@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QMetaObject>
 #include <QQuickImageProvider>
+#include <QRegularExpression>
 
 #include <algorithm>
 
@@ -54,6 +55,26 @@ char16_t lowerUnit(char16_t c)
 }
 
 const application::FontNameLower kLower = lowerUnit;
+
+// Plain characters as written for the renderer: braces as \{ and \}, and
+// a word joiner after each backslash so that it reads no escape.
+QString rendererText(QString plain)
+{
+    plain.replace(QLatin1Char('\\'), QStringLiteral("\\\u2060"));
+    plain.replace(QLatin1Char('{'), QStringLiteral("\\{")).replace(QLatin1Char('}'), QStringLiteral("\\}"));
+    return plain.trimmed();
+}
+
+// The family for a preview: the Style's Fontname, or, when it holds a
+// comma (the Style line is comma-separated), an \\fn override before the
+// text, as the picker's tag names it on a Line.
+QString withFamily(core::StyleValues &style, const QString &family, const QString &text)
+{
+    if (family.contains(QLatin1Char(',')))
+        return QStringLiteral("{\\fn") + family + QLatin1Char('}') + text;
+    style.fontname = core::toUtf8(u16(family));
+    return text;
+}
 
 // FontCatalogList's preview Style (FontCatalogList.cpp:191).
 constexpr char8_t kFontPreviewStyle[] = u8"Style: FontPreview,Arial,80,&H00FFFFFF,&HFF0000FF,&H00301946,&H7A301946,-1,0,"
@@ -102,7 +123,7 @@ FontCatalogsController::~FontCatalogsController()
     // ~FontCatalogList: FCManagement.SaveCatalogs() (FontCatalogList.cpp:
     // 218-221 at 20d647c4). A window that was made lived until the end, so
     // the catalogs as they are then are written to FontCatalogs.txt.
-    if (m_windowMade)
+    if (m_windowMade || m_unsaved) // PU3: and a save that failed is tried again
         save();
     stopResolver();
 }
@@ -138,6 +159,10 @@ void FontCatalogsController::ensureLoaded()
     m_loaded = true;
     if (const auto text = application::readFontCatalogFile(catalogPath(m_dir, application::kFontCatalogsFile)))
         m_catalogs.load(*text);
+    // A header with no '=' read as a catalog with no name: nothing could
+    // choose or manage it (as Load leaves it out).
+    if (m_catalogs.find(u""))
+        m_catalogs.remove(u"");
 }
 
 QStringList FontCatalogsController::catalogNames() const
@@ -193,6 +218,13 @@ void FontCatalogsController::saveFilterText(const QString &text)
     m_settings.set("styles.editFilterText", text);
 }
 
+void FontCatalogsController::applyFilterText(const QString &text)
+{
+    ensureLoaded();
+    saveFilterText(text);
+    m_families->refilter(u16(text));
+}
+
 QStringList FontCatalogsController::allFonts()
 {
     return list(m_families->fonts());
@@ -233,6 +265,39 @@ bool FontCatalogsController::isFontInCatalog(const QString &catalog, const QStri
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
     return m_catalogs.contains(u16(catalog), u16(font));
+}
+
+QStringList FontCatalogsController::catalogsOf(const QString &font) const
+{
+    const_cast<FontCatalogsController *>(this)->ensureLoaded();
+    QStringList out;
+    for (const auto &c : m_catalogs.catalogs())
+        if (std::find(c.fonts.begin(), c.fonts.end(), u16(font)) != c.fonts.end())
+            out << qs(c.name);
+    return out;
+}
+
+int FontCatalogsController::catalogSize(const QString &name) const
+{
+    const_cast<FontCatalogsController *>(this)->ensureLoaded();
+    const auto *c = m_catalogs.find(u16(name));
+    return c ? int(c->fonts.size()) : 0;
+}
+
+QString FontCatalogsController::existingName(const QString &name) const
+{
+    const_cast<FontCatalogsController *>(this)->ensureLoaded();
+    const auto *c = m_catalogs.findNoCase(u16(name));
+    return c ? qs(c->name) : QString();
+}
+
+int FontCatalogsController::sameNameIndex(const QStringList &names, const QString &name) const
+{
+    const std::u16string key = u16(name);
+    for (int i = 0; i < names.size(); ++i)
+        if (application::sameNoCase(u16(names[i]), key, kLower))
+            return i;
+    return -1;
 }
 
 bool FontCatalogsController::catalogExists(const QString &name) const
@@ -297,22 +362,122 @@ void FontCatalogsController::toggleFontInCatalog(const QString &catalog, const Q
     emit catalogsChanged();
 }
 
-void FontCatalogsController::loadCatalogsFrom(const QUrl &file)
+QVariantMap FontCatalogsController::reviewCatalogFile(const QUrl &file)
 {
     ensureLoaded();
     const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
+    m_reviewed.clear();
     if (const auto text = application::readFontCatalogFile(std::filesystem::path(path.toStdU16String())))
-        m_catalogs.load(*text);
-    emit catalogsChanged();
+        m_reviewed = application::FontCatalogs::parse(*text);
+    // A header with no '=' parses as a catalog with no name (LoadCatalogs):
+    // nothing could choose or manage it, so it is not loaded.
+    std::erase_if(m_reviewed, [](const auto &c) { return c.name.empty(); });
+    // The file's names for one catalog in other cases are one catalog, as
+    // here: their fonts gathered under the first name.
+    std::vector<application::FontCatalogs::Catalog> one;
+    for (auto &c : m_reviewed) {
+        const auto it = std::find_if(one.begin(), one.end(), [&](const auto &o) { return application::sameNoCase(o.name, c.name, kLower); });
+        if (it == one.end()) {
+            one.push_back(std::move(c));
+            continue;
+        }
+        for (auto &font : c.fonts)
+            if (std::find(it->fonts.begin(), it->fonts.end(), font) == it->fonts.end())
+                it->fonts.push_back(std::move(font));
+    }
+    m_reviewed = std::move(one);
+    QVariantList rows;
+    QStringList names;
+    int same = 0;
+    for (const auto &c : m_reviewed) {
+        names.append(qs(c.name));
+        const auto *here = m_catalogs.findNoCase(c.name); // another case is that catalog
+        if (!here)
+            continue;
+        int added = 0;
+        for (const auto &font : c.fonts)
+            if (std::find(here->fonts.begin(), here->fonts.end(), font) == here->fonts.end())
+                ++added;
+        if (added == 0 && here->fonts.size() == c.fonts.size()) {
+            ++same; // the same fonts: nothing to choose
+            continue;
+        }
+        rows.append(QVariantMap{{QStringLiteral("name"), qs(c.name)},
+                                {QStringLiteral("here"), int(here->fonts.size())},
+                                {QStringLiteral("there"), int(c.fonts.size())},
+                                {QStringLiteral("added"), added}});
+    }
+    return {{QStringLiteral("ok"), !m_reviewed.empty()},
+            {QStringLiteral("file"), QFileInfo(path).fileName()},
+            {QStringLiteral("total"), int(m_reviewed.size())},
+            {QStringLiteral("rows"), rows},
+            {QStringLiteral("names"), names},
+            {QStringLiteral("same"), same}};
 }
 
-void FontCatalogsController::save()
+QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
 {
     ensureLoaded();
-    application::writeFontCatalogFile(catalogPath(m_dir, application::kFontCatalogsFile), m_catalogs.serialize());
+    using Action = application::FontCatalogs::LoadAction;
+    std::vector<application::FontCatalogs::LoadChoice> chosen(m_reviewed.size());
+    int added = 0, merged = 0, replaced = 0, renamed = 0, skipped = 0, same = 0;
+    // New names already counted: a later one in another case merges into it.
+    std::vector<std::u16string> addedNames;
+    const auto isNew = [&](const std::u16string &name) {
+        if (m_catalogs.findNoCase(name))
+            return false;
+        for (const auto &earlier : addedNames)
+            if (application::sameNoCase(earlier, name, kLower))
+                return false;
+        addedNames.push_back(name);
+        return true;
+    };
+    for (std::size_t i = 0; i < m_reviewed.size(); ++i) {
+        bool reviewed = false;
+        for (const QVariant &v : choices) {
+            const QVariantMap c = v.toMap();
+            if (u16(c.value(QStringLiteral("name")).toString()) != m_reviewed[i].name)
+                continue;
+            reviewed = true;
+            const QString action = c.value(QStringLiteral("action")).toString();
+            chosen[i].action = action == QLatin1String("replace") ? Action::Replace
+                             : action == QLatin1String("rename")  ? Action::Rename
+                             : action == QLatin1String("skip")    ? Action::Skip
+                                                                  : Action::Merge;
+            chosen[i].newName = u16(c.value(QStringLiteral("newName")).toString());
+        }
+        // One left out of the review that exists holds the same fonts.
+        if (!reviewed && m_catalogs.findNoCase(m_reviewed[i].name)) {
+            chosen[i].action = Action::Skip;
+            ++same;
+            continue;
+        }
+        switch (chosen[i].action) {
+        case Action::Skip: ++skipped; break;
+        case Action::Replace: ++replaced; break;
+        // A name taken after all (the review refuses one) merges, as apply() does.
+        case Action::Rename: ++(isNew(chosen[i].newName) ? renamed : merged); break;
+        case Action::Merge: ++(isNew(m_reviewed[i].name) ? added : merged); break;
+        }
+    }
+    m_catalogs.apply(m_reviewed, chosen);
+    const int loaded = int(m_reviewed.size()) - skipped - same;
+    m_reviewed.clear();
+    emit catalogsChanged();
+    return {{QStringLiteral("loaded"), loaded}, {QStringLiteral("added"), added}, {QStringLiteral("merged"), merged},
+            {QStringLiteral("replaced"), replaced}, {QStringLiteral("renamed"), renamed}, {QStringLiteral("skipped"), skipped}};
 }
 
-bool FontCatalogsController::collectFromSubtitles(const QString &catalog, bool clear, bool allTabs)
+bool FontCatalogsController::save()
+{
+    ensureLoaded();
+    const bool written =
+        application::writeFontCatalogFile(catalogPath(m_dir, application::kFontCatalogsFile), m_catalogs.serialize());
+    m_unsaved = !written;
+    return written;
+}
+
+QVariantMap FontCatalogsController::collectFromSubtitles(const QString &catalog, bool clear, bool allTabs)
 {
     ensureLoaded();
     std::vector<std::shared_ptr<const core::Document>> documents;
@@ -322,18 +487,9 @@ bool FontCatalogsController::collectFromSubtitles(const QString &catalog, bool c
     for (const auto &d : documents)
         raw.push_back(d.get());
     const bool done = m_catalogs.collect(u16(catalog), clear, raw);
-    if (done) // the catalog's absence returned before SaveCatalogs
-        save();
+    const bool saved = done && save(); // the catalog's absence returned before SaveCatalogs
     emit catalogsChanged();
-    return done;
-}
-
-void FontCatalogsController::noCatalogToAddTo()
-{
-    if (m_hooks.log)
-        m_hooks.log(QCoreApplication::translate("HikariSub.Fonts",
-                                                "For adding fonts to catalog,\nclick \"Manage\" button first,\n"
-                                                "to create new catalog."));
+    return {{QStringLiteral("done"), done}, {QStringLiteral("saved"), saved}};
 }
 
 void FontCatalogsController::startAutosave()
@@ -345,11 +501,13 @@ void FontCatalogsController::startAutosave()
 void FontCatalogsController::autosaveNow()
 {
     // The edition timer: "Autosave", Config/FontCatalogsAutosave<i>.txt with i
-    // going 0, 1, 2 and round again.
-    m_autosaveStatus = QCoreApplication::translate("HikariSub.Fonts", "Autosave");
+    // going 0, 1, 2 and round again. The status says so only once the copy
+    // is written; a failed write is said until one succeeds.
+    const bool written = application::writeFontCatalogFile(
+        catalogPath(m_dir, application::fontCatalogsAutosaveFile(m_autosaveIndex)), m_catalogs.serialize());
+    m_autosaveStatus = written ? QCoreApplication::translate("HikariSub.Fonts", "Autosave") : QString();
+    m_autosaveFailed = !written;
     emit autosaveStatusChanged();
-    application::writeFontCatalogFile(catalogPath(m_dir, application::fontCatalogsAutosaveFile(m_autosaveIndex)),
-                                      m_catalogs.serialize());
     if (++m_autosaveIndex > 2)
         m_autosaveIndex = 0;
     m_autosaveLabel.start();
@@ -360,10 +518,107 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
     if (width < 1 || height < 1)
         return;
     core::StyleValues style = core::legacy::decodeStyle(kFontPreviewStyle, false);
-    style.fontname = core::toUtf8(u16(font));
-    m_preview = renderStylePreview(m_renderer, style, width, height, previewText(), externalFontLeases());
+    // The preview text's characters only: an override in it ({\\fn…},
+    // {\\b0}) would draw another face than the one the note names.
+    const QString text = withFamily(style, font, rendererText(samplePlain(previewText(), true)));
+    m_preview = renderStylePreview(m_renderer, style, width, height, text, externalFontLeases());
     ++m_previewKey;
     emit previewChanged();
+}
+
+QString FontCatalogsController::samplePlain(const QString &text, bool ass, int from, int to) const
+{
+    // A preview needs a line's worth: a longer text stops there.
+    constexpr qsizetype kMaxSample = 1000;
+    QString out;
+    out.reserve(std::min(text.size(), kMaxSample));
+    const auto put = [&](qsizetype at, QChar c) {
+        if (to < from || (at >= from && at < to))
+            out += c;
+    };
+    bool drawing = false; // \p1 and up: vector drawing until \p0
+    // The next '}' at or after a position, found once per brace (one pass
+    // over a line of unclosed '{').
+    qsizetype nextClose = -2;
+    for (qsizetype i = 0; i < text.size() && out.size() < kMaxSample; ++i) {
+        const QChar c = text[i];
+        if (c == QLatin1Char('\n')) {
+            if (!drawing)
+                put(i, QLatin1Char(' '));
+            continue;
+        }
+        if (!ass) {
+            put(i, c);
+            continue;
+        }
+        if (c == QLatin1Char('{')) {
+            if (nextClose != -1 && nextClose <= i)
+                nextClose = text.indexOf(QLatin1Char('}'), i + 1);
+            const qsizetype close = nextClose;
+            if (close >= 0) { // an override block (an unclosed '{' is text)
+                // A top-level \pN only: one inside \t(…) or another tag's
+                // parentheses does not switch drawing mode (as the renderer
+                // and core::project read it).
+                const QString block = text.mid(i + 1, close - i - 1);
+                int depth = 0;
+                for (qsizetype k = 0; k < block.size(); ++k) {
+                    const QChar b = block[k];
+                    if (b == QLatin1Char('('))
+                        ++depth;
+                    else if (b == QLatin1Char(')'))
+                        depth = std::max(0, depth - 1);
+                    else if (depth == 0 && b == QLatin1Char('\\') && k + 1 < block.size() && block[k + 1] == QLatin1Char('p')) {
+                        qsizetype digits = k + 2;
+                        if (digits < block.size() && block[digits] == QLatin1Char('-'))
+                            ++digits;
+                        qsizetype end = digits;
+                        while (end < block.size() && block[end].isDigit())
+                            ++end;
+                        if (end > digits)
+                            drawing = block.mid(k + 2, end - k - 2).toInt() > 0;
+                    }
+                }
+                i = close;
+                continue;
+            }
+        }
+        if (drawing)
+            continue;
+        if (c == QLatin1Char('\\') && i + 1 < text.size()) {
+            const QChar next = text[i + 1];
+            if (next == QLatin1Char('N') || next == QLatin1Char('n') || next == QLatin1Char('h')
+                || next == QLatin1Char('{') || next == QLatin1Char('}')) {
+                put(i, next == QLatin1Char('h') ? QChar(0x00A0) : next == QLatin1Char('N') || next == QLatin1Char('n') ? QChar(u' ') : next);
+                ++i;
+                continue;
+            }
+        }
+        put(i, c);
+    }
+    return out.trimmed();
+}
+
+void FontCatalogsController::renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height)
+{
+    if (width < 1 || height < 1)
+        return;
+    core::StyleValues style = core::legacy::decodeStyle(kFontPreviewStyle, false);
+    // The size as written, kept between legacy's preview bounds (6 to 64).
+    const double size = std::clamp(font.value(QStringLiteral("size")).toString().toDouble(), 6.0, 64.0);
+    style.fontsize = core::toUtf8(u16(QString::number(size)));
+    style.bold = font.value(QStringLiteral("bold")).toBool();
+    style.italic = font.value(QStringLiteral("italic")).toBool();
+    style.underline = font.value(QStringLiteral("underline")).toBool();
+    style.strikeOut = font.value(QStringLiteral("strikeOut")).toBool();
+    const QString plain = withFamily(style, font.value(QStringLiteral("name")).toString(), rendererText(samplePlain(text, ass)));
+    // The fonts as the Line's renderer has them: the Document's attached
+    // fonts, then the external ones.
+    std::vector<application::FontLease> fonts = m_hooks.documentFonts ? m_hooks.documentFonts() : std::vector<application::FontLease>();
+    for (auto &font : externalFontLeases())
+        fonts.push_back(std::move(font));
+    m_sample = renderStylePreview(m_renderer, style, width, height, plain, std::move(fonts));
+    ++m_sampleKey;
+    emit sampleChanged();
 }
 
 std::vector<application::FontLease> FontCatalogsController::externalFontLeases() const
@@ -447,15 +702,22 @@ void FontCatalogsController::settingChanged(const QString &id)
     }
 }
 
-int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool italic)
+int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts,
+                                          const QString &text)
 {
+    application::FontEnvironment environment = m_families->environment();
+    if (documentFonts && m_hooks.documentFonts)
+        for (auto &font : m_hooks.documentFonts())
+            environment.attachments.push_back({std::move(font.family), std::move(font.bytes)});
     // Each resolution builds a libass library over fontconfig, so it runs on
     // the worker; the GUI thread only hands over the latest request.
     const int request = ++m_resolveRequest;
     {
         std::lock_guard lock(m_resolveMutex);
-        m_resolveJob = ResolveJob{request, m_service, m_families->environment(),
-                                  application::FontRequest{family.toStdString(), bold, italic, "AaBbCcDdEeFfGg 0123456789"}};
+        m_resolveJob = ResolveJob{request, m_service, std::move(environment),
+                                  application::FontRequest{family.toStdString(), bold, italic,
+                                                           text.trimmed().isEmpty() ? std::string("AaBbCcDdEeFfGg 0123456789")
+                                                                                    : text.toStdString()}};
     }
     m_resolveWake.notify_one();
     if (!m_resolver.joinable())
@@ -521,9 +783,10 @@ public:
         : QQuickImageProvider(QQuickImageProvider::Image), m_controller(controller)
     {
     }
-    QImage requestImage(const QString &, QSize *size, const QSize &) override
+    QImage requestImage(const QString &id, QSize *size, const QSize &) override
     {
-        const QImage image = m_controller.preview();
+        // "sample/<key>": the font picker's; "<key>": the catalog window's.
+        const QImage image = id.startsWith(QLatin1String("sample/")) ? m_controller.sample() : m_controller.preview();
         if (size)
             *size = image.size();
         return image;

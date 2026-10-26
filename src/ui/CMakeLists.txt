@@ -2,10 +2,10 @@
 # submits commands; never a second authoritative document store.
 qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_grid.cpp line_grid.h line_grid_accessible.cpp line_grid_accessible.h
     shell_controller.cpp shell_controller.h line_editor_controller.cpp line_editor_controller.h
-    automation_dialog_controller.cpp automation_dialog_controller.h video_presenter.cpp video_presenter.h
+    automation_dialog_controller.cpp automation_dialog_controller.h script_dialog_memory.cpp script_dialog_memory.h video_presenter.cpp video_presenter.h
     automation_manager_controller.cpp automation_manager_controller.h
     automation_services_qt.cpp automation_services_qt.h video_controller.cpp video_controller.h
-    log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
+    automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
@@ -21,12 +21,14 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml MisspellReplacerDialog.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml FixMinorErrors.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
 # TS1: the Shift times panel and the dock-form pieces it is built from.
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 # SH2: the Home page, while no Document is open.
 qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml)
+# TP1: the Styles panel.
+qt_target_qml_sources(hikari_ui QML_FILES StylesPanel.qml)
 # E6: the Line editor's tag list.
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 # LE5: the custom tag buttons, as the strip shows them, and their popover.
@@ -48,6 +50,8 @@ hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui
 # O2: the "Hotkey mapping" window and its questions.
 # S4: the automation shell's message boxes and script editor picker.
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
+# AD3 (#312): a macro run's notice and progress card, and a line of a run's log.
+qt_target_qml_sources(hikari_ui QML_FILES AutomationProgress.qml RunLogLine.qml)
 # Y4-playres-ask: the question a macro reading a missing script resolution asks.
 qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml)
 # R1: the tab menu's "Subtitle comparison".
@@ -59,9 +63,9 @@ qt_target_qml_sources(hikari_ui QML_FILES GridHeaderToolTip.qml)
 # The windows' closing rows (DialogButtonBox, in the platform's order).
 qt_target_qml_sources(hikari_ui QML_FILES WindowFooter.qml FooterButton.qml)
 # P9: the association question, the tab commands' questions and the legacy autosaves.
-qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml LegacyAutosaveList.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml)
 # ADR 0019: the update notices and the installing notice.
-qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateAurNotice.qml UpdateInstallingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateInstallingWindow.qml)
 # Y8: the font collector's window.
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 # KA7: the Karaoke check window.
@@ -70,6 +74,10 @@ qt_target_qml_sources(hikari_ui QML_FILES KaraokeCheckDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml)
 # Y6: Font catalogs, the catalog window and "Add fonts from subtitles".
 qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.qml FontsFromSubtitlesDialog.qml)
+# PU3: the font picker's chips and renderer note; the one catalog window and
+# "Add fonts from subtitles" window for every opener.
+set_source_files_properties(FontWindows.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+qt_target_qml_sources(hikari_ui QML_FILES FilterChip.qml FontResolutionNote.qml FontWindows.qml)
 # Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 # E4: the Line editor's metadata fields, counters and \an choice; its masked time fields
@@ -122,7 +130,7 @@ target_sources(hikari_ui PRIVATE title_bars.cpp title_bars.h)
 if(WIN32)
     target_link_libraries(hikari_ui PRIVATE dwmapi)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml SettingsSection.qml SettingsRow.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
 # K2: the controls style (Fusion with the theme's control outlines), chosen by
 # theme::chooseControlsStyle and imported as a static plugin by theme.cpp.
 add_subdirectory(style)
@@ -217,7 +225,13 @@ qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml Wh
 qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml
     ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
     MessageHost.qml LogPanel.qml)
+# PU1: the file and session popups on the kit: the lazily made message box, Unsaved changes, Autosaves and the
+# startup offer.
+qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")
 qt_add_resources(hikari_ui "hikari_app_icon" PREFIX "/hikari/ui" FILES "${hikari_app_icon}")
+# KA1 (#276): Karaoke's English hyphenation (LibreOffice's hyph_en_US.dic,
+# BSD-style; README_hyph_en_US.txt beside it).
+qt_add_resources(hikari_ui "hikari_hyphenation" PREFIX "/hikari/ui" FILES hyphenation/hyph_en_US.dic)

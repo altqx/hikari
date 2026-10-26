@@ -257,6 +257,12 @@ const std::vector<SettingDefinition> &definitions()
         // DG1 (#222): where each dialog was left and how big, one
         // "<id>\t<x>,<y>,<width>,<height>" row per dialog (dialog_placement.h).
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        // PU1 (#303): the folder each file picker of the file and session
+        // popups was last left in, one "<picker>\t<folder URL>" row per picker.
+        {"workspace.pickerFolders", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        // PF1 (#225): the Settings page shown last (its id), where the
+        // window opens next, also after a restart.
+        {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
         // PK1 (#301): "Show notices as toasts" (off: notices go only to the
         // Log), and the questions hidden by "Don't ask again" that have no
         // setting of their own (Settings > General > Ask again clears them).
@@ -285,6 +291,12 @@ const std::vector<SettingDefinition> &definitions()
         // "nextCommit", "goto", "sliders"). Starts on AU1's row; legacy has
         // no such option, so an import leaves it as it is.
         {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
+        // KA1 (#276): Karaoke's Auto split gives a double consonant a
+        // syllable of its own (so|ma|t|ta; off: so|mat|ta, KM's script).
+        {"audio.karaokeDoubleConsonantApart", "", Bool, Profile, Mapped, false, false},
+        // KA1: how long a syllable is (in centiseconds) for the \k and \kf
+        // switch to take it (owner 2026-10-21: KM's 100).
+        {"audio.karaokeKfThreshold", "", Int, Profile, Mapped, false, std::int64_t{100}},
         // KA2 (#277): the audio box's playback speed in percent (25, 33, 50,
         // 75 or 100), pitch kept (KA2-slowed-playback); tap-to-time's Hold or
         // Press and the calibrated latency in ms (KA2-tap-to-time).
@@ -308,6 +320,9 @@ const std::vector<SettingDefinition> &definitions()
         // quit; off, it only says that one exists. Legacy keeps it as
         // UPDATER_AUTO_INSTALL from 0.0.2 on, which the importer does not read.
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
+        // PU7 (#309): the version "Skip this version" hid from the automatic
+        // check (no "v"); empty: none. A newer release is offered again.
+        {"updater.skippedVersion", "", String, Profile, Mapped, false, std::string()},
         // TS1: the Shift times panel's collapsed sections, by section id
         // ("amount", "lines", "videoAudio", "leadInOut", "continuous", "snap");
         // all are open by default.
@@ -317,6 +332,9 @@ const std::vector<SettingDefinition> &definitions()
         // open video's size without asking, both keys (the question's
         // "Always set it from the video"; Settings > Editor).
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
+        // AD3 (#312): the Automation panel's run log shows each line's time
+        // since the run started (its clock button), for every run.
+        {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         // GR3 (wave 6, Aegisub's convention): Grid columns that carry nothing
         // in the whole Document hide themselves, on top of grid.hideColumns;
         // the Grid's Hide columns menu and Settings > Editor.
@@ -338,6 +356,13 @@ const std::vector<SettingDefinition> &definitions()
         // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
         // over the video (GLOBAL_VIDEO_RENDER_COST).
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
+        // AD2 (#311): "Fill in my last answers" (AD2-fill-last-answers, off
+        // by default); script dialogs' last answers, one "<key>\t<JSON>" row
+        // per dialog, the one used last first, at most 200; and their
+        // presets, one row per dialog (ScriptDialogMemory).
+        {"automation.fillLastAnswers", "", Bool, Profile, Mapped, false, false},
+        {"automation.dialogAnswers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // SH3 (#223): What's new. The version that ran last, recorded at each
         // start, and the one that ran before the installed version: the notes
         // of the releases after it show, until the next update.

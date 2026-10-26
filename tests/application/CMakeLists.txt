@@ -16,6 +16,9 @@ hikari_add_gtest(hikari_application_document_scripts_tests SOURCES document_scri
 # S4-run-validation: the dependencies' validations before a macro runs.
 hikari_add_gtest(hikari_application_macro_validation_tests SOURCES macro_validation_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# AD2: Repeat last run's matching, filling by name and the safe-prefill rule.
+hikari_add_gtest(hikari_application_dialog_memory_tests SOURCES dialog_memory_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_automation_services_tests SOURCES automation_services_tests.cpp
     LIBRARIES hikari_application LABELS application)
 # V1: playback frames off the GUI thread
@@ -119,6 +122,11 @@ hikari_add_gtest(hikari_application_audio_karaoke_tests SOURCES audio_karaoke_te
 target_compile_definitions(hikari_application_audio_karaoke_tests PRIVATE
     HIKARI_KARAOKE_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/karaoke-cases.txt"
     HIKARI_KARAOKE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-a5-karaoke-20261005/observations.jsonl")
+# KA1: Karaoke's language-aware Auto split, with the UI's hyphenation patterns.
+hikari_add_gtest(hikari_application_karaoke_split_tests SOURCES karaoke_split_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_karaoke_split_tests PRIVATE
+    HIKARI_HYPHENATION_PATTERNS="${PROJECT_SOURCE_DIR}/src/ui/hyphenation/hyph_en_US.dic")
 # P6: legacy session files against fixtures in the legacy format.
 hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_tests.cpp
     LIBRARIES hikari_application LABELS application)

@@ -68,6 +68,12 @@ MenuItem {
     property string shortcutText
     readonly property int tabAt: text.indexOf("\t")
     readonly property string labelText: tabAt >= 0 ? text.slice(0, tabAt) : text
+    // TP1 (Codex security review): a label that could read as markup (a
+    // file's Style, chapter, track, file or font catalog name with a "<",
+    // or with "&lt;", which Qt::mightBeRichText also reads as rich text) is
+    // drawn as plain text: as markup an <img> in it would be fetched, and
+    // Qt's IconLabel crashes laying one out. The menus' own texts never have one.
+    readonly property bool plainLabel: labelText.indexOf("<") >= 0 || labelText.indexOf("&lt;") >= 0
     readonly property string keysText: (tabAt >= 0 ? text.slice(tabAt + 1) : shortcutText)
         .replace(/(Ctrl|Shift|Alt|Meta|Win|Cmd)-/g, "$1+")
     property string help
@@ -103,21 +109,43 @@ MenuItem {
         readonly property real iconGutter: control.icon.source.toString().length > 0 ? 0 : control.icon.width + control.spacing
         readonly property color textColour: control.enabled && (control.down || control.highlighted)
             ? control.palette.highlightedText : control.palette.text
-        implicitWidth: label.implicitWidth + (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
-        implicitHeight: Math.max(label.implicitHeight, keys.implicitHeight)
+        // A plain label's room in the IconLabel's: past its paddings and the
+        // icon on the leading side.
+        readonly property real iconRoom: control.icon.source.toString().length > 0 ? control.icon.width + control.spacing : 0
+        readonly property real leadPadding: control.mirrored ? arrowPadding : checkGutter + iconGutter
+        readonly property real trailPadding: control.mirrored ? checkGutter + iconGutter : arrowPadding
+        readonly property real textStart: leadPadding + (control.mirrored ? 0 : iconRoom)
+        readonly property real textEnd: trailPadding + (control.mirrored ? iconRoom : 0)
+        implicitWidth: (control.plainLabel ? textStart + plainText.implicitWidth + textEnd : label.implicitWidth)
+            + (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
+        implicitHeight: Math.max(label.implicitHeight, plainText.implicitHeight, keys.implicitHeight)
         IconLabel {
             id: label
             width: parent.width - (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
             height: parent.height
             x: control.mirrored ? parent.width - width : 0
-            leftPadding: control.mirrored ? parent.arrowPadding : parent.checkGutter + parent.iconGutter
-            rightPadding: control.mirrored ? parent.checkGutter + parent.iconGutter : parent.arrowPadding
+            leftPadding: parent.leadPadding
+            rightPadding: parent.trailPadding
             spacing: control.spacing
             mirrored: control.mirrored
             display: control.display
             alignment: Qt.AlignLeft
             icon: control.icon
-            text: control.labelText
+            text: control.plainLabel ? "" : control.labelText
+            font: control.font
+            color: parent.textColour
+        }
+        Text {
+            id: plainText
+            objectName: "menuItemPlainText"
+            visible: control.plainLabel
+            text: control.plainLabel ? control.labelText : ""
+            textFormat: Text.PlainText
+            x: label.x + parent.textStart
+            width: Math.max(0, label.width - parent.textStart - parent.textEnd)
+            anchors.verticalCenter: parent.verticalCenter
+            horizontalAlignment: control.mirrored ? Text.AlignRight : Text.AlignLeft
+            elide: Text.ElideRight
             font: control.font
             color: parent.textColour
         }

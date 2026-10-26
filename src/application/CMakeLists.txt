@@ -1,6 +1,7 @@
 # Application services: Documents, commands, history, settings and ports.
 add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_session.cpp workspace.cpp document_files.cpp
-    automation_registry.cpp macro_transaction.cpp automation_services.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp editor_fields.cpp grid_split.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp misspell_replacer.cpp spell_checker.cpp settings.cpp options_dialog.cpp audio_display.cpp audio_box.cpp)
+    automation_registry.cpp macro_transaction.cpp automation_services.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp editor_fields.cpp grid_split.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp misspell_replacer.cpp spell_checker.cpp settings.cpp options_dialog.cpp audio_display.cpp audio_box.cpp
+    dialog_memory.cpp)
 # O2: hotkeys and the shortcut editor.
 target_sources(hikari_application PRIVATE hotkeys.cpp)
 # A3: the audio box's timing.
@@ -11,6 +12,8 @@ target_sources(hikari_application PRIVATE audio_devices.cpp include/hikari/appli
 target_sources(hikari_application PRIVATE audio_playback.cpp)
 # A5: the audio box's karaoke mode.
 target_sources(hikari_application PRIVATE audio_karaoke.cpp)
+# KA1 (#276): Karaoke's language-aware Auto split.
+target_sources(hikari_application PRIVATE karaoke_split.cpp include/hikari/application/karaoke_split.h)
 # KA2 (#277): tap-to-time karaoke timing and the latency calibration.
 target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/application/karaoke_tap.h)
 # KA5 (#280): vocal onsets for snapping syllable boundaries.

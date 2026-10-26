@@ -36,7 +36,7 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 | A21 | ui/MatroskaSubtitles.qml noTracksMessage | Load subtitles from an MKV/OGM file | The file does not contain any subtitle tracks. | info | yes | toast | same |
 | A22 | ui/AllTagsEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | message box | Tag editing |
 | A23 | ui/ShapesEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | message box | Vector shape editing |
-| A24 | ui/FontCatalogWindow.qml info | Info | Enter a name for the new catalog | warning | yes | message box | Manage font catalogs |
+| A24 | ui/FontCatalogWindow.qml info | Info | Enter a name for the new catalog | warning | yes | message box | Manage font catalogs (PU3: gone; New and Rename say an empty name inline in their popovers) |
 | A25 | ui/FontCollectorDialog.qml message | none | Start refusals | warning / error | yes | message box | Font collector |
 | A26 | ui/SettingsDialog.qml warningDialog | Warning | The selected %1 for conversion does not exist… | warning | yes | toast | Settings |
 | A27 | ui/SelectLinesDialog.qml result | Select (Close + OK) | %1 lines selected. … | info | yes | toast | Select lines |
@@ -46,6 +46,11 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 16 objects leave the allow-list; SearchTool:question stays on it for its Yes/No questions (PU2). The update
 notices were already windows of their own (DG1); UpdateMessage.qml is gone. A11 and A14 put the script's
 error text under Details.
+
+PU7 ([#309](https://github.com/altqx/hikari/issues/309)): Settings > Hotkeys' Import legacy hotkeys… tells
+its result in a toast titled "Import legacy hotkeys": info with how many bindings were added, kept and
+skipped (the skipped ones, with their keys, under Details), an error when the file cannot be read. The AUR
+notice (UpdateAurNotice.qml) is gone: an AUR install's release opens the update window (PU7-aur-command).
 
 ## B. Messages that pop the Log window up (49 call-site groups)
 

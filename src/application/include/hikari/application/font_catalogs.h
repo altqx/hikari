@@ -65,6 +65,22 @@ public:
     // empty name without one), "}" closes it, and the lines between, trimmed,
     // are its fonts (each once, exactly); other lines are ignored.
     void load(std::u16string_view text);
+    // The catalogs a file's text holds, as load() reads them, in the order
+    // they first appear, without touching these: a catalog named twice
+    // gathers both blocks' fonts (each once, exactly).
+    static std::vector<Catalog> parse(std::u16string_view text);
+    // PU3-load-review: what Load does with each catalog of a file (PK1's
+    // clash review). Merge adds the fonts these lack (load()'s, legacy's
+    // only answer); Replace gives the catalog of that name the file's fonts;
+    // Rename adds them under `newName` (merged when that name exists too);
+    // Skip leaves the catalog out.
+    enum class LoadAction { Merge, Replace, Rename, Skip };
+    struct LoadChoice {
+        LoadAction action = LoadAction::Merge;
+        std::u16string newName;
+    };
+    // `file` from parse(); choices[i] for file[i], Merge past their end.
+    void apply(const std::vector<Catalog> &file, const std::vector<LoadChoice> &choices);
     // SaveCatalogs (FontCatalogList.cpp:615-629): the file's bytes.
     std::string serialize() const;
 
@@ -74,6 +90,8 @@ public:
     // The catalogs in legacy's map order.
     const std::vector<Catalog> &catalogs() const { return m_catalogs; }
     const Catalog *find(std::u16string_view name) const;
+    // PU3: the catalog named `name` ignoring case (sameNoCase); nullptr for none.
+    const Catalog *findNoCase(std::u16string_view name) const;
 
     // FindCatalogByFont: the first catalog (map order) holding `font`
     // exactly; empty for none.

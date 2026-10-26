@@ -71,14 +71,17 @@
 #include <QGuiApplication>
 #include <QSignalSpy>
 #include <QQmlApplicationEngine>
+#include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlExpression>
 #include <QQmlProperty>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QScopeGuard>
 #include <QTemporaryDir>
 #include <QTranslator>
 #include <QQuickItem>
+#include <QTextDocument>
 #include <QQuickWindow>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QElapsedTimer>
@@ -1487,7 +1490,7 @@ private slots:
         QTRY_VERIFY(frame->custom());
         auto *dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6); // Appearance
+        showSettingsPage("appearance");
         auto *useSystem = dialogItem("settingsDialog", "appearanceSystemTitleBar");
         QVERIFY(useSystem);
         QTRY_VERIFY(useSystem->isVisible());
@@ -2562,12 +2565,44 @@ private slots:
         auto *list = history->findChild<QQuickItem *>(QStringLiteral("historyList"));
         QVERIFY(list);
         QCOMPARE(list->property("currentIndex").toInt(), 2);
-        QCOMPARE(history->title(), QStringLiteral("History (3 elements)"));
+        // PU2: titled by its command, the count in the body; it blocks
+        // nothing (the grid stays usable).
+        QCOMPARE(history->title(), QStringLiteral("History"));
+        QCOMPARE(history->findChild<QObject *>(QStringLiteral("historyCount"))->property("text").toString(),
+                 QStringLiteral("3 steps. Steps after the current one can be redone."));
+        QCOMPARE(history->modality(), Qt::NonModal);
+        QVERIFY(history->property("resizable").toBool());
+        QTRY_VERIFY(list->hasActiveFocus());
+        // Go to step (Enter in the list) jumps and keeps the window open.
         list->setProperty("currentIndex", 0);
-        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historySet")), "clicked"));
+        QTest::keyClick(history, Qt::Key_Return);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
-        QVERIFY(history->isVisible()); // Set keeps the window open
-        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historyCancel")), "clicked"));
+        QVERIFY(history->isVisible());
+        QCOMPARE(editor.historyCursor(), 0);
+        list->setProperty("currentIndex", 2);
+        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historyGo")), "click"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first12"));
+        list->setProperty("currentIndex", 0);
+        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historyGo")), "click"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        QVERIFY(history->isVisible());
+        // It follows the editing target and names its Document (Codex review).
+        auto *documentLabel = history->findChild<QObject *>(QStringLiteral("historyDocument"));
+        QVERIFY(documentLabel);
+        QVERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history.ass")));
+        const int historyTab = application->currentTab();
+        list->setProperty("currentIndex", 2); // chosen, not gone to
+        QVERIFY(application->openFile(writeFile(dir, "history-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        if (application->currentTab() == historyTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QTRY_VERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history-other.ass")));
+        // The other tab's current step is selected, not the last tab's choice.
+        QCOMPARE(list->property("currentIndex").toInt(), editor.historyCursor());
+        application->selectTab(historyTab);
+        QTRY_VERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history.ass")));
+        QCOMPARE(editor.historyCursor(), 0);
+        // Esc closes.
+        QTest::keyClick(history, Qt::Key_Escape);
         QTRY_VERIFY(!history->isVisible());
 
         // Undo to last save: forward to the saved step; redo steps stay.
@@ -2839,7 +2874,7 @@ private slots:
             return QVariantMap{{QStringLiteral("title"), title}, {QStringLiteral("text"), text},
                                {QStringLiteral("severity"), severity}, {QStringLiteral("details"), details}};
         };
-        const QString readOnly = QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute.");
+        const QString readOnly = QStringLiteral("“episode.ass” is read-only.");
         const QVariantList readOnlyChoices{
             QVariantMap{{QStringLiteral("id"), QStringLiteral("saveAs")}, {QStringLiteral("text"), QStringLiteral("Save as…")},
                         {QStringLiteral("role"), QStringLiteral("accept")}, {QStringLiteral("isDefault"), true}},
@@ -2862,13 +2897,9 @@ private slots:
              box(QStringLiteral("Tag editing"), QStringLiteral("Enter a name for the new tag."), QStringLiteral("error"))},
             {"shapesMessages", QStringLiteral("shape-editing"),
              box(QStringLiteral("Vector shape editing"), QStringLiteral("Enter a name for the new shape."), QStringLiteral("error"))},
-            {"fontCatalogMessages", QStringLiteral("font-catalogs"),
-             box(QStringLiteral("Manage font catalogs"), QStringLiteral("Enter a name for the new catalog"), QStringLiteral("warning"))},
             {"fontCollectorMessages", QStringLiteral("font-collector"),
              box(QStringLiteral("Font collector"), QStringLiteral("Select the folder where you want to copy fonts"),
                  QStringLiteral("warning"))},
-            {"findMessages", QStringLiteral("find-in-files"),
-             box(QStringLiteral("Find in files"), QStringLiteral("Search path is invalid"), QStringLiteral("error"))},
         };
         for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
                                     QStringLiteral("highContrastBlack")}) {
@@ -2890,19 +2921,13 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(item<QObject>("logDock"), "close"));
             QVERIFY(QMetaObject::invokeMethod(stack, "clear"));
             // The read-only save, as Save asks it.
-            QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+            QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("locked.ass"))));
             QQuickWindow *saveBox = nullptr;
             QTRY_VERIFY((saveBox = messageBox("messages")) && saveBox->isVisible());
             save(saveBox, QStringLiteral("box-save-") + code);
             QVERIFY(QMetaObject::invokeMethod(saveBox, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!saveBox->isVisible());
             for (const auto &[host, part, options] : boxes) {
-                // The Search tool's message box comes with its panel.
-                const bool search = qstrcmp(host, "findMessages") == 0;
-                if (search) {
-                    QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
-                    QTRY_VERIFY(named(host));
-                }
                 QObject *found = named(host);
                 QVERIFY2(found, host);
                 QVERIFY(QMetaObject::invokeMethod(found, "ask", Q_ARG(QVariant, options), Q_ARG(QVariant, QVariant())));
@@ -2913,8 +2938,6 @@ private slots:
                 save(shown, QStringLiteral("box-") + part + QLatin1Char('-') + code);
                 QVERIFY(QMetaObject::invokeMethod(shown, "answer", Q_ARG(QVariant, shown->property("choices").toList().value(0).toMap().value(QStringLiteral("id")))));
                 QTRY_VERIFY(!shown->isVisible());
-                if (search)
-                    QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "close"));
             }
         }
     }
@@ -2956,15 +2979,38 @@ private slots:
                  QStringLiteral("{note}def"));
     }
 
+    // PU1-message-boxes: answers the MKV save question, made when first
+    // asked ("save", "load", "cancel").
+    bool mkvAnswer(const char *id) const
+    {
+        auto *box = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mkvSaveQuestion"));
+        return box && QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QLatin1String(id)));
+    }
+    bool mkvQuestionShown() const
+    {
+        auto *box = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mkvSaveQuestion"));
+        return box && box->property("visible").toBool();
+    }
+    // PF1: the Settings window, made at its first opening.
+    QObject *settingsWindow() const
+    {
+        QVariant made;
+        QMetaObject::invokeMethod(engine->rootObjects().first(), "settingsWindow", Q_RETURN_ARG(QVariant, made));
+        return made.value<QObject *>();
+    }
     // E1: a control inside a dialog (popups live in the overlay).
     QQuickItem *dialogItem(const char *dialog, const char *name) const
     {
-        auto *popup = engine->rootObjects().first()->findChild<QObject *>(QLatin1String(dialog));
+        auto *popup = qstrcmp(dialog, "settingsDialog") == 0
+                          ? settingsWindow()
+                          : engine->rootObjects().first()->findChild<QObject *>(QLatin1String(dialog));
         auto *content = popup ? popup->property("contentItem").value<QQuickItem *>() : nullptr;
         return content ? findItem(content, QLatin1String(name)) : nullptr;
     }
 
-    void fontDialogTagsTheSelectionAndCancelTakesItBack()
+    // PU3 (#305): the font picker from the Line editor (E1's font dialog):
+    // each change tags the selection at once, and Cancel takes it back.
+    void fontPickerTagsTheSelectionAndCancelTakesItBack()
     {
         const QString path = dir.filePath(QStringLiteral("font.ass"));
         {
@@ -2988,40 +3034,46 @@ private slots:
         press(Qt::Key_Home);
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("abc"));
-        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("fontDialog"));
-        QVERIFY(dialog);
+        auto *picker = named("fontPicker");
+        QVERIFY(picker);
 
         // Bold on the selection with tags hidden: the tag, and the Style's
         // value after it, in the raw text; the field still shows "abc".
         text->forceActiveFocus();
         QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 3));
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("fontDialog", "fontName")->property("text").toString(), QStringLiteral("Arial"));
-        QCOMPARE(dialogItem("fontDialog", "fontSize")->property("text").toString(), QStringLiteral("20"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontBold"), "click"));
+        QTRY_VERIFY(picker->property("visible").toBool());
+        QCOMPARE(picker->property("title").toString(), QStringLiteral("Font selection"));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Arial"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("20"));
+        // The preview draws the selected text.
+        QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(),
+                 QStringLiteral("The line’s selected text"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerBold"), "click"));
         QTRY_COMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftText().value_or(u8"").c_str())),
                      QStringLiteral("{\\b1}abc{\\b0}"));
         QCOMPARE(text->property("text").toString(), QStringLiteral("abc"));
         application->editor().setShowTags(true);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\b1}abc{\\b0}"));
-        // A later change in the same dialog replaces the tag in place.
-        dialogItem("fontDialog", "fontSize")->setProperty("text", QStringLiteral("30"));
+        // A later change in the same picker replaces the tag in place.
+        dialogItem("fontPicker", "fontPickerSize")->setProperty("text", QStringLiteral("30"));
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\fs30\\b1}abc{\\fs20\\b0}"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerOk"), "click"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
 
-        // Cancel takes the dialog's changes back and leaves no draft behind.
+        // Cancel takes the picker's changes back and leaves no draft behind.
         QVERIFY(application->editor().commit());
         const auto steps = session->historySize();
         text->forceActiveFocus();
         text->setProperty("cursorPosition", 0);
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("fontDialog", "fontSize")->property("text").toString(), QStringLiteral("30"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontItalic"), "click"));
+        QTRY_VERIFY(picker->property("visible").toBool());
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("30"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerItalic"), "click"));
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\i1")));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCancel"), "click"));
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\fs30\\b1}abc{\\fs20\\b0}"));
         QVERIFY(!session->draftLine());
         QCOMPARE(session->historySize(), steps);
@@ -3060,7 +3112,7 @@ private slots:
         f.write(events);
         return path;
     }
-    QObject *openFontDialog(const QString &path)
+    QObject *openFontPicker(const QString &path)
     {
         if (!application->openFile(path))
             return nullptr;
@@ -3071,228 +3123,868 @@ private slots:
             return nullptr;
         text->forceActiveFocus();
         text->setProperty("cursorPosition", 0);
-        auto *dialog = named("fontDialog");
+        auto *picker = named("fontPicker");
         QMetaObject::invokeMethod(visualItem("changeFont"), "click");
-        return QTest::qWaitFor([&] { return dialog->property("visible").toBool(); }) ? dialog : nullptr;
+        return QTest::qWaitFor([&] { return picker->property("visible").toBool(); }) ? picker : nullptr;
     }
     static void choose(QObject *combo, int index)
     {
         combo->setProperty("currentIndex", index);
         QMetaObject::invokeMethod(combo, "activated", Q_ARG(int, index));
     }
+    // A popup menu's entry by object name and text.
+    static QQuickItem *menuEntry(QObject *menu, const QString &name, const QString &text = QString())
+    {
+        for (QQuickItem *entry : menuItems(menu))
+            if (entry && entry->objectName() == name && (text.isEmpty() || entry->property("text").toString() == text))
+                return entry;
+        return nullptr;
+    }
+    // The last notice posted on the toast stack (the first of its entries),
+    // as "title|text|details".
+    QString lastNotice() const
+    {
+        const QVariantList entries = named("toastStack")->property("entries").toList();
+        if (entries.isEmpty())
+            return QString();
+        const QVariantMap last = entries.first().toMap();
+        return last.value(QStringLiteral("title")).toString() + QLatin1Char('|') + last.value(QStringLiteral("text")).toString()
+            + QLatin1Char('|') + last.value(QStringLiteral("details")).toString();
+    }
 
-    // Y6: the font dialog's list comes from the FontService through the
-    // catalog choice (FontDialog::ChangeCatalog, FontDialog.cpp:656-695) and
-    // the Filter (GetFontsTable); the renderer reports what it selected.
-    void fontDialogListsCatalogsAndTheFilter()
+    // PU3 (#305): the picker's list comes from the FontService through the
+    // catalog chip (FontDialog::ChangeCatalog, FontDialog.cpp:656-695) and the
+    // characters chip (GetFontsTable); the search filters as you type
+    // (PU3-font-search), a name no font answers to can be used anyway, and
+    // the renderer reports what it selected.
+    void fontPickerSearchesAndFiltersTheFamilies()
     {
         usePickerFonts();
-        auto *dialog = openFontDialog(fontAss("picker.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        auto *list = dialogItem("fontDialog", "fontList");
-        auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
+        auto *picker = openFontPicker(fontAss("picker.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
+        QVERIFY(picker);
+        const auto in = [this](const char *name) { return dialogItem("fontPicker", name); };
+        const auto shown = [picker] { return picker->property("shown").toStringList(); };
         const QStringList all{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"};
-        QCOMPARE(list->property("model").toStringList(), all);
-        QCOMPARE(list->property("currentIndex").toInt(), 3); // SetSelectionByName("Tahoma")
-        QCOMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B"}));
+        QCOMPARE(shown(), all);
+        QCOMPARE(in("fontPickerList")->property("currentIndex").toInt(), 3); // the Style's Tahoma
+        QCOMPARE(in("fontPickerCount")->property("text").toString(), QStringLiteral("5 fonts"));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B"}));
+        // Each family's catalogs at the row's trailing edge.
+        QString verdanaNote;
+        auto *rows = in("fontPickerList")->property("contentItem").value<QQuickItem *>();
+        for (QQuickItem *row : rows->childItems())
+            if (row->objectName() == QLatin1String("fontPickerRow") && row->property("family").toString() == QLatin1String("Verdana"))
+                verdanaNote = row->property("note").toString();
+        QCOMPARE(verdanaNote, QStringLiteral("A"));
+
+        // The catalog chip: a menu of the choices with their sizes.
+        auto *catalogChip = in("fontPickerCatalog");
+        QCOMPARE(catalogChip->property("text").toString(), QStringLiteral("All fonts"));
+        QVERIFY(!catalogChip->property("on").toBool());
+        QVERIFY(QMetaObject::invokeMethod(catalogChip, "click"));
+        auto *menu = named("fontPickerCatalogMenu");
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QStringList sizes;
+        for (QQuickItem *entry : menuItems(menu))
+            if (entry && entry->objectName() == QLatin1String("fontPickerCatalogItem"))
+                sizes << entry->property("text").toString() + QLatin1Char(' ') + entry->property("shortcutText").toString();
+        QCOMPARE(sizes, (QStringList{"All fonts 5", "Without catalog 2", "A 3", "B 1"}));
+        QVERIFY(menuEntry(menu, QStringLiteral("fontPickerCatalogManage")));
         // A catalog: its installed fonts, sorted (GetCatalogFonts); the
-        // Style's font is not among them, so the partial-name search picks.
-        choose(choice, 2);
-        QCOMPARE(list->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
-        QCOMPARE(list->property("currentIndex").toInt(), 1); // "tahoma": past "arial", at "verdana"
-        // "Without catalog": the fonts no catalog holds, as in the Style
-        // editor (Y6-without-catalog; legacy's FontList::FindString answered
-        // 0, removing the first font per catalog entry).
-        choose(choice, 1);
-        QCOMPARE(list->property("model").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
-        // The Filter: the fonts with a glyph for each of STYLE_EDIT_FILTER_TEXT's
-        // characters, and STYLE_EDIT_FILTER_TEXT_ON saved.
-        choose(choice, 0);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontFilter"), "toggle"));
-        QMetaObject::invokeMethod(dialogItem("fontDialog", "fontFilter"), "toggled");
-        QCOMPARE(list->property("model").toStringList(), (QStringList{"Arial", "Tahoma"}));
+        // Style's Tahoma is not among them, so nothing is selected.
+        QVERIFY(QMetaObject::invokeMethod(menuEntry(menu, QStringLiteral("fontPickerCatalogItem"), QStringLiteral("A")), "triggered"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QCOMPARE(shown(), (QStringList{"Arial", "Verdana"}));
+        QCOMPARE(catalogChip->property("text").toString(), QStringLiteral("A"));
+        QVERIFY(catalogChip->property("on").toBool());
+        QCOMPARE(in("fontPickerList")->property("currentIndex").toInt(), -1);
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(in("fontPickerCount")->property("text").toString(), QStringLiteral("2 of 5 fonts"));
+        // Renamed with only its case changed, it is the same catalog: the
+        // chip stays on it.
+        QVERIFY(application->fontCatalogs().renameCatalog(QStringLiteral("A"), QStringLiteral("a"), 2));
+        QCOMPARE(catalogChip->property("text").toString(), QStringLiteral("a"));
+        QCOMPARE(shown(), (QStringList{"Arial", "Verdana"}));
+        QVERIFY(application->fontCatalogs().renameCatalog(QStringLiteral("a"), QStringLiteral("A"), 2));
+        // "Without catalog": the fonts no catalog holds (Y6-without-catalog).
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 1)));
+        QCOMPARE(shown(), (QStringList{"Comic Sans MS", "Tahoma"}));
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 0)));
+
+        // The characters chip (PU3-character-chip): the text in a popover,
+        // Apply keeping it in STYLE_EDIT_FILTER_TEXT and turning the filter
+        // on (STYLE_EDIT_FILTER_TEXT_ON), Clear turning it off.
+        auto *characters = in("fontPickerCharacters");
+        QCOMPARE(characters->property("text").toString(), QStringLiteral("Characters"));
+        QVERIFY(QMetaObject::invokeMethod(characters, "click"));
+        auto *popover = named("fontPickerCharactersPopover");
+        QTRY_VERIFY(popover->property("visible").toBool());
+        auto *field = named("fontPickerCharactersText");
+        QCOMPARE(field->property("text").toString(), QStringLiteral("ą"));
+        QVERIFY(QMetaObject::invokeMethod(named("fontPickerCharactersApply"), "click"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(shown(), (QStringList{"Arial", "Tahoma"}));
         QVERIFY(application->settingsStore()->boolean("styles.editFilterTextOn"));
-        // Typing selects as FontList::SetSelectionByPartialName.
-        dialogItem("fontDialog", "fontName")->setProperty("text", QStringLiteral("ta"));
-        QCOMPARE(list->property("currentIndex").toInt(), 1);
-        // The renderer's selection for the typed name: substituted.
-        QTRY_VERIFY(dialogItem("fontDialog", "fontResolution")->property("text").toString().contains(QStringLiteral("DejaVu Sans")));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(characters->property("text").toString(), QStringLiteral("Has “ą”"));
+        QVERIFY(characters->property("on").toBool());
+        // Other characters apply at once (legacy's list kept the first).
+        for (const auto &[text, expected] : {std::pair{QStringLiteral("a"), all}, std::pair{QStringLiteral("ą"), QStringList{"Arial", "Tahoma"}}}) {
+            QVERIFY(QMetaObject::invokeMethod(characters, "click"));
+            QTRY_VERIFY(popover->property("visible").toBool());
+            field->setProperty("text", text);
+            QVERIFY(QMetaObject::invokeMethod(named("fontPickerCharactersApply"), "click"));
+            QTRY_VERIFY(!popover->property("visible").toBool());
+            QCOMPARE(shown(), expected);
+        }
+        QVERIFY(QMetaObject::invokeMethod(characters, "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("fontPickerCharactersClear"), "click"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(shown(), all);
+        QVERIFY(!application->settingsStore()->boolean("styles.editFilterTextOn"));
+        QCOMPARE(application->settingsStore()->text("styles.editFilterText"), QStringLiteral("ą"));
+
+        // The search filters as you type and picks the family it names, else
+        // the first starting with it, else the first shown.
+        auto *search = in("fontPickerSearch");
+        search->setProperty("text", QStringLiteral("a"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "pickTyped"));
+        QCOMPARE(shown(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Arial"));
+        search->setProperty("text", QStringLiteral("ta"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "pickTyped"));
+        QCOMPARE(shown(), QStringList{"Tahoma"});
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(in("fontPickerCount")->property("text").toString(), QStringLiteral("1 of 5 fonts"));
+        // Up and Down move in the list while the search keeps the keyboard.
+        search->setProperty("text", QString());
+        QVERIFY(QMetaObject::invokeMethod(picker, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Verdana"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Verdana"));
+        // Names are one ignoring case as the catalogs compare them (unit by
+        // unit: no final sigma).
+        QVariant at;
+        const QStringList sigma{QStringLiteral("x"), QStringLiteral("\u03B1\u03C3")};
+        QVERIFY(QMetaObject::invokeMethod(picker, "indexIn", Q_RETURN_ARG(QVariant, at), Q_ARG(QVariant, sigma),
+                                          Q_ARG(QVariant, QStringLiteral("\u0391\u03A3"))));
+        QCOMPARE(at.toInt(), 1);
+        // An installed name the catalog leaves out: said so, not offered
+        // as a name to use anyway.
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 2))); // A
+        search->setProperty("text", QStringLiteral("Tahoma"));
+        QCOMPARE(shown(), QStringList());
+        QCOMPARE(picker->property("unlisted").toString(), QString());
+        QCOMPARE(picker->property("leftOut").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(in("fontPickerEmpty")->property("text").toString(), QStringLiteral("“Tahoma” is installed but not in this list."));
+        QVERIFY(!in("fontPickerUseUnlisted")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 0)));
+        // A name no installed font answers to: said so, and usable anyway.
+        search->setProperty("text", QStringLiteral("Futura"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "pickTyped"));
+        QCOMPARE(shown(), QStringList());
+        QCOMPARE(picker->property("unlisted").toString(), QStringLiteral("Futura"));
+        QCOMPARE(in("fontPickerEmpty")->property("text").toString(), QStringLiteral("No installed font is called “Futura”."));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Verdana"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, QStringLiteral("Futura"))));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Futura"));
+        // The renderer's selection for the name: substituted, in words.
+        QTRY_VERIFY(in("fontResolutionText")->property("text").toString().contains(QStringLiteral("DejaVu Sans")));
+        QVERIFY(in("fontResolutionText")->property("text").toString().startsWith(QStringLiteral("Not installed")));
+        // The preview's characters: an ASS Line's text without its blocks
+        // and what drawing mode draws; another format's as written.
+        auto &fonts = application->fontCatalogs();
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\p1}m 0 0 l 100 100{\\p0}Hello\\Nthere\\h\\{x\\}"), true),
+                 QStringLiteral("Hello there\u00A0{x}"));
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\pos(1,2)}a{\\p2}m 0 0{\\p0}b"), true), QStringLiteral("ab"));
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\t(0,500,\\p1)}Hello"), true), QStringLiteral("Hello")); // \p inside \t: no drawing
+        QCOMPARE(fonts.samplePlain(QStringLiteral("Use {name} \\N"), false), QStringLiteral("Use {name} \\N"));
+        // A range: what [from, to) draws, drawing mode read from the start.
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\p1}m 0 0{\\p0}ab\\Nc"), true, 7, 20), QStringLiteral("ab c"));
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\p1}m 0 0{\\p0}ab"), true, 5, 10), QString());
+        // A line of unclosed braces is read in one pass, and a preview
+        // stops at a line's worth.
+        const QString braces(400000, QLatin1Char('{'));
+        QCOMPARE(fonts.samplePlain(braces, true), braces.left(1000));
+        QCOMPARE(fonts.samplePlain(QString(5000, QLatin1Char('a')), false).size(), 1000);
+        // The preview is drawn by the subtitle renderer.
+        QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
+        QVERIFY(!application->fontCatalogs().sample().isNull());
+        QTRY_VERIFY(in("fontPickerPreview")->property("source").toString().startsWith(QStringLiteral("image://fontcatalogpreview/sample/")));
+        // An ASS Line's override block is not drawn; another format's
+        // braces are its text.
+        const QVariantMap arial{{QStringLiteral("name"), QStringLiteral("Arial")}, {QStringLiteral("size"), QStringLiteral("40")}};
+        auto &catalogs = application->fontCatalogs();
+        catalogs.renderSample(arial, QStringLiteral("{name}"), true, 300, 80);
+        const QImage asAss = catalogs.sample();
+        catalogs.renderSample(arial, QStringLiteral(" "), true, 300, 80);
+        QCOMPARE(asAss, catalogs.sample());
+        catalogs.renderSample(arial, QStringLiteral("{name}"), false, 300, 80);
+        QVERIFY(catalogs.sample() != asAss);
+        QVERIFY(QMetaObject::invokeMethod(in("fontPickerCancel"), "click"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
         application->fontCatalogs().waitResolved();
     }
 
-    // Y6: "Manage font catalogs" (FontCatalogList.cpp): the fonts with their
-    // catalogs, Add with its autosave copy, the Catalog column's menu over
-    // the marked rows, rename with Merge, and FontCatalogs.txt written when
-    // the window hides (CATALOG_CHANGED).
+    // PU3 (#305): the picker draws and names a family only the Document's
+    // [Fonts] has (tests/fixtures/attachments/attached.ass), as its
+    // renderer does.
+    void fontPickerUsesTheDocumentsAttachedFonts()
+    {
+        QTemporaryDir folder;
+        const QString path = folder.filePath(QStringLiteral("attached.ass"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_ATTACHMENT_FIXTURES "/attached.ass"), path));
+        auto *picker = openFontPicker(path);
+        QVERIFY(picker);
+        QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, QStringLiteral("HikariAttachedTest"))));
+        QTRY_VERIFY(dialogItem("fontPicker", "fontResolutionText")->property("text").toString().startsWith(
+            QStringLiteral("Drawn by the subtitle renderer with HikariAttachedTest")));
+        auto &catalogs = application->fontCatalogs();
+        const auto font = [](const char *name) {
+            return QVariantMap{{QStringLiteral("name"), QString::fromLatin1(name)}, {QStringLiteral("size"), QStringLiteral("40")}};
+        };
+        catalogs.renderSample(font("HikariAttachedTest"), QStringLiteral("HH"), true, 300, 80);
+        const QImage attached = catalogs.sample();
+        catalogs.renderSample(font("HikariNoSuchFamily"), QStringLiteral("HH"), true, 300, 80);
+        const QImage fallback = catalogs.sample();
+        QVERIFY(attached != fallback); // not the fallback face
+        // A family with a comma is named by an \\fn override, not in the
+        // comma-separated Style line: the same fallback, nothing shifted.
+        catalogs.renderSample(font("HikariNoSuch, Family"), QStringLiteral("HH"), true, 300, 80);
+        QCOMPARE(catalogs.sample(), fallback);
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        catalogs.waitResolved();
+    }
+
+    // PU3 (#305): the preview draws what the Line draws, from its raw text
+    // (a drawing the hidden-tag field leaves out stays out, a selection's
+    // text after \\p0 shows); a font refresh looks the face up again and
+    // redraws.
+    void fontPickerPreviewFollowsTheRawLine()
+    {
+        usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        application->editor().setShowTags(false);
+        auto *picker = openFontPicker(fontAss("drawing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10{\\p0}abc\n"));
+        QVERIFY(picker);
+        QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        application->editor().setShowTags(true);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\p1}m 0 0 l 10 10{\\p0}abc"));
+        const auto openOn = [&](int from, int to) {
+            text->forceActiveFocus();
+            QMetaObject::invokeMethod(text, "select", Q_ARG(int, from), Q_ARG(int, to));
+            QMetaObject::invokeMethod(visualItem("changeFont"), "click");
+            return QTest::qWaitFor([&] { return picker->property("visible").toBool(); });
+        };
+        // The selection's drawing commands are not text; "ab" is.
+        QVERIFY(openOn(5, 25));
+        QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("ab"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s selected text"));
+        // A refresh: a new lookup, and the preview drawn again.
+        QTRY_VERIFY(!picker->property("resolution").toMap().isEmpty());
+        const int request = picker->property("resolveRequest").toInt();
+        QSignalSpy drawn(&catalogs, &app::FontCatalogsController::sampleChanged);
+        catalogs.refreshFonts();
+        QVERIFY(picker->property("resolveRequest").toInt() != request);
+        QVERIFY(picker->property("resolution").toMap().isEmpty());
+        QTRY_VERIFY(!picker->property("resolution").toMap().isEmpty());
+        QTRY_VERIFY(!drawn.isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        // Only the drawing selected: the line's text.
+        QVERIFY(openOn(5, 15));
+        QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        catalogs.waitResolved();
+    }
+
+    // PU3 (#305): with no text of the Line's to draw, the picker's lookup
+    // asks for the preview text's characters, as the catalog window's
+    // does; with no catalogs the picker's first choice is still All fonts.
+    void fontPopupsResolveThePreviewTextsCharacters()
+    {
+        usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        for (const QString &name : catalogs.catalogNames())
+            catalogs.removeCatalog(name);
+        application->settingsStore()->set("styles.previewText", QStringLiteral("{\\b1}日本"));
+        auto *picker = openFontPicker(fontAss("drawing-only.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10\n"));
+        QVERIFY(picker);
+        QCOMPARE(picker->property("sampleText").toString(), QString());
+        QCOMPARE(picker->property("resolvedFor").toString(), QStringLiteral("日本"));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog"}));
+        QCOMPARE(picker->property("choice").toInt(), 0);
+        QCOMPARE(picker->property("listed").toStringList().size(), picker->property("total").toInt());
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        auto *window = named("fontCatalogWindow");
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(window->property("visible").toBool());
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Arial"));
+        QCOMPARE(window->property("resolvedFor").toString(), QStringLiteral("日本"));
+        // The preview text edited while the window is open: the image and
+        // the lookup follow.
+        const int previewKey = catalogs.property("previewKey").toInt();
+        catalogs.setPreviewText(QStringLiteral("Zz"));
+        QTRY_COMPARE(window->property("resolvedFor").toString(), QStringLiteral("Zz"));
+        QVERIFY(catalogs.property("previewKey").toInt() > previewKey);
+        // The window's preview draws those characters only: an override in
+        // the preview text draws no other face than the one named.
+        application->settingsStore()->set("styles.previewText", QStringLiteral("AB"));
+        catalogs.renderPreview(QStringLiteral("Arial"), 300, 80);
+        const QImage plain = catalogs.preview();
+        application->settingsStore()->set("styles.previewText", QStringLiteral("{\\fnImpact\\b0}AB"));
+        catalogs.renderPreview(QStringLiteral("Arial"), 300, 80);
+        QCOMPARE(catalogs.preview(), plain);
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->property("visible").toBool());
+        catalogs.waitResolved();
+    }
+
+    // PU3 (#305): a header with no '=' in FontCatalogs.txt (a catalog with
+    // no name, which nothing could choose or manage) is not loaded.
+    void fontCatalogsWithNoNameAreNotLoaded()
+    {
+        usePickerFonts();
+        {
+            QFile f(QString::fromStdU16String((application->fontCatalogs().catalogDir() / u"FontCatalogs.txt").u16string()));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("Nameless{\r\n\tArial\r\n}\r\nX={\r\n\tTahoma\r\n}\r\n");
+        }
+        auto &catalogs = application->fontCatalogs();
+        QCOMPARE(catalogs.catalogNames(), QStringList{"X"});
+        QCOMPARE(catalogs.catalogOf(QStringLiteral("Arial")), QString());
+    }
+
+    // PU3 (#305): names from files (a catalog's, an attached font's file)
+    // show as plain text, never as markup that Qt would load; a lookup
+    // clears the last answer until its own comes.
+    void fontPopupsShowNamesAsPlainText()
+    {
+        usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        const QString markup = QStringLiteral("<b>Bold</b>");
+        QVERIFY(catalogs.addCatalog(markup));
+        catalogs.setFontsInCatalog(markup, {QStringLiteral("Tahoma")}, true);
+        // "&lt;" alone also reads as rich text (Qt::mightBeRichText).
+        const QString entities = QStringLiteral("&lt;i&gt;Bold");
+        QVERIFY(catalogs.addCatalog(entities));
+        auto *picker = qobject_cast<QQuickWindow *>(openFontPicker(fontAss("plain.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n")));
+        QVERIFY(picker);
+        QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, QStringLiteral("Arial"))));
+        QVERIFY(picker->property("resolution").toMap().isEmpty());
+        QTRY_VERIFY(!picker->property("resolution").toMap().isEmpty());
+        picker->setProperty("resolution", QVariantMap{{QStringLiteral("kind"), QStringLiteral("requested")},
+                                                      {QStringLiteral("family"), markup},
+                                                      {QStringLiteral("file"), markup}});
+        // Every text showing the name: plain (a Label's textFormat), or for a
+        // menu's IconLabel, no tag Qt reads.
+        const auto checkPlain = [&](QQuickItem *top, const char *where) {
+            int seen = 0;
+            QList<QQuickItem *> items;
+            const std::function<void(QQuickItem *)> walk = [&](QQuickItem *item) {
+                items.append(item);
+                for (QQuickItem *child : item->childItems())
+                    walk(child);
+            };
+            walk(top);
+            for (QQuickItem *text : items) {
+                // the items that draw text (Text, Label, IconLabel's label)
+                if (text->metaObject()->indexOfProperty("textFormat") < 0)
+                    continue;
+                const QString shown = text->property("text").toString();
+                if (!shown.contains(QStringLiteral("Bold")))
+                    continue;
+                ++seen;
+                QVERIFY2(text->property("textFormat").toInt() == Qt::PlainText || !Qt::mightBeRichText(shown),
+                         qPrintable(QStringLiteral("%1: %2").arg(QLatin1String(where), shown)));
+            }
+            QVERIFY2(seen > 0, where);
+        };
+        checkPlain(picker->contentItem(), "picker");
+        // A family named so (a Style's or \\fn's) in the + button's tooltip.
+        QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, markup)));
+        auto *add = dialogItem("fontPicker", "fontPickerAdd");
+        const QString tip = QQmlProperty::read(add, QStringLiteral("ToolTip.text"), qmlContext(add)).toString();
+        QVERIFY2(tip.contains(QStringLiteral("Bold")) && !Qt::mightBeRichText(tip), qPrintable(tip));
+        // Typed in the search, no font is called so: "Use “…” anyway", plain.
+        auto *search = dialogItem("fontPicker", "fontPickerSearch");
+        search->setProperty("text", markup);
+        QTRY_VERIFY(dialogItem("fontPicker", "fontPickerUseUnlisted")->isVisible());
+        checkPlain(dialogItem("fontPicker", "fontPickerUseUnlisted"), "use anyway");
+        search->setProperty("text", QString());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCatalog"), "click"));
+        auto *menu = named("fontPickerCatalogMenu");
+        QTRY_VERIFY(menu->property("visible").toBool());
+        checkPlain(qobject_cast<QQuickItem *>(menu->property("contentItem").value<QObject *>()), "catalog menu");
+        // Both names drawn as written, by the menu item's plain text.
+        QStringList drawn;
+        const std::function<void(QQuickItem *)> collect = [&](QQuickItem *item) {
+            if (item->objectName() == QLatin1String("menuItemPlainText") && item->isVisible())
+                drawn.append(item->property("text").toString());
+            for (QQuickItem *child : item->childItems())
+                collect(child);
+        };
+        collect(qobject_cast<QQuickItem *>(menu->property("contentItem").value<QObject *>()));
+        QVERIFY2(drawn.contains(markup) && drawn.contains(entities), qPrintable(drawn.join(QLatin1Char('|'))));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerManage"), "click"));
+        auto *window = qobject_cast<QQuickWindow *>(named("fontCatalogWindow"));
+        QTRY_VERIFY(window->isVisible());
+        window->setProperty("chosen", markup);
+        checkPlain(window->contentItem(), "catalog window");
+        // The delete question names it in PK1's message box.
+        QVERIFY(QMetaObject::invokeMethod(window, "askDelete"));
+        auto *box = qobject_cast<QQuickWindow *>(named("fontCatalogMessageBox"));
+        QTRY_VERIFY(box->isVisible());
+        checkPlain(box->contentItem(), "delete question");
+        QCOMPARE(findItem(box->contentItem(), QStringLiteral("messageBoxText"))->property("textFormat").toInt(), int(Qt::PlainText));
+        QCOMPARE(findItem(box->contentItem(), QStringLiteral("messageBoxDetail"))->property("textFormat").toInt(), int(Qt::PlainText));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QVERIFY(catalogs.catalogExists(markup));
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
+        catalogs.waitResolved();
+    }
+
+    // PU3 (#305): + adds the picker's family to a catalog (legacy's Add
+    // menu, AddToCatalog), its rows' catalogs following.
+    void fontPickerAddsTheFamilyToACatalog()
+    {
+        usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        auto *picker = openFontPicker(fontAss("picker-add.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
+        QVERIFY(picker);
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Tahoma"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerAdd"), "click"));
+        auto *menu = named("fontPickerAddMenu");
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QVERIFY(!menuEntry(menu, QStringLiteral("fontPickerNoCatalogs"))->isVisible());
+        auto *a = menuEntry(menu, QStringLiteral("fontPickerAddItem"), QStringLiteral("A"));
+        QVERIFY(a);
+        QVERIFY(!a->property("checked").toBool());
+        QVERIFY(menuEntry(menu, QStringLiteral("fontPickerNewCatalog")));
+        QVERIFY(menuEntry(menu, QStringLiteral("fontsFromSubtitlesItem")));
+        QVERIFY(QMetaObject::invokeMethod(a, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(a, "triggered"));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")));
+        const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
+        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("\tTahoma\r\n}\r\nB={"));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), QStringList{"A"});
+        // The catalog chip's choice follows: A now lists Tahoma.
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 2)));
+        QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Arial", "Tahoma", "Verdana"}));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        catalogs.waitResolved();
+    }
+
+    // PU3 (#305): "Manage font catalogs" is one window for the program,
+    // never made inside the font picker or the Style manager that open it:
+    // the same window from both, transient for its opener.
+    void fontCatalogWindowIsOneWindowOfItsOwn()
+    {
+        usePickerFonts();
+        auto *root = engine->rootObjects().first();
+        auto *window = qobject_cast<QQuickWindow *>(named("fontCatalogWindow"));
+        QVERIFY(window);
+        QVERIFY(qobject_cast<QQuickWindow *>(named("fontsFromSubtitlesDialog")));
+        auto *picker = qobject_cast<QQuickWindow *>(openFontPicker(fontAss("one-window.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n")));
+        QVERIFY(picker);
+        QVERIFY(!picker->findChild<QObject *>(QStringLiteral("fontCatalogWindow")));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerManage"), "click"));
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->transientParent(), picker);
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("A")); // Tahoma is in no catalog: the first
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
+        application->fontCatalogs().waitResolved();
+
+        // From the Style editor's catalog bar: the same window.
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(!manager->findChild<QObject *>(QStringLiteral("fontCatalogWindow")));
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *bar = findItem(manager->contentItem(), QStringLiteral("styleEditorCatalogBar"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontCatalogManage")), "click"));
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->transientParent(), manager);
+        QCOMPARE(qobject_cast<QQuickWindow *>(named("fontCatalogWindow")), window);
+        // Reopened, it shows every font with the one asked for selected,
+        // whatever the search and Show were when it closed.
+        findItem(window->contentItem(), QStringLiteral("fontCatalogFind"))->setProperty("text", QStringLiteral("Verd"));
+        window->setProperty("show", 1);
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontCatalogManage")), "click"));
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->property("shown").toStringList().size(), 5);
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Tahoma"));
+        QTRY_VERIFY(findItem(window->contentItem(), QStringLiteral("fontCatalogResolution"))->isVisible());
+        // Nothing matches: no preview and no renderer note for a font gone.
+        auto *find = findItem(window->contentItem(), QStringLiteral("fontCatalogFind"));
+        find->setProperty("text", QStringLiteral("zzz"));
+        QVERIFY(QMetaObject::invokeMethod(window, "select", Q_ARG(QVariant, 0))); // as textEdited does
+        QCOMPARE(window->property("shown").toStringList().size(), 0);
+        QVERIFY(!findItem(window->contentItem(), QStringLiteral("fontCatalogPreview"))->isVisible());
+        QVERIFY(!findItem(window->contentItem(), QStringLiteral("fontCatalogResolution"))->isVisible());
+        // Asked again by the same opener while shown, with another font:
+        // the whole list, that font selected.
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Verdana")),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(manager))));
+        QCOMPARE(find->property("text").toString(), QString());
+        QCOMPARE(window->property("shown").toStringList().size(), 5);
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Verdana"));
+        QVERIFY(findItem(window->contentItem(), QStringLiteral("fontCatalogPreview"))->isVisible());
+        QCOMPARE(window->transientParent(), manager);
+        // Shown for the Style manager, then asked for by the modal picker:
+        // it serves the picker (and closes with it).
+        const QVariantMap arial{{QStringLiteral("name"), QStringLiteral("Arial")}};
+        QVERIFY(QMetaObject::invokeMethod(picker, "choose", Q_ARG(QVariant, arial), Q_ARG(QVariant, QStringLiteral("Sample")),
+                                          Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant::fromValue<QObject *>(manager))));
+        QTRY_COMPARE(picker->transientParent(), manager);
+        QTRY_VERIFY(picker->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerManage"), "click"));
+        QTRY_COMPARE(window->transientParent(), picker);
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Arial"));
+        // Add fonts from subtitles, shown for the Style manager and then
+        // asked for by the picker, is modal to the picker.
+        auto *fromSubtitles = qobject_cast<QQuickWindow *>(named("fontsFromSubtitlesDialog"));
+        QVERIFY(QMetaObject::invokeMethod(fromSubtitles, "openFor", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QVariant()),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(manager))));
+        QTRY_VERIFY(fromSubtitles->isVisible());
+        QCOMPARE(fromSubtitles->transientParent(), manager);
+        QVERIFY(QMetaObject::invokeMethod(fromSubtitles, "openFor", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QVariant()),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(picker))));
+        QTRY_VERIFY(fromSubtitles->isVisible());
+        QCOMPARE(fromSubtitles->transientParent(), picker);
+        QVERIFY(QMetaObject::invokeMethod(fromSubtitles, "reject"));
+        QTRY_VERIFY(!fromSubtitles->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
+        QTRY_VERIFY(!window->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+        application->fontCatalogs().waitResolved();
+    }
+
+    // PU3 (#305, PU3-catalog-membership): the catalog window's catalogs on
+    // the leading side, New in a popover with its name error inline, each
+    // font's check for the chosen catalog (Ctrl adds rows, Space toggles
+    // them), Show, Rename onto a taken name through PK1's message box
+    // (Merge, Replace, Cancel), Delete through another, the "Saved" status
+    // with the autosave copy, and FontCatalogs.txt written when the window
+    // hides (CATALOG_CHANGED).
     void fontCatalogWindowManagesTheCatalogs()
     {
         usePickerFonts();
         auto &catalogs = application->fontCatalogs();
         catalogs.setAutosaveInterval(20);
-        auto *dialog = openFontDialog(fontAss("manage.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
-        auto *window = named("fontDialogCatalogWindow");
-        QVERIFY(window);
+        auto *window = named("fontCatalogWindow");
+        const auto in = [this](const char *name) { return dialogItem("fontCatalogWindow", name); };
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Verdana")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(window->property("visible").toBool());
         const QStringList all{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"};
         QCOMPARE(window->property("fonts").toStringList(), all);
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"A", "", "B", "", "A"}));
-        QCOMPARE(dialogItem("fontDialogCatalogWindow", "fontCatalogList")->property("currentIndex").toInt(), 3);
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("A")); // the first catalog holding Verdana
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Verdana"));
+        QCOMPARE(in("fontCatalogCatalogs")->property("model").toStringList(), (QStringList{"A", "B"}));
+        QCOMPARE(in("fontCatalogCatalogs")->property("currentIndex").toInt(), 0);
         // Load's chooser is titled for catalog files (Y6-load-title).
         auto *load = window->findChild<QObject *>(QStringLiteral("fontCatalogLoadDialog"));
         QVERIFY(load);
         QCOMPARE(load->property("title").toString(), QStringLiteral("Choose font catalog file"));
-        // Add: a new catalog in the choice, saved to FontCatalogsAutosave0.txt.
-        auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
-        // The empty choice (legacy's) says what goes in it; typing hides that.
-        auto *placeholder = dialogItem("fontDialogCatalogWindow", "fontCatalogFieldPlaceholder");
-        QVERIFY(placeholder);
-        QCOMPARE(field->property("editText").toString(), QString());
-        QVERIFY(placeholder->isVisible());
-        field->setProperty("editText", QStringLiteral("C"));
-        QVERIFY(!placeholder->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogAddCatalog"), "click"));
+        QVERIFY(!in("fontCatalogStatus")->isVisible());
+
+        // New: a name another catalog has, ignoring case, is said inline.
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogNew"), "click"));
+        auto *newPopover = named("fontCatalogNewPopover");
+        QTRY_VERIFY(newPopover->property("visible").toBool());
+        auto *newName = named("fontCatalogNewName");
+        newName->setProperty("text", QStringLiteral("b"));
+        QCOMPARE(named("fontCatalogNewProblem")->property("text").toString(), QStringLiteral("“B” already exists."));
+        QVERIFY(!named("fontCatalogNewCreate")->property("enabled").toBool());
+        newName->setProperty("text", QStringLiteral("C"));
+        QVERIFY(!qobject_cast<QQuickItem *>(named("fontCatalogNewProblem"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("fontCatalogNewCreate"), "click"));
+        QTRY_VERIFY(!newPopover->property("visible").toBool());
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "C"}));
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("C"));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
         QTRY_VERIFY(readAll(dirPath + QStringLiteral("/FontCatalogsAutosave0.txt")).contains("C={\r\n}\r\n"));
         QCOMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
-        // The Catalog column's menu on Comic Sans MS with Tahoma marked: both join C.
-        QVariantList marks{false, false, false, true, false};
-        window->setProperty("marked", marks);
-        QVERIFY(QMetaObject::invokeMethod(window, "chooseCatalog", Q_ARG(QVariant, 1), Q_ARG(QVariant, QStringLiteral("C")),
-                                          Q_ARG(QVariant, true)));
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"A", "C", "B", "C", "A"}));
-        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Tahoma")));
-        // Edit: C onto the existing B, merged; C leaves the choices.
-        QVERIFY(catalogs.catalogExists(QStringLiteral("B")));
-        QVERIFY(QMetaObject::invokeMethod(window, "renamed", Q_ARG(QVariant, QStringLiteral("C")), Q_ARG(QVariant, QStringLiteral("B")),
-                                          Q_ARG(QVariant, 0)));
-        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B"}));
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"A", "B", "B", "B", "A"}));
-        // Hiding the window saves FontCatalogs.txt (the font dialog's CATALOG_CHANGED).
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
-        QTRY_COMPARE(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")),
-                     QByteArray("\xEF\xBB\xBF" "A={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n}\r\n"
-                                "B={\r\n\tImpact\r\n\tComic Sans MS\r\n\tTahoma\r\n}\r\n"));
-        QCOMPARE(dialogItem("fontDialog", "fontCatalogChoice")->property("model").toStringList(),
-                 (QStringList{"All fonts", "Without catalog", "A", "B"}));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
-        application->fontCatalogs().waitResolved();
-    }
+        QTRY_VERIFY(in("fontCatalogStatus")->isVisible());
+        QCOMPARE(in("fontCatalogStatus")->property("text").toString(), QStringLiteral("Saved"));
 
-    // Y6: the catalog window's Edit and Delete through their questions
-    // (FontCatalogList.cpp:126-150, ChangeCatalogName at 739-776): Cancel
-    // keeps both catalogs, Delete drops the existing list for the renamed
-    // one's, and "Are you sure" removes a catalog. The font dialog keeps its
-    // choice within the list when the window hides (FontDialog.cpp:466-474).
-    void fontCatalogWindowEditAndDeleteAsk()
-    {
-        usePickerFonts();
-        auto &catalogs = application->fontCatalogs();
-        auto *dialog = openFontDialog(fontAss("edit.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
-        choose(choice, 3); // B
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
-        auto *window = named("fontDialogCatalogWindow");
-        QTRY_VERIFY(window->property("visible").toBool());
-        const auto in = [window](const char *name) { return window->findChild<QObject *>(QLatin1String(name)); };
-        auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
-        // Edit with B in the field: the question opens on B.
-        field->setProperty("editText", QStringLiteral("b"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogEdit"), "click"));
-        auto *edition = in("catalogEditionDialog");
-        QTRY_VERIFY(edition->property("visible").toBool());
-        QCOMPARE(in("catalogEditionCurrent")->property("currentIndex").toInt(), 1);
-        // A onto the existing B: the question; Cancel changes nothing.
-        in("catalogEditionCurrent")->setProperty("currentIndex", 0);
-        in("catalogEditionNewName")->setProperty("text", QStringLiteral("B"));
-        QVERIFY(QMetaObject::invokeMethod(in("catalogEditionOk"), "click"));
-        auto *clash = in("catalogClashQuestion");
-        QTRY_VERIFY(clash->property("visible").toBool());
-        QVERIFY(!edition->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(in("catalogClashCancel"), "click"));
-        QTRY_VERIFY(!clash->property("visible").toBool());
+        // Up and Down in the catalog list choose the catalog.
+        auto *catalogList = in("fontCatalogCatalogs");
+        catalogList->forceActiveFocus();
+        QTRY_VERIFY(catalogList->hasActiveFocus());
+        QTest::keyClick(qobject_cast<QWindow *>(window), Qt::Key_Up);
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("B"));
+        QCOMPARE(catalogList->property("currentIndex").toInt(), 1);
+        QTest::keyClick(qobject_cast<QWindow *>(window), Qt::Key_Down);
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("C"));
+        QCOMPARE(catalogList->property("currentIndex").toInt(), 2);
+        // Comic Sans MS, then Tahoma with Ctrl (the list has the keyboard,
+        // as after a click): both selected, Space puts both in C.
+        in("fontCatalogList")->forceActiveFocus();
+        QTRY_VERIFY(in("fontCatalogList")->hasActiveFocus());
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 1), Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 3), Q_ARG(QVariant, int(Qt::ControlModifier))));
+        QCOMPARE(window->property("selected").toMap().keys(), (QStringList{"Comic Sans MS", "Tahoma"}));
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Tahoma"));
+        QTest::keyClick(qobject_cast<QWindow *>(window), Qt::Key_Space);
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Comic Sans MS")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Tahoma")));
+        // Comic Sans MS (in C), Arial with Ctrl, then Comic Sans MS unmarked
+        // with Ctrl (still current): Space adds the marked Arial.
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 1), Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 0), Q_ARG(QVariant, int(Qt::ControlModifier))));
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 1), Q_ARG(QVariant, int(Qt::ControlModifier))));
+        QCOMPARE(window->property("selected").toMap().keys(), QStringList{"Arial"});
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Comic Sans MS"));
+        QTest::keyClick(qobject_cast<QWindow *>(window), Qt::Key_Space);
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Arial")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Comic Sans MS")));
+        catalogs.setFontsInCatalog(QStringLiteral("C"), {QStringLiteral("Arial")}, false);
+        // Show "In “C”": only its fonts; "Not in a catalog": every font is in one now.
+        window->setProperty("show", 1);
+        QCOMPARE(window->property("shown").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
+        // Another catalog chosen: its list, its first font current and
+        // selected (Tahoma is not in A), the preview with it.
+        window->setProperty("chosen", QStringLiteral("A"));
+        const QStringList inA = window->property("shown").toStringList();
+        QVERIFY(!inA.isEmpty() && !inA.contains(QStringLiteral("Tahoma")));
+        QCOMPARE(window->property("currentFont").toString(), inA.first());
+        QCOMPARE(window->property("selected").toMap().keys(), QStringList{inA.first()});
+        window->setProperty("chosen", QStringLiteral("C"));
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Comic Sans MS"));
+        // Tahoma, current, leaves C: the list's first is current and selected.
+        QVERIFY(QMetaObject::invokeMethod(window, "select", Q_ARG(QVariant, 1)));
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Tahoma"));
+        QVERIFY(QMetaObject::invokeMethod(window, "setMembership", Q_ARG(QVariant, QStringList{"Tahoma"}), Q_ARG(QVariant, false)));
+        QCOMPARE(window->property("shown").toStringList(), QStringList{"Comic Sans MS"});
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Comic Sans MS"));
+        QCOMPARE(window->property("selected").toMap().keys(), QStringList{"Comic Sans MS"});
+        QVERIFY(QMetaObject::invokeMethod(window, "setMembership", Q_ARG(QVariant, QStringList{"Tahoma"}), Q_ARG(QVariant, true)));
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Comic Sans MS"));
+        window->setProperty("show", 2);
+        QCOMPARE(window->property("shown").toStringList(), QStringList());
+        window->setProperty("show", 0);
+        // A row's check takes it out again.
+        QVERIFY(QMetaObject::invokeMethod(window, "setMembership", Q_ARG(QVariant, QStringList{"Tahoma"}), Q_ARG(QVariant, false)));
+        QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Tahoma")));
+        QVERIFY(QMetaObject::invokeMethod(window, "setMembership", Q_ARG(QVariant, QStringList{"Tahoma"}), Q_ARG(QVariant, true)));
+
+        // Rename: an empty name is said inline; onto B (any case) asks.
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogRename"), "click"));
+        auto *renamePopover = named("fontCatalogRenamePopover");
+        QTRY_VERIFY(renamePopover->property("visible").toBool());
+        auto *renameName = named("fontCatalogRenameName");
+        QCOMPARE(renameName->property("text").toString(), QStringLiteral("C"));
+        renameName->setProperty("text", QStringLiteral(" "));
+        QCOMPARE(named("fontCatalogRenameProblem")->property("text").toString(), QStringLiteral("Enter a name for the catalog."));
+        QVERIFY(!named("fontCatalogRenameOk")->property("enabled").toBool());
+        renameName->setProperty("text", QStringLiteral("b"));
+        QVERIFY(QMetaObject::invokeMethod(named("fontCatalogRenameOk"), "click"));
+        QTRY_VERIFY(!renamePopover->property("visible").toBool());
+        auto *box = named("fontCatalogMessageBox");
+        QVERIFY(box);
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Rename font catalog"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("A catalog named “B” already exists."));
+        // Cancel changes nothing.
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->property("visible").toBool());
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "C"}));
+        // Merge: C's fonts join B, C goes, B is chosen.
+        QVERIFY(QMetaObject::invokeMethod(window, "renameCatalog", Q_ARG(QVariant, QStringLiteral("C")), Q_ARG(QVariant, QStringLiteral("b"))));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("merge"))));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B"}));
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("B"));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Impact")));
-        // Again, answering Delete: B's list goes, A's fonts become B's.
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogEdit"), "click"));
-        QTRY_VERIFY(edition->property("visible").toBool());
-        in("catalogEditionCurrent")->setProperty("currentIndex", 0);
-        in("catalogEditionNewName")->setProperty("text", QStringLiteral("B"));
-        QVERIFY(QMetaObject::invokeMethod(in("catalogEditionOk"), "click"));
-        QTRY_VERIFY(clash->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(in("catalogClashDelete"), "click"));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Tahoma")));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Comic Sans MS")), QStringList{"B"});
+        // Replace: A onto B drops B's list first.
+        QVERIFY(QMetaObject::invokeMethod(window, "renameCatalog", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QStringLiteral("B"))));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("replace"))));
         QCOMPARE(catalogs.catalogNames(), QStringList{"B"});
         QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Impact")));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Verdana")));
-        QCOMPARE(field->property("editText").toString(), QStringLiteral("B")); // catalog->SetValue
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"B", "", "", "", "B"}));
-        // Hiding: the choice's B at 3 is past the new end, so the font dialog
-        // takes the last entry (B, now at 2).
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
-        QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "B"}));
-        QCOMPARE(choice->property("currentIndex").toInt(), 2);
-        QCOMPARE(choice->property("displayText").toString(), QStringLiteral("B"));
-        QCOMPARE(dialogItem("fontDialog", "fontList")->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
-        // Delete asks "Are you sure"; No keeps the catalog, Yes removes it.
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
+        // A free name: renamed in place, chosen.
+        QVERIFY(QMetaObject::invokeMethod(window, "renameCatalog", Q_ARG(QVariant, QStringLiteral("B")), Q_ARG(QVariant, QStringLiteral("Latin"))));
+        QCOMPARE(catalogs.catalogNames(), QStringList{"Latin"});
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("Latin"));
+
+        // Hiding the window saves FontCatalogs.txt (CATALOG_CHANGED).
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogClose"), "click"));
+        QTRY_VERIFY(!window->property("visible").toBool());
+        QTRY_COMPARE(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")),
+                     QByteArray("\xEF\xBB\xBF" "Latin={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n}\r\n"));
+
+        // Delete asks; Cancel keeps the catalog, Delete removes it.
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(window->property("visible").toBool());
-        field->setProperty("editText", QStringLiteral("B"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogDelete"), "click"));
-        auto *question = in("catalogDeleteQuestion");
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "reject"));
-        QCOMPARE(catalogs.catalogNames(), QStringList{"B"});
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogDelete"), "click"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogDelete"), "click"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Delete font catalog"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Delete the catalog “Latin”?"));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QCOMPARE(catalogs.catalogNames(), QStringList{"Latin"});
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogDelete"), "click"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("delete"))));
         QCOMPARE(catalogs.catalogNames(), QStringList{});
-        QCOMPARE(field->property("editText").toString(), QString());
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
-        // With no catalog, Insert's clamp puts "Without catalog" first
-        // (ListControls.cpp:685-688); 2 is clamped to the last entry.
-        QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"Without catalog", "All fonts"}));
-        QCOMPARE(choice->property("currentIndex").toInt(), 1);
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QCOMPARE(window->property("chosen").toString(), QString());
+        QVERIFY(!in("fontCatalogRename")->property("enabled").toBool());
+        QVERIFY(!in("fontCatalogDelete")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->property("visible").toBool());
         catalogs.waitResolved();
     }
 
-    // Y6-rename-listed: Edit renaming a catalog to a free name lists the new
-    // name at once, in the old one's place: in the window's choice and, when
-    // the window hides, in the font dialog's (legacy ChangeCatalogName,
-    // FontCatalogList.cpp:739-776, dropped the old name and listed the new
-    // one only after a restart).
-    void fontCatalogRenameIsListedAtOnce()
+    // PU3 (#305, PU3-load-review): Load reads the file's catalogs; the new
+    // ones are added, those the same as yours left, and those that exist
+    // with other fonts reviewed in PK1's clash review (Merge, legacy's, by
+    // default; Replace, Rename or Skip each). An unreadable file is a notice.
+    void fontCatalogLoadReviewsTheClashes()
     {
         usePickerFonts();
         auto &catalogs = application->fontCatalogs();
-        auto *dialog = openFontDialog(fontAss("rename.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
-        auto *window = named("fontDialogCatalogWindow");
+        auto *window = named("fontCatalogWindow");
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(window->property("visible").toBool());
-        const auto in = [window](const char *name) { return window->findChild<QObject *>(QLatin1String(name)); };
-        auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
-        field->setProperty("editText", QStringLiteral("A"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogEdit"), "click"));
-        QTRY_VERIFY(in("catalogEditionDialog")->property("visible").toBool());
-        QCOMPARE(in("catalogEditionCurrent")->property("currentIndex").toInt(), 0);
-        in("catalogEditionNewName")->setProperty("text", QStringLiteral("Latin"));
-        QVERIFY(QMetaObject::invokeMethod(in("catalogEditionOk"), "click"));
-        QCOMPARE(catalogs.catalogNames(), (QStringList{"Latin", "B"}));
-        QCOMPARE(field->property("model").toStringList(), (QStringList{"Latin", "B"}));
-        QCOMPARE(field->property("editText").toString(), QStringLiteral("Latin"));
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"Latin", "", "B", "", "Latin"}));
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
-        auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
-        QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "Latin", "B"}));
-        choose(choice, 2);
-        QCOMPARE(dialogItem("fontDialog", "fontList")->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        const auto catalogFile = [this](const char *name, const char *text) {
+            const QString path = dir.filePath(QLatin1String(name));
+            QFile f(path);
+            if (f.open(QIODevice::WriteOnly))
+                f.write(text);
+            return path;
+        };
+        // "\u03B1\u03C3" is taken as "\u0391\u03A3" too: the catalogs' case
+        // folding (unit by unit), not JavaScript's (a final sigma there).
+        QVERIFY(catalogs.addCatalog(QStringLiteral("\u03B1\u03C3")));
+        QCOMPARE(catalogs.sameNameIndex({QStringLiteral("x"), QStringLiteral("\u03B1\u03C3")}, QStringLiteral("\u0391\u03A3")), 1);
+        // The file's "a" is the catalog A (names are one ignoring case).
+        const QString file = catalogFile("more-catalogs.txt", "a={\n\tTahoma\n}\nB={\n\tImpact\n}\nD={\n\tComic Sans MS\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
+        auto *review = named("fontCatalogClashReview");
+        QVERIFY(review);
+        QTRY_VERIFY(review->property("visible").toBool());
+        QCOMPARE(review->property("title").toString(), QStringLiteral("Load font catalogs"));
+        QCOMPARE(review->property("text").toString(), QStringLiteral("1 of 3 catalogs in “more-catalogs.txt” already exist."));
+        QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalog"));
+        const QVariantList rows = review->property("rows").toList();
+        QCOMPARE(rows.size(), 1);
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("a"));
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("difference")).toString(), QStringLiteral("3 here, +1 new"));
+        QCOMPARE(review->property("actions").toStringList(), QStringList{"merge"});
+        QCOMPARE(review->property("kinds").toStringList(), (QStringList{"merge", "replace", "rename", "skip"}));
+        // Rename: the file's a comes in as "a (2)".
+        QVERIFY(QMetaObject::invokeMethod(review, "setAction", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("rename"))));
+        QCOMPARE(review->property("names").toStringList(), QStringList{"a (2)"});
+        // A rename onto a name that exists, in any case, is refused.
+        for (const QString &taken : {QStringLiteral("b"), QStringLiteral("D"), QStringLiteral("\u0391\u03A3")}) {
+            QVERIFY(QMetaObject::invokeMethod(review, "setName", Q_ARG(QVariant, 0), Q_ARG(QVariant, taken)));
+            QVERIFY(!review->property("complete").toBool());
+            auto *takenLabel = findItem(qobject_cast<QQuickWindow *>(review)->contentItem(), QStringLiteral("clashNameTaken0"));
+            QVERIFY(takenLabel);
+            QVERIFY(takenLabel->isVisible());
+        }
+        QVERIFY(QMetaObject::invokeMethod(review, "setName", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("a (2)"))));
+        QVERIFY(review->property("complete").toBool());
+        catalogs.removeCatalog(QStringLiteral("\u03B1\u03C3"));
+        // A catalog name may hold a comma (a style name may not).
+        auto *nameField = findItem(qobject_cast<QQuickWindow *>(review)->contentItem(), QStringLiteral("clashName0"));
+        QVERIFY(nameField);
+        const QRegularExpression namePattern =
+            nameField->property("validator").value<QObject *>()->property("regularExpression").toRegularExpression();
+        QVERIFY(QRegularExpression(QRegularExpression::anchoredPattern(namePattern.pattern())).match(QStringLiteral("Latin, CJK")).hasMatch());
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QTRY_VERIFY(!review->property("visible").toBool());
+        QCOMPARE(catalogs.catalogNames().join(QLatin1Char('|')), QStringLiteral("A|B|a (2)|D"));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), QStringList{"a (2)"});
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("A")), 3);
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("B")), 1);
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 2 font catalogs|From more-catalogs.txt: 1 new, 1 renamed."));
+        // Again with Merge: the file's Tahoma joins A; D, now the same, is left.
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
+        QTRY_VERIFY(review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")));
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("A")), 4);
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 1 font catalog|From more-catalogs.txt: 1 merged."));
+        // Cancel loads nothing.
+        const QString other = catalogFile("other-catalogs.txt", "B={\n\tArial\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(other))));
+        QTRY_VERIFY(review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, false)));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Arial")), QStringList{"A"});
+        // Replace: B holds the file's fonts only.
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(other))));
+        QTRY_VERIFY(review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(review, "setAll", Q_ARG(QVariant, QStringLiteral("replace"))));
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Impact")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Arial")));
+        // The file's names for one catalog in other cases are one row (one
+        // catalog): Replace gives B the fonts of both, the one B already had too.
+        const QString aliases = catalogFile("alias-catalogs.txt", "B={\n\tTahoma\n}\nb={\n\tArial\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(aliases))));
+        QTRY_VERIFY(review->property("visible").toBool());
+        QCOMPARE(review->property("rows").toList().size(), 1);
+        QCOMPARE(review->property("rows").toList()[0].toMap().value(QStringLiteral("difference")).toString(), QStringLiteral("1 here, +1 new"));
+        QVERIFY(QMetaObject::invokeMethod(review, "setAll", Q_ARG(QVariant, QStringLiteral("replace"))));
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("B")), 2);
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Tahoma")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Arial")));
+        catalogs.setFontsInCatalog(QStringLiteral("B"), {QStringLiteral("Tahoma")}, false);
+        // A file with no catalog in it: a warning, nothing loaded.
+        const QString empty = catalogFile("no-catalogs.txt", "nothing here\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(empty))));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|The file holds no font catalog.|no-catalogs.txt"));
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D"}));
+        // Two new names differing only by case are one catalog, counted so.
+        const QString cased = catalogFile("cased-catalogs.txt", "N={\n\tArial\n}\nn={\n\tTahoma\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(cased))));
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D", "N"}));
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("N")), 2);
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 1 font catalog|From cased-catalogs.txt: 1 new."));
+        // Loaded into an empty list: the first catalog is chosen. (The last
+        // deleted while Show is "In …": every font is shown again.)
+        window->setProperty("show", 1);
+        for (const QString &name : catalogs.catalogNames())
+            catalogs.removeCatalog(name);
+        QCOMPARE(window->property("chosen").toString(), QString());
+        QCOMPARE(window->property("show").toInt(), 0);
+        QVERIFY(!window->property("shown").toStringList().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(other))));
+        QCOMPARE(catalogs.catalogNames(), QStringList{"B"});
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("B"));
+        // A header with no '=' is a catalog with no name: not loaded.
+        const QString nameless = catalogFile("nameless-catalogs.txt", "Nameless{\n\tArial\n}\nX={\n\tTahoma\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(nameless))));
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"B", "X"}));
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->property("visible").toBool());
         catalogs.waitResolved();
     }
 
@@ -3317,8 +4009,38 @@ private slots:
         QVERIFY(!QFileInfo::exists(dirPath + QStringLiteral("/FontCatalogsAutosave3.txt")));
     }
 
+    // PU3 (#305): a safety copy that cannot be written is not "Saved": the
+    // status stays empty and the catalog window's footer says it failed.
+    void fontCatalogAutosaveFailureIsSaid()
+    {
+        QTemporaryDir parent;
+        QVERIFY(parent.isValid());
+        const QString notAFolder = parent.filePath(QStringLiteral("catalogs"));
+        {
+            QFile f(notAFolder); // a file where the catalogs' folder should be
+            QVERIFY(f.open(QIODevice::WriteOnly));
+        }
+        app::Application::Options options;
+        options.fontCatalogDir = notAFolder;
+        restartWith(options);
+        auto &catalogs = application->fontCatalogs();
+        catalogs.setAutosaveInterval(20);
+        auto *window = named("fontCatalogWindow");
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QString()), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(window->property("visible").toBool());
+        QVERIFY(catalogs.addCatalog(QStringLiteral("W")));
+        QTRY_VERIFY(catalogs.property("autosaveFailed").toBool());
+        QCOMPARE(catalogs.autosaveStatus(), QString());
+        auto *status = dialogItem("fontCatalogWindow", "fontCatalogStatus");
+        QTRY_VERIFY(status->isVisible());
+        QCOMPARE(status->property("text").toString(), QStringLiteral("Not saved: the safety copy could not be written"));
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->property("visible").toBool());
+        restartWith(app::Application::Options());
+    }
+
     // Y6: ~FontCatalogList saves the catalogs (FontCatalogList.cpp:218-221):
-    // once a catalog window was made, the application's end writes
+    // once the catalog window was made, the application's end writes
     // FontCatalogs.txt with the edits made while it is still open. Without
     // a window the file is left as it was (not rewritten with a BOM).
     void fontCatalogsAreSavedAtTheEndOnceAWindowWasMade()
@@ -3336,24 +4058,20 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write(plain);
         }
-        auto *dialog = openFontDialog(fontAss("end-none.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        QCOMPARE(dialogItem("fontDialog", "fontCatalogChoice")->property("model").toStringList(),
-                 (QStringList{"All fonts", "Without catalog", "A"}));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        auto *picker = openFontPicker(fontAss("end-none.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
+        QVERIFY(picker);
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog", "A"}));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         application->fontCatalogs().waitResolved();
         restartWith(options);
         QCOMPARE(readAll(file), plain);
 
         usePickerFonts();
-        dialog = openFontDialog(fontAss("end-open.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
-        auto *window = named("fontDialogCatalogWindow");
+        auto *window = named("fontCatalogWindow");
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(window->property("visible").toBool());
-        dialogItem("fontDialogCatalogWindow", "fontCatalogField")->setProperty("editText", QStringLiteral("C"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogAddCatalog"), "click"));
-        QVERIFY(!readAll(file).contains("C={")); // written when shown, before Add
+        QVERIFY(QMetaObject::invokeMethod(window, "createCatalog", Q_ARG(QVariant, QStringLiteral("C"))));
+        QVERIFY(!readAll(file).contains("C={")); // written when shown, before New
         application->fontCatalogs().waitResolved();
         delete engine;
         engine = nullptr;
@@ -3364,7 +4082,7 @@ private slots:
         restartWith(app::Application::Options());
     }
 
-    // Y6: the font dialog's renderer report resolves on one worker thread:
+    // Y6: the font picker's renderer report resolves on one worker thread:
     // asking never waits for an earlier resolution, a request still waiting
     // is replaced by a newer one, and waitResolved waits for the latest.
     void fontResolutionDoesNotBlockAndAnswersTheLatest()
@@ -3402,46 +4120,164 @@ private slots:
         QCOMPARE(entered->load(), 2);
     }
 
-    // Y6: Add > "Add fonts from subtitles" (GetFontsFromASSDialog,
-    // CollectFontsFromSubtitles): the Style fonts and \fn names join the
-    // catalog, the catalogs are saved, and the choice is left with the catalog
-    // with "All fonts" and "Without catalog" and the catalog chosen
-    // (Y6-collect-choice; legacy's PutArray left the names alone).
+    // Y6, PU3 (#305, PU3-from-subtitles): "Add fonts from subtitles"
+    // (GetFontsFromASSDialog, CollectFontsFromSubtitles) from the picker's
+    // +: the Style fonts and \fn names join the catalog chosen or typed (a
+    // new name makes it), the catalogs are saved, a notice says how many
+    // fonts were added, and the picker shows that catalog
+    // (Y6-collect-choice).
     void fontsFromSubtitlesFillTheChosenCatalog()
     {
         usePickerFonts();
         auto &catalogs = application->fontCatalogs();
-        auto *dialog = openFontDialog(fontAss("collect.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\fnImpact}abc\n"
+        auto *picker = openFontPicker(fontAss("collect.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\fnImpact}abc\n"
                                                              "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\fnSkipped}x\n"));
-        QVERIFY(dialog);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogAdd"), "click"));
-        auto *menu = named("fontDialogCatalogAddMenu");
-        QTRY_VERIFY(menu->property("visible").toBool());
-        QCOMPARE(menu->property("count").toInt(), 3); // the dialog's item and A, B
-        QQuickItem *first = nullptr;
-        QVERIFY(QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, first), Q_ARG(int, 0)));
-        QCOMPARE(first->objectName(), QStringLiteral("fontsFromSubtitlesItem"));
-        QVERIFY(QMetaObject::invokeMethod(first, "triggered"));
-        auto *from = named("fontDialogFromSubtitles");
-        QTRY_VERIFY(from->property("visible").toBool());
-        QCOMPARE(dialogItem("fontDialogFromSubtitles", "fontsFromSubtitlesCatalog")->property("editText").toString(), QStringLiteral("A"));
-        QVERIFY(QMetaObject::invokeMethod(from, "accept"));
-        QCOMPARE(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")), true);
-        QCOMPARE(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Impact")), true);
-        QCOMPARE(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Skipped")), false);
+        QVERIFY(picker);
+        auto *from = qobject_cast<QQuickWindow *>(named("fontsFromSubtitlesDialog"));
+        QVERIFY(from);
+        const auto in = [this](const char *name) { return dialogItem("fontsFromSubtitlesDialog", name); };
+        const auto openFrom = [&] {
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerAdd"), "click"));
+            auto *menu = named("fontPickerAddMenu");
+            QTRY_VERIFY(menu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(menuEntry(menu, QStringLiteral("fontsFromSubtitlesItem")), "triggered"));
+            QTRY_VERIFY(from->isVisible());
+        };
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 2))); // A
+        openFrom();
+        QCOMPARE(from->transientParent(), qobject_cast<QWindow *>(picker));
+        QCOMPARE(in("fontsFromSubtitlesCatalog")->property("editText").toString(), QStringLiteral("A"));
+        QVERIFY(in("fontsFromSubtitlesHint")->property("text").toString().startsWith(
+            QStringLiteral("The fonts of every style and every \\fn tag in collect")));
+        QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
+        QTRY_VERIFY(!from->isVisible());
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Impact")));
+        QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Skipped")));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
-        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("A={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n\tTahoma\r\n\tImpact\r\n}"));
-        auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
-        QCOMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B"}));
-        QCOMPARE(choice->property("currentIndex").toInt(), 2);
-        QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
-        // The catalog's installed fonts, sorted.
-        QCOMPARE(dialogItem("fontDialog", "fontList")->property("model").toStringList(),
-                 (QStringList{"Arial", "Impact", "Tahoma", "Verdana"}));
-        // A check in the Add menu adds the font and saves (AddToCatalog).
-        catalogs.toggleFontInCatalog(QStringLiteral("B"), QStringLiteral("Tahoma"), true);
-        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("B={\r\n\tImpact\r\n\tTahoma\r\n}"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        // A's fonts sorted: the picker listed A (GetCatalogFonts sorts in place).
+        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("A={\r\n\tArial\r\n\tNot Installed\r\n\tVerdana\r\n\tTahoma\r\n\tImpact\r\n}"));
+        QVERIFY(lastNotice().startsWith(QStringLiteral("Add fonts from subtitles|Added 2 fonts to “A”|")));
+        QCOMPARE(picker->property("choice").toInt(), 2);
+        QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Arial", "Impact", "Tahoma", "Verdana"}));
+
+        // A new name makes the catalog, which the picker then shows.
+        openFrom();
+        in("fontsFromSubtitlesCatalog")->setProperty("editText", QStringLiteral("Mine"));
+        QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
+        QTRY_VERIFY(!from->isVisible());
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "Mine"}));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Impact")), (QStringList{"A", "B", "Mine"}));
+        QVERIFY(lastNotice().startsWith(QStringLiteral("Add fonts from subtitles|Added 2 fonts to “Mine”|")));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B", "Mine"}));
+        QCOMPARE(picker->property("choice").toInt(), 4);
+        QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Impact", "Tahoma"}));
+
+        // A name typed in another case is that catalog; Replace empties it first.
+        openFrom();
+        in("fontsFromSubtitlesCatalog")->setProperty("editText", QStringLiteral("b"));
+        in("fontsFromSubtitlesReplace")->setProperty("checked", true);
+        QVERIFY(in("fontsFromSubtitlesHint")->property("text").toString().endsWith(
+            QStringLiteral(" The fonts “B” holds now are removed first.")));
+        QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
+        QTRY_VERIFY(!from->isVisible());
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "Mine"}));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), (QStringList{"A", "B", "Mine"}));
+        QVERIFY(lastNotice().startsWith(QStringLiteral("Add fonts from subtitles|Added 2 fonts to “B”|")));
+        // FontCatalogs.txt cannot be written: said, as a warning.
+        QVERIFY(QFile::remove(dirPath + QStringLiteral("/FontCatalogs.txt")));
+        QVERIFY(QDir(dirPath).mkdir(QStringLiteral("FontCatalogs.txt")));
+        openFrom();
+        QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
+        QTRY_VERIFY(!from->isVisible());
+        QCOMPARE(lastNotice(), QStringLiteral("Add fonts from subtitles|The fonts were added to “B” but could not be saved.|"
+                                              "FontCatalogs.txt in the \"Config\" folder could not be written. Saving is tried again on exit."));
+        QVERIFY(QDir(dirPath).rmdir(QStringLiteral("FontCatalogs.txt")));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        application->fontCatalogs().waitResolved();
+    }
+
+    // PU3 (#305): the font picker, its characters popover, the catalog
+    // window with New's popover, the rename question and the load review,
+    // and Add fonts from subtitles in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (font-<popup>-<theme>.png).
+    void fontPopupsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        app::attachFontCatalogPreview(*engine, application->fontCatalogs()); // the previews, as the app has them
+        usePickerFonts();
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        auto *picker = qobject_cast<QQuickWindow *>(openFontPicker(fontAss("shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Fonts for every sign\n")));
+        QVERIFY(picker);
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
+        const auto shoot = [&](QQuickWindow *w, const QString &name) {
+            QTest::qWait(300);
+            QVERIFY(w->grabWindow().save(out + QStringLiteral("/font-") + name));
+        };
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            // The picker on the catalog A, Verdana chosen.
+            item("lineText")->forceActiveFocus();
+            QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
+            QTRY_VERIFY(picker->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 2)));
+            QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, QStringLiteral("Verdana"))));
+            QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
+            shoot(picker, QStringLiteral("picker") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCharacters"), "click"));
+            QTRY_VERIFY(named("fontPickerCharactersPopover")->property("opened").toBool());
+            shoot(picker, QStringLiteral("picker-characters") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(named("fontPickerCharactersPopover"), "revert"));
+            // The catalog window from the picker, New's popover open.
+            auto *window = qobject_cast<QQuickWindow *>(named("fontCatalogWindow"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerManage"), "click"));
+            QTRY_VERIFY(window->isVisible());
+            shoot(window, QStringLiteral("catalogs") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCatalogWindow", "fontCatalogNew"), "click"));
+            QTRY_VERIFY(named("fontCatalogNewPopover")->property("opened").toBool());
+            named("fontCatalogNewName")->setProperty("text", QStringLiteral("b"));
+            shoot(window, QStringLiteral("catalogs-new") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(named("fontCatalogNewPopover"), "revert"));
+            // Rename A onto B: the question.
+            QVERIFY(QMetaObject::invokeMethod(window, "renameCatalog", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QStringLiteral("B"))));
+            auto *box = qobject_cast<QQuickWindow *>(named("fontCatalogMessageBox"));
+            QTRY_VERIFY(box && box->isVisible());
+            shoot(box, QStringLiteral("rename-question") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            // Load: the review of the catalogs that exist.
+            const QString file = dir.filePath(QStringLiteral("shot-catalogs.txt"));
+            {
+                QFile f(file);
+                QVERIFY(f.open(QIODevice::WriteOnly));
+                f.write("A={\n\tTahoma\n}\nB={\n\tImpact\n\tComic Sans MS\n}\nLatin={\n\tArial\n}\n");
+            }
+            QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
+            auto *review = qobject_cast<QQuickWindow *>(named("fontCatalogClashReview"));
+            QTRY_VERIFY(review && review->isVisible());
+            shoot(review, QStringLiteral("load-review") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, false)));
+            QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+            QTRY_VERIFY(!window->isVisible());
+            // Add fonts from subtitles, from the picker's +.
+            auto *from = qobject_cast<QQuickWindow *>(named("fontsFromSubtitlesDialog"));
+            QVERIFY(QMetaObject::invokeMethod(from, "openFor", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QVariant()),
+                                              Q_ARG(QVariant, QVariant::fromValue<QObject *>(picker))));
+            QTRY_VERIFY(from->isVisible());
+            shoot(from, QStringLiteral("from-subtitles") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(from, "reject"));
+            QTRY_VERIFY(!from->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+            QTRY_VERIFY(!picker->isVisible());
+        }
         application->fontCatalogs().waitResolved();
     }
 
@@ -3674,19 +4510,14 @@ private slots:
         choose(choice, 3); // B
         QCOMPARE(font->property("model").toStringList(), QStringList{"Impact"});
         QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontCatalogManage")), "click"));
-        QObject *window = nullptr;
-        for (QObject *o : editor->findChildren<QObject *>())
-            if (o->objectName() == QLatin1String("styleEditorCatalogWindow"))
-                window = o;
-        QVERIFY(window);
+        auto *window = named("fontCatalogWindow");
         QTRY_VERIFY(window->property("visible").toBool());
-        auto *content = window->property("contentItem").value<QQuickItem *>();
-        findItem(content, QStringLiteral("fontCatalogField"))->setProperty("editText", QStringLiteral("B"));
-        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("fontCatalogDelete")), "click"));
-        auto *question = window->findChild<QObject *>(QStringLiteral("catalogDeleteQuestion"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
+        window->setProperty("chosen", QStringLiteral("B"));
+        QVERIFY(QMetaObject::invokeMethod(window, "askDelete"));
+        auto *box = named("fontCatalogMessageBox");
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("delete"))));
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
         QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "A"}));
         QCOMPARE(choice->property("currentIndex").toInt(), 0);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
@@ -5041,7 +5872,8 @@ private slots:
         QTRY_COMPARE(session->selection().active, session->document().lines()[1]->id);
         auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("translationShiftWindow"));
         QVERIFY(window);
-        QVERIFY(QMetaObject::invokeMethod(window, "show"));
+        QVERIFY(QMetaObject::invokeMethod(window, "open"));
+        QCOMPARE(window->modality(), Qt::NonModal); // it stays open while working
         auto *button = findItem(window->contentItem(), QStringLiteral("translationMove0"));
         QVERIFY(button);
         const auto steps = session->historySize();
@@ -5331,23 +6163,25 @@ private slots:
 
     // PK1: Remove temporary files' age is a date field with its calendar
     // (legacy's day, month and year boxes), a month before today when it
-    // opens (legacy's default); the cutoff is the day picked.
+    // opens (legacy's default). PU1-autosaves-window: it opens the Autosaves
+    // window with the Delete older than… popover open.
     void temporaryFilesTakeTheirAgeFromADatePicker()
     {
-        auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("temporaryFilesWindow"));
+        QObject *autosaves = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("autosaves"));
+        QVERIFY(autosaves);
+        QVERIFY(QMetaObject::invokeMethod(autosaves, "show", Q_ARG(QVariant, true)));
+        auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("autosavesWindow"));
         QVERIFY(window);
-        QVERIFY(QMetaObject::invokeMethod(window, "showFiles"));
         auto close = qScopeGuard([&] { window->close(); });
         QVERIFY(QTest::qWaitForWindowExposed(window));
-        auto *picker = findItem(window->contentItem(), QStringLiteral("olderDate"));
+        auto *popover = window->findChild<QObject *>(QStringLiteral("autosavesDeleteOlderPopover"));
+        QVERIFY(popover);
+        QTRY_VERIFY(popover->property("visible").toBool());
+        auto *picker = window->findChild<QObject *>(QStringLiteral("olderDate"));
         QVERIFY(picker);
         QDate monthAgo = QDate::currentDate().addMonths(-1);
         QCOMPARE(picker->property("date").toDateTime().date(), monthAgo);
-        QVERIFY(QMetaObject::invokeMethod(picker, "setDate", Q_ARG(QVariant, QDateTime(QDate(2026, 3, 4), QTime(15, 30)))));
-        QVariant cutoff;
-        QVERIFY(QMetaObject::invokeMethod(window, "cutoff", Q_RETURN_ARG(QVariant, cutoff)));
-        QCOMPARE(cutoff.toDateTime(), QDateTime(QDate(2026, 3, 4), QTime(0, 0)));
-        QVERIFY(findItem(window->contentItem(), QStringLiteral("datePickerOpen")));
+        QVERIFY(window->findChild<QObject *>(QStringLiteral("datePickerOpen")));
     }
 
     // IC1 (#226): every menu and context-menu item that runs a command shows
@@ -5380,8 +6214,16 @@ private slots:
             {main, QStringLiteral(R"("macro_" + modelData.name)"), QStringLiteral("a macro of the loaded scripts")},
             {main, QStringLiteral(R"("panelMenu" + modelData.uniqueName)"), QStringLiteral("a panel, under Panels")},
             {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
+            {QStringLiteral("AutomationDialog.qml"), QStringLiteral(R"("dialogPreset_" + modelData)"),
+             QStringLiteral("a script dialog's preset, under Presets")},
+            {QStringLiteral("AutomationDialog.qml"), QStringLiteral(R"("dialogDeletePreset_" + modelData)"),
+             QStringLiteral("a script dialog's preset, under Delete preset")},
             {QStringLiteral("MainTitleBar.qml"), QStringLiteral("bar.foldFrom + index"),
              QStringLiteral("a menu of the title bar folded into More (the menus have no icons)")},
+            {QStringLiteral("FontPicker.qml"), QStringLiteral(R"(text: qsTr("No catalogs yet"))"),
+             QStringLiteral("the empty list's placeholder")},
+            {QStringLiteral("FontCatalogBar.qml"), QStringLiteral(R"(text: qsTr("No catalogs yet"))"),
+             QStringLiteral("the empty list's placeholder")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
         if (!problems.isEmpty())
@@ -6833,11 +7675,49 @@ private slots:
         restartWith(app::Application::Options());
     }
 
+    // PU7 (#309): the window shown while the installer runs is titled
+    // "Install update", names the version and cannot be closed: no Close on
+    // its title bar, and Esc and the window system's close do nothing. It
+    // reads "Use system title bar" as every dialog does.
+    QQuickWindow *installingWindow(const QString &version)
+    {
+        QQmlComponent component(engine);
+        component.loadFromModule("Hikari.Ui", "UpdateInstallingWindow");
+        auto *window = qobject_cast<QQuickWindow *>(component.createWithInitialProperties(
+            {{QStringLiteral("version"), version},
+             {QStringLiteral("settings"), QVariant::fromValue(static_cast<QObject *>(application->settingsStore()))}}));
+        if (!window)
+            qWarning() << component.errorString();
+        return window;
+    }
+    void installingWindowCannotBeClosed()
+    {
+        std::unique_ptr<QQuickWindow> window(installingWindow(QStringLiteral("1.4.0")));
+        QVERIFY(window);
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("Install update"));
+        QCOMPARE(findItem(window->contentItem(), QStringLiteral("updateInstallingText"))->property("text").toString(),
+                 QStringLiteral("Installing HikariSub 1.4.0…"));
+        QVERIFY(!window->property("closable").toBool());
+        QVERIFY(window->property("settings").value<QObject *>());
+        // The window system's frame offers no Close either (its hints alone).
+        QVERIFY(!window->flags().testFlag(Qt::WindowCloseButtonHint));
+        QVERIFY(window->flags().testFlag(Qt::CustomizeWindowHint));
+        QVERIFY(QTest::qWaitForWindowExposed(window.get()));
+        window->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window.get());
+        QTest::keyClick(window.get(), Qt::Key_Escape);
+        QVERIFY(!window->close());
+        QCoreApplication::processEvents();
+        QVERIFY(window->isVisible());
+    }
+
     // P8, ADR 0019, DG1 (#222): the update check's results are toasts (NT1,
     // #302), titled "Check for updates" (a failure a warning), the
     // installer's errors "Download and install" or, at the start, "Install
     // update"; a newer release opens on the dialog frame, modeless, in the
-    // resizable notice with its notes, or in the AUR notice for an AUR copy.
+    // resizable notice with its notes; PU7 (#309): an AUR copy's in the same
+    // window, with its command; Skip this version and Remind me later.
     void updateNoticesOpenOnTheDialogFrame()
     {
         // Keys sent before a new window has taken its first show (its
@@ -6911,17 +7791,55 @@ private slots:
         QTest::keyClick(available, Qt::Key_Escape);
         QTRY_VERIFY(!available->isVisible());
 
-        auto *aur = root->findChild<QQuickWindow *>(QStringLiteral("updateAurNotice"));
+        // PU7 (#309): an AUR copy gets the same window: the command to copy,
+        // no offer, Close the default.
         QVariantMap fromAur = release;
         fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
+        fromAur.insert(QStringLiteral("aurCarries"), true);
         QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
                                           Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
-        QTRY_VERIFY(aur->isVisible());
-        QVERIFY(dialogItem("updateAurNotice", "updateAurText")->property("text").toString().contains(QStringLiteral("yay -Syu")));
-        QVERIFY(!available->isVisible());
-        settled(aur);
-        QTest::keyClick(aur, Qt::Key_Escape);
-        QTRY_VERIFY(!aur->isVisible());
+        QTRY_VERIFY(available->isVisible());
+        auto *command = dialogItem("updateAvailable", "updateAurCommand");
+        QTRY_VERIFY(command->isVisible());
+        QVERIFY(command->property("text").toString().contains(QStringLiteral(" -Syu")));
+        QVERIFY(!dialogItem("updateAvailable", "updateOffer")->isVisible());
+        QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateClose"));
+        auto *copy = dialogItem("updateAvailable", "updateAurCopy");
+        QVERIFY(QMetaObject::invokeMethod(copy, "click"));
+        QCOMPARE(QGuiApplication::clipboard()->text(), command->property("text").toString());
+        QCOMPARE(copy->property("text").toString(), QStringLiteral("Copied"));
+        settled(available);
+        QTest::keyClick(available, Qt::Key_Escape);
+        QTRY_VERIFY(!available->isVisible());
+        // A prerelease the AUR package does not carry: the release page.
+        fromAur.insert(QStringLiteral("aurCarries"), false);
+        fromAur.insert(QStringLiteral("url"), QStringLiteral("https://example.invalid/v9.0.0"));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QTRY_VERIFY(dialogItem("updateAvailable", "updateAurPrerelease")->isVisible());
+        QVERIFY(!dialogItem("updateAvailable", "updateAurCommand")->isVisible());
+        QCOMPARE(dialogItem("updateAvailable", "updateOffer")->property("text").toString(), QStringLiteral("Open the release page"));
+        QVERIFY(QMetaObject::invokeMethod(available, "close"));
+        QTRY_VERIFY(!available->isVisible());
+        // Skip this version: the version kept as skipped, the window closed;
+        // Settings > Updates offers it again.
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("updateAvailable", "updateSkip"), "click"));
+        QTRY_VERIFY(!available->isVisible());
+        QCOMPARE(updates.skippedVersion(), QStringLiteral("9.0.0"));
+        QCOMPARE(application->settingsStore()->text("updater.skippedVersion"), QStringLiteral("9.0.0"));
+        // Remind me later: the next automatic check a week away.
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        const qint64 before = QDateTime::currentSecsSinceEpoch();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("updateAvailable", "updateRemind"), "click"));
+        QTRY_VERIFY(!available->isVisible());
+        QVERIFY(updates.nextCheck() >= before + 7 * 24 * 60 * 60);
+        updates.skipVersion(QString());
     }
 
     // P7: the legacy Save routes: the video name, the extension, Save
@@ -6990,11 +7908,11 @@ private slots:
             QSKIP("Read-only files are writable for this user");
         QCOMPARE(application->saveChosen(QUrl::fromLocalFile(locked)), QStringLiteral("readonly"));
         QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
-        // NT1: the question is PK1's message box, Save as… (the Save dialog
-        // again) or Cancel (nothing more).
+        // NT1, PU1-message-boxes: the question is PK1's message box, Save
+        // as… (the Save dialog again) or Cancel (nothing more).
         auto *root = engine->rootObjects().first();
         auto *saveAs = named("saveAsDialog");
-        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("locked.ass"))));
         QQuickWindow *box = nullptr;
         QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
         QCOMPARE(box->property("severity").toString(), QStringLiteral("warning"));
@@ -7003,14 +7921,12 @@ private slots:
         QCOMPARE(choices.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Save as…"));
         QCOMPARE(choices.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Cancel"));
         answerMessage("messages", QStringLiteral("Save"),
-                      QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute."),
-                      QStringLiteral("cancel"));
+                      QStringLiteral("“locked.ass” is read-only."), QStringLiteral("cancel"));
         QTest::qWait(50);
         QVERIFY(!saveAs->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("locked.ass"))));
         answerMessage("messages", QStringLiteral("Save"),
-                      QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute."),
-                      QStringLiteral("saveAs"));
+                      QStringLiteral("“locked.ass” is read-only."), QStringLiteral("saveAs"));
         QTRY_VERIFY(saveAs->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(saveAs, "close"));
         QTRY_VERIFY(!saveAs->property("visible").toBool());
@@ -7018,8 +7934,8 @@ private slots:
 
     // F4: Edit > Fix minor errors: check rules, find, review the results and
     // replace the checked finds as one step; replace all errors in the tab.
-    // Driven with real mouse presses: the two modeless dialogs stay open while
-    // the other one, the grid or the editor is clicked.
+    // PU2-fix-minor-errors-panel: one dock panel, driven with real mouse
+    // presses; the menu shows and hides it.
     void misspellReplacerFindsReviewsAndReplaces()
     {
         const QString path = writeFile(dir, "misspell.ass",
@@ -7029,140 +7945,87 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("misspellDialog"));
-        QVERIFY(dialog);
-        auto *results = root->findChild<QObject *>(QStringLiteral("misspellResults"));
-        QVERIFY(results);
+        auto *dock = item<QObject>("misspellDock");
+        QVERIFY(dock);
+        QCOMPARE(dock->property("uniqueName").toString(), QStringLiteral("FixMinorErrors"));
+        QVERIFY(!dock->property("isOpen").toBool()); // closed in the default layout
+        QQuickItem *tool = nullptr;
+        QObject *results = nullptr;
+        const auto named = [&](const char *name) { return findItem(tool, QLatin1String(name)); };
         const auto centre = [](QQuickItem *item) { return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint(); };
         const auto click = [&](QQuickItem *item) {
             QVERIFY(item && item->isVisible());
-            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centre(item));
+            QTest::mouseClick(item->window(), Qt::LeftButton, Qt::NoModifier, centre(item));
         };
         auto *menuItem = root->findChild<QObject *>(QStringLiteral("misspellMenuItem"));
         QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QTRY_VERIFY(dialog->property("opened").toBool());
-        QCOMPARE(dialog->property("rules").toList().size(), 13);
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QTRY_VERIFY((tool = item<QQuickItem>("misspellTool")));
+        results = item<QObject>("misspellResults");
+        QVERIFY(results);
+        QTRY_VERIFY(tool->isVisible() && tool->width() > 0);
+        QTRY_COMPARE(tool->property("rules").toList().size(), 13); // read once it shows
+        // Docked at the right edge, full height, on its first opening.
+        const QRectF toolArea = tool->mapRectToScene(QRectF(0, 0, tool->width(), tool->height()));
+        QVERIFY2(toolArea.right() > window->width() - 40, qPrintable(QString::number(toolArea.right())));
+        QVERIFY(toolArea.left() > window->width() / 2.0);
+        QTRY_COMPARE(named("misspellRuleCount")->property("text").toString(), QStringLiteral("0 of 13 rules on"));
         // Check "Remove space before comma or dot" in the list.
         QQuickItem *check = nullptr;
-        QTRY_VERIFY((check = dialogItem("misspellDialog", "misspellRuleCheck0")));
+        QTRY_VERIFY((check = named("misspellRuleCheck0")));
         click(check);
         QTRY_VERIFY(application->misspellRules().at(0).toMap().value(QStringLiteral("checked")).toBool());
-        // Find errors in current tab: a header with the file, then two finds.
-        click(dialogItem("misspellDialog", "misspellFindTab"));
-        QTRY_VERIFY(results->property("opened").toBool());
+        QTRY_COMPARE(named("misspellRuleCount")->property("text").toString(), QStringLiteral("1 of 13 rules on"));
+        // Find in this tab: a header with the file, then two finds.
+        QCOMPARE(named("misspellTabs")->property("currentIndex").toInt(), 0);
+        click(named("misspellFindButton"));
+        QTRY_VERIFY(results->property("shown").toBool());
         const auto rows = results->property("rows").toList();
         QCOMPARE(rows.size(), 3);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("text")).toString(), QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath()));
         QCOMPARE(rows[1].toMap().value(QStringLiteral("line")).toInt(), 1);
         QCOMPARE(rows[2].toMap().value(QStringLiteral("position")).toInt(), 13);
-        // Legacy placement: the Multireplacer centred; the results at
-        // wxDefaultPosition (R5-per-platform): on Windows 34x22 dialog units
-        // (68x44 pixels) from the client origin below the menu bar, on Linux
-        // the window manager's choice, here the window's top left. At the top
-        // left the results leave the rules list and the Multireplacer's
-        // buttons uncovered, so rules can be checked while they are shown; on
-        // Windows they reach the rules list in this window, as legacy's did,
-        // and are moved aside first.
-        const auto sceneRect = [](QQuickItem *item) { return item->mapRectToScene(QRectF(0, 0, item->width(), item->height())); };
-        const auto popupRect = [&](QObject *popup) { return sceneRect(popup->property("background").value<QQuickItem *>()); };
-        auto *addRule = dialogItem("misspellDialog", "misspellAddRule");
-        auto *menuBar = root->property("menuBar").value<QQuickItem *>();
-        QVERIFY(menuBar && menuBar->height() > 0);
-        QCOMPARE(dialog->property("clientTop").toReal(), menuBar->height());
-        const QRectF rulesArea = sceneRect(dialogItem("misspellDialog", "misspellRules"));
-#ifdef _WIN32
-        QCOMPARE(popupRect(results).topLeft(), QPointF(68, menuBar->height() + 44));
-        QVERIFY(popupRect(results).intersects(rulesArea)); // as legacy's did here
-        // moved aside: as far left as their title drag goes (48 px stay on screen)
-        results->setProperty("x", 48 - results->property("width").toReal());
-        results->setProperty("y", 0);
-        const QRectF resultsArea = popupRect(results);
-#else
-        const QRectF resultsArea = popupRect(results);
-        QCOMPARE(resultsArea.topLeft(), QPointF(0, 0));
-#endif
-        QVERIFY2(!resultsArea.intersects(rulesArea),
-                 qPrintable(QStringLiteral("results %1,%2 %3x%4, rules %5,%6 %7x%8")
-                                .arg(resultsArea.x()).arg(resultsArea.y()).arg(resultsArea.width()).arg(resultsArea.height())
-                                .arg(rulesArea.x()).arg(rulesArea.y()).arg(rulesArea.width()).arg(rulesArea.height())));
-        for (const char *button : {"misspellAddRule", "misspellEditRule", "misspellRemoveRule", "misspellFindTab",
-                                   "misspellFindAllTabs", "misspellReplaceTab", "misspellReplaceAllTabs"})
-            QVERIFY2(!resultsArea.intersects(sceneRect(dialogItem("misspellDialog", button))), button);
-        QVERIFY2(qAbs(popupRect(dialog).center().x() - window->width() / 2.0) < 2,
-                 qPrintable(QStringLiteral("dialog %1,%2 %3x%4 (implicit %5x%6, x %7), window %8")
-                                .arg(popupRect(dialog).x()).arg(popupRect(dialog).y()).arg(popupRect(dialog).width())
-                                .arg(popupRect(dialog).height()).arg(dialog->property("implicitWidth").toReal())
-                                .arg(dialog->property("implicitHeight").toReal()).arg(dialog->property("x").toReal())
-                                .arg(window->width())));
-        click(dialogItem("misspellDialog", "misspellRuleCheck2"));
+        QCOMPARE(named("misspellResultCount")->property("text").toString(), QStringLiteral("2 errors in 1 file"));
+        QCOMPARE(named("misspellCheckedCount")->property("text").toString(), QStringLiteral("2 checked"));
+        // Rules can still be checked while the results show, but not changed:
+        // the strip waits until the results are closed (legacy refused).
+        click(named("misspellRuleCheck2"));
         QTRY_VERIFY(application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
-        QVERIFY(results->property("visible").toBool());
-        click(dialogItem("misspellDialog", "misspellRuleCheck2"));
+        click(named("misspellRuleCheck2"));
         QTRY_VERIFY(!application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
-        // Dragging a title moves its window (legacy HTCAPTION), and it stays
-        // there when shown again.
-        results->setProperty("x", 0); // from the top left
-        results->setProperty("y", 0);
-        auto *resultsTitle = results->property("header").value<QQuickItem *>();
-        QVERIFY(resultsTitle);
-        const QPoint grab = centre(resultsTitle);
-        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, grab);
-        QTest::mouseMove(window, grab + QPoint(20, 10));
-        QTest::mouseMove(window, grab + QPoint(40, 30));
-        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, grab + QPoint(40, 30));
-        QTRY_COMPARE(popupRect(results).topLeft(), QPointF(40, 30));
-        QVERIFY(QMetaObject::invokeMethod(results, "close"));
-        QTRY_VERIFY(!results->property("visible").toBool());
-        click(dialogItem("misspellDialog", "misspellFindTab"));
-        QTRY_VERIFY(results->property("opened").toBool());
-        QCOMPARE(popupRect(results).topLeft(), QPointF(40, 30));
-        // The drag stops where the title would leave the window: its top
-        // stays inside, and 48 pixels of the window stay in view sideways.
-        const QPoint title = centre(resultsTitle);
-        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, title);
-        QTest::mouseMove(window, title - QPoint(10, 10));
-        QTest::mouseMove(window, title - QPoint(5000, 5000));
-        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, title - QPoint(5000, 5000));
-        QTRY_COMPARE(popupRect(results).topLeft(), QPointF(48 - popupRect(results).width(), 0));
-        QVERIFY(sceneRect(resultsTitle).right() > 0); // part of the title is still there to grab
-        results->setProperty("x", 0);
-        results->setProperty("y", 0);
-        // Rules cannot change while the results are shown: a press on Add rule
-        // keeps both windows open and is refused.
-        click(addRule);
-        QCOMPARE(application->log().lastMessage(), QStringLiteral("Cannot change rules\nwhen find results window is open"));
-        QVERIFY(results->property("visible").toBool());
-        QVERIFY(dialog->property("visible").toBool());
-        QCOMPARE(application->misspellRules().size(), 13);
-        auto *resultsContent = results->property("contentItem").value<QQuickItem *>();
-        // A click on the header's text folds its finds, another unfolds them.
-        QQuickItem *header = nullptr, *firstRow = nullptr, *second = nullptr;
-        QTRY_VERIFY((header = findItem(resultsContent, QStringLiteral("misspellResultHeader0"))));
-        QTRY_VERIFY((firstRow = findItem(resultsContent, QStringLiteral("misspellResultRow1"))));
-        click(header);
+        QVERIFY(results->property("shown").toBool());
+        for (const char *button : {"misspellAddRule", "misspellEditRule", "misspellRemoveRule"})
+            QVERIFY2(!named(button)->isEnabled(), button);
+        // An arrow folds the file's finds, another press unfolds them.
+        QQuickItem *fold = nullptr, *firstRow = nullptr, *second = nullptr, *header = nullptr;
+        QTRY_VERIFY((fold = named("misspellResultFold0")));
+        QTRY_VERIFY((firstRow = named("misspellResultRow1")));
+        click(fold);
         QTRY_VERIFY(!firstRow->isVisible());
-        click(header);
+        click(fold);
         QTRY_VERIFY(firstRow->isVisible());
-        // Uncheck the second find with its checkbox.
-        QTRY_VERIFY((second = findItem(resultsContent, QStringLiteral("misspellResultCheck2"))));
+        // The header's box checks all of its finds, then none, then all.
+        QTRY_VERIFY((header = named("misspellResultCheck0")));
+        QCOMPARE(header->property("checkState").toInt(), int(Qt::Checked));
+        click(header);
+        QTRY_COMPARE(named("misspellCheckedCount")->property("text").toString(), QStringLiteral("0 checked"));
+        QVERIFY(!named("misspellReplaceChecked")->isEnabled());
+        click(header);
+        QTRY_COMPARE(named("misspellCheckedCount")->property("text").toString(), QStringLiteral("2 checked"));
+        // Uncheck the second find with its checkbox: the header is partly checked.
+        QTRY_VERIFY((second = named("misspellResultCheck2")));
         click(second);
         QTRY_VERIFY(!second->property("checked").toBool());
+        QCOMPARE(header->property("checkState").toInt(), int(Qt::PartiallyChecked));
         // A double click on a find shows its Line with the find selected.
-        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, centre(findItem(resultsContent, QStringLiteral("misspellResultRow2"))));
+        auto *findRow = named("misspellResultRow2");
+        QTest::mouseDClick(findRow->window(), Qt::LeftButton, Qt::NoModifier, centre(findRow));
         QTRY_COMPARE(session->selection().active, std::optional(session->document().lines()[0]->id));
         QCOMPARE(application->editor().selectionStart(), 13);
         QCOMPARE(application->editor().selectionEnd(), 15);
-        // A click in the main window outside both dialogs closes neither.
-        const QPoint outside(window->width() - 12, window->height() / 2);
-        QVERIFY(!popupRect(results).contains(outside) && !popupRect(dialog).contains(outside));
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, outside);
-        QTest::qWait(50);
-        QVERIFY(results->property("visible").toBool());
-        QVERIFY(dialog->property("visible").toBool());
         // Replace: one "Fixing minor errors" step with the checked find.
         const auto steps = session->historySize();
-        auto *replace = findItem(resultsContent, QStringLiteral("misspellReplaceChecked"));
+        auto *replace = named("misspellReplaceChecked");
         click(replace);
         QTRY_COMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Fixing minor errors"));
@@ -7171,37 +8034,65 @@ private slots:
             return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
         };
         QCOMPARE(text(0), QStringLiteral("Hello, world , again"));
-        QVERIFY(!replace->property("enabled").toBool()); // once per search
-        // Closing the results window leaves the Multireplacer open.
-        QVERIFY(QMetaObject::invokeMethod(results, "close"));
-        QTRY_VERIFY(!results->property("visible").toBool());
-        QVERIFY(dialog->property("visible").toBool());
-        // Replace all errors in current tab with "Remove doubled spaces" too.
-        click(dialogItem("misspellDialog", "misspellRuleCheck1"));
+        QVERIFY(!replace->isEnabled()); // once per search
+        // Closing the results gives the strip back; the panel stays.
+        click(named("misspellCloseResults"));
+        QTRY_VERIFY(!results->property("shown").toBool());
+        QVERIFY(named("misspellAddRule")->isEnabled());
+        QVERIFY(dock->property("isOpen").toBool());
+        // Replace all in this tab with "Remove doubled spaces" too.
+        click(named("misspellRuleCheck1"));
         QTRY_VERIFY(application->misspellRules().at(1).toMap().value(QStringLiteral("checked")).toBool());
-        click(dialogItem("misspellDialog", "misspellReplaceTab"));
+        click(named("misspellReplaceAll"));
         QTRY_COMPARE(session->historySize(), steps + 2);
         QCOMPARE(session->history().back().name, std::string("Fixing minor errors"));
         QCOMPARE(text(0), QStringLiteral("Hello, world, again"));
         QCOMPARE(text(1), QStringLiteral("a b"));
-        // The rule buttons: add (unchecked), edit the chosen one, delete it.
-        auto *find = dialogItem("misspellDialog", "misspellFind");
+        // The Rule section (folded by the Find): add (unchecked), update the
+        // chosen one, delete it. Case and In are one list each over the
+        // rules file's bits.
+        if (!tool->property("editorOpen").toBool())
+            click(named("misspellRuleSection"));
+        QTRY_VERIFY(tool->property("editorOpen").toBool());
+        auto *find = named("misspellFind");
+        QTRY_VERIFY(find->isVisible());
         find->setProperty("text", QStringLiteral("fine"));
-        dialogItem("misspellDialog", "misspellReplace")->setProperty("text", QStringLiteral("good"));
-        click(addRule);
+        named("misspellReplace")->setProperty("text", QStringLiteral("good"));
+        named("misspellCase")->setProperty("currentIndex", 2);  // Lower case: 2
+        named("misspellWhere")->setProperty("currentIndex", 2); // Text only: 32
+        named("misspellMatchCase")->setProperty("checked", true);
+        click(named("misspellAddRule"));
         auto added = application->misspellRules();
         QCOMPARE(added.size(), 14);
         QCOMPARE(added.last().toMap().value(QStringLiteral("find")).toString(), QStringLiteral("fine"));
+        QCOMPARE(added.last().toMap().value(QStringLiteral("options")).toInt(), 1 | 2 | 32);
         QVERIFY(!added.last().toMap().value(QStringLiteral("checked")).toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "chooseRule", Q_ARG(QVariant, 13)));
+        QVERIFY(QMetaObject::invokeMethod(tool, "chooseRule", Q_ARG(QVariant, 13)));
+        QCOMPARE(named("misspellCase")->property("currentIndex").toInt(), 2);
+        QCOMPARE(named("misspellWhere")->property("currentIndex").toInt(), 2);
         find->setProperty("text", QStringLiteral("fin"));
-        click(dialogItem("misspellDialog", "misspellEditRule"));
+        named("misspellCase")->setProperty("currentIndex", 1); // Unchanged: 8
+        click(named("misspellEditRule"));
         QCOMPARE(application->misspellRules().last().toMap().value(QStringLiteral("find")).toString(), QStringLiteral("fin"));
-        click(dialogItem("misspellDialog", "misspellRemoveRule"));
+        QCOMPARE(application->misspellRules().last().toMap().value(QStringLiteral("options")).toInt(), 1 | 8 | 32);
+        // A rule saved with several case bits opens as the one the engine
+        // applies: unchanged, then lower, then upper.
+        QVariant both;
+        QVERIFY(QMetaObject::invokeMethod(tool, "caseIndexOf", Q_RETURN_ARG(QVariant, both), Q_ARG(QVariant, 2 | 4 | 8)));
+        QCOMPARE(both.toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(tool, "caseIndexOf", Q_RETURN_ARG(QVariant, both), Q_ARG(QVariant, 2 | 4)));
+        QCOMPARE(both.toInt(), 2);
+        click(named("misspellRemoveRule"));
         QCOMPARE(application->misspellRules().size(), 13);
-        // The menu hides the dialog again.
+        // The Styles field and Choose styles show only for "According to
+        // the selected styles".
+        QVERIFY(!named("misspellChooseStyles")->isVisible());
+        named("misspellWhichLines")->setProperty("currentIndex", 3);
+        QTRY_VERIFY(named("misspellChooseStyles")->isVisible());
+        named("misspellWhichLines")->setProperty("currentIndex", 0);
+        // The menu hides the panel again.
         QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
     }
 
     // F4: a find in an untranslated Line in translation mode is selected in
@@ -7254,6 +8145,31 @@ private slots:
         // The valid checked rule still ran.
         const auto &line = *session->document().lines()[1];
         QCOMPARE(std::string(line.text.begin(), line.text.end()), std::string("untranslated three"));
+    }
+
+    // PU2 (#304): starting and quitting leave Rules.txt alone: the default
+    // arrangement opens Fix minor errors only in passing, and the rules are
+    // read (and written back at exit) only once the panel shows (Codex
+    // review). A malformed file would come back rewritten otherwise.
+    void startingLeavesTheRulesFileAlone()
+    {
+        QTemporaryDir home;
+        const QByteArray bytes("#HikariSub rules file\r\n1\r\nnot a rule\r\nMine\fteh\fthe\f1\r\n");
+        QFile rules(home.filePath(QStringLiteral("Rules.txt")));
+        QVERIFY(rules.open(QIODevice::WriteOnly));
+        rules.write(bytes);
+        rules.close();
+        restartWithSpelling(home.path(), false);
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "defaultLayout"));
+        QTest::qWait(100);
+        QVERIFY(!item<QObject>("misspellDock")->property("isOpen").toBool());
+        QVERIFY(!application->log().history().contains(QStringLiteral("is invalid")));
+        delete engine;
+        delete application;
+        engine = nullptr;
+        application = nullptr;
+        QVERIFY(rules.open(QIODevice::ReadOnly));
+        QCOMPARE(rules.readAll(), bytes);
     }
 
     // F4: Rules.txt beside the INI file, written when the application ends
@@ -7362,18 +8278,17 @@ private slots:
         QTRY_VERIFY(matroska.available());
         application->duplicateLines();
         QVERIFY(application->files().session(before)->isDirty());
-        auto *question = named("mkvSaveQuestion");
         auto *chooser = named("mkvTrackChooser");
-        QVERIFY(question && chooser);
+        QVERIFY(chooser);
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveCancel"), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("cancel"));
+        QTRY_VERIFY(!mkvQuestionShown());
         QCOMPARE(matroska.state(), 0);
         // No: the tracks, then "Choose subtitle track"; its Cancel reads nothing.
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QCOMPARE(chooser->property("title").toString(), QStringLiteral("Choose the subtitle track"));
         QCOMPARE(chooser->property("rows").toStringList(),
@@ -7394,8 +8309,8 @@ private slots:
         // Yes saves the Document to its file first (Hikari->Save(false)); OK
         // on the first row: the ASS track replaces the tab's Document.
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveYes"), "click"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("save"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != before, 20000);
@@ -7440,8 +8355,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root, "runGridHotkey", Q_RETURN_ARG(QVariant, handled),
                                           Q_ARG(QVariant, QStringLiteral("GRID_SUBS_FROM_MKV"))));
         QVERIFY(handled.toBool());
-        QTRY_VERIFY(question->property("visible").toBool()); // the loaded Document is unsaved
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY(mkvQuestionShown()); // the loaded Document is unsaved
+        QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         chooser->setProperty("current", 1);
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
@@ -7453,6 +8368,174 @@ private slots:
         QCOMPARE(srt->document().lines()[0]->start.value.microseconds(), 500'000);
         QCOMPARE(srt->document().lines()[0]->end.value.microseconds(), 1'500'000);
         QCOMPARE(QString::fromStdString(*application->workspace().title(target())), QStringLiteral("mkvextract.srt"));
+
+        // PU1-mkv-notices: the window stays usable while the file is read;
+        // work done in the tab meanwhile keeps it, and the track opens in a
+        // new tab.
+        const auto edited = target();
+        const auto tabs = application->workspace().tabs().size();
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->duplicateLines();
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != edited, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        QVERIFY(application->files().session(edited));
+        QCOMPARE(application->files().session(edited)->document().lines().size(), std::size_t(2));
+
+        // A draft typed before the load, which the question covered, goes
+        // with the tab's Document (Load without saving): the track takes the
+        // tab (the edited tab again, which has the video).
+        const auto listed = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(listed, edited) - listed.begin()));
+        QTRY_VERIFY(target() == edited);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000); // its video opens again
+        QTRY_VERIFY(item->property("enabled").toBool());
+        auto *editedSession = application->files().session(edited);
+        QVERIFY(editedSession->editDraftText(*editedSession->selection().active, u8"before"));
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != edited, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        QVERIFY(!application->files().session(edited));
+
+        // A draft typed meanwhile, not yet committed, keeps the tab too.
+        const auto drafted = target();
+        const auto order = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(order, drafted) - order.begin()));
+        QTRY_VERIFY(target() == drafted);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000); // its video opens again
+        QTRY_VERIFY(item->property("enabled").toBool());
+        auto *draftSession = application->files().session(drafted);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(draftSession->editDraftText(*draftSession->selection().active, u8"typed"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 2);
+        QVERIFY(application->files().session(drafted));
+        QCOMPARE(application->files().session(drafted)->draftText(), std::optional<std::u8string>(u8"typed"));
+
+        // Another video opened in the tab meanwhile keeps the tab: the track
+        // is the old video's, so it opens in a new tab, also while that video
+        // is still being opened.
+        QVERIFY(draftSession->commitDraft());
+        const auto reopened = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(reopened, drafted) - reopened.begin()));
+        QTRY_VERIFY(target() == drafted);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000);
+        QTRY_VERIFY(item->property("enabled").toBool());
+        const auto lines = draftSession->document().lines().size();
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 3);
+        QCOMPARE(application->files().session(drafted)->document().lines().size(), lines);
+    }
+
+    // PU1-mkv-notices: a load File > Open started on Home has its progress
+    // there; a Document opened while the file is read keeps its tab, and
+    // the track opens in a new one.
+    void anMkvOpenedOnHomeKeepsADocumentOpenedMeanwhile()
+    {
+        auto &matroska = application->matroska();
+        auto *dialog = named("subtitlesOpenDialog");
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(dialog && chooser);
+        auto *root = engine->rootObjects().first();
+        QVERIFY(!application->workspace().editingTarget());
+        dialog->setProperty("selectedFile", QUrl::fromLocalFile(nativeFixture("mkvextract.mkv")));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accepted"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QCOMPARE(root->property("mkvTab").toString(), QStringLiteral("home"));
+        QVERIFY(application->openFile(writeFile(dir, "home.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,kept\n")));
+        const auto opened = *application->workspace().editingTarget();
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != opened, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(2));
+        auto *kept = application->files().session(opened);
+        QVERIFY(kept);
+        QCOMPARE(kept->document().lines().size(), std::size_t(1));
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*application->workspace().editingTarget())),
+                 QStringLiteral("mkvextract.ass"));
+    }
+
+    // PU1-mkv-notices: a tab reloaded while the file is read keeps what was
+    // reloaded, and the track opens in a new tab.
+    void anMkvReadKeepsATabReloadedMeanwhile()
+    {
+        auto &matroska = application->matroska();
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(chooser);
+        const QString subs = writeFile(dir, "mkvreload.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
+        QVERIFY(application->openFile(subs));
+        const auto reloaded = *application->workspace().editingTarget();
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        application->video().openVideo(mkv);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
+                                 30000);
+        QTRY_VERIFY(matroska.available());
+        const auto tabs = application->workspace().tabs().size();
+        QVERIFY(matroska.start()); // a clean tab: no question
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(application->reloadTarget());
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != reloaded, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        auto *kept = application->files().session(reloaded);
+        QVERIFY(kept);
+        QCOMPARE(kept->document().lines().size(), std::size_t(1));
+    }
+
+    // A tab left and come back to while the file is read is unchanged (its
+    // video opened again): the track replaces its Document.
+    void anMkvReadReplacesATabLeftAndComeBackTo()
+    {
+        auto &matroska = application->matroska();
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(chooser);
+        const QString subs = writeFile(dir, "mkvback.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
+        QVERIFY(application->openFile(subs));
+        const auto source = *application->workspace().editingTarget();
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        const auto ready = [&] {
+            return QTest::qWaitFor([&] {
+                return application->video().session().state() == application::VideoSession::State::Ready &&
+                       QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())) == mkv;
+            }, 30000);
+        };
+        application->video().openVideo(mkv);
+        QVERIFY(ready());
+        QTRY_VERIFY(matroska.available());
+        QVERIFY(matroska.start()); // a clean tab: no question
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->addPage();
+        const auto tabs = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(tabs, source) - tabs.begin()));
+        QVERIFY(ready()); // its video again
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->files().session(source), 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs.size());
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*application->workspace().editingTarget())),
+                 QStringLiteral("mkvextract.ass"));
     }
 
     // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
@@ -7473,9 +8556,8 @@ private slots:
             dialog->setProperty("selectedFile", QUrl::fromLocalFile(path));
             return QMetaObject::invokeMethod(dialog, "accepted");
         };
-        auto *question = named("mkvSaveQuestion");
         auto *chooser = named("mkvTrackChooser");
-        QVERIFY(question && chooser);
+        QVERIFY(chooser);
         const auto target = [&] { return application->workspace().editingTarget(); };
         const auto tabs = [&] { return application->workspace().tabs().size(); };
         const auto ass = [&](application::DocumentId id) {
@@ -7506,7 +8588,7 @@ private slots:
         QCOMPARE(tabs(), std::size_t(1));
         QVERIFY(choose(mkv));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(!mkvQuestionShown());
         QCOMPARE(chooser->property("rows").toStringList(),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
@@ -7532,7 +8614,7 @@ private slots:
         QVERIFY(QFile::copy(mkv, upper));
         QVERIFY(choose(upper));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(!mkvQuestionShown());
         QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, false)));
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(target(), first);
@@ -7570,15 +8652,15 @@ private slots:
         QVERIFY(application->files().session(untitled)->isDirty());
         const auto count = tabs();
         QVERIFY(choose(mkv));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveCancel"), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("cancel"));
+        QTRY_VERIFY(!mkvQuestionShown());
         QCOMPARE(matroska.state(), 0);
         QVERIFY(!matroska.start()); // no video in the tab, and the file is forgotten
         QCOMPARE(target(), untitled);
         QVERIFY(choose(mkv));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != untitled, 20000);
@@ -8292,12 +9374,22 @@ private slots:
         auto *find = dialogItem("selectLinesDialog", "selectFindText");
         QVERIFY(find);
         find->setProperty("editText", QStringLiteral("alpha"));
+        // PU2-select-lines: a modeless window on DG1's frame; Select keeps
+        // it open and the count is a toast.
+        auto *window = qobject_cast<QQuickWindow *>(dialog);
+        QVERIFY(window);
+        QCOMPARE(window->modality(), Qt::NonModal);
+        QCOMPARE(window->title(), QStringLiteral("Select lines"));
+        // DG1's settings: the title bar choice and the remembered place (Codex review).
+        QCOMPARE(dialog->property("settings").value<QObject *>(), static_cast<QObject *>(application->settingsStore()));
+        QCOMPARE(dialog->property("defaultButton").value<QObject *>()->objectName(), QStringLiteral("selectRun"));
+        auto *toasts = root->findChild<QObject *>(QStringLiteral("toastStack"));
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectRun"), "click"));
-        // NT1: the result is an info toast and Select lines stays open.
+        // NT1: the count is an info toast titled with the command.
         QQuickItem *result = nullptr;
         QTRY_VERIFY((result = toastWith(QStringLiteral("2 lines selected."))));
-        QCOMPARE(partNamed(result, "toastTitle")->property("text").toString(),
-                 QStringLiteral("Select lines"));
+        QCOMPARE(partNamed(result, "toastTitle")->property("text").toString(), QStringLiteral("Select lines"));
         QVERIFY(dialog->property("visible").toBool());
         const auto lines = session->document().lines();
         QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id, lines[2]->id}));
@@ -8320,7 +9412,23 @@ private slots:
         QTRY_VERIFY(!styles->property("visible").toBool());
         QCOMPARE(find->property("editText").toString(), QStringLiteral("alpha"));
         QVERIFY(!dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+        // The In row is a segmented choice; a styles tick picks Styles.
+        auto *fields = dialogItem("selectLinesDialog", "selectField");
+        QCOMPARE(fields->property("currentIndex").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectChooseStyles"), "click"));
+        QTRY_VERIFY(styles->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(styles, "toggle", Q_ARG(QVariant, names.first())));
+        QCOMPARE(fields->property("currentIndex").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(styles, "revert"));
+        QCOMPARE(fields->property("currentIndex").toInt(), 0);
+        // Enter in the find field selects too, and Close (Esc) closes.
+        window->requestActivate();
+        find->forceActiveFocus();
+        QTRY_VERIFY(find->hasActiveFocus());
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(toastWith(QStringLiteral("2 lines selected.")));
+        QTest::keyClick(window, Qt::Key_Escape);
         QTRY_VERIFY(!dialog->property("visible").toBool());
         // Delete by style, as one "Selecting lines" step; Without and Comments too.
         const auto steps = session->historySize();
@@ -8861,8 +9969,6 @@ private slots:
             {"keyframesDialog", QStringLiteral("Choose keyframes file")},
             {"fontsFolderDialog", QStringLiteral("Choose external font folder")},
             {"findFolderDialog", QStringLiteral("Choose subtitle search folder")},
-            {"closeSaveAs", QStringLiteral("Save subtitle file")},
-            {"mkvProgress", QStringLiteral("Load subtitles from an MKV/OGM file")},
             {"aspectRatioDialog", QStringLiteral("Change aspect ratio")},
         };
         for (const auto &[name, title] : titles) {
@@ -8929,7 +10035,6 @@ private slots:
                     out << w;
             return out;
         };
-        named("closeReview")->setProperty("visible", true);
         for (const char *name : {"keyframesDialog", "fontsFolderDialog", "findFolderDialog", "closeSaveAs"}) {
             QObject *dialog = find(name);
             const QSet<QWindow *> before = shown();
@@ -8942,7 +10047,6 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
             QTRY_VERIFY(!own->isVisible());
         }
-        named("closeReview")->setProperty("visible", false);
         QVERIFY(QMetaObject::invokeMethod(settings, "close"));
         for (const char *name : {"mkvProgress", "aspectRatioDialog"}) {
             QObject *popup = find(name);
@@ -9302,22 +10406,29 @@ private slots:
         QCOMPARE(session->selection().active, std::optional(lines[1]->id));
         press(Qt::Key_F3);
         QCOMPARE(session->selection().active, std::optional(lines[2]->id));
-        // The end asks "Reached end" in a box that does not block: F3 (and any
-        // other find) is refused while it waits.
+        // PU2: the end asks "Reached the end" in a message box that blocks
+        // nothing else: F3 (and any other find) is refused while it waits.
         application->setFindQuestionHandler({});
         auto *question = item<QObject>("findQuestion");
+        const auto box = [&] { return qobject_cast<QQuickWindow *>(question->property("box").value<QObject *>()); };
+        const auto choice = [&](const char *id) {
+            return findItem(box()->contentItem(), QStringLiteral("messageBoxChoice_%1").arg(QLatin1String(id)));
+        };
         press(Qt::Key_F3);
-        QTRY_VERIFY(question->property("visible").toBool());
-        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached the end of the subtitles."));
+        QCOMPARE(box()->title(), QStringLiteral("Find and replace"));
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("Search again from the first line?"));
         QVERIFY(application->findBusy());
         press(Qt::Key_F3);
         application->findNext();
         application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}});
         QCOMPARE(question->property("queue").toList().size(), 0);
         QCOMPARE(session->selection().active, std::optional(lines[2]->id));
-        // Yes: from the beginning.
-        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        // Search from the start (the default, Enter's): from the beginning.
+        QCOMPARE(box()->property("defaultButton").value<QObject *>(), choice("fromStart"));
+        QVERIFY(QMetaObject::invokeMethod(choice("fromStart"), "click"));
+        QTRY_VERIFY(!question->property("opened").toBool());
         QVERIFY(!application->findBusy());
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
         // Find all lists the matches on the right; a double click goes there.
@@ -9346,27 +10457,36 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Replace all"));
         QVERIFY(!application->canReplaceFindResults());
         QVERIFY(!item("replaceCheckedButton")->isEnabled());
-        // "Could not find" is an info toast titled "Find" (NT1), not a box;
-        // Yes to "Reached end" that finds nothing from the beginning either
-        // closes the question and gives the toast.
+        // An answer that asks again at once: "Search from the start" finds
+        // nothing from the beginning either, and "Could not find" is an info
+        // toast titled "Find" (PU2, NT1), which blocks nothing.
         application->setFindQuestionHandler({});
+        auto *toasts = item<QObject>("toastStack");
         const QVariantMap zzz{{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}};
-        const QString notFound = QStringLiteral("Could not find the specified phrase \"zzz\".");
+        const QString notFound = QStringLiteral("Could not find “zzz”.");
         const int infos = application->log().infoCount();
         application->runFindReplace(QStringLiteral("find"), zzz); // from the beginning (the last search wrapped)
         QQuickItem *toast = nullptr;
         QTRY_VERIFY((toast = toastWith(notFound)));
         QCOMPARE(partNamed(toast, "toastTitle")->property("text").toString(), QStringLiteral("Find"));
         QCOMPARE(application->log().infoCount(), infos + 1);
-        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(!question->property("opened").toBool());
         QVERIFY(!application->findBusy());
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
         application->runFindReplace(QStringLiteral("find"), zzz);
-        QTRY_VERIFY(question->property("visible").toBool());
-        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
-        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached the end of the subtitles."));
+        QVERIFY(QMetaObject::invokeMethod(choice("fromStart"), "click"));
         QTRY_COMPARE(application->log().infoCount(), infos + 2);
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_VERIFY(toastWith(notFound));
+        QTRY_VERIFY(!question->property("opened").toBool());
+        // Esc answers Stop: nothing more is found or asked.
+        application->runFindReplace(QStringLiteral("find"), zzz);
+        QTRY_VERIFY(question->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box(), "reject"));
+        QTRY_VERIFY(!question->property("opened").toBool());
         QVERIFY(!application->findBusy());
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
         // Ctrl+F again on the Find tab with the focus in the tool hides it.
         item("findText")->forceActiveFocus();
         press(Qt::Key_F, Qt::ControlModifier);
@@ -9628,7 +10748,8 @@ private slots:
                                     {{QStringLiteral("tab"), 2},
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("folder"), folder.filePath(QStringLiteral("missing"))}});
-        QCOMPARE(questions.back(), QStringLiteral("Search path is invalid"));
+        QCOMPARE(questions.back(), QStringLiteral("The search folder “%1” does not exist.")
+                                       .arg(folder.filePath(QStringLiteral("missing"))));
     }
 
     // F1 (R5-per-platform): legacy wxDir::GetAllFiles lists each folder's
@@ -9728,23 +10849,26 @@ private slots:
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("folder"), folder.path()}});
         QCOMPARE(application->findResults().size(), 2);
-        auto *review = item<QObject>("closeReview");
-        QVERIFY(review);
+        // PU1-unsaved-window: one Document is asked about in a message box.
+        const auto question = [&] { return item<QObject>("closeQuestion"); };
+        const auto answer = [&](const char *id) {
+            return QMetaObject::invokeMethod(question(), "answer", Q_ARG(QVariant, QLatin1String(id)));
+        };
         // Cancel: the Untitled Document stays, its row 0 is the result's Line.
         application->showFindResult(1);
-        QTRY_VERIFY(review->property("visible").toBool());
+        QTRY_VERIFY(question() && question()->property("visible").toBool());
         QVERIFY(application->findBusy());
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("closeCancel"), "click"));
-        QTRY_VERIFY(!review->property("visible").toBool());
+        QVERIFY(answer("cancel"));
+        QTRY_VERIFY(!question()->property("visible").toBool());
         QVERIFY(!application->findBusy());
         QVERIFY(application->targetUntitled());
         QVERIFY(untitled->isDirty());
         QCOMPARE(untitled->selection().active, std::optional(untitled->document().lines()[0]->id));
         // Discard: the file is loaded into that tab and its Line is shown.
         application->showFindResult(1);
-        QTRY_VERIFY(review->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("closeDiscardAll"), "click"));
-        QTRY_VERIFY(!review->property("visible").toBool());
+        QTRY_VERIFY(question()->property("visible").toBool());
+        QVERIFY(answer("discard"));
+        QTRY_VERIFY(!question()->property("visible").toBool());
         QVERIFY(!application->findBusy());
         QVERIFY(!application->targetUntitled());
         QCOMPARE(application->workspace().documents().size(), std::size_t(1));
@@ -10243,35 +11367,30 @@ private slots:
         // the first is named.
         using Buttons = std::vector<std::pair<const char *, Role>>;
         const std::vector<Buttons> footers{
-            {{"historySet", Apply}, {"historyOk", Accept}, {"historyCancel", Reject}},
-            {{"closeSaveAll", Accept}, {"closeDiscardAll", Destructive}, {"closeContinue", Action}, {"closeCancel", Reject}},
+            {{"historyGo", Accept}, {"historyClose", Reject}}, // PU2
             {{"automationReassignOk", Accept}, {"automationReassignKeepBoth", Action}, {"automationReassignCancel", Reject}},
             {{"fpsOk", Accept}, {"fpsCancel", Reject}},
             {{"columnsOk", Accept}, {"columnsCancel", Reject}},
-            {{"groupBreakRemove", Destructive}, {"groupBreakCancel", Reject}},
-            {{"reloadYes", Yes}, {"reloadNo", No}},
             {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
              {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
             {{"conversionAccept", Accept}, {"Cancel", Reject}},
             {{"resampleOk", Accept}, {"Cancel", Reject}},
             {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
-            {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
             {{"saveTag", Accept}, {"cancelTag", Reject}},
-            {{"updateOffer", Accept}, {"updateClose", Reject}}, // DG1: Remind me in a week at the leading edge
-            {{"updateAurRemind", No}, {"updateAurClose", Reject}},
-            {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
+            {{"updateOffer", Accept}, {"updateClose", Reject}, {"updateRemind", No}}, // PU7: Skip this version at the leading edge
+            {{"saveLayoutSave", Accept}, {"saveLayoutCancel", Reject}}, // PU7
+            {{"selectRun", Accept}, {"selectClose", Reject}}, // PU2: Select in all tabs at the leading edge
+            {{"translationShiftClose", Reject}}, // PU2
             {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
              {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
-            {{"mkvSaveYes", Yes}, {"mkvSaveNo", No}, {"mkvSaveCancel", Reject}},
-            {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
             {{"clashReviewApply", Accept}, {"clashReviewCancel", Reject}}, // PK1
             {{"listChooserTake", Accept}, {"listChooserCancel", Reject}}, // PK1
             {{"styleCreateYes", Accept}, {"styleCreateCancel", Reject}}, // LE6
+            {{"fontPickerOk", Accept}, {"fontPickerCancel", Reject}}, // PU3
+            {{"fontCatalogClose", Reject}},
+            {{"fontsFromSubtitlesOk", Accept}, {"fontsFromSubtitlesCancel", Reject}},
         };
-        // The find question lives in the Search tool's dock: open it. The
-        // Automation panel's Reassign question has no items until it opens.
-        press(Qt::Key_F, Qt::ControlModifier);
-        QTRY_VERIFY(item<QObject>("searchDock")->property("isOpen").toBool());
+        // The Automation panel's Reassign question has no items until it opens.
         QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("automationDock")))));
         QTRY_VERIFY(item<QObject>("automationDock")->property("isOpen").toBool());
         QObject *reassign = item<QObject>("automationReassign");
@@ -10304,6 +11423,7 @@ private slots:
             for (int i = 0; i < count; ++i) {
                 QQuickItem *button = nullptr;
                 QVERIFY(QMetaObject::invokeMethod(box, "itemAt", Q_RETURN_ARG(QQuickItem *, button), Q_ARG(int, i)));
+                QVERIFY2(button, first);
                 const QString name = button->objectName().isEmpty() ? button->property("text").toString() : button->objectName();
                 const auto expected = std::find_if(buttons.begin(), buttons.end(),
                                                    [&](const auto &b) { return name == QLatin1String(b.first); });
@@ -10317,19 +11437,21 @@ private slots:
         clashes->close();
         QTRY_VERIFY(!clashes->isVisible());
 
-        // History: Set (apply), OK (accept), Cancel (reject), at the right edge.
-        auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
-        history->show();
+        // History: Go to step (accept, the default) and Close (reject), at
+        // the right edge.
+        auto *history = qobject_cast<QQuickWindow *>(item<QObject>("historyWindow"));
+        QVERIFY(history);
+        QVERIFY(QMetaObject::invokeMethod(history, "open"));
         QVERIFY(QTest::qWaitForWindowExposed(history));
-        auto *set = history->findChild<QQuickItem *>(QStringLiteral("historySet"));
-        auto *ok = history->findChild<QQuickItem *>(QStringLiteral("historyOk"));
-        auto *cancel = history->findChild<QQuickItem *>(QStringLiteral("historyCancel"));
-        auto *box = boxOf(ok);
+        auto *go = findItem(history->contentItem(), QStringLiteral("historyGo"));
+        auto *close = findItem(history->contentItem(), QStringLiteral("historyClose"));
+        QVERIFY(go && close);
+        auto *box = boxOf(go);
         const auto left = [&](QQuickItem *item) { return item->mapToItem(box, QPointF()).x(); };
         const auto order = [&](int layout) {
             box->setProperty("buttonLayout", layout); // laid out at the next polish: QTRY_COMPARE asks again
             std::vector<std::pair<qreal, QString>> xs;
-            for (QQuickItem *b : {set, ok, cancel})
+            for (QQuickItem *b : {go, close})
                 xs.emplace_back(left(b), b->property("text").toString());
             std::sort(xs.begin(), xs.end());
             QStringList names;
@@ -10340,61 +11462,56 @@ private slots:
         const QVariant platformLayout = box->property("buttonLayout");
         {
             auto restoreLayout = qScopeGuard([&] { box->setProperty("buttonLayout", platformLayout); });
-            QTRY_COMPARE(order(0), (QStringList{"OK", "Cancel", "Set"})); // WinLayout
-            QTRY_COMPARE(order(2), (QStringList{"OK", "Set", "Cancel"})); // KdeLayout
-            QTRY_COMPARE(order(3), (QStringList{"Set", "Cancel", "OK"})); // GnomeLayout
+            QTRY_COMPARE(order(0), (QStringList{"Go to step", "Close"})); // WinLayout
+            QTRY_COMPARE(order(2), (QStringList{"Go to step", "Close"})); // KdeLayout
+            QTRY_COMPARE(order(3), (QStringList{"Close", "Go to step"})); // GnomeLayout
         }
         qreal right = 0;
-        for (QQuickItem *b : {set, ok, cancel})
+        for (QQuickItem *b : {go, close})
             right = std::max(right, left(b) + b->width());
         QTRY_COMPARE(right, box->width());
         const QPointF boxRight = box->mapToItem(history->contentItem(), QPointF(box->width(), 0));
-        QVERIFY(boxRight.x() > history->width() - 20); // the window's margin, not centred
+        QVERIFY(boxRight.x() > history->width() - 30); // the window's margin, not centred
         history->close();
 
-        // The find question's answers in the platform's order: the styles
-        // question on Windows (Yes, OK, No, Cancel by their roles).
-        auto *question = item<QObject>("findQuestion");
-        emit application->findQuestion(0, 2, QStringLiteral("Styles named \"X\" do not exist."), QStringLiteral("Confirmation"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        auto *answerBox = boxOf(question->findChild<QQuickItem *>(QStringLiteral("findAnswerOk")));
+        // PU2: the find question is a message box, its answers in the
+        // platform's order by their roles: the styles question on Windows.
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("searchDock")))));
+        QObject *question = nullptr;
+        QTRY_VERIFY((question = item<QObject>("findQuestion")));
+        emit application->findQuestion(0, 2, {{QStringLiteral("title"), QStringLiteral("Find and replace")},
+                                              {QStringLiteral("text"), QStringLiteral("a.ass has no style named “X”.")},
+                                              {QStringLiteral("severity"), QStringLiteral("warning")}});
+        QTRY_VERIFY(question->property("opened").toBool());
+        auto *questionBox = qobject_cast<QQuickWindow *>(question->property("box").value<QObject *>());
+        QVERIFY(questionBox);
+        auto *answerBox = boxOf(findItem(questionBox->contentItem(), QStringLiteral("messageBoxChoice_dropMissing")));
+        QVERIFY(answerBox);
         const QVariant answerLayout = answerBox->property("buttonLayout");
         {
             auto restoreLayout = qScopeGuard([&] { answerBox->setProperty("buttonLayout", answerLayout); });
             answerBox->setProperty("buttonLayout", 0); // WinLayout
             const auto answers = [&] {
                 std::vector<std::pair<qreal, QString>> xs;
-                for (QQuickItem *b : answerBox->findChildren<QQuickItem *>())
-                    if (b->inherits("QQuickAbstractButton") && b->isVisible())
-                        xs.emplace_back(b->mapToItem(answerBox, QPointF()).x(), b->property("text").toString());
+                std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                    for (QQuickItem *b : from->childItems()) {
+                        if (b->inherits("QQuickAbstractButton") && b->isVisible())
+                            xs.emplace_back(b->mapToItem(answerBox, QPointF()).x(), b->property("text").toString());
+                        else
+                            walk(b);
+                    }
+                };
+                walk(answerBox);
                 std::sort(xs.begin(), xs.end());
                 QStringList names;
                 for (const auto &x : xs)
                     names << x.second;
                 return names;
             };
-            QTRY_COMPARE(answers(), (QStringList{"Remove styles", "Remove nonexistent styles", "Ignore", "Cancel"}));
+            QTRY_COMPARE(answers(), (QStringList{"Drop the missing styles", "Search every style", "Keep them", "Cancel"}));
         }
-        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerCancel")), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
-
-        // Line group: the Cancel alone when there is no group to remove.
-        auto *breakDialog = root->findChild<QQuickWindow *>(QStringLiteral("groupBreakDialog"));
-        breakDialog->setProperty("description", 0);
-        breakDialog->show();
-        QVERIFY(QTest::qWaitForWindowExposed(breakDialog));
-        auto *remove = breakDialog->findChild<QQuickItem *>(QStringLiteral("groupBreakRemove"));
-        auto *breakCancel = breakDialog->findChild<QQuickItem *>(QStringLiteral("groupBreakCancel"));
-        auto *breakBox = boxOf(breakCancel);
-        QVERIFY(!remove->isVisible());
-        QTRY_COMPARE(breakBox->implicitWidth(), breakCancel->width());
-        QTRY_COMPARE(breakCancel->mapToItem(breakBox, QPointF(breakCancel->width(), 0)).x(), breakBox->width());
-        breakDialog->setProperty("description", 7);
-        QTRY_VERIFY(remove->isVisible());
-        QTRY_COMPARE(breakBox->implicitWidth(),
-                     remove->width() + breakBox->property("spacing").toReal() + breakCancel->width());
-        breakDialog->close();
-        breakDialog->setProperty("description", 0);
+        QVERIFY(QMetaObject::invokeMethod(questionBox, "reject"));
+        QTRY_VERIFY(!question->property("opened").toBool());
     }
 
     // R1-check-items-close: a check item keeps its menus open when switched,
@@ -10539,18 +11656,152 @@ private slots:
         QTRY_COMPARE(table->rowCount(), 2);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
         QTRY_COMPARE(table->rowCount(), 4);
-        // Sorting by Start would orphan the members: refused, with the offer.
         auto *root = engine->rootObjects().first();
-        auto *breakDialog = root->findChild<QQuickWindow *>(QStringLiteral("groupBreakDialog"));
-        QVERIFY(breakDialog);
+        // PU2: Change description is a popover under the group's row (the
+        // menu's place): Esc changes nothing, Enter renames.
+        qulonglong description = 0;
+        for (const auto &line : session->document().lines())
+            if (line->group == core::GroupMarker::Description)
+                description = line->id.value;
+        QVERIFY(description);
+        auto *groupMenu = root->findChild<QObject *>(QStringLiteral("groupMenu"));
+        auto *popover = root->findChild<QObject *>(QStringLiteral("groupDescriptionPopover"));
+        QVERIFY(popover);
+        const auto openRename = [&] {
+            emit grid->groupMenuRequested(description, 120, rh * 2.5);
+            QTRY_VERIFY(groupMenu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("groupRename")), "triggered"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+        };
+        openRename();
+        auto *field = qobject_cast<QQuickItem *>(root->findChild<QObject *>(QStringLiteral("groupDescription")));
+        QCOMPARE(field->property("text").toString(), QStringLiteral("Signs"));
+        QTRY_VERIFY(field->hasActiveFocus());
+        QCOMPARE(field->property("selectedText").toString(), QStringLiteral("Signs"));
+        // Under the description row (rows 0-1 are the header and "a").
+        const auto popupItem = popover->property("contentItem").value<QQuickItem *>();
+        QVERIFY(popupItem->mapToItem(grid, QPointF()).y() >= rh * 3 - 1);
+        QCOMPARE(root->findChild<QObject *>(QStringLiteral("groupDescriptionRename"))->property("text").toString(),
+                 QStringLiteral("Rename"));
+        field->setProperty("text", QStringLiteral("Typing"));
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("opened").toBool());
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Signs"));
+        // Another editing target closes it as Esc does (Codex review): with
+        // the Grid floating the main window's tabs stay usable.
+        openRename();
+        field->setProperty("text", QStringLiteral("Elsewhere"));
+        const int renameTab = application->currentTab();
+        QVERIFY(application->openFile(writeFile(dir, "g9-rename.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,y\n")));
+        if (application->currentTab() == renameTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QTRY_VERIFY(!popover->property("opened").toBool());
+        application->selectTab(renameTab);
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Signs"));
+        openRename();
+        field->setProperty("text", QStringLiteral("Station signs"));
+        press(Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("opened").toBool());
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Station signs"));
+        // Sorting by Start would orphan the members: refused, with the offer
+        // in a message box (Cancel the default, Remove group in the danger
+        // colour).
+        auto *breakBox = qobject_cast<QQuickWindow *>(root->findChild<QObject *>(QStringLiteral("groupBreakBox")));
+        QVERIFY(breakBox);
         const auto steps = session->historySize();
         QVERIFY(!application->sortLines(QStringLiteral("start"), false));
-        QTRY_VERIFY(breakDialog->isVisible());
+        QTRY_VERIFY(breakBox->isVisible());
+        QCOMPARE(breakBox->title(), QStringLiteral("Line group"));
+        QCOMPARE(breakBox->property("text").toString(), QStringLiteral("This would break the line group “Station signs”."));
+        auto *cancel = findItem(breakBox->contentItem(), QStringLiteral("messageBoxChoice_cancel"));
+        auto *remove = findItem(breakBox->contentItem(), QStringLiteral("messageBoxChoice_remove"));
+        QCOMPARE(breakBox->property("defaultButton").value<QObject *>(), cancel);
+        QVERIFY(QString::fromLatin1(remove->metaObject()->className()).startsWith(QLatin1String("DangerButton")));
         QCOMPARE(session->historySize(), steps);
+        // The box is for the tab that refused (Codex review): with the Grid
+        // floating the main window's tabs stay usable, and another editing
+        // target closes it unanswered, nothing removed.
+        const int groupTab = application->currentTab();
+        QVERIFY(application->openFile(writeFile(dir, "g9-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        if (application->currentTab() == groupTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QVERIFY(application->currentTab() != groupTab);
+        QTRY_VERIFY(!breakBox->isVisible());
+        application->selectTab(groupTab);
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Station signs"));
+        QCOMPARE(session->historySize(), steps);
+        QVERIFY(!application->sortLines(QStringLiteral("start"), false));
+        QTRY_VERIFY(breakBox->isVisible());
+        remove = findItem(breakBox->contentItem(), QStringLiteral("messageBoxChoice_remove"));
+        QVERIFY(remove);
         // Remove group deletes the description; the sort then works (a lands between m1 and m2).
-        QVERIFY(QMetaObject::invokeMethod(breakDialog->findChild<QObject *>(QStringLiteral("groupBreakRemove")), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(remove, "click"));
+        QTRY_VERIFY(!breakBox->isVisible());
         QTRY_COMPARE(table->rowCount(), 3);
         QVERIFY(application->sortLines(QStringLiteral("start"), false));
+        // Without a group to remove there is nothing to choose: a warning toast.
+        auto *toasts = item<QObject>("toastStack");
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+        emit application->groupBreakRefused(0, QString());
+        const auto entries = toasts->property("entries").toList();
+        QCOMPARE(entries.size(), 1);
+        QCOMPARE(entries.first().toMap().value(QStringLiteral("severity")).toString(), QStringLiteral("warning"));
+        QCOMPARE(entries.first().toMap().value(QStringLiteral("title")).toString(),
+                 QStringLiteral("This would leave lines outside their line group"));
+        QVERIFY(!breakBox->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+    }
+
+    // PU2 (#304): Copy / Paste columns names how many Lines it acts on;
+    // Paste columns skips the selected Lines the Grid hides (a folded
+    // group), as the paste does, and the window is for the tab it was
+    // opened in (Codex review).
+    void columnsWindowCountsItsLinesAndKeepsToItsTab()
+    {
+        const QString path = writeFile(dir, "c9.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,Signs\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_opened],0,0,0,,m1\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,[tree_opened],0,0,0,,m2\n");
+        QVERIFY(application->openFile(path));
+        const int columnsTab = application->currentTab();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        std::set<core::LineId> all;
+        for (const auto &line : lines)
+            all.insert(line->id);
+        session->setSelection(application::Selection{lines[0]->id, all, lines[0]->id, {}});
+        QCOMPARE(application->selectedLineCount(), 4);
+        QCOMPARE(application->selectedLineCount(true), 4);
+        // A click on the description row folds the group: m1 and m2 are hidden.
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        auto *table = QAccessible::queryAccessibleInterface(grid)->tableInterface();
+        const double rh = grid->property("rowHeight").toDouble();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
+        QTRY_COMPARE(table->rowCount(), 2);
+        session->setSelection(application::Selection{lines[0]->id, all, lines[0]->id, {}});
+        QCOMPARE(application->selectedLineCount(), 4);
+        QCOMPARE(application->selectedLineCount(true), 2);
+        auto *columns = qobject_cast<QQuickWindow *>(engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("columnsWindow")));
+        QVERIFY(columns);
+        QVERIFY(QMetaObject::invokeMethod(columns, "choose", Q_ARG(QVariant, true)));
+        QTRY_VERIFY(columns->isVisible());
+        QCOMPARE(columns->property("lineCount").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(columns, "close"));
+        QTRY_VERIFY(!columns->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(columns, "choose", Q_ARG(QVariant, false)));
+        QTRY_VERIFY(columns->isVisible());
+        QCOMPARE(columns->property("lineCount").toInt(), 4);
+        // Another editing target closes it unchosen.
+        QVERIFY(application->openFile(writeFile(dir, "c9-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        if (application->currentTab() == columnsTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QVERIFY(application->currentTab() != columnsTab);
+        QTRY_VERIFY(!columns->isVisible());
+        // Unfold the group again for the tests that follow.
+        application->selectTab(columnsTab);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
+        QTRY_COMPARE(table->rowCount(), 4);
     }
 
     void enterOnTheLastLineAppendsOne()
@@ -10749,13 +12000,22 @@ private slots:
         QTRY_VERIFY(item("originalNotConfirmed") && item("originalNotConfirmed")->isVisible());
         QVERIFY(item("originalMovingTags")->isVisible());
 
-        // Turning it off asks; No, the focused default, keeps it on.
+        // Turning it off asks (PU2-translation-mode-off: PK1's message
+        // box); Keep it on, the focused default, keeps it on.
         auto *confirm = item<QObject>("translatorModeOffConfirm");
         QVERIFY(confirm);
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(confirm->property("opened").toBool());
+        QCOMPARE(confirm->property("text").toString(), QStringLiteral("Turn off Translation mode?"));
+        QCOMPARE(confirm->property("defaultButton").value<QObject *>()->objectName(), QStringLiteral("messageBoxChoice_keepOn"));
         QVERIFY(action->property("checked").toBool()); // still checked while it asks
-        press(Qt::Key_Space); // the focused No
+        auto *confirmWindow = qobject_cast<QQuickWindow *>(confirm);
+        const auto focused = [&] {
+            auto *item = confirmWindow->activeFocusItem();
+            return item ? item->objectName() : QString();
+        };
+        QTRY_COMPARE(focused(), QStringLiteral("messageBoxChoice_keepOn"));
+        QTest::keyClick(confirmWindow, Qt::Key_Space); // the focused Keep it on
         QTRY_VERIFY(!confirm->property("visible").toBool());
         QVERIFY(application->editor().translationMode());
         QCOMPARE(session->historySize(), steps + 1);
@@ -11138,6 +12398,192 @@ private slots:
             QTest::qWait(300);
             QVERIFY(window->grabWindow().save(out + QStringLiteral("/translation-mode-fields") + suffix));
         }
+    }
+
+    // PU2 (#304): every redesigned Lines and edit popup in the four themes,
+    // written to HIKARI_SURFACE_SHOT_DIR (pu2-<popup>-<theme>.png): the
+    // windows and message boxes on their own, the panel, the popover and the
+    // toasts over the 1280 x 800 main window.
+    void pu2Screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const QString path = writeFile(dir, "pu2-shots.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello , station\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,Station signs\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_opened],0,0,0,,Gate  four\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,[tree_opened],0,0,0,,Platform , two\n"
+                                       "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,The train leaves at noon\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        // Two steps for the History window.
+        application->selectLines({{QStringLiteral("find"), QStringLiteral("noon")}, {QStringLiteral("field"), 0},
+                                  {QStringLiteral("action"), 5}}, false);
+        application->selectLines({{QStringLiteral("find"), QStringLiteral("noon")}, {QStringLiteral("field"), 0},
+                                  {QStringLiteral("action"), 5}}, false);
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto themed = [&](const std::function<void(const QString &)> &shoot) {
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                shoot(ui::theme::codeName(code));
+            }
+        };
+        const auto save = [&](QQuickWindow *w, const QString &name, const QString &theme) {
+            QVERIFY2(w && w->isVisible(), qPrintable(name));
+            QTest::qWait(300);
+            QImage shot;
+            QTRY_VERIFY((shot = w->grabWindow(), !shot.isNull() && shot.width() > 0));
+            QVERIFY(shot.save(out + QStringLiteral("/pu2-") + name + QLatin1Char('-') + theme + QStringLiteral(".png")));
+        };
+        const auto windowNamed = [&](const char *name) { return qobject_cast<QQuickWindow *>(item<QObject>(name)); };
+        const auto showAndShoot = [&](const char *name, const char *method, const QVariantList &args, const QString &file) {
+            auto *w = windowNamed(name);
+            QVERIFY2(w, name);
+            themed([&](const QString &theme) {
+                if (args.isEmpty())
+                    QVERIFY(QMetaObject::invokeMethod(w, method));
+                else
+                    QVERIFY(QMetaObject::invokeMethod(w, method, Q_ARG(QVariant, args.first())));
+                QTRY_VERIFY(w->isVisible());
+                save(w, file, theme);
+                w->close();
+                QTRY_VERIFY(!w->isVisible());
+            });
+        };
+        showAndShoot("selectLinesDialog", "openDialog", {}, QStringLiteral("select-lines"));
+        showAndShoot("historyWindow", "open", {}, QStringLiteral("history"));
+        showAndShoot("columnsWindow", "choose", {false}, QStringLiteral("copy-columns"));
+        showAndShoot("translationShiftWindow", "open", {}, QStringLiteral("translation-matching"));
+
+        // The find/replace questions: the four-answer one and the destructive one.
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("searchDock")))));
+        QObject *question = nullptr;
+        QTRY_VERIFY((question = item<QObject>("findQuestion")));
+        const auto ask = [&](int kind, const QVariantMap &shown, const QString &file) {
+            themed([&](const QString &theme) {
+                emit application->findQuestion(0, kind, shown);
+                QTRY_VERIFY(question->property("opened").toBool());
+                auto *box = qobject_cast<QQuickWindow *>(question->property("box").value<QObject *>());
+                save(box, file, theme);
+                QVERIFY(QMetaObject::invokeMethod(box, "reject"));
+                QTRY_VERIFY(!question->property("opened").toBool());
+            });
+        };
+        ask(2, {{QStringLiteral("title"), QStringLiteral("Find and replace")},
+                {QStringLiteral("text"), QStringLiteral("pu2-shots.ass has no style named “Sign” or “Caption”.")},
+                {QStringLiteral("detail"), QStringLiteral("The other chosen styles are there. Searching with the missing ones finds fewer lines.")},
+                {QStringLiteral("severity"), QStringLiteral("warning")}},
+            QStringLiteral("find-missing-styles"));
+        ask(4, {{QStringLiteral("title"), QStringLiteral("Replace in subtitles")},
+                {QStringLiteral("text"), QStringLiteral("Replace in every matching file in “Episodes”?")},
+                {QStringLiteral("detail"), QStringLiteral("The files are changed on disk; Undo cannot bring them back. "
+                                                          "A copy of each file goes to the ReplaceBackup folder first.")},
+                {QStringLiteral("severity"), QStringLiteral("warning")}},
+            QStringLiteral("replace-in-files"));
+
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "close"));
+
+        // The line group refusal (a sort would orphan the members) and the
+        // description popover at the group's row.
+        auto *breakBox = windowNamed("groupBreakBox");
+        QVERIFY(breakBox);
+        themed([&](const QString &theme) {
+            QVERIFY(!application->sortLines(QStringLiteral("start"), false));
+            QTRY_VERIFY(breakBox->isVisible());
+            save(breakBox, QStringLiteral("group-break"), theme);
+            QVERIFY(QMetaObject::invokeMethod(breakBox, "reject"));
+            QTRY_VERIFY(!breakBox->isVisible());
+        });
+        qulonglong description = 0;
+        for (const auto &line : session->document().lines())
+            if (line->group == core::GroupMarker::Description)
+                description = line->id.value;
+        QVERIFY(description);
+        auto *groupMenu = item<QObject>("groupMenu");
+        auto *popover = item<QObject>("groupDescriptionPopover");
+        QVERIFY(groupMenu && popover);
+        const double rh = grid->property("rowHeight").toDouble();
+        themed([&](const QString &theme) {
+            emit grid->groupMenuRequested(description, 120, rh * 2.5);
+            QTRY_VERIFY(groupMenu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>("groupRename"), "triggered"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+            save(window, QStringLiteral("group-description"), theme);
+            press(Qt::Key_Escape);
+            QTRY_VERIFY(!popover->property("opened").toBool());
+        });
+
+        // The Fix minor errors panel, editing rules and with the results open.
+        auto *dock = item<QObject>("misspellDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QQuickItem *tool = nullptr;
+        QTRY_VERIFY((tool = item<QQuickItem>("misspellTool")));
+        auto *results = item<QObject>("misspellResults");
+        application->checkMisspellRule(0, true);
+        application->checkMisspellRule(1, true);
+        QVERIFY(QMetaObject::invokeMethod(tool, "reloadRules"));
+        QVERIFY(QMetaObject::invokeMethod(tool, "chooseRule", Q_ARG(QVariant, 0)));
+        themed([&](const QString &theme) { save(window, QStringLiteral("fix-minor-errors"), theme); });
+        QVERIFY(QMetaObject::invokeMethod(tool, "find"));
+        QTRY_VERIFY(results->property("shown").toBool());
+        themed([&](const QString &theme) { save(window, QStringLiteral("fix-minor-errors-results"), theme); });
+        QVERIFY(QMetaObject::invokeMethod(results, "close"));
+        application->checkMisspellRule(0, false);
+        application->checkMisspellRule(1, false);
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+
+        // The toasts that replace the OK-only messages.
+        auto *toasts = item<QObject>("toastStack");
+        themed([&](const QString &theme) {
+            QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+            auto &log = application->log();
+            log.notice(ui::LogController::Warning, QStringLiteral("Find in files"),
+                       QStringLiteral("The search folder “/home/user/Episodes” does not exist."));
+            log.notice(ui::LogController::Info, QStringLiteral("Find"), QStringLiteral("Could not find “platfrom”."));
+            log.notice(ui::LogController::Info, QStringLiteral("Select lines"), QStringLiteral("2 lines selected."));
+            save(window, QStringLiteral("toasts"), theme);
+        });
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+
+        // The two Translation mode prompts: the preset's question (shown
+        // here without the preset, and closed unanswered), then the
+        // turn-off question on a Document in the mode.
+        auto *modeQuestion = windowNamed("translationModeQuestion");
+        QVERIFY(modeQuestion);
+        themed([&](const QString &theme) {
+            QVERIFY(QMetaObject::invokeMethod(modeQuestion, "open"));
+            QTRY_VERIFY(modeQuestion->isVisible());
+            save(modeQuestion, QStringLiteral("translation-mode-on"), theme);
+            modeQuestion->setProperty("dropping", true);
+            modeQuestion->close();
+            modeQuestion->setProperty("dropping", false);
+            QTRY_VERIFY(!modeQuestion->isVisible());
+        });
+        application->editor().discard();
+        QVERIFY(application->openFile(writeTranslationFile("pu2-tl.ass")));
+        press(Qt::Key_Home);
+        showAndShoot("columnsWindow", "choose", {true}, QStringLiteral("paste-columns"));
+        auto *confirm = windowNamed("translatorModeOffConfirm");
+        QVERIFY(confirm);
+        themed([&](const QString &theme) {
+            QVERIFY(QMetaObject::invokeMethod(confirm, "open"));
+            QTRY_VERIFY(confirm->isVisible());
+            save(confirm, QStringLiteral("translation-mode-off"), theme);
+            QVERIFY(QMetaObject::invokeMethod(confirm, "reject"));
+            QTRY_VERIFY(!confirm->isVisible());
+        });
+        application->editor().discard();
     }
 
     // E5: "Not confirmed" (EditBox::OnDoubtfulTl) flips every selected Line
@@ -11524,23 +12970,72 @@ private slots:
         }
     }
 
-    // O1: File > Settings, the legacy Options dialog over the settings registry.
-    QQuickItem *settingsButton(const char *name) const
+    // O1: File > Settings, the legacy Options dialog over the settings
+    // registry; PF1: the Settings window, its buttons in its footer.
+    QQuickItem *settingsButton(const char *name) const { return dialogItem("settingsDialog", name); }
+    // PF1: the page with `id` shown ("general", "video", "hotkeys", ...).
+    void showSettingsPage(const char *id)
     {
-        auto *popup = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsDialog"));
-        auto *footer = popup ? popup->property("footer").value<QQuickItem *>() : nullptr;
-        return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+        auto *pages = dialogItem("settingsDialog", "settingsPages");
+        QVERIFY(pages);
+        const auto list = settingsWindow()->property("pages").toList();
+        for (qsizetype i = 0; i < list.size(); ++i)
+            if (list[i].toMap().value(QStringLiteral("id")).toString() == QLatin1String(id)) {
+                pages->setProperty("currentIndex", int(i));
+                return;
+            }
+        QFAIL(id);
+    }
+    // PF1: the Settings window's question (PK1's message box) answered.
+    void answerSettingsQuestion(const char *choice)
+    {
+        QObject *box = nullptr;
+        QTRY_VERIFY((box = settingsWindow()->property("question").value<QObject *>()) && box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QString::fromLatin1(choice))));
+        QTRY_VERIFY(!box->property("visible").toBool());
     }
     QObject *openSettings()
     {
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("settingsDialog"));
+        auto *dialog = settingsWindow();
         auto *menuItem = root->findChild<QObject *>(QStringLiteral("settingsMenuItem"));
         if (!dialog || !menuItem || !QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"))
             return nullptr;
         return dialog;
     }
     QVariantMap settingsValues(QObject *dialog) const { return dialog->property("values").toMap(); }
+
+    // PU7 (#309): the update options on Settings > Updates, staged like
+    // every page's: OK writes them and the checker reads them at once; the
+    // skipped version is named there with Offer it again.
+    void settingsUpdatesPageKeepsTheUpdateOptions()
+    {
+        auto &updates = application->updates();
+        const bool autoCheck = updates.autoCheck();
+        updates.skipVersion(QStringLiteral("9.0.0"));
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("updates");
+        QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageUpdates")->isVisible());
+        auto *check = dialogItem("settingsDialog", "setting_updater.autoCheck");
+        QVERIFY(check);
+        QCOMPARE(check->property("checked").toBool(), autoCheck);
+        QCOMPARE(dialogItem("settingsDialog", "settingsSkippedVersion")->property("text").toString(), QStringLiteral("9.0.0"));
+        QVERIFY(dialogItem("settingsDialog", "settingsInstallNote"));
+        QVERIFY(QMetaObject::invokeMethod(check, "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "settingsOfferAgain"), "click"));
+        QVERIFY(!dialogItem("settingsDialog", "settingsSkippedVersion")->isVisible());
+        // Staged until OK.
+        QCOMPARE(updates.autoCheck(), autoCheck);
+        QCOMPARE(updates.skippedVersion(), QStringLiteral("9.0.0"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(updates.autoCheck(), !autoCheck);
+        QVERIFY(updates.skippedVersion().isEmpty());
+        QCOMPARE(application->settingsStore()->boolean("updater.autoCheck"), !autoCheck);
+        updates.setAutoCheck(autoCheck);
+    }
 
     void settingsDialogAppliesChangedValuesLive()
     {
@@ -11562,7 +13057,7 @@ private slots:
         // tests (Windows, HIKARI_WITH_VSFILTERMOD), never elsewhere (none at
         // all on Linux). The unset setting shows libass. Checked on the Video
         // page, where the group's visibility is its own.
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 3); // Video
+        showSettingsPage("video");
         QTRY_VERIFY(dialogItem("settingsDialog", "setting_video.zoomPercent")->isVisible());
 #ifdef HIKARI_WITH_VSFILTERMOD
         QCOMPARE(dialog->property("renderers").toStringList(),
@@ -11578,7 +13073,6 @@ private slots:
         QVERIFY(!dialogItem("settingsDialog", "settingsRendererGroup")->isVisible());
         QVERIFY(!settingsValues(dialog).contains(QStringLiteral("video.subtitleProvider")));
 #endif
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 0);
         // "Do not warn about resolution mismatch" applies on Apply, not before.
         QSignalSpy askChanged(application, &app::Application::askForBadResolutionChanged);
         auto *noWarning = dialogItem("settingsDialog", "setting_video.dontAskForBadResolution");
@@ -11624,27 +13118,43 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(settings.boolean("grid.changeActiveOnSelection"));
-        // Set default resets every option at once, even when then cancelled;
-        // the recent list is kept, as legacy writes it back at exit.
+        // PF1-staged-reset: "Reset all settings…" asks, then shows every
+        // page's defaults, and Cancel keeps the settings as they were.
         const auto recent = application->recentEntries();
         QVERIFY(openSettings());
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("cancel"); // the question's default
+        QVERIFY(dialogItem("settingsDialog", "setting_video.dontAskForBadResolution")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
         QVERIFY(!dialogItem("settingsDialog", "setting_video.dontAskForBadResolution")->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!application->askForBadResolution());
+        QCOMPARE(askChanged.count(), 1);
+        QCOMPARE(settings.integer("autosave.maxFiles"), 2);
+        QVERIFY(settings.boolean("grid.duplicationDontChangeSelection"));
+        // OK after it resets every option; the recent list is kept, as
+        // legacy writes it back at exit.
+        QVERIFY(openSettings());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(application->askForBadResolution());
         QCOMPARE(askChanged.count(), 2);
         QCOMPARE(settings.integer("autosave.maxFiles"), 3);
         QVERIFY(!settings.contains("grid.duplicationDontChangeSelection"));
-        QVERIFY(!settings.contains("program.tabTextMaxChars"));
         QCOMPARE(application->recentEntries(), recent);
         QCOMPARE(settings.list("recent.subtitles").size(), qsizetype(recent.size()));
         QVERIFY(application->closeEditingTarget());
     }
 
-    // O1: every legacy ConOpt control is on its page, in the legacy order, with
-    // the legacy label (OptionsDialog.cpp opts[] arrays, OptionsPanels.cpp).
+    // O1: every legacy ConOpt control is on a page (OptionsDialog.cpp opts[]
+    // arrays, OptionsPanels.cpp); PF1-pages: on the page and in the order of
+    // the approved page map, with its label.
     void settingsDialogPagesBindTheLegacyOptions()
     {
         auto *dialog = openSettings();
@@ -11654,104 +13164,101 @@ private slots:
             const char *setting;
             const char *label; // a check box's text (nullptr: not checked)
         };
+        // PF1-pages: the flat pages, their sections in the page's order, the
+        // shorter labels.
         const std::vector<std::pair<const char *, std::vector<Control>>> pages{
-            {"settingsPageEditor",
+            {"settingsPageGeneral",
              {{"program.language", nullptr},
-              {"editor.dictionaryLanguage", nullptr},
-              {"notices.toasts", "Show notices as toasts (off: in the Log only)"}, // PK1
-              {"grid.loadSortedSubs", "Open sorted subtitles"},
-              {"editor.spellchecker", "Turn spell checking"},
-              {"grid.autoSelectLinesFromLastTab", "Select the line with the time line\nof the previous active tab"},
-              {"editor.suggestionsOnDoubleClick", "Show suggestions by double-clicking on misspell"},
               {"subtitles.openInNewTab", "Always open subtitles in a new tab"},
-              {"editor.dontGoToNextLineOnTimesEdit", "Stay on selected line when editing times"},
-              {"video.disableLiveEditing", "Turn off edits preview on video\n(re-opening tab is required)"},
-              {"grid.setVisibleLineAfterFullScreen", "Turn searching of visible line\nafter switching from full screen"},
+              {"grid.loadSortedSubs", "Open sorted subtitles"},
               {"shiftTimes.changeValuesWithTab", "Synchronize time shifting window in all tabs"},
-              {"grid.changeActiveOnSelection", "Change active line after add to selection"},
-              {"translation.showOriginal", "Show original in translator mode"},
-              {"translation.hideOriginalOnVideo", "Hide original on video in translator mode"},
-              {"grid.duplicationDontChangeSelection", "Do not change selections when duplicating dialogue lines"},
-              {"grid.dontCenterActiveLine", "Do not vertically center the active line in the subtitle grid"},
-              {"grid.autoHideColumns", "Hide empty columns in the subtitle grid"}, // GR3
+              {"program.tabTextMaxChars", nullptr},
+              {"editor.saveAfterCharacterCount", nullptr},
+              {"autosave.maxFiles", nullptr},
+              {"notices.toasts", "Show notices as toasts"}, // PK1
+              {"fonts.externalDirectory", nullptr}}},
+            {"settingsPageAppearance", {{"program.font", nullptr}, {"program.fontSize", nullptr}}},
+            {"settingsPageLineEditor",
+             {{"editor.spellchecker", "Check spelling"},
+              {"editor.dictionaryLanguage", nullptr},
+              {"editor.suggestionsOnDoubleClick", "Show suggestions on double-click"},
+              {"editor.hideTags", "Hide tags"}, // LE3-tags-shown
+              {"editor.timesToFramesSwitch", "Show video frames instead of times"}, // LE2
+              {"editor.dontGoToNextLineOnTimesEdit", "Stay on the line when editing times"},
               {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
-              {"video.visualWarningsOff", "Turn off visual tools warning"},
-              {"video.dontAskForBadResolution", "Do not warn about resolution mismatch"},
-              {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
+              {"translation.showOriginal", "Show the original"},
+              {"translation.hideOriginalOnVideo", "Hide the original on the video"}}},
+            {"settingsPageGrid",
+             {{"grid.font", nullptr},
+              {"grid.fontSize", nullptr},
+              {"grid.autoSelectLinesFromLastTab", "Select the line at the previous tab's time"},
+              {"grid.changeActiveOnSelection", "Change the active line when adding to the selection"},
+              {"grid.duplicationDontChangeSelection", "Keep the selection when duplicating lines"},
+              {"grid.dontCenterActiveLine", "Don't center the active line"},
+              {"grid.setVisibleLineAfterFullScreen", "Find the visible line after leaving full screen"},
+              {"grid.autoHideColumns", "Hide empty columns"}, // GR3
+              {"grid.calcSpacesAndPunctuationForWraps", "Count spaces and punctuation for wraps"},
+              {"grid.calcSpacesAndPunctuationForCps", "Count spaces and punctuation for CPS"},
+              {"grid.insertStartOffset", nullptr},
+              {"grid.insertEndOffset", nullptr},
+              {"grid.tagsSwapCharacter", nullptr}}},
+            {"settingsPageVideo",
+             {{"video.pauseOnClick", "Left mouse button pauses video"},
+              {"video.fullScreenOnStart", "Open video from the context menu in full screen"},
+              {"video.openAtActiveLine", "Open video at the active line's time"},
+              {"video.moveToActiveLine", nullptr}, // VF1, the Video panel's Seek on
+              {"video.playAfterSelection", nullptr}, // and Then play
+#ifdef _WIN32
+              {"video.playbackPlayer", nullptr}, // W1, Windows only
+#endif
+              {"video.subtitleProvider", nullptr}, // W2
+              {"video.disableLiveEditing", "Turn off the edits preview"},
+              {"video.ffms2Seeking", nullptr},
+              {"video.gpuConversion", "Convert video colours on the GPU"},
+              {"video.acceptedAudioStream", nullptr},
+              {"video.zoomPercent", nullptr},
+              {"video.visualWarningsOff", "Turn off the visual tools warning"},
+              {"video.dontAskForBadResolution", "Don't warn about a resolution mismatch"},
               // Y4-playres-ask, the rewrite's own
-              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"},
-              // LE2: the Times/Frames switch, out of the Line editor
-              {"editor.timesToFramesSwitch", "Show video frames instead of times in the line editor and the subtitle grid"},
-              // LE3-tags-shown
-              {"editor.hideTags", "Hide tags in the line editor"}}},
+              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"}}},
+            {"settingsPageAudio",
+             {{"audio.outputDevice", nullptr}, // H2-output-device
+#ifdef _WIN32
+              {"audio.outputHostApi", nullptr}, // A4-wasapi-default, Windows only
+#endif
+              {"audio.delay", nullptr},
+              {"audio.markPlayTime", nullptr},
+              {"audio.leadInValue", nullptr},
+              {"audio.leadOutValue", nullptr},
+              {"audio.lockScrollOnCursor", "Follow audio during playback"},
+              {"audio.dontPlayWhenLineChanges", "Don't play after changing the line"},
+              {"audio.autoFocus", "Hotkeys follow the panel under the pointer"}, // KB1
+              {"audio.drawTimeCursor", "Show the time beside the cursor"},
+              {"audio.drawSecondaryLines", "Show seconds markers"},
+              {"audio.drawSelectionBackground", "Show the selection background"},
+              {"audio.drawVideoPosition", "Show the video position"},
+              {"audio.drawKeyframes", "Show keyframes"},
+              {"audio.lineBoundariesThickness", nullptr},
+              {"audio.inactiveLinesDisplayMode", nullptr},
+              {"audio.snapToKeyframes", "Snap to keyframes"},
+              {"audio.snapToOtherLines", "Snap to other lines"},
+              {"audio.mergeEveryNWithSyllable", "Merge every \"n\" with the previous syllable"},
+              {"audio.karaokeMoveOnClick", "Move the syllable line after a click"},
+              {"audio.karaokeDoubleConsonantApart", "Give a double consonant its own syllable (so|ma|t|ta)"}, // KA1
+              {"audio.karaokeKfThreshold", nullptr},                                                         // KA1
+              {"audio.ramCache", "Load audio into RAM"},
+              {"audio.cacheFilesLimit", nullptr}}},
             {"settingsPageConversion",
              {{"convert.styleCatalog", nullptr},
               {"convert.style", nullptr},
               {"convert.fps", nullptr},
-              {"convert.fpsFromVideo", "FPS from video"},
+              {"convert.fpsFromVideo", "Frame rate from the video"},
               {"convert.newEndTimes", "New end times"},
-              {"convert.showSettings", "Show window before conversion"},
               {"convert.timePerCharacter", nullptr},
               {"convert.resolutionWidth", nullptr},
               {"convert.resolutionHeight", nullptr},
-              {"convert.assTagsToInsertInLine", nullptr}}},
-            {"settingsPageEditorAdvanced",
-             {{"grid.calcSpacesAndPunctuationForWraps", "Calculate spaces and punctation characters for wraps"},
-              {"grid.calcSpacesAndPunctuationForCps", "Calculate spaces and punctation characters for CPS"},
-              {"editor.saveAfterCharacterCount", nullptr},
-              {"autosave.maxFiles", nullptr},
-              {"grid.insertStartOffset", nullptr},
-              {"grid.insertEndOffset", nullptr},
-              {"grid.tagsSwapCharacter", nullptr},
-              {"program.tabTextMaxChars", nullptr},
-              {"automation.traceLevel", nullptr},
-              {"grid.font", nullptr},
-              {"grid.fontSize", nullptr},
-              {"program.font", nullptr},
-              {"program.fontSize", nullptr},
-              {"automation.loadingMethod", nullptr},
-              {"fonts.externalDirectory", nullptr}}},
-            {"settingsPageVideo",
-             {{"video.fullScreenOnStart", "Open video from context menu on full screen"},
-              {"video.pauseOnClick", "Left mouse button pauses video"},
-              {"video.openAtActiveLine", "Open video with time of active line"},
-              {"video.gpuConversion", "Convert video colours on the GPU (requires reloading)"},
-              {"video.moveToActiveLine", nullptr}, // VF1, the Video panel's Seek on
-              {"video.playAfterSelection", nullptr}, // and Then play
-              {"video.acceptedAudioStream", nullptr},
-              {"video.ffms2Seeking", nullptr},
-              {"video.subtitleProvider", nullptr}, // W2: shown before the zoom, bound last
-#ifdef _WIN32
-              {"video.playbackPlayer", nullptr}, // W1, Windows only
-#endif
-              {"video.zoomPercent", nullptr}}},
-            {"settingsPageAudio",
-             {{"audio.drawTimeCursor", "Show time next to cursor"},
-              {"audio.drawSecondaryLines", "Show seconds markers"},
-              {"audio.drawSelectionBackground", "Show background selection"},
-              {"audio.drawVideoPosition", "Show video position"},
-              {"audio.drawKeyframes", "Show keyframes"},
-              {"audio.lockScrollOnCursor", "Follow audio during playback"},
-              {"audio.autoFocus", "Hotkeys follow the panel under the pointer"}, // KB1
-              {"audio.snapToKeyframes", "Snap to keyframe"},
-              {"audio.snapToOtherLines", "Snap to other lines"},
-              {"audio.dontPlayWhenLineChanges", "Do not play audio after changing the line"},
-              {"audio.mergeEveryNWithSyllable", "Merge all the \"n\" with the previous syllable"},
-              {"audio.karaokeMoveOnClick", "Move syllable line after click"},
-              {"audio.ramCache", "Load audio into RAM"},
-              {"audio.outputDevice", nullptr}, // H2-output-device
-#ifdef _WIN32
-              {"audio.outputHostApi", nullptr}, // A4-wasapi-default, Windows only
-#endif
-             }},
-            {"settingsPageAudioAdvanced",
-             {{"audio.delay", nullptr},
-              {"audio.markPlayTime", nullptr},
-              {"audio.leadInValue", nullptr},
-              {"audio.leadOutValue", nullptr},
-              {"audio.lineBoundariesThickness", nullptr},
-              {"audio.cacheFilesLimit", nullptr},
-              {"audio.inactiveLinesDisplayMode", nullptr}}},
+              {"convert.assTagsToInsertInLine", nullptr},
+              {"convert.showSettings", "Show the conversion window first"}}},
             {"settingsPageSubtitleProperties",
              {{"scriptProperties.title", nullptr},
               {"scriptProperties.titleOn", nullptr},
@@ -11767,7 +13274,18 @@ private slots:
               {"scriptProperties.updateOn", nullptr},
               {"scriptProperties.askForChange", "Always ask before changing subtitle information"},
               // WS2, the rewrite's own
-              {"subtitles.layoutInFile", "Save panel layout in subtitle files"}}},
+              {"subtitles.layoutInFile", "Save the panel layout in subtitle files"}}},
+            {"settingsPageAutomation",
+             {{"automation.loadingMethod", nullptr},
+              {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
+              {"automation.traceLevel", nullptr},
+              {"automation.fillLastAnswers", "Fill in my last answers"}}}, // AD2
+            // PU7 (#309): the options that left the update window (the
+            // skipped version is a row of its own, below).
+            {"settingsPageUpdates",
+             {{"updater.autoCheck", "Check for updates automatically"},
+              {"updater.checkForStable", "Stable versions only"},
+              {"updater.autoInstall", "Install updates automatically"}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
@@ -11784,11 +13302,8 @@ private slots:
             QCOMPARE(found.size(), controls.size());
             for (std::size_t i = 0; i < controls.size(); ++i) {
                 QCOMPARE(found[i]->objectName(), QLatin1String("setting_") + QLatin1String(controls[i].setting));
-                // The legacy label, its hard line breaks shown as spaces (the
-                // check box wraps in the page's width).
                 if (controls[i].label)
-                    QCOMPARE(found[i]->property("text").toString(),
-                             QString::fromUtf8(controls[i].label).replace(QLatin1Char('\n'), QLatin1Char(' ')));
+                    QCOMPARE(found[i]->property("text").toString(), QString::fromUtf8(controls[i].label));
                 shown.insert(controls[i].setting);
             }
         }
@@ -11799,6 +13314,9 @@ private slots:
             if (!b.sizeSetting.empty())
                 bound.insert(std::string(b.sizeSetting));
         }
+        // PU7: the skipped version's row, named with Offer it again.
+        QVERIFY(bound.erase("updater.skippedVersion"));
+        QVERIFY(dialogItem("settingsDialog", "settingsOfferAgain"));
         QCOMPARE(shown, bound);
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
@@ -11809,6 +13327,9 @@ private slots:
                 bound.insert(std::string(s.id));
         // and PK1's questions hidden with "Don't ask again" (Ask again).
         bound.insert("notices.hiddenQuestions");
+        bound.insert("updater.skippedVersion"); // PU7: held, shown in its row
+        // and AD2's last answers (Clear last answers).
+        bound.insert("automation.dialogAnswers");
 #ifndef HIKARI_WITH_VSFILTERMOD
         // W2: "Subtitle display filter" holds a value only when it is offered
         // (a CSRI renderer besides libass); its control stays in the page.
@@ -11874,27 +13395,29 @@ private slots:
         auto *method = dialogItem("settingsDialog", "setting_automation.loadingMethod");
         QVERIFY(QMetaObject::invokeMethod(method, "activated", Q_ARG(int, 3)));
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), 3);
-        // The shift times panel keeps its values through Set default.
+        // The shift times panel keeps its values through the reset.
         auto shift = application->shiftTimesSettings().settingsMap();
         shift.insert(QStringLiteral("forward"), true);
         shift.insert(QStringLiteral("timeMs"), 750);
         application->shiftTimesSettings().setSettingsMap(shift);
-        // Set default: the controls refresh as ResetDefault refreshes them,
-        // and OK then writes what they show.
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
-        QCOMPARE(settings.integer("updater.nextCheck"), 0);
-        QVERIFY(!settings.contains("automation.loadingMethod"));
+        // "Reset all settings…": the controls refresh as ResetDefault
+        // refreshes them, and OK resets the store, then writes what they
+        // show (PF1-staged-reset: nothing changes before OK).
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
+        QCOMPARE(settings.integer("updater.nextCheck"), 200);
         QCOMPARE(dialogItem("settingsDialog", "setting_automation.loadingMethod")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.inactiveLinesDisplayMode")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 20);
         QCOMPARE(dialogItem("settingsDialog", "setting_video.zoomPercent")->property("text").toString(), QString());
         QCOMPARE(dialogItem("settingsDialog", "setting_program.language")->property("currentIndex").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.integer("updater.nextCheck"), 0);
         QVERIFY(application->shiftTimesSettings().settings().forward);
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 750);
         QVERIFY(!settings.contains("shiftTimes.time"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(settings.integer("automation.loadingMethod"), -1);
         QCOMPARE(settings.integer("video.ffms2Seeking"), -1);
         QCOMPARE(settings.integer("audio.inactiveLinesDisplayMode"), -1);
@@ -11916,18 +13439,11 @@ private slots:
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
         // "does not exist" for the catalog: the current one is shown.
-        // NT1: a warning toast titled "Settings".
+        // NT1: a warning toast titled "Settings", in the main window beside
+        // the Settings window (PF1).
         QQuickItem *warning = nullptr;
         QTRY_VERIFY((warning = toastWith(QStringLiteral("does not exist"))));
         QCOMPARE(partNamed(warning, "toastTitle")->property("text").toString(), QStringLiteral("Settings"));
-        // Over the modal dialog's dimmer: beside the window's popup overlay, above it.
-        auto *stack = item<QQuickItem>("toastStack");
-        QQuickItem *overlay = nullptr;
-        for (QQuickItem *child : stack->parentItem()->childItems())
-            if (child->inherits("QQuickOverlay"))
-                overlay = child;
-        QVERIFY(overlay && overlay->isVisible());
-        QVERIFY(stack->z() > overlay->z());
         const auto catalogs = dialog->property("catalogs").toStringList();
         QVERIFY(catalogs.contains(QStringLiteral("Conv")));
         auto *catalog = dialogItem("settingsDialog", "setting_convert.styleCatalog");
@@ -11989,6 +13505,8 @@ private slots:
     // O3: File > Import legacy settings... (a ShellMenuItem) reviews a
     // legacy installation's files, imports the chosen changes for the next
     // start and rolls them back; the legacy files are never written.
+    // PU7 (#309): through the wizard's three steps (choose, review, result),
+    // the review's Conflicts and All, and Roll back… asked in the message box.
     void legacySettingsImportThroughTheWindow()
     {
         QTemporaryDir home, legacy;
@@ -12013,43 +13531,82 @@ private slots:
         auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        auto footerButton = [&](const char *name) {
-            auto *footer = dialog->property("footer").value<QQuickItem *>();
-            return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+        auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
+        auto visibleNamed = [&](const char *name) {
+            auto *found = control(name);
+            return found && found->isVisible();
         };
-        QVERIFY(!footerButton("settingsImportImport")->property("enabled").toBool());
+        // Step 1: no installation found in this home, nothing to review yet.
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QVERIFY(visibleNamed("settingsImportNext"));
+        QVERIFY(!control("settingsImportNext")->property("enabled").toBool());
+        QVERIFY(!visibleNamed("settingsImportImport"));
 
+        // Choosing an installation reads it.
         auto &importer = application->settingsImport();
         QVERIFY(importer.addRoot(legacy.path()));
-        dialogItem("settingsImportDialog", "settingsImportRoots")->setProperty("currentIndex", importer.roots().size() - 1);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportRead"), "click"));
+        const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
+        QQuickItem *root = nullptr;
+        QTRY_VERIFY((root = control(last.constData())) != nullptr);
+        QVERIFY(QMetaObject::invokeMethod(root, "click"));
         QCOMPARE(importer.root(), QDir::cleanPath(legacy.path()));
-        auto *rows = dialogItem("settingsImportDialog", "settingsImportRows");
+        QTRY_VERIFY(control("settingsImportNext")->property("enabled").toBool());
+
+        // Step 2: the conflicts, the proposed ones ticked.
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QCOMPARE(dialog->property("step").toInt(), 2);
+        QVERIFY(visibleNamed("settingsImportBack") && visibleNamed("settingsImportImport"));
+        QVERIFY(!visibleNamed("settingsImportNext"));
+        auto *rows = control("settingsImportRows");
         QTRY_VERIFY(rows->property("count").toInt() > 0);
         QVERIFY(importer.chosen().contains("setting:grid.font"));
         QVERIFY(importer.chosen().contains("shortcut:GLOBAL_SAVE_SUBS:G"));
-        QVERIFY(dialogItem("settingsImportDialog", "settingsImportSummary")->property("text").toString().contains(
-            QStringLiteral("1 excluded")));
-        // The theme is shown, excluded, and cannot be chosen.
+        int selectable = 0;
         QVariantMap theme;
-        for (const auto &row : importer.rows())
+        for (const auto &row : importer.rows()) {
+            selectable += row.toMap().value(QStringLiteral("selectable")).toBool();
             if (row.toMap().value(QStringLiteral("key")) == QStringLiteral("PROGRAM_THEME"))
                 theme = row.toMap();
+        }
+        QCOMPARE(rows->property("count").toInt(), selectable);
+        QCOMPARE(control("settingsImportSummary")->property("text").toString(),
+                 QStringLiteral("%1 of %2 chosen").arg(importer.chosen().size()).arg(selectable));
+        QCOMPARE(control("settingsImportImport")->property("text").toString(),
+                 QStringLiteral("Import %1 setting(s)").arg(importer.chosen().size()));
+        // The theme is excluded: not a conflict, shown under All only, as
+        // "Not here" and without a tick box.
         QCOMPARE(theme.value(QStringLiteral("disposition")).toString(), QStringLiteral("excluded"));
         QVERIFY(!theme.value(QStringLiteral("selectable")).toBool());
+        const QString themeId = theme.value(QStringLiteral("id")).toString();
+        auto rowNamed = [&](const QString &name) { return findItem(rows, name); };
+        QVERIFY(!rowNamed(QStringLiteral("settingsImportRow_") + themeId));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportFilter"), "activated", Q_ARG(int, 1)));
+        QTRY_COMPARE(rows->property("count").toInt(), int(importer.rows().size()));
+        QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtEnd"));
+        QQuickItem *themeStatus = nullptr;
+        for (int i = 0; i < rows->property("count").toInt() && !themeStatus; ++i) {
+            QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtIndex", Q_ARG(int, i), Q_ARG(int, 0)));
+            themeStatus = rowNamed(QStringLiteral("settingsImportStatus_") + themeId);
+        }
+        QVERIFY(themeStatus);
+        QCOMPARE(themeStatus->property("text").toString(), QStringLiteral("Not here"));
+        auto *themeBox = rowNamed(QStringLiteral("settingsImportChoose_") + themeId);
+        QVERIFY(!themeBox || !themeBox->isVisible() || !themeBox->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportFilter"), "activated", Q_ARG(int, 0)));
+        QTRY_COMPARE(rows->property("count").toInt(), selectable);
         // Choosing a row far down the list keeps the list where it is
         // scrolled, and "Proposed choice" still reaches the clicked row.
         {
             const QVariantList all = importer.rows();
-            int last = int(all.size()) - 1;
-            while (last >= 0 && !all.at(last).toMap().value(QStringLiteral("selectable")).toBool())
-                --last;
-            QVERIFY(last > 0);
-            const QString id = all.at(last).toMap().value(QStringLiteral("id")).toString();
+            int lastRow = int(all.size()) - 1;
+            while (lastRow >= 0 && !all.at(lastRow).toMap().value(QStringLiteral("selectable")).toBool())
+                --lastRow;
+            QVERIFY(lastRow > 0);
+            const QString id = all.at(lastRow).toMap().value(QStringLiteral("id")).toString();
             const bool proposed = importer.chosen().contains(id.toStdString());
             QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtEnd"));
             QQuickItem *box = nullptr;
-            QTRY_VERIFY((box = findItem(rows, QStringLiteral("settingsImportChoose_") + id)) != nullptr);
+            QTRY_VERIFY((box = rowNamed(QStringLiteral("settingsImportChoose_") + id)) != nullptr);
             const QPointer<QQuickItem> sameBox(box);
             const qreal scrolled = rows->property("contentY").toReal();
             QVERIFY(scrolled > 0);
@@ -12059,16 +13616,32 @@ private slots:
             QVERIFY(sameBox);
             QCOMPARE(box->property("checked").toBool(), !proposed);
             QCOMPARE(rows->property("contentY").toReal(), scrolled);
-            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportProposed"), "click"));
+            QVERIFY(QMetaObject::invokeMethod(control("settingsImportProposed"), "click"));
             QVERIFY(sameBox);
             QCOMPARE(box->property("checked").toBool(), proposed);
             QCOMPARE(rows->property("contentY").toReal(), scrolled);
         }
-        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportImport"), "click"));
-        QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportStatus")->property("text").toString().contains(
-            QStringLiteral("starts again")));
+        // Back to step 1 and on again keeps the choice.
+        const auto chosen = importer.chosen();
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportBack"), "click"));
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QCOMPARE(importer.chosen(), chosen);
+
+        // Step 3: the result, in effect at the next start.
+        const int count = int(importer.chosen().size());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportImport"), "click"));
+        QTRY_COMPARE(dialog->property("step").toInt(), 3);
+        QCOMPARE(control("settingsImportResult")->property("text").toString(),
+                 QStringLiteral("%1 setting(s) imported.").arg(count));
+        QVERIFY(control("settingsImportStatus")->property("text").toString().contains(QStringLiteral("starts again")));
+        QVERIFY(visibleNamed("settingsImportClose"));
+        QVERIFY(!visibleNamed("settingsImportCancel") && !visibleNamed("settingsImportBack"));
+        QCOMPARE(visibleNamed("settingsImportRollback"), importer.canRollBack());
         // Not in effect in this session.
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
 
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Arial"));
@@ -12076,16 +13649,24 @@ private slots:
                     .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
         QVERIFY(!application->settingsStore()->isSet(QStringLiteral("program.theme")));
 
-        // Roll back, asked first, in effect at the next start.
+        // Roll back from step 1's bar, asked first in PK1's message box:
+        // Cancel keeps the import, Roll back is in effect at the next start.
         QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
         dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(footerButton("settingsImportRollback")->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportRollback"), "click"));
-        auto *question = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportRollbackQuestion"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QTRY_VERIFY(visibleNamed("settingsImportRollbackBar"));
+        QCOMPARE(control("settingsImportState")->property("text").toString(), QStringLiteral("The last import is in effect."));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("cancel"));
+        QVERIFY(!application->settingsImport().pending());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("rollback"));
         QVERIFY(application->settingsImport().pending());
+        QTRY_COMPARE(control("settingsImportState")->property("text").toString(),
+                     QStringLiteral("An import waits for the next start."));
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
         QVERIFY(!application->settingsStore()->isSet(application::kHotkeysSetting.data()));
@@ -12093,6 +13674,56 @@ private slots:
         QFile f(legacy.filePath(QStringLiteral("Config/Config.txt")));
         QVERIFY(f.open(QIODevice::ReadOnly));
         QCOMPARE(f.readAll(), config);
+    }
+
+    // PU7 (#309): a folder that holds no legacy installation says why on the
+    // wizard's first step; Roll back… from the result says it rolled back,
+    // and the import it undid never takes effect.
+    void settingsImportWizardSaysWhyAndWhatItRolledBack()
+    {
+        QTemporaryDir home, legacy, empty;
+        QVERIFY(home.isValid() && legacy.isValid() && empty.isValid());
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\n";
+        QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        {
+            QFile f(legacy.filePath(QStringLiteral("Config/Config.txt")));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(config);
+        }
+        restartWithSpelling(home.path(), false);
+        QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
+        // The folder dialog's choice (a closed FolderDialog keeps no folder
+        // set from outside): an empty folder is refused, with why.
+        auto addFolder = [&](const QString &path) {
+            return QMetaObject::invokeMethod(dialog, "addFolder", Q_ARG(QVariant, QUrl::fromLocalFile(path).toString()));
+        };
+        QVERIFY(addFolder(empty.path()));
+        QTRY_VERIFY(control("settingsImportRootProblem")->isVisible());
+        QCOMPARE(control("settingsImportRootProblem")->property("text").toString(), application->settingsImport().status());
+        QVERIFY(!control("settingsImportRootProblem")->property("text").toString().isEmpty());
+        // A readable one: the problem goes.
+        QVERIFY(addFolder(legacy.path()));
+        QTRY_VERIFY(control("settingsImportNext")->isEnabled());
+        QVERIFY(!control("settingsImportRootProblem")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QVERIFY(application->settingsImport().chosen().contains("setting:grid.font"));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportImport"), "click"));
+        QTRY_COMPARE(dialog->property("step").toInt(), 3);
+        QVERIFY(application->settingsImport().pending());
+        QVERIFY(control("settingsImportRollback")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollback"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("rollback"));
+        QTRY_COMPARE(control("settingsImportResult")->property("text").toString(),
+                     QStringLiteral("Rolled back to the settings before the last import."));
+        restartWithSpelling(home.path(), false);
+        QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
     }
 
     // R6-dictionary-location: the Main page lists the settings folder's
@@ -12186,7 +13817,7 @@ private slots:
         const QVariantMap red{{QStringLiteral("r"), 255}, {QStringLiteral("g"), 0}, {QStringLiteral("b"), 0}, {QStringLiteral("a"), 0}};
         a.colourPicker().addRecent(red); // no picker yet: the option is the list
 
-        a.resetSettings({});
+        a.applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QCOMPARE(settings.list("recent.video"), QStringList{QStringLiteral("/v.mkv")});
         QCOMPARE(settings.list("recent.audio"), QStringList{QStringLiteral("/a.wav")});
         QVERIFY(!settings.contains("recent.keyframes"));
@@ -12229,7 +13860,7 @@ private slots:
         // A created DialogColorPicker keeps its recent colours.
         a.colourPickerOpened();
         a.colourPicker().addRecent(red);
-        a.resetSettings({});
+        a.applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("selectLines.options"));
         QVERIFY(!settings.contains("selectLines.recentSelections"));
         auto shown = a.openSelectLines();
@@ -12252,7 +13883,7 @@ private slots:
 
         // A changed program font runs DestroyDialogs: SelectLines saves its
         // options and is gone, so it reads the settings again.
-        a.resetSettings({});
+        a.applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("selectLines.options"));
         QSignalSpy destroyed(&a, &app::Application::selectLinesDestroyed);
         a.applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
@@ -12285,7 +13916,7 @@ private slots:
         settings.set("find.options", 1); // CASE_SENSITIVE
         settings.set("find.styles", QStringLiteral("Sign"));
         settings.set("find.recentFinds", QStringList{QStringLiteral("old")});
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_H, Qt::ControlModifier);
         QTRY_VERIFY(dock->property("isOpen").toBool());
@@ -12310,7 +13941,7 @@ private slots:
         settings.sync();
         QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("profile/find.recentFinds")).toStringList(),
                  QStringList{QStringLiteral("alpha")});
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("find.options"));
         QVERIFY(!settings.contains("find.recentFinds"));
         QVERIFY(matchCase->property("checked").toBool()); // the dialog's controls stay
@@ -12329,11 +13960,15 @@ private slots:
         QCOMPARE(settings.list("find.recentFinds"), (QStringList{QStringLiteral("beta"), QStringLiteral("alpha")}));
         QVERIFY(!settings.contains("find.recentReplacements"));
 
-        // The Multireplacer, once shown, holds its rules.
+        // The Fix minor errors panel, once shown, holds its rules.
         auto *root = engine->rootObjects().first();
-        auto *misspell = root->findChild<QObject *>(QStringLiteral("misspellDialog"));
-        QVERIFY(QMetaObject::invokeMethod(misspell, "openDialog"));
-        QTRY_VERIFY(misspell->property("opened").toBool());
+        auto *misspellDock = item<QObject>("misspellDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(misspellDock))));
+        QTRY_VERIFY(misspellDock->property("isOpen").toBool());
+        QObject *misspell = nullptr;
+        QTRY_VERIFY((misspell = item<QObject>("misspellTool")));
+        QTRY_COMPARE(misspell->property("rules").toList().size(), 13);
+        item<QObject>("misspellFind")->setProperty("text", QStringLiteral("typed"));
         QVERIFY(application->addMisspellRule({{QStringLiteral("description"), QStringLiteral("Owner rule")},
                                               {QStringLiteral("find"), QStringLiteral("zz")},
                                               {QStringLiteral("replace"), QStringLiteral("z")},
@@ -12343,7 +13978,7 @@ private slots:
 
         // A changed program font: DestroyDialogs.
         matchCase->setProperty("checked", false);
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QSignalSpy findDestroyed(application, &app::Application::findReplaceDestroyed);
         QSignalSpy misspellDestroyed(application, &app::Application::misspellReplacerDestroyed);
         application->applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
@@ -12354,10 +13989,12 @@ private slots:
         QCOMPARE(settings.integer("find.options") & 1, 0);
         QTRY_VERIFY(!dock->property("isOpen").toBool());
         QVERIFY(!tool->property("opened").toBool());
-        // ~MisspellReplacer wrote the rules; the window is closed and built
-        // again (empty fields, centred) from Rules.txt at the next opening.
-        QTRY_VERIFY(!misspell->property("visible").toBool());
-        QVERIFY(!misspell->property("placed").toBool());
+        // ~MisspellReplacer wrote the rules; the panel stays where it is
+        // and starts again (empty fields) from Rules.txt
+        // (PU2-fix-minor-errors-panel; legacy's window closed).
+        QVERIFY(misspellDock->property("isOpen").toBool());
+        QTRY_COMPARE(item<QObject>("misspellFind")->property("text").toString(), QString());
+        QCOMPARE(misspell->property("rules").toList().size(), 14);
         QVERIFY(QFile::exists(rules));
         QVERIFY(application->misspellRules().last().toMap().value(QStringLiteral("description")).toString()
                 == QStringLiteral("Owner rule"));
@@ -12405,7 +14042,7 @@ private slots:
         // Grid, but the Line editor keeps the switch the menu turned off.
         application->setSpellingOn(false);
         QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(application->spellingOn());
         QVERIFY(!application->suggestionsOnDoubleClick());
         QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
@@ -12970,6 +14607,7 @@ private slots:
         };
         QVERIFY2(split->isVisible(), qPrintable(rowWidths()));
         QVERIFY(tap->isVisible());
+        QVERIFY2(item("audioKaraokeSplitArrow")->isVisible(), qPrintable(rowWidths())); // KA1: room for the arrow
         QVERIFY(!item<QObject>("audioLineMode")->property("checked").toBool());
         QVERIFY(item<QObject>("audioKaraoke")->property("checked").toBool());
         // KA2-karaoke-row-fold: with Tap the three toggles go into ⋯ first;
@@ -12999,6 +14637,9 @@ private slots:
         QVERIFY(!item("audioMoreKaraoke")->isVisible());
         QVERIFY(!item("audioMoreTap")->isVisible());
         QVERIFY(!item("audioMoreTapOptions")->isVisible());
+        // KA1: the syllable commands are Auto split's arrow's while it shows
+        QVERIFY(!item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(!item("audioMoreKaraokeKf")->isVisible());
         closeMore();
         auto *moreAutoScroll = item<QObject>("audioMoreAutoScroll");
         QVERIFY(moreAutoScroll->property("checked").toBool());
@@ -13037,7 +14678,19 @@ private slots:
         QVERIFY(item("audioMoreKaraoke")->isVisible());
         QVERIFY(item("audioMoreTap")->isVisible());
         QVERIFY(item("audioMoreTapOptions")->isVisible());
+        // KA1: and Auto split's syllable commands
+        QVERIFY(item("audioMoreKaraokeSplit")->isVisible());
+        QVERIFY(item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(item("audioMoreKaraokeKf")->isVisible());
         closeMore();
+        // ⋯'s Auto split switches it once, the folded button's face following (Codex)
+        const bool splitMode = audio.karaokeSplitMode();
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplit"), "triggered"));
+        QCOMPARE(audio.karaokeSplitMode(), !splitMode);
+        QCOMPARE(item("audioKaraokeSplit")->property("checked").toBool(), !splitMode);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplit"), "triggered"));
+        QCOMPARE(audio.karaokeSplitMode(), splitMode);
+        QCOMPARE(item("audioKaraokeSplit")->property("checked").toBool(), splitMode);
         // Tap options opens the Tap menu at ⋯: Hold or Press, the speed, the latency
         auto *tapMenu = named("audioTapMenu");
         QVERIFY(QMetaObject::invokeMethod(named("audioMoreTapOptions"), "triggered"));
@@ -14266,17 +15919,19 @@ private slots:
         QStringList names;
         for (const auto &p : model)
             names << p.toMap().value(QStringLiteral("name")).toString();
-        // (legacy's Themes page is K2's Appearance page, #206)
-        QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Appearance",
-                                     "Hotkeys", "Subtitle properties"}));
+        // (legacy's Themes page is K2's Appearance page, #206; PF1-pages:
+        // one flat list, legacy's sub-pages are sections)
+        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Subtitle grid", "Video", "Audio",
+                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys", "Updates"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
         // "Translation mode" and VT2's eleven visual tools listed; KA2's Tap
-        // to time, Slower and Faster; VT3's Perspective; KA7's "Check karaoke".
-        QCOMPARE(hotkeyRows().size(), 238);
+        // to time, Slower and Faster; VT3's Perspective; KA7's "Check karaoke"; KA1's two syllable commands; AD2's
+        // "Repeat last run".
+        QCOMPARE(hotkeyRows().size(), 241);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -14310,7 +15965,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(settings.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_HISTORY G=Ctrl-Shift-K")));
-        QCOMPARE(settings.list("shortcuts.audioHotkeys").size(), 26); // KA2: with AUDIO_TAP and the speeds
+        QCOMPARE(settings.list("shortcuts.audioHotkeys").size(), 28); // KA2: with AUDIO_TAP and the speeds; KA1: K and Shift-K
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+K"));
         // The shell's table (every Global binding, the menus' too) follows.
         QVERIFY(application->hotkeys().globalShortcuts().contains(
@@ -14341,7 +15996,7 @@ private slots:
         auto *dialog = openSettings();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 7); // Hotkeys
+        showSettingsPage("hotkeys");
         auto *mapping = captureForm("settingsHotkeyMapping");
         QVERIFY(mapping);
         const auto map = [&](const QString &text) {
@@ -14441,9 +16096,10 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
 
-    // "Set default": Hkeys.ResetDefaults() in memory only; nothing is saved
-    // or installed until legacy next saves (OK with a change, a gesture).
-    void hotkeysSetDefaultResetsInMemoryOnly()
+    // PF1-staged-reset: the Hotkeys page's "Reset page" puts every row back
+    // to its default in the list; Cancel drops it, OK saves and installs it
+    // (legacy's Set default reset the bindings in memory, saved later).
+    void hotkeysResetPageIsStaged()
     {
         auto &store = *application->settingsStore();
         // Stored bindings are read as stored, however few (C04-short-file);
@@ -14471,23 +16127,108 @@ private slots:
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-J"));
         QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        showSettingsPage("hotkeys");
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
         QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-S"));
-        QVERIFY(hotkeyRow(QStringLiteral("Global Script a.lua-1")).isEmpty()); // the scripts' go too
-        QVERIFY(application->automationHotkeys().committedKeys().empty());
-        // Stored and installed bindings stay as they were, even after Cancel.
+        // the scripts' unbound, their rows listed
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QString());
+        // Stored and installed bindings stay as they were after Cancel.
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(store.list("shortcuts.hotkeys"), saved);
         QCOMPARE(store.list(application::kAutomationHotkeysSetting.data()).size(), 1);
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+K"));
-        // The next save writes them (a gesture saves the main file).
-        h.gestureMap(application::hotkeyIdOf("GLOBAL_OPEN_SUBS"), QStringLiteral("Open subtitles"),
-                     QStringLiteral("Ctrl-Shift-Q"), 0, QStringLiteral("cancel"));
+        // Reset page, then OK: saved and installed.
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(store.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")));
-        QVERIFY(store.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_OPEN_SUBS G=Ctrl-Shift-Q")));
-        QCOMPARE(store.list(application::kAutomationHotkeysSetting.data()).size(), 0);
+        QVERIFY(application->automationHotkeys().committedKeys().empty());
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+S"));
+    }
+
+    // PF1-staged-reset: the Line editor's Reset page empties its tag
+    // buttons too, staged until OK like the rest of the page.
+    void lineEditorResetPageClearsTagButtons()
+    {
+        auto &buttons = application->tagButtons();
+        auto &store = *application->settingsStore();
+        buttons.setCount(2);
+        buttons.edit(0, QStringLiteral("Bold"), QStringLiteral("\\b1"), 0);
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("lineEditor");
+        QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(dialog->property("tagButtonList").toList().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(buttons.count(), 2);
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(buttons.count(), 0);
+        QCOMPARE(store.integer("editor.tagButtons"), 0);
+        QVERIFY(!store.contains("editor.tagButton1"));
+    }
+
+    // Conversion's Reset page loads the default catalog and lists its
+    // Styles, so the default Style is chosen among them.
+    void conversionResetPageLoadsTheDefaultCatalog()
+    {
+        auto &settings = *application->settingsStore();
+        auto &styles = application->styleManager();
+        QVERIFY(styles.createCatalog(QStringLiteral("Conv")));
+        styles.saveCatalog();
+        QVERIFY(styles.chooseCatalog(QStringLiteral("Default")));
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("conversion");
+        const auto catalogs = dialog->property("catalogs").toStringList();
+        auto *catalog = dialogItem("settingsDialog", "setting_convert.styleCatalog");
+        QVERIFY(QMetaObject::invokeMethod(catalog, "activated", Q_ARG(int, int(catalogs.indexOf(QStringLiteral("Conv"))))));
+        QVERIFY(dialog->property("styles").toStringList().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QCOMPARE(styles.catalog(), QStringLiteral("Default"));
+        QTRY_COMPARE(catalog->property("currentText").toString(), QStringLiteral("Default"));
+        QVERIFY(dialog->property("styles").toStringList().contains(QStringLiteral("Default")));
+        QTRY_COMPARE(dialogItem("settingsDialog", "setting_convert.style")->property("currentText").toString(),
+                     QStringLiteral("Default"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("convert.styleCatalog"), QStringLiteral("Default"));
+        QCOMPARE(settings.text("convert.style"), QStringLiteral("Default"));
+        QVERIFY(styles.deleteCatalog(QStringLiteral("Conv")));
+    }
+
+    // "Reset all settings…" keeps the page shown, where Settings opens next,
+    // and the Appearance page as it is: its program font size too.
+    void resetAllKeepsThePageShown()
+    {
+        auto &settings = *application->settingsStore();
+        settings.set("program.fontSize", 13);
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("video");
+        QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("video"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("program.fontSize")).toInt(), 13);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("video"));
+        QCOMPARE(settings.integer("program.fontSize"), 13);
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("currentPage").toString(), QStringLiteral("video"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     // Hotkeys::OnMapHkey: Shift+click on a menu item (with the window
@@ -14621,7 +16362,7 @@ private slots:
 
     // GRID_FILTER_IGNORE_IN_ACTIONS through a hotkey toggles from the stored
     // option (SubsGrid::OnAccelerator), while the menu item toggles what the
-    // Grid shows; "Set default" resets the option only.
+    // Grid shows; "Reset all settings…" resets the option only.
     void ignoreFilteringHotkeyTogglesFromTheOption()
     {
         keysNeverRepeat();
@@ -14634,15 +16375,16 @@ private slots:
         auto &filter = application->gridFilter();
         auto &settings = *application->settingsStore();
         filter.setIgnoreInActions(true);
-        // "Set default": the option resets, the Grid keeps ignoring.
+        // "Reset all settings…" and OK: the option resets, the Grid keeps
+        // ignoring, the hotkeys stay (PF1-staged-reset).
         auto *dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(!settings.boolean("grid.ignoreFiltering"));
         QVERIFY(filter.ignoreInActions());
-        // Set default reset the bindings in memory, not the installed ones.
         QCOMPARE(h.accelOf(QStringLiteral("GRID_FILTER_IGNORE_IN_ACTIONS"), 1), QStringLiteral("Ctrl-Shift-G"));
         item<QQuickItem>("editingGrid")->forceActiveFocus();
         press(Qt::Key_G, Qt::ControlModifier | Qt::ShiftModifier);
@@ -14941,10 +16683,10 @@ private slots:
         QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Stop\""));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
-        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_K);
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_U);
         QTRY_VERIFY(!mapping->isVisible());
-        QCOMPARE(h.accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("K"));
-        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (K)\nShortcut can be set using Shift + Click"));
+        QCOMPARE(h.accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("U"));
+        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (U)\nShortcut can be set using Shift + Click"));
         // The frame keys are GLOBAL_PREVIOUS_FRAME / GLOBAL_NEXT_FRAME:
         // from the Grid too, and remapped they follow the registry.
         QTRY_VERIFY(window->isActive());
@@ -14973,7 +16715,7 @@ private slots:
         QTRY_VERIFY(dialog->property("visible").toBool());
         auto &h = application->hotkeys();
         QVERIFY(!h.listFiltered());
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 7); // Hotkeys
+        showSettingsPage("hotkeys");
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 1)));
         QVERIFY(h.listFiltered());
         const int count = int(hotkeyRows().size());
@@ -15419,40 +17161,70 @@ private slots:
         macros.install();
         QTRY_COMPARE(visualItem(name("keysNote", 0).constData())->property("text").toString(),
                      QStringLiteral("Save also uses Ctrl+S and takes it."));
-        // A run opens the closed panel on its run status; Cancel ends it.
+        // AD3: a run leaves the closed panel closed; the progress card
+        // (under the toasts) shows it and its Cancel ends it.
+        auto &automation = application->automation();
+        automation.setCardDelay(0);
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
         QTRY_VERIFY(!dock->property("isOpen").toBool());
-        QVERIFY(application->automation().run(QDir::toNativeSeparators(fixture).toStdString(), 1));
-        QTRY_VERIFY(dock->property("isOpen").toBool());
-        auto *run = visualItem("automationRun");
-        QTRY_VERIFY(run && run->isVisible());
-        auto *cancel = visualItem("automationCancel");
+        QVERIFY(automation.run(QDir::toNativeSeparators(fixture).toStdString(), 1));
+        auto *card = item("automationCard");
+        QTRY_COMPARE(automation.cardState(), QStringLiteral("running"));
+        QTRY_VERIFY(card->isVisible());
+        QVERIFY(!dock->property("isOpen").toBool());
+        auto *cancel = item("automationCancel");
+        QTRY_VERIFY(cancel->isVisible());
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        // What the run said stays until Close (S1's window kept it too).
-        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        // What the run said stays until × (S1's window kept it too).
+        QCOMPARE(item("automationCardTask")->property("text").toString(),
                  QStringLiteral("The macro was cancelled; nothing was changed."));
-        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Wait for cancel cancelled"));
-        QCOMPARE(cancel->property("text").toString(), QStringLiteral("Close"));
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Wait for cancel cancelled"));
+        QVERIFY(!cancel->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
+        QTRY_VERIFY(!card->isVisible());
+        // The run stays in the panel's Runs.
+        QCOMPARE(automation.runs()->count(), 1);
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
-        QTRY_VERIFY(run->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(automation.running(), 30000);
+        QTRY_VERIFY(cancel->isVisible());
         // Enter on a macro row leaves the key alone while a macro runs, as
         // Run and a double click are off then.
+        QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *list = visualItem("scripts");
         QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
         QVERIFY(list->property("currentIndex").toInt() >= 0);
         QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
         QCoreApplication::sendEvent(list, &enter);
         QVERIFY(!enter.isAccepted());
+        // The running macro's row carries the busy mark.
+        QTRY_VERIFY(visualItem(name("macroBusy", 1).constData()) && visualItem(name("macroBusy", 1).constData())->isVisible());
+        QVERIFY(!visualItem(name("macroBusy", 0).constData())->isVisible());
+        // The Automation menu keeps its commands, Cancel macro among them,
+        // above the separator and the macros below it.
+        {
+            auto *menu = named("automationMenu");
+            const auto at = [&](const char *objectName) {
+                for (int i = 0; i < menu->property("count").toInt(); ++i) {
+                    QQuickItem *entry = nullptr;
+                    QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i));
+                    if (entry && entry->objectName() == QLatin1String(objectName))
+                        return i;
+                }
+                return -1;
+            };
+            QVERIFY(at("cancelMacroMenuItem") >= 0);
+            QVERIFY(at("cancelMacroMenuItem") < at("automationManagerMenuItem"));
+            QCOMPARE(at("macrosSeparator"), at("automationManagerMenuItem") + 1);
+            QVERIFY(at("macro_Wait for cancel") > at("macrosSeparator"));
+        }
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
-        // Off under a modal dialog (Settings), which keeps the run status
-        // out of reach.
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        automation.dismissCard();
+        QTRY_VERIFY(!card->isVisible());
+        // Off under a modal dialog (Settings), which keeps the card out of
+        // reach.
         QVERIFY(!application->workspaceLayout().modalOpen());
         auto *runLast = named("loadLastScriptMenuItem")->property("action").value<QObject *>();
         QVERIFY(runLast->property("enabled").toBool());
@@ -15460,23 +17232,25 @@ private slots:
         QTRY_VERIFY(application->workspaceLayout().modalOpen());
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTest::qWait(200);
-        QVERIFY(!application->automation().running());
+        QVERIFY(!automation.running());
         // The Global command running the last loaded script too.
         QVERIFY(!runLast->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(runLast, "trigger"));
         QTest::qWait(200);
-        QVERIFY(!application->automation().running());
+        QVERIFY(!automation.running());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!application->workspaceLayout().modalOpen());
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
-        QTRY_VERIFY(run->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(automation.running(), 30000);
+        // Automation → Cancel macro ends it too.
+        auto *cancelMacro = named("cancelMacroMenuItem")->property("action").value<QObject *>();
+        QTRY_VERIFY(cancelMacro->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(cancelMacro, "trigger"));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QCOMPARE(automation.cardState(), QStringLiteral("cancelled"));
+        automation.dismissCard();
         // A macro whose validation does not let it run (from the panel or
-        // the menu, which say nothing else): the run status says so.
+        // the menu, which say nothing else): the card says so.
         QTemporaryDir scripts;
         const QString invalid = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("invalid.lua")));
         {
@@ -15484,16 +17258,16 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("aegisub.register_macro(\"Guarded\", \"\", function() end, function() return false end)\n");
         }
-        application->automation().load(invalid.toStdString());
+        automation.load(invalid.toStdString());
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Guarded"), 30000);
-        QVERIFY(application->automation().run(invalid.toStdString(), 0));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QTRY_VERIFY(run->isVisible());
-        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Guarded failed"));
-        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+        QVERIFY(automation.run(invalid.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QTRY_VERIFY(card->isVisible());
+        QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Guarded failed"));
+        QCOMPARE(item("automationCardTask")->property("text").toString(),
                  QStringLiteral("Its validation did not let it run; nothing was changed."));
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
+        QTRY_VERIFY(!card->isVisible());
         // KE1-template-problems: a run that applied but whose karaoke report
         // names template problems stays, its log open to be read.
         const QString templated = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("templated.lua")));
@@ -15510,18 +17284,34 @@ private slots:
                     "    .. '{\"line\":2,\"effect\":\"template syl\",\"style\":\"Default\",\"seconds\":0.4,\"generated\":2}]}')\n"
                     "end)\n");
         }
-        application->automation().load(templated.toStdString());
+        automation.load(templated.toStdString());
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Templated"), 30000);
-        QVERIFY(application->automation().run(templated.toStdString(), 0));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY2(application->automation().lastOutcome() == QStringLiteral("applied"),
-                 qPrintable(application->automation().lastMessage()));
-        QVERIFY(application->automation().keepLog());
-        QTRY_VERIFY(run->isVisible());
-        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
-        QCOMPARE(visualItem("automationShowLog")->property("text").toString(), QStringLiteral("Hide log"));
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QVERIFY(automation.run(templated.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QVERIFY2(automation.lastOutcome() == QStringLiteral("applied"), qPrintable(automation.lastMessage()));
+        QVERIFY(automation.keepLog());
+        QTRY_VERIFY(card->isVisible());
+        QCOMPARE(automation.cardState(), QStringLiteral("problems"));
+        QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
+        QVERIFY(card->property("logOpen").toBool());
+        // The report is in the run's log, which the card shows.
+        QTRY_VERIFY(item("automationCardLogToggle")->isVisible());
+        QVERIFY(item<QObject>("automationCardLog")->property("count").toInt() > 0);
+        // Open in panel: the panel's Runs at that run.
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item("automationOpenRun"), "clicked"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QCOMPARE(tool->property("view").toString(), QStringLiteral("runs"));
+        QCOMPARE(item<QObject>("runLines")->property("run").toInt(), automation.runId());
+        // The row names the macro's script too.
+        QQuickItem *row = nullptr;
+        QTRY_VERIFY((row = findItem(item("automationPanel"), QStringLiteral("run_%1").arg(automation.runId()))));
+        QCOMPARE(findItem(row, QStringLiteral("runScript"))->property("text").toString(), QStringLiteral("templated.lua"));
+        QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
+        QTRY_VERIFY(!card->isVisible());
+        tool->setProperty("view", QStringLiteral("scripts"));
+        automation.setCardDelay(1000);
     }
 
     // AM1: the Automation panel in the four themes, written to
@@ -15529,7 +17319,7 @@ private slots:
     // visual review): a Document script and two autoload ones, one failed;
     // a shortcut, one a Global command takes, one recording on a taken
     // shortcut, one whose macro is missing (automation-panel-<theme>.png);
-    // a macro running (automation-run-<theme>.png); Settings → Hotkeys
+    // a macro running, its row marked (automation-run-<theme>.png); Settings → Hotkeys
     // under "Automation shortcuts" (automation-settings-<theme>.png).
     void automationPanelScreenshots()
     {
@@ -15583,21 +17373,199 @@ private slots:
         };
         shoot(floating, QStringLiteral("panel"));
         keyTo(recorder, Qt::Key_Escape);
-        // A macro running: the run status at the top.
+        // A macro running: its row's busy mark (the card is in the main
+        // window, shot by automationProgressScreenshots).
         QVERIFY(automation.run(QDir::toNativeSeparators(fixture).toStdString(), 1));
-        QTRY_VERIFY(item("automationRun")->isVisible());
+        QTRY_VERIFY(automation.running());
         QTest::qWait(500);
         shoot(floating, QStringLiteral("run"));
-        QVERIFY(QMetaObject::invokeMethod(item("automationCancel"), "clicked"));
+        automation.cancelRun();
         QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        automation.dismissCard();
         // Settings → Hotkeys, Automation shortcuts: what the panel's menu opens.
-        auto *settingsDialog = root->findChild<QObject *>(QStringLiteral("settingsDialog"));
-        QVERIFY(QMetaObject::invokeMethod(settingsDialog, "openDialog", Q_ARG(QVariant, 7),
+        auto *settingsDialog = settingsWindow();
+        QVERIFY(QMetaObject::invokeMethod(settingsDialog, "openDialog", Q_ARG(QVariant, QStringLiteral("hotkeys")),
                                           Q_ARG(QVariant, 7)));
         QTRY_VERIFY(settingsDialog->property("opened").toBool());
         QCOMPARE(application->hotkeys().filterMode(), 7);
         shoot(window, QStringLiteral("settings"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        dock->setProperty("isFloating", false);
+    }
+
+    // AD3: F6 reaches the progress card as the region after the panels, and
+    // Esc gives the keyboard back; with every panel closed it is the one
+    // region.
+    void f6ReachesTheProgressCard()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &automation = application->automation();
+        const std::string fixture = HIKARI_LUA_FIXTURES "/progress-fixture.lua";
+        automation.load(fixture);
+        int fail = -1;
+        QTRY_VERIFY_WITH_TIMEOUT([&] {
+            for (const auto &s : automation.scripts())
+                if (s.path == fixture && s.state == application::ScriptStatus::State::Ready)
+                    for (std::size_t i = 0; i < s.info.macros.size(); ++i)
+                        if (s.info.macros[i].name == "Fail")
+                            fail = static_cast<int>(i);
+            return fail >= 0;
+        }(), 30000);
+        QVERIFY(automation.run(fixture, fail));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        auto *card = item("automationCard");
+        QTRY_VERIFY(card->isVisible());
+        QVERIFY(card->property("reachable").toBool());
+        QVERIFY(!card->hasActiveFocus());
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "focusPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("gridPanel"))),
+                                          Q_ARG(QVariant, int(Qt::OtherFocusReason))));
+        // F6 past the last panel shown.
+        for (int i = 0; i < 12 && !card->hasActiveFocus(); ++i)
+            QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, 1)));
+        QVERIFY(card->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!card->hasActiveFocus());
+        QVERIFY(card->isVisible());
+        // Every panel closed.
+        QList<QObject *> reopen;
+        const auto docks = root->property("dockList").toList();
+        for (const QVariant &d : docks) {
+            auto *dock = d.value<QObject *>();
+            if (dock->property("isOpen").toBool()) {
+                reopen << dock;
+                QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+            }
+        }
+        QTRY_VERIFY(std::ranges::none_of(docks, [](const QVariant &d) { return d.value<QObject *>()->property("isOpen").toBool(); }));
+        QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, 1)));
+        QTRY_VERIFY(card->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!card->hasActiveFocus());
+        for (QObject *dock : reopen)
+            QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        // From a floating panel's window: the main window is activated, then
+        // the card takes the keys.
+        auto *dock = item<QObject>("automationDock");
+        if (!dock->property("isOpen").toBool())
+            QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        dock->setProperty("isFloating", true);
+        auto *panel = item("automationPanel");
+        QTRY_VERIFY(panel->window() != window);
+        QVERIFY(QMetaObject::invokeMethod(root, "focusPanel", Q_ARG(QVariant, QVariant::fromValue<QObject *>(panel)),
+                                          Q_ARG(QVariant, int(Qt::OtherFocusReason))));
+        QTRY_COMPARE(QGuiApplication::focusWindow(), panel->window());
+        for (int i = 0; i < 12 && !card->hasActiveFocus(); ++i) {
+            QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, 1)));
+            QTest::qWait(50);
+        }
+        QTRY_VERIFY(card->hasActiveFocus());
+        QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(window));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!card->hasActiveFocus());
+        dock->setProperty("isFloating", false);
+        QTRY_COMPARE(panel->window(), static_cast<QQuickWindow *>(window));
+        automation.dismissCard();
+        QTRY_VERIFY(!card->isVisible());
+    }
+
+    // AD3: the progress card and the Runs view in the four themes, written
+    // to HIKARI_AUTOMATION_SHOT_DIR when it is set (tools/review): the notice
+    // (automation-notice-<theme>.png), the card running with its log
+    // (automation-card-<theme>.png), after an error (automation-failed-…),
+    // applied with a log (automation-applied-…), and the panel's Runs at
+    // that run, the level threshold at warning (automation-runs-…).
+    void automationProgressScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_AUTOMATION_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_AUTOMATION_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        auto &settings = *application->settingsStore();
+        auto &automation = application->automation();
+        QVERIFY(application->openFile(episode));
+        const std::string fixture = HIKARI_LUA_FIXTURES "/progress-fixture.lua";
+        automation.load(fixture);
+        QTRY_VERIFY_WITH_TIMEOUT(std::ranges::any_of(automation.scripts(), [&](const auto &s) {
+                                     return s.path == fixture && s.state == application::ScriptStatus::State::Ready;
+                                 }),
+                                 30000);
+        const auto ordinal = [&](const char *macro) {
+            for (const auto &s : automation.scripts())
+                if (s.path == fixture)
+                    for (std::size_t i = 0; i < s.info.macros.size(); ++i)
+                        if (s.info.macros[i].name == macro)
+                            return static_cast<int>(i);
+            return -1;
+        };
+        auto *root = engine->rootObjects().first();
+        auto *card = item("automationCard");
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        // The card's corner of the main window, or a whole window.
+        const auto shoot = [&](QQuickWindow *w, QQuickItem *area, const QString &name) {
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                QImage shot;
+                QTRY_VERIFY((shot = w->grabWindow(), !shot.isNull() && shot.width() > 0));
+                if (area) {
+                    const qreal dpr = shot.devicePixelRatio();
+                    const QRectF r = area->mapRectToScene(QRectF(0, 0, area->width(), area->height())).adjusted(-24, -24, 24, 24);
+                    shot = shot.copy(QRectF(r.x() * dpr, r.y() * dpr, r.width() * dpr, r.height() * dpr).toRect());
+                }
+                QVERIFY(shot.save(out + QStringLiteral("/automation-") + name + QLatin1Char('-') + QLatin1String(code) +
+                                  QStringLiteral(".png")));
+            }
+        };
+        // The notice: a run under its second.
+        automation.setCardDelay(600000);
+        QVERIFY(automation.run(fixture, ordinal("Busy")));
+        QTRY_VERIFY(item("automationNotice")->isVisible());
+        shoot(window, card, QStringLiteral("notice"));
+        automation.cancelRun();
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        automation.dismissCard();
+        // The card, running, its log open.
+        automation.setCardDelay(1000);
+        QVERIFY(automation.run(fixture, ordinal("Retime karaoke")));
+        QTRY_COMPARE(automation.cardState(), QStringLiteral("running"));
+        QTRY_VERIFY(automation.progressKnown());
+        QTRY_COMPARE(item<QObject>("automationCardLog")->property("count").toInt(), 4);
+        shoot(window, card, QStringLiteral("card"));
+        automation.cancelRun();
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        // After an error, and applied with a log.
+        QVERIFY(automation.run(fixture, ordinal("Fail")));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QCOMPARE(automation.cardState(), QStringLiteral("failed"));
+        shoot(window, card, QStringLiteral("failed"));
+        QVERIFY(automation.run(fixture, ordinal("Levels")));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QCOMPARE(automation.cardState(), QStringLiteral("applied"));
+        shoot(window, card, QStringLiteral("applied"));
+        // Runs, at the karaoke run, up to warning, times on.
+        const int retimed = automation.runs()->idAt(2);
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "openAutomationRun", Q_ARG(QVariant, retimed)));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        dock->setProperty("isFloating", true);
+        auto *panel = item("automationPanel");
+        QTRY_VERIFY(panel && panel->window() != window);
+        QQuickWindow *floating = panel->window();
+        floating->resize(460, 760);
+        auto *lines = item<QObject>("runLines");
+        QTRY_COMPARE(lines->property("run").toInt(), retimed);
+        lines->setProperty("levelLimit", 2);
+        QTRY_COMPARE(item<QObject>("runLogLevel")->property("currentIndex").toInt(), 2);
+        settings.setValue(QStringLiteral("automation.runLogTimes"), true);
+        QTRY_VERIFY(lines->property("times").toBool());
+        shoot(floating, nullptr, QStringLiteral("runs"));
+        settings.setValue(QStringLiteral("automation.runLogTimes"), false);
+        automation.dismissCard();
         dock->setProperty("isFloating", false);
     }
 
@@ -15749,8 +17717,9 @@ private slots:
         QVERIFY(doc.scriptInfo(u8"PlayResX") == std::u8string(u8"640"));
         QVERIFY(doc.scriptInfo(u8"PlayResY") == std::u8string(u8"480"));
         QVERIFY(!application->settingsStore()->boolean("automation.scriptResolutionFromVideo"));
-        // The Automation panel's run status goes: nothing to say (AM1).
-        QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
+        // It applied and wrote to its log: the progress card stays (AD3).
+        QTRY_COMPARE(application->automation().cardState(), QStringLiteral("applied"));
+        application->automation().dismissCard();
 
         // Return on Cancel, and Escape, stop the macro, quietly.
         application->editor().undo();
@@ -15771,7 +17740,8 @@ private slots:
             const auto &after = application->files().session(*application->workspace().editingTarget())->document();
             QVERIFY(!after.scriptInfo(u8"PlayResX"));
             QVERIFY(after.lines().front()->text == std::u8string(u8"first"));
-            QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
+            // Declined: nothing to say, the card goes (AD3).
+            QTRY_COMPARE(application->automation().cardState(), QString());
         }
     }
 
@@ -16452,46 +18422,46 @@ private slots:
         // remapped through the registry (the Options page's Hotkeys list, OK)
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Audio Scroll left")));      // AUDIO_SCROLL_RIGHT, A
-        h.optionsMap(QStringLiteral("K"), 4, QStringLiteral("cancel"));
+        h.optionsMap(QStringLiteral("U"), 4, QStringLiteral("cancel"));
         h.select(hotkeyPosition(QStringLiteral("Audio Play line alt")));    // R
-        h.optionsMap(QStringLiteral("U"), 4, QStringLiteral("cancel")); // (KA2: Y is Tap to time)
+        h.optionsMap(QStringLiteral("I"), 4, QStringLiteral("cancel")); // (KA2: Y is Tap to time; KA1: K splits)
         h.select(hotkeyPosition(QStringLiteral("Audio Commit")));           // Enter
         h.optionsMap(QStringLiteral("J"), 4, QStringLiteral("cancel"));
         h.commitOptions();
-        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_SCROLL_RIGHT"), 4), QStringLiteral("K"));
-        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("U"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_SCROLL_RIGHT"), 4), QStringLiteral("U"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("I"));
         QCOMPARE(h.accelOf(QStringLiteral("AUDIO_COMMIT"), 4), QStringLiteral("J"));
-        QVERIFY(application->settingsStore()->list("shortcuts.audioHotkeys").contains(QStringLiteral("AUDIO_SCROLL_RIGHT A=K")));
+        QVERIFY(application->settingsStore()->list("shortcuts.audioHotkeys").contains(QStringLiteral("AUDIO_SCROLL_RIGHT A=U")));
 
-        // in the display: K scrolls back 50 columns, A no longer does
+        // in the display: U scrolls back 50 columns, A no longer does
         item("audioDisplay")->forceActiveFocus();
         audio.setHorizontalZoom(0); // the most columns
         audio.setScrollPosition(10);
         const auto at = view.position();
         QVERIFY(at >= 100);
-        press(Qt::Key_K);
+        press(Qt::Key_U);
         QCOMPARE(view.position(), at - 50);
         press(Qt::Key_A);
         QCOMPARE(view.position(), at - 50);
         // in the Grid too
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_K);
+        press(Qt::Key_U);
         QCOMPARE(view.position(), at - 100);
         press(Qt::Key_A);
         QCOMPARE(view.position(), at - 100);
 
-        // U plays the line (AUDIO_PLAY_LINE_ALT as AUDIO_PLAY_LINE), R no longer
+        // I plays the line (AUDIO_PLAY_LINE_ALT as AUDIO_PLAY_LINE), R no longer
         using application::PlayRange;
         auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
         item("audioDisplay")->forceActiveFocus();
         press(Qt::Key_R);
         QVERIFY(!audio.lastPlayRange());
-        press(Qt::Key_U);
+        press(Qt::Key_I);
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         press(Qt::Key_H);
         // from the Grid, the display takes the focus (the play handlers' SetFocus)
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_U);
+        press(Qt::Key_I);
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
         press(Qt::Key_H);
@@ -16671,16 +18641,16 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, {}, at(split, 8));
         QCOMPARE(audio.karaokeModel().count(), 4);
         QCOMPARE(audio.currentSyllable(), 2);
-        QCOMPARE(audio.karaokeModel().times()[2], 950); // ZEROIT(700 + 500 / 2)
+        QCOMPARE(audio.karaokeModel().times()[2], 860); // KA1-time-by-character: ZEROIT(700 + 500 / 3)
         QCOMPARE(editor.history().size(), steps + 2);
-        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k25}o{\\k25}ke")));
+        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k16}o{\\k34}ke")));
         // below the letters the cursor is back
         QTest::mouseMove(window, at(okeEnd - 3, y));
         QVERIFY(audio.cursor());
 
         // a middle click on the new boundary joins the syllables again
-        QTest::mouseMove(window, at(int(view.xAtMs(950)), y));
-        QTest::mouseClick(window, Qt::MiddleButton, {}, at(int(view.xAtMs(950)), y));
+        QTest::mouseMove(window, at(int(view.xAtMs(860)), y));
+        QTest::mouseClick(window, Qt::MiddleButton, {}, at(int(view.xAtMs(860)), y));
         QCOMPARE(audio.karaokeModel().count(), 3);
         QCOMPARE(editor.history().size(), steps + 3);
         QVERIFY(editor.text().endsWith(QStringLiteral("{\\k50}oke")));
@@ -16692,7 +18662,7 @@ private slots:
         QTest::mouseMove(window, kOverNoPanel);
         // Undo takes the join back
         QVERIFY(editor.undo());
-        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k25}o{\\k25}ke")));
+        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k16}o{\\k34}ke")));
 
         // Next past the last syllable: the next Line, split automatically
         // (AUDIO_KARAOKE_SPLIT_MODE is on by default)
@@ -16703,7 +18673,7 @@ private slots:
         QCOMPARE(editor.text(), QStringLiteral("kara oke"));
         QCOMPARE(audio.currentSyllable(), 0);
         QCOMPARE(audio.karaokeModel().count(), 4); // ka ra o ke
-        QCOMPARE(range(), (PlayRange{62400, 7200}));
+        QCOMPARE(range(), (PlayRange{62400, 8160})); // KA1-time-by-character: 2 of 7 letters, 170 ms
         click("audioKaraokeSplit"); // the switch: at spaces only
         QVERIFY(!audio.karaokeSplitMode());
         QVERIFY(!store->boolean("audio.karaokeSplitMode"));
@@ -16718,6 +18688,374 @@ private slots:
         QVERIFY(!store->boolean("audio.karaoke"));
         QCOMPARE(store->integer("audio.horizontalZoom"), 50);
         press(Qt::Key_H);
+    }
+
+    // KA1 (#276): K splits the syllable at the waveform cursor and Shift+K
+    // switches the long ones between \k and \kf, each one step, the view
+    // staying where it is (KA1-split-keeps-view); both in Auto split's arrow
+    // menu and the narrow panel's ⋯ menu (KA1-syllable-commands); a lead-in
+    // keeps the syllables at their times (KA1-lead-in-keeps-syllables).
+    void audioKaraokeSyllableCommands()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        const QString path = writeFile(dir, "karaoke-commands.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n");
+        QVERIFY(application->openFile(path));
+        auto &audio = application->audio();
+        auto &editor = application->editor();
+        auto *store = application->settingsStore();
+        editor.setShowTags(true);
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        QCOMPARE(item("audioKaraokeSplitArrow")->width(), 9.0); // narrower than the other split buttons' arrows
+        // KA1 (owner 2026-10-21): the default panel has no room for the arrow
+        // beside KA2's Tap; it folds first, its commands in ⋯, the switches,
+        // Auto split and Tap still shown
+        QVERIFY(item("audioButtons")->property("splitArrowFolded").toBool());
+        QVERIFY(!item("audioButtons")->property("folded").toBool());
+        QVERIFY(!item("audioKaraokeSplitArrow")->isVisible());
+        QVERIFY(item("audioKaraokeSplit")->isVisible());
+        QVERIFY(item("audioTap")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
+        auto *moreMenu = named("audioMoreMenu");
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, item("audioMore")), Q_ARG(qreal, 0),
+                                          Q_ARG(qreal, item("audioMore")->height())));
+        QTRY_VERIFY(moreMenu->property("opened").toBool());
+        QVERIFY(item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(item("audioMoreKaraokeKf")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
+        QTRY_VERIFY(!moreMenu->property("visible").toBool());
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const auto steps = editor.history().size();
+
+        // zoomed in past the Line, 1200 ms in the middle of the view
+        audio.setHorizontalZoom(1);
+        QVERIFY(view.xAtMs(1800) - view.xAtMs(200) > view.width());
+        const auto column = [&](int ms) { return int(view.sampleAtMs(ms) / view.samples()); };
+        audio.setScrollPosition((column(1200) - view.width() / 2) / 12);
+        const int x = int(view.xAtMs(1200));
+        QVERIFY(x > 0 && x < view.width());
+        // K over the waveform: "hana" split at the cursor's time, by its letters
+        QTest::mouseMove(window, at(x - 1, 30));
+        QTest::mouseMove(window, at(x, 30));
+        QVERIFY(audio.cursor());
+        display->forceActiveFocus();
+        const int scrolled = view.position(); // (the scrollbar follows on the next draw)
+        press(Qt::Key_K);
+        const int boundary = application::legacyZeroIt(view.msAtX(x));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[1], boundary);
+        QCOMPARE(audio.currentSyllable(), 2);
+        QCOMPARE(editor.history().size(), steps + 1);
+        QCOMPARE(editor.history().last(), QStringLiteral("Changing time on audio spectrum, active line 1"));
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k%1}ha{\\k%2}na")
+                                    .arg((boundary - 600) / 10)
+                                    .arg((1800 - boundary) / 10));
+        QCOMPARE(view.position(), scrolled); // the view stays
+        press(Qt::Key_B); // AUDIO_GOTO: where legacy's commit would have scrolled
+        QVERIFY(view.position() != scrolled);
+
+        // Shift+K: every syllable of 50 cs or more to \kf, and back
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 50);
+        const int now = view.position();
+        press(Qt::Key_K, Qt::ShiftModifier);
+        QCOMPARE(editor.history().size(), steps + 2);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\kf%1}ha{\\kf%2}na")
+                                    .arg((boundary - 600) / 10)
+                                    .arg((1800 - boundary) / 10));
+        QCOMPARE(view.position(), now);
+        // the arrow's menu: its items with their keys, the switch back
+        auto *kf = named("audioKaraokeKf");
+        QCOMPARE(kf->property("text").toString(), QStringLiteral("Switch long syllables between \\k and \\kf\tShift-K"));
+        QCOMPARE(named("audioKaraokeSplitAtCursor")->property("text").toString(), QStringLiteral("Split syllable at the cursor\tK"));
+        QVERIFY(QMetaObject::invokeMethod(kf, "triggered"));
+        QCOMPARE(editor.history().size(), steps + 3);
+        QVERIFY(!editor.text().contains(QStringLiteral("\\kf")));
+        // with no cursor: the current syllable's middle
+        QTest::mouseMove(window, kOverNoPanel);
+        QVERIFY(!audio.cursor());
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 4);
+        QCOMPARE(audio.karaokeModel().times()[2], application::legacyZeroIt(boundary + (1800 - boundary) / 2));
+        QCOMPARE(editor.history().size(), steps + 4);
+        // the ⋯ menu's items do the same
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 5);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeKf"), "triggered"));
+        QCOMPARE(editor.history().size(), steps + 6);
+        QVERIFY(editor.text().contains(QStringLiteral("\\kf")));
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+
+        // at the default zoom: K over a letter splits before it, as a click
+        audio.setHorizontalZoom(50);
+        display->forceActiveFocus();
+        press(Qt::Key_B);
+        const auto middle = [&](int i) {
+            const auto [from, to] = audio.karaokeModel().syllableTimes(i, audio.selectionStart());
+            return application::legacyZeroIt(from + (to - from) / 2);
+        };
+        int letter = -1;
+        for (int lx = std::max(int(view.xAtMs(600)), 1); lx < std::min(int(view.xAtMs(1800)), view.width()) && letter < 0;
+             lx++) {
+            QTest::mouseMove(window, at(lx, 8));
+            if (audio.karaokeModel().hover == 1 && audio.karaokeModel().character == 1)
+                letter = lx;
+        }
+        QVERIFY(letter > 0);
+        press(Qt::Key_K);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k30}h{\\k90}ana"));
+        QVERIFY(editor.undo());
+        // a letter the mouse has left: the current syllable's middle
+        QTest::mouseMove(window, at(letter - 1, 8));
+        QTest::mouseMove(window, at(letter, 8));
+        QCOMPARE(audio.karaokeModel().hover, 1);
+        QTest::mouseMove(window, kOverNoPanel);
+        int current = audio.currentSyllable();
+        int expected = middle(current);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[current], expected);
+        QVERIFY(editor.undo());
+        // a cursor past the Line's syllables: the current syllable's middle too
+        const int past = int(view.xAtMs(2200));
+        QVERIFY(past > 0 && past < view.width());
+        QTest::mouseMove(window, at(past - 1, 30));
+        QTest::mouseMove(window, at(past, 30));
+        QVERIFY(audio.cursor());
+        display->forceActiveFocus();
+        current = audio.currentSyllable();
+        expected = middle(current);
+        press(Qt::Key_K);
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[current], expected);
+        QVERIFY(editor.undo());
+        QTest::mouseMove(window, kOverNoPanel);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+
+        // AUDIO_LEAD_IN (200 ms): the time before the syllables is a lead syllable
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        display->forceActiveFocus();
+        audio.leadIn();
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k20}{\\k40}sakura{\\k120}hana"));
+        // a lead-in of no whole centiseconds (Codex): the text is written for
+        // the start the Line keeps, 95 ms kept as 90
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+        store->setValue(QStringLiteral("audio.leadInValue"), 105);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k11}{\\k40}sakura{\\k120}hana"));
+        // and the panel takes that start, so the syllables are drawn and
+        // played from it (Codex)
+        QCOMPARE(audio.selectionStart(), 90);
+        QCOMPARE(audio.karaokeModel().syllableTimes(0, audio.selectionStart()), std::pair(90, 200));
+        // the commands measure from that kept start (Codex): the lead
+        // syllable is 11 cs from 90 ms, not 10.5 from the panel's 95
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 11);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeKf"), "triggered"));
+        QCOMPARE(editor.text(), QStringLiteral("{\\kf11}{\\kf40}sakura{\\kf120}hana"));
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 100);
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+        // a start off the 10 ms grid that the Line was not read again for
+        // (a 103 ms lead-in: 97 kept as 90; the lead then joined to
+        // "sakura"), then another lead-in (Codex): the new lead runs to the
+        // kept start, and "sakura" keeps its 51 cs from there
+        store->setValue(QStringLiteral("audio.leadInValue"), 103);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k11}{\\k40}sakura{\\k120}hana"));
+        audio.setHorizontalZoom(1); // the lead wide enough to click its end
+        audio.setScrollPosition((column(200) - view.width() / 2) / 12);
+        const int lead = int(view.xAtMs(200));
+        QVERIFY(lead > 0 && lead < view.width());
+        QTest::mouseMove(window, at(lead, 30));
+        QTest::mouseClick(window, Qt::MiddleButton, {}, at(lead, 30));
+        QCOMPARE(editor.text(), QStringLiteral("{\\k51}sakura{\\k120}hana"));
+        store->setValue(QStringLiteral("audio.leadInValue"), 50);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k5}{\\k51}sakura{\\k120}hana"));
+        QTest::mouseMove(window, kOverNoPanel);
+        store->setValue(QStringLiteral("audio.leadInValue"), 200);
+        audio.setHorizontalZoom(50);
+        press(Qt::Key_H);
+    }
+
+    // KA1 (Codex): Add lead-in in Karaoke mode with several Lines selected
+    // writes no \k text, which the commit would give every selected Line:
+    // each keeps its own (legacy, as Line mode's start moves)
+    void audioKaraokeLeadInSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lead-several.ass",
+                                       "Dialogue: 0,0:00:00.40,0:00:01.00,Default,,0,0,0,,{\\k30}sa{\\k30}ku\n"
+                                       "Dialogue: 0,0:00:01.20,0:00:01.80,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        audio.leadIn();
+        // the panel's syllables as the kept text reads from the new start (Codex)
+        QCOMPARE(audio.karaokeModel().times(), (std::vector<int>{500, 800}));
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->text, std::u8string(u8"{\\k30}sa{\\k30}ku"));
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+        QCOMPARE(after[0]->start.value.microseconds(), 200000);
+    }
+
+    // KA1 (Codex): a start the right button carries the syllables with, its
+    // drag cut short (the grab lost), commits them as its release would: the
+    // Line keeps its syllables' lengths, not the times its own tags read
+    void audioKaraokeLostCaptureKeepsTheCarriedSyllables()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lost-capture.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:02.60,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const int from = int(view.xAtMs(200));
+        QTest::mouseMove(window, at(from, 40));
+        QTest::mousePress(window, Qt::RightButton, {}, at(from, 40));
+        QTest::mouseMove(window, at(int(view.xAtMs(300)), 40));
+        const int by = application::legacyZeroIt(audio.selectionStart()) - 200; // as the commit writes it
+        QVERIFY(by > 50);
+        QCOMPARE(audio.karaokeModel().times(), (std::vector<int>{600 + by, 1800}));
+        display->ungrabMouse();
+        QTest::mouseRelease(window, Qt::RightButton, {}, at(int(view.xAtMs(300)), 40));
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->start.value.microseconds() / 1000, std::int64_t(200 + by));
+        // "sakura" carried whole; "hana" ends with the Line (its own tags
+        // would have kept "sakura" at its old end)
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(after[0]->text.c_str())),
+                 QStringLiteral("{\\k40}sakura{\\k%1}hana").arg((1200 - by) / 10));
+    }
+
+    // KA1 (Codex): a right drag of the start cut short with several Lines
+    // selected commits the carried syllables to the active Line alone
+    void audioKaraokeLostCaptureSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lost-several.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:02.60,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const int from = int(view.xAtMs(200));
+        QTest::mouseMove(window, at(from, 40));
+        QTest::mousePress(window, Qt::RightButton, {}, at(from, 40));
+        QTest::mouseMove(window, at(int(view.xAtMs(300)), 40));
+        QVERIFY(audio.selectionStart() > 250);
+        display->ungrabMouse();
+        QTest::mouseRelease(window, Qt::RightButton, {}, at(int(view.xAtMs(300)), 40));
+        audio.commit();
+        const auto after = session->document().lines();
+        QVERIFY(after[0]->text != std::u8string(u8"{\\k40}sakura{\\k120}hana")); // the carried syllables
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+    }
+
+    // KA1 (Codex): K and Shift+K with several Lines selected write the
+    // active Line's syllables to it alone; the others keep their texts
+    void audioKaraokeCommandsSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-commands-several.ass",
+                                       "Dialogue: 0,0:00:00.40,0:00:01.00,Default,,0,0,0,,{\\k30}sa{\\k30}ku\n"
+                                       "Dialogue: 0,0:00:01.20,0:00:01.80,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        auto *store = application->settingsStore();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        QTest::mouseMove(window, kOverNoPanel);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 15);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeKf"), "triggered"));
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 100);
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->text, std::u8string(u8"{\\kf15}s{\\kf15}a{\\kf30}ku"));
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+
+        // KA1: without AUDIO_AUTO_COMMIT the split waits in the draft, and
+        // Commit sends it to the active Line alone (Codex)
+        store->setValue(QStringLiteral("audio.autoCommit"), false);
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 3);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 4);
+        QCOMPARE(session->document().lines()[0]->text, std::u8string(u8"{\\kf15}s{\\kf15}a{\\kf30}ku"));
+        audio.commit();
+        const auto committed = session->document().lines();
+        QCOMPARE(text(committed[0]).count(QStringLiteral("{\\k")), 4); // the new syllable is a \k one
+        QCOMPARE(committed[1]->text, std::u8string(u8"{\\k60}hana"));
+
+        // the editor's Commit the same, with an Actor typed for both Lines
+        // still going to both
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 4);
+        QVERIFY(session->editDraft(lines[0]->id, application::DraftChange{.actor = u8"Kara"}));
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 5);
+        QVERIFY(application->editor().commit());
+        store->setValue(QStringLiteral("audio.autoCommit"), true);
+        const auto sent = session->document().lines();
+        QCOMPARE(text(sent[0]).count(QStringLiteral("{\\k")), 5);
+        QCOMPARE(sent[1]->text, std::u8string(u8"{\\k60}hana"));
+        QCOMPARE(sent[0]->actor, std::u8string(u8"Kara"));
+        QCOMPARE(sent[1]->actor, std::u8string(u8"Kara"));
     }
 
     // KA2 (#277, KA2-tap-to-time): tap-to-time in Karaoke mode with the real
@@ -16789,6 +19127,12 @@ private slots:
         QCOMPARE(text("audioTapNext"), QStringLiteral("› koro"));
         QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
         QVERIFY(visualItem("audioTapLane")->isVisible());
+        // KA1: the syllable commands' menu items wait while tapping, as their
+        // keys do (Codex)
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeKf"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(editor.history().size(), steps);
 
         // Hold: ki, a gap, mi and no back to back; Space reaches tap mode,
         // not the video's play (VIDEO_PLAY_PAUSE)
@@ -17506,7 +19850,7 @@ private slots:
             auto *shown = openSettings();
             if (!QTest::qWaitFor([&] { return shown->property("visible").toBool(); }))
                 return static_cast<QObject *>(nullptr);
-            dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6); // Appearance
+            showSettingsPage("appearance");
             return shown;
         };
         auto *dialog = openAppearance();
@@ -17534,6 +19878,9 @@ private slots:
             auto *ring = background->findChild<QQuickItem *>(QStringLiteral("focusRing"));
             QVERIFY2(ring, name);
             QVERIFY2(!ring->isVisible(), name);
+            // PF1: in the Settings window, which has the keyboard.
+            control->window()->requestActivate();
+            QTRY_COMPARE(QGuiApplication::focusWindow(), control->window());
             control->forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY2(ring->isVisible(), name);
             const auto *border = ring->property("border").value<QObject *>();
@@ -17635,7 +19982,7 @@ private slots:
         QTRY_COMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
                      QStringLiteral("#123456"));
         QCOMPARE(accent(), QColor(0x12, 0x34, 0x56));
-        QTest::keyClick(window, Qt::Key_Escape);
+        QTest::keyClick(qobject_cast<QWindow *>(dialog), Qt::Key_Escape);
         QTRY_VERIFY(!themePopover->property("visible").toBool());
         QVERIFY(dialog->property("visible").toBool()); // Esc was the popover's
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(), accentBefore);
@@ -17657,9 +20004,10 @@ private slots:
         QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
         // High contrast white keeps its own colours.
         QCOMPARE(settings.text("appearance.highContrastWhite.accent"), QStringLiteral("#0037B3"));
-        // "Set default" leaves the appearance; the reset puts the picks back.
+        // "Reset all settings…" leaves the appearance; the reset puts the picks back.
         QVERIFY((dialog = openAppearance()) != nullptr);
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
                  QStringLiteral("#00FF00"));
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.theme")).toString(), QStringLiteral("highContrastBlack"));
@@ -18413,9 +20761,9 @@ private slots:
         QCOMPARE(application->shell().statusText(), QString());
         // "Audio settings…" opens the dialog on its Audio page.
         QVERIFY(QMetaObject::invokeMethod(named("audioOutputSettings"), "triggered"));
-        dialog = named("settingsDialog");
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 4);
+        QTRY_VERIFY((dialog = settingsWindow()) && dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 5); // Audio
+        QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("audio")); // where Settings opens next
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
@@ -22209,16 +24557,16 @@ private slots:
         QCOMPARE(url(findTab), QStringLiteral("image://hikari-icon/search/%1/%2/0").arg(normal, accent));
         QCOMPARE(url(replaceTab), QStringLiteral("image://hikari-icon/find-replace/%1/%2/0").arg(normal, accent));
         QCOMPARE(findTab->property("text").toString(), QStringLiteral("Find"));
-        // A dialog's title shows its icon.
+        // PF1: the Settings window's pages show their icons.
         auto *dialog = openSettings();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("opened").toBool());
-        auto *title = dialog->findChild<QQuickItem *>(QStringLiteral("settingsDialogTitle"));
-        QVERIFY(title && title->isVisible());
-        QCOMPARE(title->property("text").toString(), QStringLiteral("Options"));
-        auto *titleIcon = title->findChild<QQuickItem *>(QStringLiteral("dialogIcon"));
-        QVERIFY(titleIcon && titleIcon->property("valid").toBool());
-        QCOMPARE(titleIcon->property("iconRole").toString(), QStringLiteral("settings"));
+        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Settings"));
+        auto *page = dialogItem("settingsDialog", "settingsPage_general");
+        QVERIFY(page && page->isVisible());
+        auto *pageIcon = findItem(page, QStringLiteral("settingsPageIcon"));
+        QVERIFY(pageIcon && pageIcon->property("valid").toBool());
+        QCOMPARE(pageIcon->property("iconRole").toString(), QStringLiteral("settings"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         // The windows' icons.
         for (const char *w : {"historyWindow", "styleManager"}) {
@@ -22298,15 +24646,13 @@ private slots:
             // K2: the Options dialog's Appearance page.
             auto *dialog = openSettings();
             QTRY_VERIFY(dialog->property("opened").toBool());
-            dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6);
+            showSettingsPage("appearance");
             QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
             dialogItem("settingsDialog", "appearanceFollowSystem")->forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY(dialogItem("settingsDialog", "appearanceFollowSystem")->property("visualFocus").toBool());
             QTest::qWait(300);
-            const QImage dialogShot = window->grabWindow();
-            auto *dialogItemRoot = dialog->property("contentItem").value<QQuickItem *>()->parentItem();
-            QVERIFY(dialogShot.copy(crop(dialogItemRoot).adjusted(-8, -8, 8, 8).intersected(dialogShot.rect()))
-                        .save(out + QStringLiteral("/appearance-page") + suffix));
+            // PF1: the Settings window, whole.
+            QVERIFY(qobject_cast<QQuickWindow *>(dialog)->grabWindow().save(out + QStringLiteral("/appearance-page") + suffix));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
         }
@@ -22463,7 +24809,7 @@ private slots:
             // with keyboard focus.
             auto *dialog = openSettings();
             QTRY_VERIFY(dialog->property("opened").toBool());
-            dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6);
+            showSettingsPage("appearance");
             QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
             const char *subject = ui::theme::isHighContrast(code) ? "appearanceTheme_dark" : "accent_green";
             QQuickItem *control = dialogItem("settingsDialog", subject);
@@ -22473,9 +24819,7 @@ private slots:
             QQuickItem *ring = control->property("background").value<QQuickItem *>()->findChild<QQuickItem *>(QStringLiteral("focusRing"));
             QTRY_VERIFY2(ring && ring->isVisible(), subject);
             QTest::qWait(300);
-            const QImage dialogShot = window->grabWindow();
-            auto *dialogRoot = dialog->property("contentItem").value<QQuickItem *>()->parentItem();
-            QVERIFY(save(dialogShot.copy(cropOf(dialogRoot, 8).intersected(dialogShot.rect())), QStringLiteral("swatch"), theme));
+            QVERIFY(save(qobject_cast<QQuickWindow *>(dialog)->grabWindow(), QStringLiteral("swatch"), theme));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
         }
@@ -25008,7 +27352,7 @@ private slots:
         values.insert(QStringLiteral("video.subtitleProvider"), 0);
         dialog->setProperty("values", values);
         QVERIFY(QMetaObject::invokeMethod(dialog, "reloaded"));
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 3); // Video
+        showSettingsPage("video");
         QTRY_VERIFY(dialogItem("settingsDialog", "settingsRendererGroup")->property("visible").toBool());
         const auto shoot = [&](QObject *popup, const QString &name) {
             auto *content = popup->property("contentItem").value<QQuickItem *>();
@@ -25044,8 +27388,74 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
     }
 
+    // PF1 (#225) screenshots for review (HIKARI_SETTINGS_SHOT_DIR; skipped
+    // without it): the Settings window's ten pages in the four themes
+    // (pf1-<page>-<theme>.png), the Hotkeys page searched, and the "Reset
+    // all settings…" question.
+    void settingsWindowScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SETTINGS_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SETTINGS_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        });
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        auto *window = qobject_cast<QQuickWindow *>(dialog);
+        QTRY_VERIFY(window->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!window->isVisible());
+        const auto shoot = [&](QQuickWindow *shown, const QString &file) {
+            QTest::qWait(300);
+            QVERIFY(shown->grabWindow().save(out + QLatin1Char('/') + file));
+        };
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            QVERIFY(openSettings());
+            QTRY_VERIFY(window->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            for (const auto &page : dialog->property("pages").toList()) {
+                const QString id = page.toMap().value(QStringLiteral("id")).toString();
+                showSettingsPage(qPrintable(id));
+                shoot(window, QStringLiteral("pf1-%1-%2.png").arg(id, code));
+                // and scrolled to its end, where the page is longer than the window
+                auto *stack = dialogItem("settingsDialog", "settingsPageStack");
+                auto *shown = stack->childItems().value(stack->property("currentIndex").toInt());
+                auto *flick = shown ? shown->property("contentItem").value<QQuickItem *>() : nullptr;
+                if (flick && flick->property("contentHeight").toReal() > flick->height()) {
+                    flick->setProperty("contentY", flick->property("contentHeight").toReal() - flick->height());
+                    shoot(window, QStringLiteral("pf1-%1-end-%2.png").arg(id, code));
+                    flick->setProperty("contentY", 0);
+                }
+            }
+            auto *search = dialogItem("settingsDialog", "hotkeySearch");
+            search->setProperty("text", QStringLiteral("save"));
+            shoot(window, QStringLiteral("pf1-hotkeys-search-%1.png").arg(code));
+            search->setProperty("text", QString());
+            QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+            QObject *box = nullptr;
+            QTRY_VERIFY((box = dialog->property("question").value<QObject *>()) && box->property("visible").toBool());
+            QVERIFY(QTest::qWaitForWindowExposed(qobject_cast<QQuickWindow *>(box)));
+            shoot(qobject_cast<QQuickWindow *>(box), QStringLiteral("pf1-reset-all-%1.png").arg(code));
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!window->isVisible());
+        }
+    }
+
     // DG1 (#222) screenshots for review (HIKARI_DIALOG_SHOT_DIR; skipped
-    // without it): About, Credits, a newer release and the AUR notice in the
+    // without it): About, Credits and a newer release in the
     // four themes on HikariSub's title bar (where the platform has one: X11,
     // Wayland, Windows), then About with "Use system title bar" (the update
     // check's warning is a toast since NT1).
@@ -25075,17 +27485,13 @@ private slots:
                                                                            "window.\n- About and Credits stay open beside the editor.\n\nFixed\n"
                                                                            "- The update notice remembers its size.")},
                                   {QStringLiteral("offer"), QStringLiteral("page")}};
-        QVariantMap fromAur = release;
-        fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
-        // Each opener leaves its dialog shown; the name is its window's.
+        // Each opener leaves its dialog shown; the name is its window's (the
+        // AUR variant is PU7's, pu7Screenshots).
         const std::vector<std::pair<QString, std::function<void()>>> dialogs{
             {QStringLiteral("aboutDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutDialog")), "open"); }},
             {QStringLiteral("creditsDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsDialog")), "open"); }},
             {QStringLiteral("updateAvailable"), [&] {
                  QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, release), Q_ARG(bool, true));
-             }},
-            {QStringLiteral("updateAurNotice"), [&] {
-                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true));
              }},
         };
         const auto shoot = [&](const QString &name, const QString &file) {
@@ -25116,6 +27522,155 @@ private slots:
                 open();
                 shoot(name, QStringLiteral("dg1-%1-system-%2.png").arg(name, code));
             }
+        }
+    }
+
+    // PU7 (#309): every popup the card redesigned, in the four themes, for
+    // the card's evidence: the update window (an offer, an AUR install's
+    // command, a prerelease its package does not carry), Install update,
+    // Settings > Updates and > Hotkeys, the import wizard's three steps and
+    // its Roll back question, Save layout as, Manage layouts (renaming, the
+    // Delete question) and Move panel.
+    void pu7Screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_PU7_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_PU7_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        // A settings file of its own: the import needs one (as
+        // legacySettingsImportThroughTheWindow's).
+        QTemporaryDir home, legacy;
+        QVERIFY(home.isValid() && legacy.isValid());
+        QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\nPROGRAM_THEME=Mine\r\nAUTOSAVE_MAX_FILES=5\r\nGRID_LOAD_SORTED_SUBS=1\r\n";
+        for (const auto &[name, bytes] :
+             {std::pair{"Config/Config.txt", config},
+              std::pair{"Config/Hotkeys.txt", QByteArray("[Kainote v0.9.0.1500]\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n")}}) {
+            QFile f(legacy.filePath(QLatin1String(name)));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        }
+        restartWithSpelling(home.path(), false);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+        QVERIFY(application->openFile(episode));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        });
+        const auto setTheme = [&](const QString &code) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        const auto grab = [&](QQuickWindow *window, const QString &file) {
+            QVERIFY(window);
+            QTRY_VERIFY(window->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QLatin1Char('/') + file));
+        };
+        const auto windowNamed = [&](const char *name) { return root->findChild<QQuickWindow *>(QLatin1String(name)); };
+        const auto closeWindow = [&](QQuickWindow *window) {
+            QVERIFY(window->close());
+            QTRY_VERIFY(!window->isVisible());
+        };
+        auto &updates = application->updates();
+        const QString notes = QStringLiteral("New\n- Dialogs are windows of their own.\n- The update options are on "
+                                             "Settings > Updates.\n\nFixed\n- Skip this version is kept.");
+        const auto release = [&](const char *offer, bool prerelease, bool carries) {
+            const QString version = prerelease ? QStringLiteral("1.4.0-beta.2") : QStringLiteral("1.4.0");
+            return QVariantMap{{QStringLiteral("name"), QStringLiteral("HikariSub ") + version},
+                               {QStringLiteral("tag"), QStringLiteral("v") + version},
+                               {QStringLiteral("version"), version},
+                               {QStringLiteral("notes"), notes},
+                               {QStringLiteral("prerelease"), prerelease},
+                               {QStringLiteral("aurCarries"), carries},
+                               {QStringLiteral("offer"), QLatin1String(offer)}};
+        };
+        auto &layouts = application->workspaceLayout();
+        QTRY_VERIFY(root->property("arrangementSettled").toBool()); // the saved layouts read
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Subtitles only")));
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Review with video")));
+        auto &importer = application->settingsImport();
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            setTheme(code);
+            const auto file = [&](const char *name) { return QStringLiteral("pu7-%1-%2.png").arg(QLatin1String(name), code); };
+            // The update window.
+            for (const auto &[name, r] : {std::pair{"update-offer", release("notify", false, true)},
+                                          std::pair{"update-aur", release("aur", false, true)},
+                                          std::pair{"update-aur-prerelease", release("aur", true, false)}}) {
+                QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, r),
+                                          Q_ARG(bool, true));
+                grab(windowNamed("updateAvailable"), file(name));
+                closeWindow(windowNamed("updateAvailable"));
+            }
+            {
+                std::unique_ptr<QQuickWindow> installing(installingWindow(QStringLiteral("1.4.0")));
+                grab(installing.get(), file("install-update"));
+            }
+            // Settings > Updates and > Hotkeys.
+            auto *settingsDialog = qobject_cast<QQuickWindow *>(openSettings());
+            QVERIFY(settingsDialog);
+            QVERIFY(QMetaObject::invokeMethod(settingsDialog, "put", Q_ARG(QVariant, QStringLiteral("updater.skippedVersion")),
+                                              Q_ARG(QVariant, QStringLiteral("1.3.2"))));
+            showSettingsPage("updates");
+            grab(settingsDialog, file("settings-updates"));
+            showSettingsPage("hotkeys");
+            grab(settingsDialog, file("settings-hotkeys"));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!settingsDialog->isVisible());
+            // The import wizard: its steps, then the Roll back question.
+            QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+            auto *wizard = windowNamed("settingsImportDialog");
+            QTRY_VERIFY(wizard && wizard->isVisible());
+            QVERIFY(importer.addRoot(legacy.path())); // (opening finds the installations anew)
+            QQuickItem *legacyRoot = nullptr;
+            const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
+            QTRY_VERIFY((legacyRoot = dialogItem("settingsImportDialog", last.constData())) != nullptr);
+            QVERIFY(QMetaObject::invokeMethod(legacyRoot, "click"));
+            QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportNext")->isEnabled());
+            grab(wizard, file("import-1"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportNext"), "click"));
+            grab(wizard, file("import-2-conflicts"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportFilter"), "activated", Q_ARG(int, 1)));
+            grab(wizard, file("import-2-all"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportFilter"), "activated", Q_ARG(int, 0)));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportImport"), "click"));
+            QTRY_COMPARE(wizard->property("step").toInt(), 3);
+            grab(wizard, file("import-3"));
+            QVERIFY(QMetaObject::invokeMethod(wizard, "askRollBack"));
+            grab(messageBox("settingsImportMessages"), file("import-rollback"));
+            QVERIFY(QMetaObject::invokeMethod(messageBox("settingsImportMessages"), "answer", Q_ARG(QVariant, QStringLiteral("rollback"))));
+            closeWindow(wizard);
+            // The layout windows.
+            QVERIFY(QMetaObject::invokeMethod(named("viewLayoutSaveAs"), "triggered"));
+            findItem(windowNamed("saveLayoutDialog")->contentItem(), QStringLiteral("saveLayoutName"))
+                ->setProperty("text", QStringLiteral("Subtitles only"));
+            grab(windowNamed("saveLayoutDialog"), file("save-layout"));
+            closeWindow(windowNamed("saveLayoutDialog"));
+            auto *manage = windowNamed("manageLayoutsDialog");
+            QVERIFY(QMetaObject::invokeMethod(named("viewLayoutManage"), "triggered"));
+            grab(manage, file("manage-layouts"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "startRename"));
+            grab(manage, file("manage-layouts-rename"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "endRename"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "askDelete"));
+            grab(messageBox("manageLayoutsMessages"), file("manage-layouts-delete"));
+            QVERIFY(QMetaObject::invokeMethod(messageBox("manageLayoutsMessages"), "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            closeWindow(manage);
+            // Move panel.
+            item("editingGrid")->forceActiveFocus();
+            QVERIFY(QMetaObject::invokeMethod(named("movePanel"), "triggered"));
+            grab(windowNamed("placementWindow"), file("move-panel"));
+            closeWindow(windowNamed("placementWindow"));
         }
     }
 
@@ -27748,8 +30303,8 @@ private slots:
         // Its "Audio settings…" leaves fullscreen for the dialog's Audio page.
         QVERIFY(QMetaObject::invokeMethod(audioSettings, "triggered"));
         QTRY_VERIFY(!fs.active());
-        auto *settingsDialog = named("settingsDialog");
-        QTRY_VERIFY(settingsDialog->property("visible").toBool());
+        QObject *settingsDialog = nullptr;
+        QTRY_VERIFY((settingsDialog = settingsWindow()) && settingsDialog->property("visible").toBool());
         QMetaObject::invokeMethod(settingsDialog, "close");
         QTRY_VERIFY(!settingsDialog->property("visible").toBool());
     }
@@ -27961,10 +30516,11 @@ private slots:
         application->duplicateLines();
         QVERIFY(v5Session()->isDirty());
         QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
-        auto *review = mappingWindow("closeReview");
-        QVERIFY(review);
+        // PU1-unsaved-window: one Document is asked about in a message box.
+        QTRY_VERIFY(mappingWindow("closeQuestion"));
+        auto *review = mappingWindow("closeQuestion");
         QTRY_VERIFY(review->isVisible());
-        clickButton(review, "closeCancel");
+        clickButton(review, "messageBoxChoice_cancel");
         QTRY_VERIFY(!review->isVisible());
         QVERIFY(!application->video().hasVideo());
         // The same video opened another way, later: not fullscreen.
@@ -27976,7 +30532,7 @@ private slots:
         // The review gone through (Discard all): fullscreen once shown.
         QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
         QTRY_VERIFY(review->isVisible());
-        clickButton(review, "closeDiscardAll");
+        clickButton(review, "messageBoxChoice_discard");
         QTRY_VERIFY_WITH_TIMEOUT(fs.active(), 20000);
         QTRY_VERIFY(fullscreenWindow()->isVisible());
         QVERIFY(fs.leave());

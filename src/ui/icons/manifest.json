@@ -1522,6 +1522,43 @@
    ]
   },
   {
+   "role": "run-busy",
+   "file": "run-busy.svg",
+   "label": "Running",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation",
+    "notices"
+   ]
+  },
+  {
+   "role": "run-applied",
+   "file": "run-applied.svg",
+   "label": "Applied",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation",
+    "notices"
+   ]
+  },
+  {
+   "role": "run-cancelled",
+   "file": "run-cancelled.svg",
+   "label": "Cancelled",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation",
+    "notices",
+    "menu:automation"
+   ]
+  },
+  {
    "role": "layout",
    "file": "layout.svg",
    "label": "Layout",
@@ -2847,6 +2884,18 @@
    ]
   },
   {
+   "role": "repeat-run",
+   "file": "repeat-run.svg",
+   "label": "Repeat last run",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation",
+    "automation-panel"
+   ]
+  },
+  {
    "role": "automation-manager",
    "file": "automation-manager.svg",
    "label": "Show panel",
@@ -3431,8 +3480,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "ui-font",
@@ -3443,8 +3491,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "renderer",
@@ -3455,8 +3502,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "video-seek",
@@ -3467,8 +3513,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "audio-device",
@@ -3479,8 +3524,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "audio-delay",
@@ -3491,8 +3535,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "theme",
@@ -3503,8 +3546,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "accent-colour",
@@ -3515,8 +3557,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "ui-colours",
@@ -3527,8 +3568,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "restore-default",
@@ -3539,8 +3579,29 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
+  },
+  {
+   "role": "settings-grid",
+   "file": "settings-grid.svg",
+   "label": "Subtitle grid",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "notices",
+   "file": "notices.svg",
+   "label": "Notices",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
   },
   {
    "role": "paste-selection-translation",
@@ -3595,6 +3656,17 @@
    "legacy": [],
    "surfaces": [
     "menu:subtitles"
+   ]
+  },
+  {
+   "role": "style-apply",
+   "file": "style-apply.svg",
+   "label": "Apply to the selected lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "styles-panel"
    ]
   }
  ],

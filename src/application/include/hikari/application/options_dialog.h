@@ -48,8 +48,18 @@ enum class OptionsControl {
     OutputDevice, // H2-output-device: the selection's device id, its name beside it
 };
 
-// The pages, in the legacy tree's order (AddPage/AddSubPage).
-enum class OptionsPage { Editor, Conversion, EditorAdvanced, Video, Audio, AudioAdvanced, SubtitleProperties };
+// PF1 (#225): the Settings pages that hold bound controls, in the page
+// list's order (Hotkeys holds none; Appearance holds the program font).
+// Legacy's tree (Editor with Conversion and Advanced, Video, Audio with
+// Advanced, Subtitle properties) became these topic pages (PF1-pages).
+// PU7 (#309): Updates, after Hotkeys, holds the update options that left the
+// update window (PU7-update-settings).
+enum class OptionsPage { General, Appearance, LineEditor, Grid, Video, Audio, Conversion, SubtitleProperties, Automation,
+                         Updates };
+// The page's id in the Settings window ("general", "lineEditor", ...), and
+// back; nothing for an id that names no such page.
+std::string_view optionsPageId(OptionsPage page);
+std::optional<OptionsPage> optionsPageOfId(std::string_view id);
 
 struct OptionsBinding {
     std::string_view setting;
@@ -65,7 +75,9 @@ struct OptionsBinding {
 // them: automation.scriptResolutionFromVideo (Y4), grid.autoHideColumns
 // (GR3), audio.outputDevice (H2), editor.timesToFramesSwitch (LE2),
 // editor.hideTags (LE3), subtitles.layoutInFile (WS2),
-// video.moveToActiveLine and video.playAfterSelection (VF1) and, on Windows,
+// video.moveToActiveLine and video.playAfterSelection (VF1),
+// notices.toasts (PK1), the Updates page's updater.* (PU7),
+// automation.fillLastAnswers (AD2) and, on Windows,
 // audio.outputHostApi and video.playbackPlayer (W1).
 std::span<const OptionsBinding> optionsBindings();
 const OptionsBinding *findOptionsBinding(std::string_view setting);
@@ -134,8 +146,11 @@ std::optional<std::string> optionsCatalogToLoad(const Settings &settings, const 
 std::vector<std::string> commitOptionsDialog(Settings &settings, const OptionsLists &lists, const OptionsState &state);
 
 // ResetDefault's control refresh, after the settings were reset: `state` is
-// what the controls held before.
-OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const OptionsLists &lists, OptionsState state);
+// what the controls held before. PF1-staged-reset: `settings` may hold the
+// defaults only (the reset staged until OK or Apply), and `page` limits the
+// refresh to that page's controls ("Reset page").
+OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const OptionsLists &lists, OptionsState state,
+                                            std::optional<OptionsPage> page = std::nullopt);
 
 // OnChangeCatalog: `lists.styles` now holds the chosen catalog's Styles; the
 // style choice moves to the first (or keeps its index when there is none).
