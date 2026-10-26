@@ -15,7 +15,7 @@ pragma Translator: "HikariSub.MainWindow"
 //   colour and never the default;
 // * "Don't ask again" where the question can be hidden (`dontAsk`).
 //
-// ask(options, done): title, text, detail, details, severity, choices
+// ask(options, done): title, text, detail, details, severity, plainText, choices
 // ([{id, text, role: "accept" | "reject" | "destructive" | "action",
 // isDefault}]), dontAsk; done(id, dontAskAgain). Closing it (Esc, its
 // Close) answers the "reject" choice, or "" without one.
@@ -32,6 +32,8 @@ DialogWindow {
     property string text: ""
     property string detail: ""
     property string details: ""
+    // The text and detail as given, for text holding a user's own names.
+    property bool plainText: false
     property bool offerDontAsk: false
     property var choices: []
     property var done: null
@@ -46,6 +48,7 @@ DialogWindow {
         text = o.text || ""
         detail = o.detail || ""
         details = o.details || ""
+        plainText = o.plainText === true
         severity = o.severity || "info"
         offerDontAsk = o.dontAsk === true
         dontAskBox.checked = false
@@ -111,7 +114,9 @@ DialogWindow {
             Label {
                 objectName: "messageBoxText"
                 text: box.text
+                textFormat: box.plainText ? Text.PlainText : Text.AutoText
                 font: box.fontAt(14, Font.DemiBold)
+                textFormat: Text.PlainText
                 wrapMode: Text.Wrap
                 Accessible.role: Accessible.StaticText
                 Layout.fillWidth: true
@@ -120,7 +125,9 @@ DialogWindow {
                 objectName: "messageBoxDetail"
                 visible: box.detail.length > 0
                 text: box.detail
+                textFormat: box.plainText ? Text.PlainText : Text.AutoText
                 color: Theme.muted
+                textFormat: Text.PlainText
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
             }

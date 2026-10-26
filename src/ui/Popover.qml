@@ -159,6 +159,7 @@ Popup {
             anchors.fill: parent
             spacing: 8
             Label {
+                textFormat: Text.PlainText
                 id: headingLabel
                 visible: popover.showTitle && popover.title.length > 0
                 text: popover.title

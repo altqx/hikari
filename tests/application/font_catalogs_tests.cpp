@@ -200,6 +200,13 @@ TEST(FontCatalogs, LoadReadsWhatLegacyRead)
     // The bytes written back are legacy's own form of what it read.
     EXPECT_EQ(c.serialize(), "\xEF\xBB\xBF={\r\n\tVerdana\r\n}\r\n  Spaced ={\r\n\tArial\r\n\tARIAL\r\n}\r\n"
                              "Empty={\r\n}\r\nSecond={\r\n\tThird={\r\n}\r\n");
+    // Names are exact: catalogs saved as A and a stay two (the reviewed
+    // Load alone takes another case as the same catalog).
+    FontCatalogs cased(kLower);
+    cased.load(u"A={\n\tArial\n}\na={\n\tTahoma\n}\n");
+    EXPECT_EQ(cased.names(), (std::vector<std::u16string>{u"A", u"a"}));
+    EXPECT_EQ(fontsOf(cased, u"A"), std::vector<std::u16string>{u"Arial"});
+    EXPECT_EQ(fontsOf(cased, u"a"), std::vector<std::u16string>{u"Tahoma"});
 }
 
 // FileOpen(path, text, false): wxConvAuto: a BOM decides (UTF-16 here),
@@ -228,6 +235,57 @@ TEST(FontCatalogs, LoadingAnotherFileMerges)
     c.load(u"Anime={\n\tArial\n\tImpact\n}\nZeta={\n\tTahoma\n}\n");
     EXPECT_EQ(fontsOf(c, u"Anime"), (std::vector<std::u16string>{u"Arial", u"Gandhi Sans", u"Łódź Sans", u"Impact"}));
     EXPECT_EQ(c.names().back(), u"Zeta");
+}
+
+// PU3-load-review: a file's catalogs read on their own (a name twice
+// gathers both blocks), then each merged, replaced, renamed or skipped.
+TEST(FontCatalogs, LoadingAFileCanReplaceRenameOrSkipEachCatalog)
+{
+    const auto file = FontCatalogs::parse(u"junk\nAnime={\n\tArial\n\tImpact\n}\nZeta={\n\tTahoma\n}\nAnime={\n\tArial\n\tVerdana\n}\n");
+    ASSERT_EQ(file.size(), 2u);
+    EXPECT_EQ(file[0].name, u"Anime");
+    EXPECT_EQ(file[0].fonts, (std::vector<std::u16string>{u"Arial", u"Impact", u"Verdana"}));
+    EXPECT_EQ(file[1].name, u"Zeta");
+
+    using A = FontCatalogs::LoadAction;
+    FontCatalogs c(kLower);
+    c.load(*readFontCatalogFile(fixture("FontCatalogs.txt")));
+    FontCatalogs merged = c, replaced = c, renamed = c, skipped = c;
+    merged.apply(file, {});
+    EXPECT_EQ(fontsOf(merged, u"Anime"),
+              (std::vector<std::u16string>{u"Arial", u"Gandhi Sans", u"Łódź Sans", u"Impact", u"Verdana"}));
+    replaced.apply(file, {{A::Replace, {}}});
+    EXPECT_EQ(fontsOf(replaced, u"Anime"), (std::vector<std::u16string>{u"Arial", u"Impact", u"Verdana"}));
+    renamed.apply(file, {{A::Rename, u"Anime (2)"}, {A::Skip, {}}});
+    EXPECT_EQ(fontsOf(renamed, u"Anime"), fontsOf(c, u"Anime"));
+    EXPECT_EQ(fontsOf(renamed, u"Anime (2)"), (std::vector<std::u16string>{u"Arial", u"Impact", u"Verdana"}));
+    EXPECT_EQ(renamed.find(u"Zeta"), nullptr);
+    EXPECT_EQ(renamed.names().back(), u"Anime (2)");
+    skipped.apply(file, {{A::Skip, {}}, {A::Merge, {}}});
+    EXPECT_EQ(fontsOf(skipped, u"Anime"), fontsOf(c, u"Anime"));
+    EXPECT_EQ(fontsOf(skipped, u"Zeta"), (std::vector<std::u16string>{u"Tahoma"}));
+    // Renaming onto a catalog that exists merges into it.
+    FontCatalogs onto = c;
+    onto.apply({file[1]}, {{A::Rename, u"Anime"}});
+    EXPECT_EQ(fontsOf(onto, u"Anime").back(), u"Tahoma");
+    // A name is found ignoring case for the windows' clash checks.
+    EXPECT_EQ(c.findNoCase(u"ANIME"), c.find(u"Anime"));
+    EXPECT_EQ(c.findNoCase(u"Nothing"), nullptr);
+    // A file's catalog (or a new name) in another case is that catalog:
+    // no second catalog differing only by case.
+    FontCatalogs cased = c;
+    cased.apply(FontCatalogs::parse(u"anime={\n\tTahoma\n}\n"), {});
+    EXPECT_EQ(cased.find(u"anime"), nullptr);
+    EXPECT_EQ(fontsOf(cased, u"Anime").back(), u"Tahoma");
+    FontCatalogs renamedCased = c;
+    renamedCased.apply({file[1]}, {{A::Rename, u"ANIME"}});
+    EXPECT_EQ(renamedCased.find(u"ANIME"), nullptr);
+    EXPECT_EQ(fontsOf(renamedCased, u"Anime").back(), u"Tahoma");
+    // Two of the file's names for one catalog, both Replace: emptied once,
+    // then the fonts of both.
+    FontCatalogs replacedCased = c;
+    replacedCased.apply(FontCatalogs::parse(u"ANIME={\n\tArial\n}\nanime={\n\tTahoma\n}\n"), {{A::Replace, {}}, {A::Replace, {}}});
+    EXPECT_EQ(fontsOf(replacedCased, u"Anime"), (std::vector<std::u16string>{u"Arial", u"Tahoma"}));
 }
 
 // SaveCatalogs' OpenWrite: the folder is made, the file replaced; no
@@ -409,6 +467,10 @@ TEST(FontPicker, FamiliesAreListedFilteredAndKeptAsLegacyDid)
     families.enumerate(); // a font change: the last filter applies
     EXPECT_EQ(families.filteredFonts(u"b"), (std::vector<std::u16string>{u"arial", u"Comic", u"Times"}));
     EXPECT_EQ(service.checked.back(), U"b");
+    // The picker's chip applies its text at once.
+    families.refilter(u"a");
+    EXPECT_EQ(families.filteredFonts(u"a"), (std::vector<std::u16string>{u"arial", u"Times"}));
+    EXPECT_EQ(service.checked.back(), U"a");
 }
 
 // CheckGlyphsExists' characters: Windows skips UTF-16 surrogates (so a
