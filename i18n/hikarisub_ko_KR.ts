@@ -2556,7 +2556,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Manages font catalogs</source>
-        <translation>글꼴 목록을 관리합니다</translation>
+        <translation type="vanished">글꼴 목록을 관리합니다</translation>
     </message>
     <message>
         <source>Allows managing font catalogs</source>
@@ -2580,39 +2580,19 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Catalogs:</source>
-        <translation>목록 선택:</translation>
-    </message>
-    <message>
-        <source>Choose or type a catalog name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add a catalog with this name</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">목록 선택:</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>편집</translation>
-    </message>
-    <message>
-        <source>Edit the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">편집</translation>
     </message>
     <message>
         <source>Delete</source>
         <translation>삭제</translation>
     </message>
     <message>
-        <source>Delete the catalog</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Load</source>
-        <translation>파일에서</translation>
-    </message>
-    <message>
-        <source>Load a catalog from a file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">파일에서</translation>
     </message>
     <message>
         <source>Refresh fonts</source>
@@ -2624,19 +2604,171 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Find:</source>
-        <translation>찾기:</translation>
+        <translation type="vanished">찾기:</translation>
     </message>
     <message>
         <source>Save filter</source>
-        <translation>필터 저장</translation>
+        <translation type="vanished">필터 저장</translation>
     </message>
     <message>
         <source>Font name</source>
-        <translation>글꼴 이름</translation>
+        <translation type="vanished">글꼴 이름</translation>
+    </message>
+    <message>
+        <source>Enter a name for the catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A catalog named “%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge adds the fonts of “%1” to it. Replace deletes the old “%2” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">교체</translation>
+    </message>
+    <message>
+        <source>Delete font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the catalog “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It holds no fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its fonts stay installed and in their other catalogs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file holds no font catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 catalogs in “%3” already exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file’s new catalogs are added.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Those with the same fonts as yours are left as they are.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Catalog</source>
         <translation>목록</translation>
+    </message>
+    <message>
+        <source>%1 here, +%2 new</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 here, %2 in the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load 1 catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Load %n catalogs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n new</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n merged</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n replaced</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n renamed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Loaded 1 font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Loaded %n font catalogs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>From %1: %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load from a file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not in a catalog</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sample</source>
@@ -2647,20 +2779,40 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>“%1” in “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not saved: the safety copy could not be written</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalogs are saved automatically to FontCatalogs.txt in the &quot;Config&quot; folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fonts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mark %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalog of %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
-        <translation>글꼴 목록은 자동 저장 됩니다. 파일은 &quot;Config&quot; 폴더에서 찾을 수 있습니다.</translation>
+        <translation type="vanished">글꼴 목록은 자동 저장 됩니다. 파일은 &quot;Config&quot; 폴더에서 찾을 수 있습니다.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -2668,15 +2820,15 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Select the name of the profile</source>
-        <translation>프로필을 선택하십시오</translation>
+        <translation type="vanished">프로필을 선택하십시오</translation>
     </message>
     <message>
         <source>Choose new catalog name</source>
-        <translation>새 목록 이름 선택</translation>
+        <translation type="vanished">새 목록 이름 선택</translation>
     </message>
     <message>
         <source>Replace with:</source>
-        <translation>변경 글자:</translation>
+        <translation type="vanished">변경 글자:</translation>
     </message>
     <message>
         <source>OK</source>
@@ -2692,15 +2844,15 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Enter a name for the new catalog</source>
-        <translation>새 목록의 이름</translation>
+        <translation type="vanished">새 목록의 이름</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation>질문</translation>
+        <translation type="vanished">질문</translation>
     </message>
     <message>
         <source>Catalog named &quot;%1&quot; already exists. What to do?</source>
-        <translation type="unfinished">&quot;%1&quot; 목록이 이미 있습니다. 어떻게 할까요?</translation>
+        <translation type="obsolete">&quot;%1&quot; 목록이 이미 있습니다. 어떻게 할까요?</translation>
     </message>
     <message>
         <source>Merge</source>
@@ -2708,7 +2860,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Are you sure you want to delete this catalog?</source>
-        <translation>이 목록을 삭제하시겠습니까?</translation>
+        <translation type="vanished">이 목록을 삭제하시겠습니까?</translation>
     </message>
     <message>
         <source>Choose font catalog file</source>
@@ -2810,11 +2962,67 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Select a font</source>
-        <translation>글꼴 선택</translation>
+        <translation type="vanished">글꼴 선택</translation>
     </message>
     <message>
         <source>Font</source>
         <translation>글꼴</translation>
+    </message>
+    <message>
+        <source>Font selection</source>
+        <translation type="unfinished">글꼴 선택</translation>
+    </message>
+    <message>
+        <source>Search fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font catalog: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only fonts that have “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to a catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add “%1” to a catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font is called “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is installed but not in this list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font is in “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No fonts match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use “%1” anyway</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Size</source>
@@ -2823,6 +3031,10 @@ when demuxing fonts from an MKV file.</source>
     <message>
         <source>Font size</source>
         <translation>글꼴 크기</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Bold</source>
@@ -2840,20 +3052,76 @@ when demuxing fonts from an MKV file.</source>
         <source>Strikethrough</source>
         <translation>삭제(표시)선</translation>
     </message>
-    <message>
-        <source>Filtering and font catalogs</source>
-        <translation>필터링 및 글꼴 목록</translation>
+    <message numerus="yes">
+        <source>%1 of %n fonts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>Preview</source>
-        <translation>미리보기</translation>
+        <source>1 font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n fonts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>AaBbCcDdEeFfGg 0123456789</source>
+        <source>Sample text</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The subtitle renderer uses %1 (%2).</source>
+        <source>The line’s selected text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Style editor’s sample text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage catalogs…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No catalogs yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New catalog…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts from subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only fonts that have these characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">스타일 정리</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">적용</translation>
+    </message>
+    <message>
+        <source>Filtering and font catalogs</source>
+        <translation type="vanished">필터링 및 글꼴 목록</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="vanished">미리보기</translation>
+    </message>
+    <message>
+        <source>Drawn by the subtitle renderer with %1 (%2).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2870,11 +3138,11 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Remove all contents of catalog</source>
-        <translation>목록의 모든 내용 제거</translation>
+        <translation type="vanished">목록의 모든 내용 제거</translation>
     </message>
     <message>
         <source>Add fonts from all open subtitles</source>
-        <translation>열려 있는 모든 자막에서 글꼴 추가</translation>
+        <translation type="vanished">열려 있는 모든 자막에서 글꼴 추가</translation>
     </message>
     <message>
         <source>All fonts</source>
@@ -2888,7 +3156,7 @@ when demuxing fonts from an MKV file.</source>
         <source>For adding fonts to catalog,
 click &quot;Manage&quot; button first,
 to create new catalog.</source>
-        <translation>목록에 글꼴을 추가하려면
+        <translation type="vanished">목록에 글꼴을 추가하려면
 먼저 &quot;글꼴 목록창&quot;버튼을 클릭하고
 새 목록를 만듭니다.</translation>
     </message>
@@ -3244,6 +3512,70 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Completed successfully and copied %1 fonts.</source>
         <translation type="unfinished">성공적으로 %1 글꼴을 복사했습니다.</translation>
+    </message>
+    <message>
+        <source>Added 1 font to “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n fonts to “%1”</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The fonts were added to “%1” but could not be saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>FontCatalogs.txt in the &quot;Config&quot; folder could not be written. Saving is tried again on exit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the styles and %1 tags of the open files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the styles and %1 tags of %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a catalog or type a new name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All open files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the catalog’s fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The fonts of every style and every %1 tag in all %n open files.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The fonts of every style and every %1 tag in %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fonts “%1” holds now are removed first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5365,6 +5697,10 @@ great help testing HikariSub on a slow computer)
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Merge</source>
+        <translation type="unfinished">병합</translation>
+    </message>
+    <message>
         <source>Action</source>
         <translation type="unfinished">찾은 후에 할 동작</translation>
     </message>
@@ -5374,6 +5710,10 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>New name for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

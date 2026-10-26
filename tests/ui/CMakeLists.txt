@@ -205,6 +205,12 @@ target_compile_definitions(hikari_ui_automation_document_scripts_tests PRIVATE
     HIKARI_S4_SCRIPTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/document-scripts")
 add_dependencies(hikari_ui_automation_document_scripts_tests hikari_lua_helper hikari_automation_stage
     hikari_media_helper hikari_media_fixtures)
+# AD2: Repeat last run and "Fill in my last answers" with the real Lua helper.
+hikari_add_qttest(hikari_ui_automation_repeat_tests SOURCES automation_repeat_tests.cpp
+    LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_automation_repeat_tests PRIVATE
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+add_dependencies(hikari_ui_automation_repeat_tests hikari_lua_helper hikari_automation_stage)
 # KE1-template-timing: the karaoke templater's report in the status bar and the log window.
 hikari_add_qttest(hikari_ui_karaoke_report_tests SOURCES karaoke_report_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_karaoke_report_tests PRIVATE

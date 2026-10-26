@@ -15,7 +15,7 @@ pragma Translator: "HikariSub.MainWindow"
 //   colour and never the default;
 // * "Don't ask again" where the question can be hidden (`dontAsk`).
 //
-// ask(options, done): title, text, detail, details, severity, choices
+// ask(options, done): title, text, detail, details, severity, plainText, choices
 // ([{id, text, role: "accept" | "reject" | "destructive" | "action",
 // isDefault}]), dontAsk, from (the window it opens over; else the one with
 // the keyboard); done(id, dontAskAgain). Closing it (Esc, its Close)
@@ -33,6 +33,8 @@ DialogWindow {
     property string text: ""
     property string detail: ""
     property string details: ""
+    // The text and detail as given, for text holding a user's own names.
+    property bool plainText: false
     property bool offerDontAsk: false
     property var choices: []
     property var done: null
@@ -47,6 +49,7 @@ DialogWindow {
         text = o.text || ""
         detail = o.detail || ""
         details = o.details || ""
+        plainText = o.plainText === true
         severity = o.severity || "info"
         offerDontAsk = o.dontAsk === true
         dontAskBox.checked = false
@@ -113,7 +116,7 @@ DialogWindow {
                 objectName: "messageBoxText"
                 text: box.text
                 // Messages quote file names: never markup (an <img> would
-                // fetch its URL as the box opens).
+                // fetch its URL as the box opens); plainText changes nothing here.
                 textFormat: Text.PlainText
                 font: box.fontAt(14, Font.DemiBold)
                 wrapMode: Text.Wrap

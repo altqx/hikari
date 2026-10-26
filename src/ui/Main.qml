@@ -1650,6 +1650,19 @@ ApplicationWindow {
                     onTriggered: root.automation.rerunLast()
                 }
             }
+            // AD2-repeat-last-run: the last run again with its answers,
+            // without its dialogs when they are unchanged.
+            ShellMenuItem {
+                help: qsTr("Run the last macro again with the same answers, without its dialogs when they are unchanged")
+                iconRole: "repeat-run"
+                objectName: "repeatRunMenuItem"
+                action: Action {
+                    id: repeatRunAction
+                    text: qsTr("Repeat last run")
+                    enabled: root.automation.canRepeat && !root.workspaceLayout.modalOpen
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_REPEAT_LAST_RUN")) root.automation.repeatLast()
+                }
+            }
             // AD3: the progress card's Cancel from the menu (it has no
             // hotkey of its own).
             ShellMenuItem {
@@ -5041,7 +5054,7 @@ ApplicationWindow {
                                     if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                         return
                                     const field = root.editedField()
-                                    fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
+                                    fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd)
                                 }
                             }
                             Repeater {
@@ -6490,6 +6503,7 @@ ApplicationWindow {
         controller: root.automationDialogs
         colourPicker: root.colourPicker
         settings: root.app.settings
+        messages: messages
     }
     AutomationFilePicker {
         picker: root.automationPicker
@@ -7281,11 +7295,30 @@ ApplicationWindow {
         app: root.app
         anchors.centerIn: parent
     }
-    FontDialog {
-        id: fontDialog
+    // PU3 (#305): the font picker, and the program's one catalog window and
+    // one "Add fonts from subtitles" window (FontWindows), which the picker
+    // and the Style editor open.
+    FontPicker {
+        id: fontPicker
         editor: root.editor
         catalogs: root.fontCatalogs
-        anchors.centerIn: parent
+        settings: root.app.settings
+    }
+    FontCatalogWindow {
+        id: fontCatalogWindow
+        catalogs: root.fontCatalogs
+        notices: root.notices
+        settings: root.app.settings
+        Component.onCompleted: FontWindows.catalogWindow = fontCatalogWindow
+    }
+    FontsFromSubtitlesDialog {
+        id: fontsFromSubtitles
+        catalogs: root.fontCatalogs
+        notices: root.notices
+        settings: root.app.settings
+        openFiles: root.app.tabs.length
+        fileName: root.app.currentTab >= 0 && root.app.currentTab < root.app.tabs.length ? root.app.tabs[root.app.currentTab].title : ""
+        Component.onCompleted: FontWindows.fromSubtitles = fontsFromSubtitles
     }
     // SY2: the one colour picker, anchored to the colour button.
     ColourPopover {
@@ -7501,6 +7534,7 @@ ApplicationWindow {
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
+        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, // AD2
         GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
@@ -7706,7 +7740,7 @@ ApplicationWindow {
             return true
         case "EDITBOX_FIND_NEXT_DOUBTFUL": root.editor.findNextUnconfirmed(); return true
         case "EDITBOX_FIND_NEXT_UNTRANSLATED": root.editor.findNextUntranslated(); return true
-        case "EDITBOX_CHANGE_FONT": fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd); return true
+        case "EDITBOX_CHANGE_FONT": fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_PASTE_ALL_TO_TRANSLATION": root.editor.pasteAllToTranslation(); return true
         case "EDITBOX_PASTE_SELECTION_TO_TRANSLATION":
             root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd, translationText.cursorPosition)
