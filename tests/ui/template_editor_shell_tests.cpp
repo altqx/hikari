@@ -607,8 +607,8 @@ private slots:
     }
 
     // KE3, for review: New › From a preset open on a song without
-    // templates, then Sparkles inserted and previewed on the video, in the
-    // four themes.
+    // templates, then Sparkles and Falling letters inserted and previewed on
+    // the video, in the four themes.
     void presetScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_TEMPLATE_SHOT_DIR");
@@ -645,8 +645,8 @@ private slots:
                                   QStringLiteral(".png")));
             }
         };
-        click(item(QStringLiteral("templateNew")));
         auto *menu = object(QStringLiteral("templateNewMenu"));
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("templateNew")), "clicked"));
         QTRY_VERIFY(menu->property("opened").toBool());
         auto *presets = object(QStringLiteral("templatePresetMenu"));
         QVERIFY(QMetaObject::invokeMethod(presets, "open"));
@@ -665,6 +665,13 @@ private slots:
         application->video().showFrameAt(qRound(2.0 * 23.976));
         QTest::qWait(1500);
         shoot(QStringLiteral("presets-preview"));
+        // Falling letters instead: the letters still dropping in before the Line.
+        QVERIFY(session()->undo());
+        QVERIFY(editor().insertPreset(8));
+        QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview() && !editor().previewPending(), 20'000);
+        application->video().showFrameAt(qRound(0.5 * 23.976));
+        QTest::qWait(1500);
+        shoot(QStringLiteral("presets-preview-letters"));
     }
 };
 
