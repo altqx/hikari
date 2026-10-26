@@ -9,8 +9,9 @@
 // <step>, <decimal places>, <placing>, <change option>[, <more values>]"
 // line each; without the file legacy's 22 defaults are used.
 
+#include "hikari/application/edit_history.h"
+
 #include <array>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -106,83 +107,136 @@ private:
 // NumCtrl.cpp's getdouble: "%f" without trailing zeros (and point).
 std::u16string numCtrlText(double value);
 
-// The "Tag editing" dialog (AllTagsEdition, VisualAllTagsEdition.cpp:
-// 155-455). It edits a copy of the definitions; Apply keeps an edit in the
-// copy, OK keeps it and gives the copy back to be saved, Cancel drops it.
-// The fields are what the dialog shows; `current` is legacy's currentTag,
-// what they were last set from or saved to.
+// HY1's tag list sections (#271): legacy's everyday definitions (0,
+// Common), the rest of its defaults (1, More), the user's own (2), by
+// definition and by its name.
+std::vector<int> allTagsSections(const std::vector<AllTagsSetting> &tags);
+// The names the Hydra strip gives a definition's values (HY1): one value is
+// "Value"; several are R G B for a colour, X Y for \pos, In Out for \fad,
+// Start End for \t, else 1 to 4. As many as the definition takes.
+std::vector<std::u16string> allTagsValueNames(const AllTagsSetting &tag);
+// What the all-tags tool's Set writes for the definition at its starting
+// values where the Line has no such tag (AllTagsTool::getTagValue without a
+// value: \<tag> and the value as its decimal places give it; the alphas
+// "&H..&", the colours "&HBBGGRR&" from R G B, several values in brackets).
+std::u16string allTagsSetText(const AllTagsSetting &tag);
+
+// PU5 (#307): the "Edit tags" window's model (legacy AllTagsEdition, "Tag
+// editing", VisualAllTagsEdition.cpp:155-455, redesigned). Every change is
+// kept as it is made and is a step of the window's history: the caller
+// hands the definitions back to the tool and writes the file after each
+// one (usable(): a new definition reaches them once it has its tag). A
+// value the tool cannot use is refused with its reason and the definition
+// keeps its last good one: legacy's Save checks (an empty tag, the maximum
+// not above the minimum, the step not above zero or above half the range),
+// a number that does not read or lies outside -10000 to 10000 (NumCtrl's
+// range; decimal places 0 to 6, whole), and a name that is empty, holds
+// the file's separator "," or another definition's (ignoring case:
+// replaceNamed() replaces that one, the window asking first).
 class AllTagsEdition {
 public:
-    // A legacy message box: its text and title. Error boxes have OK only.
-    struct Message {
-        std::u16string text;
-        std::u16string title;
+    // The window's steps (it names them for Undo and Redo).
+    enum Step : int {
+        Rename,
+        EditTag,
+        EditRange,
+        EditStep,
+        EditDecimals,
+        EditCount,
+        EditValue,
+        ChangeOption,
+        ChangePlacing,
+        NewTag,
+        DuplicateTag,
+        DeleteTag,
+        ReplaceTag,
+        RestoreDefaults,
+        UndoAll
     };
+    enum class Check {
+        Ok,
+        Empty,
+        Taken,
+        Separator,
+        NotANumber,
+        OutOfRange,
+        MaxNotAboveMin,
+        MinNotBelowMax,
+        StepNotPositive,
+        StepTooLarge,
+        TakenLastUsable // taken by the last definition with a tag, this one without its tag yet
+    };
+    // The number fields: the range, the step, the decimal places and the
+    // starting values.
+    enum class Number { Min, Max, Step, Digits, Value0, Value1, Value2, Value3 };
+    static constexpr double kNumberLimit = 10000.0; // NumCtrl's -10000 to 10000
+    static constexpr int kMaxDigits = 6;
 
-    // curTag out of range starts on the first definition.
-    AllTagsEdition(std::vector<AllTagsSetting> tags, int curTag);
+    // `selection` is a definition's index; out of range the first.
+    AllTagsEdition(std::vector<AllTagsSetting> tags, int selection);
 
-    const std::vector<AllTagsSetting> &tags() const { return m_tags; }
-    // The list as legacy's HikariChoice holds it: names are added and
-    // removed with the definitions, and a save puts a rename there
-    // (T6-dialog-list-stale: legacy never refreshed it).
-    const std::vector<std::u16string> &list() const { return m_list; }
-    int selection() const { return m_selection; }
-    const AllTagsSetting &current() const { return m_current; }
-
-    // The fields.
-    std::u16string newTagName;
-    std::u16string name, tag;
-    NumberField minValue{0, -10000.0, 10000.0, false};
-    NumberField maxValue{0, -10000.0, 10000.0, false};
-    NumberField step{0, -10000.0, 10000.0, false};
-    int placing = 0; // the "mode" choice: kPlacings
-    NumberField digitsAfterDot{0, 0, 6, true};
-    std::array<NumberField, 4> values{NumberField{0, -10000.0, 10000.0, false},
-                                      NumberField{0, -10000.0, 10000.0, false},
-                                      NumberField{0, -10000.0, 10000.0, false},
-                                      NumberField{0, -10000.0, 10000.0, false}};
-    int additionalValues = 0; // the count choice: values - 1
-    int changeOption = 0;     // the insert mode choice (AllTagsPasteMode)
-    // values[i] (i 1-3) take input only while additionalValues + 1 > i.
-    bool valueEnabled(int i) const { return i == 0 || additionalValues + 1 > i; }
-
-    // OnAddTag: a new definition named `newTagName`, selected. Refused with a
-    // message when the name is empty or the list holds it (ignoring case).
-    std::optional<Message> addTag();
-    // OnRemoveTag: the selected definition goes; refused for the last one.
-    std::optional<Message> removeTag();
-    // CheckModified: a field differs from `current`.
-    bool modified() const;
-    // OnListChanged's question when modified(): "Save changes to tag
-    // \"%s\"?" (legacy names the tag, not its name).
-    Message saveChangesQuestion() const;
-    // OnListChanged after its question: the list's `index` (out of range:
-    // the first) becomes the selection and the fields show it (SetTag).
+    const std::vector<AllTagsSetting> &tags() const { return m_history.items(); }
+    // The definitions the tool and the file take: those with a tag.
+    std::vector<AllTagsSetting> usable() const;
+    int selection() const { return m_history.selection(); }
+    // The selected definition (an empty one when there are none).
+    const AllTagsSetting &current() const;
+    // Another definition chosen: no step.
     void select(int index);
-    // Save (VisualAllTagsEdition.cpp:422-455) for Apply and OK: the fields
-    // become `current` and, unless a check refuses them, the selected
-    // definition. An empty name becomes the tag.
-    std::optional<Message> save();
-    // OnResetDefault after its question and the file's removal: the
-    // definitions are the defaults, the list keeps the selected name's
-    // place if it is there (else the first, HikariChoice::PutArray) and the
-    // fields show it.
-    void restoreDefaults();
-    static Message restoreQuestion();
 
-    // The dialog's choices (VisualAllTagsEdition.cpp:204-221).
-    static const std::array<std::u16string_view, 3> &placings();
-    static const std::array<std::u16string_view, 4> &valueCounts();
+    Check setName(std::u16string_view name, std::u16string *taken = nullptr);
+    // The tag, the blanks around it and its leading backslashes dropped.
+    Check setTag(std::u16string_view tag);
+    // A number field's text (a comma reads as the decimal point). A range
+    // refused sets `limit` to the value its reason names: the other end, or
+    // half the range as typed.
+    Check setNumber(Number field, std::u16string_view text, float *limit = nullptr);
+    // How many values the tag takes, 1 to 4; the values past it are kept.
+    void setCount(int count);
+    // The change option the tag brings to the strip (AllTagsPasteMode).
+    void setChangeOption(int option);
+    // Where Set puts the tag (AllTagsSetting::mode, 0 to 2).
+    void setPlacing(int placing);
+    // A field left: its next change is a step of its own.
+    void endTyping() { m_history.endMerge(); }
+
+    // New tag: "New tag" ("New tag 2", ...), no tag yet, range 0 to 100,
+    // step 1 (AllTagsSetting::named's), after the last, selected.
+    void addTag();
+    // Duplicate: the selected definition as "<name> copy" ("<name> copy 2"),
+    // after it, selected.
+    void duplicate();
+    // Delete: the selected definition goes; never the last one, nor the
+    // last one with a tag while new ones wait for theirs (false): the tool
+    // and the file always have one.
+    bool remove();
+    bool canRemove() const;
+    // The answer Replace to a taken name: the definition that has it goes
+    // and the selected one takes `name`, one step. Never the last one with
+    // a tag for one without its tag yet (setName's TakenLastUsable).
+    void replaceNamed(std::u16string_view name);
+    // Restore default tags, after its question: legacy's 22, the selected
+    // name's place kept when it is there (else the first), one step.
+    void restoreDefaults();
+    // Undo all changes: the definitions the window opened with, one step.
+    bool undoAll() { return m_history.undoAll(UndoAll); }
+
+    bool canUndo() const { return m_history.canUndo(); }
+    bool canRedo() const { return m_history.canRedo(); }
+    int undoStep() const { return m_history.undoStep(); }
+    int redoStep() const { return m_history.redoStep(); }
+    bool undo() { return m_history.undo(); }
+    bool redo() { return m_history.redo(); }
+    // What the last change, Undo, Redo or Undo all renamed (Name, Replace):
+    // the toolbar's choice follows it.
+    const Renames &renamed() const { return m_history.renamed(); }
+    std::uint64_t revision() const { return m_history.revision(); }
 
 private:
-    void updateTag();    // UpdateTag
-    void showCurrent();  // SetTagFromSettings
-    void setTag(int num); // SetTag
-    std::vector<AllTagsSetting> m_tags;
-    std::vector<std::u16string> m_list;
-    AllTagsSetting m_current;
-    int m_selection = 0;
+    bool replacesLastUsable(std::size_t other) const;
+    void edit(AllTagsSetting tag, Step step, std::string mergeKey = {}, Renames renamed = {});
+    std::u16string freeName(std::u16string base, bool copy) const;
+    EditHistory<AllTagsSetting> m_history;
 };
 
 // The toolbar's "Tag change options" (AllTagsItem::ShowContols,
