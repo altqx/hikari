@@ -2,7 +2,7 @@
 
 // T1: the Video panel's visual tools (docs/qt/visual-tools.md). The tool
 // rail (accepted layout A on #55) lists legacy VideoToolbar's eleven
-// families; the active tool gets the pointer over the video and the panel's
+// families and VT3's Perspective; the active tool gets the pointer over the video and the panel's
 // keys, and draws through the overlay. This controller is the tools'
 // VisualHost: it keeps the shared view transform (visual::VideoView) in step
 // with the panel's size, the video's geometry and the script resolution,
@@ -27,6 +27,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <set>
 
 class QQuickItem;
 
@@ -40,6 +41,9 @@ class VisualToolsController : public QObject, public application::visual::Visual
     QML_UNCREATABLE("Provided by the application composition")
     // The rail: name, tooltip, icon and whether the family has its tool yet.
     Q_PROPERTY(QVariantList families READ families CONSTANT)
+    // VT3: the families' ids in the rail's order (the Perspective tool after
+    // Text X / Y rotation); `families` stays in the ids' order.
+    Q_PROPERTY(QVariantList railOrder READ railOrder CONSTANT)
     Q_PROPERTY(int activeFamily READ activeFamily NOTIFY changed)
     // Legacy VideoToolbar::DisableVisuals(form != ASS): the rail is disabled
     // for a Document that is not ASS.
@@ -112,6 +116,9 @@ public:
     // (legacy's "Warning" box): both a warning toast titled toolName().
     void setLog(std::function<void(const QString &)> log) { m_log = std::move(log); }
     void setIgnoreFiltered(std::function<bool()> ignore) { m_ignoreFiltered = std::move(ignore); }
+    // VT3: the names (family, full, PostScript) of the fonts the video's
+    // renderer is given: its Script's attachments and the external fonts.
+    void setLeasedFonts(const std::vector<std::string> &names);
     // T3: the Line editor's selection in the edited text (FindTag's mode 0).
     void setEditorSelection(std::function<std::pair<long, long>()> selection)
     {
@@ -141,6 +148,7 @@ public:
     application::visual::BatchPicker &batchPicker() { return m_picker; }
 
     QVariantList families() const;
+    QVariantList railOrder() const;
     int activeFamily() const { return static_cast<int>(m_family); }
     bool railEnabled() const { return m_railEnabled; }
     QVariantList overlay() const;
@@ -231,6 +239,8 @@ public:
     application::LegacyTimebase timebase() const override;
     application::TextMeasurePort *textMeasure() const override { return &m_measure; }
     bool ignoreFiltered() const override { return m_ignoreFiltered && m_ignoreFiltered(); }
+    bool fontLeased(const std::string &name) const override;
+    bool fallsBackToLeased(const std::string &font, bool bold, bool italic, std::u16string_view text) const override;
     void log(std::u16string_view text) override;
     std::pair<long, long> editorSelection() const override;
     void setEditorSelection(long from, long to) override
@@ -297,6 +307,7 @@ private:
     std::function<void(const core::Document *)> m_preview;
     std::function<void(const QString &)> m_log;
     std::function<bool()> m_ignoreFiltered;
+    std::set<std::string> m_leasedFonts; // ASCII lower case
     std::function<std::pair<long, long>()> m_editorSelection;
     std::function<void(long, long)> m_placeSelection;
     mutable QtTextMeasurePort m_measure;

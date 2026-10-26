@@ -600,15 +600,15 @@ private slots:
     // A live switch re-evaluates the closed Dialogs' implicit sizes, where
     // the Fusion Dialog and DialogButtonBox bindings report "Binding loop
     // detected for property implicitWidth" (as a text change in a closed
-    // Dialog does without a switch: the Style Manager's catalog question in
-    // the shell tests). Opened afterwards, each Dialog has the size it has
-    // when the program starts in that language or with that font.
+    // Dialog does without a switch). Opened afterwards, each Dialog has the
+    // size it has when the program starts in that language or with that
+    // font.
     void dialogsSizeAfterASwitchAsAtStart()
     {
-        // One button (Ok) and two (Yes, No), in Main.qml and StyleManager.qml.
+        // One button (OK) and two (Change, Do not change).
         const auto sizes = [this] {
             QList<QSizeF> out;
-            for (const char *name : {"aboutDialog", "creditsDialog", "styleMultiQuestion"}) {
+            for (const char *name : {"aboutDialog", "creditsDialog", "mismatchDialog"}) {
                 QObject *dialog = root()->findChild<QObject *>(QLatin1String(name));
                 if (!dialog) {
                     out << QSizeF(-1, -1);

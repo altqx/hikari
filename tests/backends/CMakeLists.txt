@@ -41,6 +41,12 @@ target_compile_definitions(hikari_backends_visual_geometry_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/visual-t3")
 
+# VT3: the Perspective tool's tags rendered by libass onto its quad.
+hikari_add_gtest(hikari_backends_visual_perspective_render_tests SOURCES visual_perspective_render_tests.cpp
+    LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
+target_compile_definitions(hikari_backends_visual_perspective_render_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+
 add_executable(hikari_test_helper test_helper.cpp)
 target_link_libraries(hikari_test_helper PRIVATE hikari_helper_endpoint)
 hikari_add_gtest(hikari_backends_helper_tests SOURCES helper_host_tests.cpp

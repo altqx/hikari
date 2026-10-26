@@ -256,7 +256,7 @@ std::vector<std::string> legacyTooltips()
     std::vector<std::string> out;
     std::string text;
     const std::regex item(R"re(icons\.push_back\(new itemdata\(PTR_BITMAP_PNG\(L"([^"]+)"\), _\("([^"]+)"\)\)\);)re");
-    while (std::getline(in, text) && out.size() < kFamilyCount) {
+    while (std::getline(in, text) && out.size() < kLegacyFamilyCount) {
         std::smatch m;
         if (std::regex_search(text, m, item))
             out.push_back(m[1].str() + "|" + m[2].str());
@@ -269,8 +269,8 @@ std::vector<std::string> legacyTooltips()
 TEST(VisualFamilies, AreLegacysElevenRailItems)
 {
     const auto legacy = legacyTooltips();
-    ASSERT_EQ(legacy.size(), static_cast<std::size_t>(kFamilyCount));
-    for (int i = 0; i < kFamilyCount; ++i) {
+    ASSERT_EQ(legacy.size(), static_cast<std::size_t>(kLegacyFamilyCount));
+    for (int i = 0; i < kLegacyFamilyCount; ++i) {
         const FamilyInfo &info = families()[i];
         EXPECT_EQ(static_cast<int>(info.family), i);
         EXPECT_EQ(std::string(info.icon) + "|" + std::string(info.tooltip), legacy[i]);
@@ -305,7 +305,7 @@ TEST(VisualFamilies, TheToolsThatNudgeTakeTheArrows)
 {
     const std::set<Family> nudging{Family::Position,      Family::Move,       Family::Scale,
                                    Family::RectangleClip, Family::VectorClip, Family::Drawing,
-                                   Family::PositionShifter};
+                                   Family::PositionShifter, Family::Perspective};
     for (const FamilyInfo &info : families()) {
         SCOPED_TRACE(std::string(info.tooltip));
         const auto tool = makeVisualTool(info.family);
