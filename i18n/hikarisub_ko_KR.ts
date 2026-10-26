@@ -1391,6 +1391,54 @@ to the color selection location</source>
         <translation>새 프레임(FPS)</translation>
     </message>
     <message>
+        <source>Keep as is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change resolution only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample and stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation type="unfinished">영상 파일 열기</translation>
+    </message>
+    <message>
+        <source>The video is %1 × %2 and the subtitles are %3 × %4.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample the subtitles to the video? Subtitles › Resample subtitles does it later too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished">목록</translation>
+    </message>
+    <message>
+        <source>Every line gets this style.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags at start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Written at the start of every line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation type="unfinished">해상도 변경</translation>
+    </message>
+    <message>
         <source>Width</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1399,16 +1447,56 @@ to the color selection location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>FPS</source>
+        <source>The new file’s script resolution.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished">프레임</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a frame rate from 1 to 1000.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MicroDVD counts frames: times become frames at this rate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Per character</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to show until the frame rate is valid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>FPS from video</source>
-        <translation>영상에서 프레임 가져오기(FPS)</translation>
-    </message>
-    <message>
-        <source>Catalog for style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">영상에서 프레임 가져오기(FPS)</translation>
     </message>
     <message>
         <source>Style</source>
@@ -1416,7 +1504,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>Time for one letter in milliseconds</source>
-        <translation>한 글자의 시간 (ms)</translation>
+        <translation type="vanished">한 글자의 시간 (ms)</translation>
     </message>
     <message>
         <source>New end times</source>
@@ -1424,19 +1512,11 @@ to the color selection location</source>
     </message>
     <message>
         <source>Tags to paste at the beginning of every ASS line</source>
-        <translation>ASS 자막 시작 부분에 붙여넣을 태그</translation>
+        <translation type="vanished">ASS 자막 시작 부분에 붙여넣을 태그</translation>
     </message>
     <message>
         <source>Resolution when converting to ASS</source>
-        <translation>ASS로 변환 시 자막 해상도</translation>
-    </message>
-    <message>
-        <source>The conversion will:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the conversion changes</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ASS로 변환 시 자막 해상도</translation>
     </message>
     <message>
         <source>Convert</source>
@@ -1444,23 +1524,79 @@ to the color selection location</source>
     </message>
     <message>
         <source>Subtitles resolution</source>
-        <translation>자막 해상도</translation>
+        <translation type="vanished">자막 해상도</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">자막</translation>
+    </message>
+    <message>
+        <source>Subtitles width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles height</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>From subtitles</source>
         <translation>자막에서</translation>
     </message>
     <message>
+        <source>No video is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The resolution the lines are written for now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The same as the subtitles: nothing to resample.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Positions, sizes and margins are scaled by %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaled by %1 across and %2 down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The aspect ratio changes from %1 to %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Target resolution</source>
-        <translation>대상 해상도</translation>
+        <translation type="vanished">대상 해상도</translation>
     </message>
     <message>
         <source>Resample options</source>
-        <translation>리샘플 설정</translation>
+        <translation type="vanished">리샘플 설정</translation>
     </message>
     <message>
         <source>No stretch</source>
-        <translation>늘리지 않음</translation>
+        <translation type="vanished">늘리지 않음</translation>
     </message>
     <message>
         <source>Stretch</source>
@@ -1468,7 +1604,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>Incompatible resolution</source>
-        <translation>맞지 않는 해상도</translation>
+        <translation type="vanished">맞지 않는 해상도</translation>
     </message>
     <message>
         <source>The video and subtitle resolutions are different.
@@ -1479,7 +1615,7 @@ Subtitle resolution: %3 x %4
 
 Match the resolution to the video?
 </source>
-        <translation type="unfinished">자막과 영상 해상도가 다릅니다.
+        <translation type="obsolete">자막과 영상 해상도가 다릅니다.
 지금 변경하거나 자막 리샘플링을 사용할 수 있습니다.
 
 영상 해상도: %1 x %2
@@ -1490,27 +1626,27 @@ Match the resolution to the video?
     </message>
     <message>
         <source>Change only the subtitle resolution</source>
-        <translation>자막 해상도 변경</translation>
+        <translation type="vanished">자막 해상도 변경</translation>
     </message>
     <message>
         <source>Resample subtitles (no stretch)</source>
-        <translation>자막 리샘플링 (늘이지 않음)</translation>
+        <translation type="vanished">자막 리샘플링 (늘이지 않음)</translation>
     </message>
     <message>
         <source>Resample subtitles (stretch)</source>
-        <translation>자막 리샘플링 (늘이기)</translation>
+        <translation type="vanished">자막 리샘플링 (늘이기)</translation>
     </message>
     <message>
         <source>Change</source>
-        <translation>변경</translation>
+        <translation type="vanished">변경</translation>
     </message>
     <message>
         <source>Do not change</source>
-        <translation>변경하지 않음</translation>
+        <translation type="vanished">변경하지 않음</translation>
     </message>
     <message>
         <source>Disable warning</source>
-        <translation>창 끄기</translation>
+        <translation type="vanished">창 끄기</translation>
     </message>
     <message>
         <source>In line %1, value &apos;%2&apos; cannot be scaled
@@ -2868,11 +3004,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Save folder</source>
-        <translation>저장 폴더</translation>
-    </message>
-    <message>
-        <source>Destination folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">저장 폴더</translation>
     </message>
     <message>
         <source>Select a folder</source>
@@ -2880,40 +3012,124 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Options</source>
-        <translation>선택</translation>
+        <translation type="vanished">선택</translation>
     </message>
     <message>
         <source>Check availability of fonts</source>
-        <translation>글꼴 사용 가능 여부 확인</translation>
+        <translation type="vanished">글꼴 사용 가능 여부 확인</translation>
     </message>
     <message>
         <source>Copy to selected folder</source>
-        <translation>선택한 폴더에 복사</translation>
+        <translation type="vanished">선택한 폴더에 복사</translation>
     </message>
     <message>
         <source>Zip</source>
-        <translation>Zip</translation>
+        <translation type="vanished">Zip</translation>
     </message>
     <message>
         <source>Save to video / subtitles folder.</source>
-        <translation>영상 / 자막 폴더에 저장.</translation>
+        <translation type="vanished">영상 / 자막 폴더에 저장.</translation>
     </message>
     <message>
         <source>Saves to the video folder
 when demuxing fonts from an MKV file.</source>
-        <translation>MKV 파일에서 글꼴을 추출 할 때
+        <translation type="vanished">MKV 파일에서 글꼴을 추출 할 때
 영상과 함께 폴더에 저장.</translation>
     </message>
     <message>
         <source>Demux fonts from loaded MKV file</source>
-        <translation>로드 된 MKV 파일에서 글꼴 추출</translation>
+        <translation type="vanished">로드 된 MKV 파일에서 글꼴 추출</translation>
     </message>
     <message>
         <source>Font collector log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Write this incomplete collection, labelled incomplete</source>
+        <source>Lists the fonts the subtitles use and whether this computer has each one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copies each font file the subtitles use into the folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Puts each font file the subtitles use into a zip archive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writing the new archive replaces it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">교체</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation type="unfinished">찾은 후에 할 동작</translation>
+    </message>
+    <message>
+        <source>Check fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zip archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose an archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write beside the subtitles, in a “Fonts” folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beside the video when the fonts come from the MKV file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take the fonts from the loaded MKV file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start lists the fonts the subtitles use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some fonts were not found, so the collection is incomplete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to write %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to copy to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write it, labelled incomplete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy it, labelled incomplete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2925,12 +3141,24 @@ when demuxing fonts from an MKV file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Show folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start on all tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Start</source>
         <translation>시작 시간</translation>
     </message>
     <message>
+        <source>Stop</source>
+        <translation type="unfinished">멈춤</translation>
+    </message>
+    <message>
         <source>Start on tabs</source>
-        <translation>탭으로 시작</translation>
+        <translation type="vanished">탭으로 시작</translation>
     </message>
     <message>
         <source>Choose save folder</source>
@@ -7497,6 +7725,18 @@ and will be changed to the default</source>
         <translation>ASS 파일 정보</translation>
     </message>
     <message>
+        <source>Credits</source>
+        <translation type="unfinished">만든사람들</translation>
+    </message>
+    <message>
+        <source>Same as the subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rendering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>저장</translation>
     </message>
@@ -7506,7 +7746,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Subtitle information</source>
-        <translation>자막 정보</translation>
+        <translation type="vanished">자막 정보</translation>
     </message>
     <message>
         <source>Title</source>
@@ -7565,16 +7805,12 @@ and will be changed to the default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Link the layout resolution to the subtitle resolution</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>YCbCr matrix</source>
         <translation>YCbCr 매트릭스</translation>
     </message>
     <message>
         <source>Options</source>
-        <translation>선택</translation>
+        <translation type="vanished">선택</translation>
     </message>
     <message>
         <source>Wrap style</source>
@@ -8818,6 +9054,14 @@ please save with different name or change file attribute.</source>
 <context>
     <name>HikariSub.Spelling</name>
     <message>
+        <source>Ignore words in capitals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words added to dictionary…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix suggestions</source>
         <translation>제안 수정</translation>
     </message>
@@ -8831,11 +9075,11 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Misspell word:</source>
-        <translation>맞춤법 오류 단어:</translation>
+        <translation type="vanished">맞춤법 오류 단어:</translation>
     </message>
     <message>
         <source>Replace to:</source>
-        <translation>변경 글자:</translation>
+        <translation type="vanished">변경 글자:</translation>
     </message>
     <message>
         <source>No suggestions</source>
@@ -8852,7 +9096,7 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Ignore words written entirely
 in uppercase</source>
-        <translation>대문자 단어 무시</translation>
+        <translation type="vanished">대문자 단어 무시</translation>
     </message>
     <message>
         <source>Replace</source>
@@ -8861,6 +9105,42 @@ in uppercase</source>
     <message>
         <source>Replace all</source>
         <translation>모두 변경</translation>
+    </message>
+    <message>
+        <source>Checks the spelling from the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No spelling errors in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spelling settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation type="unfinished">철자 확인창</translation>
+    </message>
+    <message>
+        <source>Misspelled word: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Ignore</source>
@@ -8876,11 +9156,33 @@ in uppercase</source>
     </message>
     <message>
         <source>Remove from dictionary</source>
-        <translation>사전에서 제거</translation>
+        <translation type="vanished">사전에서 제거</translation>
     </message>
     <message>
         <source>Remove from dictionary words added by user.</source>
-        <translation>사용자가 추가 한 단어를 사전에서 제거합니다.</translation>
+        <translation type="vanished">사용자가 추가 한 단어를 사전에서 제거합니다.</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">필터</translation>
+    </message>
+    <message>
+        <source>No words added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove %n word(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
