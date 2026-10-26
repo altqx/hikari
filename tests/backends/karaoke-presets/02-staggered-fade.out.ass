@@ -1,0 +1,40 @@
+[Script Info]
+; KE3: the karaoke Lines each built-in preset is applied to (romaji phrases authored for the test)
+Title: KE3 preset fixture
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Other-furigana,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,2,20,20,20,1
+Style: Romaji-furigana,Arial,24,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,1,0.5,8,20,20,30,1
+Style:  Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style:  Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template syl noblank,!retime("line",-600,400)!{\an5\pos($center,$middle)\alpha&HFF&\t(!$i*40!,!$i*40+300!,\alpha&H00&)\t(!$start+600!,!$end+600!,\1c&H3CC8FF&)\t(!$ldur+600!,!$ldur+1000!,\alpha&HFF&)}
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k40}ki{\k35}ra{\k0} {\k45}ki{\k30}ra {\k60}hi{\k50}ka{\k40}ru
+Comment: 0,0:00:05.00,0:00:07.50,Romaji,,0,0,0,karaoke,{\k50}yo{\k25}ru{\k25}no {\k80}so{\k70}ra
+Dialogue: 0,0:00:08.00,0:00:09.00,Other,,0,0,0,,{\k50}ho{\k50}ka
+Comment: 0,0:00:10.00,0:00:12.00,Romaji,,0,0,0,karaoke,{\k30}ta{\k30}bi{\k0} {\k40}no{\k0} {\k50}to{\k50}chu{\k0}u
+Dialogue: 0,0:00:00.40,0:00:04.40,Romaji,,0,0,0,fx,{\an5\pos(455,54)\alpha&HFF&\t(40,340,\alpha&H00&)\t(600,1000,\1c&H3CC8FF&)\t(3600,4000,\alpha&HFF&)}ki
+Dialogue: 0,0:00:00.40,0:00:04.40,Romaji,,0,0,0,fx,{\an5\pos(508,54)\alpha&HFF&\t(80,380,\alpha&H00&)\t(1000,1350,\1c&H3CC8FF&)\t(3600,4000,\alpha&HFF&)}ra
+Dialogue: 0,0:00:00.40,0:00:04.40,Romaji,,0,0,0,fx,{\an5\pos(587,54)\alpha&HFF&\t(160,460,\alpha&H00&)\t(1350,1800,\1c&H3CC8FF&)\t(3600,4000,\alpha&HFF&)}ki
+Dialogue: 0,0:00:00.40,0:00:04.40,Romaji,,0,0,0,fx,{\an5\pos(640,54)\alpha&HFF&\t(200,500,\alpha&H00&)\t(1800,2100,\1c&H3CC8FF&)\t(3600,4000,\alpha&HFF&)}ra 
+Dialogue: 0,0:00:00.40,0:00:04.40,Romaji,,0,0,0,fx,{\an5\pos(719,54)\alpha&HFF&\t(240,540,\alpha&H00&)\t(2100,2700,\1c&H3CC8FF&)\t(3600,4000,\alpha&HFF&)}hi
+Dialogue: 0,0:00:00.40,0:00:04.40,Romaji,,0,0,0,fx,{\an5\pos(772,54)\alpha&HFF&\t(280,580,\alpha&H00&)\t(2700,3200,\1c&H3CC8FF&)\t(3600,4000,\alpha&HFF&)}ka
+Dialogue: 0,0:00:00.40,0:00:04.40,Romaji,,0,0,0,fx,{\an5\pos(825,54)\alpha&HFF&\t(320,620,\alpha&H00&)\t(3200,3600,\1c&H3CC8FF&)\t(3600,4000,\alpha&HFF&)}ru
+Dialogue: 0,0:00:04.40,0:00:07.90,Romaji,,0,0,0,fx,{\an5\pos(521,54)\alpha&HFF&\t(40,340,\alpha&H00&)\t(600,1100,\1c&H3CC8FF&)\t(3100,3500,\alpha&HFF&)}yo
+Dialogue: 0,0:00:04.40,0:00:07.90,Romaji,,0,0,0,fx,{\an5\pos(574,54)\alpha&HFF&\t(80,380,\alpha&H00&)\t(1100,1350,\1c&H3CC8FF&)\t(3100,3500,\alpha&HFF&)}ru
+Dialogue: 0,0:00:04.40,0:00:07.90,Romaji,,0,0,0,fx,{\an5\pos(627,54)\alpha&HFF&\t(120,420,\alpha&H00&)\t(1350,1600,\1c&H3CC8FF&)\t(3100,3500,\alpha&HFF&)}no 
+Dialogue: 0,0:00:04.40,0:00:07.90,Romaji,,0,0,0,fx,{\an5\pos(706,54)\alpha&HFF&\t(160,460,\alpha&H00&)\t(1600,2400,\1c&H3CC8FF&)\t(3100,3500,\alpha&HFF&)}so
+Dialogue: 0,0:00:04.40,0:00:07.90,Romaji,,0,0,0,fx,{\an5\pos(759,54)\alpha&HFF&\t(200,500,\alpha&H00&)\t(2400,3100,\1c&H3CC8FF&)\t(3100,3500,\alpha&HFF&)}ra
+Dialogue: 0,0:00:09.40,0:00:12.40,Romaji,,0,0,0,fx,{\an5\pos(482,54)\alpha&HFF&\t(40,340,\alpha&H00&)\t(600,900,\1c&H3CC8FF&)\t(2600,3000,\alpha&HFF&)}ta
+Dialogue: 0,0:00:09.40,0:00:12.40,Romaji,,0,0,0,fx,{\an5\pos(534,54)\alpha&HFF&\t(80,380,\alpha&H00&)\t(900,1200,\1c&H3CC8FF&)\t(2600,3000,\alpha&HFF&)}bi
+Dialogue: 0,0:00:09.40,0:00:12.40,Romaji,,0,0,0,fx,{\an5\pos(614,54)\alpha&HFF&\t(160,460,\alpha&H00&)\t(1200,1600,\1c&H3CC8FF&)\t(2600,3000,\alpha&HFF&)}no
+Dialogue: 0,0:00:09.40,0:00:12.40,Romaji,,0,0,0,fx,{\an5\pos(693,54)\alpha&HFF&\t(240,540,\alpha&H00&)\t(1600,2100,\1c&H3CC8FF&)\t(2600,3000,\alpha&HFF&)}to
+Dialogue: 0,0:00:09.40,0:00:12.40,Romaji,,0,0,0,fx,{\an5\pos(759,54)\alpha&HFF&\t(280,580,\alpha&H00&)\t(2100,2600,\1c&H3CC8FF&)\t(2600,3000,\alpha&HFF&)}chu

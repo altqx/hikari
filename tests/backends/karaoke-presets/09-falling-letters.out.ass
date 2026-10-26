@@ -1,0 +1,58 @@
+[Script Info]
+; KE3: the karaoke Lines each built-in preset is applied to (romaji phrases authored for the test)
+Title: KE3 preset fixture
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Other-furigana,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,2,20,20,20,1
+Style: Romaji-furigana,Arial,24,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,1,0.5,8,20,20,30,1
+Style:  Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style:  Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template syl noblank char,!retime("line",-800,300)!{\an5\move($center,!$middle-40!,$center,$middle,!$left-$lleft!,!$left-$lleft+250!)\alpha&HFF&\t(!$left-$lleft!,!$left-$lleft+250!,\alpha&H00&)\t(!$start+800!,!$end+800!,\1c&H90E0A0&)\fad(0,300)}
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k40}ki{\k35}ra{\k0} {\k45}ki{\k30}ra {\k60}hi{\k50}ka{\k40}ru
+Comment: 0,0:00:05.00,0:00:07.50,Romaji,,0,0,0,karaoke,{\k50}yo{\k25}ru{\k25}no {\k80}so{\k70}ra
+Dialogue: 0,0:00:08.00,0:00:09.00,Other,,0,0,0,,{\k50}ho{\k50}ka
+Comment: 0,0:00:10.00,0:00:12.00,Romaji,,0,0,0,karaoke,{\k30}ta{\k30}bi{\k0} {\k40}no{\k0} {\k50}to{\k50}chu{\k0}u
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(442,14,442,54,0,250)\alpha&HFF&\t(0,250,\alpha&H00&)\t(800,1200,\1c&H90E0A0&)\fad(0,300)}k
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(468,14,468,54,26,276)\alpha&HFF&\t(26,276,\alpha&H00&)\t(800,1200,\1c&H90E0A0&)\fad(0,300)}i
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(495,14,495,54,53,303)\alpha&HFF&\t(53,303,\alpha&H00&)\t(1200,1550,\1c&H90E0A0&)\fad(0,300)}r
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(521,14,521,54,79,329)\alpha&HFF&\t(79,329,\alpha&H00&)\t(1200,1550,\1c&H90E0A0&)\fad(0,300)}a
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(574,14,574,54,132,382)\alpha&HFF&\t(132,382,\alpha&H00&)\t(1550,2000,\1c&H90E0A0&)\fad(0,300)}k
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(600,14,600,54,158,408)\alpha&HFF&\t(158,408,\alpha&H00&)\t(1550,2000,\1c&H90E0A0&)\fad(0,300)}i
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(627,14,627,54,185,435)\alpha&HFF&\t(185,435,\alpha&H00&)\t(2000,2300,\1c&H90E0A0&)\fad(0,300)}r
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(653,14,653,54,211,461)\alpha&HFF&\t(211,461,\alpha&H00&)\t(2000,2300,\1c&H90E0A0&)\fad(0,300)}a
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(706,14,706,54,264,514)\alpha&HFF&\t(264,514,\alpha&H00&)\t(2300,2900,\1c&H90E0A0&)\fad(0,300)}h
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(732,14,732,54,290,540)\alpha&HFF&\t(290,540,\alpha&H00&)\t(2300,2900,\1c&H90E0A0&)\fad(0,300)}i
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(759,14,759,54,317,567)\alpha&HFF&\t(317,567,\alpha&H00&)\t(2900,3400,\1c&H90E0A0&)\fad(0,300)}k
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(785,14,785,54,343,593)\alpha&HFF&\t(343,593,\alpha&H00&)\t(2900,3400,\1c&H90E0A0&)\fad(0,300)}a
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(812,14,812,54,369,619)\alpha&HFF&\t(369,619,\alpha&H00&)\t(3400,3800,\1c&H90E0A0&)\fad(0,300)}r
+Dialogue: 0,0:00:00.20,0:00:04.30,Romaji,,0,0,0,fx,{\an5\move(838,14,838,54,396,646)\alpha&HFF&\t(396,646,\alpha&H00&)\t(3400,3800,\1c&H90E0A0&)\fad(0,300)}u
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(508,14,508,54,0,250)\alpha&HFF&\t(0,250,\alpha&H00&)\t(800,1300,\1c&H90E0A0&)\fad(0,300)}y
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(534,14,534,54,26,276)\alpha&HFF&\t(26,276,\alpha&H00&)\t(800,1300,\1c&H90E0A0&)\fad(0,300)}o
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(561,14,561,54,53,303)\alpha&HFF&\t(53,303,\alpha&H00&)\t(1300,1550,\1c&H90E0A0&)\fad(0,300)}r
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(587,14,587,54,79,329)\alpha&HFF&\t(79,329,\alpha&H00&)\t(1300,1550,\1c&H90E0A0&)\fad(0,300)}u
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(614,14,614,54,105,355)\alpha&HFF&\t(105,355,\alpha&H00&)\t(1550,1800,\1c&H90E0A0&)\fad(0,300)}n
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(640,14,640,54,132,382)\alpha&HFF&\t(132,382,\alpha&H00&)\t(1550,1800,\1c&H90E0A0&)\fad(0,300)}o
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(693,14,693,54,185,435)\alpha&HFF&\t(185,435,\alpha&H00&)\t(1800,2600,\1c&H90E0A0&)\fad(0,300)}s
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(719,14,719,54,211,461)\alpha&HFF&\t(211,461,\alpha&H00&)\t(1800,2600,\1c&H90E0A0&)\fad(0,300)}o
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(746,14,746,54,237,487)\alpha&HFF&\t(237,487,\alpha&H00&)\t(2600,3300,\1c&H90E0A0&)\fad(0,300)}r
+Dialogue: 0,0:00:04.20,0:00:07.80,Romaji,,0,0,0,fx,{\an5\move(772,14,772,54,264,514)\alpha&HFF&\t(264,514,\alpha&H00&)\t(2600,3300,\1c&H90E0A0&)\fad(0,300)}a
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(468,14,468,54,0,250)\alpha&HFF&\t(0,250,\alpha&H00&)\t(800,1100,\1c&H90E0A0&)\fad(0,300)}t
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(495,14,495,54,27,277)\alpha&HFF&\t(27,277,\alpha&H00&)\t(800,1100,\1c&H90E0A0&)\fad(0,300)}a
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(521,14,521,54,53,303)\alpha&HFF&\t(53,303,\alpha&H00&)\t(1100,1400,\1c&H90E0A0&)\fad(0,300)}b
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(548,14,548,54,79,329)\alpha&HFF&\t(79,329,\alpha&H00&)\t(1100,1400,\1c&H90E0A0&)\fad(0,300)}i
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(600,14,600,54,132,382)\alpha&HFF&\t(132,382,\alpha&H00&)\t(1400,1800,\1c&H90E0A0&)\fad(0,300)}n
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(627,14,627,54,159,409)\alpha&HFF&\t(159,409,\alpha&H00&)\t(1400,1800,\1c&H90E0A0&)\fad(0,300)}o
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(680,14,680,54,211,461)\alpha&HFF&\t(211,461,\alpha&H00&)\t(1800,2300,\1c&H90E0A0&)\fad(0,300)}t
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(706,14,706,54,238,488)\alpha&HFF&\t(238,488,\alpha&H00&)\t(1800,2300,\1c&H90E0A0&)\fad(0,300)}o
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(732,14,732,54,264,514)\alpha&HFF&\t(264,514,\alpha&H00&)\t(2300,2800,\1c&H90E0A0&)\fad(0,300)}c
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(759,14,759,54,291,541)\alpha&HFF&\t(291,541,\alpha&H00&)\t(2300,2800,\1c&H90E0A0&)\fad(0,300)}h
+Dialogue: 0,0:00:09.20,0:00:12.30,Romaji,,0,0,0,fx,{\an5\move(785,14,785,54,317,567)\alpha&HFF&\t(317,567,\alpha&H00&)\t(2300,2800,\1c&H90E0A0&)\fad(0,300)}u

@@ -1,0 +1,19 @@
+[Script Info]
+; A HikariSub karaoke effect preset (KE3, docs/qt/karaoke-presets.md): original
+; work under HikariSub's licence. Give the Comment Lines the karaoke Lines' Style.
+Title: Glow
+Description: A soft halo flares behind each syllable as it is sung, then fades.
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank,!retime("syl",0,400)!{\an5\pos($center,$middle)\1a&HFF&\bord5\blur8\3c&HFFB050&\shad0\fad(80,400)}
+Comment: 1,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank,!retime("line",-300,300)!{\an5\pos($center,$middle)\fad(300,300)\t(!$start+300!,!$end+300!,\1c&HFFE6B4&)}
