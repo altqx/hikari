@@ -1409,6 +1409,54 @@ w miejsce wyboru koloru</translation>
         <translation>Nowy FPS napisów</translation>
     </message>
     <message>
+        <source>Keep as is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change resolution only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample and stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation type="unfinished">Otwórz wideo</translation>
+    </message>
+    <message>
+        <source>The video is %1 × %2 and the subtitles are %3 × %4.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample the subtitles to the video? Subtitles › Resample subtitles does it later too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished">Katalog</translation>
+    </message>
+    <message>
+        <source>Every line gets this style.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags at start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Written at the start of every line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation type="unfinished">Rozdzielczość</translation>
+    </message>
+    <message>
         <source>Width</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1417,16 +1465,56 @@ w miejsce wyboru koloru</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>FPS</source>
+        <source>The new file’s script resolution.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished">Klatki</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a frame rate from 1 to 1000.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MicroDVD counts frames: times become frames at this rate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Per character</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to show until the frame rate is valid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>FPS from video</source>
-        <translation>FPS z wideo</translation>
-    </message>
-    <message>
-        <source>Catalog for style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">FPS z wideo</translation>
     </message>
     <message>
         <source>Style</source>
@@ -1434,7 +1522,7 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Time for one letter in milliseconds</source>
-        <translation>Czas w ms na jedną literę</translation>
+        <translation type="vanished">Czas w ms na jedną literę</translation>
     </message>
     <message>
         <source>New end times</source>
@@ -1442,19 +1530,11 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Tags to paste at the beginning of every ASS line</source>
-        <translation>Tagi wstawiane na początku każdej linijki ass</translation>
+        <translation type="vanished">Tagi wstawiane na początku każdej linijki ass</translation>
     </message>
     <message>
         <source>Resolution when converting to ASS</source>
-        <translation>Rozdzielczość przy konwersji na ASS</translation>
-    </message>
-    <message>
-        <source>The conversion will:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the conversion changes</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Rozdzielczość przy konwersji na ASS</translation>
     </message>
     <message>
         <source>Convert</source>
@@ -1462,23 +1542,79 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Subtitles resolution</source>
-        <translation>Rozdzielczość napisów</translation>
+        <translation type="vanished">Rozdzielczość napisów</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Napisy</translation>
+    </message>
+    <message>
+        <source>Subtitles width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles height</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>From subtitles</source>
         <translation>Pobierz z napisów</translation>
     </message>
     <message>
+        <source>No video is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The resolution the lines are written for now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The same as the subtitles: nothing to resample.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Positions, sizes and margins are scaled by %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaled by %1 across and %2 down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The aspect ratio changes from %1 to %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Target resolution</source>
-        <translation>Rozdzielczość docelowa</translation>
+        <translation type="vanished">Rozdzielczość docelowa</translation>
     </message>
     <message>
         <source>Resample options</source>
-        <translation>Opcje skalowania</translation>
+        <translation type="vanished">Opcje skalowania</translation>
     </message>
     <message>
         <source>No stretch</source>
-        <translation>Nie rozciągaj</translation>
+        <translation type="vanished">Nie rozciągaj</translation>
     </message>
     <message>
         <source>Stretch</source>
@@ -1486,7 +1622,7 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Incompatible resolution</source>
-        <translation>Niezgodna rozdzielczość</translation>
+        <translation type="vanished">Niezgodna rozdzielczość</translation>
     </message>
     <message>
         <source>The video and subtitle resolutions are different.
@@ -1497,7 +1633,7 @@ Subtitle resolution: %3 x %4
 
 Match the resolution to the video?
 </source>
-        <translation type="unfinished">Rozdzielczości wideo i napisów się różnią.
+        <translation type="obsolete">Rozdzielczości wideo i napisów się różnią.
 Możesz zmienić je teraz lub skorzystać ze &apos;zmień rozdzielczość napisów&apos;.
 
 Rozdzielczość wideo: %1 x %2
@@ -1508,27 +1644,27 @@ Dopasować rozdzielczość do wideo?
     </message>
     <message>
         <source>Change only the subtitle resolution</source>
-        <translation>Zmień wyłącznie rozdzielczość napisów</translation>
+        <translation type="vanished">Zmień wyłącznie rozdzielczość napisów</translation>
     </message>
     <message>
         <source>Resample subtitles (no stretch)</source>
-        <translation>Dopasuj skrypt napisów do rozdzielczości wideo (Nie rozciągaj)</translation>
+        <translation type="vanished">Dopasuj skrypt napisów do rozdzielczości wideo (Nie rozciągaj)</translation>
     </message>
     <message>
         <source>Resample subtitles (stretch)</source>
-        <translation>Dopasuj skrypt napisów do rozdzielczości wideo (Rozciągnij)</translation>
+        <translation type="vanished">Dopasuj skrypt napisów do rozdzielczości wideo (Rozciągnij)</translation>
     </message>
     <message>
         <source>Change</source>
-        <translation>Zmień</translation>
+        <translation type="vanished">Zmień</translation>
     </message>
     <message>
         <source>Do not change</source>
-        <translation>Nie zmieniaj</translation>
+        <translation type="vanished">Nie zmieniaj</translation>
     </message>
     <message>
         <source>Disable warning</source>
-        <translation>Wyłącz ostrzeżenie</translation>
+        <translation type="vanished">Wyłącz ostrzeżenie</translation>
     </message>
     <message>
         <source>In line %1, value &apos;%2&apos; cannot be scaled
@@ -2925,11 +3061,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Save folder</source>
-        <translation>Folder zapisu</translation>
-    </message>
-    <message>
-        <source>Destination folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Folder zapisu</translation>
     </message>
     <message>
         <source>Select a folder</source>
@@ -2937,40 +3069,124 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Options</source>
-        <translation>Opcje</translation>
+        <translation type="vanished">Opcje</translation>
     </message>
     <message>
         <source>Check availability of fonts</source>
-        <translation>Sprawdź dostępność czcionek</translation>
+        <translation type="vanished">Sprawdź dostępność czcionek</translation>
     </message>
     <message>
         <source>Copy to selected folder</source>
-        <translation>Skopiuj do wybranego folderu</translation>
+        <translation type="vanished">Skopiuj do wybranego folderu</translation>
     </message>
     <message>
         <source>Zip</source>
-        <translation>Spakuj zipem</translation>
+        <translation type="vanished">Spakuj zipem</translation>
     </message>
     <message>
         <source>Save to video / subtitles folder.</source>
-        <translation>Zapisuj do folderu z napisami / wideo.</translation>
+        <translation type="vanished">Zapisuj do folderu z napisami / wideo.</translation>
     </message>
     <message>
         <source>Saves to the video folder
 when demuxing fonts from an MKV file.</source>
-        <translation>Zapisuje do folderu z wideo
+        <translation type="vanished">Zapisuje do folderu z wideo
 przy wyciąganiu czcionek z pliku MKV.</translation>
     </message>
     <message>
         <source>Demux fonts from loaded MKV file</source>
-        <translation>Wyciągnij czcionki z wczytanego pliku MKV</translation>
+        <translation type="vanished">Wyciągnij czcionki z wczytanego pliku MKV</translation>
     </message>
     <message>
         <source>Font collector log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Write this incomplete collection, labelled incomplete</source>
+        <source>Lists the fonts the subtitles use and whether this computer has each one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copies each font file the subtitles use into the folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Puts each font file the subtitles use into a zip archive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writing the new archive replaces it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">Zamień</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation type="unfinished">Akcja</translation>
+    </message>
+    <message>
+        <source>Check fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zip archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose an archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write beside the subtitles, in a “Fonts” folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beside the video when the fonts come from the MKV file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take the fonts from the loaded MKV file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start lists the fonts the subtitles use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some fonts were not found, so the collection is incomplete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to write %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to copy to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write it, labelled incomplete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy it, labelled incomplete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2982,12 +3198,24 @@ przy wyciąganiu czcionek z pliku MKV.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Show folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start on all tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Start</source>
         <translation>Start</translation>
     </message>
     <message>
+        <source>Stop</source>
+        <translation type="unfinished">Zatrzymaj</translation>
+    </message>
+    <message>
         <source>Start on tabs</source>
-        <translation>Rozpocznij na zakładkach</translation>
+        <translation type="vanished">Rozpocznij na zakładkach</translation>
     </message>
     <message>
         <source>Choose save folder</source>
@@ -7584,6 +7812,18 @@ zostanie zmieniony na domyślny</translation>
         <translation>Właściwości pliku ASS</translation>
     </message>
     <message>
+        <source>Credits</source>
+        <translation type="unfinished">Lista osób pomocnych przy tworzeniu programu</translation>
+    </message>
+    <message>
+        <source>Same as the subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rendering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>Zapisz</translation>
     </message>
@@ -7593,7 +7833,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Subtitle information</source>
-        <translation>Informacje o napisach</translation>
+        <translation type="vanished">Informacje o napisach</translation>
     </message>
     <message>
         <source>Title</source>
@@ -7652,16 +7892,12 @@ zostanie zmieniony na domyślny</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Link the layout resolution to the subtitle resolution</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>YCbCr matrix</source>
         <translation>Macierz YCbCr</translation>
     </message>
     <message>
         <source>Options</source>
-        <translation>Opcje</translation>
+        <translation type="vanished">Opcje</translation>
     </message>
     <message>
         <source>Wrap style</source>
@@ -8920,6 +9156,14 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
 <context>
     <name>HikariSub.Spelling</name>
     <message>
+        <source>Ignore words in capitals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words added to dictionary…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix suggestions</source>
         <translation>Sugestie poprawy</translation>
     </message>
@@ -8933,11 +9177,11 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Misspell word:</source>
-        <translation>Błędne słowo:</translation>
+        <translation type="vanished">Błędne słowo:</translation>
     </message>
     <message>
         <source>Replace to:</source>
-        <translation>Zmień na:</translation>
+        <translation type="vanished">Zmień na:</translation>
     </message>
     <message>
         <source>No suggestions</source>
@@ -8954,7 +9198,7 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     <message>
         <source>Ignore words written entirely
 in uppercase</source>
-        <translation>Ignoruj słowa całe pisane
+        <translation type="vanished">Ignoruj słowa całe pisane
 wielką literą</translation>
     </message>
     <message>
@@ -8964,6 +9208,42 @@ wielką literą</translation>
     <message>
         <source>Replace all</source>
         <translation>Zamień wszystko</translation>
+    </message>
+    <message>
+        <source>Checks the spelling from the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No spelling errors in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spelling settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation type="unfinished">Sprawdź poprawność pisowni</translation>
+    </message>
+    <message>
+        <source>Misspelled word: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Ignore</source>
@@ -8979,11 +9259,35 @@ wielką literą</translation>
     </message>
     <message>
         <source>Remove from dictionary</source>
-        <translation>Usuń ze słownika</translation>
+        <translation type="vanished">Usuń ze słownika</translation>
     </message>
     <message>
         <source>Remove from dictionary words added by user.</source>
-        <translation>Usuwa ze słownika słowa dodane przez użytkownika.</translation>
+        <translation type="vanished">Usuwa ze słownika słowa dodane przez użytkownika.</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">Filtruj</translation>
+    </message>
+    <message>
+        <source>No words added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove %n word(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>

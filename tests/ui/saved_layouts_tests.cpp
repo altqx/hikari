@@ -497,6 +497,7 @@ private slots:
         start();
         openEpisode();
         auto &video = application->video();
+        application->setAskForBadResolution(false); // PU6: the resolution question is a message box with the keyboard
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(video.session().lastFrame() != nullptr, 20000);
         close("videoDock");
