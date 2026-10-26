@@ -957,10 +957,12 @@ private slots:
                           << found.join(QStringLiteral(", "));
         // Not HikariSub.Session: PU1's session and autosave popups replaced
         // the windows whose legacy texts were translated, and their own
-        // texts wait for the translators.
+        // texts wait for the translators. Nor HikariSub.Conversion: PU4's Set
+        // new FPS and PU6's conversion windows are made at their first
+        // opening, and the resolution question is a message box.
         for (const char *context : {"HikariSub.MainWindow", "HikariSub.Audio", "HikariSub.Video", "HikariSub.Editor",
                                     "HikariSub.Grid", "HikariSub.TimeShift", "HikariSub.Options", "HikariSub.Styles",
-                                    "HikariSub.Conversion", "HikariSub.Documents"})
+                                    "HikariSub.Documents"})
             QVERIFY2(seen.contains(QLatin1String(context)), context);
         // A surface string the application keeps: the Untitled tab's name.
         application->addPage();

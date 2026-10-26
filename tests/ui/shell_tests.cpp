@@ -30015,6 +30015,9 @@ private slots:
         for (const char *name : {"a.mkv", "b.MKV", "c.mkv"})
             videos << QDir::toNativeSeparators(own.filePath(QLatin1String(name)));
         QVERIFY(application->openFile(episode));
+        // PU6's resolution question shares the message box: off, so the file
+        // question is the one shown.
+        application->setAskForBadResolution(false);
         auto &video = application->video();
         video.openVideo(videos[0]);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
