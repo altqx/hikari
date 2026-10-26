@@ -25,6 +25,7 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -728,17 +729,24 @@ std::size_t afterLastReset(const std::vector<Tag> &tags)
 // (libass evaluates it at the frame; one box does not hold its frames).
 bool animatesTheQuad(const Tag &tag)
 {
-    static constexpr u16v kAnimated[] = {u"fs",  u"fscx", u"fscy", u"fsc",   u"fsp",   u"frx",   u"fry",
-                                         u"frz", u"fr",   u"fax",  u"fay",   u"bord",  u"shad",  u"xbord",
-                                         u"ybord", u"xshad", u"yshad"};
+    // libass runs every tag in a \t: an animatable one with the time, any
+    // other at once (a \pos, an \an, a \fn, a \r ...). Only colours,
+    // alphas, blurs and clips leave the box where the quad has it.
+    static constexpr u16v kStill[] = {u"1c", u"2c",   u"3c", u"4c", u"1a", u"2a",    u"3a",
+                                      u"4a", u"alpha", u"blur", u"be", u"clip", u"iclip", u"c"};
     if (tag.name != u"t")
         return false;
     const std::size_t first = tag.value.find(u'\\');
     if (first == u16v::npos)
         return false;
-    for (const Tag &inner : tagsOf(tag.value.substr(first)))
-        if (std::find(std::begin(kAnimated), std::end(kAnimated), inner.name) != std::end(kAnimated))
+    for (const Tag &inner : tagsOf(tag.value.substr(first))) {
+        // Known names are the quad's own; the still ones are not among them.
+        const bool still = inner.name.empty() && std::any_of(std::begin(kStill), std::end(kStill), [&inner](u16v n) {
+                               return inner.value.starts_with(n);
+                           });
+        if (!still)
             return true;
+    }
     return false;
 }
 
@@ -750,17 +758,164 @@ bool animatesTheQuad(const Tag &tag)
 // megabytes of tags, a drawing of megabytes, or many Lines shown at once)
 // gets no quad rather than unbounded work.
 constexpr std::size_t kMaxParsed = 512 * 1024; // bytes of Line text
+// The bytes of the text the tool reads: in translation mode the translation.
+std::size_t renderedSize(const core::LineRecord &line)
+{
+    return (line.translation.empty() ? line.text : line.translation).size();
+}
 struct MeasureBudget {
     std::size_t rows = 64, shown = 4096, drawn = 256 * 1024, parsed = kMaxParsed;
     // Whether `line`'s text may be parsed, charging it.
     bool parse(const core::LineRecord &line)
     {
-        if (line.text.size() > parsed)
+        const std::size_t size = renderedSize(line);
+        if (size > parsed)
             return false;
-        parsed -= line.text.size();
+        parsed -= size;
         return true;
     }
 };
+
+// libass's ass_strtod at code[i]: blanks, a sign, digits with one point,
+// an exponent; false, and `i` kept, when no digit is read.
+bool drawingNumber(u16v code, std::size_t &i, double &out)
+{
+    std::size_t k = i;
+    while (k < code.size() && (code[k] == u' ' || (code[k] >= u'\t' && code[k] <= u'\r')))
+        ++k;
+    const std::size_t numberStart = k;
+    if (k < code.size() && (code[k] == u'-' || code[k] == u'+'))
+        ++k;
+    bool digits = false, point = false;
+    for (; k < code.size(); ++k) {
+        if (code[k] >= u'0' && code[k] <= u'9')
+            digits = true;
+        else if (code[k] == u'.' && !point)
+            point = true;
+        else
+            break;
+    }
+    if (!digits)
+        return false;
+    if (k < code.size() && (code[k] == u'e' || code[k] == u'E')) {
+        std::size_t e = k + 1;
+        if (e < code.size() && (code[e] == u'-' || code[e] == u'+'))
+            ++e;
+        if (e < code.size() && code[e] >= u'0' && code[e] <= u'9') {
+            while (e < code.size() && code[e] >= u'0' && code[e] <= u'9')
+                ++e;
+            k = e;
+        }
+    }
+    // ASCII by now; from_chars takes no '+' and no locale's point.
+    std::string ascii;
+    for (std::size_t j = numberStart + (code[numberStart] == u'+' ? 1 : 0); j < k; ++j)
+        ascii += static_cast<char>(code[j]);
+    out = 0;
+    std::from_chars(ascii.data(), ascii.data() + ascii.size(), out);
+    i = k;
+    return true;
+}
+
+// The points libass draws a drawing through (ass_drawing.c
+// drawing_tokenize, whose cbox they make): nothing before the first m with
+// a point, all of it rejected by an n before any m, a b's points in threes,
+// an s's three then a p's only once there are three. Nullopt: no ink.
+std::optional<std::array<double, 4>> drawingBounds(u16v code)
+{
+    std::optional<std::array<double, 4>> box;
+    const auto add = [&box](double x, double y) {
+        if (!box)
+            box = std::array<double, 4>{x, y, x, y};
+        (*box)[0] = std::min((*box)[0], x);
+        (*box)[1] = std::min((*box)[1], y);
+        (*box)[2] = std::max((*box)[2], x);
+        (*box)[3] = std::max((*box)[3], y);
+    };
+    const auto point = [&code](std::size_t &i, double &x, double &y) {
+        std::size_t k = i;
+        if (!drawingNumber(code, k, x) || !drawingNumber(code, k, y))
+            return false;
+        i = k;
+        return true;
+    };
+    // Points in batches of `batch` until one cannot be read; a partial
+    // batch is read but not drawn.
+    std::size_t points = 0;
+    const auto many = [&](std::size_t &i, std::size_t batch) {
+        double buf[3][2];
+        std::size_t n = 0;
+        double x, y;
+        while (i < code.size() && point(i, x, y)) {
+            buf[n][0] = x;
+            buf[n][1] = y;
+            if (++n != batch)
+                continue;
+            for (std::size_t j = 0; j < n; ++j)
+                add(buf[j][0], buf[j][1]);
+            points += n;
+            n = 0;
+        }
+    };
+    bool root = false, mSeen = false;
+    for (std::size_t i = 0; i < code.size();) {
+        const char16_t cmd = code[i++];
+        double x, y;
+        switch (cmd) {
+        case u'm':
+        case u'n':
+            if (cmd == u'm')
+                mSeen = true;
+            if (!root) {
+                if (!point(i, x, y))
+                    continue;
+                if (!mSeen)
+                    return std::nullopt;
+                add(x, y);
+                ++points;
+                root = true;
+            }
+            many(i, 1);
+            break;
+        case u'l':
+            if (root)
+                many(i, 1);
+            break;
+        case u'b':
+            if (root)
+                many(i, 3);
+            break;
+        case u's':
+            if (!root)
+                break;
+            {
+                double xs[3], ys[3];
+                std::size_t k = i;
+                bool three = true;
+                for (int j = 0; j < 3 && three; ++j)
+                    three = point(k, xs[j], ys[j]);
+                if (!three) {
+                    // libass reads what it can of the three and draws none.
+                    for (int j = 0; j < 3 && point(i, xs[0], ys[0]); ++j) {
+                    }
+                    break;
+                }
+                i = k;
+                for (int j = 0; j < 3; ++j)
+                    add(xs[j], ys[j]);
+                points += 3;
+            }
+            [[fallthrough]];
+        case u'p':
+            if (points >= 3)
+                many(i, 1);
+            break;
+        default:
+            break; // c adds back points already drawn; others are skipped
+        }
+    }
+    return root ? box : std::nullopt;
+}
 
 // `edited`: the Line the tool writes, whose outline and shadow are scaled
 // in its leading blocks only, so a later change of them is not taken.
@@ -780,22 +935,11 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
             return std::nullopt;
         budget.drawn -= lead.drawing.size();
         const double k = std::ldexp(1., 1 - lead.p);
-        double minx = 0, miny = 0, maxx = 0, maxy = 0;
-        bool any = false;
-        for (const transform::ClipPoint &p : transform::vectorPoints(lead.drawing)) {
-            const double x = p.x * k, y = p.y * k;
-            if (!any) {
-                minx = maxx = x;
-                miny = maxy = y;
-                any = true;
-            }
-            minx = std::min(minx, x);
-            maxx = std::max(maxx, x);
-            miny = std::min(miny, y);
-            maxy = std::max(maxy, y);
-        }
-        if (!any)
+        const auto bounds = drawingBounds(lead.drawing);
+        if (!bounds)
             return std::nullopt;
+        const double minx = (*bounds)[0] * k, miny = (*bounds)[1] * k, maxx = (*bounds)[2] * k,
+                     maxy = (*bounds)[3] * k;
         // libass sets the drawing's ascent to its height less \pbo and its
         // descent to \pbo; the line holds neither below 0, so a \pbo past
         // the height drops the ink and one outside 0..height grows the line.
@@ -857,11 +1001,14 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         } else if (tag.name == u"fsc") {
             scaleX = styleScaleX;
         } else if (tag.name == u"fs") {
+            // Relative only with the sign first: libass reads \fs +10 as
+            // 10, its number past the space.
             u16v v = tag.value;
+            const bool relative = !v.empty() && (v.front() == u'+' || v.front() == u'-');
             while (!v.empty() && v.front() == u' ')
                 v.remove_prefix(1);
             double val = number(v).value_or(0);
-            if (!v.empty() && (v.front() == u'+' || v.front() == u'-'))
+            if (relative)
                 val = size * (1 + val / 10);
             size = val > 0 ? val : transform::styleNumber(current.fontsize, 0);
         } else if (tag.name == u"fn") {
@@ -1077,14 +1224,38 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
             y -= h / 2;
         return std::array<double, 4>{x, y, x + w, y + h};
     };
-    const int band = static_cast<int>(t.an / 3.1f);
     const auto mine = rect(line, styles.line(line.style), t, box);
-    // Past this many obstacles in its band the stack is off the frame (the
-    // work of reading them is the budget's).
+    if (mine[2] <= mine[0] || mine[3] <= mine[1])
+        return 0.0; // no area: libass does not move it
+    // libass's fit_rect on a track without placement history: each earlier
+    // Line that collides is placed in its turn clear of those placed before
+    // it (`used`, by top), and this one last; a bottom-aligned Line moves
+    // up, another down.
+    std::vector<std::array<double, 4>> used;
+    const auto fit = [&used](const std::array<double, 4> &r, int an) {
+        double shift = 0;
+        const auto meets = [&r, &shift](const std::array<double, 4> &f) {
+            return !(r[3] + shift <= f[1] || r[1] + shift >= f[3] || r[2] <= f[0] || r[0] >= f[2]);
+        };
+        if (an >= 4) {
+            for (const auto &f : used)
+                if (meets(f))
+                    shift = f[3] - r[1];
+        } else {
+            for (auto f = used.rbegin(); f != used.rend(); ++f)
+                if (meets(*f))
+                    shift = (*f)[1] - r[3];
+        }
+        const std::array<double, 4> placed{r[0], r[1] + shift, r[2], r[3] + shift};
+        used.insert(std::upper_bound(used.begin(), used.end(), placed[1],
+                                     [](double y, const std::array<double, 4> &f) { return y < f[1]; }),
+                    placed);
+        return shift;
+    };
+    // Past this many obstacles the stack is off the frame, but where is not
+    // known (the work of reading them is the budget's).
     constexpr int kMaxMeasured = 256;
     int measured = 0;
-    double offset = 0;
-    int placesForText = 0, placesTaken = 0;
     for (const core::LineRecord *dial : ctx.document->lines()) {
         if ((!ctx.ignoreFiltered && dial->visibility == core::LineVisibility::Hidden) || dial->unparsed)
             continue;
@@ -1095,7 +1266,7 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
         if (!budget.parse(*dial))
             return std::nullopt;
         const LineState other = readTagsIn(host, styles, *dial);
-        if (!other.stacks || static_cast<int>(other.transform.an / 3.1f) != band)
+        if (!other.stacks)
             continue;
         const u16 text = transform::lineText(*dial);
         const core::StyleValues style = styles.line(dial->style);
@@ -1111,18 +1282,10 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
         if (r[2] <= r[0] || r[3] <= r[1])
             continue; // no area: libass does not move others for it
         if (++measured > kMaxMeasured)
-            break;
-        if (r[2] > mine[0] && r[0] < mine[2] && r[3] > mine[1] && r[1] < mine[3]) {
-            const double h = r[3] - r[1];
-            offset += band == 2 ? h : band == 1 ? h / 2 : -h;
-            ++placesTaken;
-        } else if (placesTaken < placesForText && placesTaken > 0 && placesForText > 0) {
-            break;
-        } else {
-            ++placesForText;
-        }
+            return std::nullopt;
+        fit(r, other.transform.an);
     }
-    return offset;
+    return fit(mine, t.an);
 }
 
 LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line)
@@ -1667,7 +1830,7 @@ bool PerspectiveTool::beginEdit(VisualHost &host)
     // read's is.
     std::size_t parsed = 0;
     for (const core::LineId &id : host.gesture()->targets())
-        parsed += host.gesture()->before(id).text.size();
+        parsed += perspective::renderedSize(host.gesture()->before(id));
     if (parsed > perspective::kMaxParsed) {
         host.cancelGesture();
         return false;

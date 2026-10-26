@@ -952,6 +952,95 @@ TEST(PerspectiveTags, ASpacedSurrogatePairIsNotMeasured)
     EXPECT_TRUE(readLine(host, lineWith(host, 2)));
 }
 
+TEST(PerspectiveTags, ATranslationIsChargedAsTheTextItShows)
+{
+    // In translation mode the translation is what is read: it is what the
+    // read's bound counts.
+    Host host({"{\\pos(320,200)}a"});
+    core::LineRecord line = lineWith(host, 0);
+    std::string big = "{\\pos(320,200)";
+    while (big.size() < 600 * 1024)
+        big += "\\frx0";
+    big += "}b";
+    line.translation = std::u8string(big.begin(), big.end());
+    EXPECT_FALSE(readLine(host, line));
+    line.translation = u8"{\\pos(320,200)}b";
+    EXPECT_TRUE(readLine(host, line));
+}
+
+TEST(PerspectiveTags, ADrawingIsReadAsLibassReadsIt)
+{
+    // drawing_tokenize: nothing before the first m with a point, nothing at
+    // all after an n before any m, a b's points in threes, an s's three or
+    // none, a p's once there are three; anything else is skipped.
+    Host host(apart({"{\\pos(320,200)\\p1}l 0 0 100 100", "{\\pos(320,200)\\p1}n 5 5 m 0 0 l 10 10",
+                     "{\\pos(320,200)\\p1}m 0 0 l 100 0 100 50 b 500 500 600 600",
+                     "{\\pos(320,200)\\p1}x l 900 900 m 0 0 l 40 0 40 20",
+                     "{\\pos(320,200)\\p1}m 0 0 l 30 30 s 300 300 400", "{\\pos(320,200)\\p1}m 0 0 s 10 0 10 10 0 10 p 70 70",
+                     "{\\pos(320,200)\\p1}m 0 0 l 1e1 +2.5 -.5 5"}));
+    const auto box = [&host](std::size_t i) { return readLine(host, lineWith(host, i)); };
+    EXPECT_FALSE(box(0));
+    EXPECT_FALSE(box(1));
+    ASSERT_TRUE(box(2));
+    EXPECT_FLOAT_EQ(box(2)->box.width(), 100);
+    EXPECT_FLOAT_EQ(box(2)->box.height(), 50);
+    ASSERT_TRUE(box(3));
+    EXPECT_FLOAT_EQ(box(3)->box.width(), 40);
+    ASSERT_TRUE(box(4));
+    EXPECT_FLOAT_EQ(box(4)->box.width(), 30);
+    ASSERT_TRUE(box(5));
+    EXPECT_FLOAT_EQ(box(5)->box.width(), 70);
+    ASSERT_TRUE(box(6));
+    EXPECT_FLOAT_EQ(box(6)->box.width(), 10.5);
+    EXPECT_FLOAT_EQ(box(6)->box.height(), 5);
+}
+
+TEST(PerspectiveTags, ATagRunInATransformIsTheQuads)
+{
+    // libass runs every tag in a \t, a \pos or an \an at once: only
+    // colours, alphas, blurs and clips leave the quad where it is.
+    Host host(apart({"{\\t(\\pos(100,100))}Text", "{\\t(\\an7)}Text", "{\\t(0,500,\\fn Other)}Text",
+                     "{\\t(\\c&HFF&\\1a&H80&\\3c&H00FF00&\\alpha&H10&\\blur2\\be1\\clip(0,0,10,10))}Text",
+                     "{\\t(\\iclip(0,0,10,10))}Text"}));
+    for (const std::size_t i : {0, 1, 2})
+        EXPECT_FALSE(readLine(host, lineWith(host, i))) << i;
+    for (const std::size_t i : {3, 4})
+        EXPECT_TRUE(readLine(host, lineWith(host, i))) << i;
+}
+
+TEST(PerspectiveTags, ARelativeSizeHasItsSignFirst)
+{
+    // libass reads \fs +10 as 10: the sign is relative only where the
+    // argument starts.
+    Host host(apart({"{\\pos(320,200)\\fs +10}ab", "{\\pos(320,200)\\fs+10}ab"}));
+    const auto a = readLine(host, lineWith(host, 0));
+    const auto b = readLine(host, lineWith(host, 1));
+    ASSERT_TRUE(a && b);
+    EXPECT_FLOAT_EQ(a->box.height(), 10);
+    EXPECT_FLOAT_EQ(b->box.height(), 80);
+}
+
+TEST(PerspectiveTags, TheStackIsFittedAsLibassFitsIt)
+{
+    // fit_rect: placed one after another, each clear of those placed before
+    // it. Rectangles at 55..75 and 80..100 stay; a third at 80..100 meets
+    // the second, moved up to 60..80 meets the first, and goes to 35..55.
+    const std::string at = "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,";
+    const std::string text = ",,{\\bord0\\fs20}A";
+    Host host({at + "285" + text, at + "260" + text, at + "260" + text});
+    Host alone({at + "260" + text});
+    const auto stacked = readLine(host, lineWith(host, 2));
+    const auto nominal = readLine(alone, lineWith(alone, 0));
+    ASSERT_TRUE(stacked && nominal);
+    EXPECT_NEAR(stacked->transform.pos.y, nominal->transform.pos.y - 45, 0.05);
+    // A middle-aligned Line moves down by the whole height.
+    Host middle({"{\\an5\\bord0\\fs20}A", "{\\an5\\bord0\\fs20}A"});
+    const auto first = readLine(middle, lineWith(middle, 0));
+    const auto second = readLine(middle, lineWith(middle, 1));
+    ASSERT_TRUE(first && second);
+    EXPECT_NEAR(second->transform.pos.y, first->transform.pos.y + 20, 0.05);
+}
+
 TEST(PerspectiveTags, AWrittenPositionStaysAheadOfAMove)
 {
     // libass takes the first \pos or \move: a \move after the \pos written
