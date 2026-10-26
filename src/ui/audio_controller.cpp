@@ -452,6 +452,17 @@ void AudioController::switchLongSyllablesToKf()
 void AudioController::toggleKaraoke()
 {
     emit focusRequested();
+    switchKaraoke();
+}
+
+void AudioController::setKaraoke(bool on)
+{
+    if (on != m_hasKara)
+        switchKaraoke();
+}
+
+void AudioController::switchKaraoke()
+{
     if (m_hasKara && m_tapState != TapOff)
         toggleTap(); // KA2: tap mode is Karaoke mode's
     m_hasKara = !m_hasKara;

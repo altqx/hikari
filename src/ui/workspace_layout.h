@@ -74,7 +74,7 @@ class WorkspaceLayoutController : public QObject {
     Q_PROPERTY(QString notice READ notice NOTIFY changed)
     Q_PROPERTY(bool hasBackup READ hasBackup NOTIFY changed)
     // The built-in template the arrangement started from (Editing, Timing,
-    // Translation, Typesetting); Reset layout returns to it unless the
+    // Translation, Typesetting, Karaoke); Reset layout returns to it unless the
     // arrangement started from a saved layout.
     Q_PROPERTY(QString preset READ preset WRITE setPreset NOTIFY changed)
     // WS3: the saved layout the current tab's arrangement started from, or
@@ -121,7 +121,7 @@ public:
     // After the shell built its default arrangement: what Reset layout returns to.
     Q_INVOKABLE void captureDefault();
     // TP1 (#274): a preset whose arrangement the shell builds itself
-    // (Typesetting). The first time it is shown (applyPreset, Reset this
+    // (Typesetting, Karaoke). The first time it is shown (applyPreset, Reset this
     // layout) the default arrangement is restored and buildArrangement asks
     // the shell to arrange it; what the shell built is the preset's from then
     // on. Nothing is built at start, before anyone chooses it.
@@ -138,8 +138,9 @@ public:
     // this one writes that over the saved layout.
     Q_INVOKABLE bool saveForQuit();
     Q_INVOKABLE bool resetLayout();
-    // A built-in template (Editing, Timing, Translation, Typesetting) for the
-    // current tab: its own arrangement (Typesetting's, buildsArrangement), else
+    // A built-in template (Editing, Timing, Translation, Typesetting, Karaoke)
+    // for the current tab: its own arrangement (Typesetting's and Karaoke's,
+    // buildsArrangement), else
     // the default arrangement with the panels it leaves closed.
     Q_INVOKABLE bool applyPreset(const QString &name);
     // A preset's name as the user reads it.
@@ -150,7 +151,8 @@ public:
     // arrangement whose preset carries another mode or none afterwards
     // leaves it (presetModeLeft). What starting and leaving do is the mode's
     // own: Translation asks to turn the Document's Translation mode on and
-    // stays on when left; KP1's Karaoke puts back the audio mode it replaced.
+    // stays on when left; Karaoke (KP1) turns the audio panel's Karaoke mode
+    // and the Grid's folding on, and puts back what it changed.
     // Showing a tab, opening a file, a Session's arrangement, the backup and
     // Reset this layout start and leave nothing.
     Q_INVOKABLE static QString presetMode(const QString &preset);

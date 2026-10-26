@@ -339,11 +339,31 @@ ApplicationWindow {
         if (lower !== natural)
             Docking.resizeInLayout("Video", 0, 0, 0, lower - natural)
     }
+    // KP1 (#286): the Karaoke preset's own arrangement (owner-approved
+    // mockup A, 2026-10-26), built from the default one as Typesetting's is.
+    // Video and the Template editor, the Line editor the tab behind it, share
+    // the upper row; Audio spans the window under them, so a Line's syllables
+    // get its whole width; a short Grid at the bottom.
+    function karaokeLayout() {
+        // Audio leaves the Line editor's column for the Grid's row, above it,
+        // at the height Editing gives it.
+        dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, gridDock,
+                                  Qt.size(0, root.workspaceLayout.panelSize(audioDock).height))
+        templateDock.open()
+        templateDock.raise()
+        // The Grid keeps its heading and six rows, the rest goes to the upper row.
+        const lower = root.workspaceLayout.panelSize(gridDock).height
+        const short = Math.ceil(lower - grid.height + grid.rowHeight * 7)
+        if (lower > short)
+            Docking.resizeInLayout("Grid", 0, short - lower, 0, 0)
+    }
     Connections {
         target: root.workspaceLayout
         function onBuildArrangement(name) {
             if (name === "Typesetting")
                 root.typesettingLayout()
+            else if (name === "Karaoke")
+                root.karaokeLayout()
         }
     }
     Connections {
@@ -528,8 +548,37 @@ ApplicationWindow {
         function onPresetModeChosen(mode) {
             if (mode === "Translation" && root.app.translationQuestionDue())
                 root.openInMainWindow(translationModeQuestion)
+            if (mode === "Karaoke") {
+                // KP1: Karaoke mode and the Grid's folding on, remembered as
+                // Karaoke's own change while nobody changes them after.
+                const karaoke = root.audio.karaoke
+                const folds = root.shell.foldGenerated
+                root.audio.setKaraoke(true)
+                root.shell.foldGenerated = true
+                root.karaokeTurnedOn = root.karaokeTurnedOn || !karaoke
+                root.foldTurnedOn = root.foldTurnedOn || !folds
+            }
+        }
+        // KP1: leaving Karaoke puts back what it changed itself.
+        function onPresetModeLeft(mode) {
+            if (mode !== "Karaoke")
+                return
+            if (root.karaokeTurnedOn)
+                root.audio.setKaraoke(false)
+            if (root.foldTurnedOn)
+                root.shell.foldGenerated = false
+            root.karaokeTurnedOn = false
+            root.foldTurnedOn = false
         }
     }
+    // KP1: what choosing Karaoke turned on; a change by anyone else since
+    // keeps it as it is when Karaoke is left.
+    property bool karaokeTurnedOn: false
+    property bool foldTurnedOn: false
+    readonly property bool audioKaraoke: root.audio.karaoke
+    readonly property bool gridFolds: root.shell.foldGenerated
+    onAudioKaraokeChanged: root.karaokeTurnedOn = false
+    onGridFoldsChanged: root.foldTurnedOn = false
 
     // F1: GLOBAL_SEARCH (0) and GLOBAL_FIND_REPLACE (1) open the Search tool
     // on that tab; the same shortcut again while the tool has the focus on
@@ -6253,6 +6302,7 @@ ApplicationWindow {
         root.fitAudioBox()
         root.workspaceLayout.captureDefault()
         root.workspaceLayout.buildsArrangement("Typesetting") // TP1: when first chosen
+        root.workspaceLayout.buildsArrangement("Karaoke") // KP1
         root.workspaceLayout.restoreSaved()
         root.placeOriginal() // TM1: a TLMode file opened before the first frame
         Docking.guardClose(root, root.admitClose)

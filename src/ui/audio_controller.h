@@ -293,6 +293,9 @@ public:
     bool karaoke() const { return m_hasKara; }
     bool karaokeSplitMode() const { return m_karaAuto; }
     Q_INVOKABLE void toggleKaraoke();
+    // KP1 (#286): Karaoke mode on or off without taking the focus, as the
+    // Karaoke layout turns it on and puts back the mode it replaced.
+    Q_INVOKABLE void setKaraoke(bool on);
     Q_INVOKABLE void toggleKaraokeSplitMode();
     // KA1 (#276), Karaoke mode: AUDIO_KARAOKE_SPLIT splits a syllable at the
     // hovered letter, else at the waveform cursor (the pointer's line, or the
@@ -485,6 +488,7 @@ signals:
     void calibrationChanged();
 
 private:
+    void switchKaraoke(); // toggleKaraoke's switch
     void loadBoxControls(); // legacy AudioBox's constructor
     void loadThemeColours(); // K2: the theme's display colours (legacy ChangeColors)
     void applyVerticalZoom(int position, bool fromVolume);
