@@ -534,6 +534,16 @@ icon("chevron-left", "Previous", [], ["date-picker"], stroke("M9.5 4.5L6 8l3.5 3
 icon("chevron-right", "Next", [], ["date-picker", "dialogs"], stroke("M6.5 4.5L10 8l-3.5 3.5"), mirror=True)
 icon("chevron-down", "Expanded", [], ["dialogs"], stroke("M4.5 6.5L8 10l3.5-3.5"))
 
+# AD3 (#312): a macro run, on the progress card and in the Automation panel's
+# Runs: running (the ring turns; its accent quarter leads), applied,
+# cancelled. A failed run takes notice-error, problems notice-warning.
+icon("run-busy", "Running", [], ["automation", "notices"],
+     stroke("M8 1.5a6.5 6.5 0 1 0 6.5 6.5") + accent(stroke("M8 1.5a6.5 6.5 0 0 1 6.5 6.5")))
+icon("run-applied", "Applied", [], ["automation", "notices"],
+     circle(8, 8, 6.5) + accent(stroke("M5 8.25l2 2 4-4.5")))
+icon("run-cancelled", "Cancelled", [], ["automation", "notices", AUTO],
+     circle(8, 8, 6.5) + accent(stroke("M4.5 11.5L11.5 4.5")))
+
 # Layouts (WS3 #217: the layout switcher and View > Layout, which replace
 # legacy's View arrangements; their icons were retired with them). The cut
 # window and the refresh badge are IC1's (#226) for the same commands.

@@ -50,14 +50,14 @@ protected:
             edit(" two");
             observed.push_back(text()); // 0
             enterKey("mainWindow/lineText", Qt::Key_H, spix::KeyModifiers::Control | spix::KeyModifiers::Shift);
-            if (waitForItem("historyWindow/historySet", 5s)) {
+            if (waitForItem("historyWindow/historyGo", 5s)) {
                 observed.push_back(getStringProperty("historyWindow", "title")); // 1
                 observed.push_back(getStringProperty("historyWindow/historyList", "currentIndex")); // 2
                 invokeMethod("historyWindow/historyList", "forceActiveFocus", {});
                 enterKey("historyWindow/historyList", Qt::Key_Up, spix::KeyModifiers::None);
                 enterKey("historyWindow/historyList", Qt::Key_Up, spix::KeyModifiers::None);
                 wait(200ms);
-                mouseClick("historyWindow/historyOk");
+                mouseClick("historyWindow/historyGo"); // Go to step: jumps, the window stays
                 wait(500ms);
                 observed.push_back(text()); // 3
             }
@@ -112,9 +112,9 @@ int main(int argc, char **argv)
     expect(o.size() == 4, "every step observed");
     if (o.size() == 4) {
         expect(o[0] == "Gate one two", "two committed edits");
-        expect(o[1] == "History (3 elements)", "the window counts the steps");
+        expect(o[1] == "History", "the window is titled History (PU2-history)");
         expect(o[2] == "2", "the current step is selected");
-        expect(o[3] == "Gate", "OK on the first step returns to the opened text");
+        expect(o[3] == "Gate", "Go to step on the first step returns to the opened text");
     }
     return failures == 0 ? 0 : 1;
 }

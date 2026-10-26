@@ -180,92 +180,109 @@ public:
         return m_app.actionLines(session);
     }
     // HikariMessageBox / HikariMessageDialog without a nested event loop: the
-    // box is shown (findQuestion) and the engine resumes when it is answered
+    // question is shown (findQuestion: a message box; a message is a
+    // notice) and the engine resumes when it is answered
     // (answerFindQuestion); a message needs no answer. Tests answer at once.
     void ask(const application::FindQuestion &question, std::function<void(application::FindAnswer)> answer) override
     {
-        const QString text = questionText(question);
-        const QString title = questionTitle(question);
+        const QVariantMap shown = questionMap(question);
         const int kind = static_cast<int>(question.kind);
         const auto reply = [&](int code) {
             if (answer)
                 answer(static_cast<application::FindAnswer>(std::clamp(code, 0, 3)));
         };
         if (m_app.m_findQuestionHandler) {
-            reply(m_app.m_findQuestionHandler(kind, text));
+            reply(m_app.m_findQuestionHandler(kind, shown.value(QStringLiteral("text")).toString()));
             return;
         }
         if (!m_app.isSignalConnected(QMetaMethod::fromSignal(&Application::findQuestion))) {
             reply(answer ? 3 : 0); // nobody to ask: Cancel
             return;
         }
-        // NT1 (#302): "Could not find" and "Replaced N times" are info
-        // toasts; only an invalid path is still a message (a message box).
-        using I = application::FindQuestion::Info;
-        if (question.kind == application::FindQuestion::Kind::Message &&
-            (question.info == I::NotFound || question.info == I::Replaced)) {
-            m_app.m_log->notice(ui::LogController::Info, title, text);
+        // NT1 (#302): a message is a notice titled with the command that
+        // gave it; an invalid path is a warning (PU2-find-questions).
+        if (question.kind == application::FindQuestion::Kind::Message) {
+            m_app.m_log->notice(shown.value(QStringLiteral("severity")) == QLatin1String("warning")
+                                    ? ui::LogController::Warning
+                                    : ui::LogController::Info,
+                                shown.value(QStringLiteral("title")).toString(),
+                                shown.value(QStringLiteral("text")).toString());
             reply(0);
             return;
         }
         const int id = ++m_app.m_findQuestionId;
         if (answer)
             m_app.m_findAnswers.emplace(id, std::move(answer));
-        emit m_app.findQuestion(id, kind, text, title);
+        emit m_app.findQuestion(id, kind, shown);
         emit m_app.findBusyChanged();
     }
-    // The legacy texts, translated (the engine's English is the source).
-    static QString questionText(const application::FindQuestion &q)
+    // PU2 (#304): the message box's title (the command), main line, detail
+    // and severity, by the message-box rules (visual-language.md "Popups";
+    // the PU2-find-* departures name the legacy texts). A message (no
+    // answer) is a notice: its title and main line.
+    static QVariantMap questionMap(const application::FindQuestion &q)
     {
         using K = application::FindQuestion::Kind;
         using I = application::FindQuestion::Info;
-        const QString argument = qs(q.argument);
+        const QString findAndReplace = QCoreApplication::translate("HikariSub.Search", "Find and replace");
+        const QString document = qs(q.document);
+        QString title = findAndReplace, text, detail, severity = QStringLiteral("info");
         switch (q.kind) {
-        case K::Wrap: return QCoreApplication::translate("HikariSub.Search", "Reached end. Search from the beginning?");
-        case K::Styles:
-            return QCoreApplication::translate("HikariSub.Search",
-                                               "Styles named \"%1\" do not exist in the subtitles being searched,\n"
-                                               "which may significantly reduce the number of search results.\n"
-                                               "What would you like to do?")
-                .arg(argument);
+        case K::Wrap:
+            text = QCoreApplication::translate("HikariSub.Search", "Reached the end of the subtitles.");
+            detail = QCoreApplication::translate("HikariSub.Search", "Search again from the first line?");
+            break;
+        case K::Styles: {
+            // “A”, “B” or “C”.
+            QStringList quoted;
+            for (const auto &name : q.missing)
+                quoted << QCoreApplication::translate("HikariSub.Search", "“%1”").arg(qs(name));
+            QString names = quoted.isEmpty() ? QString() : quoted.takeLast();
+            if (!quoted.isEmpty())
+                names = QCoreApplication::translate("HikariSub.Search", "%1 or %2")
+                            .arg(quoted.join(QCoreApplication::translate("HikariSub.Search", ", ")), names);
+            text = QCoreApplication::translate("HikariSub.Search", "%1 has no style named %2.").arg(document, names);
+            detail = QCoreApplication::translate("HikariSub.Search", "The other chosen styles are there. Searching with "
+                                                                     "the missing ones finds fewer lines.");
+            severity = QStringLiteral("warning");
+            break;
+        }
         case K::NoStyles:
-            return QCoreApplication::translate("HikariSub.Search",
-                                               "None of the selected styles exist in the subtitles being searched,\n"
-                                               "so nothing will be found.\nWhat would you like to do?");
+            text = QCoreApplication::translate("HikariSub.Search", "%1 has none of the chosen styles.").arg(document);
+            detail = QCoreApplication::translate("HikariSub.Search", "Searching only these styles would find nothing.");
+            severity = QStringLiteral("warning");
+            break;
         case K::ConfirmFiles:
-            return QCoreApplication::translate("HikariSub.Search",
-                                               "Are you sure you want to make changes in all subtitle files?\n"
-                                               "If you make a mistake, backups are in the 'ReplaceBackup' folder.");
-        case K::Message: break;
-        }
-        switch (q.info) {
-        case I::NotFound: return QCoreApplication::translate("HikariSub.Search", "Could not find the specified phrase \"%1\".")
-                                     .arg(argument);
-        case I::Replaced: return QCoreApplication::translate("HikariSub.Search", "Replaced %1 times.").arg(argument);
-        case I::InvalidPath: return QCoreApplication::translate("HikariSub.Search", "Search path is invalid");
-        case I::None: break;
-        }
-        return qs(q.text);
-    }
-    // NT1: a message is titled with the command that gave it.
-    static QString questionTitle(const application::FindQuestion &q)
-    {
-        using I = application::FindQuestion::Info;
-        if (q.kind == application::FindQuestion::Kind::Message)
+            title = QCoreApplication::translate("HikariSub.Search", "Replace in subtitles");
+            text = QCoreApplication::translate("HikariSub.Search", "Replace in every matching file in “%1”?")
+                       .arg(qs(q.folder));
+            detail = QCoreApplication::translate("HikariSub.Search",
+                                                 "The files are changed on disk; Undo cannot bring them back. A copy "
+                                                 "of each file goes to the ReplaceBackup folder first.");
+            severity = QStringLiteral("warning");
+            break;
+        case K::Message:
             switch (q.info) {
-            case I::NotFound: return QCoreApplication::translate("HikariSub.Search", "Find");
-            case I::Replaced: return QCoreApplication::translate("HikariSub.Search", "Replace all");
-            case I::InvalidPath: return QCoreApplication::translate("HikariSub.Search", "Find in files");
-            case I::None: break;
+            case I::NotFound:
+                title = QCoreApplication::translate("HikariSub.Search", "Find");
+                text = QCoreApplication::translate("HikariSub.Search", "Could not find “%1”.").arg(qs(q.argument));
+                break;
+            case I::Replaced:
+                title = QCoreApplication::translate("HikariSub.Search", "Replace all");
+                text = QCoreApplication::translate("HikariSub.Search", "Replaced %1 times.").arg(qs(q.argument));
+                break;
+            case I::InvalidPath:
+                title = QCoreApplication::translate("HikariSub.Search", "Find in files");
+                text = QCoreApplication::translate("HikariSub.Search", "The search folder “%1” does not exist.")
+                           .arg(qs(q.folder));
+                severity = QStringLiteral("warning");
+                break;
+            case I::None: text = qs(q.text); break;
             }
-        const QString title = qs(q.title);
-        if (title == QLatin1String("Confirmation"))
-            return QCoreApplication::translate("HikariSub.Search", "Confirmation");
-        if (title == QLatin1String("Info"))
-            return QCoreApplication::translate("HikariSub.Search", "Info");
-        if (title == QLatin1String("Find and Replace") || title.isEmpty())
-            return QCoreApplication::translate("HikariSub.Search", "Find and Replace");
-        return title;
+            break;
+        }
+        return {{QStringLiteral("title"), title}, {QStringLiteral("text"), text},
+                {QStringLiteral("detail"), detail}, {QStringLiteral("severity"), severity}};
     }
     void finished() override { m_app.findFinished(); }
     // The legacy log lines, translated (the engine's English is the source).
@@ -2803,6 +2820,19 @@ bool Application::pasteLines()
     m_editor->reloadFromSession();
     refreshViews();
     return done;
+}
+
+int Application::selectedLineCount(bool shownOnly) const
+{
+    auto *session = targetSession();
+    if (!session)
+        return 0;
+    const auto &selected = session->selection().selected;
+    if (!shownOnly)
+        return int(selected.size());
+    // Paste columns skips the selected lines the filter hides (Codex review).
+    const auto shown = shownLines();
+    return int(std::ranges::count_if(selected, [&](core::LineId id) { return shown(id); }));
 }
 
 QVariantList Application::columnChoices(bool paste)
