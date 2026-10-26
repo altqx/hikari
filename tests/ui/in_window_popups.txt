@@ -7,14 +7,6 @@
 # the PU cards take them off.
 AllTagsEditionDialog.qml:dialog
 AllTagsEditionDialog.qml:questionBox
-FontCollectorDialog.qml:dialog
-FontCollectorDialog.qml:replaceQuestion
-Main.qml:conversionDialog
-Main.qml:resampleDialog
-Main.qml:mismatchDialog
-ScriptPropertiesDialog.qml:dialog
 ShapesEditionDialog.qml:dialog
 ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
-SpellCheckerDialog.qml:dialog
-SpellCheckerDialog.qml:addedWords
