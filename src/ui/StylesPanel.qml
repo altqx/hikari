@@ -512,7 +512,7 @@ Item {
             enabled: panel.canChange
             iconRole: "copy-to-storage"
             text: qsTr("Copy to the catalog…")
-            onTriggered: panel.manager.copyToCatalog(rowMenu.row)
+            onTriggered: panel.manager.copyStyleToCatalog(rowMenu.row)
         }
         MenuSeparator {}
         ShellMenuItem {

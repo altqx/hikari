@@ -226,25 +226,42 @@ std::vector<std::size_t> moveStyles(StyleList &styles, std::vector<std::size_t> 
         return rows;
     const long step = move == StyleMove::ToStart ? -size : move == StyleMove::Up ? -1 : move == StyleMove::Down ? 1 : size;
     const bool up = move == StyleMove::ToStart || move == StyleMove::Up;
+    // Legacy moves the rows one by one (an erase and an insert each), each
+    // clamped behind the ones moved before it. That leaves each at its own
+    // place below, the rest in their order around them: built in one pass
+    // (SY1: a file may hold tens of thousands of Styles).
+    const std::vector<std::size_t> from = rows;
     long lastUp = 0, lastDown = size - 1;
     const long count = static_cast<long>(rows.size());
     for (long k = 0; k < count; ++k) {
         const long i = up ? k : count - 1 - k;
-        const long from = static_cast<long>(rows[static_cast<std::size_t>(i)]);
-        long to = from + step;
+        long to = static_cast<long>(from[static_cast<std::size_t>(i)]) + step;
         if (up && to < lastUp)
             to = lastUp;
         else if (!up && to > lastDown)
             to = lastDown;
-        const auto style = styles[static_cast<std::size_t>(from)];
-        styles.erase(styles.begin() + from);
-        styles.insert(styles.begin() + to, style);
         rows[static_cast<std::size_t>(i)] = static_cast<std::size_t>(to);
         if (up)
             ++lastUp;
         else
             --lastDown;
     }
+    StyleList out(styles.size());
+    std::vector<char> moved(styles.size(), 0), placed(styles.size(), 0);
+    for (std::size_t k = 0; k < rows.size(); ++k) {
+        out[rows[k]] = std::move(styles[from[k]]);
+        moved[from[k]] = 1;
+        placed[rows[k]] = 1;
+    }
+    std::size_t next = 0;
+    for (std::size_t r = 0; r < styles.size(); ++r) {
+        if (moved[r])
+            continue;
+        while (placed[next])
+            ++next;
+        out[next++] = std::move(styles[r]);
+    }
+    styles = std::move(out);
     return rows;
 }
 
@@ -261,8 +278,13 @@ std::expected<std::size_t, std::u8string> commitStyle(StyleList &styles, const S
     const auto found = lastNamed(styles, edit.style.name);
     if ((found && dummy) || (found && edit.oldName != edit.style.name && !dummy))
         return std::unexpected(edit.style.name);
-    std::optional<std::size_t> row = found;
-    if (!row && !dummy)
+    // A repeated name is edited where it was opened, not at its last copy.
+    std::optional<std::size_t> row;
+    if (!dummy && styles[*edit.row].name == edit.oldName)
+        row = edit.row;
+    else if (found)
+        row = found;
+    else if (!dummy)
         row = firstNamed(styles, edit.oldName);
     if (!row)
         dummy = true;
