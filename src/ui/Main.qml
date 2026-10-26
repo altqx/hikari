@@ -2243,8 +2243,12 @@ ApplicationWindow {
         // and ASS spaces ending with a block, or -1. Linear in both: the
         // prefix walked once for where its blocks end, `inner` found by
         // KMP (a long Line's prefix is never scanned per candidate). The
-        // block ends kept by position: V4's Set.has is linear.
+        // block ends kept by position: V4's Set.has is linear. Past what
+        // Tags from original carries (an Original and a translation of 3 *
+        // 16384 units each) no tags were carried: nothing is walked.
         function carriedPrefix(outer, inner) {
+            if (outer.length > 6 * 16384 || inner.length > 6 * 16384)
+                return -1
             const ends = []
             let any = false
             let at = 0
