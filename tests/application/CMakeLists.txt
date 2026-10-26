@@ -13,6 +13,9 @@ hikari_add_gtest(hikari_application_macro_tests SOURCES macro_transaction_tests.
 # KE2: the template editor's preview of the karaoke templater on one Line.
 hikari_add_gtest(hikari_application_template_preview_tests SOURCES template_preview_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# KP1: the generated Lines the Grid folds, and their runs.
+hikari_add_gtest(hikari_application_generated_runs_tests SOURCES generated_runs_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # S4: the scripts a Document names (legacy AddFromSubs).
 hikari_add_gtest(hikari_application_document_scripts_tests SOURCES document_scripts_tests.cpp
     LIBRARIES hikari_application LABELS application)
