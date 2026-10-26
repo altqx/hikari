@@ -2,6 +2,7 @@ pragma Translator: "HikariSub.MainWindow"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Shapes
 import QtQuick.Dialogs
 import Hikari.Ui
 import com.kdab.dockwidgets 2.0 as KDDW
@@ -2205,20 +2206,6 @@ ApplicationWindow {
     // One text role of the Line editor (Original or Translated). The field
     // mirrors the editor's projection; user changes go to the controller,
     // which maps them onto the raw source. Programmatic updates are not edits.
-    // TM1: the dotted underline of a suggested run (RoleField).
-    component SuggestionDots: Row {
-        id: dots
-        spacing: 2
-        height: 2
-        Repeater {
-            model: Math.max(0, Math.floor((dots.width + 2) / 4))
-            Rectangle {
-                width: 2
-                height: 2
-                color: Theme.accent
-            }
-        }
-    }
     component RoleField: TextArea {
         id: field
         required property int role
@@ -2381,13 +2368,23 @@ ApplicationWindow {
                     objectName: field.objectName + "Run" + run.modelData.number + "Suggestion"
                     visible: from >= 0 && to > from && to <= field.length
                     anchors.fill: parent
-                    Repeater {
-                        model: field.underlineRows(suggestion.first, suggestion.last)
-                        SuggestionDots {
-                            required property var modelData
-                            x: modelData.x
-                            y: modelData.y - 1
-                            width: modelData.width
+                    // The dotted underline, 2 px dots 2 px apart on every
+                    // row, in one Shape: no item per dot or row.
+                    Shape {
+                        anchors.fill: parent
+                        ShapePath {
+                            strokeColor: Theme.accent
+                            strokeWidth: 2
+                            strokeStyle: ShapePath.DashLine
+                            dashPattern: [1, 1]
+                            capStyle: ShapePath.FlatCap
+                            fillColor: "transparent"
+                            PathMultiline {
+                                paths: suggestion.visible
+                                       ? field.underlineRows(suggestion.first, suggestion.last).map(
+                                             r => [Qt.point(r.x, r.y), Qt.point(r.x + r.width, r.y)])
+                                       : []
+                            }
                         }
                     }
                 }

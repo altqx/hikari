@@ -11524,6 +11524,14 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("X"));
         QCOMPARE(translated->property("cursorPosition").toInt(), 1);
+        // Ctrl+I in it toggles the italic the carried \i1 gives, not the
+        // Style's: the selected letter alone loses it.
+        translated->forceActiveFocus();
+        QTest::keyClick(window, 'Y');
+        QTest::keyClick(window, 'Z');
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("XYZ"));
+        QVERIFY(application->editor().toggleTagIn(1, QStringLiteral("i"), 1, 2));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8\\i1}X{\\i0}Y{\\i1}Z"));
     }
 
     // TM1: the Original's runs are placed on the translation's words: Alt+1

@@ -1552,6 +1552,12 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
                                                                                       : style.strikeOut;
             break;
         }
+    // TM1: the carried tags are left out of the Translated field but still
+    // apply: the value toggled is the one they give.
+    if (role == 1)
+        if (const auto c = carry(*sessionRecord()))
+            if (const auto v = c->tags.base.find(u16(tag)); v != c->tags.base.end())
+                styleValue = v->second != u"0";
     // Legacy subsFormat < SRT (ASS, and plain text, which loads as ASS) uses
     // override tags; SRT and MicroDVD use their own markup (PutinNonass).
     const auto format = session()->document().format();
@@ -1671,10 +1677,19 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
     if (!editable() || !r || tag.isEmpty() || type < 0 || type > 2)
         return false;
     const std::u16string text = tag.toStdU16String();
+    // TM1: in the Translated field a button's restoring value is the one the
+    // carried tags give, for the tags whose value is spelled as it is read.
+    const auto c = role == 1 ? carry(*sessionRecord()) : std::nullopt;
+    auto restoring = [&](std::u16string_view name) -> std::optional<std::u16string> {
+        static constexpr std::u16string_view spelled[] = {u"b", u"i", u"u", u"s", u"fs", u"fsp", u"fscx", u"fscy", u"fn"};
+        if (c && std::ranges::find(spelled, name) != std::end(spelled))
+            if (const auto v = c->tags.base.find(std::u16string(name)); v != c->tags.base.end())
+                return v->second;
+        return styleTagValue(name);
+    };
     if (type != 2)
         return editRaw(role, selectionStart, selectionEnd, [&](core::legacy::EditorText t) {
-            return core::legacy::applyTagButton(std::move(t), text, type == 1,
-                                                [this](std::u16string_view name) { return styleTagValue(name); });
+            return core::legacy::applyTagButton(std::move(t), text, type == 1, restoring);
         });
     auto *s = session();
     if (s->selection().selected.size() < 2)
