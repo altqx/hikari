@@ -282,20 +282,58 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);
-    connect(&m_manager, &backends::AutomationManager::logged, this, [this](const QString &, const QString &text) {
-        m_log += text;
-        emit progressChanged();
-    });
+    connect(&m_manager, &backends::AutomationManager::logged, this,
+            [this](const QString &, const QString &text, int level) {
+                // Bounded as a run's log is (a script can write without end).
+                if (m_log.size() < ui::AutomationRuns::kMaxChars)
+                    m_log += text.left(ui::AutomationRuns::kMaxChars - m_log.size());
+                // An empty write adds nothing to read: the run has not logged.
+                if (m_run && !text.isEmpty()) {
+                    m_runs.append(m_runId, text, level);
+                    m_logged = true;
+                    // AD3: output opens the card at once.
+                    showCard();
+                }
+                emit progressChanged();
+            });
     connect(&m_manager, &backends::AutomationManager::progressChanged, this, [this](const QString &, double p) {
         m_progress = p;
+        m_progressKnown = true;
+        if (m_run)
+            m_runs.setProgress(m_runId, p);
         emit progressChanged();
     });
     connect(&m_manager, &backends::AutomationManager::taskChanged, this, [this](const QString &, const QString &t) {
-        m_task = t;
+        m_task = t.left(ui::AutomationRuns::kMaxText);
+        if (m_run)
+            m_runs.setTask(m_runId, m_task);
         emit progressChanged();
     });
+    m_cardTimer.setSingleShot(true);
+    connect(&m_manager, &backends::AutomationManager::macroStarted, this, [this](const QString &path) {
+        if (!m_run || m_run->active != m_run->path || path.toStdString() != m_run->path)
+            return;
+        m_macroStarted = true;
+        m_cardTimer.stop();
+        updateCardTimer();
+    });
+    // AD3: an ended run's card goes with its run (Clear runs).
+    connect(&m_runs, &ui::AutomationRuns::removed, this, [this](int id) {
+        if (id == m_runId && !m_run && !m_cardState.isEmpty()) {
+            m_cardState.clear();
+            emit progressChanged();
+        }
+    });
+    connect(&m_cardTimer, &QTimer::timeout, this, [this] {
+        if (m_run && !waitingForUser())
+            showCard();
+    });
+    connect(&m_dialogs, &ui::AutomationDialogController::changed, this, &AutomationShell::updateCardTimer);
+    connect(&m_picker, &ui::AutomationFilePickerController::changed, this, &AutomationShell::updateCardTimer);
+    connect(&m_resolutionPrompt, &ui::ScriptResolutionPromptController::changed, this,
+            &AutomationShell::updateCardTimer);
     connect(&m_manager, &backends::AutomationManager::titleChanged, this, [this](const QString &, const QString &t) {
-        m_title = t;
+        m_title = t.left(ui::AutomationRuns::kMaxText);
         emit progressChanged();
     });
     connect(&m_manager, &backends::AutomationManager::dialogWithdrawn, this, [this] { m_dialogs.withdraw(); });
@@ -573,6 +611,87 @@ bool AutomationShell::forceStopOffered() const
     return host && host->forceStopAvailable();
 }
 
+void AutomationShell::cancelRun()
+{
+    if (m_run && !m_cancelling) {
+        m_cancelling = true;
+        // Cancelling…, and Force stop if it does not stop, are in the card:
+        // a cancel before the card's second (in a validation) opens it.
+        showCard();
+        emit progressChanged();
+    }
+    m_manager.cancel();
+}
+
+void AutomationShell::finishCard(const QString &ended, const QString &text, const QString &validationError)
+{
+    m_cardTimer.stop();
+    m_macroStarted = false;
+    m_cancelling = false;
+    QString state;
+    QString said = text;
+    if (ended == QLatin1String("applied"))
+        state = m_keepLog ? QStringLiteral("problems") : QStringLiteral("applied");
+    else if (ended == QLatin1String("cancelled") || ended == QLatin1String("declined"))
+        state = QStringLiteral("cancelled");
+    else
+        state = QStringLiteral("failed");
+    if (ended == QLatin1String("invalid"))
+        said = QCoreApplication::translate("HikariSub.Automation", "Its validation did not let it run; nothing was changed.");
+    // The error and how it ended are the run log's last lines.
+    if (!validationError.isEmpty())
+        m_runs.note(m_runId, validationError, ui::AutomationRuns::kHostError);
+    if (!said.isEmpty())
+        m_runs.note(m_runId, said, state == QLatin1String("failed") ? ui::AutomationRuns::kHostError
+                                                                   : ui::AutomationRuns::kHostInfo);
+    m_runs.finish(m_runId, state, said);
+    // The card says the first lines; the run's log keeps the rest.
+    m_cardText = said.left(ui::AutomationRuns::kMaxText);
+    // A run that applied and logged nothing, or whose script-resolution
+    // question was declined, leaves no card.
+    if (ended == QLatin1String("declined") || (state == QLatin1String("applied") && !m_logged))
+        m_cardState.clear();
+    else
+        m_cardState = state;
+}
+
+void AutomationShell::dismissCard()
+{
+    if (m_run || m_cardState.isEmpty())
+        return;
+    m_cardState.clear();
+    emit progressChanged();
+}
+
+bool AutomationShell::waitingForUser() const
+{
+    return m_dialogs.isOpen() || m_picker.isOpen() || m_resolutionPrompt.isOpen();
+}
+
+void AutomationShell::updateCardTimer()
+{
+    if (!m_run || !m_macroStarted || m_cardState != QLatin1String("notice"))
+        return;
+    // Paused while the user is asked: what was left of the second resumes.
+    if (waitingForUser()) {
+        if (m_cardTimer.isActive()) {
+            m_cardLeft = std::max(0, m_cardTimer.remainingTime());
+            m_cardTimer.stop();
+        }
+    } else if (!m_cardTimer.isActive()) {
+        m_cardTimer.start(m_cardLeft);
+    }
+}
+
+void AutomationShell::showCard()
+{
+    m_cardTimer.stop();
+    if (m_run && m_cardState != QLatin1String("running")) {
+        m_cardState = QStringLiteral("running");
+        emit progressChanged();
+    }
+}
+
 bool AutomationShell::forceStopRun()
 {
     return m_run && m_manager.forceStop(m_run->active);
@@ -610,6 +729,9 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     // before it, on the same snapshot, and no other macro does.
     Run started{*target, std::move(*snapshot), path, macro, ordinal, origin};
     started.validations = application::dependencyValidations(m_manager.scripts(), path);
+    m_macroStarted = false;
+    m_cardTimer.stop();
+    m_cardLeft = m_cardDelay;
     if (!startStep(started)) {
         s->setReadOnly(false);
         return false;
@@ -623,6 +745,14 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_lastOutcome.clear();
     m_progress = 0;
     m_keepLog = false;
+    m_problems = 0;
+    m_logged = false;
+    m_cancelling = false;
+    m_progressKnown = false;
+    m_cardState = QStringLiteral("notice");
+    m_cardText.clear();
+    m_runId = m_runs.begin(m_title, prettyName(path), m_shell.editingTitle());
+    updateCardTimer();
     if (m_documentChanged)
         m_documentChanged();
     emit progressChanged();
@@ -644,6 +774,8 @@ bool AutomationShell::startStep(Run &run)
         return m_manager.validate(v.path, v.ordinal, run.snapshot);
     }
     run.active = run.path;
+    // The card's second starts when the helper says the macro itself has
+    // (macroStarted), after its validation function.
     return m_manager.run(run.path, run.ordinal, run.snapshot, true);
 }
 
@@ -702,9 +834,14 @@ void AutomationShell::karaokeReport(const ui::KaraokeReport &report)
         if (serial == m_statusSerial && m_shell.statusText() == summary)
             m_shell.setStatusText(QString());
     });
+    const QString details = ui::karaokeReportDetails(report);
     if (m_logLine)
-        m_logLine(ui::karaokeReportDetails(report), LogLine::Quiet);
+        m_logLine(details, LogLine::Quiet);
+    // AD3: the run's log has it too, so a run naming problems shows them
+    // (the run has ended: its id is still the card's).
+    m_runs.note(m_runId, details, ui::AutomationRuns::kHostInfo);
     m_keepLog = report.problems > 0;
+    m_problems = report.problems;
 }
 
 void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutcome outcome, const QString &message)
@@ -759,6 +896,13 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                 text = refusalText(applied.error());
             else if (const auto report = ui::readKaraokeReport(host->lastResult()->report))
                 karaokeReport(*report);
+        } else if (!s) {
+            // AD3: the card and the run's log say why nothing was applied.
+            text = QCoreApplication::translate("HikariSub.Automation",
+                                               "Its document was closed while the macro ran; nothing was changed.");
+        } else {
+            text = QCoreApplication::translate("HikariSub.Automation",
+                                               "The macro's changes could not be applied; nothing was changed.");
         }
         ended = ok ? QStringLiteral("applied") : QStringLiteral("refused");
         break;
@@ -794,9 +938,10 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         // A dependency's failed validation is said the same way, naming
         // the dependency (S4-run-validation).
         // NT1: the runtime error is the box's Details, and an error of the
-        // Log; the menu's run only logged it, now an error toast.
+        // Log; the menu's run only logged it. AD3: the progress card says
+        // it failed, so the Log takes it without a toast.
         if (!message.isEmpty() && m_logLine)
-            m_logLine(message, run.origin == RunOrigin::Menu ? LogLine::Notice : LogLine::QuietError);
+            m_logLine(message, LogLine::QuietError);
         if (run.origin != RunOrigin::Menu)
             emit notice(QStringLiteral("error"),
                         run.origin == RunOrigin::LastScript
@@ -807,10 +952,12 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                         message);
         break;
     }
-    if (!text.isEmpty())
-        m_log += (m_log.isEmpty() || m_log.endsWith(QLatin1Char('\n')) ? QString() : QStringLiteral("\n")) + text;
+    if (!text.isEmpty() && m_log.size() < ui::AutomationRuns::kMaxChars)
+        m_log += ((m_log.isEmpty() || m_log.endsWith(QLatin1Char('\n')) ? QString() : QStringLiteral("\n")) + text)
+                     .left(ui::AutomationRuns::kMaxChars - m_log.size());
     m_lastMessage = text;
     m_lastOutcome = ended;
+    finishCard(ended, text, outcome == Outcome::NotValid ? message : QString());
     m_editor.reloadFromSession();
     if (m_documentChanged)
         m_documentChanged();

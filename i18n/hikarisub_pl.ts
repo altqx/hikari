@@ -492,6 +492,62 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Applied. The script wrote 1 line to its log.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied. The script wrote %n lines to its log.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Applied. 1 template line has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied. %n template lines have problems.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Cancelling…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script has not stopped yet. Force stop ends its helper; nothing is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Log · 1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Log · %n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fold the log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Its validation did not let it run; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -504,19 +560,23 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Hide log</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show log</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Loading a script runs its code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -533,6 +593,126 @@ Output device: %2</source>
     </message>
     <message>
         <source>Macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No macro has run yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applied, problems named</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>nothing logged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to fatal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to hint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to debug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All levels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Levels shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines without a level always show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">Filtruj</translation>
+    </message>
+    <message>
+        <source>Filter the run&apos;s log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
+    </message>
+    <message>
+        <source>Copy the lines shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the lines shown…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No lines match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing logged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 min %2 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the run&apos;s log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Log files (*.log *.txt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -692,15 +872,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import legacy hotkeys…</source>
+        <source>Clear runs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Automation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hotkeys (Hotkeys.txt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -763,6 +939,10 @@ Output device: %2</source>
     </message>
     <message>
         <source>The line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its document was closed while the macro ran; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -867,6 +1047,42 @@ Output device: %2</source>
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>The script wrote more than this log keeps; the rest is not kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The rest of this message is not kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>fatal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>debug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>trace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The run is no longer kept.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4600,6 +4816,10 @@ Nie udało się skopiować %2 czcionek.</translation>
     <message>
         <source>Load script</source>
         <translation>Wczytaj skrypt</translation>
+    </message>
+    <message>
+        <source>Cancel macro</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show &amp;panel</source>

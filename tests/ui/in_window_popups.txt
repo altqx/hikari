@@ -18,11 +18,7 @@ FontsFromSubtitlesDialog.qml:dialog
 Main.qml:conversionDialog
 Main.qml:resampleDialog
 Main.qml:mismatchDialog
-MisspellReplacerDialog.qml:dialog
-MisspellReplacerDialog.qml:results
 ScriptPropertiesDialog.qml:dialog
-SearchTool.qml:question
-SelectLinesDialog.qml:dialog
 ShapesEditionDialog.qml:dialog
 ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
@@ -33,5 +29,3 @@ StyleManager.qml:multiQuestion
 StyleManager.qml:renameQuestion
 StyleManager.qml:newCatalog
 StyleManager.qml:deleteCatalogQuestion
-TranslationModeOffConfirm.qml:dialog
-TranslationModeQuestion.qml:dialog
