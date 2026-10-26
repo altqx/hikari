@@ -3,6 +3,7 @@
 #include "hikari/core/line_groups.h"
 
 #include <algorithm>
+#include <atomic>
 
 namespace hikari::application {
 
@@ -150,6 +151,8 @@ std::optional<DraftProblem> problemOf(const core::LineRecord &line)
 
 EditSession::EditSession(core::Document document, bool protectedReference) : m_protected(protectedReference)
 {
+    static std::atomic<std::uint64_t> nextSerial{1};
+    m_serial = nextSerial++;
     m_states.push_back(State{std::move(document), ContentId{m_nextContent++}, {}, "Open"});
     m_saved = m_states.front().content; // a freshly loaded Document is saved as opened
 }

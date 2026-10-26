@@ -5,6 +5,7 @@
 #include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/visual_drawing.h"
+#include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
 #include "hikari/application/visual_scale.h"
@@ -81,8 +82,19 @@ const std::array<FamilyInfo, kFamilyCount> &families()
         {Family::PositionShifter, "MOVEAll", "Position shifter", "Visual position adjustment tool",
          "VIDEO_TOOL_POSITION_SHIFTER"},
         {Family::Hydra, "ALL_TAGS", "Hydra", "Visual Hydra tool", "VIDEO_TOOL_HYDRA"},
+        // VT3: no legacy family; its icon is K1's tool-perspective.
+        {Family::Perspective, "perspective", "Perspective", "Visual perspective tool", "VIDEO_TOOL_PERSPECTIVE"},
     }};
     return table;
+}
+
+const std::array<Family, kFamilyCount> &railOrder()
+{
+    static const std::array<Family, kFamilyCount> order{
+        Family::Crosshair,     Family::Position,   Family::Move,    Family::Scale,
+        Family::RotationZ,     Family::RotationXY, Family::Perspective, Family::RectangleClip,
+        Family::VectorClip,    Family::Drawing,    Family::PositionShifter, Family::Hydra};
+    return order;
 }
 
 const FamilyInfo &familyInfo(Family family)
@@ -290,6 +302,8 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
         return std::make_unique<PositionShifterTool>(); // T6
     case Family::Hydra:
         return std::make_unique<AllTagsTool>(); // T6
+    case Family::Perspective:
+        return std::make_unique<PerspectiveTool>(); // VT3
     default:
         return nullptr;
     }

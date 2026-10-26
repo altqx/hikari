@@ -72,7 +72,7 @@ constexpr int kDuplicate = 4527;   // GRID_DUPLICATE_LINES, Ctrl-D
 constexpr int kNextDoubtful = 3017; // EDITBOX_FIND_NEXT_DOUBTFUL, Ctrl-D
 
 // VT2: a Video command per visual tool, named as the rail names it, with
-// the audit's single-key defaults (#270).
+// the audit's single-key defaults (#270; VT3's Perspective, #273).
 struct ToolCommand {
     int id;
     const char *symbol, *name, *accel;
@@ -89,6 +89,7 @@ constexpr ToolCommand kToolCommands[] = {
         {2030, "VIDEO_TOOL_DRAWING", "Vector drawing", "D"},
         {2031, "VIDEO_TOOL_POSITION_SHIFTER", "Position shifter", "A"},
         {2032, "VIDEO_TOOL_HYDRA", "Hydra", "H"},
+        {2033, "VIDEO_TOOL_PERSPECTIVE", "Perspective", "Q"}, // VT3 (#273)
 };
 
 } // namespace
@@ -98,11 +99,11 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     ASSERT_EQ(ids().size(), 243u);
     // Legacy's IDS, then the rewrite's own commands (LE3: GLOBAL_EDITOR_HIDE_TAGS;
     // KE1: GLOBAL_VIDEO_RENDER_COST; FS1: VIDEO_FULLSCREEN_BAR and VT2's
-    // eleven tool commands, Video commands; TM1: GLOBAL_TRANSLATION_MODE, the nine run keys and the
-    // next run; KA7: GLOBAL_CHECK_KARAOKE; KA2: AUDIO_TAP, AUDIO_SPEED_DOWN, AUDIO_SPEED_UP and KA1:
-    // AUDIO_KARAOKE_SPLIT and AUDIO_KARAOKE_KF, Audio commands; AD2:
+    // eleven tool commands and VT3's Perspective, Video commands; TM1: GLOBAL_TRANSLATION_MODE, the
+    // nine run keys and the next run; KA7: GLOBAL_CHECK_KARAOKE; KA2: AUDIO_TAP, AUDIO_SPEED_DOWN,
+    // AUDIO_SPEED_UP and KA1: AUDIO_KARAOKE_SPLIT and AUDIO_KARAOKE_KF, Audio commands; AD2:
     // GLOBAL_AUTOMATION_REPEAT_LAST_RUN).
-    ASSERT_EQ(hotkeyActions().size(), 275u);
+    ASSERT_EQ(hotkeyActions().size(), 276u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(ids().at(std::string(a.symbol)), a.id) << a.symbol;
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
@@ -116,7 +117,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
         const bool editor = std::string_view(a.symbol).starts_with("EDITBOX_");
         const bool audio = a.id >= 1028 && a.id <= 1032; // KA1, KA2
         EXPECT_EQ(hotkeyType(a.id), editor                         ? EditorHotkey
-                                    : a.id >= 2021 && a.id <= 2032 ? VideoHotkey
+                                    : a.id >= 2021 && a.id <= 2033 ? VideoHotkey
                                     : audio                        ? AudioHotkey
                                                                    : GlobalHotkey)
             << a.symbol;
@@ -247,7 +248,7 @@ TEST(Hotkeys, DefaultsAreLoadDefault)
     HotkeyMap main, audio;
     loadDefaultHotkeys(main, false);
     loadDefaultHotkeys(audio, true);
-    EXPECT_EQ(main.size(), 82u);
+    EXPECT_EQ(main.size(), 83u); // VT3: Q
     EXPECT_EQ(audio.size(), 23u + 3u + 2u); // KA2's three, KA1's K and Shift-K
     for (const auto &[k, h] : audio)
         EXPECT_EQ(k.type, AudioHotkey);
@@ -293,7 +294,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"}; // main file: not an Audio binding
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 11u + 9u); // WS3: no Ctrl-E; FS1: Tab; SH1: no F10; VT2: the tools; TM1: the run keys
+    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u); // WS3: no Ctrl-E; FS1: Tab; SH1: no F10; VT2, VT3: the tools; TM1: the run keys
     EXPECT_EQ(audio.size(), 23u + 3u + 2u); // KA2's three, KA1's K and Shift-K
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P"); // map order: window, then id
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -426,8 +427,8 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     // The names table from the highest id down; no GLOBAL_QUIT.
     // V3, AM1: no "Open video with FFMS2" or "Open shortcut mapping window"
     // row; WS3: none for the five View arrangements and the editor switch;
-    // LE3's, KE1's, FS1's, TM1's (the run keys too) and VT2's commands, KA2's three, KA7's, KA1's two and AD2's have their own.
-    ASSERT_EQ(list.rowCount(), 250u);
+    // LE3's, KE1's, FS1's, TM1's (the run keys too), VT2's and VT3's commands, KA2's three, KA7's, KA1's two and AD2's have their own.
+    ASSERT_EQ(list.rowCount(), 251u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -457,7 +458,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 252u); // V3, AM1, WS3, TM1, VT2, KA2, KA7, KA1, AD2: 250 named rows and these two
+    ASSERT_EQ(more.rowCount(), 253u); // V3, AM1, WS3, TM1, VT2, KA2, VT3, KA7, KA1, AD2: 251 named rows and these two
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -473,7 +474,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 249u); // V3, AM1, WS3, TM1, VT2, KA2, KA7, KA1, AD2: 250 named rows less Commit alt
+    EXPECT_EQ(cut.rowCount(), 250u); // V3, AM1, WS3, TM1, VT2, KA2, VT3, KA7, KA1, AD2: 251 named rows less Commit alt
     EXPECT_EQ(cut.find("Audio Commit alt"), -1);
     // A binding in a window legacy cannot name (-1) is never listed, and so
     // the list never ends early.
@@ -481,7 +482,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 250u);
+    EXPECT_EQ(whole.rowCount(), 251u);
 }
 
 TEST(Hotkeys, FilterModesAndSelection)
@@ -494,7 +495,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 109u); // set shortcuts (GLOBAL_QUIT is not listed; WS3: no Ctrl-E; FS1: Tab; SH1: no F10; VT2: 11; KA2: three; TM1: nine; KA1: K, Shift-K)
+    EXPECT_EQ(count(1), 110u); // set shortcuts (GLOBAL_QUIT is not listed; WS3: no Ctrl-E; FS1: Tab; SH1: no F10; VT2: 11; KA2: three; VT3: Q; TM1: nine; KA1: K, Shift-K)
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 28u);
     list.filter(5);
@@ -505,12 +506,12 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 109u);
+    EXPECT_EQ(list.shown().size(), 110u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 108u);
+    EXPECT_EQ(list.shown().size(), 109u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 250u);
+    EXPECT_EQ(list.shown().size(), 251u);
 }
 
 // PF1 (#225): the Hotkeys page's search, within the filter, by the
@@ -702,14 +703,14 @@ TEST(Hotkeys, ConflictsPerWindow)
         HotkeyList list(copy);
         list.build(live);
         const int stop = list.find("Video Stop");
-        // Audio's Q (VT2: H, Audio Stop's, is Hydra's in the Video window).
-        auto c = list.mapConflict(stop, "Q", VideoHotkey, live);
+        // Audio's W (VT2: H, Audio Stop's, is Hydra's in the Video window; VT3: Q, Play 500ms before's, is Perspective's).
+        auto c = list.mapConflict(stop, "W", VideoHotkey, live);
         ASSERT_TRUE(c);
         EXPECT_TRUE(c->doubled);
-        EXPECT_EQ(c->message, "This hotkey already exists for \"Play 500ms before\".\nWhat to do?");
-        list.map(stop, "Q", VideoHotkey, HotkeyAnswer::Delete, live);
-        EXPECT_EQ(list.row(stop).accel, "Q");
-        EXPECT_EQ(rowNamed(list, "Audio Play 500ms before").accel, "Q"); // another window: untouched
+        EXPECT_EQ(c->message, "This hotkey already exists for \"Play 500ms after\".\nWhat to do?");
+        list.map(stop, "W", VideoHotkey, HotkeyAnswer::Delete, live);
+        EXPECT_EQ(list.row(stop).accel, "W");
+        EXPECT_EQ(rowNamed(list, "Audio Play 500ms after").accel, "W"); // another window: untouched
         const int insert = list.find("Subtitles Insert before");
         c = list.mapConflict(insert, "L", GridHotkey, live); // Video 5 seconds forward
         ASSERT_TRUE(c);
@@ -746,8 +747,8 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S"); // the Global row keeps its keys
-    ASSERT_EQ(list.rowCount(), 251u);
-    const auto &added = list.row(250);
+    ASSERT_EQ(list.rowCount(), 252u);
+    const auto &added = list.row(251);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
@@ -755,9 +756,9 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     // Again: that row changes and is selected.
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 251u);
-    EXPECT_EQ(list.row(250).accel, "F6");
-    EXPECT_EQ(list.selection(), 250);
+    EXPECT_EQ(list.rowCount(), 252u);
+    EXPECT_EQ(list.row(251).accel, "F6");
+    EXPECT_EQ(list.selection(), 251);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -849,7 +850,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 250u); // every row shown, the filter choice as it was
+    EXPECT_EQ(third.shown().size(), 251u); // every row shown, the filter choice as it was
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
@@ -873,17 +874,17 @@ TEST(Hotkeys, GestureMapsAtOnce)
     EXPECT_TRUE(c->doubled);
     EXPECT_EQ(c->message, "This hotkey already exists for \"Save\".\nWhat to do?");
     // Only the same window is "the same" here (no Video/Audio rule). Audio's
-    // Q (VT2: H, Audio Stop's, is Hydra's in the Video window).
-    c = mapHotkeyNowConflict(live, ids().at("VIDEO_STOP"), "Q", VideoHotkey);
+    // W (VT2: H, Audio Stop's, is Hydra's in the Video window; VT3: Q, Play 500ms before's, is Perspective's).
+    c = mapHotkeyNowConflict(live, ids().at("VIDEO_STOP"), "W", VideoHotkey);
     ASSERT_TRUE(c);
     EXPECT_FALSE(c->doubled);
     EXPECT_EQ(c->message, "This shortcut already exists in another window as a shortcut for \"Audio Play 500ms "
-                          "before\".\nWhat would you like to do?");
-    auto r = mapHotkeyNow(live, ids().at("VIDEO_STOP"), "Stop", "Q", VideoHotkey, HotkeyAnswer::SetAnyway);
+                          "after\".\nWhat would you like to do?");
+    auto r = mapHotkeyNow(live, ids().at("VIDEO_STOP"), "Stop", "W", VideoHotkey, HotkeyAnswer::SetAnyway);
     EXPECT_TRUE(r.changed);
     EXPECT_TRUE(r.saveAudio); // an Audio binding was named
-    EXPECT_EQ(live.at(HotkeyId{ids().at("VIDEO_STOP"), VideoHotkey}).accel, "Q");
-    EXPECT_EQ(live.at(HotkeyId{ids().at("AUDIO_PLAY_500MS_BEFORE"), AudioHotkey}).accel, "Q");
+    EXPECT_EQ(live.at(HotkeyId{ids().at("VIDEO_STOP"), VideoHotkey}).accel, "W");
+    EXPECT_EQ(live.at(HotkeyId{ids().at("AUDIO_PLAY_500MS_AFTER"), AudioHotkey}).accel, "W");
     // Switch gives the other binding the old keys of (id, window).
     r = mapHotkeyNow(live, kNextDoubtful, "Next unconfirmed line", "Ctrl-R", EditorHotkey, HotkeyAnswer::Switch);
     EXPECT_FALSE(r.saveAudio);

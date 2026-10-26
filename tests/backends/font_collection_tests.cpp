@@ -20,10 +20,12 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <chrono>
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <thread>
 
@@ -265,6 +267,141 @@ TEST(FontPickerFaces, ExternalFontsAreListedFromTheirBytes)
     // Bytes no face is read from list nothing.
     env.externalFonts = {{"/x/broken.ttf", std::make_shared<std::vector<std::byte>>(16, std::byte{1})}};
     EXPECT_TRUE(service.pickerFaces(env).empty());
+}
+
+// VT3: the names libass matches a leased font by (family, full and
+// PostScript), read from its bytes: every face of a collection.
+TEST(FontPickerFaces, ALeasesNamesAreReadFromItsBytes)
+{
+    const auto names = hikari::backends::fontNames(*load(fixture("collection.ttc")));
+    for (const char *want : {"HikariProbeCollectionA", "HikariProbeCollectionB"})
+        EXPECT_NE(std::ranges::find(names, std::string(want)), names.end()) << want;
+    EXPECT_TRUE(hikari::backends::fontNames(std::vector<std::byte>(16, std::byte{1})).empty());
+}
+
+// A Script's attachment can be a hostile collection: many faces, each of
+// many names. Its names are read in linear time and bounded (Codex security,
+// VT3 round 7: 32 faces of 5000 names took 31 s).
+namespace {
+
+// A name table: `records` Windows UTF-16BE family-name records, record i
+// naming `text(i)`, or every record naming the one string `text(0)`.
+std::vector<std::byte> nameTable(unsigned records, const std::function<std::string(unsigned)> &text, bool shared)
+{
+    std::vector<std::byte> out, strings;
+    const auto put16 = [&out](unsigned v) {
+        out.push_back(std::byte(v >> 8 & 0xFF));
+        out.push_back(std::byte(v & 0xFF));
+    };
+    put16(0);
+    put16(records);
+    put16(6 + 12 * records);
+    for (unsigned i = 0; i < records; ++i) {
+        const unsigned offset = shared ? 0 : unsigned(strings.size());
+        if (!shared || i == 0)
+            for (const char c : text(i)) {
+                strings.push_back(std::byte{0});
+                strings.push_back(std::byte(c));
+            }
+        put16(3);
+        put16(1);
+        put16(0x409);
+        put16(1);
+        put16(shared ? unsigned(strings.size()) : unsigned(strings.size()) - offset);
+        put16(offset);
+    }
+    out.insert(out.end(), strings.begin(), strings.end());
+    return out;
+}
+
+// A collection of `faces` faces, all base.ttf with the name table `names`.
+std::vector<std::byte> collectionOf(unsigned faces, const std::vector<std::byte> &names)
+{
+    const auto base = load(fixture("base.ttf"));
+    if (!base)
+        return {};
+    const auto at = [&base](std::size_t i) { return std::to_integer<unsigned>((*base)[i]); };
+    const auto be16 = [&at](std::size_t i) { return at(i) << 8 | at(i + 1); };
+    const auto be32 = [&be16](std::size_t i) { return be16(i) << 16 | be16(i + 2); };
+    std::vector<std::byte> out;
+    const auto put16 = [&out](unsigned v) {
+        out.push_back(std::byte(v >> 8 & 0xFF));
+        out.push_back(std::byte(v & 0xFF));
+    };
+    const auto put32 = [&put16](unsigned v) {
+        put16(v >> 16);
+        put16(v & 0xFFFF);
+    };
+    const unsigned tables = be16(4);
+    const unsigned header = 12 + 4 * faces;
+    put32(0x74746366); // ttcf
+    put32(0x00010000);
+    put32(faces);
+    for (unsigned i = 0; i < faces; ++i)
+        put32(header);
+    for (std::size_t i = 0; i < 12; ++i)
+        out.push_back((*base)[i]);
+    unsigned offset = header + 12 + 16 * tables;
+    std::vector<std::byte> data;
+    for (unsigned t = 0; t < tables; ++t) {
+        const std::size_t record = 12 + 16 * std::size_t(t);
+        const unsigned tag = be32(record);
+        const bool isName = tag == 0x6E616D65; // name
+        const unsigned from = be32(record + 8), length = isName ? unsigned(names.size()) : be32(record + 12);
+        put32(tag);
+        put32(be32(record + 4));
+        put32(offset + unsigned(data.size()));
+        put32(length);
+        if (isName)
+            data.insert(data.end(), names.begin(), names.end());
+        else
+            data.insert(data.end(), base->begin() + from, base->begin() + from + length);
+        while (data.size() % 4)
+            data.push_back(std::byte{0});
+    }
+    out.insert(out.end(), data.begin(), data.end());
+    return out;
+}
+
+} // namespace
+
+TEST(FontPickerFaces, AHostileCollectionsNamesAreBounded)
+{
+    // 32 faces, each of 5000 distinct family names.
+    const auto out = collectionOf(32, nameTable(
+                                          5000,
+                                          [](unsigned i) {
+                                              char text[16];
+                                              std::snprintf(text, sizeof text, "Name%05u", i);
+                                              return std::string(text);
+                                          },
+                                          false));
+    ASSERT_FALSE(out.empty());
+
+    const auto started = std::chrono::steady_clock::now();
+    const auto read = hikari::backends::fontNames(out);
+    const auto ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
+    EXPECT_NE(std::ranges::find(read, std::string("Name00000")), read.end());
+    EXPECT_LE(read.size(), 4096u);
+    EXPECT_LT(ms, 3000);
+}
+
+// Names that repeat add nothing kept, but each is still read: the bytes
+// read are bounded, not only the names kept.
+TEST(FontPickerFaces, AHostileCollectionsRepeatedLongNamesAreBounded)
+{
+    // 256 faces, each of 2730 records sharing one name of 16380 characters.
+    const auto out =
+        collectionOf(256, nameTable(2730, [](unsigned) { return std::string(16380, 'A'); }, true));
+    ASSERT_FALSE(out.empty());
+
+    const auto started = std::chrono::steady_clock::now();
+    const auto read = hikari::backends::fontNames(out);
+    const auto ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
+    EXPECT_NE(std::ranges::find(read, std::string(16380, 'A')), read.end());
+    EXPECT_LT(ms, 3000);
 }
 
 // The font filter's check (FontEnumerator::CheckGlyphsExists): a face

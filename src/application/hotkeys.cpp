@@ -298,6 +298,8 @@ constexpr HotkeyAction kActions[] = {
         {"VIDEO_TOOL_DRAWING", 2030},
         {"VIDEO_TOOL_POSITION_SHIFTER", 2031},
         {"VIDEO_TOOL_HYDRA", 2032},
+        // VT3 (#273): the Perspective tool.
+        {"VIDEO_TOOL_PERSPECTIVE", 2033},
         // KA7: the Karaoke check window.
         {"GLOBAL_CHECK_KARAOKE", 5172},
         // AD2: Repeat last run (AD2-repeat-last-run).
@@ -568,6 +570,7 @@ constexpr NameRow kNames[] = {
         {2030, "Vector drawing"}, // VIDEO_TOOL_DRAWING
         {2031, "Position shifter"}, // VIDEO_TOOL_POSITION_SHIFTER
         {2032, "Hydra"}, // VIDEO_TOOL_HYDRA
+        {2033, "Perspective"}, // VIDEO_TOOL_PERSPECTIVE (VT3)
         {5172, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
         {5173, "Repeat last run"}, // GLOBAL_AUTOMATION_REPEAT_LAST_RUN (AD2)
 };
@@ -646,6 +649,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {2030, VideoHotkey, "Vector drawing", "D"}, // VIDEO_TOOL_DRAWING
         {2031, VideoHotkey, "Position shifter", "A"}, // VIDEO_TOOL_POSITION_SHIFTER
         {2032, VideoHotkey, "Hydra", "H"}, // VIDEO_TOOL_HYDRA
+        {2033, VideoHotkey, "Perspective", "Q"}, // VIDEO_TOOL_PERSPECTIVE (VT3)
         {3012, EditorHotkey, "Add bold", "Ctrl-B"}, // EDITBOX_INSERT_BOLD
         {3013, EditorHotkey, "Add italic", "Ctrl-I"}, // EDITBOX_INSERT_ITALIC
         {3014, EditorHotkey, "Add line wrap", "Shift-Enter"}, // EDITBOX_SPLIT_LINE

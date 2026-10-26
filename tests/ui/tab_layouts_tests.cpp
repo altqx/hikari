@@ -130,13 +130,18 @@ class TabLayoutsTest : public QObject {
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         dismissMismatch();
     }
-    // The resolution question a video opened may ask a moment later.
+    // The resolution question a video opened may ask a moment later (a
+    // message box since PU6), kept as it is.
     void dismissMismatch()
     {
-        auto *mismatch = window()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
-        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000)) {
-            QMetaObject::invokeMethod(mismatch, "close");
-            QTRY_VERIFY(!mismatch->property("visible").toBool());
+        auto *host = window()->findChild<QObject *>(QStringLiteral("messages"));
+        QQuickWindow *box = nullptr;
+        if (host && QTest::qWaitFor([&] {
+                box = qvariant_cast<QQuickWindow *>(host->property("box"));
+                return box && box->isVisible() && box->title() == QLatin1String("Open video");
+            }, 3000)) {
+            QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("keep")));
+            QTRY_VERIFY(!box->isVisible());
         }
     }
     void loadSession(const QString &path)
@@ -378,11 +383,13 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("c.ass")))));
         float_("audioDock", true);
         // The arrangement shown: the panels it leaves closed (AM1's
-        // Automation, NT1's Log, TP1's Styles, PU2's Fix minor errors and,
-        // outside Translation mode, TM1's Original text among them), not every panel.
+        // Automation, NT1's Log, PU6's Spellchecker, TP1's Styles, PU2's Fix
+        // minor errors and, outside Translation mode, TM1's Original text
+        // among them), not every panel.
         int closedShown = 0;
         for (const char *dock : {"videoDock", "audioDock", "editorDock", "gridDock", "referenceDock", "timingDock",
-                                 "searchDock", "automationDock", "originalDock", "logDock", "stylesDock", "misspellDock"})
+                                 "searchDock", "automationDock", "originalDock", "logDock", "spellDock", "stylesDock",
+                                 "misspellDock"})
             closedShown += isOpen(dock) ? 0 : 1;
         QVERIFY(closedShown < 12);
         window()->close();
