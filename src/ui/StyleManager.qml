@@ -2083,6 +2083,29 @@ DialogWindow {
     }
     onStoreShownChanged: storeList.sync(storeShown)
     onAssShownChanged: assList.sync(assShown)
+    // A row the filter hides leaves the selection, so no command acts on a
+    // Style that is not shown; the editor follows, and an edit not applied
+    // stays open on its Style.
+    onFilterTextChanged: {
+        // (The rows are read, not storeShown: its binding may not have
+        // followed the filter yet.)
+        for (const store of [true, false]) {
+            const rows = store ? storeSelected : assSelected
+            const list = store ? storeRows : assRows
+            const kept = rows.filter(r => r < list.length
+                                          && (filterText.length === 0 || list[r].name.toLowerCase().indexOf(filterText) >= 0))
+            if (kept.length === rows.length)
+                continue
+            if (kept.length === 0 && dirty && !pendingNew && editingStore === store) {
+                if (store)
+                    storeSelected = []
+                else
+                    assSelected = []
+            } else {
+                followRows(store, kept)
+            }
+        }
+    }
 
     // Y7: StyleChange::OnAllCols (StyleChange.cpp:335-399). SY2: a left
     // click opens the colour popover at the button's colour and

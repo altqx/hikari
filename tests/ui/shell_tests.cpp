@@ -7285,7 +7285,7 @@ private slots:
 
         // The filter hides the first Style: another tab selects the first
         // it shows.
-        pick(false, {0});
+        pick(false, {1}); // Sign, shown by the filter
         field("styleFilter")->setProperty("text", QStringLiteral("sign"));
         showTab("where-b.ass");
         QTRY_COMPARE(targetSession(), second);
@@ -7339,6 +7339,24 @@ private slots:
         QCOMPARE(size(second, u8"Sign"), std::u8string(u8"20"));
         QCOMPARE(count(second), std::size_t(3));
         QCOMPARE(size(first, u8"Sign"), std::u8string(u8"44"));
+
+        // A filter that hides the selected Style takes it out of the
+        // selection: nothing to delete or copy. An edit not applied stays.
+        pick(false, {0}); // Default
+        QVERIFY(field("addToStore")->isEnabled());
+        field("styleFilter")->setProperty("text", QStringLiteral("sign"));
+        QTRY_COMPARE(manager->property("assSelected").toList(), QVariantList{});
+        QVERIFY(!field("addToStore")->isEnabled());
+        QVERIFY(!manager->property("editing").toBool());
+        field("styleFilter")->setProperty("text", QString());
+        pick(false, {1}); // Sign
+        edit("styleSize", QStringLiteral("33"));
+        field("styleFilter")->setProperty("text", QStringLiteral("alpha"));
+        QTRY_COMPARE(manager->property("assSelected").toList(), QVariantList{});
+        QVERIFY(manager->property("editing").toBool() && manager->property("dirty").toBool());
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
+        QCOMPARE(size(second, u8"Sign"), std::u8string(u8"33")); // the tab shown since the review
+        field("styleFilter")->setProperty("text", QString());
 
         QVERIFY(styles.deleteCatalog(QStringLiteral("SY1 where")));
         QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
