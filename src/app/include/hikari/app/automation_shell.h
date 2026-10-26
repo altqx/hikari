@@ -7,7 +7,7 @@
 // Script dialogs and pickers use the fixed QML windows; host services answer
 // from the open video, the Line editor, the clipboard and the font metrics
 // (L3). Progress, the log and Cancel / Force stop are exposed for the
-// progress window.
+// progress card (AD3), and each run's log is kept in `runs`.
 
 #include "hikari/application/audio_box.h"
 #include "hikari/application/automation.h"
@@ -22,6 +22,7 @@
 
 #include "automation_dialog_controller.h"
 #include "automation_manager_controller.h"
+#include "automation_runs.h"
 #include "automation_services_qt.h"
 #include "karaoke_report.h"
 #include "line_editor_controller.h"
@@ -33,6 +34,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QTimer>
 
 #include <functional>
 #include <set>
@@ -63,6 +65,28 @@ class AutomationShell : public QObject, public application::AutomationServicePor
     // KE1-template-problems: the run ended well but its log names template
     // problems, so the progress window stays for it to be read.
     Q_PROPERTY(bool keepLog READ keepLog NOTIFY progressChanged)
+    // AD3 (#312): what the progress card shows. "notice" as a macro starts;
+    // "running" once the macro itself has run about a second (time in its
+    // dialogs and pickers not counted) or written to its log; when it ends,
+    // "applied" (it logged), "problems" (KE1), "cancelled" or "failed" until
+    // dismissCard() or the next run; "" otherwise (a run that applied and
+    // logged nothing, or whose script-resolution question was declined).
+    Q_PROPERTY(QString cardState READ cardState NOTIFY progressChanged)
+    // How the ended run went, in a sentence (its error's text when it failed).
+    Q_PROPERTY(QString cardText READ cardText NOTIFY progressChanged)
+    // The macro running (its script's path and ordinal; "" and -1 when none),
+    // which the Automation panel marks busy.
+    Q_PROPERTY(QString runPath READ runPath NOTIFY progressChanged)
+    Q_PROPERTY(int runOrdinal READ runOrdinal NOTIFY progressChanged)
+    // The run in `runs` the card shows (0: none yet).
+    Q_PROPERTY(int runId READ runId NOTIFY progressChanged)
+    Q_PROPERTY(hikari::ui::AutomationRuns *runs READ runs CONSTANT)
+    // Cancel was asked for and the macro has not stopped yet.
+    Q_PROPERTY(bool cancelling READ cancelling NOTIFY progressChanged)
+    // The script has set a progress (else the bar is busy).
+    Q_PROPERTY(bool progressKnown READ progressKnown NOTIFY progressChanged)
+    // The last run's karaoke report: template Lines with problems (KE1).
+    Q_PROPERTY(int problems READ problems NOTIFY progressChanged)
 public:
     struct Paths {
         QString helper;        // the Lua helper program
@@ -156,7 +180,9 @@ public:
     Q_INVOKABLE bool repeatLast();
     // Settings > Clear last answers: the record goes with the answers.
     void forgetRepeat();
-    Q_INVOKABLE void cancelRun() { m_manager.cancel(); }
+    Q_INVOKABLE void cancelRun();
+    // The card's ×: the ended run's card goes (its log stays in `runs`).
+    Q_INVOKABLE void dismissCard();
     Q_INVOKABLE bool forceStopRun();
 
     bool running() const { return m_run.has_value(); }
@@ -171,6 +197,17 @@ public:
     bool canRepeat() const { return m_repeat.has_value() && !m_run; }
     QString repeatText() const;
     bool keepLog() const { return m_keepLog; }
+    QString cardState() const { return m_cardState; }
+    QString cardText() const { return m_cardText; }
+    QString runPath() const { return m_run ? QString::fromStdString(m_run->path) : QString(); }
+    int runOrdinal() const { return m_run ? m_run->ordinal : -1; }
+    int runId() const { return m_runId; }
+    ui::AutomationRuns *runs() { return &m_runs; }
+    bool cancelling() const { return m_cancelling; }
+    bool progressKnown() const { return m_progressKnown; }
+    int problems() const { return m_problems; }
+    // Tests: how long the macro runs before the notice becomes the card.
+    void setCardDelay(int ms) { m_cardDelay = ms; }
 
     ui::AutomationManagerController *managerController() { return m_managerController.get(); }
     ui::AutomationDialogController *dialogs() { return &m_dialogs; }
@@ -240,6 +277,13 @@ private:
     void loadDocumentScript(const std::string &path);
     void continueLastScript();
     void startEditor(const QString &editor, const QString &script);
+    // The card's second runs only while the macro itself runs: not before
+    // it starts (validations), nor while its dialog, picker or the script
+    // resolution question waits for the user, which starts it again.
+    bool waitingForUser() const;
+    void updateCardTimer();
+    void showCard();
+    void finishCard(const QString &ended, const QString &text, const QString &validationError);
 
     Paths m_paths;
     application::DocumentFiles &m_files;
@@ -272,6 +316,19 @@ private:
     double m_progress = 0;
     bool m_keepLog = false;
     std::uint64_t m_statusSerial = 0;
+    ui::AutomationRuns m_runs;
+    int m_runId = 0;
+    QString m_cardState, m_cardText;
+    QTimer m_cardTimer;
+    // The macro's own time the card waits for, and what is left of it (time
+    // in a dialog, picker or prompt does not count).
+    int m_cardDelay = 1000;
+    int m_cardLeft = 1000;
+    bool m_macroStarted = false; // the run's own macro (not a validation) runs
+    bool m_logged = false;       // the run wrote to its log
+    bool m_cancelling = false;
+    bool m_progressKnown = false;
+    int m_problems = 0;
 };
 
 } // namespace hikari::app

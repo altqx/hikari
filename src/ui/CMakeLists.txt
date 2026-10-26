@@ -5,7 +5,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     automation_dialog_controller.cpp automation_dialog_controller.h script_dialog_memory.cpp script_dialog_memory.h video_presenter.cpp video_presenter.h
     automation_manager_controller.cpp automation_manager_controller.h
     automation_services_qt.cpp automation_services_qt.h video_controller.cpp video_controller.h
-    log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
+    automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
@@ -21,7 +21,7 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml MisspellReplacerDialog.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml FixMinorErrors.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
 # TS1: the Shift times panel and the dock-form pieces it is built from.
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
@@ -50,6 +50,8 @@ hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui
 # O2: the "Hotkey mapping" window and its questions.
 # S4: the automation shell's message boxes and script editor picker.
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
+# AD3 (#312): a macro run's notice and progress card, and a line of a run's log.
+qt_target_qml_sources(hikari_ui QML_FILES AutomationProgress.qml RunLogLine.qml)
 # Y4-playres-ask: the question a macro reading a missing script resolution asks.
 qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml)
 # R1: the tab menu's "Subtitle comparison".
