@@ -410,6 +410,8 @@ public:
     // what legacy's Grid click reads to move the video (SetVideoLineTime).
     Q_INVOKABLE void clickLine(qulonglong id, int modifiers, bool endColumn = false, bool doubleClick = false);
     Q_INVOKABLE void dragSelection(qulonglong id);
+    // KP1 (#286): the Grid's fold arrow on a run of generated Lines (its first Line).
+    Q_INVOKABLE void toggleFold(qulonglong first);
     Q_INVOKABLE void selectAllLines();
     // The Grid's active Line was hidden: only the active Line moves.
     Q_INVOKABLE void moveActiveLine(qulonglong id);

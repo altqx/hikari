@@ -741,6 +741,11 @@ ApplicationWindow {
                       run: () => spellTool.setIgnoreUpperCase(!spellTool.ignoreUpperCase) },
                     { name: "spellAddedWords", text: qsTranslate("HikariSub.Spelling", "Words added to dictionary…"),
                       iconRole: "dictionary", run: () => spellTool.openAddedWords() }]
+        // KP1 (#286): runs of generated Lines folded into one row each.
+        if (dock === gridDock)
+            return [{ name: "foldGenerated", text: qsTranslate("HikariSub.Grid", "Fold generated Lines"), checkable: true,
+                      checked: () => root.shell.foldGenerated,
+                      run: () => root.shell.foldGenerated = !root.shell.foldGenerated }]
         return []
     }
     // VF1 (#288): a panel's own submenus, after its own items: an item's
@@ -5599,6 +5604,7 @@ ApplicationWindow {
                     GridHeaderToolTip { grid: grid }
                     onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
                     onGroupToggleRequested: id => root.app.toggleGroup(id)
+                    onFoldToggleRequested: id => root.app.toggleFold(id) // KP1
                     onGroupMenuRequested: (id, x, y) => {
                         groupMenu.description = id
                         groupMenu.at = Qt.point(x, y)
@@ -5632,6 +5638,7 @@ ApplicationWindow {
                     }
                     Keys.onShortcutOverride: event => {
                         event.accepted = clipboardKey(event) || root.hotkeys.actionFor(1, event.key, event.modifiers) !== ""
+                                         || grid.foldsWith(event.key, event.modifiers)
                     }
                     Keys.onPressed: event => {
                         if (clipboardKey(event)) {

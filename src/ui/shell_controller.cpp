@@ -83,8 +83,62 @@ void ShellController::selectLine(qulonglong id)
         m_lines.setSelection(application::Selection{line, {line}}, line);
 }
 
+void ShellController::setFoldGenerated(bool on)
+{
+    if (m_lines.foldGenerated() == on)
+        return;
+    m_shown.changeFolds([&] { m_lines.setFoldGenerated(on); });
+    emit foldGeneratedChanged();
+}
+
+void ShellController::setRunFolded(core::LineId first, bool folded)
+{
+    m_shown.changeFolds([&] { m_lines.setRunFolded(first, folded); });
+}
+
+std::optional<core::LineId> ShellController::runFirst(core::LineId line) const
+{
+    const auto row = m_lines.rowOf(line);
+    const int first = row ? m_lines.runFirstRow(*row) : -1;
+    return first >= 0 ? m_lines.lineAt(first) : std::nullopt;
+}
+
+bool ShellController::runFolded(core::LineId first) const
+{
+    const auto row = m_lines.rowOf(first);
+    return row && m_lines.runFolded(*row);
+}
+
+std::vector<core::LineId> ShellController::runLines(core::LineId first) const
+{
+    const auto row = m_lines.rowOf(first);
+    return row ? m_lines.runLines(*row) : std::vector<core::LineId>{};
+}
+
+application::Selection ShellController::withFoldedRuns(application::Selection selection) const
+{
+    for (const int row : m_lines.foldedRuns()) {
+        const auto lines = m_lines.runLines(row);
+        // A Line made active inside the run unfolds it (setSelection).
+        if (selection.active && std::find(lines.begin() + 1, lines.end(), *selection.active) != lines.end())
+            continue;
+        const bool whole = selection.selected.contains(lines.front());
+        for (std::size_t k = 1; k < lines.size(); ++k)
+            if (whole)
+                selection.selected.insert(lines[k]);
+            else
+                selection.selected.erase(lines[k]);
+    }
+    return selection;
+}
+
 void ShellController::setSelection(const application::Selection &selection)
 {
+    // KP1: a Line made active inside a folded run (Find, Go to, the audio's
+    // next Line) unfolds it.
+    if (selection.active)
+        if (const auto first = runFirst(*selection.active); first && *first != *selection.active && runFolded(*first))
+            setRunFolded(*first, false);
     m_lines.setSelection(selection, selection.anchor);
     const auto row = selection.active ? m_lines.rowOf(*selection.active) : std::nullopt;
     const core::LineRecord *record = row ? m_lines.recordAt(*row) : nullptr;
@@ -93,6 +147,8 @@ void ShellController::setSelection(const application::Selection &selection)
     m_activeNumber = record ? *row + 1 : 0;
     const auto shown = displayedLines();
     const auto hidden = std::count_if(selection.selected.begin(), selection.selected.end(), [&](core::LineId id) {
+        if (const auto row = m_lines.rowOf(id); row && m_lines.foldedMember(*row))
+            return false; // KP1: its folded row shows it
         return std::find(shown.begin(), shown.end(), id) == shown.end();
     });
     m_selectedCount = static_cast<qsizetype>(selection.selected.size());

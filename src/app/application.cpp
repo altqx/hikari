@@ -1047,6 +1047,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (m_settings->boolean("grid.autoHideColumns") != m_shell->autoHideColumns())
             m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns());
     });
+    // KP1: the Grid's Fold generated Lines.
+    m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
+    connect(m_shell.get(), &ui::ShellController::foldGeneratedChanged, this, [this] {
+        if (m_settings->boolean("grid.foldGenerated") != m_shell->foldGenerated())
+            m_settings->set("grid.foldGenerated", m_shell->foldGenerated());
+    });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened")); // SH2
     m_copyColumns = m_settings->integer("grid.copyColumns");
@@ -2803,14 +2809,37 @@ void Application::selectLine(qulonglong id)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(gridSelection().plain(session->selection(), core::LineId{id}));
+        applySelection(m_shell->withFoldedRuns(gridSelection().plain(session->selection(), core::LineId{id})));
 }
 
 void Application::extendSelection(int rows)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(gridSelection().shiftKey(session->selection(), rows));
+        applySelection(m_shell->withFoldedRuns(gridSelection().shiftKey(session->selection(), rows)));
+}
+
+// KP1 (#286): a run of generated Lines folded or unfolded from the Grid. A
+// run folded over the active Line leaves its first Line active, the whole
+// run selected as its row then is.
+void Application::toggleFold(qulonglong first)
+{
+    const core::LineId id{first};
+    if (!m_shell->foldGenerated() || m_shell->runFirst(id) != id)
+        return;
+    const bool fold = !m_shell->runFolded(id);
+    auto *session = targetSession();
+    if (fold && session && session->selection().active && *session->selection().active != id) {
+        const auto lines = m_shell->runLines(id);
+        if (std::ranges::find(lines, *session->selection().active) != lines.end()) {
+            application::Selection next = session->selection();
+            next.active = id;
+            next.selected.insert(lines.begin(), lines.end());
+            if (!applySelection(std::move(next)))
+                return;
+        }
+    }
+    m_shell->setRunFolded(id, fold);
 }
 
 void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool doubleClick)
@@ -2833,13 +2862,13 @@ void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool d
     m_lineChangeOrigin = origin;
     if (doubleClick) {
         if (ctrl && !shift)
-            applySelection(rules.plain(session->selection(), line));
+            applySelection(m_shell->withFoldedRuns(rules.plain(session->selection(), line)));
     } else if (shift)
-        applySelection(rules.shiftClick(session->selection(), line, ctrl));
+        applySelection(m_shell->withFoldedRuns(rules.shiftClick(session->selection(), line, ctrl)));
     else if (ctrl)
-        applySelection(rules.ctrlClick(session->selection(), line));
+        applySelection(m_shell->withFoldedRuns(rules.ctrlClick(session->selection(), line)));
     else
-        applySelection(rules.plain(session->selection(), line));
+        applySelection(m_shell->withFoldedRuns(rules.plain(session->selection(), line)));
     // A press on the active Line: SetLine's "goto done" still plays.
     if (origin && m_lineChangeOrigin && session->selection().active == before)
         followShownLine(false, *origin);
@@ -2852,7 +2881,7 @@ void Application::dragSelection(qulonglong id)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(gridSelection().shiftClick(session->selection(), core::LineId{id}, false));
+        applySelection(m_shell->withFoldedRuns(gridSelection().shiftClick(session->selection(), core::LineId{id}, false)));
 }
 
 void Application::selectAllLines()
@@ -5579,6 +5608,8 @@ void Application::settingChanged(const QString &id)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     else if (id == QLatin1String("grid.autoHideColumns") && !m_resettingSettings)
         m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    else if (id == QLatin1String("grid.foldGenerated") && !m_resettingSettings)
+        m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
     else if (id == QLatin1String("video.disableLiveEditing") || id.startsWith(QLatin1String("grid.calcSpaces"))) {
         m_editor->optionsChanged(); // E4: the counters and Duration follow at once
         refreshVideo();             // live editing on or off: the draft or the committed Lines
@@ -6066,6 +6097,7 @@ void Application::resetAllSettings()
     m_updates->reload();
     // GR3: empty-column hiding has no legacy owner; both Grids take the default.
     m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated")); // KP1
     // SelectLines, once created, keeps its controls and recent searches:
     // the options go back at its close (legacy: at exit or DestroyDialogs),
     // the recent searches at its next selection. Before that, the dialog
