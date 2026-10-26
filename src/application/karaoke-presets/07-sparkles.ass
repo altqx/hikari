@@ -16,4 +16,4 @@ Style: Default,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank,!retime("line",-300,300)!{\an5\pos($center,$middle)\fad(300,300)\t(!$start+300!,!$end+300!,\1c&HC0F8FF&)}
-Comment: 1,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank notext loop 8,!retime("syl",0,600)!{\an5\move($center,$middle,!$center+(($i*7+j*5)%13-6)*7!,!$middle+(($i*3+j*7)%11-5)*6!)\bord0\shad0\blur0.6\1c&HC0F8FF&\fad(0,450)\p1}m 0 -5 l 5 0 0 5 -5 0
+Comment: 1,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank notext loop 8,!retime("syl",0,600)!{\an5\move($center,$middle,!$center+math.floor(({42,30,0,-30,-42,-30,0,30})[j]*(6+($i*3+j*2)%5)/10)!,!$middle+math.floor(({0,-30,-42,-30,0,30,42,30})[j]*(6+($i*3+j*2)%5)/10)!)\bord0\shad0\blur0.6\1c&HC0F8FF&\fad(0,450)\p1}m 0 -5 l 5 0 0 5 -5 0

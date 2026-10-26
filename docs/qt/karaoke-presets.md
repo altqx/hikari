@@ -16,7 +16,7 @@ Each preset is one ASS file in `src/application/karaoke-presets/`. The number in
 
 So a preset can be opened in Aegisub, or its Lines pasted into any script, as they are. `hikari::application::readKaraokePreset` (`karaoke_presets.h`) reads a file into its title, description and Lines.
 
-The presets use no random values. Their sparks and staggers come from the syllable index and the loop counter. KE1 can therefore regenerate one karaoke Line alone, and the preview gives what Apply writes.
+The presets use no random values. Their sparks and staggers come from the syllable index and the loop counter, in integer arithmetic, so the output is the same on every platform. KE1 can therefore regenerate one karaoke Line alone, and the preview gives what Apply writes.
 
 ## Inserting a preset
 
