@@ -106,6 +106,9 @@ class TemplateEditorController : public QObject {
     // Values of the stock variables on the source's first syllable, by name
     // (filled in by requestValues).
     Q_PROPERTY(QVariantMap values READ values NOTIFY valuesChanged)
+    // KE3: the built-in karaoke effect presets, in list order: title and
+    // description (translated) and file (in :/hikari/ui/karaoke-presets).
+    Q_PROPERTY(QVariantList presets READ presets CONSTANT)
 
 public:
     using SessionSource = std::function<application::EditSession *()>;
@@ -168,6 +171,7 @@ public:
     int layer() const;
     QString text() const;
     QStringList styles() const;
+    static QVariantList presets();
     QString problem() const;
     QVariantList problemRange() const;
     bool hasProblems() const;
@@ -209,6 +213,9 @@ public:
     // A new Comment with this Effect above the first karaoke Line, with its
     // Style, made current; one undo step.
     Q_INVOKABLE bool insertTemplate(const QString &effect);
+    // KE3: the preset's template and code Lines, in its order and Layers,
+    // where insertTemplate puts one; the first made current; one undo step.
+    Q_INVOKABLE bool insertPreset(int index);
     // Runs the templater once to find the variables' values on the source.
     Q_INVOKABLE void requestValues();
     // What fits at `cursor` in `text`: after `$` the variables, after `!`
@@ -259,6 +266,9 @@ private:
         int start = 0, length = 0; // bytes from 1 in the text the run saw
     };
 
+    // New Comments above the first karaoke Line, with its Style, as one
+    // Command; the first made current.
+    bool insertLines(const char *commandName, std::vector<application::MacroDialogueLine> made);
     application::EditSession *session() const;
     const core::Document *document() const;
     const core::LineRecord *line(core::LineId id) const;
