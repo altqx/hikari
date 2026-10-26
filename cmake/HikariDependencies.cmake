@@ -96,6 +96,15 @@ find_package(SoundTouch CONFIG REQUIRED)
 add_library(hikari_soundtouch INTERFACE)
 target_link_libraries(hikari_soundtouch INTERFACE SoundTouch::SoundTouch)
 add_library(Hikari::soundtouch ALIAS hikari_soundtouch)
+# KA4 (#279): the furigana suggestions' MeCab (ports/mecab, static, BSD) and
+# its dictionary, UniDic 2.1.2 (ports/hikari-unidic-lite, BSD), shipped as
+# Dictionary/unidic-lite.
+find_package(mecab CONFIG REQUIRED)
+add_library(hikari_mecab INTERFACE)
+target_link_libraries(hikari_mecab INTERFACE mecab::mecab)
+add_library(Hikari::mecab ALIAS hikari_mecab)
+find_path(HIKARI_UNIDIC_DIR sys.dic PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/dicdir"
+    NO_DEFAULT_PATH NO_CACHE REQUIRED)
 
 # LuaJIT for the isolated Lua helper only (ADR 0006). Its flags export the
 # executable's symbols (-Wl,-E), which Lua native modules need, so it must not
@@ -113,6 +122,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
     "libass=${HIKARI_LIBASS_VERSION} ${HIKARI_LIBASS_LINK_LIBRARIES}\n"
     "portaudio_DIR=${portaudio_DIR} ${portaudio_VERSION}\n"
     "SoundTouch_DIR=${SoundTouch_DIR} ${SoundTouch_VERSION}\n"
+    "mecab_DIR=${mecab_DIR} ${mecab_VERSION}\nHIKARI_UNIDIC_DIR=${HIKARI_UNIDIC_DIR}\n"
     "luajit=${HIKARI_LUAJIT_VERSION} ${HIKARI_LUAJIT_LINK_LIBRARIES}\n"
     "hunspell=${HIKARI_HUNSPELL_VERSION} ${HIKARI_HUNSPELL_LINK_LIBRARIES}\n"
     "toolchain=${CMAKE_TOOLCHAIN_FILE}\ntriplet=${VCPKG_TARGET_TRIPLET}\n"
