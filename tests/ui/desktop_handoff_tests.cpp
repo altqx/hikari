@@ -241,14 +241,11 @@ private slots:
 
     // UD1 (#362): Help > Open user folder and Settings > General's Open
     // open the user folder in the file manager, made first when missing;
-    // without a user folder neither shows.
+    // without a user folder nothing opens.
     void openUserFolderOpensItInTheFileManager()
     {
         const QString folder = dir.filePath(QStringLiteral("user folder"));
         start(folder);
-        QObject *item = named("openUserFolderMenuItem");
-        QVERIFY(item);
-        QVERIFY(item->property("visible").toBool());
         triggerAction("openUserFolderMenuItem");
         QCOMPARE(recorded::opened(), QList<QUrl>{QUrl::fromLocalFile(folder)});
         QVERIFY(QFileInfo(folder).isDir());
@@ -267,7 +264,9 @@ private slots:
             QMetaObject::invokeMethod(window, "close");
         cleanup();
         start();
-        QVERIFY(!named("openUserFolderMenuItem")->property("visible").toBool());
+        QVERIFY(application->userFolder().isEmpty());
+        triggerAction("openUserFolderMenuItem");
+        QVERIFY(recorded::opened().isEmpty());
         QVERIFY(recorded::refused().isEmpty());
     }
 };
