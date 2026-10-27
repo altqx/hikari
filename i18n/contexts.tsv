@@ -27,6 +27,7 @@ HikariSub.Search	Find and replace: its panel, questions and results
 HikariSub.SelectLines	The Select lines dialog
 HikariSub.Session	Sessions, autosaves and their recovery, temporary files
 HikariSub.SettingsImport	Importing the settings of a legacy installation
+HikariSub.GettingStarted	Getting started, the setup of the first start (FR1)
 HikariSub.Spelling	The spellchecker, dictionaries and fix suggestions
 HikariSub.StatusBar	The status bar: its fields, the selection status and progress
 HikariSub.Styles	The Style manager and style catalogs

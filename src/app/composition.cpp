@@ -185,6 +185,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 
     Application::Options options;
     options.autoload = true; // legacy: the Autoload scripts load at start
+    options.gettingStarted = true; // FR1: the first start opens Getting started
     // The settings registry (O1).
     options.settingsFile =
         QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + QStringLiteral("/hikari.ini");

@@ -215,6 +215,12 @@ void AudioBoxPlayer::playAudio(std::shared_ptr<const application::DisplayAudio> 
     m_wake.notify_all();
 }
 
+bool AudioBoxPlayer::playingClip(const application::DisplayAudio *clip) const
+{
+    const std::scoped_lock lock(m_lock);
+    return m_playing && m_clipping && m_playingAudio.get() == clip;
+}
+
 // Legacy Stop: the buffer stops at once.
 void AudioBoxPlayer::stop()
 {

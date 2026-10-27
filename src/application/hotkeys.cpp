@@ -306,6 +306,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", 5173},
         // KA3: the Kanji timer window.
         {"GLOBAL_KANJI_TIMER", 5174},
+        // FR1: the Getting started window.
+        {"GLOBAL_GETTING_STARTED", 5176},
 };
 
 struct NameRow {
@@ -576,6 +578,7 @@ constexpr NameRow kNames[] = {
         {5172, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
         {5173, "Repeat last run"}, // GLOBAL_AUTOMATION_REPEAT_LAST_RUN (AD2)
         {5174, "Kanji timer"}, // GLOBAL_KANJI_TIMER (KA3)
+        {5176, "Getting started"}, // GLOBAL_GETTING_STARTED (FR1)
 };
 
 struct DefaultRow {
