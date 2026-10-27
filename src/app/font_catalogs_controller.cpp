@@ -513,7 +513,7 @@ void FontCatalogsController::autosaveNow()
     m_autosaveLabel.start();
 }
 
-void FontCatalogsController::renderPreview(const QString &font, int width, int height)
+void FontCatalogsController::renderPreview(const QString &font, int width, int height, qreal scale)
 {
     if (width < 1 || height < 1)
         return;
@@ -521,7 +521,7 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
     // The preview text's characters only: an override in it ({\\fn…},
     // {\\b0}) would draw another face than the one the note names.
     const QString text = withFamily(style, font, rendererText(samplePlain(previewText(), true)));
-    m_preview = renderStylePreview(m_renderer, style, width, height, text, externalFontLeases());
+    m_preview = renderStylePreview(m_renderer, style, width, height, text, externalFontLeases(), m_atScreenSize ? scale : 1);
     ++m_previewKey;
     emit previewChanged();
 }
@@ -598,7 +598,8 @@ QString FontCatalogsController::samplePlain(const QString &text, bool ass, int f
     return out.trimmed();
 }
 
-void FontCatalogsController::renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height)
+void FontCatalogsController::renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height,
+                                         qreal scale)
 {
     if (width < 1 || height < 1)
         return;
@@ -616,7 +617,7 @@ void FontCatalogsController::renderSample(const QVariantMap &font, const QString
     std::vector<application::FontLease> fonts = m_hooks.documentFonts ? m_hooks.documentFonts() : std::vector<application::FontLease>();
     for (auto &font : externalFontLeases())
         fonts.push_back(std::move(font));
-    m_sample = renderStylePreview(m_renderer, style, width, height, plain, std::move(fonts));
+    m_sample = renderStylePreview(m_renderer, style, width, height, plain, std::move(fonts), m_atScreenSize ? scale : 1);
     ++m_sampleKey;
     emit sampleChanged();
 }

@@ -62,6 +62,9 @@ class FontCatalogsController : public QObject {
     // The font environment generation: each re-listing makes a new one.
     Q_PROPERTY(int generation READ generation NOTIFY fontsChanged)
     Q_PROPERTY(int previewKey READ previewKey NOTIFY previewChanged)
+    // SV1: the device pixel ratio the preview and the sample were drawn at.
+    Q_PROPERTY(qreal previewScale READ previewScale NOTIFY previewChanged)
+    Q_PROPERTY(qreal sampleScale READ sampleScale NOTIFY sampleChanged)
     // PU3: the font picker's preview, "image://fontcatalogpreview/sample/<key>".
     Q_PROPERTY(int sampleKey READ sampleKey NOTIFY sampleChanged)
 public:
@@ -89,6 +92,8 @@ public:
     bool autosaveFailed() const { return m_autosaveFailed; }
     int generation() const { return int(m_generation); }
     int previewKey() const { return m_previewKey; }
+    qreal previewScale() const { return m_preview.devicePixelRatio(); }
+    qreal sampleScale() const { return m_sample.devicePixelRatio(); }
     QImage preview() const { return m_preview; }
     int sampleKey() const { return m_sampleKey; }
     QImage sample() const { return m_sample; }
@@ -179,13 +184,17 @@ public:
 
     // The management window's preview: the "FontPreview" Style with `font`
     // (StylePreview::DrawPreview), as "image://fontcatalogpreview/<key>".
-    Q_INVOKABLE void renderPreview(const QString &font, int width, int height);
+    Q_INVOKABLE void renderPreview(const QString &font, int width, int height, qreal scale = 1);
     // PU3: the font picker's preview: `text` (a Line's text; when `ass`,
     // override blocks dropped and \N and \n as spaces, otherwise every
     // character as written) in the picker's font {name, size, bold,
     // italic, underline, strikeOut} on the preview Style, drawn by the
     // subtitle renderer at `width` x `height`.
-    Q_INVOKABLE void renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height);
+    // SV1: `scale` (the window's device pixel ratio) is used with Screen size.
+    Q_INVOKABLE void renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height,
+                                  qreal scale = 1);
+    // SV1-screen-size-subtitles: previews drawn at the screen's pixels.
+    void setPreviewAtScreenSize(bool on) { m_atScreenSize = on; }
     // The characters renderSample draws for `text`, on one line: when `ass`,
     // without override blocks and what \p drawing mode draws, \N and \n
     // as spaces, \h as a no-break space, \{ and \} as braces; otherwise
@@ -264,6 +273,7 @@ private:
     QFileSystemWatcher m_watcher;
     backends::LibassRenderer m_renderer;
     QImage m_preview;
+    bool m_atScreenSize = false;
     int m_previewKey = 0;
     QImage m_sample;
     int m_sampleKey = 0;

@@ -742,7 +742,8 @@ DialogWindow {
         const browsed = fontField.browsedFont()
         if (browsed.length)
             v.fontname = browsed
-        styles.renderPreview(v, Math.max(1, preview.width), Math.max(1, preview.height), previewText.text)
+        styles.renderPreview(v, Math.max(1, preview.width), Math.max(1, preview.height), previewText.text,
+                             preview.Window.window ? preview.Window.window.devicePixelRatio : 1)
     }
     readonly property string nameProblem: {
         if (!editing || multi)
@@ -1582,6 +1583,10 @@ DialogWindow {
                     id: preview
                     objectName: "stylePreview"
                     Layout.fillWidth: true
+                    // SV1: drawn with the screen's pixels; the layout takes
+                    // its size in the window's units (Image ignores the
+                    // image's pixel ratio).
+                    Layout.preferredWidth: manager.styles.previewScale > 1 ? implicitWidth / manager.styles.previewScale : -1
                     Layout.preferredHeight: 84
                     cache: false
                     source: manager.editing ? "image://stylepreview/" + manager.styles.previewKey : ""
