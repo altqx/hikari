@@ -289,6 +289,8 @@ struct StartupArguments {
     bool printVersion = false;
     std::string healthFile;  // --hikari-health=<path>
     std::string updatedFrom; // --hikari-updated-from=<version>
+    // DX1 (#367): --export-docs <dir> (or =<dir>); "" when the folder is missing.
+    std::optional<std::string> exportDocs;
     std::vector<std::string> rest;
 };
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments);
