@@ -228,6 +228,7 @@ void AudioController::closeAudio()
 
 AudioController::~AudioController()
 {
+    blockSignals(true); // no findingOnsetsChanged to a closing window
     stopFindingOnsets();
 }
 
@@ -638,6 +639,20 @@ void AudioController::setSettingsStore(SettingsStore *store)
         disconnect(m_store, nullptr, this, nullptr);
     m_store = store;
     loadBoxControls();
+    // Settings > Audio's display options, as they change (legacy applied
+    // them when the Options dialog closed: OptionsDialog's ChangeOptions).
+    if (m_store)
+        connect(m_store, &SettingsStore::changed, this, [this](const QString &id) {
+            static const QStringList kDisplay{
+                QStringLiteral("audio.drawTimeCursor"),         QStringLiteral("audio.drawSecondaryLines"),
+                QStringLiteral("audio.drawSelectionBackground"), QStringLiteral("audio.drawVideoPosition"),
+                QStringLiteral("audio.drawKeyframes"),          QStringLiteral("audio.lineBoundariesThickness"),
+                QStringLiteral("audio.inactiveLinesDisplayMode")};
+            if (!kDisplay.contains(id))
+                return;
+            loadDisplayOptions();
+            redraw();
+        });
     emit boxControlsChanged();
     redraw();
 }
@@ -652,6 +667,19 @@ void AudioController::loadThemeColours()
     if (m_spectrum)
         m_spectrum->setColours(m_options.spectrumBackground, m_options.spectrumEcho, m_options.spectrumInner);
     m_spectrumImage.reset(); // drawn again with the new palette
+}
+
+void AudioController::loadDisplayOptions()
+{
+    if (!m_store)
+        return;
+    m_options.lineBoundaryWidth = m_store->integer("audio.lineBoundariesThickness");
+    m_options.inactiveLines = m_store->integer("audio.inactiveLinesDisplayMode");
+    m_options.drawVideoPosition = m_store->boolean("audio.drawVideoPosition");
+    m_options.drawSelectionBackground = m_store->boolean("audio.drawSelectionBackground");
+    m_options.drawSecondBoundaries = m_store->boolean("audio.drawSecondaryLines");
+    m_options.drawKeyframes = m_store->boolean("audio.drawKeyframes");
+    m_options.drawTimeCursor = m_store->boolean("audio.drawTimeCursor"); // AU-time-cursor-option
 }
 
 // Legacy AudioBox's constructor: the zoom and scale from the settings, the
@@ -680,6 +708,7 @@ void AudioController::loadBoxControls()
         m_tapLatency = std::clamp(m_store->integer("audio.tapLatency"), -200, 500); // as setTapLatency
         m_onsetSnap = m_store->boolean("audio.onsetSnap"); // KA5
     }
+    loadDisplayOptions();
     m_view.setSamplesPercent(zoom, false);
     m_horizontalZoom = std::clamp(zoom, 0, 100);
     m_view.setScale(application::audioScaleFromSlider(vertical));
@@ -1152,14 +1181,15 @@ bool AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, ap
     return committed;
 }
 
-// AudioBox::OnCommit: CommitChanges(true), so the next Line follows whatever
-// AUDIO_NEXT_LINE_ON_COMMIT says (legacy never reads it).
+// AudioBox::OnCommit: CommitChanges(true), to the next Line.
+// AU-next-line-on-commit: only while AUDIO_NEXT_LINE_ON_COMMIT is on (legacy
+// never read it); off, the Line stays active.
 void AudioController::commit()
 {
     if (tapBusy())
         return;
     emit focusRequested();
-    commitChanges(true, true, false);
+    commitChanges(!m_store || m_store->boolean("audio.nextLineOnCommit"), true, false);
 }
 
 // Legacy ChangeLine: nothing past either end; otherwise the shown Line
@@ -1605,6 +1635,7 @@ void AudioController::findOnsets()
     auto cancel = std::make_shared<std::atomic<bool>>(false);
     m_onsetCancel = cancel;
     ++m_onsetDetections;
+    emit findingOnsetsChanged();
     m_onsetWorker = std::thread([this, audio = m_box.sharedAudio(), cancel, key, serial = m_onsetsSerial] {
         std::optional<std::vector<int>> found;
         try {
@@ -1623,10 +1654,12 @@ void AudioController::findOnsets()
                 m_onsetWorker.join();
                 m_onsetCancel.reset();
                 m_onsetCache[key] = onsets;
-                if (serial != m_box.serial())
-                    return;
-                m_onsets = onsets;
-                emit onsetsChanged();
+                const bool current = serial == m_box.serial();
+                if (current)
+                    m_onsets = onsets;
+                emit findingOnsetsChanged();
+                if (current)
+                    emit onsetsChanged();
             },
             Qt::QueuedConnection);
     });
@@ -1638,7 +1671,8 @@ void AudioController::stopFindingOnsets()
         *m_onsetCancel = true;
     if (m_onsetWorker.joinable())
         m_onsetWorker.join();
-    m_onsetCancel.reset();
+    if (std::exchange(m_onsetCancel, nullptr))
+        emit findingOnsetsChanged();
 }
 
 void AudioController::setTapLatency(int ms)

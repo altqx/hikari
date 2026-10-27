@@ -1257,6 +1257,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
     m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::findingOnsetsChanged, this,
+                                  &Application::noticeOnsets);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
         if (m_templateEditor && !m_video->playing())
             m_templateEditor->hostChanged(); // KE2: an audio box opened or closed
@@ -3739,7 +3741,11 @@ QString Application::shiftTimes()
     // A3: the audio box's mark (legacy ChangeTimes' moveTimeOptions & 8 with ABox->hasMark)
     if (m_audio && m_audio->hasMark())
         context.audioMarkMs = m_audio->markMs();
-    const auto result = application::shiftTimes(*session, m_shiftTimes->settings(), context, actionLines(*session));
+    // "New times" lengths: the Conversion time per letter (legacy's
+    // CONVERT_TIME_PER_CHARACTER, SubsGridBase.cpp:439)
+    auto settings = m_shiftTimes->settings();
+    settings.timePerCharacter = m_settings->integer("convert.timePerCharacter");
+    const auto result = application::shiftTimes(*session, settings, context, actionLines(*session));
     m_editor->reloadFromSession();
     refreshViews();
     if (!result) {
