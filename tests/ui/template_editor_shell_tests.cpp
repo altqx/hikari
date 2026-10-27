@@ -616,10 +616,15 @@ private slots:
         const QString path = dir.filePath(QStringLiteral("fold.ass"));
         QFile f(path);
         QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
-        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n"
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\nWrapStyle: 0\n\n"
+                "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Romaji,Noto Sans,64,&H00FFFFFF,&H00FF8C3C,&H00301018,&H80000000,-1,0,0,0,100,100,0,0,1,3,0,8,10,"
+                "10,60,1\n\n"
                 "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-                "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\\k50}ki{\\k50}ra{\\k100}ri\n"
-                "Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,,{\\k100}yo{\\k100}ru\n");
+                "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,,{\\k50}ki{\\k50}ra{\\k100}ri\n"
+                "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,,{\\k100}yo{\\k100}ru\n");
         f.close();
         QVERIFY(openPath(path, false));
         QVERIFY(QMetaObject::invokeMethod(root(), "applyPreset", Q_ARG(QVariant, QStringLiteral("Karaoke"))));
@@ -627,7 +632,8 @@ private slots:
         QVERIFY(shell.foldGenerated());
         QVERIFY(editor().insertPreset(0));
         QSignalSpy done(&application->automation(), &app::AutomationShell::runCompleted);
-        QTRY_VERIFY_WITH_TIMEOUT(editor().apply(false), 20'000);
+        QTRY_VERIFY_WITH_TIMEOUT(editor().canApply(), 20'000);
+        QVERIFY(editor().apply(false));
         QVERIFY(done.wait(30'000));
         QVERIFY(done.first().at(0).toBool());
         std::set<core::LineId> generated;
