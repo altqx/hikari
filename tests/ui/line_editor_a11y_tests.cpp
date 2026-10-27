@@ -77,9 +77,10 @@ private slots:
         // LE2: no Time / Frames radios here (the Video panel's menu has them).
         QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show times")), qPrintable(tree));
         QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show frames")), qPrintable(tree));
-        // The counters read as their text (EditBox::UpdateChars).
-        expect(QAccessible::StaticText, "Wraps: 5/43");
-        expect(QAccessible::StaticText, "Characters per second: 5<=15");
+        // The counters read as their names and numbers (EditBox::UpdateChars,
+        // LE1-counters).
+        expect(QAccessible::StaticText, "Wraps 5/43");
+        expect(QAccessible::StaticText, "CPS 5/15");
     }
 };
 

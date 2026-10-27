@@ -83,8 +83,8 @@ struct HotkeyAction {
 // EDITBOX_PLACE_NEXT_RUN (3029, unbound), the VIDEO_TOOL_* commands (VT2,
 // 2022-2032, and VT3, 2033, a single key each in the Video window), AUDIO_TAP,
 // AUDIO_SPEED_DOWN and AUDIO_SPEED_UP (KA2, 1030 to 1032),
-// GLOBAL_CHECK_KARAOKE (KA7, 5172) and GLOBAL_AUTOMATION_REPEAT_LAST_RUN
-// (AD2, 5173).
+// GLOBAL_CHECK_KARAOKE (KA7, 5172), GLOBAL_AUTOMATION_REPEAT_LAST_RUN
+// (AD2, 5173) and GLOBAL_KANJI_TIMER (KA3, 5174).
 std::span<const HotkeyAction> hotkeyActions();
 // GetIdValue: 0 for an unknown symbol.
 int hotkeyIdOf(std::string_view symbol);

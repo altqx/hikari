@@ -1161,6 +1161,39 @@
    ]
   },
   {
+   "role": "margin-left",
+   "file": "margin-left.svg",
+   "label": "Left margin",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "margin-right",
+   "file": "margin-right.svg",
+   "label": "Right margin",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "margin-vertical",
+   "file": "margin-vertical.svg",
+   "label": "Vertical margin",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
    "role": "editor",
    "file": "editor.svg",
    "label": "Line editor",

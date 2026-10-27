@@ -3138,6 +3138,22 @@ private slots:
         QVERIFY(textOf(QStringLiteral("templatePreviewEmpty")).contains(QStringLiteral("problem")));
     }
 
+    // Before the first template there is nothing to preview, and nothing went
+    // wrong: the panel says the templates are still to come.
+    void noTemplatesYetIsNoProblem()
+    {
+        core::Document plain = loadFile(QStringLiteral("stock-tutorials.ass"));
+        plain.removeLinesIf([](const core::LineRecord &l) { return application::templateKindOf(l).has_value(); });
+        openDocument(std::move(plain), true);
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        showPanel();
+        QCOMPARE(editor->templateCount(), 0);
+        QTRY_VERIFY(item(QStringLiteral("templatePreviewEmpty"))->isVisible());
+        QTRY_VERIFY(textOf(QStringLiteral("templatePreviewEmpty")).startsWith(QStringLiteral("No templates yet")));
+        QVERIFY(!textOf(QStringLiteral("templatePreviewEmpty")).contains(QStringLiteral("problem")));
+    }
+
     // Markup in a Line's fields is text: as rich text an <img> would be
     // fetched (from a server, on Windows a share) before the user previews.
     void markupInTheFileIsShownAsText()

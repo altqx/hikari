@@ -310,6 +310,9 @@ const std::vector<SettingDefinition> &definitions()
         // KA5 (#280): Karaoke mode's syllable boundaries snap to vocal onsets
         // (KA5-onset-snap), off by default.
         {"audio.onsetSnap", "", Bool, Profile, Mapped, false, false},
+        // KA3 (#278): the Kanji timer's Suggest groupings (Aegisub's "Attempt
+        // to interpolate kanji", Tool/Kanji Timer/Interpolation), on by default.
+        {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other

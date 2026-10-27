@@ -1,0 +1,19 @@
+{
+  "name": "mecab",
+  "version-date": "2019-09-25",
+  "port-version": 100,
+  "description": "MeCab morphological analyser (Hikari-owned overlay: libmecab only, mmap, wide paths, static)",
+  "homepage": "https://taku910.github.io/mecab/",
+  "license": "BSD-3-Clause OR GPL-2.0-only OR LGPL-2.1-only",
+  "supports": "!uwp",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}

@@ -24,6 +24,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <functional>
 #include <memory>
 
 using namespace hikari;
@@ -200,7 +201,7 @@ private slots:
         auto *buttons = item("originalTextButtons");
         QTRY_VERIFY(buttons->isVisible());
         QCOMPARE(buttons->parentItem()->parentItem()->objectName(), QStringLiteral("dockToolbarSlot"));
-        QVERIFY(!item("translationButtons")->isVisible());
+        QVERIFY(!item("translationButtons")->property("active").toBool());
         for (const char *name : {"originalPasteAll", "originalPasteSelection", "originalCommentOut", "originalNotConfirmed",
                                  "originalMovingTags"})
             QVERIFY2(item(name)->isVisible() && !item(name)->property("text").toString().isEmpty(), name);
@@ -325,12 +326,13 @@ private slots:
         QTRY_VERIFY(!isOpen("originalDock"));
         QVERIFY(!originalInPanel());
         QTRY_VERIFY(item("lineText")->isVisible());
-        QVERIFY(item("translationButtons")->isVisible());
+        // LE1: on the tag strip, as icons or folded into its More menu.
+        QVERIFY(item("translationButtons")->property("active").toBool());
         QVERIFY(QMetaObject::invokeMethod(window(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock("originalDock")))));
         QTRY_VERIFY(isOpen("originalDock"));
         QVERIFY(!isFloating("originalDock"));
         QVERIFY(originalInPanel());
-        QVERIFY(!item("translationButtons")->isVisible());
+        QVERIFY(!item("translationButtons")->property("active").toBool());
         stop();
     }
 
@@ -827,6 +829,74 @@ private slots:
             QVERIFY(application->editor().placeRun(2, toi, toi + 3));
             QTest::qWait(400);
             QVERIFY(window()->grabWindow().save(out + QStringLiteral("/tags-placed-%1.png").arg(QLatin1String(theme))));
+            stop();
+        }
+    }
+
+    // #341, for the card's evidence: the Translated field and its runs for
+    // Originals Tags from original reads as libass does, each after the
+    // translator's steps (tm2-<case>.png; HIKARI_SURFACE_SHOT_DIR as above).
+    void tagsFromOriginalLibassScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        struct Case {
+            const char *name, *original, *translation;
+            std::function<void(ui::LineEditorController &)> steps;
+        };
+        const Case cases[] = {
+            {"fsp-no-digits", "a {\\fspabc}b{\\fsp0} c", "x b y", {}},
+            {"reset-missing-style", "a {\\rGone}b{\\r} c", "x b y", {}},
+            {"spaced-transform", "a {\\ t(\\fs20)\\ t(\\bord2)}B{\\r} c", "x Y z",
+             [](ui::LineEditorController &e) { e.placeRun(1, 2, 3); }},
+            {"adjacent-transforms", "a{\\t(\\fs30)}A{\\t(\\bord2)}B{\\r}c", "XY",
+             [](ui::LineEditorController &e) {
+                 e.placeRun(1, 0, 1);
+                 e.placeRun(2, 1, 2);
+             }},
+            {"reset-between-runs", "a{\\fs30}b{\\b1}c{\\fs20}d{\\r}z", "AB",
+             [](ui::LineEditorController &e) {
+                 e.placeRun(1, 0, 1);
+                 e.placeRun(2, 1, 2);
+                 e.applyTagButton(1, QStringLiteral("{\\r}"), 2, 1, 1);
+                 e.setShowTags(true);
+             }},
+        };
+        for (const auto &c : cases) {
+            start();
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
+            QFile f(dir.filePath(QStringLiteral("tm2-%1.ass").arg(QLatin1String(c.name))));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: TLMode Original\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
+            f.write(QStringLiteral("Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,%1\n"
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,%2\n")
+                        .arg(QLatin1String(c.original), QLatin1String(c.translation))
+                        .toUtf8());
+            f.close();
+            QVERIFY(application->openFile(f.fileName()));
+            QTRY_VERIFY(isOpen("originalDock"));
+            applyPreset("Translation");
+            application->editor().setShowTags(false);
+            QTRY_VERIFY(application->editor().moveTags());
+            item("translationText")->forceActiveFocus();
+            if (c.steps)
+                c.steps(application->editor());
+            QTest::qWait(400);
+            // The field with the run strip beside it.
+            const auto scene = [&](const char *name) {
+                auto *it = item(name);
+                return QRectF(it->mapToScene(QPointF()), it->size());
+            };
+            QRectF area = scene("translationText").united(scene("runStrip")).adjusted(-8, -8, 8, 8);
+            const qreal ratio = window()->devicePixelRatio();
+            area = QRectF(area.topLeft() * ratio, area.size() * ratio);
+            QVERIFY(window()->grabWindow().copy(area.toAlignedRect()).save(
+                out + QStringLiteral("/tm2-%1.png").arg(QLatin1String(c.name))));
             stop();
         }
     }
