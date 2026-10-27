@@ -1,16 +1,44 @@
-# HikariSub
+<p align="center">
+  <img src="packaging/linux/icons/hicolor/128x128/apps/hikarisub.png" width="96" alt="">
+</p>
 
-HikariSub is a fork of [Kainote](https://github.com/bjakja/Kainote) by Marcin Drob, continued as a separate project from Kainote commit `6e1bbb15`. It is distributed under the same GNU GPL v3 license, and the original copyright notices are kept in the source.
+<h1 align="center">HikariSub legacy</h1>
 
-HikariSub is a subtitle editor and player for everything from quick fixes to full typesetting. It has a built-in video player, with **FFMS2** for frame-accurate typesetting and timing, **DirectShow** for ordinary playback on Windows, and **GStreamer** on Linux.
+<p align="center">A subtitle editor and player for everything from quick fixes to full typesetting.</p>
 
-## Why a fork?
+<img src="docs/readme/hero.webp" alt="HikariSub legacy with a karaoke music video: the video with typeset karaoke, the audio waveform, the line editor and the subtitle grid">
+<p align="center"><sub>Subtitles: Jibrill</sub></p>
 
-My work on Kainote was housekeeping, not new features: I updated every dependency to a current release, reworked the build and CI workflow, and refactored and optimised existing code. That changed the project more than the original maintainer wanted, and it wasn't the direction they had in mind for Kainote. We disagreed about it and decided to part ways. HikariSub is where that work continues.
-
-HikariSub will stay actively maintained rather than go dormant, and its dependencies will be kept up to date. It will also gain new features I want that Kainote doesn't have.
+This is HikariSub legacy, version 0.0.x, built on wxWidgets. It is still maintained. A rewrite in Qt (0.1) is on the [`qt`](https://github.com/altqx/hikari/tree/qt) branch. Legacy will offer it as an update, and moving is your choice ([ADR-0021](https://github.com/altqx/hikari/blob/qt/docs/adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md)).
 
 ## Features
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/readme/vector-clip.webp" alt="A vector clip drawn on the video around part of a line">
+      <p>Visual typesetting on the video: position, move, scale, rotation, clips and drawings.</p>
+    </td>
+    <td width="50%">
+      <img src="docs/readme/translation.webp" alt="Translator mode: the original karaoke line above the translation being typed">
+      <p>Translator mode keeps the original text above your translation.</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="docs/readme/styles.webp" alt="The style manager and style editor with a live preview">
+      <p>A style manager with reusable catalogs and a live preview.</p>
+    </td>
+    <td>
+      <img src="docs/readme/spectrum.webp" alt="The audio spectrum above the line editor">
+      <p>Waveform or spectrum, with karaoke syllables edited on the audio.</p>
+    </td>
+  </tr>
+</table>
+<p align="center"><sub>Subtitles: Jibrill</sub></p>
+
+<details>
+<summary><b>Every feature</b></summary>
 
 ### Formats
 
@@ -30,7 +58,6 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 * **Themes**: every colour in the interface can be themed. The bundled themes can be copied and edited in the settings.
 * **Localisation**: the interface is available in English, Polish, Korean, Thai and Tamil.
 * **Windows integration**: registers file associations for subtitle types.
-* **Update check**: when the program starts, once a day at most, it asks GitHub (api.github.com) for the list of HikariSub releases and says when a newer one is out. If GitHub could not be reached, it asks again at a start an hour later. What happens next depends on how HikariSub was installed. The Windows installer, the AppImage, and the deb and rpm packages download the new version from github.com in the background, check it against the SHA-256 the release lists, and install it when you choose Restart now or the next time you quit (an AppImage at the next start after that quit, so that a version that cannot start is put back). Before it installs, the part that installs checks the download once more by itself against the release's `SHA256SUMS` on GitHub, so nothing another program put in your download folder runs with administrator rights: on Windows that is the installed HikariSub, which an all-users installation starts through the administrator prompt, only when its folder cannot be changed without administrator rights, and which then runs the installer (if you start HikariSub while that installer runs, it starts when the installer is done); on Linux it is the deb and rpm packages' update helper, which asks for your password through the system's prompt (pkexec) and installs the package only if it is that release's own file. The AUR packages say a new version is out (hikarisub-stable-bin only for stable releases, hikarisub-beta-bin for release candidates too); update with your AUR helper or pacman as usual. A portable copy (zip or tar.gz) says a new version is out and opens the release page. GitHub sees your IP address and "HikariSub" as the user agent, and nothing about the build. The check is on by default; turn it off in File > Settings, on the Editor page, under Updates, where turning off "Install updates automatically" makes an installed copy only say a new version is out, as a portable copy does. Help > Check for updates checks at any time.
 
 ### Subtitle grid
 
@@ -100,469 +127,57 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 ### Automation
 
 * **Automation 4**: runs Automation 4 Lua scripts on LuaJIT, ships the Aegisub automation library, and works with [DependencyControl](https://github.com/TypesettingTools/DependencyControl).
-* **Script management**: autoloads scripts, maps macro hotkeys, reruns the last script, and has a compatibility mode for older scripts.
-* **Your own scripts**: the portable package keeps everything in its `Automation` folder. An installed copy cannot write to its program folder, so it keeps what scripts write (`?user`, `?local` and `?temp`, logs and autosaves) in `%LOCALAPPDATA%\HikariSub\Legacy\Automation` on Windows or `~/.local/share/HikariSub/Legacy/Automation` on Linux. It autoloads scripts from `automation/Autoload` there, and from DependencyControl's `automation/autoload`, as well as the shipped ones; a script there replaces a shipped script of the same name.
+* **Script management**: autoloads scripts, maps macro hotkeys, reruns the last script, and has a compatibility mode for older scripts. An installed copy keeps your own scripts in its data folder ([docs/install.md](docs/install.md#where-your-scripts-keep-their-files)).
 
 ### Platforms
 
 * **Windows x64**: the full-featured build, including DirectShow, DirectSound and Direct3D 9.
 * **Linux**: built on wxGTK and GStreamer.
 
-## Installing on Windows
+</details>
 
-Each release has two Windows downloads, for Windows 10 version 1809 or later, x64:
+## Download
 
-* **`HikariSub-<version>-windows-x64-setup.exe`**, the installer. It asks whether to install for **Just me** (in `%LOCALAPPDATA%\Programs\HikariSub`, no administrator rights needed) or for **All users** (in `Program Files`, after an administrator prompt). It adds a Start menu entry and, unless you untick it, registers HikariSub for `.ass`, `.ssa`, `.srt` and `.sub` files, without taking a file type that another program already opens. A desktop shortcut is optional. Running a newer installer updates the existing installation in place, for the same choice of users; to switch between Just me and All users, uninstall first. Uninstall from Settings > Apps; it removes the program files, shortcuts and file types, and keeps your settings and any files you added to the folder. An all-users uninstall started without administrator rights asks for them only when the installation folder cannot be changed without them; otherwise run the uninstaller as administrator. The installer is not code-signed, so Windows SmartScreen may ask you to confirm it ("More info", then "Run anyway").
-* **`HikariSub-<version>-windows-x64.zip`**, the portable package. Extract it anywhere and run `HikariSub.exe`; it keeps its settings beside the executable and installs nothing.
+Get the latest release from the [releases page](https://github.com/altqx/hikari/releases):
 
-The installer also runs unattended:
-
-| Switch | Meaning |
+| System | Download |
 | --- | --- |
-| `/S` | silent: no pages or messages |
-| `/CURRENTUSER`, `/ALLUSERS` | install for you alone or for all users (the latter from an elevated prompt). Without either, a silent install updates the existing installation, or installs for you alone |
-| `/COMPONENTS=assoc,desktop` | a new silent install's options: `assoc` registers the file types (the default), `desktop` adds a desktop shortcut; `/COMPONENTS=` selects neither |
-| `/D=<folder>` | the installation folder; it must come last and is not quoted. For all users it must be a new folder directly in Program Files, or the folder of the existing all-users installation |
+| Windows 10 (1809) or 11, x64 | `HikariSub-<version>-windows-x64-setup.exe` installer or `.zip` portable |
+| Linux x86_64, glibc 2.35 or later | `.AppImage`, `.deb`, `.rpm` or `.tar.gz` portable |
+| Arch Linux | AUR: `hikarisub-stable-bin` (stable releases) or `hikarisub-beta-bin` (release candidates too) |
 
-Its exit code is 0 on success, 1 when cancelled, 2 on another failure, 3 when HikariSub is still running, 4 when administrator rights are needed or were refused, 5 when a newer version is already installed, and 6 when HikariSub is installed for the other choice of users. The uninstaller, `Uninstall HikariSub.exe` in the installation folder, takes `/S` too.
+The installer is not code-signed, so Windows SmartScreen may ask you to confirm it. [docs/install.md](docs/install.md) covers each package, the installer's silent switches and its exit codes.
 
-## Installing on Linux
+## Updates and privacy
 
-Every release on the [releases page](https://github.com/altqx/hikari/releases)
-has these Linux x86_64 packages. All of them need glibc 2.35 or newer: Ubuntu
-22.04, Debian 12, Fedora, openSUSE Tumbleweed, Arch, Linux Mint 21 and later.
+At most once a day, HikariSub asks GitHub whether a newer release is out. The installer, AppImage, deb and rpm then download it, check its SHA-256 and install it when you choose Restart now or quit. The AUR packages and portable copies only tell you. Turn the check off in File > Settings, on the Editor page, under Updates.
 
-* **AppImage** (`HikariSub-<version>-linux-x86_64.AppImage`): one file with
-  everything inside, GTK, GLib and GStreamer included, so it runs on any of
-  those distributions with nothing else to install. Make it executable and run
-  it:
+<details>
+<summary>What is sent and how updates install</summary>
 
-  ```bash
-  chmod +x HikariSub-*-linux-x86_64.AppImage
-  ./HikariSub-*-linux-x86_64.AppImage
-  ```
+- The check asks `api.github.com` for the list of HikariSub releases when the program starts. If GitHub could not be reached, it asks again at a start an hour later. GitHub sees your IP address and "HikariSub" as the user agent, and nothing about the build.
+- Before it installs, the part that installs checks the download again by itself against the release's `SHA256SUMS` on GitHub, so nothing another program put in your download folder runs with administrator rights:
+  - On Windows that is the installed HikariSub. An all-users installation starts it through the administrator prompt, only when its folder cannot be changed without administrator rights, and it then runs the installer. If you start HikariSub while that installer runs, it starts when the installer is done.
+  - On Linux it is the deb and rpm packages' update helper, which asks for your password through the system's prompt (pkexec) and installs the package only if it is that release's own file.
+- An AppImage installs at the next start after that quit, so that a version that cannot start is put back.
+- `hikarisub-stable-bin` says when a stable release is out, `hikarisub-beta-bin` also for release candidates; update with your AUR helper or pacman as usual.
+- A portable copy (zip or tar.gz) says a new version is out and opens the release page.
+- Turning off "Install updates automatically" makes an installed copy only say a new version is out, as a portable copy does. Help > Check for updates checks at any time.
 
-  It needs FUSE, but not the old `libfuse2`. Where FUSE is missing (in a
-  container, for example), run it with `--appimage-extract-and-run`. It adds
-  no menu entry of its own; AppImageLauncher or Gear Lever can add one.
-* **Debian, Ubuntu and Mint** (`hikarisub-<version>-linux-amd64.deb`):
+</details>
 
-  ```bash
-  sudo apt install ./hikarisub-*-linux-amd64.deb
-  ```
-
-* **Fedora** and **openSUSE** (`hikarisub-<version>-linux-x86_64.rpm`):
-
-  ```bash
-  sudo dnf install --nogpgcheck ./hikarisub-*-linux-x86_64.rpm
-  sudo zypper install --allow-unsigned-rpm ./hikarisub-*-linux-x86_64.rpm
-  ```
-
-  On Fedora and openSUSE, H.264, AAC and other patented formats play only
-  with the full codec sets from RPM Fusion or Packman; the FFMS2 path used for
-  typesetting and timing decodes them either way.
-* **Arch Linux**: install one of the two AUR packages with an AUR helper, and
-  update it as any other package (`yay -Syu`):
-  * `hikarisub-stable-bin` (`yay -S hikarisub-stable-bin`) carries stable
-    releases only;
-  * `hikarisub-beta-bin` (`yay -S hikarisub-beta-bin`) carries every release,
-    release candidates included, so it always has the newest one.
-
-  They conflict with each other: install one.
-* **Portable** (`hikarisub-<version>-linux-x86_64.tar.gz`): extract it
-  anywhere and run `./hikarisub`. It uses the system's GTK and GStreamer, so
-  install those first (see "Package names on other Linux distributions"
-  below), and run `./install-desktop-integration.sh` for a menu entry.
-
-The deb, rpm and AUR packages install HikariSub in `/opt/hikarisub`, with
-`hikarisub` on the `PATH`, the menu entry, file types and icons, and pull in
-everything it needs, the GStreamer plugins included. Removing the package
-leaves your settings in your home directory alone.
-
-When a new release is out, HikariSub tells you. The AppImage replaces itself,
-and the deb and rpm download the new package and install it after the
-system's password prompt. The AUR packages only tell you; update with your
-AUR helper as usual. `hikarisub-stable-bin` is told about stable releases
-only and `hikarisub-beta-bin` about release candidates too, so the "Stable
-versions only" option is not shown for them.
-
-## Building from Source
-
-HikariSub currently has two supported source-build paths:
-
-- **Windows**: the upstream Visual Studio solution (`HikariSub.sln`). This is the full-featured build that uses DirectShow, DirectSound, Direct3D 9/D3DX9, and the Windows COM/Shell APIs.
-- **Linux**: This build uses wxGTK and system packages where possible. Some Windows-only runtime backends are still compatibility layers or partial ports, but the project can be configured, compiled, linked, and smoke-tested on Linux.
-
-Both start from a recursive clone -- most third-party code is a git submodule,
-and wxWidgets keeps its own dependencies in nested submodules:
+## Build from source
 
 ```bash
 git clone --recurse-submodules https://github.com/altqx/hikari.git
-cd HikariSub
 ```
 
----
+Windows builds with Visual Studio 2022 or newer from `HikariSub.sln` after `Thirdparty\bootstrap.ps1`. Linux builds with CMake against system packages and a pinned wxWidgets. [docs/build.md](docs/build.md) has the steps, the dependencies for each distribution and the AUR publishing notes.
 
-### Windows build
+## Why a fork?
 
-```powershell
-pwsh -File Thirdparty\bootstrap.ps1
-msbuild HikariSub.sln /m /p:Configuration=Release /p:Platform=x64
-```
+HikariSub is a fork of [Kainote](https://github.com/bjakja/Kainote) by Marcin Drob, continued from Kainote commit `6e1bbb15`. My work on Kainote was housekeeping: current dependencies, a new build and CI, and refactoring. That changed the project more than its maintainer wanted, so we parted ways, and HikariSub is where that work continues.
 
-`HikariSub.exe` is written to `x64\Release`.
+## License
 
-If the clone was not recursive, run `git submodule update --init --recursive`
-first -- `bootstrap.ps1` does this too, but a non-recursive checkout otherwise
-fails inside the wxWidgets build on empty directories.
-
-#### Required tools
-
-| Tool | Why |
-|---|---|
-| **Visual Studio 2022 or newer** | Desktop development with C++, Windows 10/11 SDK, and MFC for C++ (the VSFilter renderer needs it). The projects build with whichever MSVC toolset the installed Visual Studio defaults to. |
-| **NASM** | Assembly in libass and LuaJIT. Must be on `PATH` (`nasm -v`) |
-| **YASM** | Assembly in the VirtualDub libraries the VSFilter renderer builds on. Must be on `PATH` (`yasm --version`) |
-| **Git** | Submodules, and the commit recorded in the title bar |
-| **DirectX SDK (June 2010)** | D3DX9. Expected at `C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)` |
-
-Optionally **gettext** for `msgfmt` and **Python 3**, which together compile
-`Locale\*.po` into the `Locale\<lang>\LC_MESSAGES\hikarisub.mo` files the program
-loads. Without either the step prints a notice and is skipped, and the build
-has no translations.
-
-#### What bootstrap.ps1 does
-
-1. `git submodule update --init --recursive`
-2. `hydrate.ps1` — downloads the dependencies that are archives rather than
-   submodules (FFmpeg, Boost, ICU, fribidi, zlib, curl), verifying each
-   archive's SHA-256 against [`Thirdparty/dependencies.json`](Thirdparty/dependencies.json)
-   and refusing to continue on a mismatch
-3. `build-wxwidgets.ps1` — builds wxWidgets 3.3.4 using `wx_vc17.sln`, the
-   solution wxWidgets itself ships
-4. `gen-gitparams.ps1` — writes `HikariSub/gitparams.h`
-
-Every step is re-runnable: hydrate skips what is already extracted, and the
-wxWidgets build is incremental. Pass `-Force` to re-extract, or
-`-SkipSubmodules` / `-SkipWxWidgets` to skip a step.
-
-For a Debug build, wxWidgets needs its Debug libraries too:
-
-```powershell
-pwsh -File Thirdparty\bootstrap.ps1 -Configuration Debug
-msbuild HikariSub.sln /m /p:Configuration=Debug /p:Platform=x64
-```
-
-#### Where the dependencies come from
-
-Most are git submodules pinned to a release tag; the rest are hash-pinned
-archives. [`Thirdparty/README.md`](Thirdparty/README.md) has the full table and
-explains why each one is where it is.
-
-FFmpeg is a prebuilt developer package — headers, MSVC import libraries and
-runtime DLLs. Building it from source previously required MSYS2 and a
-from-scratch FFmpeg compile; that is no longer part of the build. The DLLs are
-copied next to `HikariSub.exe` by a post-build step, so they must ship with the
-application.
-
-> **x64 only.** The solution has no 32-bit (`Win32`) configurations: they
-> were never shipped or built in CI, and their libass had no assembly.
-
-#### If the build cannot find something
-
-Check that `bootstrap.ps1` completed — most failures are a step that was
-skipped or a submodule that was not checked out. Beyond that, the include and
-library directories live in `HikariSub\HikariSub.vcxproj` under
-**C/C++ > General > Additional Include Directories** and
-**Linker > General > Additional Library Directories**.
-
----
-
-### Linux build
-
-The Linux build uses CMake and system packages for most dependencies. wxGTK is built from the same pinned wxWidgets 3.3.4 submodule as the Windows build, and libass from the same `Thirdparty/libass` submodule, the altqx fork, built as a shared library the package bundles. It requires GCC, FFMS2, FFmpeg, Hunspell, uchardet, libcurl, ICU, Boost, GStreamer 1.x, and OpenGL development packages, plus what libass needs: FreeType, FriBidi, HarfBuzz, Fontconfig, NASM and autotools.
-
-#### 1. Install dependencies on Ubuntu/Debian
-
-```bash
-sudo apt update
-sudo apt install --no-install-recommends -y \
-  build-essential \
-  cmake \
-  ninja-build \
-  gzip \
-  tar \
-  git \
-  pkg-config \
-  libgtk-3-dev \
-  libfreetype-dev \
-  libfribidi-dev \
-  libharfbuzz-dev \
-  libfontconfig-dev \
-  nasm \
-  autoconf \
-  automake \
-  libtool \
-  libffms2-dev \
-  libhunspell-dev \
-  hunspell-en-us \
-  libuchardet-dev \
-  libcurl4-openssl-dev \
-  libicu-dev \
-  libboost-filesystem-dev \
-  libboost-locale-dev \
-  libboost-regex-dev \
-  libboost-system-dev \
-  libavformat-dev \
-  libavcodec-dev \
-  libavutil-dev \
-  libgl1-mesa-dev \
-  libgtk-3-dev \
-  libgstreamer1.0-dev \
-  libgstreamer-plugins-base1.0-dev \
-  gstreamer1.0-plugins-base \
-  gstreamer1.0-plugins-good \
-  gstreamer1.0-pulseaudio \
-  gettext
-```
-
-GStreamer backs both video and audio playback on Linux, so its runtime plugins
-must be present, not just the `-dev` headers. The `-base` plugins provide
-`appsrc`, `audioconvert`, `audioresample` and `playbin`; the `-good` plugins
-provide `autoaudiosink`; and an audio sink such as `gstreamer1.0-pulseaudio`
-(or `gstreamer1.0-pipewire` / `gstreamer1.0-alsa`) is needed to actually output
-sound. Without these plugins the audio/video pipeline cannot be created.
-
-Optional but useful for headless smoke tests:
-
-```bash
-sudo apt install --no-install-recommends -y xvfb
-```
-
-#### 2. Package names on other Linux distributions
-
-The exact package names vary by distribution. Install the equivalent development packages for:
-
-- C and C++ compiler toolchain (`gcc`, `g++`, `make`)
-- CMake 3.21 or newer
-- GNU tar and gzip (used by the reproducible Linux archive target)
-- pkg-config
-- GTK 3 and OpenGL development packages for the pinned wxWidgets 3.3.4 build
-- FreeType, FriBidi, HarfBuzz and Fontconfig, plus NASM, autoconf, automake and
-  libtool, for the libass fork (not the distribution's libass)
-- FFMS2
-- Hunspell
-- A Hunspell dictionary (the runtime copy step looks for `en_US.aff` and `en_US.dic`)
-- GNU gettext (`msgfmt`) for compiling translations
-- Python 3, which drives the translation compile step (`tools/compile_catalogs.py`)
-- uchardet
-- libcurl
-- ICU (`icu-uc` and `icu-i18n` pkg-config modules)
-- Boost filesystem, locale, regex, and system
-- FFmpeg development libraries: libavformat, libavcodec, libavutil
-- OpenGL/Mesa development headers
-- GTK 3 development headers
-- GStreamer 1.x: the core (`gstreamer-1.0`) plus the `-base` libraries
-  (`gstreamer-app-1.0`, `gstreamer-audio-1.0`, `gstreamer-video-1.0`), and at
-  runtime the base and good plugin sets plus an audio sink (pulse/pipewire/alsa)
-
-For Fedora-like systems, the package set is approximately:
-
-```bash
-sudo dnf install \
-  gcc gcc-c++ make cmake ninja-build gzip tar git pkgconf-pkg-config \
-  freetype-devel fribidi-devel harfbuzz-devel fontconfig-devel nasm autoconf automake libtool \
-  ffms2-devel hunspell-devel hunspell-en-US uchardet-devel \
-  libcurl-devel libicu-devel boost-devel ffmpeg-devel mesa-libGL-devel gtk3-devel \
-  gstreamer1-devel gstreamer1-plugins-base-devel \
-  gstreamer1-plugins-base gstreamer1-plugins-good gettext
-```
-
-For Arch-like systems, the package set is approximately:
-
-```bash
-sudo pacman -S --needed \
-  base-devel cmake ninja gzip tar git pkgconf freetype2 fribidi harfbuzz fontconfig nasm ffms2 \
-  hunspell hunspell-en_us uchardet curl icu boost ffmpeg mesa gtk3 \
-  gstreamer gst-plugins-base gst-plugins-good gettext
-```
-
-LuaJIT is not taken from the distribution. The build compiles the copy in `Thirdparty/luajit` and `Thirdparty/LuaJIT` with GNU make and links it statically, with the same options as the Windows build: the Lua 5.2 extensions on (`LUAJIT_ENABLE_LUA52COMPAT`: `table.pack`, `__pairs`, `__ipairs` and others, which DependencyControl's Functional, ASSFoundation and many other automation libraries use) and `string.buffer` off (`LUAJIT_DISABLE_BUFFER`). Distribution LuaJIT packages are built without the Lua 5.2 extensions.
-
-#### 3. Verify dependency discovery
-
-Before configuring HikariSub, confirm that pkg-config can find the required libraries:
-
-```bash
-pkg-config --modversion \
-  ffms2 \
-  hunspell \
-  uchardet \
-  libcurl \
-  icu-uc \
-  icu-i18n \
-  libavformat \
-  libavcodec \
-  libavutil \
-  gstreamer-1.0 \
-  gstreamer-video-1.0 \
-  gstreamer-audio-1.0 \
-  gstreamer-app-1.0
-```
-
-Build wxWidgets from the pinned submodule, then verify it. The script first
-applies HikariSub's wxGTK fixes from `Thirdparty/wxWidgets-patches/` to the
-submodule (see `Thirdparty/PATCHES.md`):
-
-```bash
-Thirdparty/build-wxwidgets-linux.sh
-build-wx-linux/prefix/bin/wx-config --version
-build-wx-linux/prefix/bin/wx-config --libs core,base,adv,aui,html,xml,gl,stc,net
-```
-
-The version must be 3.3.4. HikariSub's CMake configure uses this private `wx-config` by default and rejects a different wxWidgets version. If a command fails, install the missing `-dev`/`-devel` package or adjust `PKG_CONFIG_PATH` so that pkg-config can locate the corresponding `.pc` file.
-
-For a Debug build, run `Thirdparty/build-wxwidgets-linux.sh --debug` and
-configure HikariSub with `-DCMAKE_BUILD_TYPE=Debug`. The Debug build uses its
-own wxWidgets libraries under `build-wx-linux-debug/prefix`.
-
-Build libass from the `Thirdparty/libass` submodule, the altqx fork the Windows
-build uses too:
-
-```bash
-Thirdparty/build-libass-linux.sh
-```
-
-It installs the shared library into `build-libass-linux/prefix`, where the
-configure step requires it (`-DHIKARISUB_LIBASS_PREFIX=` names another prefix).
-The configure step rejects a libass without the fork's API, such as the
-distribution's, and the package bundles the fork's `libass.so.9`.
-
-#### 4. Configure and build
-
-```bash
-cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
-cmake --build build-linux -j$(nproc)
-```
-
-The executable is created at:
-
-```text
-build-linux/hikarisub
-```
-
-To create a clean Linux runtime archive after building:
-
-```bash
-cmake --build build-linux --target hikarisub_linux_package
-```
-
-The archive and its SHA-256 file are written under `build-linux/dist/`. The
-package target uses an explicit allowlist: it includes the executable,
-manifest-recorded runtime libraries, freshly compiled translations, bitmap
-resources, the bundled Automation tree with DependencyControl's native modules
-(`libBadMutex.so`, `libPreciseTimer.so` and `libDownloadManager.so` under
-`Automation/automation/Include/BM`, `PT` and `DM`), the project license, and the
-configured English dictionary when one is available. It deliberately excludes CMake internals and any Config,
-Automation, or Themes files created by local runs. Host graphics/windowing
-libraries, Fontconfig, GLib, and GStreamer with its plugins remain system
-requirements; this archive is not a universal AppImage.
-
-The package also carries `libSubInspector.so`, which ASSFoundation scripts use
-to measure rendered lines. To check that the automation's `Inspector.moon`
-loads it and gets bounds from it (needs `luajit` and a font), extract the
-archive and run:
-
-```bash
-tar -xzf build-linux/dist/hikarisub-linux-x86_64.tar.gz -C /tmp
-tests/subinspector/check-package.sh /tmp/hikarisub-linux-x86_64
-```
-
-#### 5. Run HikariSub
-
-On a normal desktop session:
-
-```bash
-./build-linux/hikarisub
-```
-
-For a headless smoke test, use Xvfb and a timeout:
-
-```bash
-timeout 8s xvfb-run -a ./build-linux/hikarisub
-```
-
-Exit code `124` from the command above is expected when `timeout` stops an otherwise running GUI application after 8 seconds.
-
-#### 6. Clean or rebuild
-
-To rebuild incrementally:
-
-```bash
-cmake --build build-linux -j$(nproc)
-```
-
-To force a clean reconfigure:
-
-```bash
-rm -rf build-linux
-cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
-cmake --build build-linux -j$(nproc)
-```
-
-#### 7. Current Linux runtime notes
-
-On Linux the build behaves the same as the Windows build except for the following.
-
-Media backends (Windows uses DirectShow / DirectSound / Direct3D):
-
-- General video playback uses **GStreamer** in place of DirectShow: `playbin`
-  decodes the file and an `appsink` hands BGRA frames to the app, which
-  composites the libass subtitles and progress bar and presents them through the
-  shared wxWidgets paint path. The frame-accurate FFMS2 path used for
-  typesetting, timing, and visual editing is unchanged.
-- Audio plays through **GStreamer** (`appsrc → audioconvert → audioresample →
-  autoaudiosink`); the playback position is read from the pipeline, so it
-  follows the audio that is heard. There is no DirectSound path.
-- GStreamer discovers plugins from the runtime system registry and standard
-  plugin paths. The base and good plugin sets (and an audio sink) must be
-  installed on the machine that runs HikariSub.
-
-Other Linux differences:
-
-- Move-to-trash uses freedesktop `gio trash`, so the `gio` tool (glib2) must be present at runtime; if it is missing, deleting a loaded video is a no-op instead of an unrecoverable hard delete.
-- The file-association `("Skojarzenia")` options tab is not shown. On Linux associations
-  are declared by the `.desktop` file rather than set per extension at runtime. Run
-  `./install-desktop-integration.sh` from the extracted archive to register the menu
-  entry, icons and file types under `~/.local/share`; `--uninstall` removes them. A
-  prefix install (`cmake --install`) installs the same data, but not the executable:
-  HikariSub still locates its resources relative to the binary, so it has to run from its
-  own directory.
-
-Under Wayland specifically (these work normally on X11):
-
-- Cursor-anchored dialogs (colour picker, font/style/hotkey dialogs, etc.) open centred instead of at the pointer a Wayland client cannot position its own windows.
-- "Fullscreen on a specific monitor" falls back to fullscreen on the current output.
-- Auto-pause-on-minimize and the B-key minimize do nothing a Wayland client cannot minimize itself.
-- The screen-pixel colour eyedropper is unavailable Wayland forbids reading pixels outside the app's own surface.
-
-## Publishing to the AUR (maintainers)
-
-The release job publishes each release to the AUR: `hikarisub-beta-bin` always,
-`hikarisub-stable-bin` too for a stable version. It needs an AUR account whose
-SSH key is the repository secret `AUR_SSH_PRIVATE_KEY`. Without one, or when the
-AUR refuses the key, the release still comes out and the job only warns. To
-publish later:
-
-1. Register at <https://aur.archlinux.org/register> and add the public key
-   (`~/.ssh/aur_ed25519.pub`) under My Account, SSH Public Key.
-2. Run the AUR publish workflow for the newest release, for example
-   `gh workflow run aur-publish.yml -f tag=v0.0.2-rc.1` (add `-f dry_run=true`
-   to see the commits without pushing them).
-
-It takes the release's tar.gz from GitHub, checks it against the release's
-`SHA256SUMS`, builds and installs each package in an Arch container, and pushes
-it. It refuses an older tag when a newer release of the same channel exists, and
-a version lower than the one on the AUR. The packages follow legacy until the
-repository variable `HIKARISUB_OFFER_QT_TO_LEGACY` is `true`, then the Qt
-rewrite.
+GNU GPL v3, the same as Kainote, see [LICENSE](LICENSE). The original copyright notices are kept in the source.
