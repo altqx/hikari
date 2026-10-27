@@ -37,5 +37,6 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 | 5172 | `GLOBAL_CHECK_KARAOKE` Check karaoke (the rewrite's own command, KA7) | — | none: opens the Karaoke check window; Subtitles > "Check karaoke" | `shell_tests`, `hotkeys_tests` |
 | 5173 | `GLOBAL_AUTOMATION_REPEAT_LAST_RUN` Repeat last run (the rewrite's own command, AD2-repeat-last-run) | — | none: runs the last macro again with the answers given last time, without its dialogs when they are unchanged (questions, dialogs with nothing to fill in, are asked again); Automation > "Repeat last run" and the Automation panel | `shell_tests`, `hotkeys_tests` |
 | 5174 | `GLOBAL_KANJI_TIMER` Kanji timer (the rewrite's own command, KA3-window) | — | none: opens the Kanji timer window; Subtitles > "Kanji timer…" | `shell_tests`, `hotkeys_tests` |
+| 5176 | `GLOBAL_GETTING_STARTED` Getting started (the rewrite's own command, FR1) | — | none: opens the Getting started window; Help > "Getting started" | `shell_tests`, `hotkeys_tests` |
 
 A "Not yet" row is unfinished, not dropped: each is assigned to the card or surface named.

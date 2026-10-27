@@ -275,6 +275,35 @@ bool SettingsImportController::importChosen()
     return false;
 }
 
+std::map<std::string, application::SettingValue, std::less<>> SettingsImportController::chosenValues() const
+{
+    if (!m_store || !m_plan)
+        return {};
+    return si::applyPlan(*m_plan, m_chosen, m_store->destination()).values;
+}
+
+bool SettingsImportController::importChosenBut(const std::set<std::string, std::less<>> &skip)
+{
+    if (!m_store || !m_plan)
+        return false;
+    const auto chosen = m_chosen;
+    rebuild();
+    m_chosen.clear();
+    for (const auto &id : chosen)
+        if (const si::PlanRow *row = m_plan->row(id); row && row->selectable && !skip.contains(row->destination))
+            m_chosen.insert(row->id);
+    emit planChanged();
+    emit chosenChanged();
+    if (m_chosen.empty() || importChosen())
+        return true;
+    // Not staged: the review shows the user's choices again.
+    for (const auto &id : chosen)
+        if (const si::PlanRow *row = m_plan ? m_plan->row(id) : nullptr; row && row->selectable)
+            m_chosen.insert(row->id);
+    emit chosenChanged();
+    return false;
+}
+
 QStringList SettingsImportController::rollbackEdits() const
 {
     return m_store ? m_store->editsSinceActivation() : QStringList();

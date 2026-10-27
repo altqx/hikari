@@ -217,6 +217,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         options.userFolderMove = userFolder.moveIn(oldFolders);
     options.userFolderSeed = userFolder.seed(bundledFolder());
     options.userFolder = userFolder.root();
+    options.gettingStarted = true; // FR1: the first start opens Getting started
     // The settings registry (O1).
     options.settingsFile = userFolder.settingsFile();
     options.recoveryDir = userFolder.recovery();
