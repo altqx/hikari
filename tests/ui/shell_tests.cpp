@@ -10981,6 +10981,310 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    // KA3 (#278): Subtitles > Kanji timer… and GLOBAL_KANJI_TIMER open the
+    // Kanji timer on the guessed styles; the strip's keys group and link,
+    // Ctrl+Z undoes in the window, and closing with done pairs asks: Cancel
+    // keeps the window, Apply puts the kanji timing in as one step.
+    void kanjiTimerWindowTimesTheKanjiLines()
+    {
+        const QString path = dir.filePath(QStringLiteral("kanji.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Song,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song,,0,0,0,,{\\k50}yu{\\k50}me\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Song,,0,0,0,,{\\k40}ki{\\k30}mi{\\k30}no\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song kanji,,0,0,0,,夢\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Song kanji,,0,0,0,,{\\i1}君の\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+
+        auto *root = engine->rootObjects().first();
+        QVERIFY(!root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog")));
+        // Subtitles > Kanji timer…, right after Check karaoke.
+        auto *item = root->findChild<QObject *>(QStringLiteral("kanjiTimerMenuItem"));
+        const auto entries = menuItems(item->property("menu").value<QObject *>());
+        const auto at = [&](const char *name) {
+            for (qsizetype i = 0; i < entries.size(); ++i)
+                if (entries[i] && entries[i]->objectName() == QLatin1String(name))
+                    return i;
+            return qsizetype(-1);
+        };
+        QCOMPARE(at("kanjiTimerMenuItem"), at("checkKaraokeMenuItem") + 1);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *kanji = qobject_cast<QQuickWindow *>(dialog);
+        QVERIFY(kanji);
+        QTRY_VERIFY(kanji->isActive());
+        auto *strip = dialogItem("kanjiTimerDialog", "kanjiStrip");
+        QVERIFY(strip);
+        QTRY_VERIFY(strip->hasActiveFocus());
+
+        // The styles guessed: the one with the \k Lines, the one named kanji.
+        auto *controller = dialog->property("timer").value<QObject *>();
+        QCOMPARE(controller->property("romajiStyle").toString(), QStringLiteral("Song"));
+        QCOMPARE(controller->property("kanjiStyle").toString(), QStringLiteral("Song kanji"));
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 2);
+        const auto statuses = [&] {
+            QStringList out;
+            for (const QVariant &row : controller->property("pairs").toList())
+                out << row.toMap().value(QStringLiteral("status")).toString();
+            return out;
+        };
+        QCOMPARE(statuses(), (QStringList{QStringLiteral("suggested"), QStringLiteral("suggested")}));
+        QCOMPARE(controller->property("current").toInt(), 0);
+
+        // Enter links 夢 ← yu me, the whole Line; Enter again accepts it and
+        // goes on to the next pair, as in Aegisub.
+        QTest::keyClick(kanji, Qt::Key_Return);
+        QTRY_VERIFY(controller->property("pair").toMap().value(QStringLiteral("canAccept")).toBool());
+        QCOMPARE(controller->property("current").toInt(), 0);
+        QTest::keyClick(kanji, Qt::Key_Return);
+        QTRY_COMPARE(controller->property("current").toInt(), 1);
+        QCOMPARE(statuses(), (QStringList{QStringLiteral("done"), QStringLiteral("suggested")}));
+        const auto currentSyllables = [&] {
+            for (const QVariant &g : controller->property("pair").toMap().value(QStringLiteral("groups")).toList())
+                if (g.toMap().value(QStringLiteral("kind")).toString() == QLatin1String("cur"))
+                    return g.toMap().value(QStringLiteral("syllables")).toList().size();
+            return qsizetype(-1);
+        };
+        // 君 takes ki mi; Down gives mi back, Ctrl+Z undoes that.
+        QCOMPARE(currentSyllables(), qsizetype(2));
+        QTest::keyClick(kanji, Qt::Key_Down);
+        QCOMPARE(currentSyllables(), qsizetype(1));
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiDetail")->property("text").toString(),
+                 QStringLiteral("君 ← ki (き) · 40 cs"));
+        QTest::keyClick(kanji, Qt::Key_Z, Qt::ControlModifier);
+        QCOMPARE(currentSyllables(), qsizetype(2));
+        // Ctrl+Enter accepts the Line with the rest of the suggestion; the
+        // kanji Line keeps its own tags.
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiResult")->property("plain").toString(),
+                 QStringLiteral("{\\i1\\k70}君{\\k30}の"));
+        QTest::keyClick(kanji, Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(statuses(), (QStringList{QStringLiteral("done"), QStringLiteral("done")}));
+        QCOMPARE(controller->property("pending").toInt(), 2);
+        // Nothing is in the Document before Apply.
+        QVERIFY(session->document().lines()[2]->text == u8"夢");
+        // Another tab as the target and back: the done pairs are kept (Codex on #352).
+        const int kanjiTab = application->currentTab();
+        QVERIFY(application->openFile(writeFile(dir, "other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        // (a file opened while the window has the keyboard waits in its own tab)
+        const int otherTab = static_cast<int>(application->workspace().tabs().size()) - 1;
+        QVERIFY(otherTab != kanjiTab);
+        application->selectTab(otherTab);
+        QTRY_COMPARE(application->currentTab(), otherTab);
+        QTRY_COMPARE(controller->property("pending").toInt(), 0);
+        application->selectTab(kanjiTab);
+        QTRY_COMPARE(controller->property("pending").toInt(), 2);
+        QCOMPARE(statuses(), (QStringList{QStringLiteral("done"), QStringLiteral("done")}));
+        kanji->requestActivate();
+        QTRY_VERIFY(kanji->isActive());
+        strip->forceActiveFocus();
+
+        // Esc with done pairs asks; Cancel keeps the window.
+        QTest::keyClick(kanji, Qt::Key_Escape);
+        answerMessage("kanjiTimerMessages", QStringLiteral("Kanji timer"),
+                      QStringLiteral("Apply the kanji timing of 2 lines?"), QStringLiteral("cancel"));
+        QVERIFY(dialog->property("visible").toBool());
+        QCOMPARE(controller->property("pending").toInt(), 2);
+        // The keyboard is back on the strip.
+        QTRY_VERIFY(kanji->isActive());
+        QTRY_VERIFY(strip->hasActiveFocus());
+        // Apply: both kanji Lines in one step, and the window closes.
+        const auto steps = session->history().size();
+        QTest::keyClick(kanji, Qt::Key_Escape);
+        answerMessage("kanjiTimerMessages", QStringLiteral("Kanji timer"),
+                      QStringLiteral("Apply the kanji timing of 2 lines?"), QStringLiteral("apply"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->history().size(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Kanji timing"));
+        QVERIFY(session->document().lines()[2]->text == u8"{\\k100}夢");
+        QVERIFY(session->document().lines()[3]->text == u8"{\\i1\\k70}君{\\k30}の");
+        QVERIFY(session->document().lines()[0]->text == lines[0]->text);
+
+        // The hotkey opens it again, the pairs Applied; Esc closes it at once.
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_KANJI_TIMER"))));
+        QVERIFY(ran.toBool());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(statuses(), (QStringList{QStringLiteral("applied"), QStringLiteral("applied")}));
+        QCOMPARE(controller->property("pending").toInt(), 0);
+        QVERIFY(!dialogItem("kanjiTimerDialog", "kanjiApply")->isEnabled());
+        QTRY_VERIFY(kanji->isActive());
+        QTest::keyClick(kanji, Qt::Key_Escape);
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!messageBox("kanjiTimerMessages") || !messageBox("kanjiTimerMessages")->isVisible());
+
+        // The same style twice: nothing to pair, and the window says so.
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(controller, "setStyles", Q_ARG(QString, QStringLiteral("Song")),
+                                          Q_ARG(QString, QStringLiteral("Song"))));
+        QCOMPARE(controller->property("problem").toString(), QStringLiteral("same"));
+        QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiSameStyle")->isVisible());
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 0);
+        QVERIFY(dialogItem("kanjiTimerDialog", "kanjiNoPair")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
+    // KA3: a Line of thousands of syllables shows a window of 60 groups
+    // around the current one, not an item per syllable (Codex security
+    // review on #352).
+    void kanjiTimerShowsAWindowOfALongLine()
+    {
+        QByteArray romaji, kanjiLine;
+        for (int i = 0; i < 3000; ++i) {
+            romaji += "{\\k1}a";
+            kanjiLine += "\xE3\x81\x82"; // あ
+        }
+        const QString path = dir.filePath(QStringLiteral("long.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Song romaji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "2,8,10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
+            f.write("Dialogue: 0,0:00:00.00,0:00:30.00,Song romaji,,0,0,0,," + romaji + "\n");
+            f.write("Dialogue: 0,0:00:00.00,0:00:30.00,Song kanji,,0,0,0,," + kanjiLine + "\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "openKanjiTimer"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("timer").value<QObject *>();
+        QTRY_VERIFY(controller->property("pair").toMap().contains(QStringLiteral("groups")));
+        const QVariantMap pair = controller->property("pair").toMap();
+        QCOMPARE(pair.value(QStringLiteral("groups")).toList().size(), 60);
+        QCOMPARE(pair.value(QStringLiteral("earlier")).toInt(), 0);
+        QVERIFY(pair.value(QStringLiteral("later")).toInt() > 2000);
+        QVERIFY(pair.value(QStringLiteral("result")).toList().size() <= 241);
+        QVERIFY(dialogItem("kanjiTimerDialog", "kanjiLaterGroups")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
+    // KA3 (#278): the Kanji timer in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (ka3-<part>-<theme>.png): a pair
+    // half linked after two applied ones, and a romaji syllable with no
+    // kanji left.
+    void kanjiTimerScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const QString path = dir.filePath(QStringLiteral("kanji-shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Song romaji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "2,8,10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:05.00,0:00:07.00,Song romaji,,0,0,0,,{\\k30}yu{\\k30}me {\\k20}wo {\\k30}mi{\\k20}te "
+                    "{\\k30}i{\\k40}ta\n"
+                    "Dialogue: 0,0:00:08.00,0:00:10.00,Song romaji,,0,0,0,,{\\k20}ne{\\k20}mu{\\k20}re{\\k20}na{\\k20}i "
+                    "{\\k30}yo{\\k20}ru {\\k50}ni\n"
+                    "Dialogue: 0,0:00:14.10,0:00:16.80,Song romaji,,0,0,0,,{\\k18}ki{\\k22}mi {\\k30}no {\\k20}ko{\\k25}e "
+                    "{\\k35}ga {\\k22}ki{\\k18}ko{\\k20}e{\\k60}ru\n"
+                    "Dialogue: 0,0:00:18.00,0:00:21.00,Song romaji,,0,0,0,,{\\k30}to{\\k30}o{\\k20}i {\\k25}so{\\k25}ra "
+                    "{\\k20}no {\\k20}mu{\\k20}ko{\\k20}u {\\k90}e\n"
+                    "Dialogue: 0,0:00:22.30,0:00:24.70,Song romaji,,0,0,0,,{\\kf30}ho{\\kf25}shi {\\kf30}wo {\\kf20}ka"
+                    "{\\kf22}zo{\\kf18}e{\\kf40}te {\\kf55}yo\n"
+                    "Dialogue: 0,0:00:26.00,0:00:28.00,Song romaji,,0,0,0,,{\\k60}la {\\k60}la {\\k80}la\n"
+                    "Dialogue: 0,0:00:05.00,0:00:07.00,Song kanji,,0,0,0,,夢を見ていた\n"
+                    "Dialogue: 0,0:00:08.00,0:00:10.00,Song kanji,,0,0,0,,眠れない夜に\n"
+                    "Dialogue: 0,0:00:14.10,0:00:16.80,Song kanji,,0,0,0,,君の声が聞こえる\n"
+                    "Dialogue: 0,0:00:18.00,0:00:21.00,Song kanji,,0,0,0,,遠い空の向こうへ\n"
+                    "Dialogue: 0,0:00:22.30,0:00:24.70,Song kanji,,0,0,0,,{\\i1}星を数えて\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("kanjiTimerMenuItem")), "triggered"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        auto *kanji = qobject_cast<QQuickWindow *>(dialog);
+        QTRY_VERIFY(kanji->isVisible() && kanji->isActive());
+        auto *controller = dialog->property("timer").value<QObject *>();
+        auto *strip = dialogItem("kanjiTimerDialog", "kanjiStrip");
+        QTRY_VERIFY(strip->hasActiveFocus());
+        const auto currentKanji = [&] {
+            for (const QVariant &g : controller->property("pair").toMap().value(QStringLiteral("groups")).toList())
+                if (g.toMap().value(QStringLiteral("kind")).toString() == QLatin1String("cur"))
+                    return g.toMap().value(QStringLiteral("kanji")).toString();
+            return QStringLiteral("-");
+        };
+        // The first two pairs accepted and applied; four groups of the third linked.
+        QTest::keyClick(kanji, Qt::Key_Return, Qt::ControlModifier);
+        QTest::keyClick(kanji, Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(controller->property("current").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiApply"), "click"));
+        QTRY_COMPARE(controller->property("pending").toInt(), 0);
+        strip->forceActiveFocus();
+        for (int i = 0; i < 4; ++i)
+            QTest::keyClick(kanji, Qt::Key_Return);
+        QCOMPARE(currentKanji(), QStringLiteral("聞"));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto shoot = [&](const char *part) {
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                QImage shot;
+                QTRY_VERIFY((shot = kanji->grabWindow(), !shot.isNull() && shot.width() > 0));
+                QVERIFY(shot.save(out + QStringLiteral("/ka3-") + QLatin1String(part) + QLatin1Char('-')
+                                  + QLatin1String(code) + QStringLiteral(".png")));
+            }
+        };
+        shoot("window");
+        // Pair 5: "yo" has no kanji left once て takes "te" alone.
+        QVERIFY(QMetaObject::invokeMethod(controller, "choose", Q_ARG(int, 4)));
+        strip->forceActiveFocus();
+        for (int i = 0; i < 8 && currentKanji() != QStringLiteral("て"); ++i)
+            QTest::keyClick(kanji, Qt::Key_Return);
+        QCOMPARE(currentKanji(), QStringLiteral("て"));
+        // (the suggestion gives て both "te" and "yo": Down leaves it "te")
+        QTest::keyClick(kanji, Qt::Key_Down);
+        QTest::keyClick(kanji, Qt::Key_Return);
+        QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiNoKanjiLeft")->isVisible());
+        shoot("no-kanji-left");
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+        QVERIFY(QMetaObject::invokeMethod(controller, "discard"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!kanji->isVisible());
+    }
+
     // F3: the Grid's and the editor's marks, Subtitles > Check spelling
     // (Replace as one step, then the next word on another Line, then "No
     // spelling errors were found"), a suggestion from the editor and Add word.
@@ -13849,8 +14153,9 @@ private slots:
         };
         collect(content);
         // (LE2 and LE3 took the Times/Frames radios and Hide tags out; TM1
-        // the Translator mode row.)
-        QVERIFY2(controls.size() >= 20, qPrintable(QString::number(controls.size())));
+        // the Translator mode row; LE1 put the translation buttons on the
+        // tag strip, where they fold into More.)
+        QVERIFY2(controls.size() >= 16, qPrintable(QString::number(controls.size())));
         for (QQuickItem *control : std::as_const(controls))
             scrollTheEditorTo(control);
         scrollTheEditorTo(controls.first()); // and back up
@@ -13874,25 +14179,25 @@ private slots:
                     it = p;
             return it;
         };
-        auto *layer = item("layerField");
+        auto *first = item("startField");
         view->setProperty("contentY", 0);
-        QTRY_VERIFY(!inTheEditorView(layer));
-        layer->forceActiveFocus(Qt::TabFocusReason);
-        QTRY_VERIFY(inTheEditorView(layer));
-        QStringList reached{layer->objectName()};
+        QTRY_VERIFY(!inTheEditorView(first));
+        first->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(inTheEditorView(first));
+        QStringList reached{first->objectName()};
         for (int step = 0; step < 30; ++step) {
             view->setProperty("contentY", 0);
             press(Qt::Key_Tab);
             QQuickItem *focused = focusedControl();
-            if (!inEditor(focused) || focused == layer)
+            if (!inEditor(focused) || focused == first)
                 break;
             reached << focused->objectName();
             QTRY_VERIFY2(inTheEditorView(focused), qPrintable(focused->objectName()));
         }
-        for (const char *name : {"startField", "endField", "durationField", "styleChoice", "styleEditButton", "commentBox",
+        for (const char *name : {"layerField", "endField", "durationField", "styleChoice", "styleEditButton", "commentBox",
                                  "actorBox", "marginLeftField", "marginRightField", "marginVerticalField", "effectBox"})
             QVERIFY2(reached.contains(QLatin1String(name)), qPrintable(reached.join(u' ')));
-        layer->forceActiveFocus(Qt::TabFocusReason);
+        first->forceActiveFocus(Qt::TabFocusReason);
         auto *translated = item("translationText");
         press(Qt::Key_Backtab);
         QTRY_VERIFY(translated->hasActiveFocus());
@@ -13931,7 +14236,7 @@ private slots:
         foldTheLineEditor();
         auto *original = item("lineText");
         auto *translated = item("translationText");
-        auto *layer = item("layerField");
+        auto *first = item("startField"); // LE1: the first of the Line's fields
         auto *view = item("editorScroll");
         QTRY_VERIFY(translated->isVisible());
         const QString originalText = original->property("text").toString();
@@ -13948,11 +14253,11 @@ private slots:
         QTRY_VERIFY(translated->hasActiveFocus());
         QCOMPARE(translated->property("focusReason").toInt(), int(Qt::TabFocusReason));
         view->setProperty("contentY", 0);
-        QTRY_VERIFY(!inTheEditorView(layer));
+        QTRY_VERIFY(!inTheEditorView(first));
         press(Qt::Key_Tab);
-        QTRY_VERIFY(layer->hasActiveFocus());
-        QTRY_VERIFY(inTheEditorView(layer));
-        layer->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(first->hasActiveFocus());
+        QTRY_VERIFY(inTheEditorView(first));
+        first->forceActiveFocus(Qt::TabFocusReason);
         press(Qt::Key_Backtab, Qt::ShiftModifier);
         QTRY_VERIFY(translated->hasActiveFocus());
         press(Qt::Key_Backtab, Qt::ShiftModifier);
@@ -15360,6 +15665,86 @@ private slots:
         QCOMPARE(q8(after[2]->translation), QStringLiteral("abc{\\be1}d"));
         QCOMPARE(q8(after[1]->translation), QStringLiteral("y{\\be1}"));
         QCOMPARE(q8(after[0]->translation), QStringLiteral("{\\i1}x{\\i0}{\\be1}"));
+    }
+
+    // #341: Tags from original reads overrides as libass does. A value it
+    // reads as the base's (\fspabc is \fsp0, \rGone the Line's Style) is no
+    // run, a drawing scale it reads as 1 carries nothing, a clip a \t
+    // animates is carried, spaced and adding transforms place, and a run a
+    // tag button keeps from reading back is placed no longer.
+    void tagsFromOriginalReadsOverridesAsLibassDoes()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm2-libass.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a{\\fspabc}b{\\fsp0}c\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,a{\\rGone}b{\\r}c\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,,{\\p1e-3\\an8}m 0 0\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:07.00,0:00:08.00,O,,0,0,0,,a{\\t(\\clip(0,0,100,100)\\fs20)}b{\\r}c\n"
+                "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:09.00,0:00:10.00,O,,0,0,0,,a{\\ t(\\fs20)\\ t(\\bord2)}B{\\r}c\n"
+                "Dialogue: 0,0:00:09.00,0:00:10.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:11.00,0:00:12.00,O,,0,0,0,,a{\\t(\\fs30)}A{\\t(\\bord2)}B{\\r}c\n"
+                "Dialogue: 0,0:00:11.00,0:00:12.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:13.00,0:00:14.00,O,,0,0,0,,a{\\fs30}b{\\b1}c{\\fs20}d{\\r}z\n"
+                "Dialogue: 0,0:00:13.00,0:00:14.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        const auto lines = session->document().lines();
+        QCOMPARE(lines.size(), std::size_t(7));
+        auto &editor = application->editor();
+        auto select = [&](std::size_t line) {
+            session->setSelection(application::Selection{lines[line]->id, {lines[line]->id}, lines[line]->id, {}});
+            editor.reloadFromSession();
+        };
+        auto translation = [&] { return q8(session->draftRecord()->translation); };
+        auto placed = [&](int run) { return editor.tagRuns()[run - 1].toMap().value("placed").toBool(); };
+        select(0);
+        QVERIFY(editor.tagRuns().isEmpty());
+        select(1);
+        QVERIFY(editor.tagRuns().isEmpty());
+        select(2);
+        editor.translationEdited(QStringLiteral("x"), 1);
+        QCOMPARE(translation(), QStringLiteral("x"));
+        QVERIFY(editor.commit());
+        select(3);
+        QCOMPARE(editor.tagRuns().size(), 1);
+        editor.translationEdited(QStringLiteral("xyz"), 3);
+        QCOMPARE(translation(), QStringLiteral("{\\t(\\clip(0,0,100,100))}xyz"));
+        QVERIFY(editor.placeRun(1, 1, 2));
+        QCOMPARE(translation(), QStringLiteral("{\\t(\\clip(0,0,100,100))}x{\\t(\\fs20)}y{\\r}z"));
+        QVERIFY(editor.commit());
+        select(4);
+        editor.translationEdited(QStringLiteral("xYz"), 3);
+        QVERIFY(editor.placeRun(1, 1, 2));
+        QCOMPARE(translation(), QStringLiteral("x{\\ t(\\fs20)\\ t(\\bord2)}Y{\\r}z"));
+        QVERIFY(editor.commit());
+        select(5);
+        editor.translationEdited(QStringLiteral("XY"), 2);
+        QVERIFY(editor.placeRun(1, 0, 1));
+        QVERIFY(editor.placeRun(2, 1, 2));
+        QCOMPARE(translation(), QStringLiteral("{\\t(\\fs30)}X{\\t(\\bord2)}Y{\\r}"));
+        QVERIFY(placed(1) && placed(2));
+        QVERIFY(editor.commit());
+        // The translator's \r between two runs side by side comes after
+        // run 2's opening: run 2 is placed no longer, its \b1 not kept.
+        select(6);
+        editor.translationEdited(QStringLiteral("AB"), 2);
+        QVERIFY(editor.placeRun(1, 0, 1));
+        QVERIFY(editor.placeRun(2, 1, 2));
+        QCOMPARE(translation(), QStringLiteral("{\\fs30}A{\\b1}B{\\r}"));
+        QVERIFY(editor.applyTagButton(1, QStringLiteral("{\\r}"), 2, 1, 1));
+        QCOMPARE(translation(), QStringLiteral("{\\fs30}A{\\r}{\\r}B"));
+        QVERIFY(placed(1));
+        QVERIFY(!placed(2));
     }
 
     // TM1: a translation past what Tags from original reads takes no run:
@@ -18733,8 +19118,8 @@ private slots:
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
         // "Translation mode" and its run keys and VT2's eleven visual tools listed; KA2's Tap
         // to time, Slower and Faster; VT3's Perspective; KA7's "Check karaoke"; KA1's two syllable
-        // commands; AD2's "Repeat last run".
-        QCOMPARE(hotkeyRows().size(), 251);
+        // commands; AD2's "Repeat last run"; KA3's "Kanji timer".
+        QCOMPARE(hotkeyRows().size(), 252);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -28928,7 +29313,7 @@ private slots:
         auto *end = item("endField");
         auto *duration = item<QObject>("durationField");
         auto *cps = item<QObject>("cpsCounter");
-        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 15<=15"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
         const auto colour = [](QQuickItem *field, const char *role) {
             return field->property("palette").value<QObject *>()->property(role).value<QColor>();
         };
@@ -28937,7 +29322,7 @@ private slots:
         QVERIFY(start->hasActiveFocus());
         QCOMPARE(start->property("text").toString(), QStringLiteral("0:00:01.50"));
         QCOMPARE(duration->property("text").toString(), QStringLiteral("0:00:00.50"));
-        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 30<=15"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("30/15"));
         QCOMPARE(session->draftRecord()->start.value.microseconds(), 1'500'000);
         QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'000'000); // not sent yet
         QVERIFY(!application->editor().startWarning());
@@ -29093,15 +29478,19 @@ private slots:
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QTest::mouseMove(window, at + QPoint(10, -8));
         QCOMPARE(text(), QStringLiteral("0:00:12.00"));
-        // Start past End: "End is before Start." shows below the fields and
-        // the layout moves them up under the held pointer on its next
-        // polish, which is no drag (the pointer's travel in the window).
+        // Start past End: "End is before Start." shows above the fields
+        // (LE1: under the text, which gives up the room), so the fields stay
+        // under the held pointer.
         QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
-        QTRY_VERIFY(start->mapToScene(QPointF()).y() < fieldOrigin.y());
+        auto *problem = item("editorProblem");
+        QTRY_VERIFY(problem->isVisible() && problem->height() > 0
+                    && problem->mapToScene(QPointF(0, problem->height())).y() <= fieldOrigin.y());
+        QCOMPARE(start->mapToScene(QPointF()), fieldOrigin);
         QTest::mouseMove(window, at + QPoint(-2, -8));
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QCOMPARE(draftStart(), 2'000'000); // live: NUMBER_CHANGED
-        QTRY_COMPARE(start->mapToScene(QPointF()), fieldOrigin); // the problem gone
+        QTRY_VERIFY(!problem->isVisible()); // the problem gone
+        QCOMPARE(start->mapToScene(QPointF()), fieldOrigin);
         QTest::mouseRelease(window, Qt::RightButton, {}, at + QPoint(-2, -8));
         QCOMPARE(shownPopups(), popupsBefore);
         // Released: moving changes nothing.
@@ -30101,9 +30490,11 @@ private slots:
         application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
     }
 
-    // EditBox::UpdateChars against legacy TextData: "Wraps: <counts>/43" and
-    // "Characters per second: <n><=15", warned over 43 characters a wrap and
-    // over 15 per second; the translation's counts in translation mode.
+    // EditBox::UpdateChars against legacy TextData: each wrap's characters
+    // and 43, and the characters per second and 15 (LE1-counters: named
+    // Wraps and CPS beside them), warned over 43 characters a wrap and over
+    // 15 per second with the warning colour and mark; the translation's
+    // counts in translation mode.
     void countersFollowTheEditedText()
     {
         QVERIFY(application->openFile(writeStyled("counters.ass",
@@ -30113,20 +30504,206 @@ private slots:
         QTRY_VERIFY(application->editor().hasLine());
         auto *chars = item<QObject>("charsCounter");
         auto *cps = item<QObject>("cpsCounter");
-        QCOMPARE(chars->property("text").toString(), QStringLiteral("Wraps: 5/10/43"));
-        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 15<=15"));
+        QCOMPARE(chars->property("text").toString(), QStringLiteral("5/10/43"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
         QCOMPARE(application->editor().cpsWarning(), false);
+        QCOMPARE(item("cpsCounterValue")->property("text").toString(), QStringLiteral("15"));
+        QVERIFY(!item("cpsCounterWarning")->isVisible());
         auto *text = item("lineText");
         text->forceActiveFocus();
         press(Qt::Key_End, Qt::ControlModifier);
         typeText(QStringLiteral(" more words here"));
-        QTRY_COMPARE(chars->property("text").toString(), QStringLiteral("Wraps: 5/23/43"));
-        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 28<=15"));
+        QTRY_COMPARE(chars->property("text").toString(), QStringLiteral("5/23/43"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("28/15"));
         QVERIFY(application->editor().cpsWarning());
         QVERIFY(!application->editor().charsWarning());
+        QTRY_VERIFY(item("cpsCounterWarning")->isVisible());
+        QCOMPARE(item("cpsCounterValue")->property("color").value<QColor>(), ui::theme::current().roles.warning);
+        QVERIFY(!item("charsCounterWarning")->isVisible());
         typeText(QStringLiteral(" and many more words to pass the limit"));
         QTRY_VERIFY(application->editor().charsWarning());
+        QTRY_VERIFY(item("charsCounterWarning")->isVisible());
         application->editor().discard();
+    }
+
+    // The Line editor squeezed from its left edge to its minimum width.
+    void squeezeTheLineEditor()
+    {
+        auto *panel = item("editorPanel");
+        QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), -2000, 0, 0, 0));
+        const qreal minimum = panel->property("minimumSize").toSizeF().width();
+        QTRY_VERIFY2(panel->width() <= minimum + 1, qPrintable(QStringLiteral("%1 > %2").arg(panel->width()).arg(minimum)));
+    }
+    static qreal centreY(QQuickItem *i) { return i->mapToScene(QPointF(0, i->height() / 2)).y(); }
+
+    // LE1-inspector-rows: every Line field shows its name, beside it in the
+    // Line editor's two rows (Start to Style, then Comment to the margins),
+    // above it in a narrow editor, two to a row with Style alone. A margin of
+    // 0 shows the Style's margin in the secondary colour until it is edited.
+    void lineInspectorNamesItsFields()
+    {
+        QVERIFY(application->openFile(writeStyled("names.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,25,0,,text\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *inspector = item("lineInspector");
+        QTRY_VERIFY(inspector->property("wide").toBool()); // the default layout's editor
+        const std::pair<const char *, const char *> named[] = {
+            {"startSlot", "startField"}, {"endSlot", "endField"}, {"durationSlot", "durationField"},
+            {"styleSlot", "styleChoice"}, {"layerSlot", "layerField"}, {"actorSlot", "actorBox"},
+            {"effectSlot", "effectBox"}, {"marginsSlot", "marginLeftField"}};
+        for (const auto &[slot, field] : named) {
+            auto *label = item(qPrintable(QLatin1String(slot) + QLatin1String("Label")));
+            auto *control = item(field);
+            QVERIFY2(label && label->isVisible() && !label->property("text").toString().isEmpty(), slot);
+            QVERIFY2(std::abs(centreY(label) - centreY(control)) <= 2, slot);
+            QVERIFY2(label->mapToScene(QPointF(label->width(), 0)).x() <= control->mapToScene(QPointF(0, 0)).x(), slot);
+        }
+        QVERIFY(std::abs(centreY(item("startField")) - centreY(item("styleChoice"))) <= 2);
+        QVERIFY(centreY(item("commentBox")) > centreY(item("startField")) + 10);
+        QVERIFY(std::abs(centreY(item("commentBox")) - centreY(item("marginVerticalField"))) <= 2);
+        QVERIFY(item("actorBox")->property("placeholderText").toString().isEmpty()); // its name shows
+
+        // The margins: 0 shows the Style's 10 (its text still 0), 25 itself.
+        auto *left = item("marginLeftField");
+        QCOMPARE(left->property("text").toString(), QStringLiteral("0"));
+        QTRY_VERIFY(item("marginLeftFieldHint")->isVisible());
+        QCOMPARE(item("marginLeftFieldHint")->property("text").toString(), QStringLiteral("10"));
+        QCOMPARE(item("marginLeftFieldHint")->property("color").value<QColor>(), ui::theme::current().roles.muted);
+        QCOMPARE(item("marginRightField")->property("text").toString(), QStringLiteral("25"));
+        QVERIFY(!item("marginRightFieldHint")->isVisible());
+        left->forceActiveFocus();
+        QTRY_VERIFY(!item("marginLeftFieldHint")->isVisible());
+        item("lineText")->forceActiveFocus();
+        QTRY_VERIFY(item("marginLeftFieldHint")->isVisible());
+
+        // Narrow: names above, two to a row, Style alone.
+        squeezeTheLineEditor();
+        QTRY_VERIFY(!inspector->property("wide").toBool());
+        for (const auto &[slot, field] : named) {
+            auto *label = item(qPrintable(QLatin1String(slot) + QLatin1String("Label")));
+            auto *control = item(field);
+            // (once the rearranged rows are laid out)
+            QTRY_VERIFY2(label->mapToScene(QPointF(0, label->height())).y() <= control->mapToScene(QPointF(0, 0)).y() + 0.5, slot);
+            QTRY_VERIFY2(std::abs(label->mapToScene(QPointF(0, 0)).x() - control->mapToScene(QPointF(0, 0)).x()) <= 1, slot);
+        }
+        QVERIFY(std::abs(centreY(item("startField")) - centreY(item("endField"))) <= 1);
+        QVERIFY(std::abs(centreY(item("durationField")) - centreY(item("layerField"))) <= 1);
+        QVERIFY(centreY(item("durationField")) > centreY(item("startField")) + 10);
+        QVERIFY(centreY(item("styleChoice")) > centreY(item("durationField")) + 10);
+        QVERIFY(std::abs(centreY(item("actorBox")) - centreY(item("effectBox"))) <= 1);
+        QVERIFY(item("styleChoice")->width() > 1.5 * item("startField")->width());
+        application->workspaceLayout().resetLayout();
+        QTRY_VERIFY(inspector->property("wide").toBool());
+    }
+
+    // LE1-counters (the strip folds): wide enough, the Line editor's strip
+    // shows every group; at its minimum width it keeps the tag buttons and
+    // the counters and folds the other groups
+    // into More, which holds their buttons; nothing in the editor is wider
+    // than its view (it scrolls only up and down).
+    void lineEditorHoldsAtItsMinimum()
+    {
+        auto &buttons = application->tagButtons();
+        buttons.setCount(3);
+        buttons.edit(0, QStringLiteral("Blur"), QStringLiteral("\\blur3"), 0);
+        buttons.edit(1, QStringLiteral("Fade"), QStringLiteral("\\fad(200,200)"), 0);
+        buttons.edit(2, QStringLiteral("Note"), QStringLiteral("{note}"), 2);
+        QVERIFY(application->openFile(writeStyled("strip.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("abc"));
+        // Widened, the editor shows every group.
+        QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), 600, 0, 0, 0));
+        QTRY_VERIFY(visualItem("tagButton2") && visualItem("tagButton2")->isVisible());
+        QVERIFY(!item("tagStripMore")->isVisible());
+        for (const char *group : {"lookGroup", "alignGroup", "customGroup"})
+            QVERIFY2(item(group)->isVisible(), group);
+
+        const auto widest = [&] {
+            auto *view = item("editorScroll");
+            const qreal right = view->mapToScene(QPointF(view->width(), 0)).x() + 0.5;
+            const qreal left = view->mapToScene(QPointF(0, 0)).x() - 0.5;
+            QStringList out;
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                for (QQuickItem *child : from->childItems()) {
+                    if (!child->isVisible() || child->width() <= 0)
+                        continue;
+                    const QRectF r = child->mapRectToScene(QRectF(0, 0, child->width(), child->height()));
+                    if ((child->inherits("QQuickControl") || child->inherits("QQuickText")) && (r.left() < left || r.right() > right))
+                        out << child->objectName() + QLatin1Char('/') + QString::fromLatin1(child->metaObject()->className());
+                    walk(child);
+                }
+            };
+            walk(item("editorContent"));
+            return out;
+        };
+        QVERIFY2(widest().isEmpty(), qPrintable(widest().join(u", ")));
+
+        squeezeTheLineEditor();
+        QTRY_VERIFY(item("tagStripMore")->isVisible());
+        QVERIFY(visualItem("tag_b") && visualItem("tag_b")->isVisible() && visualItem("tag_s")->isVisible());
+        QVERIFY(item("charsCounter")->isVisible() && item("cpsCounter")->isVisible());
+        QVERIFY(!item("customGroup")->isVisible());
+        QVERIFY2(widest().isEmpty(), qPrintable(widest().join(u", ")));
+        // More holds what folded, and its items act as the buttons do.
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("tagStripMore")));
+        auto *menu = item<QObject>("tagStripMoreMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QQuickItem *blur = nullptr;
+        QTRY_VERIFY((blur = visualItem("foldedTagButton0")) && blur->isVisible());
+        QCOMPARE(blur->property("text").toString(), QStringLiteral("Blur"));
+        QVERIFY(visualItem("foldedAddTagButton")->isVisible());
+        if (!item("lookGroup")->isVisible()) {
+            QVERIFY(visualItem("foldedFont")->isVisible());
+            QVERIFY(visualItem("foldedColour1") && visualItem("foldedColour1")->isVisible());
+        }
+        text->forceActiveFocus();
+        QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 3));
+        QVERIFY(QMetaObject::invokeMethod(blur, "triggered"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\blur3}abc{\\blur0}"));
+        application->editor().discard();
+        QMetaObject::invokeMethod(menu, "close");
+        application->workspaceLayout().resetLayout();
+        buttons.setCount(0);
+    }
+
+    // LE1: More takes the focus as it opens; its items still act on the
+    // text field edited before, the Translated text here.
+    void foldedTagButtonsActOnTheEditedField()
+    {
+        auto &buttons = application->tagButtons();
+        buttons.setCount(1);
+        buttons.edit(0, QStringLiteral("Blur"), QStringLiteral("\\blur3"), 0);
+        QVERIFY(application->openFile(writeTranslationFile("more-field.ass")));
+        QTRY_VERIFY(application->editor().translationMode());
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        closeTheOriginalTextPanel();
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->isVisible() && !translated->property("text").toString().isEmpty());
+        const QString originalText = original->property("text").toString();
+        const QString translatedText = translated->property("text").toString();
+        squeezeTheLineEditor();
+        QTRY_VERIFY(item("tagStripMore")->isVisible());
+        QVERIFY(!item("customGroup")->isVisible());
+        translated->forceActiveFocus();
+        QMetaObject::invokeMethod(translated, "selectAll");
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("tagStripMore")));
+        auto *menu = item<QObject>("tagStripMoreMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QQuickItem *blur = nullptr;
+        QTRY_VERIFY((blur = visualItem("foldedTagButton0")) && blur->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(blur, "triggered"));
+        QTRY_VERIFY(translated->property("text").toString().startsWith(QStringLiteral("{\\blur3}")));
+        QCOMPARE(original->property("text").toString(), originalText);
+        QVERIFY(translated->property("text").toString() != translatedText);
+        application->editor().discard();
+        QMetaObject::invokeMethod(menu, "close");
+        application->workspaceLayout().resetLayout();
+        buttons.setCount(0);
     }
 
     // EditBox::SetAlignment and OnAnChoice: the shown Line's position (the
@@ -33986,7 +34563,7 @@ private slots:
         QCOMPARE(box->property("title").toString(), QStringLiteral("Next file"));
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!box->property("visible").toBool());
-        QTRY_VERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(becomesFocusWindow(fsWindow));
         // Open dummy video and the Shift times question (Global commands,
         // which the fullscreen window takes) open over it too.
         QVERIFY(QMetaObject::invokeMethod(root, "openDummyVideo"));
@@ -33995,7 +34572,7 @@ private slots:
         QCOMPARE(dummy->transientParent(), fsWindow);
         QVERIFY(QMetaObject::invokeMethod(dummy, "reject"));
         QTRY_VERIFY(!dummy->isVisible());
-        QTRY_VERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(becomesFocusWindow(fsWindow));
         auto shiftSettings = application->shiftTimesSettings().settingsMap();
         const auto shiftBefore = shiftSettings;
         shiftSettings.insert(QStringLiteral("whichTimes"), 1);
@@ -34008,7 +34585,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(shift, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!shift->property("visible").toBool());
         application->shiftTimesSettings().setSettingsMap(shiftBefore);
-        QTRY_VERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(becomesFocusWindow(fsWindow));
         // Open video and Open subtitles take the fullscreen window as parent.
         QCOMPARE(named("videoOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
         QCOMPARE(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
@@ -34114,10 +34691,26 @@ private slots:
         QCOMPARE(tagsWindow()->transientParent(), fsWindow);
         tags->addTag();
         QVERIFY(tags->canUndo());
-        // Left, the dialogs are the main window's again.
+        // Left, the dialogs are the main window's again: Edit shapes and
+        // Edit tags too, with their history (a window going with
+        // fullscreen's is no closing of it), opened without the keyboard.
         QVERIFY(fs.leave());
         QTRY_VERIFY(!fsWindow->isVisible());
-        QTRY_VERIFY(becomesFocusWindow(window));
+        QTRY_VERIFY(shapesWindow() && shapesWindow()->transientParent() != fsWindow);
+        QTest::qWait(100);
+        QVERIFY(shapes);
+        QCOMPARE(tools.shapeEditor(), shapes.data());
+        QVERIFY(shapes->canUndo());
+        QTRY_VERIFY(tagsWindow() && tagsWindow()->transientParent() != fsWindow);
+        QVERIFY(tags);
+        QCOMPARE(tools.tagsEditor(), tags.data());
+        QVERIFY(tags->canUndo());
+        QVERIFY(QGuiApplication::focusWindow() != shapesWindow());
+        QVERIFY(QGuiApplication::focusWindow() != tagsWindow());
+        // Without a window manager fullscreen's editors, going, leave the
+        // keyboard nowhere; the hotkey below opens from the window with it.
+        window->requestActivate();
+        QVERIFY(becomesFocusWindow(window));
         QVERIFY(QMetaObject::invokeMethod(aspect, "openAtCursor",
                                           Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("visualOverlay")))));
         QTRY_VERIFY(aspectPopover->property("opened").toBool());
@@ -34136,17 +34729,6 @@ private slots:
         QTRY_VERIFY(!box->property("visible").toBool());
         QVERIFY(named("videoOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
         QVERIFY(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
-        // Edit shapes and Edit tags too, with their history: a window going
-        // with fullscreen's is no closing of it.
-        QTRY_VERIFY(shapesWindow() && shapesWindow()->transientParent() != fsWindow);
-        QTest::qWait(100);
-        QVERIFY(shapes);
-        QCOMPARE(tools.shapeEditor(), shapes.data());
-        QVERIFY(shapes->canUndo());
-        QTRY_VERIFY(tagsWindow() && tagsWindow()->transientParent() != fsWindow);
-        QVERIFY(tags);
-        QCOMPARE(tools.tagsEditor(), tags.data());
-        QVERIFY(tags->canUndo());
         // Closed by the user, the editors go.
         shapesWindow()->close();
         QTRY_VERIFY(!tools.shapeEditor());

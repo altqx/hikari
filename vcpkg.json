@@ -19,6 +19,8 @@
     "spix",
     "portaudio",
     "soundtouch",
+    "mecab",
+    "hikari-unidic-lite",
     "kddockwidgets",
     "luajit",
     {
