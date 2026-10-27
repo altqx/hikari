@@ -332,7 +332,7 @@ private slots:
         stop();
     }
 
-    // Folding is a setting: Fold generated Lines in the Grid's ⋯ menu, kept
+    // Folding is a setting: Fold generated lines in the Grid's ⋯ menu, kept
     // across a restart.
     void foldingIsTheGridsSetting()
     {
@@ -343,7 +343,7 @@ private slots:
         QTRY_VERIFY(menu->property("opened").toBool());
         auto *fold = window()->findChild<QQuickItem *>(QStringLiteral("panelOptions_foldGenerated"));
         QTRY_VERIFY(fold);
-        QCOMPARE(fold->property("text").toString(), QStringLiteral("Fold generated Lines"));
+        QCOMPARE(fold->property("text").toString(), QStringLiteral("Fold generated lines"));
         QVERIFY(fold->property("checkable").toBool());
         QVERIFY(!fold->property("checked").toBool());
         QTRY_VERIFY(fold->isVisible() && fold->width() > 0);
@@ -375,10 +375,10 @@ private slots:
         QCOMPARE(cell(5, ui::LineTableModel::EndColumn), QStringLiteral("0:00:04.20"));
         QCOMPARE(cell(5, ui::LineTableModel::StyleColumn), QStringLiteral("Romaji, English"));
         QCOMPARE(cell(5, ui::LineTableModel::EffectColumn), QStringLiteral("fx"));
-        QCOMPARE(cell(5, ui::LineTableModel::TextColumn), QStringLiteral("5 generated Lines"));
+        QCOMPARE(cell(5, ui::LineTableModel::TextColumn), QStringLiteral("5 generated lines"));
         QCOMPARE(cell(11, ui::LineTableModel::NumberColumn), QStringLiteral("12–13"));
         QCOMPARE(cell(11, ui::LineTableModel::EffectColumn), QStringLiteral("fx, Effector [fx]"));
-        QCOMPARE(cell(11, ui::LineTableModel::TextColumn), QStringLiteral("2 generated Lines"));
+        QCOMPARE(cell(11, ui::LineTableModel::TextColumn), QStringLiteral("2 generated lines"));
         QCOMPARE(gridModel()->index(gridRowOf(5), 0).data(ui::LineTableModel::FoldCountRole).toInt(), 5);
         // The Document is untouched, and the video still shows the Lines.
         QCOMPARE(session()->document().lines().size(), std::size_t(13));

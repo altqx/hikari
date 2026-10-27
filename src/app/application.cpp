@@ -1059,7 +1059,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (m_settings->boolean("grid.autoHideColumns") != m_shell->autoHideColumns())
             m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns());
     });
-    // KP1: the Grid's Fold generated Lines.
+    // KP1: the Grid's Fold generated lines.
     m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
     connect(m_shell.get(), &ui::ShellController::foldGeneratedChanged, this, [this] {
         if (m_settings->boolean("grid.foldGenerated") != m_shell->foldGenerated())

@@ -628,7 +628,7 @@ private slots:
         filter.setPredicate([](const core::LineRecord &l) { return l.style != u8"Sign"; });
         QCOMPARE(filter.rowCount(), 1);
         QCOMPARE(filter.index(0, 0).data(LineTableModel::DocumentRowRole).toInt(), 1);
-        QCOMPARE(filter.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("3 generated Lines"));
+        QCOMPARE(filter.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("3 generated lines"));
         const qulonglong first = idAt(model, 1), second = idAt(model, 2);
         model.setSelection({core::LineId{first}, {core::LineId{first}, core::LineId{second}}}, core::LineId{first});
         QCOMPARE(filter.hiddenSelectedCount(), 1); // the first Line, filtered out

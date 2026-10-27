@@ -4261,11 +4261,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Fold generated Lines</source>
+        <source>Fold generated lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>%n generated Lines</source>
+        <source>%n generated lines</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>

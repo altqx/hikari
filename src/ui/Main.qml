@@ -802,7 +802,7 @@ ApplicationWindow {
                       iconRole: "dictionary", run: () => spellTool.openAddedWords() }]
         // KP1 (#286): runs of generated Lines folded into one row each.
         if (dock === gridDock)
-            return [{ name: "foldGenerated", text: qsTranslate("HikariSub.Grid", "Fold generated Lines"), checkable: true,
+            return [{ name: "foldGenerated", text: qsTranslate("HikariSub.Grid", "Fold generated lines"), checkable: true,
                       checked: () => root.shell.foldGenerated,
                       run: () => root.shell.foldGenerated = !root.shell.foldGenerated }]
         return []

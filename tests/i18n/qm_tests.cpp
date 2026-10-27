@@ -290,7 +290,7 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // Edit shapes' and Edit tags' restore questions and the tags' count,
         // "The tag takes %n value(s)" (PU5). 66 with the Kanji timer's "Apply the
         // kanji timing of %n lines?" (KA3). 67 with the Grid's folded run,
-        // "%n generated Lines" (KP1).
+        // "%n generated lines" (KP1).
         ASSERT_EQ(numerus, 67) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));

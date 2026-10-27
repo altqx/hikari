@@ -674,7 +674,7 @@ QVariant LineTableModel::foldedData(const Run &run, int column) const
     case EndColumn: return endText(shownRow(run.latest).line);
     case StyleColumn: return run.styles;
     case EffectColumn: return run.effects;
-    case TextColumn: return QCoreApplication::translate("HikariSub.Grid", "%n generated Lines", nullptr, run.count);
+    case TextColumn: return QCoreApplication::translate("HikariSub.Grid", "%n generated lines", nullptr, run.count);
     default: return QString();
     }
 }

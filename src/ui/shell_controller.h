@@ -38,7 +38,7 @@ class ShellController : public QObject {
     // GR3: empty columns hide themselves in both Grids (grid.autoHideColumns).
     Q_PROPERTY(bool autoHideColumns READ autoHideColumns WRITE setAutoHideColumns NOTIFY autoHideColumnsChanged)
     // KP1 (#286): the Grid folds each run of generated Lines into one row
-    // (grid.foldGenerated; the Grid's Fold generated Lines).
+    // (grid.foldGenerated; the Grid's Fold generated lines).
     Q_PROPERTY(bool foldGenerated READ foldGenerated WRITE setFoldGenerated NOTIFY foldGeneratedChanged)
     // The editing target's format has the ASS columns (Layer ... Effect), and an End time.
     Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)

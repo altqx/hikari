@@ -350,7 +350,7 @@ const std::vector<SettingDefinition> &definitions()
         // the Grid's Hide columns menu and Settings > Editor.
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
         // KP1 (#286): the Grid folds each run of generated Lines (Effect fx
-        // or "Effector [fx]") into one row; the Grid's Fold generated Lines,
+        // or "Effector [fx]") into one row; the Grid's Fold generated lines,
         // turned on by choosing the Karaoke layout.
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
         // LE3-tags-shown (owner, 2026-10-18): the Line editor shows ASS
