@@ -140,7 +140,7 @@ std::string decodeAutomationPath(std::string path, const AutomationPathContext &
 struct AutomationFolders {
     std::vector<std::string> autoload; // the shipped one first
     std::vector<std::string> include;  // searched in this order after the script's own
-    std::vector<std::string> made;     // made at start: log, temp, autosave, Autoload, Include
+    std::vector<std::string> made;     // made at start: log, temp, autosave, autoload, include (UD1)
 };
 // user empty or the same folder as shipped: a portable copy.
 AutomationFolders automationFolders(const std::string &shipped, const std::string &user, bool windows);

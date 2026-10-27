@@ -137,10 +137,10 @@ const QStringList &WorkspaceLayoutController::panelIds()
     return ids;
 }
 
-WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QObject *parent)
-    : QObject(parent), m_file(std::move(layoutFile))
+WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QString savedLayoutsFile, QObject *parent)
+    : QObject(parent), m_savedFile(std::move(savedLayoutsFile)), m_file(std::move(layoutFile))
 {
-    if (!m_file.isEmpty())
+    if (!m_file.isEmpty() && m_savedFile.isEmpty())
         m_savedFile = QFileInfo(m_file).absolutePath() + QStringLiteral("/layouts.json");
     readSavedLayouts();
     if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance())) {

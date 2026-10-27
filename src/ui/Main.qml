@@ -2508,6 +2508,19 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
                 }
             }
+            // UD1 (#362): the user folder in the file manager; no hotkey.
+            ShellMenuItem {
+                help: qsTr("Opens the folder that holds your settings, scripts, dictionaries and presets")
+                iconRole: "folder-open"
+                objectName: "openUserFolderMenuItem"
+                visible: root.app.userFolder.length > 0
+                height: visible ? implicitHeight : 0
+                action: Action {
+                    id: openUserFolderAction
+                    text: qsTr("Open user &folder")
+                    onTriggered: root.app.openUserFolder()
+                }
+            }
             // SH3 (#223): the release notes since the version used before; no hotkey.
             ShellMenuItem {
                 help: qsTr("Shows the release notes of the versions since the one you used before")
