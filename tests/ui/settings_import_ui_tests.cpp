@@ -132,6 +132,34 @@ class SettingsImportTests : public QObject {
     Q_OBJECT
 
 private slots:
+    // UD1: with the user folder's dictionaries, the start's untouched copy
+    // of a bundled dictionary is no profile's; once changed it is the
+    // user's, and the profile holds it under its Dictionary/ name.
+    void seededDictionaryCopiesStayOutOfTheProfileUntilChanged()
+    {
+        QTemporaryDir dir;
+        const QString folder = dir.filePath(QStringLiteral("user"));
+        const QString dictionaries = folder + QStringLiteral("/dictionaries");
+        const QString bundled = dir.filePath(QStringLiteral("program/Dictionary"));
+        QVERIFY(QDir().mkpath(dictionaries) && QDir().mkpath(bundled));
+        const auto put = [](const QString &path, const QByteArray &bytes) {
+            QFile f(path);
+            return f.open(QIODevice::WriteOnly) && f.write(bytes) == bytes.size();
+        };
+        QVERIFY(put(bundled + QStringLiteral("/en_US.dic"), "1\nword\n"));
+        QVERIFY(put(dictionaries + QStringLiteral("/en_US.dic"), "1\nword\n"));
+        QVERIFY(put(dictionaries + QStringLiteral("/UserDic.udic"), "mine\n"));
+        SettingsStore settings(folder + QStringLiteral("/hikari.ini"));
+        SettingsImportStore store(settings, folder);
+        store.setDictionaryFolder(dictionaries, bundled);
+        auto files = store.liveProfile().files;
+        QVERIFY(files.contains("Dictionary/UserDic.udic"));
+        QVERIFY(!files.contains("Dictionary/en_US.dic"));
+        QVERIFY(put(dictionaries + QStringLiteral("/en_US.dic"), "2\nword\nmine\n"));
+        files = store.liveProfile().files;
+        QVERIFY(files.contains("Dictionary/en_US.dic"));
+        QCOMPARE(files.at("Dictionary/en_US.dic"), std::string("2\nword\nmine\n"));
+    }
     void rootsAreListedNeverCombined()
     {
         LegacyRoot a, b;

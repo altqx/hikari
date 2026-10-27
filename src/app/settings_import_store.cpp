@@ -253,12 +253,24 @@ QStringList collectionPaths(const QString &folder, const QString &dictionaryFold
     return out;
 }
 
-// UD1: the bundled dictionaries' file names, whose copies the start seeds
-// into the user's dictionaries; they are the program's, not the profile's.
-QStringList bundledDictionaryNames()
+// UD1: the dictionaries in `folder` that are still the start's copies of
+// the bundled ones, byte for byte; they are the program's, not the
+// profile's. A changed copy is the user's and stays in the profile.
+QStringList seededCopiesIn(const QString &folder, const QString &bundledFolder)
 {
-    return QDir(QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary"))
-        .entryList({QStringLiteral("*.dic"), QStringLiteral("*.aff")}, QDir::Files);
+    QStringList out;
+    const QDir bundled(bundledFolder.isEmpty() ? QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary")
+                                               : bundledFolder);
+    for (const QFileInfo &source : bundled.entryInfoList({QStringLiteral("*.dic"), QStringLiteral("*.aff")}, QDir::Files)) {
+        const QFileInfo copy(folder + QLatin1Char('/') + source.fileName());
+        if (!copy.isFile() || copy.size() != source.size())
+            continue;
+        const auto a = readAll(source.filePath());
+        const auto b = readAll(copy.filePath());
+        if (a && b && *a == *b)
+            out << source.fileName();
+    }
+    return out;
 }
 
 bool trackedCollection(const QString &path)
@@ -727,7 +739,7 @@ void SettingsImportStore::materialize(const si::Profile &profile)
 
 QStringList SettingsImportStore::seededDictionaries() const
 {
-    return m_dictionaryFolder.isEmpty() ? QStringList() : bundledDictionaryNames();
+    return m_dictionaryFolder.isEmpty() ? QStringList() : seededCopiesIn(m_dictionaryFolder, m_bundledDictionaryFolder);
 }
 
 QString SettingsImportStore::diskPath(const QString &path) const
