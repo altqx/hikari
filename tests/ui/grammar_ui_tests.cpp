@@ -593,6 +593,52 @@ private slots:
         QVERIFY(!application->grammarWalkState().contains(QStringLiteral("walking")));
     }
 
+    // SRT: Harper reads the text as spelling does there, with the <...> tags
+    // left out and {...} as text; a suggestion keeps the tags.
+    void srtTagsAreLeftOut()
+    {
+        start();
+        grammarOn();
+        const QString text = QStringLiteral(R"(<font face="tomorow">I has a apple.</font> {see you tomorow})");
+        const QString path = home() + QStringLiteral("/tags.srt");
+        QFile srt(path);
+        QVERIFY(srt.open(QIODevice::WriteOnly));
+        srt.write("1\n00:00:01,000 --> 00:00:02,000\n" + text.toUtf8() + "\n\n");
+        srt.close();
+        QVERIFY(application->openFile(path));
+        QTRY_COMPARE(item("lineText")->property("text").toString(), text);
+        const int article = text.indexOf(QStringLiteral("a apple"));
+        QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
+        const int braced = text.lastIndexOf(QStringLiteral("tomorow"));
+        QTRY_VERIFY(marks().contains(qMakePair(braced, braced + 7)));
+        for (const auto &[from, to] : marks())
+            QVERIFY(from > text.indexOf(QLatin1Char('>'))); // nothing in the tag
+        QVERIFY(application->replaceEditorGrammar(0, article, QStringLiteral("an")));
+        QCOMPARE(lineText(), QStringLiteral(R"(<font face="tomorow">I has an apple.</font> {see you tomorow})"));
+    }
+
+    // Skipped Lines (comments here) are read a turn of the event loop at a
+    // time: the walk starts at once, and Cancel is answered while it reads.
+    void walkReadsSkippedLinesInTurns()
+    {
+        start();
+        grammarOn();
+        QByteArray events;
+        for (int i = 0; i < 3000; ++i)
+            events += "Comment" + dialogue("I has a apple.").mid(8);
+        events += dialogue("I has a apple.", 2);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/comments.ass"), events)));
+        QTRY_VERIFY(target());
+        QVariantMap state = application->startGrammarWalk();
+        QCOMPARE(state.value(QStringLiteral("total")).toInt(), 3001);
+        QVERIFY(state.value(QStringLiteral("checked")).toInt() < 3000); // not every comment yet
+        state = application->cancelGrammarWalk();
+        QVERIFY(state.value(QStringLiteral("cancelled")).toBool());
+        application->startGrammarWalk();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+        QVERIFY(application->grammarWalkState().value(QStringLiteral("found")).toBool());
+    }
+
     // Replacing the walk's last finding: the editor and the Grid show the
     // correction though no finding is left to show.
     void replacingTheLastFindingShowsIt()

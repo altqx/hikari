@@ -518,7 +518,7 @@ TEST_F(Spelling, GrammarReplacementKeepsTagsAndRefusesStaleText)
     EXPECT_EQ(refusal(replaceGrammar(session, line, true, checked, 2, 5, u"have")), CommandRefusal::StaleRevision);
     const auto caret = replaceGrammar(session, line, false, checked, 2, 5, u"have");
     ASSERT_TRUE(caret);
-    EXPECT_EQ(*caret, 6u);
+    EXPECT_EQ(*caret, 11u); // raw, before {\i0}
     EXPECT_EQ(session.historySize(), 2u);
     EXPECT_EQ(session.history().back().name, "Correcting grammar errors in the text field");
     EXPECT_EQ(utf8(session.document().lines()[0]->text), R"(I {\i1}have{\i0} a apple)");

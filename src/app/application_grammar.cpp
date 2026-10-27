@@ -23,8 +23,10 @@ namespace hikari::app {
 
 namespace {
 
-// Lines the panel's walk has with harper-ls at once.
+// Lines the panel's walk has with harper-ls at once, and the most it reads in
+// one turn of the event loop (the rest are skipped comments or blank text).
 constexpr std::size_t kWalkInFlight = 4;
+constexpr std::size_t kWalkPerTurn = 256;
 
 // Harper's groups (harper-core/default_config.json), in core::grammar's order,
 // with their descriptions shortened (the approved mockup).
@@ -98,14 +100,6 @@ QString harperPath(const QString &configured)
 bool blank(const core::grammar::CheckedText &text)
 {
     return std::ranges::all_of(text.text, [](char16_t c) { return c == u' '; });
-}
-
-const core::LineRecord *lineOf(const application::EditSession &session, core::LineId id)
-{
-    for (const auto *line : session.document().lines())
-        if (line->id == id)
-            return line;
-    return nullptr;
 }
 
 } // namespace
@@ -295,7 +289,9 @@ void Application::checkEditorGrammar()
     if (m_grammarTicket)
         client->cancel(m_grammarTicket);
     m_grammarTicket = 0;
-    m_grammarPending = GrammarCheck{*raw, core::grammar::checkedText(*raw), {}};
+    const auto *session = targetSession();
+    const auto format = session ? session->document().format() : core::SubtitleFormat::Ass;
+    m_grammarPending = GrammarCheck{*raw, core::grammar::checkedText(*raw, format), {}};
     m_grammarRole = role;
     if (blank(m_grammarPending.text)) {
         m_grammarEditor = std::move(m_grammarPending);
@@ -361,7 +357,11 @@ void Application::syncGrammarWords()
     if (!file.open(QIODevice::WriteOnly) || file.write(content.toUtf8()) < 0 || !file.commit())
         return;
     m_grammarWords = content;
-    // harper-ls reads the file for each text: the field is checked again.
+    // harper-ls reads the file for each text: the field is checked again, a
+    // check that read the old words dropped.
+    if (m_grammarTicket)
+        m_harper->cancel(m_grammarTicket);
+    m_grammarTicket = 0;
     m_grammarEditor.reset();
     scheduleGrammar();
 }
@@ -451,11 +451,8 @@ bool Application::replaceEditorGrammar(int role, int position, const QString &re
         return false;
     m_editor->reloadFromSession();
     refreshViews(); // the Grid and the tab's modified mark
-    if (const auto raw = editorRaw(role)) {
-        const int at = int(core::rawOffset(core::project(*raw), *caret, false));
-        const int shown = m_editor->displaySpan(role, at, at).first;
-        m_editor->selectInField(shown, shown);
-    }
+    const int shown = m_editor->displaySpan(role, int(*caret), int(*caret)).first;
+    m_editor->selectInField(shown, shown);
     // The findings after it moved with the text: the field is checked again.
     m_grammarEditor.reset();
     checkEditorGrammar();
@@ -538,6 +535,20 @@ QVariantMap Application::startGrammarWalk()
     return grammarWalkState();
 }
 
+const core::LineRecord *Application::grammarWalkLine(const application::EditSession &session, std::size_t index)
+{
+    auto &walk = *m_grammarWalk;
+    if (walk.rowsOf != &session.document() || walk.rowsRevision != session.revision()) {
+        walk.rows.clear();
+        for (const auto *line : session.document().lines())
+            walk.rows.emplace(line->id.value, line);
+        walk.rowsOf = &session.document();
+        walk.rowsRevision = session.revision();
+    }
+    const auto it = walk.rows.find(walk.lines[index].value);
+    return it == walk.rows.end() ? nullptr : it->second;
+}
+
 void Application::pumpGrammarWalk()
 {
     if (!m_grammarWalk || m_grammarWalk->cancelled)
@@ -547,16 +558,28 @@ void Application::pumpGrammarWalk()
         return;
     auto &walk = *m_grammarWalk;
     const auto *session = m_files->session(walk.document);
+    std::size_t read = 0;
     while (walk.pending.size() < kWalkInFlight && !walk.queue.empty()) {
+        if (++read > kWalkPerTurn) { // the window answers (Cancel too) before the rest
+            if (!walk.pumpQueued) {
+                walk.pumpQueued = true;
+                QTimer::singleShot(0, this, [this] {
+                    if (m_grammarWalk)
+                        m_grammarWalk->pumpQueued = false;
+                    pumpGrammarWalk();
+                });
+            }
+            break;
+        }
         const std::size_t index = walk.queue.front();
         walk.queue.pop_front();
-        const auto *line = session ? lineOf(*session, walk.lines[index]) : nullptr;
+        const auto *line = session ? grammarWalkLine(*session, index) : nullptr;
         if (!line || !core::syntax::spellChecked(core::syntax::textState(line->comment, core::toUtf16(line->effect)))) {
             walk.arrived[index] = {};
             continue;
         }
         GrammarCheck check{core::toUtf16(walk.translation ? line->translation : line->text), {}, {}};
-        check.text = core::grammar::checkedText(check.raw);
+        check.text = core::grammar::checkedText(check.raw, session->document().format());
         const bool empty = blank(check.text);
         const QString text = QString::fromStdU16String(check.text.text);
         walk.checks[index] = std::move(check);
@@ -747,9 +770,9 @@ QVariantMap Application::grammarWalkReplace(const QString &replacement)
             other.handled = true;
         }
     }
-    if (const auto *line = lineOf(*session, walk.lines[found.line])) {
+    if (const auto *line = grammarWalkLine(*session, found.line)) {
         check.raw = core::toUtf16(walk.translation ? line->translation : line->text);
-        check.text = core::grammar::checkedText(check.raw);
+        check.text = core::grammar::checkedText(check.raw, session->document().format());
     }
     // The editor shows the correction even when no finding is left to show.
     m_editor->reloadFromSession();

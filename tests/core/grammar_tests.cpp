@@ -112,6 +112,60 @@ TEST(Grammar, OffsetsAreTheHiddenTagProjections)
     EXPECT_EQ(*replaced, uR"({\i1}I have{\i0}\Na {\p1}m 0 0{\p0}apple)");
 }
 
+TEST(Grammar, AssSuggestionsKeepTheTagsAndReturnTheRawCaret)
+{
+    const std::u16string raw = uR"(I {\i1}has{\i0} a apple)";
+    const auto replaced = replace(raw, hikari::core::SubtitleFormat::Ass, 2, 5, u"have");
+    ASSERT_TRUE(replaced);
+    EXPECT_EQ(replaced->raw, uR"(I {\i1}have{\i0} a apple)");
+    EXPECT_EQ(replaced->caret, 11u); // before the closing block
+    EXPECT_FALSE(replace(raw, hikari::core::SubtitleFormat::Ass, 2, 2, u"x"));
+    EXPECT_FALSE(replace(raw, hikari::core::SubtitleFormat::Ass, 2, 5, u"{x}"));
+}
+
+TEST(Grammar, SrtLeavesItsAngleTagsOutAndChecksBraces)
+{
+    // As spelling reads SRT: <...> are tags, {...} is text, \N a space.
+    using hikari::core::SubtitleFormat;
+    const std::u16string raw = uR"(<font face="tomorow">I has a apple.</font>\N{see you tomorow})";
+    const auto text = checkedText(raw, SubtitleFormat::Srt);
+    EXPECT_EQ(text.text, u"I has a apple. {see you tomorow}");
+    ASSERT_EQ(text.raw.size(), text.text.size());
+    EXPECT_EQ(rawUnder(raw, text, u"apple. {"), uR"(apple.</font>\N{)");
+    const auto at = text.text.find(u"a apple");
+    const auto replaced = replace(raw, SubtitleFormat::Srt, at, at + 1, u"an");
+    ASSERT_TRUE(replaced);
+    EXPECT_EQ(replaced->raw, uR"(<font face="tomorow">I has an apple.</font>\N{see you tomorow})");
+    EXPECT_EQ(replaced->caret, raw.find(u"a apple") + 2);
+    // Tags inside the range stay, after the replacement.
+    const std::u16string italic = u"<i>Their</i> going";
+    const auto both = checkedText(italic, SubtitleFormat::Srt);
+    ASSERT_EQ(both.text, u"Their going");
+    const auto joined = replace(italic, SubtitleFormat::Srt, 0, 11, u"They're going");
+    ASSERT_TRUE(joined);
+    EXPECT_EQ(joined->raw, u"<i>They're going</i>");
+    // Nothing that reads as a tag, and never an unclosed one.
+    EXPECT_FALSE(replace(raw, SubtitleFormat::Srt, at, at + 1, u"<b>an"));
+    const auto unclosed = checkedText(u"a <b", SubtitleFormat::Srt);
+    EXPECT_EQ(unclosed.text, u"a  ");
+    EXPECT_FALSE(replace(u"a <b", SubtitleFormat::Srt, 1, 3, u"x"));
+}
+
+TEST(Grammar, LineFormatsLeaveBracesOutAndReadTheBarAsASpace)
+{
+    using hikari::core::SubtitleFormat;
+    const std::u16string raw = u"{y:i}I has|a apple";
+    for (const auto format : {SubtitleFormat::MicroDvd, SubtitleFormat::TMPlayer, SubtitleFormat::Mpl2}) {
+        const auto text = checkedText(raw, format);
+        EXPECT_EQ(text.text, u"I has a apple");
+        EXPECT_EQ(rawUnder(raw, text, u"has a"), u"has|a");
+        const auto replaced = replace(raw, format, 2, 5, u"have");
+        ASSERT_TRUE(replaced);
+        EXPECT_EQ(replaced->raw, u"{y:i}I have|a apple");
+        EXPECT_FALSE(replace(raw, format, 2, 5, u"ha|ve"));
+    }
+}
+
 TEST(Grammar, RangesOutsideTheTextMapToNothing)
 {
     const auto text = checkedText(u"abc");

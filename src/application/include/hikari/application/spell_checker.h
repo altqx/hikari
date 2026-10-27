@@ -133,14 +133,14 @@ std::expected<int, CommandRefusal> replaceInEditor(EditSession &session, core::L
                                                    std::u16string_view replacement);
 
 // GR1 (#364): a grammar finding's suggestion. `checked` is the field's text
-// the finding was found in and [start, end) its range there, in the
-// hidden-tag projection's offsets (core::grammar::checkedText): the
-// replacement goes in by core::mappedReplace, so override blocks inside the
-// range stay in order, and the draft and the replacement are committed as one
+// the finding was found in and [start, end) its range there, in
+// core::grammar::checkedText's offsets for the Document's format: the
+// replacement goes in by core::grammar::replace, so tags inside the range
+// stay in order, and the draft and the replacement are committed as one
 // "Correcting grammar errors in the text field" step. Refused (StaleRevision)
 // when the field's text is no longer `checked`, and (Invalid) when the
 // replacement would touch a drawing or a malformed span. Returns the caret
-// after the replacement, in projection offsets.
+// after the replacement, in raw offsets.
 std::expected<std::size_t, CommandRefusal> replaceGrammar(EditSession &session, core::LineId line, bool translation,
                                                           std::u16string_view checked, std::size_t start,
                                                           std::size_t end, std::u16string_view replacement);

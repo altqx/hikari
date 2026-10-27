@@ -82,6 +82,7 @@
 #include <memory>
 #include <set>
 #include <tuple>
+#include <unordered_map>
 
 namespace hikari::app {
 
@@ -1481,6 +1482,11 @@ private:
         bool translation = false;
         std::vector<core::LineId> lines; // from the active Line to the end, then from the start
         std::map<std::size_t, GrammarCheck> checks;
+        // The Document's Lines by id, read again when its revision moves.
+        std::unordered_map<std::uint64_t, const core::LineRecord *> rows;
+        const core::Document *rowsOf = nullptr;
+        std::uint64_t rowsRevision = 0;
+        bool pumpQueued = false;
         std::deque<std::size_t> queue;           // the Lines still to send
         std::map<quint64, std::size_t> pending;  // a ticket's Line
         std::map<std::size_t, QList<backends::GrammarFinding>> arrived; // after a Line still pending
@@ -1505,6 +1511,7 @@ private:
                                                   int end) const;
     const backends::GrammarFinding *editorGrammarFinding(int role, int position) const;
     void pumpGrammarWalk();
+    const core::LineRecord *grammarWalkLine(const application::EditSession &session, std::size_t index);
     void nextGrammarFinding();
     void showGrammarFinding();
     bool grammarWalkStale();

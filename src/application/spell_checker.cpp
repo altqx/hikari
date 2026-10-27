@@ -1,6 +1,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/legacy_dir.h"
 
+#include "hikari/core/grammar.h"
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
@@ -347,16 +348,16 @@ std::expected<std::size_t, CommandRefusal> replaceGrammar(EditSession &session, 
     const std::u16string text = core::toUtf16(translation ? record->translation : record->text);
     if (text != checked)
         return std::unexpected(CommandRefusal::StaleRevision);
-    const auto replaced = core::mappedReplace(text, start, end, replacement);
+    auto replaced = core::grammar::replace(text, session.document().format(), start, end, replacement);
     if (!replaced)
         return std::unexpected(CommandRefusal::Invalid);
     DraftChange change;
-    (translation ? change.translation : change.text) = core::toUtf8(*replaced);
+    (translation ? change.translation : change.text) = core::toUtf8(replaced->raw);
     if (!session.editDraft(line, change))
         return std::unexpected(CommandRefusal::Protected);
     if (!session.commitDraftAs("Correcting grammar errors in the text field") && session.draftLine())
         return std::unexpected(CommandRefusal::InvalidDraft);
-    return start + replacement.size();
+    return replaced->caret;
 }
 
 SpellCheckWalk::SpellCheckWalk(SpellChecker &checker, SpellingText spelling)
