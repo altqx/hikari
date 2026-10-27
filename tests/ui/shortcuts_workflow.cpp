@@ -40,7 +40,7 @@ protected:
             wait(300ms);
             mouseClick("mainWindow/settingsMenuItem");
             if (waitForItem("settingsDialog/settingsPages", 5s)) {
-                setStringProperty("settingsDialog/settingsPages", "currentIndex", "9"); // Hotkeys, the last page (PF1)
+                setStringProperty("settingsDialog/settingsPages", "currentIndex", "10"); // Hotkeys (PF1), after GR1's Spelling & grammar
                 wait(300ms);
                 observed.push_back(getStringProperty("settingsDialog/hotkeyList", "selectedRow")); // 1: the first row
                 mouseClick("settingsDialog/hotkeyMap");
