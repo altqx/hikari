@@ -623,11 +623,12 @@ private slots:
         QVERIFY(result);
         QCOMPARE(result->outcome, PresentOutcome::Error);
         QCOMPARE(result->stage, PresentStage::Submitted);
+        // SV1: an overlay may be of any size, but its buffer must hold it.
         const auto wrongOverlay = std::make_shared<OverlayFrame>();
         wrongOverlay->width = 10;
         wrongOverlay->height = 10;
         wrongOverlay->stride = 40;
-        wrongOverlay->pixels.resize(400);
+        wrongOverlay->pixels.resize(399);
         wrongOverlay->empty = false;
         const auto mismatched = presentAndWait({6, quadrants(), wrongOverlay, {}});
         QVERIFY(mismatched);
