@@ -6,7 +6,9 @@
 // HIKARI_TEMPLATE_SHOT_DIR set, the panel in the four themes for review.
 
 #include "hikari/app/application.h"
+#include "hikari/application/generated_runs.h"
 #include "docking.h"
+#include "shell_controller.h"
 #include "template_editor_controller.h"
 #include "video_view_controller.h"
 
@@ -22,6 +24,7 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <set>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -604,6 +607,43 @@ private slots:
             QVERIFY(shot.save(out + QStringLiteral("/template-narrow-") + QLatin1String(code) + QStringLiteral(".png")));
         }
         dock->setProperty("isFloating", false);
+    }
+
+    // KP1 with KE3: in the Karaoke arrangement, the Lines a preset's
+    // templates generate show in the Grid as one folded row per run.
+    void aPresetsLinesFoldInTheKaraokeGrid()
+    {
+        const QString path = dir.filePath(QStringLiteral("fold.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\\k50}ki{\\k50}ra{\\k100}ri\n"
+                "Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,,{\\k100}yo{\\k100}ru\n");
+        f.close();
+        QVERIFY(openPath(path, false));
+        QVERIFY(QMetaObject::invokeMethod(root(), "applyPreset", Q_ARG(QVariant, QStringLiteral("Karaoke"))));
+        auto &shell = application->shell();
+        QVERIFY(shell.foldGenerated());
+        QVERIFY(editor().insertPreset(0));
+        QSignalSpy done(&application->automation(), &app::AutomationShell::runCompleted);
+        QTRY_VERIFY_WITH_TIMEOUT(editor().apply(false), 20'000);
+        QVERIFY(done.wait(30'000));
+        QVERIFY(done.first().at(0).toBool());
+        std::set<core::LineId> generated;
+        for (const auto *l : session()->document().lines())
+            if (application::isFoldableGeneratedLine(*l))
+                generated.insert(l->id);
+        QVERIFY(generated.size() > 1);
+        std::size_t rows = 0;
+        for (const auto id : shell.displayedLines()) {
+            if (!generated.contains(id))
+                continue;
+            QCOMPARE(shell.runFirst(id), std::optional(id));
+            QVERIFY(shell.runFolded(id));
+            ++rows;
+        }
+        QVERIFY(rows > 0 && rows < generated.size());
     }
 
     // KE3, for review: New › From a preset open on a song without
