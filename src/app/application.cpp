@@ -3,6 +3,7 @@
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
+#include "hikari/backends/mecab_readings.h"
 #include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/qt_audio_devices.h"
@@ -128,6 +129,18 @@ QString luaHelperPath(const QString &configured)
 #ifdef HIKARI_BUILD_LUA_HELPER
     if (!QFileInfo::exists(sibling))
         return QStringLiteral(HIKARI_BUILD_LUA_HELPER);
+#endif
+    return sibling;
+}
+
+QString readingDictionaryPath(const QString &configured)
+{
+    if (!configured.isEmpty())
+        return configured;
+    const QString sibling = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary/unidic-lite");
+#ifdef HIKARI_BUILD_UNIDIC
+    if (!QFileInfo::exists(sibling + QStringLiteral("/sys.dic")))
+        return QStringLiteral(HIKARI_BUILD_UNIDIC);
 #endif
     return sibling;
 }
@@ -883,6 +896,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_editor->reloadFromSession();
             refreshViews();
         };
+        // KA4: MeCab over UniDic, opened when Furigana is first on
+        hooks.dictionary = [folder = readingDictionaryPath(options.readingDictionaryDir)]() -> application::ReadingAnalyzer {
+            std::shared_ptr<const backends::MecabReadings> readings =
+                backends::MecabReadings::open(std::filesystem::path(folder.toStdU16String()));
+            return readings ? backends::MecabReadings::analyzer(std::move(readings)) : application::ReadingAnalyzer{};
+        };
         m_kanjiTimer = std::make_unique<KanjiTimerController>(*m_settings, std::move(hooks));
     }
     {
@@ -1076,6 +1095,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (m_settings->boolean("grid.autoHideColumns") != m_shell->autoHideColumns())
             m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns());
     });
+    // KP1: the Grid's Fold generated lines.
+    m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
+    connect(m_shell.get(), &ui::ShellController::foldGeneratedChanged, this, [this] {
+        selectFoldedRunsWhole();
+        if (m_settings->boolean("grid.foldGenerated") != m_shell->foldGenerated())
+            m_settings->set("grid.foldGenerated", m_shell->foldGenerated());
+    });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened")); // SH2
     m_copyColumns = m_settings->integer("grid.copyColumns");
@@ -1262,6 +1288,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
     m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::findingOnsetsChanged, this,
+                                  &Application::noticeOnsets);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
         if (m_templateEditor && !m_video->playing())
             m_templateEditor->hostChanged(); // KE2: an audio box opened or closed
@@ -2911,14 +2939,47 @@ void Application::selectLine(qulonglong id)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(gridSelection().plain(session->selection(), core::LineId{id}));
+        applySelection(m_shell->withFoldedRuns(gridSelection().plain(session->selection(), core::LineId{id})));
 }
 
 void Application::extendSelection(int rows)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(gridSelection().shiftKey(session->selection(), rows));
+        applySelection(m_shell->withFoldedRuns(gridSelection().shiftKey(session->selection(), rows)));
+}
+
+// KP1 (#286): a run of generated Lines folded or unfolded from the Grid. A
+// folded run is selected whole or not at all, as its first Line is: a run
+// folded over the active Line leaves its first Line active and the run
+// selected.
+void Application::toggleFold(qulonglong first)
+{
+    const core::LineId id{first};
+    if (!m_shell->foldGenerated() || m_shell->runFirst(id) != id)
+        return;
+    const bool fold = !m_shell->runFolded(id);
+    if (auto *session = targetSession(); fold && session) {
+        const application::Selection &current = session->selection();
+        application::Selection next = m_shell->foldedWhole(current, id);
+        if ((next.active != current.active || next.selected != current.selected) && !applySelection(std::move(next)))
+            return;
+    }
+    m_shell->setRunFolded(id, fold);
+}
+
+// KP1: the folded runs selected whole or not at all once folding turns on.
+// Afterwards a selection that reaches a run in part unfolds it instead
+// (ShellController::setSelection).
+void Application::selectFoldedRunsWhole()
+{
+    auto *session = targetSession();
+    if (!session || !m_shell->foldGenerated())
+        return;
+    const application::Selection &current = session->selection();
+    application::Selection next = m_shell->foldedWhole(current);
+    if (next.active != current.active || next.selected != current.selected)
+        applySelection(std::move(next));
 }
 
 void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool doubleClick)
@@ -2941,13 +3002,13 @@ void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool d
     m_lineChangeOrigin = origin;
     if (doubleClick) {
         if (ctrl && !shift)
-            applySelection(rules.plain(session->selection(), line));
+            applySelection(m_shell->withFoldedRuns(rules.plain(session->selection(), line)));
     } else if (shift)
-        applySelection(rules.shiftClick(session->selection(), line, ctrl));
+        applySelection(m_shell->withFoldedRuns(rules.shiftClick(session->selection(), line, ctrl)));
     else if (ctrl)
-        applySelection(rules.ctrlClick(session->selection(), line));
+        applySelection(m_shell->withFoldedRuns(rules.ctrlClick(session->selection(), line)));
     else
-        applySelection(rules.plain(session->selection(), line));
+        applySelection(m_shell->withFoldedRuns(rules.plain(session->selection(), line)));
     // A press on the active Line: SetLine's "goto done" still plays.
     if (origin && m_lineChangeOrigin && session->selection().active == before)
         followShownLine(false, *origin);
@@ -2960,7 +3021,7 @@ void Application::dragSelection(qulonglong id)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(gridSelection().shiftClick(session->selection(), core::LineId{id}, false));
+        applySelection(m_shell->withFoldedRuns(gridSelection().shiftClick(session->selection(), core::LineId{id}, false)));
 }
 
 void Application::selectAllLines()
@@ -3010,7 +3071,7 @@ application::EditSession *Application::targetSession() const
 
 application::LineVisible Application::shownLines() const
 {
-    const auto shown = m_shell->displayedLines();
+    const auto shown = m_shell->actionLines();
     const std::set<core::LineId> set(shown.begin(), shown.end());
     return [set](core::LineId id) { return set.contains(id); };
 }
@@ -3813,7 +3874,11 @@ QString Application::shiftTimes()
     // A3: the audio box's mark (legacy ChangeTimes' moveTimeOptions & 8 with ABox->hasMark)
     if (m_audio && m_audio->hasMark())
         context.audioMarkMs = m_audio->markMs();
-    const auto result = application::shiftTimes(*session, m_shiftTimes->settings(), context, actionLines(*session));
+    // "New times" lengths: the Conversion time per letter (legacy's
+    // CONVERT_TIME_PER_CHARACTER, SubsGridBase.cpp:439)
+    auto settings = m_shiftTimes->settings();
+    settings.timePerCharacter = m_settings->integer("convert.timePerCharacter");
+    const auto result = application::shiftTimes(*session, settings, context, actionLines(*session));
     m_editor->reloadFromSession();
     refreshViews();
     if (!result) {
@@ -5698,6 +5763,8 @@ void Application::settingChanged(const QString &id)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     else if (id == QLatin1String("grid.autoHideColumns") && !m_resettingSettings)
         m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    else if (id == QLatin1String("grid.foldGenerated") && !m_resettingSettings)
+        m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
     else if (id == QLatin1String("video.disableLiveEditing") || id.startsWith(QLatin1String("grid.calcSpaces"))) {
         m_editor->optionsChanged(); // E4: the counters and Duration follow at once
         refreshVideo();             // live editing on or off: the draft or the committed Lines
@@ -6383,6 +6450,7 @@ void Application::resetAllSettings()
     m_updates->reload();
     // GR3: empty-column hiding has no legacy owner; both Grids take the default.
     m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated")); // KP1
     // SelectLines, once created, keeps its controls and recent searches:
     // the options go back at its close (legacy: at exit or DestroyDialogs),
     // the recent searches at its next selection. Before that, the dialog

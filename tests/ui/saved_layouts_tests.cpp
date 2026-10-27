@@ -208,7 +208,7 @@ private slots:
         QCOMPARE(switcherText(), QStringLiteral("Editing"));
         for (const char *prefix : {"viewLayout", "switcher"}) {
             const QString p = QLatin1String(prefix);
-            for (const char *preset : {"Editing", "Timing", "Translation", "Typesetting"})
+            for (const char *preset : {"Editing", "Timing", "Translation", "Typesetting", "Karaoke"})
                 QVERIFY2(named(p + QStringLiteral("Preset") + QLatin1String(preset)), preset);
             QVERIFY(named(p + QStringLiteral("PresetEditing"))->property("checked").toBool());
             QVERIFY(!named(p + QStringLiteral("PresetTiming"))->property("checked").toBool());

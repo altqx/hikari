@@ -77,6 +77,32 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
     });
 }
 
+// #384: Snap to vocal onsets reads the whole audio before anything snaps;
+// the status bar says so while it reads, and when it is done (for 5 s, as
+// legacy's status messages).
+void Application::noticeOnsets()
+{
+    //: Status bar while Snap to vocal onsets (the audio panel's Tap menu, Karaoke mode) reads the audio
+    const QString finding = QCoreApplication::translate("HikariSub.Audio", "Finding vocal onsets…");
+    if (m_audio->findingOnsets()) {
+        m_shell->setStatusText(finding);
+        return;
+    }
+    if (m_shell->statusText() != finding)
+        return; // replaced by another message
+    if (!m_audio->onsetsFound()) {
+        m_shell->setStatusText(QString()); // stopped before the end
+        return;
+    }
+    //: Status bar once Snap to vocal onsets has read the audio and boundaries snap
+    const QString found = QCoreApplication::translate("HikariSub.Audio", "Vocal onsets found");
+    m_shell->setStatusText(found);
+    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, found] {
+        if (m_shell->statusText() == found)
+            m_shell->setStatusText(QString());
+    });
+}
+
 QString Application::dummyVideoAudio(const QString &videoPath)
 {
     const std::string path = videoPath.toStdString();

@@ -7,6 +7,8 @@
 // and Ctrl+Y undo and redo in the window. Nothing reaches the Document until
 // Apply, one "Kanji timing" step; closing with done pairs asks first. A
 // window of its own on DG1's dialog frame (PK1), modeless and resizable.
+// KA4 (#279): Furigana draws each group's reading over its kanji (typed in
+// the text colour, suggested muted) and edits the current group's.
 pragma Translator: "HikariSub.Karaoke"
 import QtQuick
 import QtQuick.Controls
@@ -24,6 +26,8 @@ DialogWindow {
     initialFocus: strip
     readonly property var pair: timer.pair
     readonly property bool hasPair: pair.groups !== undefined
+    // KA4: the kanji cells take the reading above their kanji.
+    readonly property int kanjiHeight: timer.furigana ? 58 : 44
     // A click on the rest of the kanji or syllables shows how clicks work.
     property bool overRest: false
     // Set while the close question is answered by Apply or Discard.
@@ -131,6 +135,27 @@ DialogWindow {
             ToolTip.visible: hovered
             ToolTip.delay: 600
             ToolTip.text: qsTr("Write each further syllable of a group as a # syllable, for the templater's multi effects")
+        }
+        CheckBox {
+            objectName: "kanjiFurigana"
+            text: qsTr("Furigana")
+            checked: dialog.timer.furigana
+            onToggled: dialog.timer.furigana = checked
+            ToolTip.visible: hovered
+            ToolTip.delay: 600
+            ToolTip.text: qsTr("Write each kanji's reading after it (漢|かん), as the romaji sings it")
+        }
+    }
+    RowLayout {
+        objectName: "kanjiNoDictionary"
+        visible: dialog.timer.noDictionary
+        Layout.alignment: Qt.AlignRight
+        spacing: 6
+        Icon { iconRole: "dictionary"; color: Theme.muted; size: 14 }
+        Label {
+            color: Theme.muted
+            textFormat: Text.PlainText
+            text: qsTr("No reading dictionary: readings come from the romaji only.")
         }
     }
     RowLayout {
@@ -272,8 +297,8 @@ DialogWindow {
                         }
                     }
                     onClicked: {
-                        dialog.timer.choose(index)
                         strip.forceActiveFocus()
+                        dialog.timer.choose(index)
                     }
                 }
             }
@@ -378,6 +403,7 @@ DialogWindow {
                                 objectName: "kanjiGroup" + index
                                 spacing: 4
                                 Row {
+                                    id: syllableRow
                                     spacing: 2
                                     Repeater {
                                         model: group.modelData.syllables
@@ -413,15 +439,43 @@ DialogWindow {
                                     }
                                 }
                                 Cell {
+                                    id: kanjiCell
                                     kind: group.kind
                                     blank: group.modelData.blank
-                                    width: parent.width
-                                    height: 44
-                                    Label {
+                                    width: Math.max(syllableRow.implicitWidth, readingText.implicitWidth + 12)
+                                    height: dialog.kanjiHeight
+                                    readonly property var furigana: dialog.timer.furigana ? group.modelData.furigana : undefined
+                                    Column {
                                         anchors.centerIn: parent
-                                        textFormat: Text.PlainText
-                                        text: group.modelData.kanji
-                                        font: dialog.fontAt(22)
+                                        Label {
+                                            id: readingText
+                                            objectName: "kanjiGroupReading"
+                                            visible: dialog.timer.furigana
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            height: 14
+                                            textFormat: Text.PlainText
+                                            text: kanjiCell.furigana ? kanjiCell.furigana.reading : ""
+                                            color: kanjiCell.furigana && (kanjiCell.furigana.typed || group.kind === "cur") ? Theme.text : Theme.muted
+                                            font: dialog.fontAt(11, kanjiCell.furigana && kanjiCell.furigana.typed && group.kind === "cur" ? Font.Bold : Font.Normal)
+                                        }
+                                        Label {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            textFormat: Text.PlainText
+                                            text: group.modelData.kanji
+                                            font: dialog.fontAt(22)
+                                        }
+                                    }
+                                    // The dictionary reads it otherwise.
+                                    Rectangle {
+                                        objectName: "kanjiGroupDiffers"
+                                        visible: kanjiCell.furigana !== undefined && kanjiCell.furigana.differs
+                                        anchors.top: parent.top
+                                        anchors.right: parent.right
+                                        anchors.margins: 3
+                                        width: 5
+                                        height: 5
+                                        radius: 2.5
+                                        color: Theme.warning
                                     }
                                     MouseArea {
                                         anchors.fill: parent
@@ -468,7 +522,7 @@ DialogWindow {
                             }
                             Row {
                                 spacing: 2
-                                height: 44
+                                height: dialog.kanjiHeight
                                 Repeater {
                                     id: restKanji
                                     model: dialog.pair.restKanji || []
@@ -477,7 +531,7 @@ DialogWindow {
                                         required property var modelData
                                         objectName: "kanjiRestCharacter"
                                         width: restChar.implicitWidth + 6
-                                        height: 44
+                                        height: dialog.kanjiHeight
                                         radius: 1
                                         color: restHover.hovered ? Theme.raised : "transparent"
                                         border.color: restHover.hovered ? Theme.accent : "transparent"
@@ -563,19 +617,77 @@ DialogWindow {
                           .arg(dialog.pair.noKanjiLeft || "")
                 }
             }
-            Label {
-                objectName: "kanjiDetail"
+            RowLayout {
                 visible: dialog.hasPair && (dialog.pair.noKanjiLeft || "") === ""
                 Layout.fillWidth: true
-                elide: Text.ElideRight
-                color: Theme.muted
-                textFormat: Text.PlainText
+                spacing: 8
                 readonly property var detail: dialog.pair.detail || {}
-                text: dialog.overRest ? qsTr("Click a kanji: the current group ends there. Click a syllable: its romaji does.")
-                    : detail.romaji === undefined ? ""
-                    : detail.blank ? qsTr("blank ← %1 · %2 cs").arg(detail.romaji).arg(detail.cs)
-                    : detail.reading ? qsTr("%1 ← %2 (%3) · %4 cs").arg(detail.kanji).arg(detail.romaji).arg(detail.reading).arg(detail.cs)
-                    : qsTr("%1 ← %2 · %3 cs").arg(detail.kanji).arg(detail.romaji).arg(detail.cs)
+                // KA4: the current group's reading, with Furigana on and kanji in it
+                readonly property var furigana: dialog.timer.furigana && !dialog.overRest ? detail.furigana : undefined
+                Label {
+                    objectName: "kanjiDetail"
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    color: Theme.muted
+                    textFormat: Text.PlainText
+                    readonly property var detail: parent.detail
+                    text: dialog.overRest ? qsTr("Click a kanji: the current group ends there. Click a syllable: its romaji does.")
+                        : detail.romaji === undefined ? ""
+                        : detail.blank ? qsTr("blank ← %1 · %2 cs").arg(detail.romaji).arg(detail.cs)
+                        : detail.reading ? qsTr("%1 ← %2 (%3) · %4 cs").arg(detail.kanji).arg(detail.romaji).arg(detail.reading).arg(detail.cs)
+                        : qsTr("%1 ← %2 · %3 cs").arg(detail.kanji).arg(detail.romaji).arg(detail.cs)
+                }
+                // Why the suggestion is what it is.
+                RowLayout {
+                    objectName: "kanjiReadingHint"
+                    readonly property string text: !parent.furigana ? ""
+                        : parent.furigana.dictionary ? qsTr("Dictionary: %1").arg(parent.furigana.dictionary)
+                        : parent.furigana.notSung ? qsTr("Not sung in kana") : ""
+                    visible: text.length > 0
+                    spacing: 5
+                    Icon { iconRole: "dictionary"; color: Theme.muted; size: 14 }
+                    Label { color: Theme.muted; font: dialog.fontAt(12); textFormat: Text.PlainText; text: parent.text }
+                }
+                Label {
+                    visible: parent.furigana !== undefined
+                    text: qsTr("Reading")
+                }
+                TextField {
+                    id: readingField
+                    objectName: "kanjiReading"
+                    visible: parent.furigana !== undefined
+                    Layout.preferredWidth: 120
+                    readonly property string shown: parent.furigana ? parent.furigana.reading : ""
+                    text: shown
+                    onShownChanged: if (!activeFocus) text = shown
+                    placeholderText: qsTr("No furigana")
+                    Accessible.name: qsTr("Reading")
+                    onEditingFinished: {
+                        if (text !== shown)
+                            dialog.timer.setReading(text)
+                        text = shown
+                    }
+                    // (back to the strip: leaving the field sets the reading;
+                    // every command leaves it first, so a reading being typed
+                    // goes to its own group)
+                    Keys.onReturnPressed: strip.forceActiveFocus()
+                    Keys.onEnterPressed: strip.forceActiveFocus()
+                }
+                IconButton {
+                    objectName: "kanjiUseSuggestion"
+                    visible: parent.furigana !== undefined
+                    iconRole: "restore-default"
+                    text: qsTr("Use the suggestion")
+                    flat: true
+                    enabled: parent.furigana !== undefined && parent.furigana.typed
+                    focusPolicy: Qt.TabFocus
+                    // (what was typed is dropped, not set as it leaves)
+                    onClicked: {
+                        dialog.timer.useSuggestion()
+                        readingField.text = readingField.shown
+                        strip.forceActiveFocus()
+                    }
+                }
             }
 
             // The commands, as buttons.
@@ -587,27 +699,27 @@ DialogWindow {
                     objectName: "kanjiLink"
                     text: qsTr("Link")
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.link(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.link() }
                 }
                 Button {
                     objectName: "kanjiUnlink"
                     text: qsTr("Unlink")
                     enabled: dialog.pair.canUnlink === true
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.unlink(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.unlink() }
                 }
                 Rectangle { implicitWidth: 1; implicitHeight: 20; color: Theme.line; Layout.leftMargin: 4; Layout.rightMargin: 4 }
                 Button {
                     objectName: "kanjiSkipRomaji"
                     text: qsTr("Skip romaji line")
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.skipRomaji(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.skipRomaji() }
                 }
                 Button {
                     objectName: "kanjiSkipKanji"
                     text: qsTr("Skip kanji line")
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.skipKanji(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.skipKanji() }
                 }
                 Item { Layout.fillWidth: true }
                 IconTextButton {
@@ -616,14 +728,14 @@ DialogWindow {
                     iconRole: "chevron-left"
                     enabled: dialog.pair.canPrevious === true
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.previous(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.previous() }
                 }
                 Button {
                     objectName: "kanjiAcceptLine"
                     text: qsTr("Accept line")
                     enabled: dialog.pair.canAccept === true
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.acceptLine(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.acceptLine() }
                 }
             }
 
@@ -748,7 +860,7 @@ DialogWindow {
         objectName: "kanjiAcceptAll"
         text: qsTr("Accept all suggestions")
         enabled: dialog.timer.problem === "" && dialog.timer.pairs.some(p => p.status === "suggested")
-        onClicked: { dialog.timer.acceptAll(); strip.forceActiveFocus() }
+        onClicked: { strip.forceActiveFocus(); dialog.timer.acceptAll() }
     }
     buttons: [
         PrimaryButton {

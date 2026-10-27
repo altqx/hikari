@@ -199,6 +199,9 @@ public:
         // Bundled dictionaries, searched after the user's folder (legacy
         // <executable dir>/Dictionary; the composition sets it).
         QString bundledDictionaryDir;
+        // KA4: the furigana reading dictionary (MeCab's UniDic); empty:
+        // Dictionary/unidic-lite beside the executable, else the build tree's.
+        QString readingDictionaryDir;
         // A1: legacy's AudioCache folder; empty: "AudioCache" beside the
         // settings file, or a temporary directory without one (tests).
         QString audioCacheDir;
@@ -434,6 +437,8 @@ public:
     // what legacy's Grid click reads to move the video (SetVideoLineTime).
     Q_INVOKABLE void clickLine(qulonglong id, int modifiers, bool endColumn = false, bool doubleClick = false);
     Q_INVOKABLE void dragSelection(qulonglong id);
+    // KP1 (#286): the Grid's fold arrow on a run of generated Lines (its first Line).
+    Q_INVOKABLE void toggleFold(qulonglong first);
     Q_INVOKABLE void selectAllLines();
     // The Grid's active Line was hidden: only the active Line moves.
     Q_INVOKABLE void moveActiveLine(qulonglong id);
@@ -1204,6 +1209,7 @@ private:
     bool targetUntouched() const;
     application::GridSelection gridSelection() const;
     bool applySelection(application::Selection next);
+    void selectFoldedRunsWhole(); // KP1
 
     std::unique_ptr<application::FileReadPort> m_reader;
     std::unique_ptr<backends::PlatformFilePort> m_port;
@@ -1509,6 +1515,7 @@ private:
     // AV1: the status bar says so when the chosen device went away and the
     // system default plays (application_audio.cpp).
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
+    void noticeOnsets(); // #384: the status bar while vocal onsets are found
     application::OutputRoute m_noticedRoute;
     QString m_audioRouteNotice; // the unplugged device's notice while it shows
     int m_audioRouteNoticeSerial = 0;

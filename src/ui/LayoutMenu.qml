@@ -17,7 +17,7 @@ ShellMenu {
     required property var layouts // WorkspaceLayoutController
     // The items' objectNames start with it (the switcher's and View's menus).
     property string prefix: "layout"
-    readonly property var presets: ["Editing", "Timing", "Translation", "Typesetting"]
+    readonly property var presets: ["Editing", "Timing", "Translation", "Typesetting", "Karaoke"]
     signal presetChosen(string name)
     signal savedLayoutChosen(string name)
     signal saveRequested()
@@ -42,7 +42,7 @@ ShellMenu {
     // presetLabel's literals), marked here for the context lint.
     readonly property var presetTexts: [QT_TRANSLATE_NOOP("HikariSub.Workspace", "Editing"),
         QT_TRANSLATE_NOOP("HikariSub.Workspace", "Timing"), QT_TRANSLATE_NOOP("HikariSub.Workspace", "Translation"),
-        QT_TRANSLATE_NOOP("HikariSub.Workspace", "Typesetting")]
+        QT_TRANSLATE_NOOP("HikariSub.Workspace", "Typesetting"), QT_TRANSLATE_NOOP("HikariSub.Workspace", "Karaoke")]
     Instantiator {
         model: menu.presets
         delegate: ShellMenuItem {
