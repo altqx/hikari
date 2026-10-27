@@ -43,7 +43,6 @@ constexpr OptionsBinding kBindings[] = {
     {"editor.dontGoToNextLineOnTimesEdit", Check, LineEditor},
     {"video.disableLiveEditing", Check, Video},
     {"grid.setVisibleLineAfterFullScreen", Check, Grid},
-    {"shiftTimes.changeValuesWithTab", Check, General},
     {"grid.changeActiveOnSelection", Check, Grid},
     {"translation.showOriginal", Check, LineEditor},
     {"translation.hideOriginalOnVideo", Check, LineEditor},

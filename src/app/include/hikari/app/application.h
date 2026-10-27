@@ -1511,6 +1511,7 @@ private:
     // AV1: the status bar says so when the chosen device went away and the
     // system default plays (application_audio.cpp).
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
+    void noticeOnsets(); // #384: the status bar while vocal onsets are found
     application::OutputRoute m_noticedRoute;
     QString m_audioRouteNotice; // the unplugged device's notice while it shows
     int m_audioRouteNoticeSerial = 0;

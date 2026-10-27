@@ -105,8 +105,8 @@ FocusScope {
             return lines.total === 1 ? qsTr("Applied. The script wrote 1 line to its log.")
                                      : qsTr("Applied. The script wrote %n lines to its log.", "", lines.total)
         if (state === "problems")
-            return automation.problems === 1 ? qsTr("Applied. 1 template line has problems.")
-                                             : qsTr("Applied. %n template lines have problems.", "", automation.problems)
+            return automation.problems === 1 ? qsTr("Applied. The templates have 1 problem.")
+                                             : qsTr("Applied. The templates have %n problems.", "", automation.problems)
         // A Lua error's text is its traceback: "File …, line N" headers
         // and the message; the card says the message, the log has the rest.
         const parts = automation.cardText.split("\n").filter(l => l.trim().length > 0)

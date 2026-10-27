@@ -102,6 +102,8 @@ class AudioController : public QObject {
     // KA5 (#280, KA5-onset-snap): Karaoke mode's boundaries snap to vocal
     // onsets (audio.onsetSnap, off by default).
     Q_PROPERTY(bool onsetSnap READ onsetSnap NOTIFY boxControlsChanged)
+    // #384: while a worker finds the open audio's onsets
+    Q_PROPERTY(bool findingOnsets READ findingOnsets NOTIFY findingOnsetsChanged)
     // The tapped syllables on the display ({x1, x2, text, held}, columns),
     // each tick while tapping.
     Q_PROPERTY(QVariantList tapSpans READ tapSpans NOTIFY tapSpansChanged)
@@ -407,6 +409,7 @@ public:
     // is on in Karaoke mode; else none.
     std::span<const int> snapOnsets() const;
     bool onsetsFound() const { return m_onsets && m_onsetsSerial == m_box.serial(); }
+    bool findingOnsets() const { return m_onsetCancel != nullptr; }
     // Detections run so far (each audio file once, unless it changed).
     int onsetDetections() const { return m_onsetDetections; }
 
@@ -485,12 +488,14 @@ signals:
     void tapChanged();
     void tapSpansChanged();
     void onsetsChanged(); // KA5: the open audio's onsets were found
+    void findingOnsetsChanged();
     void calibrationChanged();
 
 private:
     void switchKaraoke(); // toggleKaraoke's switch
     void loadBoxControls(); // legacy AudioBox's constructor
     void loadThemeColours(); // K2: the theme's display colours (legacy ChangeColors)
+    void loadDisplayOptions(); // legacy AudioDisplay::ChangeOptions, without the colours
     void applyVerticalZoom(int position, bool fromVolume);
     bool autoScrollSetting() const;
     void ask(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer, bool forBox);

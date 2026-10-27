@@ -150,6 +150,7 @@ struct AudioDisplayOptions {
     bool drawSelectionBackground = true; // AUDIO_DRAW_SELECTION_BACKGROUND
     bool drawSecondBoundaries = true;    // AUDIO_DRAW_SECONDARY_LINES
     bool drawKeyframes = true;           // AUDIO_DRAW_KEYFRAMES
+    bool drawTimeCursor = true;          // AUDIO_DRAW_TIME_CURSOR (AU-time-cursor-option)
     bool autoScroll = true;              // AUDIO_AUTO_SCROLL
     bool grabTimesOnSelect = true;       // AUDIO_GRAB_TIMES_ON_SELECT
     int horizontalZoom = 50;             // AUDIO_HORIZONTAL_ZOOM (samples percent)
@@ -307,7 +308,8 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
 // Legacy DrawProgress while the audio is still loading (`progress` 0..1).
 std::vector<AudioShape> audioProgressScene(const AudioView &view, float progress, const AudioDisplayOptions &options);
 // Legacy DrawCursor: the mouse cursor's line and, when not playing, its time
-// (20 rows down in karaoke mode, under the syllables, else 5).
+// (20 rows down in karaoke mode, under the syllables, else 5), unless
+// drawTimeCursor is off.
 std::vector<AudioShape> audioCursor(const AudioView &view, float x, bool playing, const AudioDisplayOptions &options,
                                     bool karaoke = false);
 
