@@ -1494,12 +1494,15 @@ private:
     backends::HarperClient *grammarClient();
     QJsonObject grammarSettings() const;
     void applyGrammarSettings();
+    void grammarWalkSettingsChanged(const QJsonObject &before, const QJsonObject &after);
     void scheduleGrammar();
     void checkEditorGrammar();
     void grammarChecked(quint64 ticket, const QList<backends::GrammarFinding> &findings);
     void grammarFailed(const QString &message);
     void syncGrammarWords();
     const GrammarCheck *editorGrammarCheck(int role) const;
+    std::optional<std::pair<int, int>> fieldSpan(int role, const core::grammar::CheckedText &text, int start,
+                                                  int end) const;
     const backends::GrammarFinding *editorGrammarFinding(int role, int position) const;
     void pumpGrammarWalk();
     void nextGrammarFinding();

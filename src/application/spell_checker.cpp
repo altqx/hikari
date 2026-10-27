@@ -256,7 +256,8 @@ bool SpellChecker::addUserWord(std::u16string_view word)
 
 bool SpellChecker::removeWords(const std::vector<std::u16string> &words)
 {
-    if (words.empty() || !m_backend || !fileExists(userDictionary()))
+    // GR1: as addUserWord, with or without a dictionary loaded.
+    if (words.empty() || !fileExists(userDictionary()))
         return false;
     const auto content = readUserDictionary(userDictionary());
     if (!content)
@@ -264,8 +265,9 @@ bool SpellChecker::removeWords(const std::vector<std::u16string> &words)
     const auto removed = core::legacy::removeUserWords(*content, words);
     if (removed.removed.empty())
         return false;
-    for (const auto &word : removed.removed)
-        m_backend->remove(word);
+    if (m_backend)
+        for (const auto &word : removed.removed)
+            m_backend->remove(word);
     m_results.clear();
     writeUserDictionary(userDictionary(), removed.content);
     return true;

@@ -219,7 +219,9 @@ FocusScope {
     }
     function restartCheck() {
         restartPending = false
-        if (!checking)
+        // GR1: the Grammar walk's finding keeps the panel (also when the
+        // restart was queued before the switch to Grammar).
+        if (!checking || grammarMode)
             return
         restarting = true
         show(app.openSpellChecker(options()))
@@ -228,11 +230,11 @@ FocusScope {
     Connections {
         target: panel.app
         function onSpellCheckerRestarted() {
-            if (panel.checking && !panel.restarting)
+            if (panel.checking && !panel.restarting && !panel.grammarMode)
                 panel.scheduleRestart()
         }
         function onSpellingChanged() {
-            if (panel.checking && !panel.restarting && panel.current.available === false)
+            if (panel.checking && !panel.restarting && !panel.grammarMode && panel.current.available === false)
                 panel.scheduleRestart()
         }
         function onGrammarWalkChanged() {

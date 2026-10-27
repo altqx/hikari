@@ -233,6 +233,10 @@ TEST_F(Spelling, UserWordsWithoutADictionary)
     EXPECT_FALSE(checker->addUserWord(u"-12"));
     EXPECT_TRUE(checker->addUserWord(u"wrold"));
     EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold"}));
+    // ...and removed the same way (Words added to dictionary).
+    EXPECT_TRUE(checker->addUserWord(u"gone"));
+    EXPECT_TRUE(checker->removeWords({u"gone"}));
+    EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold"}));
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
     EXPECT_TRUE(checker->checkWord(u"wrold"));
     EXPECT_TRUE(checker->addUserWord(u"zzyzx"));

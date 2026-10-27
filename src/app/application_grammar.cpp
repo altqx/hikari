@@ -203,21 +203,65 @@ void Application::applyGrammarSettings()
         }
         if (m_harper) {
             const QJsonObject settings = grammarSettings();
-            if (settings == m_harper->settings())
+            const QJsonObject before = m_harper->settings();
+            if (settings == before)
                 return;
             m_harper->setSettings(settings); // ends the process and the checks it had
             m_grammarTicket = 0;
-            if (m_grammarWalk) {
-                for (auto it = m_grammarWalk->pending.rbegin(); it != m_grammarWalk->pending.rend(); ++it)
-                    m_grammarWalk->queue.push_front(it->second);
-                m_grammarWalk->pending.clear();
-                pumpGrammarWalk();
-            }
+            if (m_grammarWalk)
+                grammarWalkSettingsChanged(before, settings);
         }
         m_grammarEditor.reset(); // found under the old rules
         checkEditorGrammar();
         emit grammarChanged();
     }, Qt::QueuedConnection);
+}
+
+// The walk's findings were found under `before`. Rules turned off (Ignore
+// this rule, a group switched off) only drop theirs; any other change (the
+// English, a rule turned on, Hunspell) walks the file again.
+void Application::grammarWalkSettingsChanged(const QJsonObject &before, const QJsonObject &after)
+{
+    auto &walk = *m_grammarWalk;
+    const QJsonObject wasOn = before.value(QStringLiteral("linters")).toObject();
+    const QJsonObject isOn = after.value(QStringLiteral("linters")).toObject();
+    QJsonObject rest = before, restAfter = after;
+    rest.remove(QStringLiteral("linters"));
+    restAfter.remove(QStringLiteral("linters"));
+    const bool narrowed = rest == restAfter && std::ranges::all_of(isOn.keys(), [&](const QString &rule) {
+        return !isOn.value(rule).toBool() || wasOn.value(rule).toBool(true);
+    });
+    if (narrowed) {
+        for (auto &found : walk.findings)
+            if (!isOn.value(found.finding.rule).toBool(true))
+                found.handled = true;
+        for (auto &[index, findings] : walk.arrived)
+            findings.removeIf([&](const backends::GrammarFinding &f) { return !isOn.value(f.rule).toBool(true); });
+        for (auto it = walk.pending.rbegin(); it != walk.pending.rend(); ++it)
+            walk.queue.push_front(it->second);
+        walk.pending.clear();
+        if (walk.current && walk.findings[*walk.current].handled) {
+            nextGrammarFinding();
+            showGrammarFinding();
+        }
+        pumpGrammarWalk();
+        emit grammarWalkChanged();
+        return;
+    }
+    // Found under other settings: all of it again, from the walk's first Line
+    // (a cancelled walk only loses what it found).
+    walk.checks.clear();
+    walk.queue.clear();
+    walk.pending.clear();
+    walk.arrived.clear();
+    walk.findings.clear();
+    walk.current.reset();
+    walk.checked = 0;
+    if (!walk.cancelled)
+        for (std::size_t i = 0; i < walk.lines.size(); ++i)
+            walk.queue.push_back(i);
+    pumpGrammarWalk();
+    emit grammarWalkChanged();
 }
 
 void Application::scheduleGrammar()
@@ -331,17 +375,28 @@ const Application::GrammarCheck *Application::editorGrammarCheck(int role) const
     return raw && *raw == m_grammarEditor->raw ? &*m_grammarEditor : nullptr;
 }
 
+// A finding's range in the field as shown: the raw text's (whole Translated
+// text in translation mode), less a carried leading block, and through the
+// projection when tags are hidden.
+std::optional<std::pair<int, int>> Application::fieldSpan(int role, const core::grammar::CheckedText &text, int start,
+                                                          int end) const
+{
+    const auto raw = core::grammar::rawRange(text, std::size_t(start), std::size_t(end));
+    if (!raw)
+        return std::nullopt;
+    const auto span = m_editor->displaySpan(role, int(raw->first), int(raw->second));
+    if (span.first >= span.second)
+        return std::nullopt;
+    return span;
+}
+
 const backends::GrammarFinding *Application::editorGrammarFinding(int role, int position) const
 {
     const auto *check = editorGrammarCheck(role);
     if (!check || position < 0)
         return nullptr;
-    const bool tags = m_editor->showTags();
-    const auto range = [&](const backends::GrammarFinding &f) -> std::pair<int, int> {
-        if (!tags)
-            return {f.start, f.end};
-        const auto raw = core::grammar::rawRange(check->text, std::size_t(f.start), std::size_t(f.end));
-        return raw ? std::pair{int(raw->first), int(raw->second)} : std::pair{-1, -1};
+    const auto range = [&](const backends::GrammarFinding &f) {
+        return fieldSpan(role, check->text, f.start, f.end).value_or(std::pair{-1, -1});
     };
     // A position inside a finding, else at its end (the caret after a word).
     for (const auto &f : check->findings)
@@ -359,13 +414,9 @@ QVariantList Application::editorGrammarMarks(int role)
     const auto *check = editorGrammarCheck(role);
     if (!check)
         return out;
-    for (const auto &f : check->findings) {
-        if (!m_editor->showTags()) {
-            out << f.start << f.end;
-        } else if (const auto raw = core::grammar::rawRange(check->text, std::size_t(f.start), std::size_t(f.end))) {
-            out << int(raw->first) << int(raw->second);
-        }
-    }
+    for (const auto &f : check->findings)
+        if (const auto span = fieldSpan(role, check->text, f.start, f.end))
+            out << span->first << span->second;
     return out;
 }
 
@@ -399,11 +450,11 @@ bool Application::replaceEditorGrammar(int role, int position, const QString &re
     if (!caret)
         return false;
     m_editor->reloadFromSession();
-    std::size_t shown = *caret;
-    if (m_editor->showTags())
-        if (const auto raw = editorRaw(role))
-            shown = core::rawOffset(core::project(*raw), *caret, false);
-    m_editor->selectInField(int(shown), int(shown));
+    if (const auto raw = editorRaw(role)) {
+        const int at = int(core::rawOffset(core::project(*raw), *caret, false));
+        const int shown = m_editor->displaySpan(role, at, at).first;
+        m_editor->selectInField(shown, shown);
+    }
     // The findings after it moved with the text: the field is checked again.
     m_grammarEditor.reset();
     checkEditorGrammar();
@@ -490,6 +541,9 @@ void Application::pumpGrammarWalk()
 {
     if (!m_grammarWalk || m_grammarWalk->cancelled)
         return;
+    // Another Document went into the editor while the walk waited for harper-ls.
+    if (grammarWalkStale())
+        return;
     auto &walk = *m_grammarWalk;
     const auto *session = m_files->session(walk.document);
     while (walk.pending.size() < kWalkInFlight && !walk.queue.empty()) {
@@ -553,7 +607,7 @@ void Application::nextGrammarFinding()
 
 void Application::showGrammarFinding()
 {
-    if (!m_grammarWalk || !m_grammarWalk->current)
+    if (!m_grammarWalk || !m_grammarWalk->current || m_workspace.editingTarget() != m_grammarWalk->document)
         return;
     const auto &walk = *m_grammarWalk;
     const auto &found = walk.findings[*walk.current];
@@ -563,13 +617,8 @@ void Application::showGrammarFinding()
     const int role = walk.translation ? 1 : 0;
     if (editorRaw(role) != check.raw)
         return;
-    int from = found.finding.start, to = found.finding.end;
-    if (m_editor->showTags())
-        if (const auto raw = core::grammar::rawRange(check.text, std::size_t(from), std::size_t(to))) {
-            from = int(raw->first);
-            to = int(raw->second);
-        }
-    m_editor->selectInField(from, to, role);
+    if (const auto span = fieldSpan(role, check.text, found.finding.start, found.finding.end))
+        m_editor->selectInField(span->first, span->second, role);
 }
 
 bool Application::grammarWalkStale()
@@ -582,6 +631,7 @@ bool Application::grammarWalkStale()
     cancelGrammarWalk();
     m_grammarWalk->current.reset();
     m_grammarWalk->problem = QCoreApplication::translate("HikariSub.Spelling", "Another file is open in the editor.");
+    emit grammarWalkChanged();
     return true;
 }
 

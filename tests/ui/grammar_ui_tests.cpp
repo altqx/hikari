@@ -383,6 +383,99 @@ private slots:
         QVERIFY(marks(0).isEmpty());
     }
 
+    // Tags from original: the Translated field leaves the carried leading
+    // tags out, and so do the findings' marks and the menu's hit test.
+    void carriedTagsAreLeftOutOfTheMarks()
+    {
+        start();
+        grammarOn();
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/carried.ass"), dialogue("{\\i1}Wall high"),
+                                               "TLMode: Yes")));
+        QTRY_VERIFY(application->spellingRole() == 1);
+        QVERIFY(application->editor().moveTags());
+        const QString shown = QStringLiteral("I has a apple.");
+        application->editor().translationEdited(shown, int(shown.size()));
+        QTRY_COMPARE(item("translationText")->property("text").toString(), shown);
+        const auto draft = target()->draftRecord();
+        QVERIFY(draft);
+        const auto &stored = draft->translation;
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(stored.data()), qsizetype(stored.size())),
+                 QStringLiteral("{\\i1}I has a apple."));
+        const int article = shown.indexOf(QStringLiteral("a apple"));
+        QTRY_VERIFY_WITH_TIMEOUT(marks(1).contains(qMakePair(article, article + 1)), kHarperWait);
+        for (const auto &[from, to] : marks(1))
+            QVERIFY(to <= shown.size());
+        QCOMPARE(application->editorGrammarAt(1, article).value(QStringLiteral("rule")).toString(), QStringLiteral("AnA"));
+    }
+
+    // Another file in the editor while the walk waits for harper-ls: the walk
+    // stops and says so, and the editor stays where it was.
+    void walkStopsWhenAnotherFileIsEdited()
+    {
+        start();
+        grammarOn();
+        QByteArray events;
+        for (int i = 0; i < 60; ++i)
+            events += dialogue(i % 20 == 5 ? "I has a apple." : "This line is fine.", i % 59);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/first.ass"), events)));
+        QTRY_VERIFY(target());
+        QVERIFY(application->startGrammarWalk().value(QStringLiteral("walking")).toBool());
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/second.ass"),
+                                               dialogue("One.") + dialogue("Two.", 2) + dialogue("Three.", 3))));
+        application->selectTab(1);
+        QTRY_COMPARE(lineText(), QStringLiteral("One."));
+        const auto active = target()->selection().active;
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("cancelled")).toBool(), kHarperWait);
+        const QVariantMap state = application->grammarWalkState();
+        QCOMPARE(state.value(QStringLiteral("problem")).toString(), QStringLiteral("Another file is open in the editor."));
+        QVERIFY(!state.value(QStringLiteral("found")).toBool());
+        QTest::qWait(500);
+        QCOMPARE(target()->selection().active, active);
+        QCOMPARE(lineText(), QStringLiteral("One."));
+    }
+
+    // The walk's findings follow the settings: a group turned off drops its
+    // findings in place; another English walks the file again.
+    void walkFollowsTheSettings()
+    {
+        start();
+        grammarOn();
+        QByteArray events;
+        for (int i = 0; i < 12; ++i)
+            events += dialogue(i % 4 == 1 ? "I has a apple." : "This line is fine.", i + 1);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/follow.ass"), events)));
+        QTRY_VERIFY(target());
+        application->startGrammarWalk();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+        QVariantMap state = application->grammarWalkState();
+        QVERIFY(state.value(QStringLiteral("found")).toBool());
+        const QString group = state.value(QStringLiteral("groupName")).toString();
+        const int count = state.value(QStringLiteral("count")).toInt();
+        QVERIFY(count >= 6);
+        // The shown finding's group off (in Settings, not through the walk).
+        int index = -1;
+        const QVariantList groups = application->grammarGroups();
+        for (int i = 0; i < groups.size(); ++i)
+            if (groups[i].toMap().value(QStringLiteral("name")).toString() == group)
+                index = i;
+        QVERIFY(index >= 0);
+        application->setGrammarGroup(index, false);
+        QTRY_VERIFY(application->grammarWalkState().value(QStringLiteral("groupName")).toString() != group);
+        state = application->grammarWalkState();
+        QVERIFY(state.value(QStringLiteral("done")).toBool());
+        QCOMPARE(state.value(QStringLiteral("count")).toInt(), count); // dropped in place, not walked again
+        application->setGrammarGroup(index, true);
+        // Another English: all of it again.
+        grammarOn(2);
+        QTRY_VERIFY(!application->grammarWalkState().value(QStringLiteral("done")).toBool()
+                    || application->grammarWalkState().value(QStringLiteral("count")).toInt() != count);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+        state = application->grammarWalkState();
+        QCOMPARE(state.value(QStringLiteral("checked")).toInt(), 12);
+        QVERIFY(state.value(QStringLiteral("found")).toBool());
+        QCOMPARE(state.value(QStringLiteral("index")).toInt(), 1);
+    }
+
     // Settings > Spelling & grammar: the groups greyed out while grammar
     // check is off; the licence line opens Help > Credits.
     void settingsPage()
