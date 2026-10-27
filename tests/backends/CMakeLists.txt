@@ -135,7 +135,7 @@ hikari_add_gtest(hikari_backends_audio_box_player_tests SOURCES audio_box_player
 # N8: the isolated Lua helper with the unchanged bundled edgeblur script and
 # authored fixtures.
 hikari_add_gtest(hikari_backends_lua_helper_tests SOURCES lua_helper_tests.cpp
-    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+    LIBRARIES hikari_backends Qt6::Core Qt6::Network LABELS backends)
 target_compile_definitions(hikari_backends_lua_helper_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/lua-fixtures"
