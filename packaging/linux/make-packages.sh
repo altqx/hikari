@@ -64,10 +64,13 @@ mkdir -p "$stage"
 tree=$stage/tree
 cmake --install "$build_dir" --prefix "$tree" --component hikari_app
 [ -x "$tree/hikarisub" ] || { echo "error: the install produced no hikarisub" >&2; exit 1; }
+# GR1 (#364): the grammar checker's helper.
+[ -x "$tree/harper-ls" ] || { echo "error: the install produced no harper-ls" >&2; exit 1; }
 # KA4 (#279): the furigana suggestions' dictionary and the BSD notices.
 for f in Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin Dictionary/unidic-lite/char.bin \
     Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc Dictionary/unidic-lite/mecabrc \
-    Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE; do
+    Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE \
+    licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt; do
     [ -f "$tree/$f" ] || { echo "error: the install produced no $f" >&2; exit 1; }
 done
 "$here/check-payload.sh" --min-glibc "$min_glibc" "$tree"
