@@ -1064,6 +1064,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_shell.get(), &ui::ShellController::foldGeneratedChanged, this, [this] {
         if (m_settings->boolean("grid.foldGenerated") != m_shell->foldGenerated())
             m_settings->set("grid.foldGenerated", m_shell->foldGenerated());
+        selectFoldedRunsWhole();
     });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened")); // SH2
@@ -1873,6 +1874,7 @@ void Application::refreshViews()
         m_shell->setDraft(targetSession->draftRecord()); // GR2
         m_shell->setSelection(targetSession->selection());
         m_editor->selectionChanged(); // LE4: the mixed position
+        selectFoldedRunsWhole(); // KP1
     }
     if (referenceSession) // R2: the reference's own selection
         m_shell->setReferenceSelection(referenceSession->selection());
@@ -2852,22 +2854,25 @@ void Application::toggleFold(qulonglong first)
         return;
     const bool fold = !m_shell->runFolded(id);
     if (auto *session = targetSession(); fold && session) {
-        const auto lines = m_shell->runLines(id);
         const application::Selection &current = session->selection();
-        application::Selection next = current;
-        if (next.active && std::ranges::find(lines, *next.active) != lines.end()) {
-            next.active = id;
-            next.selected.insert(id);
-        }
-        if (next.selected.contains(id))
-            next.selected.insert(lines.begin(), lines.end());
-        else
-            for (const auto line : lines)
-                next.selected.erase(line);
+        application::Selection next = m_shell->foldedWhole(current, id);
         if ((next.active != current.active || next.selected != current.selected) && !applySelection(std::move(next)))
             return;
     }
     m_shell->setRunFolded(id, fold);
+}
+
+// KP1: the folded runs selected whole or not at all once folding turns on
+// or the Grid shows a Document anew (an edit, another tab, a file opened).
+void Application::selectFoldedRunsWhole()
+{
+    auto *session = targetSession();
+    if (!session || !m_shell->foldGenerated())
+        return;
+    const application::Selection &current = session->selection();
+    application::Selection next = m_shell->foldedWhole(current);
+    if (next.active != current.active || next.selected != current.selected)
+        applySelection(std::move(next));
 }
 
 void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool doubleClick)

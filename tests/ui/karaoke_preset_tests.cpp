@@ -466,6 +466,29 @@ private slots:
         stop();
     }
 
+    // Turning folding on, from the menu, the setting or Karaoke, leaves each
+    // run selected as its row: an active Line inside hands over to the
+    // run's first Line, and a run whose first Line is selected is selected
+    // whole.
+    void turningFoldingOnSelectsRunsWhole()
+    {
+        start();
+        openSong();
+        application->clickLine(lineId(11).value, Qt::NoModifier);
+        application->clickLine(lineId(7).value, Qt::ControlModifier);
+        QCOMPARE(active(), std::optional(lineId(7)));
+        QCOMPARE(selected(), ids({7, 11}));
+        shell().setFoldGenerated(true);
+        QCOMPARE(active(), std::optional(lineId(5)));
+        QCOMPARE(selected(), ids({5, 6, 7, 8, 9, 11, 12}));
+        QCOMPARE(gridRows(), (QList<int>{0, 1, 2, 3, 4, 5, 10, 11}));
+        shell().setFoldGenerated(false);
+        application->clickLine(lineId(11).value, Qt::NoModifier);
+        applyPreset("Karaoke");
+        QCOMPARE(selected(), ids({11, 12}));
+        stop();
+    }
+
     // → unfolds the current folded run, ← folds it again from its first
     // row; elsewhere they move between the cells. The arrow at the Text
     // cell's start folds and unfolds with a click.

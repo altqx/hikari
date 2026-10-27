@@ -189,6 +189,11 @@ public:
     // A Grid gesture's selection with each folded run selected as its row is:
     // all its Lines or none.
     application::Selection withFoldedRuns(application::Selection selection) const;
+    // The selection a fold leaves, for the run `first` or every folded run:
+    // an active Line inside moves to the run's first Line, and the run is
+    // selected whole or not at all, as that Line is.
+    application::Selection foldedWhole(application::Selection selection,
+                                       std::optional<core::LineId> first = std::nullopt) const;
 
     // GR2: the editing target's pending draft, shown live in its Grid row
     // until it is committed or reverted (set again after each refresh).

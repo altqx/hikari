@@ -133,6 +133,31 @@ application::Selection ShellController::withFoldedRuns(application::Selection se
     return selection;
 }
 
+application::Selection ShellController::foldedWhole(application::Selection selection,
+                                                    std::optional<core::LineId> first) const
+{
+    const auto fold = [&selection](const std::vector<core::LineId> &lines) {
+        if (lines.empty())
+            return;
+        if (selection.active && std::find(lines.begin(), lines.end(), *selection.active) != lines.end()) {
+            selection.active = lines.front();
+            selection.selected.insert(lines.front());
+        }
+        const bool whole = selection.selected.contains(lines.front());
+        for (const auto line : lines)
+            if (whole)
+                selection.selected.insert(line);
+            else
+                selection.selected.erase(line);
+    };
+    if (first)
+        fold(runLines(*first));
+    else
+        for (const int row : m_lines.foldedRuns())
+            fold(m_lines.runLines(row));
+    return selection;
+}
+
 void ShellController::setSelection(const application::Selection &selection)
 {
     // KP1: a Line made active inside a folded run (Find, Go to, the audio's

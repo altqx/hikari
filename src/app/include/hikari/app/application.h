@@ -1150,6 +1150,7 @@ private:
     bool targetUntouched() const;
     application::GridSelection gridSelection() const;
     bool applySelection(application::Selection next);
+    void selectFoldedRunsWhole(); // KP1
 
     std::unique_ptr<application::FileReadPort> m_reader;
     std::unique_ptr<backends::PlatformFilePort> m_port;
