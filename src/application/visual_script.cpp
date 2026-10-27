@@ -1010,6 +1010,7 @@ int endMs(const core::LineRecord &line)
 void drawRect(Overlay &out, PointF pos, bool sel, float rcsize)
 {
     // Visuals::DrawRect (Visuals.cpp:357-374).
+    rcsize *= out.unit; // SV1-hidpi-tool-sizes
     out.polygons.push_back({{{pos.x - rcsize, pos.y - rcsize},
                              {pos.x + rcsize, pos.y - rcsize},
                              {pos.x + rcsize, pos.y + rcsize},
@@ -1021,6 +1022,7 @@ void drawRect(Overlay &out, PointF pos, bool sel, float rcsize)
 void drawCircle(Overlay &out, PointF pos, bool sel, float crsize)
 {
     // Visuals::DrawCircle (Visuals.cpp:377-400): filled, then its border.
+    crsize *= out.unit; // SV1-hidpi-tool-sizes
     out.circles.push_back({pos, crsize, sel ? kHandleSelectedFill : kHandleFill, true});
     out.circles.push_back({pos, crsize, kHandleBorder, false});
 }
@@ -1029,8 +1031,9 @@ void drawCross(Overlay &out, PointF position, std::uint32_t colour)
 {
     // Visuals::DrawCross (Visuals.cpp:339-355): two 30-pixel lines in the
     // two-pixel antialiased D3DX line Draw sets.
-    out.lines.push_back({{position.x - 15.0f, position.y}, {position.x + 15.0f, position.y}, 2, colour});
-    out.lines.push_back({{position.x, position.y - 15.0f}, {position.x, position.y + 15.0f}, 2, colour});
+    const float arm = 15.0f * out.unit; // SV1-hidpi-tool-sizes
+    out.lines.push_back({{position.x - arm, position.y}, {position.x + arm, position.y}, 2, colour});
+    out.lines.push_back({{position.x, position.y - arm}, {position.x, position.y + arm}, 2, colour});
 }
 
 PointF drawArrow(Overlay &out, PointF from, PointF to, int diff)
@@ -1039,10 +1042,12 @@ PointF drawArrow(Overlay &out, PointF from, PointF to, int diff)
     const PointF pdiff{from.x - to.x, from.y - to.y};
     const float len = std::sqrt((pdiff.x * pdiff.x) + (pdiff.y * pdiff.y));
     const PointF units = (len == 0) ? PointF{0, 0} : PointF{pdiff.x / len, pdiff.y / len};
-    const float back = static_cast<float>(12 + diff);
+    // SV1-hidpi-tool-sizes: the head's size and `diff` in legacy's pixels.
+    const float u = out.unit;
+    const float back = static_cast<float>(12 + diff) * u;
     const PointF pend{to.x + (units.x * back), to.y + (units.y * back)};
-    const PointF halfbase{-units.y * 5.f, units.x * 5.f};
-    out.polygons.push_back({{{pend.x - units.x * 12, pend.y - units.y * 12},
+    const PointF halfbase{-units.y * 5.f * u, units.x * 5.f * u};
+    out.polygons.push_back({{{pend.x - units.x * 12 * u, pend.y - units.y * 12 * u},
                              {pend.x + halfbase.x, pend.y + halfbase.y},
                              {pend.x - halfbase.x, pend.y - halfbase.y}},
                             kHandleFill,
@@ -1054,6 +1059,7 @@ void drawDashedLine(Overlay &out, const PointF *vector, std::size_t vectorSize, 
 {
     // Visuals::DrawDashedLine (Visuals.cpp:402-423).
     PointF actual[2];
+    const float dash = static_cast<float>(dashLen) * out.unit; // SV1-hidpi-tool-sizes
     for (std::size_t i = 0; i + 1 < vectorSize; i++) {
         const std::size_t iPlus1 = i + 1;
         const PointF pdiff{vector[i].x - vector[iPlus1].x, vector[i].y - vector[iPlus1].y};
@@ -1061,16 +1067,16 @@ void drawDashedLine(Overlay &out, const PointF *vector, std::size_t vectorSize, 
         if (len == 0)
             return;
         const PointF units{pdiff.x / len, pdiff.y / len};
-        const float singleMovement = 1 / (len / (dashLen * 2));
+        const float singleMovement = 1 / (len / (dash * 2));
         actual[0] = vector[i];
         actual[1] = actual[0];
         for (float j = 0; j <= 1; j += singleMovement) {
-            actual[1] = {actual[1].x - units.x * dashLen, actual[1].y - units.y * dashLen};
+            actual[1] = {actual[1].x - units.x * dash, actual[1].y - units.y * dash};
             if (j + singleMovement >= 1)
                 actual[1] = vector[iPlus1];
             out.lines.push_back({actual[0], actual[1], 2, colour});
-            actual[1] = {actual[1].x - units.x * dashLen, actual[1].y - units.y * dashLen};
-            actual[0] = {actual[0].x - (units.x * dashLen) * 2, actual[0].y - (units.y * dashLen) * 2};
+            actual[1] = {actual[1].x - units.x * dash, actual[1].y - units.y * dash};
+            actual[0] = {actual[0].x - (units.x * dash) * 2, actual[0].y - (units.y * dash) * 2};
         }
     }
 }

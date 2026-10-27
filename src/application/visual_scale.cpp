@@ -209,8 +209,10 @@ void ScaleTool::setCurVisual(VisualHost &host)
     const float coeffW = view.coeffW(), coeffH = view.coeffH();
     const PointF zm = view.zoomMove(), zs = view.zoomScale();
     m_from = {((linepos.x / coeffW) - zm.x) * zs.x, ((linepos.y / coeffH) - zm.y) * zs.y};
-    m_arrowLengths.y = (linepos.y > ctx.height / 2) ? -100.f : 100.f;
-    m_arrowLengths.x = (linepos.x > ctx.width / 2) ? -100.f : 100.f;
+    // SV1-hidpi-tool-sizes: legacy's 100-pixel arrows at any scale.
+    const float length = 100.f * unitOf(host);
+    m_arrowLengths.y = (linepos.y > ctx.height / 2) ? -length : length;
+    m_arrowLengths.x = (linepos.x > ctx.width / 2) ? -length : length;
     m_to.x = m_from.x + (m_scale.x * m_arrowLengths.x);
     m_to.y = m_from.y + (m_scale.y * m_arrowLengths.y);
     if (m_hasScaleToRectangle && ctx.active) {
@@ -455,12 +457,12 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
             // the scaled rectangle even while only the original showed.
             const PointF at{static_cast<float>(x), static_cast<float>(y)};
             bool setarrow = false;
-            if (const int test = hitTest(at, false, false); test < INSIDE) {
+            if (const int test = hitTest(at, false, false, unitOf(host)); test < INSIDE) {
                 setarrow = true;
                 host.setPointerShape(edgePointerShape(test));
             }
             if (m_originalRectangleVisible) {
-                if (const int test = hitTest(at, true, false); test < INSIDE) {
+                if (const int test = hitTest(at, true, false, unitOf(host)); test < INSIDE) {
                     setarrow = true;
                     host.setPointerShape(edgePointerShape(test));
                 }
@@ -473,7 +475,7 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
             m_grabbed = OUTSIDE;
             const float pointx = ((x / zs.x) + zm.x) * coeffW, pointy = ((y / zs.y) + zm.y) * coeffH;
             if (m_rectangleVisible) {
-                m_grabbed = hitTest({static_cast<float>(x), static_cast<float>(y)}, false, true);
+                m_grabbed = hitTest({static_cast<float>(x), static_cast<float>(y)}, false, true, unitOf(host));
                 if (m_grabbed == INSIDE) {
                     if (m_sizingRectangle[0].x <= pointx && m_sizingRectangle[1].x >= pointx &&
                         m_sizingRectangle[0].y <= pointy && m_sizingRectangle[1].y >= pointy) {
@@ -485,7 +487,7 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
                 }
             }
             if (m_originalRectangleVisible) {
-                const int grabbed1 = hitTest({static_cast<float>(x), static_cast<float>(y)}, true, true);
+                const int grabbed1 = hitTest({static_cast<float>(x), static_cast<float>(y)}, true, true, unitOf(host));
                 if (grabbed1 == INSIDE) {
                     if (m_sizingRectangle[2].x <= pointx && m_sizingRectangle[3].x >= pointx &&
                         m_sizingRectangle[2].y <= pointy && m_sizingRectangle[3].y >= pointy) {
@@ -566,13 +568,14 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
         // shape, so a shape set over one end stays until the pointer leaves
         // them all.
         const float fx = static_cast<float>(x), fy = static_cast<float>(y);
-        if (std::abs(m_to.x - fx) < 11 && std::abs(m_to.y - fy) < 11) {
+        const float grab = 11 * unitOf(host); // SV1-hidpi-tool-sizes
+        if (std::abs(m_to.x - fx) < grab && std::abs(m_to.y - fy) < grab) {
             if (host.hasArrow())
                 host.setPointerShape(PointerShape::Sizing);
-        } else if (std::abs(m_to.x - fx) < 11 && std::abs(m_from.y - fy) < 11) {
+        } else if (std::abs(m_to.x - fx) < grab && std::abs(m_from.y - fy) < grab) {
             if (host.hasArrow())
                 host.setPointerShape(PointerShape::SizeWE);
-        } else if (std::abs(m_to.y - fy) < 11 && std::abs(m_from.x - fx) < 11) {
+        } else if (std::abs(m_to.y - fy) < grab && std::abs(m_from.x - fx) < grab) {
             if (host.hasArrow())
                 host.setPointerShape(PointerShape::SizeNS);
         } else if (!host.hasArrow()) {
@@ -587,13 +590,14 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
             m_type = 1;
         if (e.middlec || (e.leftc && e.shift) || m_preserveProportions)
             m_type = 2;
-        if (std::abs(m_to.x - fx) < 11 && std::abs(m_from.y - fy) < 11) {
+        const float grab = 11 * unitOf(host); // SV1-hidpi-tool-sizes
+        if (std::abs(m_to.x - fx) < grab && std::abs(m_from.y - fy) < grab) {
             m_grabbed = 0;
             m_type = 0;
-        } else if (std::abs(m_to.y - fy) < 11 && std::abs(m_from.x - fx) < 11) {
+        } else if (std::abs(m_to.y - fy) < grab && std::abs(m_from.x - fx) < grab) {
             m_grabbed = 1;
             m_type = 1;
-        } else if (std::abs(m_to.x - fx) < 11 && std::abs(m_to.y - fy) < 11) {
+        } else if (std::abs(m_to.x - fx) < grab && std::abs(m_to.y - fy) < grab) {
             m_grabbed = 2;
             m_type = 2;
         }
@@ -713,7 +717,7 @@ bool ScaleTool::key(const Key &event, VisualHost &host)
     return true;
 }
 
-int ScaleTool::hitTest(PointF pos, bool originalRect, bool diff)
+int ScaleTool::hitTest(PointF pos, bool originalRect, bool diff, float unit)
 {
     // Scale::HitTest (VisualScale.cpp:609-650); the previous corner is kept
     // in ints and the vertical inside test reads the x corners, as legacy.
@@ -723,12 +727,12 @@ int ScaleTool::hitTest(PointF pos, bool originalRect, bool diff)
         const PointF corner = m_sizingRectangle[static_cast<std::size_t>(i) + tablediff];
         const float pointx = ((corner.x / m_coeffW) - m_viewZoomMove.x) * m_viewZoomScale.x;
         const float pointy = ((corner.y / m_coeffH) - m_viewZoomMove.y) * m_viewZoomScale.y;
-        if (std::abs(pos.x - pointx) < 5) {
+        if (std::abs(pos.x - pointx) < 5 * unit) {
             if (diff)
                 m_diffs.x = pointx - pos.x;
             resultX |= (i + 1);
         }
-        if (std::abs(pos.y - pointy) < 5) {
+        if (std::abs(pos.y - pointy) < 5 * unit) {
             if (diff)
                 m_diffs.y = pointy - pos.y;
             resultY |= ((i + 1) * 4);
@@ -841,6 +845,7 @@ Overlay ScaleTool::overlay(const VisualHost &host) const
     // Scale::DrawVisual (VisualScale.cpp:44-114), lines 2 pixels wide
     // (Visuals::Draw).
     Overlay out;
+    out.unit = unitOf(host);
     const VideoView &view = host.view();
     if (m_hasScaleToRectangle) {
         auto rect = [&](PointF a, PointF b, std::uint32_t colour) {

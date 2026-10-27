@@ -62,8 +62,9 @@ PointF sub(PointF a, PointF b)
     return {a.x - b.x, a.y - b.y};
 }
 
-// Visuals::IsInPos (Visuals.h:117-119) on wxPoints.
-bool isInPos(int x, int y, int x2, int y2, int diff)
+// Visuals::IsInPos (Visuals.h:117-119) on wxPoints; SV1: `diff` in device
+// pixels (legacy's times unitOf).
+bool isInPos(int x, int y, int x2, int y2, float diff)
 {
     return std::abs(x - x2) < diff && std::abs(y - y2) < diff;
 }
@@ -394,7 +395,7 @@ void PositionTool::pointer(const Pointer &evt, VisualHost &host)
         return;
     }
     if (click) {
-        if (isInPos(x, y, m_helperX, m_helperY, 4)) {
+        if (isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) {
             m_movingHelperLine = true;
             return;
         }
@@ -426,7 +427,7 @@ void PositionTool::pointer(const Pointer &evt, VisualHost &host)
         }
     }
     if (evt.kind == Pointer::Kind::Press && evt.button == Pointer::Button::Middle) {
-        m_hasHelperLine = (m_hasHelperLine && isInPos(x, y, m_helperX, m_helperY, 4)) ? false : true;
+        m_hasHelperLine = (m_hasHelperLine && isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) ? false : true;
         m_helperX = x;
         m_helperY = y;
     }
@@ -539,12 +540,12 @@ int PositionTool::hitTest(PointF pos, bool diff, const VisualHost &host)
     for (int i = 0; i < 2; i++) {
         const PointF point = host.view().scriptToView(m_rectangle[static_cast<std::size_t>(i)]);
         const float pointx = point.x, pointy = point.y;
-        if (std::abs(pos.x - pointx) < 5) {
+        if (std::abs(pos.x - pointx) < 5 * unitOf(host)) { // SV1-hidpi-tool-sizes
             if (diff)
                 m_diffs.x = pointx - pos.x;
             resultX |= (i + 1);
         }
-        if (std::abs(pos.y - pointy) < 5) {
+        if (std::abs(pos.y - pointy) < 5 * unitOf(host)) {
             if (diff)
                 m_diffs.y = pointy - pos.y;
             resultY |= ((i + 1) * 4);
@@ -740,6 +741,7 @@ Overlay PositionTool::overlay(const VisualHost &host) const
 {
     // Position::Draw (VisualPosition.cpp:63-134).
     Overlay out;
+    out.unit = unitOf(host);
     const EditSession *session = host.session();
     if (!session)
         return out;
@@ -1176,7 +1178,8 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
     const bool shift = evt.shift;
     const bool buttonUp = evt.kind == Pointer::Kind::Release;
     const int x = evt.x, y = evt.y;
-    const auto near8 = [](PointF p, int px, int py) { return std::abs(p.x - px) < 8 && std::abs(p.y - py) < 8; };
+    const float grab = 8 * unitOf(host); // SV1-hidpi-tool-sizes
+    const auto near8 = [grab](PointF p, int px, int py) { return std::abs(p.x - px) < grab && std::abs(p.y - py) < grab; };
 
     if (m_hasLineToMove) {
         if (buttonUp) {
@@ -1202,7 +1205,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
             return;
         }
         if (click) {
-            if (isInPos(x, y, m_helperX, m_helperY, 4)) {
+            if (isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) {
                 m_movingHelperLine = true;
                 return;
             }
@@ -1283,7 +1286,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
         return;
     }
     if (click) {
-        if (isInPos(x, y, m_helperX, m_helperY, 4)) {
+        if (isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) {
             m_movingHelperLine = true;
             return;
         }
@@ -1340,7 +1343,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
         setVisual(true, host);
     }
     if (press && evt.button == Pointer::Button::Middle) {
-        m_hasHelperLine = (m_hasHelperLine && isInPos(x, y, m_helperX, m_helperY, 4)) ? false : true;
+        m_hasHelperLine = (m_hasHelperLine && isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) ? false : true;
         m_helperX = x;
         m_helperY = y;
     }
@@ -1403,6 +1406,7 @@ Overlay MoveTool::overlay(const VisualHost &host) const
     // stays at its start when the \move has no duration (DrawWx's guard,
     // VisualMove.cpp:128; the Direct3D path divided by zero).
     Overlay out;
+    out.unit = unitOf(host);
     const int time = static_cast<int>(host.videoTimeMs());
     if (m_hasLineToMove && m_lineToMoveVisibility[0]) {
         drawRect(out, m_lineToMoveStart);

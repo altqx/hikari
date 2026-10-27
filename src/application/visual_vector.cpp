@@ -297,16 +297,17 @@ void dashedLines(Overlay &out, const std::vector<PointF> &vector, int dashLen, s
         if (len == 0)
             return;
         const PointF diffUnits = divide(pdiff, len);
-        const float singleMovement = 1 / (len / (dashLen * 2));
+        const float dash = static_cast<float>(dashLen) * out.unit; // SV1-hidpi-tool-sizes
+        const float singleMovement = 1 / (len / (dash * 2));
         actualPoint[0] = vector[i];
         actualPoint[1] = actualPoint[0];
         for (float j = 0; j <= 1; j += singleMovement) {
-            actualPoint[1] = sub(actualPoint[1], mul(diffUnits, static_cast<float>(dashLen)));
+            actualPoint[1] = sub(actualPoint[1], mul(diffUnits, dash));
             if (j + singleMovement >= 1)
                 actualPoint[1] = vector[iPlus1];
             line(out, actualPoint[0], actualPoint[1], argb, width);
-            actualPoint[1] = sub(actualPoint[1], mul(diffUnits, static_cast<float>(dashLen)));
-            actualPoint[0] = sub(actualPoint[0], mul(mul(diffUnits, static_cast<float>(dashLen)), 2.f));
+            actualPoint[1] = sub(actualPoint[1], mul(diffUnits, dash));
+            actualPoint[0] = sub(actualPoint[0], mul(mul(diffUnits, dash), 2.f));
         }
     }
 }
@@ -839,12 +840,12 @@ void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const
 
 void VectorEditor::drawRect(Overlay &out, const VectorFrame &frame, int i) const
 {
-    pointSquare(out, frame.toView(points[i]), points[i].selected, 3.0f);
+    pointSquare(out, frame.toView(points[i]), points[i].selected, 3.0f * frame.unit);
 }
 
 void VectorEditor::drawCircle(Overlay &out, const VectorFrame &frame, int i) const
 {
-    pointCircle(out, frame.toView(points[i]), points[i].selected, 3.0f);
+    pointCircle(out, frame.toView(points[i]), points[i].selected, 3.0f * frame.unit);
 }
 
 void VectorEditor::drawLine(Overlay &out, const VectorFrame &frame, int i) const
@@ -998,7 +999,7 @@ void VectorEditor::drawPoints(Overlay &out, const VectorFrame &frame) const
     }
     if (m_lastpos >= 0 && m_lastpos < size) {
         const PointF pos = frame.toView(points[m_lastpos]);
-        const float rcsize = 3;
+        const float rcsize = 3 * frame.unit;
         OverlayPolygon hover;
         hover.points = {{pos.x - rcsize, pos.y - rcsize},
                         {pos.x + rcsize, pos.y - rcsize},

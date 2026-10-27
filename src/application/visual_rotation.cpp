@@ -430,7 +430,7 @@ void RotationZTool::pointer(const Pointer &event, VisualHost &host)
     takeView(host.view());
     const Mouse e = mouse(event);
     const float x = static_cast<float>(e.x), y = static_cast<float>(e.y);
-    const float pointCatch = 5;
+    const float pointCatch = 5 * unitOf(host); // SV1-hidpi-tool-sizes
     if (e.click)
         (void)beginEdit(host);
 
@@ -537,6 +537,8 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
 {
     // RotationZ::DrawVisual (VisualRotationZ.cpp:34-137).
     Overlay out;
+    out.unit = unitOf(host);
+    const float u = out.unit; // SV1-hidpi-tool-sizes: the ring, its band and the crosses
     if (m_hasTwoPoints) {
         if (m_visibility[1]) {
             out.lines.push_back({m_twoPoints[0], m_twoPoints[1], 2.f, kHandleBorder});
@@ -561,7 +563,7 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
     }
     m_oldtime = time;
     const PointF org = m_org, from = m_from;
-    const float radius = std::sqrt(std::pow(std::fabs(org.x - from.x), 2.f) + std::pow(std::fabs(org.y - from.y), 2.f)) + 40;
+    const float radius = std::sqrt(std::pow(std::fabs(org.x - from.x), 2.f) + std::pow(std::fabs(org.y - from.y), 2.f)) + 40 * u;
     // The ring: a triangle strip between the circles of radius and radius +
     // 10 (0xAA121150), the two circles in 0xAAFF0000.
     OverlayPolygon ring;
@@ -570,7 +572,7 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
     std::vector<PointF> outer, inner;
     for (int j = 0; j < 181; j++) {
         const float a = static_cast<float>(j * 2) * kRad;
-        outer.push_back({org.x + ((radius + 10.f) * std::sin(a)), org.y + ((radius + 10.f) * std::cos(a))});
+        outer.push_back({org.x + ((radius + 10.f * u) * std::sin(a)), org.y + ((radius + 10.f * u) * std::cos(a))});
         inner.push_back({org.x + (radius * std::sin(a)), org.y + (radius * std::cos(a))});
     }
     ring.points = outer;
@@ -581,18 +583,18 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
         out.lines.push_back({inner[static_cast<std::size_t>(j)], inner[static_cast<std::size_t>(j) + 1], 1.f, 0xAAFF0000});
     }
     if (radius) {
-        const float xx1 = org.x + ((radius - 40) * std::sin(m_lastmove.y * kRad));
-        const float yy1 = org.y + ((radius - 40) * std::cos(m_lastmove.y * kRad));
+        const float xx1 = org.x + ((radius - 40 * u) * std::sin(m_lastmove.y * kRad));
+        const float yy1 = org.y + ((radius - 40 * u) * std::cos(m_lastmove.y * kRad));
         const float xx2 = xx1 + (radius * std::sin((m_lastmove.y + 90) * kRad));
         const float yy2 = yy1 + (radius * std::cos((m_lastmove.y + 90) * kRad));
         const float xx3 = xx1 + (radius * std::sin((m_lastmove.y - 90) * kRad));
         const float yy3 = yy1 + (radius * std::cos((m_lastmove.y - 90) * kRad));
-        out.lines.push_back({{xx1 - 5.0f, yy1}, {xx1 + 5.0f, yy1}, 10.f, 0xAAFF0000});
+        out.lines.push_back({{xx1 - 5.0f * u, yy1}, {xx1 + 5.0f * u, yy1}, 10.f, 0xAAFF0000});
         out.lines.push_back({org, {xx1, yy1}, 2.f, kHandleBorder});
         out.lines.push_back({{xx2, yy2}, {xx3, yy3}, 2.f, kHandleBorder});
     }
-    out.lines.push_back({{org.x - 10.0f, org.y}, {org.x + 10.0f, org.y}, 2.f, kHandleBorder});
-    out.lines.push_back({{org.x, org.y - 10.0f}, {org.x, org.y + 10.0f}, 2.f, kHandleBorder});
+    out.lines.push_back({{org.x - 10.0f * u, org.y}, {org.x + 10.0f * u, org.y}, 2.f, kHandleBorder});
+    out.lines.push_back({{org.x, org.y - 10.0f * u}, {org.x, org.y + 10.0f * u}, 2.f, kHandleBorder});
     out.lines.push_back({org, m_to, 2.f, kHandleBorder});
     return out;
 }
@@ -981,7 +983,8 @@ void RotationXYTool::pointer(const Pointer &event, VisualHost &host)
             m_type = 1; // frx
         if (e.middlec)
             m_type = 2; // frx + fry
-        if (std::abs(m_org.x - x) < 8 && std::abs(m_org.y - y) < 8) {
+        const float grab = 8 * unitOf(host); // SV1-hidpi-tool-sizes
+        if (std::abs(m_org.x - x) < grab && std::abs(m_org.y - y) < grab) {
             m_isOrg = true;
             m_lastOrg = m_org;
             m_diffsX = static_cast<int>(m_org.x - x);
@@ -1011,6 +1014,7 @@ Overlay RotationXYTool::overlay(const VisualHost &host) const
 {
     // RotationXY::DrawVisual (VisualRotationXY.cpp:37-181).
     Overlay out;
+    out.unit = unitOf(host);
     const VideoView &view = host.view();
     const int time = static_cast<int>(host.videoTimeMs());
     if (time != m_oldtime && m_moveValues[6] > 3) {
@@ -1036,8 +1040,9 @@ Overlay RotationXYTool::overlay(const VisualHost &host) const
     if (p.width > 0 && p.height > 0)
         drawXYGrid(out, p, m_an);
     const PointF org = m_org;
-    out.lines.push_back({{org.x - 10.0f, org.y}, {org.x + 10.0f, org.y}, 2.f, kHandleBorder});
-    out.lines.push_back({{org.x, org.y - 10.0f}, {org.x, org.y + 10.0f}, 2.f, kHandleBorder});
+    const float arm = 10.0f * unitOf(host); // SV1-hidpi-tool-sizes
+    out.lines.push_back({{org.x - arm, org.y}, {org.x + arm, org.y}, 2.f, kHandleBorder});
+    out.lines.push_back({{org.x, org.y - arm}, {org.x, org.y + arm}, 2.f, kHandleBorder});
     return out;
 }
 

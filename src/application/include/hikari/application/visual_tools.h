@@ -142,6 +142,9 @@ struct Overlay {
     std::vector<OverlayCircle> circles;
     std::vector<OverlayText> texts;
     std::vector<OverlayPolygon> polygons;
+    // SV1-hidpi-tool-sizes: device pixels per legacy pixel (unitOf): the
+    // drawing helpers' handles and arrows keep legacy's size on screen.
+    float unit = 1;
     bool empty() const { return lines.empty() && circles.empty() && texts.empty() && polygons.empty(); }
 };
 
@@ -413,6 +416,14 @@ public:
 private:
     PointerShape m_pointerShape = PointerShape::Arrow;
 };
+
+// SV1-hidpi-tool-sizes: device pixels per legacy pixel. Legacy's handle,
+// ring and arrow sizes and its grab and snap distances are device pixels;
+// times this they keep their size on screen at any scale.
+inline float unitOf(const VisualHost &host)
+{
+    return static_cast<float>(host.view().devicePixelRatio());
+}
 
 // One visual family. The host gives a tool only the events legacy's
 // Visuals got: pointer events over the video with a video open, keys while

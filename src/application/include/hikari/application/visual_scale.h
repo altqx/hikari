@@ -65,7 +65,7 @@ private:
     void setVisual(bool dummy, VisualHost &host);
     void changeVisualLine(std::u16string &text, const core::LineRecord &line, const transform::Context &context);
     std::pair<long, long> changeVisualEditor(std::u16string &text);
-    int hitTest(PointF pos, bool originalRect, bool diff);
+    int hitTest(PointF pos, bool originalRect, bool diff, float unit); // unit: unitOf(host)
     void sortPoints();
     void setScale();
     PointF scaleToVideo(PointF point, const VideoView &view) const;

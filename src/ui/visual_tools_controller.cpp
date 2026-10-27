@@ -1278,11 +1278,13 @@ QVariantList VisualToolsController::overlay() const
     for (const OverlayPolygon &p : o.polygons)
         if (!p.above)
             polygon(p);
+    // SV1-hidpi-tool-sizes: a line's width is legacy's pixels, in the
+    // window's units (as the borders' and the labels'), at any scale.
     for (const OverlayLine &l : o.lines)
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("line")},
                                {QStringLiteral("x1"), L(l.from.x)}, {QStringLiteral("y1"), L(l.from.y)},
                                {QStringLiteral("x2"), L(l.to.x)}, {QStringLiteral("y2"), L(l.to.y)},
-                               {QStringLiteral("width"), L(l.width)}, {QStringLiteral("color"), colour(l.argb)}});
+                               {QStringLiteral("width"), l.width}, {QStringLiteral("color"), colour(l.argb)}});
     for (const OverlayCircle &c : o.circles)
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("circle")},
                                {QStringLiteral("x"), L(c.centre.x)}, {QStringLiteral("y"), L(c.centre.y)},
