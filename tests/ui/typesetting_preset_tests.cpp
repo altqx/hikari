@@ -516,13 +516,16 @@ private slots:
         applyPreset("Typesetting");
         verifyTypesettingArrangement();
         QTRY_COMPARE(item<QObject>("stylesTool")->property("rows").toList().size(), 4);
-        const auto sample = [this](const char *name) { return rowItem(name)->property("text").toString(); };
-        QTRY_VERIFY(rowItem("stylesSampleText0"));
-        QCOMPARE(sample("stylesSampleText0"), QStringLiteral("光 Hikari 日本"));
-        QCOMPARE(sample("stylesSampleText3"), QStringLiteral("光 Hikari 日本"));
+        // A row made again while the list is read again: asked each time.
+        const auto sample = [this](const char *name) {
+            QQuickItem *text = rowItem(name);
+            return text ? text->property("text").toString() : QString();
+        };
+        QTRY_COMPARE(sample("stylesSampleText0"), QStringLiteral("光 Hikari 日本"));
+        QTRY_COMPARE(sample("stylesSampleText3"), QStringLiteral("光 Hikari 日本"));
         application->settingsStore()->set("styles.previewText", QStringLiteral("{\\b1}Mine"));
-        QCOMPARE(sample("stylesSampleText0"), QStringLiteral("Mine"));
-        QCOMPARE(sample("stylesSampleText3"), QStringLiteral("Mine"));
+        QTRY_COMPARE(sample("stylesSampleText0"), QStringLiteral("Mine"));
+        QTRY_COMPARE(sample("stylesSampleText3"), QStringLiteral("Mine"));
         stop();
     }
 
