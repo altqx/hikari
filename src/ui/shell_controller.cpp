@@ -88,8 +88,13 @@ void ShellController::setFoldGenerated(bool on)
 {
     if (m_lines.foldGenerated() == on)
         return;
-    m_shown.changeFolds([&] { m_lines.setFoldGenerated(on); });
-    emit foldGeneratedChanged();
+    // Announced before the Grid drops the folded rows: the selection is made
+    // whole first (Application::selectFoldedRunsWhole), so the Grid's current
+    // Line never falls back from a row that folds away.
+    m_shown.changeFolds([&] {
+        m_lines.setFoldGenerated(on);
+        emit foldGeneratedChanged();
+    });
 }
 
 void ShellController::setRunFolded(core::LineId first, bool folded)
