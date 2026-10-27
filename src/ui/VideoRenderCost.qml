@@ -9,6 +9,8 @@ Item {
     id: overlay
     objectName: "videoRenderCost"
     property var cost: ({})
+    // KE2: below the Template editor's preview badge when both show.
+    property real textTop: 8
     enabled: false
     readonly property bool drawn: cost.milliseconds !== undefined
 
@@ -18,7 +20,7 @@ Item {
 
     Column {
         x: 8
-        y: 8
+        y: overlay.textTop
         spacing: 2
         Repeater {
             model: {

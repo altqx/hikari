@@ -132,7 +132,8 @@ const QStringList &WorkspaceLayoutController::panelIds()
                                  QStringLiteral("Grid"), QStringLiteral("Reference"), QStringLiteral("Timing"),
                                  QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original"),
                                  QStringLiteral("Log"), QStringLiteral("Styles"),
-                                 QStringLiteral("FixMinorErrors"), QStringLiteral("Spellchecker")};
+                                 QStringLiteral("FixMinorErrors"), QStringLiteral("Template"),
+                                 QStringLiteral("Spellchecker")};
     return ids;
 }
 

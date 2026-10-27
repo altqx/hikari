@@ -574,6 +574,70 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_files,
         m_workspace, *m_editor, *m_video, *m_shell, *m_mediaSource);
     m_automation->setDocumentChanged([this] { refreshViews(); });
+    // KE2: the Template editor edits the editing target; its preview runs on
+    // the shell's templater and shows on the video.
+    m_templateEditor = std::make_unique<ui::TemplateEditorController>();
+    // A reload is new content: the user's trust in the old one does not
+    // carry over (KE2-preview-trust).
+    m_templateEditor->setDocumentKey([this]() -> ui::TemplateEditorController::DocumentKey {
+        const auto target = m_workspace.editingTarget();
+        return target ? ui::TemplateEditorController::DocumentKey{target->value, m_files->generation(*target)}
+                      : ui::TemplateEditorController::DocumentKey{};
+    });
+    m_templateEditor->setSessionSource([this]() -> application::EditSession * {
+        const auto target = m_workspace.editingTarget();
+        return target ? m_files->session(*target) : nullptr;
+    });
+    m_templateEditor->setSessionOf([this](ui::TemplateEditorController::DocumentKey key) -> application::EditSession * {
+        const application::DocumentId id{key.first};
+        auto *session = m_files->session(id);
+        return session && m_files->generation(id) == key.second ? session : nullptr;
+    });
+    m_templateEditor->setTemplater(&m_automation->templater());
+    // The video, keyframes, audio selection and frame shown a preview read:
+    // a change of them, once paused, previews again.
+    m_templateEditor->setHostState([this] { return m_automation->hostState(); });
+    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
+        if (!m_video->playing())
+            m_templateEditor->hostChanged();
+    });
+    // A shortcut's or the menu's macro starts from the template just typed.
+    m_automation->setBeforeRun([this] { m_templateEditor->commit(); });
+    // A save writes the template just typed (Save all sees the file it made
+    // dirty too).
+    m_files->setBeforeSave([this] { m_templateEditor->commit(); });
+    connect(m_templateEditor.get(), &ui::TemplateEditorController::documentEdited, this, [this] { refreshViews(); });
+    connect(m_templateEditor.get(), &ui::TemplateEditorController::otherDocumentEdited, this,
+            [this](std::pair<std::uint64_t, std::uint64_t> document) {
+                scheduleAutosave(application::DocumentId{document.first});
+            });
+    connect(m_templateEditor.get(), &ui::TemplateEditorController::videoChanged, this, [this] {
+        if (m_videoShowsTemplate || m_templateEditor->videoPreview())
+            showVideoSubtitles();
+    });
+    // A new frame redraws the preview only when its span changes (stepping
+    // frame by frame; while the Line loops the span stays).
+    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
+        if (!m_templateEditor->videoPreview())
+            return;
+        const auto &video = m_video->session();
+        const auto frame = video.reportedFrame();
+        const auto at = frame ? video.frameStart(*frame) : std::nullopt;
+        const auto window = m_templateEditor->videoWindow(at ? at->microseconds() / 1000 : 0, video.playing());
+        if (m_templateWindow != std::pair(window.fromMs, window.toMs))
+            showVideoSubtitles();
+    });
+    // The report is the run's Document's: another tab chosen meanwhile
+    // keeps its own, and the run's shows it once chosen again.
+    connect(m_automation.get(), &AutomationShell::karaokeApplied, this,
+            [this](quint64 document, const QByteArray &report) {
+                const application::DocumentId id{document};
+                if (m_files->session(id))
+                    m_templateEditor->applied(report.toStdString(),
+                                              ui::TemplateEditorController::DocumentKey{document, m_files->generation(id)});
+            });
+    connect(m_automation.get(), &AutomationShell::progressChanged, m_templateEditor.get(),
+            [this] { m_templateEditor->refresh(); });
     if (options.autoload)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
@@ -1013,6 +1077,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_shell->setDraft(session->draftRecord());
         m_editRefresh->start();
         scheduleAutosave();
+        if (m_templateEditor && m_templateEditor->shown())
+            m_templateEditor->refresh(); // KE2: Apply runs on the draft, so the preview does
     });
     // E4: the editor's time fields show frames of the open video (TimeCtrl::SetVideoBox).
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
@@ -1060,6 +1126,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_shell->setSelection(session->selection());
         m_editor->selectionChanged(); // LE4: no longer mixed
         followEditingLine(); // R2: the editor's own move (E4 sends the draft before it)
+        if (m_templateEditor)
+            m_templateEditor->refresh(); // KE2: the preview follows the active karaoke Line
     });
     // The editor's Start/End difference measures from the frame the Video
     // panel reports: the player's while playing (legacy EditBox::
@@ -1177,6 +1245,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
     m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
+        if (m_templateEditor && !m_video->playing())
+            m_templateEditor->hostChanged(); // KE2: an audio box opened or closed
+    });
     // A3: the box's timing options from the registry, read when used (legacy
     // Options), and what legacy's AudioDisplay did through the edit box, the
     // grid and the video. Playback (A4) is the box's own.
@@ -1800,6 +1872,10 @@ void Application::refreshViews()
         m_shell->setReferenceSelection(referenceSession->selection());
     followEditingLine(); // R2: a linked reference follows the active Line
     // The editor only ever edits the editing target, never the reference.
+    if (m_templateEditor) {
+        m_templateEditor->setEditable(target && m_workspace.checkContentCommand(*target).has_value());
+        m_templateEditor->refresh();
+    }
     if (target != m_editorDocument) {
         m_editorDocument = target;
         m_editor->setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
@@ -1837,14 +1913,27 @@ bool Application::showVideoSubtitles()
     std::optional<core::Document> draft;
     if (!m_settings->boolean("video.disableLiveEditing") && m_editorDocument == target && m_video->hasVideo())
         draft = m_editor->draftDocument();
-    if (draft || m_videoShowsDraft || session->revision() != m_videoRevision) {
+    // KE2: the Template editor's preview of the current karaoke Line, in
+    // place of its generated Lines, with only the Lines over the frame.
+    std::optional<core::Document> templated;
+    if (m_templateEditor && m_templateEditor->videoPreview()) {
+        const auto &video = m_video->session();
+        const auto frame = video.reportedFrame();
+        const auto at = frame ? video.frameStart(*frame) : std::nullopt;
+        const std::int64_t ms = at ? at->microseconds() / 1000 : 0;
+        templated = m_templateEditor->videoDocument(draft ? *draft : session->document(), ms, video.playing());
+        const auto window = m_templateEditor->videoWindow(ms, video.playing());
+        m_templateWindow = std::pair(window.fromMs, window.toMs);
+    }
+    if (draft || templated || m_videoShowsDraft || m_videoShowsTemplate || session->revision() != m_videoRevision) {
         if (session->revision() != m_videoRevision)
             edited = m_videoRevision.has_value(); // V6: legacy SetModified / Undo
         m_videoRevision = session->revision();
         m_videoShowsDraft = draft.has_value();
+        m_videoShowsTemplate = templated.has_value();
         // T4: with the visual tool's preview (its Lines, the vector clip's
         // mask); E5: as the renderer takes it (GetVisible).
-        auto script = m_visualTools->subtitles(draft ? *draft : session->document(),
+        auto script = m_visualTools->subtitles(templated ? *templated : draft ? *draft : session->document(),
                                                [this](const core::Document &d) { return rendererScript(d); });
         if (script != m_videoScript) {
             m_videoScript = script;
@@ -1996,6 +2085,8 @@ void Application::endFindOpen(bool opened)
 
 QVariantList Application::reviewClose(const QString &then)
 {
+    if (m_templateEditor)
+        m_templateEditor->commit(); // KE2: the template just typed is reviewed with the rest
     endFindOpen(false); // another review replaces the file result's
     const bool quitReplaced = m_closeThen == QLatin1String("quit");
     m_closeThen = then;
@@ -2431,6 +2522,7 @@ bool Application::saveDocument(qulonglong id)
 QVariantList Application::saveAll()
 {
     // Legacy SaveAll: Save(false, i, false) for every modified tab in order.
+    m_templateEditor->commit(); // KE2: a template just typed makes its tab modified
     QVariantList later;
     for (const auto id : m_workspace.tabs()) {
         auto *session = m_files->session(id);
@@ -2722,6 +2814,8 @@ bool Application::applySelection(application::Selection next)
     session->setSelection(std::move(next));
     m_shell->setSelection(session->selection());
     m_editor->selectionChanged(); // LE4: the mixed position
+    if (m_templateEditor)
+        m_templateEditor->refresh(); // KE2: the preview follows the active karaoke Line
     refreshVideo();
     followEditingLine(); // R2
     return true;
@@ -3104,11 +3198,11 @@ std::string Application::recoveryKey(application::DocumentId document) const
     return m_sessionId.toStdString() + "-" + std::to_string(document.value);
 }
 
-void Application::scheduleAutosave()
+void Application::scheduleAutosave(std::optional<application::DocumentId> document)
 {
     if (!m_recovery || !m_recovery->enabled())
         return;
-    const auto target = m_workspace.editingTarget();
+    const auto target = document ? document : m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
     if (!session || !session->isDirty() || session->isReadOnly())
         return;
@@ -3123,6 +3217,12 @@ void Application::scheduleAutosave()
     }
     if (!timer->isActive())
         timer->start();
+}
+
+bool Application::autosavePending(application::DocumentId document) const
+{
+    const auto it = m_autosaveTimers.find(document.value);
+    return it != m_autosaveTimers.end() && it->second && it->second->isActive();
 }
 
 bool Application::autosaveNow()
@@ -5457,6 +5557,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("audio"), QVariant::fromValue(m_audio.get())},
             {QStringLiteral("automation"), QVariant::fromValue(static_cast<QObject *>(m_automation.get()))},
             {QStringLiteral("automationManager"), QVariant::fromValue(m_automation->managerController())},
+            {QStringLiteral("templateEditor"), QVariant::fromValue(m_templateEditor.get())},
             {QStringLiteral("automationDialogs"), QVariant::fromValue(m_automation->dialogs())},
             {QStringLiteral("automationPicker"), QVariant::fromValue(m_automation->picker())},
             {QStringLiteral("automationResolution"), QVariant::fromValue(m_automation->resolutionPrompt())},
