@@ -309,6 +309,10 @@ hikari_add_qttest(hikari_ui_translation_preset_tests SOURCES translation_preset_
 # TP1 (#274): the Typesetting preset's own arrangement and the Styles panel.
 hikari_add_qttest(hikari_ui_typesetting_preset_tests SOURCES typesetting_preset_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+# KP1 (#286): the Karaoke preset's arrangement and mode, and the Grid's
+# folded runs of generated Lines.
+hikari_add_qttest(hikari_ui_karaoke_preset_tests SOURCES karaoke_preset_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 # WS3 (#217): the layout presets and saved layouts (save, apply, rename,
 # delete, persistence) and the retired View arrangements and editor switch.
 # Every function starts the application and its QML, as D2's suite did, so

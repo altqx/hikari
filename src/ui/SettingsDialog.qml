@@ -579,7 +579,6 @@ DialogWindow {
                     SettingsSection {
                         title: qsTr("Tabs")
                         SettingCheck { setting: "subtitles.openInNewTab"; text: qsTr("Always open subtitles in a new tab") }
-                        SettingCheck { setting: "shiftTimes.changeValuesWithTab"; text: qsTr("Synchronize time shifting window in all tabs") }
                         SettingsRow {
                             text: qsTr("Tab name length")
                             SettingNumber {

@@ -37,6 +37,9 @@ class ShellController : public QObject {
     Q_PROPERTY(int hiddenColumns READ hiddenColumns WRITE setHiddenColumns NOTIFY hiddenColumnsChanged)
     // GR3: empty columns hide themselves in both Grids (grid.autoHideColumns).
     Q_PROPERTY(bool autoHideColumns READ autoHideColumns WRITE setAutoHideColumns NOTIFY autoHideColumnsChanged)
+    // KP1 (#286): the Grid folds each run of generated Lines into one row
+    // (grid.foldGenerated; the Grid's Fold generated lines).
+    Q_PROPERTY(bool foldGenerated READ foldGenerated WRITE setFoldGenerated NOTIFY foldGeneratedChanged)
     // The editing target's format has the ASS columns (Layer ... Effect), and an End time.
     Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)
     Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
@@ -173,6 +176,25 @@ public:
         m_referenceLines.setSpelling(spelling);
     }
 
+    // KP1 (#286): folding in the editing target's Grid (LineTableModel).
+    // Every run folds when folding is turned on; while it is on, each run
+    // folds and unfolds on its own.
+    bool foldGenerated() const { return m_lines.foldGenerated(); }
+    void setFoldGenerated(bool on);
+    void setRunFolded(core::LineId first, bool folded);
+    // The first Line of the run of generated Lines `line` is in.
+    std::optional<core::LineId> runFirst(core::LineId line) const;
+    bool runFolded(core::LineId first) const;
+    std::vector<core::LineId> runLines(core::LineId first) const;
+    // A Grid gesture's selection with each folded run selected as its row is:
+    // all its Lines or none.
+    application::Selection withFoldedRuns(application::Selection selection) const;
+    // The selection a fold leaves, for the run `first` or every folded run:
+    // an active Line inside moves to the run's first Line, and the run is
+    // selected whole or not at all, as that Line is.
+    application::Selection foldedWhole(application::Selection selection,
+                                       std::optional<core::LineId> first = std::nullopt) const;
+
     // GR2: the editing target's pending draft, shown live in its Grid row
     // until it is committed or reverted (set again after each refresh).
     void setDraft(std::optional<core::LineRecord> draft) { m_lines.setDraft(std::move(draft)); }
@@ -183,8 +205,11 @@ public:
     Q_INVOKABLE void selectLine(qulonglong id);
     // Shows the editing target's whole selection (G1).
     void setSelection(const application::Selection &selection);
-    // The editing target's Lines in the order the Grid shows them.
+    // The editing target's Lines in the order the Grid shows them, one per row.
     std::vector<core::LineId> displayedLines() const;
+    // The Lines actions take as shown: displayedLines with every Line a
+    // folded row stands for that the Grid filter passes (KP1).
+    std::vector<core::LineId> actionLines() const;
     // O5: the interface language changed: the selection status, the titles
     // and both Grids' headings again.
     void retranslate();
@@ -210,6 +235,7 @@ signals:
     void statusTextChanged();
     void hiddenColumnsChanged();
     void autoHideColumnsChanged();
+    void foldGeneratedChanged();
     void hideTagsChanged();
     void referenceNavigationChanged();
     // R2: a seek made this reference Line active: the tray brings it into view.

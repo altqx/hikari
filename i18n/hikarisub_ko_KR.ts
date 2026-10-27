@@ -400,6 +400,16 @@ Output device: %2</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Finding vocal onsets…</source>
+        <extracomment>Status bar while Snap to vocal onsets (the audio panel&apos;s Tap menu, Karaoke mode) reads the audio</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vocal onsets found</source>
+        <extracomment>Status bar once Snap to vocal onsets has read the audio and boundaries snap</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -498,11 +508,11 @@ Output device: %2</source>
         </translation>
     </message>
     <message>
-        <source>Applied. 1 template line has problems.</source>
+        <source>Applied. The templates have 1 problem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Applied. %n template lines have problems.</source>
+        <source>Applied. The templates have %n problems.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
@@ -4258,6 +4268,24 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Line wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fold generated lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n generated lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>folded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unfolded</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -13111,6 +13139,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Delete</source>
         <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

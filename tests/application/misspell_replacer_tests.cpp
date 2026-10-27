@@ -291,12 +291,16 @@ TEST(MisspellRules, OnlyTagsOrText)
     EXPECT_EQ(fix("{\\b1}b1", {rule("b1", "b0", kReplacerOnlyTags)}), "{\\b0}b1");
     // Options above both bits find nothing.
     EXPECT_EQ(fix("b1", {rule("b1", "X", 64)}), "b1");
-    // ReplaceOnTab looks back only to the end of the previous find: after
-    // "b" (inside tags, kept) the " x" in the same tag reads as text.
-    EXPECT_EQ(fix("{b x}", {rule("b| x", "", kReplacerOnlyText)}), "{b}");
-    // The find walk looks back over the whole text: only "b"'s neighbour is text.
+    // FME-replace-all-in-tags: Replace all looks back over the whole Line,
+    // as Find does, so the " x" after "b" in the same tag is in tags too
+    // (legacy's ReplaceOnTab looked back only to the end of the previous find).
+    EXPECT_EQ(fix("{b x}", {rule("b| x", "", kReplacerOnlyText)}), "{b x}");
     EditSession seek{load({dialogue("{b x}")})};
     EXPECT_TRUE(findErrors(seek, {rule("b| x", "", kReplacerOnlyText)}, {}).empty());
+    EXPECT_EQ(fix("{\\bord2\\bord3}Hello", {rule("\\\\bord", "X", kReplacerOnlyText)}), "{\\bord2\\bord3}Hello");
+    EXPECT_EQ(fix("{\\bord2\\bord3}Hello", {rule("\\\\bord", "B", kReplacerOnlyTags)}), "{B2B3}Hello");
+    EditSession bord{load({dialogue("{\\bord2\\bord3}Hello")})};
+    EXPECT_EQ(findErrors(bord, {rule("\\\\bord", "X", kReplacerOnlyTags)}, {}).size(), 2u);
 }
 
 // wxRegEx::Replace on a find, and the expression syntax: PCRE2 through
@@ -433,7 +437,10 @@ TEST(MisspellFind, WhichLines)
     EXPECT_EQ(rows({L::FromSelection, {}}), (std::vector<std::size_t>{1, 2}));
     EXPECT_EQ(findErrors(session, rules, {L::FromSelection, {}}).front().lineNumber, 2);
     EXPECT_EQ(rows({L::Styles, u8"Default,Sign Two"}), (std::vector<std::size_t>{0, 2}));
-    EXPECT_EQ(rows({L::Styles, u8"Default, Sign"}), (std::vector<std::size_t>{0}));
+    // FME-styles-trimmed: each name trimmed, as Choose styles reads the list.
+    EXPECT_EQ(rows({L::Styles, u8"Default, Sign"}), (std::vector<std::size_t>{0, 1}));
+    EXPECT_EQ(rows({L::Styles, u8" Sign Two ,, Default "}), (std::vector<std::size_t>{0, 2}));
+    EXPECT_TRUE(rows({L::Styles, u8"Sign T, , Default2"}).empty());
     EXPECT_TRUE(replaceErrors(session, rules, {L::Selected, {}}).value());
     EXPECT_EQ(texts(session), (std::vector<std::string>{"a", "b", "a"}));
     EXPECT_TRUE(replaceErrors(session, {rule("a|b", "c")}, {L::FromSelection, {}}).value());

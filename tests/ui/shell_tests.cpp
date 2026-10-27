@@ -12947,6 +12947,40 @@ private slots:
         QCOMPARE(a->end.value.microseconds() / 1000, 2300);
     }
 
+    // #384: Correction end times' "New times" lasts the Conversion time per
+    // letter (convert.timePerCharacter) for each letter, at least 1 s, as
+    // legacy's (SubsGridBase.cpp:439), not always 1 s.
+    void shiftTimesNewTimesTakeTheTimePerLetter()
+    {
+        const QString path = writeFile(dir, "shift-new-times.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:00.50,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,abcdefghij\n"
+                                       "Dialogue: 0,0:00:06.00,0:00:07.50,Default,,0,0,0,,b\n"
+                                       "Dialogue: 0,0:00:08.00,0:00:09.00,Default,,0,0,0,,c\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        auto &store = *application->settingsStore();
+        const auto before = application->shiftTimesSettings().settingsMap();
+        auto restore = qScopeGuard([&] {
+            application->shiftTimesSettings().setSettingsMap(before);
+            store.setValue(QStringLiteral("convert.timePerCharacter"), 110);
+        });
+        auto settings = before;
+        settings.insert(QStringLiteral("timeMs"), 0);
+        settings.insert(QStringLiteral("whichLines"), 0);
+        settings.insert(QStringLiteral("whichTimes"), 0);
+        settings.insert(QStringLiteral("correctEndTimes"), 2);
+        settings.insert(QStringLiteral("postprocessor"), 0);
+        application->shiftTimesSettings().setSettingsMap(settings);
+        store.setValue(QStringLiteral("convert.timePerCharacter"), 200);
+        QVERIFY(application->shiftTimes().isEmpty());
+        const auto lines = session->document().lines();
+        QCOMPARE(lines[1]->end.value.microseconds() / 1000, 3000); // ten letters of 200 ms
+        QCOMPARE(lines[2]->end.value.microseconds() / 1000, 7000); // one letter: 1 s
+    }
+
     // TS1: legacy's two panels come back as the form's two modes (its
     // "Post processor" / "Shift times" button, POSTPROCESSOR_ON's 16): each
     // shows its own options, the Lines are shared, and the run button says
@@ -16496,7 +16530,6 @@ private slots:
             {"settingsPageGeneral",
              {{"program.language", nullptr},
               {"subtitles.openInNewTab", "Always open subtitles in a new tab"},
-              {"shiftTimes.changeValuesWithTab", "Synchronize time shifting window in all tabs"},
               {"program.tabTextMaxChars", nullptr},
               {"autosave.maxFiles", nullptr},
               {"notices.toasts", "Show notices as toasts"}, // PK1
@@ -22670,6 +22703,59 @@ private slots:
         press(Qt::Key_H);
     }
 
+    // #384: Settings > Audio's display options reach the display as they
+    // change, and Commit goes to the next Line only while "Go to the next
+    // line after applying changes" is on (AU-next-line-on-commit).
+    void audioDisplayOptionsAndNextLineOnCommitFollowTheSettings()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "audio-options.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:00.80,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:01.60,Default,,0,0,0,,two\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        auto &settings = *application->settingsStore();
+        const QStringList checks{QStringLiteral("audio.drawTimeCursor"), QStringLiteral("audio.drawSecondaryLines"),
+                                 QStringLiteral("audio.drawSelectionBackground"),
+                                 QStringLiteral("audio.drawVideoPosition"), QStringLiteral("audio.drawKeyframes")};
+        auto restore = qScopeGuard([&] {
+            for (const QString &id : checks)
+                settings.setValue(id, true);
+            settings.setValue(QStringLiteral("audio.lineBoundariesThickness"), 2);
+            settings.setValue(QStringLiteral("audio.inactiveLinesDisplayMode"), 1);
+            settings.setValue(QStringLiteral("audio.nextLineOnCommit"), true);
+        });
+        const auto &options = audio.options();
+        QVERIFY(options.drawTimeCursor && options.drawSecondBoundaries && options.drawSelectionBackground
+                && options.drawVideoPosition && options.drawKeyframes);
+        QCOMPARE(options.lineBoundaryWidth, 2);
+        QCOMPARE(options.inactiveLines, 1);
+        QVERIFY(!audio.marks().inactive.empty()); // the next Line
+        QCOMPARE(application::audioCursor(audio.view(), 10, false, options).size(), std::size_t(2)); // with its time
+        for (const QString &id : checks)
+            settings.setValue(id, false);
+        settings.setValue(QStringLiteral("audio.lineBoundariesThickness"), 4);
+        settings.setValue(QStringLiteral("audio.inactiveLinesDisplayMode"), 0);
+        QVERIFY(!options.drawTimeCursor && !options.drawSecondBoundaries && !options.drawSelectionBackground
+                && !options.drawVideoPosition && !options.drawKeyframes);
+        QCOMPARE(options.lineBoundaryWidth, 4);
+        QCOMPARE(options.inactiveLines, 0);
+        QVERIFY(audio.marks().inactive.empty());
+        QCOMPARE(application::audioCursor(audio.view(), 10, false, options).size(), std::size_t(1)); // the line alone
+
+        const auto lines = session->document().lines();
+        QCOMPARE(session->selection().active, lines[0]->id);
+        settings.setValue(QStringLiteral("audio.nextLineOnCommit"), false);
+        audio.commit();
+        QCOMPARE(session->selection().active, lines[0]->id);
+        settings.setValue(QStringLiteral("audio.nextLineOnCommit"), true);
+        audio.commit();
+        QCOMPARE(session->selection().active, lines[1]->id);
+    }
+
     // KA1 (Codex): Add lead-in in Karaoke mode with several Lines selected
     // writes no \k text, which the commit would give every selected Line:
     // each keeps its own (legacy, as Line mode's start moves)
@@ -23280,9 +23366,15 @@ private slots:
         QCOMPARE(audio.onsetDetections(), 0); // off: nothing is looked for
         // turned off again before the worker's result arrives: it is cancelled
         // and nothing is kept
+        // #384: the status bar says so while it looks, and clears when stopped
+        auto &shell = application->shell();
         audio.setOnsetSnap(true);
         QCOMPARE(audio.onsetDetections(), 1);
+        QVERIFY(audio.findingOnsets());
+        QCOMPARE(shell.statusText(), QStringLiteral("Finding vocal onsets…"));
         audio.setOnsetSnap(false);
+        QVERIFY(!audio.findingOnsets());
+        QCOMPARE(shell.statusText(), QString());
         QTest::qWait(300);
         QVERIFY(!audio.onsetsFound());
 
@@ -23294,6 +23386,8 @@ private slots:
         QVERIFY(snapItem->property("checked").toBool());
         QTRY_VERIFY_WITH_TIMEOUT(audio.onsetsFound(), 10000);
         QCOMPARE(audio.onsetDetections(), 2);
+        QVERIFY(!audio.findingOnsets());
+        QCOMPARE(shell.statusText(), QStringLiteral("Vocal onsets found")); // and when they are found
         const std::vector<int> onsets(audio.snapOnsets().begin(), audio.snapOnsets().end());
         QCOMPARE(onsets.size(), std::size_t(3));
         for (const auto &[found, at] : {std::pair(onsets[0], 1000), std::pair(onsets[1], 1630), std::pair(onsets[2], 2140)})

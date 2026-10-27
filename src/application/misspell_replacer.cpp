@@ -99,8 +99,20 @@ bool inScope(const core::LineRecord &line, const ReplacerScope &scope, const Sel
     using L = ReplacerScope::Lines;
     switch (scope.lines) {
     case L::All: return true;
-    case L::Styles:
-        return (u8"," + scope.styles + u8",").find(u8"," + line.style + u8",") != std::u8string::npos;
+    case L::Styles: {
+        // FME-styles-trimmed: each name of the comma list trimmed, as
+        // Choose styles reads it (legacy matched ",Name," in the text as
+        // typed, so "A, B" never took B).
+        for (std::u8string_view name : split(scope.styles, u8',', false)) {
+            while (!name.empty() && (name.front() == u8' ' || name.front() == u8'\t'))
+                name.remove_prefix(1);
+            while (!name.empty() && (name.back() == u8' ' || name.back() == u8'\t'))
+                name.remove_suffix(1);
+            if (!name.empty() && name == line.style)
+                return true;
+        }
+        return false;
+    }
     case L::Selected: return selection.selected.contains(line.id);
     // S57-from-selected / R3-hang-crash-loss: every Line from the first
     // selected one on (legacy started the walk there and then took no Line).
@@ -180,8 +192,10 @@ std::optional<std::u16string> replaceInText(const std::u16string &lineText, cons
             }
             const std::size_t start = match->first;
             std::size_t length = std::max<std::size_t>(match->second, 1);
-            if (rule.options < 16 || keepFinding(text, start, rule.options)) {
-                const std::size_t at = start + textPos;
+            const std::size_t at = start + textPos;
+            // FME-replace-all-in-tags: in tags or not on the whole Line, as
+            // Find decides it (legacy read only the rest after the last match).
+            if (rule.options < 16 || keepFinding(changedText, at, rule.options)) {
                 const std::u16string found = mid(changedText, at, length);
                 auto result = replacerReplace(re, found, replacement).first;
                 noteMatchError(re, errors);
