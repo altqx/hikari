@@ -119,9 +119,16 @@ SubtitleRendererSelection::prepare(application::RenderSnapshot snapshot)
 std::expected<application::OverlayFrame, application::RenderError>
 SubtitleRendererSelection::render(core::DocumentTime time, int width, int height)
 {
+    return renderScaled(time, width, height, width, height);
+}
+
+std::expected<application::OverlayFrame, application::RenderError>
+SubtitleRendererSelection::renderScaled(core::DocumentTime time, int width, int height, int videoWidth,
+                                        int videoHeight)
+{
     std::shared_lock lock(m_switch);
     const auto started = std::chrono::steady_clock::now();
-    auto frame = m_active->render(time, width, height);
+    auto frame = application::renderOverlay(*m_active, time, {width, height, videoWidth, videoHeight});
     if (frame)
         frame->cost.milliseconds =
             std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count() -

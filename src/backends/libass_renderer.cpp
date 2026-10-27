@@ -107,6 +107,7 @@ struct LibassRenderer::Engine {
     std::vector<application::FontLease> fonts; // leases held while the engine lives
     std::vector<Track> tracks;                 // most recently used first; the first is shown
     int frameWidth = 0, frameHeight = 0;       // ass_set_frame_size's
+    int storageWidth = 0, storageHeight = 0;   // ass_set_storage_size's
 
     static Fonts keyOf(const application::RenderSnapshot &snapshot)
     {
@@ -333,17 +334,37 @@ void count(application::RenderCost &cost, const ASS_Track &track, long long ms, 
 
 std::expected<OverlayFrame, RenderError> LibassRenderer::render(core::DocumentTime time, int width, int height)
 {
+    return draw(time, width, height, width, height);
+}
+
+std::expected<OverlayFrame, RenderError> LibassRenderer::renderScaled(core::DocumentTime time, int width, int height,
+                                                                      int videoWidth, int videoHeight)
+{
+    return draw(time, width, height, videoWidth, videoHeight);
+}
+
+std::expected<OverlayFrame, RenderError> LibassRenderer::draw(core::DocumentTime time, int width, int height,
+                                                              int videoWidth, int videoHeight)
+{
     std::lock_guard lock(m_mutex);
     if (!m_engine || !m_engine->current())
         return std::unexpected(RenderError::NoSnapshot);
-    if (width <= 0 || height <= 0 || width > kMaxDimension || height > kMaxDimension)
+    const auto invalid = [](int w, int h) { return w <= 0 || h <= 0 || w > kMaxDimension || h > kMaxDimension; };
+    if (invalid(width, height) || invalid(videoWidth, videoHeight))
         return std::unexpected(RenderError::InvalidSize);
     Engine &e = *m_engine;
     if (width != e.frameWidth || height != e.frameHeight) {
         ass_set_frame_size(e.renderer, width, height);
-        ass_set_storage_size(e.renderer, width, height);
         e.frameWidth = width;
         e.frameHeight = height;
+    }
+    // SV1-screen-size-subtitles: the storage size is the video's, so libass
+    // lays the script out (and scales \blur, \be and unscaled borders) as
+    // it does at the video's size, drawing it with the frame size's pixels.
+    if (videoWidth != e.storageWidth || videoHeight != e.storageHeight) {
+        ass_set_storage_size(e.renderer, videoWidth, videoHeight);
+        e.storageWidth = videoWidth;
+        e.storageHeight = videoHeight;
     }
     int change = 0;
     const long long ms = time.microseconds() / 1000; // libass times are milliseconds

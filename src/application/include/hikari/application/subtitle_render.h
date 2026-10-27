@@ -15,6 +15,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace hikari::application {
@@ -122,7 +123,42 @@ public:
     // V1 playback pipeline may use an overlay rendered ahead for any frame
     // starting in that millisecond.
     virtual std::expected<OverlayFrame, RenderError> render(core::DocumentTime time, int width, int height) = 0;
+    // SV1-screen-size-subtitles: the overlay of a videoWidth x videoHeight
+    // frame drawn at width x height. The script is laid out on the video's
+    // size as render() lays it out, only drawn with more (or fewer) pixels.
+    // A renderer that cannot draws it at the video's size, as render().
+    virtual std::expected<OverlayFrame, RenderError> renderScaled(core::DocumentTime time, int width, int height,
+                                                                   int videoWidth, int videoHeight)
+    {
+        (void)width;
+        (void)height;
+        return render(time, videoWidth, videoHeight);
+    }
 };
+
+// SV1-screen-size-subtitles: where a frame's overlay is drawn, at its video
+// size (decision 5 of 2026-10-15, the default) or at the size the picture
+// takes on screen.
+struct OverlaySize {
+    int width = 0, height = 0;           // the overlay's pixels
+    int videoWidth = 0, videoHeight = 0; // the frame's
+    bool operator==(const OverlaySize &) const = default;
+    bool scaled() const { return width != videoWidth || height != videoHeight; }
+};
+
+// The overlay size for a videoWidth x videoHeight frame shown at `screen`
+// pixels (none: at the video's size). A screen size past the renderers'
+// limit is scaled down to it, keeping its shape.
+OverlaySize overlaySizeFor(int videoWidth, int videoHeight, std::optional<std::pair<int, int>> screen);
+
+// render() or renderScaled(), as `size` asks.
+inline std::expected<OverlayFrame, RenderError> renderOverlay(SubtitleRendererPort &renderer, core::DocumentTime time,
+                                                              const OverlaySize &size)
+{
+    if (!size.scaled())
+        return renderer.render(time, size.videoWidth, size.videoHeight);
+    return renderer.renderScaled(time, size.width, size.height, size.videoWidth, size.videoHeight);
+}
 
 // Legacy Notebook::RefreshVideo(true) (FontEnumerator, when the fonts on the
 // system change) made libass's library and renderer, which every tab and

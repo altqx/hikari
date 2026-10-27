@@ -1,5 +1,6 @@
 #include "hikari/application/subtitle_render.h"
 
+#include <algorithm>
 #include <atomic>
 #include <cstring>
 
@@ -36,6 +37,20 @@ void compositeOverlay(const OverlayFrame &overlay, std::uint8_t *bgra, int width
                 dst[x + c] = static_cast<std::uint8_t>(std::min(255u, src[x + c] + (dst[x + c] * inv + 127u) / 255u));
         }
     }
+}
+
+OverlaySize overlaySizeFor(int videoWidth, int videoHeight, std::optional<std::pair<int, int>> screen)
+{
+    OverlaySize size{videoWidth, videoHeight, videoWidth, videoHeight};
+    if (!screen || screen->first <= 0 || screen->second <= 0 || videoWidth <= 0 || videoHeight <= 0)
+        return size;
+    // At most 8K (a zoomed picture's whole frame is larger than the screen):
+    // past it the overlay is scaled up with the picture again.
+    constexpr double kMaxWidth = 7680, kMaxHeight = 4320;
+    const double fit = std::min({1.0, kMaxWidth / screen->first, kMaxHeight / screen->second});
+    size.width = std::max(1, static_cast<int>(screen->first * fit + 0.5));
+    size.height = std::max(1, static_cast<int>(screen->second * fit + 0.5));
+    return size;
 }
 
 } // namespace hikari::application
