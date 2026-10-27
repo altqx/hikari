@@ -3,7 +3,7 @@
 qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_grid.cpp line_grid.h line_grid_accessible.cpp line_grid_accessible.h
     shell_controller.cpp shell_controller.h line_editor_controller.cpp line_editor_controller.h
     automation_dialog_controller.cpp automation_dialog_controller.h script_dialog_memory.cpp script_dialog_memory.h video_presenter.cpp video_presenter.h
-    automation_manager_controller.cpp automation_manager_controller.h
+    automation_manager_controller.cpp automation_manager_controller.h template_editor_controller.cpp template_editor_controller.h
     automation_services_qt.cpp automation_services_qt.h video_controller.cpp video_controller.h
     automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
@@ -21,7 +21,7 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml FixMinorErrors.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml FixMinorErrors.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
 # TS1: the Shift times panel and the dock-form pieces it is built from.
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
@@ -145,6 +145,7 @@ target_sources(hikari_ui PRIVATE video_fullscreen_controller.cpp video_fullscree
 qt_target_qml_sources(hikari_ui QML_FILES VideoFullscreen.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
     VideoRenderCost.qml # KE1-render-cost-overlay
+    VideoTemplateBadge.qml # KE2: the Template editor's preview on the video
     VideoVolumeSlider.qml)
 # V6: the video toolbar's seek-after and play-after lists.
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)

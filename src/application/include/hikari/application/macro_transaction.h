@@ -17,6 +17,13 @@ namespace hikari::application {
 // A pending draft on the target is committed first (T43-reconcile); false
 // when it cannot be. The snapshot then reflects the committed Document.
 std::expected<MacroSnapshot, CommandRefusal> snapshotForMacro(EditSession &session);
+// The same snapshot of any Document, with that selection and revision 0.
+MacroSnapshot macroSnapshotOf(const core::Document &doc, const Selection &selection);
+
+// A Line as a script sees it (legacy LineToLua), and a new Line from a
+// script's (LuaToLine). In TLMode the script's text is the translation.
+MacroDialogueLine macroLineOf(const core::LineRecord &line);
+core::LineRecord lineOfMacro(const MacroDialogueLine &line);
 
 enum class MacroApplyError {
     Refused,           // the EditSession refused the command (see refusal)

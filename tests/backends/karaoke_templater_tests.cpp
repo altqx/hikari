@@ -928,6 +928,133 @@ TEST_F(KaraokeTemplater, SelectedRunReportsTheSelectedLinesWork)
     EXPECT_EQ(templates[0].toObject()[QStringLiteral("generated")].toInt(), 0) << "T1a's Lines were not run";
 }
 
+// The problems of a report's run, by Line number: each one's message and
+// where it is in that Line's text (start 0 for none).
+struct Issue {
+    QString kind, message;
+    int start = 0, length = 0;
+};
+
+std::multimap<int, Issue> issuesOf(const QJsonObject &report)
+{
+    std::multimap<int, Issue> out;
+    for (const QJsonValue v : report[QStringLiteral("issues")].toArray()) {
+        const QJsonObject o = v.toObject();
+        out.emplace(o[QStringLiteral("line")].toInt(),
+                    Issue{o[QStringLiteral("kind")].toString(), o[QStringLiteral("message")].toString(),
+                          o[QStringLiteral("start")].toInt(), o[QStringLiteral("length")].toInt()});
+    }
+    return out;
+}
+
+// KE2: the report lists each problem once with its Line, 2.1.7's message
+// without the Line's number, and where the variable or expression is in the
+// Line's text (1-based bytes), so the template editor can mark it.
+TEST_F(KaraokeTemplater, ReportedProblemsSayWhereInTheLineTheyAre)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/errors.ass"))).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const auto issues = issuesOf(report);
+    ASSERT_EQ(issues.count(3), 1u) << "one entry however many syllables ran it";
+    const Issue expression = issues.find(3)->second;
+    EXPECT_EQ(expression.kind, QStringLiteral("template"));
+    EXPECT_TRUE(expression.message.startsWith(QStringLiteral("Runtime error in template expression: ")));
+    EXPECT_TRUE(expression.message.endsWith(QStringLiteral("Template with expression: {\\pos(!nosuch.field!,$y)}")))
+        << expression.message.toStdString();
+    EXPECT_EQ(expression.start, 7); // {\pos(!nosuch.field!,$y)}
+    EXPECT_EQ(expression.length, 14);
+    ASSERT_EQ(issues.count(4), 1u);
+    EXPECT_TRUE(issues.find(4)->second.message.startsWith(QStringLiteral("Error parsing expression: ")));
+    EXPECT_EQ(issues.find(4)->second.start, 7); // {\fscx!1 +!}
+    EXPECT_EQ(issues.find(4)->second.length, 5);
+    ASSERT_EQ(issues.count(5), 1u);
+    EXPECT_EQ(issues.find(5)->second.message,
+              QStringLiteral("Unknown variable name: nosuchvar\nIn karaoke template: {\\pos($x,$nosuchvar)}"));
+    EXPECT_EQ(issues.find(5)->second.start, 10); // {\pos($x,$nosuchvar)}
+    EXPECT_EQ(issues.find(5)->second.length, 10);
+    ASSERT_GE(issues.count(1), 1u);
+    EXPECT_EQ(issues.find(1)->second.kind, QStringLiteral("code"));
+    EXPECT_EQ(issues.find(1)->second.start, 0);
+    EXPECT_GE(issues.count(6), 1u) << "an unknown modifier";
+    EXPECT_EQ(issues.find(6)->second.start, 0);
+    EXPECT_EQ(issues.count(10) + issues.count(11), 0u);
+}
+
+// A named line template's problem is placed in the text of the Line it is
+// in, after the variables and expressions of the Lines before it.
+TEST_F(KaraokeTemplater, NamedTemplateProblemsArePlacedInTheirOwnLine)
+{
+    const std::string text =
+        "[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+        "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+        "MarginR, MarginV, Encoding\n"
+        "Style: Err,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1\n\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template line joined,{\\t($start,$end,\\fscx!100+20!)}\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template line joined,{\\pos($x,$nosuchvar)}\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template line joined,{\\fscy!nosuch.field!}\n"
+        "Dialogue: 0,0:00:01.00,0:00:03.00,Err,,0,0,0,,{\\k50}ha{\\k50}ru\n";
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const auto issues = issuesOf(report);
+    EXPECT_EQ(issues.count(1), 0u);
+    ASSERT_EQ(issues.count(2), 1u);
+    EXPECT_EQ(issues.find(2)->second.start, 10); // {\pos($x,$nosuchvar)}
+    EXPECT_EQ(issues.find(2)->second.length, 10);
+    ASSERT_EQ(issues.count(3), 1u);
+    EXPECT_EQ(issues.find(3)->second.start, 7); // {\fscy!nosuch.field!}
+    EXPECT_EQ(issues.find(3)->second.length, 14);
+}
+
+// An expression a variable's value brings in is nowhere in the template's
+// text: its problem has no place, and the written one after it keeps its own.
+TEST_F(KaraokeTemplater, AnExpressionFromAVariableHasNoPlaceInTheText)
+{
+    const std::string text =
+        "[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+        "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+        "MarginR, MarginV, Encoding\n"
+        "Style: Err,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1\n\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template line,{$actor\\fscx!nosuch.field!}\n"
+        "Dialogue: 0,0:00:01.00,0:00:03.00,Err,!nosuch.actor!,0,0,0,,{\\k50}ha{\\k50}ru\n";
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const auto issues = issuesOf(report);
+    ASSERT_EQ(issues.count(1), 2u);
+    std::map<QString, Issue> byExpression;
+    for (auto [at, end] = issues.equal_range(1); at != end; ++at)
+        byExpression[at->second.message.section(QLatin1Char('\n'), 1, 1)] = at->second;
+    const Issue injected = byExpression[QStringLiteral("Expression producing error: nosuch.actor")];
+    EXPECT_EQ(injected.start, 0) << "not in the template's text";
+    const Issue written = byExpression[QStringLiteral("Expression producing error: nosuch.field")];
+    EXPECT_EQ(written.start, 13); // {$actor\fscx!nosuch.field!}
+    EXPECT_EQ(written.length, 14);
+}
+
+// A selected-Lines run numbers its problems' Lines as they are after it.
+TEST_F(KaraokeTemplater, SelectedRunPlacesProblemsInTheLinesAfterTheRun)
+{
+    std::string text = textOf(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass")));
+    text += "Comment: 0,0:00:00.00,0:00:05.00,T2c,,0,0,0,template syl,{\\pos(!nosuch.field!,$y)}\n";
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+    std::optional<hikari::core::LineId> t2c;
+    for (const auto *l : session.document().lines())
+        if (l->style == u8"T2c" && l->effect == u8"karaoke")
+            t2c = l->id;
+    ASSERT_TRUE(t2c);
+    select(session, {*t2c});
+    ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+    const auto issues = issuesOf(report);
+    ASSERT_EQ(issues.size(), 1u);
+    EXPECT_EQ(issues.begin()->first, static_cast<int>(session.document().lines().size()));
+    EXPECT_EQ(issues.begin()->second.start, 7);
+}
+
+
 // The stock script attaches nothing.
 TEST_F(KaraokeTemplater, StockTemplaterAttachesNoReport)
 {
