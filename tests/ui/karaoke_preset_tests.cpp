@@ -424,6 +424,48 @@ private slots:
         stop();
     }
 
+    // Commands over the selected Lines act on every Line a folded row
+    // stands for, not only the first.
+    void aFoldedRowActsOnAllItsLines()
+    {
+        start();
+        openSong();
+        shell().setFoldGenerated(true);
+        application->clickLine(lineId(5).value, Qt::NoModifier);
+        QCOMPARE(application->selectedLineCount(true), 5);
+        QVERIFY(application->deleteText());
+        for (int row = 5; row <= 9; ++row)
+            QVERIFY2(session()->document().lines()[std::size_t(row)]->text.empty(), QByteArray::number(row));
+        QVERIFY(session()->document().lines()[10]->text == u8"{\\k50}ha{\\k50}ru");
+        stop();
+    }
+
+    // Folding a run makes it selected whole or not at all, as its first Line
+    // is.
+    void foldingSelectsTheRunAsItsFirstLine()
+    {
+        start();
+        openSong();
+        shell().setFoldGenerated(true);
+        QVERIFY(QMetaObject::invokeMethod(application.get(), "toggleFold", Q_ARG(qulonglong, lineId(5).value)));
+        QCOMPARE(fold(5), 2);
+        application->clickLine(lineId(5).value, Qt::NoModifier);
+        application->clickLine(lineId(7).value, Qt::ControlModifier);
+        QVERIFY(QMetaObject::invokeMethod(application.get(), "toggleFold", Q_ARG(qulonglong, lineId(5).value)));
+        QCOMPARE(fold(5), 1);
+        QCOMPARE(active(), std::optional(lineId(5)));
+        QCOMPARE(selected(), ids({5, 6, 7, 8, 9}));
+        // A run whose first Line is not selected folds unselected.
+        QVERIFY(QMetaObject::invokeMethod(application.get(), "toggleFold", Q_ARG(qulonglong, lineId(5).value)));
+        application->clickLine(lineId(7).value, Qt::NoModifier);
+        application->clickLine(lineId(4).value, Qt::ControlModifier);
+        QCOMPARE(active(), std::optional(lineId(4)));
+        QCOMPARE(selected(), ids({4, 7}));
+        QVERIFY(QMetaObject::invokeMethod(application.get(), "toggleFold", Q_ARG(qulonglong, lineId(5).value)));
+        QCOMPARE(selected(), ids({4}));
+        stop();
+    }
+
     // → unfolds the current folded run, ← folds it again from its first
     // row; elsewhere they move between the cells. The arrow at the Text
     // cell's start folds and unfolds with a click.

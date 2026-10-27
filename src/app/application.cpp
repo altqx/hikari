@@ -2841,24 +2841,30 @@ void Application::extendSelection(int rows)
 }
 
 // KP1 (#286): a run of generated Lines folded or unfolded from the Grid. A
-// run folded over the active Line leaves its first Line active, the whole
-// run selected as its row then is.
+// folded run is selected whole or not at all, as its first Line is: a run
+// folded over the active Line leaves its first Line active and the run
+// selected.
 void Application::toggleFold(qulonglong first)
 {
     const core::LineId id{first};
     if (!m_shell->foldGenerated() || m_shell->runFirst(id) != id)
         return;
     const bool fold = !m_shell->runFolded(id);
-    auto *session = targetSession();
-    if (fold && session && session->selection().active && *session->selection().active != id) {
+    if (auto *session = targetSession(); fold && session) {
         const auto lines = m_shell->runLines(id);
-        if (std::ranges::find(lines, *session->selection().active) != lines.end()) {
-            application::Selection next = session->selection();
+        const application::Selection &current = session->selection();
+        application::Selection next = current;
+        if (next.active && std::ranges::find(lines, *next.active) != lines.end()) {
             next.active = id;
-            next.selected.insert(lines.begin(), lines.end());
-            if (!applySelection(std::move(next)))
-                return;
+            next.selected.insert(id);
         }
+        if (next.selected.contains(id))
+            next.selected.insert(lines.begin(), lines.end());
+        else
+            for (const auto line : lines)
+                next.selected.erase(line);
+        if ((next.active != current.active || next.selected != current.selected) && !applySelection(std::move(next)))
+            return;
     }
     m_shell->setRunFolded(id, fold);
 }
@@ -2952,7 +2958,7 @@ application::EditSession *Application::targetSession() const
 
 application::LineVisible Application::shownLines() const
 {
-    const auto shown = m_shell->displayedLines();
+    const auto shown = m_shell->actionLines();
     const std::set<core::LineId> set(shown.begin(), shown.end());
     return [set](core::LineId id) { return set.contains(id); };
 }
