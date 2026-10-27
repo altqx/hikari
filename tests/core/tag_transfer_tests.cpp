@@ -9,6 +9,8 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
+
 using namespace hikari::core;
 
 namespace {
@@ -366,8 +368,11 @@ TEST(TagTransfer, ANamedResetTakesThatStylesValues)
     ASSERT_EQ(tags.runs.size(), 1u);
     EXPECT_EQ(u8(tags.runs[0].text), "bc");
     expectRoundTrip(tags, draft(u"x y", {{0, 1, 1}}));
-    // Without the Document's Styles, Alt is unknown: two runs, as before.
-    EXPECT_EQ(readOriginalTags(u"a{\\rAlt}b{\\b1}c{\\r}d", &plain).runs.size(), 2u);
+    // Without the Document's Styles, Alt is unknown: the reset is to the
+    // Line's Style (libass), and only \b1 makes a run.
+    const auto unknown = readOriginalTags(u"a{\\rAlt}b{\\b1}c{\\r}d", &plain);
+    ASSERT_EQ(unknown.runs.size(), 1u);
+    EXPECT_EQ(u8(unknown.runs[0].text), "c");
 }
 
 // A leading named reset gives the Line another Style's values: it is what
@@ -980,4 +985,116 @@ TEST(TagTransfer, NoSuggestionsPastTheLengthBound)
     body += u" a";
     EXPECT_TRUE(suggestPlacements(tags, draft(body)).empty());
     EXPECT_EQ(suggestPlacements(tags, draft(u"x a")).size(), 1u);
+}
+
+// #341: overrides read as libass reads them.
+
+TEST(TagTransfer, ANumberWithNoDigitsIsZero)
+{
+    // ass_strtod and strtoll read the longest number they can: none is 0,
+    // "inf" is none, and what follows the digits is ignored.
+    EXPECT_TRUE(readOriginalTags(u"a{\\fspabc}b{\\fsp0}c").runs.empty());
+    EXPECT_TRUE(readOriginalTags(u"a{\\fspinf}b{\\fsp0}c").runs.empty());
+    EXPECT_TRUE(readOriginalTags(u"a{\\iabc}b{\\i0}c").runs.empty());
+    const auto tags = readOriginalTags(u"a {\\fe x}b{\\fe0} c{\\fe} d");
+    ASSERT_EQ(tags.runs.size(), 1u);
+    EXPECT_EQ(u8(tags.runs[0].text), "b c");
+}
+
+TEST(TagTransfer, AnArgumentIsSplitAsLibassSplitsIt)
+{
+    // In parentheses, the first argument; after the name, spaces only at
+    // its end are skipped, so "\fs +5" is a size of 5, not 5 more.
+    const auto parenthesised = readOriginalTags(u"a {\\bord(3)}b{\\bord3} c{\\r} d");
+    ASSERT_EQ(parenthesised.runs.size(), 1u);
+    EXPECT_EQ(u8(parenthesised.runs[0].text), "b c");
+    StyleValues style;
+    style.name = u8"Default";
+    style.fontsize = u8"20";
+    const std::vector<StyleValues> styles{style};
+    const auto spaced = readOriginalTags(u"a {\\fs30}b {\\fs +5}c{\\fs20} d", &style, styles);
+    ASSERT_EQ(spaced.runs.size(), 2u);
+    EXPECT_EQ(u8(spaced.runs[1].differs.at(u"fs")), "5");
+}
+
+TEST(TagTransfer, ADrawingScaleIsItsWholeNumberPrefix)
+{
+    // argtoi32 reads "1e-3" as 1: a drawing, nothing carried.
+    EXPECT_TRUE(readOriginalTags(u"{\\p1e-3\\an8}m 0 0").drawing);
+    EXPECT_TRUE(readOriginalTags(u"{\\p 2}m 0 0").drawing);
+}
+
+TEST(TagTransfer, AResetToAStyleTheDocumentLacksIsTheLines)
+{
+    StyleValues plain, alt;
+    plain.name = u8"Default";
+    alt.name = u8"Alt";
+    alt.italic = true;
+    const std::vector<StyleValues> styles{plain, alt};
+    EXPECT_TRUE(readOriginalTags(u"a{\\rGone}b{\\r}c", &plain, styles).runs.empty());
+    // " Alt", the name with the space after "\r", is no Style either.
+    EXPECT_TRUE(readOriginalTags(u"a{\\r Alt}b{\\r}c", &plain, styles).runs.empty());
+    EXPECT_EQ(readOriginalTags(u"a{\\rAlt}b{\\r}c", &plain, styles).runs.size(), 1u);
+}
+
+TEST(TagTransfer, ASpacedTransformOpensItsRun)
+{
+    const auto tags = readOriginalTags(u"a{\\ t(\\fs20)\\ t(\\bord2)}B{\\r}c");
+    ASSERT_EQ(tags.runs.size(), 1u);
+    const auto d = draft(u"xYz", {{1, 2, 1}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "x{\\ t(\\fs20)\\ t(\\bord2)}Y{\\r}z");
+    expectRoundTrip(tags, d);
+    // A spaced reset is a reset: what both runs share is set again after it.
+    const auto shared = readOriginalTags(u"x {\\i1\\u1}U{\\ r} x {\\i1\\b1}B{\\ r} x");
+    ASSERT_EQ(shared.runs.size(), 2u);
+    const auto both = draft(u"y BU y", {{2, 3, 2}, {3, 4, 1}});
+    EXPECT_EQ(u8(composeTranslation(shared, both)), "y {\\i1\\b1}B{\\ r\\i1\\u1}U{\\ r} y");
+    expectRoundTrip(shared, both);
+}
+
+TEST(TagTransfer, AClipAnimatedAmongOtherTagsGoesToTheFront)
+{
+    // libass animates the line's clip; only \fs20 is the run's.
+    const auto tags = readOriginalTags(u"a{\\t(0,500,\\clip(0,0,100,100)\\fs20)}b{\\r}c");
+    EXPECT_EQ(u8(tags.leading), "{\\t(0,500,\\clip(0,0,100,100))}");
+    ASSERT_EQ(tags.runs.size(), 1u);
+    EXPECT_EQ(u8(tags.runs[0].text), "b");
+    EXPECT_EQ(u8(composeTranslation(tags, draft(u"xyz"))), "{\\t(0,500,\\clip(0,0,100,100))}xyz");
+    const auto d = draft(u"xyz", {{1, 2, 1}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "{\\t(0,500,\\clip(0,0,100,100))}x{\\t(0,500,\\fs20)}y{\\r}z");
+    expectRoundTrip(tags, d);
+}
+
+TEST(TagTransfer, AdjacentRunsWriteOnlyTheTransformsTheyAdd)
+{
+    const auto tags = readOriginalTags(u"a{\\t(\\fs30)}A{\\t(\\bord2)}B{\\r}c");
+    ASSERT_EQ(tags.runs.size(), 2u);
+    const auto d = draft(u"XY", {{0, 1, 1}, {1, 2, 2}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "{\\t(\\fs30)}X{\\t(\\bord2)}Y{\\r}");
+    expectRoundTrip(tags, d);
+    // Transforms that don't go on from the first run's: its reset first.
+    const auto reset = readOriginalTags(u"a{\\t(\\fs30)}A{\\r\\t(\\bord2)}B{\\r}c");
+    ASSERT_EQ(reset.runs.size(), 2u);
+    EXPECT_EQ(u8(composeTranslation(reset, d)), "{\\t(\\fs30)}X{\\r\\t(\\bord2)}Y{\\r}");
+    expectRoundTrip(reset, d);
+    // Another value's reset ends the first run's transforms too: the
+    // second's are all written again after it.
+    const auto other = readOriginalTags(u"a{\\t(\\fs30)}B{\\t(\\bord2)}C{\\r}d{\\i1\\t(\\fs30)}A{\\r}z");
+    ASSERT_EQ(other.runs.size(), 3u);
+    const auto swapped = draft(u"XY", {{0, 1, 3}, {1, 2, 2}});
+    EXPECT_EQ(u8(composeTranslation(other, swapped)), "{\\i1\\t(\\fs30)}X{\\r\\t(\\fs30)\\t(\\bord2)}Y{\\r}");
+    expectRoundTrip(other, swapped);
+}
+
+TEST(TagTransfer, ARunAnEditKeepsFromReadingBackIsNoLongerPlaced)
+{
+    // The translator's \r, put in between two runs side by side, comes after
+    // run 2's opening: B is drawn as the base, so run 2 is placed no longer.
+    const auto tags = readOriginalTags(u"a{\\fs30}b{\\b1}c{\\fs20}d{\\r}z");
+    ASSERT_EQ(tags.runs.size(), 3u);
+    auto d = draft(u"A{\\r}B", {{0, 1, 1}, {4, 5, 2}});
+    EXPECT_FALSE(placementHolds(tags, d, std::array{2}));
+    keepHeldPlacements(tags, d);
+    EXPECT_EQ(d.placements, (std::vector<RunPlacement>{{0, 1, 1}}));
+    expectRoundTrip(tags, d);
 }

@@ -271,54 +271,62 @@ KanjiText kanjiText(u16v text)
         tags.insert(tags.end(), removed, out.text.size());
         i = end;
     }
-    // KA4-furigana: each syllable's reading out of the text, from the last
-    // (base|reading, the full-width forms, a ! or < after the | dropped)
+    // KA4-furigana: each syllable's reading out of the text (base|reading,
+    // the full-width forms, a ! or < after the | dropped), in one pass
     struct Read {
         std::size_t syllable, begin, end;
         u16 text;
         bool hash;
     };
     std::vector<Read> read;
-    for (std::size_t t = tags.size(); t-- > 0;) {
-        const std::size_t from = tags[t], to = t + 1 < tags.size() ? tags[t + 1] : out.text.size();
-        auto skipBlock = [&](std::size_t j) {
-            const std::size_t close = out.text.find(u'}', j);
-            return close == u16::npos || close >= to ? to : close + 1;
-        };
-        std::size_t bar = u16::npos;
-        for (std::size_t j = from; j < to && bar == u16::npos;) {
-            if (out.text[j] == u'{')
-                j = skipBlock(j);
-            else if (out.text[j] == u'|' || out.text[j] == u'｜')
-                bar = j;
-            else
-                ++j;
-        }
-        if (bar == u16::npos)
-            continue;
-        u16 reading, blocks;
-        for (std::size_t j = bar + 1; j < to;) {
-            if (out.text[j] == u'{') {
-                const std::size_t close = skipBlock(j);
-                blocks.append(out.text, j, close - j);
-                j = close;
-            } else {
-                reading += out.text[j++];
+    {
+        u16 kept;
+        std::vector<std::size_t> moved(tags.size());
+        std::size_t copied = 0, gone = 0;
+        for (std::size_t t = 0; t < tags.size(); ++t) {
+            const std::size_t from = tags[t], to = t + 1 < tags.size() ? tags[t + 1] : out.text.size();
+            moved[t] = from - gone;
+            auto skipBlock = [&](std::size_t j) {
+                const std::size_t close = out.text.find(u'}', j);
+                return close == u16::npos || close >= to ? to : close + 1;
+            };
+            std::size_t bar = u16::npos;
+            for (std::size_t j = from; j < to && bar == u16::npos;) {
+                if (out.text[j] == u'{')
+                    j = skipBlock(j);
+                else if (out.text[j] == u'|' || out.text[j] == u'｜')
+                    bar = j;
+                else
+                    ++j;
             }
+            if (bar == u16::npos)
+                continue;
+            u16 reading, blocks;
+            for (std::size_t j = bar + 1; j < to;) {
+                if (out.text[j] == u'{') {
+                    const std::size_t close = skipBlock(j);
+                    blocks.append(out.text, j, close - j);
+                    j = close;
+                } else {
+                    reading += out.text[j++];
+                }
+            }
+            if (!reading.empty() && u16v(u"!<！＜").find(reading.front()) != u16v::npos)
+                reading.erase(0, 1);
+            if (kept.empty())
+                kept.reserve(out.text.size());
+            kept.append(out.text, copied, bar - copied);
+            kept += blocks;
+            copied = to;
+            const u16v base = u16v(out.text).substr(from, bar - from);
+            read.push_back({t, from - gone, bar - gone, std::move(reading), base == u"#" || base == u"＃"});
+            gone += to - bar - blocks.size();
         }
-        if (!reading.empty() && u16v(u"!<！＜").find(reading.front()) != u16v::npos)
-            reading.erase(0, 1);
-        const std::size_t cut = to - bar - blocks.size();
-        out.text.replace(bar, to - bar, blocks);
-        for (std::size_t &at : tags)
-            if (at >= to)
-                at -= cut;
-        for (Read &r : read) {
-            r.begin -= cut;
-            r.end -= cut;
+        if (!read.empty()) {
+            kept.append(out.text, copied);
+            out.text = std::move(kept);
+            tags = std::move(moved);
         }
-        const u16v base = u16v(out.text).substr(from, bar - from);
-        read.insert(read.begin(), {t, from, bar, std::move(reading), base == u"#" || base == u"＃"});
     }
     // a # syllable's reading goes on the base before it
     {
@@ -334,9 +342,10 @@ KanjiText kanjiText(u16v text)
         read = std::move(merged);
     }
     // the readings by the kanji runs of their bases' units
+    // (in order: one pass over the units)
     auto finish = [&] {
+        std::size_t from = 0;
         for (const Read &r : read) {
-            std::size_t from = 0;
             while (from < out.units.size() && out.units[from].begin < r.begin)
                 ++from;
             std::size_t to = from;
@@ -364,7 +373,7 @@ KanjiText kanjiText(u16v text)
     out.units = unitsOf(out.text);
     // KA8-multi-highlight: the # syllables, one character each up to the next tag
     std::vector<bool> hash(tags.size());
-    std::vector<std::size_t> erased; // their units, from the last
+    std::vector<std::size_t> erased; // their units, in order
     for (std::size_t t = 1, u = 0; t < tags.size(); ++t) {
         while (u < out.units.size() && out.units[u].begin < tags[t])
             ++u;
@@ -372,25 +381,37 @@ KanjiText kanjiText(u16v text)
         if (u < out.units.size() && (out.units[u].text == u"#" || out.units[u].text == u"＃") &&
             (u + 1 == out.units.size() || out.units[u + 1].begin >= next) && out.units[u].begin < next) {
             hash[t] = true;
-            erased.insert(erased.begin(), u);
+            erased.push_back(u);
         }
     }
     if (erased.empty()) {
         finish();
         return out;
     }
+    // the text without them, and each tag moved back by what went before it,
+    // in one pass each (a Line of many # syllables must not take n² here)
+    u16 kept;
+    kept.reserve(out.text.size());
+    std::size_t copied = 0;
     for (const std::size_t u : erased) {
-        const auto [begin, end] = std::pair(out.units[u].begin, out.units[u].end);
-        out.text.erase(begin, end - begin);
-        for (std::size_t &at : tags)
-            if (at >= end)
-                at -= end - begin;
-        for (Read &r : read)
-            if (r.begin >= end) {
-                r.begin -= end - begin;
-                r.end -= end - begin;
-            }
+        kept.append(out.text, copied, out.units[u].begin - copied);
+        copied = out.units[u].end;
     }
+    kept.append(out.text, copied);
+    std::size_t gone = 0;
+    for (std::size_t t = 0, e = 0; t < tags.size(); ++t) {
+        for (; e < erased.size() && out.units[erased[e]].end <= tags[t]; ++e)
+            gone += out.units[erased[e]].end - out.units[erased[e]].begin;
+        tags[t] -= gone;
+    }
+    gone = 0;
+    for (std::size_t r = 0, e = 0; r < read.size(); ++r) {
+        for (; e < erased.size() && out.units[erased[e]].end <= read[r].begin; ++e)
+            gone += out.units[erased[e]].end - out.units[erased[e]].begin;
+        read[r].begin -= gone;
+        read[r].end -= gone;
+    }
+    out.text = std::move(kept);
     out.units = unitsOf(out.text);
     // the groups the tags make, when no character comes before the first
     if (!out.units.empty() && out.units.front().begin < tags.front()) {
@@ -561,16 +582,20 @@ std::optional<u16> sungKana(const std::vector<KanjiSyllable> &syllables, std::si
 }
 
 // The dictionary's reading of a kanji run: its words' runs within it when
-// they take every kanji of it.
-u16 dictionaryReading(const KanjiText &kanji, const std::vector<FuriganaRun> &dictionary, std::size_t from,
-                      std::size_t to)
+// they take every kanji of it. `word`: the first word not before it (the
+// runs are asked in order).
+u16 dictionaryReading(const KanjiText &kanji, const std::vector<FuriganaRun> &dictionary, std::size_t &word,
+                      std::size_t from, std::size_t to)
 {
     const std::size_t begin = kanji.units[from].begin, end = kanji.units[to - 1].end;
+    while (word < dictionary.size() && dictionary[word].end <= begin)
+        ++word;
     u16 out;
     std::size_t covered = begin;
-    for (const FuriganaRun &run : dictionary) {
+    for (std::size_t w = word; w < dictionary.size() && dictionary[w].begin < end; ++w) {
+        const FuriganaRun &run = dictionary[w];
         if (run.begin < begin || run.end > end)
-            continue;
+            return {};
         if (run.suggested.empty())
             return {};
         // (kana between two runs is no kanji of this one)
@@ -590,7 +615,7 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
                                         bool suggest)
 {
     std::vector<KanjiReading> out;
-    std::size_t syllable = 0, character = 0;
+    std::size_t syllable = 0, character = 0, word = 0;
     for (std::size_t g = 0; g < groups.size(); ++g) {
         const std::size_t from = std::min(character, kanji.units.size());
         const std::size_t to = std::min(character + groups[g].characters, kanji.units.size());
@@ -602,7 +627,7 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
         for (std::size_t r = 0; r < runs.size(); ++r) {
             KanjiReading k{g, runs[r].first, runs[r].second};
             if (suggest) {
-                k.dictionary = dictionaryReading(kanji, dictionary, runs[r].first, runs[r].second);
+                k.dictionary = dictionaryReading(kanji, dictionary, word, runs[r].first, runs[r].second);
                 k.sung = parts.has_value();
                 k.suggested = parts ? (*parts)[r] : k.dictionary;
             }
@@ -616,11 +641,11 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
     }
     for (KanjiReading &k : out)
         k.differs = k.sung && !k.dictionary.empty() && k.dictionary != k.suggested;
-    // a word over more runs, one after another
-    for (const FuriganaRun &word : suggest ? dictionary : std::vector<FuriganaRun>{}) {
-        if (word.suggested.empty())
+    // a word over more runs, one after another (both in order)
+    std::size_t first = 0;
+    for (const FuriganaRun &word : dictionary) {
+        if (!suggest || word.suggested.empty())
             continue;
-        std::size_t first = 0;
         while (first < out.size() && kanji.units[out[first].begin].begin < word.begin)
             ++first;
         std::size_t last = first;

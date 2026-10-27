@@ -564,6 +564,22 @@ TEST(KanjiTimer, HashSyllablesReadBackAsTheirGroups)
     EXPECT_TRUE(kanjiText(u(kKimiOut)).tagged.empty());
 }
 
+TEST(KanjiTimer, ALineOfManyHashSyllablesReadsQuickly)
+{
+    // the # syllables go in one pass, not a pass over the tags for each
+    // (Codex review on #360): 256,000 of them after one kanji
+    std::string text = "{\\k1}撃";
+    for (int i = 0; i < 256000; ++i)
+        text += "{\\k1}#";
+    const auto line = u(text);
+    const auto start = std::chrono::steady_clock::now();
+    const auto read = kanjiText(line);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(10));
+    EXPECT_EQ(s(read.text), "撃");
+    ASSERT_EQ(read.tagged.size(), 1u);
+    EXPECT_EQ(read.tagged[0], (KanjiGroup{256001, 1}));
+}
+
 TEST(KanjiTimer, ALineWithHashSyllablesOpensWithItsGroupsLinked)
 {
     KanjiTimer timer(classes());

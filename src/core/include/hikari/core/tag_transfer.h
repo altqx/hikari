@@ -158,5 +158,15 @@ std::vector<int> runOrder(std::span<const RunPlacement> placements);
 // the translator chose, where each still names a run of the same formatting;
 // otherwise the draft is left as read.
 void relabelRuns(const OriginalTags &tags, TranslationDraft &draft, std::span<const int> order);
+// Whether a draft with `runs` placed in it is saved as placed: each is found
+// again, over the same text, on reading the composed translation (one past
+// the reader's limits is not, its tags left as the translator's own; one
+// opened by the translator's own tags before it reads over more), and the
+// translator's own formatting around them draws as it did.
+bool placementHolds(const OriginalTags &tags, const TranslationDraft &draft, std::span<const int> runs);
+// Takes out the placements that no longer hold after an edit of the body (a
+// reset put in after a run's opening), as placeRun would not place them:
+// their tags are not written, rather than stay as the translator's own.
+void keepHeldPlacements(const OriginalTags &tags, TranslationDraft &draft);
 
 } // namespace hikari::core
