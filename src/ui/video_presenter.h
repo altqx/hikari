@@ -25,6 +25,7 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <QRect>
+#include <QSize>
 #include <QVariantMap>
 
 #include <atomic>
@@ -49,6 +50,9 @@ class VideoPresenter : public QQuickItem, public application::PresenterPort {
     // cost to draw (application::RenderCost: milliseconds, counted, events,
     // images, area, blurred, vectorClips); empty when it had none.
     Q_PROPERTY(QVariantMap renderCost READ renderCost NOTIFY renderCostChanged)
+    // SV1-screen-size-subtitles: the whole frame's size on screen in device
+    // pixels (a zoomed frame's hidden part included); empty with no frame.
+    Q_PROPERTY(QSize screenSize READ screenSize NOTIFY screenSizeChanged)
 public:
     explicit VideoPresenter(QQuickItem *parent = nullptr);
     ~VideoPresenter() override;
@@ -60,6 +64,7 @@ public:
     QVariantMap renderCost() const { return m_renderCost; }
     // Where the frame is drawn, in item coordinates (empty with no frame).
     QRectF frameRect() const;
+    QSize screenSize() const { return m_screenSize; }
     QRectF videoRect() const { return m_videoRect; }
     void setVideoRect(const QRectF &rect);
     QRectF sourceRect() const { return m_sourceRect; }
@@ -81,6 +86,7 @@ signals:
     void presented();
     void renderCostChanged();
     void placementChanged();
+    void screenSizeChanged();
 
 protected:
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
@@ -101,6 +107,8 @@ private:
     void attachWindow(QQuickWindow *window);
     void resolveLater(Done done, application::PresentResult result);
     void onFrameSwapped(); // render thread
+    QRectF placement(QSizeF frame, double pixelAspect) const;
+    void updateScreenSize();
 
     std::optional<Submission> m_pending;      // touched on the GUI thread and during sync
     application::Presentation m_shown;        // what the node shows (or will after upload)
@@ -114,6 +122,9 @@ private:
     QVariantMap m_renderCost;
     std::uint64_t m_rejected = 0;
     QRectF m_videoRect, m_sourceRect;
+    QSize m_frameSize;        // the last frame presented, its pixels and aspect (GUI thread)
+    double m_pixelAspect = 1;
+    QSize m_screenSize;
     struct Stats : UploadStats {
         std::mutex mutex;
         bool failed = false; // a texture could not be made since the last swap
