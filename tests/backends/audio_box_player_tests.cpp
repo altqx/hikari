@@ -731,6 +731,22 @@ TEST_F(BoxPlayer, AClipPlaysAtSpeedOne)
     EXPECT_NE(device.rendered[2 * 5000], (1000 + 5000) / 32768.0f);
 }
 
+// FR1: Test sound stops its own tone, never a later playback; a clip longer
+// than the wanted latency plays on into silence until it is stopped.
+TEST_F(BoxPlayer, PlayingClipNamesTheClipThatPlays)
+{
+    auto clip = std::make_shared<DisplayAudio>(stereoRamp(48000, 9600)); // 200 ms
+    ASSERT_TRUE(player.playClip(clip));
+    EXPECT_TRUE(player.playingClip(clip.get()));
+    run(40); // past its end
+    EXPECT_TRUE(player.playing());
+    EXPECT_TRUE(player.playingClip(clip.get()));
+    player.play(0, 48000);
+    EXPECT_FALSE(player.playingClip(clip.get()));
+    player.stop();
+    EXPECT_FALSE(player.playingClip(clip.get()));
+}
+
 // Through a real stream: the CI null PCM, or a sound device on a desktop or
 // the Windows VM, named by HIKARI_TEST_AUDIO_DEVICE (the tone is quiet but
 // audible, so never the default speakers unasked). At half speed the stream

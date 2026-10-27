@@ -17066,7 +17066,9 @@ private slots:
         QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
         for (int i = 1; i <= 11; ++i)
             config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
-        config += "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\nGRID_SAVE_AFTER_CHARACTER_COUNT=4\r\n";
+        // TAB_TEXT_MAX_CHARS is on no page: the Settings window would make its
+        // default 0 into 40, which Finish must not write over the import.
+        config += "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\nGRID_SAVE_AFTER_CHARACTER_COUNT=4\r\nTAB_TEXT_MAX_CHARS=25\r\n";
         const LegacyHere legacy(config);
         QTemporaryDir home;
         QVERIFY(home.isValid());
@@ -17096,10 +17098,12 @@ private slots:
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
         QCOMPARE(store->integer("autosave.maxFiles"), 10);
         QCOMPARE(store->integer("editor.saveAfterCharacterCount"), 6);
+        QVERIFY(!store->isSet(QStringLiteral("program.tabTextMaxChars"))); // only the pages are written
         QVERIFY(importer.pending());
         restartWithSpelling(home.path(), false, {}, true);
         store = application->settingsStore();
         QCOMPARE(store->text("grid.font"), QStringLiteral("Arial"));
+        QCOMPARE(store->integer("program.tabTextMaxChars"), 25);
         QCOMPARE(store->integer("editor.saveAfterCharacterCount"), 6);
         QCOMPARE(store->integer("autosave.maxFiles"), 10);
         QTest::qWait(100);

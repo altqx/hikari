@@ -6008,12 +6008,28 @@ bool Application::finishGettingStarted(const QVariantMap &values, bool import)
     // The import first: when it cannot be staged (the legacy files changed,
     // staging failed) nothing is written and the window stays open with the
     // importer's status.
-    if (import && !m_settingsImport->importChosenBut(application::gettingStartedPageSettings(fromVariant(values))))
+    // The pages' state: the Settings window's controls, and the look's
+    // settings, which are not among them.
+    auto state = fromVariant(values);
+    for (const auto id : appearanceSettings())
+        if (const auto found = values.constFind(qs(id)); found != values.cend())
+            state[std::string(id)] = found->typeId() == QMetaType::Bool
+                                         ? application::SettingValue(found->toBool())
+                                         : application::SettingValue(found->toString().toStdString());
+    const auto pages = application::gettingStartedPageSettings(state);
+    if (import && !m_settingsImport->importChosenBut(pages))
         return false;
     // The stored language first: Finish's own switch (settingChanged)
     // happens only when the language changes.
     endLanguagePreview();
-    applySettings(values);
+    // Only what the pages hold: the rest of the Settings window's state
+    // (values it normalises when it opens) would otherwise be written now
+    // and, as a later edit, win over the import.
+    QVariantMap written;
+    for (const auto &id : pages)
+        if (const auto found = values.constFind(qs(id)); found != values.cend())
+            written.insert(qs(id), *found);
+    applySettings(written);
     m_settings->set("workspace.gettingStarted", QStringLiteral("done"));
     return true;
 }
@@ -6118,14 +6134,18 @@ void Application::playTestSound(int device)
     m_audioPlayer->setOutputDevice(choice.kind == application::OutputDeviceChoice::Kind::SystemDefault ? std::string()
                                                                                                         : choice.name);
     m_audioPlayer->switchOutput();
+    const std::weak_ptr<const application::DisplayAudio> played = tone;
     m_audioPlayer->playClip(std::move(tone));
-    // The next open is the route's again: once the tone is over its stream
-    // closes (or what plays by then moves to the route), unless another Test
-    // sound came since.
+    // The next open is the route's again: once the tone is over it stops (a
+    // clip this long plays on into silence) and its stream closes, or what
+    // plays by then moves to the route; unless another Test sound came since.
     m_audioPlayer->setOutputDevice(m_noticedRoute.systemDefault ? std::string() : m_noticedRoute.name);
-    QTimer::singleShot(frames * 1000 / rate + 200, this, [this, test = ++m_testSounds] {
-        if (test == m_testSounds)
-            m_audioPlayer->switchOutput();
+    QTimer::singleShot(frames * 1000 / rate + 200, this, [this, test = ++m_testSounds, played] {
+        if (test != m_testSounds)
+            return;
+        if (const auto clip = played.lock(); clip && m_audioPlayer->playingClip(clip.get()))
+            m_audioPlayer->stop();
+        m_audioPlayer->switchOutput();
     });
 }
 
