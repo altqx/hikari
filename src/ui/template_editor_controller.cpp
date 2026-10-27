@@ -1,10 +1,12 @@
 #include "template_editor_controller.h"
 
+#include "hikari/application/karaoke_presets.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/editor_syntax.h"
 
 #include <QCoreApplication>
+#include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -12,6 +14,7 @@
 #include <QRegularExpression>
 
 #include <algorithm>
+#include <span>
 
 namespace hikari::ui {
 
@@ -32,6 +35,40 @@ QString translated(const char *text)
 {
     return QCoreApplication::translate("HikariSub.TemplateEditor", text);
 }
+
+// KE3: the built-in karaoke effect presets (docs/qt/karaoke-presets.md), in
+// list order, with their files' Title and Description for the translators.
+struct PresetEntry {
+    const char *file, *title, *description;
+};
+constexpr PresetEntry kPresets[] = {
+    {"01-classic-fill.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Classic fill"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "The karaoke fill from left to right, fading in with the Line and out after it.")},
+    {"02-staggered-fade.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Staggered fade"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "Syllables fade in one after another, light up as they are sung and fade out together.")},
+    {"03-colour-sweep.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Colour sweep"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "A second colour wipes across each syllable from left to right while it is sung.")},
+    {"04-scale-pop.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Scale pop"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "Each syllable swells as it is sung and settles back to its Style's size in the sung colour.")},
+    {"05-bounce.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Bounce"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Each syllable hops up and lands again while it is sung.")},
+    {"06-glow.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Glow"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "A soft halo flares behind each syllable as it is sung, then fades.")},
+    {"07-sparkles.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Sparkles"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Small sparks scatter from each syllable as it is sung.")},
+    {"08-echo.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Echo"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "A copy of each syllable grows and fades away as it is sung.")},
+    {"09-falling-letters.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Falling letters"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "Letters drop into place one by one, then light up syllable by syllable.")},
+    {"10-palette.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Colour per Line"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "Lines take turns through a short palette of fill colours, by their place in the file.")},
+};
 
 // The time a Line's text shows, without its override blocks.
 QString withoutTags(const std::u8string &text)
@@ -1310,45 +1347,92 @@ void TemplateEditorController::applied(const std::string &report, std::optional<
 
 bool TemplateEditorController::insertTemplate(const QString &effect)
 {
+    application::MacroDialogueLine d;
+    d.effect = effect.toStdString();
+    return insertLines("New template", {d});
+}
+
+QVariantList TemplateEditorController::presets()
+{
+    QVariantList out;
+    for (const auto &p : kPresets)
+        out << QVariantMap{{QStringLiteral("title"), translated(p.title)},
+                           {QStringLiteral("description"), translated(p.description)},
+                           {QStringLiteral("file"), QLatin1String(p.file)}};
+    return out;
+}
+
+bool TemplateEditorController::insertPreset(int index)
+{
+    if (index < 0 || index >= static_cast<int>(std::size(kPresets)))
+        return false;
+    QFile file(QStringLiteral(":/hikari/ui/karaoke-presets/") + QLatin1String(kPresets[index].file));
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+    const QByteArray bytes = file.readAll();
+    const auto preset = application::readKaraokePreset(std::as_bytes(std::span(bytes.constData(), static_cast<std::size_t>(bytes.size()))));
+    if (!preset)
+        return false;
+    std::vector<application::MacroDialogueLine> lines;
+    for (const auto &l : preset->lines) {
+        application::MacroDialogueLine d;
+        d.layer = static_cast<int>(l.layer);
+        d.effect = std::string(l.effect.begin(), l.effect.end());
+        d.text = std::string(l.text.begin(), l.text.end());
+        lines.push_back(std::move(d));
+    }
+    return insertLines("New template from preset", std::move(lines));
+}
+
+bool TemplateEditorController::insertLines(const char *commandName, std::vector<application::MacroDialogueLine> made)
+{
     commit();
     auto *s = session();
-    if (!s || !m_editable)
+    if (!s || !m_editable || made.empty())
         return false;
     // A `template line karaoke` too: the templater runs it as one.
     const auto firstOf = [](const auto &lines) {
         return std::ranges::find_if(lines, [](const core::LineRecord *l) { return application::isKaraokeLine(*l); });
     };
-    // A Line editor draft of the Line it goes above goes in first, as the
+    // A Line editor draft of the Line they go above goes in first, as the
     // run would (and then find the revision moved); the Line is read after.
     if (const auto lines = s->document().lines(); firstOf(lines) != lines.end() && s->draftLine() == (*firstOf(lines))->id)
         if (!s->commitDraft() && s->draftLine())
             return false; // a draft that can't go in yet
-    const auto lines = s->document().lines();
-    const auto first = firstOf(lines);
-    application::MacroDialogueLine d;
-    d.comment = true;
-    d.effect = effect.toStdString();
-    if (first != lines.end())
-        d.style = std::string((*first)->style.begin(), (*first)->style.end());
+    const auto all = s->document().lines();
+    const auto first = firstOf(all);
+    std::string style;
+    if (first != all.end())
+        style = std::string((*first)->style.begin(), (*first)->style.end());
     else if (const auto names = styles(); !names.isEmpty())
-        d.style = names.front().toStdString();
-    const core::LineRecord fresh = application::lineOfMacro(d);
+        style = names.front().toStdString();
+    std::vector<core::LineRecord> fresh;
+    for (auto &d : made) {
+        d.comment = true;
+        d.style = style;
+        fresh.push_back(application::lineOfMacro(d));
+    }
     std::optional<core::LineId> added;
     application::Command command;
-    command.name = "New template";
+    command.name = commandName;
     command.expectedRevision = s->revision();
-    if (first != lines.end())
+    if (first != all.end())
         command.touches = {(*first)->id};
-    const std::optional<core::LineId> before = first != lines.end() ? std::optional((*first)->id) : std::nullopt;
+    const std::optional<core::LineId> before = first != all.end() ? std::optional((*first)->id) : std::nullopt;
     command.apply = [&](core::Document &doc) {
-        added = before ? doc.insertLineBefore(*before, fresh) : doc.appendLine(fresh);
-        return added.has_value();
+        for (const auto &l : fresh) {
+            const auto id = before ? doc.insertLineBefore(*before, l) : doc.appendLine(l);
+            if (!id)
+                return false;
+            added = added.value_or(*id);
+        }
+        return true;
     };
     const bool chosen = trusted();
     if (!s->run(command) || !added)
         return false;
     if (chosen)
-        trust(); // with the user's own template
+        trust(); // with the user's own templates
     m_seenRevision = s->revision();
     m_current = *added;
     emit documentEdited();
