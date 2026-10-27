@@ -299,8 +299,11 @@ void HarperClient::actions(quint64 ticket, int index, const QJsonValue &result)
         for (const QJsonValue &edit : changes.value(check.uri).toArray()) {
             const QJsonObject e = edit.toObject();
             const QString with = e.value(QStringLiteral("newText")).toString();
+            // harper-ls 3.0.0 offers some fixes twice, once with a space
+            // after (TheirToTheyre: "They're" and "They're "): the first is kept.
             if (rangeOf(check.text, e.value(QStringLiteral("range")).toObject()) == std::pair{finding.start, finding.end}
-                && !finding.suggestions.contains(with))
+                && std::ranges::none_of(finding.suggestions,
+                                        [&](const QString &s) { return s.trimmed() == with.trimmed(); }))
                 finding.suggestions.append(with);
         }
     }

@@ -100,7 +100,7 @@ TEST_F(HarperClientTest, StartsOnTheFirstCheckAndFindsGrammarWithReplacements)
     const auto *their = Checker::find(*findings, text, QStringLiteral("Their"));
     ASSERT_NE(their, nullptr);
     EXPECT_EQ(their->rule, QStringLiteral("TheirToTheyre"));
-    EXPECT_FALSE(their->suggestions.isEmpty());
+    EXPECT_EQ(their->suggestions, QStringList{QStringLiteral("They're")}); // not "They're " too
     ASSERT_NE(Checker::find(*findings, text, QStringLiteral("has")), nullptr);
 
     // A second check reuses the process.
