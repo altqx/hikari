@@ -1,5 +1,6 @@
 // KA3 (#278): the Kanji timer's grouping (Aegisub's DialogKanjiTimer and
 // KaraokeMatcher over the whole song) and the kana readings KA4 shares.
+// KA8 (#354): its multi-highlight (#) syllables.
 
 #include "hikari/application/kana.h"
 #include "hikari/application/kanji_timer.h"
@@ -476,7 +477,156 @@ TEST(KanjiTimer, EveryOutputAddsUpToTheRomaji)
     for (const auto &[romaji, kanji] : song) {
         const auto syls = kanjiSyllables(u(romaji), 0, 0);
         const auto text = kanjiText(u(kanji));
-        const auto out = kanjiOutput(syls, text, suggestGroups(syls, 0, text, 0, classes()).groups);
+        const auto sug = suggestGroups(syls, 0, text, 0, classes()).groups;
+        const auto out = kanjiOutput(syls, text, sug);
         EXPECT_EQ(total(out), total(u(romaji))) << s(out);
+        // KA8: with # syllables too, and they read back as the groups
+        const auto multi = kanjiOutput(syls, text, sug, true);
+        EXPECT_EQ(total(multi), total(u(romaji))) << s(multi);
+        EXPECT_EQ(kanjiSyllables(multi, 0, 0).size(), syls.size()) << s(multi);
+        EXPECT_EQ(kanjiText(multi).text, text.text) << s(multi);
+        if (s(multi).find('#') != std::string::npos)
+            EXPECT_EQ(groups(kanjiText(multi).tagged), groups(sug)) << s(multi);
     }
+}
+
+// ---- KA8: multi-highlight (#) syllables ---------------------------------------------
+
+// The owner's example on #354: 撃、 over ge ki, 腐 over fu sho ku.
+const std::string kGedou = "{\\k15}ge{\\k16}dou {\\k13}kou{\\k9}ge{\\k7}ki, {\\k6}fu{\\k9}sho{\\k9}ku {\\k12}kou{\\k12}ge{\\k7}ki";
+const std::string kGedouKanji = "外道攻撃、腐蝕攻撃";
+const std::string kGedouMulti = "{\\k15}外{\\k16}道{\\k13}攻{\\k9}撃、{\\k7}#{\\k6}腐{\\k9}#{\\k9}#{\\k12}蝕{\\k12}攻{\\k7}撃";
+const std::vector<KanjiGroup> kGedouGroups{{1, 1}, {1, 1}, {1, 1}, {2, 2}, {3, 1}, {1, 1}, {1, 1}, {1, 1}};
+
+TEST(KanjiTimer, MultiHighlightWritesAHashForEachFurtherSyllable)
+{
+    const auto syls = kanjiSyllables(u(kGedou), 0, 0);
+    const auto kanji = kanjiText(u(kGedouKanji));
+    EXPECT_EQ(s(kanjiOutput(syls, kanji, kGedouGroups, true)), kGedouMulti);
+    // folding, the default, as KA3 writes it
+    EXPECT_EQ(s(kanjiOutput(syls, kanji, kGedouGroups)),
+              "{\\k15}外{\\k16}道{\\k13}攻{\\k16}撃、{\\k24}腐{\\k12}蝕{\\k12}攻{\\k7}撃");
+    EXPECT_EQ(total(u(kGedouMulti)), total(u(kGedou)));
+}
+
+TEST(KanjiTimer, MultiHighlightKeepsEachSyllablesLettersAndTheLinesTags)
+{
+    const auto syls = kanjiSyllables(u("{\\kf30}ho{\\K25}shi {\\ko30}wo {\\kf55}yo"), 0, 0);
+    const auto kanji = kanjiText(u("{\\i1\\k99}星を{\\b1}"));
+    // 星 ho shi: its tag into the Line's block, shi's \K after 星; the blank yo into {\b1}
+    EXPECT_EQ(s(kanjiOutput(syls, kanji, {{2, 1}, {1, 1}, {1, 0}}, true)),
+              "{\\i1\\kf30}星{\\K25}#{\\ko30}を{\\b1\\kf55}");
+    // a Line's block between two groups stays before the next one's tag
+    const auto between = kanjiText(u("星{\\i1}を"));
+    EXPECT_EQ(s(kanjiOutput(syls, between, {{2, 1}, {2, 1}}, true)), "{\\kf30}星{\\K25}#{\\i1\\ko30}を{\\kf55}#");
+}
+
+TEST(KanjiTimer, MultiHighlightLeavesSingleBlankAndLeftoverAsTheyWere)
+{
+    // a group of one syllable and a blank group of two are written as KA3 writes them
+    const auto syls = kanjiSyllables(u("{\\k10}a{\\k5} {\\k5} {\\k20}b"), 0, 0);
+    const auto kanji = kanjiText(u("AB"));
+    EXPECT_EQ(s(kanjiOutput(syls, kanji, {{1, 1}, {2, 0}, {1, 1}}, true)), "{\\k10}A{\\k10}{\\k20}B");
+    // KA3-leftover-kanji: the last group's # syllables come after the rest of the Line
+    const auto geki = kanjiSyllables(u("{\\k20}ge{\\k10}ki"), 0, 0);
+    EXPECT_EQ(s(kanjiOutput(geki, kanjiText(u("撃！")), {{2, 1}}, true)), "{\\k20}撃！{\\k10}#");
+    KanjiTimer timer(classes());
+    timer.setMulti(true);
+    timer.setLines({line(1, "{\\k20}ge{\\k10}ki", 0, 300)}, {line(2, "撃！", 0, 300)});
+    EXPECT_TRUE(timer.clickSyllable(1));
+    EXPECT_TRUE(timer.enter());
+    EXPECT_TRUE(timer.enter()); // accepted: ！ joins 撃's group
+    ASSERT_EQ(timer.pending().size(), 1u);
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k20}撃！{\\k10}#");
+}
+
+TEST(KanjiTimer, HashSyllablesReadBackAsTheirGroups)
+{
+    const auto read = kanjiText(u(kGedouMulti));
+    EXPECT_EQ(s(read.text), kGedouKanji);
+    EXPECT_EQ(read.units.size(), 9u);
+    EXPECT_EQ(groups(read.tagged), groups(kGedouGroups));
+    // a full-width ＃, and the Line's own tags beside it
+    const auto wide = kanjiText(u("{\\i1\\k20}撃{\\k10\\b1}＃{\\k5}を"));
+    EXPECT_EQ(s(wide.text), "{\\i1}撃{\\b1}を");
+    EXPECT_EQ(groups(wide.tagged), "2:1 1:1 ");
+    // not a # syllable: the first tag's, one with more text, one outside a tag
+    for (const char *text : {"{\\k10}#{\\k5}a", "{\\k10}a{\\k5}#b", "a#", "{\\k10}a#"}) {
+        const auto kanji = kanjiText(u(text));
+        EXPECT_NE(s(kanji.text).find('#'), std::string::npos) << text;
+        EXPECT_TRUE(kanji.tagged.empty()) << text;
+    }
+    // characters before the first tag: the # goes, the Line has no groups
+    const auto before = kanjiText(u("前{\\k10}撃{\\k5}#"));
+    EXPECT_EQ(s(before.text), "前撃");
+    EXPECT_TRUE(before.tagged.empty());
+    // a Line with no # syllable has none either (KA3 suggests it anew)
+    EXPECT_TRUE(kanjiText(u(kKimiOut)).tagged.empty());
+}
+
+TEST(KanjiTimer, ALineOfManyHashSyllablesReadsQuickly)
+{
+    // the # syllables go in one pass, not a pass over the tags for each
+    // (Codex review on #360): 256,000 of them after one kanji
+    std::string text = "{\\k1}撃";
+    for (int i = 0; i < 256000; ++i)
+        text += "{\\k1}#";
+    const auto line = u(text);
+    const auto start = std::chrono::steady_clock::now();
+    const auto read = kanjiText(line);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(10));
+    EXPECT_EQ(s(read.text), "撃");
+    ASSERT_EQ(read.tagged.size(), 1u);
+    EXPECT_EQ(read.tagged[0], (KanjiGroup{256001, 1}));
+}
+
+TEST(KanjiTimer, ALineWithHashSyllablesOpensWithItsGroupsLinked)
+{
+    KanjiTimer timer(classes());
+    timer.setMulti(true);
+    timer.setLines({line(1, kGedou, 0, 1150)}, {line(2, kGedouMulti, 0, 1150)});
+    auto v = timer.view();
+    ASSERT_TRUE(v);
+    EXPECT_EQ(groups(v->linked), groups(kGedouGroups));
+    EXPECT_TRUE(v->canAccept);
+    ASSERT_TRUE(v->output);
+    EXPECT_EQ(s(*v->output), kGedouMulti);
+    EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::Suggested);
+    // Backspace reopens the last group as for any linked one
+    EXPECT_TRUE(timer.unlink());
+    EXPECT_EQ(timer.view()->selection, (KanjiGroup{1, 1}));
+    EXPECT_TRUE(timer.undo());
+    // accepted with Multi-highlight off: folded
+    timer.setMulti(false);
+    EXPECT_TRUE(timer.enter());
+    ASSERT_EQ(timer.pending().size(), 1u);
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k15}外{\\k16}道{\\k13}攻{\\k16}撃、{\\k24}腐{\\k12}蝕{\\k12}攻{\\k7}撃");
+    // a romaji Line retimed: read again, not Changed (nobody had worked on it)
+    KanjiTimer reopened(classes());
+    reopened.setLines({line(1, kGedou, 0, 1150)}, {line(2, kGedouMulti, 0, 1150)});
+    reopened.setLines({line(1, "{\\k16}ge" + kGedou.substr(8), 0, 1150)}, {line(2, kGedouMulti, 0, 1150)});
+    EXPECT_EQ(reopened.pairs()[0].status, KanjiTimer::Status::Suggested);
+    EXPECT_EQ(groups(reopened.view()->linked), groups(kGedouGroups));
+    // groups that don't take every syllable: suggested anew
+    KanjiTimer other(classes());
+    other.setLines({line(1, kKimi, 0, 2700)}, {line(2, "{\\k40}君{\\k30}#{\\k45}の", 0, 2700)});
+    EXPECT_TRUE(other.view()->linked.empty());
+}
+
+TEST(KanjiTimer, MultiHighlightIsAppliedAndStaysApplied)
+{
+    KanjiTimer timer(classes());
+    timer.setMulti(true);
+    timer.setLines({line(1, kKimi, 0, 2700)}, {line(2, kKimiKanji, 0, 2700)});
+    EXPECT_TRUE(timer.acceptLine());
+    ASSERT_EQ(timer.pending().size(), 1u);
+    const std::string out = s(timer.pending()[0].second);
+    EXPECT_EQ(out, "{\\k18}君{\\k22}#{\\k30}の{\\k20}声{\\k25}#{\\k35}が{\\k22}聞{\\k18}こ{\\k20}え{\\k60}る");
+    timer.applied();
+    timer.setLines({line(1, kKimi, 0, 2700)}, {line(2, out, 0, 2700)});
+    EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::Applied);
+    // the option switched after Apply leaves the applied pair as it is
+    timer.setMulti(false);
+    EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::Applied);
+    EXPECT_TRUE(timer.pending().empty());
 }
