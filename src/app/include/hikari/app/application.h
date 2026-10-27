@@ -211,8 +211,9 @@ public:
         // P9: legacy SelectInFolder (the tab menu's folder items, a Ctrl+click
         // on a recent file); unset: backends::desktop::selectInFolder. Tests record.
         std::function<void(const QString &path)> revealInFolder;
-        // P9: legacy's autosave folder (Options.pathfull/Subs), read only;
-        // empty: "Subs" beside the settings file, or none without one.
+        // P9: legacy's autosave folder (Options.dataPath/Subs), read only;
+        // empty: "Subs" in the first legacy root that has one (#387), or
+        // none without a settings file.
         QString legacyAutosaveDir;
     };
     explicit Application(QObject *parent = nullptr);
