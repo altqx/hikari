@@ -1471,6 +1471,7 @@ private:
         std::u16string raw;              // the field's text that was checked
         core::grammar::CheckedText text; // what harper-ls was given
         QList<backends::GrammarFinding> findings;
+        core::SubtitleFormat format = core::SubtitleFormat::Ass; // how `text` was read
     };
     struct GrammarWalk {
         struct Finding {
@@ -1507,6 +1508,7 @@ private:
     void grammarFailed(const QString &message);
     void syncGrammarWords();
     const GrammarCheck *editorGrammarCheck(int role) const;
+    core::SubtitleFormat editorFormat() const;
     std::optional<std::pair<int, int>> fieldSpan(int role, const core::grammar::CheckedText &text, int start,
                                                   int end) const;
     const backends::GrammarFinding *editorGrammarFinding(int role, int position) const;

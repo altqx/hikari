@@ -279,9 +279,11 @@ void Application::checkEditorGrammar()
         }
         return;
     }
-    if (m_grammarEditor && m_grammarEditorRole == role && m_grammarEditor->raw == *raw)
+    // The same text in a Document of another format is read otherwise.
+    const auto format = editorFormat();
+    if (m_grammarEditor && m_grammarEditorRole == role && m_grammarEditor->raw == *raw && m_grammarEditor->format == format)
         return;
-    if (m_grammarTicket && m_grammarRole == role && m_grammarPending.raw == *raw)
+    if (m_grammarTicket && m_grammarRole == role && m_grammarPending.raw == *raw && m_grammarPending.format == format)
         return; // already with harper-ls
     auto *client = grammarClient();
     if (!client)
@@ -289,9 +291,7 @@ void Application::checkEditorGrammar()
     if (m_grammarTicket)
         client->cancel(m_grammarTicket);
     m_grammarTicket = 0;
-    const auto *session = targetSession();
-    const auto format = session ? session->document().format() : core::SubtitleFormat::Ass;
-    m_grammarPending = GrammarCheck{*raw, core::grammar::checkedText(*raw, format), {}};
+    m_grammarPending = GrammarCheck{*raw, core::grammar::checkedText(*raw, format), {}, format};
     m_grammarRole = role;
     if (blank(m_grammarPending.text)) {
         m_grammarEditor = std::move(m_grammarPending);
@@ -372,7 +372,14 @@ const Application::GrammarCheck *Application::editorGrammarCheck(int role) const
         !core::syntax::spellChecked(m_editor->syntaxState()))
         return nullptr;
     const auto raw = editorRaw(role);
-    return raw && *raw == m_grammarEditor->raw ? &*m_grammarEditor : nullptr;
+    return raw && *raw == m_grammarEditor->raw && m_grammarEditor->format == editorFormat() ? &*m_grammarEditor
+                                                                                          : nullptr;
+}
+
+core::SubtitleFormat Application::editorFormat() const
+{
+    const auto *session = targetSession();
+    return session ? session->document().format() : core::SubtitleFormat::Ass;
 }
 
 // A finding's range in the field as shown: the raw text's (whole Translated
@@ -578,8 +585,9 @@ void Application::pumpGrammarWalk()
             walk.arrived[index] = {};
             continue;
         }
-        GrammarCheck check{core::toUtf16(walk.translation ? line->translation : line->text), {}, {}};
-        check.text = core::grammar::checkedText(check.raw, session->document().format());
+        const auto format = session->document().format();
+        GrammarCheck check{core::toUtf16(walk.translation ? line->translation : line->text), {}, {}, format};
+        check.text = core::grammar::checkedText(check.raw, format);
         const bool empty = blank(check.text);
         const QString text = QString::fromStdU16String(check.text.text);
         walk.checks[index] = std::move(check);

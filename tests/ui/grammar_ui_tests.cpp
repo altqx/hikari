@@ -47,6 +47,14 @@ QString writeAss(const QString &path, const QByteArray &events, const QByteArray
     return path;
 }
 
+QString writeSrt(const QString &path, const QString &text)
+{
+    QFile f(path);
+    if (f.open(QIODevice::WriteOnly))
+        f.write("1\n00:00:01,000 --> 00:00:02,000\n" + text.toUtf8() + "\n\n");
+    return path;
+}
+
 QByteArray dialogue(const QByteArray &text, int second = 1)
 {
     return "Dialogue: 0,0:00:" + QByteArray::number(second).rightJustified(2, '0') + ".00,0:00:"
@@ -600,12 +608,7 @@ private slots:
         start();
         grammarOn();
         const QString text = QStringLiteral(R"(<font face="tomorow">I has a apple.</font> {see you tomorow})");
-        const QString path = home() + QStringLiteral("/tags.srt");
-        QFile srt(path);
-        QVERIFY(srt.open(QIODevice::WriteOnly));
-        srt.write("1\n00:00:01,000 --> 00:00:02,000\n" + text.toUtf8() + "\n\n");
-        srt.close();
-        QVERIFY(application->openFile(path));
+        QVERIFY(application->openFile(writeSrt(home() + QStringLiteral("/tags.srt"), text)));
         QTRY_COMPARE(item("lineText")->property("text").toString(), text);
         const int article = text.indexOf(QStringLiteral("a apple"));
         QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
@@ -615,6 +618,25 @@ private slots:
             QVERIFY(from > text.indexOf(QLatin1Char('>'))); // nothing in the tag
         QVERIFY(application->replaceEditorGrammar(0, article, QStringLiteral("an")));
         QCOMPARE(lineText(), QStringLiteral(R"(<font face="tomorow">I has an apple.</font> {see you tomorow})"));
+    }
+
+    // The same text in a Document of another format is checked again: SRT
+    // leaves <i> out, ASS reads it as text.
+    void sameTextInAnotherFormatIsCheckedAgain()
+    {
+        start();
+        grammarOn();
+        const QString text = QStringLiteral("<i>I has a apple.</i>");
+        QVERIFY(application->openFile(writeSrt(home() + QStringLiteral("/same.srt"), text)));
+        QTRY_COMPARE(item("lineText")->property("text").toString(), text);
+        const int article = text.indexOf(QStringLiteral("a apple"));
+        QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/same.ass"), dialogue(text.toUtf8()))));
+        application->selectTab(1);
+        QTRY_VERIFY(target()->document().format() == core::SubtitleFormat::Ass);
+        QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
+        QVERIFY(application->replaceEditorGrammar(0, article, QStringLiteral("an")));
+        QCOMPARE(lineText(), QStringLiteral("<i>I has an apple.</i>"));
     }
 
     // Skipped Lines (comments here) are read a turn of the event loop at a
