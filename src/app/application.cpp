@@ -1367,11 +1367,18 @@ void Application::reportUserFolder(const UserFolder::MoveReport &moved, const Us
             text += QLatin1Char(' ') + QCoreApplication::translate("HikariSub.MainWindow",
                                                                    "%n item(s) stayed where they were, because the user folder already had them.",
                                                                    nullptr, int(moved.leftOver.size()));
-        m_log->notice(ui::LogController::Info, title, text,
-                      QCoreApplication::translate("HikariSub.MainWindow", "Moved from: %1").arg(moved.from.join(QStringLiteral(", "))) +
-                          (moved.leftOver.isEmpty() ? QString()
-                                                    : QLatin1Char('\n') + QCoreApplication::translate("HikariSub.MainWindow", "Not moved: %1")
-                                                                                .arg(moved.leftOver.join(QStringLiteral(", ")))));
+        if (!moved.keptBack.isEmpty())
+            text += QLatin1Char(' ') + QCoreApplication::translate("HikariSub.MainWindow",
+                                                                   "The old DependencyControl stayed behind: HikariSub brings a newer one.");
+        QString details =
+            QCoreApplication::translate("HikariSub.MainWindow", "Moved from: %1").arg(moved.from.join(QStringLiteral(", ")));
+        if (!moved.leftOver.isEmpty())
+            details += QLatin1Char('\n') + QCoreApplication::translate("HikariSub.MainWindow", "Not moved: %1")
+                                               .arg(moved.leftOver.join(QStringLiteral(", ")));
+        if (!moved.keptBack.isEmpty())
+            details += QLatin1Char('\n') + QCoreApplication::translate("HikariSub.MainWindow", "Left behind: %1")
+                                               .arg(moved.keptBack.join(QStringLiteral(", ")));
+        m_log->notice(ui::LogController::Info, title, text, details);
     }
     for (const QString &path : seeded.kept)
         m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
@@ -1382,6 +1389,11 @@ void Application::reportUserFolder(const UserFolder::MoveReport &moved, const Us
         m_log->log(QCoreApplication::translate("HikariSub.MainWindow", "Could not copy the bundled %1 into the user folder.")
                        .arg(QDir::toNativeSeparators(path)),
                    ui::LogController::Warning, title);
+    if (!seeded.removed.isEmpty())
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
+                                               "Removed %n bundled file(s) this version no longer brings.", nullptr,
+                                               int(seeded.removed.size())),
+                   ui::LogController::Info, title);
     if (const qsizetype count = seeded.copied.size() + seeded.updated.size(); count > 0)
         m_log->log(QCoreApplication::translate("HikariSub.MainWindow", "Copied %n bundled file(s) into the user folder.", nullptr,
                                                int(count)),

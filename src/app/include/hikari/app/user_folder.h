@@ -66,12 +66,14 @@ public:
         QStringList copied;  // missing, copied in
         QStringList updated; // unchanged since the bundled version they came from, replaced
         QStringList kept;    // changed in the user folder, kept
-        QStringList failed;  // could not be written
+        QStringList removed; // no longer bundled and unchanged, removed
+        QStringList failed;  // could not be written or removed
     };
     // Copies the bundled files the manifest in `programFolder` lists into the
     // user folder: a missing file is copied in; a file still as the bundled
     // version it came from is replaced by the new one; a changed file is
-    // kept. Which bundled version each file came from is recorded in
+    // kept; a file the bundle no longer has is removed while it is as
+    // bundled. Which bundled version each file came from is recorded in
     // `.bundled-files` in the user folder. Paths in the report are the user
     // folder's. Nothing happens without a manifest.
     SeedReport seed(const QString &programFolder) const;
@@ -79,6 +81,7 @@ public:
     struct MoveReport {
         QStringList from;     // the old folders something was moved from
         QStringList leftOver; // entries not moved (the new folder had one of that name)
+        QStringList keptBack; // DependencyControl's own files, left in the old folder
     };
     // The Qt folders before UD1, `config` (hikari.ini's) and `data`
     // (Recovery, Automation): on Linux ~/.config/HikariSub/HikariSub and
@@ -91,7 +94,9 @@ public:
     };
     // Moves the old folders' contents in once: only while the user folder has
     // no hikari.ini. Caches go to the cache folder, the rest into the user
-    // folder's layout; an entry whose name the user folder already has stays.
+    // folder's layout; an entry whose name the user folder already has stays,
+    // and so do DependencyControl's own files (the old package's or its
+    // self-update), which would shadow the bundled release.
     // Empty folders left behind are removed. Legacy's folders are never read.
     MoveReport moveIn(const OldFolders &old) const;
 

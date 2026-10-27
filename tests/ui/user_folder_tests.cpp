@@ -206,6 +206,33 @@ private slots:
         QCOMPARE(read(user.filePath(QStringLiteral("automation/autoload/a.lua"))), QByteArray("a 4"));
     }
 
+    // A seeded file the bundle no longer has goes (DC1 dropped
+    // DependencyControl's FileOps.moon); one the user changed stays theirs.
+    void aFileTheBundleDroppedGoesUnlessChanged()
+    {
+        QTemporaryDir program, user;
+        const UserFolder folder(user.path(), user.filePath(QStringLiteral("cache")));
+        const QString a = QStringLiteral("Automation/automation/Include/l0/DependencyControl/FileOps.moon");
+        const QString b = QStringLiteral("Automation/automation/Include/mine.lua");
+        const QString c = QStringLiteral("Automation/automation/Include/kept.lua");
+        bundle(program.path(), {{a, "a"}, {b, "b"}, {c, "c"}});
+        QCOMPARE(folder.seed(program.path()).copied.size(), 3);
+        QVERIFY(write(user.filePath(QStringLiteral("automation/include/mine.lua")), "changed"));
+        QVERIFY(QFile::remove(program.filePath(a)) && QFile::remove(program.filePath(b)));
+        bundle(program.path(), {{c, "c"}});
+        UserFolder::SeedReport r = folder.seed(program.path());
+        QCOMPARE(r.removed, QStringList{QStringLiteral("automation/include/l0/DependencyControl/FileOps.moon")});
+        QVERIFY(r.failed.isEmpty() && r.kept.isEmpty());
+        QVERIFY(!QFileInfo::exists(user.filePath(QStringLiteral("automation/include/l0/DependencyControl/FileOps.moon"))));
+        QCOMPARE(read(user.filePath(QStringLiteral("automation/include/mine.lua"))), QByteArray("changed"));
+        QCOMPARE(read(user.filePath(QStringLiteral("automation/include/kept.lua"))), QByteArray("c"));
+        // Forgotten: a bundle that brings it back finds the user's file.
+        bundle(program.path(), {{b, "b 2"}, {c, "c"}});
+        r = folder.seed(program.path());
+        QCOMPARE(r.kept, QStringList{QStringLiteral("automation/include/mine.lua")});
+        QCOMPARE(read(user.filePath(QStringLiteral("automation/include/mine.lua"))), QByteArray("changed"));
+    }
+
     // A file that could not be replaced is tried again at the next start,
     // though the bundle is the same.
     void aFailedUpdateIsRetried()
@@ -338,6 +365,35 @@ private slots:
         QCOMPARE(read(folder.root() + QStringLiteral("/automation/autoload/s.lua")), QByteArray("used"));
         QCOMPARE(read(folder.root() + QStringLiteral("/automation/include/m.lua")), QByteArray("used"));
         QCOMPARE(r.leftOver, (QStringList{scripts + QStringLiteral("Autoload/s.lua"), scripts + QStringLiteral("include/m.lua")}));
+    }
+
+    // The old package's DependencyControl (0.6.4, or the 0.8.1 it updated
+    // itself to in ?user) stays in the old folder, so the bundled release is
+    // the one loaded; the scripts and modules beside it move in.
+    void theOldDependencyControlStaysBehind()
+    {
+        QTemporaryDir home;
+        const QString data = home.filePath(QStringLiteral("old-data"));
+        const QString scripts = data + QStringLiteral("/Automation/automation/");
+        const QStringList old{scripts + QStringLiteral("include/l0/DependencyControl.moon"),
+                              scripts + QStringLiteral("include/l0/DependencyControl/Updater.moon"),
+                              scripts + QStringLiteral("autoload/l0.DependencyControl.Toolbox.moon")};
+        for (const QString &path : old)
+            QVERIFY(write(path, "0.8.1"));
+        QVERIFY(write(scripts + QStringLiteral("include/l0/Functional.moon"), "module"));
+        QVERIFY(write(scripts + QStringLiteral("autoload/mine.lua"), "script"));
+        const UserFolder folder(home.filePath(QStringLiteral("user")), home.filePath(QStringLiteral("cache")));
+        const UserFolder::MoveReport r = folder.moveIn({{}, data});
+        QVERIFY2(r.leftOver.isEmpty(), qPrintable(r.leftOver.join(QLatin1Char(','))));
+        QStringList keptBack = r.keptBack;
+        keptBack.sort();
+        QStringList expected{old[2], old[0], old[1]};
+        expected.sort();
+        QCOMPARE(keptBack, expected);
+        QCOMPARE(entries(folder.root() + QStringLiteral("/automation")),
+                 (QStringList{"autoload", "autoload/mine.lua", "include", "include/l0", "include/l0/Functional.moon"}));
+        for (const QString &path : old)
+            QCOMPARE(read(path), QByteArray("0.8.1"));
     }
 
     // What the user folder already has stays; the old entry is left where it

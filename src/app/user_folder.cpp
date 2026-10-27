@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QHash>
 #include <QSaveFile>
+#include <QSet>
 
 #include <algorithm>
 
@@ -99,14 +100,22 @@ bool writeSeedRecord(const QString &file, const SeedRecord &record)
 }
 
 // Moves `source` to `target`; a folder whose target exists is merged entry
-// by entry. What cannot go because the target has it stays, in `leftOver`.
-void moveEntry(const QString &source, const QString &target, QStringList &leftOver)
+// by entry. What cannot go because the target has it stays, in `leftOver`;
+// the paths in `stay` stay too, in `keptBack`.
+void moveEntry(const QString &source, const QString &target, QStringList &leftOver, const QStringList &stay,
+               QStringList &keptBack)
 {
+    if (stay.contains(source)) {
+        keptBack << source;
+        return;
+    }
+    const bool holdsStay =
+        std::any_of(stay.begin(), stay.end(), [&](const QString &path) { return path.startsWith(source + QLatin1Char('/')); });
     const QFileInfo from(source);
     const QFileInfo to(target);
     if (!to.exists() && !to.isSymLink()) {
         QDir().mkpath(to.absolutePath());
-        if (QDir().rename(source, target))
+        if (!holdsStay && QDir().rename(source, target))
             return;
         if (!from.isDir() || from.isSymLink()) {
             if (QFile::copy(source, target) && QFile::remove(source))
@@ -121,7 +130,7 @@ void moveEntry(const QString &source, const QString &target, QStringList &leftOv
     }
     const QDir dir(source);
     for (const QString &name : dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System))
-        moveEntry(dir.filePath(name), target + QLatin1Char('/') + name, leftOver);
+        moveEntry(dir.filePath(name), target + QLatin1Char('/') + name, leftOver, stay, keptBack);
     QDir().rmdir(source);
 }
 
@@ -207,6 +216,7 @@ UserFolder::SeedReport UserFolder::seed(const QString &programFolder) const
     // The same bundled files as at the last start: only missing ones come in.
     const bool sameBundle = record.manifest == listingDigest;
     bool changed = !sameBundle;
+    QSet<QString> listed;
     for (const QByteArray &raw : listing.split('\n')) {
         const QByteArray line = raw.trimmed();
         const qsizetype space = line.indexOf(' ');
@@ -217,6 +227,7 @@ UserFolder::SeedReport UserFolder::seed(const QString &programFolder) const
         const QString user = seededPath(bundledPath);
         if (user.isEmpty())
             continue;
+        listed.insert(user);
         const QString source = programFolder + QLatin1Char('/') + bundledPath;
         const QString target = m_root + QLatin1Char('/') + user;
         const auto copy = [&](QStringList &into) {
@@ -242,6 +253,25 @@ UserFolder::SeedReport UserFolder::seed(const QString &programFolder) const
             copy(report.updated);
         } else {
             report.kept << user;
+        }
+    }
+    // A file the bundle no longer has goes while it is as bundled; a changed
+    // one is the user's from now on.
+    if (!sameBundle) {
+        const QStringList recorded = record.version.keys();
+        for (const QString &user : recorded) {
+            if (listed.contains(user))
+                continue;
+            const QString target = m_root + QLatin1Char('/') + user;
+            if (QFileInfo::exists(target) && sha256Of(target) == record.version.value(user)) {
+                if (!QFile::remove(target)) {
+                    report.failed << user;
+                    continue;
+                }
+                report.removed << user;
+            }
+            record.version.remove(user);
+            changed = true;
         }
     }
     // A file that could not be written is tried again at the next start:
@@ -294,6 +324,10 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &old) const
     // The data folder: Recovery, the installed copy's Automation folder (its
     // automation/Autoload and Include become automation/autoload and
     // include), the files a quit left for the next start.
+    // DependencyControl's own files stay in the old folder: they are the old
+    // package's 0.6.4 or its self-update, and in the user folder they would
+    // shadow the release the program brings (DC1-depctrl-release).
+    QStringList stay;
     const auto dataTargets = [&](const QString &folder) {
         QList<std::pair<QString, QString>> out;
         const QDir dir(folder);
@@ -328,7 +362,13 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &old) const
                         const QString lower = part == QLatin1String("Autoload")  ? QStringLiteral("autoload")
                                               : part == QLatin1String("Include") ? QStringLiteral("include")
                                                                                  : part;
-                        out.append({scripts.filePath(part), into(QStringLiteral("automation/") + lower)});
+                        const QString partPath = scripts.filePath(part);
+                        if (lower == QLatin1String("include"))
+                            stay << partPath + QStringLiteral("/l0/DependencyControl.moon")
+                                 << partPath + QStringLiteral("/l0/DependencyControl");
+                        else if (lower == QLatin1String("autoload"))
+                            stay << partPath + QStringLiteral("/l0.DependencyControl.Toolbox.moon");
+                        out.append({partPath, into(QStringLiteral("automation/") + lower)});
                     }
                 }
             } else {
@@ -352,7 +392,7 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &old) const
         if (!moves.isEmpty())
             report.from << QDir::toNativeSeparators(folder);
         for (const auto &[source, target] : moves)
-            moveEntry(source, target, report.leftOver);
+            moveEntry(source, target, report.leftOver, stay, report.keptBack);
         removeEmpty(folder);
         QDir().rmdir(QFileInfo(folder).absolutePath());
     }
