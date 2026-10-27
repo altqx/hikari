@@ -2,6 +2,7 @@
 
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/desktop_handoff.h"
+#include "hikari/backends/karaoke_preview_runner.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -127,6 +128,11 @@ public:
         const auto *session = target ? m_files.session(*target) : nullptr;
         if (!session || !session->selection().active)
             return std::nullopt; // legacy always has a current Line
+        // KE2: a preview runs before Apply commits the Line editor's draft,
+        // so it reads the draft's times, as Apply's run will.
+        if (const auto draft = session->draftRecord(); draft && draft->id == *session->selection().active)
+            return std::pair<std::int64_t, std::int64_t>{draft->start.value.microseconds() / 1000,
+                                                         draft->end.value.microseconds() / 1000};
         for (const auto *line : session->document().lines())
             if (line->id == *session->selection().active)
                 return std::pair<std::int64_t, std::int64_t>{line->start.value.microseconds() / 1000,
@@ -158,6 +164,29 @@ public:
         if (!box || !box->isOpen())
             return std::nullopt;
         return box->audio();
+    }
+    // KE2: what the preview's services read, as one value. The frame times
+    // change only with the video, so its path and frame count stand for them;
+    // the file's path for its name and ?script.
+    std::string state() const
+    {
+        const auto &s = m_video.session();
+        std::string out = s.path() + '\n' + std::to_string(static_cast<int>(s.state())) + ' ' +
+                          std::to_string(s.frameCount());
+        if (const auto size = videoSize())
+            out += " size " + std::to_string(size->width) + 'x' + std::to_string(size->height);
+        if (const auto frames = keyframes())
+            out += " keyframes " + std::to_string(frames->size()) + ' ' +
+                   std::to_string(std::hash<std::string_view>{}(
+                       std::string_view(reinterpret_cast<const char *>(frames->data()),
+                                        frames->size() * sizeof(std::int64_t))));
+        if (const auto selection = audioSelection())
+            out += " audio " + std::to_string(selection->first) + '-' + std::to_string(selection->second);
+        out += " frame " + std::to_string(project()->videoFrameShown) + '\n';
+        const auto target = m_workspace.editingTarget();
+        if (const auto destination = target ? m_files.destination(*target) : std::nullopt)
+            out += destination->value;
+        return out;
     }
 
     std::function<const application::AudioBox *()> audioBox;
@@ -348,9 +377,72 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     });
 }
 
+std::string AutomationShell::hostState() const
+{
+    return static_cast<const MediaAdapter *>(m_media.get())->state();
+}
+
 void AutomationShell::setAudioBox(std::function<const application::AudioBox *()> box)
 {
     static_cast<MediaAdapter *>(m_media.get())->audioBox = std::move(box);
+}
+
+class AutomationShell::Templater final : public application::KaraokeTemplaterPort {
+public:
+    explicit Templater(AutomationShell &shell)
+        : m_shell(shell), m_runner(shell.m_paths.helper, sharedIncludes(shell.m_paths))
+    {
+        // Previews read what the shell's services read (isPreviewService
+        // keeps them to the ones that only read).
+        m_runner.setServiceHandler([this](const application::HostServiceRequest &r,
+                                          backends::LuaScriptHost::ServiceReply reply) {
+            m_shell.m_router.handle(r, std::move(reply));
+        });
+    }
+
+    // The loaded templater script: kara-templater.lua, the user's or the
+    // shipped one, with both of its macros.
+    std::string path() const
+    {
+        for (const auto &s : m_shell.m_manager.scripts())
+            if ((s.state == application::ScriptStatus::State::Ready ||
+                 s.state == application::ScriptStatus::State::Running) &&
+                QFileInfo(QString::fromStdString(s.path)).fileName().compare(QStringLiteral("kara-templater.lua"),
+                                                                             Qt::CaseInsensitive) == 0 &&
+                s.info.macros.size() >= 2)
+                return s.path;
+        return {};
+    }
+    void update() { m_runner.setScript(QString::fromStdString(path())); }
+
+    bool available() const override { return m_runner.ready() && !path().empty(); }
+    void preview(const application::MacroSnapshot &snapshot, PreviewDone done) override
+    {
+        m_runner.run(snapshot, std::move(done));
+    }
+    void cancelPreview() override { m_runner.cancel(); }
+    bool apply(bool selectedOnly) override
+    {
+        const std::string script = path();
+        return !script.empty() && m_shell.run(script, selectedOnly ? 1 : 0, RunOrigin::Menu);
+    }
+    backends::KaraokePreviewRunner &runner() { return m_runner; }
+
+private:
+    AutomationShell &m_shell;
+    backends::KaraokePreviewRunner m_runner;
+};
+
+application::KaraokeTemplaterPort &AutomationShell::templater()
+{
+    if (!m_templater) {
+        m_templater = std::make_unique<Templater>(*this);
+        connect(&m_manager, &backends::AutomationManager::changed, this, [this] { m_templater->update(); });
+        connect(&m_templater->runner(), &backends::KaraokePreviewRunner::readyChanged, this,
+                &AutomationShell::progressChanged);
+        m_templater->update();
+    }
+    return *m_templater;
 }
 
 AutomationShell::~AutomationShell()
@@ -839,6 +931,8 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     for (const auto &script : m_manager.scripts())
         if (script.path == path && ordinal >= 0 && static_cast<std::size_t>(ordinal) < script.info.macros.size())
             macro = script.info.macros[static_cast<std::size_t>(ordinal)].name;
+    if (m_beforeRun)
+        m_beforeRun();
     // The pending draft is committed first (T43-reconcile); the target is
     // read-only until the macro ends.
     auto snapshot = application::snapshotForMacro(*s);
@@ -854,7 +948,8 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     // HikariSubFrame::OnRunScript and GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT);
     // S4-run-validation: the macros of the scripts it depends on validate
     // before it, on the same snapshot, and no other macro does.
-    Run started{*target, std::move(*snapshot), path, macro, ordinal, origin};
+    Run started{*target, std::move(*snapshot), 0, path, macro, ordinal, origin};
+    started.generation = m_files.generation(*target);
     started.validations = application::dependencyValidations(m_manager.scripts(), path);
     m_macroStarted = false;
     m_cardTimer.stop();
@@ -996,8 +1091,13 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     if (!run.cancelledAtDialog && (outcome == Outcome::Ok || outcome == Outcome::Failed))
         m_repeat = RepeatRecord{run.path, run.macro, run.ordinal, std::move(run.dialogs)};
     auto *s = session(run.target);
+    // The file reloaded while the macro ran: its result belongs to the old
+    // content and is not applied to the new one.
+    const bool reloaded = s && m_files.generation(run.target) != run.generation;
     if (s)
         s->setReadOnly(false);
+    if (reloaded)
+        s = nullptr;
     m_router.withdraw();
     m_dialogs.withdraw();
     // Y4-playres-ask: the resolution set while the macro ran is its own undo
@@ -1025,8 +1125,13 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
             ok = applied.has_value();
             if (!ok)
                 text = refusalText(applied.error());
-            else if (const auto report = ui::readKaraokeReport(host->lastResult()->report))
+            else if (const auto report = ui::readKaraokeReport(host->lastResult()->report)) {
                 karaokeReport(*report);
+                emit karaokeApplied(run.target.value, QByteArray::fromStdString(host->lastResult()->report));
+            }
+        } else if (reloaded) {
+            text = QCoreApplication::translate("HikariSub.Automation",
+                                               "The subtitles were reloaded while the macro ran; nothing was changed.");
         } else if (!s) {
             // AD3: the card and the run's log say why nothing was applied.
             text = QCoreApplication::translate("HikariSub.Automation",

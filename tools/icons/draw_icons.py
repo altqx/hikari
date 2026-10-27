@@ -256,6 +256,7 @@ TRANSPORT, FULLSCREEN, AUDIOBOX, EDITOR, VISUAL, PICKER, TABS = (
     "video-transport", "video-fullscreen", "audio-box", "line-editor", "visual-tools", "colour-picker",
     "document-tabs")
 AUTOPANEL = "automation-panel"  # AM1: the Automation panel (was the automation manager window)
+TEMPLATEPANEL = "template-editor"  # KE2: the Template editor panel and its preview badge on the video
 
 # File
 icon("open-subtitles", "Open subtitles", ["opensubs.png"], [FILE, "video-context-menu"], page(True) + plus_badge())
@@ -887,6 +888,18 @@ icon("repeat-run", "Repeat last run", [], [AUTO, AUTOPANEL],
 icon("automation-manager", "Show panel", [], [AUTO],
      stroke("M4.5 3.5v-2h6l3 3v8h-2") + stroke("M10.5 14.5h-9v-10h6l3 3z")
      + accent(stroke("M5 9L3.75 10.25 5 11.5M7 9l1.25 1.25L7 11.5")))
+
+# KE2: the Template editor (View > Panels, the video's preview badge), its
+# header's Loop the Line and a template's problem (drawn in the danger colour).
+icon("template-editor", "Template editor", [], [VIEW, TEMPLATEPANEL],
+     stroke("M4.5 1.5h8v10") + rect(2.5, 3.5, 8, 11, 0.5)
+     + accent(stroke("M5.5 6.5c-.75 0-.75.5-.75 1.5s-.5 1-1 1c.5 0 1 0 1 1s0 1.5.75 1.5"
+                     "M7.5 6.5c.75 0 .75.5.75 1.5s.5 1 1 1c-.5 0-1 0-1 1s0 1.5-.75 1.5")))
+icon("loop", "Loop the Line", [], [TEMPLATEPANEL],
+     stroke("M2.5 9V7.5a3 3 0 0 1 3-3h7M10.5 2.5l2 2-2 2")
+     + accent(stroke("M13.5 7v1.5a3 3 0 0 1-3 3h-7M5.5 13.5l-2-2 2-2")))
+icon("problem", "Problem", [], [TEMPLATEPANEL],
+     circle(8, 8, 6) + stroke("M8 4.75v4") + dot(8, 11.25, 0.75))
 
 # Video menu and the video's context menu
 icon("dummy-video", "Open dummy video", [], [VIDEO], video_film() + accent(frect(10, 10, 4.5, 4.5, 0.5)))

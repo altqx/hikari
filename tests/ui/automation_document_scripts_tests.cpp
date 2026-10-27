@@ -630,6 +630,12 @@ private slots:
         QVERIFY(done.last().at(0).toBool());
         const auto &text = session().document().lines()[1]->text;
         QCOMPARE(std::string(text.begin(), text.end()), std::string("0,10,20|3000,4000"));
+        // A preview runs before Apply commits the Line editor's draft: the
+        // current Line's times are the draft's, as Apply's run reads them.
+        QVERIFY(session().editDraft(session().document().lines()[1]->id,
+                                    application::DraftChange{.start = core::DocumentTime(3500000),
+                                                             .end = core::DocumentTime(4500000)}));
+        QVERIFY(app->automation().hostState().find(" audio 3500-4500") != std::string::npos);
     }
 
     // The legacy capture (local-s4-document-scripts-20261013, the legacy
