@@ -22,6 +22,28 @@ constexpr std::size_t kShownGroups = 60;
 constexpr const char *kSuggest = "audio.kanjiTimerSuggest";
 constexpr const char *kMulti = "audio.kanjiTimerMulti";
 
+// The Lines of the two styles in Document order: Lines with text, a romaji
+// Line with \k tags, no fx Line of the templater.
+std::pair<std::vector<application::KanjiTimer::Line>, std::vector<application::KanjiTimer::Line>>
+styleLines(application::EditSession &session, const QString &romajiStyle, const QString &kanjiStyle)
+{
+    std::vector<application::KanjiTimer::Line> romaji, kanji;
+    const std::u8string romajiName = core::toUtf8(romajiStyle.toStdU16String());
+    const std::u8string kanjiName = core::toUtf8(kanjiStyle.toStdU16String());
+    for (const auto *line : session.document().lines()) {
+        if (line->text.empty() || line->effect == u8"fx")
+            continue;
+        const auto text = core::toUtf16(line->text);
+        const int start = static_cast<int>(line->start.value.microseconds() / 1000);
+        const int end = static_cast<int>(line->end.value.microseconds() / 1000);
+        if (line->style == romajiName && application::hasKaraokeTags(text))
+            romaji.push_back({line->id, text, start, end});
+        else if (line->style == kanjiName)
+            kanji.push_back({line->id, text, start, end});
+    }
+    return {std::move(romaji), std::move(kanji)};
+}
+
 QString qs(std::u16string_view s)
 {
     return QString::fromUtf16(s.data(), static_cast<qsizetype>(s.size()));
@@ -223,6 +245,9 @@ void KanjiTimerController::readLines()
             m_romajiStyle = kept->second.romajiStyle;
             m_kanjiStyle = kept->second.kanjiStyle;
             m_kept.erase(kept);
+            // Suggest groupings as it is now (changed on another Document)
+            if (m_timer && m_timer->suggest() != suggest())
+                m_timer->setSuggest(suggest());
         }
     }
     // The styles as the Document has them now (one added or renamed since);
@@ -247,21 +272,7 @@ void KanjiTimerController::readLines()
         m_timer.reset();
         return;
     }
-    std::vector<application::KanjiTimer::Line> romaji, kanji;
-    const std::u8string romajiStyle = core::toUtf8(m_romajiStyle.toStdU16String());
-    const std::u8string kanjiStyle = core::toUtf8(m_kanjiStyle.toStdU16String());
-    for (const auto *line : session->document().lines()) {
-        // a Line with text; not the templater's fx output
-        if (line->text.empty() || line->effect == u8"fx")
-            continue;
-        const auto text = core::toUtf16(line->text);
-        const int start = static_cast<int>(line->start.value.microseconds() / 1000);
-        const int end = static_cast<int>(line->end.value.microseconds() / 1000);
-        if (line->style == romajiStyle && application::hasKaraokeTags(text))
-            romaji.push_back({line->id, text, start, end});
-        else if (line->style == kanjiStyle)
-            kanji.push_back({line->id, text, start, end});
-    }
+    auto [romaji, kanji] = styleLines(*session, m_romajiStyle, m_kanjiStyle);
     if (romaji.empty()) {
         m_problem = QStringLiteral("noKaraoke");
         m_timer.reset();
@@ -552,11 +563,26 @@ int KanjiTimerController::pendingFor(std::uint64_t document) const
 
 bool KanjiTimerController::applyTo(std::uint64_t document, application::EditSession &session)
 {
-    // the window's Document: as its Apply (a Line editor draft first)
-    if (document == m_document && target() == &session && m_hooks.targetId && m_hooks.targetId() == document)
-        return apply();
+    // The Lines as the Document has them now (edited while the window was
+    // closed or on another tab): a pair whose Lines changed since it was done
+    // is Changed and not written over them.
+    if (document == m_document && target() == &session && m_hooks.targetId && m_hooks.targetId() == document) {
+        readLines();
+        if (!m_timer || m_timer->pending().empty()) {
+            emit changed();
+            return true;
+        }
+        return apply(); // as the window's Apply (a Line editor draft first)
+    }
     auto *timer = timerFor(document);
-    if (!timer || timer->pending().empty())
+    if (!timer)
+        return true;
+    const auto kept = m_kept.find(document);
+    const bool own = document == m_document;
+    auto [romaji, kanji] = styleLines(session, own ? m_romajiStyle : kept->second.romajiStyle,
+                                      own ? m_kanjiStyle : kept->second.kanjiStyle);
+    timer->setLines(std::move(romaji), std::move(kanji));
+    if (timer->pending().empty())
         return true;
     if (!writePending(*timer, session))
         return false;

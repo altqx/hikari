@@ -201,6 +201,17 @@ TEST(KanjiTimer, ALineBreakInASyllableIsASpace)
     }
 }
 
+TEST(KanjiTimer, AnApostrophizedNIsReadWhole)
+{
+    // n' for ん takes its apostrophe, not n alone (Codex review on #352)
+    const auto syls = kanjiSyllables(u("{\\k10}n'{\\k20}a"), 0, 0);
+    const auto kanji = kanjiText(u("んあ"));
+    const auto sug = suggestGroups(syls, 0, kanji, 0, classes());
+    EXPECT_EQ(groups(sug.groups), "1:1 1:1 ");
+    EXPECT_TRUE(sug.clean);
+    EXPECT_EQ(s(kanjiOutput(syls, kanji, sug.groups)), "{\\k10}ん{\\k20}あ");
+}
+
 TEST(KanjiTimer, ABlankSyllableWithinAReadingIsInItsGroup)
 {
     // ki, a blank, mi under 君: the blank counts for the reading's share but
