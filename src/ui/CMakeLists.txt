@@ -81,7 +81,7 @@ qt_target_qml_sources(hikari_ui QML_FILES FilterChip.qml FontResolutionNote.qml 
 # Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 # E4: the Line editor's metadata fields, counters and \an choice; its masked time fields
-qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml TimeField.qml
+qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml LineEditorStrip.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 # T1: the visual tool rail and the overlay over the Video canvas; VT1: the inspector bar below it and its fields.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)

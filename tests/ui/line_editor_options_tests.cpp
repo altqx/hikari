@@ -480,6 +480,9 @@ private slots:
         QVERIFY(buttons.add(QStringLiteral("A"), QStringLiteral("\\b1"), 0));
         QVERIFY(buttons.add(QStringLiteral("B"), QStringLiteral("\\i1"), 0));
         QVERIFY(buttons.add(QStringLiteral("C"), QStringLiteral("\\u1"), 0));
+        // LE1: room for the three buttons, which fold into More when the
+        // strip is short of it (the pseudo-translated names are longer).
+        QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), 600, 0, 0, 0));
         QTRY_COMPARE(stripFromLeft(3), rightToLeft ? QStringLiteral("CBA") : QStringLiteral("ABC"));
         auto *menu = named("tagButtonMenu");
         QVERIFY(menu);

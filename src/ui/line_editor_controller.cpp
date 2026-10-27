@@ -2553,6 +2553,21 @@ int LineEditorController::styleIndex() const
     return static_cast<int>(styleNames().indexOf(qs(r->style))); // case-sensitive
 }
 
+QStringList LineEditorController::styleMargins() const
+{
+    const auto r = record();
+    auto *s = session();
+    if (!r || !s)
+        return {};
+    for (const auto &style : core::decodeStyles(s->document())) {
+        if (style.name != r->style)
+            continue;
+        const auto margin = [](const std::u8string &v) { return QString::number(qs(v).trimmed().toInt()); }; // "0010" is 10
+        return {margin(style.marginLeft), margin(style.marginRight), margin(style.marginVertical)};
+    }
+    return {};
+}
+
 QString LineEditorController::actor() const
 {
     const auto r = record();
@@ -2633,7 +2648,7 @@ QString LineEditorController::charsText() const
 {
     const auto r = record();
     if (!r)
-        return QCoreApplication::translate("HikariSub.Editor", "Wraps: 0/86"); // the label before any Line (EditBox.cpp:219)
+        return QStringLiteral("0/86"); // the label before any Line (EditBox.cpp:219)
     if (r->comment)
         return {};
     // EditBox::UpdateChars (EditBox.cpp:497-525): the edited field's
@@ -2648,7 +2663,7 @@ QString LineEditorController::charsText() const
         const qsizetype slash = head.lastIndexOf(QLatin1Char('/'));
         wraps = (slash < 0 ? QString() : head.left(slash)) + QStringLiteral("/.../");
     }
-    return QCoreApplication::translate("HikariSub.Editor", "Wraps: ") + wraps + QStringLiteral("43");
+    return wraps + QStringLiteral("43");
 }
 
 bool LineEditorController::charsWarning() const
@@ -2680,15 +2695,15 @@ QString LineEditorController::cpsText() const
 {
     const auto r = record();
     if (!r)
-        return QCoreApplication::translate("HikariSub.Editor", "Characters per second: %1<=15").arg(0);
+        return QStringLiteral("0/15");
     if (r->comment)
         return {};
     // TextData::GetCPS over the Line copy's times: the draft's with live
     // editing (OnEdit), the committed ones without.
     const auto o = options();
     const auto times = o.liveEditing ? r : committedRecord();
-    return QCoreApplication::translate("HikariSub.Editor", "Characters per second: %1<=15")
-        .arg(editorCps(*r, times ? *times : *r, translationMode(), session()->document().format(), o));
+    return QString::number(editorCps(*r, times ? *times : *r, translationMode(), session()->document().format(), o))
+        + QStringLiteral("/15");
 }
 
 bool LineEditorController::cpsWarning() const

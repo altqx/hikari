@@ -13849,8 +13849,9 @@ private slots:
         };
         collect(content);
         // (LE2 and LE3 took the Times/Frames radios and Hide tags out; TM1
-        // the Translator mode row.)
-        QVERIFY2(controls.size() >= 20, qPrintable(QString::number(controls.size())));
+        // the Translator mode row; LE1 put the translation buttons on the
+        // tag strip, where they fold into More.)
+        QVERIFY2(controls.size() >= 16, qPrintable(QString::number(controls.size())));
         for (QQuickItem *control : std::as_const(controls))
             scrollTheEditorTo(control);
         scrollTheEditorTo(controls.first()); // and back up
@@ -13874,25 +13875,25 @@ private slots:
                     it = p;
             return it;
         };
-        auto *layer = item("layerField");
+        auto *first = item("startField");
         view->setProperty("contentY", 0);
-        QTRY_VERIFY(!inTheEditorView(layer));
-        layer->forceActiveFocus(Qt::TabFocusReason);
-        QTRY_VERIFY(inTheEditorView(layer));
-        QStringList reached{layer->objectName()};
+        QTRY_VERIFY(!inTheEditorView(first));
+        first->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(inTheEditorView(first));
+        QStringList reached{first->objectName()};
         for (int step = 0; step < 30; ++step) {
             view->setProperty("contentY", 0);
             press(Qt::Key_Tab);
             QQuickItem *focused = focusedControl();
-            if (!inEditor(focused) || focused == layer)
+            if (!inEditor(focused) || focused == first)
                 break;
             reached << focused->objectName();
             QTRY_VERIFY2(inTheEditorView(focused), qPrintable(focused->objectName()));
         }
-        for (const char *name : {"startField", "endField", "durationField", "styleChoice", "styleEditButton", "commentBox",
+        for (const char *name : {"layerField", "endField", "durationField", "styleChoice", "styleEditButton", "commentBox",
                                  "actorBox", "marginLeftField", "marginRightField", "marginVerticalField", "effectBox"})
             QVERIFY2(reached.contains(QLatin1String(name)), qPrintable(reached.join(u' ')));
-        layer->forceActiveFocus(Qt::TabFocusReason);
+        first->forceActiveFocus(Qt::TabFocusReason);
         auto *translated = item("translationText");
         press(Qt::Key_Backtab);
         QTRY_VERIFY(translated->hasActiveFocus());
@@ -13931,7 +13932,7 @@ private slots:
         foldTheLineEditor();
         auto *original = item("lineText");
         auto *translated = item("translationText");
-        auto *layer = item("layerField");
+        auto *first = item("startField"); // LE1: the first of the Line's fields
         auto *view = item("editorScroll");
         QTRY_VERIFY(translated->isVisible());
         const QString originalText = original->property("text").toString();
@@ -13948,11 +13949,11 @@ private slots:
         QTRY_VERIFY(translated->hasActiveFocus());
         QCOMPARE(translated->property("focusReason").toInt(), int(Qt::TabFocusReason));
         view->setProperty("contentY", 0);
-        QTRY_VERIFY(!inTheEditorView(layer));
+        QTRY_VERIFY(!inTheEditorView(first));
         press(Qt::Key_Tab);
-        QTRY_VERIFY(layer->hasActiveFocus());
-        QTRY_VERIFY(inTheEditorView(layer));
-        layer->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(first->hasActiveFocus());
+        QTRY_VERIFY(inTheEditorView(first));
+        first->forceActiveFocus(Qt::TabFocusReason);
         press(Qt::Key_Backtab, Qt::ShiftModifier);
         QTRY_VERIFY(translated->hasActiveFocus());
         press(Qt::Key_Backtab, Qt::ShiftModifier);
@@ -28928,7 +28929,7 @@ private slots:
         auto *end = item("endField");
         auto *duration = item<QObject>("durationField");
         auto *cps = item<QObject>("cpsCounter");
-        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 15<=15"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
         const auto colour = [](QQuickItem *field, const char *role) {
             return field->property("palette").value<QObject *>()->property(role).value<QColor>();
         };
@@ -28937,7 +28938,7 @@ private slots:
         QVERIFY(start->hasActiveFocus());
         QCOMPARE(start->property("text").toString(), QStringLiteral("0:00:01.50"));
         QCOMPARE(duration->property("text").toString(), QStringLiteral("0:00:00.50"));
-        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 30<=15"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("30/15"));
         QCOMPARE(session->draftRecord()->start.value.microseconds(), 1'500'000);
         QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'000'000); // not sent yet
         QVERIFY(!application->editor().startWarning());
@@ -29093,15 +29094,19 @@ private slots:
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QTest::mouseMove(window, at + QPoint(10, -8));
         QCOMPARE(text(), QStringLiteral("0:00:12.00"));
-        // Start past End: "End is before Start." shows below the fields and
-        // the layout moves them up under the held pointer on its next
-        // polish, which is no drag (the pointer's travel in the window).
+        // Start past End: "End is before Start." shows above the fields
+        // (LE1: under the text, which gives up the room), so the fields stay
+        // under the held pointer.
         QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
-        QTRY_VERIFY(start->mapToScene(QPointF()).y() < fieldOrigin.y());
+        auto *problem = item("editorProblem");
+        QTRY_VERIFY(problem->isVisible() && problem->height() > 0
+                    && problem->mapToScene(QPointF(0, problem->height())).y() <= fieldOrigin.y());
+        QCOMPARE(start->mapToScene(QPointF()), fieldOrigin);
         QTest::mouseMove(window, at + QPoint(-2, -8));
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QCOMPARE(draftStart(), 2'000'000); // live: NUMBER_CHANGED
-        QTRY_COMPARE(start->mapToScene(QPointF()), fieldOrigin); // the problem gone
+        QTRY_VERIFY(!problem->isVisible()); // the problem gone
+        QCOMPARE(start->mapToScene(QPointF()), fieldOrigin);
         QTest::mouseRelease(window, Qt::RightButton, {}, at + QPoint(-2, -8));
         QCOMPARE(shownPopups(), popupsBefore);
         // Released: moving changes nothing.
@@ -30101,9 +30106,11 @@ private slots:
         application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
     }
 
-    // EditBox::UpdateChars against legacy TextData: "Wraps: <counts>/43" and
-    // "Characters per second: <n><=15", warned over 43 characters a wrap and
-    // over 15 per second; the translation's counts in translation mode.
+    // EditBox::UpdateChars against legacy TextData: each wrap's characters
+    // and 43, and the characters per second and 15 (LE1-counters: named
+    // Wraps and CPS beside them), warned over 43 characters a wrap and over
+    // 15 per second with the warning colour and mark; the translation's
+    // counts in translation mode.
     void countersFollowTheEditedText()
     {
         QVERIFY(application->openFile(writeStyled("counters.ass",
@@ -30113,20 +30120,206 @@ private slots:
         QTRY_VERIFY(application->editor().hasLine());
         auto *chars = item<QObject>("charsCounter");
         auto *cps = item<QObject>("cpsCounter");
-        QCOMPARE(chars->property("text").toString(), QStringLiteral("Wraps: 5/10/43"));
-        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 15<=15"));
+        QCOMPARE(chars->property("text").toString(), QStringLiteral("5/10/43"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
         QCOMPARE(application->editor().cpsWarning(), false);
+        QCOMPARE(item("cpsCounterValue")->property("text").toString(), QStringLiteral("15"));
+        QVERIFY(!item("cpsCounterWarning")->isVisible());
         auto *text = item("lineText");
         text->forceActiveFocus();
         press(Qt::Key_End, Qt::ControlModifier);
         typeText(QStringLiteral(" more words here"));
-        QTRY_COMPARE(chars->property("text").toString(), QStringLiteral("Wraps: 5/23/43"));
-        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 28<=15"));
+        QTRY_COMPARE(chars->property("text").toString(), QStringLiteral("5/23/43"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("28/15"));
         QVERIFY(application->editor().cpsWarning());
         QVERIFY(!application->editor().charsWarning());
+        QTRY_VERIFY(item("cpsCounterWarning")->isVisible());
+        QCOMPARE(item("cpsCounterValue")->property("color").value<QColor>(), ui::theme::current().roles.warning);
+        QVERIFY(!item("charsCounterWarning")->isVisible());
         typeText(QStringLiteral(" and many more words to pass the limit"));
         QTRY_VERIFY(application->editor().charsWarning());
+        QTRY_VERIFY(item("charsCounterWarning")->isVisible());
         application->editor().discard();
+    }
+
+    // The Line editor squeezed from its left edge to its minimum width.
+    void squeezeTheLineEditor()
+    {
+        auto *panel = item("editorPanel");
+        QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), -2000, 0, 0, 0));
+        const qreal minimum = panel->property("minimumSize").toSizeF().width();
+        QTRY_VERIFY2(panel->width() <= minimum + 1, qPrintable(QStringLiteral("%1 > %2").arg(panel->width()).arg(minimum)));
+    }
+    static qreal centreY(QQuickItem *i) { return i->mapToScene(QPointF(0, i->height() / 2)).y(); }
+
+    // LE1-inspector-rows: every Line field shows its name, beside it in the
+    // Line editor's two rows (Start to Style, then Comment to the margins),
+    // above it in a narrow editor, two to a row with Style alone. A margin of
+    // 0 shows the Style's margin in the secondary colour until it is edited.
+    void lineInspectorNamesItsFields()
+    {
+        QVERIFY(application->openFile(writeStyled("names.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,25,0,,text\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *inspector = item("lineInspector");
+        QTRY_VERIFY(inspector->property("wide").toBool()); // the default layout's editor
+        const std::pair<const char *, const char *> named[] = {
+            {"startSlot", "startField"}, {"endSlot", "endField"}, {"durationSlot", "durationField"},
+            {"styleSlot", "styleChoice"}, {"layerSlot", "layerField"}, {"actorSlot", "actorBox"},
+            {"effectSlot", "effectBox"}, {"marginsSlot", "marginLeftField"}};
+        for (const auto &[slot, field] : named) {
+            auto *label = item(qPrintable(QLatin1String(slot) + QLatin1String("Label")));
+            auto *control = item(field);
+            QVERIFY2(label && label->isVisible() && !label->property("text").toString().isEmpty(), slot);
+            QVERIFY2(std::abs(centreY(label) - centreY(control)) <= 2, slot);
+            QVERIFY2(label->mapToScene(QPointF(label->width(), 0)).x() <= control->mapToScene(QPointF(0, 0)).x(), slot);
+        }
+        QVERIFY(std::abs(centreY(item("startField")) - centreY(item("styleChoice"))) <= 2);
+        QVERIFY(centreY(item("commentBox")) > centreY(item("startField")) + 10);
+        QVERIFY(std::abs(centreY(item("commentBox")) - centreY(item("marginVerticalField"))) <= 2);
+        QVERIFY(item("actorBox")->property("placeholderText").toString().isEmpty()); // its name shows
+
+        // The margins: 0 shows the Style's 10 (its text still 0), 25 itself.
+        auto *left = item("marginLeftField");
+        QCOMPARE(left->property("text").toString(), QStringLiteral("0"));
+        QTRY_VERIFY(item("marginLeftFieldHint")->isVisible());
+        QCOMPARE(item("marginLeftFieldHint")->property("text").toString(), QStringLiteral("10"));
+        QCOMPARE(item("marginLeftFieldHint")->property("color").value<QColor>(), ui::theme::current().roles.muted);
+        QCOMPARE(item("marginRightField")->property("text").toString(), QStringLiteral("25"));
+        QVERIFY(!item("marginRightFieldHint")->isVisible());
+        left->forceActiveFocus();
+        QTRY_VERIFY(!item("marginLeftFieldHint")->isVisible());
+        item("lineText")->forceActiveFocus();
+        QTRY_VERIFY(item("marginLeftFieldHint")->isVisible());
+
+        // Narrow: names above, two to a row, Style alone.
+        squeezeTheLineEditor();
+        QTRY_VERIFY(!inspector->property("wide").toBool());
+        for (const auto &[slot, field] : named) {
+            auto *label = item(qPrintable(QLatin1String(slot) + QLatin1String("Label")));
+            auto *control = item(field);
+            // (once the rearranged rows are laid out)
+            QTRY_VERIFY2(label->mapToScene(QPointF(0, label->height())).y() <= control->mapToScene(QPointF(0, 0)).y() + 0.5, slot);
+            QTRY_VERIFY2(std::abs(label->mapToScene(QPointF(0, 0)).x() - control->mapToScene(QPointF(0, 0)).x()) <= 1, slot);
+        }
+        QVERIFY(std::abs(centreY(item("startField")) - centreY(item("endField"))) <= 1);
+        QVERIFY(std::abs(centreY(item("durationField")) - centreY(item("layerField"))) <= 1);
+        QVERIFY(centreY(item("durationField")) > centreY(item("startField")) + 10);
+        QVERIFY(centreY(item("styleChoice")) > centreY(item("durationField")) + 10);
+        QVERIFY(std::abs(centreY(item("actorBox")) - centreY(item("effectBox"))) <= 1);
+        QVERIFY(item("styleChoice")->width() > 1.5 * item("startField")->width());
+        application->workspaceLayout().resetLayout();
+        QTRY_VERIFY(inspector->property("wide").toBool());
+    }
+
+    // LE1-counters (the strip folds): wide enough, the Line editor's strip
+    // shows every group; at its minimum width it keeps the tag buttons and
+    // the counters and folds the other groups
+    // into More, which holds their buttons; nothing in the editor is wider
+    // than its view (it scrolls only up and down).
+    void lineEditorHoldsAtItsMinimum()
+    {
+        auto &buttons = application->tagButtons();
+        buttons.setCount(3);
+        buttons.edit(0, QStringLiteral("Blur"), QStringLiteral("\\blur3"), 0);
+        buttons.edit(1, QStringLiteral("Fade"), QStringLiteral("\\fad(200,200)"), 0);
+        buttons.edit(2, QStringLiteral("Note"), QStringLiteral("{note}"), 2);
+        QVERIFY(application->openFile(writeStyled("strip.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("abc"));
+        // Widened, the editor shows every group.
+        QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), 600, 0, 0, 0));
+        QTRY_VERIFY(visualItem("tagButton2") && visualItem("tagButton2")->isVisible());
+        QVERIFY(!item("tagStripMore")->isVisible());
+        for (const char *group : {"lookGroup", "alignGroup", "customGroup"})
+            QVERIFY2(item(group)->isVisible(), group);
+
+        const auto widest = [&] {
+            auto *view = item("editorScroll");
+            const qreal right = view->mapToScene(QPointF(view->width(), 0)).x() + 0.5;
+            const qreal left = view->mapToScene(QPointF(0, 0)).x() - 0.5;
+            QStringList out;
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                for (QQuickItem *child : from->childItems()) {
+                    if (!child->isVisible() || child->width() <= 0)
+                        continue;
+                    const QRectF r = child->mapRectToScene(QRectF(0, 0, child->width(), child->height()));
+                    if ((child->inherits("QQuickControl") || child->inherits("QQuickText")) && (r.left() < left || r.right() > right))
+                        out << child->objectName() + QLatin1Char('/') + QString::fromLatin1(child->metaObject()->className());
+                    walk(child);
+                }
+            };
+            walk(item("editorContent"));
+            return out;
+        };
+        QVERIFY2(widest().isEmpty(), qPrintable(widest().join(u", ")));
+
+        squeezeTheLineEditor();
+        QTRY_VERIFY(item("tagStripMore")->isVisible());
+        QVERIFY(visualItem("tag_b") && visualItem("tag_b")->isVisible() && visualItem("tag_s")->isVisible());
+        QVERIFY(item("charsCounter")->isVisible() && item("cpsCounter")->isVisible());
+        QVERIFY(!item("customGroup")->isVisible());
+        QVERIFY2(widest().isEmpty(), qPrintable(widest().join(u", ")));
+        // More holds what folded, and its items act as the buttons do.
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("tagStripMore")));
+        auto *menu = item<QObject>("tagStripMoreMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QQuickItem *blur = nullptr;
+        QTRY_VERIFY((blur = visualItem("foldedTagButton0")) && blur->isVisible());
+        QCOMPARE(blur->property("text").toString(), QStringLiteral("Blur"));
+        QVERIFY(visualItem("foldedAddTagButton")->isVisible());
+        if (!item("lookGroup")->isVisible()) {
+            QVERIFY(visualItem("foldedFont")->isVisible());
+            QVERIFY(visualItem("foldedColour1") && visualItem("foldedColour1")->isVisible());
+        }
+        text->forceActiveFocus();
+        QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 3));
+        QVERIFY(QMetaObject::invokeMethod(blur, "triggered"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\blur3}abc{\\blur0}"));
+        application->editor().discard();
+        QMetaObject::invokeMethod(menu, "close");
+        application->workspaceLayout().resetLayout();
+        buttons.setCount(0);
+    }
+
+    // LE1: More takes the focus as it opens; its items still act on the
+    // text field edited before, the Translated text here.
+    void foldedTagButtonsActOnTheEditedField()
+    {
+        auto &buttons = application->tagButtons();
+        buttons.setCount(1);
+        buttons.edit(0, QStringLiteral("Blur"), QStringLiteral("\\blur3"), 0);
+        QVERIFY(application->openFile(writeTranslationFile("more-field.ass")));
+        QTRY_VERIFY(application->editor().translationMode());
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        closeTheOriginalTextPanel();
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->isVisible() && !translated->property("text").toString().isEmpty());
+        const QString originalText = original->property("text").toString();
+        const QString translatedText = translated->property("text").toString();
+        squeezeTheLineEditor();
+        QTRY_VERIFY(item("tagStripMore")->isVisible());
+        QVERIFY(!item("customGroup")->isVisible());
+        translated->forceActiveFocus();
+        QMetaObject::invokeMethod(translated, "selectAll");
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("tagStripMore")));
+        auto *menu = item<QObject>("tagStripMoreMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QQuickItem *blur = nullptr;
+        QTRY_VERIFY((blur = visualItem("foldedTagButton0")) && blur->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(blur, "triggered"));
+        QTRY_VERIFY(translated->property("text").toString().startsWith(QStringLiteral("{\\blur3}")));
+        QCOMPARE(original->property("text").toString(), originalText);
+        QVERIFY(translated->property("text").toString() != translatedText);
+        application->editor().discard();
+        QMetaObject::invokeMethod(menu, "close");
+        application->workspaceLayout().resetLayout();
+        buttons.setCount(0);
     }
 
     // EditBox::SetAlignment and OnAnChoice: the shown Line's position (the
