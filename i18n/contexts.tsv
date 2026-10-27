@@ -32,6 +32,7 @@ HikariSub.StatusBar	The status bar: its fields, the selection status and progres
 HikariSub.Styles	The Style manager and style catalogs
 HikariSub.Tabs	The Document tab bar, its menu, tab commands and subtitle comparison
 HikariSub.TagList	The ASS override tag list and its popup
+HikariSub.TemplateEditor	The Template editor panel: template and code Lines, their preview on a karaoke Line, Apply
 HikariSub.TimeShift	The Shift times panel
 HikariSub.Translation	Translation mode: its switch and toggles, translation files and matching
 HikariSub.Video	The video panel and full screen: playback, menus, streams, chapters, keyframes, dummy video, indexing, player errors

@@ -43,6 +43,8 @@ class VideoController : public QObject {
     Q_PROPERTY(QString offerDirectoryLabel READ offerDirectoryLabel NOTIFY changed)
     Q_PROPERTY(bool offerApplyToAll READ offerApplyToAll WRITE setOfferApplyToAll NOTIFY changed)
     Q_PROPERTY(bool playing READ playing NOTIFY changed)
+    // KE2: playing a span again and again (loopRange).
+    Q_PROPERTY(bool looping READ looping NOTIFY changed)
     // V2: the legacy times field ("00:00:01,001;  24;  0;  1 ms, -999 ms":
     // time, frame, frames from the active Line's start, then ms from its
     // start and end) and whether the shown frame is a keyframe; while
@@ -125,6 +127,10 @@ public:
     // A4: GLOBAL_PLAY_ACTUAL_LINE (legacy VideoBox's "Play the current
     // line"): the active Line from its start to the frame before its end.
     Q_INVOKABLE bool playActualLine();
+    // KE2: the Template editor's Loop the Line: [startMs, endMs) as
+    // playActualLine plays a Line, from its start again at each end.
+    Q_INVOKABLE bool loopRange(int startMs, int endMs);
+    bool looping() const { return m_session.looping(); }
     // V2 navigation.
     QString times() const;
     bool keyframeShown() const;

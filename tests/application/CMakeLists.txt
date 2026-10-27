@@ -10,6 +10,9 @@ hikari_add_gtest(hikari_application_document_files_tests SOURCES document_files_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_macro_tests SOURCES macro_transaction_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# KE2: the template editor's preview of the karaoke templater on one Line.
+hikari_add_gtest(hikari_application_template_preview_tests SOURCES template_preview_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # S4: the scripts a Document names (legacy AddFromSubs).
 hikari_add_gtest(hikari_application_document_scripts_tests SOURCES document_scripts_tests.cpp
     LIBRARIES hikari_application LABELS application)

@@ -47,6 +47,7 @@
 #endif
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
+#include "template_editor_controller.h"
 #include "log_controller.h"
 #include "colour_picker_controller.h"
 #include "workspace_layout.h"
@@ -461,6 +462,8 @@ public:
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
     // Writes the editing target's recovery now (the autosave timer's work; tests).
     bool autosaveNow();
+    // Whether `document` waits for its autosave (tests).
+    bool autosavePending(application::DocumentId document) const;
     // G4: "Split lines": "videoTime" (GRID_SPLIT_BY_VIDEO_TIME) or "frames"
     // (GRID_SPLIT_BY_FRAME), against the open video's timebase.
     Q_INVOKABLE bool splitLines(const QString &kind);
@@ -808,6 +811,7 @@ public:
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
+    ui::TemplateEditorController &templateEditor() { return *m_templateEditor; }
     ui::VideoController &video() { return *m_video; }
     backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; } // tests: general playback (V3), its volume (V4)
     // W1: the player that plays video: the general player, or on Windows the
@@ -1177,6 +1181,10 @@ private:
     bool m_selectLinesOpened = false; // legacy SelectLines exists
     application::OptionsLists m_optionsLists; // what the open Options dialog lists
     std::unique_ptr<AutomationShell> m_automation;
+    // KE2: the Template editor panel; the video shows its preview.
+    std::unique_ptr<ui::TemplateEditorController> m_templateEditor;
+    bool m_videoShowsTemplate = false;
+    std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow; // the span it was drawn for
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<HotkeysController> m_hotkeys; // O2: after the automation hotkeys it shares
     std::unique_ptr<UpdateChecker> m_updates;
@@ -1325,7 +1333,7 @@ private:
     QString m_recoveryDir;
     QString m_sessionId;
     std::map<std::uint64_t, QTimer *> m_autosaveTimers;
-    void scheduleAutosave();
+    void scheduleAutosave(std::optional<application::DocumentId> document = std::nullopt);
     bool autosave(application::DocumentId document);
     void discardRecovery(application::DocumentId document);
     std::string recoveryKey(application::DocumentId document) const;
