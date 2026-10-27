@@ -1878,6 +1878,7 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
 {
     // AllTags::DrawVisual (VisualAllTags.cpp:34-39): a slider per value.
     Overlay out;
+    out.unit = unitOf(host);
     if (m_legacySliders) {
         for (int i = 0; i < m_actualTag.numOfValues && i < 4; i++)
             drawSlider(out, host, m_slider[static_cast<std::size_t>(i)]);
@@ -1973,7 +1974,8 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
         const u16 text = m_actualTag.name + u"  " + valueText(m_drag->from) + u" \u2192 " +
                          valueText(field(*m_sample, m_drag->name, m_mode));
         const auto [w, h] = host.measureLabel(text);
-        const int x = m_drag->atX + 14, y = m_drag->atY - h - 10;
+        const float u = unitOf(host); // SV1-hidpi-tool-sizes
+        const int x = m_drag->atX + static_cast<int>(14 * u), y = m_drag->atY - h - static_cast<int>(10 * u);
         out.texts.push_back({IntRect{x, y, x + w, y + h}, text, 0xFFFFFFFF, true, 0});
     }
     return out;

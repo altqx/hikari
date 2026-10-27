@@ -989,6 +989,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
     }
+    applySubtitlesAt(); // SV1
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
     m_recoveryDir = options.recoveryDir;
@@ -5626,6 +5627,9 @@ void Application::settingChanged(const QString &id)
         m_videoRevision.reset();
         m_videoScript.clear(); // E4: the same script goes to the new renderer too
         refreshVideo();
+        applySubtitlesAt(); // SV1: Screen size is libass's only
+    } else if (id == QLatin1String("video.previewSubtitlesAt")) {
+        applySubtitlesAt();
     } else if (id == QLatin1String("video.renderCost")) {
         // KE1-render-cost-overlay: libass counts only while the overlay is
         // shown; the frame is drawn again so it shows the counts at once.
@@ -5634,6 +5638,18 @@ void Application::settingChanged(const QString &id)
         m_videoScript.clear();
         refreshVideo();
     }
+}
+
+// SV1-screen-size-subtitles: "Preview subtitles at" Screen size draws libass
+// at the picture's size on screen; a CSRI filter stays at the video's.
+void Application::applySubtitlesAt()
+{
+    const bool screen = m_settings->integer("video.previewSubtitlesAt") == 1 && m_renderer.usesLibass();
+    m_video->setSubtitlesAtScreenSize(screen);
+    if (m_styleManager)
+        m_styleManager->setPreviewAtScreenSize(screen);
+    if (m_fontCatalogs)
+        m_fontCatalogs->setPreviewAtScreenSize(screen);
 }
 
 namespace {

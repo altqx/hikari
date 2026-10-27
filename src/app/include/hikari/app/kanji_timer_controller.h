@@ -34,6 +34,8 @@ class KanjiTimerController : public QObject {
     // the romaji style).
     Q_PROPERTY(QString problem READ problem NOTIFY changed)
     Q_PROPERTY(bool suggest READ suggest WRITE setSuggest NOTIFY changed)
+    // KA8-multi-highlight: "Multi-highlight (#)", off by default.
+    Q_PROPERTY(bool multi READ multi WRITE setMulti NOTIFY changed)
     // {number, kanji, romaji, status, groups}: status is "suggested",
     // "check", "todo", "done", "applied", "changed", "noKanji", "noRomaji";
     // groups the current pair's "5 of 8 groups".
@@ -66,6 +68,8 @@ public:
     QString problem() const { return m_problem; }
     bool suggest() const;
     void setSuggest(bool on);
+    bool multi() const;
+    void setMulti(bool on);
     QVariantList pairs() const;
     int current() const;
     QVariantMap pair() const;
