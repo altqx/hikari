@@ -111,3 +111,9 @@ _Avoid_: Script as an interchangeable name for one registered command.
 **Automation export filter**:
 A compatibility-API term for a script-defined export-processing operation.
 _Avoid_: Grid filter as a synonym.
+
+### Files
+
+**User folder**:
+The one folder holding what a user may edit or keep: settings, automation scripts and modules, dictionaries, catalogs, presets, autosaves, recovery and logs. Automation's `?user` is this folder. Bundled scripts, modules and dictionaries are copied into it; caches live elsewhere.
+_Avoid_: Settings folder, data folder or config folder as names for it; program folder for the bundled files' source.
