@@ -1,6 +1,6 @@
 -- DC1 fixture: DependencyControl installs a module from a feed and updates
--- it, with the calls its Toolbox makes. The feed's URL and the version to
--- update to come from the environment.
+-- it, with the calls its Toolbox makes. The feed's URL, the version to
+-- update to and a feed to add to the update come from the environment.
 script_name = "DependencyControl feed"
 script_namespace = "test.DepCtrlFeed"
 
@@ -8,7 +8,7 @@ local DepCtrl = require("l0.DependencyControl")
 local UpdateTask = DepCtrl.UpdateTask
 
 local function run(record, target)
-    local task, status, result = DepCtrl.updater:addTask(record, target, nil, nil, "stable",
+    local task, status, result = DepCtrl.updater:addTask(record, target, {os.getenv("HIKARI_TEST_ADD_FEED")}, nil, "stable",
         UpdateTask.UpdateReason.UserRequested)
     if task then
         status, result = task:run()

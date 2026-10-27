@@ -523,9 +523,11 @@ class ConfigHandler
 
     success, msg = @__writeFile config, nil, true
     if success
+      -- HikariSub (DC1): the baseline is what this handler holds, not what the file got; another writer's keys
+      -- in the file would otherwise read as deletions on the next save
       for view in *views
-        written = traverseHive view.__hivePath, config
-        mergeHive view.__hivePath, makeHive(view.__hivePath, type(written) == "table" and utils.deepCopy(written) or nil),
+        held = traverseHive view.__hivePath, @config
+        mergeHive view.__hivePath, makeHive(view.__hivePath, type(held) == "table" and utils.deepCopy(held) or nil),
           @__baseline
     @lock\release!
     return if success

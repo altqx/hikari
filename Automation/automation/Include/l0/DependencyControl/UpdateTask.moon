@@ -839,7 +839,15 @@ class UpdateTask
       gather {declaredFeed}
       selected, tied, eligible = @__selectCandidate candidates
 
-      unless selected and selected.trustBand == TrustBand.DeclaredDirect
+      -- HikariSub (DC1): an installed package updates only from its own feeds, the declared one and the one its
+      -- copy came from; another feed offering its namespace would switch publishers unasked. Only a user-requested
+      -- update of a package that names no feed still searches.
+      installedFrom = not @record.virtual and @record.config.c.currentSource
+      bound = not @record.virtual and (declaredFeed or installedFrom or @reason != UpdateReason.UserRequested)
+      if bound and not (selected and selected.trustBand == TrustBand.DeclaredDirect)
+        gather {installedFrom and installedFrom.feedUrl}
+        selected, tied, eligible = @__selectCandidate candidates
+      elseif not (selected and selected.trustBand == TrustBand.DeclaredDirect)
         -- tier 2: the trusted discovery feeds — the user's extra feeds, trusted add-feeds, and the
         -- official set. (extraFeeds lives in the `feeds` section, not `updates`.)
         gather @updater.config.c.feeds.extraFeeds

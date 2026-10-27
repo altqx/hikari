@@ -1562,8 +1562,9 @@ TEST_F(LuaHelper, DependencyControlLoadsWhileTheScriptLoads)
 
 // DC1: DependencyControl.ConfigHandler is still the class of what
 // getConfigHandler returns, which scripts written for DependencyControl < 0.7
-// compare against (lyger's presets would otherwise lose their tags).
-TEST_F(LuaHelper, DependencyControlConfigHandlerIsTheConfigViewsClass)
+// compare against (lyger's presets would otherwise lose their tags); and a
+// handler saving a config file again keeps what another wrote there since.
+TEST_F(LuaHelper, DependencyControlConfigSuitsOldScriptsAndOtherWriters)
 {
     QTemporaryDir work;
     ASSERT_TRUE(work.isValid());
@@ -1576,7 +1577,7 @@ TEST_F(LuaHelper, DependencyControlConfigHandlerIsTheConfigViewsClass)
 #ifdef _WIN32
     paths.windows = true;
 #endif
-    auto host = load(fixture("depctrl-config-class.lua"),
+    auto host = load(fixture("depctrl-config.lua"),
                      [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
                          if (r.service != hikari::application::HostService::DecodePath)
                              return reply(hikari::application::HostServiceReply::unavailable());
@@ -1587,6 +1588,9 @@ TEST_F(LuaHelper, DependencyControlConfigHandlerIsTheConfigViewsClass)
     ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
     ASSERT_TRUE(runToEnd(*host, "Show"));
     EXPECT_EQ(run.log, QStringList{"true,false"});
+    ASSERT_TRUE(runToEnd(*host, "Writers"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, QStringList{"3,1"});
 }
 
 // DC1: an update feed on the loopback, so DependencyControl's downloads need
@@ -1632,7 +1636,8 @@ private:
 
 // DC1: DependencyControl installs a module from its feed and updates it,
 // with the calls its Toolbox makes, into the user's folder of an installed
-// copy, which the host then searches.
+// copy, which the host then searches. Another trusted feed offering the
+// module does not update it while its own feed is down.
 TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
 {
     FeedServer server;
@@ -1647,7 +1652,8 @@ TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
             .arg(version, feed)
             .toUtf8();
     };
-    const auto publish = [&](const QString &version) {
+    const QString other = server.url(QStringLiteral("/other.json"));
+    const auto publish = [&](const QString &version, const QString &feedPath = QStringLiteral("/feed.json")) {
         const QString path = QStringLiteral("/Greeter-%1.lua").arg(version);
         server.files[path] = module(version);
         const QJsonObject file{
@@ -1663,7 +1669,7 @@ TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
         const QJsonObject greeter{{QStringLiteral("name"), QStringLiteral("Greeter")},
                                   {QStringLiteral("author"), QStringLiteral("test")},
                                   {QStringLiteral("channels"), QJsonObject{{QStringLiteral("stable"), channel}}}};
-        server.files[QStringLiteral("/feed.json")] =
+        server.files[feedPath] =
             QJsonDocument(QJsonObject{{QStringLiteral("dependencyControlFeedFormatVersion"), QStringLiteral("0.4.0")},
                                       {QStringLiteral("name"), QStringLiteral("test feed")},
                                       {QStringLiteral("modules"),
@@ -1700,7 +1706,7 @@ TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
                                                QJsonObject{{QStringLiteral("mode"), QStringLiteral("dependency-resolution")},
                                                            {QStringLiteral("blockPrivateHosts"), false}}},
                                               {QStringLiteral("feeds"),
-                                               QJsonObject{{QStringLiteral("trustedFeeds"), QJsonArray{feed}},
+                                               QJsonObject{{QStringLiteral("trustedFeeds"), QJsonArray{feed, other}},
                                                            {QStringLiteral("cacheMaxAge"), 0},
                                                            {QStringLiteral("feedFetchTimeout"), 5}}}}}})
                      .toJson());
@@ -1708,16 +1714,15 @@ TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
     qputenv("HIKARI_TEST_FEED", feed.toUtf8());
     qputenv("HIKARI_TEST_VERSION", "1.1.0");
 
+    const auto services = [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+        if (r.service != hikari::application::HostService::DecodePath)
+            return reply(hikari::application::HostServiceReply::unavailable());
+        hikari::application::HostServiceReply out;
+        out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+        reply(out);
+    };
     publish(QStringLiteral("1.0.0"));
-    auto host = load(fixture("depctrl-feed.lua"),
-                     [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
-                         if (r.service != hikari::application::HostService::DecodePath)
-                             return reply(hikari::application::HostServiceReply::unavailable());
-                         hikari::application::HostServiceReply out;
-                         out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
-                         reply(out);
-                     },
-                     include.join(QLatin1Char('\n')));
+    auto host = load(fixture("depctrl-feed.lua"), services, include.join(QLatin1Char('\n')));
     ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
     // Installed (status 1) into the user's lower-case include folder.
     ASSERT_TRUE(runToEnd(*host, "Install", 60'000));
@@ -1737,8 +1742,28 @@ TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
     EXPECT_EQ(run.log.last(), QStringLiteral("1,1.1.0,hello 1.1.0")) << run.log.join(QLatin1Char('\n')).toStdString();
     ASSERT_TRUE(installed.open(QIODevice::ReadOnly));
     EXPECT_EQ(installed.readAll(), module(QStringLiteral("1.1.0")));
+    installed.close();
+
+    // Its own feed is gone and another trusted feed offers 1.2.0: no
+    // suitable package (status -6), and 1.1.0 stays. The helper reads the
+    // environment it started with, so a new one runs this update.
+    server.files.erase(QStringLiteral("/feed.json"));
+    publish(QStringLiteral("1.2.0"), QStringLiteral("/other.json"));
+    qputenv("HIKARI_TEST_ADD_FEED", other.toUtf8());
+    qputenv("HIKARI_TEST_VERSION", "1.2.0");
+    host = load(fixture("depctrl-feed.lua"), services, include.join(QLatin1Char('\n')));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    ASSERT_TRUE(runToEnd(*host, "Update", 60'000));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_FALSE(run.log.isEmpty());
+    EXPECT_TRUE(run.log.last().startsWith(QStringLiteral("-6,")) &&
+                run.log.last().endsWith(QStringLiteral(",hello 1.1.0")))
+        << run.log.join(QLatin1Char('\n')).toStdString();
+    ASSERT_TRUE(installed.open(QIODevice::ReadOnly));
+    EXPECT_EQ(installed.readAll(), module(QStringLiteral("1.1.0")));
     qunsetenv("HIKARI_TEST_FEED");
     qunsetenv("HIKARI_TEST_VERSION");
+    qunsetenv("HIKARI_TEST_ADD_FEED");
 }
 
 // L6: the LuaJIT build as the legacy Windows build had it, on every platform
