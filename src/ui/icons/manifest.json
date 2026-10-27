@@ -3179,6 +3179,7 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
+    "kanji-timer",
     "text-field-menu",
     "settings-dialog"
    ]
@@ -3611,6 +3612,7 @@
    "mirror": true,
    "legacy": [],
    "surfaces": [
+    "kanji-timer",
     "settings-dialog"
    ]
   },

@@ -21,6 +21,7 @@ constexpr std::size_t kShownGroups = 60;
 
 constexpr const char *kSuggest = "audio.kanjiTimerSuggest";
 constexpr const char *kMulti = "audio.kanjiTimerMulti";
+constexpr const char *kFurigana = "audio.kanjiTimerFurigana";
 
 // The Lines of the two styles in Document order: Lines with text, a romaji
 // Line with \k tags, no fx Line of the templater.
@@ -147,6 +148,38 @@ void KanjiTimerController::setMulti(bool on)
     if (m_timer)
         m_timer->setMulti(on);
     emit changed();
+}
+
+bool KanjiTimerController::furigana() const
+{
+    return m_settings.boolean(kFurigana);
+}
+
+void KanjiTimerController::setFurigana(bool on)
+{
+    if (on == furigana())
+        return;
+    m_settings.set(kFurigana, on);
+    if (m_timer)
+        configure(*m_timer);
+    emit changed();
+}
+
+bool KanjiTimerController::noDictionary() const
+{
+    return furigana() && m_dictionary && !*m_dictionary;
+}
+
+void KanjiTimerController::configure(application::KanjiTimer &timer) const
+{
+    timer.setMulti(multi());
+    timer.setFurigana(furigana());
+    if (!furigana() || timer.hasDictionary())
+        return;
+    if (!m_dictionary)
+        m_dictionary = m_hooks.dictionary ? m_hooks.dictionary() : application::ReadingAnalyzer{};
+    if (*m_dictionary)
+        timer.setDictionary(*m_dictionary);
 }
 
 void KanjiTimerController::open()
@@ -282,7 +315,7 @@ void KanjiTimerController::readLines()
         m_timer = std::make_unique<application::KanjiTimer>(charClasses());
         m_timer->setSuggest(suggest());
     }
-    m_timer->setMulti(multi());
+    configure(*m_timer);
     m_timer->setLines(std::move(romaji), std::move(kanji));
 }
 
@@ -343,17 +376,39 @@ QVariantMap KanjiTimerController::pair() const
         return out;
     };
     QVariantMap detail;
+    // KA4-furigana: each group's kanji runs
+    std::vector<std::vector<const application::KanjiReading *>> runsOf(groupCount);
+    for (const auto &r : v->readings)
+        if (r.group < groupCount)
+            runsOf[r.group].push_back(&r);
+    auto joined = [](const std::vector<const application::KanjiReading *> &runs, auto text) {
+        QStringList out;
+        for (const auto *r : runs)
+            out << qs(text(*r));
+        return out.join(QLatin1Char(' ')).trimmed();
+    };
     auto add = [&](const application::KanjiGroup &g, const QString &kind) {
+        const auto &runs = runsOf[index];
         const bool shown = index >= shownFrom && index < shownTo;
         ++index;
         const QString kanji = shown || kind == QLatin1String("cur") ? charactersOf(character, g.characters) : QString();
-        if (shown)
-            groups << QVariantMap{{QStringLiteral("kind"), kind},
-                                  {QStringLiteral("syllables"), syllablesOf(syllable, g.syllables)},
-                                  {QStringLiteral("kanji"), kanji},
-                                  {QStringLiteral("first"), static_cast<int>(character)},
-                                  {QStringLiteral("characters"), static_cast<int>(g.characters)},
-                                  {QStringLiteral("blank"), g.characters == 0}};
+        const bool typed = std::ranges::any_of(runs, [](const auto *r) { return r->typed.has_value(); });
+        const QString reading = joined(runs, [](const auto &r) { return r.reading(); });
+        if (shown) {
+            QVariantMap group{{QStringLiteral("kind"), kind},
+                              {QStringLiteral("syllables"), syllablesOf(syllable, g.syllables)},
+                              {QStringLiteral("kanji"), kanji},
+                              {QStringLiteral("first"), static_cast<int>(character)},
+                              {QStringLiteral("characters"), static_cast<int>(g.characters)},
+                              {QStringLiteral("blank"), g.characters == 0}};
+            if (!runs.empty())
+                group.insert(QStringLiteral("furigana"),
+                             QVariantMap{{QStringLiteral("reading"), reading},
+                                         {QStringLiteral("typed"), typed},
+                                         {QStringLiteral("differs"),
+                                          std::ranges::any_of(runs, [](const auto *r) { return r->differs; })}});
+            groups << group;
+        }
         if (kind == QLatin1String("cur")) {
             std::u16string romaji;
             int cs = 0;
@@ -361,12 +416,27 @@ QVariantMap KanjiTimerController::pair() const
                 romaji += v->syllables[k].text;
                 cs += v->syllables[k].cs;
             }
-            const auto reading = application::romajiToHiragana(romaji);
+            const auto sung = application::romajiToHiragana(romaji);
             detail = {{QStringLiteral("kanji"), kanji},
                       {QStringLiteral("romaji"), qs(romaji).simplified()},
-                      {QStringLiteral("reading"), reading && hasKanji(kanji.toStdU16String()) ? qs(*reading) : QString()},
+                      {QStringLiteral("reading"), sung && hasKanji(kanji.toStdU16String()) ? qs(*sung) : QString()},
                       {QStringLiteral("cs"), cs},
                       {QStringLiteral("blank"), g.characters == 0}};
+            if (!runs.empty()) {
+                // the dictionary's word, when it reads the group otherwise
+                QString dictionary;
+                for (const auto *r : runs)
+                    if (r->differs && dictionary.isEmpty())
+                        dictionary = qs(r->dictionary);
+                const QString suggestion = joined(runs, [](const auto &r) { return r.suggested; });
+                detail.insert(QStringLiteral("furigana"),
+                              QVariantMap{{QStringLiteral("reading"), reading},
+                                          {QStringLiteral("suggestion"), suggestion},
+                                          {QStringLiteral("typed"), typed},
+                                          {QStringLiteral("dictionary"), dictionary},
+                                          {QStringLiteral("notSung"),
+                                           !suggestion.isEmpty() && std::ranges::none_of(runs, [](const auto *r) { return r->sung; })}});
+            }
         }
         syllable += g.syllables;
         character += g.characters;
@@ -477,6 +547,13 @@ bool KanjiTimerController::clickSyllable(int syllable)
     return done(m_timer && syllable >= 0 && m_timer->clickSyllable(static_cast<std::size_t>(syllable)));
 }
 
+bool KanjiTimerController::setReading(const QString &reading)
+{
+    return done(m_timer && m_timer->setReading(reading.trimmed().toStdU16String()));
+}
+
+bool KanjiTimerController::useSuggestion() { return done(m_timer && m_timer->useSuggestion()); }
+
 bool KanjiTimerController::clickCharacter(int character)
 {
     return done(m_timer && character >= 0 && m_timer->clickCharacter(static_cast<std::size_t>(character)));
@@ -582,7 +659,7 @@ bool KanjiTimerController::applyTo(std::uint64_t document, application::EditSess
     auto [romaji, kanji] = styleLines(session, own ? m_romajiStyle : kept->second.romajiStyle,
                                       own ? m_kanjiStyle : kept->second.kanjiStyle);
     timer->setLines(std::move(romaji), std::move(kanji));
-    timer->setMulti(multi()); // as it is now (changed on another Document)
+    configure(*timer); // as the options are now (changed on another Document)
     if (timer->pending().empty())
         return true;
     if (!writePending(*timer, session))
