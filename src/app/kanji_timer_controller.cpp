@@ -582,6 +582,7 @@ bool KanjiTimerController::applyTo(std::uint64_t document, application::EditSess
     auto [romaji, kanji] = styleLines(session, own ? m_romajiStyle : kept->second.romajiStyle,
                                       own ? m_kanjiStyle : kept->second.kanjiStyle);
     timer->setLines(std::move(romaji), std::move(kanji));
+    timer->setMulti(multi()); // as it is now (changed on another Document)
     if (timer->pending().empty())
         return true;
     if (!writePending(*timer, session))
