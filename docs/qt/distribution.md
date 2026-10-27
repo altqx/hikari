@@ -67,9 +67,21 @@ What the first passing release offers depends on the package kind:
 
 No flow installs a version that is not newer than the running one.
 
-## Automation folders
+## The user folder
 
-A portable copy keeps the Automation folder beside the program, as legacy does. An installed copy cannot write its program folder, so what scripts write (`?user`, `?local` and `?temp`, logs and autosaves) goes to its own Automation folder in the app's data folder (`%APPDATA%\HikariSub\HikariSub\Automation`, `~/.local/share/HikariSub/HikariSub/Automation`), laid out as the shipped one. Autoload scripts load from the shipped `automation/Autoload`, then from `automation/Autoload` and DependencyControl's `automation/autoload` there; a script there replaces a shipped script of the same name. Its `automation/Include` and `include` are searched before the shipped `Include` ([L6-user-automation-folder](compatibility-decisions.md)).
+Everything a user may edit or keep is in one user folder, Aegisub's `?user` ([UD1-user-folder](compatibility-decisions.md)):
+
+| Copy | User folder | Caches (index files, audio cache) |
+|---|---|---|
+| Linux | `$XDG_CONFIG_HOME/hikarisub` (`~/.config/hikarisub`) | `$XDG_CACHE_HOME/hikarisub` (`~/.cache/hikarisub`) |
+| Windows | `%APPDATA%\HikariSub` | `%LOCALAPPDATA%\HikariSub\cache` |
+| Portable | `user` beside the program | as the platform's |
+
+`HIKARISUB_USER_DIR` names another user folder (tests, power users). The folder holds `hikari.ini`, `automation/autoload` and `automation/include` (DependencyControl's modules and its config too), `dictionaries` (Hunspell pairs, `UserDic.udic`), `catalogs` (style and font catalogs), `presets` (saved workspace layouts), `autosave`, `recovery` and `log`. Help > Open user folder and Settings > General > Folders open it. No uninstaller deletes it.
+
+**Bundled files.** Each package ships `bundled-files.txt` beside the program: the SHA-256 of every file under `Automation/automation` and of the `Dictionary` folder's own `.dic` and `.aff` files (`cmake/HikariBundledManifest.cmake`). Each start copies them into the user folder (`automation/Autoload` and `Include` into `automation/autoload` and `include`, the dictionaries into `dictionaries`): a missing file is copied in; a file still as the bundled version it came from is replaced by the new one; a file changed since (by the user, or by a DependencyControl update) is kept, and the Log says so; a file a new version no longer brings is removed unless it was changed. `.bundled-files` in the user folder records which bundled version each file came from ([UD1-seeded-bundle](compatibility-decisions.md)). Autoload scripts load from the shipped `automation/Autoload`, then from the user folder's `automation/Autoload` and `automation/autoload`, where a script replaces a shipped one of the same name; scripts search the user folder's `automation/Include` and `include` before the shipped `Include`. `?user`, `?local` and `?temp` resolve into the user folder, `?data` into the shipped `Automation` folder.
+
+**Earlier Qt folders.** The first start of a version with the user folder moves the Qt folders before it into it once, while it has no `hikari.ini` yet: `~/.config/HikariSub/HikariSub` and `~/.local/share/HikariSub/HikariSub` on Linux, `%LOCALAPPDATA%\HikariSub\HikariSub` and `%APPDATA%\HikariSub\HikariSub` on Windows. Their contents go into the layout (`Dictionary` to `dictionaries`, `Catalog` and `FontCatalogs*.txt` to `catalogs`, `layouts.json` to `presets`, `Recovery` to `recovery`, the `Automation` folder's contents to the top, its `automation/Autoload` and `Include` to `automation/autoload` and `include`), caches to the cache folder; what the user folder already has stays where it was, and so does the old DependencyControl (the bundled release replaces it). A notice names the folder. Legacy's folders (`%LOCALAPPDATA%\HikariSub\Legacy`, `~/.local/share/HikariSub/Legacy`, a portable legacy copy's own) are never touched, so Import legacy settings keeps working. A portable copy and a start with `HIKARISUB_USER_DIR` move nothing ([UD1-move-in](compatibility-decisions.md)).
 
 ## Versions and the move from legacy
 

@@ -26,6 +26,15 @@ add_executable(hikari_app_startup startup.cpp)
 target_link_libraries(hikari_app_startup PRIVATE hikari_composition
     hikari_test_url_recorder hikari_test_desktop_routes) # 38e: the desktop recorded
 _hikari_add_qt_modes(hikari_app_startup app $<TARGET_FILE:hikari_app_startup>)
+# UD1: the starts keep to a user folder of their own, so they never move or
+# seed the user's real one.
+foreach(mode offscreen xvfb)
+    if(TEST app.${mode})
+        set_property(TEST app.${mode} APPEND PROPERTY ENVIRONMENT
+            "HIKARISUB_USER_DIR=${CMAKE_CURRENT_BINARY_DIR}/app-${mode}/user"
+            "XDG_CACHE_HOME=${CMAKE_CURRENT_BINARY_DIR}/app-${mode}/cache")
+    endif()
+endforeach()
 
 # O5-first-start-ui-languages: the composition's first start reads the
 # system's UI languages (QLocale::system().uiLanguages()). Linux: Qt reads
@@ -35,4 +44,11 @@ if(UNIX AND NOT APPLE)
         COMMAND "${CMAKE_COMMAND}" -DSTARTUP=$<TARGET_FILE:hikari_app_startup>
             -DWORK=${CMAKE_CURRENT_BINARY_DIR}/first-start -P "${CMAKE_CURRENT_SOURCE_DIR}/check_first_start_language.cmake")
     set_tests_properties(modules.first-start-system-ui-languages PROPERTIES LABELS "modules;offscreen" TIMEOUT 300)
+    # UD1 (#362): the real composition's user folder under XDG_CONFIG_HOME
+    # and HIKARISUB_USER_DIR, the bundled files seeded from the build tree's
+    # manifest, and the one-time move from a populated and an empty old folder.
+    add_test(NAME modules.user-folder
+        COMMAND "${CMAKE_COMMAND}" -DSTARTUP=$<TARGET_FILE:hikari_app_startup>
+            -DWORK=${CMAKE_CURRENT_BINARY_DIR}/user-folder -P "${CMAKE_CURRENT_SOURCE_DIR}/check_user_folder.cmake")
+    set_tests_properties(modules.user-folder PROPERTIES LABELS "modules;offscreen" TIMEOUT 300)
 endif()

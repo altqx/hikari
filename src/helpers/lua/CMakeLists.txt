@@ -91,6 +91,8 @@ add_custom_target(hikari_automation_stage ALL
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_precisetimer>" "${HIKARI_AUTOMATION_STAGE}/Include/PT/PreciseTimer/"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_downloadmanager>" "${HIKARI_AUTOMATION_STAGE}/Include/DM/DownloadManager/"
     ${_hikari_subinspector_stage}
+    # UD1: the staged files' manifest, which a start from the build tree seeds from.
+    COMMAND "${CMAKE_COMMAND}" -DROOT=${CMAKE_BINARY_DIR} -P "${PROJECT_SOURCE_DIR}/cmake/HikariBundledManifest.cmake"
     DEPENDS hikari_depctrl_badmutex hikari_depctrl_precisetimer hikari_depctrl_downloadmanager
         ${_hikari_subinspector_target}
     COMMENT "Staging the automation tree with DependencyControl's native modules")
