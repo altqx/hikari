@@ -859,6 +859,51 @@ TEST_F(VideoTest, PlayLinePlaysToTheFrameBeforeTheEnd)
     EXPECT_TRUE(video.playing());
 }
 
+// KE2: the Template editor's Loop the Line plays the Line again from its
+// start each time its end is shown, until a pause, a stop or a seek.
+TEST_F(VideoTest, ALoopedLinePlaysAgainFromItsStart)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    ASSERT_TRUE(video.playLine(100, 300, /*loop*/ true));
+    EXPECT_TRUE(video.looping());
+    player.opened();
+    player.delivered();
+    player.calls.clear();
+    video.generalFrame(playerFrame(), 285'000); // frame 7: the end, from frame 3 again
+    EXPECT_TRUE(video.playing());
+    EXPECT_TRUE(video.looping());
+    EXPECT_EQ(source.frames.back().first, 3);
+    player.delivered();
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"pause", "seek 120000", "play"}));
+    video.generalFrame(playerFrame(), 285'000);
+    EXPECT_TRUE(video.playing());
+    // a pause ends the loop; a Line played without it pauses at its end
+    ASSERT_TRUE(video.pause());
+    EXPECT_FALSE(video.looping());
+    ASSERT_TRUE(video.playLine(100, 300));
+    EXPECT_FALSE(video.looping());
+    player.delivered();
+    video.generalFrame(playerFrame(), 285'000);
+    EXPECT_FALSE(video.playing());
+    // a seek by time (a chapter) ends it, and playing goes on from there
+    ASSERT_TRUE(video.playLine(100, 300, true));
+    player.delivered();
+    ASSERT_TRUE(video.seekToMs(160));
+    EXPECT_FALSE(video.looping());
+    player.delivered();
+    video.generalFrame(playerFrame(), 285'000);
+    EXPECT_TRUE(video.playing());
+    EXPECT_FALSE(video.looping());
+    // a stop ends it too
+    ASSERT_TRUE(video.playLine(100, 300, true));
+    ASSERT_TRUE(video.stop());
+    EXPECT_FALSE(video.looping());
+}
+
 // V3: legacy ProgressSink "Indexing video" and its Cancel
 // (ProviderFFMS2.cpp:89-97, 301-312): the progress while indexing, and a
 // cancelled indexing leaves no video (the failed provider deleted the

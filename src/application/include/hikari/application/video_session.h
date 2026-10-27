@@ -141,8 +141,12 @@ public:
     // shown, then paused (PlaybackReachedEnd, OnEndFile). Nothing when the
     // start is not before that end or not before the video's duration (its
     // last frame's time); the end is clamped to the duration, an end of 0
-    // plays on; a playing video is paused first.
-    bool playLine(int startMs, int endMs);
+    // plays on; a playing video is paused first. KE2: `loop` plays it again
+    // from its start each time the end is shown, until a pause, stop or seek.
+    bool playLine(int startMs, int endMs, bool loop = false);
+    bool looping() const { return m_playing && m_playEndMs > 0 && m_loop; }
+    // The span a loop plays (its start and end in ms), whether or not it plays.
+    std::pair<int, int> loopSpan() const { return {m_loopStartMs, m_loopEndMs}; }
     // A1: legacy's Stopped state: Stop while playing, until the next Play
     // (legacy marks the paused video's frame in the audio box only when Paused).
     bool stopped() const { return m_stopped; }
@@ -297,6 +301,8 @@ private:
     std::uint64_t m_lastGeneralEpoch = 0; // the play epoch m_lastGeneralUs belongs to
     std::uint64_t m_subtitleSerial = 0;   // each prepare and close of the subtitles
     int m_playEndMs = 0; // A4: legacy m_PlayEndTime (0: none)
+    bool m_loop = false; // KE2: the Line played with playLine plays again
+    int m_loopStartMs = 0, m_loopEndMs = 0;
     bool startPlayback(std::int64_t fromUs);
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time
     std::vector<int> m_keyframes;

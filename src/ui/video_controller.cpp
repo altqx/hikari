@@ -378,6 +378,13 @@ bool VideoController::playActualLine()
     return done;
 }
 
+bool VideoController::loopRange(int startMs, int endMs)
+{
+    const bool done = m_session.playLine(startMs, endMs, /*loop*/ true);
+    emit changed();
+    return done;
+}
+
 bool VideoController::pause()
 {
     const bool done = m_session.pause();
