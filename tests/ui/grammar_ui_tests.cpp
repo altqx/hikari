@@ -7,6 +7,7 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "line_table_model.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -17,6 +18,7 @@
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QSignalSpy>
 #include <QStyleHints>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -143,6 +145,10 @@ class GrammarUiTests : public QObject {
     {
         const auto t = application->workspace().editingTarget();
         return t ? application->files().session(*t) : nullptr;
+    }
+    QString gridText(int row = 0) const
+    {
+        return application->shell().lines()->index(row, ui::LineTableModel::TextColumn).data().toString();
     }
     QString lineText(std::size_t row = 0) const
     {
@@ -278,10 +284,14 @@ private slots:
         QVERIFY(ignore && ignore->isVisible());
         QCOMPARE(ignore->property("shortcutText").toString(), QStringLiteral("Turns off Miscellaneous"));
         QVERIFY(!field->findChild<QQuickItem *>(QStringLiteral("lineTextGrammarAddWord"))->isVisible());
+        QSignalSpy tabs(application.get(), &app::Application::tabsChanged);
         QVERIFY(QMetaObject::invokeMethod(entries[1], "triggered"));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         const QString fixed = QStringLiteral(R"({\i1}Their{\i0} going to the store, I has an apple.)");
         QTRY_COMPARE(lineText(), fixed);
+        // The Grid and the tab's modified mark follow.
+        QVERIFY(gridText().contains(QStringLiteral("an apple")));
+        QVERIFY(!tabs.isEmpty());
         QCOMPARE(target()->history().back().name, std::string("Correcting grammar errors in the text field"));
         QTRY_VERIFY_WITH_TIMEOUT(marked(fixed, QStringLiteral("Their")), kHarperWait);
         QVERIFY(!marks().contains(qMakePair(article, article + 2)));
@@ -581,6 +591,28 @@ private slots:
         QVERIFY(!item("spellReplaceAll")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(panel, "setMode", Q_ARG(QVariant, QStringLiteral("spelling"))));
         QVERIFY(!application->grammarWalkState().contains(QStringLiteral("walking")));
+    }
+
+    // Replacing the walk's last finding: the editor and the Grid show the
+    // correction though no finding is left to show.
+    void replacingTheLastFindingShowsIt()
+    {
+        start();
+        grammarOn();
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/last.ass"), dialogue("I has a apple."))));
+        QTRY_VERIFY(target());
+        application->startGrammarWalk();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+        QVariantMap state = application->grammarWalkState();
+        const int count = state.value(QStringLiteral("count")).toInt();
+        for (int i = 0; i < count && state.value(QStringLiteral("rule")).toString() != QLatin1String("AnA"); ++i)
+            state = application->grammarWalkIgnore();
+        QCOMPARE(state.value(QStringLiteral("rule")).toString(), QStringLiteral("AnA")); // the Line's last
+        state = application->grammarWalkReplace(QStringLiteral("an"));
+        QVERIFY(!state.value(QStringLiteral("found")).toBool());
+        QCOMPARE(lineText(), QStringLiteral("I has an apple."));
+        QCOMPARE(item("lineText")->property("text").toString(), QStringLiteral("I has an apple."));
+        QVERIFY(gridText().contains(QStringLiteral("an apple")));
     }
 
     // For review (HIKARI_SURFACE_SHOT_DIR; skipped without it), in the four

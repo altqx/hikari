@@ -450,6 +450,7 @@ bool Application::replaceEditorGrammar(int role, int position, const QString &re
     if (!caret)
         return false;
     m_editor->reloadFromSession();
+    refreshViews(); // the Grid and the tab's modified mark
     if (const auto raw = editorRaw(role)) {
         const int at = int(core::rawOffset(core::project(*raw), *caret, false));
         const int shown = m_editor->displaySpan(role, at, at).first;
@@ -750,6 +751,9 @@ QVariantMap Application::grammarWalkReplace(const QString &replacement)
         check.raw = core::toUtf16(walk.translation ? line->translation : line->text);
         check.text = core::grammar::checkedText(check.raw);
     }
+    // The editor shows the correction even when no finding is left to show.
+    m_editor->reloadFromSession();
+    refreshViews();
     nextGrammarFinding();
     showGrammarFinding();
     emit grammarWalkChanged();
