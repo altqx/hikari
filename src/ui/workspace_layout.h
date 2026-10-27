@@ -148,8 +148,8 @@ public:
     // TM1 (#232): the mode a preset carries, or empty. Choosing the preset
     // (applyPreset, or applySavedLayout of a layout that started from it)
     // starts that mode for the current tab (presetModeChosen); choosing an
-    // arrangement whose preset carries another mode or none afterwards
-    // leaves it (presetModeLeft). What starting and leaving do is the mode's
+    // arrangement whose preset carries another mode or none afterwards, in
+    // this tab or another, leaves it (presetModeLeft). What starting and leaving do is the mode's
     // own: Translation asks to turn the Document's Translation mode on and
     // stays on when left; Karaoke (KP1) turns the audio panel's Karaoke mode
     // and the Grid's folding on, and puts back what it changed.
@@ -269,8 +269,9 @@ private:
     void checkModal();
     bool applyPresetArrangement(const QString &name);
     bool applySavedArrangement(const QString &name);
-    // TM1: the modes of the preset chosen, after `before` was the current one.
-    void choseFrom(const QString &before);
+    // TM1: the mode of the preset just chosen starts, and the mode chosen
+    // last, in this tab or another (KP1), is left when it differs.
+    void choseMode();
     bool restorePayload(const QByteArray &payload, bool inPlace = false);
     bool restoreSavedFile();
     bool buildPreset(const QString &name, bool inPlace);
@@ -344,6 +345,7 @@ private:
     void addPanelNotice(const QString &text);
     void addSavedNotice(const QString &text);
     void dismissPanelNotice();
+    QString m_chosenMode; // the mode the last explicit choice started
     QString m_preset = QStringLiteral("Editing");
     QString m_layout; // WS3: the saved layout the shown arrangement started from
     bool m_restoring = false;

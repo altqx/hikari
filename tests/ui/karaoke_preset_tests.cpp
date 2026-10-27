@@ -314,6 +314,24 @@ private slots:
         stop();
     }
 
+    // The modes are the application's, not a tab's: a preset chosen in
+    // another tab after Karaoke leaves Karaoke all the same.
+    void leavingFromAnotherTab()
+    {
+        start();
+        application->addPage(); // a second Editing tab
+        application->selectTab(0);
+        applyPreset("Karaoke");
+        QVERIFY(audio().karaoke());
+        QVERIFY(shell().foldGenerated());
+        application->selectTab(1);
+        QVERIFY(audio().karaoke()); // showing a tab leaves nothing
+        applyPreset("Timing");
+        QVERIFY(!audio().karaoke());
+        QVERIFY(!shell().foldGenerated());
+        stop();
+    }
+
     // Folding is a setting: Fold generated Lines in the Grid's ⋯ menu, kept
     // across a restart.
     void foldingIsTheGridsSetting()

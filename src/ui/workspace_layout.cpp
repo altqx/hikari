@@ -385,12 +385,12 @@ QString WorkspaceLayoutController::presetMode(const QString &preset)
     return mode == modes.end() ? QString() : mode->second;
 }
 
-void WorkspaceLayoutController::choseFrom(const QString &before)
+void WorkspaceLayoutController::choseMode()
 {
-    const QString left = presetMode(before);
     const QString chosen = presetMode(m_preset);
-    if (!left.isEmpty() && left != chosen)
-        emit presetModeLeft(left);
+    if (!m_chosenMode.isEmpty() && m_chosenMode != chosen)
+        emit presetModeLeft(m_chosenMode);
+    m_chosenMode = chosen;
     if (!chosen.isEmpty())
         emit presetModeChosen(chosen);
 }
@@ -835,10 +835,9 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
 
 bool WorkspaceLayoutController::applyPreset(const QString &name)
 {
-    const QString before = m_preset;
     if (!applyPresetArrangement(name))
         return false;
-    choseFrom(before);
+    choseMode();
     return true;
 }
 
@@ -1400,10 +1399,9 @@ bool WorkspaceLayoutController::saveLayoutAs(const QString &name)
 
 bool WorkspaceLayoutController::applySavedLayout(const QString &name)
 {
-    const QString before = m_preset;
     if (!applySavedArrangement(name))
         return false;
-    choseFrom(before);
+    choseMode();
     return true;
 }
 
