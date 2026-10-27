@@ -274,11 +274,12 @@ struct PlaybackPipeline::State {
     bool posted = false;          // a task to take it is on the owner's queue
     std::uint64_t serial = 0;
     bool on = false;
+    std::optional<std::pair<int, int>> screen; // SV1: the picture's size on screen (none: the video's)
     Counters counters;
     // The next frame's overlay, rendered ahead (requested, then made).
     struct AheadRequest {
         std::int64_t timeUs;
-        int width, height;
+        OverlaySize size;
     };
     std::vector<AheadRequest> aheadRequests; // the likeliest first
     struct Ahead {
@@ -350,6 +351,12 @@ void PlaybackPipeline::setSubtitles(std::uint64_t serial, bool on)
     m_state->on = on;
 }
 
+void PlaybackPipeline::setScreenSize(std::optional<std::pair<int, int>> size)
+{
+    std::lock_guard lock(m_state->mutex);
+    m_state->screen = size;
+}
+
 PlaybackPipeline::Counters PlaybackPipeline::counters() const
 {
     std::lock_guard lock(m_state->mutex);
@@ -377,10 +384,12 @@ PlaybackPipeline::Output PlaybackPipeline::process(Input input)
     }
     std::uint64_t serial = 0;
     bool on = false;
+    std::optional<std::pair<int, int>> screen;
     {
         std::lock_guard lock(m_state->mutex);
         serial = m_state->serial;
         on = m_state->on;
+        screen = m_state->screen;
     }
     if (!serial) {
         unused(false);
@@ -391,10 +400,9 @@ PlaybackPipeline::Output PlaybackPipeline::process(Input input)
         unused(false);
         return out;
     }
-    const int width = out.frame->width, height = out.frame->height;
+    const OverlaySize size = overlaySizeFor(out.frame->width, out.frame->height, screen);
     for (auto &made : ahead)
-        if (made.serial == serial && millisecond(made.at.timeUs) == millisecond(input.startUs) && made.at.width == width &&
-            made.at.height == height) {
+        if (made.serial == serial && millisecond(made.at.timeUs) == millisecond(input.startUs) && made.at.size == size) {
             out.overlay = std::move(made.overlay);
             out.overlayBounds = made.bounds;
             unused(true);
@@ -403,7 +411,7 @@ PlaybackPipeline::Output PlaybackPipeline::process(Input input)
             return out;
         }
     unused(false);
-    if (auto overlay = m_renderer.render(core::DocumentTime(input.startUs), width, height)) {
+    if (auto overlay = renderOverlay(m_renderer, core::DocumentTime(input.startUs), size)) {
         out.overlayBounds = overlayBounds(*overlay);
         out.overlay = std::make_shared<const OverlayFrame>(std::move(*overlay));
     }
@@ -435,7 +443,7 @@ void PlaybackPipeline::run()
             if (!serial)
                 continue;
             State::Ahead made{*ahead, serial, nullptr, std::nullopt};
-            if (auto overlay = m_renderer.render(core::DocumentTime(ahead->timeUs), ahead->width, ahead->height)) {
+            if (auto overlay = renderOverlay(m_renderer, core::DocumentTime(ahead->timeUs), ahead->size)) {
                 made.bounds = overlayBounds(*overlay);
                 made.overlay = std::make_shared<const OverlayFrame>(std::move(*overlay));
             }
@@ -463,7 +471,7 @@ void PlaybackPipeline::run()
                 post = state->posted = true;
             if (shown && !state->input) {
                 if (next) {
-                    state->aheadRequests.push_back({*next * 1000, width, height});
+                    state->aheadRequests.push_back({*next * 1000, overlaySizeFor(width, height, state->screen)});
                     ++state->counters.aheadPlanned;
                 }
                 if (withheld)

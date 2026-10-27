@@ -153,8 +153,14 @@ struct FakeSource : IndexedSourcePort {
 
 struct FakeRenderer : SubtitleRendererPort {
     std::vector<std::int64_t> renderedAt;
+    std::vector<OverlaySize> scaled; // renderScaled's sizes
     OverlayPixels pixels; // the overlay's, when it is drawn at their size
     std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
+    std::expected<OverlayFrame, RenderError> renderScaled(core::DocumentTime t, int w, int h, int vw, int vh) override
+    {
+        scaled.push_back({w, h, vw, vh});
+        return render(t, w, h);
+    }
     std::expected<OverlayFrame, RenderError> render(core::DocumentTime t, int w, int h) override
     {
         renderedAt.push_back(t.microseconds());
@@ -344,6 +350,35 @@ TEST_F(VideoTest, NewSubtitlesRenderTheShownFrameAgain)
     video.setSubtitles({std::byte{'x'}});
     EXPECT_EQ(presenter.shown.size(), 2u);
     EXPECT_TRUE(presenter.shown.back().overlay);
+}
+
+// SV1-screen-size-subtitles: a paused frame's overlay is drawn again at the
+// screen size; a frame asked for with its subtitles stays at the video's.
+TEST_F(VideoTest, AScreenSizeDrawsTheShownFramesOverlayAgain)
+{
+    video.setPresenter(&presenter);
+    video.setSubtitles({std::byte{'x'}});
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    ASSERT_TRUE(presenter.shown.back().overlay);
+    const int width = presenter.shown.back().frame->width, height = presenter.shown.back().frame->height;
+    EXPECT_EQ(presenter.shown.back().overlay->width, width);
+    video.setScreenSize(std::pair{width * 3, height * 3});
+    ASSERT_EQ(presenter.shown.size(), 2u);
+    ASSERT_TRUE(presenter.shown.back().overlay);
+    EXPECT_EQ(presenter.shown.back().overlay->width, width * 3);
+    EXPECT_EQ(renderer.scaled, (std::vector<OverlaySize>{{width * 3, height * 3, width, height}}));
+    video.setScreenSize(std::pair{width * 3, height * 3}); // unchanged: nothing drawn
+    EXPECT_EQ(presenter.shown.size(), 2u);
+    std::shared_ptr<const IndexedFrame> got;
+    video.requestFrame(2, true, [&](std::shared_ptr<const IndexedFrame> f) { got = std::move(f); });
+    source.answer();
+    ASSERT_TRUE(got);
+    EXPECT_EQ(renderer.scaled.size(), 1u);
+    video.setScreenSize(std::nullopt);
+    ASSERT_EQ(presenter.shown.size(), 3u);
+    EXPECT_EQ(presenter.shown.back().overlay->width, width);
 }
 
 TEST_F(VideoTest, AFailedOpenLeavesTheSessionFailed)

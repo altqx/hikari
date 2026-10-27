@@ -39,8 +39,25 @@ template <typename F> bool eventually(F done)
 struct Renderer : SubtitleRendererPort {
     mutable std::mutex mutex;
     std::vector<std::int64_t> renderedAt;
+    std::vector<OverlaySize> sizes; // each render's, scaled or not
     std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
+    std::expected<OverlayFrame, RenderError> renderScaled(core::DocumentTime t, int w, int h, int vw, int vh) override
+    {
+        {
+            std::lock_guard lock(mutex);
+            sizes.push_back({w, h, vw, vh});
+        }
+        return draw(t, w, h);
+    }
     std::expected<OverlayFrame, RenderError> render(core::DocumentTime t, int w, int h) override
+    {
+        {
+            std::lock_guard lock(mutex);
+            sizes.push_back({w, h, w, h});
+        }
+        return draw(t, w, h);
+    }
+    std::expected<OverlayFrame, RenderError> draw(core::DocumentTime t, int w, int h)
     {
         std::lock_guard lock(mutex);
         renderedAt.push_back(t.microseconds());
@@ -58,6 +75,11 @@ struct Renderer : SubtitleRendererPort {
     {
         std::lock_guard lock(mutex);
         return renderedAt;
+    }
+    std::vector<OverlaySize> sizesDrawn() const
+    {
+        std::lock_guard lock(mutex);
+        return sizes;
     }
 };
 
@@ -256,6 +278,45 @@ TEST(PlaybackPipeline, TheNextFramesOverlayIsRenderedAhead)
     EXPECT_EQ(std::count(times.begin(), times.end(), 40'000), 1);
 }
 
+// SV1-screen-size-subtitles: with a screen size the overlays, the next
+// frame's too, are drawn at it; one made ahead at another size is not used.
+TEST(PlaybackPipeline, OverlaysAreDrawnAtTheScreenSize)
+{
+    Renderer renderer;
+    Queue queue;
+    std::vector<PlaybackPipeline::Output> got;
+    PlaybackPipeline pipeline(renderer, queue.post(), [&](PlaybackPipeline::Output o) { got.push_back(std::move(o)); });
+    pipeline.setSubtitles(1, true);
+    pipeline.setScreenSize(std::pair{8, 4});
+    pipeline.submit(input(0, 40'000));
+    ASSERT_TRUE(eventually([&] { return renderer.times().size() == 2; }));
+    EXPECT_EQ(renderer.sizesDrawn(), (std::vector<OverlaySize>{{8, 4, 4, 2}, {8, 4, 4, 2}}));
+    pipeline.submit(input(40'000, 80'000));
+    ASSERT_TRUE(eventually([&] { return pipeline.counters().aheadUsed == 1 && queue.size() == 1; }));
+    queue.drain();
+    ASSERT_TRUE(got.back().overlay);
+    EXPECT_EQ(got.back().overlay->width, 8);
+    // The screen changes with 80 ms made ahead at 8 x 4: drawn again at 12 x 6.
+    ASSERT_TRUE(eventually([&] { return renderer.times().size() == 3; }));
+    pipeline.setScreenSize(std::pair{12, 6});
+    pipeline.submit(input(80'000, 120'000));
+    ASSERT_TRUE(eventually([&] { return queue.size() == 1; }));
+    queue.drain();
+    EXPECT_EQ(pipeline.counters().aheadUsed, 1);
+    ASSERT_TRUE(got.back().overlay);
+    EXPECT_EQ(got.back().overlay->width, 12);
+    EXPECT_EQ(got.back().overlay->height, 6);
+    // None: back to the video's size, drawn by render().
+    ASSERT_TRUE(eventually([&] { return renderer.times().size() == 5; }));
+    pipeline.setScreenSize(std::nullopt);
+    pipeline.submit(input(120'000, 160'000));
+    ASSERT_TRUE(eventually([&] { return queue.size() == 1; }));
+    queue.drain();
+    ASSERT_TRUE(got.back().overlay);
+    EXPECT_EQ(got.back().overlay->width, 4);
+    EXPECT_EQ(renderer.sizesDrawn()[5], (OverlaySize{4, 2, 4, 2}));
+}
+
 TEST(PlaybackPipeline, AnOverlayRenderedAheadForOlderSubtitlesIsNotUsed)
 {
     Renderer renderer;
@@ -377,6 +438,20 @@ TEST(PlaybackPipeline, StoppingDropsWaitingWork)
     }
     queue.drain(); // the task outlived the pipeline: it does nothing
     EXPECT_EQ(shown, 0);
+}
+
+TEST(OverlaySize, FollowsTheScreenUpToEightK)
+{
+    EXPECT_EQ(overlaySizeFor(1920, 1080, std::nullopt), (OverlaySize{1920, 1080, 1920, 1080}));
+    EXPECT_FALSE(overlaySizeFor(1920, 1080, std::nullopt).scaled());
+    EXPECT_EQ(overlaySizeFor(1920, 1080, std::pair{3840, 2160}), (OverlaySize{3840, 2160, 1920, 1080}));
+    EXPECT_TRUE(overlaySizeFor(1920, 1080, std::pair{3840, 2160}).scaled());
+    EXPECT_FALSE(overlaySizeFor(1920, 1080, std::pair{1920, 1080}).scaled());
+    // Past 8K the shape is kept.
+    EXPECT_EQ(overlaySizeFor(1920, 1080, std::pair{15360, 8640}), (OverlaySize{7680, 4320, 1920, 1080}));
+    EXPECT_EQ(overlaySizeFor(640, 480, std::pair{10000, 1000}), (OverlaySize{7680, 768, 640, 480}));
+    // No screen yet: the video's.
+    EXPECT_EQ(overlaySizeFor(640, 480, std::pair{0, 0}), (OverlaySize{640, 480, 640, 480}));
 }
 
 TEST(OverlayBounds, CoverTheVisiblePixels)

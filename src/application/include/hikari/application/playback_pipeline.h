@@ -32,6 +32,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace hikari::application {
@@ -106,6 +107,9 @@ public:
     void submit(Input input); // any thread
     // The owner's subtitles after a prepare (serial > 0), or none.
     void setSubtitles(std::uint64_t serial, bool on);
+    // SV1-screen-size-subtitles: overlays drawn at the picture's size on
+    // screen, in device pixels (none: at the frame's size). Any thread.
+    void setScreenSize(std::optional<std::pair<int, int>> size);
     Counters counters() const;
     FramePool &pool() { return *m_pool; }
 
