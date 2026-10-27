@@ -18,6 +18,8 @@ target_sources(hikari_application PRIVATE karaoke_split.cpp include/hikari/appli
 target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/application/karaoke_tap.h)
 # KA5 (#280): vocal onsets for snapping syllable boundaries.
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
+# KA4 (#279): furigana reading suggestions and the furigana karaoke syntax.
+target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
 target_include_directories(hikari_application PUBLIC include)
 # V1: player frames off the GUI thread (latest wins, pooled buffers, the
 # overlay on a worker) and the Y'CbCr rows to BGRA the CPU paths share.

@@ -7,6 +7,8 @@
 #   the app-local MSVC runtime, from the Visual Studio redistributable folder
 #   Automation/automation (the staged tree with DependencyControl's modules)
 #   Dictionary/ (legacy's dictionaries, pinned by commit and SHA-256)
+#   Dictionary/unidic-lite/ (KA4: the furigana suggestions' UniDic 2.1.2)
+#   licenses/mecab/LICENSE, licenses/unidic/LICENSE (their BSD notices)
 #   Csri/VSFiltermod.dll, the prebuilt VSFilterMod release that
 #     HikariVsfilterMod.cmake pins (URL and SHA-256s); the only CSRI
 #     renderer the payload ships (xy-VSFilter was dropped, user 2026-10-14;
@@ -57,6 +59,9 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DWINDEPLOYQT=${_hikari_windeployqt}"
             "-DQMLDIR=${PROJECT_SOURCE_DIR}/src"
             "-DLICENSE=${PROJECT_SOURCE_DIR}/LICENSE"
+            "-DUNIDIC=${HIKARI_UNIDIC_DIR}"
+            "-DMECAB_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyright"
+            "-DUNIDIC_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/copyright"
             "-DDOWNLOADS=${CMAKE_BINARY_DIR}/payload-downloads"
             -P "${CMAKE_CURRENT_LIST_FILE}"
         DEPENDS hikarisub hikari_media_helper hikari_lua_helper hikari_automation_stage
@@ -67,7 +72,8 @@ endif()
 
 # --- script mode -------------------------------------------------------------
 cmake_minimum_required(VERSION 3.28)
-foreach(var STAGE APP HELPERS AUTOMATION CRT WINDEPLOYQT QMLDIR LICENSE DOWNLOADS)
+foreach(var STAGE APP HELPERS AUTOMATION CRT WINDEPLOYQT QMLDIR LICENSE DOWNLOADS UNIDIC MECAB_LICENSE
+        UNIDIC_LICENSE)
     if(NOT DEFINED ${var} OR "${${var}}" STREQUAL "")
         message(FATAL_ERROR "HikariPackageWindows: ${var} is required")
     endif()
@@ -139,6 +145,11 @@ endforeach()
 
 file(COPY ${CRT} DESTINATION "${STAGE}")
 file(COPY_FILE "${LICENSE}" "${STAGE}/LICENSE")
+# KA4 (#279): as the install rules (HikariInstall.cmake) lay them out.
+file(COPY "${UNIDIC}/" DESTINATION "${STAGE}/Dictionary/unidic-lite")
+file(MAKE_DIRECTORY "${STAGE}/licenses/mecab" "${STAGE}/licenses/unidic")
+file(COPY_FILE "${MECAB_LICENSE}" "${STAGE}/licenses/mecab/LICENSE")
+file(COPY_FILE "${UNIDIC_LICENSE}" "${STAGE}/licenses/unidic/LICENSE")
 
 # Qt: libraries, plugins, QML imports (scanned from every QML file under src)
 # and Qt's own translations. The compiler runtime is the step above; the QML
@@ -189,9 +200,12 @@ if(problems)
     message(FATAL_ERROR "HikariPackageWindows: unresolved imports:\n  ${text}")
 endif()
 
-# The payload's fixed members (installers SPEC 6.5; W2: the CSRI renderer).
+# The payload's fixed members (installers SPEC 6.5; W2: the CSRI renderer;
+# KA4: the furigana dictionary and the notices).
 foreach(required HikariSub.exe hikari-media-helper.exe hikari-lua-helper.exe LICENSE Dictionary/en_US.dic
-        Csri/VSFiltermod.dll)
+        Csri/VSFiltermod.dll Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin
+        Dictionary/unidic-lite/char.bin Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc
+        Dictionary/unidic-lite/mecabrc Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE)
     if(NOT required IN_LIST everything)
         message(FATAL_ERROR "HikariPackageWindows: the payload lacks ${required}")
     endif()

@@ -7,6 +7,8 @@
 #   <prefix>/Automation/automation/...    the bundled scripts and native modules
 #   <prefix>/Automation/{log,autosave,temp}
 #   <prefix>/Dictionary/                  the bundled spell-check dictionaries
+#   <prefix>/Dictionary/unidic-lite/      the furigana suggestions' MeCab dictionary
+#   <prefix>/licenses/                    the bundled libraries' and data's licences
 #   <prefix>/lib/ plugins/ qml/ translations/ qt.conf   (Qt's deploy API)
 #   <prefix>/LICENSE
 #
@@ -57,6 +59,14 @@ if(HIKARI_INSTALL_DICTIONARY_DIR)
     install(DIRECTORY "${HIKARI_INSTALL_DICTIONARY_DIR}/" DESTINATION Dictionary COMPONENT hikari_app
         FILES_MATCHING PATTERN "*.aff" PATTERN "*.dic")
 endif()
+
+# KA4 (#279): UniDic 2.1.2 for MeCab, with its licence texts. MeCab and
+# UniDic are BSD-licensed here, whose notice every binary copy carries.
+install(DIRECTORY "${HIKARI_UNIDIC_DIR}/" DESTINATION Dictionary/unidic-lite COMPONENT hikari_app)
+install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyright" DESTINATION licenses/mecab
+    RENAME LICENSE COMPONENT hikari_app)
+install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/copyright"
+    DESTINATION licenses/unidic RENAME LICENSE COMPONENT hikari_app)
 
 install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION . COMPONENT hikari_app)
 
