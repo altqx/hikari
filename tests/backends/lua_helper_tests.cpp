@@ -8,12 +8,15 @@
 #include "hikari/core/ass_load.h"
 
 #include <QCoreApplication>
+#include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <QElapsedTimer>
@@ -74,10 +77,10 @@ protected:
             new QCoreApplication(argc, argv);
     }
 
-    std::unique_ptr<LuaScriptHost> load(const QString &script, LuaScriptHost::ServiceHandler services = {})
+    std::unique_ptr<LuaScriptHost> load(const QString &script, LuaScriptHost::ServiceHandler services = {},
+                                        const QString &include = QStringLiteral(HIKARI_LUA_INCLUDE))
     {
-        auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script,
-                                                    QStringLiteral(HIKARI_LUA_INCLUDE));
+        auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script, include);
         host->setServiceHandler(std::move(services));
         QObject::connect(host.get(), &LuaScriptHost::logged, [this](const QString &t) { run.log << t; });
         QObject::connect(host.get(), &LuaScriptHost::progressChanged, [this](double p) { run.progress << p; });
@@ -101,12 +104,12 @@ protected:
         return -1;
     }
 
-    bool runToEnd(LuaScriptHost &host, const std::string &name)
+    bool runToEnd(LuaScriptHost &host, const std::string &name, int ms = 10'000)
     {
         run = {};
         if (!host.run(macro(host, name)))
             return false;
-        return waitFor([&] { return run.outcome.has_value(); });
+        return waitFor([&] { return run.outcome.has_value(); }, ms);
     }
 
     RunRecord run;
@@ -1443,12 +1446,9 @@ TEST_F(LuaHelper, MoonScriptMacrosLoadAndMapErrorLines)
 }
 
 // DependencyControl's first require in a fresh configuration runs its
-// update check, which fetches live third-party feeds; with them reachable,
-// DependencyControl's own UpdateFeed fails on the current Aegisub-Motion feed
-// ("attempt to index a nil value" in its template expansion), in any host and
-// at load or macro time alike (the check runs once per update interval).
-// The tests keep the updater off so what they observe does not depend on the
-// network or on those feeds (the legacy capture's check evidently reached none).
+// update check, which fetches live third-party feeds. The tests keep the
+// updater off so what they observe does not depend on the network or on
+// those feeds; DependencyControlInstallsAndUpdatesFromAFeed serves its own.
 void disableDependencyControlUpdater(const QString &automationDir)
 {
     QDir().mkpath(automationDir + QStringLiteral("/config"));
@@ -1558,6 +1558,158 @@ TEST_F(LuaHelper, DependencyControlLoadsWhileTheScriptLoads)
     EXPECT_GT(decodedWhileLoading, 0);
     ASSERT_TRUE(runToEnd(*host, "Show"));
     EXPECT_EQ(run.log, QStringList{"true,table,"});
+}
+
+// DC1: an update feed on the loopback, so DependencyControl's downloads need
+// no network. A GET answers the body published at its path, or 404.
+class FeedServer : public QObject {
+public:
+    FeedServer()
+    {
+        m_server.listen(QHostAddress::LocalHost);
+        connect(&m_server, &QTcpServer::newConnection, this, [this] {
+            while (QTcpSocket *socket = m_server.nextPendingConnection()) {
+                connect(socket, &QTcpSocket::readyRead, this, [this, socket] { answer(socket); });
+                connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
+            }
+        });
+    }
+
+    bool listening() const { return m_server.isListening(); }
+    QString url(const QString &path) const
+    {
+        return QStringLiteral("http://127.0.0.1:%1%2").arg(m_server.serverPort()).arg(path);
+    }
+
+    std::map<QString, QByteArray> files;
+
+private:
+    void answer(QTcpSocket *socket)
+    {
+        const QByteArray request = socket->property("request").toByteArray() + socket->readAll();
+        socket->setProperty("request", request);
+        if (!request.contains("\r\n\r\n"))
+            return;
+        const auto it = files.find(QString::fromLatin1(request.split(' ').value(1)));
+        const QByteArray body = it == files.end() ? QByteArray("not found") : it->second;
+        socket->write(QByteArray(it == files.end() ? "HTTP/1.1 404 Not Found" : "HTTP/1.1 200 OK") +
+                      "\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" +
+                      body);
+        socket->disconnectFromHost();
+    }
+
+    QTcpServer m_server;
+};
+
+// DC1: DependencyControl installs a module from its feed and updates it,
+// with the calls its Toolbox makes, into the user's folder of an installed
+// copy, which the host then searches.
+TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
+{
+    FeedServer server;
+    ASSERT_TRUE(server.listening());
+    const QString feed = server.url(QStringLiteral("/feed.json"));
+    const auto module = [&](const QString &version) {
+        return QStringLiteral("local DepCtrl = require(\"l0.DependencyControl\")\n"
+                              "local version = DepCtrl{name = \"Greeter\", version = \"%1\", "
+                              "moduleName = \"test.Greeter\", feed = \"%2\"}\n"
+                              "return version:register({version = version, greet = function() "
+                              "return \"hello %1\" end})\n")
+            .arg(version, feed)
+            .toUtf8();
+    };
+    const auto publish = [&](const QString &version) {
+        const QString path = QStringLiteral("/Greeter-%1.lua").arg(version);
+        server.files[path] = module(version);
+        const QJsonObject file{
+            {QStringLiteral("name"), QStringLiteral(".lua")},
+            {QStringLiteral("url"), server.url(path)},
+            {QStringLiteral("sha1"), QString::fromLatin1(QCryptographicHash::hash(module(version),
+                                                                                  QCryptographicHash::Sha1)
+                                                             .toHex())}};
+        const QJsonObject channel{{QStringLiteral("version"), version},
+                                  {QStringLiteral("released"), QStringLiteral("2026-10-27")},
+                                  {QStringLiteral("default"), true},
+                                  {QStringLiteral("files"), QJsonArray{file}}};
+        const QJsonObject greeter{{QStringLiteral("name"), QStringLiteral("Greeter")},
+                                  {QStringLiteral("author"), QStringLiteral("test")},
+                                  {QStringLiteral("channels"), QJsonObject{{QStringLiteral("stable"), channel}}}};
+        server.files[QStringLiteral("/feed.json")] =
+            QJsonDocument(QJsonObject{{QStringLiteral("dependencyControlFeedFormatVersion"), QStringLiteral("0.4.0")},
+                                      {QStringLiteral("name"), QStringLiteral("test feed")},
+                                      {QStringLiteral("modules"),
+                                       QJsonObject{{QStringLiteral("test.Greeter"), greeter}}}})
+                .toJson();
+    };
+
+    QTemporaryDir work;
+    ASSERT_TRUE(work.isValid());
+    const QString shipped = QDir(QStringLiteral(HIKARI_LUA_INCLUDE "/../..")).absolutePath();
+    const QString user = work.filePath(QStringLiteral("Automation"));
+    hikari::application::AutomationPathContext paths;
+    paths.automationDir = shipped.toStdString();
+    paths.userAutomationDir = user.toStdString();
+#ifdef _WIN32
+    paths.windows = true;
+#endif
+    const auto folders = hikari::application::automationFolders(paths.automationDir, paths.userAutomationDir,
+                                                                 paths.windows);
+    for (const auto &dir : folders.made)
+        QDir().mkpath(QDir::fromNativeSeparators(QString::fromStdString(dir)));
+    QStringList include;
+    for (const auto &dir : folders.include)
+        include << QString::fromStdString(dir);
+    // Loopback feeds are refused unless private hosts are allowed; an
+    // untrusted feed asks first; no update check of its own; every load of
+    // the feed fetches it again.
+    QDir().mkpath(user + QStringLiteral("/config"));
+    QFile config(user + QStringLiteral("/config/l0.DependencyControl.json"));
+    ASSERT_TRUE(config.open(QIODevice::WriteOnly));
+    config.write(QJsonDocument(
+                     QJsonObject{{QStringLiteral("config"),
+                                  QJsonObject{{QStringLiteral("updates"),
+                                               QJsonObject{{QStringLiteral("mode"), QStringLiteral("dependency-resolution")},
+                                                           {QStringLiteral("blockPrivateHosts"), false}}},
+                                              {QStringLiteral("feeds"),
+                                               QJsonObject{{QStringLiteral("trustedFeeds"), QJsonArray{feed}},
+                                                           {QStringLiteral("cacheMaxAge"), 0},
+                                                           {QStringLiteral("feedFetchTimeout"), 5}}}}}})
+                     .toJson());
+    config.close();
+    qputenv("HIKARI_TEST_FEED", feed.toUtf8());
+    qputenv("HIKARI_TEST_VERSION", "1.1.0");
+
+    publish(QStringLiteral("1.0.0"));
+    auto host = load(fixture("depctrl-feed.lua"),
+                     [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+                         if (r.service != hikari::application::HostService::DecodePath)
+                             return reply(hikari::application::HostServiceReply::unavailable());
+                         hikari::application::HostServiceReply out;
+                         out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+                         reply(out);
+                     },
+                     include.join(QLatin1Char('\n')));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    // Installed (status 1) into the user's lower-case include folder.
+    ASSERT_TRUE(runToEnd(*host, "Install", 60'000));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_FALSE(run.log.isEmpty());
+    EXPECT_EQ(run.log.last(), QStringLiteral("1,1.0.0")) << run.log.join(QLatin1Char('\n')).toStdString();
+    QFile installed(user + QStringLiteral("/automation/include/test/Greeter.lua"));
+    ASSERT_TRUE(installed.open(QIODevice::ReadOnly));
+    EXPECT_EQ(installed.readAll(), module(QStringLiteral("1.0.0")));
+    installed.close();
+
+    // The feed moves on; the update replaces the file and the loaded module.
+    publish(QStringLiteral("1.1.0"));
+    ASSERT_TRUE(runToEnd(*host, "Update", 60'000));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_FALSE(run.log.isEmpty());
+    EXPECT_EQ(run.log.last(), QStringLiteral("1,1.1.0,hello 1.1.0")) << run.log.join(QLatin1Char('\n')).toStdString();
+    ASSERT_TRUE(installed.open(QIODevice::ReadOnly));
+    EXPECT_EQ(installed.readAll(), module(QStringLiteral("1.1.0")));
+    qunsetenv("HIKARI_TEST_FEED");
+    qunsetenv("HIKARI_TEST_VERSION");
 }
 
 // L6: the LuaJIT build as the legacy Windows build had it, on every platform
