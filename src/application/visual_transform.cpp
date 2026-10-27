@@ -1314,10 +1314,12 @@ PointF drawArrow(Overlay &out, PointF from, PointF to, int diff)
     const PointF pdiff{from.x - to.x, from.y - to.y};
     const float len = std::sqrt((pdiff.x * pdiff.x) + (pdiff.y * pdiff.y));
     const PointF diffUnits = (len == 0) ? PointF{0, 0} : PointF{pdiff.x / len, pdiff.y / len};
-    const float k = static_cast<float>(12 + diff);
+    // SV1-hidpi-tool-sizes: the head's size and `diff` in legacy's pixels.
+    const float u = out.unit;
+    const float k = static_cast<float>(12 + diff) * u;
     const PointF pend{to.x + diffUnits.x * k, to.y + diffUnits.y * k};
-    const PointF halfbase{-diffUnits.y * 5.f, diffUnits.x * 5.f};
-    out.polygons.push_back({{{pend.x - diffUnits.x * 12, pend.y - diffUnits.y * 12},
+    const PointF halfbase{-diffUnits.y * 5.f * u, diffUnits.x * 5.f * u};
+    out.polygons.push_back({{{pend.x - diffUnits.x * 12 * u, pend.y - diffUnits.y * 12 * u},
                              {pend.x + halfbase.x, pend.y + halfbase.y},
                              {pend.x - halfbase.x, pend.y - halfbase.y}},
                             kHandleFill,
@@ -1377,6 +1379,7 @@ std::optional<std::pair<PointF, PointF>> lineBox(const Context &context, const c
 void drawRect(Overlay &out, PointF pos, bool selected, float size)
 {
     // Visuals::DrawRect (Visuals.cpp:357-374).
+    size *= out.unit; // SV1-hidpi-tool-sizes
     out.polygons.push_back({{{pos.x - size, pos.y - size},
                              {pos.x + size, pos.y - size},
                              {pos.x + size, pos.y + size},

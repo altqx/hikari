@@ -80,6 +80,9 @@ public:
     std::expected<std::uint64_t, application::RenderError> prepare(application::RenderSnapshot snapshot) override;
     std::expected<application::OverlayFrame, application::RenderError> render(core::DocumentTime time, int width,
                                                                              int height) override;
+    // SV1: libass draws at width x height; a CSRI renderer at the video's size.
+    std::expected<application::OverlayFrame, application::RenderError>
+    renderScaled(core::DocumentTime time, int width, int height, int videoWidth, int videoHeight) override;
 
 private:
     std::shared_ptr<CsriRenderers> csriRenderers();

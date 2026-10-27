@@ -416,12 +416,12 @@ int RectangleClipTool::hitTest(PointF pos, bool diff, const VisualHost &host)
     for (int i = 0; i < 2; i++) {
         const int pointx = legacy::toInt(((m_corner[i].x / coeffW) - v.zoomMove().x) * v.zoomScale().x);
         const int pointy = legacy::toInt(((m_corner[i].y / coeffH) - v.zoomMove().y) * v.zoomScale().y);
-        if (std::fabs(pos.x - pointx) < 5) {
+        if (std::fabs(pos.x - pointx) < 5 * unitOf(host)) { // SV1-hidpi-tool-sizes
             if (diff)
                 m_diffs.x = (pointx)-pos.x;
             resultX |= (i + 1);
         }
-        if (std::fabs(pos.y - pointy) < 5) {
+        if (std::fabs(pos.y - pointy) < 5 * unitOf(host)) {
             if (diff)
                 m_diffs.y = (pointy)-pos.y;
             resultY |= ((i + 1) * 4);
@@ -648,6 +648,7 @@ Overlay RectangleClipTool::overlay(const VisualHost &host) const
     // ClipRect::DrawVisual (VisualClipRect.cpp:45-118): the darkened outside
     // (inside for \iclip) and the one-pixel outline.
     Overlay out;
+    out.unit = unitOf(host);
     if (!m_showClip)
         return out;
     const VideoView &v = host.view();
@@ -738,6 +739,7 @@ VectorFrame VectorClipTool::frame(const VisualHost &host) const
 {
     const VideoView &v = host.view();
     VectorFrame f;
+    f.unit = unitOf(host);
     f.coeffW = v.coeffW();
     f.coeffH = v.coeffH();
     f.coeffW /= m_scale; // SetCurVisual: coeffW /= scale.x
@@ -909,6 +911,7 @@ bool VectorClipTool::key(const Key &event, VisualHost &host)
 Overlay VectorClipTool::overlay(const VisualHost &host) const
 {
     Overlay out;
+    out.unit = unitOf(host);
     m_editor.draw(out, frame(host));
     return out;
 }

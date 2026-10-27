@@ -30,6 +30,10 @@ class StyleManagerController : public QObject {
     Q_PROPERTY(QStringList documentStyles READ documentStyles NOTIFY changed)
     Q_PROPERTY(bool available READ available NOTIFY changed) // the editing target has ASS Styles
     Q_PROPERTY(int previewKey READ previewKey NOTIFY previewChanged)
+    // SV1: the device pixel ratio the preview was drawn at.
+    Q_PROPERTY(qreal previewScale READ previewScale NOTIFY previewChanged)
+    // SV1: whether the preview takes the screen's pixels; open windows draw again when it changes.
+    Q_PROPERTY(bool previewAtScreenSize READ previewAtScreenSize NOTIFY previewAtScreenSizeChanged)
 public:
     struct Hooks {
         std::function<application::EditSession *()> target;                  // the editing target
@@ -54,6 +58,7 @@ public:
     QStringList documentStyles() const;
     bool available() const;
     int previewKey() const { return m_previewKey; }
+    qreal previewScale() const { return m_preview.devicePixelRatio(); }
     QImage preview() const { return m_preview; }
     const application::StyleCatalogs &catalogStore() const { return m_catalogs; }
 
@@ -140,12 +145,24 @@ public:
     // toast's Details)}; {} without an ASS Document.
     Q_INVOKABLE QVariantMap deleteUnusedStyles();
 
-    // StylePreview: the editor's values over the checkered background.
-    Q_INVOKABLE void renderPreview(const QVariantMap &values, int width, int height, const QString &text);
+    // StylePreview: the editor's values over the checkered background;
+    // `scale`, the window's device pixel ratio (SV1: used with Screen size).
+    Q_INVOKABLE void renderPreview(const QVariantMap &values, int width, int height, const QString &text,
+                                   qreal scale = 1);
+    // SV1-screen-size-subtitles: previews drawn at the screen's pixels.
+    void setPreviewAtScreenSize(bool on)
+    {
+        if (on == m_atScreenSize)
+            return;
+        m_atScreenSize = on;
+        emit previewAtScreenSizeChanged();
+    }
+    bool previewAtScreenSize() const { return m_atScreenSize; }
 
 signals:
     void changed();
     void previewChanged();
+    void previewAtScreenSizeChanged();
     void targetEdited(bool switched);
     // TP1: the Styles panel reads panelRows() again; `retargeted` when the
     // editing target is another Document than last time.
@@ -177,15 +194,18 @@ private:
     std::optional<application::DocumentId> m_lastTarget;
     backends::LibassRenderer m_renderer;
     QImage m_preview;
+    bool m_atScreenSize = false;
     int m_previewKey = 0;
     bool m_available = false; // as last notified by documentEdited
     std::optional<application::DocumentId> m_notifiedTarget; // ditto
 };
 
 // StylePreview: `style` at alignment 5 over the checkered background, the
-// size of the preview, rendered by libass with `fonts` in memory.
+// size of the preview, rendered by libass with `fonts` in memory. SV1: a
+// `scale` above 1 draws it with that many pixels per unit of the preview's
+// size (the image's device pixel ratio), laid out as at scale 1.
 QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues style, int width, int height,
-                          const QString &text, std::vector<application::FontLease> fonts = {});
+                          const QString &text, std::vector<application::FontLease> fonts = {}, qreal scale = 1);
 
 // "image://stylepreview/<key>": the controller's latest preview.
 void attachStylePreview(QQmlEngine &engine, StyleManagerController &controller);

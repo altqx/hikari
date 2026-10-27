@@ -158,7 +158,8 @@ public:
     // planes converted on the CPU.
     std::shared_ptr<const application::IndexedFrame> bgraLease;
     std::shared_ptr<const application::OverlayFrame> overlayLease; // null: no overlay drawn
-    QRect overlayRegion; // the frame pixels the overlay texture holds
+    QRect overlayRegion; // the overlay pixels its texture holds
+    QSizeF overlayScale{1, 1}; // frame pixels per overlay pixel (SV1: an overlay drawn at screen size)
     bool frameAttached = true;
     bool ycbcrAttached = false;
     bool overlayAttached = false;
@@ -209,10 +210,11 @@ QString layoutError(const application::Presentation &p)
         return QStringLiteral("frame layout does not match its buffer");
     }
     if (p.overlay && !p.overlay->empty) {
+        // SV1: drawn at the frame's size or at the picture's size on screen.
         const auto &o = *p.overlay;
-        if (o.width != f->width || o.height != f->height || o.stride < o.width * 4 ||
+        if (o.width <= 0 || o.height <= 0 || o.stride < o.width * 4 ||
             o.pixels.size() < static_cast<std::size_t>(o.stride) * static_cast<std::size_t>(o.height))
-            return QStringLiteral("overlay layout does not match the frame");
+            return QStringLiteral("overlay layout does not match its buffer");
     }
     if (!(p.transform.pixelAspect > 0))
         return QStringLiteral("pixel aspect must be positive");
@@ -262,7 +264,10 @@ void VideoPresenter::present(application::Presentation presentation, Done done)
         m_renderCost = std::move(cost);
         emit renderCostChanged();
     }
+    m_frameSize = QSize(presentation.frame->width, presentation.frame->height);
+    m_pixelAspect = presentation.transform.pixelAspect;
     m_pending = Submission{std::move(presentation), std::move(done), m_surfaceEpoch.load()};
+    updateScreenSize();
     update();
 }
 
@@ -280,6 +285,7 @@ void VideoPresenter::setVideoRect(const QRectF &rect)
         return;
     m_videoRect = rect;
     emit placementChanged();
+    updateScreenSize();
     update(); // placement only
 }
 
@@ -289,6 +295,7 @@ void VideoPresenter::setSourceRect(const QRectF &rect)
         return;
     m_sourceRect = rect;
     emit placementChanged();
+    updateScreenSize();
     update();
 }
 
@@ -296,13 +303,36 @@ QRectF VideoPresenter::frameRect() const
 {
     if (!m_shown.frame)
         return {};
+    return placement(QSizeF(m_shown.frame->width, m_shown.frame->height), m_shown.transform.pixelAspect);
+}
+
+QRectF VideoPresenter::placement(QSizeF frame, double pixelAspect) const
+{
     if (!m_videoRect.isEmpty())
         return m_videoRect;
-    const double displayWidth = m_shown.frame->width * m_shown.transform.pixelAspect;
-    const double displayHeight = m_shown.frame->height;
+    const double displayWidth = frame.width() * pixelAspect;
+    const double displayHeight = frame.height();
     const double scale = std::min(width() / displayWidth, height() / displayHeight);
     const QSizeF size(displayWidth * scale, displayHeight * scale);
     return QRectF(QPointF((width() - size.width()) / 2, (height() - size.height()) / 2), size);
+}
+
+void VideoPresenter::updateScreenSize()
+{
+    QSize size;
+    if (!m_frameSize.isEmpty()) {
+        // The shown part's rectangle, widened to the whole frame (T1's zoom).
+        const QRectF target = placement(QSizeF(m_frameSize), m_pixelAspect);
+        const QRectF source = m_sourceRect.isEmpty() ? QRectF(QPointF(), QSizeF(m_frameSize)) : m_sourceRect;
+        const double dpr = window() ? window()->effectiveDevicePixelRatio() : 1.0;
+        if (!target.isEmpty() && !source.isEmpty())
+            size = QSize(qRound(target.width() * m_frameSize.width() / source.width() * dpr),
+                         qRound(target.height() * m_frameSize.height() / source.height() * dpr));
+    }
+    if (size == m_screenSize)
+        return;
+    m_screenSize = size;
+    emit screenSizeChanged();
 }
 
 void VideoPresenter::itemChange(ItemChange change, const ItemChangeData &value)
@@ -312,6 +342,9 @@ void VideoPresenter::itemChange(ItemChange change, const ItemChangeData &value)
         attachWindow(value.window);
     }
     QQuickItem::itemChange(change, value);
+    // V5: fullscreen moves it to another window, maybe on a screen of another scale.
+    if (change == ItemSceneChange || change == ItemDevicePixelRatioHasChanged)
+        updateScreenSize();
 }
 
 void VideoPresenter::attachWindow(QQuickWindow *window)
@@ -330,6 +363,7 @@ void VideoPresenter::attachWindow(QQuickWindow *window)
 void VideoPresenter::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     QQuickItem::geometryChange(newGeometry, oldGeometry);
+    updateScreenSize();
     update(); // placement only; nothing is uploaded again
 }
 
@@ -488,6 +522,7 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
                 node->overlay->markDirty(QSGNode::DirtyMaterial);
                 node->overlayRegion = QRect(QPoint(0, 0), size);
                 node->overlayLease = overlay;
+                node->overlayScale = {double(m_shown.frame->width) / o.width, double(m_shown.frame->height) / o.height};
             } else {
                 // Only the part with visible pixels becomes an image.
                 const QRect region = padded(*bounds, size);
@@ -504,6 +539,7 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
                 node->overlay->setTexture(texture);
                 node->overlayRegion = region;
                 node->overlayLease = overlay;
+                node->overlayScale = {double(m_shown.frame->width) / o.width, double(m_shown.frame->height) / o.height};
                 std::lock_guard lock(m_stats->mutex);
                 ++m_stats->overlayUploads;
                 m_stats->lastOverlayUpload = region;
@@ -522,15 +558,20 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
         node->frame->setSourceRect(source);
     }
     // The overlay's region of the frame, where the shown part of the frame covers it.
+    const QSizeF k = node->overlayScale;
+    const QRect r = node->overlayRegion;
+    const QRectF region(r.x() * k.width(), r.y() * k.height(), r.width() * k.width(), r.height() * k.height());
     QRectF visible;
     if (node->overlayLease && source.width() > 0 && source.height() > 0)
-        visible = QRectF(node->overlayRegion).intersected(source);
+        visible = region.intersected(source);
     if (!visible.isEmpty()) {
         const double sx = target.width() / source.width(), sy = target.height() / source.height();
         node->overlay->setRect(QRectF(target.x() + (visible.x() - source.x()) * sx,
                                       target.y() + (visible.y() - source.y()) * sy, visible.width() * sx,
                                       visible.height() * sy));
-        node->overlay->setSourceRect(visible.translated(-QPointF(node->overlayRegion.topLeft())));
+        // In the texture's pixels (the overlay's, from the region's corner).
+        node->overlay->setSourceRect(QRectF((visible.x() - region.x()) / k.width(), (visible.y() - region.y()) / k.height(),
+                                            visible.width() / k.width(), visible.height() / k.height()));
         if (!node->overlayAttached) {
             node->appendChildNode(node->overlay);
             node->overlayAttached = true;

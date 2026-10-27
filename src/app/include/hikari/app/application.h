@@ -1114,6 +1114,7 @@ private:
     // The Video panel follows the editing target: its association when the
     // target changes, its committed content and its active Line.
     void refreshVideo();
+    void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
     void newDocument();
     // P9
