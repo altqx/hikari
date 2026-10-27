@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
+#include <variant>
 
 namespace hikari::application {
 
@@ -48,6 +50,22 @@ OptionsState gettingStartedState(const Settings &live, const OptionsLists &lists
             state.emplace(id, copy.value(id));
     }
     return state;
+}
+
+std::set<std::string, std::less<>> gettingStartedPageSettings(const OptionsState &pages)
+{
+    std::set<std::string, std::less<>> out;
+    for (const std::string_view id : kSettings) {
+        const auto it = pages.find(id);
+        if (it == pages.end())
+            continue;
+        if (const auto *index = std::get_if<std::int64_t>(&it->second); index && *index < 0)
+            continue;
+        out.emplace(id);
+        if (id == "audio.outputDevice")
+            out.emplace("audio.outputDeviceName");
+    }
+    return out;
 }
 
 } // namespace hikari::application

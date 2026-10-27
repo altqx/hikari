@@ -17147,6 +17147,64 @@ private slots:
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Verdana"));
     }
 
+    // Following the system, the Look page's accents are those of the side
+    // shown (a dark stored theme on a light system: the light accent), as
+    // Settings › Appearance has them.
+    void gettingStartedAccentIsTheShownThemes()
+    {
+        const LegacyHere none({});
+        auto restore = qScopeGuard([] { ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown); });
+        auto *store = application->settingsStore();
+        store->setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
+        store->setValue(QStringLiteral("appearance.followSystem"), true);
+        ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
+        QTRY_COMPARE(ui::theme::codeName(ui::theme::current().code), QStringLiteral("light"));
+        QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        setupNext(); // Look
+        QVERIFY(setupItem("gettingStartedTheme_light")->property("checked").toBool());
+        const QString dark = store->text("appearance.darkAccent");
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedAccent_blue"), "click"));
+        QCOMPARE(setupValues().value(QStringLiteral("appearance.lightAccent")).toString(), QStringLiteral("blue"));
+        QCOMPARE(setupValues().value(QStringLiteral("appearance.darkAccent")).toString(), dark);
+        while (setupPage() != u"files")
+            setupNext();
+        setupNext(); // Finish
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        QCOMPARE(store->text("appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(store->text("appearance.darkAccent"), dark);
+        QVERIFY(store->boolean("appearance.followSystem"));
+    }
+
+    // A legacy file that is not UTF-8 is read once its encoding is chosen on
+    // the Import page, as Import legacy settings asks.
+    void gettingStartedAsksTheEncodingOfALegacyFile()
+    {
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        const LegacyHere legacy(config + "GRID_FONT=Caf\xe9\r\n");
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        restartWithSpelling(home.path(), false, {}, true);
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        setupNext(); // Import
+        auto &importer = application->settingsImport();
+        QVERIFY(importer.ambiguousEncoding());
+        QVERIFY(!importer.chosen().contains("setting:grid.font"));
+        auto *encoding = setupItem("gettingStartedInterpretation");
+        QVERIFY(encoding->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(encoding, "activated", Q_ARG(int, 1)));
+        QCOMPARE(importer.interpretation(), 1);
+        QVERIFY(importer.chosen().contains("setting:grid.font"));
+        while (setupPage() != u"files")
+            setupNext();
+        setupNext(); // Finish
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        restartWithSpelling(home.path(), false, {}, true);
+        QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Caf\u00e9"));
+    }
+
     // Every page in the four themes, written to HIKARI_SURFACE_SHOT_DIR when
     // it is set (fr1-<n>-<page>-<theme>.png), with a legacy installation so
     // the Import page shows.

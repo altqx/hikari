@@ -100,3 +100,26 @@ TEST(GettingStarted, WhatTheSettingsWindowDoesNotOfferIsLeftOut)
     EXPECT_EQ(state.size(), gettingStartedSettings().size() - 1);
     EXPECT_EQ(std::get<std::int64_t>(gettingStartedState(live, lists(), imported).at("video.subtitleProvider")), 1);
 }
+
+TEST(GettingStarted, AChoiceThePagesCannotShowStaysTheImports)
+{
+    // The legacy dictionary is imported with its files: not installed yet,
+    // the pages show no choice (-1) and the import keeps its language.
+    MemorySettingsStorage storage;
+    Settings live(storage);
+    const std::map<std::string, SettingValue, std::less<>> imported{
+        {"editor.dictionaryLanguage", std::string("de_DE")}, {"autosave.maxFiles", std::int64_t{10}}};
+    const auto state = gettingStartedState(live, lists(), imported);
+    EXPECT_EQ(std::get<std::int64_t>(state.at("editor.dictionaryLanguage")), -1);
+    const auto pages = gettingStartedPageSettings(state);
+    EXPECT_FALSE(pages.contains("editor.dictionaryLanguage"));
+    EXPECT_TRUE(pages.contains("autosave.maxFiles"));
+    EXPECT_TRUE(pages.contains("appearance.theme"));
+    // The device's name goes with its id.
+    EXPECT_TRUE(pages.contains("audio.outputDevice"));
+    EXPECT_TRUE(pages.contains("audio.outputDeviceName"));
+    // An installed one is a page value: the page's choice wins.
+    auto chosen = state;
+    chosen["editor.dictionaryLanguage"] = std::int64_t{2};
+    EXPECT_TRUE(gettingStartedPageSettings(chosen).contains("editor.dictionaryLanguage"));
+}

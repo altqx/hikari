@@ -6008,14 +6008,8 @@ bool Application::finishGettingStarted(const QVariantMap &values, bool import)
     // The import first: when it cannot be staged (the legacy files changed,
     // staging failed) nothing is written and the window stays open with the
     // importer's status.
-    if (import) {
-        std::set<std::string, std::less<>> pages;
-        for (const auto id : application::gettingStartedSettings())
-            pages.emplace(id);
-        pages.emplace("audio.outputDeviceName");
-        if (!m_settingsImport->importChosenBut(pages))
-            return false;
-    }
+    if (import && !m_settingsImport->importChosenBut(application::gettingStartedPageSettings(fromVariant(values))))
+        return false;
     // The stored language first: Finish's own switch (settingChanged)
     // happens only when the language changes.
     endLanguagePreview();

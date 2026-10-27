@@ -10,6 +10,7 @@
 
 #include <functional>
 #include <map>
+#include <set>
 #include <span>
 #include <string>
 #include <string_view>
@@ -25,5 +26,11 @@ std::span<const std::string_view> gettingStartedSettings();
 // read.
 OptionsState gettingStartedState(const Settings &live, const OptionsLists &lists,
                                  const std::map<std::string, SettingValue, std::less<>> &imported);
+
+// The settings Finish leaves out of an import because the pages set them
+// (the device's name goes with its id). A choice the pages cannot show
+// (index -1: an imported dictionary that is not installed until the import
+// takes effect) is not a page value and stays the import's.
+std::set<std::string, std::less<>> gettingStartedPageSettings(const OptionsState &pages);
 
 } // namespace hikari::application

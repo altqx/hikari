@@ -144,8 +144,10 @@ DialogWindow {
         skipped()
     }
 
-    // The staged theme's roles (Theme.rolesOf), its dark and high contrast.
-    readonly property string stagedTheme: values["appearance.theme"] ?? Theme.code
+    // The theme shown (the pages' values previewed; following the system,
+    // the system's side), its dark and high contrast: the accent the user
+    // picks is the one for what they see (as Settings › Appearance does).
+    readonly property string stagedTheme: Theme.code
     readonly property var stagedThemeInfo: Theme.themes().find(t => t.code === stagedTheme) ?? ({dark: Theme.dark, highContrast: Theme.highContrast})
 
     // A page: the title and the explanation centred, its controls, where
@@ -588,6 +590,26 @@ DialogWindow {
                         }
                     }
                 }
+                // As Import legacy settings asks: files that are not UTF-8
+                // stay unresolved until their encoding is chosen.
+                RowLayout {
+                    id: encodingRow
+                    visible: setup.importing && (setup.importer.ambiguousEncoding || setup.importer.interpretation > 0)
+                    spacing: 8
+                    Label { text: qsTranslate("HikariSub.SettingsImport", "Files that are not UTF-8 are read as") }
+                    ComboBox {
+                        objectName: "gettingStartedInterpretation"
+                        Layout.preferredWidth: 200
+                        model: [qsTranslate("HikariSub.SettingsImport", "Choose..."),
+                                qsTranslate("HikariSub.SettingsImport", "Latin-1 (ISO 8859-1)"),
+                                qsTranslate("HikariSub.SettingsImport", "Windows-1252")]
+                        currentIndex: setup.importer.interpretation
+                        onActivated: index => {
+                            setup.importer.interpretation = index
+                            review.reset()
+                        }
+                    }
+                }
                 SettingsImportReview {
                     id: review
                     objectName: "gettingStartedReview"
@@ -597,7 +619,8 @@ DialogWindow {
                     Layout.fillWidth: true
                     // The rest of the page, so its buttons stay above the Later line.
                     Layout.preferredHeight: Math.max(140, importPage.height - importChoices.height - 16
-                                                     - (setup.importProblem.length > 0 ? importProblemRow.height + 16 : 0))
+                                                     - (importProblemRow.visible ? importProblemRow.height + 16 : 0)
+                                                     - (encodingRow.visible ? encodingRow.height + 16 : 0))
                 }
             }
 
