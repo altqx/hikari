@@ -856,6 +856,29 @@ private slots:
         QCOMPARE(std::get<bool>(result->values[2]), true);
     }
 
+    // A label keeps its line breaks, as legacy's wxStaticText did:
+    // DependencyControl's trust prompt (its text, the feed, the question on
+    // their own lines) is narrower than a 1280 px screen (#392).
+    void labelsKeepTheirLineBreaks()
+    {
+        DialogRequest request;
+        request.controls = {DialogControl{
+            .kind = "label",
+            .name = "l",
+            .label = "The installation of module '(Almost) Functional Suite' can only be satisfied from a feed "
+                     "DependencyControl doesn't trust:\nhttps://raw.githubusercontent.com/TypesettingTools/Functional/"
+                     "master/DependencyControl.json\n\nTrust this feed and proceed?"}};
+        request.buttons = {"Cancel", "Trust this time", "Always trust this feed"};
+        request.buttonIds = {"cancel", "", ""};
+        std::optional<DialogResult> result;
+        showDialog(request, result);
+        QQuickItem *label = controlItem(0);
+        QTRY_COMPARE(label->property("lineCount").toInt(), 4);
+        QVERIFY2(window->width() < 1280, qPrintable(QString::number(window->width())));
+        window->close();
+        QTRY_VERIFY(result.has_value());
+    }
+
     // The window is resizable: the columns of an edit grow, a label's do
     // not; a textbox's row takes the extra height. Taller than the screen's
     // free area, it is capped: the grid scrolls (the focused control comes
