@@ -1762,6 +1762,10 @@ TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
     ASSERT_TRUE(installed.open(QIODevice::ReadOnly));
     EXPECT_EQ(installed.readAll(), module(QStringLiteral("1.0.0")));
     installed.close();
+    // A feed a script builds itself, without FeedLoader's cache, loads too.
+    ASSERT_TRUE(runToEnd(*host, "Direct", 60'000));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(run.log.size() - 1), QStringLiteral("test feed")) << run.log.join(QLatin1Char('\n')).toStdString();
 
     // The feed moves on; the update replaces the file and the loaded module.
     publish(QStringLiteral("1.1.0"));

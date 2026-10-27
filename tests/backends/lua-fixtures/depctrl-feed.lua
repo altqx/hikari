@@ -1,6 +1,7 @@
 -- DC1 fixture: DependencyControl installs a module from a feed and updates
 -- it, with the calls its Toolbox makes. The feed's URL, the version to
 -- update to and a feed to add to the update come from the environment.
+-- Direct loads the feed through an UpdateFeed built without FeedLoader.
 script_name = "DependencyControl feed"
 script_namespace = "test.DepCtrlFeed"
 
@@ -25,4 +26,10 @@ end)
 aegisub.register_macro("Update", "", function()
     local result = run(require("test.Greeter").version, os.getenv("HIKARI_TEST_VERSION"))
     aegisub.log("%s,%s", result, require("test.Greeter").greet())
+end)
+
+aegisub.register_macro("Direct", "", function()
+    local feed = DepCtrl.UpdateFeed(os.getenv("HIKARI_TEST_FEED"), false, nil, {blockPrivateHosts = false})
+    local data, err = feed:ensureLoaded()
+    aegisub.log("%s", data and data.name or tostring(err))
 end)

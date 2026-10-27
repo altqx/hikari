@@ -389,7 +389,8 @@ class UpdateFeed
     @logger\trace msgs.trace.downloaded, @fileName
     result, loadErr = @loadFile @fileName, expansionMode
     -- persist the freshly fetched feed to the on-disk cache (best-effort; a failure just skips caching)
-    if result and @_url
+    -- HikariSub (DC1): only FeedLoader injects a cache; a feed built directly fetches without one
+    if result and @_url and @config.cache
       rawJson = fileOps.readFile @fileName
       if rawJson
         cacheMeta = @config.cache\put @_url, rawJson, @data.name
@@ -439,7 +440,8 @@ class UpdateFeed
     if @_url
       -- the feed cache serves the unexpanded data from its in-memory L1, else the on-disk snapshot.
       -- expand copies it into @data for the requested mode
-      unexpandedData, meta, fresh = @config.cache\get @_url
+      local unexpandedData, meta, fresh
+      unexpandedData, meta, fresh = @config.cache\get @_url if @config.cache
       if unexpandedData and fresh
         @unexpandedData = unexpandedData
         @lastFetchedAt = meta.cachedAt

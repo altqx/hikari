@@ -35,13 +35,16 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
   substitutes into `##__X_VERSION__##` placeholders.
 - DependencyControl's own files are the v0.9.1 release. The legacy package had
   mixed its 0.6.4 core with newer modules, which broke its feeds
-  (DC1-depctrl-release). Nine fixes are marked `HikariSub (DC1)`: the
+  (DC1-depctrl-release). Twelve fixes are marked `HikariSub (DC1)`: the
   Toolbox releases the updater lock after Install and Update Script, its log
   level field starts at 2 (lower levels make ordinary messages raise), and
-  Package Source Configuration writes into the reloaded config;
+  Package Source Configuration writes into the reloaded config and clears
+  the override feed when another kind is chosen;
   `ConfigHandler.getSerializableCopy` keeps a table referenced twice, a
-  save keeps another writer's keys on the next save, and a schema migration
-  rereads and writes the file under one lock;
+  save keeps another writer's keys on the next save, a schema migration
+  rereads and writes the file under one lock, and a corrupted file is set
+  aside under the lock it was read with; an `UpdateFeed` built without
+  `FeedLoader` loads without a cache;
   `DependencyControl.ConfigHandler` is the class of what `getConfigHandler`
   returns (`ConfigView`), which scripts written for 0.6 compare against; and
   an installed package updates only from its own feeds, and a missing one

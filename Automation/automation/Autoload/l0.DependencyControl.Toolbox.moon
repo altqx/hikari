@@ -1117,7 +1117,9 @@ sourceConfig = ->
 
     -- HikariSub (DC1): the getConfig reloads above replaced the section's tables, so write into its live entry
     pkg = pkg.namespace and sectionConfig.c[pkg.namespace] or pkg
-    pkg.userFeed, pkg.configuredSource = state.userFeed, configuredSource
+    -- HikariSub (DC1): an override feed is exclusive in resolution, so another kind clears it
+    userFeed = state.kind == SourceFeedKind.UserFeed and state.userFeed or nil
+    pkg.userFeed, pkg.configuredSource = userFeed, configuredSource
     sectionConfig\save!
 
     logger\log msgs.sourceConfig.saved, pkg.name or pkg.namespace

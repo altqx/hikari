@@ -174,21 +174,23 @@ class ConfigHandler
     data = handle\read "*a"
     handle\close!
 
-    @lock\release! if useLock
-
     -- dkjson.decode returns nil + an error message (it doesn't raise) when the file can't be parsed
     res, _, decodeErr = dkjson.decode data
     unless res
       -- JSON parse error usually points to a corrupted config file
       -- Rename the broken file to allow generating a new one
       -- so the user can continue their work
+      -- HikariSub (DC1): still under the read's lock, so a valid config another helper saved since isn't removed
       @logger\debug msgs.readFile.jsonDecodeError, decodeErr
       backup = @filePath .. ".corrupted"
       fileOps.copy @filePath, backup
       fileOps.remove @filePath, false, true
+      @lock\release! if useLock
 
       @logger\warn msgs.readFile.configCorrupted, backup
       return false, msgs.readFile.configCorrupted\format backup
+
+    @lock\release! if useLock
 
     if "table" != type res
       return nil, msgs.readFile.badJsonRoot\format type res
