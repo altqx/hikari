@@ -962,6 +962,17 @@ TEST(KanjiTimer, ALinesReadingThatSpellsNoneOfItsKanaStaysWhole)
     EXPECT_EQ(s(apart.pending()[0].second), "{\\k20}愛|あいお{\\k20}を君|きみ");
 }
 
+TEST(KanjiTimer, AWholeBaseReadingJoinsTheRunItIsGroupedWith)
+{
+    auto timer = furiganaTimer("{\\k20}ai{\\k40}jouo", "{\\k20}愛|あい{\\k40}情を|じょうお");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.growSyllables());
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k60}愛情を|あいじょうお");
+}
+
 TEST(KanjiTimer, AReadingOverNoKanjiIsKeptToo)
 {
     const auto read = kanjiText(u("{\\k40}きみ|キミ{\\k30}の"));

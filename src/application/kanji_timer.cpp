@@ -748,8 +748,8 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
 {
     std::vector<KanjiReading> out;
     const KanjiTyped fitted = fitTyped(kanji, runsOver(kanji, groups), typed);
-    auto entry = fitted.begin(), whole = fitted.end(); // (whole: one over kanji and kana given out)
-    std::size_t syllable = 0, character = 0, word = 0;
+    auto entry = fitted.begin();
+    std::size_t syllable = 0, character = 0, word = 0, before = 0; // (before: the last run's end)
     for (std::size_t g = 0; g < groups.size(); ++g) {
         const std::size_t from = std::min(character, kanji.units.size());
         const std::size_t to = std::min(character + groups[g].characters, kanji.units.size());
@@ -783,18 +783,26 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
             }
             while (entry != fitted.end() && entry->first.second <= runs[r].first)
                 ++entry;
-            if (entry != fitted.end() && entry->first == runs[r]) {
-                k.typed = entry->second;
-            } else if (entry != fitted.end() && entry->first.first < runs[r].second) {
-                // a Line's own over kanji and kana: all on its first run
-                k.typed = entry == whole ? u16() : entry->second;
-                if (entry != whole)
-                    std::tie(k.spellsFrom, k.spellsTo) = entry->first;
-                whole = entry;
+            // every typed one over it, one after another; a Line's own over
+            // kanji and kana goes all on its first run (with the units it
+            // spells) and is none of the runs after
+            for (auto it = entry; it != fitted.end() && it->first.first < runs[r].second; ++it) {
+                if (noKanji(kanji, it->first)) // (bare: its group's)
+                    continue;
+                if (!k.typed)
+                    k.typed.emplace();
+                if (it->first.first < before)
+                    continue;
+                *k.typed += it->second;
+                if (it->first != runs[r]) {
+                    k.spellsFrom = k.spellsTo ? std::min(k.spellsFrom, it->first.first) : it->first.first;
+                    k.spellsTo = std::max(k.spellsTo, it->first.second);
+                }
             }
-            // (one read to its end is done with)
-            if (entry != fitted.end() && entry->first.second <= runs[r].second)
+            // (the ones read to their end are done with)
+            while (entry != fitted.end() && entry->first.second <= runs[r].second)
                 ++entry;
+            before = runs[r].second;
             if (suggest || k.typed)
                 out.push_back(std::move(k));
         }
