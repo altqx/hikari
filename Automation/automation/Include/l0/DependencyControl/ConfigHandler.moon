@@ -339,12 +339,15 @@ class ConfigHandler
   ---@param val any
   ---@return any copy
   @getSerializableCopy = (val) =>
-    seen = {}
+    -- HikariSub (DC1): only tables on the current path are circular; a table referenced twice is copied twice
+    active = {}
     copy = (val) ->
       return val if type(val) != 'table'
-      return {} if seen[val] -- nuke circular references which JSON doesn't support
-      seen[val] = val
-      {k, copy(v) for k, v in pairs val when type(k) != "string" or k\sub(1,1) != "_"}
+      return {} if active[val] -- nuke circular references which JSON doesn't support
+      active[val] = true
+      result = {k, copy(v) for k, v in pairs val when type(k) != "string" or k\sub(1,1) != "_"}
+      active[val] = nil
+      result
     copy val
 
 

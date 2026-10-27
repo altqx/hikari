@@ -191,7 +191,11 @@ runUpdaterTask = (scriptData, isInstall) ->
 
   task, code, extErr = DepCtrl.updater\addTask scriptData, nil, nil, nil, scriptData.channel,
     DepCtrl.UpdateTask.UpdateReason.UserRequested
-  return task\run! if task
+  -- HikariSub (DC1): run! leaves the updater lock to its caller; release it so other scripts can update
+  if task
+    status, detail = task\run!
+    DepCtrl.updater\releaseLock!
+    return status, detail
   with scriptData
     logger\log DepCtrl.UpdateTask.getUpdaterErrorMsg code, .moduleName or .name,
       .moduleName and ScriptType.Module or ScriptType.Automation, isInstall, extErr
@@ -693,8 +697,9 @@ configFields = {
   {section: "feeds", key: "feedFetchTimeout", type: "int", default: FeedLoader.defaultFeedFetchTimeout,
     label: "Feed fetch timeout (s)", hint: "Longest time to fetch a single feed before aborting; 0 removes the timeout."}
 
-  {section: "logging", key: "defaultLevel", type: "int", max: 5, default: sections.logging.defaultLevel,
-    label: "Log level (0-5)", hint: "Default verbosity; higher logs more (fatal 0 to trace 5)."}
+  -- HikariSub (DC1): this is the level of unqualified log calls, and below 2 (warning) they raise
+  {section: "logging", key: "defaultLevel", type: "int", min: 2, max: 5, default: sections.logging.defaultLevel,
+    label: "Log level (2-5)", hint: "Default verbosity; higher logs more (warning 2 to trace 5)."}
   {section: "logging", key: "toFile", type: "bool", default: sections.logging.toFile,
     label: "Write logs to file", hint: "Write log messages to a file in the log directory."}
   {section: "logging", key: "maxFiles", type: "int", default: loggerDefaults.maxFiles,
@@ -737,7 +742,7 @@ configFieldWidget = (f, x, y) ->
   switch f.type
     when "bool" then ctl.class, ctl.label, ctl.value = "checkbox", "", cur
     when "int"
-      ctl.class, ctl.value, ctl.min = "intedit", cur, 0
+      ctl.class, ctl.value, ctl.min = "intedit", cur, f.min or 0
       ctl.max = f.max if f.max
     when "enum" then ctl.class, ctl.items, ctl.value = "dropdown", f.enum.values, cur
     when "string" then ctl.class, ctl.text = "edit", cur
