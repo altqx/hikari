@@ -51,6 +51,17 @@ QStringList entries(const QString &folder)
     return out;
 }
 
+// Whether names in `folder` ignore case (Windows, macOS): there
+// config/HikariSub is the user folder config/hikarisub, and Autoload and
+// autoload are one folder.
+bool namesIgnoreCase(const QString &folder)
+{
+    const QString probe = folder + QStringLiteral("/case-probe");
+    const bool blind = write(probe, {}) && QFileInfo::exists(folder + QStringLiteral("/CASE-PROBE"));
+    QFile::remove(probe);
+    return blind;
+}
+
 } // namespace
 
 class UserFolderTests : public QObject {
@@ -279,9 +290,11 @@ private slots:
         QCOMPARE(entries(folder.cache()), (QStringList{"AudioCache", "AudioCache/x.w64", "HandedOn-0123.txt", "Indices",
                                                        "Indices/y.ffindex"}));
         QCOMPARE(read(folder.settingsFile()), (config + QStringLiteral("/hikari.ini")).toUtf8());
-        // The old folders are gone, the organisation folder only when empty.
+        // The old folders are gone, the organisation folder only when empty
+        // (where names ignore case it is the user folder, as on Windows,
+        // %APPDATA%\HikariSub around the old HikariSub\HikariSub).
         QVERIFY(!QFileInfo::exists(config));
-        QVERIFY(!QFileInfo::exists(home.filePath(QStringLiteral("config/HikariSub"))));
+        QCOMPARE(QFileInfo::exists(home.filePath(QStringLiteral("config/HikariSub"))), namesIgnoreCase(home.path()));
         QVERIFY(!QFileInfo::exists(data));
         QCOMPARE(read(legacy), legacy.toUtf8());
 
@@ -312,6 +325,8 @@ private slots:
     void mergedScriptFoldersKeepTheCopyThatWasUsed()
     {
         QTemporaryDir home;
+        if (namesIgnoreCase(home.path()))
+            QSKIP("Autoload and autoload are one folder where names ignore case");
         const QString data = home.filePath(QStringLiteral("old-data"));
         const QString scripts = data + QStringLiteral("/Automation/automation/");
         QVERIFY(write(scripts + QStringLiteral("Autoload/s.lua"), "shadowed"));
