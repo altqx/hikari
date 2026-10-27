@@ -1012,6 +1012,31 @@ Pane {
             onObjectRemoved: (index, object) => newMenu.removeItem(object)
         }
         MenuSeparator {}
+        // KE3: a built-in effect, as its template and code Lines (still stock
+        // syntax, editable like any other); what it does on hover.
+        ShellMenu {
+            id: presetMenu
+            objectName: "templatePresetMenu"
+            title: qsTr("From a preset")
+            iconRole: "template-editor"
+            Instantiator {
+                model: root.controller.presets
+                delegate: ShellMenuItem {
+                    required property var modelData
+                    required property int index
+                    objectName: "templatePreset_" + index
+                    iconRole: "template-editor"
+                    text: modelData.title
+                    help: modelData.description
+                    ToolTip.visible: hovered
+                    ToolTip.text: modelData.description
+                    onTriggered: root.controller.insertPreset(index)
+                }
+                onObjectAdded: (index, object) => presetMenu.insertItem(index, object)
+                onObjectRemoved: (index, object) => presetMenu.removeItem(object)
+            }
+        }
+        MenuSeparator {}
         Label {
             width: 300
             leftPadding: 12

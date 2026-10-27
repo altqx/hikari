@@ -8,6 +8,30 @@
 #include "DebugLog.h"
 #include "Downloader.hpp"
 
+#ifdef __linux__
+#include <unistd.h>
+
+// HikariSub (DC1): the Linux packages are built on an older distribution whose
+// CA bundle path curl keeps, so downloads failed elsewhere. Use the bundle this
+// system has: SSL_CERT_FILE, else the first of the usual distribution paths.
+static const char *systemCaBundle( void ) {
+	static const char *const bundles[] = {
+		"/etc/ssl/certs/ca-certificates.crt",
+		"/etc/pki/tls/certs/ca-bundle.crt",
+		"/etc/ssl/ca-bundle.pem",
+		"/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
+		"/etc/ssl/cert.pem",
+	};
+	const char *fromEnvironment = getenv( "SSL_CERT_FILE" );
+	if ( fromEnvironment != nullptr && access( fromEnvironment, R_OK ) == 0 )
+		return fromEnvironment;
+	for ( const char *bundle : bundles )
+		if ( access( bundle, R_OK ) == 0 )
+			return bundle;
+	return nullptr;
+}
+#endif
+
 static size_t curlWriteCallback( char *buffer, size_t size, size_t nitems, void *userdata ) {
 	DEBUG_LOG( "Write callback." );
 	return static_cast<Downloader*>(userdata)->writeCallback( buffer, size*nitems );
@@ -186,6 +210,12 @@ void Downloader::process( void ) {
 		errorMessage = "Could not set Accept-Encoding header.";
 		goto fail;
 	}
+#ifdef __linux__
+	if (systemCaBundle( ) != nullptr && CURLE_OK != curl_easy_setopt( curl, CURLOPT_CAINFO, systemCaBundle( ) )) {
+		errorMessage = "Could not set the CA bundle.";
+		goto fail;
+	}
+#endif
 
 	DEBUG_LOG( "Running curl_easy_perform." );
 	switch (curl_easy_perform( curl )) {

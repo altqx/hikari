@@ -135,7 +135,7 @@ hikari_add_gtest(hikari_backends_audio_box_player_tests SOURCES audio_box_player
 # N8: the isolated Lua helper with the unchanged bundled edgeblur script and
 # authored fixtures.
 hikari_add_gtest(hikari_backends_lua_helper_tests SOURCES lua_helper_tests.cpp
-    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+    LIBRARIES hikari_backends Qt6::Core Qt6::Network LABELS backends)
 target_compile_definitions(hikari_backends_lua_helper_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/lua-fixtures"
@@ -165,6 +165,19 @@ target_compile_definitions(hikari_backends_karaoke_preview_tests PRIVATE
     HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus")
 add_dependencies(hikari_backends_karaoke_preview_tests hikari_lua_helper hikari_automation_stage)
+
+# KE3: the built-in karaoke effect presets through the bundled templater, byte
+# for byte against the unchanged script Aegisub 3.2.2 shipped.
+hikari_add_gtest(hikari_backends_karaoke_presets_tests SOURCES karaoke_presets_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_karaoke_presets_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
+    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
+    HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus"
+    HIKARI_KARAOKE_PRESETS="${PROJECT_SOURCE_DIR}/src/application/karaoke-presets"
+    HIKARI_KARAOKE_PRESET_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-presets")
+add_dependencies(hikari_backends_karaoke_presets_tests hikari_lua_helper hikari_automation_stage)
 
 # L6: representative third-party scripts (tests/fixtures/automation-thirdparty).
 # The stage test verifies the manifest's sha256s, fetches the projects that are

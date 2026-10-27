@@ -1,0 +1,58 @@
+[Script Info]
+; KE3: the karaoke Lines each built-in preset is applied to (romaji phrases authored for the test)
+Title: KE3 preset fixture
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Other-furigana,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,2,20,20,20,1
+Style: Romaji-furigana,Arial,24,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,1,0.5,8,20,20,30,1
+Style:  Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style:  Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template syl noblank,!retime("line",-300,300)!{\an5\pos($center,$middle)\fad(300,300)}
+Comment: 1,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template syl noblank,!retime("line",-300,300)!{\an5\pos($center,$middle)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip($left,!$top-20!,$left,!$bottom+20!)\t(!$start+300!,!$end+300!,\clip($left,!$top-20!,$right,!$bottom+20!))}
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k40}ki{\k35}ra{\k0} {\k45}ki{\k30}ra {\k60}hi{\k50}ka{\k40}ru
+Comment: 0,0:00:05.00,0:00:07.50,Romaji,,0,0,0,karaoke,{\k50}yo{\k25}ru{\k25}no {\k80}so{\k70}ra
+Dialogue: 0,0:00:08.00,0:00:09.00,Other,,0,0,0,,{\k50}ho{\k50}ka
+Comment: 0,0:00:10.00,0:00:12.00,Romaji,,0,0,0,karaoke,{\k30}ta{\k30}bi{\k0} {\k40}no{\k0} {\k50}to{\k50}chu{\k0}u
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(455,54)\fad(300,300)}ki
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(455,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(429,10,429,98)\t(300,700,\clip(429,10,482,98))}ki
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(508,54)\fad(300,300)}ra
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(508,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(482,10,482,98)\t(700,1050,\clip(482,10,534,98))}ra
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(587,54)\fad(300,300)}ki
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(587,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(561,10,561,98)\t(1050,1500,\clip(561,10,614,98))}ki
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(640,54)\fad(300,300)}ra 
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(640,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(614,10,614,98)\t(1500,1800,\clip(614,10,666,98))}ra 
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(719,54)\fad(300,300)}hi
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(719,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(693,10,693,98)\t(1800,2400,\clip(693,10,746,98))}hi
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(772,54)\fad(300,300)}ka
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(772,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(746,10,746,98)\t(2400,2900,\clip(746,10,798,98))}ka
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(825,54)\fad(300,300)}ru
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(825,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(798,10,798,98)\t(2900,3300,\clip(798,10,851,98))}ru
+Dialogue: 0,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(521,54)\fad(300,300)}yo
+Dialogue: 1,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(521,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(495,10,495,98)\t(300,800,\clip(495,10,548,98))}yo
+Dialogue: 0,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(574,54)\fad(300,300)}ru
+Dialogue: 1,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(574,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(548,10,548,98)\t(800,1050,\clip(548,10,600,98))}ru
+Dialogue: 0,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(627,54)\fad(300,300)}no 
+Dialogue: 1,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(627,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(600,10,600,98)\t(1050,1300,\clip(600,10,653,98))}no 
+Dialogue: 0,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(706,54)\fad(300,300)}so
+Dialogue: 1,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(706,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(680,10,680,98)\t(1300,2100,\clip(680,10,732,98))}so
+Dialogue: 0,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(759,54)\fad(300,300)}ra
+Dialogue: 1,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(759,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(732,10,732,98)\t(2100,2800,\clip(732,10,785,98))}ra
+Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(482,54)\fad(300,300)}ta
+Dialogue: 1,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(482,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(455,10,455,98)\t(300,600,\clip(455,10,508,98))}ta
+Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(534,54)\fad(300,300)}bi
+Dialogue: 1,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(534,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(508,10,508,98)\t(600,900,\clip(508,10,561,98))}bi
+Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(614,54)\fad(300,300)}no
+Dialogue: 1,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(614,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(587,10,587,98)\t(900,1300,\clip(587,10,640,98))}no
+Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(693,54)\fad(300,300)}to
+Dialogue: 1,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(693,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(666,10,666,98)\t(1300,1800,\clip(666,10,719,98))}to
+Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(759,54)\fad(300,300)}chu
+Dialogue: 1,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(759,54)\fad(300,300)\1c&H40A0FF&\3c&H10306A&\clip(719,10,719,98)\t(1800,2300,\clip(719,10,798,98))}chu

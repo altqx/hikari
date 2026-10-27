@@ -23,6 +23,8 @@ target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/applica
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
 # KA4 (#279): furigana reading suggestions and the furigana karaoke syntax.
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
+# KE3 (#285): the built-in karaoke effect presets.
+target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
 # DX1 (#367): the user guide's pages for User guide (F1).
 target_sources(hikari_application PRIVATE guide_links.cpp include/hikari/application/guide_links.h)
 target_include_directories(hikari_application PUBLIC include)
