@@ -89,7 +89,7 @@ private slots:
         env.userDirOverride = QStringLiteral("/data/mine/");
         f = UserFolder::locate(env);
         QCOMPARE(f.root(), QStringLiteral("/data/mine"));
-        QCOMPARE(f.cache(), QStringLiteral("/home/a/.cache/hikarisub"));
+        QCOMPARE(f.cache(), QStringLiteral("/srv/cache/hikarisub"));
     }
 
     void windowsUsesAppDataAndLocalAppData()
@@ -245,9 +245,9 @@ private slots:
         QCOMPARE(r.from, (QStringList{QDir::toNativeSeparators(config), QDir::toNativeSeparators(data)}));
         QVERIFY2(r.leftOver.isEmpty(), qPrintable(r.leftOver.join(QLatin1Char(','))));
         QCOMPARE(entries(folder.root()),
-                 (QStringList{"Import", "Import/manifest.json", "Rules.txt", "autosave", "autosave/a.ass", "automation",
-                              "automation/autoload", "automation/autoload/dep.moon", "automation/autoload/mine.lua",
-                              "automation/include", "automation/include/mod.lua", "catalogs", "catalogs/Default.sty",
+                 (QStringList{"Import", "Import/manifest.json", "Rules.txt", "automation", "automation/autoload",
+                              "automation/autoload/dep.moon", "automation/autoload/mine.lua", "automation/include",
+                              "automation/include/mod.lua", "autosave", "autosave/a.ass", "catalogs", "catalogs/Default.sty",
                               "catalogs/FontCatalogs.txt", "catalogs/FontCatalogsAutosave1.txt", "config",
                               "config/l0.DependencyControl.json", "dictionaries", "dictionaries/UserDic.udic",
                               "hikari.ini", "layout.json", "log", "log/x.log", "presets", "presets/layouts.json",

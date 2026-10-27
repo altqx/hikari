@@ -161,10 +161,12 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
     // UD1: the user folder (user_folder.h); a portable copy keeps it beside
-    // the program.
+    // the program. A start from the build tree (no Automation folder beside
+    // it) is no portable copy.
     const UpdateEnvironment updateEnvironment = UpdateEnvironment::current();
-    const auto folderEnvironment =
-        UserFolder::Environment::current(updateEnvironment.package.kind == application::PackageKind::Portable);
+    const auto folderEnvironment = UserFolder::Environment::current(
+        updateEnvironment.package.kind == application::PackageKind::Portable &&
+        QFileInfo::exists(QCoreApplication::applicationDirPath() + QStringLiteral("/Automation/automation")));
     const UserFolder userFolder = UserFolder::locate(folderEnvironment);
     const UserFolder::OldFolders oldFolders = UserFolder::OldFolders::of(folderEnvironment);
     // The start's files, absolute: its arguments without Qt's options and

@@ -20,9 +20,10 @@ QString xdgDir(const QString &value, const QString &home, const char *fallback)
     return home + QLatin1Char('/') + QLatin1String(fallback);
 }
 
-QString nativeFolder(const QString &value)
+// A Windows folder from the environment, with forward slashes on any host.
+QString windowsFolder(const QString &value)
 {
-    return QDir::cleanPath(QDir::fromNativeSeparators(value));
+    return QDir::cleanPath(QString(value).replace(QLatin1Char('\\'), QLatin1Char('/')));
 }
 
 QByteArray sha256Of(const QString &path)
@@ -156,16 +157,16 @@ UserFolder UserFolder::locate(const Environment &env)
 {
     QString cache;
     if (env.windows)
-        cache = nativeFolder(env.localAppData) + QStringLiteral("/HikariSub/cache");
+        cache = windowsFolder(env.localAppData) + QStringLiteral("/HikariSub/cache");
     else
         cache = xdgDir(env.xdgCacheHome, env.home, ".cache") + QStringLiteral("/hikarisub");
     QString root;
     if (!env.userDirOverride.isEmpty())
-        root = QDir(nativeFolder(env.userDirOverride)).absolutePath();
+        root = QDir(QDir::cleanPath(QDir::fromNativeSeparators(env.userDirOverride))).absolutePath();
     else if (env.portable)
-        root = nativeFolder(env.programFolder) + QStringLiteral("/user");
+        root = QDir::cleanPath(QDir::fromNativeSeparators(env.programFolder)) + QStringLiteral("/user");
     else if (env.windows)
-        root = nativeFolder(env.appData) + QStringLiteral("/HikariSub");
+        root = windowsFolder(env.appData) + QStringLiteral("/HikariSub");
     else
         root = xdgDir(env.xdgConfigHome, env.home, ".config") + QStringLiteral("/hikarisub");
     return UserFolder(root, cache);
@@ -254,9 +255,9 @@ UserFolder::OldFolders UserFolder::OldFolders::of(const Environment &env)
     OldFolders old;
     if (env.windows) {
         if (!env.localAppData.isEmpty())
-            old.config = nativeFolder(env.localAppData) + QStringLiteral("/HikariSub/HikariSub");
+            old.config = windowsFolder(env.localAppData) + QStringLiteral("/HikariSub/HikariSub");
         if (!env.appData.isEmpty())
-            old.data = nativeFolder(env.appData) + QStringLiteral("/HikariSub/HikariSub");
+            old.data = windowsFolder(env.appData) + QStringLiteral("/HikariSub/HikariSub");
     } else {
         old.config = xdgDir(env.xdgConfigHome, env.home, ".config") + QStringLiteral("/HikariSub/HikariSub");
         old.data = xdgDir(env.xdgDataHome, env.home, ".local/share") + QStringLiteral("/HikariSub/HikariSub");
