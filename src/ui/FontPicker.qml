@@ -199,10 +199,18 @@ DialogWindow {
         resolvedFor = own ? catalogs.samplePlain(sampleText, sampleAss) : catalogs.samplePlain(catalogs.previewText, true)
         resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked, true, resolvedFor)
     }
+    // SV1: drawn again on a screen of another scale, or when the setting
+    // changes (Window.devicePixelRatio, Qt 6.11).
+    readonly property real previewPixelRatio: preview.Window.window ? preview.Window.window.devicePixelRatio : 1
+    onPreviewPixelRatioChanged: renderTimer.restart()
+    Connections {
+        target: picker.catalogs
+        function onPreviewAtScreenSizeChanged() { renderTimer.restart() }
+    }
     function render() {
         const own = sampleText.trim().length > 0
         catalogs.renderSample(current(), own ? sampleText : catalogs.previewText, !own || sampleAss,
-                              Math.max(1, preview.width), Math.max(1, preview.height))
+                              Math.max(1, preview.width), Math.max(1, preview.height), previewPixelRatio)
     }
     function flush() {
         if (changeTimer.running) {
@@ -443,7 +451,9 @@ DialogWindow {
             anchors.fill: parent
             anchors.margins: 1
             cache: false
-            fillMode: Image.Pad
+            // SV1: drawn with the screen's pixels, shown at the preview's
+            // size (Image ignores the image's pixel ratio).
+            fillMode: picker.catalogs.sampleScale > 1 ? Image.PreserveAspectFit : Image.Pad
             source: picker.catalogs.sampleKey > 0 ? "image://fontcatalogpreview/sample/" + picker.catalogs.sampleKey : ""
             onWidthChanged: renderTimer.restart()
             onHeightChanged: renderTimer.restart()

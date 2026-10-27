@@ -279,7 +279,28 @@ QString VideoController::status() const
 
 void VideoController::attachPresenter(QObject *presenter)
 {
-    m_session.setPresenter(qobject_cast<VideoPresenter *>(presenter));
+    if (m_presenter)
+        disconnect(m_presenter, nullptr, this, nullptr);
+    m_presenter = qobject_cast<VideoPresenter *>(presenter);
+    if (m_presenter)
+        connect(m_presenter, &VideoPresenter::screenSizeChanged, this, &VideoController::followScreenSize);
+    m_session.setPresenter(m_presenter);
+    followScreenSize();
+}
+
+void VideoController::setSubtitlesAtScreenSize(bool on)
+{
+    m_screenSizeSubtitles = on;
+    followScreenSize();
+}
+
+void VideoController::followScreenSize()
+{
+    const QSize size = m_presenter ? m_presenter->screenSize() : QSize();
+    if (m_screenSizeSubtitles && !size.isEmpty())
+        m_session.setScreenSize(std::pair(size.width(), size.height()));
+    else
+        m_session.setScreenSize(std::nullopt);
 }
 
 void VideoController::answer(int answer)

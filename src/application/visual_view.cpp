@@ -220,16 +220,17 @@ void VideoView::zoomPress(int x, int y)
     // ZoomMouseHandle's LeftDown (RendererVideo.cpp:916-938); m_ZoomDiff is a
     // wxPoint, so each difference is truncated.
     m_grabbed = -1;
-    if (std::abs(x - m_zoomRect.x) < 5) {
+    const double grab = 5 * m_dpr; // SV1-hidpi-tool-sizes
+    if (std::abs(x - m_zoomRect.x) < grab) {
         m_zoomDiffX = static_cast<int>(m_zoomRect.x - x);
         m_grabbed = 0;
-    } else if (std::abs(y - m_zoomRect.y) < 5) {
+    } else if (std::abs(y - m_zoomRect.y) < grab) {
         m_zoomDiffY = static_cast<int>(m_zoomRect.y - y);
         m_grabbed = 1;
-    } else if (std::abs(x - m_zoomRect.width) < 5) {
+    } else if (std::abs(x - m_zoomRect.width) < grab) {
         m_zoomDiffX = static_cast<int>(m_zoomRect.width - x);
         m_grabbed = 2;
-    } else if (std::abs(y - m_zoomRect.height) < 5) {
+    } else if (std::abs(y - m_zoomRect.height) < grab) {
         m_zoomDiffY = static_cast<int>(m_zoomRect.height - y);
         m_grabbed = 3;
     } else {

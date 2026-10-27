@@ -77,8 +77,8 @@ struct OptionsBinding {
 // editor.hideTags (LE3), subtitles.layoutInFile (WS2),
 // video.moveToActiveLine and video.playAfterSelection (VF1),
 // notices.toasts (PK1), the Updates page's updater.* (PU7),
-// automation.fillLastAnswers (AD2) and, on Windows,
-// audio.outputHostApi and video.playbackPlayer (W1).
+// automation.fillLastAnswers (AD2), video.previewSubtitlesAt (SV1) and, on
+// Windows, audio.outputHostApi and video.playbackPlayer (W1).
 std::span<const OptionsBinding> optionsBindings();
 const OptionsBinding *findOptionsBinding(std::string_view setting);
 

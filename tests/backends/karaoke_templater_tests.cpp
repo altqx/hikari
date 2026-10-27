@@ -12,10 +12,12 @@
 // script (never from the bundled one).
 #include "hikari/application/automation.h"
 #include "hikari/application/edit_session.h"
+#include "hikari/application/kanji_timer.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/text_projection.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -1063,3 +1065,53 @@ TEST_F(KaraokeTemplater, StockTemplaterAttachesNoReport)
 }
 
 } // namespace
+
+// KA8 (#354): the Kanji timer's multi-highlight output through the bundled
+// templater. A `template syl multi` effect highlights a kanji group once per
+// romaji syllable sung over it; on the folded output (KA3's), once per group.
+TEST_F(KaraokeTemplater, KanjiTimerHashSyllablesHighlightOncePerSyllable)
+{
+    using namespace hikari::application;
+    auto u16 = [](std::string_view utf8) {
+        return hikari::core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(utf8.data()), utf8.size()));
+    };
+    const auto syllables = kanjiSyllables(
+        u16("{\\k15}ge{\\k16}dou {\\k13}kou{\\k9}ge{\\k7}ki, {\\k6}fu{\\k9}sho{\\k9}ku {\\k12}kou{\\k12}ge{\\k7}ki"), 0, 0);
+    const auto kanji = kanjiText(u16("外道攻撃、腐蝕攻撃"));
+    const std::vector<KanjiGroup> groups{{1, 1}, {1, 1}, {1, 1}, {2, 2}, {3, 1}, {1, 1}, {1, 1}, {1, 1}};
+    // each fx Line's highlight ($start-$end) and the text it highlights
+    const auto highlights = [&](bool multi) {
+        const auto line = hikari::core::toUtf8(kanjiOutput(syllables, kanji, groups, multi));
+        const std::string text =
+            "[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[V4+ Styles]\n"
+            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+            "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+            "MarginL, MarginR, MarginV, Encoding\n"
+            "Style: Kanji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,"
+            "1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+            "Comment: 0,0:00:00.00,0:00:05.00,Kanji,,0,0,0,template syl multi,{\\t($start,$end,\\bord5)}\n"
+            "Dialogue: 0,0:00:01.00,0:00:02.15,Kanji,,0,0,0,," +
+            std::string(reinterpret_cast<const char *>(line.data()), line.size()) + "\n";
+        hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+        std::vector<std::string> out;
+        if (!apply(session, bundledScript(), "Apply karaoke template"))
+            return out;
+        for (const auto *l : session.document().lines()) {
+            if (l->effect != u8"fx")
+                continue;
+            const std::string fx(reinterpret_cast<const char *>(l->text.data()), l->text.size());
+            const auto t = fx.find("\\t(");
+            const auto comma = fx.find(',', t);
+            const std::string shown = fx.substr(fx.rfind('}') + 1);
+            if (t == std::string::npos || shown.empty())
+                continue; // (the empty syllable before the first tag)
+            out.push_back(fx.substr(t + 3, fx.find(',', comma + 1) - t - 3) + " " + shown);
+        }
+        return out;
+    };
+    EXPECT_EQ(highlights(true), (std::vector<std::string>{"0,150 外", "150,310 道", "310,440 攻", "440,530 撃、",
+                                                          "530,600 撃、", "600,660 腐", "660,750 腐", "750,840 腐",
+                                                          "840,960 蝕", "960,1080 攻", "1080,1150 撃"}));
+    EXPECT_EQ(highlights(false), (std::vector<std::string>{"0,150 外", "150,310 道", "310,440 攻", "440,600 撃、",
+                                                           "600,840 腐", "840,960 蝕", "960,1080 攻", "1080,1150 撃"}));
+}

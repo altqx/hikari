@@ -45,7 +45,7 @@ jobs:
   ubuntu:
     name: Ubuntu x64 release, empty cache
     runs-on: ubuntu-26.04
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:

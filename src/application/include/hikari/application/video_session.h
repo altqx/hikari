@@ -30,6 +30,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace hikari::application {
@@ -80,6 +81,11 @@ public:
     // D2: the video without subtitles (legacy OpenSubs(CLOSE_SUBTITLES) in
     // the player layout); setSubtitles shows them again.
     void closeSubtitles();
+    // SV1-screen-size-subtitles: overlays drawn at the picture's size on
+    // screen, in device pixels (none: at the video's size, the default). A
+    // change draws the shown frame's overlay again (playing: the next frame).
+    // Frames asked for with requestFrame stay at the video's size.
+    void setScreenSize(std::optional<std::pair<int, int>> size);
     bool hasSubtitles() const { return m_hasSubtitles; }
     void seekTo(core::DocumentTime start);
     bool step(int frames); // false at either end, without video or while playing (legacy ChangePositionByFrame)
@@ -277,6 +283,7 @@ private:
     std::uint64_t m_request = 0; // the newest frame request; older answers are dropped
     std::shared_ptr<const IndexedFrame> m_shown;
     std::shared_ptr<const OverlayFrame> m_overlay;
+    std::optional<std::pair<int, int>> m_screen; // SV1
     bool m_hasSubtitles = false;
     std::uint64_t m_subtitleUpdates = 0;
     float m_legacyFps = 0.f; // P10
