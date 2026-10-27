@@ -218,6 +218,16 @@ private slots:
         QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("section")).toString(),
                  QStringLiteral("UI colors"));
         QVERIFY(!byKey.value(QStringLiteral("appearance.darkAccent")).value(QStringLiteral("values")).toArray().isEmpty());
+        // Windows' own rows, on every platform, marked.
+        const QJsonObject player = byKey.value(QStringLiteral("video.playbackPlayer"));
+        QCOMPARE(player.value(QStringLiteral("platform")).toString(), QStringLiteral("windows"));
+        QCOMPARE(player.value(QStringLiteral("page")).toString(), QStringLiteral("video"));
+        QCOMPARE(player.value(QStringLiteral("values")).toArray().size(), 2);
+        const QJsonObject api = byKey.value(QStringLiteral("audio.outputHostApi"));
+        QCOMPARE(api.value(QStringLiteral("platform")).toString(), QStringLiteral("windows"));
+        QCOMPARE(api.value(QStringLiteral("hint")).toString(), QStringLiteral("Applies when the output opens again."));
+        QCOMPARE(api.value(QStringLiteral("values")).toArray().at(1).toObject().value(QStringLiteral("label")).toString(),
+                 QStringLiteral("DirectSound"));
 
         const QJsonObject tabs = byKey.value(QStringLiteral("program.tabTextMaxChars"));
         QCOMPARE(tabs.value(QStringLiteral("page")).toString(), QStringLiteral("general"));

@@ -12,7 +12,9 @@ namespace hikari::app {
 //   and its places in the menu bar and the Grid's menu;
 // - settings.json: the Settings window's pages and every control bound to a
 //   setting, in page order: its page, section, label, hint, control, type,
-//   the value a new profile has and its range or entries;
+//   the value a new profile has and its range or entries; a setting only
+//   one platform's window shows has `platform` ("windows"), so the export
+//   of any platform lists every setting;
 // - guide-links.json: User guide's pages (guide_links.h);
 // - meta.json: the version, the commit the build was configured at and the
 //   schema (kDocsSchema).

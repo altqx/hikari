@@ -888,6 +888,11 @@ DialogWindow {
                         // (legacy's player with indexing off). It applies at
                         // once; a playing video pauses.
                         Loader {
+                            // DX1: the docs export's entry on every platform.
+                            readonly property var docsEntries: [{
+                                setting: "video.playbackPlayer", control: "choice", label: qsTr("Player"), platform: "windows",
+                                values: [{value: 0, label: qsTr("Built-in")}, {value: 1, label: "DirectShow"}]
+                            }]
                             active: Qt.platform.os === "windows"
                             visible: active
                             Layout.fillWidth: true
@@ -989,6 +994,12 @@ DialogWindow {
                         }
                         Loader {
                             objectName: "audioOutputHostApiBox"
+                            // DX1: the docs export's entry on every platform.
+                            readonly property var docsEntries: [{
+                                setting: "audio.outputHostApi", control: "choice", label: qsTr("API"), platform: "windows",
+                                hint: qsTr("Applies when the output opens again."),
+                                values: [{value: 0, label: "WASAPI"}, {value: 1, label: "DirectSound"}]
+                            }]
                             active: Qt.platform.os === "windows"
                             visible: active
                             Layout.fillWidth: true
