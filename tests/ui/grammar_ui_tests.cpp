@@ -661,6 +661,25 @@ private slots:
         QVERIFY(application->grammarWalkState().value(QStringLiteral("found")).toBool());
     }
 
+    // A Line longer than the check's cap (4096 UTF-16 units) is never
+    // checked, in the field or by the walk.
+    void outsizedLinesAreNotChecked()
+    {
+        start();
+        grammarOn();
+        const QByteArray outsized = QByteArray("I has a apple. ").repeated(300);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/long.ass"),
+                                               dialogue(outsized) + dialogue("I has a apple.", 2))));
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QString::fromUtf8(outsized.trimmed()));
+        QTest::qWait(1500); // the field's check would be back by now
+        QVERIFY(marks().isEmpty());
+        application->startGrammarWalk();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+        const QVariantMap state = application->grammarWalkState();
+        QVERIFY(state.value(QStringLiteral("found")).toBool());
+        QCOMPARE(state.value(QStringLiteral("line")).toInt(), 2);
+    }
+
     // Replacing the walk's last finding: the editor and the Grid show the
     // correction though no finding is left to show.
     void replacingTheLastFindingShowsIt()

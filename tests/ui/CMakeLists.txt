@@ -178,6 +178,12 @@ hikari_add_qttest(hikari_ui_file_session_popups_tests SOURCES file_session_popup
 # GR1 (#364): grammar check with the pinned harper-ls in the main window.
 hikari_add_qttest(hikari_ui_grammar_tests SOURCES grammar_ui_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_grammar_tests PRIVATE HIKARI_HARPER_LS="${HIKARI_HARPER_LS}")
+# Each case starts harper-ls and waits for its checks (the walks most).
+foreach(mode offscreen xvfb native)
+    if(TEST hikari_ui_grammar_tests.${mode})
+        set_tests_properties(hikari_ui_grammar_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
 # K2 / W1: the popups take the theme's palette from the first engine's start.
 hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)

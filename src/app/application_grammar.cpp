@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <array>
+#include <set>
 
 namespace hikari::app {
 
@@ -27,6 +28,12 @@ namespace {
 // one turn of the event loop (the rest are skipped comments or blank text).
 constexpr std::size_t kWalkInFlight = 4;
 constexpr std::size_t kWalkPerTurn = 256;
+// A Line's text longer than this (UTF-16 units) is never checked: a check
+// keeps a few copies of it and a raw range per unit. The walk keeps the checks
+// of Lines with findings left; past kWalkKept units of them it reads no
+// further until findings are dealt with.
+constexpr std::size_t kMaxCheckedUnits = 4096;
+constexpr std::size_t kWalkKept = std::size_t(1) << 20;
 
 // Harper's groups (harper-core/default_config.json), in core::grammar's order,
 // with their descriptions shortened (the approved mockup).
@@ -268,7 +275,9 @@ void Application::checkEditorGrammar()
 {
     const int role = spellingRole();
     // E4: as spelling, none for a comment, a template or code.
-    const auto raw = core::syntax::spellChecked(m_editor->syntaxState()) ? editorRaw(role) : std::nullopt;
+    auto raw = core::syntax::spellChecked(m_editor->syntaxState()) ? editorRaw(role) : std::nullopt;
+    if (raw && raw->size() > kMaxCheckedUnits)
+        raw.reset();
     if (!raw) {
         if (m_grammarTicket && m_harper)
             m_harper->cancel(m_grammarTicket);
@@ -565,8 +574,22 @@ void Application::pumpGrammarWalk()
         return;
     auto &walk = *m_grammarWalk;
     const auto *session = m_files->session(walk.document);
+    // Lines read whose findings are all dealt with keep nothing.
+    std::set<std::size_t> open;
+    for (const auto &found : walk.findings)
+        if (!found.handled)
+            open.insert(found.line);
+    std::size_t kept = 0;
+    for (auto it = walk.checks.begin(); it != walk.checks.end();) {
+        if (it->first < walk.checked && !open.contains(it->first)) {
+            it = walk.checks.erase(it);
+        } else {
+            kept += it->second.raw.size();
+            ++it;
+        }
+    }
     std::size_t read = 0;
-    while (walk.pending.size() < kWalkInFlight && !walk.queue.empty()) {
+    while (walk.pending.size() < kWalkInFlight && !walk.queue.empty() && kept < kWalkKept) {
         if (++read > kWalkPerTurn) { // the window answers (Cancel too) before the rest
             if (!walk.pumpQueued) {
                 walk.pumpQueued = true;
@@ -587,6 +610,11 @@ void Application::pumpGrammarWalk()
         }
         const auto format = session->document().format();
         GrammarCheck check{core::toUtf16(walk.translation ? line->translation : line->text), {}, {}, format};
+        if (check.raw.size() > kMaxCheckedUnits) {
+            walk.arrived[index] = {};
+            continue;
+        }
+        kept += check.raw.size();
         check.text = core::grammar::checkedText(check.raw, format);
         const bool empty = blank(check.text);
         const QString text = QString::fromStdU16String(check.text.text);
@@ -787,6 +815,7 @@ QVariantMap Application::grammarWalkReplace(const QString &replacement)
     refreshViews();
     nextGrammarFinding();
     showGrammarFinding();
+    pumpGrammarWalk(); // reads on if the kept checks held it back
     emit grammarWalkChanged();
     return grammarWalkState();
 }
@@ -798,6 +827,7 @@ QVariantMap Application::grammarWalkIgnore()
     m_grammarWalk->findings[*m_grammarWalk->current].handled = true;
     nextGrammarFinding();
     showGrammarFinding();
+    pumpGrammarWalk(); // reads on if the kept checks held it back
     emit grammarWalkChanged();
     return grammarWalkState();
 }
@@ -815,6 +845,7 @@ QVariantMap Application::grammarWalkIgnoreRule()
                 other.handled = true;
     nextGrammarFinding();
     showGrammarFinding();
+    pumpGrammarWalk(); // reads on if the kept checks held it back
     if (group)
         setGrammarGroup(int(*group), false);
     QVariantMap state = grammarWalkState();
@@ -845,6 +876,7 @@ QVariantMap Application::grammarWalkAddWord()
             other.handled = true;
     nextGrammarFinding();
     showGrammarFinding();
+    pumpGrammarWalk(); // reads on if the kept checks held it back
     emit grammarWalkChanged();
     return grammarWalkState();
 }
