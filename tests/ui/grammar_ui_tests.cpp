@@ -799,6 +799,33 @@ private slots:
         QVERIFY(marks().contains(qMakePair(article, article + 1)));
     }
 
+    // A Line deleted after its findings came in: the walk passes over them
+    // and the selection stays on a Line that is there.
+    void walkSkipsDeletedLines()
+    {
+        start();
+        grammarOn();
+        QByteArray events;
+        for (int i = 0; i < 6; ++i)
+            events += dialogue(i == 1 || i == 3 ? "I has a apple." : "This line is fine.", i + 1);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/gone.ass"), events)));
+        QTRY_VERIFY(target());
+        application->startGrammarWalk();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+        QVariantMap state = application->grammarWalkState();
+        QCOMPARE(state.value(QStringLiteral("line")).toInt(), 2);
+        const auto gone = target()->document().lines()[3]->id;
+        target()->setSelection(application::Selection{gone, {gone}, gone, {}});
+        QVERIFY(application->deleteLines());
+        QCOMPARE(target()->document().lines().size(), std::size_t(5));
+        for (int i = 0; i < 10 && state.value(QStringLiteral("line")).toInt() == 2; ++i)
+            state = application->grammarWalkIgnore();
+        QVERIFY2(!state.value(QStringLiteral("found")).toBool(), qPrintable(state.value(QStringLiteral("line")).toString()));
+        const auto active = target()->selection().active;
+        QVERIFY(active);
+        QVERIFY(std::ranges::any_of(target()->document().lines(), [&](const auto *l) { return l->id == *active; }));
+    }
+
     // Replacing the walk's last finding: the editor and the Grid show the
     // correction though no finding is left to show.
     void replacingTheLastFindingShowsIt()

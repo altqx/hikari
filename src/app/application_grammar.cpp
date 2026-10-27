@@ -696,16 +696,28 @@ void Application::showGrammarFinding()
 {
     if (!m_grammarWalk || !m_grammarWalk->current || m_workspace.editingTarget() != m_grammarWalk->document)
         return;
-    const auto &walk = *m_grammarWalk;
+    auto *session = targetSession();
+    if (!session)
+        return;
+    // A deleted Line's findings went with it.
+    auto &walk = *m_grammarWalk;
+    while (walk.current && !grammarWalkLine(*session, walk.findings[*walk.current].line)) {
+        const std::size_t gone = walk.findings[*walk.current].line;
+        for (auto &other : walk.findings)
+            if (other.line == gone)
+                other.handled = true;
+        nextGrammarFinding();
+    }
+    if (!walk.current)
+        return;
     const auto &found = walk.findings[*walk.current];
     const auto &check = walk.checks.at(found.line);
     const auto line = walk.lines[found.line];
     // The finding's Line alone is selected, as the spelling walk does: Enter
     // in the editor commits to the selection. A draft the editor cannot
     // commit (Block) keeps it where it is.
-    auto *session = targetSession();
     m_editor->commit();
-    if (!session || (session->draftLine() && *session->draftLine() != line))
+    if (session->draftLine() && *session->draftLine() != line)
         return;
     session->setSelection(application::Selection{line, {line}, line, {}});
     m_editor->reloadFromSession();
