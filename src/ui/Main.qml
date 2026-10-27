@@ -681,6 +681,35 @@ ApplicationWindow {
         return null
     }
 
+    // DX1 (#367): User guide (GLOBAL_HELP): the page of the DG1 window with
+    // the keyboard (its guideId), else of the panel the hotkeys act on (the
+    // one under the pointer while they follow it, KeyRouter, else the one
+    // with the focus); the guide's home for anything else.
+    function openUserGuide() {
+        const w = root.workspaceLayout.focusWindow
+        if (w && w.guideId !== undefined) {
+            UserGuide.open("window", w.guideId)
+            return
+        }
+        const hovered = keyRouter.followsPointer() ? keyRouter.hoveredPanel : null
+        const panel = hovered || root.panelOf(w ? w.activeFocusItem : root.activeFocusItem)
+        const i = panel ? root.panels.indexOf(panel) : -1
+        UserGuide.open(i >= 0 ? "panel" : "", i >= 0 ? root.dockList[i].uniqueName : "")
+    }
+    Connections {
+        target: UserGuide
+        function onOpenRequested(kind, id) { root.app.openUserGuide(kind, id) }
+    }
+    // User guide's keys in a DG1 window, where the Global bindings are off.
+    Shortcut {
+        objectName: "dialogUserGuide"
+        sequences: root.hotkeys.globalShortcuts.filter(s => s.symbol === "GLOBAL_HELP").map(s => s.keys)
+        context: Qt.ApplicationShortcut
+        enabled: !root.shellActive && root.workspaceLayout.focusWindow !== null
+                 && root.workspaceLayout.focusWindow.guideId !== undefined
+        onActivated: root.openUserGuide()
+    }
+
     // D3: a panel's "⋯" menu (MuseScore's DockPanelMenuModel,
     // docs/research/musescore-docking.md §1): the panel's own items, then
     // Move panel…, Undock (Dock while it floats) and Close, each disabled
@@ -1245,6 +1274,7 @@ ApplicationWindow {
             menu: ShellMenu {
                 title: qsTr("&File")
                 ShellMenuItem {
+                    command: "GLOBAL_OPEN_SUBS"
                     help: qsTr("Open subtitle file") // HikariSubFrame.cpp:178
                     iconRole: "open-subtitles"
                     action: Action {
@@ -1283,6 +1313,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_REMOVE_SUBS"
                     help: qsTr("Remove subtitles from the editor") // HikariSubFrame.cpp:190
                     iconRole: "close-subtitles"
                     objectName: "newMenuItem"
@@ -1294,6 +1325,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_CLOSE_PAGE"
                     iconRole: "tab-close"
                     objectName: "closeMenuItem"
                     action: Action {
@@ -1304,6 +1336,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_OPEN_VIDEO"
                     help: qsTr("Opens video file") // HikariSubFrame.cpp:247
                     iconRole: "open-video"
                     objectName: "openVideoMenuItem"
@@ -1314,6 +1347,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_SAVE_SUBS"
                     help: qsTr("Save current file") // HikariSubFrame.cpp:180
                     iconRole: "save"
                     objectName: "saveMenuItem"
@@ -1325,6 +1359,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_SAVE_ALL_SUBS"
                     help: qsTr("Save all subtitles") // HikariSubFrame.cpp:182
                     iconRole: "save-all"
                     objectName: "saveAllMenuItem"
@@ -1340,6 +1375,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_SAVE_SUBS_AS"
                     help: qsTr("Save as") // HikariSubFrame.cpp:184
                     iconRole: "save-as"
                     objectName: "saveAsMenuItem"
@@ -1351,6 +1387,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_SAVE_TRANSLATION"
                     help: qsTr("Save translation") // HikariSubFrame.cpp:186
                     iconRole: "save-translation"
                     objectName: "saveTranslationMenuItem"
@@ -1367,6 +1404,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_SAVE_WITH_VIDEO_NAME"
                     help: qsTr("Save subtitles using the video name") // HikariSubFrame.cpp:192
                     iconRole: "save-with-video-name"
                     objectName: "saveWithVideoNameMenuItem"
@@ -1386,6 +1424,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_OPEN_AUTO_SAVE"
                     help: qsTr("Opens the selected autosave from the list") // HikariSubFrame.cpp:196
                     iconRole: "autosave"
                     objectName: "openAutoSaveMenuItem"
@@ -1396,6 +1435,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_DELETE_TEMPORARY_FILES"
                     help: qsTr("Opens the temporary file removal window") // HikariSubFrame.cpp:197
                     iconRole: "remove-temporary"
                     objectName: "removeTemporaryMenuItem"
@@ -1426,6 +1466,7 @@ ApplicationWindow {
                     objectName: "lastSessionMenu"
                     title: qsTr("Last session")
                     ShellMenuItem {
+                        command: "GLOBAL_LOAD_LAST_SESSION"
                         help: qsTr("Loads previously loaded files") // HikariSubFrame.cpp:161
                         id: loadLastSessionItem
                         iconRole: "last-session"
@@ -1434,6 +1475,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_LAST_SESSION")) sessionWindows.load()
                     }
                     ShellMenuItem {
+                        command: "GLOBAL_LOAD_EXTERNAL_SESSION"
                         help: qsTr("Loads session from saved session file") // HikariSubFrame.cpp:163
                         id: loadSessionFileItem
                         iconRole: "session-open"
@@ -1442,6 +1484,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_EXTERNAL_SESSION")) sessionWindows.chooseSessionToLoad()
                     }
                     ShellMenuItem {
+                        command: "GLOBAL_SAVE_EXTERNAL_SESSION"
                         help: qsTr("Saves session to file") // HikariSubFrame.cpp:165
                         id: saveSessionFileItem
                         iconRole: "session-save"
@@ -1470,6 +1513,7 @@ ApplicationWindow {
                 }
                 // O1: legacy GLOBAL_SETTINGS, the Options dialog.
                 ShellMenuItem {
+                    command: "GLOBAL_SETTINGS"
                     help: qsTr("Program settings") // HikariSubFrame.cpp:202
                     iconRole: "settings"
                     objectName: "settingsMenuItem"
@@ -1501,6 +1545,7 @@ ApplicationWindow {
         ShellMenu {
             title: qsTr("&Edit")
             ShellMenuItem {
+                command: "GLOBAL_UNDO"
                 help: qsTr("Undo") // HikariSubFrame.cpp:209
                 iconRole: "undo"
                 action: Action {
@@ -1511,6 +1556,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_REDO"
                 help: qsTr("Redo") // HikariSubFrame.cpp:214
                 iconRole: "redo"
                 action: Action {
@@ -1533,6 +1579,7 @@ ApplicationWindow {
                     delegate: ShellMenuItem {
                         required property var modelData
                         objectName: "sortAll_" + modelData.key
+                        command: modelData.all
                         help: modelData.help
                         text: modelData.label
                         onTriggered: if (!root.hotkeyGesture(modelData.all)) root.app.sortLines(modelData.key, false)
@@ -1553,6 +1600,7 @@ ApplicationWindow {
                     delegate: ShellMenuItem {
                         required property var modelData
                         objectName: "sortSelected_" + modelData.key
+                        command: modelData.selected
                         help: modelData.help
                         text: modelData.label
                         onTriggered: if (!root.hotkeyGesture(modelData.selected)) root.app.sortLines(modelData.key, true)
@@ -1562,6 +1610,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_UNDO_TO_LAST_SAVE"
                 help: qsTr("Undo to last save") // HikariSubFrame.cpp:211
                 iconRole: "undo-to-last-save"
                 objectName: "undoToLastSaveMenuItem"
@@ -1573,6 +1622,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_HISTORY"
                 help: qsTr("History") // HikariSubFrame.cpp:216
                 iconRole: "history"
                 objectName: "historyMenuItem"
@@ -1584,6 +1634,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_MISSPELLS_REPLACER"
                 help: qsTr("Turns on multireplacer") // HikariSubFrame.cpp:241
                 iconRole: "multireplace"
                 objectName: "misspellMenuItem"
@@ -1594,6 +1645,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_OPEN_SELECT_LINES"
                 help: qsTr("Selects lines by expressions") // HikariSubFrame.cpp:243
                 iconRole: "select-lines"
                 objectName: "selectLinesMenuItem"
@@ -1606,6 +1658,7 @@ ApplicationWindow {
             }
             // F1: legacy GLOBAL_FIND_REPLACE, GLOBAL_SEARCH and GLOBAL_FIND_NEXT.
             ShellMenuItem {
+                command: "GLOBAL_FIND_REPLACE"
                 help: qsTr("Searches for the specified text phrases and replaces them") // HikariSubFrame.cpp:218
                 iconRole: "find-replace"
                 objectName: "findReplaceMenuItem"
@@ -1617,6 +1670,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_SEARCH"
                 help: qsTr("Searches for the specified text phrase") // HikariSubFrame.cpp:220
                 iconRole: "search"
                 objectName: "findMenuItem"
@@ -1628,6 +1682,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_FIND_NEXT"
                 help: qsTr("Finds the next occurrence of the phrase in the text") // HikariSubFrame.cpp:222
                 iconRole: "search"
                 objectName: "findNextMenuItem"
@@ -1650,6 +1705,7 @@ ApplicationWindow {
             // window (AM1-hotkeys-window-retired); each macro's shortcut is
             // in the Automation panel and Settings → Hotkeys.
             ShellMenuItem {
+                command: "GLOBAL_AUTOMATION_LOAD_SCRIPT"
                 help: qsTr("Load script") // HikariSubFrame.cpp:349
                 iconRole: "automation"
                 objectName: "loadScriptMenuItem"
@@ -1660,6 +1716,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_AUTOMATION_RELOAD_AUTOLOAD"
                 help: qsTr("Refresh autoload scripts") // HikariSubFrame.cpp:351
                 iconRole: "automation"
                 objectName: "reloadAutoloadMenuItem"
@@ -1670,6 +1727,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT"
                 iconRole: "run-script"
                 objectName: "loadLastScriptMenuItem"
                 action: Action {
@@ -1694,6 +1752,7 @@ ApplicationWindow {
             // AD2-repeat-last-run: the last run again with its answers,
             // without its dialogs when they are unchanged.
             ShellMenuItem {
+                command: "GLOBAL_AUTOMATION_REPEAT_LAST_RUN"
                 help: qsTr("Run the last macro again with the same answers, without its dialogs when they are unchanged")
                 iconRole: "repeat-run"
                 objectName: "repeatRunMenuItem"
@@ -1764,6 +1823,7 @@ ApplicationWindow {
             title: qsTr("&Video")
             // Each item: Shift+click maps its Global hotkey (OnMenuSelected).
             ShellMenuItem {
+                command: "GLOBAL_OPEN_VIDEO"
                 help: qsTr("Opens video file") // HikariSubFrame.cpp:247
                 iconRole: "open-video"
                 action: Action {
@@ -1786,6 +1846,7 @@ ApplicationWindow {
                 onChosen: path => root.video.openVideo(path)
             }
             ShellMenuItem {
+                command: "GLOBAL_OPEN_KEYFRAMES"
                 objectName: "openKeyframesMenuItem"
                 help: qsTr("Open keyframes") // HikariSubFrame.cpp:252
                 iconRole: "open-keyframes"
@@ -1810,6 +1871,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_OPEN_DUMMY_VIDEO"
                 iconRole: "dummy-video"
                 objectName: "dummyVideoMenuItem"
                 action: Action {
@@ -1821,6 +1883,7 @@ ApplicationWindow {
             // V6: GLOBAL_SET_START_TIME / GLOBAL_SET_END_TIME (HikariSubFrame.cpp:259-262;
             // OnMenuOpened enables them with a video and the editor).
             ShellMenuItem {
+                command: "GLOBAL_SET_START_TIME"
                 iconRole: "set-start-time"
                 objectName: "setStartTimeMenuItem"
                 action: Action {
@@ -1831,6 +1894,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_SET_END_TIME"
                 iconRole: "set-end-time"
                 objectName: "setEndTimeMenuItem"
                 action: Action {
@@ -1841,6 +1905,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_PREVIOUS_FRAME"
                 help: qsTr("Go to previous frame") // HikariSubFrame.cpp:263
                 iconRole: "frame-previous"
                 action: Action {
@@ -1850,6 +1915,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_NEXT_FRAME"
                 help: qsTr("Go to next frame") // HikariSubFrame.cpp:265
                 iconRole: "frame-next"
                 action: Action {
@@ -1859,6 +1925,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_SET_VIDEO_AT_START_TIME"
                 help: qsTr("Moves video to start time") // HikariSubFrame.cpp:267
                 iconRole: "video-to-start-time"
                 action: Action {
@@ -1868,6 +1935,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_SET_VIDEO_AT_END_TIME"
                 help: qsTr("Moves video to end time") // HikariSubFrame.cpp:270
                 iconRole: "video-to-end-time"
                 action: Action {
@@ -1877,6 +1945,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_PLAY_PAUSE"
                 help: qsTr("Plays / Pauses video") // HikariSubFrame.cpp:273
                 iconRole: root.video.playing ? "media-pause" : "media-play"
                 action: Action {
@@ -1886,6 +1955,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_GO_TO_PREVIOUS_KEYFRAME"
                 iconRole: "keyframe-previous"
                 action: Action {
                     id: previousKeyframeAction
@@ -1894,6 +1964,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_GO_TO_NEXT_KEYFRAME"
                 iconRole: "keyframe-next"
                 action: Action {
                     id: nextKeyframeAction
@@ -1905,6 +1976,7 @@ ApplicationWindow {
             // (legacy OnMenuOpened: ABox != nullptr && editor; the editor is
             // the editing target's).
             ShellMenuItem {
+                command: "GLOBAL_SET_AUDIO_FROM_VIDEO"
                 iconRole: "audio-to-video-time"
                 objectName: "setAudioFromVideoMenuItem"
                 action: Action {
@@ -1915,6 +1987,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_SET_AUDIO_MARK_FROM_VIDEO"
                 iconRole: "audio-marker-to-video-time"
                 objectName: "setAudioMarkFromVideoMenuItem"
                 action: Action {
@@ -1947,6 +2020,7 @@ ApplicationWindow {
             // V4: GLOBAL_VIDEO_ZOOM and GLOBAL_RESET_VIDEO_ZOOM (legacy
             // OnMenuOpened: a loaded video; the reset also a zoom != 1).
             ShellMenuItem {
+                command: "GLOBAL_VIDEO_ZOOM"
                 iconRole: "zoom"
                 objectName: "videoZoomMenuItem"
                 action: Action {
@@ -1956,6 +2030,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_RESET_VIDEO_ZOOM"
                 iconRole: "zoom-reset"
                 objectName: "resetVideoZoomMenuItem"
                 action: Action {
@@ -1966,6 +2041,7 @@ ApplicationWindow {
             }
             // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
             ShellMenuItem {
+                command: "GLOBAL_VIDEO_RENDER_COST"
                 iconRole: "render-cost"
                 objectName: "renderCostMenuItem"
                 action: Action {
@@ -1983,6 +2059,7 @@ ApplicationWindow {
             objectName: "audioMenu"
             title: qsTr("A&udio")
             ShellMenuItem {
+                command: "GLOBAL_OPEN_AUDIO"
                 help: qsTr("Opens audio file") // HikariSubFrame.cpp:293
                 iconRole: "open-audio"
                 objectName: "openAudioMenuItem"
@@ -2027,6 +2104,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_AUDIO_FROM_VIDEO"
                 help: qsTr("Opens audio from video") // HikariSubFrame.cpp:299
                 iconRole: "audio-from-video"
                 objectName: "audioFromVideoMenuItem"
@@ -2038,6 +2116,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_CLOSE_AUDIO"
                 help: qsTr("Closes audio") // HikariSubFrame.cpp:303
                 iconRole: "close-audio"
                 objectName: "closeAudioMenuItem"
@@ -2138,6 +2217,7 @@ ApplicationWindow {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
             ShellMenuItem {
+                command: "GLOBAL_SHOW_SHIFT_TIMES"
                 help: qsTr("Shifting subtitle times") // HikariSubFrame.cpp:336
                 id: showShiftTimesItem
                 iconRole: "shift-times"
@@ -2146,6 +2226,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
             }
             ShellMenuItem {
+                command: "GLOBAL_SHIFT_TIMES"
                 id: runShiftTimesItem
                 iconRole: "shift-times-run"
                 objectName: "runShiftTimes"
@@ -2154,6 +2235,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
             }
             ShellMenuItem {
+                command: "GLOBAL_OPEN_STYLE_MANAGER"
                 help: qsTr("Is used to manage ASS styles") // HikariSubFrame.cpp:320
                 id: styleManagerItem
                 iconRole: "styles"
@@ -2163,6 +2245,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) styleManagerWindow.showFor(root.app.activeLineStyle())
             }
             ShellMenuItem {
+                command: "GLOBAL_OPEN_ASS_PROPERTIES"
                 help: qsTr("ASS subtitle properties") // HikariSubFrame.cpp:318
                 id: assPropertiesItem
                 iconRole: "script-properties"
@@ -2183,6 +2266,7 @@ ApplicationWindow {
                     model: root.conversionItems
                     ShellMenuItem {
                         objectName: "convertTo_" + modelData[0]
+                        command: modelData[2]
                         help: modelData[3]
                         iconRole: ["convert-ass", "convert-srt", "convert-mdvd", "convert-mpl2", "convert-tmp"][index]
                         text: modelData[1]
@@ -2194,6 +2278,7 @@ ApplicationWindow {
             // Legacy SubsMenu: Font collector after Conversion and Shift times
             // (HikariSubFrame.cpp:338), enabled for subsFormat < SRT (2407).
             ShellMenuItem {
+                command: "GLOBAL_OPEN_FONT_COLLECTOR"
                 help: qsTr("Font collector") // HikariSubFrame.cpp:338
                 id: fontCollectorItem
                 objectName: "fontCollectorMenuItem"
@@ -2203,6 +2288,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
             }
             ShellMenuItem {
+                command: "GLOBAL_OPEN_SUBS_RESAMPLE"
                 help: qsTr("Resample subtitles") // HikariSubFrame.cpp:340
                 id: resampleItem
                 iconRole: "resample"
@@ -2213,6 +2299,7 @@ ApplicationWindow {
             }
             // Legacy HikariSubFrame: after Resample subtitles.
             ShellMenuItem {
+                command: "GLOBAL_OPEN_SPELLCHECKER"
                 help: qsTr("Check spelling") // HikariSubFrame.cpp:342
                 id: checkSpellingItem
                 iconRole: "spellchecker"
@@ -2223,6 +2310,7 @@ ApplicationWindow {
             }
             // KA7: the Karaoke check window, after Check spelling.
             ShellMenuItem {
+                command: "GLOBAL_CHECK_KARAOKE"
                 help: qsTr("Checks the karaoke syllables of every line")
                 id: checkKaraokeItem
                 iconRole: "karaoke"
@@ -2233,6 +2321,7 @@ ApplicationWindow {
             }
             // KA3: the Kanji timer window, after Check karaoke.
             ShellMenuItem {
+                command: "GLOBAL_KANJI_TIMER"
                 help: qsTr("Copies the karaoke timing of romaji lines to their kanji lines")
                 id: kanjiTimerItem
                 iconRole: "karaoke-split"
@@ -2247,6 +2336,7 @@ ApplicationWindow {
             // (TM1-translator-check-removed). On is one "Turning on translator
             // mode" step; off asks first (TranslationModeOffConfirm).
             ShellMenuItem {
+                command: "GLOBAL_TRANSLATION_MODE"
                 help: root.app.translationHint.length > 0 ? root.app.translationHint
                     : qsTranslate("HikariSub.Translation", "Translator mode displays and saves both foreign text and translation text")
                 iconRole: "translation-mode"
@@ -2272,6 +2362,7 @@ ApplicationWindow {
             // E6: legacy SubsMenu's last item, "Hides tags in ASS and MDVD"
             // (HikariSubFrame.cpp:344-345): the Grid's switch.
             ShellMenuItem {
+                command: "GLOBAL_HIDE_TAGS"
                 id: hideTagsItem
                 iconRole: "hide-tags"
                 objectName: "hideTagsMenuItem"
@@ -2282,6 +2373,7 @@ ApplicationWindow {
             // (editor.hideTags) and this command; the Grid's switch above
             // stays its own.
             ShellMenuItem {
+                command: "GLOBAL_EDITOR_HIDE_TAGS"
                 iconRole: "hide-tags"
                 objectName: "hideEditorTagsMenuItem"
                 action: Action {
@@ -2300,16 +2392,20 @@ ApplicationWindow {
         ShellMenu {
             title: qsTr("&Help")
             ShellMenuItem {
-                help: qsTr("Opens the HikariSub website in the default browser") // HikariSubFrame.cpp:360
+                command: "GLOBAL_HELP"
+                // DX1 (#367): legacy's "HikariSub website" (HikariSubFrame.cpp:360)
+                // is the user guide now, at the page of the panel or window in use.
+                help: qsTr("Opens the user guide in the default browser")
                 iconRole: "help"
-                objectName: "websiteMenuItem"
+                objectName: "userGuideMenuItem"
                 action: Action {
-                    id: websiteAction
-                    text: qsTr("HikariSub &website")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELP")) root.app.openWebsite()
+                    id: userGuideAction
+                    text: qsTr("User &guide")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELP")) root.openUserGuide()
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_ANSI"
                 help: qsTr("Opens the HikariSub issue tracker") // HikariSubFrame.cpp:362
                 iconRole: "report-issue"
                 objectName: "reportIssueMenuItem"
@@ -2320,6 +2416,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_CHECK_FOR_UPDATES"
                 help: qsTr("Checks whether a newer version is available") // HikariSubFrame.cpp:364
                 iconRole: "check-updates"
                 objectName: "checkForUpdatesMenuItem"
@@ -2342,6 +2439,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_ABOUT"
                 help: qsTr("Shows program info") // HikariSubFrame.cpp:366
                 iconRole: "about"
                 objectName: "aboutMenuItem"
@@ -2352,6 +2450,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_HELPERS"
                 help: qsTr("Shows credits") // HikariSubFrame.cpp:368
                 iconRole: "credits"
                 objectName: "creditsMenuItem"
@@ -5483,30 +5582,35 @@ ApplicationWindow {
                         ShellMenu {
                             iconRole: "add"
                             title: qsTranslate("HikariSub.Grid", "&Insert")
-                            ShellMenuItem { iconRole: "insert-before"; objectName: "insertBefore"; text: qsTranslate("HikariSub.Grid", "Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
-                            ShellMenuItem { iconRole: "insert-after"; objectName: "insertAfter"; text: qsTranslate("HikariSub.Grid", "Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
+                            ShellMenuItem { command: "GRID_INSERT_BEFORE"; iconRole: "insert-before"; objectName: "insertBefore"; text: qsTranslate("HikariSub.Grid", "Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
+                            ShellMenuItem { command: "GRID_INSERT_AFTER"; iconRole: "insert-after"; objectName: "insertAfter"; text: qsTranslate("HikariSub.Grid", "Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
                             ShellMenuItem {
+                                command: "GRID_INSERT_BEFORE_VIDEO"
                                 iconRole: "insert-before"
                                 objectName: "insertBeforeVideo"; text: qsTranslate("HikariSub.Grid", "Insert before with &video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_VIDEO")) root.app.insertLine(true, "video")
                             }
                             ShellMenuItem {
+                                command: "GRID_INSERT_AFTER_VIDEO"
                                 iconRole: "insert-after"
                                 objectName: "insertAfterVideo"; text: qsTranslate("HikariSub.Grid", "Insert after with video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_VIDEO")) root.app.insertLine(false, "video")
                             }
                             ShellMenuItem {
+                                command: "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME"
                                 iconRole: "insert-before"
                                 objectName: "insertBeforeFrame"; text: qsTranslate("HikariSub.Grid", "Insert before with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME")) root.app.insertLine(true, "frame")
                             }
                             ShellMenuItem {
+                                command: "GRID_INSERT_AFTER_WITH_VIDEO_FRAME"
                                 iconRole: "insert-after"
                                 objectName: "insertAfterFrame"; text: qsTranslate("HikariSub.Grid", "Insert after with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_WITH_VIDEO_FRAME")) root.app.insertLine(false, "frame")
                             }
                         }
                         ShellMenuItem {
+                            command: "GRID_DUPLICATE_LINES"
                             objectName: "duplicateLines"
                             iconRole: "duplicate"
                             // SetAccMenu: the binding's keys after the tab.
@@ -5514,16 +5618,18 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Grid", "&Duplicate lines") + (keys.length ? "\t" + keys : "")
                             onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
                         }
-                        ShellMenuItem { iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
-                        ShellMenuItem { iconRole: "join-lines"; objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
-                        ShellMenuItem { iconRole: "join-keep-first"; objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
-                        ShellMenuItem { iconRole: "join-keep-last"; objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
+                        ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenuItem { command: "GRID_JOIN_LINES"; iconRole: "join-lines"; objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
+                        ShellMenuItem { command: "GRID_JOIN_TO_FIRST_LINE"; iconRole: "join-keep-first"; objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
+                        ShellMenuItem { command: "GRID_JOIN_TO_LAST_LINE"; iconRole: "join-keep-last"; objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
                         ShellMenuItem {
+                            command: "GRID_MAKE_CONTINOUS_PREVIOUS_LINE"
                             iconRole: "continuous-previous"
                             objectName: "continuousPrevious"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (previous line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_PREVIOUS_LINE")) root.app.makeContinuous(true)
                         }
                         ShellMenuItem {
+                            command: "GRID_MAKE_CONTINOUS_NEXT_LINE"
                             iconRole: "continuous-next"
                             objectName: "continuousNext"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (next line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
@@ -5533,6 +5639,7 @@ ApplicationWindow {
                             iconRole: "split-lines"
                             title: qsTranslate("HikariSub.Grid", "Split lines")
                             ShellMenuItem {
+                                command: "GRID_SPLIT_BY_VIDEO_TIME"
                                 iconRole: "split-at-video"
                                 objectName: "splitAtVideoTime"
                                 text: qsTranslate("HikariSub.Grid", "Split line at video time")
@@ -5540,6 +5647,7 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_VIDEO_TIME")) root.app.splitLines("videoTime")
                             }
                             ShellMenuItem {
+                                command: "GRID_SPLIT_BY_FRAME"
                                 iconRole: "split-frames"
                                 objectName: "splitIntoFrames"
                                 text: qsTranslate("HikariSub.Grid", "Split lines into frames")
@@ -5547,18 +5655,21 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_FRAME")) root.app.splitLines("frames")
                             }
                             ShellMenuItem {
+                                command: "GRID_SPLIT_BY_CHARS"
                                 iconRole: "split-characters"
                                 objectName: "splitIntoCharacters"
                                 text: qsTranslate("HikariSub.Grid", "Split lines into characters")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_CHARS")) root.app.splitLines("chars")
                             }
                             ShellMenuItem {
+                                command: "GRID_SPLIT_BY_WORDS"
                                 iconRole: "split-words"
                                 objectName: "splitIntoWords"
                                 text: qsTranslate("HikariSub.Grid", "Split lines into words")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WORDS")) root.app.splitLines("words")
                             }
                             ShellMenuItem {
+                                command: "GRID_SPLIT_BY_WRAPS"
                                 iconRole: "split-wraps"
                                 objectName: "splitByWraps"
                                 text: qsTranslate("HikariSub.Grid", "Split lines by wraps")
@@ -5567,13 +5678,15 @@ ApplicationWindow {
                         }
                         // V6: after "Split lines", as legacy's menu (SubsGrid.cpp:264-265).
                         ShellMenuItem {
+                            command: "GRID_SELECT_VISIBLE_LINES"
                             iconRole: "select-visible"
                             objectName: "selectVisibleLines"; text: qsTranslate("HikariSub.Grid", "Select all lines visible on video")
                             onTriggered: if (!root.gridGesture(this, "GRID_SELECT_VISIBLE_LINES")) root.app.selectLinesVisibleOnVideo()
                         }
-                        ShellMenuItem { iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         // R2: legacy's in-Grid preview, here another tab in the reference tray (SubsGrid.cpp:277).
                         ShellMenuItem {
+                            command: "GRID_SHOW_PREVIEW"
                             iconRole: "reference"
                             objectName: "showPreview"
                             readonly property string keys: root.boundKeys("GRID_SHOW_PREVIEW", 1)
@@ -5583,6 +5696,7 @@ ApplicationWindow {
                         }
                         // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
                         ShellMenuItem {
+                            command: "GRID_PASTE_TRANSLATION"
                             iconRole: "paste-translation"
                             objectName: "pasteTranslation"
                             text: qsTranslate("HikariSub.Grid", "Paste translation text")
@@ -5596,13 +5710,14 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem {
+                            command: "GRID_TRANSLATION_DIALOG"
                             iconRole: "translation-shift"
                             objectName: "translationDialog"
                             text: qsTranslate("HikariSub.Grid", "Dialogue shifting window")
                             enabled: gridMenu.canShiftTranslation
                             onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.open()
                         }
-                        ShellMenuItem { iconRole: "hide"; objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
+                        ShellMenuItem { command: "GRID_HIDE_SELECTED"; iconRole: "hide"; objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
                         // Legacy Filtering submenu (GRID_FILTER_*).
                         ShellMenu {
                             id: filteringMenu
@@ -5612,6 +5727,7 @@ ApplicationWindow {
                             property var styleNames: []
                             onAboutToShow: styleNames = root.app.styleNames()
                             ShellMenuItem {
+                                command: "GRID_FILTER_AFTER_SUBS_LOAD"
                                 objectName: "filterAfterLoad"
                                 text: qsTranslate("HikariSub.Grid", "Filter after loading subtitles")
                                 checkable: true
@@ -5620,6 +5736,7 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_FILTER_AFTER_SUBS_LOAD")) root.gridFilter.afterLoad = checked
                             }
                             ShellMenuItem {
+                                command: "GRID_FILTER_INVERT"
                                 objectName: "filterInvert"
                                 text: qsTranslate("HikariSub.Grid", "Reverse filtering")
                                 checkable: true
@@ -5627,6 +5744,7 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_FILTER_INVERT")) root.gridFilter.inverted = checked
                             }
                             ShellMenuItem {
+                                command: "GRID_FILTER_DO_NOT_RESET"
                                 objectName: "filterDoNotReset"
                                 text: qsTranslate("HikariSub.Grid", "Do not reset previous filtering")
                                 checkable: true
@@ -5666,6 +5784,7 @@ ApplicationWindow {
                                 delegate: ShellMenuItem {
                                     required property var modelData
                                     objectName: modelData.name
+                                    command: modelData.symbol
                                     text: modelData.label
                                     checkable: true
                                     enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.tl || root.editor.translationMode)
@@ -5675,8 +5794,9 @@ ApplicationWindow {
                                 onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
                                 onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
                             }
-                            ShellMenuItem { iconRole: "filter"; objectName: "filter"; text: qsTranslate("HikariSub.Grid", "Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
+                            ShellMenuItem { command: "GRID_FILTER"; iconRole: "filter"; objectName: "filter"; text: qsTranslate("HikariSub.Grid", "Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
                             ShellMenuItem {
+                                command: "GRID_FILTER_BY_NOTHING"
                                 iconRole: "filter-off"
                                 objectName: "turnOffFiltering"
                                 text: qsTranslate("HikariSub.Grid", "Turn off filtering")
@@ -5685,6 +5805,7 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem {
+                            command: "GRID_FILTER_IGNORE_IN_ACTIONS"
                             objectName: "ignoreFilteringInActions"
                             text: qsTranslate("HikariSub.Grid", "Ignore filtering in some actions")
                             checkable: true
@@ -5725,6 +5846,7 @@ ApplicationWindow {
                                 delegate: ShellMenuItem {
                                     required property var modelData
                                     objectName: "hideColumn" + modelData.bit
+                                    command: modelData.symbol
                                     text: modelData.label
                                     checkable: true
                                     checked: (root.shell.hiddenColumns & modelData.bit) !== 0
@@ -5735,29 +5857,32 @@ ApplicationWindow {
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps() }
+                        ShellMenuItem { command: "GRID_SET_NEW_FPS"; iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps() }
                         ShellMenuItem {
+                            command: "GRID_SET_FPS_FROM_VIDEO"
                             iconRole: "fps-from-video"
                             objectName: "setFpsFromVideo"; text: qsTranslate("HikariSub.Grid", "Set FPS from video")
                             enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
                         }
-                        ShellMenuItem { iconRole: "edit-copy"; objectName: "copyLines"; text: qsTranslate("HikariSub.Grid", "Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
-                        ShellMenuItem { iconRole: "edit-cut"; objectName: "cutLines"; text: qsTranslate("HikariSub.Grid", "Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
-                        ShellMenuItem { iconRole: "edit-paste"; objectName: "pasteLines"; text: qsTranslate("HikariSub.Grid", "Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
-                        ShellMenuItem { iconRole: "columns-copy"; objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
-                        ShellMenuItem { iconRole: "columns-paste"; objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                        ShellMenuItem { command: "GRID_COPY"; iconRole: "edit-copy"; objectName: "copyLines"; text: qsTranslate("HikariSub.Grid", "Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
+                        ShellMenuItem { command: "GRID_CUT"; iconRole: "edit-cut"; objectName: "cutLines"; text: qsTranslate("HikariSub.Grid", "Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
+                        ShellMenuItem { command: "GRID_PASTE"; iconRole: "edit-paste"; objectName: "pasteLines"; text: qsTranslate("HikariSub.Grid", "Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
+                        ShellMenuItem { command: "GRID_COPY_COLUMNS"; iconRole: "columns-copy"; objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
+                        ShellMenuItem { command: "GRID_PASTE_COLUMNS"; iconRole: "columns-paste"; objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
                         // E6: SubsGrid's menu, "Delete text" before "Delete" (SubsGrid.cpp:285-286).
-                        ShellMenuItem { iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
-                        ShellMenuItem { iconRole: "delete"; objectName: "deleteLines"; text: qsTranslate("HikariSub.Grid", "Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_LINES"; iconRole: "delete"; objectName: "deleteLines"; text: qsTranslate("HikariSub.Grid", "Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                         // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
                         MenuSeparator {}
                         ShellMenuItem {
+                            command: "GLOBAL_OPEN_FONT_COLLECTOR"
                             iconRole: "font-collector"
                             objectName: "gridFontCollector"; text: qsTranslate("HikariSub.Grid", "Font collector"); enabled: root.shell.assColumns
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
                         }
                         // Y9: SubsGrid.cpp:289, enabled for a ".mkv" or ".ogm" video.
                         ShellMenuItem {
+                            command: "GRID_SUBS_FROM_MKV"
                             iconRole: "extract-subtitles"
                             objectName: "gridSubsFromMkv"; text: qsTranslate("HikariSub.Grid", "Load subtitles from an MKV/OGM file")
                             enabled: root.matroska.available
@@ -7512,7 +7637,7 @@ ApplicationWindow {
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
-        GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
+        GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction, // LE3
         GLOBAL_TRANSLATION_MODE: translationModeAction, // TM1
@@ -7531,6 +7656,46 @@ ApplicationWindow {
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem, // KA7
         GLOBAL_KANJI_TIMER: kanjiTimerItem, // KA3
     }
+    }
+    // DX1 (#367): where each command is in the menus, for the docs export:
+    // symbol => ["File > Save", ...], the menu bar's places first, then the
+    // Grid's menu's ("Grid menu > Insert > Insert before"). The titles as
+    // shown, without mnemonics or the keys after a tab.
+    function commandMenus() {
+        const symbolOf = new Map()
+        const actions = root.globalActions(), items = root.globalItems()
+        for (const s in actions)
+            symbolOf.set(actions[s], s)
+        for (const s in items)
+            symbolOf.set(items[s], s)
+        const plain = text => {
+            const tab = text.indexOf("\t")
+            return (tab >= 0 ? text.slice(0, tab) : text).replace(/&(&?)/g, "$1")
+        }
+        const out = {}
+        const walk = (menu, path) => {
+            for (let i = 0; i < menu.count; ++i) {
+                const item = menu.itemAt(i)
+                if (!item)
+                    continue
+                if (item.subMenu) {
+                    walk(item.subMenu, path.concat(plain(item.subMenu.title)))
+                    continue
+                }
+                const symbol = item.command || symbolOf.get(item.action) || symbolOf.get(item)
+                if (!symbol)
+                    continue
+                const place = path.concat(plain(item.text)).join(" > ")
+                if (!out[symbol])
+                    out[symbol] = []
+                if (!out[symbol].includes(place))
+                    out[symbol].push(place)
+            }
+        }
+        for (let i = 0; i < appMenus.count; ++i)
+            walk(appMenus.menuAt(i), [plain(appMenus.menuAt(i).title)])
+        walk(gridMenu, ["Grid menu"]) // (the export is in English)
+        return out
     }
     // The menu bar's items show their Global binding at the right (legacy
     // SetAccMenu wrote it after a tab), refreshed when the bindings change.

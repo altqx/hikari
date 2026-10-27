@@ -190,6 +190,9 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     }
     EXPECT_EQ(legacy.at(ids().at("VIDEO_DELETE_FILE")), "Remove video");
     legacy[ids().at("VIDEO_DELETE_FILE")] = "Unload video";
+    // DX1-user-guide: GLOBAL_HELP (5112, F1) is User guide.
+    EXPECT_EQ(legacy.at(ids().at("GLOBAL_HELP")), "HikariSub website");
+    legacy[ids().at("GLOBAL_HELP")] = "User guide";
     // The rewrite's own commands are named too (LE3, KE1, FS1, TM1, KA2, KA7, AD2).
     legacy[5169] = "Hide tags in the line editor";
     legacy[5170] = "Show / hide render cost";
@@ -246,6 +249,9 @@ TEST(Hotkeys, DefaultsAreLoadDefault)
     legacy[HotkeyId{1030, AudioHotkey}] = Hotkey{"Tap to time", "Y"};
     legacy[HotkeyId{1031, AudioHotkey}] = Hotkey{"Slower", "["};
     legacy[HotkeyId{1032, AudioHotkey}] = Hotkey{"Faster", "]"};
+    // DX1-user-guide: F1 stays GLOBAL_HELP's, now named User guide.
+    EXPECT_EQ(legacy.at(HotkeyId{ids().at("GLOBAL_HELP"), GlobalHotkey}), (Hotkey{"HikariSub website", "F1"}));
+    legacy[HotkeyId{ids().at("GLOBAL_HELP"), GlobalHotkey}].name = "User guide";
     EXPECT_EQ(defaultHotkeys(), legacy);
     HotkeyMap main, audio;
     loadDefaultHotkeys(main, false);

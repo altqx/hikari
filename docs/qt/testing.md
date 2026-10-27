@@ -111,7 +111,7 @@ First workloads, each 5×200 operations: loading a generated 50,000-Line ASS scr
 
 ## The desktop in tests (38e, 2026-10-14)
 
-No test may open a real browser, file manager or editor. Every hand-off from the application to a program on the desktop goes through `backends::desktop` ([`desktop_handoff.h`](../../src/backends/include/hikari/backends/desktop_handoff.h)): `openUrl` (Help > HikariSub website, Report an issue, an update's release page, Font Collector's folder on Linux), `selectInFolder` (the tab menu's and recent files' folder items, a downloaded update's Show in folder) and `startDetached` (the Lua script editor, Explorer for Font Collector's folder on Windows). The application's own relaunches and installer runs after an update are not hand-offs.
+No test may open a real browser, file manager or editor. Every hand-off from the application to a program on the desktop goes through `backends::desktop` ([`desktop_handoff.h`](../../src/backends/include/hikari/backends/desktop_handoff.h)): `openUrl` (Help > User guide and a DG1 window's "?", About's HikariSub website, Report an issue, an update's release page, Font Collector's folder on Linux), `selectInFolder` (the tab menu's and recent files' folder items, a downloaded update's Show in folder) and `startDetached` (the Lua script editor, Explorer for Font Collector's folder on Windows). The application's own relaunches and installer runs after an update are not hand-offs.
 
 [`tests/support/desktop`](../../tests/support/desktop/desktop_guard.h) stands in for the desktop in every UI suite (`tests/ui`) and in every test executable that builds the application (`hikari_app_startup`):
 
