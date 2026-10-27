@@ -7,8 +7,10 @@
 // The text is the hidden-tag projection's (core::project, as TM1's tag
 // transfer reads it): override blocks (karaoke tags too) and brace comments
 // are left out; \N, \n and \h are a space; a drawing's commands and a
-// malformed span are one space, never checked. A finding [start, end) in that
-// text maps back to the raw text it covers.
+// malformed span are one space, never checked. Its offsets are the
+// projection's (what the field shows with tags hidden), so a finding
+// [start, end) is a projection range: mappedReplace applies a suggestion, and
+// rawRange gives the raw text it covers.
 
 #include <cstddef>
 #include <optional>

@@ -3,6 +3,7 @@
 // goes back, and Harper's rules in their groups.
 
 #include "hikari/core/grammar.h"
+#include "hikari/core/text_projection.h"
 
 #include <gtest/gtest.h>
 
@@ -94,6 +95,21 @@ TEST(Grammar, PositionsAreUtf16Units)
     EXPECT_EQ(text.text, u"\U0001F600 dont");
     EXPECT_EQ(rawUnder(raw, text, u"dont"), u"dont");
     EXPECT_EQ(rawRange(text, 3, 7), (Range{8, 12}));
+}
+
+TEST(Grammar, OffsetsAreTheHiddenTagProjections)
+{
+    // A finding is a projection range: the field with tags hidden marks it as
+    // it is, and mappedReplace applies a suggestion over it.
+    const std::u16string raw = uR"({\i1}I has{\i0}\Na {\p1}m 0 0{\p0}apple)";
+    const auto text = checkedText(raw);
+    const auto projection = hikari::core::project(raw);
+    ASSERT_EQ(text.text.size(), projection.text.size());
+    const auto at = text.text.find(u"has");
+    EXPECT_EQ(projection.text.substr(at, 3), u"has");
+    const auto replaced = hikari::core::mappedReplace(raw, at, at + 3, u"have");
+    ASSERT_TRUE(replaced);
+    EXPECT_EQ(*replaced, uR"({\i1}I have{\i0}\Na {\p1}m 0 0{\p0}apple)");
 }
 
 TEST(Grammar, RangesOutsideTheTextMapToNothing)
