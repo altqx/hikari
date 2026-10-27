@@ -395,8 +395,12 @@ public:
     void setSaveWithVideoName(bool on);
     // GLOBAL_ANSI ("Report an issue"): the issue tracker in the browser.
     Q_INVOKABLE void reportIssue();
-    // GLOBAL_HELP ("HikariSub website"): the website in the browser.
+    // About's "HikariSub website": the site's home page in the browser.
     Q_INVOKABLE void openWebsite();
+    // DX1 (#367): GLOBAL_HELP ("User guide", F1) and a DG1 window's "?": the
+    // guide's page for a surface, `kind` "panel" or "window" (guide_links.h),
+    // else the guide's home, in the browser.
+    Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
     // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
     // F1: a find and replace question waits for its answer.

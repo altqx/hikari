@@ -1,6 +1,7 @@
 #include "hikari/application/update_check.h"
 
 #include <algorithm>
+#include <iterator>
 
 namespace hikari::application {
 
@@ -791,10 +792,16 @@ std::string manualInstallCommand(std::string_view helper, std::string_view file,
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments)
 {
     constexpr std::string_view health = "--hikari-health=", from = "--hikari-updated-from=";
+    constexpr std::string_view exportDocs = "--export-docs";
     StartupArguments out;
-    for (const auto &argument : arguments) {
+    for (auto it = arguments.begin(); it != arguments.end(); ++it) {
+        const std::string &argument = *it;
         if (argument == "--version")
             out.printVersion = true;
+        else if (argument == exportDocs)
+            out.exportDocs = std::next(it) != arguments.end() ? *++it : std::string();
+        else if (argument.starts_with(exportDocs) && argument[exportDocs.size()] == '=')
+            out.exportDocs = argument.substr(exportDocs.size() + 1);
         else if (argument.starts_with(health))
             out.healthFile = argument.substr(health.size());
         else if (argument.starts_with(from))

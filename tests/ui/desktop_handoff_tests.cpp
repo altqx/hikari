@@ -3,7 +3,7 @@
 // from QDesktopServices and from QML; the application's hand-offs
 // (backends::desktop) are recorded; a URL of any other scheme is refused
 // before the desktop's handler and fails the run. The shell's own hand-offs
-// (Help > HikariSub website, Help > Report an issue, the tab menu's folder
+// (Help > User guide, Help > Report an issue, the tab menu's folder
 // items) go through the composition and the real QML.
 
 #include "hikari/app/application.h"
@@ -207,20 +207,23 @@ private slots:
         QVERIFY(!backends::desktop::openUrl(QUrl(QStringLiteral("hikari-guard-probe:child"))));
     }
 
-    // The shell: Help > HikariSub website (GLOBAL_HELP) and Help > Report an
-    // issue (GLOBAL_ANSI) open their pages in the browser
-    // (HikariSubFrame.cpp:360-362); the tab menu's folder item shows the
-    // subtitles in their folder (SelectInFolder). All recorded.
+    // The shell: Help > User guide (GLOBAL_HELP, DX1: a page of the user
+    // guide, user_guide_tests) and Help > Report an issue (GLOBAL_ANSI) open
+    // their pages in the browser (HikariSubFrame.cpp:360-362); the tab menu's
+    // folder item shows the subtitles in their folder (SelectInFolder). All
+    // recorded.
     void theShellsHandOffsAreRecorded()
     {
         const QString file = writeAss(dir.filePath(QStringLiteral("tabs/a.ass")));
         QVERIFY(!file.isEmpty());
         start();
-        triggerAction("websiteMenuItem");
-        QCOMPARE(recorded::opened(), QList<QUrl>{QUrl(QStringLiteral("https://altqx.com"))});
+        triggerAction("userGuideMenuItem");
+        QCOMPARE(recorded::opened().size(), 1);
+        QVERIFY2(recorded::opened().first().toString().startsWith(QStringLiteral("https://hikarisub.altqx.com/en/docs")),
+                 qPrintable(recorded::opened().first().toString()));
         triggerAction("reportIssueMenuItem");
-        QCOMPARE(recorded::opened(), (QList<QUrl>{QUrl(QStringLiteral("https://altqx.com")),
-                                                  QUrl(QStringLiteral("https://github.com/altqx/hikari/issues"))}));
+        QCOMPARE(recorded::opened().size(), 2);
+        QCOMPARE(recorded::opened().last(), QUrl(QStringLiteral("https://github.com/altqx/hikari/issues")));
         QVERIFY(application->openFile(file));
         auto *bar = named("documentTabBar");
         QVERIFY(bar);
