@@ -34563,7 +34563,7 @@ private slots:
         QCOMPARE(box->property("title").toString(), QStringLiteral("Next file"));
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!box->property("visible").toBool());
-        QTRY_VERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(becomesFocusWindow(fsWindow));
         // Open dummy video and the Shift times question (Global commands,
         // which the fullscreen window takes) open over it too.
         QVERIFY(QMetaObject::invokeMethod(root, "openDummyVideo"));
@@ -34572,7 +34572,7 @@ private slots:
         QCOMPARE(dummy->transientParent(), fsWindow);
         QVERIFY(QMetaObject::invokeMethod(dummy, "reject"));
         QTRY_VERIFY(!dummy->isVisible());
-        QTRY_VERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(becomesFocusWindow(fsWindow));
         auto shiftSettings = application->shiftTimesSettings().settingsMap();
         const auto shiftBefore = shiftSettings;
         shiftSettings.insert(QStringLiteral("whichTimes"), 1);
@@ -34585,7 +34585,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(shift, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!shift->property("visible").toBool());
         application->shiftTimesSettings().setSettingsMap(shiftBefore);
-        QTRY_VERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(becomesFocusWindow(fsWindow));
         // Open video and Open subtitles take the fullscreen window as parent.
         QCOMPARE(named("videoOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
         QCOMPARE(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
@@ -34691,10 +34691,26 @@ private slots:
         QCOMPARE(tagsWindow()->transientParent(), fsWindow);
         tags->addTag();
         QVERIFY(tags->canUndo());
-        // Left, the dialogs are the main window's again.
+        // Left, the dialogs are the main window's again: Edit shapes and
+        // Edit tags too, with their history (a window going with
+        // fullscreen's is no closing of it), opened without the keyboard.
         QVERIFY(fs.leave());
         QTRY_VERIFY(!fsWindow->isVisible());
-        QTRY_VERIFY(becomesFocusWindow(window));
+        QTRY_VERIFY(shapesWindow() && shapesWindow()->transientParent() != fsWindow);
+        QTest::qWait(100);
+        QVERIFY(shapes);
+        QCOMPARE(tools.shapeEditor(), shapes.data());
+        QVERIFY(shapes->canUndo());
+        QTRY_VERIFY(tagsWindow() && tagsWindow()->transientParent() != fsWindow);
+        QVERIFY(tags);
+        QCOMPARE(tools.tagsEditor(), tags.data());
+        QVERIFY(tags->canUndo());
+        QVERIFY(QGuiApplication::focusWindow() != shapesWindow());
+        QVERIFY(QGuiApplication::focusWindow() != tagsWindow());
+        // Without a window manager fullscreen's editors, going, leave the
+        // keyboard nowhere; the hotkey below opens from the window with it.
+        window->requestActivate();
+        QVERIFY(becomesFocusWindow(window));
         QVERIFY(QMetaObject::invokeMethod(aspect, "openAtCursor",
                                           Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("visualOverlay")))));
         QTRY_VERIFY(aspectPopover->property("opened").toBool());
@@ -34713,17 +34729,6 @@ private slots:
         QTRY_VERIFY(!box->property("visible").toBool());
         QVERIFY(named("videoOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
         QVERIFY(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
-        // Edit shapes and Edit tags too, with their history: a window going
-        // with fullscreen's is no closing of it.
-        QTRY_VERIFY(shapesWindow() && shapesWindow()->transientParent() != fsWindow);
-        QTest::qWait(100);
-        QVERIFY(shapes);
-        QCOMPARE(tools.shapeEditor(), shapes.data());
-        QVERIFY(shapes->canUndo());
-        QTRY_VERIFY(tagsWindow() && tagsWindow()->transientParent() != fsWindow);
-        QVERIFY(tags);
-        QCOMPARE(tools.tagsEditor(), tags.data());
-        QVERIFY(tags->canUndo());
         // Closed by the user, the editors go.
         shapesWindow()->close();
         QTRY_VERIFY(!tools.shapeEditor());

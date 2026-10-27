@@ -37,20 +37,26 @@ Item {
             settings: dialogs.settings
         }
     }
-    function syncShapes() {
+    function syncShapes(quiet) {
         if (dialogs.tools.shapeEditor) {
             if (!shapesDialog)
                 shapesDialog = shapesComponent.createObject(dialogs)
-            shapesDialog.open()
+            if (quiet)
+                shapesDialog.openQuietly()
+            else
+                shapesDialog.open()
         } else if (shapesDialog && shapesDialog.visible) {
             shapesDialog.close()
         }
     }
-    function syncTags() {
+    function syncTags(quiet) {
         if (dialogs.tools.tagsEditor) {
             if (!tagsDialog)
                 tagsDialog = tagsComponent.createObject(dialogs)
-            tagsDialog.open()
+            if (quiet)
+                tagsDialog.openQuietly()
+            else
+                tagsDialog.open()
         } else if (tagsDialog && tagsDialog.visible) {
             tagsDialog.close()
         }
@@ -60,9 +66,11 @@ Item {
         function onShapeEditorChanged() { dialogs.syncShapes() }
         function onTagsEditorChanged() { dialogs.syncTags() }
     }
-    // Made as fullscreen opens or closes: what is open moves with it.
+    // Made as fullscreen opens or closes: what is open moves with it,
+    // leaving the keyboard where fullscreen put it (after Escape, the
+    // main window's).
     Component.onCompleted: {
-        syncShapes()
-        syncTags()
+        syncShapes(true)
+        syncTags(true)
     }
 }
