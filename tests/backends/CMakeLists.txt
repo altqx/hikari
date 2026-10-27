@@ -41,6 +41,12 @@ target_compile_definitions(hikari_backends_visual_geometry_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/visual-t3")
 
+# VT3: the Perspective tool's tags rendered by libass onto its quad.
+hikari_add_gtest(hikari_backends_visual_perspective_render_tests SOURCES visual_perspective_render_tests.cpp
+    LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
+target_compile_definitions(hikari_backends_visual_perspective_render_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+
 add_executable(hikari_test_helper test_helper.cpp)
 target_link_libraries(hikari_test_helper PRIVATE hikari_helper_endpoint)
 hikari_add_gtest(hikari_backends_helper_tests SOURCES helper_host_tests.cpp
@@ -309,6 +315,11 @@ hikari_add_gtest(hikari_backends_legacy_spelling_tests SOURCES legacy_spelling_t
 target_compile_definitions(hikari_backends_legacy_spelling_tests PRIVATE
     HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling"
     HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs")
+
+# KA4 (#279): MeCab over the shipped UniDic 2.1.2, and the suggestions it gives.
+hikari_add_gtest(hikari_backends_mecab_readings_tests SOURCES mecab_readings_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+target_compile_definitions(hikari_backends_mecab_readings_tests PRIVATE HIKARI_UNIDIC_DIR="${HIKARI_UNIDIC_DIR}")
 
 # Y8: the font collector through the renderer, over the same private
 # fontconfig fixtures as I5; the archives are read back with zlib. On Windows

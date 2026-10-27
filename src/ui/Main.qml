@@ -2,6 +2,7 @@ pragma Translator: "HikariSub.MainWindow"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Shapes
 import QtQuick.Dialogs
 import Hikari.Ui
 import com.kdab.dockwidgets 2.0 as KDDW
@@ -90,12 +91,14 @@ ApplicationWindow {
     // E2: a custom tag button. Types 0 and 1 work in the focused field like
     // Bold; plain text (type 2) goes, as in legacy, into the main field (the
     // translation in translation mode, unless it is empty).
-    function applyTagButton(index) {
+    // `edited`: the text field edited before a menu took the focus (LE1's
+    // More), else the one edited now.
+    function applyTagButton(index, edited) {
         // EditBox::OnButtonTag reads the button's option as stored now.
         const b = root.tagButtons.pressed(index)
         if (b.tag === undefined || b.tag.length === 0)
             return false
-        let field = root.editedField()
+        let field = edited ?? root.editedField()
         if (b.type === 2)
             field = root.editor.translationMode && translationText.text.length > 0 ? translationText : lineText
         return root.editor.applyTagButton(field.role, b.tag, b.type, field.selectionStart, field.selectionEnd)
@@ -309,6 +312,12 @@ ApplicationWindow {
         // move, then closed again).
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnLeft, gridDock,
                                   Qt.size(Math.round(area * 0.44), 0))
+        // LE1: wide enough for the Line editor's two rows of fields (narrow,
+        // their names go above them and the rows double), up to half.
+        const fieldsShort = Math.ceil(editorInspector.wideMinimum - editorColumn.width)
+        const room = Math.round(area * 0.5) - root.workspaceLayout.panelSize(editorDock).width
+        if (fieldsShort > 0 && room > 0)
+            Docking.resizeInLayout("Editor", 0, 0, Math.min(fieldsShort, room), 0)
         const original = originalDock.isOpen
         originalDock.open()
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 200))
@@ -398,6 +407,20 @@ ApplicationWindow {
     function addLog() {
         dockingArea.addDockWidget(logDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
     }
+    // PU6 (#308): the Spellchecker panel's place the same way (every preset,
+    // an arrangement saved before it existed: panel registry 9 or less),
+    // along the bottom, the whole width.
+    function addSpellChecker() {
+        dockingArea.addDockWidget(spellDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
+    }
+    // Subtitles > Check spelling (GLOBAL_OPEN_SPELLCHECKER): the panel,
+    // checking from the active Line, again when it was already checking.
+    function openSpellChecker() {
+        const checking = spellTool.checking
+        root.showPanel(spellDock)
+        if (checking)
+            spellTool.start()
+    }
 
     // TP1 (#274): the Styles panel's place when it opens in an arrangement
     // saved before it existed (panel registry 6 or earlier): its default
@@ -422,10 +445,11 @@ ApplicationWindow {
 
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel, automationPanel, logPanel, stylesPanel, misspellPanel]
+                                          timingPanel, searchPanel, automationPanel, spellPanel, logPanel, stylesPanel,
+                                          misspellPanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, logDock, stylesDock, misspellDock]
+                                     searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -519,13 +543,35 @@ ApplicationWindow {
         searchTool.focusFind()
     }
 
-    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first (legacy).
+    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first
+    // (legacy; PU4-shift-question: PK1's message box, which can be hidden).
+    // The answer shifts the document it was asked for: another editing
+    // target meanwhile (the main window stays in use under the fullscreen
+    // video window's question) takes the question back.
     function runShiftTimes() {
         const which = root.shiftTimes.settings.whichTimes
         const pp = root.shiftTimes.settings.postprocessor
         if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
-            shiftConfirm.which = which
-            shiftConfirm.open()
+            const start = which === 1
+            const target = root.app.editingTargetId()
+            shiftQuestion.askedFor = target
+            shiftQuestion.askWith({
+                title: qsTranslate("HikariSub.TimeShift", "Shift times"),
+                text: start ? qsTranslate("HikariSub.TimeShift", "Shift only the start times?")
+                            : qsTranslate("HikariSub.TimeShift", "Shift only the end times?"),
+                detail: start ? qsTranslate("HikariSub.TimeShift", "End times stay where they are, so a line shifted past its end ends before it starts.")
+                              : qsTranslate("HikariSub.TimeShift", "Start times stay where they are, so a line shifted before its start ends before it starts."),
+                severity: "warning",
+                choices: [
+                    { id: "shift", text: start ? qsTranslate("HikariSub.TimeShift", "Shift start times")
+                                               : qsTranslate("HikariSub.TimeShift", "Shift end times"),
+                      role: "accept", isDefault: true },
+                    { id: "cancel", text: qsTranslate("HikariSub.TimeShift", "Cancel"), role: "reject" }
+                ]
+            }, id => {
+                if (id === "shift" && root.app.editingTargetId() === target)
+                    shiftTimesPanel.message = root.app.shiftTimes()
+            })
             return
         }
         shiftTimesPanel.message = root.app.shiftTimes()
@@ -601,6 +647,8 @@ ApplicationWindow {
             root.openOriginal()
         else if (dock === logDock && !Docking.hasPlace("Log"))
             root.addLog()
+        else if (dock === spellDock && !Docking.hasPlace("Spellchecker"))
+            root.addSpellChecker()
         else if (dock === stylesDock && !Docking.hasPlace("Styles"))
             root.addStyles()
         else if (dock === misspellDock && !Docking.hasPlace("FixMinorErrors"))
@@ -611,6 +659,9 @@ ApplicationWindow {
             dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
         dock.raise()
+        // PU6: showing the Spellchecker starts it at the active Line.
+        if (dock === spellDock && !spellTool.checking)
+            spellTool.start()
         root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
 
@@ -675,6 +726,16 @@ ApplicationWindow {
                     { name: "automationClearRuns", text: qsTranslate("HikariSub.Automation", "Clear runs"),
                       iconRole: "remove", enabled: () => root.automation.runs.count > (root.automation.running ? 1 : 0),
                       run: () => root.automation.runs.clear() }]
+        // PU6: the Spellchecker's two options (legacy's check boxes) and
+        // the user dictionary's words (legacy's "Remove from dictionary").
+        if (dock === spellDock)
+            return [{ name: "spellIgnoreComments", text: qsTranslate("HikariSub.Spelling", "Ignore comments"), checkable: true,
+                      checked: () => spellTool.ignoreComments, run: () => spellTool.setIgnoreComments(!spellTool.ignoreComments) },
+                    { name: "spellIgnoreUpper", text: qsTranslate("HikariSub.Spelling", "Ignore words in capitals"), checkable: true,
+                      checked: () => spellTool.ignoreUpperCase,
+                      run: () => spellTool.setIgnoreUpperCase(!spellTool.ignoreUpperCase) },
+                    { name: "spellAddedWords", text: qsTranslate("HikariSub.Spelling", "Words added to dictionary…"),
+                      iconRole: "dictionary", run: () => spellTool.openAddedWords() }]
         return []
     }
     // VF1 (#288): a panel's own submenus, after its own items: an item's
@@ -1049,17 +1110,18 @@ ApplicationWindow {
         }
     }
     // Application-wide, so F6 also leaves a floating panel group (D1); a
-    // Global binding of the same keys comes first.
+    // Global binding of the same keys comes first. Off in a dialog's window
+    // (the Style manager's F6 goes from list to list, SY1).
     Shortcut {
         sequences: ["F6"]
         context: Qt.ApplicationShortcut
-        enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("F6")
+        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("F6")
         onActivated: root.cyclePanels(1)
     }
     Shortcut {
         sequences: ["Shift+F6"]
         context: Qt.ApplicationShortcut
-        enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("Shift+F6")
+        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
     }
     // Windows hands Shift+F10 to the system when no shortcut wants it; the
@@ -1753,7 +1815,7 @@ ApplicationWindow {
                 action: Action {
                     id: dummyVideoAction
                     text: qsTr("Open dummy video")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) dummyVideoDialog.show()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) root.openDummyVideo()
                 }
             }
             // V6: GLOBAL_SET_START_TIME / GLOBAL_SET_END_TIME (HikariSubFrame.cpp:259-262;
@@ -2107,7 +2169,7 @@ ApplicationWindow {
                 objectName: "assProperties"
                 text: qsTr("ASS file properties")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) scriptPropertiesDialog.openFor()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
             }
             ShellMenu {
                 help: qsTr("Converts from one format to another") // HikariSubFrame.cpp:334
@@ -2125,7 +2187,7 @@ ApplicationWindow {
                         iconRole: ["convert-ass", "convert-srt", "convert-mdvd", "convert-mpl2", "convert-tmp"][index]
                         text: modelData[1]
                         enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
-                        onTriggered: if (!root.hotkeyGesture(modelData[2])) conversionDialog.openFor(modelData[0], modelData[1])
+                        onTriggered: if (!root.hotkeyGesture(modelData[2])) root.openConversion(modelData[0], modelData[1])
                     }
                 }
             }
@@ -2138,7 +2200,7 @@ ApplicationWindow {
                 iconRole: "font-collector"
                 text: qsTr("Font collector")
                 enabled: root.shell.hasEditingTarget && root.shell.assColumns
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
             }
             ShellMenuItem {
                 help: qsTr("Resample subtitles") // HikariSubFrame.cpp:340
@@ -2147,7 +2209,7 @@ ApplicationWindow {
                 objectName: "resampleMenuItem"
                 text: qsTr("Resample subtitles")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) resampleDialog.openDialog()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) root.openResample()
             }
             // Legacy HikariSubFrame: after Resample subtitles.
             ShellMenuItem {
@@ -2157,7 +2219,7 @@ ApplicationWindow {
                 objectName: "checkSpellingMenuItem"
                 text: qsTr("Check spelling")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) root.openSpellChecker()
             }
             // KA7: the Karaoke check window, after Check spelling.
             ShellMenuItem {
@@ -2322,11 +2384,76 @@ ApplicationWindow {
         Layout.minimumHeight: topPadding + bottomPadding + cursorRectangle.height
 
         property bool syncing: false
+        // Where `inner` starts in `outer` past its carried tags: a match
+        // after whole override blocks and the spaces among them ("\h" before
+        // a leading tag), not one inside a tag ("an8" in "{\an8}an8").
+        // Where `inner` starts in `outer` past a prefix of override blocks
+        // and ASS spaces ending with a block, or -1. Linear in both: the
+        // prefix walked once for where its blocks end, `inner` found by
+        // KMP (a long Line's prefix is never scanned per candidate). The
+        // block ends kept by position: V4's Set.has is linear. Past what
+        // Tags from original carries (an Original and a translation of 3 *
+        // 16384 units each) no tags were carried: nothing is walked.
+        function carriedPrefix(outer, inner) {
+            if (outer.length > 6 * 16384 || inner.length > 6 * 16384)
+                return -1
+            const ends = []
+            let any = false
+            let at = 0
+            for (let open = -1; at < outer.length; ++at) {
+                const c = outer[at]
+                if (open >= 0) {
+                    if (c === "{")
+                        break
+                    if (c === "}") {
+                        ends[at + 1] = true
+                        any = true
+                        open = -1
+                    }
+                } else if (c === "{") {
+                    open = at
+                } else if (c === "\\" && "hNn".includes(outer[at + 1] ?? "")) {
+                    ++at
+                } else if (c !== " " && c !== "\t") {
+                    break
+                }
+            }
+            if (!any || inner.length === 0)
+                return -1
+            const fail = [0]
+            for (let i = 1, k = 0; i < inner.length; ++i) {
+                while (k > 0 && inner[i] !== inner[k])
+                    k = fail[k - 1]
+                if (inner[i] === inner[k])
+                    ++k
+                fail.push(k)
+            }
+            for (let i = 0, k = 0; i < outer.length && i - k <= at; ++i) {
+                while (k > 0 && outer[i] !== inner[k])
+                    k = fail[k - 1]
+                if (outer[i] === inner[k])
+                    ++k
+                if (k === inner.length) {
+                    if (ends[i + 1 - k] === true)
+                        return i + 1 - k
+                    k = fail[k - 1]
+                }
+            }
+            return -1
+        }
         function sync() {
             if (text === shown)
                 return
             syncing = true
-            const caret = cursorPosition
+            let caret = cursorPosition
+            // TM1: the carried tags shown or left out around the same text
+            // (Tags from original switched): the caret keeps its place in it.
+            const added = text.length > 0 ? carriedPrefix(shown, text) : -1
+            const removed = shown.length > 0 ? carriedPrefix(text, shown) : -1
+            if (added > 0)
+                caret += added
+            else if (removed > 0)
+                caret = Math.max(0, caret - removed)
             text = shown
             cursorPosition = Math.min(caret, length)
             syncing = false
@@ -2354,11 +2481,115 @@ ApplicationWindow {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
-            // E5: Moving tags gives the Translated field the focus, in its
+            // E5: an untranslated Line with tags gives the Translated field the
+            // focus (TM1's Tags from original; legacy's Moving tags), in its
             // window (the Original text panel may float in another).
             function onFieldFocusRequested(role) {
                 if (role === field.role)
                     root.focusPanel(field, Qt.OtherFocusReason)
+            }
+        }
+        // The rows of text from the rectangle of one position to another's,
+        // each {x, y, width} with y at its foot: an underline on each.
+        function underlineRows(first, last) {
+            const right = width - rightPadding
+            if (last.y <= first.y)
+                return [{x: first.x, y: first.y + first.height, width: last.x - first.x}]
+            const out = [{x: first.x, y: first.y + first.height, width: right - first.x}]
+            for (let y = first.y + first.height; out.length < 1000;) {
+                const row = positionToRectangle(positionAt(leftPadding, y + 1))
+                if (row.y >= last.y || row.y < y - 1 || row.height <= 0)
+                    break
+                out.push({x: leftPadding, y: row.y + row.height, width: right - leftPadding})
+                y = row.y + row.height
+            }
+            out.push({x: leftPadding, y: last.y + last.height, width: last.x - leftPadding})
+            return out
+        }
+        // TM1: the Original's runs (editor.tagRuns): a numbered badge where
+        // each starts in the Original text, and in the Translated text a
+        // badge and an underline under the text it is placed on, or a dotted
+        // underline under the same text found unplaced (a suggestion: Tab
+        // places it, Escape dismisses it).
+        Repeater {
+            model: root.editor.translationMode ? root.editor.tagRuns : []
+            delegate: Item {
+                id: run
+                required property var modelData
+                anchors.fill: parent
+                z: 2
+                // Every suggestion Tab would place is shown, a wrapped one
+                // on every row as a placed run's underline is.
+                Item {
+                    id: suggestion
+                    readonly property int from: field.role === 1 ? run.modelData.suggestedStart : -1
+                    readonly property int to: field.role === 1 ? run.modelData.suggestedEnd : -1
+                    readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
+                    readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                    objectName: field.objectName + "Run" + run.modelData.number + "Suggestion"
+                    visible: from >= 0 && to > from && to <= field.length
+                    anchors.fill: parent
+                    // The dotted underline, 2 px dots 2 px apart on every
+                    // row, in one Shape: no item per dot or row.
+                    Shape {
+                        anchors.fill: parent
+                        ShapePath {
+                            strokeColor: Theme.accent
+                            strokeWidth: 2
+                            strokeStyle: ShapePath.DashLine
+                            dashPattern: [1, 1]
+                            capStyle: ShapePath.FlatCap
+                            fillColor: "transparent"
+                            PathMultiline {
+                                paths: suggestion.visible
+                                       ? field.underlineRows(suggestion.first, suggestion.last).map(
+                                             r => [Qt.point(r.x, r.y), Qt.point(r.x + r.width, r.y)])
+                                       : []
+                            }
+                        }
+                    }
+                }
+                Item {
+                    id: mark
+                    readonly property var modelData: run.modelData
+                    readonly property int from: field.role === 0 ? modelData.originalStart : modelData.start
+                    readonly property int to: field.role === 0 ? modelData.originalEnd : modelData.end
+                    readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
+                    readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                    objectName: field.objectName + "Run" + modelData.number
+                    visible: from >= 0 && to > from && to <= field.length
+                    anchors.fill: parent
+                    Rectangle {
+                        objectName: mark.objectName + "Badge"
+                        x: mark.first.x - width / 2
+                        y: mark.first.y - height / 2
+                        width: Math.max(badgeText.implicitWidth + 4, height)
+                        height: badgeText.implicitHeight
+                        radius: height / 2
+                        color: Theme.accent
+                        Label {
+                            id: badgeText
+                            anchors.centerIn: parent
+                            text: mark.modelData.number
+                            font.pixelSize: Math.max(8, field.font.pixelSize * 0.6)
+                            color: Theme.onAccent
+                        }
+                    }
+                    // The underline, on every row a wrapped run takes.
+                    Repeater {
+                        model: field.role === 1 ? field.underlineRows(mark.first, mark.last) : []
+                        Rectangle {
+                            required property var modelData
+                            required property int index
+                            objectName: mark.objectName + "Underline" + index
+                            x: modelData.x
+                            y: modelData.y - 1
+                            width: modelData.width
+                            height: 2
+                            color: Theme.accent
+                        }
+                    }
+                }
             }
         }
         // F3: the spell-checked field (legacy TextEdit: the Translated one in
@@ -2612,8 +2843,15 @@ ApplicationWindow {
             }
             const ctrl = event.modifiers & Qt.ControlModifier
             const action = hotkeyAction(event)
+            // TM1: a plain Tab places the suggested runs and Escape dismisses
+            // them; without suggestions they move on and discard as usual.
+            const plain = (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
             if (action !== "") {
                 root.runEditorHotkey(action, field) // an action not here yet still takes the key
+                event.accepted = true
+            } else if (plain && field.role === 1 && event.key === Qt.Key_Tab && root.editor.acceptSuggestedRuns()) {
+                event.accepted = true
+            } else if (plain && field.role === 1 && event.key === Qt.Key_Escape && root.editor.dismissSuggestedRuns()) {
                 event.accepted = true
             } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
                 field.tabOut(event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier))
@@ -2981,7 +3219,7 @@ ApplicationWindow {
                     }
                     onOpenVideoRequested: videoDialog.show()
                     onOpenSubtitlesRequested: openDialog.show()
-                    onAspectRatioRequested: aspectRatioDialog.openAtCursor()
+                    onAspectRatioRequested: aspectRatioDialog.openAtCursor(visualOverlay)
                 }
                 Label {
                     anchors.centerIn: videoStageDock
@@ -3002,6 +3240,7 @@ ApplicationWindow {
                     id: videoToolBar
                     Layout.fillWidth: true
                     dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
+                    settings: root.app.settings
                     room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
                     // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
@@ -4858,14 +5097,14 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "editorPanel"
                 dockName: "Editor"
-                // The rows that do not wrap; the Line inspector's fields
-                // wrap onto two rows below 850 (and its narrow layout fits
-                // these), so its width-dependent implicit width is not used,
-                // nor the translation buttons' (they wrap too). In height,
-                // the tag buttons and a line of each text field shown: the
-                // rest scrolls.
-                minimumBodySize: Qt.size(Math.max(tagRow.implicitWidth, editorCounters.implicitWidth),
-                                         tagRow.implicitHeight
+                // LE1: the strip at its narrowest (its groups fold into
+                // More) or the Line inspector's narrow grid, with the
+                // content's side margins; its width-dependent implicit
+                // width is not used. In height, the strip and a line of each
+                // text field shown: the rest scrolls.
+                minimumBodySize: Qt.size(Math.max(editorStrip.minimumWidth, editorInspector.minimumWidth)
+                                         + 2 * (editorColumn.x - 4),
+                                         editorStrip.implicitHeight
                                          + (lineTextSlot.visible ? editorColumn.spacing + lineText.Layout.minimumHeight : 0)
                                          + (translationText.visible ? editorColumn.spacing
                                             + translationText.Layout.minimumHeight : 0))
@@ -4987,208 +5226,44 @@ ApplicationWindow {
                     ColumnLayout {
                         id: editorColumn
                         objectName: "editorContent"
-                        // the body's margin, in the scrolled area
-                        x: 4
+                        // LE1: 12 at the sides (the dock title's inset, as
+                        // MuseScore's Properties panel), the body's 4 above
+                        // and below, in the scrolled area; rows 6 apart.
+                        x: 12
                         y: 4
-                        width: editorScroll.contentWidth - 8
+                        width: editorScroll.contentWidth - 2 * x
+                        spacing: 6
                         // The rows' own heights, or the dock's when it is taller
                         // (the text fields take the rest).
                         height: Math.max(editorScroll.height - 8, implicitHeight)
 
-                        // The tag and colour buttons (legacy BoxSizer4).
-                        RowLayout {
-                            id: tagRow
+                        // LE1: the tag strip and the counters (LineEditorStrip).
+                        LineEditorStrip {
+                            id: editorStrip
+                            shellRoot: root
+                            editor: root.editor
+                            app: root.app
+                            tagButtons: root.tagButtons
+                            fontPicker: fontPicker
+                            original: lineText
+                            translated: translationText
+                            translationTools: root.editor.translationMode && !root.originalShown
                             Layout.fillWidth: true
-                            // Ordinary ASS controls; they keep focus (and the
-                            // selection) in the text field.
-                            Repeater {
-                                // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
-                                // maps the hotkey, the tooltip shows it.
-                                // K1: the set's icons in place of the letters
-                                // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
-                                // bitmaps, EditBox.cpp:168-195).
-                                model: [
-                                    { tag: "b", name: qsTranslate("HikariSub.Editor", "Bold"), symbol: "EDITBOX_INSERT_BOLD" },
-                                    { tag: "i", name: qsTranslate("HikariSub.Editor", "Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
-                                    { tag: "u", name: qsTranslate("HikariSub.Editor", "Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
-                                    { tag: "s", name: qsTranslate("HikariSub.Editor", "Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
-                                ]
-                                IconToolButton {
-                                    required property var modelData
-                                    required property int index
-                                    objectName: "tag_" + modelData.tag
-                                    iconRole: ["tag-bold", "tag-italic", "tag-underline", "tag-strikeout"][index]
-                                    text: modelData.name
-                                    focusPolicy: Qt.NoFocus
-                                    enabled: root.editor.editable
-                                    tip: root.mappedTip(modelData.name, modelData.symbol, 2)
-                                    onClicked: {
-                                        if (root.hotkeyGesture(modelData.symbol, 2, true))
-                                            return
-                                        const field = root.editedField()
-                                        root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
-                                    }
-                                }
-                            }
-                            // E1: Font selection and the four colours
-                            // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
-                            IconToolButton {
-                                objectName: "changeFont"
-                                iconRole: "tag-font"
-                                text: qsTranslate("HikariSub.Editor", "Font selection")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                tip: root.mappedTip(qsTranslate("HikariSub.Editor", "Font selection"), "EDITBOX_CHANGE_FONT", 2)
-                                onClicked: {
-                                    if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
-                                        return
-                                    const field = root.editedField()
-                                    fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd)
-                                }
-                            }
-                            Repeater {
-                                id: colourButtons
-                                model: [
-                                    { number: 1, name: qsTranslate("HikariSub.Editor", "Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
-                                    { number: 2, name: qsTranslate("HikariSub.Editor", "Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
-                                    { number: 3, name: qsTranslate("HikariSub.Editor", "Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
-                                    { number: 4, name: qsTranslate("HikariSub.Editor", "Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
-                                ]
-                                IconToolButton {
-                                    required property var modelData
-                                    objectName: "changeColour" + modelData.number
-                                    iconRole: ["colour-primary", "colour-secondary", "colour-outline", "colour-shadow"][modelData.number - 1]
-                                    text: modelData.name
-                                    focusPolicy: Qt.NoFocus
-                                    enabled: root.editor.editable
-                                    tip: root.mappedTip(modelData.name, modelData.symbol, 2)
-                                    onClicked: {
-                                        if (root.hotkeyGesture(modelData.symbol, 2, true))
-                                            return
-                                        root.colourClick(modelData.number, true, root.editedField())
-                                    }
-                                    // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
-                                    TapHandler {
-                                        acceptedButtons: Qt.RightButton
-                                        onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
-                                                                                    root.editedField())
-                                    }
-                                }
-                            }
-                            // E4: Text position (legacy Ban, after the colours).
-                            AlignmentChoice {
-                                editor: root.editor
-                                // TM1: the Original text may be in its own panel, floating or a hidden tab.
-                                onChosen: root.focusPanel(root.editor.translationMode && root.editor.translationText.length ? translationText : lineText,
-                                                          Qt.OtherFocusReason)
-                            }
-                            // E2: custom tag buttons. LE5: a button without a tag
-                            // opens its popover; the right click its menu.
-                            Repeater {
-                                model: root.tagButtons.buttons
-                                TagButton {
-                                    id: tagButton
-                                    required property var modelData
-                                    required property int index
-                                    objectName: "tagButton" + index
-                                    text: modelData.name
-                                    iconRole: modelData.icon
-                                    focusPolicy: Qt.NoFocus
-                                    enabled: root.editor.editable
-                                    // An icon-only button reads as its tag, as in Settings' list.
-                                    Accessible.name: modelData.name.length > 0 ? modelData.name : modelData.tag
-                                    Accessible.description: modelData.tag
-                                    tip: root.mappedTip(modelData.name.length > 0 && modelData.icon.length > 0
-                                                        ? modelData.name + ": " + modelData.tag : modelData.tag,
-                                                        "EDITBOX_TAG_BUTTON" + (index + 1), 2)
-                                    onClicked: {
-                                        if (root.hotkeyGesture("EDITBOX_TAG_BUTTON" + (index + 1), 2, true))
-                                            return
-                                        if (modelData.tag.length === 0)
-                                            tagButtonEditor.openFor(tagButton, index, modelData)
-                                        else
-                                            root.applyTagButton(index)
-                                    }
-                                    TapHandler {
-                                        acceptedButtons: Qt.RightButton
-                                        onTapped: eventPoint => tagButtonMenu.openFor(tagButton, tagButton.index, eventPoint.position)
-                                    }
-                                }
-                            }
-                            IconToolButton {
-                                id: addTagButton
-                                objectName: "addTagButton"
-                                iconRole: "add"
-                                text: qsTranslate("HikariSub.Editor", "Add a tag button")
-                                focusPolicy: Qt.NoFocus
-                                visible: root.tagButtons.count < root.tagButtons.maximum
-                                onClicked: tagButtonEditor.openFor(addTagButton, -1, null)
-                            }
-                            TagButtonEditor {
-                                id: tagButtonEditor
-                                tagButtons: root.tagButtons
-                                onSaved: (index, b) => index < 0 ? root.tagButtons.add(b.name, b.tag, b.type, b.icon)
-                                                                 : root.tagButtons.edit(index, b.name, b.tag, b.type, b.icon)
-                            }
-                            // LE5: a button's context menu.
-                            ShellMenu {
-                                id: tagButtonMenu
-                                objectName: "tagButtonMenu"
-                                property Item button: null
-                                property int index: -1
-                                // Left is toward the first button, unless the layout is mirrored.
-                                readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
-                                // At the click, inside the button it is for.
-                                function openFor(b, i, at) {
-                                    button = b
-                                    index = i
-                                    popup(b, at)
-                                }
-                                function canMove(step) {
-                                    return index >= 0 && index + step >= 0 && index + step < root.tagButtons.count
-                                }
-                                ShellMenuItem {
-                                    objectName: "tagButtonEdit"
-                                    iconRole: "edit"
-                                    text: qsTranslate("HikariSub.Editor", "Edit...")
-                                    onTriggered: tagButtonEditor.openFor(tagButtonMenu.button, tagButtonMenu.index,
-                                                                         root.tagButtons.buttons[tagButtonMenu.index])
-                                }
-                                ShellMenuItem {
-                                    objectName: "tagButtonMoveLeft"
-                                    iconRole: "move-left"
-                                    text: qsTranslate("HikariSub.Editor", "Move left")
-                                    enabled: tagButtonMenu.canMove(tagButtonMenu.leftStep)
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, tagButtonMenu.leftStep)
-                                }
-                                ShellMenuItem {
-                                    objectName: "tagButtonMoveRight"
-                                    iconRole: "move-right"
-                                    text: qsTranslate("HikariSub.Editor", "Move right")
-                                    enabled: tagButtonMenu.canMove(-tagButtonMenu.leftStep)
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -tagButtonMenu.leftStep)
-                                }
-                                MenuSeparator {}
-                                ShellMenuItem {
-                                    objectName: "tagButtonRemove"
-                                    iconRole: "remove"
-                                    text: qsTranslate("HikariSub.Editor", "Remove")
-                                    onTriggered: root.tagButtons.remove(tagButtonMenu.index)
-                                }
-                            }
-                            // LE3-tags-shown: the hidden-tag view's switch left the
-                            // strip for Settings > Editor and GLOBAL_EDITOR_HIDE_TAGS
-                            // (Subtitles > "Hide tags in the line editor").
+                            // Its groups fold instead (not their widths' sum).
+                            Layout.minimumWidth: minimumWidth
                         }
                         // TM1-translator-check-removed: legacy's "Translator mode"
                         // check box (BoxSizer5, EditBox.cpp:233-239, 308) is
                         // Subtitles > Translation mode and the Translation preset.
 
-                        // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
-                        LineCounters {
-                            id: editorCounters
-                            editor: root.editor
-                            Layout.fillWidth: true
+                        // LE1: with both text fields here (translation mode,
+                        // the Original text panel closed) each is named above it.
+                        Label {
+                            objectName: "originalCaption"
+                            visible: lineTextSlot.visible && root.editor.translationMode
+                            text: qsTranslate("HikariSub.Editor", "Original text")
+                            color: Theme.muted
+                            Layout.bottomMargin: -4
                         }
 
                         // TM1: the Line's text field, the Original text in
@@ -5215,6 +5290,13 @@ ApplicationWindow {
                                 Accessible.name: root.editor.translationMode ? qsTranslate("HikariSub.Editor", "Original text") : qsTranslate("HikariSub.Editor", "Line text")
                             }
                         }
+                        Label {
+                            objectName: "translatedCaption"
+                            visible: lineTextSlot.visible && root.editor.translationMode
+                            text: qsTranslate("HikariSub.Editor", "Translated text")
+                            color: Theme.muted
+                            Layout.bottomMargin: -4
+                        }
                         RoleField {
                             id: translationText
                             objectName: "translationText"
@@ -5223,77 +5305,77 @@ ApplicationWindow {
                             tabPrevious: root.originalShown ? lineText : null
                             Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
                         }
-                        // Legacy translation-mode buttons (EDITBOX_PASTE_*,
-                        // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
-                        // They wrap: a narrow editor, a larger font or longer
-                        // translated labels must not push them past the panel's
-                        // edge, out of reach. TM1: they are the Original text
-                        // panel's header (OriginalTextTools) while it shows;
-                        // here only while it is closed, with the Original text.
-                        Flow {
-                            objectName: "translationButtons"
-                            visible: root.editor.translationMode && !root.originalShown
+                        // TM1: the Original's runs, placed on the translation's words.
+                        RunStrip {
+                            editor: root.editor
+                            shellRoot: root
+                            translated: translationText
                             Layout.fillWidth: true
-                            spacing: 5
-                            Button {
-                                objectName: "pasteAllToTranslation"
-                                text: qsTranslate("HikariSub.Editor", "Paste all")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_ALL_TO_TRANSLATION", 2)
-                                onClicked: if (!root.hotkeyGesture("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2, true)) root.editor.pasteAllToTranslation()
+                        }
+                        // A karaoke Line carries its leading tags without the
+                        // timing, which differs with the translation's syllables.
+                        Label {
+                            objectName: "karaokeCarryNotice"
+                            visible: root.editor.translationMode && root.editor.karaokeCarried
+                            text: qsTranslate("HikariSub.Translation", "Karaoke line: the tags before its text are carried, the karaoke timing is not.")
+                            color: Theme.muted
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
+                        // TM1: legacy's translation-mode buttons (EDITBOX_PASTE_*,
+                        // EDITBOX_HIDE_ORIGINAL renamed Comment out original) and
+                        // toggles are the Original text panel's header
+                        // (OriginalTextTools) while it shows; LE1: the strip's
+                        // translation group while it is closed.
+
+                        // LE1: the editor's problem and what it did not apply,
+                        // right under the text they concern.
+                        RowLayout {
+                            objectName: "editorMessages"
+                            visible: root.editor.problem.length > 0 || root.editor.attempted.length > 0
+                            spacing: 6
+                            Layout.fillWidth: true
+                            Icon {
+                                iconRole: "notice-error"
+                                size: 12
+                                color: Theme.danger
+                                accentColor: Theme.danger
+                                Layout.alignment: Qt.AlignTop
+                                Layout.topMargin: 3
                             }
-                            Button {
-                                objectName: "pasteSelectionToTranslation"
-                                text: qsTranslate("HikariSub.Editor", "Paste the selected")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
-                                onClicked: {
-                                    if (root.hotkeyGesture("EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2, true))
-                                        return
-                                    root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd,
-                                                                            translationText.cursorPosition)
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+                                Label {
+                                    id: editorProblem
+                                    objectName: "editorProblem"
+                                    visible: text.length > 0
+                                    text: root.editor.problem
+                                    color: Theme.danger
+                                    wrapMode: Text.Wrap
+                                    Layout.fillWidth: true
+                                    Accessible.role: Accessible.AlertMessage
+                                }
+                                Label {
+                                    id: editorAttempted
+                                    objectName: "editorAttempted"
+                                    visible: root.editor.attempted.length > 0
+                                    text: qsTranslate("HikariSub.Editor", "Not applied: %1").arg(root.editor.attempted)
+                                    color: Theme.danger
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
                                 }
                             }
-                            Button {
-                                objectName: "commentOutOriginal"
-                                text: qsTranslate("HikariSub.Editor", "Comment out original")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
-                                onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
-                            }
-                            TranslationToggles { app: root.app; editor: root.editor } // E5
                         }
 
                         // E4: the Line's fields (legacy BoxSizer2, below the text).
                         LineInspector {
+                            id: editorInspector
                             objectName: "lineInspector"
                             editor: root.editor
                             hotkeys: root.hotkeys
                             Layout.fillWidth: true
                             onStyleEditRequested: style => styleManagerWindow.editStyle(style) // LE6
-                        }
-
-                        Label {
-                            objectName: "editorProblem"
-                            visible: text.length > 0
-                            text: root.editor.problem
-                            color: Theme.danger
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                            Accessible.role: Accessible.AlertMessage
-                        }
-                        Label {
-                            objectName: "editorAttempted"
-                            visible: root.editor.attempted.length > 0
-                            text: qsTranslate("HikariSub.Editor", "Not applied: %1").arg(root.editor.attempted)
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
                         }
                     }
                 }
@@ -5653,7 +5735,7 @@ ApplicationWindow {
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
+                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps() }
                         ShellMenuItem {
                             iconRole: "fps-from-video"
                             objectName: "setFpsFromVideo"; text: qsTranslate("HikariSub.Grid", "Set FPS from video")
@@ -5672,7 +5754,7 @@ ApplicationWindow {
                         ShellMenuItem {
                             iconRole: "font-collector"
                             objectName: "gridFontCollector"; text: qsTranslate("HikariSub.Grid", "Font collector"); enabled: root.shell.assColumns
-                            onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
                         }
                         // Y9: SubsGrid.cpp:289, enabled for a ".mkv" or ".ogm" video.
                         ShellMenuItem {
@@ -5809,6 +5891,34 @@ ApplicationWindow {
             }
         }
 
+        // PU6 (#308): the Spellchecker panel (legacy's Spellchecker window).
+        // Closing it ends the check.
+        KDDW.DockWidget {
+            id: spellDock
+            objectName: "spellDock"
+            uniqueName: "Spellchecker"
+            title: qsTranslate("HikariSub.Spelling", "Spellchecker")
+            onIsOpenChanged: if (!isOpen) spellTool.stop()
+            Panel {
+                id: spellPanel
+                objectName: "spellPanel"
+                dockName: "Spellchecker"
+                minimumBodySize: spellTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Spelling", "Spellchecker")
+                SpellCheckerPanel {
+                    id: spellTool
+                    objectName: "spellCheckerPanel"
+                    anchors.fill: parent
+                    focus: true
+                    app: root.app
+                    notices: root.notices
+                    documentName: root.shell.editingTitle
+                    onSettingsRequested: root.openSettings("lineEditor") // the dictionary
+                }
+            }
+        }
+
         // TP1 (#274): the Styles panel, the editing target's Styles, beside
         // the video in the Typesetting preset.
         KDDW.DockWidget {
@@ -5905,6 +6015,7 @@ ApplicationWindow {
             Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
             Docking.setPanelHeader("Search", true, null)
             Docking.setPanelHeader("Log", true, null)
+            Docking.setPanelHeader("Spellchecker", true, null)
             Docking.setPanelHeader("Original", true, originalTools) // TM1
             Docking.setPanelHeader("Styles", true, stylesTool.toolbar) // TP1
             root.defaultLayout()
@@ -6530,18 +6641,28 @@ ApplicationWindow {
             open()
         }
     }
-    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question.
-    DummyVideoDialog {
-        id: dummyVideoDialog
-        app: root.app
-        colourPicker: root.colourPicker
-        anchors.centerIn: parent
-        onRefused: message => root.notices.post("error", qsTr("Open dummy video"), message)
+    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question. PU4: the
+    // window made at its first opening (PK1: every window made at the start
+    // costs the program).
+    Loader {
+        id: dummyVideoLoader
+        active: false
+        sourceComponent: DummyVideoDialog {
+            app: root.app
+            settings: root.app.settings
+            colourPicker: root.colourPicker
+            onRefused: message => root.notices.post("error", qsTr("Open dummy video"), message)
+        }
+    }
+    function openDummyVideo() {
+        dummyVideoLoader.active = true
+        dummyVideoLoader.item.show()
     }
     VideoFileQuestion {
         id: videoFileQuestion
         app: root.app
-        anchors.centerIn: parent
+        video: root.video
+        messages: root.messages
     }
     // TM1: the Translation preset's question and Translation mode's turn-off
     // confirmation (Subtitles > Translation mode).
@@ -6554,10 +6675,13 @@ ApplicationWindow {
         app: root.app
     }
 
-    // V4: VIDEO_ASPECT_RATIO.
+    // V4: VIDEO_ASPECT_RATIO (PU4: a popover from the context menus, a
+    // compact window from the hotkey).
     AspectRatioDialog {
         id: aspectRatioDialog
         view: root.videoView
+        video: root.video
+        settings: root.app.settings
     }
 
     // V5: the fullscreen video window (legacy Fullscreen). What it asks
@@ -6569,8 +6693,8 @@ ApplicationWindow {
         controller: root.videoFullscreen
         onOpenVideoRequested: videoDialog.show()
         onOpenSubtitlesRequested: openDialog.show()
-        onAspectRatioRequested: aspectRatioDialog.openAtCursor()
-        onFileQuestionRequested: next => videoFileQuestion.ask(next)
+        onAspectRatioRequested: aspectRatioDialog.openAtCursor(videoFullscreenWindow.contentItem)
+        onFileQuestionRequested: next => videoFileQuestion.ask(next, videoFullscreenWindow)
         // FS1: the output menu's "Audio settings…" opens the dialog in the main window.
         onAudioSettingsRequested: {
             root.videoFullscreen.leave()
@@ -6580,14 +6704,6 @@ ApplicationWindow {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
             root.videoFullscreen.setFocusFallback(videoPanel)
         }
-    }
-    Binding {
-        when: root.videoFullscreen.active
-        target: aspectRatioDialog; property: "parent"; value: videoFullscreenWindow.contentItem
-    }
-    Binding {
-        when: root.videoFullscreen.active
-        target: videoFileQuestion; property: "parent"; value: videoFullscreenWindow.contentItem
     }
     Binding {
         when: root.videoFullscreen.active
@@ -6647,58 +6763,19 @@ ApplicationWindow {
         }
     }
 
-    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: fpsWindow
-        objectName: "fpsWindow"
-        title: qsTranslate("HikariSub.Conversion", "Choose new FPS")
-        width: 360
-        height: 140
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        readonly property var presets: ["23.976", "24", "25", "29.97", "30", "60"]
-        GridLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            columns: 2
-            Label { text: qsTranslate("HikariSub.Conversion", "Subtitles FPS") }
-            ComboBox {
-                id: oldFps
-                objectName: "oldFps"
-                editable: true
-                model: fpsWindow.presets
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTranslate("HikariSub.Conversion", "Subtitles FPS")
-            }
-            Label { text: qsTranslate("HikariSub.Conversion", "New FPS") }
-            ComboBox {
-                id: newFps
-                objectName: "newFps"
-                editable: true
-                model: fpsWindow.presets
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTranslate("HikariSub.Conversion", "New FPS")
-            }
-            WindowFooter {
-                Layout.columnSpan: 2
-                Button {
-                    objectName: "fpsOk"
-                    text: qsTranslate("HikariSub.Conversion", "OK")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        if (root.app.setNewFps(oldFps.editText, newFps.editText))
-                            fpsWindow.close()
-                    }
-                }
-                Button {
-                    objectName: "fpsCancel"
-                    text: qsTranslate("HikariSub.Conversion", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: fpsWindow.close()
-                }
-            }
+    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new
+    // one (PU4: a compact window, made at its first opening).
+    Loader {
+        id: setNewFpsLoader
+        active: false
+        sourceComponent: SetNewFpsWindow {
+            app: root.app
+            settings: root.app.settings
         }
+    }
+    function openSetNewFps() {
+        setNewFpsLoader.active = true
+        setNewFpsLoader.item.show()
     }
 
     // The column choice for Copy columns / Paste columns (PU2: ColumnsWindow.qml).
@@ -6908,16 +6985,21 @@ ApplicationWindow {
         app: root.app
         settings: root.app.settings
     }
-    Dialog {
-        id: shiftConfirm
-        objectName: "shiftConfirm"
-        property int which: 1
-        title: qsTranslate("HikariSub.TimeShift", "Confirmation")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Yes | Dialog.No
-        Label { text: qsTranslate("HikariSub.TimeShift", "Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTranslate("HikariSub.TimeShift", "start") : qsTranslate("HikariSub.TimeShift", "end")) }
-        onAccepted: shiftTimesPanel.message = root.app.shiftTimes()
+    // GLOBAL_SHIFT_TIMES' question (runShiftTimes).
+    HidableQuestion {
+        id: shiftQuestion
+        objectName: "shiftQuestion"
+        messages: root.messages
+        questionId: "shiftOneTime"
+        // The editing target it was asked for (App.editingTargetId).
+        property var askedFor: 0
+        property Connections targetChanges: Connections {
+            target: root.app
+            function onTabsChanged() {
+                if (shiftQuestion.pending.length > 0 && root.app.editingTargetId() !== shiftQuestion.askedFor)
+                    shiftQuestion.withdraw()
+            }
+        }
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.
@@ -6971,231 +7053,90 @@ ApplicationWindow {
         app: root.app
         settings: root.app.settings
     }
-    // Y5: conversion with the approved loss preview (C02-loss-preview): the
-    // legacy CONVERT_* options, then what the conversion removes or
-    // synthesizes; Convert applies exactly the previewed plan.
-    Dialog {
-        id: conversionDialog
-        objectName: "conversionDialog"
-        modal: true
-        anchors.centerIn: parent
-        property string target: ""
-        property var preview: ({})
-        function openFor(t, label) {
-            target = t
-            title = label
-            const o = root.app.conversionOptions()
-            convFps.text = o.fps
-            convFpsFromVideo.checked = o.fpsFromVideo
-            convStyle.text = o.style
-            convCatalog.currentIndex = Math.max(0, root.styleManager.catalogs.indexOf(o.styleCatalog))
-            convNewEnds.checked = o.newEndTimes
-            convPerLetter.value = o.timePerCharacter
-            convPrefix.text = o.prefix
-            convWidth.text = o.resolutionWidth
-            convHeight.text = o.resolutionHeight
-            refresh()
-            open()
-        }
-        function refresh() { preview = root.app.previewConversion(target) }
-        function set(key, value) { root.app.setConversionOptions({[key]: value}); refresh() }
-        ColumnLayout {
-            anchors.fill: parent
-            GridLayout {
-                columns: 2
-                Label { text: qsTranslate("HikariSub.Conversion", "FPS") }
-                RowLayout {
-                    TextField { id: convFps; objectName: "convFps"; Accessible.name: qsTranslate("HikariSub.Conversion", "FPS"); onEditingFinished: conversionDialog.set("fps", text) }
-                    CheckBox { id: convFpsFromVideo; text: qsTranslate("HikariSub.Conversion", "FPS from video"); onToggled: conversionDialog.set("fpsFromVideo", checked) }
-                }
-                Label { text: qsTranslate("HikariSub.Conversion", "Catalog for style") }
-                ComboBox {
-                    id: convCatalog
-                    model: root.styleManager.catalogs
-                    Accessible.name: qsTranslate("HikariSub.Conversion", "Catalog for style")
-                    onActivated: (i) => conversionDialog.set("styleCatalog", model[i])
-                }
-                Label { text: qsTranslate("HikariSub.Conversion", "Style") }
-                TextField { id: convStyle; Accessible.name: qsTranslate("HikariSub.Conversion", "Style"); onEditingFinished: conversionDialog.set("style", text) }
-                Label { text: qsTranslate("HikariSub.Conversion", "Time for one letter in milliseconds") }
-                RowLayout {
-                    SpinBox { id: convPerLetter; from: 30; to: 1000; editable: true; onValueModified: conversionDialog.set("timePerCharacter", value) }
-                    CheckBox { id: convNewEnds; objectName: "convNewEnds"; text: qsTranslate("HikariSub.Conversion", "New end times"); onToggled: conversionDialog.set("newEndTimes", checked) }
-                }
-                Label { text: qsTranslate("HikariSub.Conversion", "Tags to paste at the beginning of every ASS line") }
-                TextField { id: convPrefix; Accessible.name: qsTranslate("HikariSub.Conversion", "Tags to paste at the beginning of every ASS line"); onEditingFinished: conversionDialog.set("prefix", text) }
-                Label { text: qsTranslate("HikariSub.Conversion", "Resolution when converting to ASS") }
-                RowLayout {
-                    TextField { id: convWidth; Accessible.name: qsTranslate("HikariSub.Conversion", "Width"); onEditingFinished: conversionDialog.set("resolutionWidth", text) }
-                    Label { text: "×" }
-                    TextField { id: convHeight; Accessible.name: qsTranslate("HikariSub.Conversion", "Height"); onEditingFinished: conversionDialog.set("resolutionHeight", text) }
-                }
-            }
-            Label {
-                text: conversionDialog.preview.ok ? qsTranslate("HikariSub.Conversion", "The conversion will:") : (conversionDialog.preview.problem || "")
-                font.bold: true
-            }
-            ListView {
-                objectName: "conversionLosses"
-                Layout.fillWidth: true
-                Layout.preferredHeight: 160
-                Layout.preferredWidth: 480
-                clip: true
-                model: conversionDialog.preview.ok ? conversionDialog.preview.losses : []
-                Accessible.role: Accessible.List
-                Accessible.name: qsTranslate("HikariSub.Conversion", "What the conversion changes")
-                delegate: Label { required property string modelData; text: "• " + modelData; Accessible.name: modelData }
-            }
-            WindowFooter {
-                Button {
-                    objectName: "conversionAccept"
-                    text: qsTranslate("HikariSub.Conversion", "Convert")
-                    enabled: conversionDialog.preview.ok === true
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        if (!root.app.acceptConversion())
-                            conversionDialog.refresh() // stale: show the new preview
-                        else
-                            conversionDialog.close()
-                    }
-                }
-                Button { text: qsTranslate("HikariSub.Conversion", "Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: conversionDialog.close() }
-            }
+    // Y5, PU6 (#308): conversion with the approved loss preview
+    // (C02-loss-preview), Resample subtitles and ASS file properties
+    // (ConversionWindow, ResampleWindow, ScriptPropertiesDialog), each made
+    // at its first opening.
+    function openConversion(target, label) {
+        conversionLoader.active = true
+        conversionLoader.item.openFor(target, label)
+    }
+    Loader {
+        id: conversionLoader
+        active: false
+        sourceComponent: ConversionWindow {
+            app: root.app
+            catalogs: root.styleManager.catalogs
+            settings: root.app.settings
         }
     }
-    // Y4: legacy SubsResampleDialog ("Change resolution").
-    Dialog {
-        id: resampleDialog
-        objectName: "resampleDialog"
-        title: qsTranslate("HikariSub.Conversion", "Resample subtitles") // the menu command's name (legacy: "Change resolution")
-        header: IconDialogHeader { objectName: "resampleDialogTitle"; iconRole: "resample"; text: resampleDialog.title }
-        modal: true
-        anchors.centerIn: parent
-        property var initial: ({})
-        function openDialog() {
-            const v = root.app.resampleValues()
-            if (v.subsWidth === undefined)
-                return
-            initial = v
-            subsWidth.value = v.subsWidth
-            subsHeight.value = v.subsHeight
-            targetWidth.value = v.videoWidth
-            targetHeight.value = v.videoHeight
-            noStretch.checked = true
-            open()
-        }
-        // The stretch choice only means something when the aspect ratio changes.
-        readonly property bool aspectChanges: targetWidth.value / subsWidth.value !== targetHeight.value / subsHeight.value
-        ColumnLayout {
-            anchors.fill: parent
-            GroupBox {
-                title: qsTranslate("HikariSub.Conversion", "Subtitles resolution")
-                Layout.fillWidth: true
-                RowLayout {
-                    SpinBox { id: subsWidth; objectName: "resampleSubsWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTranslate("HikariSub.Conversion", "Subtitles resolution") }
-                    Label { text: "×" }
-                    SpinBox { id: subsHeight; objectName: "resampleSubsHeight"; from: 100; to: 10000; editable: true }
-                    Button {
-                        text: qsTranslate("HikariSub.Conversion", "From subtitles")
-                        enabled: subsWidth.value !== resampleDialog.initial.subsWidth || subsHeight.value !== resampleDialog.initial.subsHeight
-                        onClicked: { subsWidth.value = resampleDialog.initial.subsWidth; subsHeight.value = resampleDialog.initial.subsHeight }
-                    }
-                }
-            }
-            GroupBox {
-                title: qsTranslate("HikariSub.Conversion", "Target resolution")
-                Layout.fillWidth: true
-                RowLayout {
-                    SpinBox { id: targetWidth; objectName: "resampleWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTranslate("HikariSub.Conversion", "Target resolution") }
-                    Label { text: "×" }
-                    SpinBox { id: targetHeight; objectName: "resampleHeight"; from: 100; to: 10000; editable: true }
-                    Button {
-                        text: qsTranslate("HikariSub.Conversion", "From video")
-                        // Legacy compares the target with the subtitles' size here.
-                        enabled: targetWidth.value !== resampleDialog.initial.subsWidth || targetHeight.value !== resampleDialog.initial.subsHeight
-                        onClicked: { targetWidth.value = resampleDialog.initial.videoWidth; targetHeight.value = resampleDialog.initial.videoHeight }
-                    }
-                }
-            }
-            GroupBox {
-                title: qsTranslate("HikariSub.Conversion", "Resample options")
-                Layout.fillWidth: true
-                enabled: resampleDialog.aspectChanges
-                RowLayout {
-                    RadioButton { id: noStretch; text: qsTranslate("HikariSub.Conversion", "No stretch"); checked: true }
-                    RadioButton { id: stretch; objectName: "resampleStretch"; text: qsTranslate("HikariSub.Conversion", "Stretch") }
-                }
-            }
-            WindowFooter {
-                Button {
-                    objectName: "resampleOk"
-                    text: qsTranslate("HikariSub.Conversion", "OK")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        if (subsWidth.value === targetWidth.value && subsHeight.value === targetHeight.value)
-                            return
-                        root.app.resample(subsWidth.value, subsHeight.value, targetWidth.value, targetHeight.value,
-                                          resampleDialog.aspectChanges && stretch.checked)
-                        resampleDialog.close()
-                    }
-                }
-                Button { text: qsTranslate("HikariSub.Conversion", "Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: resampleDialog.close() }
-            }
+    function openResample() {
+        resampleLoader.active = true
+        resampleLoader.item.openDialog()
+    }
+    Loader {
+        id: resampleLoader
+        active: false
+        sourceComponent: ResampleWindow {
+            app: root.app
+            settings: root.app.settings
+            video: root.video
         }
     }
-    // Y4: legacy SubsMismatchResolutionDialog ("Incompatible resolution").
+    // False for a Document that is not ASS.
+    function openScriptProperties() {
+        scriptPropertiesLoader.active = true
+        return scriptPropertiesLoader.item.openFor()
+    }
+    Loader {
+        id: scriptPropertiesLoader
+        active: false
+        sourceComponent: ScriptPropertiesDialog {
+            app: root.app
+            settings: root.app.settings
+            video: root.video
+        }
+    }
+    // Y4, PU6: legacy SubsMismatchResolutionDialog ("Incompatible
+    // resolution") as a message box titled with the command that found it:
+    // both sizes on one line, the choices as buttons (Resample the default,
+    // Keep as is on Esc, Resample and stretch only when the aspect ratio
+    // differs), Don't ask again legacy's "Disable warning".
+    function askResolutionMismatch(sizes) {
+        const choices = [{ id: "keep", text: qsTranslate("HikariSub.Conversion", "Keep as is"), role: "reject" },
+                         { id: "only", text: qsTranslate("HikariSub.Conversion", "Change resolution only"), role: "action" }]
+        if (sizes.videoWidth / sizes.subsWidth !== sizes.videoHeight / sizes.subsHeight)
+            choices.push({ id: "stretch", text: qsTranslate("HikariSub.Conversion", "Resample and stretch"), role: "action" })
+        choices.push({ id: "resample", text: qsTranslate("HikariSub.Conversion", "Resample"), role: "accept", isDefault: true })
+        // The answer acts on the Document and the video it shows: with
+        // another tab active by then, or another video or resolution (the box
+        // is modal to its window only), it does nothing.
+        const document = root.app.editingDocument()
+        const shown = () => {
+            const now = root.app.resampleValues()
+            return root.app.editingDocument() === document && now.hasVideo === true
+                && now.videoWidth === sizes.videoWidth && now.videoHeight === sizes.videoHeight
+                && now.subsWidth === sizes.subsWidth && now.subsHeight === sizes.subsHeight
+        }
+        root.messages.ask({
+            title: qsTranslate("HikariSub.Conversion", "Open video"),
+            text: qsTranslate("HikariSub.Conversion", "The video is %1 × %2 and the subtitles are %3 × %4.")
+                      .arg(sizes.videoWidth).arg(sizes.videoHeight).arg(sizes.subsWidth).arg(sizes.subsHeight),
+            detail: qsTranslate("HikariSub.Conversion", "Resample the subtitles to the video? Subtitles › Resample subtitles does it later too."),
+            severity: "info",
+            choices: choices,
+            dontAsk: true
+        }, (id, dontAskAgain) => {
+            if (dontAskAgain)
+                root.app.askForBadResolution = false
+            const option = ({ only: 0, resample: 1, stretch: 2 })[id]
+            if (option !== undefined && shown())
+                root.app.matchVideoResolution(option)
+        })
+    }
     Connections {
         target: root.app
-        function onResolutionMismatch(sizes) { mismatchDialog.show(sizes) }
-    }
-    Dialog {
-        id: mismatchDialog
-        objectName: "mismatchDialog"
-        title: qsTranslate("HikariSub.Conversion", "Incompatible resolution")
-        modal: true
-        anchors.centerIn: parent
-        property var sizes: ({})
-        readonly property bool canStretch: sizes.videoWidth / sizes.subsWidth !== sizes.videoHeight / sizes.subsHeight
-        function show(s) {
-            sizes = s
-            mismatchResample.checked = true
-            open()
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            Label {
-                objectName: "mismatchText"
-                text: qsTranslate("HikariSub.Conversion", "The video and subtitle resolutions are different.\nYou can change them now or use 'Change subtitle resolution'.\n\nVideo resolution: %1 x %2\nSubtitle resolution: %3 x %4\n\nMatch the resolution to the video?\n")
-                      .arg(mismatchDialog.sizes.videoWidth).arg(mismatchDialog.sizes.videoHeight)
-                      .arg(mismatchDialog.sizes.subsWidth).arg(mismatchDialog.sizes.subsHeight)
-            }
-            GroupBox {
-                title: qsTranslate("HikariSub.Conversion", "Resample options")
-                ColumnLayout {
-                    RadioButton { id: mismatchOnly; objectName: "mismatchOnly"; text: qsTranslate("HikariSub.Conversion", "Change only the subtitle resolution") }
-                    RadioButton { id: mismatchResample; objectName: "mismatchResample"; text: qsTranslate("HikariSub.Conversion", "Resample subtitles (no stretch)"); checked: true }
-                    RadioButton { id: mismatchStretch; objectName: "mismatchStretch"; text: qsTranslate("HikariSub.Conversion", "Resample subtitles (stretch)"); visible: mismatchDialog.canStretch }
-                }
-            }
-            WindowFooter {
-                Button {
-                    objectName: "mismatchChange"
-                    text: qsTranslate("HikariSub.Conversion", "Change")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        root.app.matchVideoResolution(mismatchOnly.checked ? 0 : mismatchStretch.checked ? 2 : 1)
-                        mismatchDialog.close()
-                    }
-                }
-                Button { text: qsTranslate("HikariSub.Conversion", "Do not change"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: mismatchDialog.close() }
-                Button {
-                    objectName: "mismatchDisable"
-                    text: qsTranslate("HikariSub.Conversion", "Disable warning")
-                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                    onClicked: { root.app.askForBadResolution = false; mismatchDialog.close() }
-                }
-            }
-        }
+        function onResolutionMismatch(sizes) { root.askResolutionMismatch(sizes) }
     }
     StyleManager {
         id: styleManagerWindow
@@ -7203,7 +7144,7 @@ ApplicationWindow {
         catalogs: root.fontCatalogs
         colourPicker: root.colourPicker
         app: root.app
-        postCleanStyles: root.postCleanStyles
+        notices: root.notices
     }
     SettingsImportDialog {
         id: settingsImportDialog
@@ -7234,20 +7175,25 @@ ApplicationWindow {
     // `page`: a page's id ("audio", "hotkeys"); without one, the page shown
     // last. `filter`: the Hotkeys page's filter.
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
-    // Y8: the font collector; a double click on a Style in its log opens the
+    // Y8: the font collector, PU6: a window on DG1's frame made at its first
+    // opening (as KA7's); a double click on a Style in its log opens the
     // Style editor (StyleStore::ShowStyleEdit).
-    FontCollectorDialog {
-        id: fontCollectorDialog
-        collector: root.fontCollector
-        anchors.centerIn: parent
-        Connections {
-            target: root.fontCollector
-            function onStyleRequested(style) {
-                styleManagerWindow.showFor(style)
-                const row = styleManagerWindow.styles.documentStyles.indexOf(style)
-                if (row >= 0)
-                    styleManagerWindow.beginEditing(styleManagerWindow.styles.beginEdit(false, row), false)
-            }
+    Loader {
+        id: fontCollectorLoader
+        active: false
+        sourceComponent: FontCollectorDialog {
+            collector: root.fontCollector
+            settings: root.app.settings
+        }
+    }
+    function openFontCollector() {
+        fontCollectorLoader.active = true
+        fontCollectorLoader.item.showOnce()
+    }
+    Connections {
+        target: root.fontCollector
+        function onStyleRequested(style) {
+            styleManagerWindow.showFor(style) // SY1: the editor is on it
         }
     }
     SelectLinesDialog {
@@ -7263,14 +7209,8 @@ ApplicationWindow {
             }
         }
     }
-    // F3: the Spellchecker window and the editor's "Fix suggestions" list
-    // (legacy's spelling message boxes are toasts, NT1).
-    SpellCheckerDialog {
-        id: spellCheckerDialog
-        app: root.app
-        notices: root.notices
-        anchors.centerIn: parent
-    }
+    // F3: the editor's "Fix suggestions" list (the Spellchecker is a panel,
+    // PU6; legacy's spelling message boxes are toasts, NT1).
     // KA7: the Karaoke check window, made at its first opening, as PK1's
     // windows are: every window made at the start costs it (on Windows a
     // native event filter apiece).
@@ -7321,11 +7261,6 @@ ApplicationWindow {
             })
         }
     }
-    ScriptPropertiesDialog {
-        id: scriptPropertiesDialog
-        app: root.app
-        anchors.centerIn: parent
-    }
     // PU3 (#305): the font picker, and the program's one catalog window and
     // one "Add fonts from subtitles" window (FontWindows), which the picker
     // and the Style editor open.
@@ -7363,13 +7298,12 @@ ApplicationWindow {
     function colourClick(number, leftClick, field) {
         if (root.colourPicker.switchClicks)
             leftClick = !leftClick
-        const button = colourButtons.itemAt(number - 1)
-        colourPopover.openFor(button, root.editor, () => {
+        colourPopover.openFor(editorStrip.colourAnchor(number), root.editor, () => {
             const c = root.editor.beginColour(number, field.role, field.selectionStart, field.selectionEnd)
             if (c.r !== undefined)
                 root.app.colourPickerOpened()
             return c
-        }, { title: button ? button.text : "", dropper: !leftClick, focus: field })
+        }, { title: editorStrip.colourName(number), dropper: !leftClick, focus: field })
     }
 
     // Legacy TreeDialog ("Tree description"), PU2 (#304): a popover under
@@ -7685,7 +7619,7 @@ ApplicationWindow {
         if (conversion) {
             // OnMenuOpened: the item is enabled for the formats it converts to.
             if (root.app.conversionTargets().indexOf(conversion[0]) >= 0)
-                conversionDialog.openFor(conversion[0], conversion[1])
+                root.openConversion(conversion[0], conversion[1])
             return true
         }
         const sort = root.sortKeys.find(k => k.all === symbol || k.selected === symbol)
@@ -7703,10 +7637,9 @@ ApplicationWindow {
                 root.video.playActualLine()
             }
             return true
-        case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles
-            if (editing) {
-                root.postCleanStyles(root.styleManager.cleanStyles())
-            }
+        case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles; SY1-clean-toast
+            if (editing)
+                styleManagerWindow.deleteUnused()
             return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
@@ -7749,6 +7682,13 @@ ApplicationWindow {
         const edited = root.editor.translationMode ? translationText : lineText
         if (tags[action] !== undefined) {
             root.editor.toggleTagIn(field.role, tags[action], field.selectionStart, field.selectionEnd)
+            return true
+        }
+        // TM1: the Original's runs go on the Translated text's selection.
+        if (action.startsWith("EDITBOX_PLACE_RUN_") || action === "EDITBOX_PLACE_NEXT_RUN") {
+            const number = action === "EDITBOX_PLACE_NEXT_RUN" ? 0 : Number(action.substring(18))
+            if (field.role === 1)
+                root.editor.placeRun(number, field.selectionStart, field.selectionEnd)
             return true
         }
         if (colours[action] !== undefined) {
@@ -7815,7 +7755,7 @@ ApplicationWindow {
         case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
         // FS1-bar-mode: Auto, Always, Never.
         case "VIDEO_FULLSCREEN_BAR": root.videoFullscreen.cycleBarMode(); return true
-        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
+        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openWindow(root.videoFullscreen.active ? videoFullscreenWindow : null); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
         case "VIDEO_SAVE_SUBBED_FRAME_TO_PNG":
@@ -7894,7 +7834,7 @@ ApplicationWindow {
         // (SubsGrid::OnAccelerator, SubsGrid.cpp:839-881, 938).
         case "GRID_COPY_COLUMNS": columnsWindow.choose(false); return true
         case "GRID_PASTE_COLUMNS": columnsWindow.choose(true); return true
-        case "GRID_SET_NEW_FPS": fpsWindow.show(); return true
+        case "GRID_SET_NEW_FPS": root.openSetNewFps(); return true
         case "GRID_SET_FPS_FROM_VIDEO": if (video) root.app.setFpsFromVideo(); return true
         case "GRID_PASTE_TRANSLATION":
             if (root.app.canPasteTranslation()) {
@@ -7929,15 +7869,6 @@ ApplicationWindow {
         hotkeys: root.hotkeys
         settings: root.app.settings
     }
-    // GLOBAL_STYLE_MANAGER_CLEAN_STYLE and the Style manager's Clear:
-    // StyleStore::OnCleanStyles's message (stylestore.cpp:738-775), a toast
-    // with the lists as its Details (NT1).
-    function postCleanStyles(result) {
-        if (result && result.text)
-            root.notices.post("info", qsTranslate("HikariSub.Styles", "Delete unused styles"), result.text,
-                              { details: result.details })
-    }
-
     // S2: committed automation shortcuts, application-wide.
     Repeater {
         model: root.automationHotkeys.shortcuts

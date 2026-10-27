@@ -66,6 +66,7 @@ void VideoView::open(const SourceGeometry &source)
     if (m_width % 2 != 0)
         m_width++;
     m_aspect = sourceAspectRatio(source);
+    m_sourceAspect = m_aspect;
     m_sourceRect = {0, 0, m_width, m_height};
     updateRects();
 }

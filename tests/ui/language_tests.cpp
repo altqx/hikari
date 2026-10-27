@@ -600,15 +600,16 @@ private slots:
     // A live switch re-evaluates the closed Dialogs' implicit sizes, where
     // the Fusion Dialog and DialogButtonBox bindings report "Binding loop
     // detected for property implicitWidth" (as a text change in a closed
-    // Dialog does without a switch: the Style Manager's catalog question in
-    // the shell tests). Opened afterwards, each Dialog has the size it has
-    // when the program starts in that language or with that font.
+    // Dialog does without a switch). Opened afterwards, each Dialog has the
+    // size it has when the program starts in that language or with that
+    // font.
     void dialogsSizeAfterASwitchAsAtStart()
     {
-        // One button (Ok) and two (Yes, No), in Main.qml and StyleManager.qml.
+        // The Fusion Dialogs whose size is all text and buttons (PU4 put the
+        // Yes / No questions on the message box, a window of its own).
         const auto sizes = [this] {
             QList<QSizeF> out;
-            for (const char *name : {"aboutDialog", "creditsDialog", "shiftConfirm", "styleMultiQuestion"}) {
+            for (const char *name : {"aboutDialog", "creditsDialog"}) {
                 QObject *dialog = root()->findChild<QObject *>(QLatin1String(name));
                 if (!dialog) {
                     out << QSizeF(-1, -1);
@@ -956,10 +957,12 @@ private slots:
                           << found.join(QStringLiteral(", "));
         // Not HikariSub.Session: PU1's session and autosave popups replaced
         // the windows whose legacy texts were translated, and their own
-        // texts wait for the translators.
+        // texts wait for the translators. Nor HikariSub.Conversion: PU4's Set
+        // new FPS and PU6's conversion windows are made at their first
+        // opening, and the resolution question is a message box.
         for (const char *context : {"HikariSub.MainWindow", "HikariSub.Audio", "HikariSub.Video", "HikariSub.Editor",
                                     "HikariSub.Grid", "HikariSub.TimeShift", "HikariSub.Options", "HikariSub.Styles",
-                                    "HikariSub.Conversion", "HikariSub.Documents"})
+                                    "HikariSub.Documents"})
             QVERIFY2(seen.contains(QLatin1String(context)), context);
         // A surface string the application keeps: the Untitled tab's name.
         application->addPage();

@@ -21,7 +21,7 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml FixMinorErrors.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml FixMinorErrors.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
 # TS1: the Shift times panel and the dock-form pieces it is built from.
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
@@ -83,16 +83,17 @@ qt_target_qml_sources(hikari_ui QML_FILES FilterChip.qml FontResolutionNote.qml 
 # Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 # E4: the Line editor's metadata fields, counters and \an choice; its masked time fields
-qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml TimeField.qml
+qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml LineEditorStrip.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 # T1: the visual tool rail and the overlay over the Video canvas; VT1: the inspector bar below it and its fields.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 # T2-T6: the families' options in the bar (Position, Move, Scale, the rotations,
 # the clips' point modes and Invert clip, ...) and the tools' dialogs.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)
-# T5: the drawing's "Vector shape editing" dialog.
-qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml)
-# T6: the all-tags tool's "Tag editing" dialog.
+# T5: the drawing's "Edit shapes" window (PU5: a drawing's preview, a
+# refused value's error under its field).
+qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml ShapeDrawing.qml FieldError.qml)
+# T6: the all-tags tool's "Edit tags" window.
 qt_target_qml_sources(hikari_ui QML_FILES AllTagsEditionDialog.qml)
 # V3: video sources, tracks and chapters: the recent lists, the stream and
 # chapter menus, the indexing progress, the next-file question and the dummy
@@ -157,7 +158,7 @@ qt_target_qml_sources(hikari_ui QML_FILES AudioTapBar.qml TapCalibrationWindow.q
 # E5: the Line editor's Not confirmed and Moving tags buttons. TM1: the
 # Original text panel's toolbar, the Translation preset's question and the
 # turn-off confirmation (the Translator mode check box is gone).
-qt_target_qml_sources(hikari_ui QML_FILES TranslationToggles.qml OriginalTextTools.qml TranslationModeQuestion.qml
+qt_target_qml_sources(hikari_ui QML_FILES TranslationToggles.qml OriginalTextTools.qml RunStrip.qml TranslationModeQuestion.qml
     TranslationModeOffConfirm.qml)
 # Y7: the colour picker's screen dropper (QScreen grabs on Windows and X11,
 # the desktop's Screenshot portal over D-Bus on Wayland).
@@ -227,9 +228,16 @@ qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml Wh
 qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml
     ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
     MessageHost.qml LogPanel.qml)
+# PU4: a question "Don't ask again" can hide.
+qt_target_qml_sources(hikari_ui QML_FILES HidableQuestion.qml)
+# PU4: Set new FPS on DG1's frame.
+qt_target_qml_sources(hikari_ui QML_FILES SetNewFpsWindow.qml)
 # PU1: the file and session popups on the kit: the lazily made message box, Unsaved changes, Autosaves and the
 # startup offer.
 qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
+# PU6 (#308): the Spellchecker panel's added words window, the conversion
+# and Resample subtitles windows.
+qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ConversionWindow.qml ResampleWindow.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")

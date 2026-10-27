@@ -1,0 +1,7 @@
+{
+  "name": "hikari-unidic-lite",
+  "version": "2.1.2",
+  "description": "UniDic 2.1.2 for MeCab (NINJAL's binary distribution), the dictionary of HikariSub's furigana suggestions",
+  "homepage": "https://clrd.ninjal.ac.jp/unidic/",
+  "license": "BSD-3-Clause OR GPL-2.0-only OR LGPL-2.1-only"
+}

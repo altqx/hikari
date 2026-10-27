@@ -42,6 +42,9 @@ Window {
     // frame included (DialogFrame drops its close hint), and Esc and the
     // window system's close do nothing (a wait the window cannot end).
     property bool closable: true
+    // SY1: a line parts the body from the footer, whose top and bottom
+    // margins are 20 (the Style manager; Settings draws its own).
+    property bool footerRule: false
     property T.AbstractButton defaultButton: null
     property Item initialFocus: null
     readonly property bool opened: visible
@@ -269,13 +272,21 @@ Window {
                 Layout.rightMargin: dialog.flush ? 0 : 24
                 Layout.topMargin: dialog.flush ? 0 : frame.custom ? 12 : 24
             }
+            Rectangle {
+                visible: dialog.footerRule && footer.visible
+                color: Theme.line
+                implicitHeight: 1
+                Layout.fillWidth: true
+            }
             RowLayout {
                 id: footer
                 objectName: "dialogFooter"
                 visible: closing.count > 0 || leading.visibleChildren.length > 0
                 spacing: 8
                 Layout.fillWidth: true
-                Layout.margins: 24
+                Layout.margins: dialog.footerRule ? 20 : 24
+                Layout.leftMargin: 24
+                Layout.rightMargin: 24
                 RowLayout {
                     id: leading
                     spacing: 8

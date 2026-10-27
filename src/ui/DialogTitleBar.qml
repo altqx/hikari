@@ -55,6 +55,7 @@ Rectangle {
         anchors.rightMargin: 12
         height: parent.height
         text: bar.title
+        textFormat: Text.PlainText // as a system title bar shows it
         elide: Text.ElideRight
         maximumLineCount: 1
         verticalAlignment: Text.AlignVCenter

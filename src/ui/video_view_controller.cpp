@@ -326,6 +326,24 @@ void VideoViewController::setAspectFromSlider(int sliderValue)
     viewChanged();
 }
 
+double VideoViewController::aspectRatio() const
+{
+    return m_tools.videoView().aspectRatio();
+}
+
+void VideoViewController::setAspectRatio(double ratio)
+{
+    if (!m_tools.videoView().hasVideo())
+        return;
+    m_tools.videoView().setAspectRatio(static_cast<float>(ratio));
+    viewChanged();
+}
+
+void VideoViewController::resetAspectRatio()
+{
+    setAspectRatio(m_tools.videoView().ownAspectRatio());
+}
+
 bool VideoViewController::toggleProgressBar()
 {
     if (!m_video.hasVideo())

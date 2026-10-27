@@ -17,6 +17,7 @@
 #include "hikari/core/editor_syntax.h"
 #include "hikari/core/editor_font_colour.h"
 #include "hikari/core/style.h"
+#include "hikari/core/tag_transfer.h"
 #include "hikari/core/tag_commands.h"
 #include "tag_list_controller.h"
 
@@ -27,6 +28,10 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <functional>
+#include <map>
+#include <memory>
+#include <tuple>
+#include <utility>
 #include <optional>
 #include <set>
 #include <string>
@@ -84,6 +89,9 @@ class LineEditorController : public QObject {
     Q_PROPERTY(QString style READ style NOTIFY changed)
     Q_PROPERTY(QStringList styleNames READ styleNames NOTIFY changed)
     Q_PROPERTY(int styleIndex READ styleIndex NOTIFY changed)
+    // LE1: the shown Line's Style's left, right and vertical margins (what a
+    // Line margin of 0 stands for); empty without that Style.
+    Q_PROPERTY(QStringList styleMargins READ styleMargins NOTIFY changed)
     Q_PROPERTY(QString actor READ actor NOTIFY changed)
     Q_PROPERTY(QString effect READ effect NOTIFY changed)
     Q_PROPERTY(QStringList actors READ actors NOTIFY changed)
@@ -93,8 +101,10 @@ class LineEditorController : public QObject {
     // LE4: several Lines selected whose alignments differ (the picker's
     // mixed icon); the shown Line's is alignmentIndex.
     Q_PROPERTY(bool alignmentMixed READ alignmentMixed NOTIFY changed)
-    // The counters (EditBox::UpdateChars): "Wraps: ..." and "Characters per
-    // second: ..." with their warnings; empty for a comment.
+    // The counters (EditBox::UpdateChars) with their warnings: each wrap's
+    // characters and the limit ("5/10/43"), and the characters per second
+    // and the limit ("8/15"); empty for a comment. LE1: the Line editor
+    // names them (Wraps, CPS) beside the numbers.
     Q_PROPERTY(QString charsText READ charsText NOTIFY changed)
     Q_PROPERTY(bool charsWarning READ charsWarning NOTIFY changed)
     Q_PROPERTY(QString cpsText READ cpsText NOTIFY changed)
@@ -128,9 +138,14 @@ class LineEditorController : public QObject {
     Q_PROPERTY(int steppedTimes READ steppedTimes NOTIFY changed)
     Q_PROPERTY(int steppedNumbers READ steppedNumbers NOTIFY changed)
     // E5: the active Line's Unconfirmed (legacy DoubtfulTL->SetValue in
-    // SetLine) and the "Moving tags" toggle (AUTO_MOVE_TAGS_FROM_ORIGINAL).
+    // SetLine) and the "Tags from original" toggle (TM1; legacy "Moving tags",
+    // AUTO_MOVE_TAGS_FROM_ORIGINAL).
     Q_PROPERTY(bool unconfirmed READ unconfirmed NOTIFY changed)
     Q_PROPERTY(bool moveTags READ moveTags NOTIFY changed)
+    // TM1: the Original text's runs while tags are carried (tagRuns()).
+    Q_PROPERTY(QVariantList tagRuns READ tagRuns NOTIFY changed)
+    // TM1: the active Line is karaoke (\k): only its leading tags are carried.
+    Q_PROPERTY(bool karaokeCarried READ karaokeCarried NOTIFY changed)
     // E4: the edited text field's state (core::syntax::TextState: 0 dialogue,
     // 1 comment, 2 template, 3 code), as legacy TextEditor::SetState gets it
     // from EditBox::SetLine and from a Comment box toggle (OnCommit), not
@@ -201,6 +216,7 @@ public:
     QString style() const;
     QStringList styleNames() const;
     int styleIndex() const;
+    QStringList styleMargins() const;
     QString actor() const;
     QString effect() const;
     QStringList actors() const { return m_actors; }
@@ -320,6 +336,9 @@ public:
     // text field's selection, with the Style's value deciding the direction.
     Q_INVOKABLE bool toggleTag(const QString &tag, int selectionStart, int selectionEnd);
     // The same in a given role: 0 Original, 1 Translated.
+    // TM1: in the Translated field, with a selection and tags carried, the
+    // Original's first run of that style (unplaced ones first) is placed on
+    // it instead (placeRun).
     Q_INVOKABLE bool toggleTagIn(int role, const QString &tag, int selectionStart, int selectionEnd);
     // EDITBOX_SPLIT_LINE (Shift+Enter): a hard break replaces the selection,
     // taking an adjacent space on each side.
@@ -396,17 +415,42 @@ public:
     // NextLine): every selected Line's Unconfirmed flips, one step.
     Q_INVOKABLE bool toggleUnconfirmed();
     bool unconfirmed() const;
-    // E5: "Moving tags" (EditBox::SetTextWithTags, EditBox.cpp:1809-1858). With
-    // it on, in translation mode, an untranslated Line whose text holds a '}'
-    // is shown split when the editor shows the Line: its override blocks in
-    // the Translated field (which takes the focus, its caret after a leading
-    // block) and the rest in the Original field, while the Document keeps the
-    // text whole. The first change to either field (a keystroke or an editor
-    // command) makes both fields the Line's draft: the Original without the
-    // tags, the Translated with them. Only while no visual tool but the
-    // crosshair is active (legacy Visual <= CROSS).
+    // TM1 (#232) "Tags from original", legacy's "Moving tags" toggle
+    // (core/tag_transfer.h; departure TM1-original-keeps-tags). With it on in
+    // translation mode the Original text keeps its tags, and the Translated
+    // field holds the translation without the tags carried from the Original:
+    // its leading block (every line-wide tag) and a wrapper's closing tags.
+    // Each change to the Translated text writes them back around it, and a
+    // change to the Original's carries the new ones to the translation. Off,
+    // or for a translation whose own leading or trailing tags differ, the
+    // Translated field holds the whole translation. Showing an untranslated
+    // Line with tags gives the Translated field the focus, as legacy's split did.
     bool moveTags() const { return m_moveTags; }
     void setMoveTags(bool on); // shows the Line again, as OnAutoMoveTags does
+    // The active Line's runs (core::TagRun) while tags are carried, by
+    // number: number, text, kind (what it changes: "Italic", "Bold, Colour"),
+    // colour ("#rrggbb" for a primary colour run, else empty), placed, and
+    // where it is in each field as the field shows its text: originalStart
+    // and originalEnd, start and end in the Translated field (-1 unplaced),
+    // and suggestedStart and suggestedEnd (-1 none): an unplaced run whose
+    // text the translation has once, as a whole word (core::suggestPlacements),
+    // until dismissed.
+    QVariantList tagRuns() const;
+    bool karaokeCarried() const
+    {
+        const auto tags = runTags();
+        return tags && tags->karaoke;
+    }
+    // Places run `number` (0: the lowest-numbered one not placed) on the
+    // Translated field's [selectionStart, selectionEnd), as a draft change:
+    // core::placeRun moves an earlier placement there, or takes it off the
+    // same selection. The selection stays on the same text. False without
+    // a selection, carried tags or that run.
+    Q_INVOKABLE bool placeRun(int number, int selectionStart, int selectionEnd);
+    // The suggested placements: all placed in one draft change (Tab), or
+    // dismissed for the active Line (Escape). False when there are none.
+    Q_INVOKABLE bool acceptSuggestedRuns();
+    Q_INVOKABLE bool dismissSuggestedRuns();
     void setVisualToolActive(std::function<bool()> active) { m_visualToolActive = std::move(active); }
     Q_INVOKABLE bool findNextUnconfirmed();
     Q_INVOKABLE bool findNextUntranslated();
@@ -433,25 +477,100 @@ signals:
 
 private:
     application::EditSession *session() const;
-    std::optional<core::LineRecord> record() const; // the active Line, draft applied (and E5's split shown)
+    // The active Line, draft applied, its translation without the carried tags.
+    std::optional<core::LineRecord> record() const;
     std::optional<core::LineRecord> sessionRecord() const; // the active Line, draft applied
     // FS1: the active Line as the video shows it: the committed Line and the
     // draft's changes over it (null without), both in place.
     std::pair<const core::LineRecord *, const application::DraftChange *> videoLine() const;
-    // E5: the split Moving tags shows, for the Line it was made for.
-    struct Split {
-        core::LineId line;
-        std::u8string original, translation;
+    // TM1: the tags carried from `line`'s Original text to its translation, as
+    // the Translated field leaves them out; nullopt when nothing is carried.
+    struct Carry {
+        core::OriginalTags tags;
+        std::u8string leading, trailing;
     };
-    std::optional<Split> m_split;
-    std::optional<core::LineId> m_splitEvaluated; // the Line SetTextWithTags last ran for
+    std::optional<Carry> carry(const core::LineRecord &line) const;
+    // The Document's Styles for carry(), decoded once a revision; nullptr for
+    // one with more than core::kMaxTagTransferStyles (nothing carried).
+    const std::vector<core::StyleValues> *carryStyles() const;
+    struct CarryStyles {
+        using Key = std::tuple<std::uint64_t, const core::Document *, std::uint64_t>;
+        Key key;
+        std::vector<core::StyleValues> styles;
+        bool within = true;
+    };
+    mutable std::optional<CarryStyles> m_carryStyles;
+    // The active Line's Original tags read with its Style, for its runs;
+    // nullopt when nothing is carried.
+    std::optional<core::OriginalTags> runTags() const;
+    // The Line's translation as a draft of `tags`, its equal runs named as
+    // the translator last placed them (m_runOrders).
+    core::TranslationDraft translationDraft(const core::OriginalTags &tags, const core::LineRecord &line) const;
+    // The draft composed without the carried tags; notes its run order
+    // (m_runOrders).
+    std::u8string composedBody(const core::OriginalTags &tags, core::TranslationDraft draft, core::LineId line);
+    // composedBody through setRaw(1) for the active Line.
+    bool saveTranslationDraft(const core::OriginalTags &tags, core::TranslationDraft draft);
+    // `before`'s translation for its Original's new carry `now`: the placed
+    // runs read with the old runs and written with the new ones.
+    std::u8string recarried(const core::LineRecord &before, const Carry &now);
+    // core::suggestPlacements for the active Line, less the dismissed ones.
+    std::vector<core::RunPlacement> suggestedRuns(const core::OriginalTags &tags,
+                                                  const core::TranslationDraft &draft) const;
+    // The translation a Translated field text stands for.
+    static std::u8string carried(const Carry &carry, std::u8string body);
+    std::size_t carriedLead() const; // UTF-16 units of the carried leading block before the field's text
+    std::optional<core::LineId> m_carryEvaluated; // the Line SetLine last showed
     bool m_moveTags = false;
     std::function<bool()> m_visualToolActive;
-    void evaluateSplit(); // legacy SetTextWithTags, from SetLine
-    bool m_splitFocus = false; // the split asks for the Translated field's focus
+    void evaluateCarry(); // what legacy SetTextWithTags did on SetLine
+    bool m_carryFocus = false; // an untranslated Line asks for the Translated field's focus
+    // The Line whose suggestions were dismissed, with the Original text and
+    // Style its runs were read from: another Original or Style numbers other
+    // runs, and the dismissals no longer hold.
+    std::optional<std::tuple<core::LineId, std::u8string, std::u8string>> m_dismissedFor;
+    std::set<int> m_dismissedRuns;
+    // TM1: each Line's placed run numbers in text order (core::relabelRuns),
+    // by Document and Line (each Document numbers its own Lines), with the
+    // translation they were composed into and the runs they were composed
+    // with, the latest first. A translation is read with the entry of its
+    // text and runs; with runs that changed under it (a Style edited, an
+    // Original edit undone) as it was composed, each placement given to the
+    // run it became; another translation without them.
+    using RunOrderKey = std::pair<std::uint64_t, std::uint64_t>;
+    RunOrderKey runOrderKey(core::LineId line) const { return {m_document ? m_document->value : 0, line.value}; }
+    struct RunOrder {
+        std::u8string translation;
+        std::vector<int> order;
+        std::shared_ptr<const core::OriginalTags> tags; // shared by the entries read the same
+        std::uint64_t noted = 0;                         // when, for the oldest to go first
+    };
+    static constexpr std::size_t kRunOrderHistory = 16; // entries kept per Line
+    // The runs every entry keeps, in UTF-16 units, at most: past it the
+    // oldest entries of any Line go.
+    static constexpr std::size_t kRunOrderUnits = std::size_t(1) << 21;
+    std::map<RunOrderKey, std::vector<RunOrder>> m_runOrders;
+    std::uint64_t m_runOrderClock = 0;
+    // Kept as entries come and go, so a note never walks every Line: the
+    // entries' Lines by age (the oldest first), the entries sharing each
+    // reading, and the units of them all, each reading counted once.
+    std::map<std::uint64_t, RunOrderKey> m_runOrderAges;
+    std::map<const core::OriginalTags *, std::size_t> m_runOrderReadings;
+    std::size_t m_runOrderSize = 0;
+    void countRunOrder(RunOrderKey key, const RunOrder &entry);
+    void uncountRunOrder(const RunOrder &entry);
+    std::optional<RunOrder> runOrderOf(core::LineId line) const;
+    void setRunOrder(core::LineId line, std::optional<RunOrder> order);
+    void noteRunOrder(core::LineId line, RunOrder order);
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
-    bool setRaw(int role, std::u8string raw);
+    // `orderBefore`: the Line's run order before this step, when the caller
+    // composed the new one already (saveTranslationDraft).
+    bool setRaw(int role, std::u8string raw, const std::optional<RunOrder> *orderBefore = nullptr);
+    // editRaw's change on the draft's body when the Translated field has
+    // placed runs; false to edit the raw text instead.
+    bool editPlacedBody(int selectionStart, int selectionEnd,
+                        const std::function<core::legacy::EditorText(core::legacy::EditorText)> &change);
     // A legacy text command on the raw text of `role`, mapped through the
     // hidden-tag projection; the result's selection is requested in QML.
     bool editRaw(int role, int selectionStart, int selectionEnd,
@@ -476,6 +595,8 @@ private:
         core::legacy::TagColour editedColour; // the colour last chosen in the dialog
     };
     bool beginDialog(int role, int selectionStart, int selectionEnd);
+    bool applyDialogToPlacedBody(DialogSession &d,
+                                 const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one);
     bool applyDialogChange(const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one,
                            const std::function<void(std::u16string &, std::u16string &)> &several);
     void publishRawSelection(const core::legacy::EditorText &state);
@@ -552,7 +673,12 @@ private:
     // Exact raw snapshots of this draft, both roles.
     struct Snapshot {
         std::u8string text, translation;
+        bool translationTyped = false;  // the draft's translation cell was typed then
+        std::optional<RunOrder> order; // the Line's run order then
     };
+    // The draft holds a typed translation cell, not only a carried one
+    // (application::DraftChange::translationCarried).
+    bool translationTyped();
     std::vector<Snapshot> m_draftUndo;
     std::vector<Snapshot> m_draftRedo;
     std::function<void()> m_onCommitted;

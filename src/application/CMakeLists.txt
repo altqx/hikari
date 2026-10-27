@@ -21,6 +21,8 @@ target_sources(hikari_application PRIVATE kana.cpp include/hikari/application/ka
 target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/application/karaoke_tap.h)
 # KA5 (#280): vocal onsets for snapping syllable boundaries.
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
+# KA4 (#279): furigana reading suggestions and the furigana karaoke syntax.
+target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
 target_include_directories(hikari_application PUBLIC include)
 # V1: player frames off the GUI thread (latest wins, pooled buffers, the
 # overlay on a worker) and the Y'CbCr rows to BGRA the CPU paths share.
@@ -84,6 +86,8 @@ target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
 # T4: the rectangle and vector clips and the vector point editor T5 shares,
 # with legacy's float steps (no contraction either).
 target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)
+# VT3: the Perspective tool (arch1t3cht's quad maths, in doubles).
+target_sources(hikari_application PRIVATE visual_perspective.cpp)
 set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 # T5: the drawing tool and its shape presets (no contraction either).
