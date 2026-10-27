@@ -3,7 +3,7 @@
 // from QDesktopServices and from QML; the application's hand-offs
 // (backends::desktop) are recorded; a URL of any other scheme is refused
 // before the desktop's handler and fails the run. The shell's own hand-offs
-// (Help > HikariSub website, Help > Report an issue, the tab menu's folder
+// (Help > User guide, Help > Report an issue, the tab menu's folder
 // items) go through the composition and the real QML.
 
 #include "hikari/app/application.h"
@@ -58,10 +58,11 @@ class DesktopHandoffTests : public QObject {
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
 
-    void start()
+    void start(const QString &userFolder = {})
     {
         app::Application::Options o;
         o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.userFolder = userFolder;
         o.playbackAudio = false;
         o.spellingBackend = {}; // no spell checker, so no notice over the window
         application = new app::Application(o); // revealInFolder unset: backends::desktop
@@ -207,20 +208,23 @@ private slots:
         QVERIFY(!backends::desktop::openUrl(QUrl(QStringLiteral("hikari-guard-probe:child"))));
     }
 
-    // The shell: Help > HikariSub website (GLOBAL_HELP) and Help > Report an
-    // issue (GLOBAL_ANSI) open their pages in the browser
-    // (HikariSubFrame.cpp:360-362); the tab menu's folder item shows the
-    // subtitles in their folder (SelectInFolder). All recorded.
+    // The shell: Help > User guide (GLOBAL_HELP, DX1: a page of the user
+    // guide, user_guide_tests) and Help > Report an issue (GLOBAL_ANSI) open
+    // their pages in the browser (HikariSubFrame.cpp:360-362); the tab menu's
+    // folder item shows the subtitles in their folder (SelectInFolder). All
+    // recorded.
     void theShellsHandOffsAreRecorded()
     {
         const QString file = writeAss(dir.filePath(QStringLiteral("tabs/a.ass")));
         QVERIFY(!file.isEmpty());
         start();
-        triggerAction("websiteMenuItem");
-        QCOMPARE(recorded::opened(), QList<QUrl>{QUrl(QStringLiteral("https://altqx.com"))});
+        triggerAction("userGuideMenuItem");
+        QCOMPARE(recorded::opened().size(), 1);
+        QVERIFY2(recorded::opened().first().toString().startsWith(QStringLiteral("https://hikarisub.altqx.com/en/docs")),
+                 qPrintable(recorded::opened().first().toString()));
         triggerAction("reportIssueMenuItem");
-        QCOMPARE(recorded::opened(), (QList<QUrl>{QUrl(QStringLiteral("https://altqx.com")),
-                                                  QUrl(QStringLiteral("https://github.com/altqx/hikari/issues"))}));
+        QCOMPARE(recorded::opened().size(), 2);
+        QCOMPARE(recorded::opened().last(), QUrl(QStringLiteral("https://github.com/altqx/hikari/issues")));
         QVERIFY(application->openFile(file));
         auto *bar = named("documentTabBar");
         QVERIFY(bar);
@@ -235,6 +239,37 @@ private slots:
             QMetaObject::invokeMethod(menu, "close");
         QCOMPARE(recorded::opened().size(), 2);
         QVERIFY(recorded::started().isEmpty());
+        QVERIFY(recorded::refused().isEmpty());
+    }
+
+    // UD1 (#362): Help > Open user folder and Settings > General's Open
+    // open the user folder in the file manager, made first when missing;
+    // without a user folder nothing opens.
+    void openUserFolderOpensItInTheFileManager()
+    {
+        const QString folder = dir.filePath(QStringLiteral("user folder"));
+        start(folder);
+        triggerAction("openUserFolderMenuItem");
+        QCOMPARE(recorded::opened(), QList<QUrl>{QUrl::fromLocalFile(folder)});
+        QVERIFY(QFileInfo(folder).isDir());
+        QCOMPARE(application->userFolder(), QDir::toNativeSeparators(folder));
+        auto *root = engine->rootObjects().first();
+        QVariant settings;
+        QVERIFY(QMetaObject::invokeMethod(root, "settingsWindow", Q_RETURN_ARG(QVariant, settings)));
+        QObject *path = named("settingsUserFolderPath");
+        QVERIFY(path);
+        QCOMPARE(path->property("text").toString(), QDir::toNativeSeparators(folder));
+        QObject *open = named("settingsOpenUserFolder");
+        QVERIFY(open);
+        QVERIFY(QMetaObject::invokeMethod(open, "clicked"));
+        QCOMPARE(recorded::opened(), (QList<QUrl>{QUrl::fromLocalFile(folder), QUrl::fromLocalFile(folder)}));
+        if (auto *window = settings.value<QObject *>())
+            QMetaObject::invokeMethod(window, "close");
+        cleanup();
+        start();
+        QVERIFY(application->userFolder().isEmpty());
+        triggerAction("openUserFolderMenuItem");
+        QVERIFY(recorded::opened().isEmpty());
         QVERIFY(recorded::refused().isEmpty());
     }
 };

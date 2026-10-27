@@ -99,6 +99,16 @@ TEST(KaraokeChecks, TemplateCodeAndMixinLinesAreSkipped)
               (std::vector<Found>{{0, Kind::ZeroLength, 0, 0, {1}}}));
 }
 
+// The templater's output, Effect "fx": Classic fill's Lines last longer than their syllables.
+TEST(KaraokeChecks, GeneratedFxLinesAreSkipped)
+{
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.60", "{\\k30}{\\kf50}a{\\kf50}b", "fx")).problems.empty());
+    for (const char *effect : {"fx2", "Fx", "karaoke"})
+        EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.60", "{\\k30}{\\kf50}a{\\kf50}b", effect)),
+                  (std::vector<Found>{{0, Kind::TotalNotDuration, 1300, 1600, {}}}))
+            << effect;
+}
+
 TEST(KaraokeChecks, OnlyKaraokeLinesAreChecked)
 {
     EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\i1 no karaoke here")).problems.empty());

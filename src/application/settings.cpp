@@ -264,6 +264,10 @@ const std::vector<SettingDefinition> &definitions()
         // PF1 (#225): the Settings page shown last (its id), where the
         // window opens next, also after a restart.
         {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
+        // FR1 (#363): Getting started opens by itself while this is "due"
+        // (the first start writes it) and never again once "done" (Finish,
+        // Skip setup, Close or Esc). Empty: a profile older than FR1.
+        {"workspace.gettingStarted", "", String, Workspace, Mapped, false, std::string()},
         // PK1 (#301): "Show notices as toasts" (off: notices go only to the
         // Log), and the questions hidden by "Don't ask again" that have no
         // setting of their own (Settings > General > Ask again clears them).
@@ -352,6 +356,10 @@ const std::vector<SettingDefinition> &definitions()
         // in the whole Document hide themselves, on top of grid.hideColumns;
         // the Grid's Hide columns menu and Settings > Editor.
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
+        // KP1 (#286): the Grid folds each run of generated Lines (Effect fx
+        // or "Effector [fx]") into one row; the Grid's Fold generated lines,
+        // turned on by choosing the Karaoke layout.
+        {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
         // LE3-tags-shown (owner, 2026-10-18): the Line editor shows ASS
         // override tags unless this is on (Settings > Editor, and the
         // EDITBOX_HIDE_TAGS command); legacy hid them on every start.
@@ -369,6 +377,10 @@ const std::vector<SettingDefinition> &definitions()
         // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
         // over the video (GLOBAL_VIDEO_RENDER_COST).
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
+        // SV1-screen-size-subtitles (#365): "Preview subtitles at", 0 Video
+        // resolution (as encoded, decision 5 of 2026-10-15), 1 Screen size
+        // (sharp; libass only).
+        {"video.previewSubtitlesAt", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // AD2 (#311): "Fill in my last answers" (AD2-fill-last-answers, off
         // by default); script dialogs' last answers, one "<key>\t<JSON>" row
         // per dialog, the one used last first, at most 200; and their

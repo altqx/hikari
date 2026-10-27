@@ -18,9 +18,13 @@ bool isDigit(char8_t c)
     return c >= u8'0' && c <= u8'9';
 }
 
-// The kara-templater roles that hold templates rather than lyrics.
+// The kara-templater roles that hold templates rather than lyrics, and the
+// Lines it generated (Effect "fx", kara-templater.lua is_generated_line),
+// which its next run deletes and makes again.
 bool isTemplateLine(const LineRecord &line)
 {
+    if (!line.comment && line.effect == u8"fx")
+        return true;
     u8sv effect = detail::trimLeft(line.effect);
     std::u8string first;
     for (char8_t c : effect) {

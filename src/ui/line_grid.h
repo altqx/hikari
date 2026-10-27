@@ -82,6 +82,10 @@ public:
     // or within two rows of the bottom, the view moves so that it is half a
     // page, less one row, from the top.
     Q_INVOKABLE void makeLineVisible(qulonglong id);
+    // KP1: whether the key folds or unfolds the current row's run (→ on a
+    // folded run, ← on an unfolded run's first row). The Grid then takes it
+    // over the Global frame steps bound to the same keys.
+    Q_INVOKABLE bool foldsWith(int key, int modifiers) const;
     // The first row shown at the top (contentY over the row height).
     Q_INVOKABLE void scrollToTopRow(int row) { setContentY(row * m_geometry.rowHeight); }
 
@@ -127,6 +131,10 @@ signals:
     // A plain click on a group description opens or closes the group; a right
     // click asks for the group's menu (legacy tree description clicks).
     void groupToggleRequested(qulonglong description);
+    // KP1 (#286): the arrow on a run of generated Lines' first row was
+    // clicked, → pressed on a folded run or ← on an unfolded run's first
+    // row: the run should fold or unfold.
+    void foldToggleRequested(qulonglong first);
     void groupMenuRequested(qulonglong description, qreal x, qreal y);
     // Keyboard navigation asks the application to move the active Line; the
     // Grid never changes selection itself (G1: every gesture is a request).
@@ -178,6 +186,9 @@ private:
     int modelColumn(int column) const;
     // V6: the press at x is in the End column.
     bool inEndColumn(qreal x) const;
+    // KP1: the press at x is on a run's fold arrow (the Text cell's start).
+    bool onFoldArrow(qreal x) const;
+    void drawFoldArrow(QPainter *painter, const QRectF &cell, bool folded) const;
 
     QPointer<QAbstractItemModel> m_model;
     std::vector<QMetaObject::Connection> m_connections;

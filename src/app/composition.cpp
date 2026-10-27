@@ -3,10 +3,12 @@
 #include "theme.h"
 
 #include "hikari/app/application.h"
+#include "hikari/app/docs_export.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/single_instance.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/update_apply.h"
+#include "hikari/app/user_folder.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/update_check.h"
 #include "hikari/backends/legacy_spelling.h"
@@ -21,7 +23,6 @@
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
 #include <QQuickWindow>
-#include <QStandardPaths>
 #include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 
@@ -91,20 +92,32 @@ std::function<void()> showInstalling(QQmlApplicationEngine &engine, QObject *set
     return [window] { delete window; };
 }
 
-// WS5: where the files a quit left wait for the next start (saveHandedOn):
-// the session's own, as its instance is (another graphical session of the
-// user does not take them). None for an elevated HikariSub on Windows:
-// the user's unelevated programs could put a script there for it to run
-// (its files go on the next start's command line instead).
-QString handedOnPath()
+// WS5: where the files a quit left wait for the next start (saveHandedOn),
+// in `folder` (UD1: the cache folder): the session's own, as its instance is
+// (another graphical session of the user does not take them). None for an
+// elevated HikariSub on Windows: the user's unelevated programs could put a
+// script there for it to run (its files go on the next start's command line
+// instead).
+QString handedOnPath(const QString &folder)
 {
     const QString session = SingleInstance::forSession().server;
-    if (session.isEmpty() || !SingleInstance::trustsUserFiles())
+    if (folder.isEmpty() || session.isEmpty() || !SingleInstance::trustsUserFiles())
         return {};
     const QString tag =
         QString::fromLatin1(QCryptographicHash::hash(session.toUtf8(), QCryptographicHash::Sha256).toHex().left(16));
-    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/HandedOn-") + tag +
-           QStringLiteral(".txt");
+    return folder + QStringLiteral("/HandedOn-") + tag + QStringLiteral(".txt");
+}
+
+// UD1: the folder holding the bundled files and their manifest: the
+// program's, or in the build tree the one the automation tree is staged in.
+QString bundledFolder()
+{
+    const QString program = QCoreApplication::applicationDirPath();
+#ifdef HIKARI_BUILD_AUTOMATION
+    if (!QFileInfo::exists(program + QStringLiteral("/Automation/automation")))
+        return QFileInfo(QStringLiteral(HIKARI_BUILD_AUTOMATION)).absolutePath();
+#endif
+    return program;
 }
 
 // WS5: the files a quit left (saved), or a start without files that came
@@ -148,12 +161,24 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+    // UD1: the user folder (user_folder.h); a portable copy keeps it beside
+    // the program. A start from the build tree (no Automation folder beside
+    // it) is no portable copy.
+    const UpdateEnvironment updateEnvironment = UpdateEnvironment::current();
+    const auto folderEnvironment = UserFolder::Environment::current(
+        updateEnvironment.package.kind == application::PackageKind::Portable &&
+        QFileInfo::exists(QCoreApplication::applicationDirPath() + QStringLiteral("/Automation/automation")));
+    const UserFolder userFolder = UserFolder::locate(folderEnvironment);
+    const UserFolder::OldFolders oldFolders = UserFolder::OldFolders::of(folderEnvironment);
     // The start's files, absolute: its arguments without Qt's options and
     // the program's own switches.
-    // WS5: and the files a quit left for the next start, which this is.
+    // WS5: and the files a quit left for the next start, which this is (a
+    // version before UD1 left them in its data folder).
     QStringList files = launchFiles(QCoreApplication::arguments().mid(1), QDir::currentPath());
-    if (const QString kept = mode == StartupMode::Run ? handedOnPath() : QString(); !kept.isEmpty())
-        files += takeHandedOn(kept);
+    if (mode == StartupMode::Run)
+        for (const QString &folder : {userFolder.cache(), oldFolders.data})
+            if (const QString kept = handedOnPath(folder); !kept.isEmpty())
+                files += takeHandedOn(kept);
 #ifndef _WIN32
     // ADR 0019: an AppImage update that an ordinary quit left installs now,
     // before anything of this version starts, with the new image watched as
@@ -184,26 +209,37 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 
     Application::Options options;
     options.autoload = true; // legacy: the Autoload scripts load at start
+    // UD1: the Qt folders before the user folder move in once, in the start
+    // that holds the instance (not a portable copy's start, nor one with
+    // HIKARISUB_USER_DIR); then the bundled scripts, modules and
+    // dictionaries are seeded in.
+    if (!folderEnvironment.portable && folderEnvironment.userDirOverride.isEmpty())
+        options.userFolderMove = userFolder.moveIn(oldFolders);
+    options.userFolderSeed = userFolder.seed(bundledFolder());
+    options.userFolder = userFolder.root();
+    options.gettingStarted = true; // FR1: the first start opens Getting started
     // The settings registry (O1).
-    options.settingsFile =
-        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + QStringLiteral("/hikari.ini");
-    options.recoveryDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/Recovery");
+    options.settingsFile = userFolder.settingsFile();
+    options.recoveryDir = userFolder.recovery();
     // F3 / R2-hunspell: Hunspell (the Options default) over the user's
-    // Dictionary folder beside hikari.ini (UserDic.udic, added dictionaries),
-    // then the bundled one beside the executable (legacy's location).
+    // dictionaries (UserDic.udic, the seeded and added dictionaries), then
+    // the bundled ones beside the executable (legacy's location).
     options.spellingBackend = backends::hunspellSpellingLoader();
+    options.dictionaryDir = userFolder.dictionaries();
     options.bundledDictionaryDir = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
+    options.catalogDir = userFolder.catalogs();
+    options.fontCatalogDir = userFolder.catalogs();
+    options.presetsDir = userFolder.presets();
+    options.audioCacheDir = userFolder.audioCache();
+    options.indexDir = userFolder.indices();
     // O5: the first start on a Polish system takes Polish (Application).
     options.systemUiLanguages = QLocale::system().uiLanguages();
     // ADR 0019: the install's package kind, the update cache and installers.
-    options.updateEnvironment = UpdateEnvironment::current();
-    // Installers spec 1.7: an installed copy cannot write its program folder,
-    // so what scripts write, and the user's own autoload and include
-    // scripts, are in the data folder's Automation, laid out as the shipped
-    // one. A portable copy keeps them beside the program.
-    if (options.updateEnvironment.package.kind != application::PackageKind::Portable)
-        options.userAutomationDir =
-            QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/Automation");
+    options.updateEnvironment = updateEnvironment;
+    // What scripts write and the user's own autoload and include scripts
+    // are in the user folder (`?user`), the shipped ones in the program's
+    // Automation folder.
+    options.userAutomationDir = userFolder.root();
 #ifdef HIKARI_UPDATE_TEST_FEED
     // Test builds only: a local release feed (tools/update-feed).
     if (const QString feed = qEnvironmentVariable("HIKARISUB_UPDATE_FEED"); !feed.isEmpty()) {
@@ -277,7 +313,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     // WS5: what was handed over and not opened (the quit came first) is
     // saved before an update can start a new version.
     const QStringList unopened = forwarded.takeUnopened();
-    const QString kept = handedOnPath();
+    const QString kept = handedOnPath(userFolder.cache());
     const bool saved = unopened.isEmpty() || (!kept.isEmpty() && saveHandedOn(kept, unopened));
     const QStringList carried = saved ? QStringList() : unopened;
     // ADR 0019: a ready update installs after a normal quit, every document
@@ -333,6 +369,24 @@ int run(int argc, char **argv, StartupMode mode)
         // 8.1: "<version> (<kind>)" without a display.
         QCoreApplication core(argc, argv);
         std::printf("%s (%s)\n", HIKARI_VERSION, qPrintable(packageKindToken(currentPackageKind().kind)));
+        return 0;
+    }
+    if (startup.exportDocs) {
+        // DX1 (#367): the docs export, on the offscreen platform whatever
+        // the desktop: no window is shown and no display is needed.
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+        QGuiApplication app(argc, argv);
+        QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
+        QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+        if (startup.exportDocs->empty()) {
+            std::fprintf(stderr, "--export-docs needs a folder\n");
+            return 2;
+        }
+        QString error;
+        if (!exportDocs(QString::fromLocal8Bit(*startup.exportDocs), &error)) {
+            std::fprintf(stderr, "%s\n", qPrintable(error));
+            return 1;
+        }
         return 0;
     }
 #ifdef _WIN32

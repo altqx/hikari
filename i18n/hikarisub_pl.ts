@@ -400,6 +400,16 @@ Output device: %2</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Finding vocal onsets…</source>
+        <extracomment>Status bar while Snap to vocal onsets (the audio panel&apos;s Tap menu, Karaoke mode) reads the audio</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vocal onsets found</source>
+        <extracomment>Status bar once Snap to vocal onsets has read the audio and boundaries snap</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -504,11 +514,11 @@ Output device: %2</source>
         </translation>
     </message>
     <message>
-        <source>Applied. 1 template line has problems.</source>
+        <source>Applied. The templates have 1 problem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Applied. %n template lines have problems.</source>
+        <source>Applied. The templates have %n problems.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
@@ -4329,6 +4339,26 @@ Nie udało się skopiować %2 czcionek.</translation>
         <source>Line wraps</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Fold generated lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n generated lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>folded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unfolded</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -5726,6 +5756,14 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Opens the user guide in the default browser</source>
+        <translation>Otwiera podręcznik użytkownika w domyślnej przeglądarce</translation>
+    </message>
+    <message>
+        <source>User &amp;guide</source>
+        <translation>&amp;Podręcznik użytkownika</translation>
+    </message>
+    <message>
         <source>Install update</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5771,7 +5809,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Opens the HikariSub website in the default browser</source>
-        <translation>Otwiera stronę HikariSub w domyślnej przeglądarce</translation>
+        <translation type="vanished">Otwiera stronę HikariSub w domyślnej przeglądarce</translation>
     </message>
     <message>
         <source>Opens the HikariSub issue tracker</source>
@@ -6412,6 +6450,10 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Enter your password when the system asks for it. HikariSub starts again when the install is done.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>Pomoc</translation>
     </message>
 </context>
 <context>
@@ -13314,6 +13356,10 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Delete</source>
         <translation type="unfinished">Usuń</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

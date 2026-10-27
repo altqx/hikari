@@ -462,10 +462,11 @@ void PositionShifterTool::pointer(const Pointer &event, VisualHost &host)
     }
 
     if (click) {
+        const float grab = 8 * unitOf(host); // SV1-hidpi-tool-sizes
         for (std::size_t i = 0; i < m_elems.size(); i++) {
             if (!(m_selectedTags & m_elems[i].type))
                 continue;
-            if ((std::fabs(m_elems[i].elem.x - x) < 8 && std::fabs(m_elems[i].elem.y - y) < 8) ||
+            if ((std::fabs(m_elems[i].elem.x - x) < grab && std::fabs(m_elems[i].elem.y - y) < grab) ||
                 i == m_elems.size() - 1) {
                 m_numElem = static_cast<int>(i);
                 m_beforeMove = m_lastmove = m_elems[i].elem;
@@ -809,6 +810,7 @@ Overlay PositionShifterTool::overlay(const VisualHost &host) const
     // start squares, \move end circles, \org crosses (orange), and the clips
     // (crosses in blue) and drawings (magenta) with their shapes.
     Overlay out;
+    out.unit = unitOf(host);
     PointF &drawingPos = m_drawingPos;
     for (const Element &e : m_elems) {
         const int type = e.type;

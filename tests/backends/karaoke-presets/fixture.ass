@@ -1,0 +1,20 @@
+[Script Info]
+; KE3: the karaoke Lines each built-in preset is applied to (romaji phrases authored for the test)
+Title: KE3 preset fixture
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style: Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,,{\k40}ki{\k35}ra{\k0} {\k45}ki{\k30}ra {\k60}hi{\k50}ka{\k40}ru
+Dialogue: 0,0:00:05.00,0:00:07.50,Romaji,,0,0,0,,{\k50}yo{\k25}ru{\k25}no {\k80}so{\k70}ra
+Dialogue: 0,0:00:08.00,0:00:09.00,Other,,0,0,0,,{\k50}ho{\k50}ka
+Dialogue: 0,0:00:10.00,0:00:12.00,Romaji,,0,0,0,,{\k30}ta{\k30}bi{\k0} {\k40}no{\k0} {\k50}to{\k50}chu{\k0}u

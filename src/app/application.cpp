@@ -10,6 +10,8 @@
 #include "hikari/backends/simulated_output.h"
 #include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/getting_started.h"
+#include "hikari/application/guide_links.h"
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
@@ -63,6 +65,10 @@
 #include <cmath>
 #include <cstdlib>
 #include <QFileInfo>
+#include <QBuffer>
+#include <QLinearGradient>
+#include <QPainter>
+#include <QUrl>
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -653,11 +659,16 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (options.autoload)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
+    m_userFolder = options.userFolder;
     rememberStartSession(); // PU1: before anything writes the session
-    // R6-dictionary-location: user dictionaries in the settings folder's
-    // Dictionary, bundled ones in the program folder's (legacy's only one).
-    if (!m_settingsFile.isEmpty())
-        m_dictionaryDirs << QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
+    // R6-dictionary-location: user dictionaries in the user folder's
+    // dictionaries (UD1; else the settings folder's Dictionary), bundled ones
+    // in the program folder's (legacy's only one).
+    m_dictionaryDir = options.dictionaryDir;
+    if (m_dictionaryDir.isEmpty() && !m_settingsFile.isEmpty())
+        m_dictionaryDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
+    if (!m_dictionaryDir.isEmpty())
+        m_dictionaryDirs << m_dictionaryDir;
     if (const QString bundled = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
         !m_dictionaryDirs.contains(bundled))
         m_dictionaryDirs << bundled;
@@ -667,6 +678,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // anything reads the profile.
     if (!m_settingsFile.isEmpty()) {
         m_importStore = std::make_unique<SettingsImportStore>(*m_settings, QFileInfo(m_settingsFile).absolutePath());
+        if (!options.dictionaryDir.isEmpty())
+            m_importStore->setDictionaryFolder(m_dictionaryDir);
         m_importStore->macroProblem = [this](std::string_view alias) -> std::string {
             const auto r = m_automation->manager().registry().resolve(std::string(alias));
             if (!r.problem)
@@ -696,6 +709,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_settings->set("program.language", QStringLiteral("pl"));
         m_settings->set("editor.dictionaryLanguage", QStringLiteral("pl"));
     }
+    // FR1: Getting started opens at the first start, and at the next one
+    // when the program was left before it was answered.
+    if (firstStart && options.gettingStarted)
+        m_settings->set("workspace.gettingStarted", QStringLiteral("due"));
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString()); // W2
     m_renderer.countCost(m_settings->boolean("video.renderCost")); // KE1-render-cost-overlay
@@ -729,9 +746,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_selectOptions = m_settings->integer("selectLines.options");
     // Legacy keeps 20 when the dialog opens.
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
-    // D1: the panel layout beside the settings (none without a settings file).
+    // D1: the panel layout beside the settings (none without a settings
+    // file); UD1: the saved layouts in the presets folder.
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
-        m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
+        m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"),
+        options.presetsDir.isEmpty() ? QString() : options.presetsDir + QStringLiteral("/layouts.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     // T1: the visual tools edit the editing target, never the reference.
     m_visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings, [this] { return targetSession(); });
@@ -1008,6 +1027,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
     }
+    applySubtitlesAt(); // SV1
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
     m_recoveryDir = options.recoveryDir;
@@ -1026,9 +1046,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // GetRightCase, IsAllUpperCase and Ignore All's comparison: the case
     // functions of the interface language's C locale (legacyCaseMapping).
     m_spellingText = backends::legacySpellingText(true);
-    m_dictionaryDir = options.dictionaryDir;
-    if (m_dictionaryDir.isEmpty() && !m_settingsFile.isEmpty())
-        m_dictionaryDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
     m_bundledDictionaryDir = options.bundledDictionaryDir;
     // The Line editor's own switch (legacy TextEditor::SpellCheckerOnOff, from
     // SPELLCHECKER_ON when the editor is built); the Grid and the menus read
@@ -1042,6 +1059,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
         m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
     }
+    m_spellingLoader = options.spellingBackend;
     m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell, int replaceTagsLen) {
         application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
         return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
@@ -1076,6 +1094,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         // Only a change: Set default's re-sync leaves the key unset.
         if (m_settings->boolean("grid.autoHideColumns") != m_shell->autoHideColumns())
             m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns());
+    });
+    // KP1: the Grid's Fold generated lines.
+    m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
+    connect(m_shell.get(), &ui::ShellController::foldGeneratedChanged, this, [this] {
+        selectFoldedRunsWhole();
+        if (m_settings->boolean("grid.foldGenerated") != m_shell->foldGenerated())
+            m_settings->set("grid.foldGenerated", m_shell->foldGenerated());
     });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened")); // SH2
@@ -1263,6 +1288,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
     m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::findingOnsetsChanged, this,
+                                  &Application::noticeOnsets);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
         if (m_templateEditor && !m_video->playing())
             m_templateEditor->hostChanged(); // KE2: an audio box opened or closed
@@ -1352,7 +1379,53 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     trackVideoFollow(); // V6
     startLocalisation(); // O5
     setupTabMenu(options); // P9
+    reportUserFolder(options.userFolderMove, options.userFolderSeed); // UD1
     refreshViews();
+}
+
+void Application::reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded)
+{
+    const QString title = QCoreApplication::translate("HikariSub.MainWindow", "User folder");
+    const QString folder = QDir::toNativeSeparators(m_userFolder);
+    if (!moved.from.isEmpty()) {
+        QString text = QCoreApplication::translate("HikariSub.MainWindow",
+                                                   "Your settings and files moved to %1. Help > Open user folder opens it.")
+                           .arg(folder);
+        if (!moved.leftOver.isEmpty())
+            text += QLatin1Char(' ') + QCoreApplication::translate("HikariSub.MainWindow",
+                                                                   "%n item(s) stayed where they were, because the user folder already had them.",
+                                                                   nullptr, int(moved.leftOver.size()));
+        if (!moved.keptBack.isEmpty())
+            text += QLatin1Char(' ') + QCoreApplication::translate("HikariSub.MainWindow",
+                                                                   "The old DependencyControl stayed behind: HikariSub brings a newer one.");
+        QString details =
+            QCoreApplication::translate("HikariSub.MainWindow", "Moved from: %1").arg(moved.from.join(QStringLiteral(", ")));
+        if (!moved.leftOver.isEmpty())
+            details += QLatin1Char('\n') + QCoreApplication::translate("HikariSub.MainWindow", "Not moved: %1")
+                                               .arg(moved.leftOver.join(QStringLiteral(", ")));
+        if (!moved.keptBack.isEmpty())
+            details += QLatin1Char('\n') + QCoreApplication::translate("HikariSub.MainWindow", "Left behind: %1")
+                                               .arg(moved.keptBack.join(QStringLiteral(", ")));
+        m_log->notice(ui::LogController::Info, title, text, details);
+    }
+    for (const QString &path : seeded.kept)
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
+                                               "Kept your changed %1; the new bundled version was not copied over it.")
+                       .arg(QDir::toNativeSeparators(path)),
+                   ui::LogController::Info, title);
+    for (const QString &path : seeded.failed)
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow", "Could not copy the bundled %1 into the user folder.")
+                       .arg(QDir::toNativeSeparators(path)),
+                   ui::LogController::Warning, title);
+    if (!seeded.removed.isEmpty())
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
+                                               "Removed %n bundled file(s) this version no longer brings.", nullptr,
+                                               int(seeded.removed.size())),
+                   ui::LogController::Info, title);
+    if (const qsizetype count = seeded.copied.size() + seeded.updated.size(); count > 0)
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow", "Copied %n bundled file(s) into the user folder.", nullptr,
+                                               int(count)),
+                   ui::LogController::Info, title);
 }
 
 // A1: legacy AudioDisplay::SetDialogue runs when the active Line changes or
@@ -2588,7 +2661,30 @@ void Application::reportIssue()
 
 void Application::openWebsite()
 {
-    backends::desktop::openUrl(QUrl(QStringLiteral("https://altqx.com")));
+    backends::desktop::openUrl(QUrl(QString::fromUtf8(application::kSiteUrl)));
+}
+
+void Application::openUserGuide(const QString &kind, const QString &id)
+{
+    using application::GuideSurface;
+    // An unknown kind names no page: the guide's home.
+    const std::string surface = kind == QLatin1String("panel") || kind == QLatin1String("window") ? id.toStdString() : "";
+    const auto url = application::guideUrl(kind == QLatin1String("panel") ? GuideSurface::Panel : GuideSurface::Window,
+                                           surface);
+    backends::desktop::openUrl(QUrl(QString::fromStdString(url)));
+}
+
+QString Application::userFolder() const
+{
+    return QDir::toNativeSeparators(m_userFolder);
+}
+
+void Application::openUserFolder()
+{
+    if (m_userFolder.isEmpty())
+        return;
+    QDir().mkpath(m_userFolder);
+    backends::desktop::openUrl(QUrl::fromLocalFile(m_userFolder));
 }
 
 QVariantMap Application::reviewOpen(const QString &path)
@@ -2843,14 +2939,47 @@ void Application::selectLine(qulonglong id)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(gridSelection().plain(session->selection(), core::LineId{id}));
+        applySelection(m_shell->withFoldedRuns(gridSelection().plain(session->selection(), core::LineId{id})));
 }
 
 void Application::extendSelection(int rows)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(gridSelection().shiftKey(session->selection(), rows));
+        applySelection(m_shell->withFoldedRuns(gridSelection().shiftKey(session->selection(), rows)));
+}
+
+// KP1 (#286): a run of generated Lines folded or unfolded from the Grid. A
+// folded run is selected whole or not at all, as its first Line is: a run
+// folded over the active Line leaves its first Line active and the run
+// selected.
+void Application::toggleFold(qulonglong first)
+{
+    const core::LineId id{first};
+    if (!m_shell->foldGenerated() || m_shell->runFirst(id) != id)
+        return;
+    const bool fold = !m_shell->runFolded(id);
+    if (auto *session = targetSession(); fold && session) {
+        const application::Selection &current = session->selection();
+        application::Selection next = m_shell->foldedWhole(current, id);
+        if ((next.active != current.active || next.selected != current.selected) && !applySelection(std::move(next)))
+            return;
+    }
+    m_shell->setRunFolded(id, fold);
+}
+
+// KP1: the folded runs selected whole or not at all once folding turns on.
+// Afterwards a selection that reaches a run in part unfolds it instead
+// (ShellController::setSelection).
+void Application::selectFoldedRunsWhole()
+{
+    auto *session = targetSession();
+    if (!session || !m_shell->foldGenerated())
+        return;
+    const application::Selection &current = session->selection();
+    application::Selection next = m_shell->foldedWhole(current);
+    if (next.active != current.active || next.selected != current.selected)
+        applySelection(std::move(next));
 }
 
 void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool doubleClick)
@@ -2873,13 +3002,13 @@ void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool d
     m_lineChangeOrigin = origin;
     if (doubleClick) {
         if (ctrl && !shift)
-            applySelection(rules.plain(session->selection(), line));
+            applySelection(m_shell->withFoldedRuns(rules.plain(session->selection(), line)));
     } else if (shift)
-        applySelection(rules.shiftClick(session->selection(), line, ctrl));
+        applySelection(m_shell->withFoldedRuns(rules.shiftClick(session->selection(), line, ctrl)));
     else if (ctrl)
-        applySelection(rules.ctrlClick(session->selection(), line));
+        applySelection(m_shell->withFoldedRuns(rules.ctrlClick(session->selection(), line)));
     else
-        applySelection(rules.plain(session->selection(), line));
+        applySelection(m_shell->withFoldedRuns(rules.plain(session->selection(), line)));
     // A press on the active Line: SetLine's "goto done" still plays.
     if (origin && m_lineChangeOrigin && session->selection().active == before)
         followShownLine(false, *origin);
@@ -2892,7 +3021,7 @@ void Application::dragSelection(qulonglong id)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(gridSelection().shiftClick(session->selection(), core::LineId{id}, false));
+        applySelection(m_shell->withFoldedRuns(gridSelection().shiftClick(session->selection(), core::LineId{id}, false)));
 }
 
 void Application::selectAllLines()
@@ -2942,7 +3071,7 @@ application::EditSession *Application::targetSession() const
 
 application::LineVisible Application::shownLines() const
 {
-    const auto shown = m_shell->displayedLines();
+    const auto shown = m_shell->actionLines();
     const std::set<core::LineId> set(shown.begin(), shown.end());
     return [set](core::LineId id) { return set.contains(id); };
 }
@@ -3735,7 +3864,11 @@ QString Application::shiftTimes()
     // A3: the audio box's mark (legacy ChangeTimes' moveTimeOptions & 8 with ABox->hasMark)
     if (m_audio && m_audio->hasMark())
         context.audioMarkMs = m_audio->markMs();
-    const auto result = application::shiftTimes(*session, m_shiftTimes->settings(), context, actionLines(*session));
+    // "New times" lengths: the Conversion time per letter (legacy's
+    // CONVERT_TIME_PER_CHARACTER, SubsGridBase.cpp:439)
+    auto settings = m_shiftTimes->settings();
+    settings.timePerCharacter = m_settings->integer("convert.timePerCharacter");
+    const auto result = application::shiftTimes(*session, settings, context, actionLines(*session));
     m_editor->reloadFromSession();
     refreshViews();
     if (!result) {
@@ -5620,6 +5753,8 @@ void Application::settingChanged(const QString &id)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     else if (id == QLatin1String("grid.autoHideColumns") && !m_resettingSettings)
         m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    else if (id == QLatin1String("grid.foldGenerated") && !m_resettingSettings)
+        m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
     else if (id == QLatin1String("video.disableLiveEditing") || id.startsWith(QLatin1String("grid.calcSpaces"))) {
         m_editor->optionsChanged(); // E4: the counters and Duration follow at once
         refreshVideo();             // live editing on or off: the draft or the committed Lines
@@ -5645,6 +5780,9 @@ void Application::settingChanged(const QString &id)
         m_videoRevision.reset();
         m_videoScript.clear(); // E4: the same script goes to the new renderer too
         refreshVideo();
+        applySubtitlesAt(); // SV1: Screen size is libass's only
+    } else if (id == QLatin1String("video.previewSubtitlesAt")) {
+        applySubtitlesAt();
     } else if (id == QLatin1String("video.renderCost")) {
         // KE1-render-cost-overlay: libass counts only while the overlay is
         // shown; the frame is drawn again so it shows the counts at once.
@@ -5653,6 +5791,18 @@ void Application::settingChanged(const QString &id)
         m_videoScript.clear();
         refreshVideo();
     }
+}
+
+// SV1-screen-size-subtitles: "Preview subtitles at" Screen size draws libass
+// at the picture's size on screen; a CSRI filter stays at the video's.
+void Application::applySubtitlesAt()
+{
+    const bool screen = m_settings->integer("video.previewSubtitlesAt") == 1 && m_renderer.usesLibass();
+    m_video->setSubtitlesAtScreenSize(screen);
+    if (m_styleManager)
+        m_styleManager->setPreviewAtScreenSize(screen);
+    if (m_fontCatalogs)
+        m_fontCatalogs->setPreviewAtScreenSize(screen);
 }
 
 namespace {
@@ -5853,6 +6003,7 @@ QVariantMap Application::openSettingsDialog()
         outputDeviceLabels << outputDeviceLabel(choice);
     return {{QStringLiteral("values"), values},
             {QStringLiteral("languages"), qList(lists.languageNames)},
+            {QStringLiteral("languageTags"), qList(lists.languageTags)}, // DX1: the docs export's entries
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
             {QStringLiteral("catalogs"), qList(lists.catalogs)},
             {QStringLiteral("styles"), qList(lists.styles)},
@@ -5973,6 +6124,188 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         m_updates->reload();
     // O2: the Hotkeys page's list, a bound control of SetOptions.
     m_hotkeys->commitOptions();
+}
+
+bool Application::gettingStartedDue() const
+{
+    return m_settings->text("workspace.gettingStarted") == u"due";
+}
+
+QVariantMap Application::openGettingStarted()
+{
+    QVariantMap opened = openSettingsDialog();
+    opened.insert(QStringLiteral("legacy"), m_importStore && !SettingsImportStore::discoverRoots(
+                                                                 SettingsImportStore::defaultCandidates()).isEmpty());
+    return opened;
+}
+
+QVariantMap Application::gettingStartedImported(const QVariantMap &values)
+{
+    QVariantMap out = values;
+    if (!m_settingsImport->plan())
+        return out;
+    const auto state = application::gettingStartedState(m_settings->settings(), m_optionsLists,
+                                                        m_settingsImport->chosenValues());
+    for (auto [id, value] : toVariant(state).asKeyValueRange())
+        out.insert(id, value);
+    return out;
+}
+
+void Application::previewLanguage(int index)
+{
+    if (m_localisation && index >= 0 && std::size_t(index) < m_optionsLists.languageTags.size())
+        m_localisation->setLanguage(qs(m_optionsLists.languageTags[std::size_t(index)]));
+}
+
+void Application::endLanguagePreview()
+{
+    switchLanguage();
+}
+
+bool Application::finishGettingStarted(const QVariantMap &values, bool import)
+{
+    // The import first: when it cannot be staged (the legacy files changed,
+    // staging failed) nothing is written and the window stays open with the
+    // importer's status.
+    // The pages' state: the Settings window's controls, and the look's
+    // settings, which are not among them.
+    auto state = fromVariant(values);
+    for (const auto id : appearanceSettings())
+        if (const auto found = values.constFind(qs(id)); found != values.cend())
+            state[std::string(id)] = found->typeId() == QMetaType::Bool
+                                         ? application::SettingValue(found->toBool())
+                                         : application::SettingValue(found->toString().toStdString());
+    const auto pages = application::gettingStartedPageSettings(state);
+    if (import && !m_settingsImport->importChosenBut(pages))
+        return false;
+    // The stored language first: Finish's own switch (settingChanged)
+    // happens only when the language changes.
+    endLanguagePreview();
+    // Only what the pages hold: the rest of the Settings window's state
+    // (values it normalises when it opens) would otherwise be written now
+    // and, as a later edit, win over the import.
+    QVariantMap written;
+    for (const auto &id : pages)
+        if (const auto found = values.constFind(qs(id)); found != values.cend())
+            written.insert(qs(id), *found);
+    applySettings(written);
+    m_settings->set("workspace.gettingStarted", QStringLiteral("done"));
+    return true;
+}
+
+void Application::skipGettingStarted()
+{
+    endLanguagePreview();
+    m_settings->set("workspace.gettingStarted", QStringLiteral("done"));
+}
+
+QVariantList Application::sampleSpellingMarks(const QString &text, bool on, int dictionary)
+{
+    QVariantList out;
+    const auto &symbols = m_optionsLists.dictionarySymbols;
+    if (!on || !m_spellingLoader || dictionary < 0 || std::size_t(dictionary) >= symbols.size())
+        return out;
+    const QString language = qs(symbols[std::size_t(dictionary)]);
+    if (!m_sampleChecker || language != m_sampleCheckerLanguage) {
+        std::vector<std::filesystem::path> folders;
+        for (const QString &folder : std::as_const(m_dictionaryDirs))
+            folders.emplace_back(folder.toStdU16String());
+        m_sampleChecker = std::make_unique<application::SpellChecker>(std::move(folders), m_spellingLoader);
+        m_sampleCheckerLanguage = language;
+        m_sampleCheckerReady = m_sampleChecker->initialize(language.toStdU16String()) == application::SpellChecker::Status::Ready;
+    }
+    if (!m_sampleCheckerReady)
+        return out;
+    const auto marks = application::editorMarks(text.toStdU16String(), core::SubtitleFormat::Ass, *m_sampleChecker,
+                                                m_spellingText);
+    for (std::size_t i = 0; i + 1 < marks.errors.size(); i += 2)
+        out << marks.errors[i] << marks.errors[i + 1] + 1;
+    return out;
+}
+
+QString Application::sampleFrame(int renderer, int width, int height)
+{
+    if (width <= 0 || height <= 0)
+        return {};
+    if (!m_sampleRenderer) {
+        m_sampleRenderer = std::make_unique<backends::SubtitleRendererSelection>();
+        m_sampleRenderer->setCsriFolder(std::filesystem::path(QCoreApplication::applicationDirPath().toStdU16String()) / u"Csri");
+    }
+    const auto &names = m_optionsLists.renderers;
+    m_sampleRenderer->select(renderer >= 0 && std::size_t(renderer) < names.size() ? names[std::size_t(renderer)]
+                                                                                   : std::string("libass"));
+    // A dusk sky, and a Line in the default Style's look at the bottom.
+    QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
+    {
+        QPainter painter(&image);
+        QLinearGradient sky(0, 0, width, height);
+        sky.setColorAt(0, QColor(0x41, 0x56, 0x6B));
+        sky.setColorAt(0.55, QColor(0x7A, 0x8C, 0x78));
+        sky.setColorAt(1, QColor(0xC7, 0xA2, 0x7A));
+        painter.fillRect(image.rect(), sky);
+    }
+    const QString text = QCoreApplication::translate("HikariSub.GettingStarted", "I said I’d be there by nine.");
+    const QByteArray script =
+        QStringLiteral("[Script Info]\r\nPlayResX: %1\r\nPlayResY: %2\r\nScaledBorderAndShadow: Yes\r\nScriptType: v4.00+\r\n"
+                       "WrapStyle: 0\r\n[V4+ Styles]\r\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
+                       "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+                       "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\r\n"
+                       "Style: Default,Arial,%3,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,2,1,2,"
+                       "10,10,%4,1\r\n\r\n[Events]\r\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
+                       "Effect, Text\r\nDialogue: 0,0:00:00.00,1:00:00.00,Default,,0000,0000,0000,,%5\r\n")
+            .arg(width)
+            .arg(height)
+            .arg(height / 6)
+            .arg(height / 9)
+            .arg(text)
+            .toUtf8();
+    application::RenderSnapshot snapshot;
+    snapshot.script.resize(std::size_t(script.size()));
+    std::memcpy(snapshot.script.data(), script.constData(), std::size_t(script.size()));
+    if (m_sampleRenderer->prepare(std::move(snapshot)))
+        if (const auto frame = m_sampleRenderer->render(core::DocumentTime(1'000'000), width, height))
+            application::compositeOverlay(*frame, image.bits(), width, height, image.bytesPerLine());
+    QByteArray png;
+    QBuffer buffer(&png);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    return QStringLiteral("data:image/png;base64,") + QString::fromLatin1(png.toBase64());
+}
+
+void Application::playTestSound(int device)
+{
+    const auto &devices = m_optionsLists.outputDevices;
+    if (device < 0 || std::size_t(device) >= devices.size())
+        return;
+    // Half a second of 660 Hz, faded in and out.
+    constexpr int rate = 48000, frames = rate / 2, fade = rate / 50;
+    std::vector<std::int16_t> samples(frames);
+    for (int i = 0; i < frames; ++i) {
+        const double gain = std::min({1.0, double(i) / fade, double(frames - i) / fade});
+        samples[std::size_t(i)] = static_cast<std::int16_t>(10000 * gain * std::sin(2 * 3.14159265358979 * 660 * i / rate));
+    }
+    auto tone = std::make_shared<application::DisplayAudio>(rate, frames);
+    tone->appendFrames(samples.data(), frames, 1);
+    tone->finish();
+    const auto &choice = devices[std::size_t(device)];
+    if (m_audioPlayer->playing())
+        m_audioPlayer->stop();
+    m_audioPlayer->setOutputDevice(choice.kind == application::OutputDeviceChoice::Kind::SystemDefault ? std::string()
+                                                                                                        : choice.name);
+    m_audioPlayer->switchOutput();
+    const std::weak_ptr<const application::DisplayAudio> played = tone;
+    m_audioPlayer->playClip(std::move(tone));
+    // The next open is the route's again: once the tone is over it stops (a
+    // clip this long plays on into silence) and its stream closes, or what
+    // plays by then moves to the route; unless another Test sound came since.
+    m_audioPlayer->setOutputDevice(m_noticedRoute.systemDefault ? std::string() : m_noticedRoute.name);
+    QTimer::singleShot(frames * 1000 / rate + 200, this, [this, test = ++m_testSounds, played] {
+        if (test != m_testSounds)
+            return;
+        if (const auto clip = played.lock(); clip && m_audioPlayer->playingClip(clip.get()))
+            m_audioPlayer->stop();
+        m_audioPlayer->switchOutput();
+    });
 }
 
 // HikariSubFrame::DestroyDialogs: FindReplaceDialog and SelectLines save
@@ -6107,6 +6440,7 @@ void Application::resetAllSettings()
     m_updates->reload();
     // GR3: empty-column hiding has no legacy owner; both Grids take the default.
     m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated")); // KP1
     // SelectLines, once created, keeps its controls and recent searches:
     // the options go back at its close (legacy: at exit or DestroyDialogs),
     // the recent searches at its next selection. Before that, the dialog

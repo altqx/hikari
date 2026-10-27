@@ -580,7 +580,6 @@ DialogWindow {
                         title: qsTr("Tabs")
                         SettingCheck { setting: "subtitles.openInNewTab"; text: qsTr("Always open subtitles in a new tab") }
                         SettingCheck { setting: "grid.loadSortedSubs"; text: qsTr("Open sorted subtitles") }
-                        SettingCheck { setting: "shiftTimes.changeValuesWithTab"; text: qsTr("Synchronize time shifting window in all tabs") }
                         SettingsRow {
                             text: qsTr("Tab name length")
                             SettingNumber {
@@ -625,6 +624,28 @@ DialogWindow {
                     }
                     SettingsSection {
                         title: qsTr("Folders")
+                        // UD1 (#362): the user folder, where settings, scripts,
+                        // dictionaries and presets live; Help has the command too.
+                        SettingsRow {
+                            objectName: "settingsUserFolderRow"
+                            visible: (dialog.app.userFolder || "").length > 0
+                            iconRole: "folder-open"
+                            text: qsTr("User folder")
+                            TextField {
+                                objectName: "settingsUserFolderPath"
+                                text: dialog.app.userFolder || ""
+                                readOnly: true
+                                selectByMouse: true
+                                Layout.fillWidth: true
+                                Accessible.name: qsTr("User folder")
+                            }
+                            Button {
+                                objectName: "settingsOpenUserFolder"
+                                text: qsTr("Open")
+                                Accessible.name: qsTr("Open user folder")
+                                onClicked: dialog.app.openUserFolder()
+                            }
+                        }
                         SettingsRow {
                             iconRole: "folder-open"
                             text: qsTr("Fonts folder")
@@ -888,6 +909,11 @@ DialogWindow {
                         // (legacy's player with indexing off). It applies at
                         // once; a playing video pauses.
                         Loader {
+                            // DX1: the docs export's entry on every platform.
+                            readonly property var docsEntries: [{
+                                setting: "video.playbackPlayer", control: "choice", label: qsTr("Player"), platform: "windows",
+                                values: [{value: 0, label: qsTr("Built-in")}, {value: 1, label: "DirectShow"}]
+                            }]
                             active: Qt.platform.os === "windows"
                             visible: active
                             Layout.fillWidth: true
@@ -916,6 +942,23 @@ DialogWindow {
                                 setting: "video.subtitleProvider"
                                 model: dialog.rendererLabels
                                 Accessible.name: qsTr("Subtitle display filter")
+                            }
+                        }
+                        // SV1 (#365): where libass draws the previews'
+                        // subtitles; a CSRI filter draws at the video's size.
+                        SettingsRow {
+                            id: previewAtRow
+                            objectName: "settingsPreviewSubtitlesAt"
+                            readonly property bool libass: dialog.renderers.length < 2
+                                || dialog.renderers[dialog.values["video.subtitleProvider"] ?? -1] === "libass"
+                            text: qsTr("Preview subtitles at")
+                            note: libass ? qsTr("Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script's layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.")
+                                         : qsTr("Video resolution only with this filter.")
+                            SettingChoice {
+                                setting: "video.previewSubtitlesAt"
+                                enabled: previewAtRow.libass
+                                model: [qsTr("Video resolution (as encoded)"), qsTr("Screen size (sharp)")]
+                                Accessible.name: qsTr("Preview subtitles at")
                             }
                         }
                         SettingCheck { setting: "video.disableLiveEditing"; text: qsTr("Turn off the edits preview") }
@@ -989,6 +1032,12 @@ DialogWindow {
                         }
                         Loader {
                             objectName: "audioOutputHostApiBox"
+                            // DX1: the docs export's entry on every platform.
+                            readonly property var docsEntries: [{
+                                setting: "audio.outputHostApi", control: "choice", label: qsTr("API"), platform: "windows",
+                                hint: qsTr("Applies when the output opens again."),
+                                values: [{value: 0, label: "WASAPI"}, {value: 1, label: "DirectSound"}]
+                            }]
                             active: Qt.platform.os === "windows"
                             visible: active
                             Layout.fillWidth: true
@@ -1160,7 +1209,8 @@ DialogWindow {
                             Layout.leftMargin: 24
                             // The check column's header: a checked field is
                             // written into the subtitles' information
-                            // (SubsGrid::SwapAssProperties).
+                            // (SubsGrid::SwapAssProperties). (docsLabel: the
+                            // docs export's, in English as it runs.)
                             Item { implicitWidth: 1; implicitHeight: 1 }
                             Item { implicitWidth: 1; implicitHeight: 1 }
                             Label {
@@ -1172,22 +1222,22 @@ DialogWindow {
                             }
                             Label { text: qsTr("Title"); Layout.preferredWidth: 120 }
                             SettingText { setting: "scriptProperties.title"; Layout.preferredWidth: 300; Accessible.name: qsTr("Title") }
-                            SettingCheck { setting: "scriptProperties.titleOn"; Accessible.name: qsTr("Title") }
+                            SettingCheck { setting: "scriptProperties.titleOn"; Accessible.name: qsTr("Title"); readonly property string docsLabel: "Write Title into the subtitles" }
                             Label { text: qsTr("Author") }
                             SettingText { setting: "scriptProperties.script"; Layout.preferredWidth: 300; Accessible.name: qsTr("Author") }
-                            SettingCheck { setting: "scriptProperties.scriptOn"; Accessible.name: qsTr("Author") }
+                            SettingCheck { setting: "scriptProperties.scriptOn"; Accessible.name: qsTr("Author"); readonly property string docsLabel: "Write Author into the subtitles" }
                             Label { text: qsTr("Translator") }
                             SettingText { setting: "scriptProperties.translation"; Layout.preferredWidth: 300; Accessible.name: qsTr("Translator") }
-                            SettingCheck { setting: "scriptProperties.translationOn"; Accessible.name: qsTr("Translator") }
+                            SettingCheck { setting: "scriptProperties.translationOn"; Accessible.name: qsTr("Translator"); readonly property string docsLabel: "Write Translator into the subtitles" }
                             Label { text: qsTr("Proofreading") }
                             SettingText { setting: "scriptProperties.editing"; Layout.preferredWidth: 300; Accessible.name: qsTr("Proofreading") }
-                            SettingCheck { setting: "scriptProperties.editingOn"; Accessible.name: qsTr("Proofreading") }
+                            SettingCheck { setting: "scriptProperties.editingOn"; Accessible.name: qsTr("Proofreading"); readonly property string docsLabel: "Write Proofreading into the subtitles" }
                             Label { text: qsTr("Timer") }
                             SettingText { setting: "scriptProperties.timing"; Layout.preferredWidth: 300; Accessible.name: qsTr("Timer") }
-                            SettingCheck { setting: "scriptProperties.timingOn"; Accessible.name: qsTr("Timer") }
+                            SettingCheck { setting: "scriptProperties.timingOn"; Accessible.name: qsTr("Timer"); readonly property string docsLabel: "Write Timer into the subtitles" }
                             Label { text: qsTr("Editing") }
                             SettingText { setting: "scriptProperties.update"; Layout.preferredWidth: 300; Accessible.name: qsTr("Editing") }
-                            SettingCheck { setting: "scriptProperties.updateOn"; Accessible.name: qsTr("Editing") }
+                            SettingCheck { setting: "scriptProperties.updateOn"; Accessible.name: qsTr("Editing"); readonly property string docsLabel: "Write Editing into the subtitles" }
                         }
                     }
                     SettingsSection {
@@ -1527,6 +1577,11 @@ DialogWindow {
                             text: qsTr("Off: prereleases (beta versions) are offered too.")
                         }
                         SettingsRow {
+                            // DX1 (#367): the docs export's entry; shown only
+                            // once a version is skipped, Offer it again clears it.
+                            readonly property string docsSetting: "updater.skippedVersion"
+                            readonly property string docsControl: "readonly"
+                            readonly property string docsLabel: text
                             visible: (dialog.values["updater.skippedVersion"] ?? "").length > 0
                             text: qsTr("Skipped version")
                             Label {

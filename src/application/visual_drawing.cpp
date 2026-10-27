@@ -602,6 +602,7 @@ VectorFrame DrawingTool::frame(const VisualHost &host) const
 {
     const VideoView &v = host.view();
     VectorFrame f;
+    f.unit = unitOf(host);
     f.coeffW = v.coeffW();
     f.coeffH = v.coeffH();
     f.coeffW /= m_scale.x; // SetCurVisual: coeffW /= scale.x
@@ -970,14 +971,15 @@ int DrawingTool::hitTest(PointF pos, bool diff, const VisualHost &host)
     // Shapes::HitTest (VisualDrawingShapes.cpp:627-665), its x/y mix-up and
     // int truncations kept.
     int resultX = 0, resultY = 0, resultInside = 0, resultFinal = 0, oldpointx = 0, oldpointy = 0;
+    const float grab = 5 * unitOf(host); // SV1-hidpi-tool-sizes
     for (int i = 0; i < 2; i++) {
         const PointF point = pointToVideo(m_rect[i], host);
-        if (std::fabs(pos.x - point.x) < 5) {
+        if (std::fabs(pos.x - point.x) < grab) {
             if (diff)
                 m_diffX = legacy::toInt(point.x - pos.x);
             resultX |= (i + 1);
         }
-        if (std::fabs(pos.y - point.y) < 5) {
+        if (std::fabs(pos.y - point.y) < grab) {
             if (diff)
                 m_diffY = legacy::toInt(point.y - pos.y);
             resultY |= ((i + 1) * 4);
@@ -1167,6 +1169,7 @@ void DrawingTool::shapePointer(const Pointer &event, VisualHost &host)
 Overlay DrawingTool::overlay(const VisualHost &host) const
 {
     Overlay out;
+    out.unit = unitOf(host);
     if (m_shape < 0) {
         // DrawingAndClip::DrawVisual: the \move position first.
         syncMove(host);

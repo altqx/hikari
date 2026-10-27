@@ -219,7 +219,8 @@ target_compile_definitions(hikari_ui_template_editor_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
     HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
-    HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus")
+    HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus"
+    HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_template_editor_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
 add_dependencies(hikari_ui_template_editor_tests hikari_lua_helper hikari_automation_stage)
 # Each test starts the templater's helper; together about a minute.
@@ -308,6 +309,10 @@ hikari_add_qttest(hikari_ui_translation_preset_tests SOURCES translation_preset_
 # TP1 (#274): the Typesetting preset's own arrangement and the Styles panel.
 hikari_add_qttest(hikari_ui_typesetting_preset_tests SOURCES typesetting_preset_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+# KP1 (#286): the Karaoke preset's arrangement and mode, and the Grid's
+# folded runs of generated Lines.
+hikari_add_qttest(hikari_ui_karaoke_preset_tests SOURCES karaoke_preset_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 # WS3 (#217): the layout presets and saved layouts (save, apply, rename,
 # delete, persistence) and the retired View arrangements and editor switch.
 # Every function starts the application and its QML, as D2's suite did, so
@@ -379,6 +384,8 @@ endforeach()
 # WS5: one instance per user session: the hand-over, a crashed or silent
 # holder, the session's own socket; and what is handed over, on the holder.
 hikari_add_qttest(hikari_ui_single_instance_tests SOURCES single_instance_tests.cpp LIBRARIES hikari_composition)
+# UD1 (#362): the user folder's location, seeding by manifest and the move in.
+hikari_add_qttest(hikari_ui_user_folder_tests SOURCES user_folder_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_forwarded_launches_tests SOURCES forwarded_launches_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
@@ -386,6 +393,13 @@ add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari
 # 38e: no test reaches the desktop's programs (tests/support/desktop): the
 # recording handlers, the refusal that fails a run, the shell's hand-offs.
 hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
+# DX1 (#367): User guide (F1, the DG1 windows' "?") and the docs export.
+hikari_add_qttest(hikari_ui_user_guide_tests SOURCES user_guide_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_user_guide_tests PRIVATE HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
+hikari_add_qttest(hikari_ui_docs_export_tests SOURCES docs_export_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_docs_export_tests PRIVATE HIKARI_PROGRAM="$<TARGET_FILE:hikarisub>"
+    HIKARI_VERSION="${HIKARI_VERSION}")
+add_dependencies(hikari_ui_docs_export_tests hikarisub)
 # R1: subtitle comparison through the composition and the tab menu.
 hikari_add_qttest(hikari_ui_comparison_tests SOURCES comparison_tests.cpp LIBRARIES hikari_composition)
 # R2: reference navigation, linked matching and the subtitles preview.

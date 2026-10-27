@@ -73,7 +73,9 @@ qt_target_qml_sources(hikari_ui QML_FILES KaraokeCheckDialog.qml)
 # KA3: the Kanji timer window.
 qt_target_qml_sources(hikari_ui QML_FILES KanjiTimerDialog.qml)
 # O3: the legacy settings importer's window.
-qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml SettingsImportReview.qml)
+# FR1: Getting started, the setup of the first start.
+qt_target_qml_sources(hikari_ui QML_FILES GettingStartedDialog.qml)
 # Y6: Font catalogs, the catalog window and "Add fonts from subtitles".
 qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.qml FontsFromSubtitlesDialog.qml)
 # PU3: the font picker's chips and renderer note; the one catalog window and
@@ -203,6 +205,8 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(hikari_ui PRIVATE Qt6::WaylandClient Wayland::Client)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_WAYLAND_DECORATIONS)
 endif()
+# DX1 (#367): User guide's pages for the shell and the DG1 windows' "?" button.
+target_sources(hikari_ui PRIVATE user_guide.cpp user_guide.h)
 # SH1: the main window's own title bar (window_frame.h, MainTitleBar.qml):
 # the frameless window, the window menu (Qt's Wayland shell surface; on X11
 # the xcb connection Qt holds, looked up at run time) and on Windows the
@@ -246,3 +250,7 @@ qt_add_resources(hikari_ui "hikari_app_icon" PREFIX "/hikari/ui" FILES "${hikari
 # KA1 (#276): Karaoke's English hyphenation (LibreOffice's hyph_en_US.dic,
 # BSD-style; README_hyph_en_US.txt beside it).
 qt_add_resources(hikari_ui "hikari_hyphenation" PREFIX "/hikari/ui" FILES hyphenation/hyph_en_US.dic)
+# KE3: the built-in karaoke effect presets the Template editor inserts.
+file(GLOB _hikari_karaoke_presets CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/src/application/karaoke-presets/*.ass")
+qt_add_resources(hikari_ui "hikari_karaoke_presets" PREFIX "/hikari/ui" BASE "${PROJECT_SOURCE_DIR}/src/application"
+    FILES ${_hikari_karaoke_presets})

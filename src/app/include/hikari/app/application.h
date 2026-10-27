@@ -17,6 +17,7 @@
 #include "hikari/app/matroska_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
+#include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/application/associated_files.h"
 #include "hikari/application/audio_devices.h"
@@ -150,6 +151,9 @@ public:
         QString userAutomationDir;
         // Load the Autoload scripts at start (the application does; tests choose).
         bool autoload = false;
+        // FR1: the first start marks Getting started due (the application
+        // does; tests choose).
+        bool gettingStarted = false;
         // INI file holding the settings registry; empty: in memory only (tests).
         QString settingsFile;
         // O5: the system's interface languages, most preferred first
@@ -214,6 +218,15 @@ public:
         // P9: legacy's autosave folder (Options.pathfull/Subs), read only;
         // empty: "Subs" beside the settings file, or none without one.
         QString legacyAutosaveDir;
+        // UD1: the user folder (Help > Open user folder; empty: none, the
+        // command does nothing) and what its start moved in and seeded,
+        // which the Log tells.
+        QString userFolder;
+        UserFolder::MoveReport userFolderMove;
+        UserFolder::SeedReport userFolderSeed;
+        // UD1: where saved presets live (workspace layouts' layouts.json);
+        // empty: beside the settings file.
+        QString presetsDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -398,8 +411,17 @@ public:
     void setSaveWithVideoName(bool on);
     // GLOBAL_ANSI ("Report an issue"): the issue tracker in the browser.
     Q_INVOKABLE void reportIssue();
-    // GLOBAL_HELP ("HikariSub website"): the website in the browser.
+    // About's "HikariSub website": the site's home page in the browser.
     Q_INVOKABLE void openWebsite();
+    // DX1 (#367): GLOBAL_HELP ("User guide", F1) and a DG1 window's "?": the
+    // guide's page for a surface, `kind` "panel" or "window" (guide_links.h),
+    // else the guide's home, in the browser.
+    Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
+    // UD1: the user folder (user_folder.h), native separators; empty without one.
+    Q_PROPERTY(QString userFolder READ userFolder CONSTANT)
+    QString userFolder() const;
+    // Help > Open user folder: the desktop's file manager on it.
+    Q_INVOKABLE void openUserFolder();
     // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
     // F1: a find and replace question waits for its answer.
@@ -414,6 +436,8 @@ public:
     // what legacy's Grid click reads to move the video (SetVideoLineTime).
     Q_INVOKABLE void clickLine(qulonglong id, int modifiers, bool endColumn = false, bool doubleClick = false);
     Q_INVOKABLE void dragSelection(qulonglong id);
+    // KP1 (#286): the Grid's fold arrow on a run of generated Lines (its first Line).
+    Q_INVOKABLE void toggleFold(qulonglong first);
     Q_INVOKABLE void selectAllLines();
     // The Grid's active Line was hidden: only the active Line moves.
     Q_INVOKABLE void moveActiveLine(qulonglong id);
@@ -738,6 +762,39 @@ public:
     // but the appearance, the hotkeys and the recent files goes back to its
     // default first (legacy ResetDefault, PF1-staged-reset).
     Q_INVOKABLE void applySettings(const QVariantMap &values, bool resetAll = false);
+    // FR1 (#363): Getting started. Whether it opens by itself now: the first
+    // start (no settings file) marks it due, and Finish, Skip setup, Close
+    // and Esc mark it done (workspace.gettingStarted).
+    Q_INVOKABLE bool gettingStartedDue() const;
+    // Opening it: what openSettingsDialog() gives (the pages are a few of the
+    // Settings window's controls, and Finish applies them as OK does), with
+    // `legacy`: whether a legacy installation was found, for the Import page.
+    Q_INVOKABLE QVariantMap openGettingStarted();
+    // The pages' values with the settings the import's chosen rows would
+    // leave (the live ones otherwise); nothing is written.
+    Q_INVOKABLE QVariantMap gettingStartedImported(const QVariantMap &values);
+    // The interface in the language at `index` of the opening's list while
+    // the window shows it, and back to the stored one; neither is saved.
+    Q_INVOKABLE void previewLanguage(int index);
+    Q_INVOKABLE void endLanguagePreview();
+    // Finish: with `import`, first the import's chosen rows but the settings
+    // the pages set, in effect at the next start as an import is; then every
+    // page's value, as OK writes the Settings window's (a live edit, so it
+    // wins over the import). False, with nothing written, when the import
+    // cannot be staged (the importer's status says why).
+    Q_INVOKABLE bool finishGettingStarted(const QVariantMap &values, bool import);
+    // Skip setup, Close and Esc: the defaults stay, nothing is imported.
+    Q_INVOKABLE void skipGettingStarted();
+    // The Editing page's example: the misspelt words of `text` (pairs of
+    // [start, end)) with the dictionary at `dictionary` of the opening's
+    // list, none while `on` is off.
+    Q_INVOKABLE QVariantList sampleSpellingMarks(const QString &text, bool on, int dictionary);
+    // The Video and audio page's example: a frame with a subtitle drawn by
+    // the renderer at `renderer` of the opening's list, as a PNG data URL.
+    Q_INVOKABLE QString sampleFrame(int renderer, int width, int height);
+    // A short tone through the device at `device` of the opening's list;
+    // the editor's output goes back to its own device after it.
+    Q_INVOKABLE void playTestSound(int device);
     // "Reset all settings…": the controls' state at the defaults, as legacy
     // ResetDefault refreshes them (its defects included); nothing is
     // stored until OK or Apply (PF1-staged-reset).
@@ -1113,6 +1170,7 @@ private:
     // The Video panel follows the editing target: its association when the
     // target changes, its committed content and its active Line.
     void refreshVideo();
+    void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
     void newDocument();
     // P9
@@ -1150,6 +1208,7 @@ private:
     bool targetUntouched() const;
     application::GridSelection gridSelection() const;
     bool applySelection(application::Selection next);
+    void selectFoldedRunsWhole(); // KP1
 
     std::unique_ptr<application::FileReadPort> m_reader;
     std::unique_ptr<backends::PlatformFilePort> m_port;
@@ -1386,6 +1445,9 @@ private:
     QString m_pendingOpenPath;
     application::RecentFiles m_recent;
     QString m_settingsFile;
+    QString m_userFolder; // UD1
+    // UD1: the notice of the move into the user folder and the seeding's Log lines.
+    void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
     // Modification time of each Document's file when last read or written,
     // and the Documents whose removal was already noticed.
     std::map<std::uint64_t, QDateTime> m_fileTimes;
@@ -1408,6 +1470,14 @@ private:
     std::unique_ptr<application::SpellChecker> m_spellChecker;
     bool m_spellingStarted = false;
     application::SpellingText m_spellingText;
+    // FR1: Getting started's examples: the spelling loader, a checker for
+    // the dictionary the Editing page shows, a renderer for the sample frame.
+    application::SpellingBackendLoader m_spellingLoader;
+    std::unique_ptr<application::SpellChecker> m_sampleChecker;
+    QString m_sampleCheckerLanguage;
+    bool m_sampleCheckerReady = false;
+    std::unique_ptr<backends::SubtitleRendererSelection> m_sampleRenderer;
+    int m_testSounds = 0; // FR1: the last Test sound's number (its stream closes after it)
     bool m_spellingOn = true; // the Line editor's switch (TextEditor::SpellCheckerOnOff)
     QString m_dictionaryDir;
     QString m_bundledDictionaryDir;
@@ -1444,6 +1514,7 @@ private:
     // AV1: the status bar says so when the chosen device went away and the
     // system default plays (application_audio.cpp).
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
+    void noticeOnsets(); // #384: the status bar while vocal onsets are found
     application::OutputRoute m_noticedRoute;
     QString m_audioRouteNotice; // the unplugged device's notice while it shows
     int m_audioRouteNoticeSerial = 0;

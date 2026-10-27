@@ -51,7 +51,6 @@ constexpr LegacyBinding kLegacy[] = {
     {"EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT", OptionsControl::Check, OptionsPage::LineEditor},
     {"DISABLE_LIVE_VIDEO_EDITING", OptionsControl::Check, OptionsPage::Video},
     {"GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN", OptionsControl::Check, OptionsPage::Grid},
-    {"SHIFT_TIMES_CHANGE_VALUES_WITH_TAB", OptionsControl::Check, OptionsPage::General},
     {"GRID_CHANGE_ACTIVE_ON_SELECTION", OptionsControl::Check, OptionsPage::Grid},
     {"TL_MODE_SHOW_ORIGINAL", OptionsControl::Check, OptionsPage::LineEditor},
     {"TL_MODE_HIDE_ORIGINAL_ON_VIDEO", OptionsControl::Check, OptionsPage::LineEditor},
@@ -237,9 +236,17 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(fill.page, OptionsPage::Automation);
     ASSERT_NE(findSetting("automation.fillLastAnswers"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("automation.fillLastAnswers")->defaultValue), false);
+    // SV1 (#365): "Preview subtitles at", Video resolution by default.
+    const auto &previewAt = all[std::size(kLegacy) + 16];
+    EXPECT_EQ(previewAt.setting, "video.previewSubtitlesAt");
+    EXPECT_EQ(previewAt.control, OptionsControl::IndexChoice);
+    EXPECT_EQ(previewAt.page, OptionsPage::Video);
+    EXPECT_EQ(previewAt.entries, 2);
+    ASSERT_NE(findSetting("video.previewSubtitlesAt"), nullptr);
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("video.previewSubtitlesAt")->defaultValue), 0);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 18);
-    const auto &hostApi = all[std::size(kLegacy) + 16];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 19);
+    const auto &hostApi = all[std::size(kLegacy) + 17];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -250,7 +257,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 16);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 17);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));

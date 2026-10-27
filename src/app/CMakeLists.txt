@@ -16,6 +16,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     update_apply.cpp include/hikari/app/update_apply.h # ADR 0019: the Windows installing side
     whats_new.cpp include/hikari/app/whats_new.h # SH3: What's new from the release notes
     package_kind.cpp include/hikari/app/package_kind.h
+    user_folder.cpp include/hikari/app/user_folder.h # UD1: the user folder, seeding, the move in
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h) # KA3: the Kanji timer window
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
@@ -45,6 +46,11 @@ hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_ui
 qt_add_executable(hikarisub main.cpp)
 target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations) # O4: QM under :/i18n
 hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
+# DX1 (#367): --export-docs, with the commit the build was configured at.
+execute_process(COMMAND git rev-parse HEAD WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    OUTPUT_VARIABLE HIKARI_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+target_sources(hikari_composition PRIVATE docs_export.cpp include/hikari/app/docs_export.h)
+set_source_files_properties(docs_export.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_COMMIT=\"${HIKARI_COMMIT}\"")
 # Y8: the font collector's window state.
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
 # O3: the legacy settings importer's generations and window state.

@@ -137,10 +137,10 @@ const QStringList &WorkspaceLayoutController::panelIds()
     return ids;
 }
 
-WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QObject *parent)
-    : QObject(parent), m_file(std::move(layoutFile))
+WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QString savedLayoutsFile, QObject *parent)
+    : QObject(parent), m_savedFile(std::move(savedLayoutsFile)), m_file(std::move(layoutFile))
 {
-    if (!m_file.isEmpty())
+    if (!m_file.isEmpty() && m_savedFile.isEmpty())
         m_savedFile = QFileInfo(m_file).absolutePath() + QStringLiteral("/layouts.json");
     readSavedLayouts();
     if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance())) {
@@ -358,7 +358,7 @@ std::optional<WorkspaceArrangement> WorkspaceArrangement::parseFromFile(QByteArr
 const QStringList &WorkspaceLayoutController::presets()
 {
     static const QStringList names{QStringLiteral("Editing"), QStringLiteral("Timing"), QStringLiteral("Translation"),
-                                   QStringLiteral("Typesetting")};
+                                   QStringLiteral("Typesetting"), QStringLiteral("Karaoke")};
     return names;
 }
 
@@ -372,23 +372,25 @@ QString WorkspaceLayoutController::presetLabel(const QString &name)
         return QCoreApplication::translate("HikariSub.Workspace", "Translation");
     if (name == QLatin1String("Typesetting"))
         return QCoreApplication::translate("HikariSub.Workspace", "Typesetting");
+    if (name == QLatin1String("Karaoke"))
+        return QCoreApplication::translate("HikariSub.Workspace", "Karaoke");
     return name;
 }
 
 QString WorkspaceLayoutController::presetMode(const QString &preset)
 {
-    // KP1 (#286) adds Karaoke here.
-    static const std::map<QString, QString> modes{{QStringLiteral("Translation"), QStringLiteral("Translation")}};
+    static const std::map<QString, QString> modes{{QStringLiteral("Translation"), QStringLiteral("Translation")},
+                                                  {QStringLiteral("Karaoke"), QStringLiteral("Karaoke")}}; // KP1
     const auto mode = modes.find(preset);
     return mode == modes.end() ? QString() : mode->second;
 }
 
-void WorkspaceLayoutController::choseFrom(const QString &before)
+void WorkspaceLayoutController::choseMode()
 {
-    const QString left = presetMode(before);
     const QString chosen = presetMode(m_preset);
-    if (!left.isEmpty() && left != chosen)
-        emit presetModeLeft(left);
+    if (!m_chosenMode.isEmpty() && m_chosenMode != chosen)
+        emit presetModeLeft(m_chosenMode);
+    m_chosenMode = chosen;
     if (!chosen.isEmpty())
         emit presetModeChosen(chosen);
 }
@@ -808,7 +810,7 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
 {
     if (m_default.isEmpty())
         return false;
-    // TP1: a preset with an arrangement of its own (Typesetting).
+    // TP1: a preset with an arrangement of its own (Typesetting, and KP1's Karaoke).
     if (const auto own = m_presetPayloads.find(name); own != m_presetPayloads.end())
         return restorePayload(own->second, inPlace);
     const bool done = restorePayload(m_default, inPlace);
@@ -833,10 +835,9 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
 
 bool WorkspaceLayoutController::applyPreset(const QString &name)
 {
-    const QString before = m_preset;
     if (!applyPresetArrangement(name))
         return false;
-    choseFrom(before);
+    choseMode();
     return true;
 }
 
@@ -1398,10 +1399,9 @@ bool WorkspaceLayoutController::saveLayoutAs(const QString &name)
 
 bool WorkspaceLayoutController::applySavedLayout(const QString &name)
 {
-    const QString before = m_preset;
     if (!applySavedArrangement(name))
         return false;
-    choseFrom(before);
+    choseMode();
     return true;
 }
 

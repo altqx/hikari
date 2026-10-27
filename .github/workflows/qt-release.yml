@@ -145,6 +145,7 @@ jobs:
             "hikarisub-$VERSION-linux-amd64.deb"
             "hikarisub-$VERSION-linux-x86_64.rpm"
             "hikarisub-$VERSION-linux-x86_64.tar.gz"
+            "hikarisub-docs-$VERSION.zip"
           )
           for name in "${names[@]}"; do
             if ! [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
@@ -281,3 +282,32 @@ jobs:
           path: aur-artifact/
           include-hidden-files: true
           if-no-files-found: warn
+
+  # DX1 (#367): the site (altqx/hikari-site) rebuilds on a published release:
+  # its downloads from the update manifest, its hotkeys and settings pages
+  # from the docs zip. A job of its own that checks out and runs nothing of
+  # the repository, so the site's token is never in a job that ran the
+  # release's code (Codex security review on #377). Without the secret, or
+  # when the request fails, it is a warning: the release is out, and the
+  # site's daily build picks it up.
+  site:
+    name: Tell the site
+    needs: [release-version, release]
+    runs-on: ubuntu-24.04
+    permissions: {}
+    steps:
+      - name: Request the site's rebuild
+        env:
+          SITE_TOKEN: ${{ secrets.HIKARI_SITE_DISPATCH_TOKEN }}
+          VERSION: ${{ needs.release-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$SITE_TOKEN" ]]; then
+            echo "::warning::HIKARI_SITE_DISPATCH_TOKEN is not set; the site picks up v$VERSION at its daily build."
+            exit 0
+          fi
+          if ! GH_TOKEN="$SITE_TOKEN" gh api repos/altqx/hikari-site/dispatches -f event_type=hikari-release \
+              -f "client_payload[version]=$VERSION" -f "client_payload[tag]=$GITHUB_REF_NAME" \
+              -f "client_payload[docs_asset]=hikarisub-docs-$VERSION.zip" > /dev/null; then
+            echo "::warning::The site's rebuild was not requested; it picks up v$VERSION at its daily build."
+          fi

@@ -9,3 +9,6 @@
 # KE1: the karaoke template corpus and its goldens are compared byte for byte;
 # the 3.2.2 reference script keeps its original bytes.
 /tests/backends/karaoke-corpus/** -text
+
+# KE3: the preset fixture and its goldens are compared byte for byte.
+/tests/backends/karaoke-presets/** -text

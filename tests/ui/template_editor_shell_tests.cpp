@@ -6,7 +6,9 @@
 // HIKARI_TEMPLATE_SHOT_DIR set, the panel in the four themes for review.
 
 #include "hikari/app/application.h"
+#include "hikari/application/generated_runs.h"
 #include "docking.h"
+#include "shell_controller.h"
 #include "template_editor_controller.h"
 #include "video_view_controller.h"
 
@@ -22,6 +24,7 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <set>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -604,6 +607,117 @@ private slots:
             QVERIFY(shot.save(out + QStringLiteral("/template-narrow-") + QLatin1String(code) + QStringLiteral(".png")));
         }
         dock->setProperty("isFloating", false);
+    }
+
+    // KP1 with KE3: in the Karaoke arrangement, the Lines a preset's
+    // templates generate show in the Grid as one folded row per run.
+    void aPresetsLinesFoldInTheKaraokeGrid()
+    {
+        const QString path = dir.filePath(QStringLiteral("fold.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\nWrapStyle: 0\n\n"
+                "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Romaji,Noto Sans,64,&H00FFFFFF,&H00FF8C3C,&H00301018,&H80000000,-1,0,0,0,100,100,0,0,1,3,0,8,10,"
+                "10,60,1\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,,{\\k50}ki{\\k50}ra{\\k100}ri\n"
+                "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,,{\\k100}yo{\\k100}ru\n");
+        f.close();
+        QVERIFY(openPath(path, false));
+        QVERIFY(QMetaObject::invokeMethod(root(), "applyPreset", Q_ARG(QVariant, QStringLiteral("Karaoke"))));
+        auto &shell = application->shell();
+        QVERIFY(shell.foldGenerated());
+        QVERIFY(editor().insertPreset(0));
+        QSignalSpy done(&application->automation(), &app::AutomationShell::runCompleted);
+        QTRY_VERIFY_WITH_TIMEOUT(editor().canApply(), 20'000);
+        QVERIFY(editor().apply(false));
+        QVERIFY(done.wait(30'000));
+        QVERIFY(done.first().at(0).toBool());
+        std::set<core::LineId> generated;
+        for (const auto *l : session()->document().lines())
+            if (application::isFoldableGeneratedLine(*l))
+                generated.insert(l->id);
+        QVERIFY(generated.size() > 1);
+        std::size_t rows = 0;
+        for (const auto id : shell.displayedLines()) {
+            if (!generated.contains(id))
+                continue;
+            QCOMPARE(shell.runFirst(id), std::optional(id));
+            QVERIFY(shell.runFolded(id));
+            ++rows;
+        }
+        QVERIFY(rows > 0 && rows < generated.size());
+    }
+
+    // KE3, for review: New › From a preset open on a song without
+    // templates, then Sparkles and Falling letters inserted and previewed on
+    // the video, in the four themes.
+    void presetScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_TEMPLATE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_TEMPLATE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1600, 1000);
+        const QString path = dir.filePath(QStringLiteral("presets.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\nWrapStyle: 0\n\n"
+                "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Romaji,Noto Sans,64,&H00FFFFFF,&H00FF8C3C,&H00301018,&H80000000,-1,0,0,0,100,100,0,0,1,3,0,8,10,"
+                "10,60,1\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:04.50,Romaji,,0,0,0,,{\\k40}ki{\\k35}ra{\\k0} {\\k45}ki{\\k30}ra "
+                "{\\k60}hi{\\k50}ka{\\k40}ru\n"
+                "Dialogue: 0,0:00:05.00,0:00:07.50,Romaji,,0,0,0,,{\\k50}yo{\\k25}ru{\\k25}no {\\k80}so{\\k70}ra\n");
+        f.close();
+        QVERIFY(openPath(path, true));
+        QVERIFY(QMetaObject::invokeMethod(object(QStringLiteral("audioDock")), "close"));
+        showPanel("templateDock");
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto shoot = [&](const QString &name) {
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                QTest::qWait(400);
+                QImage shot;
+                QTRY_VERIFY((shot = window->grabWindow(), !shot.isNull() && shot.width() > 0));
+                QVERIFY(shot.save(out + QStringLiteral("/template-") + name + QLatin1Char('-') + QLatin1String(code) +
+                                  QStringLiteral(".png")));
+            }
+        };
+        auto *menu = object(QStringLiteral("templateNewMenu"));
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("templateNew")), "clicked"));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        auto *presets = object(QStringLiteral("templatePresetMenu"));
+        QVERIFY(QMetaObject::invokeMethod(presets, "open"));
+        QTRY_VERIFY(presets->property("opened").toBool());
+        auto *sparkles = item(QStringLiteral("templatePreset_6"));
+        QVERIFY(sparkles);
+        QTRY_VERIFY(sparkles->isVisible() && sparkles->width() > 0);
+        QTest::mouseMove(sparkles->window(), sparkles->mapToScene(QPointF(sparkles->width() / 2, sparkles->height() / 2))
+                                                 .toPoint());
+        QTest::qWait(1500); // the description's tooltip
+        shoot(QStringLiteral("presets-menu"));
+        QVERIFY(QMetaObject::invokeMethod(sparkles, "triggered"));
+        QTRY_VERIFY(!menu->property("opened").toBool() || QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview(), 20'000);
+        // The frame as the fourth syllable sings and its sparks fly.
+        application->video().showFrameAt(qRound(2.0 * 23.976));
+        QTest::qWait(1500);
+        shoot(QStringLiteral("presets-preview"));
+        // Falling letters instead: the letters still dropping in before the Line.
+        QVERIFY(session()->undo());
+        QVERIFY(editor().insertPreset(8));
+        QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview() && !editor().previewPending(), 20'000);
+        application->video().showFrameAt(qRound(0.5 * 23.976));
+        QTest::qWait(1500);
+        shoot(QStringLiteral("presets-preview-letters"));
     }
 };
 
