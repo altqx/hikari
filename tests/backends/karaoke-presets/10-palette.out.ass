@@ -16,14 +16,13 @@ Style:  Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,code once,palette = {"&H3CB4FF&", "&HFF8C50&", "&H78DC64&", "&HC878FF&"}; palette_line = 0
-Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,code line,palette_line = palette_line + 1
-Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template pre-line palette,!retime("line",-300,300)!{\fad(300,300)\1c!palette[(palette_line-1)%#palette+1]!\k30}
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,code once,palette = {"&H3CB4FF&", "&HFF8C50&", "&H78DC64&", "&HC878FF&"}
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template pre-line palette,!retime("line",-300,300)!{\fad(300,300)\1c!palette[$li%#palette+1]!\k30}
 Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template line palette,{\kf$kdur}
 Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k40}ki{\k35}ra{\k0} {\k45}ki{\k30}ra {\k60}hi{\k50}ka{\k40}ru
 Comment: 0,0:00:05.00,0:00:07.50,Romaji,,0,0,0,karaoke,{\k50}yo{\k25}ru{\k25}no {\k80}so{\k70}ra
 Dialogue: 0,0:00:08.00,0:00:09.00,Other,,0,0,0,,{\k50}ho{\k50}ka
 Comment: 0,0:00:10.00,0:00:12.00,Romaji,,0,0,0,karaoke,{\k30}ta{\k30}bi{\k0} {\k40}no{\k0} {\k50}to{\k50}chu{\k0}u
-Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\fad(300,300)\1c&H3CB4FF&\k30}{\kf40}ki{\kf35}ra{\kf0} {\kf45}ki{\kf30}ra {\kf60}hi{\kf50}ka{\kf40}ru
-Dialogue: 0,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\fad(300,300)\1c&HFF8C50&\k30}{\kf50}yo{\kf25}ru{\kf25}no {\kf80}so{\kf70}ra
-Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\fad(300,300)\1c&H78DC64&\k30}{\kf30}ta{\kf30}bi{\kf0} {\kf40}no{\kf0} {\kf50}to{\kf50}chu{\kf0}u
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\fad(300,300)\1c&H78DC64&\k30}{\kf40}ki{\kf35}ra{\kf0} {\kf45}ki{\kf30}ra {\kf60}hi{\kf50}ka{\kf40}ru
+Dialogue: 0,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\fad(300,300)\1c&HC878FF&\k30}{\kf50}yo{\kf25}ru{\kf25}no {\kf80}so{\kf70}ra
+Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\fad(300,300)\1c&HFF8C50&\k30}{\kf30}ta{\kf30}bi{\kf0} {\kf40}no{\kf0} {\kf50}to{\kf50}chu{\kf0}u
