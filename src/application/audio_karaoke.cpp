@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iterator>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -154,6 +155,26 @@ std::size_t letterEnd(std::u16string_view text, std::size_t at)
         seen = std::move(probe); // on to the next block
     }
     return end;
+}
+
+// KA8-multi-highlight: where a # syllable's # is (its only character outside
+// blocks is "#" or "＃"); none for any other syllable.
+std::optional<std::size_t> hashIn(const u16 &syl)
+{
+    std::optional<std::size_t> at;
+    bool block = false;
+    for (std::size_t c = 0; c < syl.size(); ++c) {
+        if (syl[c] == u'{')
+            block = true;
+        else if (syl[c] == u'}')
+            block = false;
+        else if (!block) {
+            if (at || (syl[c] != u'#' && syl[c] != u'＃'))
+                return std::nullopt;
+            at = c;
+        }
+    }
+    return block ? std::nullopt : at;
 }
 
 } // namespace
@@ -489,11 +510,20 @@ bool AudioKaraoke::join(int i)
     if (i < 0 || static_cast<std::size_t>(i) + 1 >= m_syls.size())
         return false;
     const auto at = static_cast<std::size_t>(i);
-    const u16 joined = m_syls[at] + m_syls[at + 1];
+    u16 joined = m_syls[at] + m_syls[at + 1];
+    std::size_t place = m_places[at].at, removed = 0;
+    // KA8-join-multi-highlight: a # syllable joined with another folds back
+    // into it (its # dropped); two # syllables make one
+    const auto second = hashIn(m_syls[at + 1]);
+    const auto first = second ? std::nullopt : hashIn(m_syls[at]);
+    if (const auto drop = second ? std::optional(m_syls[at].size() + *second) : first) {
+        joined.erase(*drop, 1);
+        if (place > *drop)
+            --place;
+    }
     // every "{}" removed (wxString::Replace); the tag's place moves with the
     // text before it, and to where an emptied block was when it was in it
     u16 out;
-    std::size_t place = m_places[at].at, removed = 0;
     std::optional<std::size_t> moved;
     for (std::size_t c = 0; c < joined.size();) {
         if (joined[c] == u'{' && c + 1 < joined.size() && joined[c + 1] == u'}') {
