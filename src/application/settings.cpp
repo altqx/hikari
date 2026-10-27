@@ -264,6 +264,10 @@ const std::vector<SettingDefinition> &definitions()
         // PF1 (#225): the Settings page shown last (its id), where the
         // window opens next, also after a restart.
         {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
+        // FR1 (#363): Getting started opens by itself while this is "due"
+        // (the first start writes it) and never again once "done" (Finish,
+        // Skip setup, Close or Esc). Empty: a profile older than FR1.
+        {"workspace.gettingStarted", "", String, Workspace, Mapped, false, std::string()},
         // PK1 (#301): "Show notices as toasts" (off: notices go only to the
         // Log), and the questions hidden by "Don't ask again" that have no
         // setting of their own (Settings > General > Ask again clears them).
