@@ -250,3 +250,7 @@ qt_add_resources(hikari_ui "hikari_app_icon" PREFIX "/hikari/ui" FILES "${hikari
 # KA1 (#276): Karaoke's English hyphenation (LibreOffice's hyph_en_US.dic,
 # BSD-style; README_hyph_en_US.txt beside it).
 qt_add_resources(hikari_ui "hikari_hyphenation" PREFIX "/hikari/ui" FILES hyphenation/hyph_en_US.dic)
+# KE3: the built-in karaoke effect presets the Template editor inserts.
+file(GLOB _hikari_karaoke_presets CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/src/application/karaoke-presets/*.ass")
+qt_add_resources(hikari_ui "hikari_karaoke_presets" PREFIX "/hikari/ui" BASE "${PROJECT_SOURCE_DIR}/src/application"
+    FILES ${_hikari_karaoke_presets})

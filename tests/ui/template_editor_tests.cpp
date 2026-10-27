@@ -3,10 +3,12 @@
 // previews the templater on the current karaoke Line without changing the
 // Document; problems are placed in the text; Apply is the stock run, one
 // undo step; the video draws the preview in place of the Line's Lines. The
-// panel (TemplateEditor.qml) shows and edits it.
+// panel (TemplateEditor.qml) shows and edits it. KE3: the built-in effect
+// presets insert from New as template and code Lines that preview and apply.
 #include "template_editor_controller.h"
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/karaoke_presets.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/application/template_preview.h"
@@ -16,7 +18,9 @@
 #include "hikari/core/ass_save.h"
 #include "hikari/core/editor_syntax.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QQmlExtensionPlugin>
 #include <QQuickItem>
 #include <QQuickView>
@@ -27,6 +31,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <span>
 
 using namespace hikari;
 using application::HostService;
@@ -68,6 +73,41 @@ HostServiceReply textExtents(const HostServiceRequest &r)
 void services(const HostServiceRequest &r, LuaScriptHost::ServiceReply reply)
 {
     reply(r.service == HostService::TextExtents ? textExtents(r) : HostServiceReply::unavailable());
+}
+
+// KE3: the Document karaoke_presets_tests applies each preset to, and that
+// test's golden for a preset file.
+core::Document presetFixture()
+{
+    QFile f(QStringLiteral(HIKARI_KARAOKE_PRESET_FIXTURES "/fixture.ass"));
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+    const QByteArray data = f.readAll();
+    std::vector<std::byte> bytes(static_cast<std::size_t>(data.size()));
+    std::memcpy(bytes.data(), data.constData(), bytes.size());
+    return core::loadAss(bytes).document;
+}
+
+std::string presetGolden(const QString &file)
+{
+    QFile f(QStringLiteral(HIKARI_KARAOKE_PRESET_FIXTURES "/") + QFileInfo(file).completeBaseName() +
+            QStringLiteral(".out.ass"));
+    return f.open(QIODevice::ReadOnly) ? f.readAll().toStdString() : std::string();
+}
+
+std::optional<application::KaraokePreset> presetFile(const QString &file)
+{
+    QFile f(QStringLiteral(":/hikari/ui/karaoke-presets/") + file);
+    if (!f.open(QIODevice::ReadOnly))
+        return std::nullopt;
+    const QByteArray data = f.readAll();
+    return application::readKaraokePreset(
+        std::as_bytes(std::span(data.constData(), static_cast<std::size_t>(data.size()))));
+}
+
+QString qs(const std::u8string &s)
+{
+    return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
 }
 
 std::string bytesOf(const core::Document &doc)
@@ -3332,6 +3372,149 @@ private slots:
         QVERIFY(text->mapToScene(QPointF(text->width(), 0)).x() <= 360);
         auto *apply = item(QStringLiteral("templateApplyArrow"));
         QVERIFY(apply->mapToScene(QPointF(apply->width(), 0)).x() <= 360);
+    }
+
+    // KE3: the presets are the files in :/hikari/ui/karaoke-presets, named
+    // and described as each file says (for the translators, the controller
+    // lists the same words).
+    void presetsAreTheirFilesInOrder()
+    {
+        const QVariantList presets = TemplateEditorController::presets();
+        QCOMPARE(presets.size(), 10);
+        QStringList files;
+        for (const QVariant &v : presets) {
+            const QVariantMap p = v.toMap();
+            const QString file = p.value(QStringLiteral("file")).toString();
+            files << file;
+            const auto preset = presetFile(file);
+            QVERIFY2(preset.has_value(), qPrintable(file));
+            QCOMPARE(p.value(QStringLiteral("title")).toString(), qs(preset->title));
+            QCOMPARE(p.value(QStringLiteral("description")).toString(), qs(preset->description));
+        }
+        QStringList shipped = QDir(QStringLiteral(":/hikari/ui/karaoke-presets")).entryList(QDir::Files, QDir::Name);
+        QCOMPARE(files, shipped);
+        openDocument(presetFixture(), true);
+        QVERIFY(!editor->insertPreset(-1));
+        QVERIFY(!editor->insertPreset(static_cast<int>(presets.size())));
+        QCOMPARE(editor->templateCount() + editor->codeCount(), 0);
+    }
+
+    // Each preset goes in above the first karaoke Line as its template and
+    // code Lines, with that Line's Style, in one undo step; the first is
+    // current and editable. It previews on each karaoke Line what Apply then
+    // writes, and Apply gives karaoke_presets_tests' golden.
+    void eachPresetInsertsPreviewsAndApplies()
+    {
+        const QVariantList presets = TemplateEditorController::presets();
+        for (int i = 0; i < presets.size(); ++i) {
+            const QString file = presets[i].toMap().value(QStringLiteral("file")).toString();
+            const auto preset = presetFile(file);
+            QVERIFY2(preset.has_value(), qPrintable(file));
+            openDocument(presetFixture(), true);
+            editor->refresh();
+            const core::LineId source = *firstKaraoke();
+            activate(source);
+            editor->setShown(true);
+            const std::string before = bytesOf(session->document());
+
+            QVERIFY2(editor->insertPreset(i), qPrintable(file));
+            editor->refresh();
+            QCOMPARE(static_cast<std::size_t>(editor->templateCount() + editor->codeCount()), preset->lines.size());
+            const auto lines = session->document().lines();
+            for (std::size_t n = 0; n < preset->lines.size(); ++n) {
+                const auto *l = lines[n];
+                QVERIFY(l->comment);
+                QCOMPARE(qs(l->style), QStringLiteral("Romaji"));
+                QCOMPARE(l->layer.value, preset->lines[n].layer);
+                QCOMPARE(qs(l->effect), qs(preset->lines[n].effect));
+                QCOMPARE(qs(l->text), qs(preset->lines[n].text));
+            }
+            QCOMPARE(lines[preset->lines.size()]->id, source);
+            QCOMPARE(editor->current(), static_cast<qulonglong>(lines.front()->id.value));
+            QCOMPARE(editor->text(), qs(preset->lines.front().text));
+
+            QVERIFY2(previewCame(), qPrintable(file));
+            // Each karaoke Line of the Style previews what Apply writes for
+            // it, the later ones too (their Lines before them left out).
+            std::vector<std::pair<core::LineId, QStringList>> previews;
+            for (const auto *l : session->document().lines())
+                if (application::isKaraokeLine(*l) && l->style == u8"Romaji")
+                    previews.emplace_back(l->id, QStringList());
+            QCOMPARE(previews.size(), std::size_t{3});
+            for (auto &[id, preview] : previews) {
+                activate(id);
+                QVERIFY(QTest::qWaitFor([&] { return settled() && editor->source() == id.value; }, 20'000));
+                QVERIFY2(!editor->hasProblems(), qPrintable(editor->problem()));
+                preview = previewTexts();
+                QVERIFY(!preview.isEmpty());
+            }
+
+            QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
+            QVERIFY(editor->apply(false));
+            editor->applied(templater->report);
+            QCOMPARE(bytesOf(session->document()), presetGolden(file));
+            for (const auto &[id, preview] : previews) {
+                QStringList written;
+                for (const auto *l : session->document().lines())
+                    if (l->generatedFrom == id)
+                        written << QString::fromStdString(lineText(*l)).section(QLatin1Char(','), 9);
+                QCOMPARE(preview, written);
+            }
+
+            QVERIFY(session->undo());
+            QVERIFY(session->undo());
+            QCOMPARE(bytesOf(session->document()), before);
+        }
+    }
+
+    // A preset's Lines are the user's to edit like any other template.
+    void aPresetLineEditsLikeAnyTemplate()
+    {
+        openDocument(presetFixture(), true);
+        editor->refresh();
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(editor->insertPreset(0));
+        const auto first = editor->current();
+        editor->setText(QStringLiteral("!retime(\"line\",-300,300)!{\\fad(300,300)\\k30\\bord4}"));
+        editor->commit();
+        editor->refresh();
+        QCOMPARE(editor->current(), first);
+        QCOMPARE(qs(session->document().lines().front()->text),
+                 QStringLiteral("!retime(\"line\",-300,300)!{\\fad(300,300)\\k30\\bord4}"));
+        QVERIFY(previewCame());
+        QTRY_VERIFY_WITH_TIMEOUT(settled(), 20'000);
+        QVERIFY(previewTexts().front().startsWith(QStringLiteral("{\\fad(300,300)\\k30\\bord4}")));
+    }
+
+    // New's "From a preset" lists every preset by name, its description on
+    // hover; choosing one inserts it.
+    void newOffersThePresets()
+    {
+        openDocument(presetFixture(), true);
+        showPanel();
+        click(item(QStringLiteral("templateNew")));
+        auto *menu = object(QStringLiteral("templateNewMenu"));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        auto *presetMenu = object(QStringLiteral("templatePresetMenu"));
+        QVERIFY(presetMenu);
+        QCOMPARE(presetMenu->property("title").toString(), QStringLiteral("From a preset"));
+        QVERIFY(QMetaObject::invokeMethod(presetMenu, "open"));
+        QTRY_VERIFY(presetMenu->property("opened").toBool());
+        const QVariantList presets = TemplateEditorController::presets();
+        for (int i = 0; i < presets.size(); ++i) {
+            auto *entry = object(QStringLiteral("templatePreset_%1").arg(i));
+            QVERIFY(entry);
+            QCOMPARE(entry->property("text").toString(), presets[i].toMap().value(QStringLiteral("title")).toString());
+            QCOMPARE(entry->property("help").toString(),
+                     presets[i].toMap().value(QStringLiteral("description")).toString());
+        }
+        QVERIFY(!object(QStringLiteral("templatePreset_%1").arg(presets.size())));
+        QCOMPARE(editor->templateCount() + editor->codeCount(), 0);
+        QVERIFY(QMetaObject::invokeMethod(object(QStringLiteral("templatePreset_9")), "triggered"));
+        QCOMPARE(editor->templateCount(), 2);
+        QCOMPARE(editor->codeCount(), 1);
+        QCOMPARE(editor->effect(), QStringLiteral("code once"));
     }
 
     void newOffersTheStockKindsAboveTheFirstKaraokeLine()
