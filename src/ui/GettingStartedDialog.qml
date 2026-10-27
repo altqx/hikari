@@ -149,6 +149,14 @@ DialogWindow {
     // picks is the one for what they see (as Settings › Appearance does).
     readonly property string stagedTheme: Theme.code
     readonly property var stagedThemeInfo: Theme.themes().find(t => t.code === stagedTheme) ?? ({dark: Theme.dark, highContrast: Theme.highContrast})
+    // The theme and accent names (theme.cpp's), looked up by their source
+    // so they follow a language switch while the window stays open.
+    readonly property var themeTexts: [QT_TRANSLATE_NOOP("HikariSub.Options", "Light"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Dark"), QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast white"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast black"), QT_TRANSLATE_NOOP("HikariSub.Options", "Red"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Orange"), QT_TRANSLATE_NOOP("HikariSub.Options", "Gold"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Green"), QT_TRANSLATE_NOOP("HikariSub.Options", "Blue"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Purple"), QT_TRANSLATE_NOOP("HikariSub.Options", "Pink")]
 
     // A page: the title and the explanation centred, its controls, where
     // the choice lives later.
