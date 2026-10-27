@@ -35,11 +35,16 @@ foreach(language IN LISTS HIKARI_LANGUAGES)
     list(APPEND hikari_po_args --po "${language}=${PROJECT_SOURCE_DIR}/Locale/${language}.po")
 endforeach()
 set(HIKARI_I18N_UI_TS ${hikari_ui_ts} PARENT_SCOPE)
+# #385: English, the source language, has a catalog of its numerus forms only
+# ("Remove 1 word", "Remove 2 words" for "Remove %n word(s)"), searched after
+# every other (Localisation); lupdate -pluralonly keeps it to those.
+set(hikari_en_ts "${CMAKE_CURRENT_SOURCE_DIR}/hikarisub_en.ts")
+set(HIKARI_I18N_EN_TS ${hikari_en_ts} PARENT_SCOPE)
 set(HIKARI_I18N_PO_ARGS ${hikari_po_args} PARENT_SCOPE)
 set(HIKARI_I18N_INPUT_COMMIT ${HIKARI_I18N_INPUT_COMMIT} PARENT_SCOPE)
 
 # QM in the build, embedded under :/i18n.
-qt_add_lrelease(TS_FILES ${hikari_ui_ts} ${hikari_gettext_ts} QM_FILES_OUTPUT_VARIABLE hikari_qm_files
+qt_add_lrelease(TS_FILES ${hikari_ui_ts} ${hikari_gettext_ts} ${hikari_en_ts} QM_FILES_OUTPUT_VARIABLE hikari_qm_files
     QM_OUTPUT_DIRECTORY qm LRELEASE_TARGET hikari_lrelease NO_GLOBAL_TARGET OPTIONS -nounfinished -silent)
 qt_add_library(hikari_translations STATIC)
 qt_add_resources(hikari_translations hikari_translations PREFIX /i18n BASE "${CMAKE_CURRENT_BINARY_DIR}/qm"
@@ -54,9 +59,9 @@ add_dependencies(hikari_translations hikari_lrelease)
 # A source edit (lupdate, a translator) reconfigures, so the recorded hashes
 # are those of the last configure: the build itself must not change them
 # (tests/i18n checks).
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${hikari_ui_ts} ${hikari_gettext_ts})
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${hikari_ui_ts} ${hikari_gettext_ts} ${hikari_en_ts})
 set(hikari_ts_hashes "")
-foreach(ts IN LISTS hikari_ui_ts hikari_gettext_ts)
+foreach(ts IN LISTS hikari_ui_ts hikari_gettext_ts hikari_en_ts)
     file(SHA256 "${ts}" hash)
     string(APPEND hikari_ts_hashes "${hash}  ${ts}\n")
 endforeach()
