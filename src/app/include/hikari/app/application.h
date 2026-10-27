@@ -17,6 +17,7 @@
 #include "hikari/app/matroska_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
+#include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/application/associated_files.h"
 #include "hikari/application/audio_devices.h"
@@ -215,6 +216,15 @@ public:
         // empty: "Subs" in the first legacy root that has one (#387), or
         // none without a settings file.
         QString legacyAutosaveDir;
+        // UD1: the user folder (Help > Open user folder; empty: none, the
+        // command does nothing) and what its start moved in and seeded,
+        // which the Log tells.
+        QString userFolder;
+        UserFolder::MoveReport userFolderMove;
+        UserFolder::SeedReport userFolderSeed;
+        // UD1: where saved presets live (workspace layouts' layouts.json);
+        // empty: beside the settings file.
+        QString presetsDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -405,6 +415,11 @@ public:
     // guide's page for a surface, `kind` "panel" or "window" (guide_links.h),
     // else the guide's home, in the browser.
     Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
+    // UD1: the user folder (user_folder.h), native separators; empty without one.
+    Q_PROPERTY(QString userFolder READ userFolder CONSTANT)
+    QString userFolder() const;
+    // Help > Open user folder: the desktop's file manager on it.
+    Q_INVOKABLE void openUserFolder();
     // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
     // F1: a find and replace question waits for its answer.
@@ -776,10 +791,6 @@ public:
     // A short tone through the device at `device` of the opening's list;
     // the editor's output goes back to its own device after it.
     Q_INVOKABLE void playTestSound(int device);
-    // The folder holding the user's settings, and opening it in the file
-    // manager.
-    Q_INVOKABLE QString userFolder() const;
-    Q_INVOKABLE void openUserFolder() const;
     // "Reset all settings…": the controls' state at the defaults, as legacy
     // ResetDefault refreshes them (its defects included); nothing is
     // stored until OK or Apply (PF1-staged-reset).
@@ -1429,6 +1440,9 @@ private:
     QString m_pendingOpenPath;
     application::RecentFiles m_recent;
     QString m_settingsFile;
+    QString m_userFolder; // UD1
+    // UD1: the notice of the move into the user folder and the seeding's Log lines.
+    void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
     // Modification time of each Document's file when last read or written,
     // and the Documents whose removal was already noticed.
     std::map<std::uint64_t, QDateTime> m_fileTimes;

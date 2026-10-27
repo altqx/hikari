@@ -10739,6 +10739,7 @@ private:
         delete application;
         app::Application::Options options;
         options.settingsFile = home + QStringLiteral("/hikari.ini");
+        options.userFolder = home; // UD1: hikari.ini's folder
         options.gettingStarted = gettingStarted; // FR1
         if (!backend)
             options.spellingBackend = {};
@@ -17370,6 +17371,111 @@ private slots:
     // Every page in the four themes, written to HIKARI_SURFACE_SHOT_DIR when
     // it is set (fr1-<n>-<page>-<theme>.png), with a legacy installation so
     // the Import page shows.
+    // UD1 (#362): Your files shows the user folder; Open folder opens it.
+    void gettingStartedYourFilesShowsTheUserFolder()
+    {
+        const LegacyHere none({});
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        restartWithSpelling(home.path(), false, {}, true);
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        for (int n = 0; n < 8 && setupPage() != u"files"; ++n)
+            setupNext();
+        QCOMPARE(setupPage(), QStringLiteral("files"));
+        QCOMPARE(setupItem("gettingStartedUserFolder")->property("text").toString(), QDir::toNativeSeparators(home.path()));
+        hikari::test::desktop::clear();
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedOpenFolder"), "click"));
+        QCOMPARE(hikari::test::desktop::opened(), QList<QUrl>{QUrl::fromLocalFile(home.path())});
+        QTest::keyClick(qobject_cast<QWindow *>(gettingStarted()), Qt::Key_Escape);
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+    }
+
+    // UD1 (#362): the card's screenshots in the four themes: Help › Open
+    // user folder, Settings › General's User folder row and the notice after
+    // the one-time move (FR1's Your files page is in gettingStartedScreenshots).
+    void userFolderScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        const QString user = home.filePath(QStringLiteral("hikarisub"));
+        app::Application::Options options;
+        options.settingsFile = user + QStringLiteral("/hikari.ini");
+        options.userFolder = user;
+        options.userFolderMove.from = {home.filePath(QStringLiteral("HikariSub/HikariSub"))};
+        restartWith(options);
+        window->resize(1280, 800);
+        auto *root = engine->rootObjects().first();
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *stack = item<QObject>("toastStack");
+        stack->setProperty("fadeAfter", 600000);
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            restartWith(app::Application::Options());
+        });
+        const auto save = [&](QQuickWindow *shown, const QString &name) {
+            QTest::qWait(400);
+            const QImage image = QGuiApplication::platformName() == QLatin1String("xcb")
+                                     ? shown->screen()->grabWindow(0, shown->x(), shown->y(), shown->width(), shown->height()).toImage()
+                                     : shown->grabWindow();
+            QVERIFY(image.save(out + QStringLiteral("/ud1-") + name + QStringLiteral(".png")));
+        };
+        QQuickItem *helpBarItem = nullptr;
+        for (auto *candidate : root->findChildren<QQuickItem *>())
+            if (auto *menu = candidate->property("menu").value<QObject *>();
+                menu && menu->property("title").toString() == u"&Help")
+                helpBarItem = candidate;
+        QVERIFY(helpBarItem);
+        auto *helpMenu = helpBarItem->property("menu").value<QObject *>();
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            save(window, QStringLiteral("moved-notice-") + code);
+
+            QVERIFY(QMetaObject::invokeMethod(helpMenu, "popup", Q_ARG(QQuickItem *, helpBarItem),
+                                              Q_ARG(QPointF, QPointF(0, helpBarItem->height()))));
+            QTRY_VERIFY(helpMenu->property("opened").toBool());
+            auto *openItem = qobject_cast<QQuickItem *>(named("openUserFolderMenuItem"));
+            QTRY_VERIFY(openItem && openItem->isVisible() && openItem->width() > 0);
+            // Highlighted as the pointer would (offscreen has none over a popup).
+            for (int i = 0; i < helpMenu->property("count").toInt(); ++i) {
+                QQuickItem *at = nullptr;
+                QVERIFY(QMetaObject::invokeMethod(helpMenu, "itemAt", Q_RETURN_ARG(QQuickItem *, at), Q_ARG(int, i)));
+                if (at == openItem)
+                    helpMenu->setProperty("currentIndex", i);
+            }
+            QTRY_VERIFY(openItem->property("highlighted").toBool());
+            save(window, QStringLiteral("help-menu-") + code);
+            QVERIFY(QMetaObject::invokeMethod(helpMenu, "close"));
+            QTRY_VERIFY(!helpMenu->property("visible").toBool());
+
+            auto *dialog = openSettings();
+            QVERIFY(dialog);
+            auto *settingsWindow = qobject_cast<QQuickWindow *>(dialog);
+            QTRY_VERIFY(settingsWindow->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(settingsWindow));
+            settingsWindow->resize(1040, 620);
+            showSettingsPage("general");
+            auto *row = qobject_cast<QQuickItem *>(dialogItem("settingsDialog", "settingsUserFolderRow"));
+            QTRY_VERIFY(row && row->isVisible());
+            for (QQuickItem *up = row->parentItem(); up; up = up->parentItem())
+                if (up->property("contentY").isValid() && up->property("contentHeight").isValid()) {
+                    const QPointF at = row->mapToItem(up->property("contentItem").value<QQuickItem *>(), QPointF());
+                    up->setProperty("contentY", qMax(0.0, at.y() - 40));
+                    break;
+                }
+            save(settingsWindow, QStringLiteral("settings-") + code);
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!settingsWindow->isVisible());
+        }
+    }
+
     void gettingStartedScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");

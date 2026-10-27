@@ -58,10 +58,11 @@ class DesktopHandoffTests : public QObject {
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
 
-    void start()
+    void start(const QString &userFolder = {})
     {
         app::Application::Options o;
         o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.userFolder = userFolder;
         o.playbackAudio = false;
         o.spellingBackend = {}; // no spell checker, so no notice over the window
         application = new app::Application(o); // revealInFolder unset: backends::desktop
@@ -238,6 +239,37 @@ private slots:
             QMetaObject::invokeMethod(menu, "close");
         QCOMPARE(recorded::opened().size(), 2);
         QVERIFY(recorded::started().isEmpty());
+        QVERIFY(recorded::refused().isEmpty());
+    }
+
+    // UD1 (#362): Help > Open user folder and Settings > General's Open
+    // open the user folder in the file manager, made first when missing;
+    // without a user folder nothing opens.
+    void openUserFolderOpensItInTheFileManager()
+    {
+        const QString folder = dir.filePath(QStringLiteral("user folder"));
+        start(folder);
+        triggerAction("openUserFolderMenuItem");
+        QCOMPARE(recorded::opened(), QList<QUrl>{QUrl::fromLocalFile(folder)});
+        QVERIFY(QFileInfo(folder).isDir());
+        QCOMPARE(application->userFolder(), QDir::toNativeSeparators(folder));
+        auto *root = engine->rootObjects().first();
+        QVariant settings;
+        QVERIFY(QMetaObject::invokeMethod(root, "settingsWindow", Q_RETURN_ARG(QVariant, settings)));
+        QObject *path = named("settingsUserFolderPath");
+        QVERIFY(path);
+        QCOMPARE(path->property("text").toString(), QDir::toNativeSeparators(folder));
+        QObject *open = named("settingsOpenUserFolder");
+        QVERIFY(open);
+        QVERIFY(QMetaObject::invokeMethod(open, "clicked"));
+        QCOMPARE(recorded::opened(), (QList<QUrl>{QUrl::fromLocalFile(folder), QUrl::fromLocalFile(folder)}));
+        if (auto *window = settings.value<QObject *>())
+            QMetaObject::invokeMethod(window, "close");
+        cleanup();
+        start();
+        QVERIFY(application->userFolder().isEmpty());
+        triggerAction("openUserFolderMenuItem");
+        QVERIFY(recorded::opened().isEmpty());
         QVERIFY(recorded::refused().isEmpty());
     }
 };
