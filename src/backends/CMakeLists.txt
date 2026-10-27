@@ -26,6 +26,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.
     include/hikari/backends/helper_host.h
     legacy_spelling.cpp include/hikari/backends/legacy_spelling.h
     mecab_readings.cpp include/hikari/backends/mecab_readings.h
+    harper_client.cpp include/hikari/backends/harper_client.h # GR1 (#364): harper-ls over LSP
     $<$<PLATFORM_ID:Linux>:posix_file_port.cpp> $<$<PLATFORM_ID:Linux>:posix_file_reader.cpp>
     $<$<PLATFORM_ID:Linux>:posix_platform_files.cpp>
     $<$<PLATFORM_ID:Windows>:win_file_port.cpp> $<$<PLATFORM_ID:Windows>:win_file_reader.cpp>
