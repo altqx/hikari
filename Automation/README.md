@@ -12,7 +12,7 @@ them; `git log` on this directory is the history from there on:
 | Source | Revision |
 |---|---|
 | `TypesettingTools/Aegisub` (`automation/include`, `automation/autoload`) | `ce97a367c611` |
-| `TypesettingTools/DependencyControl` (`modules/l0`, `macros`) | `8cd732eae9cb` |
+| `TypesettingTools/DependencyControl` (`modules/l0`, `macros`), release v0.9.1 | `c4101aeed1a9` |
 | `TypesettingTools/ASSFoundation` | `8fbb4f4261ef` |
 | `TypesettingTools/Functional` | `5a28339d6d8b` |
 | `TypesettingTools/Yutils` | `364f8fa5a9d9` |
@@ -33,6 +33,14 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
   before use.
 - The `a-mo/*.moon` modules carry the version numbers DependencyControl
   substitutes into `##__X_VERSION__##` placeholders.
+- DependencyControl's own files are the v0.9.1 release, unchanged. The legacy
+  package had mixed its 0.6.4 core with newer modules, which broke its feeds
+  (DC1-depctrl-release).
+- `automation/include/moonscript.lua` is MoonScript 0.5.0, from
+  `TypesettingTools/Aegisub` `3c5b61429a49` (what arch1t3cht's Aegisub ships).
+  The released package's 0.3.0 cannot compile DependencyControl 0.9's
+  Toolbox; 0.7.0, at the revision above, rejects Aegisub-Motion's
+  `TrimHandler` (DC1-moonscript).
 - `BM/`, `DM/`, `PT/` are HikariSub's DependencyControl modules; their `.lua` is
   what the released package ships and their DLLs are built from this repository
   (`Thirdparty/DependencyControl/`) and installed into those directories by
