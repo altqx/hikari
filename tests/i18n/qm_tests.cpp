@@ -139,7 +139,8 @@ TEST(Qm, EnglishCatalogGivesTheNumerusForms)
                     << m.source.toStdString() << " n=" << n;
             ++numerus;
         }
-    EXPECT_EQ(numerus, 71);
+    // 75 with KP1's "%n generated lines" and UD1's three user folder notices.
+    EXPECT_EQ(numerus, 75);
     EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 1), QStringLiteral("Remove %n word"));
     EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 3), QStringLiteral("Remove %n words"));
 }

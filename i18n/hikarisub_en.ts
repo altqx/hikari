@@ -32,10 +32,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Applied. %n template lines have problems.</source>
+        <source>Applied. The templates have %n problems.</source>
         <translation>
-            <numerusform>Applied. %n template line has problems.</numerusform>
-            <numerusform>Applied. %n template lines have problems.</numerusform>
+            <numerusform>Applied. The templates have %n problem.</numerusform>
+            <numerusform>Applied. The templates have %n problems.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -256,6 +256,13 @@
             <numerusform>%n selected</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n generated lines</source>
+        <translation>
+            <numerusform>%n generated line</numerusform>
+            <numerusform>%n generated lines</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -298,6 +305,27 @@
         <translation>
             <numerusform>%n more notice</numerusform>
             <numerusform>%n more notices</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n item(s) stayed where they were, because the user folder already had them.</source>
+        <translation>
+            <numerusform>%n item stayed where it was, because the user folder already had it.</numerusform>
+            <numerusform>%n items stayed where they were, because the user folder already had them.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Removed %n bundled file(s) this version no longer brings.</source>
+        <translation>
+            <numerusform>Removed %n bundled file this version no longer brings.</numerusform>
+            <numerusform>Removed %n bundled files this version no longer brings.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n bundled file(s) into the user folder.</source>
+        <translation>
+            <numerusform>Copied %n bundled file into the user folder.</numerusform>
+            <numerusform>Copied %n bundled files into the user folder.</numerusform>
         </translation>
     </message>
 </context>
