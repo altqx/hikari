@@ -896,6 +896,10 @@ Output device: %2</source>
         <translation>Ten plik napisów nie ma dodanych żadnych skryptów</translation>
     </message>
     <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1 nie ma makr do uruchomienia</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation type="vanished">Błąd</translation>
     </message>
