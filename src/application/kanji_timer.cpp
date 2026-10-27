@@ -227,7 +227,7 @@ KanjiText kanjiText(u16v text)
     out.units = unitsOf(out.text);
     // KA8-multi-highlight: the # syllables, one character each up to the next tag
     std::vector<bool> hash(tags.size());
-    std::vector<std::size_t> erased; // their units, from the last
+    std::vector<std::size_t> erased; // their units, in order
     for (std::size_t t = 1, u = 0; t < tags.size(); ++t) {
         while (u < out.units.size() && out.units[u].begin < tags[t])
             ++u;
@@ -235,18 +235,28 @@ KanjiText kanjiText(u16v text)
         if (u < out.units.size() && (out.units[u].text == u"#" || out.units[u].text == u"＃") &&
             (u + 1 == out.units.size() || out.units[u + 1].begin >= next) && out.units[u].begin < next) {
             hash[t] = true;
-            erased.insert(erased.begin(), u);
+            erased.push_back(u);
         }
     }
     if (erased.empty())
         return out;
+    // the text without them, and each tag moved back by what went before it,
+    // in one pass each (a Line of many # syllables must not take n² here)
+    u16 kept;
+    kept.reserve(out.text.size());
+    std::size_t copied = 0;
     for (const std::size_t u : erased) {
-        const auto [begin, end] = std::pair(out.units[u].begin, out.units[u].end);
-        out.text.erase(begin, end - begin);
-        for (std::size_t &at : tags)
-            if (at >= end)
-                at -= end - begin;
+        kept.append(out.text, copied, out.units[u].begin - copied);
+        copied = out.units[u].end;
     }
+    kept.append(out.text, copied);
+    std::size_t gone = 0;
+    for (std::size_t t = 0, e = 0; t < tags.size(); ++t) {
+        for (; e < erased.size() && out.units[erased[e]].end <= tags[t]; ++e)
+            gone += out.units[erased[e]].end - out.units[erased[e]].begin;
+        tags[t] -= gone;
+    }
+    out.text = std::move(kept);
     out.units = unitsOf(out.text);
     // the groups the tags make, when no character comes before the first
     if (!out.units.empty() && out.units.front().begin < tags.front())
