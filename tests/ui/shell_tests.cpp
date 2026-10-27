@@ -3557,6 +3557,103 @@ private slots:
         catalogs.waitResolved();
     }
 
+    // PV1 (#398): one preview text for every sample, "光 Hikari 日本" on a
+    // fresh profile, for an empty setting and for legacy's "Podgląd"; a
+    // change follows live in the open font picker and Font catalog window.
+    void everySampleDrawsThePreviewText()
+    {
+        usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        auto *settings = application->settingsStore();
+        const QString fresh = QStringLiteral("光 Hikari 日本");
+        QCOMPARE(catalogs.previewText(), fresh);
+        settings->set("styles.previewText", QStringLiteral(" "));
+        QCOMPARE(catalogs.previewText(), fresh);
+        settings->set("styles.previewText", QStringLiteral("Podgląd"));
+        QCOMPARE(catalogs.previewText(), fresh);
+        settings->reset(QStringLiteral("styles.previewText"));
+        // The font picker with no text of the Line's to draw.
+        auto *picker = openFontPicker(fontAss("drawing-only.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10\n"));
+        QVERIFY(picker);
+        QCOMPARE(picker->property("sampleSource").toString(), QStringLiteral("sample"));
+        QCOMPARE(picker->property("resolvedFor").toString(), fresh);
+        int key = catalogs.property("sampleKey").toInt();
+        settings->set("styles.previewText", QStringLiteral("Zz"));
+        QTRY_COMPARE(picker->property("resolvedFor").toString(), QStringLiteral("Zz"));
+        QTRY_VERIFY(catalogs.property("sampleKey").toInt() > key);
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        // The Font catalog window's Sample column and preview.
+        auto *catalogWindow = qobject_cast<QQuickWindow *>(named("fontCatalogWindow"));
+        QVERIFY(catalogWindow);
+        QVERIFY(QMetaObject::invokeMethod(catalogWindow, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(catalogWindow->property("visible").toBool());
+        QTRY_VERIFY(findItem(catalogWindow->contentItem(), QStringLiteral("fontCatalogSample")));
+        QCOMPARE(findItem(catalogWindow->contentItem(), QStringLiteral("fontCatalogSample"))->property("text").toString(),
+                 QStringLiteral("Zz"));
+        key = catalogs.property("previewKey").toInt();
+        settings->reset(QStringLiteral("styles.previewText"));
+        QCOMPARE(findItem(catalogWindow->contentItem(), QStringLiteral("fontCatalogSample"))->property("text").toString(), fresh);
+        QTRY_COMPARE(catalogWindow->property("resolvedFor").toString(), fresh);
+        QVERIFY(catalogs.property("previewKey").toInt() > key);
+        QVERIFY(QMetaObject::invokeMethod(catalogWindow, "reject"));
+        QTRY_VERIFY(!catalogWindow->property("visible").toBool());
+        catalogs.waitResolved();
+    }
+
+    // PV1 (#398) screenshots for review: the font picker drawing the
+    // preview text (a Line with no text to draw) and the Font catalog
+    // window's Sample column and preview, in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (pv1-<surface>-<theme>.png).
+    // The Style editor, the Styles panel and Settings > Appearance come from
+    // styleManagerScreenshots, typesettingScreenshots and
+    // settingsWindowScreenshots.
+    void previewTextScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        app::attachFontCatalogPreview(*engine, application->fontCatalogs()); // the previews, as the app has them
+        usePickerFonts();
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        auto *picker = qobject_cast<QQuickWindow *>(
+            openFontPicker(fontAss("pv1.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10\n")));
+        QVERIFY(picker);
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto shoot = [&](QQuickWindow *w, const QString &name) {
+            QTest::qWait(300);
+            QVERIFY(w->grabWindow().save(out + QStringLiteral("/pv1-") + name));
+        };
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            item("lineText")->forceActiveFocus();
+            const int key = application->fontCatalogs().property("sampleKey").toInt();
+            QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
+            QTRY_VERIFY(picker->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, QStringLiteral("Verdana"))));
+            QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > key);
+            QCOMPARE(picker->property("sampleSource").toString(), QStringLiteral("sample"));
+            shoot(picker, QStringLiteral("picker") + suffix);
+            auto *window = qobject_cast<QQuickWindow *>(named("fontCatalogWindow"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerManage"), "click"));
+            QTRY_VERIFY(window->isVisible());
+            shoot(window, QStringLiteral("catalog") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+            QTRY_VERIFY(!window->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+            QTRY_VERIFY(!picker->isVisible());
+        }
+        application->fontCatalogs().waitResolved();
+    }
+
     // PU3 (#305): a header with no '=' in FontCatalogs.txt (a catalog with
     // no name, which nothing could choose or manage) is not loaded.
     void fontCatalogsWithNoNameAreNotLoaded()
@@ -4952,6 +5049,13 @@ private slots:
         // The sample line's text: each keystroke refreshes it, and it is kept.
         auto *sample = findItem(content, QStringLiteral("stylePreviewText"));
         QVERIFY(sample);
+        // PV1 (#398): the preview text's default, and a change in Settings
+        // drawn at once.
+        QCOMPARE(sample->property("text").toString(), QStringLiteral("光 Hikari 日本"));
+        key = styles.previewKey();
+        application->settingsStore()->set("styles.previewText", QStringLiteral("Live"));
+        QCOMPARE(sample->property("text").toString(), QStringLiteral("Live"));
+        QVERIFY(styles.previewKey() > key);
         key = styles.previewKey();
         sample->setProperty("text", QStringLiteral("Sample ąę 日本"));
         QVERIFY(QMetaObject::invokeMethod(sample, "textEdited"));
@@ -16503,7 +16607,8 @@ private slots:
               {"autosave.maxFiles", nullptr},
               {"notices.toasts", "Show notices as toasts"}, // PK1
               {"fonts.externalDirectory", nullptr}}},
-            {"settingsPageAppearance", {{"program.font", nullptr}, {"program.fontSize", nullptr}}},
+            {"settingsPageAppearance",
+             {{"program.font", nullptr}, {"program.fontSize", nullptr}, {"styles.previewText", nullptr}}}, // PV1
             {"settingsPageLineEditor",
              {{"editor.spellchecker", "Check spelling"},
               {"editor.dictionaryLanguage", nullptr},

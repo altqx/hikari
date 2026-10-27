@@ -8,7 +8,8 @@
 // dialog's values and previewed live (Theme.preview); OK or Apply saves it,
 // Cancel takes the preview back. SH1 (#220): "Use system title bar", which
 // OK or Apply applies. PF1 (#225): in the Settings window's section form,
-// with the program font (from legacy Editor > Advanced).
+// with the program font (from legacy Editor > Advanced) and, PV1 (#398),
+// the style and font samples' preview text.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Options"
 import QtQuick
@@ -270,6 +271,21 @@ ScrollView {
                     Component.onCompleted: refresh()
                     Connections { target: page.dialog; function onReloaded() { size.refresh() } }
                     onValueModified: page.dialog.put("program.fontSize", value)
+                }
+            }
+            // PV1 (#398): the text of every style and font sample.
+            SettingsRow {
+                text: qsTr("Preview text")
+                note: qsTr("The sample text of the style and font previews.")
+                TextField {
+                    id: previewText
+                    objectName: "setting_styles.previewText"
+                    Accessible.name: qsTr("Preview text")
+                    Layout.preferredWidth: 260
+                    function refresh() { text = page.dialog.values["styles.previewText"] ?? "" }
+                    Component.onCompleted: refresh()
+                    Connections { target: page.dialog; function onReloaded() { previewText.refresh() } }
+                    onTextEdited: page.dialog.put("styles.previewText", text)
                 }
             }
         }

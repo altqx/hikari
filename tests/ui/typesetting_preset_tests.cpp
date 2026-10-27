@@ -10,6 +10,7 @@
 
 #include "docking.h"
 #include "line_editor_controller.h"
+#include "settings_store.h"
 #include "theme.h"
 #include "workspace_layout.h"
 
@@ -503,6 +504,25 @@ private slots:
         QVERIFY(application->editor().chooseStyle(QStringLiteral("Unused"))); // the active Line, Italic
         QTRY_COMPARE(panel->property("rows").toList()[3].toMap().value(QStringLiteral("lines")).toInt(), 1);
         QCOMPARE(panel->property("rows").toList()[1].toMap().value(QStringLiteral("lines")).toInt(), 0);
+        stop();
+    }
+
+    // PV1 (#398): each row's sample draws the preview text (styles.previewText,
+    // its characters without override tags) and follows a change at once.
+    void theStylesPanelSamplesDrawThePreviewText()
+    {
+        start();
+        openEpisode();
+        applyPreset("Typesetting");
+        verifyTypesettingArrangement();
+        QTRY_COMPARE(item<QObject>("stylesTool")->property("rows").toList().size(), 4);
+        const auto sample = [this](const char *name) { return rowItem(name)->property("text").toString(); };
+        QTRY_VERIFY(rowItem("stylesSampleText0"));
+        QCOMPARE(sample("stylesSampleText0"), QStringLiteral("光 Hikari 日本"));
+        QCOMPARE(sample("stylesSampleText3"), QStringLiteral("光 Hikari 日本"));
+        application->settingsStore()->set("styles.previewText", QStringLiteral("{\\b1}Mine"));
+        QCOMPARE(sample("stylesSampleText0"), QStringLiteral("Mine"));
+        QCOMPARE(sample("stylesSampleText3"), QStringLiteral("Mine"));
         stop();
     }
 

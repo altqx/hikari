@@ -85,6 +85,12 @@ std::filesystem::path catalogPath(const std::filesystem::path &dir, std::u16stri
     return dir / std::filesystem::path(std::u16string(name));
 }
 
+// PV1 (#398): the samples' text when the setting is empty, its default.
+QString defaultPreviewText()
+{
+    return QString::fromStdString(std::get<std::string>(application::findSetting("styles.previewText")->defaultValue));
+}
+
 } // namespace
 
 FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std::filesystem::path catalogDir, Hooks hooks,
@@ -183,7 +189,8 @@ bool FontCatalogsController::filterOn() const
 
 QString FontCatalogsController::previewText() const
 {
-    return m_settings.text("styles.previewText");
+    const QString text = m_settings.text("styles.previewText");
+    return text.trimmed().isEmpty() ? defaultPreviewText() : text;
 }
 
 QStringList FontCatalogsController::catalogChoices() const
@@ -717,8 +724,7 @@ int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool
         std::lock_guard lock(m_resolveMutex);
         m_resolveJob = ResolveJob{request, m_service, std::move(environment),
                                   application::FontRequest{family.toStdString(), bold, italic,
-                                                           text.trimmed().isEmpty() ? std::string("AaBbCcDdEeFfGg 0123456789")
-                                                                                    : text.toStdString()}};
+                                                           (text.trimmed().isEmpty() ? defaultPreviewText() : text).toStdString()}};
     }
     m_resolveWake.notify_one();
     if (!m_resolver.joinable())
