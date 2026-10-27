@@ -32486,6 +32486,8 @@ private slots:
         for (const QString &name : {QStringLiteral("0.mkv"), markup}) // "0" before "<"
             QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), own.filePath(name)));
         QVERIFY(application->openFile(episode));
+        // (the video's first frame would ask about the resolution, maybe first)
+        application->settingsStore()->setValue(QStringLiteral("video.dontAskForBadResolution"), true);
         auto &video = application->video();
         video.openVideo(own.filePath(QStringLiteral("0.mkv")));
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
