@@ -94,7 +94,7 @@ DialogWindow {
         settings: dialog.settings
     }
 
-    // The two styles and Suggest groupings.
+    // The two styles, Suggest groupings and Multi-highlight (#).
     RowLayout {
         Layout.fillWidth: true
         spacing: 8
@@ -122,6 +122,15 @@ DialogWindow {
             text: qsTr("Suggest groupings")
             checked: dialog.timer.suggest
             onToggled: dialog.timer.suggest = checked
+        }
+        CheckBox {
+            objectName: "kanjiMulti"
+            text: qsTr("Multi-highlight (#)")
+            checked: dialog.timer.multi
+            onToggled: dialog.timer.multi = checked
+            ToolTip.visible: hovered
+            ToolTip.delay: 600
+            ToolTip.text: qsTr("Write each further syllable of a group as a # syllable, for the templater's multi effects")
         }
     }
     RowLayout {

@@ -400,6 +400,45 @@ TEST(AudioKaraoke, JoinTakesTheNextSyllableAndDropsEmptyBlocks)
     EXPECT_EQ(k.count(), 2);
 }
 
+// KA8 (#354): a kanji Line with the Kanji timer's # syllables. Each is a
+// syllable of its own time, labelled "#" in the strip as the templater reads
+// it (one more highlight of the one before), and the Line reads back as it was.
+TEST(AudioKaraoke, MultiHighlightHashSyllablesAreLabelledAsWritten)
+{
+    const std::string line = "{\\k9}撃、{\\k7}#{\\k6}腐{\\kf9}#{\\K9}＃";
+    auto k = split(line, 0, 400);
+    ASSERT_EQ(k.count(), 5);
+    std::vector<std::string> labels;
+    for (int i = 0; i < k.count(); ++i)
+        labels.push_back(s(k.stripped(i)));
+    EXPECT_EQ(labels, (std::vector<std::string>{"撃、", "#", "腐", "#", "＃"}));
+    EXPECT_EQ(strings(k.tags()), (std::vector<std::string>{"k", "k", "k", "kf", "K"}));
+    EXPECT_EQ(k.times(), (std::vector<int>{90, 160, 220, 310, 400}));
+    EXPECT_EQ(s(k.text(0)), line);
+}
+
+// KA8-join-multi-highlight: a joined syllable is a # syllable only when
+// both halves were; otherwise the highlight folds back into the other one
+TEST(AudioKaraoke, JoinWithAHashSyllableFoldsItsHighlightBack)
+{
+    const std::string line = "{\\k9}撃{\\k7}#{\\k6}腐{\\k9}{\\1c&H0000FF&}＃{\\k9}#{\\k12}蝕";
+    auto k = split(line, 0, 520);
+    ASSERT_EQ(k.count(), 6);
+    ASSERT_TRUE(k.join(0)); // 撃 + #
+    EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"撃", "{}腐", "{}{\\1c&H0000FF&}＃", "{}#", "{}蝕"}));
+    EXPECT_EQ(k.times(), (std::vector<int>{160, 220, 310, 400, 520})); // times as Join does them
+    ASSERT_TRUE(k.join(2)); // ＃ + #: one # syllable
+    EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"撃", "{}腐", "{\\1c&H0000FF&}＃", "{}蝕"}));
+    ASSERT_TRUE(k.join(2)); // ＃ + 蝕, the # syllable's block kept
+    EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"撃", "{}腐", "{\\1c&H0000FF&}蝕"}));
+    EXPECT_EQ(k.times(), (std::vector<int>{160, 220, 520}));
+    EXPECT_EQ(s(k.text(0)), "{\\k16}撃{\\k6}腐{\\k30}{\\1c&H0000FF&}蝕");
+    // a # among other text is no # syllable: joined as it was
+    auto plain = split("{\\k10}a{\\k10}#b", 0, 200);
+    ASSERT_TRUE(plain.join(0));
+    EXPECT_EQ(strings(plain.syllables()), (std::vector<std::string>{"a#b"}));
+}
+
 // KA2's taps replace the syllables: their tags go in their own places,
 // not where the Line's read ones were (KA1-k-round-trip)
 // Codex: a hovered letter is the reading's it was found in; another Line's

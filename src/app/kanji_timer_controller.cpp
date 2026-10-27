@@ -20,6 +20,7 @@ namespace {
 constexpr std::size_t kShownGroups = 60;
 
 constexpr const char *kSuggest = "audio.kanjiTimerSuggest";
+constexpr const char *kMulti = "audio.kanjiTimerMulti";
 
 // The Lines of the two styles in Document order: Lines with text, a romaji
 // Line with \k tags, no fx Line of the templater.
@@ -130,6 +131,21 @@ void KanjiTimerController::setSuggest(bool on)
     m_settings.set(kSuggest, on);
     if (m_timer)
         m_timer->setSuggest(on);
+    emit changed();
+}
+
+bool KanjiTimerController::multi() const
+{
+    return m_settings.boolean(kMulti);
+}
+
+void KanjiTimerController::setMulti(bool on)
+{
+    if (on == multi())
+        return;
+    m_settings.set(kMulti, on);
+    if (m_timer)
+        m_timer->setMulti(on);
     emit changed();
 }
 
@@ -266,6 +282,7 @@ void KanjiTimerController::readLines()
         m_timer = std::make_unique<application::KanjiTimer>(charClasses());
         m_timer->setSuggest(suggest());
     }
+    m_timer->setMulti(multi());
     m_timer->setLines(std::move(romaji), std::move(kanji));
 }
 
@@ -565,6 +582,7 @@ bool KanjiTimerController::applyTo(std::uint64_t document, application::EditSess
     auto [romaji, kanji] = styleLines(session, own ? m_romajiStyle : kept->second.romajiStyle,
                                       own ? m_kanjiStyle : kept->second.kanjiStyle);
     timer->setLines(std::move(romaji), std::move(kanji));
+    timer->setMulti(multi()); // as it is now (changed on another Document)
     if (timer->pending().empty())
         return true;
     if (!writePending(*timer, session))
