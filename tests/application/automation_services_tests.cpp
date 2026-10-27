@@ -91,14 +91,16 @@ TEST(AutomationFolders, PortableCopyHasTheShippedFolderOnly)
 
 TEST(AutomationFolders, InstalledCopyAddsTheUsersFolders)
 {
-    const auto f = automationFolders("/opt/hikarisub/Automation", "/home/a/.local/share/HikariSub/HikariSub/Automation", false);
-    const std::string u = "/home/a/.local/share/HikariSub/HikariSub/Automation";
+    // UD1: the user folder is `?user`; the start makes its lower-case
+    // automation/autoload and include.
+    const auto f = automationFolders("/opt/hikarisub/Automation", "/home/a/.config/hikarisub", false);
+    const std::string u = "/home/a/.config/hikarisub";
     EXPECT_EQ(f.autoload, (std::vector<std::string>{"/opt/hikarisub/Automation/automation/Autoload",
                                                      u + "/automation/Autoload", u + "/automation/autoload"}));
     EXPECT_EQ(f.include, (std::vector<std::string>{u + "/automation/Include", u + "/automation/include",
                                                     "/opt/hikarisub/Automation/automation/Include"}));
-    EXPECT_EQ(f.made, (std::vector<std::string>{u + "/log", u + "/temp", u + "/autosave", u + "/automation/Autoload",
-                                                 u + "/automation/Include"}));
+    EXPECT_EQ(f.made, (std::vector<std::string>{u + "/log", u + "/temp", u + "/autosave", u + "/automation/autoload",
+                                                 u + "/automation/include"}));
 
     // Windows has one autoload and one include folder per root.
     const auto w = automationFolders("C:\\Program Files\\HikariSub\\Automation", "C:\\Users\\a\\Automation\\", true);

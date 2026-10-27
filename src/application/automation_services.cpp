@@ -89,8 +89,8 @@ AutomationFolders automationFolders(const std::string &shipped, const std::strin
         addUnique(f.include, joinAll(user, {"automation", "include"}, windows), windows);
         for (const char *sub : {"log", "temp", "autosave"})
             f.made.push_back(joinAll(user, {sub}, windows));
-        f.made.push_back(joinAll(user, {"automation", "Autoload"}, windows));
-        f.made.push_back(joinAll(user, {"automation", "Include"}, windows));
+        f.made.push_back(joinAll(user, {"automation", "autoload"}, windows));
+        f.made.push_back(joinAll(user, {"automation", "include"}, windows));
     }
     addUnique(f.include, joinAll(shipped, {"automation", "Include"}, windows), windows);
     return f;

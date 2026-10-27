@@ -237,17 +237,28 @@ QStringList keptAgainst(const si::Profile &base, const si::Profile &target, cons
 }
 
 // The authored collections the profile holds, by path in the settings
-// folder: Rules.txt, Dictionary/UserDic.udic and Dictionary/*.dic / *.aff.
-QStringList collectionPaths(const QString &folder)
+// folder: Rules.txt, Dictionary/UserDic.udic and Dictionary/*.dic / *.aff
+// (the dictionaries from `dictionaryFolder`, without the copies of bundled
+// ones named in `bundled`).
+QStringList collectionPaths(const QString &folder, const QString &dictionaryFolder, const QStringList &bundled = {})
 {
     QStringList out;
     if (QFileInfo::exists(folder + QStringLiteral("/Rules.txt")))
         out << QStringLiteral("Rules.txt");
-    const QDir dictionary(folder + QStringLiteral("/Dictionary"));
+    const QDir dictionary(dictionaryFolder);
     for (const QString &name : dictionary.entryList(
              {QStringLiteral("UserDic.udic"), QStringLiteral("*.dic"), QStringLiteral("*.aff")}, QDir::Files, QDir::Name))
-        out << QStringLiteral("Dictionary/") + name;
+        if (!bundled.contains(name))
+            out << QStringLiteral("Dictionary/") + name;
     return out;
+}
+
+// UD1: the bundled dictionaries' file names, whose copies the start seeds
+// into the user's dictionaries; they are the program's, not the profile's.
+QStringList bundledDictionaryNames()
+{
+    return QDir(QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary"))
+        .entryList({QStringLiteral("*.dic"), QStringLiteral("*.aff")}, QDir::Files);
 }
 
 bool trackedCollection(const QString &path)
@@ -421,8 +432,8 @@ si::Profile SettingsImportStore::liveProfile() const
     for (const auto &def : application::settingDefinitions())
         if (settings.isSet(def.id))
             p.values[std::string(def.id)] = settings.value(def.id);
-    for (const QString &path : collectionPaths(m_folder))
-        if (const auto bytes = readAll(m_folder + QLatin1Char('/') + path))
+    for (const QString &path : collectionPaths(m_folder, diskPath(QStringLiteral("Dictionary")), seededDictionaries()))
+        if (const auto bytes = readAll(diskPath(path)))
             p.files[ss(path)] = stringOf(*bytes);
     return p;
 }
@@ -706,12 +717,28 @@ void SettingsImportStore::materialize(const si::Profile &profile)
             settings.reset(def.id);
     }
     m_settings.sync();
-    for (const QString &path : collectionPaths(m_folder))
+    for (const QString &path : collectionPaths(m_folder, diskPath(QStringLiteral("Dictionary")), seededDictionaries()))
         if (!profile.files.contains(ss(path)) && trackedCollection(path))
-            QFile::remove(m_folder + QLatin1Char('/') + path);
+            QFile::remove(diskPath(path));
     for (const auto &[path, bytes] : profile.files)
         if (trackedCollection(qs(path)))
-            writeAll(m_folder + QLatin1Char('/') + qs(path), bytesOf(bytes));
+            writeAll(diskPath(qs(path)), bytesOf(bytes));
+}
+
+QStringList SettingsImportStore::seededDictionaries() const
+{
+    return m_dictionaryFolder.isEmpty() ? QStringList() : bundledDictionaryNames();
+}
+
+QString SettingsImportStore::diskPath(const QString &path) const
+{
+    if (!m_dictionaryFolder.isEmpty()) {
+        if (path == QLatin1String("Dictionary"))
+            return m_dictionaryFolder;
+        if (path.startsWith(QLatin1String("Dictionary/")))
+            return m_dictionaryFolder + path.mid(10);
+    }
+    return m_folder + QLatin1Char('/') + path;
 }
 
 bool SettingsImportStore::recover()
