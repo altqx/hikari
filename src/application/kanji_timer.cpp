@@ -256,19 +256,19 @@ KanjiGroup suggestGroup(const std::vector<KanjiSyllable> &syllables, std::size_t
             continue;
         }
         // a kana by its reading
-        bool matched = false;
+        // (the most kana, and of the same kana the longest romaji: n' before n)
+        const KanaReading *best = nullptr;
         const u16 rest = charactersFrom(kanji, di);
-        for (const KanaReading &reading : kanaReadings(rest)) {
-            if (!u16v(src).substr(si).starts_with(reading.romaji))
-                continue;
-            si += reading.romaji.size();
-            for (std::size_t taken = 0; taken < reading.length && di < n; ++di, ++g.characters)
-                taken += kanji.units[di].text.size();
-            matched = true;
+        const auto readings = kanaReadings(rest);
+        for (const KanaReading &reading : readings)
+            if (u16v(src).substr(si).starts_with(reading.romaji) &&
+                (!best || std::pair(reading.length, reading.romaji.size()) > std::pair(best->length, best->romaji.size())))
+                best = &reading;
+        if (!best)
             break;
-        }
-        if (!matched)
-            break;
+        si += best->romaji.size();
+        for (std::size_t taken = 0; taken < best->length && di < n; ++di, ++g.characters)
+            taken += kanji.units[di].text.size();
         if (eatSpace())
             return g;
     }
