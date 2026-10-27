@@ -87,9 +87,10 @@ step inst ACTION=check-installed SCOPE=user VERSION="$v3"
 step inst ACTION=run "$(setup "$v1")" ARGS=/S EXPECT=5
 step inst ACTION=run "$(setup "$legacy")" ARGS=/S EXPECT=5
 step inst ACTION=run "$(setup "$v3")" "ARGS=/S /ALLUSERS" EXPECT=6
-# Silent uninstall keeps the user's files.
+# Silent uninstall keeps the user's files, and the user folder (UD1).
+step inst ACTION=user-file FILE=uninstall-keeps-this.txt
 step inst ACTION=run "SETUP=$user\\Uninstall HikariSub.exe" ARGS=/S
-step inst ACTION=check-removed SCOPE=user 'KEEP=Config\Config.txt'
+step inst ACTION=check-removed SCOPE=user 'KEEP=Config\Config.txt' KEEP_USER=uninstall-keeps-this.txt
 step inst ACTION=cleanup SCOPE=user
 
 # All users: refused unelevated when silent, then elevated installs, update
@@ -104,6 +105,7 @@ step inst-detach ACTION=start-app SCOPE=machine
 step inst-admin ACTION=update SCOPE=machine VERSION="$v3" CLOSE_APP=1 "$(setup "$v3")" "ARGS=/RELAUNCH /ALLUSERS /D=$machine"
 step inst ACTION=stop-app
 step inst ACTION=run "SETUP=$machine\\Uninstall HikariSub.exe" "ARGS=/S _?=$machine" EXPECT=4
+step inst-admin ACTION=user-file FILE=uninstall-keeps-this.txt
 step inst-admin ACTION=run "SETUP=$machine\\Uninstall HikariSub.exe" ARGS=/S
-step inst-admin ACTION=check-removed SCOPE=machine
+step inst-admin ACTION=check-removed SCOPE=machine KEEP_USER=uninstall-keeps-this.txt
 echo "all steps passed"

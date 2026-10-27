@@ -118,7 +118,9 @@ public:
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without
     // settings). The saved layouts are kept beside it, in layouts.json.
-    explicit WorkspaceLayoutController(QString layoutFile = {}, QObject *parent = nullptr);
+    // `savedLayoutsFile`: the saved layouts (empty: layouts.json beside
+    // `layoutFile`).
+    explicit WorkspaceLayoutController(QString layoutFile = {}, QString savedLayoutsFile = {}, QObject *parent = nullptr);
 
     // After the shell built its default arrangement: what Reset layout returns to.
     Q_INVOKABLE void captureDefault();

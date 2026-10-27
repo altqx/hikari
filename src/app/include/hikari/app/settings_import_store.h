@@ -45,6 +45,15 @@ public:
     // `settings` is the live registry; `folder` the settings folder (beside
     // hikari.ini: Rules.txt, Dictionary/).
     SettingsImportStore(ui::SettingsStore &settings, QString folder, QString profileName = QStringLiteral("default"));
+    // UD1: the user's dictionaries are elsewhere (the user folder's
+    // dictionaries); a profile still names them Dictionary/<name>. The
+    // start's untouched copies of the dictionaries in `bundled` (empty: the
+    // program folder's Dictionary) are no profile's.
+    void setDictionaryFolder(QString folder, QString bundled = {})
+    {
+        m_dictionaryFolder = std::move(folder);
+        m_bundledDictionaryFolder = std::move(bundled);
+    }
 
     // ---- Discovery
 
@@ -157,7 +166,15 @@ private:
     application::settings_import::Destination destinationOf(const application::settings_import::Profile &profile) const;
 
     ui::SettingsStore &m_settings;
+    // A profile path's file on disk (Dictionary/<name> in the dictionary folder).
+    QString diskPath(const QString &path) const;
+    // With a dictionary folder: the seeded copies of the bundled
+    // dictionaries there still as bundled, which no profile holds.
+    QStringList seededDictionaries() const;
+
     QString m_folder;
+    QString m_dictionaryFolder; // empty: the settings folder's Dictionary
+    QString m_bundledDictionaryFolder;
     QString m_profileName;
 };
 

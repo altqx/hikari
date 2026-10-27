@@ -18,7 +18,8 @@
 #   upgrade    (8.1.5) the packages in --old (an older Qt test version and a
 #              stand-in legacy 0.0.x), each upgraded by this version; files
 #              under $HOME survive.
-#   remove     (8.1.6) removal leaves no /opt/hikarisub and $HOME untouched.
+#   remove     (8.1.6) removal leaves no /opt/hikarisub and $HOME untouched
+#              (the user folder ~/.config/hikarisub included, UD1).
 #   helper     (8.1.7) the update helper, run as root with PKEXEC_UID, from
 #              the --old 0.0.9 stand-in to this version, with fake-curl.sh
 #              serving made-up releases' SHA256SUMS.
@@ -115,9 +116,14 @@ esac
 id tester > /dev/null 2>&1 || useradd -m tester
 home=/home/tester
 marker=$home/.local/share/hikari-test-marker
-runuser -u tester -- mkdir -p "$home/.local/share" "$home/.config/HikariSub"
-runuser -u tester -- sh -c "echo keep > '$marker'; echo keep > '$home/.config/HikariSub/user-file.ini'"
-check_home() { [ "$(cat "$marker")" = keep ] && [ -f "$home/.config/HikariSub/user-file.ini" ] || fail "files under \$HOME changed"; }
+# UD1: and a file in the user folder, which removal never deletes either.
+user_folder=$home/.config/hikarisub
+runuser -u tester -- mkdir -p "$home/.local/share" "$home/.config/HikariSub" "$user_folder"
+runuser -u tester -- sh -c "echo keep > '$marker'; echo keep > '$home/.config/HikariSub/user-file.ini'; echo keep > '$user_folder/uninstall-keeps-this.txt'"
+check_home() {
+    [ "$(cat "$marker")" = keep ] && [ -f "$home/.config/HikariSub/user-file.ini" ] &&
+        [ "$(cat "$user_folder/uninstall-keeps-this.txt")" = keep ] || fail "files under \$HOME changed"
+}
 
 kind_name() # token -> the names --version may print for it
 {
