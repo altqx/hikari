@@ -13,6 +13,7 @@
 #include "line_measures.h"
 
 #include <QCoreApplication>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 
@@ -408,7 +409,17 @@ void LineTableModel::setDocument(const core::Document &document,
     for (const auto &found : application::generatedRuns(lines)) {
         Run run{static_cast<int>(found.first), static_cast<int>(found.count), static_cast<int>(found.first),
                 static_cast<int>(found.first), {}, {}};
+        // The first few distinct names, then "…": a run of many distinct
+        // Styles from a file costs one lookup per Line.
+        constexpr qsizetype kNames = 8;
         QStringList styles, effects;
+        QSet<QString> seenStyles, seenEffects;
+        const auto note = [](QStringList &names, QSet<QString> &seen, const QString &name) {
+            if (names.size() > kNames || seen.contains(name))
+                return;
+            seen.insert(name);
+            names << (names.size() == kNames ? QStringLiteral("…") : name);
+        };
         for (int r = run.first; r < run.first + run.count; ++r) {
             const core::LineRecord &line = *lines[std::size_t(r)];
             m_rows[std::size_t(r)].run = static_cast<int>(m_runs.size());
@@ -416,10 +427,8 @@ void LineTableModel::setDocument(const core::Document &document,
                 run.earliest = r;
             if (line.end.value > lines[std::size_t(run.latest)]->end.value)
                 run.latest = r;
-            if (const QString style = qs(line.style); !styles.contains(style))
-                styles << style;
-            if (const QString effect = qs(line.effect); !effects.contains(effect))
-                effects << effect;
+            note(styles, seenStyles, qs(line.style));
+            note(effects, seenEffects, qs(line.effect));
         }
         run.styles = styles.join(QStringLiteral(", "));
         run.effects = effects.join(QStringLiteral(", "));

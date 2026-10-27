@@ -594,6 +594,22 @@ private slots:
         model.setHideTags(true, QStringLiteral("*"));
         QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("*charlie"));
     }
+
+    // KP1 (#286): a folded run names its first eight Styles, then "…", so a
+    // run of many distinct Styles costs one lookup per Line.
+    void aLongRunNamesItsFirstStyles()
+    {
+        std::string text = "[Events]\n";
+        for (int i = 0; i < 20; ++i)
+            text += "Dialogue: 0,0:00:01.00,0:00:02.00,S" + std::to_string(i) + ",,0,0,0,fx,x\n";
+        LineTableModel model;
+        model.setDocument(load(text));
+        model.setFoldGenerated(true);
+        QCOMPARE(model.index(0, LineTableModel::StyleColumn).data().toString(),
+                 QStringLiteral("S0, S1, S2, S3, S4, S5, S6, S7, …"));
+        QCOMPARE(model.index(0, LineTableModel::EffectColumn).data().toString(), QStringLiteral("fx"));
+    }
+
 };
 
 QTEST_MAIN(LineModelTest)
