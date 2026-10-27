@@ -23,6 +23,8 @@ target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/applica
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
 # KA4 (#279): furigana reading suggestions and the furigana karaoke syntax.
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
+# DX1 (#367): the user guide's pages for User guide (F1).
+target_sources(hikari_application PRIVATE guide_links.cpp include/hikari/application/guide_links.h)
 target_include_directories(hikari_application PUBLIC include)
 # V1: player frames off the GUI thread (latest wins, pooled buffers, the
 # overlay on a worker) and the Y'CbCr rows to BGRA the CPU paths share.
