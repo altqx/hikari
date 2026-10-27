@@ -959,6 +959,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
         m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
     }
+    setUpGrammar(options); // GR1 (#364)
     m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell, int replaceTagsLen) {
         application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
         return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
@@ -5482,6 +5483,8 @@ void Application::waitForWrites()
 // when it acts (the others are read at their next use).
 void Application::settingChanged(const QString &id)
 {
+    if (id.startsWith(QLatin1String("grammar.")) || id == QLatin1String("editor.spellchecker"))
+        applyGrammarSettings(); // GR1: harper-ls's dialect, rules and SpellCheck
     if (id == QLatin1String("audio.outputHostApi") && m_audioPlayer)
         m_audioPlayer->reopenOutput();
     if (id == QLatin1String("audio.outputDevice") && m_audioRouting)
