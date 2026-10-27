@@ -935,9 +935,36 @@ TEST(KanjiTimer, RegroupingKeepsTheReadingsOfTheLine)
     EXPECT_EQ(readings(joined), "永|と* 遠|* ");
 }
 
+TEST(KanjiTimer, ALinesReadingThatSpellsNoneOfItsKanaStaysWhole)
+{
+    // あいお spells no を: kept over the whole base, as karaskel reads it
+    const auto read = kanjiText(u("{\\k40}愛を|あいお"));
+    EXPECT_EQ(read.readings, (std::vector<KanjiText::Reading>{{0, 2, u("あいお")}}));
+    auto timer = furiganaTimer("{\\k40}aio", "{\\k40}愛を|あいお");
+    EXPECT_EQ(readings(timer), "愛|あいお* ");
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}愛を|あいお");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k40}愛を|あいお");
+    // typed over, it is the kanji's again
+    timer.setFurigana(true);
+    EXPECT_TRUE(timer.undo());
+    EXPECT_TRUE(timer.setReading(u("あい")));
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}愛を|あいを");
+}
+
+TEST(KanjiTimer, TheDictionaryReadsAKanjiRunThroughItsBlocks)
+{
+    auto timer = furiganaTimer("{\\k45}love", "愛{\\i1}情");
+    timer.setDictionary(dictionary({{"愛", "アイ"}, {"情", "ジョウ"}}));
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_EQ(readings(timer), "愛情|あいじょう ");
+    EXPECT_EQ(s(*timer.view()->output), "{\\k45}愛{\\i1}情|あいじょう");
+}
+
 TEST(KanjiTimer, AReadingOfManyKanjiAndKanaReadsBackQuickly)
 {
-    // 漢あ漢あ…|あああ… has a great many splits and none fits: read whole on the first run
+    // 漢あ漢あ…|あああ… has a great many splits and none fits: kept over the whole base
     std::string line = "{\\k10}", reading;
     for (int i = 0; i < 2000; ++i) {
         line += "漢あ";
@@ -946,5 +973,5 @@ TEST(KanjiTimer, AReadingOfManyKanjiAndKanaReadsBackQuickly)
     const auto read = kanjiText(u(line + "|" + reading + "い"));
     ASSERT_EQ(read.readings.size(), 1u);
     EXPECT_EQ(read.readings[0].begin, 0u);
-    EXPECT_EQ(read.readings[0].end, 1u);
+    EXPECT_EQ(read.readings[0].end, 4000u);
 }

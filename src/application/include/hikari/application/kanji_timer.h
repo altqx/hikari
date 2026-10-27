@@ -111,6 +111,9 @@ struct KanjiReading {
     bool sung = false;              // the suggestion is the sung kana
     bool differs = false;           // sung other than the dictionary reads it
     std::optional<std::u16string> typed;
+    // a Line's own reading over a base of kanji and kana that split over
+    // none of its runs: the units it spells, its kana too (none: 0, 0)
+    std::size_t spellsFrom = 0, spellsTo = 0;
     const std::u16string &reading() const { return typed ? *typed : suggested; }
     bool operator==(const KanjiReading &) const = default;
 };
