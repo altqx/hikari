@@ -9,13 +9,13 @@ namespace hikari::application {
 
 namespace {
 
-constexpr std::array<std::string_view, 14> kSettings{
+constexpr std::array<std::string_view, 15> kSettings{
     "program.language",                                             // Language
     "appearance.theme", "appearance.followSystem", "appearance.lightAccent", "appearance.darkAccent",
     "appearance.titleBar",                                          // Look
     "video.subtitleProvider", "audio.outputDevice",                 // Video and audio
     "editor.saveAfterCharacterCount", "autosave.maxFiles", "editor.spellchecker",
-    "editor.dictionaryLanguage",                                    // Editing
+    "editor.dictionaryLanguage", "grammar.language",                // Editing
     "updater.checkForStable", "updater.autoCheck",                  // Updates
 };
 

@@ -925,6 +925,39 @@ private slots:
     }
 
     // Switched off, the helper ends at once.
+    // Getting started's Editing page (FR1) offers grammar check: the choice
+    // is written at Finish, and then the Line editor's text is checked.
+    void gettingStartedTurnsItOn()
+    {
+        start();
+        const QString text = QStringLiteral("I has a apple.");
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/setup.ass"), dialogue(text.toUtf8()))));
+        QTRY_COMPARE(item("lineText")->property("text").toString(), text);
+        QVERIFY(QMetaObject::invokeMethod(named(QStringLiteral("gettingStartedMenuItem"))->property("action").value<QObject *>(),
+                                          "trigger"));
+        auto *setup = named(QStringLiteral("gettingStartedDialog"));
+        QTRY_VERIFY(setup->property("visible").toBool());
+        auto *next = item("gettingStartedNext");
+        for (int i = 0; i < 8 && setup->property("pageId").toString() != u"editing"; ++i)
+            QVERIFY(QMetaObject::invokeMethod(next, "click"));
+        QCOMPARE(setup->property("pageId").toString(), QStringLiteral("editing"));
+        auto *choice = item("gettingStarted_grammar.language");
+        QVERIFY(choice && choice->isVisible());
+        QCOMPARE(choice->property("count").toInt(), 5);
+        QCOMPARE(choice->property("currentIndex").toInt(), 0);
+        choice->setProperty("currentIndex", 2);
+        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 2)));
+        QCOMPARE(application->settingsStore()->integer("grammar.language"), 0); // not written yet
+        for (int i = 0; i < 8 && !setup->property("lastPage").toBool(); ++i)
+            QVERIFY(QMetaObject::invokeMethod(next, "click"));
+        QVERIFY(QMetaObject::invokeMethod(next, "click")); // Finish
+        QTRY_VERIFY(!setup->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->integer("grammar.language"), 2);
+        QVERIFY(application->grammarOn());
+        const int article = text.indexOf(QStringLiteral("a apple"));
+        QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
+    }
+
     void turningItOffEndsTheHelper()
     {
         start();
