@@ -11318,6 +11318,31 @@ private slots:
         QTRY_COMPARE(result(), QStringLiteral("{\\k40}君{\\k30}の{\\k45}愛|あい"));
         QCOMPARE(groupReading(0), QStringLiteral(""));
         QCOMPARE(field->property("placeholderText").toString(), QStringLiteral("No furigana"));
+        // Typed and a command clicked without Enter: the reading is its own
+        // group's, not the next one's.
+        const auto click = [&](const char *name) {
+            auto *item = dialogItem("kanjiTimerDialog", name);
+            QTest::mouseClick(kanji, Qt::LeftButton, {}, item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint());
+        };
+        const auto edit = [&](const QString &text) {
+            QTest::mouseClick(kanji, Qt::LeftButton, {}, field->mapToScene(QPointF(field->width() / 2, field->height() / 2)).toPoint());
+            QTRY_VERIFY(field->hasActiveFocus());
+            QVERIFY(field->setProperty("text", text));
+        };
+        edit(QStringLiteral("クン"));
+        click("kanjiLink");
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君|クン{\\k30}の{\\k45}愛|あい"));
+        QVERIFY(strip->hasActiveFocus());
+        QCOMPARE(groupReading(0), QStringLiteral("クン"));
+        // Use the suggestion over a reading being typed drops it.
+        QTest::keyClick(kanji, Qt::Key_Backspace);
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("クン"));
+        edit(QStringLiteral("クンクン"));
+        click("kanjiUseSuggestion");
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君|きみ{\\k30}の{\\k45}愛|あい"));
+        QTRY_VERIFY(strip->hasActiveFocus());
+        QCOMPARE(result(), QStringLiteral("{\\k40}君|きみ{\\k30}の{\\k45}愛|あい"));
+        QCOMPARE(field->property("text").toString(), QStringLiteral("きみ"));
         // 愛 is sung "love": the dictionary's reading, and the reason beside it.
         QTest::keyClick(kanji, Qt::Key_Return);
         QTest::keyClick(kanji, Qt::Key_Return);
@@ -11330,7 +11355,7 @@ private slots:
         QTRY_COMPARE(controller->property("pending").toInt(), 1);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiApply"), "click"));
         QTRY_COMPARE(controller->property("pending").toInt(), 0);
-        QVERIFY(session->document().lines()[1]->text == u8"{\\k40}君{\\k30}の{\\k45}愛|あい");
+        QVERIFY(session->document().lines()[1]->text == u8"{\\k40}君|きみ{\\k30}の{\\k45}愛|あい");
         QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
         QTRY_VERIFY(!kanji->isVisible());
     }

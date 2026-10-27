@@ -297,8 +297,8 @@ DialogWindow {
                         }
                     }
                     onClicked: {
-                        dialog.timer.choose(index)
                         strip.forceActiveFocus()
+                        dialog.timer.choose(index)
                     }
                 }
             }
@@ -667,7 +667,9 @@ DialogWindow {
                             dialog.timer.setReading(text)
                         text = shown
                     }
-                    // (back to the strip: leaving the field sets the reading)
+                    // (back to the strip: leaving the field sets the reading;
+                    // every command leaves it first, so a reading being typed
+                    // goes to its own group)
                     Keys.onReturnPressed: strip.forceActiveFocus()
                     Keys.onEnterPressed: strip.forceActiveFocus()
                 }
@@ -679,7 +681,12 @@ DialogWindow {
                     flat: true
                     enabled: parent.furigana !== undefined && parent.furigana.typed
                     focusPolicy: Qt.TabFocus
-                    onClicked: dialog.timer.useSuggestion()
+                    // (what was typed is dropped, not set as it leaves)
+                    onClicked: {
+                        dialog.timer.useSuggestion()
+                        readingField.text = readingField.shown
+                        strip.forceActiveFocus()
+                    }
                 }
             }
 
@@ -692,27 +699,27 @@ DialogWindow {
                     objectName: "kanjiLink"
                     text: qsTr("Link")
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.link(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.link() }
                 }
                 Button {
                     objectName: "kanjiUnlink"
                     text: qsTr("Unlink")
                     enabled: dialog.pair.canUnlink === true
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.unlink(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.unlink() }
                 }
                 Rectangle { implicitWidth: 1; implicitHeight: 20; color: Theme.line; Layout.leftMargin: 4; Layout.rightMargin: 4 }
                 Button {
                     objectName: "kanjiSkipRomaji"
                     text: qsTr("Skip romaji line")
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.skipRomaji(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.skipRomaji() }
                 }
                 Button {
                     objectName: "kanjiSkipKanji"
                     text: qsTr("Skip kanji line")
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.skipKanji(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.skipKanji() }
                 }
                 Item { Layout.fillWidth: true }
                 IconTextButton {
@@ -721,14 +728,14 @@ DialogWindow {
                     iconRole: "chevron-left"
                     enabled: dialog.pair.canPrevious === true
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.previous(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.previous() }
                 }
                 Button {
                     objectName: "kanjiAcceptLine"
                     text: qsTr("Accept line")
                     enabled: dialog.pair.canAccept === true
                     focusPolicy: Qt.TabFocus
-                    onClicked: { dialog.timer.acceptLine(); strip.forceActiveFocus() }
+                    onClicked: { strip.forceActiveFocus(); dialog.timer.acceptLine() }
                 }
             }
 
@@ -853,7 +860,7 @@ DialogWindow {
         objectName: "kanjiAcceptAll"
         text: qsTr("Accept all suggestions")
         enabled: dialog.timer.problem === "" && dialog.timer.pairs.some(p => p.status === "suggested")
-        onClicked: { dialog.timer.acceptAll(); strip.forceActiveFocus() }
+        onClicked: { strip.forceActiveFocus(); dialog.timer.acceptAll() }
     }
     buttons: [
         PrimaryButton {

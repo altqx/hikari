@@ -892,3 +892,54 @@ TEST(KanjiTimer, FuriganaReadsBackAsTypedReadings)
     timer.setFurigana(false);
     EXPECT_EQ(s(*timer.view()->output), "{\\k40}君|キミ{\\k30}の{\\k45}声{\\k35}が{\\k22}聞{\\k18}こ{\\k20}え{\\k60}る");
 }
+
+TEST(KanjiTimer, HashReadingsJoinTheirBaseThroughHighlightsWithNone)
+{
+    EXPECT_EQ(kanjiText(u("{\\k10}君{\\k10}#|き{\\k10}#|み")).readings,
+              (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    EXPECT_EQ(kanjiText(u("{\\k10}君|き{\\k10}#{\\k10}#|み")).readings,
+              (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    // a base and its highlights with none read nothing; the next base its own
+    EXPECT_EQ(kanjiText(u("{\\k10}君{\\k10}#{\\k10}声|こえ")).readings,
+              (std::vector<KanjiText::Reading>{{1, 2, u("こえ")}}));
+}
+
+TEST(KanjiTimer, RegroupingKeepsTheReadingsOfTheLine)
+{
+    // KA3 suggests 永 and 遠 apart: the Line's えいえん on the first, none on the second
+    auto timer = furiganaTimer("{\\k30}to{\\k30}wa{\\k20}ni", "{\\k60}永遠|えいえん{\\k20}に");
+    EXPECT_EQ(readings(timer), "永|えいえん* 遠|* ");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k30}永|えいえん{\\k30}遠{\\k20}に");
+    // typed over one run and grouped with the next: what was typed, in order
+    auto joined = furiganaTimer("{\\k30}to{\\k35}wa {\\k40}ni", "永遠に");
+    EXPECT_TRUE(joined.setReading(u("とこ")));
+    EXPECT_TRUE(joined.link());
+    EXPECT_TRUE(joined.setReading(u("しえ")));
+    EXPECT_TRUE(joined.unlink());
+    EXPECT_TRUE(joined.growSyllables());
+    EXPECT_TRUE(joined.growCharacters());
+    EXPECT_EQ(readings(joined), "永遠|とこしえ* ");
+    // a reading typed there takes the place of both
+    EXPECT_TRUE(joined.setReading(u("とわ")));
+    EXPECT_TRUE(joined.shrinkSyllables());
+    EXPECT_TRUE(joined.shrinkCharacters());
+    EXPECT_EQ(readings(joined), "永|とわ* 遠|* ");
+    EXPECT_TRUE(joined.useSuggestion());
+    EXPECT_EQ(readings(joined), "永|と* 遠|* ");
+}
+
+TEST(KanjiTimer, AReadingOfManyKanjiAndKanaReadsBackQuickly)
+{
+    // 漢あ漢あ…|あああ… has a great many splits and none fits: read whole on the first run
+    std::string line = "{\\k10}", reading;
+    for (int i = 0; i < 2000; ++i) {
+        line += "漢あ";
+        reading += "あああ";
+    }
+    const auto read = kanjiText(u(line + "|" + reading + "い"));
+    ASSERT_EQ(read.readings.size(), 1u);
+    EXPECT_EQ(read.readings[0].begin, 0u);
+    EXPECT_EQ(read.readings[0].end, 1u);
+}
