@@ -1077,6 +1077,13 @@ TEST(TagTransfer, AdjacentRunsWriteOnlyTheTransformsTheyAdd)
     ASSERT_EQ(reset.runs.size(), 2u);
     EXPECT_EQ(u8(composeTranslation(reset, d)), "{\\t(\\fs30)}X{\\r\\t(\\bord2)}Y{\\r}");
     expectRoundTrip(reset, d);
+    // Another value's reset ends the first run's transforms too: the
+    // second's are all written again after it.
+    const auto other = readOriginalTags(u"a{\\t(\\fs30)}B{\\t(\\bord2)}C{\\r}d{\\i1\\t(\\fs30)}A{\\r}z");
+    ASSERT_EQ(other.runs.size(), 3u);
+    const auto swapped = draft(u"XY", {{0, 1, 3}, {1, 2, 2}});
+    EXPECT_EQ(u8(composeTranslation(other, swapped)), "{\\i1\\t(\\fs30)}X{\\r\\t(\\fs30)\\t(\\bord2)}Y{\\r}");
+    expectRoundTrip(other, swapped);
 }
 
 TEST(TagTransfer, ARunAnEditKeepsFromReadingBackIsNoLongerPlaced)

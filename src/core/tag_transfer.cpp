@@ -762,6 +762,7 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
     struct Part {
         int rank; // 0 a closing reset, 1 a closing, 2 an opening reset, 3 an opening
         TagSetter setter;
+        TagSetter afterReset = {}; // what it is instead where the transition resets
     };
     std::vector<Part> parts;
     const auto isReset = [](const TagSetter &s) { return nameOf(s.tag) == u"r"; };
@@ -775,8 +776,9 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
             continue;
         const bool opening = t && t->differs.contains(component);
         // Transforms add up and only a reset ends them: to a run whose
-        // transforms go on from the source's, only those it adds; to any
-        // other, after the source's closing reset.
+        // transforms go on from the source's, only those it adds (all of
+        // them where another value's reset ends the source's); to any other,
+        // after the source's closing reset.
         if (component == u"t" && opening && f && f->differs.contains(component)) {
             const auto from = f->opens.find(component), to = t->opens.find(component);
             if (from != f->opens.end() && to != t->opens.end() && to->second.tag.starts_with(from->second.tag)) {
@@ -786,7 +788,7 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
                 for (const auto &tag : parseBlock(added.tag, order))
                     apply(state, tag, tags.defaults, tags.named, nullptr);
                 if (valueIn(state, component) == valueOf(t, component)) {
-                    add(added, true);
+                    parts.push_back({3, added, to->second});
                     continue;
                 }
             }
@@ -808,6 +810,10 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
     // A reset undoes every value: the target's values it undoes too are set
     // again after it.
     const bool reset = std::ranges::any_of(parts, [](const Part &p) { return p.rank % 2 == 0; });
+    if (reset)
+        for (auto &part : parts)
+            if (!part.afterReset.tag.empty())
+                part.setter = part.afterReset;
     if (t && reset)
         for (const auto &[component, open] : t->opens)
             if (valueOf(f, component) == valueOf(t, component))
@@ -1184,7 +1190,8 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                 // A relative size scales the current one: from the base it
                 // would be another.
                 std::size_t order = 0;
-                const auto arg = argumentOf(parseBlock(open.tag, order).front().args);
+                const auto parsed = parseBlock(open.tag, order);
+                const auto arg = argumentOf(parsed.front().args);
                 if (!arg.empty() && (arg.front() == u'+' || arg.front() == u'-'))
                     open.tag = u"\\fs" + value;
             }
