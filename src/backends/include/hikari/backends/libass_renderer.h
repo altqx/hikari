@@ -35,6 +35,8 @@ public:
     std::expected<std::uint64_t, application::RenderError> prepare(application::RenderSnapshot snapshot) override;
     std::expected<application::OverlayFrame, application::RenderError> render(core::DocumentTime time, int width,
                                                                              int height) override;
+    std::expected<application::OverlayFrame, application::RenderError>
+    renderScaled(core::DocumentTime time, int width, int height, int videoWidth, int videoHeight) override;
 
     // KE1-render-cost-overlay: render() counts the shown events and what
     // libass drew into each frame's cost; off by default, as it walks the
@@ -48,6 +50,8 @@ public:
 
 private:
     struct Engine;
+    std::expected<application::OverlayFrame, application::RenderError> draw(core::DocumentTime time, int width,
+                                                                           int height, int videoWidth, int videoHeight);
 
     std::mutex m_prepare;     // one prepare() at a time; it parses outside m_mutex
     mutable std::mutex m_mutex; // the engine's tracks, render() and its buffers
