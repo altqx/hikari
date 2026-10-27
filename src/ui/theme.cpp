@@ -831,6 +831,8 @@ QVariantList Theme::themes() const
     for (const auto code : theme::kCodes)
         out << QVariantMap{{QStringLiteral("code"), theme::codeName(code)},
                            {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", names[static_cast<int>(code)])},
+                           // FR1: for a window open across a language switch (qsTranslate).
+                           {QStringLiteral("source"), QString::fromLatin1(names[static_cast<int>(code)])},
                            {QStringLiteral("dark"), theme::isDark(code)},
                            {QStringLiteral("highContrast"), theme::isHighContrast(code)}};
     return out;
@@ -849,6 +851,7 @@ QVariantList Theme::accents(bool dark) const
             lowest = std::min(lowest, theme::contrastRatio(a.accent, s));
         out << QVariantMap{{QStringLiteral("key"), QString::fromLatin1(a.key)},
                            {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", a.name)},
+                           {QStringLiteral("source"), QString::fromLatin1(a.name)},
                            {QStringLiteral("accent"), a.accent},
                            {QStringLiteral("onAccent"), a.onAccent},
                            {QStringLiteral("contrast"), lowest}};

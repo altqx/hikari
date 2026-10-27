@@ -10699,12 +10699,13 @@ private slots:
 private:
     // F3: a session with a Dictionary folder beside its settings and the
     // production Hunspell backend (R2-hunspell), or no backend at all.
-    void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {})
+    void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {}, bool gettingStarted = false)
     {
         delete engine;
         delete application;
         app::Application::Options options;
         options.settingsFile = home + QStringLiteral("/hikari.ini");
+        options.gettingStarted = gettingStarted; // FR1
         if (!backend)
             options.spellingBackend = {};
         options.bundledDictionaryDir = bundled;
@@ -16914,6 +16915,197 @@ private slots:
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
     }
 
+private:
+    // FR1 (#363): Getting started's window, its page values and its Next.
+    QObject *gettingStarted() const
+    {
+        return engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("gettingStartedDialog"));
+    }
+    QQuickItem *setupItem(const char *name) const { return dialogItem("gettingStartedDialog", name); }
+    QVariantMap setupValues() const { return gettingStarted()->property("values").toMap(); }
+    void setupPut(const char *setting, const QVariant &value)
+    {
+        QVERIFY(QMetaObject::invokeMethod(gettingStarted(), "put", Q_ARG(QVariant, QString::fromLatin1(setting)),
+                                          Q_ARG(QVariant, value)));
+    }
+    void setupNext()
+    {
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedNext"), "click"));
+    }
+    QString setupPage() const { return gettingStarted()->property("pageId").toString(); }
+    // While it lives, the usual places hold a legacy installation with this
+    // Config.txt, or none when it is empty.
+    struct LegacyHere {
+        QTemporaryDir data;
+        QByteArray xdg = qgetenv("XDG_DATA_HOME"), local = qgetenv("LOCALAPPDATA");
+        explicit LegacyHere(const QByteArray &config)
+        {
+            if (!config.isEmpty()) {
+                QDir().mkpath(data.filePath(QStringLiteral("HikariSub/Legacy/Config")));
+                QFile f(data.filePath(QStringLiteral("HikariSub/Legacy/Config/Config.txt")));
+                if (f.open(QIODevice::WriteOnly))
+                    f.write(config);
+            }
+            qputenv("XDG_DATA_HOME", data.path().toUtf8());
+            qputenv("LOCALAPPDATA", data.path().toUtf8());
+        }
+        ~LegacyHere()
+        {
+            qputenv("XDG_DATA_HOME", xdg);
+            qputenv("LOCALAPPDATA", local);
+        }
+    };
+
+private slots:
+    // It opens by itself at the first start (and at the next one while it was
+    // left unanswered), never for a profile older than FR1 nor once answered;
+    // Help › Getting started opens it any time. Skip setup, Close and Esc
+    // keep the defaults and say where it is.
+    void gettingStartedOpensAtTheFirstStartOnly()
+    {
+        const LegacyHere none({});
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        restartWithSpelling(home.path(), false, {}, true);
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->text("workspace.gettingStarted"), QStringLiteral("due"));
+        // No legacy installation: no Import page.
+        QCOMPARE(gettingStarted()->property("pages").toStringList(),
+                 (QStringList{"language", "look", "layout", "media", "editing", "updates", "files"}));
+        QCOMPARE(setupItem("gettingStartedTitle")->property("text").toString(), QStringLiteral("Welcome to HikariSub"));
+        QVERIFY(!setupItem("gettingStartedBack")->isVisible());
+        // Left without an answer: it opens again.
+        restartWithSpelling(home.path(), false, {}, true);
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        // Esc: the defaults stay, and never again.
+        setupPut("appearance.theme", QStringLiteral("light"));
+        setupNext();
+        QCOMPARE(setupPage(), QStringLiteral("look"));
+        QVERIFY(setupItem("gettingStartedBack")->isVisible());
+        QTest::keyClick(qobject_cast<QWindow *>(gettingStarted()), Qt::Key_Escape);
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->text("workspace.gettingStarted"), QStringLiteral("done"));
+        QVERIFY(!application->settingsStore()->isSet(QStringLiteral("appearance.theme")));
+        QCOMPARE(lastNotice(), QStringLiteral("Default settings in use|Help › Getting started opens the setup again.|"));
+        restartWithSpelling(home.path(), false, {}, true);
+        QTest::qWait(100);
+        QVERIFY(!gettingStarted()->property("visible").toBool());
+        // A profile from before FR1 (a settings file, no mark): not by itself.
+        QTemporaryDir older;
+        {
+            QFile ini(older.filePath(QStringLiteral("hikari.ini")));
+            QVERIFY(ini.open(QIODevice::WriteOnly));
+            ini.write("[registry]\nschema=1\n");
+        }
+        restartWithSpelling(older.path(), false, {}, true);
+        QTest::qWait(100);
+        QVERIFY(!gettingStarted()->property("visible").toBool());
+        // Help › Getting started, any time; Skip setup is the same as Esc.
+        QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        QCOMPARE(gettingStarted()->property("page").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedSkip"), "click"));
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->text("workspace.gettingStarted"), QStringLiteral("done"));
+    }
+
+    // Nothing is written before Finish; the theme is previewed. Finish writes
+    // every page's choice and shows the first tab in the layout picked.
+    void gettingStartedFinishWritesEveryPage()
+    {
+        const LegacyHere none({});
+        auto restore = qScopeGuard([] { ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown); });
+        const auto code = [] { return ui::theme::codeName(ui::theme::current().code); };
+        QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        auto *store = application->settingsStore();
+        const QString theme = store->text("appearance.theme");
+        const QString other = theme == u"light" ? QStringLiteral("dark") : QStringLiteral("light");
+        setupNext(); // Look
+        QVERIFY(QMetaObject::invokeMethod(setupItem(qPrintable(QStringLiteral("gettingStartedTheme_") + other)), "click"));
+        QTRY_COMPARE(code(), other); // previewed
+        QCOMPARE(store->text("appearance.theme"), theme);                                   // not written
+        QCOMPARE(setupValues().value(QStringLiteral("appearance.followSystem")).toBool(), false);
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedAccent_blue"), "click"));
+        setupNext(); // What you do
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedLayout_Timing"), "click"));
+        QCOMPARE(gettingStarted()->property("layout").toString(), QStringLiteral("Timing"));
+        setupNext(); // Video and audio
+        QVERIFY(setupItem("gettingStartedFrame")->property("source").toString().startsWith(u"data:image/png;base64,"));
+        setupNext(); // Editing
+        setupPut("autosave.maxFiles", 7);
+        setupPut("editor.saveAfterCharacterCount", 5);
+        setupNext(); // Updates
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedPrereleases"), "click"));
+        setupPut("updater.autoCheck", true);
+        setupNext(); // Your files
+        QCOMPARE(setupItem("gettingStartedNext")->property("text").toString(), QStringLiteral("Finish"));
+        QVERIFY(!store->isSet(QStringLiteral("autosave.maxFiles")));
+        setupNext(); // Finish
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        QCOMPARE(store->text("appearance.theme"), other);
+        QCOMPARE(store->boolean("appearance.followSystem"), false);
+        QCOMPARE(store->text(other == u"dark" ? "appearance.darkAccent" : "appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(store->integer("autosave.maxFiles"), 7);
+        QCOMPARE(store->integer("editor.saveAfterCharacterCount"), 5);
+        QCOMPARE(store->boolean("updater.checkForStable"), false);
+        QCOMPARE(store->boolean("updater.autoCheck"), true);
+        QCOMPARE(store->text("workspace.gettingStarted"), QStringLiteral("done"));
+        QTRY_COMPARE(application->workspaceLayout().preset(), QStringLiteral("Timing"));
+        QCOMPARE(code(), other);
+    }
+
+    // With a legacy installation the Import page shows the import's review;
+    // the pages start from the imported values and a page's change wins;
+    // nothing is written before Finish, and the rest of the import waits for
+    // the next start, as Import legacy settings does.
+    void gettingStartedImportFillsThePagesAndAPageWins()
+    {
+        // More than ten records: legacy loads its defaults over a shorter
+        // file (config.cpp:569-574), and the import follows it.
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\nGRID_SAVE_AFTER_CHARACTER_COUNT=4\r\n";
+        const LegacyHere legacy(config);
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        restartWithSpelling(home.path(), false, {}, true);
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        QCOMPARE(gettingStarted()->property("pages").toStringList().value(1), QStringLiteral("import"));
+        setupNext(); // Import
+        QVERIFY(setupItem("gettingStartedReview")->isVisible());
+        auto &importer = application->settingsImport();
+        QVERIFY(importer.chosen().contains("setting:grid.font"));
+        QVERIFY(importer.chosen().contains("setting:autosave.maxFiles"));
+        setupNext(); // Look: the pages start from the import
+        QCOMPARE(setupValues().value(QStringLiteral("autosave.maxFiles")).toInt(), 10);
+        QCOMPARE(setupValues().value(QStringLiteral("editor.saveAfterCharacterCount")).toInt(), 4);
+        auto *store = application->settingsStore();
+        QVERIFY(!store->isSet(QStringLiteral("autosave.maxFiles")));
+        // A page's change wins over the import, also after going back.
+        setupPut("editor.saveAfterCharacterCount", 6);
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedBack"), "click"));
+        setupNext();
+        QCOMPARE(setupValues().value(QStringLiteral("editor.saveAfterCharacterCount")).toInt(), 6);
+        QCOMPARE(setupValues().value(QStringLiteral("autosave.maxFiles")).toInt(), 10);
+        while (setupPage() != u"files")
+            setupNext();
+        QVERIFY(!store->isSet(QStringLiteral("grid.font")));
+        setupNext(); // Finish
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        QCOMPARE(store->integer("autosave.maxFiles"), 10);
+        QCOMPARE(store->integer("editor.saveAfterCharacterCount"), 6);
+        QVERIFY(importer.pending());
+        restartWithSpelling(home.path(), false, {}, true);
+        store = application->settingsStore();
+        QCOMPARE(store->text("grid.font"), QStringLiteral("Arial"));
+        QCOMPARE(store->integer("editor.saveAfterCharacterCount"), 6);
+        QCOMPARE(store->integer("autosave.maxFiles"), 10);
+        QTest::qWait(100);
+        QVERIFY(!gettingStarted()->property("visible").toBool());
+    }
+
     // R6-dictionary-location: the Main page lists the settings folder's
     // Dictionary first (user dictionaries), then the program folder's.
     void settingsDictionariesComeFromTheSettingsFolder()
@@ -19118,8 +19310,8 @@ private slots:
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
         // "Translation mode" and its run keys and VT2's eleven visual tools listed; KA2's Tap
         // to time, Slower and Faster; VT3's Perspective; KA7's "Check karaoke"; KA1's two syllable
-        // commands; AD2's "Repeat last run"; KA3's "Kanji timer".
-        QCOMPARE(hotkeyRows().size(), 252);
+        // commands; AD2's "Repeat last run"; KA3's "Kanji timer"; FR1's "Getting started".
+        QCOMPARE(hotkeyRows().size(), 253);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.

@@ -2299,6 +2299,17 @@ ApplicationWindow {
         }
         ShellMenu {
             title: qsTr("&Help")
+            // FR1 (#363): the setup of the first start, any time.
+            ShellMenuItem {
+                help: qsTr("Walks through the settings most people change first")
+                iconRole: "settings"
+                objectName: "gettingStartedMenuItem"
+                action: Action {
+                    id: gettingStartedAction
+                    text: qsTr("&Getting started")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GETTING_STARTED")) gettingStartedDialog.openSetup()
+                }
+            }
             ShellMenuItem {
                 help: qsTr("Opens the HikariSub website in the default browser") // HikariSubFrame.cpp:360
                 iconRole: "help"
@@ -7151,6 +7162,21 @@ ApplicationWindow {
         importer: root.settingsImport
         settings: root.app.settings
     }
+    // FR1 (#363): Getting started, by itself at the first start (and at the
+    // next one when it was left unanswered), else from Help.
+    GettingStartedDialog {
+        id: gettingStartedDialog
+        app: root.app
+        importer: root.settingsImport
+        updates: root.updates
+        layouts: root.workspaceLayout.presets
+        onFinished: layout => {
+            if (layout.length > 0)
+                root.applyPreset(layout)
+        }
+        onSkipped: root.notices.post("info", qsTranslate("HikariSub.GettingStarted", "Default settings in use"),
+                                     qsTranslate("HikariSub.GettingStarted", "Help › Getting started opens the setup again."))
+    }
     // PF1 (#225): the Settings window, made at its first opening (a window
     // made at the start slows every start, PK1).
     Loader {
@@ -7414,7 +7440,11 @@ ApplicationWindow {
         }
     }
 
-    Component.onCompleted: root.applyMenuShortcuts()
+    Component.onCompleted: {
+        root.applyMenuShortcuts()
+        if (root.app.gettingStartedDue())
+            Qt.callLater(() => gettingStartedDialog.openSetup())
+    }
     // P3, P4 and P9 in one window (PU1-autosaves-window): the work left by a
     // session that did not close cleanly, the previous version's autosaves,
     // and removing them. It no longer opens by itself at the start: the
@@ -7513,6 +7543,7 @@ ApplicationWindow {
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
+        GLOBAL_GETTING_STARTED: gettingStartedAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction, // LE3
         GLOBAL_TRANSLATION_MODE: translationModeAction, // TM1
