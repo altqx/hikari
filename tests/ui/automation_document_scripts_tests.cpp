@@ -569,9 +569,28 @@ private slots:
         hikari::test::desktop::clear();
     }
 
+    // A last script that loaded but registered no macros has nothing to
+    // run: an info notice, not legacy's load error and script editor (#390).
+    void lastScriptWithoutMacrosSaysSo()
+    {
+        const QString script = QDir::toNativeSeparators(dir.filePath(QStringLiteral("library.lua")));
+        writeFile(script, "script_name = \"library\"\n");
+        QVERIFY(!open("library.ass", "|" + script.toUtf8()).isEmpty());
+        QSignalSpy notices(&app->automation(), &app::AutomationShell::notice);
+        QSignalSpy editor(&app->automation(), &app::AutomationShell::chooseScriptEditor);
+        app->automation().runLastLoadedScript();
+        QTRY_COMPARE_WITH_TIMEOUT(notices.size(), 1, 30'000);
+        QCOMPARE(notices.first().at(0).toString(), QStringLiteral("info"));
+        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("library.lua has no macros to run"));
+        QVERIFY(notices.first().at(3).toString().isEmpty());
+        QCOMPARE(editor.size(), 0);
+        QCOMPARE(firstText(), std::string("Gate"));
+    }
+
     // Automation::Add (Automation.cpp:1153-1171): Load script lists the
     // script and appends "|<path>" to the Document's Script Info as a
-    // "Changing the subtitle header" step; a listed script is not added again.
+    // "Changing the subtitle header" step; a listed script is not added
+    // again, but it reloads (#390: legacy did nothing).
     void loadScriptNamesItInTheDocument()
     {
         const QString script = QDir::toNativeSeparators(dir.filePath(QStringLiteral("loaded.lua")));
@@ -585,8 +604,11 @@ private slots:
         QVERIFY(session().document().scriptInfo(u8"Automation Scripts") == expected);
         QCOMPARE(session().historySize(), steps + 1);
         QCOMPARE(session().history().back().name, std::string("Changing the subtitle header"));
+        QVERIFY(settled());
+        const auto loaded = generation(script);
         app->automation().loadScript(QUrl::fromLocalFile(script));
         QCOMPARE(session().historySize(), steps + 1);
+        QCOMPARE(generation(script), loaded + 1);
         QVERIFY(settled());
         // It is now the last loaded script.
         QSignalSpy done(&app->automation(), &app::AutomationShell::runCompleted);

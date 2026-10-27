@@ -894,6 +894,10 @@ Output device: %2</source>
         <translation>이 자막에는 스크립트가 추가되지 않았습니다</translation>
     </message>
     <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1에 실행할 매크로가 없습니다</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation type="vanished">오류</translation>
     </message>

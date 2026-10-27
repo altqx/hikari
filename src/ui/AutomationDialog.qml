@@ -746,7 +746,10 @@ DialogWindow {
             id: label
             readonly property var spec: parent ? parent.spec : ({})
             readonly property var focusTargets: []
-            text: window.shownLabel(spec.label)
+            // Its line breaks kept, as legacy's wxStaticText did: styled text
+            // folds them, which put DependencyControl's trust prompt and its
+            // feed on one line wider than the screen (#392).
+            text: window.shownLabel(spec.label).replace(/\r?\n/g, "<br>")
             textFormat: Text.StyledText
             Accessible.description: window.descriptionOf(parent)
             ToolTip.text: spec.hint

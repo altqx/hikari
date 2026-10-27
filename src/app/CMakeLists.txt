@@ -49,6 +49,11 @@ hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
 # DX1 (#367): --export-docs, with the commit the build was configured at.
 execute_process(COMMAND git rev-parse HEAD WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     OUTPUT_VARIABLE HIKARI_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+# #391: in CI's AlmaLinux container git refuses the checkout (dubious
+# ownership); the commit Actions checked out is GITHUB_SHA.
+if(NOT HIKARI_COMMIT AND DEFINED ENV{GITHUB_SHA})
+    set(HIKARI_COMMIT "$ENV{GITHUB_SHA}")
+endif()
 target_sources(hikari_composition PRIVATE docs_export.cpp include/hikari/app/docs_export.h)
 set_source_files_properties(docs_export.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_COMMIT=\"${HIKARI_COMMIT}\"")
 # Y8: the font collector's window state.

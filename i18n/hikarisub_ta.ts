@@ -900,6 +900,10 @@ Output device: %2</source>
         <translation>இந்த வசன வரிகள் எந்த ச்கிரிப்டுகளும் சேர்க்கப்படவில்லை</translation>
     </message>
     <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1 இல் இயக்க மேக்ரோக்கள் இல்லை</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation type="vanished">பிழை</translation>
     </message>

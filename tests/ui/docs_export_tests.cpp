@@ -17,6 +17,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QSet>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -91,6 +92,10 @@ private slots:
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), 1);
         QCOMPARE(meta.value(QStringLiteral("version")).toString(), QStringLiteral(HIKARI_VERSION));
         QCOMPARE(meta.value(QStringLiteral("site")).toString(), QStringLiteral("https://hikarisub.altqx.com"));
+        // #391: never empty; the hash the build was configured at.
+        QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{40}$"))
+                    .match(meta.value(QStringLiteral("commit")).toString())
+                    .hasMatch());
         QCOMPARE(meta.value(QStringLiteral("files")).toArray().size(), 3);
     }
 
@@ -197,7 +202,10 @@ private slots:
             QVERIFY2(pages.contains(s.value(QStringLiteral("page")).toString()), qPrintable(key));
             QVERIFY2(!s.value(QStringLiteral("label")).toString().isEmpty(), qPrintable(key));
             QVERIFY2(!s.value(QStringLiteral("section")).toString().isEmpty(), qPrintable(key));
-            QCOMPARE(s.value(QStringLiteral("default")), QJsonValue::fromVariant(fresh.settingsStore()->value(key)));
+            // The stored default, but what the window shows where it maps the
+            // value on opening (Tab name length, checked below).
+            if (key != QLatin1String("program.tabTextMaxChars"))
+                QCOMPARE(s.value(QStringLiteral("default")), QJsonValue::fromVariant(fresh.settingsStore()->value(key)));
         }
         for (const application::OptionsBinding &binding : application::optionsBindings()) {
             QVERIFY2(byKey.contains(qs(binding.setting)), binding.setting.data());
@@ -236,6 +244,7 @@ private slots:
         QCOMPARE(tabs.value(QStringLiteral("control")).toString(), QStringLiteral("number"));
         QCOMPARE(tabs.value(QStringLiteral("min")).toInt(), 20);
         QCOMPARE(tabs.value(QStringLiteral("max")).toInt(), 150);
+        QCOMPARE(tabs.value(QStringLiteral("default")).toInt(), 40); // #391: what the window shows, not the stored 0
         QCOMPARE(tabs.value(QStringLiteral("hint")).toString(),
                  QStringLiteral("Number of tab name characters. Range from 20 to 150"));
         const QJsonObject language = byKey.value(QStringLiteral("program.language"));

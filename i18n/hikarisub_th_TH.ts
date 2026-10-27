@@ -894,6 +894,10 @@ Output device: %2</source>
         <translation>คำบรรยายนี้ไม่ได้เพิ่มสคริปต์ใด ๆ</translation>
     </message>
     <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1 ไม่มีแมโครให้เรียกใช้</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation type="vanished">ข้อผิดพลาด</translation>
     </message>

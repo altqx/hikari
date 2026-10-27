@@ -3011,6 +3011,25 @@ private slots:
                     QVERIFY(QMetaObject::invokeMethod(root, "openFontCollector"));
                     QTRY_VERIFY(named(host));
                 }
+                // Edit tags and Edit shapes are made at their first opening
+                // (PU5), as VisualToolDialogs makes them (#391).
+                const bool tags = qstrcmp(host, "tagsMessages") == 0;
+                QObject *visual = nullptr;
+                if (tags || qstrcmp(host, "shapesMessages") == 0) {
+                    QObject *dialogs = named("visualToolDialogs");
+                    QVERIFY(dialogs);
+                    visual = dialogs->property(tags ? "tagsDialog" : "shapesDialog").value<QObject *>();
+                    if (!visual) {
+                        QQmlComponent component(engine);
+                        component.loadFromModule("Hikari.Ui", tags ? "AllTagsEditionDialog" : "ShapesEditionDialog");
+                        visual = component.createWithInitialProperties({{QStringLiteral("settings"), dialogs->property("settings")}},
+                                                                       qmlContext(dialogs));
+                        QVERIFY2(visual, qPrintable(component.errorString()));
+                        visual->setParent(dialogs);
+                        QVERIFY(dialogs->setProperty(tags ? "tagsDialog" : "shapesDialog", QVariant::fromValue(visual)));
+                    }
+                    QVERIFY(QMetaObject::invokeMethod(visual, "openQuietly"));
+                }
                 QObject *found = named(host);
                 QVERIFY2(found, host);
                 QVERIFY(QMetaObject::invokeMethod(found, "ask", Q_ARG(QVariant, options), Q_ARG(QVariant, QVariant())));
@@ -3023,6 +3042,8 @@ private slots:
                 QTRY_VERIFY(!shown->isVisible());
                 if (collector)
                     QVERIFY(QMetaObject::invokeMethod(named("fontCollectorDialog"), "close"));
+                if (visual)
+                    QVERIFY(QMetaObject::invokeMethod(visual, "close"));
             }
         }
     }
