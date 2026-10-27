@@ -951,6 +951,15 @@ TEST(KanjiTimer, ALinesReadingThatSpellsNoneOfItsKanaStaysWhole)
     EXPECT_TRUE(timer.undo());
     EXPECT_TRUE(timer.setReading(u("あい")));
     EXPECT_EQ(s(*timer.view()->output), "{\\k40}愛を|あいを");
+    // split over groups, its kana is spelt once
+    KanjiTimer apart(classes());
+    apart.setSuggest(false);
+    apart.setLines({line(1, "{\\k20}ai{\\k20}okimi", 0, 600)}, {line(2, "{\\k40}愛を|あいお{\\k20}君|きみ", 0, 600)});
+    EXPECT_TRUE(apart.enter()); // 愛
+    EXPECT_TRUE(apart.growCharacters());
+    EXPECT_TRUE(apart.enter()); // を君
+    EXPECT_TRUE(apart.enter()); // accepted
+    EXPECT_EQ(s(apart.pending()[0].second), "{\\k20}愛|あいお{\\k20}を君|きみ");
 }
 
 TEST(KanjiTimer, AReadingOverNoKanjiIsKeptToo)

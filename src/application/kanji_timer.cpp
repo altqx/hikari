@@ -828,13 +828,14 @@ Furigana furiganaOf(const std::vector<KanjiSyllable> &syllables, const KanjiText
 {
     Furigana out;
     std::size_t syllable = 0, character = 0, next = 0;
+    std::size_t spelt = 0; // the units up to here a reading spells (across groups: a Line's own may)
     // a group's pieces: its reading (its kana spelt between the kanji runs'
     // readings), per syllable when the reading is the sung one
     auto piecesOf = [&](std::size_t from, std::size_t count, std::size_t at, std::size_t to,
                         const std::vector<const KanjiReading *> &runs) -> std::vector<u16> {
         u16 whole;
         bool any = false;
-        std::size_t r = 0, spelt = 0; // (spelt: the units up to here a reading spells)
+        std::size_t r = 0;
         for (std::size_t u = at; u < to; ++u) {
             if (r < runs.size() && u == runs[r]->begin) {
                 whole += runs[r]->reading();
