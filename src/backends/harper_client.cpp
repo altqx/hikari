@@ -4,6 +4,8 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 
+#include <algorithm>
+
 namespace hikari::backends {
 
 namespace {
@@ -78,8 +80,8 @@ quint64 HarperClient::check(const QString &text)
     m_checks[ticket] = Check{text, QStringLiteral("untitled:hikari/%1").arg(ticket)};
     if (!running())
         start();
-    else if (m_ready)
-        open(ticket);
+    else
+        openNext();
     return ticket;
 }
 
@@ -88,10 +90,13 @@ void HarperClient::cancel(quint64 ticket)
     const auto it = m_checks.find(ticket);
     if (it == m_checks.end())
         return;
-    if (it->second.opened && m_ready)
+    const bool opened = it->second.opened;
+    if (opened && m_ready)
         notify(QStringLiteral("textDocument/didClose"),
                {{QStringLiteral("textDocument"), QJsonObject{{QStringLiteral("uri"), it->second.uri}}}});
     m_checks.erase(it);
+    if (opened)
+        openNext();
 }
 
 void HarperClient::stop()
@@ -147,9 +152,17 @@ void HarperClient::notify(const QString &method, const QJsonObject &params)
     send({{QStringLiteral("method"), method}, {QStringLiteral("params"), params}});
 }
 
-void HarperClient::open(quint64 ticket)
+void HarperClient::openNext()
 {
-    auto &check = m_checks.at(ticket);
+    // One text at a time: harper-ls 3.0.0 deadlocks when a didOpen's settings
+    // pull overlaps another text's (a write lock queued between the two read
+    // locks load_user_dictionary takes).
+    if (!m_ready || std::ranges::any_of(m_checks, [](const auto &c) { return c.second.opened; }))
+        return;
+    const auto next = std::ranges::find_if(m_checks, [](const auto &c) { return !c.second.opened; });
+    if (next == m_checks.end())
+        return;
+    auto &check = next->second;
     check.opened = true;
     notify(QStringLiteral("textDocument/didOpen"),
            {{QStringLiteral("textDocument"),
@@ -221,9 +234,7 @@ void HarperClient::handle(const QJsonObject &message)
         }
         notify(QStringLiteral("initialized"), {});
         m_ready = true;
-        for (auto &[waiting, check] : m_checks)
-            if (!check.opened)
-                open(waiting);
+        openNext();
         return;
     }
     actions(ticket, finding, message.value(QStringLiteral("result")));
@@ -306,6 +317,7 @@ void HarperClient::finish(quint64 ticket)
     notify(QStringLiteral("textDocument/didClose"),
            {{QStringLiteral("textDocument"), QJsonObject{{QStringLiteral("uri"), it->second.uri}}}});
     m_checks.erase(it);
+    openNext();
     emit checked(ticket, findings);
 }
 

@@ -74,7 +74,7 @@ private:
     void send(const QJsonObject &message);
     void request(const QString &method, const QJsonObject &params, quint64 check, int finding);
     void notify(const QString &method, const QJsonObject &params);
-    void open(quint64 ticket);
+    void openNext();
     void readOutput();
     void handle(const QJsonObject &message);
     void diagnostics(const QJsonObject &params);

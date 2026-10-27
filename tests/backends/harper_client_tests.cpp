@@ -175,6 +175,47 @@ TEST_F(HarperClientTest, CancelledChecksAreDroppedAndStopEndsTheProcess)
     EXPECT_TRUE(c.failures.isEmpty());
 }
 
+// The panel's walk keeps several Lines with the client at once: each gets its
+// own findings.
+TEST_F(HarperClientTest, ChecksInFlightTogetherEachGetTheirFindings)
+{
+    Checker c;
+    std::vector<std::pair<quint64, QString>> sent;
+    for (int i = 0; i < 24; ++i) {
+        const QString text = i % 3 == 0 ? QStringLiteral("I has a apple.") : QStringLiteral("This line is fine.");
+        sent.emplace_back(c.client.check(text), text);
+    }
+    ASSERT_TRUE(waitFor([&] { return c.results.size() == sent.size() || !c.failures.isEmpty(); }))
+        << c.results.size() << " of " << sent.size();
+    for (const auto &[ticket, text] : sent) {
+        ASSERT_TRUE(c.results.contains(ticket));
+        EXPECT_EQ(Checker::find(c.results[ticket], text, QStringLiteral("a")) != nullptr,
+                  text.startsWith(QLatin1String("I has")))
+            << ticket;
+    }
+    EXPECT_EQ(c.client.starts(), 1);
+}
+
+// As the walk sends them: a new check as each one ends, findings on some.
+// harper-ls 3.0.0 deadlocked when two of its texts were opened together.
+TEST_F(HarperClientTest, ChecksSentWhileOthersRunAllEnd)
+{
+    Checker c;
+    int sent = 0;
+    const auto send = [&] {
+        c.client.check(sent++ % 5 == 0 ? QStringLiteral("I has a apple.") : QStringLiteral("This line is fine."));
+    };
+    QObject::connect(&c.client, &HarperClient::checked, [&] {
+        if (sent < 80)
+            send();
+    });
+    for (int i = 0; i < 4; ++i)
+        send();
+    EXPECT_TRUE(waitFor([&] { return c.results.size() == 80 || !c.failures.isEmpty(); }))
+        << c.results.size() << " of 80";
+    EXPECT_TRUE(c.failures.isEmpty());
+}
+
 TEST_F(HarperClientTest, AMissingProgramFailsTheCheck)
 {
     HarperClient client(QStringLiteral("/no/such/harper-ls"), QString());
