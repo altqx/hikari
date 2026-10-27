@@ -1560,6 +1560,35 @@ TEST_F(LuaHelper, DependencyControlLoadsWhileTheScriptLoads)
     EXPECT_EQ(run.log, QStringList{"true,table,"});
 }
 
+// DC1: DependencyControl.ConfigHandler is still the class of what
+// getConfigHandler returns, which scripts written for DependencyControl < 0.7
+// compare against (lyger's presets would otherwise lose their tags).
+TEST_F(LuaHelper, DependencyControlConfigHandlerIsTheConfigViewsClass)
+{
+    QTemporaryDir work;
+    ASSERT_TRUE(work.isValid());
+    const QString automation = work.filePath(QStringLiteral("Automation"));
+    for (const char *sub : {"log", "autosave", "temp"})
+        QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
+    disableDependencyControlUpdater(automation);
+    hikari::application::AutomationPathContext paths;
+    paths.automationDir = automation.toStdString();
+#ifdef _WIN32
+    paths.windows = true;
+#endif
+    auto host = load(fixture("depctrl-config-class.lua"),
+                     [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+                         if (r.service != hikari::application::HostService::DecodePath)
+                             return reply(hikari::application::HostServiceReply::unavailable());
+                         hikari::application::HostServiceReply out;
+                         out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+                         reply(out);
+                     });
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    ASSERT_TRUE(runToEnd(*host, "Show"));
+    EXPECT_EQ(run.log, QStringList{"true,false"});
+}
+
 // DC1: an update feed on the loopback, so DependencyControl's downloads need
 // no network. A GET answers the body published at its path, or 404.
 class FeedServer : public QObject {

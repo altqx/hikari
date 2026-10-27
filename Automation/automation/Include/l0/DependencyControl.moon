@@ -78,7 +78,9 @@ class DependencyControl extends PackageRecord
   @Domain = domain
   @Environment = environment
   @Utils = utils
-  @ConfigHandler = ConfigHandler
+  -- HikariSub (DC1): scripts written for DependencyControl < 0.7 test `__class == DependencyControl.ConfigHandler`
+  -- to tell a getConfigHandler result from a plain table; those results are ConfigViews now
+  @ConfigHandler = ConfigView
   @ConfigView = ConfigView
   @Hash = Hash
   @Downloader = Downloader

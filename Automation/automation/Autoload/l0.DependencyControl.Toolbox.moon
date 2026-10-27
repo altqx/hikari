@@ -1115,6 +1115,8 @@ sourceConfig = ->
     configuredSource.feedUrl = state.knownFeed if state.kind == SourceFeedKind.Other
     configuredSource.provider = {namespace: state.provider} if state.kind == SourceFeedKind.Provider
 
+    -- HikariSub (DC1): the getConfig reloads above replaced the section's tables, so write into its live entry
+    pkg = pkg.namespace and sectionConfig.c[pkg.namespace] or pkg
     pkg.userFeed, pkg.configuredSource = state.userFeed, configuredSource
     sectionConfig\save!
 
