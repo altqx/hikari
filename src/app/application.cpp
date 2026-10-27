@@ -9,6 +9,8 @@
 #include "hikari/backends/simulated_output.h"
 #include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/getting_started.h"
+#include "hikari/application/guide_links.h"
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
@@ -62,6 +64,11 @@
 #include <cmath>
 #include <cstdlib>
 #include <QFileInfo>
+#include <QBuffer>
+#include <QLinearGradient>
+#include <QPainter>
+#include <QStandardPaths>
+#include <QUrl>
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -683,6 +690,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_settings->set("program.language", QStringLiteral("pl"));
         m_settings->set("editor.dictionaryLanguage", QStringLiteral("pl"));
     }
+    // FR1: Getting started opens at the first start, and at the next one
+    // when the program was left before it was answered.
+    if (firstStart && options.gettingStarted)
+        m_settings->set("workspace.gettingStarted", QStringLiteral("due"));
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString()); // W2
     m_renderer.countCost(m_settings->boolean("video.renderCost")); // KE1-render-cost-overlay
@@ -1024,6 +1035,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
         m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
     }
+    m_spellingLoader = options.spellingBackend;
     m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell, int replaceTagsLen) {
         application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
         return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
@@ -2570,7 +2582,17 @@ void Application::reportIssue()
 
 void Application::openWebsite()
 {
-    backends::desktop::openUrl(QUrl(QStringLiteral("https://altqx.com")));
+    backends::desktop::openUrl(QUrl(QString::fromUtf8(application::kSiteUrl)));
+}
+
+void Application::openUserGuide(const QString &kind, const QString &id)
+{
+    using application::GuideSurface;
+    // An unknown kind names no page: the guide's home.
+    const std::string surface = kind == QLatin1String("panel") || kind == QLatin1String("window") ? id.toStdString() : "";
+    const auto url = application::guideUrl(kind == QLatin1String("panel") ? GuideSurface::Panel : GuideSurface::Window,
+                                           surface);
+    backends::desktop::openUrl(QUrl(QString::fromStdString(url)));
 }
 
 QVariantMap Application::reviewOpen(const QString &path)
@@ -5850,6 +5872,7 @@ QVariantMap Application::openSettingsDialog()
         outputDeviceLabels << outputDeviceLabel(choice);
     return {{QStringLiteral("values"), values},
             {QStringLiteral("languages"), qList(lists.languageNames)},
+            {QStringLiteral("languageTags"), qList(lists.languageTags)}, // DX1: the docs export's entries
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
             {QStringLiteral("catalogs"), qList(lists.catalogs)},
             {QStringLiteral("styles"), qList(lists.styles)},
@@ -5970,6 +5993,200 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         m_updates->reload();
     // O2: the Hotkeys page's list, a bound control of SetOptions.
     m_hotkeys->commitOptions();
+}
+
+bool Application::gettingStartedDue() const
+{
+    return m_settings->text("workspace.gettingStarted") == u"due";
+}
+
+QVariantMap Application::openGettingStarted()
+{
+    QVariantMap opened = openSettingsDialog();
+    opened.insert(QStringLiteral("legacy"), m_importStore && !SettingsImportStore::discoverRoots(
+                                                                 SettingsImportStore::defaultCandidates()).isEmpty());
+    return opened;
+}
+
+QVariantMap Application::gettingStartedImported(const QVariantMap &values)
+{
+    QVariantMap out = values;
+    if (!m_settingsImport->plan())
+        return out;
+    const auto state = application::gettingStartedState(m_settings->settings(), m_optionsLists,
+                                                        m_settingsImport->chosenValues());
+    for (auto [id, value] : toVariant(state).asKeyValueRange())
+        out.insert(id, value);
+    return out;
+}
+
+void Application::previewLanguage(int index)
+{
+    if (m_localisation && index >= 0 && std::size_t(index) < m_optionsLists.languageTags.size())
+        m_localisation->setLanguage(qs(m_optionsLists.languageTags[std::size_t(index)]));
+}
+
+void Application::endLanguagePreview()
+{
+    switchLanguage();
+}
+
+bool Application::finishGettingStarted(const QVariantMap &values, bool import)
+{
+    // The import first: when it cannot be staged (the legacy files changed,
+    // staging failed) nothing is written and the window stays open with the
+    // importer's status.
+    // The pages' state: the Settings window's controls, and the look's
+    // settings, which are not among them.
+    auto state = fromVariant(values);
+    for (const auto id : appearanceSettings())
+        if (const auto found = values.constFind(qs(id)); found != values.cend())
+            state[std::string(id)] = found->typeId() == QMetaType::Bool
+                                         ? application::SettingValue(found->toBool())
+                                         : application::SettingValue(found->toString().toStdString());
+    const auto pages = application::gettingStartedPageSettings(state);
+    if (import && !m_settingsImport->importChosenBut(pages))
+        return false;
+    // The stored language first: Finish's own switch (settingChanged)
+    // happens only when the language changes.
+    endLanguagePreview();
+    // Only what the pages hold: the rest of the Settings window's state
+    // (values it normalises when it opens) would otherwise be written now
+    // and, as a later edit, win over the import.
+    QVariantMap written;
+    for (const auto &id : pages)
+        if (const auto found = values.constFind(qs(id)); found != values.cend())
+            written.insert(qs(id), *found);
+    applySettings(written);
+    m_settings->set("workspace.gettingStarted", QStringLiteral("done"));
+    return true;
+}
+
+void Application::skipGettingStarted()
+{
+    endLanguagePreview();
+    m_settings->set("workspace.gettingStarted", QStringLiteral("done"));
+}
+
+QVariantList Application::sampleSpellingMarks(const QString &text, bool on, int dictionary)
+{
+    QVariantList out;
+    const auto &symbols = m_optionsLists.dictionarySymbols;
+    if (!on || !m_spellingLoader || dictionary < 0 || std::size_t(dictionary) >= symbols.size())
+        return out;
+    const QString language = qs(symbols[std::size_t(dictionary)]);
+    if (!m_sampleChecker || language != m_sampleCheckerLanguage) {
+        std::vector<std::filesystem::path> folders;
+        for (const QString &folder : std::as_const(m_dictionaryDirs))
+            folders.emplace_back(folder.toStdU16String());
+        m_sampleChecker = std::make_unique<application::SpellChecker>(std::move(folders), m_spellingLoader);
+        m_sampleCheckerLanguage = language;
+        m_sampleCheckerReady = m_sampleChecker->initialize(language.toStdU16String()) == application::SpellChecker::Status::Ready;
+    }
+    if (!m_sampleCheckerReady)
+        return out;
+    const auto marks = application::editorMarks(text.toStdU16String(), core::SubtitleFormat::Ass, *m_sampleChecker,
+                                                m_spellingText);
+    for (std::size_t i = 0; i + 1 < marks.errors.size(); i += 2)
+        out << marks.errors[i] << marks.errors[i + 1] + 1;
+    return out;
+}
+
+QString Application::sampleFrame(int renderer, int width, int height)
+{
+    if (width <= 0 || height <= 0)
+        return {};
+    if (!m_sampleRenderer) {
+        m_sampleRenderer = std::make_unique<backends::SubtitleRendererSelection>();
+        m_sampleRenderer->setCsriFolder(std::filesystem::path(QCoreApplication::applicationDirPath().toStdU16String()) / u"Csri");
+    }
+    const auto &names = m_optionsLists.renderers;
+    m_sampleRenderer->select(renderer >= 0 && std::size_t(renderer) < names.size() ? names[std::size_t(renderer)]
+                                                                                   : std::string("libass"));
+    // A dusk sky, and a Line in the default Style's look at the bottom.
+    QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
+    {
+        QPainter painter(&image);
+        QLinearGradient sky(0, 0, width, height);
+        sky.setColorAt(0, QColor(0x41, 0x56, 0x6B));
+        sky.setColorAt(0.55, QColor(0x7A, 0x8C, 0x78));
+        sky.setColorAt(1, QColor(0xC7, 0xA2, 0x7A));
+        painter.fillRect(image.rect(), sky);
+    }
+    const QString text = QCoreApplication::translate("HikariSub.GettingStarted", "I said I’d be there by nine.");
+    const QByteArray script =
+        QStringLiteral("[Script Info]\r\nPlayResX: %1\r\nPlayResY: %2\r\nScaledBorderAndShadow: Yes\r\nScriptType: v4.00+\r\n"
+                       "WrapStyle: 0\r\n[V4+ Styles]\r\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
+                       "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+                       "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\r\n"
+                       "Style: Default,Arial,%3,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,2,1,2,"
+                       "10,10,%4,1\r\n\r\n[Events]\r\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
+                       "Effect, Text\r\nDialogue: 0,0:00:00.00,1:00:00.00,Default,,0000,0000,0000,,%5\r\n")
+            .arg(width)
+            .arg(height)
+            .arg(height / 6)
+            .arg(height / 9)
+            .arg(text)
+            .toUtf8();
+    application::RenderSnapshot snapshot;
+    snapshot.script.resize(std::size_t(script.size()));
+    std::memcpy(snapshot.script.data(), script.constData(), std::size_t(script.size()));
+    if (m_sampleRenderer->prepare(std::move(snapshot)))
+        if (const auto frame = m_sampleRenderer->render(core::DocumentTime(1'000'000), width, height))
+            application::compositeOverlay(*frame, image.bits(), width, height, image.bytesPerLine());
+    QByteArray png;
+    QBuffer buffer(&png);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    return QStringLiteral("data:image/png;base64,") + QString::fromLatin1(png.toBase64());
+}
+
+void Application::playTestSound(int device)
+{
+    const auto &devices = m_optionsLists.outputDevices;
+    if (device < 0 || std::size_t(device) >= devices.size())
+        return;
+    // Half a second of 660 Hz, faded in and out.
+    constexpr int rate = 48000, frames = rate / 2, fade = rate / 50;
+    std::vector<std::int16_t> samples(frames);
+    for (int i = 0; i < frames; ++i) {
+        const double gain = std::min({1.0, double(i) / fade, double(frames - i) / fade});
+        samples[std::size_t(i)] = static_cast<std::int16_t>(10000 * gain * std::sin(2 * 3.14159265358979 * 660 * i / rate));
+    }
+    auto tone = std::make_shared<application::DisplayAudio>(rate, frames);
+    tone->appendFrames(samples.data(), frames, 1);
+    tone->finish();
+    const auto &choice = devices[std::size_t(device)];
+    if (m_audioPlayer->playing())
+        m_audioPlayer->stop();
+    m_audioPlayer->setOutputDevice(choice.kind == application::OutputDeviceChoice::Kind::SystemDefault ? std::string()
+                                                                                                        : choice.name);
+    m_audioPlayer->switchOutput();
+    const std::weak_ptr<const application::DisplayAudio> played = tone;
+    m_audioPlayer->playClip(std::move(tone));
+    // The next open is the route's again: once the tone is over it stops (a
+    // clip this long plays on into silence) and its stream closes, or what
+    // plays by then moves to the route; unless another Test sound came since.
+    m_audioPlayer->setOutputDevice(m_noticedRoute.systemDefault ? std::string() : m_noticedRoute.name);
+    QTimer::singleShot(frames * 1000 / rate + 200, this, [this, test = ++m_testSounds, played] {
+        if (test != m_testSounds)
+            return;
+        if (const auto clip = played.lock(); clip && m_audioPlayer->playingClip(clip.get()))
+            m_audioPlayer->stop();
+        m_audioPlayer->switchOutput();
+    });
+}
+
+QString Application::userFolder() const
+{
+    return QDir::toNativeSeparators(m_settingsFile.isEmpty()
+                                        ? QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
+                                        : QFileInfo(m_settingsFile).absolutePath());
+}
+
+void Application::openUserFolder() const
+{
+    backends::desktop::openUrl(QUrl::fromLocalFile(QDir::fromNativeSeparators(userFolder())));
 }
 
 // HikariSubFrame::DestroyDialogs: FindReplaceDialog and SelectLines save

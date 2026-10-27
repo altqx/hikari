@@ -3,6 +3,7 @@
 #include "theme.h"
 
 #include "hikari/app/application.h"
+#include "hikari/app/docs_export.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/single_instance.h"
 #include "hikari/app/style_manager_controller.h"
@@ -184,6 +185,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 
     Application::Options options;
     options.autoload = true; // legacy: the Autoload scripts load at start
+    options.gettingStarted = true; // FR1: the first start opens Getting started
     // The settings registry (O1).
     options.settingsFile =
         QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + QStringLiteral("/hikari.ini");
@@ -333,6 +335,24 @@ int run(int argc, char **argv, StartupMode mode)
         // 8.1: "<version> (<kind>)" without a display.
         QCoreApplication core(argc, argv);
         std::printf("%s (%s)\n", HIKARI_VERSION, qPrintable(packageKindToken(currentPackageKind().kind)));
+        return 0;
+    }
+    if (startup.exportDocs) {
+        // DX1 (#367): the docs export, on the offscreen platform whatever
+        // the desktop: no window is shown and no display is needed.
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+        QGuiApplication app(argc, argv);
+        QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
+        QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+        if (startup.exportDocs->empty()) {
+            std::fprintf(stderr, "--export-docs needs a folder\n");
+            return 2;
+        }
+        QString error;
+        if (!exportDocs(QString::fromLocal8Bit(*startup.exportDocs), &error)) {
+            std::fprintf(stderr, "%s\n", qPrintable(error));
+            return 1;
+        }
         return 0;
     }
 #ifdef _WIN32
