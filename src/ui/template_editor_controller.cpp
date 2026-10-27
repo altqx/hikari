@@ -109,7 +109,7 @@ const std::vector<Variable> &variables()
     //: Template variables' descriptions in the template editor's list (karaoke templater docs)
     static const std::vector<Variable> list = {
         {"sstart", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "syllable start, from the Line's start (ms)")},
-        {"send", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "syllable end (ms)")},
+        {"send", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "syllable end, from the Line's start (ms)")},
         {"smid", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "middle of the syllable (ms)")},
         {"sdur", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "syllable duration (ms)")},
         {"skdur", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "syllable duration in centiseconds")},
@@ -148,10 +148,10 @@ const std::vector<Variable> &variables()
         {"lheight", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "height of the Line (px)")},
         {"lx", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Line position for \\pos, by alignment")},
         {"ly", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Line position for \\pos, by alignment")},
-        {"start", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sstart in a syllable template, lstart in a line one")},
-        {"end", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "send in a syllable template, lend in a line one")},
+        {"start", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sstart; lstart in a pre-line template")},
+        {"end", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "send; lend in a pre-line template")},
         {"dur", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sdur or ldur")},
-        {"kdur", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "skdur, or the Line's duration in centiseconds")},
+        {"kdur", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "skdur; the Line's duration in centiseconds in a pre-line template")},
         {"mid", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "smid or lmid")},
         {"i", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "si or li")},
         {"left", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sleft or lleft")},

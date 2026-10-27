@@ -53,7 +53,6 @@ constexpr LegacyBinding kLegacy[] = {
     {"EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT", OptionsControl::Check, OptionsPage::LineEditor},
     {"DISABLE_LIVE_VIDEO_EDITING", OptionsControl::Check, OptionsPage::Video},
     {"GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN", OptionsControl::Check, OptionsPage::Grid},
-    {"SHIFT_TIMES_CHANGE_VALUES_WITH_TAB", OptionsControl::Check, OptionsPage::General},
     {"GRID_CHANGE_ACTIVE_ON_SELECTION", OptionsControl::Check, OptionsPage::Grid},
     {"TL_MODE_SHOW_ORIGINAL", OptionsControl::Check, OptionsPage::LineEditor},
     {"TL_MODE_HIDE_ORIGINAL_ON_VIDEO", OptionsControl::Check, OptionsPage::LineEditor},

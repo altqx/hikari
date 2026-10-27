@@ -79,6 +79,29 @@ TEST(Furigana, AWordsReadingSplitsOverItsKanjiRuns)
     EXPECT_EQ(splitReading(u"夢", u""), std::nullopt);
 }
 
+TEST(Furigana, ASplitOfManyKanjiAndKanaIsQuick)
+{
+    // 漢あ repeated, read in あ: a great many ways to try, none that fits
+    std::u16string surface, reading;
+    for (int i = 0; i < 16; ++i) {
+        surface += u"漢あ";
+        reading += u"あああ";
+    }
+    EXPECT_EQ(splitReading(surface, reading + u"い"), std::nullopt);
+    // one that fits is still the earliest
+    const auto parts = splitReading(surface, reading);
+    ASSERT_TRUE(parts);
+    ASSERT_EQ(parts->size(), 16u);
+    EXPECT_EQ(parts->front(), u"あ");
+    EXPECT_EQ(parts->back(), u"あああああああああああああああああ");
+    // so long that the steps run out: none, soon
+    for (int i = 0; i < 3000; ++i) {
+        surface += u"漢あ";
+        reading += u"あああ";
+    }
+    EXPECT_EQ(splitReading(surface, reading + u"い"), std::nullopt);
+}
+
 TEST(Furigana, RunsOfALinesText)
 {
     const auto analyze = dictionary({{u"永遠", u"エイエン"}, {u"に", u"ニ"}, {u"続く", u"ツヅク"}, {u"夢", u"ユメ"},

@@ -1,6 +1,6 @@
 // KA3 (#278): the Kanji timer's grouping (Aegisub's DialogKanjiTimer and
 // KaraokeMatcher over the whole song) and the kana readings KA4 shares.
-// KA8 (#354): its multi-highlight (#) syllables.
+// KA8 (#354): its multi-highlight (#) syllables. KA4 (#279): its furigana.
 
 #include "hikari/application/kana.h"
 #include "hikari/application/kanji_timer.h"
@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-
+#include <map>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -629,4 +629,439 @@ TEST(KanjiTimer, MultiHighlightIsAppliedAndStaysApplied)
     timer.setMulti(false);
     EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::Applied);
     EXPECT_TRUE(timer.pending().empty());
+}
+
+// ---- KA4-furigana ---------------------------------------------------------------
+
+namespace {
+
+// A stand-in dictionary: words by longest match, other characters one word
+// each with no reading.
+ReadingAnalyzer dictionary(std::map<std::string, std::string> utf8)
+{
+    std::map<std::u16string, std::u16string> words;
+    for (const auto &[surface, kana] : utf8)
+        words[u(surface)] = u(kana);
+    return [words = std::move(words)](std::u16string_view text) {
+        std::vector<ReadingWord> out;
+        for (std::size_t i = 0; i < text.size();) {
+            std::size_t best = 0;
+            const std::u16string *reading = nullptr;
+            for (const auto &[surface, kana] : words)
+                if (surface.size() > best && text.substr(i).starts_with(surface)) {
+                    best = surface.size();
+                    reading = &kana;
+                }
+            out.push_back({std::u16string(text.substr(i, best ? best : 1)), reading ? *reading : std::u16string()});
+            i += best ? best : 1;
+        }
+        return out;
+    };
+}
+
+const ReadingAnalyzer kUnidic = dictionary({{"君", "キミ"}, {"声", "コエ"}, {"聞こえる", "キコエル"}, {"永遠", "エイエン"},
+                                            {"愛", "アイ"}, {"二人", "フタリ"}});
+
+// "base|reading" for each kanji run of the view, space-separated, a * after a sung one.
+std::string readings(const KanjiTimer &timer)
+{
+    std::string out;
+    const auto v = timer.view();
+    for (const auto &r : v->readings) {
+        std::u16string base;
+        for (std::size_t c = r.begin; c < r.end; ++c)
+            base += v->kanji.units[c].text;
+        out += s(base) + "|" + s(r.reading()) + (r.sung ? "*" : "") + " ";
+    }
+    return out;
+}
+
+KanjiTimer furiganaTimer(const std::string &romaji, const std::string &kanji, bool multi = false)
+{
+    KanjiTimer timer(classes());
+    timer.setFurigana(true);
+    timer.setMulti(multi);
+    timer.setDictionary(kUnidic);
+    timer.setLines({line(1, romaji, 0, 3000)}, {line(2, kanji, 0, 3000)});
+    return timer;
+}
+
+} // namespace
+
+TEST(KanjiTimer, FuriganaIsTheSungKanaOverEachKanjiRun)
+{
+    auto timer = furiganaTimer(kKimi, kKimiKanji);
+    EXPECT_EQ(readings(timer), "君|きみ* 声|こえ* 聞|き* ");
+    ASSERT_TRUE(timer.view()->output);
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}君|きみ{\\k30}の{\\k45}声|こえ{\\k35}が{\\k22}聞|き{\\k18}こ{\\k20}え{\\k60}る");
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k40}君|きみ{\\k30}の{\\k45}声|こえ{\\k35}が{\\k22}聞|き{\\k18}こ{\\k20}え{\\k60}る");
+    // off: KA3's output
+    timer.setFurigana(false);
+    EXPECT_EQ(s(timer.pending()[0].second), kKimiOut);
+}
+
+TEST(KanjiTimer, APoeticReadingIsSungAndTheDictionarysIsKeptBeside)
+{
+    // KA3 suggests 永 to and 遠 wa; grouped as one
+    auto timer = furiganaTimer("{\\k30}to{\\k35}wa {\\k40}ni", "永遠に");
+    EXPECT_EQ(readings(timer), "永|と* 遠|わ* ");
+    // the word read over both: とわ against えいえん
+    for (const auto &r : timer.view()->readings) {
+        EXPECT_EQ(s(r.dictionary), "えいえん");
+        EXPECT_TRUE(r.differs);
+    }
+    EXPECT_TRUE(timer.growSyllables());
+    EXPECT_TRUE(timer.growCharacters());
+    const auto v = timer.view();
+    ASSERT_EQ(v->readings.size(), 1u);
+    EXPECT_EQ(s(v->readings[0].suggested), "とわ");
+    EXPECT_TRUE(v->readings[0].sung);
+    EXPECT_EQ(s(v->readings[0].dictionary), "えいえん");
+    EXPECT_TRUE(v->readings[0].differs);
+    // sung as the dictionary reads it: no difference (二 ふた, 人 り)
+    auto futari = furiganaTimer("{\\k10}fu{\\k10}ta{\\k10}ri", "二人");
+    ASSERT_EQ(futari.view()->readings.size(), 2u);
+    for (const auto &r : futari.view()->readings) {
+        EXPECT_EQ(s(r.dictionary), "ふたり");
+        EXPECT_FALSE(r.differs);
+    }
+    EXPECT_EQ(s(*v->output), "{\\k65}永遠|とわ{\\k40}に");
+}
+
+TEST(KanjiTimer, RomajiThatIsNoKanaTakesTheDictionarysReading)
+{
+    auto timer = furiganaTimer("{\\k45}love {\\k30}wo", "愛を");
+    EXPECT_EQ(readings(timer), "愛|あい ");
+    EXPECT_EQ(s(*timer.view()->output), "{\\k45}愛|あい{\\k30}を");
+    // no dictionary: no reading until one is typed
+    timer.setDictionary({});
+    EXPECT_EQ(readings(timer), "愛| ");
+    EXPECT_EQ(s(*timer.view()->output), "{\\k45}愛{\\k30}を");
+}
+
+TEST(KanjiTimer, ATypedReadingStaysUntilTheSuggestionIsTakenBack)
+{
+    auto timer = furiganaTimer("{\\k45}love {\\k30}wo", "愛を");
+    EXPECT_TRUE(timer.setReading(u("ラヴ")));
+    EXPECT_FALSE(timer.setReading(u("ラヴ"))); // (no change, no step)
+    EXPECT_EQ(readings(timer), "愛|ラヴ ");
+    EXPECT_EQ(s(*timer.view()->output), "{\\k45}愛|ラヴ{\\k30}を");
+    // regrouping and Accept line keep it
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_TRUE(timer.shrinkCharacters());
+    EXPECT_EQ(readings(timer), "愛|ラヴ ");
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k45}愛|ラヴ{\\k30}を");
+    // an undo step each
+    EXPECT_TRUE(timer.undo()); // accept
+    EXPECT_TRUE(timer.undo()); // shrink
+    EXPECT_TRUE(timer.undo()); // grow
+    EXPECT_TRUE(timer.undo()); // typed
+    EXPECT_EQ(readings(timer), "愛|あい ");
+    EXPECT_TRUE(timer.redo());
+    EXPECT_TRUE(timer.useSuggestion());
+    EXPECT_FALSE(timer.useSuggestion());
+    EXPECT_EQ(readings(timer), "愛|あい ");
+    // an empty reading: no furigana for it
+    EXPECT_TRUE(timer.setReading(u""));
+    EXPECT_EQ(s(*timer.view()->output), "{\\k45}愛{\\k30}を");
+    // a group with no kanji takes none
+    EXPECT_TRUE(timer.link());
+    EXPECT_FALSE(timer.setReading(u("お")));
+}
+
+TEST(KanjiTimer, AReadingPerKanjiRunSplitAtSpaces)
+{
+    // 生まれ変わ in one group (u ma re ka wa): two runs, う and か
+    const auto syls = kanjiSyllables(u("{\\k10}u{\\k10}ma{\\k10}re{\\k10}ka{\\k10}wa"), 0, 0);
+    const auto kanji = kanjiText(u("生まれ変わ"));
+    const std::vector<KanjiGroup> one{{5, 5}};
+    auto rs = kanjiReadings(syls, kanji, one, {}, {});
+    ASSERT_EQ(rs.size(), 2u);
+    EXPECT_EQ(s(rs[0].suggested), "う");
+    EXPECT_EQ(s(rs[1].suggested), "か");
+    KanjiTimer timer(classes());
+    timer.setFurigana(true);
+    timer.setSuggest(false);
+    timer.setLines({line(1, "{\\k10}u{\\k10}ma{\\k10}re{\\k10}ka{\\k10}wa", 0, 500)}, {line(2, "生まれ変わ", 0, 500)});
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_TRUE(timer.growSyllables());
+        EXPECT_TRUE(timer.growCharacters());
+    }
+    EXPECT_TRUE(timer.setReading(u("い　が")));
+    EXPECT_EQ(readings(timer), "生|い* 変|が* ");
+    // not as many pieces as runs: all of it for the first
+    EXPECT_TRUE(timer.setReading(u("うま れ か")));
+    EXPECT_EQ(readings(timer), "生|うまれか* 変|* ");
+}
+
+TEST(KanjiTimer, AGroupOfKanjiAndKanaReadsOverItsKanjiOnly)
+{
+    // 聞こ over ki ko: written as 聞|き and こ, each with its syllable's time
+    const auto syls = kanjiSyllables(u("{\\k35}ga {\\k22}ki{\\k18}ko {\\k20}e"), 0, 0);
+    const auto kanji = kanjiText(u("が聞こえ"));
+    const std::vector<KanjiGroup> gs{{1, 1}, {2, 2}, {1, 1}};
+    const auto rs = kanjiReadings(syls, kanji, gs, {}, {});
+    EXPECT_EQ(s(kanjiOutput(syls, kanji, gs, false, &rs)), "{\\k35}が{\\k22}聞|き{\\k18}こ{\\k20}え");
+    // syllables that don't line up with it (kiko as one): the whole group's reading
+    const auto one = kanjiSyllables(u("{\\k35}ga {\\k40}kiko {\\k20}e"), 0, 0);
+    const std::vector<KanjiGroup> ones{{1, 1}, {1, 2}, {1, 1}};
+    const auto rs1 = kanjiReadings(one, kanji, ones, {}, {});
+    EXPECT_EQ(s(kanjiOutput(one, kanji, ones, false, &rs1)), "{\\k35}が{\\k40}聞こ|きこ{\\k20}え");
+    // a typed reading of 聞 is written over 聞 alone
+    const auto typed = kanjiReadings(syls, kanji, gs, {}, {{{1, 2}, u("きき")}});
+    EXPECT_EQ(s(kanjiOutput(syls, kanji, gs, false, &typed)), "{\\k35}が{\\k22}聞|きき{\\k18}こ{\\k20}え");
+}
+
+TEST(KanjiTimer, MultiHighlightGivesEachSyllableItsKana)
+{
+    auto timer = furiganaTimer(kKimi, kKimiKanji, true);
+    EXPECT_EQ(s(*timer.view()->output),
+              "{\\k18}君|き{\\k22}#|み{\\k30}の{\\k20}声|こ{\\k25}#|え{\\k35}が{\\k22}聞|き{\\k18}こ{\\k20}え{\\k60}る");
+    // a reading that isn't the sung one: all on the first, the # syllables bare
+    auto towa = furiganaTimer("{\\k30}to{\\k35}wa {\\k40}ni", "永遠に", true);
+    EXPECT_TRUE(towa.growSyllables());
+    EXPECT_TRUE(towa.growCharacters());
+    EXPECT_EQ(s(*towa.view()->output), "{\\k30}永遠|と{\\k35}#|わ{\\k40}に");
+    EXPECT_TRUE(towa.setReading(u("えいえん")));
+    EXPECT_EQ(s(*towa.view()->output), "{\\k30}永遠|えいえん{\\k35}#{\\k40}に");
+}
+
+TEST(KanjiTimer, ALineOfManyFuriganaSyllablesReadsQuickly)
+{
+    // readings out of the text in one pass, as the # syllables: 128,000
+    // kanji, each sung over two syllables
+    std::string text;
+    for (int i = 0; i < 128000; ++i)
+        text += "{\\k1}君|き{\\k1}#|み";
+    const auto line = u(text);
+    const auto start = std::chrono::steady_clock::now();
+    const auto read = kanjiText(line);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(10));
+    ASSERT_EQ(read.units.size(), 128000u);
+    ASSERT_EQ(read.readings.size(), 128000u);
+    EXPECT_EQ(read.readings.back(), (KanjiText::Reading{127999, 128000, u("きみ")}));
+    EXPECT_EQ(read.tagged.size(), 128000u);
+}
+
+TEST(KanjiTimer, TheReadingsOfALongLineComeQuickly)
+{
+    // every run against the dictionary's words in one pass: 64,000 groups
+    // of 君 over ki mi, the dictionary reading each as きみ and 君君 as one word
+    std::string romaji, text;
+    for (int i = 0; i < 64000; ++i) {
+        romaji += "{\\k1}ki{\\k1}mi";
+        text += "君";
+    }
+    const auto syls = kanjiSyllables(u(romaji), 0, 0);
+    const auto kanji = kanjiText(u(text));
+    std::vector<KanjiGroup> groups(64000, KanjiGroup{2, 1});
+    std::vector<FuriganaRun> words;
+    for (std::size_t i = 0; i < 64000; i += 2)
+        words.push_back({i, i + 2, u("君君"), u("きみきみ"), std::nullopt});
+    const auto start = std::chrono::steady_clock::now();
+    const auto rs = kanjiReadings(syls, kanji, groups, words, {});
+    const auto out = kanjiOutput(syls, kanji, groups, true, &rs);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(10));
+    ASSERT_EQ(rs.size(), 64000u);
+    EXPECT_EQ(s(rs.back().dictionary), "きみきみ");
+    EXPECT_FALSE(rs.back().differs);
+    EXPECT_EQ(s(out.substr(0, 16)), "{\\k1}君|き{\\k1}#|み");
+}
+
+TEST(KanjiTimer, FuriganaReadsBackAsTypedReadings)
+{
+    const auto read = kanjiText(u("{\\k40}君|きみ{\\k30}の{\\k20}声｜！こ{\\k25}#|え{\\k10}二人|ふたり"));
+    EXPECT_EQ(s(read.text), "君の声二人");
+    ASSERT_EQ(read.readings.size(), 3u);
+    EXPECT_EQ(read.readings[0], (KanjiText::Reading{0, 1, u("きみ")}));
+    EXPECT_EQ(read.readings[1], (KanjiText::Reading{2, 3, u("こえ")}));
+    EXPECT_EQ(read.readings[2], (KanjiText::Reading{3, 5, u("ふたり")}));
+    EXPECT_EQ(groups(read.tagged), "1:1 1:1 2:1 1:2 ");
+    // a base of kanji and kana: the reading split over its kanji
+    const auto mixed = kanjiText(u("{\\k40}聞こ|きこ{\\k20}え"));
+    ASSERT_EQ(mixed.readings.size(), 1u);
+    EXPECT_EQ(mixed.readings[0], (KanjiText::Reading{0, 1, u("き")}));
+    // no \k tag: a | is text
+    EXPECT_EQ(s(kanjiText(u("君|きみ")).text), "君|きみ");
+    // opened, the Line's readings are typed ones and are written again
+    auto timer = furiganaTimer(kKimi, "{\\k40}君|キミ{\\k30}の{\\k45}声{\\k35}が{\\k22}聞{\\k18}こ{\\k20}え{\\k60}る");
+    EXPECT_EQ(readings(timer), "君|キミ* 声|こえ* 聞|き* ");
+    ASSERT_TRUE(timer.view()->readings[0].typed);
+    timer.setFurigana(false);
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}君|キミ{\\k30}の{\\k45}声{\\k35}が{\\k22}聞{\\k18}こ{\\k20}え{\\k60}る");
+}
+
+TEST(KanjiTimer, HashReadingsJoinTheirBaseThroughHighlightsWithNone)
+{
+    EXPECT_EQ(kanjiText(u("{\\k10}君{\\k10}#|き{\\k10}#|み")).readings,
+              (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    EXPECT_EQ(kanjiText(u("{\\k10}君|き{\\k10}#{\\k10}#|み")).readings,
+              (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    // a block in the # highlight is none of its characters
+    EXPECT_EQ(kanjiText(u("{\\k10}君|き{\\k10}#{\\i1}|み")).readings,
+              (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    EXPECT_EQ(kanjiText(u("{\\k10}君|き{\\k10\\i1}＃|み")).readings,
+              (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    // a base and its highlights with none read nothing; the next base its own
+    EXPECT_EQ(kanjiText(u("{\\k10}君{\\k10}#{\\k10}声|こえ")).readings,
+              (std::vector<KanjiText::Reading>{{1, 2, u("こえ")}}));
+}
+
+TEST(KanjiTimer, RegroupingKeepsTheReadingsOfTheLine)
+{
+    // KA3 suggests 永 and 遠 apart: the Line's えいえん on the first, none on the second
+    auto timer = furiganaTimer("{\\k30}to{\\k30}wa{\\k20}ni", "{\\k60}永遠|えいえん{\\k20}に");
+    EXPECT_EQ(readings(timer), "永|えいえん* 遠|* ");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k30}永|えいえん{\\k30}遠{\\k20}に");
+    // typed over one run and grouped with the next: what was typed, in order
+    auto joined = furiganaTimer("{\\k30}to{\\k35}wa {\\k40}ni", "永遠に");
+    EXPECT_TRUE(joined.setReading(u("とこ")));
+    EXPECT_TRUE(joined.link());
+    EXPECT_TRUE(joined.setReading(u("しえ")));
+    EXPECT_TRUE(joined.unlink());
+    EXPECT_TRUE(joined.growSyllables());
+    EXPECT_TRUE(joined.growCharacters());
+    EXPECT_EQ(readings(joined), "永遠|とこしえ* ");
+    // a reading typed there takes the place of both
+    EXPECT_TRUE(joined.setReading(u("とわ")));
+    EXPECT_TRUE(joined.shrinkSyllables());
+    EXPECT_TRUE(joined.shrinkCharacters());
+    EXPECT_EQ(readings(joined), "永|とわ* 遠|* ");
+    EXPECT_TRUE(joined.useSuggestion());
+    EXPECT_EQ(readings(joined), "永|と* 遠|* ");
+}
+
+TEST(KanjiTimer, ALinesReadingThatSpellsNoneOfItsKanaStaysWhole)
+{
+    // あいお spells no を: kept over the whole base, as karaskel reads it
+    const auto read = kanjiText(u("{\\k40}愛を|あいお"));
+    EXPECT_EQ(read.readings, (std::vector<KanjiText::Reading>{{0, 2, u("あいお")}}));
+    auto timer = furiganaTimer("{\\k40}aio", "{\\k40}愛を|あいお");
+    EXPECT_EQ(readings(timer), "愛|あいお* ");
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}愛を|あいお");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k40}愛を|あいお");
+    // typed over, it is the kanji's again
+    timer.setFurigana(true);
+    EXPECT_TRUE(timer.undo());
+    EXPECT_TRUE(timer.setReading(u("あい")));
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}愛を|あいを");
+    // split over groups, its kana is spelt once
+    KanjiTimer apart(classes());
+    apart.setSuggest(false);
+    apart.setLines({line(1, "{\\k20}ai{\\k20}okimi", 0, 600)}, {line(2, "{\\k40}愛を|あいお{\\k20}君|きみ", 0, 600)});
+    EXPECT_TRUE(apart.enter()); // 愛
+    EXPECT_TRUE(apart.growCharacters());
+    EXPECT_TRUE(apart.enter()); // を君
+    EXPECT_TRUE(apart.enter()); // accepted
+    EXPECT_EQ(s(apart.pending()[0].second), "{\\k20}愛|あいお{\\k20}を君|きみ");
+}
+
+TEST(KanjiTimer, AWholeBaseReadingJoinsTheRunItIsGroupedWith)
+{
+    auto timer = furiganaTimer("{\\k20}ai{\\k40}jouo", "{\\k20}愛|あい{\\k40}情を|じょうお");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.growSyllables());
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k60}愛情を|あいじょうお");
+}
+
+TEST(KanjiTimer, AReadingOverNoKanjiIsKeptToo)
+{
+    const auto read = kanjiText(u("{\\k40}きみ|キミ{\\k30}の"));
+    EXPECT_EQ(s(read.text), "きみの");
+    EXPECT_EQ(read.readings, (std::vector<KanjiText::Reading>{{0, 2, u("キミ")}}));
+    auto timer = furiganaTimer("{\\k40}kimi{\\k30}no", "{\\k40}きみ|キミ{\\k30}の");
+    EXPECT_EQ(readings(timer), "きみ|キミ ");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k40}きみ|キミ{\\k30}の");
+    // typed over and taken back like any other
+    timer.setFurigana(true);
+    EXPECT_TRUE(timer.undo());
+    EXPECT_TRUE(timer.setReading(u("きみ")));
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}きみ|きみ{\\k30}の");
+    EXPECT_TRUE(timer.useSuggestion());
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}きみ{\\k30}の");
+}
+
+TEST(KanjiTimer, AReadingOverNoKanjiAfterOneOverKanjiInTheSameGroup)
+{
+    auto timer = furiganaTimer("{\\k40}kimi{\\k40}wa", "{\\k40}君|きみ{\\k40}は|わ");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.growSyllables());
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_EQ(s(*timer.view()->output), "{\\k80}君は|きみわ");
+    // typed over or taken back, both are the group's
+    EXPECT_TRUE(timer.setReading(u("きみ は")));
+    EXPECT_EQ(s(*timer.view()->output), "{\\k80}君は|きみは");
+    EXPECT_TRUE(timer.setReading(u("")));
+    EXPECT_EQ(s(*timer.view()->output), "{\\k80}君は");
+    EXPECT_TRUE(timer.useSuggestion());
+    EXPECT_FALSE(timer.useSuggestion());
+    timer.setFurigana(true);
+    EXPECT_EQ(s(*timer.view()->output), "{\\k80}君は|きみは");
+}
+
+TEST(KanjiTimer, TheReadingsAppliedAreTheLinesOwnAfter)
+{
+    auto timer = furiganaTimer("{\\k40}kimi", "君");
+    EXPECT_TRUE(timer.acceptLine());
+    const std::string out = s(timer.pending()[0].second);
+    EXPECT_EQ(out, "{\\k40}君|きみ");
+    timer.applied();
+    timer.setLines({line(1, "{\\k40}kimi", 0, 3000)}, {line(2, out, 0, 3000)});
+    EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::Applied);
+    // as when it is opened: Furigana off keeps them
+    timer.setFurigana(false);
+    EXPECT_EQ(s(*timer.view()->output), out);
+    ASSERT_TRUE(timer.view());
+}
+
+TEST(KanjiTimer, TheSpacesAfterAReadingStayInTheText)
+{
+    const auto read = kanjiText(u("{\\k40}君|きみ {\\k30}の"));
+    EXPECT_EQ(s(read.text), "君 の");
+    EXPECT_EQ(read.readings, (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    // grouped as one, the space stays in the text, and the reading spells の
+    auto timer = furiganaTimer("{\\k40}kimi {\\k30}no", "{\\k40}君|きみ {\\k30}の");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.growSyllables());
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_EQ(s(*timer.view()->output), "{\\k70}君 の|きみの");
+    // a group that ends at the space: the reading before it
+    auto apart = furiganaTimer("{\\k40}kimi {\\k30}no", "{\\k40}君|きみ {\\k30}の");
+    apart.setFurigana(false);
+    EXPECT_TRUE(apart.acceptLine());
+    EXPECT_EQ(s(apart.pending()[0].second), "{\\k40}君|きみ {\\k30}の");
+}
+
+TEST(KanjiTimer, TheDictionaryReadsAKanjiRunThroughItsBlocks)
+{
+    auto timer = furiganaTimer("{\\k45}love", "愛{\\i1}情");
+    timer.setDictionary(dictionary({{"愛", "アイ"}, {"情", "ジョウ"}}));
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_EQ(readings(timer), "愛情|あいじょう ");
+    EXPECT_EQ(s(*timer.view()->output), "{\\k45}愛{\\i1}情|あいじょう");
+}
+
+TEST(KanjiTimer, AReadingOfManyKanjiAndKanaReadsBackQuickly)
+{
+    // 漢あ漢あ…|あああ… has a great many splits and none fits: kept over the whole base
+    std::string line = "{\\k10}", reading;
+    for (int i = 0; i < 2000; ++i) {
+        line += "漢あ";
+        reading += "あああ";
+    }
+    const auto read = kanjiText(u(line + "|" + reading + "い"));
+    ASSERT_EQ(read.readings.size(), 1u);
+    EXPECT_EQ(read.readings[0].begin, 0u);
+    EXPECT_EQ(read.readings[0].end, 4000u);
 }

@@ -1092,7 +1092,7 @@ std::vector<AudioShape> audioCursor(const AudioView &view, float x, bool playing
     AudioShape cursor = line(x, 0, x, float(view.height()), options.cursor, 2);
     cursor.smooth = true;
     out.push_back(cursor);
-    if (!playing) {
+    if (!playing && options.drawTimeCursor) {
         const int ms = view.msAtX(static_cast<std::int64_t>(x));
         const float top = karaoke ? 20 : 5;
         const float left = float(static_cast<long>(x - 150)); // a RECT holds integers

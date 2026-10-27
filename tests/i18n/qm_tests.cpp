@@ -289,9 +289,10 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // 62 with the added words window's "Remove %n word(s)" (PU6). 65 with
         // Edit shapes' and Edit tags' restore questions and the tags' count,
         // "The tag takes %n value(s)" (PU5). 66 with the Kanji timer's "Apply the
-        // kanji timing of %n lines?" (KA3). 70 with the grammar check's rule
-        // groups, its ignored group's toast and the walk's two line counts (GR1).
-        ASSERT_EQ(numerus, 70) << language.toStdString();
+        // kanji timing of %n lines?" (KA3). 71 with the Grid's folded run,
+        // "%n generated lines" (KP1), the grammar check's rule groups, its
+        // ignored group's toast and the walk's two line counts (GR1).
+        ASSERT_EQ(numerus, 71) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

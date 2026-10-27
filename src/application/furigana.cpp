@@ -1,5 +1,7 @@
 #include "hikari/application/furigana.h"
 
+#include <cstdint>
+#include <unordered_set>
 #include <utility>
 
 namespace hikari::application {
@@ -56,25 +58,63 @@ std::vector<Segment> segments(std::u16string_view s)
     return out;
 }
 
-// The earliest split of `reading` (hiragana) over segments k and on: each
-// kanji run one kana or more, the text between spelt as it is.
-bool split(std::u16string_view surface, const std::vector<Segment> &segs, std::size_t k, std::u16string_view reading,
+// The earliest split of `reading` (hiragana) over the segments: each kanji
+// run one kana or more, the text between spelt as it is. A place (segment,
+// kana) that found none is not tried again, and a split that takes more than
+// kSplitSteps steps is none, so no text makes this slow; no recursion, so no
+// text runs the stack out either.
+constexpr std::size_t kSplitSteps = 1u << 22;
+
+bool split(std::u16string_view surface, const std::vector<Segment> &segs, std::u16string_view reading,
            std::vector<std::u16string> &out)
 {
-    if (k == segs.size())
-        return reading.empty();
-    const Segment &seg = segs[k];
-    if (!seg.kanji) {
-        const std::u16string kana = hiragana(surface.substr(seg.begin, seg.end - seg.begin));
-        return reading.starts_with(kana) && split(surface, segs, k + 1, reading.substr(kana.size()), out);
+    std::vector<std::u16string> kana(segs.size());
+    for (std::size_t k = 0; k < segs.size(); ++k)
+        if (!segs[k].kanji)
+            kana[k] = hiragana(surface.substr(segs[k].begin, segs[k].end - segs[k].begin));
+    // at[k]: where segment k starts in the reading; taken[k]: what a kanji one takes
+    std::vector<std::size_t> at(segs.size() + 1, 0), taken(segs.size(), 0);
+    std::unordered_set<std::uint64_t> failed;
+    const auto place = [&](std::size_t k) { return std::uint64_t(k) * (reading.size() + 1) + at[k]; };
+    std::size_t k = 0;
+    bool again = false; // segment k is tried again, a kanji run taking one kana more
+    for (std::size_t steps = 0;; ++steps) {
+        if (steps == kSplitSteps)
+            return false;
+        bool on = false;
+        if (k == segs.size()) {
+            if (at[k] == reading.size())
+                break;
+        } else if (again) {
+            if (segs[k].kanji && at[k] + taken[k] < reading.size()) {
+                at[k + 1] = at[k] + ++taken[k];
+                on = true;
+            }
+        } else if (!failed.contains(place(k))) {
+            if (!segs[k].kanji && reading.substr(at[k]).starts_with(kana[k])) {
+                at[k + 1] = at[k] + kana[k].size();
+                on = true;
+            } else if (segs[k].kanji && at[k] < reading.size()) {
+                taken[k] = 1;
+                at[k + 1] = at[k] + 1;
+                on = true;
+            }
+        }
+        if (on) {
+            ++k;
+            again = false;
+            continue;
+        }
+        failed.insert(place(k));
+        if (k == 0)
+            return false;
+        --k;
+        again = true;
     }
-    for (std::size_t n = 1; n <= reading.size(); ++n) {
-        out.emplace_back(reading.substr(0, n));
-        if (split(surface, segs, k + 1, reading.substr(n), out))
-            return true;
-        out.pop_back();
-    }
-    return false;
+    for (std::size_t s = 0; s < segs.size(); ++s)
+        if (segs[s].kanji)
+            out.emplace_back(reading.substr(at[s], taken[s]));
+    return true;
 }
 
 // The pieces of a Line's text the analyser reads: outside override blocks,
@@ -117,7 +157,7 @@ void wordRuns(std::u16string_view surface, std::u16string_view reading, std::siz
                        std::nullopt});
     };
     std::vector<std::u16string> parts;
-    if (kana.empty() || split(surface, segs, 0, kana, parts)) {
+    if (kana.empty() || split(surface, segs, kana, parts)) {
         std::size_t part = 0;
         for (const Segment &seg : segs)
             if (seg.kanji)
@@ -158,7 +198,7 @@ std::u16string hiragana(std::u16string_view text)
 std::optional<std::vector<std::u16string>> splitReading(std::u16string_view surface, std::u16string_view reading)
 {
     std::vector<std::u16string> out;
-    if (!split(surface, segments(surface), 0, hiragana(reading), out))
+    if (!split(surface, segments(surface), hiragana(reading), out))
         return std::nullopt;
     return out;
 }
