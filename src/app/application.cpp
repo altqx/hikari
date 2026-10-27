@@ -644,8 +644,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             });
     connect(m_automation.get(), &AutomationShell::progressChanged, m_templateEditor.get(),
             [this] { m_templateEditor->refresh(); });
-    if (options.autoload)
-        m_automation->autoload();
     m_settingsFile = options.settingsFile;
     rememberStartSession(); // PU1: before anything writes the session
     // R6-dictionary-location: user dictionaries in the settings folder's
@@ -695,6 +693,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (firstStart && options.gettingStarted)
         m_settings->set("workspace.gettingStarted", QStringLiteral("due"));
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
+    // #383: scripts load with the profile's trace level, so they load after it.
+    m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
+    if (options.autoload)
+        m_automation->autoload();
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString()); // W2
     m_renderer.countCost(m_settings->boolean("video.renderCost")); // KE1-render-cost-overlay
     // K2: the theme layer follows this profile's appearance (the controls'
@@ -5640,6 +5642,8 @@ void Application::settingChanged(const QString &id)
         switchLanguage();
     else if (id == QLatin1String("program.font") || id == QLatin1String("program.fontSize"))
         applyProgramFont(); // O5 (legacy SetOptions: Hikari->SetFont(*Options.GetFont()))
+    else if (id == QLatin1String("automation.traceLevel"))
+        m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     else if (id == QLatin1String("video.subtitleProvider") &&
              m_renderer.select(m_settings->text("video.subtitleProvider").toStdString())) {
         // W2: legacy DestroyProviders and Notebook::RefreshVideo

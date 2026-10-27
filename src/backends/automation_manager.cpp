@@ -141,7 +141,8 @@ void AutomationManager::load(const std::string &path)
         return;
     }
     Entry entry;
-    entry.host = std::make_unique<LuaScriptHost>(m_helperPath, QString::fromStdString(path), m_sharedInclude);
+    entry.host = std::make_unique<LuaScriptHost>(m_helperPath, QString::fromStdString(path), m_sharedInclude,
+                                                 m_traceLevel);
     entry.generation = 1;
     entry.modified = modifiedTime(path);
     entry.host->setGracePeriod(m_graceMs);
@@ -243,6 +244,17 @@ void AutomationManager::setGracePeriod(int ms)
     m_graceMs = ms;
     for (auto &[path, e] : m_entries)
         e.host->setGracePeriod(ms);
+}
+
+void AutomationManager::setTraceLevel(int level)
+{
+    if (level == m_traceLevel)
+        return;
+    m_traceLevel = level;
+    for (const auto &path : m_order) {
+        m_entries.at(path).host->setTraceLevel(level);
+        reload(path);
+    }
 }
 
 std::vector<std::string> AutomationManager::shutdown(int deadlineMs)

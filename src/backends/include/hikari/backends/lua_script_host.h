@@ -77,6 +77,9 @@ public:
     // Ends the helper now, for application quit (after its deadline).
     void terminate();
     void setGracePeriod(int ms) { m_graceMs = ms; }
+    // The helper gets it when the script loads (aegisub.debug.out drops
+    // messages above it); a loaded script keeps its level until it reloads.
+    void setTraceLevel(int level) { m_traceLevel = level; }
 
     State state() const { return m_state; }
     const application::ScriptInfo &info() const { return m_info; }
