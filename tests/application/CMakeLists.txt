@@ -81,6 +81,8 @@ hikari_add_gtest(hikari_application_settings_tests SOURCES settings_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_options_dialog_tests SOURCES options_dialog_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_getting_started_tests SOURCES getting_started_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_find_replace_tests SOURCES find_replace_tests.cpp
     LIBRARIES hikari_application LABELS application)
 # F1: the legacy Find and replace captures (tools/legacy-capture ui cases)

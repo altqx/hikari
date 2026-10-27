@@ -29,6 +29,7 @@ constexpr std::array kLinks{
     GuideLink{Window, "dummyVideo", "/en/docs/basics/video"},
     GuideLink{Window, "fontCatalogs", "/en/docs/typesetting/fonts"},
     GuideLink{Window, "fontCollector", "/en/docs/typesetting/fonts"},
+    GuideLink{Window, "gettingStarted", "/en/docs/get-started/getting-started-window"}, // FR1
     GuideLink{Window, "hotkeyCapture", "/en/docs/customize/hotkeys"},
     GuideLink{Window, "kanjiTimer", "/en/docs/karaoke/kanji-timer"},
     GuideLink{Window, "karaokeCheck", "/en/docs/karaoke/karaoke-check"},

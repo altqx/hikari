@@ -15,6 +15,7 @@
 #include <QUrl>
 #include <QVariantList>
 
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
@@ -80,6 +81,13 @@ public:
 
     const application::settings_import::Plan *plan() const { return m_plan ? &*m_plan : nullptr; }
     const std::set<std::string, std::less<>> &chosen() const { return m_chosen; }
+    // FR1: the settings as importing the chosen rows would leave them, by
+    // id (the profile's own where no row changes them); nothing is written.
+    std::map<std::string, application::SettingValue, std::less<>> chosenValues() const;
+    // FR1: imports the chosen rows but those whose setting is in `skip`,
+    // over the settings as they are now. True when it is staged or nothing
+    // is left to import; false keeps the choices (status says why).
+    bool importChosenBut(const std::set<std::string, std::less<>> &skip);
 
 signals:
     void rootsChanged();

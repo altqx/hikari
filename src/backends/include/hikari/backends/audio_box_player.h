@@ -108,6 +108,9 @@ public:
     bool playClip(std::shared_ptr<const application::DisplayAudio> clip) override;
     void stop() override;
     bool playing() const override { return m_playing.load(); }
+    // Whether `clip` (a playClip's) is what plays now (FR1: Test sound stops
+    // its own tone, never a later playback).
+    bool playingClip(const application::DisplayAudio *clip) const;
     std::int64_t position() const override;
     std::int64_t startPosition() const override;
     std::int64_t endPosition() const override;
