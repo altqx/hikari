@@ -195,6 +195,30 @@ private slots:
         QCOMPARE(read(user.filePath(QStringLiteral("automation/autoload/a.lua"))), QByteArray("a 4"));
     }
 
+    // A file that could not be replaced is tried again at the next start,
+    // though the bundle is the same.
+    void aFailedUpdateIsRetried()
+    {
+#ifdef Q_OS_WIN
+        QSKIP("a read-only folder does not stop writes on Windows");
+#endif
+        QTemporaryDir program, user;
+        const UserFolder folder(user.path(), user.filePath(QStringLiteral("cache")));
+        const QString a = QStringLiteral("Automation/automation/Include/BM/BadMutex/a.so");
+        bundle(program.path(), {{a, "a 1"}});
+        QCOMPARE(folder.seed(program.path()).copied.size(), 1);
+        bundle(program.path(), {{a, "a 2"}});
+        const QString locked = user.filePath(QStringLiteral("automation/include/BM/BadMutex"));
+        const auto permissions = QFile::permissions(locked);
+        QVERIFY(QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+        UserFolder::SeedReport r = folder.seed(program.path());
+        QVERIFY(QFile::setPermissions(locked, permissions));
+        QCOMPARE(r.failed, QStringList{QStringLiteral("automation/include/BM/BadMutex/a.so")});
+        r = folder.seed(program.path());
+        QCOMPARE(r.updated, QStringList{QStringLiteral("automation/include/BM/BadMutex/a.so")});
+        QCOMPARE(read(user.filePath(QStringLiteral("automation/include/BM/BadMutex/a.so"))), QByteArray("a 2"));
+    }
+
     // A file that was there before seeding (a script of the user's with a
     // bundled one's name, one DependencyControl updated) is the user's.
     void aFileTheSeedingDidNotBringIsKept()
@@ -280,6 +304,25 @@ private slots:
         QVERIFY(r.from.isEmpty() && r.leftOver.isEmpty());
         QVERIFY(!QFileInfo::exists(config) && !QFileInfo::exists(data));
         QVERIFY(!QFileInfo::exists(folder.root()));
+    }
+
+    // Autoload and autoload (Include and include) merge as the old search
+    // read them: the lower-case autoload copy replaced an Autoload one, the
+    // Include copy shadowed an include one; the other is left behind.
+    void mergedScriptFoldersKeepTheCopyThatWasUsed()
+    {
+        QTemporaryDir home;
+        const QString data = home.filePath(QStringLiteral("old-data"));
+        const QString scripts = data + QStringLiteral("/Automation/automation/");
+        QVERIFY(write(scripts + QStringLiteral("Autoload/s.lua"), "shadowed"));
+        QVERIFY(write(scripts + QStringLiteral("autoload/s.lua"), "used"));
+        QVERIFY(write(scripts + QStringLiteral("Include/m.lua"), "used"));
+        QVERIFY(write(scripts + QStringLiteral("include/m.lua"), "shadowed"));
+        const UserFolder folder(home.filePath(QStringLiteral("user")), home.filePath(QStringLiteral("cache")));
+        const UserFolder::MoveReport r = folder.moveIn({{}, data});
+        QCOMPARE(read(folder.root() + QStringLiteral("/automation/autoload/s.lua")), QByteArray("used"));
+        QCOMPARE(read(folder.root() + QStringLiteral("/automation/include/m.lua")), QByteArray("used"));
+        QCOMPARE(r.leftOver, (QStringList{scripts + QStringLiteral("Autoload/s.lua"), scripts + QStringLiteral("include/m.lua")}));
     }
 
     // What the user folder already has stays; the old entry is left where it

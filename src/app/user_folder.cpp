@@ -8,6 +8,8 @@
 #include <QHash>
 #include <QSaveFile>
 
+#include <algorithm>
+
 namespace hikari::app {
 
 namespace {
@@ -242,7 +244,10 @@ UserFolder::SeedReport UserFolder::seed(const QString &programFolder) const
             report.kept << user;
         }
     }
-    record.manifest = listingDigest;
+    // A file that could not be written is tried again at the next start:
+    // the bundle counts as seeded only once every file is.
+    if (report.failed.isEmpty())
+        record.manifest = listingDigest;
     if (changed) {
         QDir().mkpath(m_root);
         writeSeedRecord(recordFile, record);
@@ -306,8 +311,20 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &old) const
                         out.append({automation.filePath(sub), into(sub)});
                         continue;
                     }
+                    // Autoload and autoload, Include and include become
+                    // one folder each; the copy the old search used goes
+                    // first, so it is the one kept: a later autoload folder
+                    // replaced a script of the same name, an earlier include
+                    // folder shadowed a module (automationFolders).
                     const QDir scripts(automation.filePath(sub));
-                    for (const QString &part : scripts.entryList(entries)) {
+                    QStringList parts = scripts.entryList(entries);
+                    const auto rank = [](const QString &part) {
+                        return part == QLatin1String("autoload") ? 0 : part == QLatin1String("Autoload") ? 1
+                               : part == QLatin1String("Include")  ? 2 : part == QLatin1String("include") ? 3 : 4;
+                    };
+                    std::stable_sort(parts.begin(), parts.end(),
+                                     [&](const QString &a, const QString &b) { return rank(a) < rank(b); });
+                    for (const QString &part : std::as_const(parts)) {
                         const QString lower = part == QLatin1String("Autoload")  ? QStringLiteral("autoload")
                                               : part == QLatin1String("Include") ? QStringLiteral("include")
                                                                                  : part;
