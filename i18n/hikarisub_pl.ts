@@ -5694,6 +5694,14 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Opens the user guide in the default browser</source>
+        <translation>Otwiera podręcznik użytkownika w domyślnej przeglądarce</translation>
+    </message>
+    <message>
+        <source>User &amp;guide</source>
+        <translation>&amp;Podręcznik użytkownika</translation>
+    </message>
+    <message>
         <source>Install update</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5739,7 +5747,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Opens the HikariSub website in the default browser</source>
-        <translation>Otwiera stronę HikariSub w domyślnej przeglądarce</translation>
+        <translation type="vanished">Otwiera stronę HikariSub w domyślnej przeglądarce</translation>
     </message>
     <message>
         <source>Opens the HikariSub issue tracker</source>
@@ -6380,6 +6388,10 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Enter your password when the system asks for it. HikariSub starts again when the install is done.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>Pomoc</translation>
     </message>
 </context>
 <context>

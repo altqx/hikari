@@ -157,6 +157,11 @@ jobs:
           [ $allow = OFF ] || set -- "$@" --allow-missing-update-helper
           packaging/linux/make-packages.sh "$@"
           tests/packaging/linux/make-test-packages.sh --tools "$B/packaging-tools" --out out/dist-old --version "$VERSION"
+          # DX1 (#367): the docs export the site's hotkeys and settings pages
+          # are made from, attached to the release beside the packages.
+          QT_QPA_PLATFORM=offscreen "$B/src/app/hikarisub" --export-docs out/docs
+          (cd out/docs && cmake -E tar cf "$OLDPWD/out/dist/hikarisub-docs-$VERSION.zip" --format=zip -- \
+            meta.json commands.json settings.json guide-links.json)
           (cd out/dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
           ls -la out/dist out/dist-old
 
@@ -171,7 +176,7 @@ jobs:
           done
           for f in "HikariSub-$VERSION-linux-x86_64.AppImage" "HikariSub-$VERSION-linux-x86_64.AppImage.zsync" \
                    "hikarisub-$VERSION-linux-amd64.deb" "hikarisub-$VERSION-linux-x86_64.rpm" \
-                   "hikarisub-$VERSION-linux-x86_64.tar.gz"; do
+                   "hikarisub-$VERSION-linux-x86_64.tar.gz" "hikarisub-docs-$VERSION.zip"; do
             test -f "$f" || { echo "missing $f" >&2; exit 1; }
           done
 

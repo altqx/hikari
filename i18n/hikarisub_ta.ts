@@ -5657,6 +5657,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Opens the user guide in the default browser</source>
+        <translation>இயல்பு உலாவியில் பயனர் வழிகாட்டியைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>User &amp;guide</source>
+        <translation>பயனர் வழிகாட்டி (&amp;g)</translation>
+    </message>
+    <message>
         <source>Install update</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5702,7 +5710,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens the HikariSub website in the default browser</source>
-        <translation>இயல்பு உலாவியில் HikariSub இணையதளத்தைத் திறக்கிறது</translation>
+        <translation type="vanished">இயல்பு உலாவியில் HikariSub இணையதளத்தைத் திறக்கிறது</translation>
     </message>
     <message>
         <source>Opens the HikariSub issue tracker</source>
@@ -6341,6 +6349,10 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Enter your password when the system asks for it. HikariSub starts again when the install is done.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>உதவி</translation>
     </message>
 </context>
 <context>

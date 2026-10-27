@@ -3,8 +3,9 @@
 // 38e: every hand-off from the application to another program on the
 // desktop goes through here, so tests can stand in for the desktop:
 //  - openUrl: a web page or a local file or folder, opened by the desktop's
-//    handler (QDesktopServices::openUrl; Help > HikariSub website, Report an
-//    issue, an update's release page, Font Collector's folder on Linux);
+//    handler (QDesktopServices::openUrl; Help > User guide, About's website,
+//    Report an issue, an update's release page, Font Collector's folder on
+//    Linux);
 //  - selectInFolder: a file shown selected in its folder (the tab menu's and
 //    the recent files' folder items, a downloaded update's Show in folder;
 //    show_in_folder.h);

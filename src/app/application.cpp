@@ -9,6 +9,7 @@
 #include "hikari/backends/simulated_output.h"
 #include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/guide_links.h"
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
@@ -2571,7 +2572,17 @@ void Application::reportIssue()
 
 void Application::openWebsite()
 {
-    backends::desktop::openUrl(QUrl(QStringLiteral("https://altqx.com")));
+    backends::desktop::openUrl(QUrl(QString::fromUtf8(application::kSiteUrl)));
+}
+
+void Application::openUserGuide(const QString &kind, const QString &id)
+{
+    using application::GuideSurface;
+    // An unknown kind names no page: the guide's home.
+    const std::string surface = kind == QLatin1String("panel") || kind == QLatin1String("window") ? id.toStdString() : "";
+    const auto url = application::guideUrl(kind == QLatin1String("panel") ? GuideSurface::Panel : GuideSurface::Window,
+                                           surface);
+    backends::desktop::openUrl(QUrl(QString::fromStdString(url)));
 }
 
 QVariantMap Application::reviewOpen(const QString &path)
@@ -5853,6 +5864,7 @@ QVariantMap Application::openSettingsDialog()
         outputDeviceLabels << outputDeviceLabel(choice);
     return {{QStringLiteral("values"), values},
             {QStringLiteral("languages"), qList(lists.languageNames)},
+            {QStringLiteral("languageTags"), qList(lists.languageTags)}, // DX1: the docs export's entries
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
             {QStringLiteral("catalogs"), qList(lists.catalogs)},
             {QStringLiteral("styles"), qList(lists.styles)},

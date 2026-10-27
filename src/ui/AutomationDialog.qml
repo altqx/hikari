@@ -51,6 +51,7 @@ DialogWindow {
 
     title: controller.title
     dialogId: controller.dialogId
+    guideId: "automation" // DX1: one page for every script's window
     resizable: true
     modal: true
 

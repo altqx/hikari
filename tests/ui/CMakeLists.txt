@@ -395,6 +395,13 @@ add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari
 # 38e: no test reaches the desktop's programs (tests/support/desktop): the
 # recording handlers, the refusal that fails a run, the shell's hand-offs.
 hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
+# DX1 (#367): User guide (F1, the DG1 windows' "?") and the docs export.
+hikari_add_qttest(hikari_ui_user_guide_tests SOURCES user_guide_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_user_guide_tests PRIVATE HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
+hikari_add_qttest(hikari_ui_docs_export_tests SOURCES docs_export_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_docs_export_tests PRIVATE HIKARI_PROGRAM="$<TARGET_FILE:hikarisub>"
+    HIKARI_VERSION="${HIKARI_VERSION}")
+add_dependencies(hikari_ui_docs_export_tests hikarisub)
 # R1: subtitle comparison through the composition and the tab menu.
 hikari_add_qttest(hikari_ui_comparison_tests SOURCES comparison_tests.cpp LIBRARIES hikari_composition)
 # R2: reference navigation, linked matching and the subtitles preview.
