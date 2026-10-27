@@ -4,6 +4,8 @@
 -- lyger's FbfTransform and GradientEverything do in save_preset.
 -- Writers: two handlers on one file, as two scripts' helpers have; one
 -- adds a key, and the other's later saves keep it.
+-- Migrate: another helper saves between a handler's first read and its
+-- schema migration; the migrated file keeps what it saved.
 script_name = "DependencyControl config"
 script_description = ""
 script_version = "0.0.1"
@@ -40,4 +42,31 @@ aegisub.register_macro("Writers", "", function()
     assert(check:load())
     local hive = check:getView({"package"}).c
     aegisub.log("%s,%s", tostring(hive.mine), tostring(hive.theirs))
+end)
+
+aegisub.register_macro("Migrate", "", function()
+    local path = aegisub.decode_path("?user/config/test.Migrate.json")
+    local f = assert(io.open(path, "w"))
+    f:write('{"package": {"old": 1}}')
+    f:close()
+    local handler = ConfigHandler(path, nil, {schemaId = "test-2", migrate = function(config)
+        config.package.migrated = true
+        return true
+    end})
+    local read, first = handler.__readFile, true
+    handler.__readFile = function(self, ...)
+        local config, err = read(self, ...)
+        if first then
+            first = false
+            local other = assert(io.open(path, "w"))
+            other:write('{"package": {"old": 1, "theirs": 1}}')
+            other:close()
+        end
+        return config, err
+    end
+    assert(handler:load())
+    local check = ConfigHandler(path)
+    assert(check:load())
+    local hive = check:getView({"package"}).c
+    aegisub.log("%s,%s,%s", tostring(hive.migrated), tostring(hive.theirs), tostring(check.schemaId))
 end)

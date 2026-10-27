@@ -420,21 +420,22 @@ class ConfigHandler
 
     if views == nil or @config == nil
       -- bring a pre-target config up to the handler's schema, then persist the one-time change
-      migrated = false
-      if @__migrate and @__targetSchemaId
-        currentSchema = config[JsonSchema.JSON_SCHEMA_ID_KEYWORD]
-        if currentSchema != @__targetSchemaId and @.__migrate config, currentSchema, @__targetSchemaId
-          config[JsonSchema.JSON_SCHEMA_ID_KEYWORD] = @__targetSchemaId
-          migrated = true
+      -- HikariSub (DC1): read, migrate and write again under one hold of the lock; another helper may have
+      -- written since the read above, and saving this snapshot whole would drop that
+      if @__migrate and @__targetSchemaId and config[JsonSchema.JSON_SCHEMA_ID_KEYWORD] != @__targetSchemaId
+        migrated, msg = @__migrateFile waitLockTime
+        if migrated
+          config = migrated
+        else
+          @logger\warn msgs.load.migrationSaveFailed, @filePath, msg
+          currentSchema = config[JsonSchema.JSON_SCHEMA_ID_KEYWORD]
+          if @.__migrate config, currentSchema, @__targetSchemaId
+            config[JsonSchema.JSON_SCHEMA_ID_KEYWORD] = @__targetSchemaId
       @schemaId = config[JsonSchema.JSON_SCHEMA_ID_KEYWORD]
 
       @config = config
       @__baseline = utils.deepCopy config
       view\refresh! for view, _ in pairs @views
-
-      if migrated
-        ok, msg = @save!
-        @logger\warn msgs.load.migrationSaveFailed, @filePath, msg unless ok
       return true
 
     viewsToRefresh = utils.makeSet views
@@ -456,6 +457,34 @@ class ConfigHandler
     view\refresh! for view, _ in pairs viewsToRefresh
 
     return true
+
+
+  ---HikariSub (DC1): reads the config file, migrates it to the handler's schema and writes it back, all under
+  ---one hold of the lock.
+  ---@private
+  ---@param waitLockTime? number Seconds to wait for the config lock.
+  ---@return table? config The config as migrated and written.
+  ---@return string? err
+  __migrateFile: (waitLockTime) =>
+    lockState, msg = @lock\lock waitLockTime
+    if lockState != Lock.LockState.Held
+      return nil, msgs.save.failedLock\format msg
+
+    config, err = @__readFile waitLockTime, false
+    if config == nil
+      @lock\release!
+      return nil, err
+    config or= {}
+
+    currentSchema = config[JsonSchema.JSON_SCHEMA_ID_KEYWORD]
+    if currentSchema != @__targetSchemaId and @.__migrate config, currentSchema, @__targetSchemaId
+      config[JsonSchema.JSON_SCHEMA_ID_KEYWORD] = @__targetSchemaId
+      success, err = @__writeFile config, nil, true
+      unless success
+        @lock\release!
+        return nil, err
+    @lock\release!
+    return config
 
 
   ---Writes the config file, merging only the specified views (or the full config if nil).

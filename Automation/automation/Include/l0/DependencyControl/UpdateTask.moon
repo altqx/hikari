@@ -41,6 +41,7 @@ TrustBand = Enum "UpdaterTrustBand", {
 ---@field isDirect boolean True when the feed offers the required package by name; false when via a provider.
 ---@field trustBand UpdaterTrustBand The candidate's trust band.
 ---@field providesVersion? string For a provider, the alias version range it declares (nil = any version).
+---@field foreign? boolean HikariSub (DC1): the feed is not the one a missing package names, so it ranks as untrusted.
 
 ---The outcome of resolving a package source: either a source to install or a status to return.
 ---@class UpdaterResolution
@@ -248,6 +249,8 @@ msgs = {
     providerResolved: "Satisfying required module '%s' with provider %s '%s' (v%s)."
     providerInstallFailed: "Found a provider for '%s' (%s) but it couldn't be installed: %s"
     untrustedPrompt: "The %s of %s '%s' can only be satisfied from a feed DependencyControl doesn't trust:\n%s\n\nTrust this feed and proceed?"
+    -- HikariSub (DC1)
+    foreignPrompt: "The %s of %s '%s' can only be satisfied from a feed other than the one it names (%s):\n%s\n\nInstall it from this feed?"
     choosePrompt: "More than one source can supply '%s'. Choose which one to install:"
     choiceUnavailable: "Your remembered source for '%s' is no longer available. Please choose again:"
     choiceUntrustedFlag: " [untrusted]"
@@ -274,6 +277,7 @@ msgs = {
     trustOnce: "Trust this time"
     trustAlways: "Always trust this feed"
     trustNever: "Never (block this feed)"
+    useForeign: "Install from this feed"
   }
   promptSelectSource: {
     once: "Just This Once"
@@ -583,6 +587,15 @@ class UpdateTask
   ---@return FeedTrustDecision? decision The user's decision, or nil if they cancelled.
   ---@private
   __promptTrustFeed: (selectedCandidate) =>
+    -- HikariSub (DC1): a trusted feed other than the one the package names is another publisher; ask for this
+    -- install only, and leave its trust alone
+    if selectedCandidate.foreign
+      msg = msgs.run.foreignPrompt\format getInstallTerm(@record), domain.terms.scriptType.singular[@record.scriptType],
+        @record.name, @record.feed, selectedCandidate.feedUrl
+      btn = aegisub.dialog.display {{class: "label", label: msg, x: 0, y: 0, width: 1, height: 1}},
+        {msgs.dialogCommon.cancel, msgs.__promptTrustFeed.useForeign}, {cancel: msgs.dialogCommon.cancel}
+      return btn == msgs.__promptTrustFeed.useForeign and FeedTrustDecision.Once or nil
+
     msg = msgs.run.untrustedPrompt\format getInstallTerm(@record),
       domain.terms.scriptType.singular[@record.scriptType],
       @record.name, selectedCandidate.feedUrl
@@ -780,8 +793,11 @@ class UpdateTask
     -- a remembered provider stays pinned to its band so a version bump updates it in place instead of switching providers
     stickyProvider = remembered and remembered.provider and remembered.provider.namespace
 
+    -- HikariSub (DC1): a missing package that names its feed takes another feed's build only with the user's
+    -- consent, as from an untrusted feed; another publisher could otherwise claim its namespace
+    isForeign = (url) -> @record.virtual and declaredFeed and url != declaredFeed and url != userFeed or false
     bandOf = (feedUrl, direct) ->
-      if isTrusted feedUrl
+      if isTrusted(feedUrl) and not isForeign feedUrl
         return direct and (feedUrl == declaredFeed and TrustBand.DeclaredDirect or TrustBand.TrustedDirect) or TrustBand.TrustedProvider
       return direct and TrustBand.UntrustedDirect or TrustBand.UntrustedProvider
 
@@ -802,7 +818,8 @@ class UpdateTask
 
         if rec
           maxVer = math.max maxVer, version
-          candidates[#candidates + 1] = {updateRecord: rec, feedUrl: feedUrl, isDirect: true, trustBand: bandOf(feedUrl, true)}
+          candidates[#candidates + 1] = {updateRecord: rec, feedUrl: feedUrl, isDirect: true, trustBand: bandOf(feedUrl, true),
+            foreign: isForeign feedUrl}
         elseif errMsg
           @logger\log errMsg
         if @record.virtual
@@ -810,8 +827,10 @@ class UpdateTask
             -- the version range this provider declares for the required alias, if any
             providesVersions = [e.version for e in *(provider.provides or {}) when type(e) == "table" and e.name == @record.namespace]
             -- a trusted candidate from the sticky (remembered/installed) provider stays pinned (declared-direct band)
-            trustBand = (provider.namespace == stickyProvider and isTrusted feedUrl) and TrustBand.DeclaredDirect or bandOf(feedUrl, false)
-            candidates[#candidates + 1] = {updateRecord: provider, feedUrl: feedUrl, isDirect: false, :trustBand, providesVersion: providesVersions[1]}
+            trustBand = (provider.namespace == stickyProvider and isTrusted(feedUrl) and not isForeign feedUrl) and
+              TrustBand.DeclaredDirect or bandOf(feedUrl, false)
+            candidates[#candidates + 1] = {updateRecord: provider, feedUrl: feedUrl, isDirect: false, :trustBand,
+              providesVersion: providesVersions[1], foreign: isForeign feedUrl}
 
     @logger.indent += 1
 

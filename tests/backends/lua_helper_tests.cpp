@@ -1563,7 +1563,8 @@ TEST_F(LuaHelper, DependencyControlLoadsWhileTheScriptLoads)
 // DC1: DependencyControl.ConfigHandler is still the class of what
 // getConfigHandler returns, which scripts written for DependencyControl < 0.7
 // compare against (lyger's presets would otherwise lose their tags); and a
-// handler saving a config file again keeps what another wrote there since.
+// handler saving or migrating a config file keeps what another wrote there
+// since.
 TEST_F(LuaHelper, DependencyControlConfigSuitsOldScriptsAndOtherWriters)
 {
     QTemporaryDir work;
@@ -1591,6 +1592,9 @@ TEST_F(LuaHelper, DependencyControlConfigSuitsOldScriptsAndOtherWriters)
     ASSERT_TRUE(runToEnd(*host, "Writers"));
     EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
     EXPECT_EQ(run.log, QStringList{"3,1"});
+    ASSERT_TRUE(runToEnd(*host, "Migrate"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, QStringList{"true,1,test-2"});
 }
 
 // DC1: an update feed on the loopback, so DependencyControl's downloads need
@@ -1637,7 +1641,8 @@ private:
 // DC1: DependencyControl installs a module from its feed and updates it,
 // with the calls its Toolbox makes, into the user's folder of an installed
 // copy, which the host then searches. Another trusted feed offering the
-// module does not update it while its own feed is down.
+// module neither installs it while the feed it names is down (no one
+// answers the prompt) nor updates it while its own feed is down.
 TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
 {
     FeedServer server;
@@ -1721,8 +1726,32 @@ TEST_F(LuaHelper, DependencyControlInstallsAndUpdatesFromAFeed)
         out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
         reply(out);
     };
-    publish(QStringLiteral("1.0.0"));
+    // The feed it names is gone and another trusted feed offers it: the
+    // install asks first, and declined it is an untrusted feed's (-16).
+    publish(QStringLiteral("1.0.0"), QStringLiteral("/other.json"));
+    qputenv("HIKARI_TEST_FEED", server.url(QStringLiteral("/gone.json")).toUtf8());
+    qputenv("HIKARI_TEST_ADD_FEED", other.toUtf8());
     auto host = load(fixture("depctrl-feed.lua"), services, include.join(QLatin1Char('\n')));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    std::string asked;
+    host->setDialogHandler([&](const DialogRequest &request, LuaScriptHost::DialogReply reply) {
+        asked = request.controls.empty() ? std::string() : request.controls.front().label;
+        auto result = hikari::application::initialDialogResult(request);
+        result.pressed = -1;
+        reply(result);
+    });
+    ASSERT_TRUE(runToEnd(*host, "Install", 60'000));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_NE(asked.find(other.toStdString()), std::string::npos) << asked;
+    ASSERT_FALSE(run.log.isEmpty());
+    EXPECT_TRUE(run.log.last().startsWith(QStringLiteral("-16,"))) << run.log.join(QLatin1Char('\n')).toStdString();
+    EXPECT_FALSE(QFile::exists(user + QStringLiteral("/automation/include/test/Greeter.lua")));
+    server.files.erase(QStringLiteral("/other.json"));
+
+    qputenv("HIKARI_TEST_FEED", feed.toUtf8());
+    qunsetenv("HIKARI_TEST_ADD_FEED");
+    publish(QStringLiteral("1.0.0"));
+    host = load(fixture("depctrl-feed.lua"), services, include.join(QLatin1Char('\n')));
     ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
     // Installed (status 1) into the user's lower-case include folder.
     ASSERT_TRUE(runToEnd(*host, "Install", 60'000));

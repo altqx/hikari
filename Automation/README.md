@@ -35,15 +35,17 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
   substitutes into `##__X_VERSION__##` placeholders.
 - DependencyControl's own files are the v0.9.1 release. The legacy package had
   mixed its 0.6.4 core with newer modules, which broke its feeds
-  (DC1-depctrl-release). Seven fixes are marked `HikariSub (DC1)`: the
+  (DC1-depctrl-release). Nine fixes are marked `HikariSub (DC1)`: the
   Toolbox releases the updater lock after Install and Update Script, its log
   level field starts at 2 (lower levels make ordinary messages raise), and
   Package Source Configuration writes into the reloaded config;
-  `ConfigHandler.getSerializableCopy` keeps a table referenced twice, and a
-  save keeps another writer's keys on the next save;
+  `ConfigHandler.getSerializableCopy` keeps a table referenced twice, a
+  save keeps another writer's keys on the next save, and a schema migration
+  rereads and writes the file under one lock;
   `DependencyControl.ConfigHandler` is the class of what `getConfigHandler`
   returns (`ConfigView`), which scripts written for 0.6 compare against; and
-  an installed package updates only from its own feeds.
+  an installed package updates only from its own feeds, and a missing one
+  that names its feed takes another feed's build only when the user agrees.
 - `automation/include/moonscript.lua` is MoonScript 0.5.0, from
   `TypesettingTools/Aegisub` `3c5b61429a49` (what arch1t3cht's Aegisub ships).
   The released package's 0.3.0 cannot compile DependencyControl 0.9's
