@@ -212,10 +212,12 @@ Overlay CrosshairTool::overlay(const VisualHost &host) const
     Overlay out;
     if (!shown() || !host.view().hasVideo())
         return out;
+    out.unit = unitOf(host);
+    const float half = 0.5f * out.unit;
     out.lines.push_back({m_vectors[0], m_vectors[1], 3, 0xFF000000});
     out.lines.push_back({m_vectors[2], m_vectors[3], 3, 0xFF000000});
-    out.lines.push_back({{m_vectors[0].x + 0.5f, m_vectors[0].y}, {m_vectors[1].x + 0.5f, m_vectors[1].y}, 1, 0xFFFFFFFF});
-    out.lines.push_back({{m_vectors[2].x, m_vectors[2].y + 0.5f}, {m_vectors[3].x, m_vectors[3].y + 0.5f}, 1, 0xFFFFFFFF});
+    out.lines.push_back({{m_vectors[0].x + half, m_vectors[0].y}, {m_vectors[1].x + half, m_vectors[1].y}, 1, 0xFFFFFFFF});
+    out.lines.push_back({{m_vectors[2].x, m_vectors[2].y + half}, {m_vectors[3].x, m_vectors[3].y + half}, 1, 0xFFFFFFFF});
     out.texts.push_back({m_crossRect, m_coords, 0xFFFFFFFF, true, 0});
     return out;
 }

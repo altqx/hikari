@@ -313,6 +313,9 @@ const std::vector<SettingDefinition> &definitions()
         // KA3 (#278): the Kanji timer's Suggest groupings (Aegisub's "Attempt
         // to interpolate kanji", Tool/Kanji Timer/Interpolation), on by default.
         {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
+        // KA8 (#354): the Kanji timer writes # syllables (KA8-multi-highlight),
+        // off by default.
+        {"audio.kanjiTimerMulti", "", Bool, Profile, Mapped, false, false},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other
@@ -363,6 +366,10 @@ const std::vector<SettingDefinition> &definitions()
         // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
         // over the video (GLOBAL_VIDEO_RENDER_COST).
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
+        // SV1-screen-size-subtitles (#365): "Preview subtitles at", 0 Video
+        // resolution (as encoded, decision 5 of 2026-10-15), 1 Screen size
+        // (sharp; libass only).
+        {"video.previewSubtitlesAt", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // AD2 (#311): "Fill in my last answers" (AD2-fill-last-answers, off
         // by default); script dialogs' last answers, one "<key>\t<JSON>" row
         // per dialog, the one used last first, at most 200; and their

@@ -6,6 +6,8 @@
 
 <p align="center">A subtitle editor for timing, translating, typesetting and karaoke, with a frame-accurate video player.</p>
 
+<p align="center"><a href="https://hikarisub.altqx.com">Website and user guide</a></p>
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/hero-dark.webp">
   <source media="(prefers-color-scheme: light)" srcset="docs/readme/hero-light.webp">

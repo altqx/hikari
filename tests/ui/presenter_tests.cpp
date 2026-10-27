@@ -376,6 +376,45 @@ private slots:
         QVERIFY(testing::compareImages(grabbed, cpuReference(*quadrants(), nullptr), {2, 0}).withinTolerance);
     }
 
+    // SV1-screen-size-subtitles: an overlay drawn at twice the frame's size
+    // covers the frame where its pixels fall, whole or by its bounds, and
+    // the presenter reports the picture's size on screen.
+    void anOverlayAtScreenSizeIsPlacedOnTheFrame()
+    {
+        const QRect topRight(kW, 0, kW, kH); // the frame's top-right quadrant, at 2x
+        const auto overlay = box(topRight, kW * 2, kH * 2);
+        const auto shows = [&] {
+            const QImage grabbed = window->grabWindow();
+            const QColor covered(grabbed.pixel(72, 16)), left(grabbed.pixel(24, 16)), below(grabbed.pixel(72, 48));
+            // Half-transparent grey (premultiplied 128) over (40, 200, 40).
+            return std::abs(covered.red() - 148) <= 3 && std::abs(covered.green() - 228) <= 3 &&
+                   std::abs(left.red() - 200) <= 2 && std::abs(below.red() - 220) <= 2;
+        };
+        QVERIFY(presentAndWait({1, quadrants(), overlay, {}}));
+        QVERIFY(QTest::qWaitFor(shows, 10'000));
+        QVERIFY(presentAndWait(withBounds(2, quadrants(), overlay, topRight)));
+        QVERIFY(QTest::qWaitFor(shows, 10'000));
+        const double dpr = window->effectiveDevicePixelRatio();
+        QCOMPARE(presenter->screenSize(), QSize(qRound(kW * dpr), qRound(kH * dpr)));
+        // The zoomed part's rectangle widens to the whole frame's.
+        QSignalSpy changed(presenter, &VideoPresenter::screenSizeChanged);
+        presenter->setSourceRect(QRectF(0, 0, kW / 2.0, kH / 2.0));
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(presenter->screenSize(), QSize(qRound(kW * 2 * dpr), qRound(kH * 2 * dpr)));
+        presenter->setSourceRect({});
+        QCOMPARE(presenter->screenSize(), QSize(qRound(kW * dpr), qRound(kH * dpr)));
+    }
+
+    void anOverlayOfABrokenLayoutIsRefused()
+    {
+        auto broken = std::make_shared<OverlayFrame>(*box(QRect(0, 0, 4, 4), kW * 2, kH * 2));
+        broken->stride = 4;
+        const auto result = presentAndWait({1, quadrants(), broken, {}});
+        QVERIFY(result);
+        QCOMPARE(result->outcome, PresentOutcome::Error);
+        QCOMPARE(result->message, std::string("overlay layout does not match its buffer"));
+    }
+
     void pixelAspectWidensTheFrame()
     {
         QVERIFY(presentAndWait({5, quadrants(), nullptr, {2.0}}));
@@ -584,11 +623,12 @@ private slots:
         QVERIFY(result);
         QCOMPARE(result->outcome, PresentOutcome::Error);
         QCOMPARE(result->stage, PresentStage::Submitted);
+        // SV1: an overlay may be of any size, but its buffer must hold it.
         const auto wrongOverlay = std::make_shared<OverlayFrame>();
         wrongOverlay->width = 10;
         wrongOverlay->height = 10;
         wrongOverlay->stride = 40;
-        wrongOverlay->pixels.resize(400);
+        wrongOverlay->pixels.resize(399);
         wrongOverlay->empty = false;
         const auto mismatched = presentAndWait({6, quadrants(), wrongOverlay, {}});
         QVERIFY(mismatched);

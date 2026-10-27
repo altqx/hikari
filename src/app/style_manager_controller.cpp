@@ -867,18 +867,21 @@ QVariantMap StyleManagerController::deleteUnusedStyles()
              QCoreApplication::translate("HikariSub.Styles", "Styles used:\n%1\nStyles deleted:\n%2").arg(used, deleted)}};
 }
 
-void StyleManagerController::renderPreview(const QVariantMap &values, int width, int height, const QString &text)
+void StyleManagerController::renderPreview(const QVariantMap &values, int width, int height, const QString &text,
+                                           qreal scale)
 {
     if (width < 1 || height < 1)
         return;
     const core::StyleValues style = styleOf(values, m_edit ? m_edit->opened : application::defaultStyle());
-    m_preview = renderStylePreview(m_renderer, style, width, height, text, m_hooks.fonts ? m_hooks.fonts() : std::vector<application::FontLease>());
+    m_preview = renderStylePreview(m_renderer, style, width, height, text,
+                                   m_hooks.fonts ? m_hooks.fonts() : std::vector<application::FontLease>(),
+                                   m_atScreenSize ? scale : 1);
     ++m_previewKey;
     emit previewChanged();
 }
 
 QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues style, int width, int height,
-                          const QString &text, std::vector<application::FontLease> fonts)
+                          const QString &text, std::vector<application::FontLease> fonts, qreal scale)
 {
     // StylePreview::SubsText: the Style at alignment 5 on a script the preview's size.
     style.alignment = u8"5";
@@ -897,26 +900,26 @@ QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues 
     snapshot.script.resize(script.size());
     std::memcpy(snapshot.script.data(), script.data(), script.size());
     snapshot.fonts = std::move(fonts); // Y6: the external fonts
-    // The checkered background: 10-pixel squares of the two preview colours.
-    QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
+    // SV1: the pixels drawn, `scale` per unit of the preview's size.
+    const qreal s = scale > 1 ? scale : 1;
+    const int pixelWidth = std::max(1, qRound(width * s)), pixelHeight = std::max(1, qRound(height * s));
+    // The checkered background: 10-unit squares of the two preview colours.
+    QImage image(pixelWidth, pixelHeight, QImage::Format_ARGB32_Premultiplied);
     const QRgb one = qRgb(0x43, 0x43, 0x43), two = qRgb(0x62, 0x62, 0x62);
-    bool rowPhase = false;
-    for (int y = 0; y < height; ++y) {
-        if (y % 10 == 0)
-            rowPhase = !rowPhase;
-        bool phase = rowPhase;
+    const auto square = [s](int pixel) { return static_cast<int>(pixel / s) / 10; };
+    for (int y = 0; y < pixelHeight; ++y) {
+        const bool rowPhase = square(y) % 2 == 0;
         auto *rowPixels = reinterpret_cast<QRgb *>(image.scanLine(y));
-        for (int x = 0; x < width; ++x) {
-            if (x % 10 == 0 && x > 0)
-                phase = !phase;
-            rowPixels[x] = phase ? one : two;
-        }
+        for (int x = 0; x < pixelWidth; ++x)
+            rowPixels[x] = (square(x) % 2 == 0) == rowPhase ? one : two;
     }
     // Premultiplied BGRA over the opaque background (ARGB32's bytes are B, G, R, A).
     static_assert(Q_BYTE_ORDER == Q_LITTLE_ENDIAN);
     if (renderer.prepare(std::move(snapshot)))
-        if (const auto frame = renderer.render(core::DocumentTime(1'000'000), width, height))
-            application::compositeOverlay(*frame, image.bits(), width, height, image.bytesPerLine());
+        if (const auto frame = application::renderOverlay(renderer, core::DocumentTime(1'000'000),
+                                                          {pixelWidth, pixelHeight, width, height}))
+            application::compositeOverlay(*frame, image.bits(), pixelWidth, pixelHeight, image.bytesPerLine());
+    image.setDevicePixelRatio(s);
     return image;
 }
 

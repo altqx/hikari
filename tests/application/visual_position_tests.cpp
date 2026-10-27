@@ -1353,6 +1353,41 @@ TEST(VisualPositionValues, AScrubIsOneStepAndEscDropsIt)
     host.escape();
 }
 
+// SV1-hidpi-tool-sizes: on a screen of twice the pixels the handles keep
+// legacy's size in logical pixels: twice as many device pixels, at the same
+// device positions, and grabbed from twice as far.
+TEST(VisualPositionHidpi, HandlesKeepTheirLogicalSize)
+{
+    const auto overlayAt = [](double dpr) {
+        TestHost host;
+        standard(host);
+        host.v.setDevicePixelRatio(dpr);
+        PositionTool tool;
+        host.tool = &tool;
+        tool.selected(host);
+        tool.reset(host);
+        return tool.overlay(host);
+    };
+    const Overlay one = overlayAt(1), two = overlayAt(2);
+    // The square handle: the same centre, twice the side.
+    ASSERT_EQ(one.polygons.size(), 1u);
+    ASSERT_EQ(two.polygons.size(), 1u);
+    const auto &a = one.polygons[0].points, &b = two.polygons[0].points;
+    ASSERT_EQ(a.size(), 4u);
+    ASSERT_EQ(b.size(), 4u);
+    EXPECT_FLOAT_EQ(b[0].x + b[2].x, a[0].x + a[2].x);
+    EXPECT_FLOAT_EQ(b[0].y + b[2].y, a[0].y + a[2].y);
+    EXPECT_FLOAT_EQ(b[2].x - b[0].x, 2 * (a[2].x - a[0].x));
+    // The cross's arms twice as long.
+    ASSERT_FALSE(one.lines.empty());
+    ASSERT_EQ(two.lines.size(), one.lines.size());
+    for (std::size_t i = 0; i < one.lines.size(); ++i) {
+        const auto length = [](const OverlayLine &l) { return std::hypot(l.to.x - l.from.x, l.to.y - l.from.y); };
+        EXPECT_FLOAT_EQ(length(two.lines[i]), 2 * length(one.lines[i]));
+        EXPECT_EQ(two.lines[i].width, one.lines[i].width); // logical, scaled when drawn
+    }
+}
+
 TEST(VisualPositionWarning, OnlyWhileNoneOfItsLinesIsVisible)
 {
     TestHost host;

@@ -19,6 +19,21 @@ void VideoSession::setFrameWorker(PlaybackPipeline::Post post)
     m_pipeline = std::make_unique<PlaybackPipeline>(m_renderer, std::move(post),
                                                     [this](PlaybackPipeline::Output out) { showGeneral(std::move(out)); });
     m_pipeline->setSubtitles(m_subtitleSerial, m_hasSubtitles);
+    m_pipeline->setScreenSize(m_screen);
+}
+
+void VideoSession::setScreenSize(std::optional<std::pair<int, int>> size)
+{
+    if (size == m_screen)
+        return;
+    m_screen = size;
+    if (m_pipeline)
+        m_pipeline->setScreenSize(size);
+    // Playing, the next frame is drawn at the new size.
+    if (!m_playing) {
+        render();
+        present();
+    }
 }
 
 std::optional<LegacyColourMatrix::Input> VideoSession::playerColour() const
@@ -331,7 +346,7 @@ void VideoSession::render()
     const auto start = m_overlayTime ? m_overlayTime : frameStart(m_shown->index);
     if (!start)
         return;
-    if (auto overlay = m_renderer.render(*start, m_shown->width, m_shown->height))
+    if (auto overlay = renderOverlay(m_renderer, *start, overlaySizeFor(m_shown->width, m_shown->height, m_screen)))
         m_overlay = std::make_shared<const OverlayFrame>(std::move(*overlay));
 }
 

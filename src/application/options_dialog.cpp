@@ -149,6 +149,9 @@ constexpr OptionsBinding kBindings[] = {
     // AD2 (#311): "Fill in my last answers", the Automation page's Script
     // dialogs section.
     {"automation.fillLastAnswers", Check, Automation},
+    // SV1 (#365): "Preview subtitles at" (0 Video resolution, 1 Screen
+    // size), the Video page's Subtitles on video section.
+    {"video.previewSubtitlesAt", IndexChoice, Video, 0, 0, 2},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
