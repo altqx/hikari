@@ -3401,7 +3401,7 @@ private slots:
 
     // Each preset goes in above the first karaoke Line as its template and
     // code Lines, with that Line's Style, in one undo step; the first is
-    // current and editable. It previews on the karaoke Line what Apply then
+    // current and editable. It previews on each karaoke Line what Apply then
     // writes, and Apply gives karaoke_presets_tests' golden.
     void eachPresetInsertsPreviewsAndApplies()
     {
@@ -3434,20 +3434,32 @@ private slots:
             QCOMPARE(editor->text(), qs(preset->lines.front().text));
 
             QVERIFY2(previewCame(), qPrintable(file));
-            QTRY_VERIFY_WITH_TIMEOUT(settled(), 20'000);
-            QVERIFY2(!editor->hasProblems(), qPrintable(editor->problem()));
-            const QStringList preview = previewTexts();
-            QVERIFY(!preview.isEmpty());
+            // Each karaoke Line of the Style previews what Apply writes for
+            // it, the later ones too (their Lines before them left out).
+            std::vector<std::pair<core::LineId, QStringList>> previews;
+            for (const auto *l : session->document().lines())
+                if (application::isKaraokeLine(*l) && l->style == u8"Romaji")
+                    previews.emplace_back(l->id, QStringList());
+            QCOMPARE(previews.size(), std::size_t{3});
+            for (auto &[id, preview] : previews) {
+                activate(id);
+                QVERIFY(QTest::qWaitFor([&] { return settled() && editor->source() == id.value; }, 20'000));
+                QVERIFY2(!editor->hasProblems(), qPrintable(editor->problem()));
+                preview = previewTexts();
+                QVERIFY(!preview.isEmpty());
+            }
 
             QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
             QVERIFY(editor->apply(false));
             editor->applied(templater->report);
             QCOMPARE(bytesOf(session->document()), presetGolden(file));
-            QStringList written;
-            for (const auto *l : session->document().lines())
-                if (l->generatedFrom == source)
-                    written << QString::fromStdString(lineText(*l)).section(QLatin1Char(','), 9);
-            QCOMPARE(preview, written);
+            for (const auto &[id, preview] : previews) {
+                QStringList written;
+                for (const auto *l : session->document().lines())
+                    if (l->generatedFrom == id)
+                        written << QString::fromStdString(lineText(*l)).section(QLatin1Char(','), 9);
+                QCOMPARE(preview, written);
+            }
 
             QVERIFY(session->undo());
             QVERIFY(session->undo());

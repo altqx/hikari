@@ -26,6 +26,7 @@
 #include <QJsonObject>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstring>
 #include <functional>
 #include <optional>
@@ -297,6 +298,33 @@ TEST_F(KaraokePresets, EachPresetGeneratesItsGolden)
         EXPECT_GT(generated, 0);
         EXPECT_EQ(report.value(QStringLiteral("generated")).toInt(), generated);
     }
+}
+
+// Scale pop swells each syllable from its Style's own scale and back to it,
+// so a Style scaled to 80 x 120 keeps that size between pops.
+TEST_F(KaraokePresets, ScalePopKeepsTheStyleScale)
+{
+    const auto all = presets();
+    const auto pop = std::ranges::find(all, QStringLiteral("04-scale-pop.ass"), &Preset::file);
+    ASSERT_NE(pop, all.end());
+    std::string text = textOf(fixtureWith(pop->preset));
+    const std::string style = "Style: Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,";
+    const auto at = text.find(style);
+    ASSERT_NE(at, std::string::npos);
+    text.replace(at + style.size() - 8, 8, "80,120,");
+    const std::string reference = templated(bytesOf(text), pristineScript());
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+    ASSERT_TRUE(apply(session, bundledScript(), kAll));
+    EXPECT_EQ(textOf(hikari::core::encodeAss(session.document())), reference);
+    int generated = 0;
+    for (const auto *l : session.document().lines()) {
+        if (l->comment || l->effect != u8"fx")
+            continue;
+        ++generated;
+        EXPECT_NE(l->text.find(u8"\\fscx104\\fscy156\\1c"), std::u8string::npos) << narrow(l->text);
+        EXPECT_NE(l->text.find(u8"\\fscx80\\fscy120)"), std::u8string::npos) << narrow(l->text);
+    }
+    EXPECT_GT(generated, 0);
 }
 
 // The presets use no random values, so KE1 can regenerate one karaoke Line

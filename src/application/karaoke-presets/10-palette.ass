@@ -2,7 +2,7 @@
 ; A HikariSub karaoke effect preset (KE3, docs/qt/karaoke-presets.md): original
 ; work under HikariSub's licence. Give the Comment Lines the karaoke Lines' Style.
 Title: Colour per Line
-Description: Each Line fills in the next colour of a short palette; a code Line keeps count.
+Description: Lines take turns through a short palette of fill colours, by their place in the file.
 ScriptType: v4.00+
 WrapStyle: 0
 PlayResX: 1280
@@ -15,7 +15,6 @@ Style: Default,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,code once,palette = {"&H3CB4FF&", "&HFF8C50&", "&H78DC64&", "&HC878FF&"}; palette_line = 0
-Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,code line,palette_line = palette_line + 1
-Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template pre-line palette,!retime("line",-300,300)!{\fad(300,300)\1c!palette[(palette_line-1)%#palette+1]!\k30}
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,code once,palette = {"&H3CB4FF&", "&HFF8C50&", "&H78DC64&", "&HC878FF&"}
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template pre-line palette,!retime("line",-300,300)!{\fad(300,300)\1c!palette[$li%#palette+1]!\k30}
 Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template line palette,{\kf$kdur}

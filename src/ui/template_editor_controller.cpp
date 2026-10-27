@@ -53,7 +53,7 @@ constexpr PresetEntry kPresets[] = {
                        "A second colour wipes across each syllable from left to right while it is sung.")},
     {"04-scale-pop.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Scale pop"),
      QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
-                       "Each syllable swells as it is sung and settles back in the sung colour.")},
+                       "Each syllable swells as it is sung and settles back to its Style's size in the sung colour.")},
     {"05-bounce.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Bounce"),
      QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Each syllable hops up and lands again while it is sung.")},
     {"06-glow.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Glow"),
@@ -67,7 +67,7 @@ constexpr PresetEntry kPresets[] = {
                        "Letters drop into place one by one, then light up syllable by syllable.")},
     {"10-palette.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Colour per Line"),
      QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
-                       "Each Line fills in the next colour of a short palette; a code Line keeps count.")},
+                       "Lines take turns through a short palette of fill colours, by their place in the file.")},
 };
 
 // The time a Line's text shows, without its override blocks.

@@ -2,7 +2,7 @@
 ; A HikariSub karaoke effect preset (KE3, docs/qt/karaoke-presets.md): original
 ; work under HikariSub's licence. Give the Comment Lines the karaoke Lines' Style.
 Title: Scale pop
-Description: Each syllable swells as it is sung and settles back in the sung colour.
+Description: Each syllable swells as it is sung and settles back to its Style's size in the sung colour.
 ScriptType: v4.00+
 WrapStyle: 0
 PlayResX: 1280
@@ -15,4 +15,4 @@ Style: Default,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank,!retime("line",-200,200)!{\an5\pos($center,$middle)\fad(200,200)\t(!$start+200!,!$start+200+math.floor($dur*0.35)!,\fscx130\fscy130\1c&H80F0FF&)\t(!$start+200+math.floor($dur*0.35)!,!$end+200!,\fscx100\fscy100)}
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank,!retime("line",-200,200)!{\an5\pos($center,$middle)\fad(200,200)\t(!$start+200!,!$start+200+math.floor($dur*0.35)!,\fscx!math.floor(orgline.styleref.scale_x*13/10)!\fscy!math.floor(orgline.styleref.scale_y*13/10)!\1c&H80F0FF&)\t(!$start+200+math.floor($dur*0.35)!,!$end+200!,\fscx!orgline.styleref.scale_x!\fscy!orgline.styleref.scale_y!)}

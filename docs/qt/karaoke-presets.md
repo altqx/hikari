@@ -16,7 +16,7 @@ Each preset is one ASS file in `src/application/karaoke-presets/`. The number in
 
 So a preset can be opened in Aegisub, or its Lines pasted into any script, as they are. `hikari::application::readKaraokePreset` (`karaoke_presets.h`) reads a file into its title, description and Lines.
 
-The presets use no random values. Their sparks and staggers come from the syllable index and the loop counter, in integer arithmetic, so the output is the same on every platform. KE1 can therefore regenerate one karaoke Line alone, and the preview gives what Apply writes.
+The presets use no random values. Their sparks and staggers come from the syllable index and the loop counter, in integer arithmetic, so the output is the same on every platform. Nothing carries over from one karaoke Line to the next either: a `code line` counter would count only the Lines a run reaches, and the preview runs one Line. What differs from Line to Line comes from the Line itself, such as its place in the file (`$li`). KE1 can therefore regenerate one karaoke Line alone, and the preview of any Line gives what Apply writes.
 
 ## Inserting a preset
 
@@ -31,13 +31,13 @@ The files ship inside the app as the resource `:/hikari/ui/karaoke-presets/`. Th
 | `01-classic-fill.ass` | Classic fill | The karaoke fill from left to right (`\kf`), fading in with the Line and out after it. |
 | `02-staggered-fade.ass` | Staggered fade | Syllables fade in one after another, light up as they are sung and fade out together. |
 | `03-colour-sweep.ass` | Colour sweep | A second colour wipes across each syllable from left to right while it is sung (an animated `\clip`). |
-| `04-scale-pop.ass` | Scale pop | Each syllable swells as it is sung and settles back in the sung colour. |
+| `04-scale-pop.ass` | Scale pop | Each syllable swells to 130 % of its Style's scale as it is sung and settles back to it in the sung colour. |
 | `05-bounce.ass` | Bounce | Each syllable hops up and lands again while it is sung. |
 | `06-glow.ass` | Glow | A soft halo flares behind each syllable as it is sung, then fades. |
 | `07-sparkles.ass` | Sparkles | Small sparks scatter from each syllable as it is sung (`loop 8`, `notext`, a drawing). |
 | `08-echo.ass` | Echo | A copy of each syllable grows and fades away as it is sung. |
 | `09-falling-letters.ass` | Falling letters | Letters drop into place one by one (`char`), then light up syllable by syllable. |
-| `10-palette.ass` | Colour per Line | Each Line fills in the next colour of a short palette; a `code line` keeps count. |
+| `10-palette.ass` | Colour per Line | Lines take turns through a short palette of fill colours (`code once`), by their place in the file (`$li`). |
 
 ## Tests
 
