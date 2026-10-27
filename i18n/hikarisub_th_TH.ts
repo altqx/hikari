@@ -5611,6 +5611,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Opens the user guide in the default browser</source>
+        <translation>เปิดคู่มือผู้ใช้ในเบราว์เซอร์เริ่มต้น</translation>
+    </message>
+    <message>
+        <source>User &amp;guide</source>
+        <translation>&amp;คู่มือผู้ใช้</translation>
+    </message>
+    <message>
         <source>Install update</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5656,7 +5664,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens the HikariSub website in the default browser</source>
-        <translation>เปิดเว็บไซต์ HikariSub ในเบราว์เซอร์เริ่มต้น</translation>
+        <translation type="vanished">เปิดเว็บไซต์ HikariSub ในเบราว์เซอร์เริ่มต้น</translation>
     </message>
     <message>
         <source>Opens the HikariSub issue tracker</source>
@@ -6293,6 +6301,10 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Enter your password when the system asks for it. HikariSub starts again when the install is done.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>ช่วยเหลือ</translation>
     </message>
 </context>
 <context>
