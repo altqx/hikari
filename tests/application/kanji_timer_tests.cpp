@@ -899,6 +899,11 @@ TEST(KanjiTimer, HashReadingsJoinTheirBaseThroughHighlightsWithNone)
               (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
     EXPECT_EQ(kanjiText(u("{\\k10}君|き{\\k10}#{\\k10}#|み")).readings,
               (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    // a block in the # highlight is none of its characters
+    EXPECT_EQ(kanjiText(u("{\\k10}君|き{\\k10}#{\\i1}|み")).readings,
+              (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    EXPECT_EQ(kanjiText(u("{\\k10}君|き{\\k10\\i1}＃|み")).readings,
+              (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
     // a base and its highlights with none read nothing; the next base its own
     EXPECT_EQ(kanjiText(u("{\\k10}君{\\k10}#{\\k10}声|こえ")).readings,
               (std::vector<KanjiText::Reading>{{1, 2, u("こえ")}}));

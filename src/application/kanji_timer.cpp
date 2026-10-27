@@ -304,8 +304,9 @@ KanjiText kanjiText(u16v text)
                     sole = out.text[j++];
                 }
             }
+            // (a # highlight: its one character outside blocks a #)
+            const bool hash = t > 0 && characters == 1 && (sole == u'#' || sole == u'＃');
             if (bar == u16::npos) {
-                const bool hash = t > 0 && characters == 1 && (sole == u'#' || sole == u'＃');
                 read.push_back({t, from - gone, to - gone, u16(), hash, true});
                 continue;
             }
@@ -327,8 +328,7 @@ KanjiText kanjiText(u16v text)
             kept.append(out.text, copied, bar - copied);
             kept += blocks;
             copied = to;
-            const u16v base = u16v(out.text).substr(from, bar - from);
-            read.push_back({t, from - gone, bar - gone, std::move(reading), t > 0 && (base == u"#" || base == u"＃")});
+            read.push_back({t, from - gone, bar - gone, std::move(reading), hash});
             gone += to - bar - blocks.size();
         }
         if (any) {
