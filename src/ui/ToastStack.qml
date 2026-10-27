@@ -23,7 +23,7 @@ pragma Translator: "HikariSub.MainWindow"
 // post(severity, title, text, options): severity "info", "warning" or
 // "error"; title the command that gave it; options.details, more lines for
 // the Log, which adds Details; options.actions, [{text, run}] buttons
-// beside it. Returns the toast's id (0: none shown).
+// beside it, each closing the toast. Returns the toast's id (0: none shown).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -221,7 +221,11 @@ Item {
                                     required property var modelData
                                     flat: true
                                     text: modelData.text
-                                    onClicked: modelData.run()
+                                    onClicked: {
+                                        const id = toast.modelData.id
+                                        modelData.run()
+                                        stack.dismiss(id)
+                                    }
                                 }
                             }
                         }
