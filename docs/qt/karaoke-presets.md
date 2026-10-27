@@ -35,7 +35,7 @@ The files ship inside the app as the resource `:/hikari/ui/karaoke-presets/`. Th
 | `05-bounce.ass` | Bounce | Each syllable hops up and lands again while it is sung. |
 | `06-glow.ass` | Glow | A soft halo flares behind each syllable as it is sung, then fades. |
 | `07-sparkles.ass` | Sparkles | Small sparks scatter from each syllable as it is sung (`loop 8`, `notext`, a drawing). |
-| `08-echo.ass` | Echo | A copy of each syllable grows and fades away as it is sung. |
+| `08-echo.ass` | Echo | A copy of each syllable grows to 180 % of its Style's scale and fades away as it is sung. |
 | `09-falling-letters.ass` | Falling letters | Letters drop into place one by one (`char`), then light up syllable by syllable. |
 | `10-palette.ass` | Colour per Line | Lines take turns through a short palette of fill colours (`code once`), by their place in the file (`$li`). |
 

@@ -300,31 +300,43 @@ TEST_F(KaraokePresets, EachPresetGeneratesItsGolden)
     }
 }
 
-// Scale pop swells each syllable from its Style's own scale and back to it,
-// so a Style scaled to 80 x 120 keeps that size between pops.
-TEST_F(KaraokePresets, ScalePopKeepsTheStyleScale)
+// Scale pop and Echo grow each syllable from its Style's own scale (and
+// Scale pop back to it), so on a Style scaled to 80 x 120 they still grow
+// and Scale pop keeps that size between pops.
+TEST_F(KaraokePresets, ScaledStylesKeepTheirScale)
 {
+    const struct {
+        QString file;
+        std::vector<std::u8string> scales; // in every generated Line
+    } cases[] = {
+        {QStringLiteral("04-scale-pop.ass"), {u8"\\fscx104\\fscy156\\1c", u8"\\fscx80\\fscy120)"}},
+        {QStringLiteral("08-echo.ass"), {u8"\\fscx144\\fscy216\\alpha"}},
+    };
     const auto all = presets();
-    const auto pop = std::ranges::find(all, QStringLiteral("04-scale-pop.ass"), &Preset::file);
-    ASSERT_NE(pop, all.end());
-    std::string text = textOf(fixtureWith(pop->preset));
-    const std::string style = "Style: Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,";
-    const auto at = text.find(style);
-    ASSERT_NE(at, std::string::npos);
-    text.replace(at + style.size() - 8, 8, "80,120,");
-    const std::string reference = templated(bytesOf(text), pristineScript());
-    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
-    ASSERT_TRUE(apply(session, bundledScript(), kAll));
-    EXPECT_EQ(textOf(hikari::core::encodeAss(session.document())), reference);
-    int generated = 0;
-    for (const auto *l : session.document().lines()) {
-        if (l->comment || l->effect != u8"fx")
-            continue;
-        ++generated;
-        EXPECT_NE(l->text.find(u8"\\fscx104\\fscy156\\1c"), std::u8string::npos) << narrow(l->text);
-        EXPECT_NE(l->text.find(u8"\\fscx80\\fscy120)"), std::u8string::npos) << narrow(l->text);
+    for (const auto &c : cases) {
+        SCOPED_TRACE(c.file.toStdString());
+        const auto preset = std::ranges::find(all, c.file, &Preset::file);
+        ASSERT_NE(preset, all.end());
+        std::string text = textOf(fixtureWith(preset->preset));
+        const std::string style =
+            "Style: Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,";
+        const auto at = text.find(style);
+        ASSERT_NE(at, std::string::npos);
+        text.replace(at + style.size() - 8, 8, "80,120,");
+        const std::string reference = templated(bytesOf(text), pristineScript());
+        hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+        ASSERT_TRUE(apply(session, bundledScript(), kAll));
+        EXPECT_EQ(textOf(hikari::core::encodeAss(session.document())), reference);
+        int scaled = 0;
+        for (const auto *l : session.document().lines()) {
+            if (l->comment || l->effect != u8"fx" || l->text.find(u8"\\fsc") == std::u8string::npos)
+                continue;
+            ++scaled;
+            for (const auto &scale : c.scales)
+                EXPECT_NE(l->text.find(scale), std::u8string::npos) << narrow(l->text);
+        }
+        EXPECT_GT(scaled, 0);
     }
-    EXPECT_GT(generated, 0);
 }
 
 // The presets use no random values, so KE1 can regenerate one karaoke Line
