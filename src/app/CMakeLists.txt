@@ -26,6 +26,7 @@ target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari
 # Running from the build tree, the media helper is not next to the executable.
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"
+    HIKARI_BUILD_UNIDIC="${HIKARI_UNIDIC_DIR}" # KA4: the furigana reading dictionary
     HIKARI_VERSION="${HIKARI_VERSION}")
 add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_automation_stage)
 # ADR 0019: test builds read HIKARISUB_UPDATE_FEED (a local release feed) and

@@ -320,6 +320,9 @@ const std::vector<SettingDefinition> &definitions()
         // KA8 (#354): the Kanji timer writes # syllables (KA8-multi-highlight),
         // off by default.
         {"audio.kanjiTimerMulti", "", Bool, Profile, Mapped, false, false},
+        // KA4 (#279): the Kanji timer writes furigana (KA4-furigana), off by
+        // default.
+        {"audio.kanjiTimerFurigana", "", Bool, Profile, Mapped, false, false},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other

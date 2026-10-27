@@ -11240,6 +11240,168 @@ private slots:
         QTRY_VERIFY(!kanji->isVisible());
     }
 
+    // KA4: Furigana in the Kanji timer: off by default; on, the sung kana
+    // over each kanji and the dictionary's where the romaji is no kana
+    // (愛 "love"), a reading typed, undone, typed and taken back, an empty
+    // one for no furigana, and Apply writing 漢|かん.
+    QString writeFuriganaSong(const char *name)
+    {
+        const QString path = dir.filePath(QLatin1String(name));
+        QFile f(path);
+        if (f.open(QIODevice::WriteOnly))
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Song,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.15,Song,,0,0,0,,{\\k18}ki{\\k22}mi {\\k30}no {\\k45}love\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.15,Song kanji,,0,0,0,,君の愛\n");
+        return path;
+    }
+    void kanjiTimerSuggestsAndWritesFurigana()
+    {
+        QVERIFY(application->openFile(writeFuriganaSong("kanji-furigana.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "openKanjiTimer"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        auto *kanji = qobject_cast<QQuickWindow *>(dialog);
+        QTRY_VERIFY(kanji->isVisible() && kanji->isActive());
+        auto *controller = dialog->property("timer").value<QObject *>();
+        auto *strip = dialogItem("kanjiTimerDialog", "kanjiStrip");
+        const auto result = [&] { return dialogItem("kanjiTimerDialog", "kanjiResult")->property("plain").toString(); };
+        const auto groupReading = [&](int group) {
+            auto *cell = dialogItem("kanjiTimerDialog", QByteArray("kanjiGroup" + QByteArray::number(group)).constData());
+            auto *label = cell ? cell->findChild<QQuickItem *>(QStringLiteral("kanjiGroupReading")) : nullptr;
+            return label && label->isVisible() ? label->property("text").toString() : QStringLiteral("-");
+        };
+        // Off by default: KA3's output, no reading anywhere.
+        auto *furigana = dialogItem("kanjiTimerDialog", "kanjiFurigana");
+        QVERIFY(furigana);
+        QCOMPARE(furigana->property("text").toString(), QStringLiteral("Furigana"));
+        QVERIFY(!furigana->property("checked").toBool());
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君{\\k30}の{\\k45}愛"));
+        auto *field = dialogItem("kanjiTimerDialog", "kanjiReading");
+        QVERIFY(!field->isVisible());
+        QCOMPARE(groupReading(0), QStringLiteral("-"));
+        // A click turns it on, and the setting remembers it.
+        QTest::mouseClick(kanji, Qt::LeftButton, {}, furigana->mapToScene(QPointF(10, furigana->height() / 2)).toPoint());
+        QTRY_VERIFY(controller->property("furigana").toBool());
+        QVERIFY(application->settingsStore()->boolean("audio.kanjiTimerFurigana"));
+        QVERIFY(!controller->property("noDictionary").toBool());
+        QVERIFY(!dialogItem("kanjiTimerDialog", "kanjiNoDictionary")->isVisible());
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君|きみ{\\k30}の{\\k45}愛|あい"));
+        QCOMPARE(groupReading(0), QStringLiteral("きみ"));
+        QCOMPARE(groupReading(1), QStringLiteral(""));
+        QCOMPARE(groupReading(2), QStringLiteral("あい"));
+        // The current group's reading in its field; the suggestion is the sung one.
+        QTRY_VERIFY(field->isVisible());
+        QCOMPARE(field->property("text").toString(), QStringLiteral("きみ"));
+        auto *reset = dialogItem("kanjiTimerDialog", "kanjiUseSuggestion");
+        QVERIFY(reset->isVisible() && !reset->isEnabled());
+        QCOMPARE(reset->property("text").toString(), QStringLiteral("Use the suggestion"));
+        QVERIFY(!dialogItem("kanjiTimerDialog", "kanjiReadingHint")->isVisible());
+        // Typed, then Enter back to the strip: written as typed.
+        const auto type = [&](const QString &text) {
+            QTest::mouseClick(kanji, Qt::LeftButton, {}, field->mapToScene(QPointF(field->width() / 2, field->height() / 2)).toPoint());
+            QTRY_VERIFY(field->hasActiveFocus());
+            QVERIFY(field->setProperty("text", text));
+            QTest::keyClick(kanji, Qt::Key_Return);
+            QTRY_VERIFY(strip->hasActiveFocus());
+        };
+        type(QStringLiteral("キミ"));
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君|キミ{\\k30}の{\\k45}愛|あい"));
+        QCOMPARE(groupReading(0), QStringLiteral("キミ"));
+        QCOMPARE(field->property("text").toString(), QStringLiteral("キミ"));
+        QVERIFY(reset->isEnabled());
+        // an undo step in the window
+        QTest::keyClick(kanji, Qt::Key_Z, Qt::ControlModifier);
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君|きみ{\\k30}の{\\k45}愛|あい"));
+        QCOMPARE(field->property("text").toString(), QStringLiteral("きみ"));
+        type(QStringLiteral("キミ"));
+        QTRY_VERIFY(reset->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(reset, "click"));
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君|きみ{\\k30}の{\\k45}愛|あい"));
+        QVERIFY(!reset->isEnabled());
+        // An empty reading: no furigana there.
+        type(QString());
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君{\\k30}の{\\k45}愛|あい"));
+        QCOMPARE(groupReading(0), QStringLiteral(""));
+        QCOMPARE(field->property("placeholderText").toString(), QStringLiteral("No furigana"));
+        // Typed and a command clicked without Enter: the reading is its own
+        // group's, not the next one's.
+        const auto click = [&](const char *name) {
+            auto *item = dialogItem("kanjiTimerDialog", name);
+            QTest::mouseClick(kanji, Qt::LeftButton, {}, item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint());
+        };
+        const auto edit = [&](const QString &text) {
+            QTest::mouseClick(kanji, Qt::LeftButton, {}, field->mapToScene(QPointF(field->width() / 2, field->height() / 2)).toPoint());
+            QTRY_VERIFY(field->hasActiveFocus());
+            QVERIFY(field->setProperty("text", text));
+        };
+        edit(QStringLiteral("クン"));
+        click("kanjiLink");
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君|クン{\\k30}の{\\k45}愛|あい"));
+        QVERIFY(strip->hasActiveFocus());
+        QCOMPARE(groupReading(0), QStringLiteral("クン"));
+        // Use the suggestion over a reading being typed drops it.
+        QTest::keyClick(kanji, Qt::Key_Backspace);
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("クン"));
+        edit(QStringLiteral("クンクン"));
+        click("kanjiUseSuggestion");
+        QTRY_COMPARE(result(), QStringLiteral("{\\k40}君|きみ{\\k30}の{\\k45}愛|あい"));
+        QTRY_VERIFY(strip->hasActiveFocus());
+        QCOMPARE(result(), QStringLiteral("{\\k40}君|きみ{\\k30}の{\\k45}愛|あい"));
+        QCOMPARE(field->property("text").toString(), QStringLiteral("きみ"));
+        // 愛 is sung "love": the dictionary's reading, and the reason beside it.
+        QTest::keyClick(kanji, Qt::Key_Return);
+        QTest::keyClick(kanji, Qt::Key_Return);
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("あい"));
+        auto *hint = dialogItem("kanjiTimerDialog", "kanjiReadingHint");
+        QTRY_VERIFY(hint->isVisible());
+        QCOMPARE(hint->property("text").toString(), QStringLiteral("Not sung in kana"));
+        // Accepted and applied: the furigana in the Document.
+        QTest::keyClick(kanji, Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(controller->property("pending").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiApply"), "click"));
+        QTRY_COMPARE(controller->property("pending").toInt(), 0);
+        QVERIFY(session->document().lines()[1]->text == u8"{\\k40}君|きみ{\\k30}の{\\k45}愛|あい");
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!kanji->isVisible());
+    }
+
+    // KA4: without the reading dictionary the readings come from the romaji
+    // only, and one muted line says so.
+    void kanjiTimerFuriganaWithoutADictionary()
+    {
+        app::Application::Options options;
+        options.readingDictionaryDir = dir.filePath(QStringLiteral("no-reading-dictionary"));
+        restartWith(options);
+        QVERIFY(application->openFile(writeFuriganaSong("kanji-no-dictionary.ass")));
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "openKanjiTimer"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        auto *kanji = qobject_cast<QQuickWindow *>(dialog);
+        QTRY_VERIFY(kanji->isVisible() && kanji->isActive());
+        auto *controller = dialog->property("timer").value<QObject *>();
+        QVERIFY(!dialogItem("kanjiTimerDialog", "kanjiNoDictionary")->isVisible());
+        QVERIFY(controller->setProperty("furigana", true));
+        QTRY_VERIFY(controller->property("noDictionary").toBool());
+        QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiNoDictionary")->isVisible());
+        QTRY_COMPARE(dialogItem("kanjiTimerDialog", "kanjiResult")->property("plain").toString(),
+                     QStringLiteral("{\\k40}君|きみ{\\k30}の{\\k45}愛"));
+        QVERIFY(controller->setProperty("furigana", false));
+        QTRY_VERIFY(!dialogItem("kanjiTimerDialog", "kanjiNoDictionary")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!kanji->isVisible());
+    }
+
     // KA3: a Line of thousands of syllables shows a window of 60 groups
     // around the current one, not an item per syllable (Codex security
     // review on #352).
@@ -11371,6 +11533,12 @@ private slots:
         QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiResult")->property("plain").toString().contains(QLatin1Char('#')));
         shoot("multi", "ka8");
         QVERIFY(controller->setProperty("multi", false));
+        // KA4: Furigana on, the readings over the kanji and the current group's field.
+        QVERIFY(controller->setProperty("furigana", true));
+        QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiResult")->property("plain").toString().contains(QLatin1Char('|')));
+        QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiReading")->isVisible());
+        shoot("furigana", "ka4");
+        QVERIFY(controller->setProperty("furigana", false));
         // Pair 5: "yo" has no kanji left once て takes "te" alone.
         QVERIFY(QMetaObject::invokeMethod(controller, "choose", Q_ARG(int, 4)));
         strip->forceActiveFocus();

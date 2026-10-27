@@ -3,6 +3,7 @@
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
+#include "hikari/backends/mecab_readings.h"
 #include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/qt_audio_devices.h"
@@ -128,6 +129,18 @@ QString luaHelperPath(const QString &configured)
 #ifdef HIKARI_BUILD_LUA_HELPER
     if (!QFileInfo::exists(sibling))
         return QStringLiteral(HIKARI_BUILD_LUA_HELPER);
+#endif
+    return sibling;
+}
+
+QString readingDictionaryPath(const QString &configured)
+{
+    if (!configured.isEmpty())
+        return configured;
+    const QString sibling = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary/unidic-lite");
+#ifdef HIKARI_BUILD_UNIDIC
+    if (!QFileInfo::exists(sibling + QStringLiteral("/sys.dic")))
+        return QStringLiteral(HIKARI_BUILD_UNIDIC);
 #endif
     return sibling;
 }
@@ -882,6 +895,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.refresh = [this] {
             m_editor->reloadFromSession();
             refreshViews();
+        };
+        // KA4: MeCab over UniDic, opened when Furigana is first on
+        hooks.dictionary = [folder = readingDictionaryPath(options.readingDictionaryDir)]() -> application::ReadingAnalyzer {
+            std::shared_ptr<const backends::MecabReadings> readings =
+                backends::MecabReadings::open(std::filesystem::path(folder.toStdU16String()));
+            return readings ? backends::MecabReadings::analyzer(std::move(readings)) : application::ReadingAnalyzer{};
         };
         m_kanjiTimer = std::make_unique<KanjiTimerController>(*m_settings, std::move(hooks));
     }

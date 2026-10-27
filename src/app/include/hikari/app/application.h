@@ -199,6 +199,9 @@ public:
         // Bundled dictionaries, searched after the user's folder (legacy
         // <executable dir>/Dictionary; the composition sets it).
         QString bundledDictionaryDir;
+        // KA4: the furigana reading dictionary (MeCab's UniDic); empty:
+        // Dictionary/unidic-lite beside the executable, else the build tree's.
+        QString readingDictionaryDir;
         // A1: legacy's AudioCache folder; empty: "AudioCache" beside the
         // settings file, or a temporary directory without one (tests).
         QString audioCacheDir;

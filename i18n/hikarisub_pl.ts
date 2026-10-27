@@ -4837,6 +4837,38 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Furigana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write each kanji&apos;s reading after it (漢|かん), as the romaji sings it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No reading dictionary: readings come from the romaji only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dictionary: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not sung in kana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No furigana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use the suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Choose two different styles.</source>
         <translation type="unfinished"></translation>
     </message>
