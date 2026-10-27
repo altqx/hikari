@@ -28,6 +28,7 @@ ApplicationWindow {
     required property var app
     required property var automation
     required property AutomationManagerController automationManager
+    required property TemplateEditorController templateEditor
     required property AutomationDialogController automationDialogs
     required property AutomationFilePickerController automationPicker
     required property ScriptResolutionPromptController automationResolution
@@ -287,10 +288,13 @@ ApplicationWindow {
         editorDock.addDockWidgetAsTab(timingDock)
         editorDock.addDockWidgetAsTab(automationDock)
         editorDock.addDockWidgetAsTab(stylesDock)
+        // KE2: the Template editor tabs with the editor too.
+        editorDock.addDockWidgetAsTab(templateDock)
         editorDock.setAsCurrentTab()
         timingDock.close()
         automationDock.close()
         stylesDock.close()
+        templateDock.close()
         // NT1: the Log has no place until it first opens (addLog), so the
         // arrangement keeps the sizes it had without it.
         // PU2: Fix minor errors at the right edge, full height, 420 wide.
@@ -432,6 +436,14 @@ ApplicationWindow {
         else
             dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
+    // KE2: the Template editor's, in one saved before it (registry 8 or
+    // earlier), the same way.
+    function addTemplate() {
+        if (editorDock.isOpen)
+            editorDock.addDockWidgetAsTab(templateDock)
+        else
+            dockingArea.addDockWidget(templateDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
+    }
 
     // AD3 (#312): a run shows on its progress card (AutomationProgress, in
     // the toast stack); the Automation panel no longer opens for it. The
@@ -446,10 +458,10 @@ ApplicationWindow {
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                           timingPanel, searchPanel, automationPanel, spellPanel, logPanel, stylesPanel,
-                                          misspellPanel]
+                                          misspellPanel, templatePanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock]
+                                     searchDock, automationDock, spellDock, logDock, stylesDock, misspellDock, templateDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -655,6 +667,8 @@ ApplicationWindow {
             // An arrangement saved before the panel (registry 7 or less) has no
             // place for it: the right edge, as the Classic arrangement.
             dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
+        else if (dock === templateDock && !Docking.hasPlace("Template"))
+            root.addTemplate()
         else
             dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
@@ -3210,11 +3224,21 @@ ApplicationWindow {
                     anchors.fill: presenter
                     view: root.videoView
                 }
-                // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
+                // KE2: the Template editor's preview on the frame.
+                VideoTemplateBadge {
+                    id: templateBadge
+                    x: presenter.x + 8
+                    y: presenter.y + 8
+                    visible: root.templateEditor.videoPreview && root.video.hasVideo
+                    controller: root.templateEditor
+                }
+                // KE1-render-cost-overlay: what the frame's subtitles cost to
+                // draw; below the preview badge when it shows.
                 VideoRenderCost {
                     anchors.fill: presenter
                     visible: root.videoView.renderCost && root.video.hasVideo
                     cost: presenter.renderCost
+                    textTop: templateBadge.visible ? templateBadge.height + 12 : 8
                 }
                 // HY1: Hydra's last change card, in the video's top-right corner.
                 VisualLastChange {
@@ -5961,6 +5985,36 @@ ApplicationWindow {
             }
         }
 
+        // KE2: the Template editor (docs/qt/karaoke-templater.md, "The
+        // template editor"). Its previews run, and the video draws them, only
+        // while it shows: open, and the current tab of its group.
+        KDDW.DockWidget {
+            id: templateDock
+            objectName: "templateDock"
+            uniqueName: "Template"
+            title: qsTranslate("HikariSub.TemplateEditor", "Template editor")
+            Binding {
+                target: root.templateEditor
+                property: "shown"
+                value: templateDock.isOpen && templatePanel.visible
+            }
+            Panel {
+                id: templatePanel
+                objectName: "templatePanel"
+                dockName: "Template"
+                minimumBodySize: templateTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.TemplateEditor", "Template editor")
+                TemplateEditor {
+                    id: templateTool
+                    objectName: "templateTool"
+                    anchors.fill: parent
+                    controller: root.templateEditor
+                    video: root.video
+                }
+            }
+        }
+
         // NT1 (#302): the Log panel (legacy's Log window). A toast's Details
         // opens it at its entry; nothing else opens it by itself.
         KDDW.DockWidget {
@@ -6031,6 +6085,7 @@ ApplicationWindow {
             Docking.setPanelHeader("Spellchecker", true, null)
             Docking.setPanelHeader("Original", true, originalTools) // TM1
             Docking.setPanelHeader("Styles", true, stylesTool.toolbar) // TP1
+            Docking.setPanelHeader("Template", false, templateTool.toolbar)
             root.defaultLayout()
         }
     }

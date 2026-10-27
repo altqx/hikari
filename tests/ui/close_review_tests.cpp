@@ -299,6 +299,51 @@ private slots:
         timer.setSuggest(suggest);
     }
 
+    // KA8 (#354): Multi-highlight (#) turned on while another Document is the
+    // target holds when a kept Document's pairs are saved at quit.
+    void kanjiTimerPairsKeptAreSavedWithMultiHighlightAsItIsNow()
+    {
+        const QString path = dir.filePath(QStringLiteral("kept-multi.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Song,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:01.60,Song,,0,0,0,,{\\k20}ge{\\k10}ki{\\k30}no\n"
+                    "Dialogue: 0,0:00:01.00,0:00:01.60,Song kanji,,0,0,0,,\xE6\x92\x83\xE3\x81\xAE\n"); // 撃の
+        }
+        app::Application a;
+        auto &timer = a.kanjiTimer();
+        const bool multi = timer.multi();
+        timer.setMulti(false);
+        QVERIFY(a.openFile(path));
+        timer.open();
+        QCOMPARE(timer.acceptAll(), 1);
+        timer.close();
+        // another Document as the target, Multi-highlight turned on there
+        QVERIFY(a.openFile(writeFile(dir, "kept-multi-other.ass", "x")));
+        a.selectTab(static_cast<int>(a.workspace().tabs().size()) - 1);
+        timer.open();
+        timer.setMulti(true);
+        timer.close();
+        const auto rows = a.reviewClose(QStringLiteral("quit"));
+        QCOMPARE(rows.size(), qsizetype(1));
+        QSignalSpy finished(&a, &app::Application::closeFinished);
+        a.resolveClose(choose(rows, true));
+        a.waitForWrites();
+        QTRY_COMPARE(finished.size(), 1);
+        QVERIFY(finished.first().at(0).toBool());
+        QVERIFY(readAll(path).contains(",,{\\k20}\xE6\x92\x83{\\k10}#{\\k30}\xE3\x81\xAE")); // 撃 ge, # ki, の no
+        timer.setMulti(multi);
+    }
+
     void newerEditsAfterTheChoiceKeepTheDocumentOpen()
     {
         app::Application a;

@@ -166,6 +166,10 @@ public:
     const core::AssSaveOptions &saveOptions() const { return m_saveOptions; }
     // WS2: where prepareSave takes the panel arrangement an ASS save writes.
     void setLayoutSource(LayoutSource source) { m_layoutSource = std::move(source); }
+    // Called as prepareSave starts: a panel's edit still pending goes into
+    // its Document first (KE2's Template editor), as the Line editor's draft
+    // does.
+    void setBeforeSave(std::function<void()> before) { m_beforeSave = std::move(before); }
     // The arrangement a save of the Document writes now: an ASS Document's,
     // from the layout source; none for other formats or without a source.
     std::optional<std::u8string> layoutToSave(DocumentId document, const core::Document &saved) const;
@@ -198,6 +202,7 @@ private:
     std::uint64_t m_nextDocument = 1;
     core::AssSaveOptions m_saveOptions;
     LayoutSource m_layoutSource;
+    std::function<void()> m_beforeSave;
 };
 
 } // namespace hikari::application

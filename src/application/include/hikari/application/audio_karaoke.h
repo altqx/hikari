@@ -92,7 +92,8 @@ public:
     std::u16string text(int curStartMs) const;
     // Legacy Join: syllable `i` takes the next one's text (every "{}" in the
     // result removed), its end and keeps its own tag. False (nothing done)
-    // for the last syllable (A5-join-last).
+    // for the last syllable (A5-join-last). KA8-join-multi-highlight: a #
+    // syllable joined with any other loses its #; two # syllables give one.
     bool join(int i);
     // Legacy SplitSyl: syllable `i` split before its `letters`th visible
     // character, the second part a \k; KA1-time-by-character: the new
