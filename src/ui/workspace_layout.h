@@ -74,7 +74,7 @@ class WorkspaceLayoutController : public QObject {
     Q_PROPERTY(QString notice READ notice NOTIFY changed)
     Q_PROPERTY(bool hasBackup READ hasBackup NOTIFY changed)
     // The built-in template the arrangement started from (Editing, Timing,
-    // Translation, Typesetting); Reset layout returns to it unless the
+    // Translation, Typesetting, Karaoke); Reset layout returns to it unless the
     // arrangement started from a saved layout.
     Q_PROPERTY(QString preset READ preset WRITE setPreset NOTIFY changed)
     // FR1 (#363): the built-in templates in menu order, for Getting started.
@@ -118,12 +118,14 @@ public:
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without
     // settings). The saved layouts are kept beside it, in layouts.json.
-    explicit WorkspaceLayoutController(QString layoutFile = {}, QObject *parent = nullptr);
+    // `savedLayoutsFile`: the saved layouts (empty: layouts.json beside
+    // `layoutFile`).
+    explicit WorkspaceLayoutController(QString layoutFile = {}, QString savedLayoutsFile = {}, QObject *parent = nullptr);
 
     // After the shell built its default arrangement: what Reset layout returns to.
     Q_INVOKABLE void captureDefault();
     // TP1 (#274): a preset whose arrangement the shell builds itself
-    // (Typesetting). The first time it is shown (applyPreset, Reset this
+    // (Typesetting, Karaoke). The first time it is shown (applyPreset, Reset this
     // layout) the default arrangement is restored and buildArrangement asks
     // the shell to arrange it; what the shell built is the preset's from then
     // on. Nothing is built at start, before anyone chooses it.
@@ -140,8 +142,9 @@ public:
     // this one writes that over the saved layout.
     Q_INVOKABLE bool saveForQuit();
     Q_INVOKABLE bool resetLayout();
-    // A built-in template (Editing, Timing, Translation, Typesetting) for the
-    // current tab: its own arrangement (Typesetting's, buildsArrangement), else
+    // A built-in template (Editing, Timing, Translation, Typesetting, Karaoke)
+    // for the current tab: its own arrangement (Typesetting's and Karaoke's,
+    // buildsArrangement), else
     // the default arrangement with the panels it leaves closed.
     Q_INVOKABLE bool applyPreset(const QString &name);
     // A preset's name as the user reads it.
@@ -149,10 +152,11 @@ public:
     // TM1 (#232): the mode a preset carries, or empty. Choosing the preset
     // (applyPreset, or applySavedLayout of a layout that started from it)
     // starts that mode for the current tab (presetModeChosen); choosing an
-    // arrangement whose preset carries another mode or none afterwards
-    // leaves it (presetModeLeft). What starting and leaving do is the mode's
+    // arrangement whose preset carries another mode or none afterwards, in
+    // this tab or another, leaves it (presetModeLeft). What starting and leaving do is the mode's
     // own: Translation asks to turn the Document's Translation mode on and
-    // stays on when left; KP1's Karaoke puts back the audio mode it replaced.
+    // stays on when left; Karaoke (KP1) turns the audio panel's Karaoke mode
+    // and the Grid's folding on, and puts back what it changed.
     // Showing a tab, opening a file, a Session's arrangement, the backup and
     // Reset this layout start and leave nothing.
     Q_INVOKABLE static QString presetMode(const QString &preset);
@@ -269,8 +273,9 @@ private:
     void checkModal();
     bool applyPresetArrangement(const QString &name);
     bool applySavedArrangement(const QString &name);
-    // TM1: the modes of the preset chosen, after `before` was the current one.
-    void choseFrom(const QString &before);
+    // TM1: the mode of the preset just chosen starts, and the mode chosen
+    // last, in this tab or another (KP1), is left when it differs.
+    void choseMode();
     bool restorePayload(const QByteArray &payload, bool inPlace = false);
     bool restoreSavedFile();
     bool buildPreset(const QString &name, bool inPlace);
@@ -344,6 +349,7 @@ private:
     void addPanelNotice(const QString &text);
     void addSavedNotice(const QString &text);
     void dismissPanelNotice();
+    QString m_chosenMode; // the mode the last explicit choice started
     QString m_preset = QStringLiteral("Editing");
     QString m_layout; // WS3: the saved layout the shown arrangement started from
     bool m_restoring = false;

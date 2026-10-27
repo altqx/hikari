@@ -624,6 +624,28 @@ DialogWindow {
                     }
                     SettingsSection {
                         title: qsTr("Folders")
+                        // UD1 (#362): the user folder, where settings, scripts,
+                        // dictionaries and presets live; Help has the command too.
+                        SettingsRow {
+                            objectName: "settingsUserFolderRow"
+                            visible: (dialog.app.userFolder || "").length > 0
+                            iconRole: "folder-open"
+                            text: qsTr("User folder")
+                            TextField {
+                                objectName: "settingsUserFolderPath"
+                                text: dialog.app.userFolder || ""
+                                readOnly: true
+                                selectByMouse: true
+                                Layout.fillWidth: true
+                                Accessible.name: qsTr("User folder")
+                            }
+                            Button {
+                                objectName: "settingsOpenUserFolder"
+                                text: qsTr("Open")
+                                Accessible.name: qsTr("Open user folder")
+                                onClicked: dialog.app.openUserFolder()
+                            }
+                        }
                         SettingsRow {
                             iconRole: "folder-open"
                             text: qsTr("Fonts folder")

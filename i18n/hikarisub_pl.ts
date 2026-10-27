@@ -4339,6 +4339,26 @@ Nie udało się skopiować %2 czcionek.</translation>
         <source>Line wraps</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Fold generated lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n generated lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>folded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unfolded</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -13304,6 +13324,10 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Delete</source>
         <translation type="unfinished">Usuń</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

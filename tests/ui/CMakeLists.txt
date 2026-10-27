@@ -309,6 +309,10 @@ hikari_add_qttest(hikari_ui_translation_preset_tests SOURCES translation_preset_
 # TP1 (#274): the Typesetting preset's own arrangement and the Styles panel.
 hikari_add_qttest(hikari_ui_typesetting_preset_tests SOURCES typesetting_preset_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+# KP1 (#286): the Karaoke preset's arrangement and mode, and the Grid's
+# folded runs of generated Lines.
+hikari_add_qttest(hikari_ui_karaoke_preset_tests SOURCES karaoke_preset_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 # WS3 (#217): the layout presets and saved layouts (save, apply, rename,
 # delete, persistence) and the retired View arrangements and editor switch.
 # Every function starts the application and its QML, as D2's suite did, so
@@ -380,6 +384,8 @@ endforeach()
 # WS5: one instance per user session: the hand-over, a crashed or silent
 # holder, the session's own socket; and what is handed over, on the holder.
 hikari_add_qttest(hikari_ui_single_instance_tests SOURCES single_instance_tests.cpp LIBRARIES hikari_composition)
+# UD1 (#362): the user folder's location, seeding by manifest and the move in.
+hikari_add_qttest(hikari_ui_user_folder_tests SOURCES user_folder_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_forwarded_launches_tests SOURCES forwarded_launches_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
