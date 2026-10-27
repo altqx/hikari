@@ -988,6 +988,15 @@ TEST(KanjiTimer, AReadingOverNoKanjiAfterOneOverKanjiInTheSameGroup)
     EXPECT_TRUE(timer.growSyllables());
     EXPECT_TRUE(timer.growCharacters());
     EXPECT_EQ(s(*timer.view()->output), "{\\k80}君は|きみわ");
+    // typed over or taken back, both are the group's
+    EXPECT_TRUE(timer.setReading(u("きみ は")));
+    EXPECT_EQ(s(*timer.view()->output), "{\\k80}君は|きみは");
+    EXPECT_TRUE(timer.setReading(u("")));
+    EXPECT_EQ(s(*timer.view()->output), "{\\k80}君は");
+    EXPECT_TRUE(timer.useSuggestion());
+    EXPECT_FALSE(timer.useSuggestion());
+    timer.setFurigana(true);
+    EXPECT_EQ(s(*timer.view()->output), "{\\k80}君は|きみは");
 }
 
 TEST(KanjiTimer, TheReadingsAppliedAreTheLinesOwnAfter)

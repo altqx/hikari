@@ -713,6 +713,18 @@ std::vector<std::pair<std::size_t, std::size_t>> bareIn(const KanjiTyped &typed,
     return out;
 }
 
+// What a group's reading is over: its kanji runs and the Line's own readings
+// over no kanji in it, in order.
+std::vector<std::pair<std::size_t, std::size_t>> readingsIn(const KanjiTyped &typed, const KanjiText &kanji,
+                                                            std::size_t from, std::size_t to)
+{
+    auto out = kanjiRunsIn(kanji.units, from, to);
+    const auto bare = bareIn(typed, kanji, from, to);
+    out.insert(out.end(), bare.begin(), bare.end());
+    std::ranges::sort(out);
+    return out;
+}
+
 // Takes the typed readings over any of these runs out.
 void eraseTyped(KanjiTyped &typed, const std::vector<std::pair<std::size_t, std::size_t>> &runs)
 {
@@ -1599,10 +1611,8 @@ bool KanjiTimer::setReading(std::u16string_view reading)
     return editCurrent([&](Work &work, const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji) {
         const std::size_t from = std::min(charactersIn(work.linked), kanji.units.size());
         const std::size_t to = std::min(from + selectionOf(work, syllables, kanji).characters, kanji.units.size());
-        // (a group of no kanji: the Line's own readings in it)
-        auto runs = kanjiRunsIn(kanji.units, from, to);
-        if (runs.empty())
-            runs = bareIn(work.typed, kanji, from, to);
+        // (and the Line's own readings over no kanji in it)
+        const auto runs = readingsIn(work.typed, kanji, from, to);
         if (runs.empty())
             return false;
         // a reading for each run when it has as many, split at spaces;
@@ -1639,10 +1649,7 @@ bool KanjiTimer::useSuggestion()
         const std::size_t to = std::min(from + selectionOf(work, syllables, kanji).characters, kanji.units.size());
         const KanjiTyped before = work.typed;
         work.typed = fitTyped(kanji, runsOver(kanji, proposal(work, syllables, kanji)), work.typed);
-        auto runs = kanjiRunsIn(kanji.units, from, to);
-        if (runs.empty())
-            runs = bareIn(work.typed, kanji, from, to);
-        eraseTyped(work.typed, runs);
+        eraseTyped(work.typed, readingsIn(work.typed, kanji, from, to));
         return work.typed != before;
     });
 }
