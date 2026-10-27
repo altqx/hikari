@@ -290,8 +290,13 @@ void Application::checkEditorGrammar()
     }
     // The same text in a Document of another format is read otherwise.
     const auto format = editorFormat();
-    if (m_grammarEditor && m_grammarEditorRole == role && m_grammarEditor->raw == *raw && m_grammarEditor->format == format)
+    if (m_grammarEditor && m_grammarEditorRole == role && m_grammarEditor->raw == *raw && m_grammarEditor->format == format) {
+        // Back to the text checked: a check of other text since is dropped.
+        if (m_grammarTicket && m_harper)
+            m_harper->cancel(m_grammarTicket);
+        m_grammarTicket = 0;
         return;
+    }
     if (m_grammarTicket && m_grammarRole == role && m_grammarPending.raw == *raw && m_grammarPending.format == format)
         return; // already with harper-ls
     auto *client = grammarClient();
@@ -373,6 +378,22 @@ void Application::syncGrammarWords()
     m_grammarTicket = 0;
     m_grammarEditor.reset();
     scheduleGrammar();
+    // So are the walk's Lines with harper-ls or waiting to join: sent again.
+    if (m_grammarWalk && (!m_grammarWalk->pending.empty() || !m_grammarWalk->arrived.empty())) {
+        auto &walk = *m_grammarWalk;
+        std::set<std::size_t> again;
+        for (const auto &[ticket, index] : walk.pending) {
+            m_harper->cancel(ticket);
+            again.insert(index);
+        }
+        for (const auto &[index, findings] : walk.arrived)
+            again.insert(index);
+        walk.pending.clear();
+        walk.arrived.clear();
+        for (auto it = again.rbegin(); it != again.rend(); ++it)
+            walk.queue.push_front(*it);
+        pumpGrammarWalk();
+    }
 }
 
 const Application::GrammarCheck *Application::editorGrammarCheck(int role) const

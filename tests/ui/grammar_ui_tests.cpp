@@ -753,6 +753,52 @@ private slots:
         QCOMPARE(item("lineText")->property("text").toString(), QStringLiteral("Not yet sent"));
     }
 
+    // Add to dictionary from the walk: the Lines harper-ls was reading with
+    // the old words are read again, so the word never comes back.
+    void walkAddedWordNeverComesBack()
+    {
+        start();
+        grammarOn();
+        QByteArray events;
+        for (int i = 0; i < 40; ++i)
+            events += dialogue("We will go there tomorow.", i % 59);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/word.ass"), events)));
+        QTRY_VERIFY(target());
+        QTest::qWait(500); // the settings in (a change would start the walk over)
+        application->startGrammarWalk();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("found")).toBool(), kHarperWait);
+        QVariantMap state = application->grammarWalkState();
+        QVERIFY(state.value(QStringLiteral("word")).toBool());
+        QCOMPARE(state.value(QStringLiteral("text")).toString(), QStringLiteral("tomorow"));
+        state = application->grammarWalkAddWord();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+        state = application->grammarWalkState();
+        QVERIFY2(!state.value(QStringLiteral("found")).toBool(),
+                 qPrintable(state.value(QStringLiteral("text")).toString()));
+    }
+
+    // Back to text already checked while a check of other text is with
+    // harper-ls: that check is dropped and the marks stay.
+    void restoredTextKeepsItsMarks()
+    {
+        start();
+        grammarOn();
+        const QString text = QStringLiteral("I has a apple.");
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/back.ass"), dialogue(text.toUtf8()))));
+        QTRY_COMPARE(item("lineText")->property("text").toString(), text);
+        const int article = text.indexOf(QStringLiteral("a apple"));
+        QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
+        // A text harper-ls takes a while over (a code action per finding).
+        const QString other = QStringLiteral("I has a apple. ").repeated(60).trimmed();
+        application->editor().textEdited(other, int(other.size()));
+        QTest::qWait(400); // checked 300 ms after typing: with harper-ls now
+        application->editor().textEdited(text, int(text.size()));
+        QTest::qWait(400); // the field's own text again: its marks kept
+        QVERIFY(marks().contains(qMakePair(article, article + 1)));
+        QTest::qWait(6000); // the other text's result would be in by now
+        QVERIFY(marks().contains(qMakePair(article, article + 1)));
+    }
+
     // Replacing the walk's last finding: the editor and the Grid show the
     // correction though no finding is left to show.
     void replacingTheLastFindingShowsIt()
