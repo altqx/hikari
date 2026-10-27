@@ -123,7 +123,8 @@ TEST(MisspellRules, ShippedRulesInLegacyOrder)
     const std::vector<std::pair<std::string, std::string>> expected{
         {"Remove space before comma or dot", " ([,.!?%])"},
         {"Remove doubled spaces", "(  +)"},
-        {"Replace more then three dots to suspension point", "\\.{4,}"},
+        {"Replace more than three dots with a suspension point", // #385: legacy "more then ... to"
+         "\\.{4,}"},
         {"Replace two dots to suspension point", "([^.])\\.\\.([^.])"},
         {"Replace missing spaces after dot or comma", "([^.])([,.!?%])([^ ,.!?%\\\"\\\\0-9-])"},
         {"Removing japanese suffixes", " ?- ?(san|chan|kun|sama|nee|dono|senpai|sensei)\\M"},

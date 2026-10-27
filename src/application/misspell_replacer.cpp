@@ -212,7 +212,7 @@ std::u8string defaultReplacerRules()
     return u8"#HikariSub rules file\n0|0|0|0|0|0|0|0|0|0|0|0\n"
            u8"Remove space before comma or dot\f ([,.!?%])\f\\1\f0\n"
            u8"Remove doubled spaces\f(  +)\f \f0\n"
-           u8"Replace more then three dots to suspension point\f\\.{4,}\f...\f0\n"
+           u8"Replace more than three dots with a suspension point\f\\.{4,}\f...\f0\n"
            u8"Replace two dots to suspension point\f([^.])\\.\\.([^.])\f\\1...\\2\f0\n"
            u8"Replace missing spaces after dot or comma\f([^.])([,.!?%])([^ ,.!?%\\\"\\\\0-9-])\f\\1\\2 \\3\f0\n"
            u8"Removing japanese suffixes\f ?- ?(san|chan|kun|sama|nee|dono|senpai|sensei)\\M\f\f0\n"

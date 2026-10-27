@@ -46,6 +46,8 @@ DialogWindow {
     property bool legacy: false
     // Import my old settings (else Set up from scratch).
     property bool importing: true
+    // #393: opened at the start, before anything was set up (not from Help).
+    property bool due: false
     // Why Finish could not stage the import (the importer's status).
     property string importProblem
     // The layout the first tab opens with; empty keeps Editing.
@@ -66,6 +68,7 @@ DialogWindow {
     signal skipped()
 
     function openSetup() {
+        due = app.gettingStartedDue()
         const r = app.openGettingStarted()
         opened = r.values
         values = r.values
@@ -549,7 +552,8 @@ DialogWindow {
                         iconRole: "import"
                         text: qsTr("Import my old settings")
                         badge: qsTr("Recommended")
-                        description: qsTr("Theme, hotkeys, fonts, audio and video options and your dictionary words.")
+                        // #393: legacy themes are not imported (settings_import_store.h).
+                        description: qsTr("Hotkeys, fonts, audio and video options and your dictionary words.")
                         checked: setup.importing
                         onClicked: setup.importing = true
                         Layout.preferredWidth: 300
@@ -852,8 +856,6 @@ DialogWindow {
                     rowSpacing: 10
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 620
-                    Label { text: qsTr("Save while editing every") }
-                    PageNumber { setting: "editor.saveAfterCharacterCount"; from: 0; to: 10000; unit: qsTr("edits (0: off)"); name: qsTr("Save while editing every") }
                     Label { text: qsTr("Autosave files kept") }
                     PageNumber { setting: "autosave.maxFiles"; from: 2; to: 1000000; name: qsTr("Autosave files kept") }
                     Label { text: qsTr("Spelling") }
