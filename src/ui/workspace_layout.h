@@ -105,13 +105,13 @@ public:
 
     static constexpr int kSchema = 1;
     // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Log (NT1), 7: Styles (TP1),
-    // 8: FixMinorErrors (PU2), 10: Spellchecker (PU6; 9 is KE2's)
+    // 8: FixMinorErrors (PU2), 9: Template (KE2), 10: Spellchecker (PU6)
     static constexpr int kPanelRegistry = 10;
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
     // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original, Log, Styles, FixMinorErrors,
-    // Spellchecker
+    // Template, Spellchecker
     static const QStringList &panelIds();
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without

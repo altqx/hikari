@@ -71,8 +71,10 @@ local function report_problem(level, where, message, number)
 end
 
 -- Reports a problem with a template or code Line: the 2.1.7 message, then the
--- Line's number in the Grid. `where` is nil for a template the run made up.
-local function problem(level, where, fmt, ...)
+-- Line's number in the Grid. `where` is nil for a template the run made up;
+-- `at` is where in that Line's text the problem is ({start, length} in
+-- bytes from 1), nil when it has no place there.
+local function problem_at(level, where, at, fmt, ...)
 	if quiet then
 		return
 	end
@@ -82,12 +84,24 @@ local function problem(level, where, fmt, ...)
 	end
 	if stats then
 		stats.problems = stats.problems + 1
+		-- the report's list (report_run): each problem once, however many
+		-- syllables or Lines ran into it
+		local key = where and table.concat({ where.index, at and at.start or 0, at and at.length or 0,
+			at and "" or message }, ":")
+		if key and not stats.issue_keys[key] and #stats.issues < 100 then
+			stats.issue_keys[key] = true
+			table.insert(stats.issues, { where = where, at = at, message = message })
+		end
 	end
 	if deferred_problems then
 		table.insert(deferred_problems, { level = level, where = where, message = message })
 	else
 		report_problem(level, where, message, where and where.number)
 	end
+end
+
+local function problem(level, where, fmt, ...)
+	problem_at(level, where, nil, fmt, ...)
 end
 
 -- What the run spent, for its report: the time preparing karaoke Lines
@@ -798,6 +812,33 @@ local function part_where(parts, where, pos, length, convert)
 	return found or where
 end
 
+-- Where the `length` bytes at `pos` of a template's text are in the text of
+-- the Line they came from, for the report (problem_at); nil when they cross
+-- two of a named template's Lines.
+local function part_at(parts, pos, length, total)
+	if not parts or #parts < 2 then
+		return { start = pos, length = length }
+	end
+	local at = 0
+	for _, part in ipairs(parts) do
+		at = at + #part.text
+	end
+	if at ~= total then
+		return nil
+	end
+	at = 0
+	for _, part in ipairs(parts) do
+		if pos <= at + #part.text then
+			if pos + length - 1 > at + #part.text then
+				return nil
+			end
+			return { start = pos - at, length = length }
+		end
+		at = at + #part.text
+	end
+	return nil
+end
+
 function run_text_template(template, tenv, varctx, where, parts)
 	local res = template
 	aegisub.debug.out(5, "Running text template '%s'\n", res)
@@ -816,7 +857,8 @@ function run_text_template(template, tenv, varctx, where, parts)
 				return varctx[varname]
 			else
 				aegisub.debug.out(5, "doesn't exist\n")
-				problem(2, part_where(parts, where, pos, #template, unchanged),
+				problem_at(2, part_where(parts, where, pos, #template, unchanged),
+					part_at(parts, pos, #varname + 1, #template),
 					"Unknown variable name: %s\nIn karaoke template: %s\n", varname, template)
 				return "$" .. varname
 			end
@@ -835,15 +877,48 @@ function run_text_template(template, tenv, varctx, where, parts)
 		end
 	end
 	local expanded = res
+	-- Where in the template the character at `pos` of the expanded text was
+	-- written; nil inside a variable's value. Worked out only for a problem.
+	local function written_at(pos)
+		if not varctx then
+			return pos
+		end
+		local from, at = 1, 1
+		for start, varname, after in string.gmatch(template, "()$([%a_]+)()") do
+			if pos < at + start - from then
+				return from + pos - at
+			end
+			at = at + start - from
+			-- var_replacer's result: the value, or the name as written
+			local value = varctx[string.lower(varname)]
+			local length = value and #tostring(value) or #varname + 1
+			if pos < at + length then
+				return not value and start + pos - at or nil
+			end
+			at = at + length
+			from = after
+		end
+		return from + pos - at
+	end
 	
 	-- Function for evaluating expressions
 	local function expression_evaluator(pos, expression)
 		local function expression_where()
 			return part_where(parts, where, pos, #expanded, replaced)
 		end
+		-- the same expression in the template as written, before the
+		-- variables changed where it is; none when a variable's value
+		-- brought either of its marks in
+		local function expression_at()
+			local open = written_at(pos)
+			local close = written_at(pos + #expression + 1)
+			if open and close then
+				return part_at(parts, open, close - open + 1, #template)
+			end
+		end
 		f, err = loadstring(string.format("return (%s)", expression))
 		if (err) ~= nil then
-			problem(2, expression_where(), "Error parsing expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", err, expression, template)
+			problem_at(2, expression_where(), expression_at(), "Error parsing expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", err, expression, template)
 			return "!" .. expression .. "!"
 		else
 			setfenv(f, tenv)
@@ -851,7 +926,7 @@ function run_text_template(template, tenv, varctx, where, parts)
 			if res then
 				return val
 			else
-				problem(2, expression_where(), "Runtime error in template expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", val, expression, template)
+				problem_at(2, expression_where(), expression_at(), "Runtime error in template expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", val, expression, template)
 				return "!" .. expression .. "!"
 			end
 		end
@@ -1022,7 +1097,7 @@ local function start_run()
 	problem_lines = {}
 	deferred_problems, quiet = nil, false
 	emit_line = append_generated
-	stats = { started = clock(), prepare = 0, lines = 0, problems = 0 }
+	stats = { started = clock(), prepare = 0, lines = 0, problems = 0, issues = {}, issue_keys = {} }
 end
 
 local function json_string(s)
@@ -1060,10 +1135,16 @@ local function report_run(mode, templates, generated, number_of)
 			number_of(t.where), json_string(t.where.effect), json_string(t.where.style),
 			json_number(t.seconds or 0), t.generated or 0))
 	end
+	local issues = {}
+	for _, p in ipairs(stats.issues) do
+		table.insert(issues, string.format('{"line":%d,"kind":%s,"message":%s,"start":%d,"length":%d}',
+			number_of(p.where), json_string(p.where.kind == "code" and "code" or "template"),
+			json_string((p.message:gsub("\n+$", ""))), p.at and p.at.start or 0, p.at and p.at.length or 0))
+	end
 	hikari.report(string.format('{"report":"karaoke-templater","version":1,"mode":%s,"seconds":%s,' ..
-		'"prepare_seconds":%s,"karaoke_lines":%d,"generated":%d,"problems":%d,"templates":[%s]}',
+		'"prepare_seconds":%s,"karaoke_lines":%d,"generated":%d,"problems":%d,"templates":[%s],"issues":[%s]}',
 		json_string(mode), json_number(clock() - stats.started), json_number(stats.prepare), stats.lines,
-		generated, stats.problems, table.concat(entries, ",")))
+		generated, stats.problems, table.concat(entries, ","), table.concat(issues, ",")))
 end
 
 function macro_apply_templates(subs, sel)

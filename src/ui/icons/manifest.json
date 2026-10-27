@@ -2940,6 +2940,40 @@
    ]
   },
   {
+   "role": "template-editor",
+   "file": "template-editor.svg",
+   "label": "Template editor",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "template-editor"
+   ]
+  },
+  {
+   "role": "loop",
+   "file": "loop.svg",
+   "label": "Loop the Line",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "template-editor"
+   ]
+  },
+  {
+   "role": "problem",
+   "file": "problem.svg",
+   "label": "Problem",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "template-editor"
+   ]
+  },
+  {
    "role": "dummy-video",
    "file": "dummy-video.svg",
    "label": "Open dummy video",

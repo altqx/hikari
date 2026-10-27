@@ -29,6 +29,8 @@ core::IntField intOf(std::int64_t v)
     return core::IntField{wide(std::to_string(v)), v};
 }
 
+} // namespace
+
 MacroDialogueLine macroLineOf(const core::LineRecord &l)
 {
     MacroDialogueLine d;
@@ -55,6 +57,8 @@ MacroDialogueLine macroLineOf(const core::LineRecord &l)
     d.raw = narrow(core::legacy::assLineText(l));
     return d;
 }
+
+namespace {
 
 // Writes the script-visible fields into a Line (legacy LuaToLine).
 void assign(core::LineRecord &l, const MacroDialogueLine &d)
@@ -150,13 +154,25 @@ bool sameFields(const MacroDialogueLine &a, const MacroDialogueLine &b)
 
 } // namespace
 
+core::LineRecord lineOfMacro(const MacroDialogueLine &d)
+{
+    core::LineRecord l;
+    assign(l, d);
+    return l;
+}
+
 std::expected<MacroSnapshot, CommandRefusal> snapshotForMacro(EditSession &session)
 {
     if (session.draftLine() && !session.commitDraft())
         return std::unexpected(CommandRefusal::InvalidDraft);
-    const core::Document &doc = session.document();
-    MacroSnapshot s;
+    MacroSnapshot s = macroSnapshotOf(session.document(), session.selection());
     s.revision = session.revision();
+    return s;
+}
+
+MacroSnapshot macroSnapshotOf(const core::Document &doc, const Selection &sel)
+{
+    MacroSnapshot s;
     for (const auto &section : doc.sections()) {
         for (const auto &record : section.records) {
             if (section.kind == core::SectionKind::ScriptInfo) {
@@ -178,7 +194,6 @@ std::expected<MacroSnapshot, CommandRefusal> snapshotForMacro(EditSession &sessi
     for (const auto *l : doc.lines())
         s.dialogues.push_back(macroLineOf(*l));
     const int offset = static_cast<int>(s.info.size() + s.styles.size()) + 1;
-    const Selection &sel = session.selection();
     for (std::size_t i = 0; i < s.dialogues.size(); ++i) {
         const core::LineId id{s.dialogues[i].id};
         if (sel.selected.contains(id))
