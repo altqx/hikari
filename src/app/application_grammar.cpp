@@ -588,17 +588,20 @@ void Application::pumpGrammarWalk()
             ++it;
         }
     }
+    const auto again = [this, &walk] {
+        if (walk.pumpQueued)
+            return;
+        walk.pumpQueued = true;
+        QTimer::singleShot(0, this, [this] {
+            if (m_grammarWalk)
+                m_grammarWalk->pumpQueued = false;
+            pumpGrammarWalk();
+        });
+    };
     std::size_t read = 0;
     while (walk.pending.size() < kWalkInFlight && !walk.queue.empty() && kept < kWalkKept) {
         if (++read > kWalkPerTurn) { // the window answers (Cancel too) before the rest
-            if (!walk.pumpQueued) {
-                walk.pumpQueued = true;
-                QTimer::singleShot(0, this, [this] {
-                    if (m_grammarWalk)
-                        m_grammarWalk->pumpQueued = false;
-                    pumpGrammarWalk();
-                });
-            }
+            again();
             break;
         }
         const std::size_t index = walk.queue.front();
@@ -614,21 +617,21 @@ void Application::pumpGrammarWalk()
             walk.arrived[index] = {};
             continue;
         }
-        kept += check.raw.size();
         check.text = core::grammar::checkedText(check.raw, format);
-        const bool empty = blank(check.text);
-        const QString text = QString::fromStdU16String(check.text.text);
-        walk.checks[index] = std::move(check);
-        if (empty) {
+        if (blank(check.text)) { // nothing to find, nothing kept
             walk.arrived[index] = {};
             continue;
         }
+        kept += check.raw.size();
+        const QString text = QString::fromStdU16String(check.text.text);
+        walk.checks[index] = std::move(check);
         auto *client = grammarClient();
         if (!client)
             return;
         walk.pending[client->check(text)] = index;
     }
     // The findings join in walk order, as their Lines' results come.
+    const std::size_t joined = walk.checked;
     bool added = false;
     for (auto it = walk.arrived.find(walk.checked); it != walk.arrived.end(); it = walk.arrived.find(walk.checked)) {
         // A Line's findings left to right, as they are read.
@@ -644,6 +647,9 @@ void Application::pumpGrammarWalk()
         nextGrammarFinding();
         showGrammarFinding();
     }
+    // Held back by the kept checks: the Lines just joined may free some.
+    if (kept >= kWalkKept && walk.checked > joined && !walk.queue.empty())
+        again();
     emit grammarWalkChanged();
 }
 
@@ -672,8 +678,15 @@ void Application::showGrammarFinding()
     const auto &walk = *m_grammarWalk;
     const auto &found = walk.findings[*walk.current];
     const auto &check = walk.checks.at(found.line);
+    const auto line = walk.lines[found.line];
+    // The finding's Line alone is selected, as the spelling walk does: Enter
+    // in the editor commits to the selection.
+    m_editor->commit();
+    if (auto *session = targetSession())
+        session->setSelection(application::Selection{line, {line}, line, {}});
     m_editor->reloadFromSession();
-    m_editor->showLine(walk.lines[found.line].value);
+    m_editor->showLine(line.value);
+    refreshViews(); // the Grid's selection
     const int role = walk.translation ? 1 : 0;
     if (editorRaw(role) != check.raw)
         return;

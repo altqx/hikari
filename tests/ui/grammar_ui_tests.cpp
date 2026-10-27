@@ -680,6 +680,54 @@ private slots:
         QCOMPARE(state.value(QStringLiteral("line")).toInt(), 2);
     }
 
+    // Lines with nothing to check (tags only here, a million units of them)
+    // keep nothing, so the walk never stops short of the Lines after them.
+    void blankLinesDoNotHoldTheWalk()
+    {
+        start();
+        grammarOn();
+        // 4096 units each, the longest checked: 256 of them reach the kept
+        // limit within one turn.
+        const QByteArray tags = "{" + QByteArray("\\b1").repeated(1364) + "\\i}";
+        QByteArray events;
+        for (int i = 0; i < 300; ++i)
+            events += dialogue(tags);
+        events += dialogue("I has a apple.", 2);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/tags.ass"), events)));
+        QTRY_VERIFY(target());
+        QTest::qWait(500); // the settings in (a change would start the walk over)
+        application->startGrammarWalk();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+        QCOMPARE(application->grammarWalkState().value(QStringLiteral("line")).toInt(), 301);
+    }
+
+    // A finding's Line becomes the only selected one, so Enter in the editor
+    // commits there and nowhere else.
+    void walkSelectsTheFindingsLine()
+    {
+        start();
+        grammarOn();
+        QByteArray events;
+        for (int i = 0; i < 6; ++i)
+            events += dialogue(i == 4 ? "I has a apple." : "This line is fine.", i + 1);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/select.ass"), events)));
+        QTRY_VERIFY(target());
+        const auto lines = target()->document().lines();
+        target()->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id, lines[2]->id},
+                                                      lines[0]->id, {}});
+        application->startGrammarWalk();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("found")).toBool(), kHarperWait);
+        const auto &selection = target()->selection();
+        QCOMPARE(selection.active, std::optional(lines[4]->id));
+        QCOMPARE(selection.selected, (std::set<core::LineId>{lines[4]->id}));
+        // Typed and committed in the field: only the finding's Line changes.
+        application->editor().textEdited(QStringLiteral("I have an apple."), 16);
+        QVERIFY(application->editor().commit()); // Enter
+        QTRY_COMPARE(lineText(4), QStringLiteral("I have an apple."));
+        QCOMPARE(lineText(0), QStringLiteral("This line is fine."));
+        QCOMPARE(lineText(1), QStringLiteral("This line is fine."));
+    }
+
     // Replacing the walk's last finding: the editor and the Grid show the
     // correction though no finding is left to show.
     void replacingTheLastFindingShowsIt()
