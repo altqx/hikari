@@ -215,6 +215,29 @@ target_compile_definitions(hikari_ui_automation_repeat_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_repeat_tests hikari_lua_helper hikari_automation_stage)
 # KE1-template-timing: the karaoke templater's report in the status bar and the log window.
+# KE2: the Template editor's controller over the bundled karaoke templater, and its panel.
+hikari_add_qttest(hikari_ui_template_editor_tests SOURCES template_editor_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin hikari_backends)
+target_compile_definitions(hikari_ui_template_editor_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
+    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
+    HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus")
+target_include_directories(hikari_ui_template_editor_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
+add_dependencies(hikari_ui_template_editor_tests hikari_lua_helper hikari_automation_stage)
+# Each test starts the templater's helper; together about a minute.
+foreach(mode offscreen xvfb native)
+    if(TEST hikari_ui_template_editor_tests.${mode})
+        set_tests_properties(hikari_ui_template_editor_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
+# KE2: the Template editor panel in the shell, with the video and the Automation menu's run.
+hikari_add_qttest(hikari_ui_template_editor_shell_tests SOURCES template_editor_shell_tests.cpp
+    LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_template_editor_shell_tests PRIVATE
+    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
+    HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus")
+add_dependencies(hikari_ui_template_editor_shell_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_karaoke_report_tests SOURCES karaoke_report_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_karaoke_report_tests PRIVATE
     HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"

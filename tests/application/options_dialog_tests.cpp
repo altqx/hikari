@@ -240,9 +240,17 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(fill.page, OptionsPage::Automation);
     ASSERT_NE(findSetting("automation.fillLastAnswers"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("automation.fillLastAnswers")->defaultValue), false);
+    // SV1 (#365): "Preview subtitles at", Video resolution by default.
+    const auto &previewAt = all[std::size(kLegacy) + 16];
+    EXPECT_EQ(previewAt.setting, "video.previewSubtitlesAt");
+    EXPECT_EQ(previewAt.control, OptionsControl::IndexChoice);
+    EXPECT_EQ(previewAt.page, OptionsPage::Video);
+    EXPECT_EQ(previewAt.entries, 2);
+    ASSERT_NE(findSetting("video.previewSubtitlesAt"), nullptr);
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("video.previewSubtitlesAt")->defaultValue), 0);
     // GR1 (#364): grammar check, Off by default, then Harper's 15 rule
     // groups, each on by default.
-    const auto &grammar = all[std::size(kLegacy) + 16];
+    const auto &grammar = all[std::size(kLegacy) + 17];
     EXPECT_EQ(grammar.setting, "grammar.language");
     EXPECT_EQ(grammar.control, OptionsControl::IndexChoice);
     EXPECT_EQ(grammar.page, OptionsPage::Spelling);
@@ -252,7 +260,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     const auto groups = hikari::core::grammar::groupIds();
     ASSERT_EQ(groups.size(), 15u);
     for (std::size_t i = 0; i < groups.size(); ++i) {
-        const auto &binding = all[std::size(kLegacy) + 17 + i];
+        const auto &binding = all[std::size(kLegacy) + 18 + i];
         EXPECT_EQ(binding.setting, "grammar.group." + std::string(groups[i]));
         EXPECT_EQ(binding.control, OptionsControl::Check);
         EXPECT_EQ(binding.page, OptionsPage::Spelling);
@@ -260,8 +268,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         EXPECT_EQ(std::get<bool>(findSetting(binding.setting)->defaultValue), true);
     }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 34);
-    const auto &hostApi = all[std::size(kLegacy) + 32];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 35);
+    const auto &hostApi = all[std::size(kLegacy) + 33];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -272,7 +280,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 32);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 33);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));

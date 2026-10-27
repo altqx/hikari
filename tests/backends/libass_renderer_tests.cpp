@@ -953,6 +953,54 @@ TEST(LibassRenderer, ALongMalformedBlockCountsInOnePass)
     EXPECT_LT(frame->cost.countMilliseconds, 250.0);
 }
 
+// SV1-screen-size-subtitles: drawn at a screen size the script is laid out
+// on the video's size, borders and all, only with more pixels; at the
+// video's own size it is render() byte for byte.
+TEST(LibassRenderer, AScreenSizeDrawsTheVideoSizesLayoutWithMorePixels)
+{
+    const std::vector<std::byte> base = scriptOf(
+        "Dialogue: 0,0:00:00.00,0:00:05.00,D,,0,0,0,,{\\pos(10,10)\\bord2\\p1}m 0 0 l 50 0 40 30 0 40{\\p0}\n");
+    std::string script(reinterpret_cast<const char *>(base.data()), base.size());
+    script.insert(script.find("PlayResX"), "ScaledBorderAndShadow: no\n");
+    const RenderSnapshot shot{bytesOf(script), {FontLease{"Titillium Web", testFont()}}, "Titillium Web", false};
+    backends::LibassRenderer renderer;
+    ASSERT_TRUE(renderer.prepare(shot));
+    const auto video = renderer.render(core::DocumentTime(1'000'000), 96, 64);
+    ASSERT_TRUE(video && video->bounds);
+    const auto same = renderer.renderScaled(core::DocumentTime(1'000'000), 96, 64, 96, 64);
+    ASSERT_TRUE(same);
+    EXPECT_EQ(same->pixels, video->pixels);
+    const auto sharp = renderer.renderScaled(core::DocumentTime(1'000'000), 192, 128, 96, 64);
+    ASSERT_TRUE(sharp && sharp->bounds);
+    EXPECT_EQ(sharp->width, 192);
+    EXPECT_EQ(sharp->height, 128);
+    // The visible pixels' bounds (the frames' own are libass's padded images').
+    const auto visible = [](OverlayFrame f) {
+        f.bounds.reset();
+        return overlayBounds(f).value_or(PixelRect{});
+    };
+    const PixelRect v = visible(*video), s = visible(*sharp);
+    EXPECT_NEAR(s.x, 2 * v.x, 2);
+    EXPECT_NEAR(s.y, 2 * v.y, 2);
+    EXPECT_NEAR(s.width, 2 * v.width, 3);
+    EXPECT_NEAR(s.height, 2 * v.height, 3);
+    // A 192 x 128 video keeps its 2-pixel border: narrower than the scaled one.
+    const auto big = renderer.render(core::DocumentTime(1'000'000), 192, 128);
+    ASSERT_TRUE(big);
+    EXPECT_LE(visible(*big).width, s.width - 3);
+    EXPECT_EQ(renderer.renderScaled(core::DocumentTime(1'000'000), 192, 128, 0, 64).error(), RenderError::InvalidSize);
+}
+
+TEST(LibassRenderer, TheSelectionDrawsAtTheScreenSize)
+{
+    backends::SubtitleRendererSelection selection;
+    ASSERT_TRUE(selection.prepare(snapshot(kDrawing)));
+    const auto frame = selection.renderScaled(core::DocumentTime(1'000'000), 192, 128, 96, 64);
+    ASSERT_TRUE(frame);
+    EXPECT_EQ(frame->width, 192);
+    EXPECT_GT(frame->cost.milliseconds, 0.0);
+}
+
 // The renderer selection times each render, whichever renderer draws.
 TEST(LibassRenderer, TheSelectionTimesEveryRender)
 {

@@ -3538,6 +3538,12 @@ private slots:
         catalogs.setPreviewText(QStringLiteral("Zz"));
         QTRY_COMPARE(window->property("resolvedFor").toString(), QStringLiteral("Zz"));
         QVERIFY(catalogs.property("previewKey").toInt() > previewKey);
+        // SV1: and when Preview subtitles at changes.
+        const int sharpKey = catalogs.property("previewKey").toInt();
+        application->settingsStore()->set("video.previewSubtitlesAt", 1);
+        QVERIFY(catalogs.property("previewAtScreenSize").toBool());
+        QTRY_VERIFY(catalogs.property("previewKey").toInt() > sharpKey);
+        application->settingsStore()->reset(QStringLiteral("video.previewSubtitlesAt"));
         // The window's preview draws those characters only: an override in
         // the preview text draws no other face than the one named.
         application->settingsStore()->set("styles.previewText", QStringLiteral("AB"));
@@ -4695,6 +4701,13 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
         QTRY_COMPARE(colour(1), (QList<int>{255, 0, 0, 0x40}));
         QVERIFY(application->styleManager().previewKey() > key);
+        // SV1: the open preview is drawn again when Preview subtitles at changes.
+        const int sharpKey = application->styleManager().previewKey();
+        application->settingsStore()->set("video.previewSubtitlesAt", 1);
+        QVERIFY(application->styleManager().previewAtScreenSize());
+        QTRY_VERIFY(application->styleManager().previewKey() > sharpKey);
+        application->settingsStore()->reset(QStringLiteral("video.previewSubtitlesAt"));
+        QVERIFY(!application->styleManager().previewAtScreenSize());
         auto *alpha = inPopover("alpha");
         alpha->setProperty("value", 0x60);
         QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
@@ -11144,6 +11157,88 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    // KA8 (#354): "Multi-highlight (#)" writes each further syllable of a
+    // group as a # syllable, is remembered, and a kanji Line that has them
+    // opens with its groups linked as they were written.
+    void kanjiTimerWritesMultiHighlightSyllables()
+    {
+        const QByteArray styles =
+            "[V4+ Styles]\n"
+            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+            "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+            "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+            "Style: Song,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+            "10,10,10,1\n"
+            "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+            "2,10,10,10,1\n\n"
+            "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+            "Dialogue: 0,0:00:01.00,0:00:01.60,Song,,0,0,0,,{\\k20}ge{\\kf10}ki{\\k30}no\n";
+        const auto write = [&](const char *name, const char *kanjiLine) {
+            const QString path = dir.filePath(QLatin1String(name));
+            QFile f(path);
+            if (f.open(QIODevice::WriteOnly))
+                f.write(styles + "Dialogue: 0,0:00:01.00,0:00:01.60,Song kanji,,0,0,0,," + kanjiLine + "\n");
+            return path;
+        };
+        QVERIFY(application->openFile(write("kanji-multi.ass", "撃の")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "openKanjiTimer"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        auto *kanji = qobject_cast<QQuickWindow *>(dialog);
+        QTRY_VERIFY(kanji->isVisible() && kanji->isActive());
+        auto *controller = dialog->property("timer").value<QObject *>();
+        const auto result = [&] { return dialogItem("kanjiTimerDialog", "kanjiResult")->property("plain").toString(); };
+        // Off by default: 撃 folds ge and ki, as KA3 writes it.
+        auto *multi = dialogItem("kanjiTimerDialog", "kanjiMulti");
+        QVERIFY(multi);
+        QCOMPARE(multi->property("text").toString(), QStringLiteral("Multi-highlight (#)"));
+        QVERIFY(!multi->property("checked").toBool());
+        QTRY_COMPARE(result(), QStringLiteral("{\\k30}撃{\\k30}の"));
+        // A click turns it on, and the setting remembers it.
+        QTest::mouseClick(kanji, Qt::LeftButton, {}, multi->mapToScene(QPointF(10, multi->height() / 2)).toPoint());
+        QTRY_VERIFY(controller->property("multi").toBool());
+        QVERIFY(multi->property("checked").toBool());
+        QVERIFY(application->settingsStore()->boolean("audio.kanjiTimerMulti"));
+        QTRY_COMPARE(result(), QStringLiteral("{\\k20}撃{\\kf10}#{\\k30}の"));
+        // Ctrl+Enter accepts, Apply writes it.
+        dialogItem("kanjiTimerDialog", "kanjiStrip")->forceActiveFocus();
+        QTest::keyClick(kanji, Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(controller->property("pending").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiApply"), "click"));
+        QTRY_COMPARE(controller->property("pending").toInt(), 0);
+        QVERIFY(session->document().lines()[1]->text == u8"{\\k20}撃{\\kf10}#{\\k30}の");
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!kanji->isVisible());
+
+        // Another Document's kanji Line with # syllables: the pair opens
+        // with 撃 linked over ge and ki, and Enter accepts it as written.
+        QVERIFY(application->openFile(write("kanji-read.ass", "{\\k20}撃{\\kf10}#{\\k30}の")));
+        application->selectTab(static_cast<int>(application->workspace().tabs().size()) - 1);
+        auto *read = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(read != session);
+        QVERIFY(QMetaObject::invokeMethod(root, "openKanjiTimer"));
+        QTRY_VERIFY(kanji->isVisible() && kanji->isActive());
+        QTRY_VERIFY(controller->property("pair").toMap().contains(QStringLiteral("groups")));
+        const QVariantList groups = controller->property("pair").toMap().value(QStringLiteral("groups")).toList();
+        QCOMPARE(groups.size(), 2);
+        QCOMPARE(groups[0].toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("done"));
+        QCOMPARE(groups[0].toMap().value(QStringLiteral("kanji")).toString(), QStringLiteral("撃"));
+        QCOMPARE(groups[0].toMap().value(QStringLiteral("syllables")).toList().size(), 2);
+        QCOMPARE(controller->property("pairs").toList()[0].toMap().value(QStringLiteral("kanji")).toString(),
+                 QStringLiteral("撃の"));
+        QCOMPARE(result(), QStringLiteral("{\\k20}撃{\\kf10}#{\\k30}の"));
+        // Off again: the same groups, folded.
+        QTest::mouseClick(kanji, Qt::LeftButton, {}, multi->mapToScene(QPointF(10, multi->height() / 2)).toPoint());
+        QTRY_VERIFY(!controller->property("multi").toBool());
+        QVERIFY(!application->settingsStore()->boolean("audio.kanjiTimerMulti"));
+        QTRY_COMPARE(result(), QStringLiteral("{\\k30}撃{\\k30}の"));
+        QVERIFY(QMetaObject::invokeMethod(controller, "discard"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!kanji->isVisible());
+    }
+
     // KA3: a Line of thousands of syllables shows a window of 60 groups
     // around the current one, not an item per syllable (Codex security
     // review on #352).
@@ -11191,7 +11286,8 @@ private slots:
     // KA3 (#278): the Kanji timer in the four themes, written to
     // HIKARI_SURFACE_SHOT_DIR when it is set (ka3-<part>-<theme>.png): a pair
     // half linked after two applied ones, and a romaji syllable with no
-    // kanji left.
+    // kanji left; KA8 (#354): the first with Multi-highlight (#) on
+    // (ka8-multi-<theme>.png).
     void kanjiTimerScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -11256,7 +11352,7 @@ private slots:
         QCOMPARE(currentKanji(), QStringLiteral("聞"));
         auto &settings = *application->settingsStore();
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
-        const auto shoot = [&](const char *part) {
+        const auto shoot = [&](const char *part, const char *card = "ka3") {
             for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
                 settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
                 auto *controls = root->property("palette").value<QObject *>();
@@ -11264,11 +11360,16 @@ private slots:
                 QTest::qWait(300);
                 QImage shot;
                 QTRY_VERIFY((shot = kanji->grabWindow(), !shot.isNull() && shot.width() > 0));
-                QVERIFY(shot.save(out + QStringLiteral("/ka3-") + QLatin1String(part) + QLatin1Char('-')
+                QVERIFY(shot.save(out + QLatin1Char('/') + QLatin1String(card) + QLatin1Char('-') + QLatin1String(part) + QLatin1Char('-')
                                   + QLatin1String(code) + QStringLiteral(".png")));
             }
         };
         shoot("window");
+        // KA8: Multi-highlight (#) on, the Result line with its # syllables.
+        QVERIFY(controller->setProperty("multi", true));
+        QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiResult")->property("plain").toString().contains(QLatin1Char('#')));
+        shoot("multi", "ka8");
+        QVERIFY(controller->setProperty("multi", false));
         // Pair 5: "yo" has no kanji left once て takes "te" alone.
         QVERIFY(QMetaObject::invokeMethod(controller, "choose", Q_ARG(int, 4)));
         strip->forceActiveFocus();
@@ -16226,6 +16327,41 @@ private slots:
         updates.setAutoCheck(autoCheck);
     }
 
+    // SV1 (#365): "Preview subtitles at" on the Video page, Video
+    // resolution by default; with a CSRI filter chosen it is turned off with
+    // its note. The setting reaches the video only with libass.
+    void settingsPreviewSubtitlesAtFollowsTheFilter()
+    {
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.reset(QStringLiteral("video.previewSubtitlesAt")); });
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("video");
+        auto *row = dialogItem("settingsDialog", "settingsPreviewSubtitlesAt");
+        auto *choice = dialogItem("settingsDialog", "setting_video.previewSubtitlesAt");
+        QVERIFY(row && choice);
+        QTRY_VERIFY(choice->isVisible());
+        QCOMPARE(choice->property("currentText").toString(), QStringLiteral("Video resolution (as encoded)"));
+        QVERIFY(choice->isEnabled());
+        dialog->setProperty("renderers", QStringList{QStringLiteral("libass"), QStringLiteral("vsfiltermod_textsub")});
+        auto values = settingsValues(dialog);
+        values.insert(QStringLiteral("video.subtitleProvider"), 1);
+        dialog->setProperty("values", values);
+        QTRY_VERIFY(!choice->isEnabled());
+        QCOMPARE(row->property("note").toString(), QStringLiteral("Video resolution only with this filter."));
+        values.insert(QStringLiteral("video.subtitleProvider"), 0);
+        dialog->setProperty("values", values);
+        QTRY_VERIFY(choice->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!application->video().subtitlesAtScreenSize());
+        settings.set("video.previewSubtitlesAt", 1);
+        QVERIFY(application->video().subtitlesAtScreenSize());
+        settings.reset(QStringLiteral("video.previewSubtitlesAt"));
+        QVERIFY(!application->video().subtitlesAtScreenSize());
+    }
+
     void settingsDialogAppliesChangedValuesLive()
     {
         auto &settings = *application->settingsStore();
@@ -16420,6 +16556,7 @@ private slots:
               {"video.playbackPlayer", nullptr}, // W1, Windows only
 #endif
               {"video.subtitleProvider", nullptr}, // W2
+              {"video.previewSubtitlesAt", nullptr}, // SV1
               {"video.disableLiveEditing", "Turn off the edits preview"},
               {"video.ffms2Seeking", nullptr},
               {"video.gpuConversion", "Convert video colours on the GPU"},

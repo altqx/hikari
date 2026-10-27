@@ -384,14 +384,14 @@ private slots:
         float_("audioDock", true);
         // The arrangement shown: the panels it leaves closed (AM1's
         // Automation, NT1's Log, PU6's Spellchecker, TP1's Styles, PU2's Fix
-        // minor errors and, outside Translation mode, TM1's Original text
-        // among them), not every panel.
+        // minor errors, KE2's Template editor and, outside Translation mode,
+        // TM1's Original text among them), not every panel.
         int closedShown = 0;
         for (const char *dock : {"videoDock", "audioDock", "editorDock", "gridDock", "referenceDock", "timingDock",
                                  "searchDock", "automationDock", "originalDock", "logDock", "spellDock", "stylesDock",
-                                 "misspellDock"})
+                                 "misspellDock", "templateDock"})
             closedShown += isOpen(dock) ? 0 : 1;
-        QVERIFY(closedShown < 12);
+        QVERIFY(closedShown < 13);
         window()->close();
         QTRY_VERIFY(!window()->isVisible());
         const auto session = readSession(application->lastSessionPath());

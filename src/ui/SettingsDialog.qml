@@ -1027,6 +1027,23 @@ DialogWindow {
                                 Accessible.name: qsTr("Subtitle display filter")
                             }
                         }
+                        // SV1 (#365): where libass draws the previews'
+                        // subtitles; a CSRI filter draws at the video's size.
+                        SettingsRow {
+                            id: previewAtRow
+                            objectName: "settingsPreviewSubtitlesAt"
+                            readonly property bool libass: dialog.renderers.length < 2
+                                || dialog.renderers[dialog.values["video.subtitleProvider"] ?? -1] === "libass"
+                            text: qsTr("Preview subtitles at")
+                            note: libass ? qsTr("Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script's layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.")
+                                         : qsTr("Video resolution only with this filter.")
+                            SettingChoice {
+                                setting: "video.previewSubtitlesAt"
+                                enabled: previewAtRow.libass
+                                model: [qsTr("Video resolution (as encoded)"), qsTr("Screen size (sharp)")]
+                                Accessible.name: qsTr("Preview subtitles at")
+                            }
+                        }
                         SettingCheck { setting: "video.disableLiveEditing"; text: qsTr("Turn off the edits preview") }
                         SettingNote { text: qsTr("Applies when the tab opens again.") }
                     }

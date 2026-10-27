@@ -19,6 +19,21 @@ void VideoSession::setFrameWorker(PlaybackPipeline::Post post)
     m_pipeline = std::make_unique<PlaybackPipeline>(m_renderer, std::move(post),
                                                     [this](PlaybackPipeline::Output out) { showGeneral(std::move(out)); });
     m_pipeline->setSubtitles(m_subtitleSerial, m_hasSubtitles);
+    m_pipeline->setScreenSize(m_screen);
+}
+
+void VideoSession::setScreenSize(std::optional<std::pair<int, int>> size)
+{
+    if (size == m_screen)
+        return;
+    m_screen = size;
+    if (m_pipeline)
+        m_pipeline->setScreenSize(size);
+    // Playing, the next frame is drawn at the new size.
+    if (!m_playing) {
+        render();
+        present();
+    }
 }
 
 std::optional<LegacyColourMatrix::Input> VideoSession::playerColour() const
@@ -331,7 +346,7 @@ void VideoSession::render()
     const auto start = m_overlayTime ? m_overlayTime : frameStart(m_shown->index);
     if (!start)
         return;
-    if (auto overlay = m_renderer.render(*start, m_shown->width, m_shown->height))
+    if (auto overlay = renderOverlay(m_renderer, *start, overlaySizeFor(m_shown->width, m_shown->height, m_screen)))
         m_overlay = std::make_shared<const OverlayFrame>(std::move(*overlay));
 }
 
@@ -403,7 +418,7 @@ bool VideoSession::play()
     return startPlayback(fromUs);
 }
 
-bool VideoSession::playLine(int startMs, int endMs)
+bool VideoSession::playLine(int startMs, int endMs, bool loop)
 {
     if (!m_player || m_state != State::Ready || m_starts.empty())
         return false;
@@ -419,6 +434,9 @@ bool VideoSession::playLine(int startMs, int endMs)
     const int frame = timebase.clampFrame(timebase.frameAt(startMs)); // SeekFrame
     showFrame(frame);
     m_playEndMs = end;
+    m_loop = loop;
+    m_loopStartMs = startMs;
+    m_loopEndMs = endMs;
     return startPlayback(frameStart(frame).value_or(core::DocumentTime(0)).microseconds());
 }
 
@@ -569,8 +587,12 @@ void VideoSession::showGeneral(PlaybackPipeline::Output out)
     // A4: a Line's playback pauses once its end frame is shown
     if (m_playEndMs > 0)
         if (const auto at = frameHolding(startUs))
-            if (m_starts[static_cast<std::size_t>(*at)].microseconds() / 1000 >= m_playEndMs)
+            if (m_starts[static_cast<std::size_t>(*at)].microseconds() / 1000 >= m_playEndMs) {
+                const bool again = m_loop;
                 pause();
+                if (again)
+                    playLine(m_loopStartMs, m_loopEndMs, true);
+            }
 }
 
 bool VideoSession::pause()
@@ -819,6 +841,8 @@ bool VideoSession::seekToMs(int ms)
         frame = at ? static_cast<int>(at->value()) : frameCount() - 1;
     }
     if (m_playing) {
+        if (looping())
+            m_playEndMs = 0; // KE2: a seek ends Loop the Line; playing goes on
         m_requested = frame;
         m_lastGeneralUs.reset();
         return startPlayback(frameStart(frame).value_or(core::DocumentTime(0)).microseconds());

@@ -14,6 +14,7 @@
 #include "hikari/application/video_sources.h"
 
 #include <QObject>
+#include <QPointer>
 #include <QTimer>
 
 #include <functional>
@@ -23,6 +24,8 @@
 #include <QtQml/qqmlregistration.h>
 
 namespace hikari::ui {
+
+class VideoPresenter;
 
 class VideoController : public QObject {
     Q_OBJECT
@@ -43,6 +46,8 @@ class VideoController : public QObject {
     Q_PROPERTY(QString offerDirectoryLabel READ offerDirectoryLabel NOTIFY changed)
     Q_PROPERTY(bool offerApplyToAll READ offerApplyToAll WRITE setOfferApplyToAll NOTIFY changed)
     Q_PROPERTY(bool playing READ playing NOTIFY changed)
+    // KE2: playing a span again and again (loopRange).
+    Q_PROPERTY(bool looping READ looping NOTIFY changed)
     // V2: the legacy times field ("00:00:01,001;  24;  0;  1 ms, -999 ms":
     // time, frame, frames from the active Line's start, then ms from its
     // start and end) and whether the shown frame is a keyframe; while
@@ -99,6 +104,10 @@ public:
 
     // The panel's VideoPresenter item.
     Q_INVOKABLE void attachPresenter(QObject *presenter);
+    // SV1-screen-size-subtitles: subtitles drawn at the picture's size on
+    // screen (video.previewSubtitlesAt, libass only), or at the video's.
+    void setSubtitlesAtScreenSize(bool on);
+    bool subtitlesAtScreenSize() const { return m_screenSizeSubtitles; }
     // The answers (legacy wxOK, wxYES, wxNO): offerAnswered with the
     // "Apply to All" check; the application loads what the answer names.
     Q_INVOKABLE void loadAssociated();
@@ -125,6 +134,10 @@ public:
     // A4: GLOBAL_PLAY_ACTUAL_LINE (legacy VideoBox's "Play the current
     // line"): the active Line from its start to the frame before its end.
     Q_INVOKABLE bool playActualLine();
+    // KE2: the Template editor's Loop the Line: [startMs, endMs) as
+    // playActualLine plays a Line, from its start again at each end.
+    Q_INVOKABLE bool loopRange(int startMs, int endMs);
+    bool looping() const { return m_session.looping(); }
     // V2 navigation.
     QString times() const;
     bool keyframeShown() const;
@@ -195,6 +208,9 @@ private:
     void open(const QString &path);
 
     application::VideoSession m_session;
+    QPointer<VideoPresenter> m_presenter;
+    bool m_screenSizeSubtitles = false;
+    void followScreenSize();
     OpenFilter m_filter;
     std::function<void()> m_beforeOpen;
     std::uint64_t m_openRequest = 0;

@@ -188,6 +188,8 @@ bool DocumentFiles::close(DocumentId document)
 std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId document,
                                                                 std::optional<DestinationKey> saveAs)
 {
+    if (m_beforeSave)
+        m_beforeSave();
     Entry *entry = find(document);
     if (!entry)
         return std::unexpected(SaveRefusal::UnknownDocument);
