@@ -25,6 +25,8 @@
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
+#include <memory>
+
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
 using namespace hikari;
@@ -36,6 +38,17 @@ namespace {
 QUrl guide(GuideSurface kind, const QString &id)
 {
     return QUrl(QString::fromStdString(application::guideUrl(kind, id.toStdString())));
+}
+
+// An item of a window's visual tree by its object name.
+QQuickItem *itemNamed(QQuickItem *item, const QString &name)
+{
+    if (item->objectName() == name)
+        return item;
+    for (QQuickItem *child : item->childItems())
+        if (QQuickItem *found = itemNamed(child, name))
+            return found;
+    return nullptr;
 }
 
 const QUrl kHome(QStringLiteral("https://hikarisub.altqx.com/en/docs"));
@@ -82,6 +95,10 @@ private slots:
         o.playbackAudio = false;
         o.spellingBackend = {};
         application = new app::Application(o);
+        // A second between keys: F1 again within 100 ms is a repeat
+        // (CheckLastKeyEvent) and opens nothing.
+        auto t = std::make_shared<qint64>(0);
+        application->hotkeys().setKeyClock([t] { return *t += 1000; });
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
         engine->setInitialProperties(application->qmlProperties());
@@ -107,7 +124,7 @@ private slots:
         for (const QString &panel : panels)
             QVERIFY2(!application::guidePage(GuideSurface::Panel, panel.toStdString()).empty(), qPrintable(panel));
         QSet<QString> windows;
-        const QRegularExpression id(QStringLiteral(R"((?:dialogId|guideId): "([A-Za-z]+)")"));
+        const QRegularExpression id(QStringLiteral(R"re((?:dialogId|guideId): "([A-Za-z]+)")re"));
         QDirIterator files(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files);
         while (files.hasNext()) {
             QFile file(files.next());
@@ -133,6 +150,28 @@ private slots:
                  QUrl(QStringLiteral("https://hikarisub.altqx.com/en/docs/basics/grid")));
     }
 
+    // Home (SH2) is no panel: F1 there opens the guide's home. Then a file in
+    // Translation mode, so every panel is there (the Original panel too) for
+    // the focus below.
+    void homeOpensTheGuidesHome()
+    {
+        QObject *homePage = named(QStringLiteral("homePage"));
+        QVERIFY(homePage && homePage->property("visible").toBool());
+        const qsizetype before = recorded::opened().size();
+        QTest::keyClick(window, Qt::Key_F1);
+        QTRY_COMPARE(openedAfter(before), kHome);
+        QFile file(home.filePath(QStringLiteral("tl.ass")));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: TLMode Original\n\n[Events]\n"
+                   "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                   "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,line\n"
+                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,linia\n");
+        file.close();
+        QVERIFY(application->openFile(file.fileName()));
+        QTRY_VERIFY(!homePage->property("visible").toBool());
+        QVERIFY(run(QStringLiteral("editor.translationMode")).toBool());
+    }
+
     // F1 (User guide's default key) on each panel opens the panel's page.
     void f1OnEachPanelOpensItsPage()
     {
@@ -147,7 +186,7 @@ private slots:
             QQuickWindow *shown = panel->window();
             QVERIFY2(shown, qPrintable(name));
             shown->requestActivate();
-            QVERIFY2(QTest::qWaitForWindowActive(shown), qPrintable(name));
+            QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(shown));
             QTRY_VERIFY2(run(QStringLiteral("panelOf(%1.activeFocusItem) === panels[%2]")
                                  .arg(shown == window ? QStringLiteral("root") : QStringLiteral("workspaceLayout.focusWindow"))
                                  .arg(i))
@@ -155,7 +194,7 @@ private slots:
                          qPrintable(name));
             const qsizetype before = recorded::opened().size();
             QTest::keyClick(shown, Qt::Key_F1);
-            QCOMPARE(openedAfter(before), guide(GuideSurface::Panel, name));
+            QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Panel, name));
         }
     }
 
@@ -170,7 +209,7 @@ private slots:
         QCOMPARE(action->property("text").toString(), QStringLiteral("User &guide"));
         const qsizetype before = recorded::opened().size();
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
-        QCOMPARE(openedAfter(before), guide(GuideSurface::Panel, QStringLiteral("Grid")));
+        QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Panel, QStringLiteral("Grid")));
     }
 
     // In a DG1 window with a page, F1 and the title bar's "?" (Help) open it;
@@ -182,8 +221,9 @@ private slots:
         QVERIFY(settings);
         QTRY_VERIFY(settings->isVisible());
         settings->requestActivate();
-        QVERIFY(QTest::qWaitForWindowActive(settings));
-        auto *help = settings->contentItem()->findChild<QQuickItem *>(QStringLiteral("dialogTitleBarHelp"));
+        // (A dialog counts as active while its parent is: the focus itself.)
+        QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(settings));
+        auto *help = itemNamed(settings->contentItem(), QStringLiteral("dialogTitleBarHelp"));
         QVERIFY(help);
         // Shown with the window's drawn title bar (not with the system's).
         const bool drawnBar = help->parentItem()->isVisible();
@@ -193,11 +233,11 @@ private slots:
         QCOMPARE(help->property("focusPolicy").toInt(), int(Qt::NoFocus)); // as every title bar button: F1 is its key
         qsizetype before = recorded::opened().size();
         QTest::keyClick(settings, Qt::Key_F1);
-        QCOMPARE(openedAfter(before), guide(GuideSurface::Window, QStringLiteral("settings")));
+        QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Window, QStringLiteral("settings")));
         if (drawnBar) {
             before = recorded::opened().size();
             QVERIFY(QMetaObject::invokeMethod(help, "clicked"));
-            QCOMPARE(openedAfter(before), guide(GuideSurface::Window, QStringLiteral("settings")));
+            QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Window, QStringLiteral("settings")));
         }
         settings->close();
         QTRY_VERIFY(!settings->isVisible());
@@ -207,15 +247,15 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(about, "open"));
         QTRY_VERIFY(about->isVisible());
         about->requestActivate();
-        QVERIFY(QTest::qWaitForWindowActive(about));
-        auto *none = about->contentItem()->findChild<QQuickItem *>(QStringLiteral("dialogTitleBarHelp"));
+        QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(about));
+        auto *none = itemNamed(about->contentItem(), QStringLiteral("dialogTitleBarHelp"));
         QVERIFY(none);
         QVERIFY(!none->isVisible());
         QVERIFY(!run(QStringLiteral("UserGuide.hasPage('window', 'about')")).toBool());
         QVERIFY(run(QStringLiteral("UserGuide.hasPage('window', 'settings')")).toBool());
         before = recorded::opened().size();
         QTest::keyClick(about, Qt::Key_F1);
-        QCOMPARE(openedAfter(before), kHome);
+        QTRY_COMPARE(openedAfter(before), kHome);
         about->close();
         QTRY_VERIFY(!about->isVisible());
     }

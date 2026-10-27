@@ -1160,7 +1160,8 @@ DialogWindow {
                             Layout.leftMargin: 24
                             // The check column's header: a checked field is
                             // written into the subtitles' information
-                            // (SubsGrid::SwapAssProperties).
+                            // (SubsGrid::SwapAssProperties). (docsLabel: the
+                            // docs export's, in English as it runs.)
                             Item { implicitWidth: 1; implicitHeight: 1 }
                             Item { implicitWidth: 1; implicitHeight: 1 }
                             Label {
@@ -1172,22 +1173,22 @@ DialogWindow {
                             }
                             Label { text: qsTr("Title"); Layout.preferredWidth: 120 }
                             SettingText { setting: "scriptProperties.title"; Layout.preferredWidth: 300; Accessible.name: qsTr("Title") }
-                            SettingCheck { setting: "scriptProperties.titleOn"; Accessible.name: qsTr("Title") }
+                            SettingCheck { setting: "scriptProperties.titleOn"; Accessible.name: qsTr("Title"); readonly property string docsLabel: "Write Title into the subtitles" }
                             Label { text: qsTr("Author") }
                             SettingText { setting: "scriptProperties.script"; Layout.preferredWidth: 300; Accessible.name: qsTr("Author") }
-                            SettingCheck { setting: "scriptProperties.scriptOn"; Accessible.name: qsTr("Author") }
+                            SettingCheck { setting: "scriptProperties.scriptOn"; Accessible.name: qsTr("Author"); readonly property string docsLabel: "Write Author into the subtitles" }
                             Label { text: qsTr("Translator") }
                             SettingText { setting: "scriptProperties.translation"; Layout.preferredWidth: 300; Accessible.name: qsTr("Translator") }
-                            SettingCheck { setting: "scriptProperties.translationOn"; Accessible.name: qsTr("Translator") }
+                            SettingCheck { setting: "scriptProperties.translationOn"; Accessible.name: qsTr("Translator"); readonly property string docsLabel: "Write Translator into the subtitles" }
                             Label { text: qsTr("Proofreading") }
                             SettingText { setting: "scriptProperties.editing"; Layout.preferredWidth: 300; Accessible.name: qsTr("Proofreading") }
-                            SettingCheck { setting: "scriptProperties.editingOn"; Accessible.name: qsTr("Proofreading") }
+                            SettingCheck { setting: "scriptProperties.editingOn"; Accessible.name: qsTr("Proofreading"); readonly property string docsLabel: "Write Proofreading into the subtitles" }
                             Label { text: qsTr("Timer") }
                             SettingText { setting: "scriptProperties.timing"; Layout.preferredWidth: 300; Accessible.name: qsTr("Timer") }
-                            SettingCheck { setting: "scriptProperties.timingOn"; Accessible.name: qsTr("Timer") }
+                            SettingCheck { setting: "scriptProperties.timingOn"; Accessible.name: qsTr("Timer"); readonly property string docsLabel: "Write Timer into the subtitles" }
                             Label { text: qsTr("Editing") }
                             SettingText { setting: "scriptProperties.update"; Layout.preferredWidth: 300; Accessible.name: qsTr("Editing") }
-                            SettingCheck { setting: "scriptProperties.updateOn"; Accessible.name: qsTr("Editing") }
+                            SettingCheck { setting: "scriptProperties.updateOn"; Accessible.name: qsTr("Editing"); readonly property string docsLabel: "Write Editing into the subtitles" }
                         }
                     }
                     SettingsSection {
@@ -1527,6 +1528,11 @@ DialogWindow {
                             text: qsTr("Off: prereleases (beta versions) are offered too.")
                         }
                         SettingsRow {
+                            // DX1 (#367): the docs export's entry; shown only
+                            // once a version is skipped, Offer it again clears it.
+                            readonly property string docsSetting: "updater.skippedVersion"
+                            readonly property string docsControl: "readonly"
+                            readonly property string docsLabel: text
                             visible: (dialog.values["updater.skippedVersion"] ?? "").length > 0
                             text: qsTr("Skipped version")
                             Label {

@@ -41,6 +41,16 @@ QJsonObject json(const QTemporaryDir &dir, const QString &name)
     return QJsonDocument::fromJson(read(dir.filePath(name))).object();
 }
 
+// The first line where two exports differ, for the failure message.
+QByteArray difference(const QString &name, const QByteArray &a, const QByteArray &b)
+{
+    const QList<QByteArray> x = a.split('\n'), y = b.split('\n');
+    for (qsizetype i = 0; i < qMax(x.size(), y.size()); ++i)
+        if (x.value(i) != y.value(i))
+            return name.toUtf8() + ':' + QByteArray::number(i + 1) + ": " + x.value(i) + " | " + y.value(i);
+    return name.toUtf8();
+}
+
 QString qs(std::string_view s)
 {
     return QString::fromUtf8(s.data(), qsizetype(s.size()));
@@ -67,7 +77,8 @@ private slots:
         for (const QString &name : kFiles) {
             const QByteArray a = read(first.filePath(name));
             QVERIFY2(!a.isEmpty(), qPrintable(name));
-            QVERIFY2(a == read(second.filePath(name)), qPrintable(name));
+            const QByteArray b = read(second.filePath(name));
+            QVERIFY2(a == b, difference(name, a, b).constData());
             QVERIFY2(QJsonDocument::fromJson(a).isObject(), qPrintable(name));
         }
     }
@@ -229,8 +240,8 @@ private slots:
         }
     }
 
-    // The program's switch: no display needed, the files written, exit 0; a
-    // missing folder is refused.
+    // The program's switch: no display needed, the files written, exit 0,
+    // the same bytes twice; a missing folder is refused.
     void theSwitchWritesTheFiles()
     {
         QTemporaryDir out;
@@ -243,12 +254,29 @@ private slots:
         environment.insert(QStringLiteral("XDG_DATA_HOME"), out.filePath(QStringLiteral("home/data")));
         QProcess program;
         program.setProcessEnvironment(environment);
-        program.start(QStringLiteral(HIKARI_PROGRAM), {QStringLiteral("--export-docs"), out.filePath(QStringLiteral("docs"))});
-        QVERIFY(program.waitForFinished(120000));
-        QVERIFY2(program.exitStatus() == QProcess::NormalExit && program.exitCode() == 0,
-                 program.readAllStandardError().constData());
-        for (const QString &name : kFiles)
-            QCOMPARE(read(out.filePath(QStringLiteral("docs/") + name)), read(first.filePath(name)));
+        for (const char *folder : {"docs", "again"}) {
+            program.start(QStringLiteral(HIKARI_PROGRAM), {QStringLiteral("--export-docs"), out.filePath(QLatin1String(folder))});
+            QVERIFY(program.waitForFinished(120000));
+            QVERIFY2(program.exitStatus() == QProcess::NormalExit && program.exitCode() == 0,
+                     program.readAllStandardError().constData());
+        }
+        for (const QString &name : kFiles) {
+            const QByteArray a = read(out.filePath(QStringLiteral("docs/") + name));
+            const QByteArray again = read(out.filePath(QStringLiteral("again/") + name));
+            QVERIFY2(a == again, difference(name, a, again).constData());
+            // The Interface language's entries are the catalogs beside the
+            // program, which this test's folder has not: the keys are the same.
+            const QByteArray b = read(first.filePath(name));
+            if (name != QLatin1String("settings.json"))
+                QVERIFY2(a == b, difference(name, a, b).constData());
+        }
+        const auto keys = [](const QByteArray &bytes) {
+            QStringList list;
+            for (const QJsonValue &v : QJsonDocument::fromJson(bytes).object().value(QStringLiteral("settings")).toArray())
+                list << v.toObject().value(QStringLiteral("key")).toString();
+            return list;
+        };
+        QCOMPARE(keys(read(out.filePath(QStringLiteral("docs/settings.json")))), keys(read(first.filePath(QStringLiteral("settings.json")))));
         // Nothing of the user's: the profile was a temporary one.
         QVERIFY(!QFile::exists(out.filePath(QStringLiteral("home/config/HikariSub/hikari.ini"))));
 
