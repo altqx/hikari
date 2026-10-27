@@ -14,6 +14,7 @@
 #include "hikari/application/video_sources.h"
 
 #include <QObject>
+#include <QPointer>
 #include <QTimer>
 
 #include <functional>
@@ -23,6 +24,8 @@
 #include <QtQml/qqmlregistration.h>
 
 namespace hikari::ui {
+
+class VideoPresenter;
 
 class VideoController : public QObject {
     Q_OBJECT
@@ -101,6 +104,10 @@ public:
 
     // The panel's VideoPresenter item.
     Q_INVOKABLE void attachPresenter(QObject *presenter);
+    // SV1-screen-size-subtitles: subtitles drawn at the picture's size on
+    // screen (video.previewSubtitlesAt, libass only), or at the video's.
+    void setSubtitlesAtScreenSize(bool on);
+    bool subtitlesAtScreenSize() const { return m_screenSizeSubtitles; }
     // The answers (legacy wxOK, wxYES, wxNO): offerAnswered with the
     // "Apply to All" check; the application loads what the answer names.
     Q_INVOKABLE void loadAssociated();
@@ -201,6 +208,9 @@ private:
     void open(const QString &path);
 
     application::VideoSession m_session;
+    QPointer<VideoPresenter> m_presenter;
+    bool m_screenSizeSubtitles = false;
+    void followScreenSize();
     OpenFilter m_filter;
     std::function<void()> m_beforeOpen;
     std::uint64_t m_openRequest = 0;

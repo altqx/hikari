@@ -160,37 +160,13 @@ std::vector<KanjiSyllable> kanjiSyllables(u16v text, int startMs, int endMs)
     return out;
 }
 
-KanjiText kanjiText(u16v text)
+namespace {
+
+// The characters of a text with no \k tags (KanjiText's units).
+std::vector<KanjiText::Unit> unitsOf(u16v t)
 {
-    KanjiText out;
-    // the \k tags out of every block, and a block they leave empty
+    std::vector<KanjiText::Unit> units;
     std::size_t i = 0;
-    while (i < text.size()) {
-        if (text[i] != u'{') {
-            out.text += text[i++];
-            continue;
-        }
-        const std::size_t close = text.find(u'}', i);
-        const std::size_t end = close == u16v::npos ? text.size() : close + 1;
-        u16 block;
-        bool removed = false;
-        for (std::size_t j = i; j < end;) {
-            if (text[j] == u'\\') {
-                if (const std::size_t tagEnd = karaokeTagEnd(text.substr(0, end), j); tagEnd != j) {
-                    j = tagEnd;
-                    removed = true;
-                    continue;
-                }
-            }
-            block += text[j++];
-        }
-        if (!(removed && (block == u"{}" || block == u"{")))
-            out.text += block;
-        i = end;
-    }
-    // its characters
-    const u16v t = out.text;
-    i = 0;
     while (i < t.size()) {
         if (t[i] == u'{') {
             const std::size_t close = t.find(u'}', i);
@@ -209,8 +185,95 @@ KanjiText kanjiText(u16v text)
             }
             unit.text += t[j++];
         }
-        out.units.push_back(std::move(unit));
+        units.push_back(std::move(unit));
         i = end;
+    }
+    return units;
+}
+
+} // namespace
+
+KanjiText kanjiText(u16v text)
+{
+    KanjiText out;
+    // the \k tags out of every block, and a block they leave empty; where
+    // each was, in the text left
+    std::vector<std::size_t> tags;
+    std::size_t i = 0;
+    while (i < text.size()) {
+        if (text[i] != u'{') {
+            out.text += text[i++];
+            continue;
+        }
+        const std::size_t close = text.find(u'}', i);
+        const std::size_t end = close == u16v::npos ? text.size() : close + 1;
+        u16 block;
+        std::size_t removed = 0;
+        for (std::size_t j = i; j < end;) {
+            if (text[j] == u'\\') {
+                if (const std::size_t tagEnd = karaokeTagEnd(text.substr(0, end), j); tagEnd != j) {
+                    j = tagEnd;
+                    ++removed;
+                    continue;
+                }
+            }
+            block += text[j++];
+        }
+        if (!(removed && (block == u"{}" || block == u"{")))
+            out.text += block;
+        tags.insert(tags.end(), removed, out.text.size());
+        i = end;
+    }
+    out.units = unitsOf(out.text);
+    // KA8-multi-highlight: the # syllables, one character each up to the next tag
+    std::vector<bool> hash(tags.size());
+    std::vector<std::size_t> erased; // their units, in order
+    for (std::size_t t = 1, u = 0; t < tags.size(); ++t) {
+        while (u < out.units.size() && out.units[u].begin < tags[t])
+            ++u;
+        const std::size_t next = t + 1 < tags.size() ? tags[t + 1] : u16::npos;
+        if (u < out.units.size() && (out.units[u].text == u"#" || out.units[u].text == u"＃") &&
+            (u + 1 == out.units.size() || out.units[u + 1].begin >= next) && out.units[u].begin < next) {
+            hash[t] = true;
+            erased.push_back(u);
+        }
+    }
+    if (erased.empty())
+        return out;
+    // the text without them, and each tag moved back by what went before it,
+    // in one pass each (a Line of many # syllables must not take n² here)
+    u16 kept;
+    kept.reserve(out.text.size());
+    std::size_t copied = 0;
+    for (const std::size_t u : erased) {
+        kept.append(out.text, copied, out.units[u].begin - copied);
+        copied = out.units[u].end;
+    }
+    kept.append(out.text, copied);
+    std::size_t gone = 0;
+    for (std::size_t t = 0, e = 0; t < tags.size(); ++t) {
+        for (; e < erased.size() && out.units[erased[e]].end <= tags[t]; ++e)
+            gone += out.units[erased[e]].end - out.units[erased[e]].begin;
+        tags[t] -= gone;
+    }
+    out.text = std::move(kept);
+    out.units = unitsOf(out.text);
+    // the groups the tags make, when no character comes before the first
+    if (!out.units.empty() && out.units.front().begin < tags.front())
+        return out;
+    std::size_t u = 0;
+    for (std::size_t t = 0; t < tags.size(); ++t) {
+        if (hash[t]) {
+            ++out.tagged.back().syllables;
+            continue;
+        }
+        std::size_t next = t + 1;
+        while (next < tags.size() && hash[next])
+            ++next;
+        KanjiGroup g{1, 0};
+        for (; u < out.units.size() && (next == tags.size() || out.units[u].begin < tags[next]); ++u)
+            ++g.characters;
+        out.tagged.push_back(g);
     }
     return out;
 }
@@ -345,30 +408,53 @@ KanjiSuggestion suggestGroups(const std::vector<KanjiSyllable> &syllables, std::
 }
 
 std::u16string kanjiOutput(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
-                           const std::vector<KanjiGroup> &groups)
+                           const std::vector<KanjiGroup> &groups, bool multi)
 {
-    // each group's tag and where it goes
-    std::vector<std::pair<std::size_t, u16>> tags;
-    std::size_t syllable = 0, character = 0;
-    for (const KanjiGroup &g : groups) {
-        int cs = 0;
-        for (std::size_t k = syllable; k < syllable + g.syllables && k < syllables.size(); ++k)
-            cs += syllables[k].cs;
+    // each group's tag and where it goes; a # syllable's (KA8-multi-highlight)
+    // with its "#" after the group's characters
+    struct Tag {
+        std::size_t at;
+        u16 tag;
+        bool hash;
+    };
+    std::vector<Tag> tags;
+    auto tagOf = [&](std::size_t syllable, int cs) {
         const u16 letters = syllable < syllables.size() && !syllables[syllable].tag.empty() ? syllables[syllable].tag : u16(u"k");
-        const std::size_t at = character < kanji.units.size() ? kanji.units[character].begin : kanji.text.size();
         const auto number = std::to_string(cs);
-        tags.emplace_back(at, u"\\" + letters + u16(number.begin(), number.end()));
-        syllable += g.syllables;
+        return u"\\" + letters + u16(number.begin(), number.end());
+    };
+    std::size_t syllable = 0, character = 0;
+    for (std::size_t i = 0; i < groups.size(); ++i) {
+        const KanjiGroup &g = groups[i];
+        const std::size_t end = std::min(syllable + g.syllables, syllables.size());
+        const bool hashes = multi && g.characters > 0 && end > syllable + 1;
+        int cs = 0;
+        for (std::size_t k = syllable; k < (hashes ? syllable + 1 : end); ++k)
+            cs += syllables[k].cs;
+        const std::size_t at = character < kanji.units.size() ? kanji.units[character].begin : kanji.text.size();
+        tags.push_back({at, tagOf(syllable, cs), false});
         character += g.characters;
+        if (hashes) {
+            // the last group's characters are the rest of the Line (KA3-leftover-kanji)
+            const std::size_t last = i + 1 == groups.size() ? kanji.units.size() : std::min(character, kanji.units.size());
+            const std::size_t after = last ? kanji.units[last - 1].end : 0;
+            for (std::size_t k = syllable + 1; k < end; ++k)
+                tags.push_back({after, tagOf(k, syllables[k].cs), true});
+        }
+        syllable += g.syllables;
     }
     u16 out;
     std::size_t copied = 0;
     std::size_t lastAt = u16::npos;
-    for (const auto &[at, tag] : tags) {
+    for (const auto &[at, tag, hash] : tags) {
         out.append(kanji.text, copied, at - copied);
         copied = at;
-        // into the Line's own block just before it (not one made here)
-        if (at != lastAt && at > 0 && kanji.text[at - 1] == u'}' && !out.empty() && out.back() == u'}') {
+        if (hash) {
+            out += u'{';
+            out += tag;
+            out += u"}#";
+        } else if (at != lastAt && at > 0 && kanji.text[at - 1] == u'}' && !out.empty() && out.back() == u'}') {
+            // into the Line's own block just before it (not one made here)
             out.insert(out.size() - 1, tag);
         } else {
             out += u'{';
@@ -531,11 +617,19 @@ KanjiTimer::Work &KanjiTimer::workFor(const Pair &pair)
     Work &work = m_state.works[keyOf(pair)];
     // made on other texts: a done pair shows Changed, the rest start over
     if (work.romajiText != pair.romaji->text || work.kanjiText != pair.kanji->text) {
-        const bool had = work.done || work.applied || !work.linked.empty();
+        // (the groups read from the kanji Line were nobody's work)
+        const bool had = work.done || work.applied ||
+                         (!work.linked.empty() && work.linked != kanjiText(work.kanjiText).tagged);
         work = Work{};
         work.changed = had;
         work.romajiText = pair.romaji->text;
         work.kanjiText = pair.kanji->text;
+        // KA8-multi-highlight: a kanji Line with # syllables starts linked
+        // as its tags group it, when that takes every syllable
+        auto tagged = kanjiText(pair.kanji->text).tagged;
+        if (!tagged.empty() &&
+            syllablesIn(tagged) == kanjiSyllables(pair.romaji->text, pair.romaji->startMs, pair.romaji->endMs).size())
+            work.linked = std::move(tagged);
     }
     return work;
 }
@@ -634,7 +728,7 @@ std::optional<KanjiTimer::View> KanjiTimer::view() const
     const bool covers = syllablesIn(all) >= v.syllables.size() && !v.syllables.empty();
     v.canAccept = covers && !blank;
     if (covers)
-        v.output = kanjiOutput(v.syllables, v.kanji, all);
+        v.output = kanjiOutput(v.syllables, v.kanji, all, m_multi);
     return v;
 }
 
@@ -1051,7 +1145,7 @@ std::vector<std::pair<core::LineId, std::u16string>> KanjiTimer::pending() const
         if (found == m_state.works.end())
             continue;
         const auto syllables = kanjiSyllables(pair.romaji->text, pair.romaji->startMs, pair.romaji->endMs);
-        out.emplace_back(pair.kanji->id, kanjiOutput(syllables, kanjiText(pair.kanji->text), found->second.linked));
+        out.emplace_back(pair.kanji->id, kanjiOutput(syllables, kanjiText(pair.kanji->text), found->second.linked, m_multi));
     }
     return out;
 }
@@ -1063,7 +1157,7 @@ void KanjiTimer::applied()
             continue;
         Work &work = m_state.works[keyOf(pair)];
         const auto syllables = kanjiSyllables(pair.romaji->text, pair.romaji->startMs, pair.romaji->endMs);
-        work.kanjiText = kanjiOutput(syllables, kanjiText(pair.kanji->text), work.linked);
+        work.kanjiText = kanjiOutput(syllables, kanjiText(pair.kanji->text), work.linked, m_multi);
         work.done = false;
         work.applied = true;
     }

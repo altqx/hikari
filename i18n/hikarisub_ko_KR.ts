@@ -4742,6 +4742,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Multi-highlight (#)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write each further syllable of a group as a # syllable, for the templater&apos;s multi effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Choose two different styles.</source>
         <translation type="unfinished"></translation>
     </message>
