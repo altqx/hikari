@@ -41,11 +41,12 @@
 --   and "Apply karaoke template to selected lines" replaces only the selected karaoke
 --   Lines' generated Lines
 -- * a run reports how long each template took and how many Lines it generated
+-- * the description no longer offers an export filter, which HikariSub has none of
 
 local tr = aegisub.gettext
 
 script_name = tr"Karaoke Templater"
-script_description = tr"Macro and export filter to apply karaoke effects using the template language"
+script_description = tr"Macro to apply karaoke effects using the template language"
 script_author = "Niels Martin Hansen"
 script_version = "2.1.7"
 
