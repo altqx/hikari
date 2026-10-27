@@ -16225,6 +16225,41 @@ private slots:
         updates.setAutoCheck(autoCheck);
     }
 
+    // SV1 (#365): "Preview subtitles at" on the Video page, Video
+    // resolution by default; with a CSRI filter chosen it is turned off with
+    // its note. The setting reaches the video only with libass.
+    void settingsPreviewSubtitlesAtFollowsTheFilter()
+    {
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.reset(QStringLiteral("video.previewSubtitlesAt")); });
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("video");
+        auto *row = dialogItem("settingsDialog", "settingsPreviewSubtitlesAt");
+        auto *choice = dialogItem("settingsDialog", "setting_video.previewSubtitlesAt");
+        QVERIFY(row && choice);
+        QTRY_VERIFY(choice->isVisible());
+        QCOMPARE(choice->property("currentText").toString(), QStringLiteral("Video resolution (as encoded)"));
+        QVERIFY(choice->isEnabled());
+        dialog->setProperty("renderers", QStringList{QStringLiteral("libass"), QStringLiteral("vsfiltermod_textsub")});
+        auto values = settingsValues(dialog);
+        values.insert(QStringLiteral("video.subtitleProvider"), 1);
+        dialog->setProperty("values", values);
+        QTRY_VERIFY(!choice->isEnabled());
+        QCOMPARE(row->property("note").toString(), QStringLiteral("Video resolution only with this filter."));
+        values.insert(QStringLiteral("video.subtitleProvider"), 0);
+        dialog->setProperty("values", values);
+        QTRY_VERIFY(choice->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!application->video().subtitlesAtScreenSize());
+        settings.set("video.previewSubtitlesAt", 1);
+        QVERIFY(application->video().subtitlesAtScreenSize());
+        settings.reset(QStringLiteral("video.previewSubtitlesAt"));
+        QVERIFY(!application->video().subtitlesAtScreenSize());
+    }
+
     void settingsDialogAppliesChangedValuesLive()
     {
         auto &settings = *application->settingsStore();
@@ -16400,6 +16435,7 @@ private slots:
               {"video.playbackPlayer", nullptr}, // W1, Windows only
 #endif
               {"video.subtitleProvider", nullptr}, // W2
+              {"video.previewSubtitlesAt", nullptr}, // SV1
               {"video.disableLiveEditing", "Turn off the edits preview"},
               {"video.ffms2Seeking", nullptr},
               {"video.gpuConversion", "Convert video colours on the GPU"},
