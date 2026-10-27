@@ -1060,7 +1060,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             add(std::move(row));
             continue;
         }
-        row.value = convertSetting(reading.value, def->type);
+        row.value = storedValue(*def, convertSetting(reading.value, def->type));
         if (def->disposition == SettingDisposition::Unresolved)
             because("kept for review: its use in the rewrite is not settled (the migration map's preserve-unresolved)");
         // Paths: a foreign-platform one stays unresolved; missing ones are

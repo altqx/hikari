@@ -159,7 +159,8 @@ const std::vector<SettingDefinition> &definitions()
         {"postprocessor.leadOut", "POSTPROCESSOR_LEAD_OUT", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.thresholdStart", "POSTPROCESSOR_THRESHOLD_START", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.thresholdEnd", "POSTPROCESSOR_THRESHOLD_END", Int, Profile, Mapped, false, std::int64_t{0}},
-        {"styles.previewText", "STYLE_PREVIEW_TEXT", String, Profile, Mapped, false, utf8(u8"Podgląd")},
+        // PV1 (#398): the style and font samples' text, legacy "Podgląd".
+        {"styles.previewText", "STYLE_PREVIEW_TEXT", String, Profile, Mapped, false, utf8(u8"光 Hikari 日本")},
         {"program.font", "PROGRAM_FONT", String, Profile, Mapped, false, std::string("Tahoma")},
         {"program.fontSize", "PROGRAM_FONT_SIZE", Int, Profile, Mapped, false, std::int64_t{10}},
         {"program.language", "PROGRAM_LANGUAGE", String, Profile, Mapped, false, std::string()},
@@ -546,6 +547,14 @@ void MemorySettingsStorage::remove(const SettingDefinition &setting)
         m_values.erase(it);
 }
 
+SettingValue storedValue(const SettingDefinition &setting, SettingValue value)
+{
+    // PV1 (#398): Kainote's Polish "Podgląd" ("preview").
+    if (setting.id == "styles.previewText" && value == SettingValue(utf8(u8"Podgląd")))
+        return setting.defaultValue;
+    return value;
+}
+
 SettingValue Settings::value(std::string_view id) const
 {
     const auto *setting = findSetting(id);
@@ -553,7 +562,7 @@ SettingValue Settings::value(std::string_view id) const
         return false;
     if (setting->disposition != Excluded)
         if (auto stored = m_storage.read(*setting))
-            return convertSetting(*stored, setting->type);
+            return storedValue(*setting, convertSetting(*stored, setting->type));
     return setting->defaultValue;
 }
 
