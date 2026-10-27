@@ -405,8 +405,12 @@ public:
     void setSaveWithVideoName(bool on);
     // GLOBAL_ANSI ("Report an issue"): the issue tracker in the browser.
     Q_INVOKABLE void reportIssue();
-    // GLOBAL_HELP ("HikariSub website"): the website in the browser.
+    // About's "HikariSub website": the site's home page in the browser.
     Q_INVOKABLE void openWebsite();
+    // DX1 (#367): GLOBAL_HELP ("User guide", F1) and a DG1 window's "?": the
+    // guide's page for a surface, `kind` "panel" or "window" (guide_links.h),
+    // else the guide's home, in the browser.
+    Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
     // UD1: the user folder (user_folder.h), native separators; empty without one.
     Q_PROPERTY(QString userFolder READ userFolder CONSTANT)
     QString userFolder() const;
@@ -1125,6 +1129,7 @@ private:
     // The Video panel follows the editing target: its association when the
     // target changes, its committed content and its active Line.
     void refreshVideo();
+    void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
     void newDocument();
     // P9

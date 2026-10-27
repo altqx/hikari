@@ -91,7 +91,8 @@ struct VectorFrame {
     PointF zoomMove{0, 0};
     PointF zoomScale{1, 1};
     IntRect videoRect; // legacy VideoSize: left, top, right, bottom
-    float pointArea() const { return 4.f / zoomScale.x; } // SetCurVisual / SetZoom
+    float unit = 1;    // SV1-hidpi-tool-sizes: unitOf, the points' handles and grab area
+    float pointArea() const { return 4.f * unit / zoomScale.x; } // SetCurVisual / SetZoom
     // ClipPoint::GetVector: a point in the view.
     PointF toView(const VectorPoint &p) const;
 };

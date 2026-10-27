@@ -366,6 +366,10 @@ const std::vector<SettingDefinition> &definitions()
         // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
         // over the video (GLOBAL_VIDEO_RENDER_COST).
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
+        // SV1-screen-size-subtitles (#365): "Preview subtitles at", 0 Video
+        // resolution (as encoded, decision 5 of 2026-10-15), 1 Screen size
+        // (sharp; libass only).
+        {"video.previewSubtitlesAt", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // AD2 (#311): "Fill in my last answers" (AD2-fill-last-answers, off
         // by default); script dialogs' last answers, one "<key>\t<JSON>" row
         // per dialog, the one used last first, at most 200; and their

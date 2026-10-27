@@ -1677,11 +1677,14 @@ constexpr std::uint32_t kInnerColour = 0xFFBB0000;
 constexpr std::uint32_t kOuterColour = 0xAAFF0000;
 constexpr std::uint32_t kGridColour = 0x55FF0000;
 constexpr std::uint32_t kOrgColour = 0xFFFF8800;
-constexpr float kHit = 8.f; // device pixels, as the other tools' handles
+constexpr float kHit = 8.f; // legacy pixels, as the other tools' handles; times unitOf
 
 PointF add(PointF a, PointF b) { return {a.x + b.x, a.y + b.y}; }
 PointF sub(PointF a, PointF b) { return {a.x - b.x, a.y - b.y}; }
-bool near(PointF a, PointF b) { return std::abs(a.x - b.x) < kHit && std::abs(a.y - b.y) < kHit; }
+bool near(PointF a, PointF b, float unit)
+{
+    return std::abs(a.x - b.x) < kHit * unit && std::abs(a.y - b.y) < kHit * unit;
+}
 
 bool inside(const Quad &q, PointF p)
 {
@@ -2236,17 +2239,17 @@ void PerspectiveTool::pointer(const Pointer &event, VisualHost &host)
         m_press = at;
         m_drag = Drag::None;
         const Quad o = outer();
-        if (m_orgMode == OrgMode::Keep && near(dev, view.scriptToView(m_state.transform.org))) {
+        if (m_orgMode == OrgMode::Keep && near(dev, view.scriptToView(m_state.transform.org), unitOf(host))) {
             m_drag = Drag::Org;
         }
         for (int i = 0; i < 4 && m_drag == Drag::None; ++i) {
-            if (near(dev, view.scriptToView(m_inner[static_cast<std::size_t>(i)]))) {
+            if (near(dev, view.scriptToView(m_inner[static_cast<std::size_t>(i)]), unitOf(host))) {
                 m_drag = Drag::Inner;
                 m_corner = i;
             }
         }
         for (int i = 0; i < 4 && m_drag == Drag::None && m_plane; ++i) {
-            if (near(dev, view.scriptToView(o[static_cast<std::size_t>(i)]))) {
+            if (near(dev, view.scriptToView(o[static_cast<std::size_t>(i)]), unitOf(host))) {
                 m_drag = Drag::Outer;
                 m_corner = i + 4;
             }
@@ -2407,6 +2410,7 @@ Overlay PerspectiveTool::overlay(const VisualHost &host) const
 {
     follow(host);
     Overlay out;
+    out.unit = unitOf(host);
     if (!m_valid)
         return out;
     const VideoView &view = host.view();

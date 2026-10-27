@@ -43,6 +43,10 @@ ScrollView {
                 text: qsTr("Interface theme")
                 GridLayout {
                     objectName: "appearanceThemes"
+                    // DX1 (#367): what the docs export reads (docs_export.cpp).
+                    readonly property string docsSetting: "appearance.theme"
+                    readonly property string docsControl: "choice"
+                    readonly property var docsValues: Theme.themes().map(t => ({value: t.code, label: t.name}))
                     columns: 2
                     columnSpacing: 8
                     rowSpacing: 8
@@ -113,6 +117,7 @@ ScrollView {
             CheckBox {
                 id: follow
                 objectName: "appearanceFollowSystem"
+                readonly property string docsSetting: "appearance.followSystem"
                 text: qsTr("Follow system theme")
                 leftPadding: 1 // the box in the rows' icon slot
                 spacing: 9
@@ -145,6 +150,13 @@ ScrollView {
                 text: qsTr("Accent")
                 Row {
                     spacing: 8
+                    // DX1: Light's and Dark's accents, whichever is shown.
+                    readonly property var docsEntries: Theme.themes().filter(t => !t.highContrast).map(t => ({
+                        setting: t.dark ? "appearance.darkAccent" : "appearance.lightAccent",
+                        control: "choice",
+                        label: "Accent (" + t.name + ")",
+                        values: Theme.accents(t.dark).map(a => ({value: a.key, label: a.name}))
+                    }))
                     Repeater {
                         model: Theme.accents(Theme.dark)
                         delegate: AbstractButton {
@@ -184,6 +196,9 @@ ScrollView {
             Layout.leftMargin: 24
             Layout.rightMargin: 24
             Repeater {
+                // DX1: both high contrast themes' colors, whichever is shown.
+                readonly property var docsEntries: [].concat(...Theme.themes().filter(t => t.highContrast).map(
+                    t => Theme.picks(t.code).map(p => ({setting: p.setting, control: "colour", label: p.name + " (" + t.name + ")"}))))
                 model: Theme.picks(page.shownTheme)
                 delegate: SettingsRow {
                     id: pick
@@ -270,6 +285,14 @@ ScrollView {
             Layout.bottomMargin: 24
             CheckBox {
                 objectName: "appearanceSystemTitleBar"
+                // (The docs export's entries are in English: it runs in English.)
+                readonly property string docsSetting: "appearance.titleBar"
+                readonly property string docsControl: "choice"
+                readonly property var docsValues: [
+                    {value: "auto", label: "The desktop's default"},
+                    {value: "system", label: "The system's title bar"},
+                    {value: "custom", label: "HikariSub's title bar"}
+                ]
                 text: qsTr("Use system title bar")
                 leftPadding: 1
                 spacing: 9

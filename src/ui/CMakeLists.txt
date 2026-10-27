@@ -203,6 +203,8 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(hikari_ui PRIVATE Qt6::WaylandClient Wayland::Client)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_WAYLAND_DECORATIONS)
 endif()
+# DX1 (#367): User guide's pages for the shell and the DG1 windows' "?" button.
+target_sources(hikari_ui PRIVATE user_guide.cpp user_guide.h)
 # SH1: the main window's own title bar (window_frame.h, MainTitleBar.qml):
 # the frameless window, the window menu (Qt's Wayland shell surface; on X11
 # the xcb connection Qt holds, looked up at run time) and on Windows the

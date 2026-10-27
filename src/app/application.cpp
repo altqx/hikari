@@ -9,6 +9,7 @@
 #include "hikari/backends/simulated_output.h"
 #include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/guide_links.h"
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
@@ -998,6 +999,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
     }
+    applySubtitlesAt(); // SV1
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
     m_recoveryDir = options.recoveryDir;
@@ -2609,7 +2611,17 @@ void Application::reportIssue()
 
 void Application::openWebsite()
 {
-    backends::desktop::openUrl(QUrl(QStringLiteral("https://altqx.com")));
+    backends::desktop::openUrl(QUrl(QString::fromUtf8(application::kSiteUrl)));
+}
+
+void Application::openUserGuide(const QString &kind, const QString &id)
+{
+    using application::GuideSurface;
+    // An unknown kind names no page: the guide's home.
+    const std::string surface = kind == QLatin1String("panel") || kind == QLatin1String("window") ? id.toStdString() : "";
+    const auto url = application::guideUrl(kind == QLatin1String("panel") ? GuideSurface::Panel : GuideSurface::Window,
+                                           surface);
+    backends::desktop::openUrl(QUrl(QString::fromStdString(url)));
 }
 
 QString Application::userFolder() const
@@ -5679,6 +5691,9 @@ void Application::settingChanged(const QString &id)
         m_videoRevision.reset();
         m_videoScript.clear(); // E4: the same script goes to the new renderer too
         refreshVideo();
+        applySubtitlesAt(); // SV1: Screen size is libass's only
+    } else if (id == QLatin1String("video.previewSubtitlesAt")) {
+        applySubtitlesAt();
     } else if (id == QLatin1String("video.renderCost")) {
         // KE1-render-cost-overlay: libass counts only while the overlay is
         // shown; the frame is drawn again so it shows the counts at once.
@@ -5687,6 +5702,18 @@ void Application::settingChanged(const QString &id)
         m_videoScript.clear();
         refreshVideo();
     }
+}
+
+// SV1-screen-size-subtitles: "Preview subtitles at" Screen size draws libass
+// at the picture's size on screen; a CSRI filter stays at the video's.
+void Application::applySubtitlesAt()
+{
+    const bool screen = m_settings->integer("video.previewSubtitlesAt") == 1 && m_renderer.usesLibass();
+    m_video->setSubtitlesAtScreenSize(screen);
+    if (m_styleManager)
+        m_styleManager->setPreviewAtScreenSize(screen);
+    if (m_fontCatalogs)
+        m_fontCatalogs->setPreviewAtScreenSize(screen);
 }
 
 namespace {
@@ -5887,6 +5914,7 @@ QVariantMap Application::openSettingsDialog()
         outputDeviceLabels << outputDeviceLabel(choice);
     return {{QStringLiteral("values"), values},
             {QStringLiteral("languages"), qList(lists.languageNames)},
+            {QStringLiteral("languageTags"), qList(lists.languageTags)}, // DX1: the docs export's entries
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
             {QStringLiteral("catalogs"), qList(lists.catalogs)},
             {QStringLiteral("styles"), qList(lists.styles)},

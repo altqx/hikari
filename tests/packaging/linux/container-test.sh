@@ -321,6 +321,17 @@ native_checks() # after an install
     desktop-file-validate /usr/share/applications/io.github.altqx.HikariSub.desktop || fail "desktop-file-validate"
     appstreamcli validate --no-net /usr/share/metainfo/io.github.altqx.HikariSub.metainfo.xml ||
         fail "appstreamcli validate"
+    # DX1 (#367): the site is the homepage, the guide the help; GitHub the tracker.
+    grep -q '<url type="homepage">https://hikarisub.altqx.com</url>' \
+        /usr/share/metainfo/io.github.altqx.HikariSub.metainfo.xml || fail "metainfo homepage"
+    grep -q '<url type="help">https://hikarisub.altqx.com/en/docs</url>' \
+        /usr/share/metainfo/io.github.altqx.HikariSub.metainfo.xml || fail "metainfo help"
+    local homepage
+    case $family in
+        deb) homepage=$(dpkg-query -W -f '${Homepage}' hikarisub) ;;
+        *) homepage=$(rpm -q --qf '%{URL}' hikarisub) ;;
+    esac
+    [ "$homepage" = https://hikarisub.altqx.com ] || fail "package homepage $homepage"
     pass "native install: version $(installed_version), kind $kind, desktop files valid"
     unresolved=$(find /opt/hikarisub -type f \( -name '*.so*' -o -perm -u+x \) -print0 | xargs -0 -r ldd 2>/dev/null |
                  grep 'not found' | sort -u || true)
