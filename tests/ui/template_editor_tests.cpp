@@ -3513,7 +3513,7 @@ private slots:
         QCOMPARE(editor->templateCount() + editor->codeCount(), 0);
         QVERIFY(QMetaObject::invokeMethod(object(QStringLiteral("templatePreset_9")), "triggered"));
         QCOMPARE(editor->templateCount(), 2);
-        QCOMPARE(editor->codeCount(), 2);
+        QCOMPARE(editor->codeCount(), 1);
         QCOMPARE(editor->effect(), QStringLiteral("code once"));
     }
 
