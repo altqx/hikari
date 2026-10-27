@@ -635,6 +635,35 @@ private slots:
         filter.setPredicate([](const core::LineRecord &l) { return l.style == u8"Nothing"; });
         QCOMPARE(filter.rowCount(), 0);
     }
+
+    // A folded row carries the hidden-block mark after the run's last shown
+    // Line, and its click toggles the block from there.
+    void aFoldedRunKeepsTheHiddenBlockAfterIt()
+    {
+        constexpr std::string_view text = "[Events]\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,before\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,fx,first\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,fx,second\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,%1,0,0,0,fx,third\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,[hidden],0,0,0,,hidden\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,after\n";
+        for (const auto &[actor, blockRow] : {std::pair{"", 3}, std::pair{"[hidden]", 2}}) {
+            LineTableModel model;
+            LineFilterModel filter;
+            filter.setLineModel(&model);
+            filter.setPredicate([](const core::LineRecord &l) { return l.visibility != core::LineVisibility::Hidden; });
+            model.setDocument(load(QString::fromLatin1(text.data(), text.size()).arg(QLatin1String(actor)).toStdString()));
+            model.setFoldGenerated(true);
+            QCOMPARE(filter.rowCount(), 3);
+            const QModelIndex folded = filter.index(1, 0);
+            QCOMPARE(folded.data(LineTableModel::FoldRole).toInt(), 1);
+            QCOMPARE(folded.data(LineTableModel::HiddenBlockRole).toInt(), 1);
+            QCOMPARE(folded.data(LineTableModel::DocumentRowRole).toInt(), 1);
+            QCOMPARE(folded.data(LineTableModel::HiddenBlockRowRole).toInt(), blockRow);
+            filter.changeFolds([&] { model.setRunFolded(core::LineId{idAt(model, 1)}, false); });
+            QCOMPARE(filter.index(1, 0).data(LineTableModel::HiddenBlockRole).toInt(), 0);
+        }
+    }
 };
 
 QTEST_MAIN(LineModelTest)

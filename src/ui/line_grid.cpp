@@ -419,7 +419,7 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
         } else if (row < m_model->rowCount()) {
             const QModelIndex idx = m_model->index(row, 0);
             mark = idx.data(LineTableModel::HiddenBlockRole).toInt();
-            documentRow = idx.data(LineTableModel::DocumentRowRole).toInt();
+            documentRow = idx.data(LineTableModel::HiddenBlockRowRole).toInt();
         }
         if (mark && event->position().y() > m_geometry.headerHeight / 2)
             emit hiddenBlockToggleRequested(documentRow);

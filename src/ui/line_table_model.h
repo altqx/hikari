@@ -104,6 +104,10 @@ public:
         FoldRole,
         // KP1: on a run's first row, how many Lines the run holds.
         FoldCountRole,
+        // The Document row whose HiddenBlockRole mark the row shows, and
+        // toggles from: the row's own, or on a folded run's row its last
+        // Line the Grid filter shows (KP1).
+        HiddenBlockRowRole,
     };
     // E6: the number cell's colour index in LabelColoursRole for a State
     // (SubsGridWindow.cpp:478-479): 0 normal, 1 modified, 2 saved, 3 doubtful
@@ -252,6 +256,7 @@ private:
     struct Run {
         int first = 0, count = 0;
         int earliest = 0, latest = 0; // the rows with the earliest start and the latest end
+        int blockRow = 0;             // the last Line the Grid filter shows: its hidden-block mark
         QString styles, effects;      // each one once, in order
     };
     // KP1: the folded row's cells.

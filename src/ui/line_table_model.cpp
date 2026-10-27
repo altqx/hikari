@@ -408,7 +408,7 @@ void LineTableModel::setDocument(const core::Document &document,
     std::unordered_set<std::uint64_t> unfolded;
     for (const auto &found : application::generatedRuns(lines)) {
         Run run{static_cast<int>(found.first), static_cast<int>(found.count), static_cast<int>(found.first),
-                static_cast<int>(found.first), {}, {}};
+                static_cast<int>(found.first), static_cast<int>(found.first), {}, {}};
         // The first few distinct names, then "…": a run of many distinct
         // Styles from a file costs one lookup per Line.
         constexpr qsizetype kNames = 8;
@@ -427,6 +427,8 @@ void LineTableModel::setDocument(const core::Document &document,
                 run.earliest = r;
             if (line.end.value > lines[std::size_t(run.latest)]->end.value)
                 run.latest = r;
+            if (line.visibility != core::LineVisibility::Hidden)
+                run.blockRow = r;
             note(styles, seenStyles, qs(line.style));
             note(effects, seenEffects, qs(line.effect));
         }
@@ -567,10 +569,14 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return role == FoldCountRole ? m_runs[std::size_t(r.run)].count : runFolded(index.row()) ? 1 : 2;
     }
     // KP1: a folded run's row summarises it; it keeps its first Line's
-    // identity and selection.
+    // identity and selection, and the hidden-block mark after its last shown
+    // Line, which toggles from there.
     if (r.run >= 0 && m_runs[std::size_t(r.run)].first == index.row() && runFolded(index.row())) {
+        const Run &run = m_runs[std::size_t(r.run)];
         switch (role) {
-        case Qt::DisplayRole: return foldedData(m_runs[std::size_t(r.run)], index.column());
+        case Qt::DisplayRole: return foldedData(run, index.column());
+        case HiddenBlockRole: return m_rows[std::size_t(run.blockRow)].blockMark;
+        case HiddenBlockRowRole: return run.blockRow;
         case CommentRole:
         case CpsTooHighRole:
         case BadWrapsRole:
@@ -579,8 +585,7 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case SpellMarksRole:
         case ComparisonMarksRole: return QVariantList();
         case ComparisonRole:
-        case LineStateRole:
-        case HiddenBlockRole: return 0;
+        case LineStateRole: return 0;
         default: break;
         }
     }
@@ -620,6 +625,7 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
     case HiddenBlockRole:
         return r.blockMark;
     case DocumentRowRole:
+    case HiddenBlockRowRole:
         return index.row();
     case GroupRole:
         switch (line.group) {
