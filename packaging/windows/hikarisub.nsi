@@ -71,6 +71,8 @@ SetCompressorDictSize 64
 !define HS_SETUP_MUTEX   "Global\io.github.altqx.HikariSub.Installing"
 !define HS_START_EVENT   "Global\io.github.altqx.HikariSub.StartAfterUpdate"
 !define HS_URL           "https://github.com/altqx/hikari"
+; DX1 (#367): the homepage Apps & features links to; GitHub stays the issue tracker.
+!define HS_HOMEPAGE      "https://hikarisub.altqx.com"
 
 Name "${HS_NAME}"
 Caption "${HS_NAME} ${HS_VERSION} Setup"
@@ -1048,7 +1050,7 @@ Section "-Program files" SecCore
   WriteRegStr SHCTX "${HS_UNINST_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr SHCTX "${HS_UNINST_KEY}" "UninstallString" '"$INSTDIR\${HS_UNINSTALLER}" $1'
   WriteRegStr SHCTX "${HS_UNINST_KEY}" "QuietUninstallString" '"$INSTDIR\${HS_UNINSTALLER}" $1 /S'
-  WriteRegStr SHCTX "${HS_UNINST_KEY}" "URLInfoAbout" "${HS_URL}"
+  WriteRegStr SHCTX "${HS_UNINST_KEY}" "URLInfoAbout" "${HS_HOMEPAGE}"
   WriteRegStr SHCTX "${HS_UNINST_KEY}" "HelpLink" "${HS_URL}/issues"
   WriteRegDWORD SHCTX "${HS_UNINST_KEY}" "NoModify" 1
   WriteRegDWORD SHCTX "${HS_UNINST_KEY}" "NoRepair" 1

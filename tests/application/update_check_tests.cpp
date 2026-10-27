@@ -385,6 +385,12 @@ TEST(UpdateInstall, StartupArguments)
     EXPECT_EQ(a.rest[0], "episode.ass");
     EXPECT_TRUE(parseStartupArguments({"--version"}).printVersion);
     EXPECT_TRUE(parseStartupArguments({}).rest.empty());
+    // DX1: the docs export's folder, as the next argument or after "=".
+    EXPECT_FALSE(parseStartupArguments({"episode.ass"}).exportDocs);
+    EXPECT_EQ(parseStartupArguments({"--export-docs", "out/docs"}).exportDocs, "out/docs");
+    EXPECT_EQ(parseStartupArguments({"--export-docs=out/docs"}).exportDocs, "out/docs");
+    EXPECT_EQ(parseStartupArguments({"--export-docs"}).exportDocs, "");
+    EXPECT_TRUE(parseStartupArguments({"--export-docs", "out/docs"}).rest.empty());
 }
 
 // ADR 0019: what installs an update checks the version it is asked for and
