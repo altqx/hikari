@@ -389,6 +389,8 @@ endforeach()
 # WS5: one instance per user session: the hand-over, a crashed or silent
 # holder, the session's own socket; and what is handed over, on the holder.
 hikari_add_qttest(hikari_ui_single_instance_tests SOURCES single_instance_tests.cpp LIBRARIES hikari_composition)
+# UD1 (#362): the user folder's location, seeding by manifest and the move in.
+hikari_add_qttest(hikari_ui_user_folder_tests SOURCES user_folder_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_forwarded_launches_tests SOURCES forwarded_launches_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")

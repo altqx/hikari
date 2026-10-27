@@ -78,6 +78,11 @@ install(FILES "${PROJECT_SOURCE_DIR}/packaging/licenses/harper/THIRD-PARTY.txt" 
 
 install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION . COMPONENT hikari_app)
 
+# UD1 (#362): the manifest of the bundled scripts, modules and dictionaries
+# installed above, which each start seeds into the user folder.
+install(CODE "include(\"${PROJECT_SOURCE_DIR}/cmake/HikariBundledManifest.cmake\")
+hikari_write_bundled_manifest(\"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\")" COMPONENT hikari_app)
+
 # Qt's deploy API: the Qt libraries, plugins and QML modules the app uses,
 # with a qt.conf, into lib/, plugins/ and qml/. The platforms are xcb (Qt's
 # default), wayland and offscreen. Plugins that would pull a library the

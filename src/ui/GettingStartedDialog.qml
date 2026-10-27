@@ -957,7 +957,7 @@ DialogWindow {
                     TextField {
                         objectName: "gettingStartedUserFolder"
                         readOnly: true
-                        text: setup.visible ? setup.app.userFolder() : ""
+                        text: setup.app.userFolder
                         Layout.preferredWidth: 420
                         Accessible.name: qsTr("Your folder")
                     }

@@ -67,7 +67,6 @@
 #include <QBuffer>
 #include <QLinearGradient>
 #include <QPainter>
-#include <QStandardPaths>
 #include <QUrl>
 
 #ifdef _WIN32
@@ -647,11 +646,16 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (options.autoload)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
+    m_userFolder = options.userFolder;
     rememberStartSession(); // PU1: before anything writes the session
-    // R6-dictionary-location: user dictionaries in the settings folder's
-    // Dictionary, bundled ones in the program folder's (legacy's only one).
-    if (!m_settingsFile.isEmpty())
-        m_dictionaryDirs << QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
+    // R6-dictionary-location: user dictionaries in the user folder's
+    // dictionaries (UD1; else the settings folder's Dictionary), bundled ones
+    // in the program folder's (legacy's only one).
+    m_dictionaryDir = options.dictionaryDir;
+    if (m_dictionaryDir.isEmpty() && !m_settingsFile.isEmpty())
+        m_dictionaryDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
+    if (!m_dictionaryDir.isEmpty())
+        m_dictionaryDirs << m_dictionaryDir;
     if (const QString bundled = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
         !m_dictionaryDirs.contains(bundled))
         m_dictionaryDirs << bundled;
@@ -661,6 +665,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // anything reads the profile.
     if (!m_settingsFile.isEmpty()) {
         m_importStore = std::make_unique<SettingsImportStore>(*m_settings, QFileInfo(m_settingsFile).absolutePath());
+        if (!options.dictionaryDir.isEmpty())
+            m_importStore->setDictionaryFolder(m_dictionaryDir);
         m_importStore->macroProblem = [this](std::string_view alias) -> std::string {
             const auto r = m_automation->manager().registry().resolve(std::string(alias));
             if (!r.problem)
@@ -727,9 +733,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_selectOptions = m_settings->integer("selectLines.options");
     // Legacy keeps 20 when the dialog opens.
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
-    // D1: the panel layout beside the settings (none without a settings file).
+    // D1: the panel layout beside the settings (none without a settings
+    // file); UD1: the saved layouts in the presets folder.
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
-        m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
+        m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"),
+        options.presetsDir.isEmpty() ? QString() : options.presetsDir + QStringLiteral("/layouts.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     // T1: the visual tools edit the editing target, never the reference.
     m_visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings, [this] { return targetSession(); });
@@ -1019,9 +1027,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // GetRightCase, IsAllUpperCase and Ignore All's comparison: the case
     // functions of the interface language's C locale (legacyCaseMapping).
     m_spellingText = backends::legacySpellingText(true);
-    m_dictionaryDir = options.dictionaryDir;
-    if (m_dictionaryDir.isEmpty() && !m_settingsFile.isEmpty())
-        m_dictionaryDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
     m_bundledDictionaryDir = options.bundledDictionaryDir;
     // The Line editor's own switch (legacy TextEditor::SpellCheckerOnOff, from
     // SPELLCHECKER_ON when the editor is built); the Grid and the menus read
@@ -1347,7 +1352,53 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     trackVideoFollow(); // V6
     startLocalisation(); // O5
     setupTabMenu(options); // P9
+    reportUserFolder(options.userFolderMove, options.userFolderSeed); // UD1
     refreshViews();
+}
+
+void Application::reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded)
+{
+    const QString title = QCoreApplication::translate("HikariSub.MainWindow", "User folder");
+    const QString folder = QDir::toNativeSeparators(m_userFolder);
+    if (!moved.from.isEmpty()) {
+        QString text = QCoreApplication::translate("HikariSub.MainWindow",
+                                                   "Your settings and files moved to %1. Help > Open user folder opens it.")
+                           .arg(folder);
+        if (!moved.leftOver.isEmpty())
+            text += QLatin1Char(' ') + QCoreApplication::translate("HikariSub.MainWindow",
+                                                                   "%n item(s) stayed where they were, because the user folder already had them.",
+                                                                   nullptr, int(moved.leftOver.size()));
+        if (!moved.keptBack.isEmpty())
+            text += QLatin1Char(' ') + QCoreApplication::translate("HikariSub.MainWindow",
+                                                                   "The old DependencyControl stayed behind: HikariSub brings a newer one.");
+        QString details =
+            QCoreApplication::translate("HikariSub.MainWindow", "Moved from: %1").arg(moved.from.join(QStringLiteral(", ")));
+        if (!moved.leftOver.isEmpty())
+            details += QLatin1Char('\n') + QCoreApplication::translate("HikariSub.MainWindow", "Not moved: %1")
+                                               .arg(moved.leftOver.join(QStringLiteral(", ")));
+        if (!moved.keptBack.isEmpty())
+            details += QLatin1Char('\n') + QCoreApplication::translate("HikariSub.MainWindow", "Left behind: %1")
+                                               .arg(moved.keptBack.join(QStringLiteral(", ")));
+        m_log->notice(ui::LogController::Info, title, text, details);
+    }
+    for (const QString &path : seeded.kept)
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
+                                               "Kept your changed %1; the new bundled version was not copied over it.")
+                       .arg(QDir::toNativeSeparators(path)),
+                   ui::LogController::Info, title);
+    for (const QString &path : seeded.failed)
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow", "Could not copy the bundled %1 into the user folder.")
+                       .arg(QDir::toNativeSeparators(path)),
+                   ui::LogController::Warning, title);
+    if (!seeded.removed.isEmpty())
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
+                                               "Removed %n bundled file(s) this version no longer brings.", nullptr,
+                                               int(seeded.removed.size())),
+                   ui::LogController::Info, title);
+    if (const qsizetype count = seeded.copied.size() + seeded.updated.size(); count > 0)
+        m_log->log(QCoreApplication::translate("HikariSub.MainWindow", "Copied %n bundled file(s) into the user folder.", nullptr,
+                                               int(count)),
+                   ui::LogController::Info, title);
 }
 
 // A1: legacy AudioDisplay::SetDialogue runs when the active Line changes or
@@ -2594,6 +2645,19 @@ void Application::openUserGuide(const QString &kind, const QString &id)
     const auto url = application::guideUrl(kind == QLatin1String("panel") ? GuideSurface::Panel : GuideSurface::Window,
                                            surface);
     backends::desktop::openUrl(QUrl(QString::fromStdString(url)));
+}
+
+QString Application::userFolder() const
+{
+    return QDir::toNativeSeparators(m_userFolder);
+}
+
+void Application::openUserFolder()
+{
+    if (m_userFolder.isEmpty())
+        return;
+    QDir().mkpath(m_userFolder);
+    backends::desktop::openUrl(QUrl::fromLocalFile(m_userFolder));
 }
 
 QVariantMap Application::reviewOpen(const QString &path)
@@ -6178,18 +6242,6 @@ void Application::playTestSound(int device)
             m_audioPlayer->stop();
         m_audioPlayer->switchOutput();
     });
-}
-
-QString Application::userFolder() const
-{
-    return QDir::toNativeSeparators(m_settingsFile.isEmpty()
-                                        ? QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
-                                        : QFileInfo(m_settingsFile).absolutePath());
-}
-
-void Application::openUserFolder() const
-{
-    backends::desktop::openUrl(QUrl::fromLocalFile(QDir::fromNativeSeparators(userFolder())));
 }
 
 // HikariSubFrame::DestroyDialogs: FindReplaceDialog and SelectLines save

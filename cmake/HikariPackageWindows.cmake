@@ -158,6 +158,10 @@ file(COPY_FILE "${HARPER}" "${STAGE}/harper-ls.exe")
 file(MAKE_DIRECTORY "${STAGE}/licenses/harper")
 file(COPY_FILE "${HARPER_LICENSE}" "${STAGE}/licenses/harper/LICENSE")
 file(COPY_FILE "${HARPER_NOTICES}" "${STAGE}/licenses/harper/THIRD-PARTY.txt")
+# UD1 (#362): the manifest of the bundled files each start seeds into the
+# user folder.
+include("${CMAKE_CURRENT_LIST_DIR}/HikariBundledManifest.cmake")
+hikari_write_bundled_manifest("${STAGE}")
 
 # Qt: libraries, plugins, QML imports (scanned from every QML file under src)
 # and Qt's own translations. The compiler runtime is the step above; the QML
@@ -210,7 +214,7 @@ endif()
 
 # The payload's fixed members (installers SPEC 6.5; W2: the CSRI renderer;
 # KA4: the furigana dictionary and the notices; GR1: harper-ls and its notices).
-foreach(required HikariSub.exe hikari-media-helper.exe hikari-lua-helper.exe LICENSE Dictionary/en_US.dic
+foreach(required HikariSub.exe hikari-media-helper.exe hikari-lua-helper.exe LICENSE bundled-files.txt Dictionary/en_US.dic
         Csri/VSFiltermod.dll Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin
         Dictionary/unidic-lite/char.bin Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc
         Dictionary/unidic-lite/mecabrc Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE
