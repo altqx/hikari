@@ -15667,6 +15667,86 @@ private slots:
         QCOMPARE(q8(after[0]->translation), QStringLiteral("{\\i1}x{\\i0}{\\be1}"));
     }
 
+    // #341: Tags from original reads overrides as libass does. A value it
+    // reads as the base's (\fspabc is \fsp0, \rGone the Line's Style) is no
+    // run, a drawing scale it reads as 1 carries nothing, a clip a \t
+    // animates is carried, spaced and adding transforms place, and a run a
+    // tag button keeps from reading back is placed no longer.
+    void tagsFromOriginalReadsOverridesAsLibassDoes()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm2-libass.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a{\\fspabc}b{\\fsp0}c\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,a{\\rGone}b{\\r}c\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,,{\\p1e-3\\an8}m 0 0\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:07.00,0:00:08.00,O,,0,0,0,,a{\\t(\\clip(0,0,100,100)\\fs20)}b{\\r}c\n"
+                "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:09.00,0:00:10.00,O,,0,0,0,,a{\\ t(\\fs20)\\ t(\\bord2)}B{\\r}c\n"
+                "Dialogue: 0,0:00:09.00,0:00:10.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:11.00,0:00:12.00,O,,0,0,0,,a{\\t(\\fs30)}A{\\t(\\bord2)}B{\\r}c\n"
+                "Dialogue: 0,0:00:11.00,0:00:12.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:13.00,0:00:14.00,O,,0,0,0,,a{\\fs30}b{\\b1}c{\\fs20}d{\\r}z\n"
+                "Dialogue: 0,0:00:13.00,0:00:14.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        const auto lines = session->document().lines();
+        QCOMPARE(lines.size(), std::size_t(7));
+        auto &editor = application->editor();
+        auto select = [&](std::size_t line) {
+            session->setSelection(application::Selection{lines[line]->id, {lines[line]->id}, lines[line]->id, {}});
+            editor.reloadFromSession();
+        };
+        auto translation = [&] { return q8(session->draftRecord()->translation); };
+        auto placed = [&](int run) { return editor.tagRuns()[run - 1].toMap().value("placed").toBool(); };
+        select(0);
+        QVERIFY(editor.tagRuns().isEmpty());
+        select(1);
+        QVERIFY(editor.tagRuns().isEmpty());
+        select(2);
+        editor.translationEdited(QStringLiteral("x"), 1);
+        QCOMPARE(translation(), QStringLiteral("x"));
+        QVERIFY(editor.commit());
+        select(3);
+        QCOMPARE(editor.tagRuns().size(), 1);
+        editor.translationEdited(QStringLiteral("xyz"), 3);
+        QCOMPARE(translation(), QStringLiteral("{\\t(\\clip(0,0,100,100))}xyz"));
+        QVERIFY(editor.placeRun(1, 1, 2));
+        QCOMPARE(translation(), QStringLiteral("{\\t(\\clip(0,0,100,100))}x{\\t(\\fs20)}y{\\r}z"));
+        QVERIFY(editor.commit());
+        select(4);
+        editor.translationEdited(QStringLiteral("xYz"), 3);
+        QVERIFY(editor.placeRun(1, 1, 2));
+        QCOMPARE(translation(), QStringLiteral("x{\\ t(\\fs20)\\ t(\\bord2)}Y{\\r}z"));
+        QVERIFY(editor.commit());
+        select(5);
+        editor.translationEdited(QStringLiteral("XY"), 2);
+        QVERIFY(editor.placeRun(1, 0, 1));
+        QVERIFY(editor.placeRun(2, 1, 2));
+        QCOMPARE(translation(), QStringLiteral("{\\t(\\fs30)}X{\\t(\\bord2)}Y{\\r}"));
+        QVERIFY(placed(1) && placed(2));
+        QVERIFY(editor.commit());
+        // The translator's \r between two runs side by side comes after
+        // run 2's opening: run 2 is placed no longer, its \b1 not kept.
+        select(6);
+        editor.translationEdited(QStringLiteral("AB"), 2);
+        QVERIFY(editor.placeRun(1, 0, 1));
+        QVERIFY(editor.placeRun(2, 1, 2));
+        QCOMPARE(translation(), QStringLiteral("{\\fs30}A{\\b1}B{\\r}"));
+        QVERIFY(editor.applyTagButton(1, QStringLiteral("{\\r}"), 2, 1, 1));
+        QCOMPARE(translation(), QStringLiteral("{\\fs30}A{\\r}{\\r}B"));
+        QVERIFY(placed(1));
+        QVERIFY(!placed(2));
+    }
+
     // TM1: a translation past what Tags from original reads takes no run:
     // more tags than it reads keep a run from being placed, a longer text
     // shows no runs at all.
