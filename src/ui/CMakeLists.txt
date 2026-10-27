@@ -73,7 +73,7 @@ qt_target_qml_sources(hikari_ui QML_FILES KaraokeCheckDialog.qml)
 # KA3: the Kanji timer window.
 qt_target_qml_sources(hikari_ui QML_FILES KanjiTimerDialog.qml)
 # O3: the legacy settings importer's window.
-qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml SettingsImportReview.qml)
 # Y6: Font catalogs, the catalog window and "Add fonts from subtitles".
 qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.qml FontsFromSubtitlesDialog.qml)
 # PU3: the font picker's chips and renderer note; the one catalog window and
