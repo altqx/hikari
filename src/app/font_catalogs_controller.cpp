@@ -10,6 +10,8 @@
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontMetricsF>
 #include <QMetaObject>
 #include <QQuickImageProvider>
 #include <QRegularExpression>
@@ -527,7 +529,20 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
     core::StyleValues style = core::legacy::decodeStyle(kFontPreviewStyle, false);
     // The preview text's characters only: an override in it ({\\fn…},
     // {\\b0}) would draw another face than the one the note names.
-    const QString text = withFamily(style, font, rendererText(samplePlain(previewText(), true)));
+    const QString plain = samplePlain(previewText(), true);
+    // PV1 (#398): on one line; a text wider than the room between the
+    // Style's margins (120 each) is drawn smaller. Qt's advance of the bold
+    // face at 80 pixels is at least libass's at size 80 (libass's size is
+    // the face's height, not its em).
+    QFont face(font);
+    face.setPixelSize(80);
+    face.setBold(true);
+    const qreal wide = QFontMetricsF(face).horizontalAdvance(plain);
+    const qreal room = width - 240.0;
+    QString fit;
+    if (room > 0 && wide > room)
+        fit = QStringLiteral("{\\fscx%1\\fscy%1}").arg(std::max(1, int(100 * room / wide)));
+    const QString text = withFamily(style, font, fit + rendererText(plain));
     m_preview = renderStylePreview(m_renderer, style, width, height, text, externalFontLeases(), m_atScreenSize ? scale : 1);
     ++m_previewKey;
     emit previewChanged();
