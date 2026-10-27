@@ -1,0 +1,484 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#171B20;color:#E8EDF2;font:13px 'Liberation Sans',Arial,sans-serif;padding:24px;width:1596px}
+.acc{color:#9CDBC9}
+.ic{display:block;flex:none}
+h1{font-size:18px;font-weight:600;margin:0 0 8px}
+h2{font-size:13px;font-weight:650;margin:28px 0 10px}
+p.note{color:#A5B1BD;font-size:12px;margin:0 0 8px;max-width:1280px;line-height:1.45}
+.cap{font-size:11px;color:#A5B1BD;margin:8px 0 0;max-width:520px;line-height:1.4}
+.row{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.col{display:flex;flex-direction:column}
+.notes{background:#29313A;outline:1px solid #414B57;padding:12px 16px;width:1280px;line-height:1.5}
+.notes td{padding:3px 14px 3px 0;vertical-align:top}
+.notes td:first-child{font-weight:650;white-space:nowrap}
+
+/* main window backdrop */
+.app{position:relative;width:1280px;height:800px;background:url(shots/body-dark.png) 0 0 no-repeat;outline:1px solid #414B57;margin-top:12px}
+.barslot{position:absolute;left:0;top:64px;width:1280px}
+.stack{position:absolute;right:12px;bottom:34px;width:360px;display:flex;flex-direction:column;gap:8px}
+
+/* DG1 window */
+.dlg{background:#20262D;color:#E8EDF2;display:flex;flex-direction:column;outline:1px solid #414B57;
+     box-shadow:0 8px 28px rgba(0,0,0,.55)}
+.dtb{display:flex;align-items:center;height:32px;flex:none;background:#20262D;}
+.dtitle{flex:1;min-width:0;padding-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wbs{display:flex;margin-left:auto;flex:none}
+.wb{display:flex;align-items:center;justify-content:center;width:46px;height:32px;color:#E8EDF2}
+.dbody{padding:12px 24px 0;display:flex;flex-direction:column}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;padding:24px}
+.dfoot .lead,.pfoot .lead{margin-right:auto}
+
+/* controls */
+.b{display:inline-flex;align-items:center;justify-content:center;min-width:80px;height:30px;padding:0 10px;border-radius:1px;
+   background:#29313A;border:1px solid #414B57;color:#E8EDF2;white-space:nowrap;flex:none}
+.b.sm{min-width:0;height:26px;padding:0 10px}
+.b.on{background:#304C47;border-color:#9CDBC9}
+.b.flat{background:none;border-color:transparent;color:#9CDBC9;padding:0 6px;height:24px}
+.b.pri{background:#9CDBC9;border-color:#9CDBC9;color:#102C24;font-weight:650}
+.b.dng{color:#FFADAD;border-color:#FFADAD}
+.ring{outline:1px solid #E8EDF2;outline-offset:1px}
+.qb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:1px;color:#E8EDF2}
+.cb{display:flex;align-items:center;gap:8px;height:24px}
+.box{width:16px;height:16px;border:1px solid #7A8691;background:#171D24;border-radius:1px;display:flex;
+     align-items:center;justify-content:center;flex:none}
+.box.on{background:#9CDBC9;border-color:#9CDBC9;color:#102C24}
+.fld{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:#171D24;border:1px solid #414B57;
+     border-radius:1px;color:#E8EDF2;min-width:0}
+.fld.wide{display:flex;width:100%}
+.fld.focus{border-color:#9CDBC9;box-shadow:inset 0 0 0 1px #9CDBC9}
+.fld.ph .ftext{color:#A5B1BD}
+.ftext{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fic,.ftail{color:#A5B1BD}
+.ftail{display:flex;margin-left:auto}
+.frow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.flabel{width:56px;color:#E8EDF2;flex:none}
+.seg{display:inline-flex;border:1px solid #414B57;border-radius:1px;overflow:hidden;flex:none}
+.seg span{padding:0 10px;height:26px;display:flex;align-items:center;background:#29313A;border-left:1px solid #414B57}
+.seg span:first-child{border-left:none}
+.seg span.on{background:#304C47;color:#E8EDF2;box-shadow:inset 0 -2px #9CDBC9;font-weight:650}
+.seg.sm span{height:24px;padding:0 8px}
+.sbar{position:absolute;right:3px;width:4px;border-radius:2px;background:#7A8691;opacity:.8}
+.big{color:#E8EDF2}
+.warn,.warn .acc{color:#E0A030}
+.err,.err .acc{color:#FFADAD}
+.lnk2{color:#9CDBC9;cursor:pointer}
+
+/* message box */
+.mb{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+.mbtext{display:flex;flex-direction:column;gap:6px;padding-top:4px;min-width:0}
+.mbmain{font-size:14px;font-weight:650;line-height:1.4}
+.mbdetail{color:#A5B1BD;line-height:1.45}
+.mbcheck{margin-top:8px}
+.disc{display:flex;align-items:center;gap:4px;margin:14px 0 0 48px;color:#E8EDF2}
+.dets{position:relative;margin:6px 0 0 48px;background:#171D24;outline:1px solid #414B57;padding:8px 34px 8px 10px}
+.dets pre{font:12px 'Liberation Mono',Consolas,monospace;color:#E8EDF2;white-space:pre-wrap}
+.dets .qb{position:absolute;right:6px;top:6px}
+
+/* notices */
+.toast{display:flex;gap:10px;align-items:flex-start;padding:10px 8px 10px 12px;background:#20262D;outline:1px solid #414B57;
+       border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.55);color:#E8EDF2}
+.toast.hover{background:#29313A}
+.toast>.ic{margin-top:1px}
+.tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ttitle{font-weight:650;line-height:1.35}
+.ttext{color:#A5B1BD;line-height:1.4}
+.tacts{display:flex;gap:4px;margin:4px 0 0 -6px}
+.tx{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#A5B1BD;flex:none}
+.ibar{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 10px;background:#29313A;
+      box-shadow:inset 0 -1px #414B57,inset 0 1px #414B57;color:#E8EDF2}
+.ibt{flex:1}
+
+/* popover */
+.pop{position:relative;background:#20262D;outline:1px solid #414B57;border-radius:4px;padding:12px;
+     box-shadow:0 6px 22px rgba(0,0,0,.55);color:#E8EDF2;z-index:2}
+.ptitle{font-weight:650;margin-bottom:8px}
+.pfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.pfoot.wrap{flex-wrap:wrap;justify-content:flex-start}
+.anchorbox{position:relative}
+
+/* clash review */
+.allrow{display:flex;align-items:center;gap:10px;margin-top:14px}
+.ctable{margin-top:10px;outline:1px solid #414B57;background:#171D24}
+.chead,.crow2{display:flex;align-items:center;gap:10px;padding:0 10px;min-height:38px}
+.chead{min-height:28px;color:#A5B1BD;font-size:12px;box-shadow:inset 0 -1px #414B57;background:#29313A}
+.crow2+.crow2{box-shadow:inset 0 1px #414B57}
+.crow2 .cname{font-weight:650}
+.cname{width:110px;flex:none}
+.cdiff{width:170px;flex:none;color:#A5B1BD}
+.cact{flex:1;display:flex;gap:8px;align-items:center}
+
+/* choose styles */
+.slist{position:relative;margin-top:8px;height:186px;overflow:hidden;outline:1px solid #414B57;background:#171D24;padding:2px 0}
+.srow{display:flex;align-items:center;gap:8px;height:22px;padding:0 14px 0 8px}
+.srow.cur{background:#304C47}
+.sname{flex:1}
+.scount{color:#A5B1BD;font-size:12px}
+.sfoot{display:flex;gap:14px;align-items:center;margin-top:10px}
+
+/* hotkeys */
+.htable{outline:1px solid #414B57;background:#171D24}
+.hhead,.hrow{display:grid;grid-template-columns:1fr 130px;padding:0 10px;height:26px;align-items:center}
+.hhead{color:#A5B1BD;font-size:12px;background:#29313A;box-shadow:inset 0 -1px #414B57}
+.hrow.sel{background:#304C47}
+.keys{color:#A5B1BD}
+.capture{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;background:#171D24;
+         border:1px solid #414B57;border-radius:1px}
+.capture.focus{border-color:#9CDBC9;box-shadow:inset 0 0 0 1px #9CDBC9}
+.wait{color:#A5B1BD}
+.kc{display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid #7A8691;border-bottom-width:2px;
+    border-radius:3px;background:#29313A;font-weight:650}
+.plus{color:#A5B1BD}
+.conf{display:flex;gap:8px;align-items:flex-start;margin-top:10px;line-height:1.4}
+
+/* lists */
+.llist{margin-top:10px;outline:1px solid #414B57;background:#171D24;padding:2px 0}
+.llist.pl{margin-top:0}
+.lrow{display:flex;gap:10px;align-items:center;height:28px;padding:0 10px}
+.lrow.cur{background:#304C47;box-shadow:inset 2px 0 #9CDBC9}
+.lnum{color:#A5B1BD;width:12px}
+.lmeta{color:#A5B1BD;margin-left:auto}
+.editor{height:30px;display:flex;align-items:center;padding:0 10px;background:#171D24;border:1px solid #414B57}
+.miss{text-decoration:underline wavy #FFADAD;text-underline-offset:3px;background:#304C47}
+
+/* calendar */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calm{font-weight:650}
+.cal{display:grid;grid-template-columns:repeat(7,32px);row-gap:2px}
+.dh{height:24px;display:flex;align-items:center;justify-content:center;color:#A5B1BD;font-size:11px}
+.dd{height:28px;display:flex;align-items:center;justify-content:center;border-radius:1px}
+.dd.out{color:#75818D}
+.dd.sel{background:#9CDBC9;color:#102C24;font-weight:650;outline:1px solid #E8EDF2;outline-offset:1px}
+
+.gs .gsbody{position:relative;display:flex;flex-direction:column;align-items:center;height:500px;padding:18px 28px 0;
+            box-shadow:inset 0 -1px #414B57}
+.dots{display:flex;gap:8px;margin-bottom:18px}
+.dot{width:8px;height:8px;border-radius:50%;background:#75818D;opacity:.6}
+.dot.on{background:#9CDBC9}
+.gsh{font-size:16px;font-weight:650;margin-bottom:6px;text-align:center}
+.gsi{color:#A5B1BD;line-height:1.45;text-align:center;max-width:600px}
+.gsc{width:100%;display:flex;flex-direction:column;align-items:center;margin-top:22px}
+.gsn{color:#A5B1BD;font-size:12px;line-height:1.45;margin:10px 0 0;max-width:640px}
+.gsl2{color:#A5B1BD;font-size:12px;margin:14px 0 4px}
+.where{position:absolute;left:0;right:0;bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;
+       color:#A5B1BD;font-size:12px}
+.gsfoot{padding:16px 20px}
+.mono{font-family:'Liberation Mono',Consolas,monospace;font-size:12px}
+.sp{width:16px;flex:none}
+.rad{width:16px;height:16px;border-radius:50%;border:1px solid #7A8691;background:#171D24;flex:none;position:relative}
+.rad.on{border-color:#9CDBC9}
+.rad.on::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#9CDBC9}
+.lrow .rad{margin-right:2px}
+.lnat{width:130px}
+.lnat.ko{font-family:'Noto Sans CJK KR','Noto Sans CJK JP',sans-serif}
+.lnat.ta{font-family:'Noto Sans Tamil',sans-serif}
+.lnat.th{font-family:'IBM Plex Sans Thai Looped','Kanit',sans-serif}
+.lrow .lmeta{margin-left:0}
+.badge{font-size:11px;font-weight:600;padding:1px 6px;border-radius:1px;outline:1px solid #9CDBC9;color:#9CDBC9}
+.opts{display:flex;gap:16px;justify-content:center}
+.opt{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 16px;outline:1px solid #414B57;
+     background:#171D24;text-align:center}
+.opt.on{outline:2px solid #9CDBC9;background:#304C47}
+.oic{color:#E8EDF2}
+.optn{display:flex;align-items:center;gap:8px;font-weight:650}
+.optd{color:#A5B1BD;line-height:1.45;font-size:12px}
+.opt.on .optd{color:#E8EDF2}
+.ccx{display:flex;align-items:center;gap:6px;margin-top:14px;color:#A5B1BD}
+.ccx .lnk2{margin-left:10px}
+.frow.wide{width:100%;margin:0 0 8px}
+.cnt{color:#A5B1BD;margin-left:auto}
+.itable{width:100%;outline:1px solid #414B57;background:#171D24}
+.ihead,.irow{display:flex;align-items:center;gap:10px;height:28px;padding:0 10px}
+.ihead{color:#A5B1BD;font-size:12px;background:#29313A;box-shadow:inset 0 -1px #414B57}
+.irow+.irow{box-shadow:inset 0 1px #414B57}
+.irow.cur{background:#304C47}
+.ic1{flex:1;min-width:0}
+.ic2{width:120px}
+.ic3{width:130px;color:#A5B1BD}
+.ic4{width:64px}
+.look{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:-6px}
+.smps{display:flex;gap:48px}
+.smp{display:flex;flex-direction:column;align-items:center;gap:8px}
+.smp .mm{outline-offset:0}
+.smp.on .mm{outline:2px solid #9CDBC9 !important;outline-offset:2px}
+.smpn{display:flex;align-items:center;gap:8px;font-weight:600}
+.mm{display:flex;flex-direction:column;overflow:hidden}
+.accs,.tbrow{display:flex;align-items:center;gap:4px;height:28px}
+.accl{color:#E8EDF2;margin-right:10px}
+.accn{color:#A5B1BD;font-size:12px;margin-left:10px}
+.accc{width:20px;height:20px;border-radius:50%;margin:0 2px}
+.accc.on{outline:2px solid #E8EDF2;outline-offset:2px}
+.tbrow{margin-top:2px}
+.lcs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.lc{padding:8px;outline:1px solid #414B57;background:#171D24;display:flex;flex-direction:column;gap:6px;min-width:0}
+.lc .lcd{min-height:48px}
+.lcn{display:flex;align-items:center;gap:8px;font-weight:600}
+.lcd{color:#A5B1BD;font-size:12px;line-height:1.4}
+.lt{height:104px;background:#171B20;outline:1px solid #414B57;padding:2px;display:flex}
+.lcol{display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0}
+.lrowb{display:flex;gap:2px;min-width:0;min-height:0}
+.lb{background:#20262D;outline:1px solid #414B57;display:flex;align-items:center;justify-content:center;
+    min-width:0;min-height:0;font-size:10px;color:#A5B1BD;text-align:center;overflow:hidden}
+.lb.vid{background:#0B0E12;color:#C8CED4}
+.lb.aud{background:#171D24;color:#9CDBC9}
+.fcol{display:flex;flex-direction:column;align-items:flex-start;width:620px}
+.fl{width:124px;flex:none;color:#E8EDF2}
+.frame{position:relative;width:620px;height:150px;margin-top:6px;outline:1px solid #414B57;
+       background:linear-gradient(160deg,#41566B 0%,#7A8C78 55%,#C7A27A 100%);display:flex;align-items:flex-end;justify-content:center}
+.fsub{font:600 22px 'Liberation Sans',Arial,sans-serif;color:#FFFFFF;margin-bottom:18px;
+      text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 2px 0 #000,0 -2px 0 #000,2px 0 0 #000,-2px 0 0 #000,3px 4px 3px rgba(0,0,0,.6)}
+.fcap{position:absolute;right:6px;top:4px;font-size:10px;color:#fff;background:rgba(0,0,0,.45);padding:1px 5px}
+.meter{width:80px;height:6px;background:#171D24;outline:1px solid #414B57;display:flex}
+.meter span{background:#9CDBC9}
+.editor.sl{height:34px;font-size:14px;width:100%}
+.sp1{background:#940000}
+.gr1{text-decoration:underline wavy #7FB2FF;text-decoration-thickness:1.5px;text-underline-offset:4px}
+.legend{display:flex;align-items:center;gap:8px;color:#A5B1BD;font-size:12px;margin-top:6px}
+.legend .sw{color:#E8EDF2;padding:0 3px;margin-left:8px}
+.legend .sw:first-child{margin-left:0}
+.tree{width:100%;margin-top:10px;outline:1px solid #414B57;background:#171D24;padding:4px 0}
+.tr{display:flex;gap:16px;align-items:center;height:26px;padding:0 12px}
+.tr .mono{width:200px}
+.tr .lmeta{margin-left:0}
+.menu{width:260px}
+.mbar{display:flex;gap:2px;background:#20262D;padding:0 4px;height:28px;align-items:center;box-shadow:inset 0 -1px #414B57}
+.mbar span{padding:4px 8px}
+.mbar span.on{background:#304C47}
+.mdrop{background:#20262D;outline:1px solid #414B57;padding:4px 0;box-shadow:0 6px 20px rgba(0,0,0,.55);width:240px}
+.mi{display:flex;align-items:center;gap:10px;height:28px;padding:0 12px;color:#E8EDF2}
+.mi .ic{color:#A5B1BD}
+.mi.hot{background:#304C47;box-shadow:inset 2px 0 #9CDBC9}
+.wn{background:#20262D;outline:1px solid #414B57;padding:12px 16px;line-height:1.5}
+.wnh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.wn ul{padding-left:18px}
+.wn li{margin:2px 0}
+.alt *{box-sizing:border-box;margin:0;padding:0}
+.alt body{background:#171B20;color:#E8EDF2;font:13px 'Liberation Sans',Arial,sans-serif;padding:24px;width:1596px}
+.alt .acc{color:#C6B5F4}
+.alt .ic{display:block;flex:none}
+.alt h1{font-size:18px;font-weight:600;margin:0 0 8px}
+.alt h2{font-size:13px;font-weight:650;margin:28px 0 10px}
+.alt p.note{color:#A5B1BD;font-size:12px;margin:0 0 8px;max-width:1280px;line-height:1.45}
+.alt .cap{font-size:11px;color:#A5B1BD;margin:8px 0 0;max-width:520px;line-height:1.4}
+.alt .row{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.alt .col{display:flex;flex-direction:column}
+.alt .notes{background:#29313A;outline:1px solid #414B57;padding:12px 16px;width:1280px;line-height:1.5}
+.alt .notes td{padding:3px 14px 3px 0;vertical-align:top}
+.alt .notes td:first-child{font-weight:650;white-space:nowrap}
+.alt .app{position:relative;width:1280px;height:800px;background:url() 0 0 no-repeat;outline:1px solid #414B57;margin-top:12px}
+.alt .barslot{position:absolute;left:0;top:64px;width:1280px}
+.alt .stack{position:absolute;right:12px;bottom:34px;width:360px;display:flex;flex-direction:column;gap:8px}
+.alt .dlg{background:#20262D;color:#E8EDF2;display:flex;flex-direction:column;outline:1px solid #414B57;
+     box-shadow:0 8px 28px rgba(0,0,0,.55)}
+.alt .dtb{display:flex;align-items:center;height:32px;flex:none;background:#20262D;}
+.alt .dtitle{flex:1;min-width:0;padding-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alt .wbs{display:flex;margin-left:auto;flex:none}
+.alt .wb{display:flex;align-items:center;justify-content:center;width:46px;height:32px;color:#E8EDF2}
+.alt .dbody{padding:12px 24px 0;display:flex;flex-direction:column}
+.alt .dfoot{display:flex;gap:8px;justify-content:flex-end;padding:24px}
+.alt .dfoot .lead,.alt .pfoot .lead{margin-right:auto}
+.alt .b{display:inline-flex;align-items:center;justify-content:center;min-width:80px;height:30px;padding:0 10px;border-radius:1px;
+   background:#29313A;border:1px solid #414B57;color:#E8EDF2;white-space:nowrap;flex:none}
+.alt .b.sm{min-width:0;height:26px;padding:0 10px}
+.alt .b.on{background:#38304C;border-color:#C6B5F4}
+.alt .b.flat{background:none;border-color:transparent;color:#C6B5F4;padding:0 6px;height:24px}
+.alt .b.pri{background:#C6B5F4;border-color:#C6B5F4;color:#18102C;font-weight:650}
+.alt .b.dng{color:#FFADAD;border-color:#FFADAD}
+.alt .ring{outline:1px solid #E8EDF2;outline-offset:1px}
+.alt .qb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:1px;color:#E8EDF2}
+.alt .cb{display:flex;align-items:center;gap:8px;height:24px}
+.alt .box{width:16px;height:16px;border:1px solid #7A8691;background:#171D24;border-radius:1px;display:flex;
+     align-items:center;justify-content:center;flex:none}
+.alt .box.on{background:#C6B5F4;border-color:#C6B5F4;color:#18102C}
+.alt .fld{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:#171D24;border:1px solid #414B57;
+     border-radius:1px;color:#E8EDF2;min-width:0}
+.alt .fld.wide{display:flex;width:100%}
+.alt .fld.focus{border-color:#C6B5F4;box-shadow:inset 0 0 0 1px #C6B5F4}
+.alt .fld.ph .ftext{color:#A5B1BD}
+.alt .ftext{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alt .fic,.alt .ftail{color:#A5B1BD}
+.alt .ftail{display:flex;margin-left:auto}
+.alt .frow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.alt .flabel{width:56px;color:#E8EDF2;flex:none}
+.alt .seg{display:inline-flex;border:1px solid #414B57;border-radius:1px;overflow:hidden;flex:none}
+.alt .seg span{padding:0 10px;height:26px;display:flex;align-items:center;background:#29313A;border-left:1px solid #414B57}
+.alt .seg span:first-child{border-left:none}
+.alt .seg span.on{background:#38304C;color:#E8EDF2;box-shadow:inset 0 -2px #C6B5F4;font-weight:650}
+.alt .seg.sm span{height:24px;padding:0 8px}
+.alt .sbar{position:absolute;right:3px;width:4px;border-radius:2px;background:#7A8691;opacity:.8}
+.alt .big{color:#E8EDF2}
+.alt .warn,.alt .warn .acc{color:#E0A030}
+.alt .err,.alt .err .acc{color:#FFADAD}
+.alt .lnk2{color:#C6B5F4;cursor:pointer}
+.alt .mb{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+.alt .mbtext{display:flex;flex-direction:column;gap:6px;padding-top:4px;min-width:0}
+.alt .mbmain{font-size:14px;font-weight:650;line-height:1.4}
+.alt .mbdetail{color:#A5B1BD;line-height:1.45}
+.alt .mbcheck{margin-top:8px}
+.alt .disc{display:flex;align-items:center;gap:4px;margin:14px 0 0 48px;color:#E8EDF2}
+.alt .dets{position:relative;margin:6px 0 0 48px;background:#171D24;outline:1px solid #414B57;padding:8px 34px 8px 10px}
+.alt .dets pre{font:12px 'Liberation Mono',Consolas,monospace;color:#E8EDF2;white-space:pre-wrap}
+.alt .dets .qb{position:absolute;right:6px;top:6px}
+.alt .toast{display:flex;gap:10px;align-items:flex-start;padding:10px 8px 10px 12px;background:#20262D;outline:1px solid #414B57;
+       border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.55);color:#E8EDF2}
+.alt .toast.hover{background:#29313A}
+.alt .toast>.ic{margin-top:1px}
+.alt .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.alt .ttitle{font-weight:650;line-height:1.35}
+.alt .ttext{color:#A5B1BD;line-height:1.4}
+.alt .tacts{display:flex;gap:4px;margin:4px 0 0 -6px}
+.alt .tx{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#A5B1BD;flex:none}
+.alt .ibar{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 10px;background:#29313A;
+      box-shadow:inset 0 -1px #414B57,inset 0 1px #414B57;color:#E8EDF2}
+.alt .ibt{flex:1}
+.alt .pop{position:relative;background:#20262D;outline:1px solid #414B57;border-radius:4px;padding:12px;
+     box-shadow:0 6px 22px rgba(0,0,0,.55);color:#E8EDF2;z-index:2}
+.alt .ptitle{font-weight:650;margin-bottom:8px}
+.alt .pfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.alt .pfoot.wrap{flex-wrap:wrap;justify-content:flex-start}
+.alt .anchorbox{position:relative}
+.alt .allrow{display:flex;align-items:center;gap:10px;margin-top:14px}
+.alt .ctable{margin-top:10px;outline:1px solid #414B57;background:#171D24}
+.alt .chead,.alt .crow2{display:flex;align-items:center;gap:10px;padding:0 10px;min-height:38px}
+.alt .chead{min-height:28px;color:#A5B1BD;font-size:12px;box-shadow:inset 0 -1px #414B57;background:#29313A}
+.alt .crow2+.crow2{box-shadow:inset 0 1px #414B57}
+.alt .crow2 .cname{font-weight:650}
+.alt .cname{width:110px;flex:none}
+.alt .cdiff{width:170px;flex:none;color:#A5B1BD}
+.alt .cact{flex:1;display:flex;gap:8px;align-items:center}
+.alt .slist{position:relative;margin-top:8px;height:186px;overflow:hidden;outline:1px solid #414B57;background:#171D24;padding:2px 0}
+.alt .srow{display:flex;align-items:center;gap:8px;height:22px;padding:0 14px 0 8px}
+.alt .srow.cur{background:#38304C}
+.alt .sname{flex:1}
+.alt .scount{color:#A5B1BD;font-size:12px}
+.alt .sfoot{display:flex;gap:14px;align-items:center;margin-top:10px}
+.alt .htable{outline:1px solid #414B57;background:#171D24}
+.alt .hhead,.alt .hrow{display:grid;grid-template-columns:1fr 130px;padding:0 10px;height:26px;align-items:center}
+.alt .hhead{color:#A5B1BD;font-size:12px;background:#29313A;box-shadow:inset 0 -1px #414B57}
+.alt .hrow.sel{background:#38304C}
+.alt .keys{color:#A5B1BD}
+.alt .capture{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;background:#171D24;
+         border:1px solid #414B57;border-radius:1px}
+.alt .capture.focus{border-color:#C6B5F4;box-shadow:inset 0 0 0 1px #C6B5F4}
+.alt .wait{color:#A5B1BD}
+.alt .kc{display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid #7A8691;border-bottom-width:2px;
+    border-radius:3px;background:#29313A;font-weight:650}
+.alt .plus{color:#A5B1BD}
+.alt .conf{display:flex;gap:8px;align-items:flex-start;margin-top:10px;line-height:1.4}
+.alt .llist{margin-top:10px;outline:1px solid #414B57;background:#171D24;padding:2px 0}
+.alt .llist.pl{margin-top:0}
+.alt .lrow{display:flex;gap:10px;align-items:center;height:28px;padding:0 10px}
+.alt .lrow.cur{background:#38304C;box-shadow:inset 2px 0 #C6B5F4}
+.alt .lnum{color:#A5B1BD;width:12px}
+.alt .lmeta{color:#A5B1BD;margin-left:auto}
+.alt .editor{height:30px;display:flex;align-items:center;padding:0 10px;background:#171D24;border:1px solid #414B57}
+.alt .miss{text-decoration:underline wavy #FFADAD;text-underline-offset:3px;background:#38304C}
+.alt .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.alt .calm{font-weight:650}
+.alt .cal{display:grid;grid-template-columns:repeat(7,32px);row-gap:2px}
+.alt .dh{height:24px;display:flex;align-items:center;justify-content:center;color:#A5B1BD;font-size:11px}
+.alt .dd{height:28px;display:flex;align-items:center;justify-content:center;border-radius:1px}
+.alt .dd.out{color:#75818D}
+.alt .dd.sel{background:#C6B5F4;color:#18102C;font-weight:650;outline:1px solid #E8EDF2;outline-offset:1px}
+.alt .gs .gsbody{position:relative;display:flex;flex-direction:column;align-items:center;height:500px;padding:18px 28px 0;
+            box-shadow:inset 0 -1px #414B57}
+.alt .dots{display:flex;gap:8px;margin-bottom:18px}
+.alt .dot{width:8px;height:8px;border-radius:50%;background:#75818D;opacity:.6}
+.alt .dot.on{background:#C6B5F4}
+.alt .gsh{font-size:16px;font-weight:650;margin-bottom:6px;text-align:center}
+.alt .gsi{color:#A5B1BD;line-height:1.45;text-align:center;max-width:600px}
+.alt .gsc{width:100%;display:flex;flex-direction:column;align-items:center;margin-top:22px}
+.alt .gsn{color:#A5B1BD;font-size:12px;line-height:1.45;margin:10px 0 0;max-width:640px}
+.alt .gsl2{color:#A5B1BD;font-size:12px;margin:14px 0 4px}
+.alt .where{position:absolute;left:0;right:0;bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;
+       color:#A5B1BD;font-size:12px}
+.alt .gsfoot{padding:16px 20px}
+.alt .mono{font-family:'Liberation Mono',Consolas,monospace;font-size:12px}
+.alt .sp{width:16px;flex:none}
+.alt .rad{width:16px;height:16px;border-radius:50%;border:1px solid #7A8691;background:#171D24;flex:none;position:relative}
+.alt .rad.on{border-color:#C6B5F4}
+.alt .rad.on::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#C6B5F4}
+.alt .lrow .rad{margin-right:2px}
+.alt .lnat{width:130px}
+.alt .lnat.ko{font-family:'Noto Sans CJK KR','Noto Sans CJK JP',sans-serif}
+.alt .lnat.ta{font-family:'Noto Sans Tamil',sans-serif}
+.alt .lnat.th{font-family:'IBM Plex Sans Thai Looped','Kanit',sans-serif}
+.alt .lrow .lmeta{margin-left:0}
+.alt .badge{font-size:11px;font-weight:600;padding:1px 6px;border-radius:1px;outline:1px solid #C6B5F4;color:#C6B5F4}
+.alt .opts{display:flex;gap:16px;justify-content:center}
+.alt .opt{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 16px;outline:1px solid #414B57;
+     background:#171D24;text-align:center}
+.alt .opt.on{outline:2px solid #C6B5F4;background:#38304C}
+.alt .oic{color:#E8EDF2}
+.alt .optn{display:flex;align-items:center;gap:8px;font-weight:650}
+.alt .optd{color:#A5B1BD;line-height:1.45;font-size:12px}
+.alt .opt.on .optd{color:#E8EDF2}
+.alt .ccx{display:flex;align-items:center;gap:6px;margin-top:14px;color:#A5B1BD}
+.alt .ccx .lnk2{margin-left:10px}
+.alt .frow.wide{width:100%;margin:0 0 8px}
+.alt .cnt{color:#A5B1BD;margin-left:auto}
+.alt .itable{width:100%;outline:1px solid #414B57;background:#171D24}
+.alt .ihead,.alt .irow{display:flex;align-items:center;gap:10px;height:28px;padding:0 10px}
+.alt .ihead{color:#A5B1BD;font-size:12px;background:#29313A;box-shadow:inset 0 -1px #414B57}
+.alt .irow+.irow{box-shadow:inset 0 1px #414B57}
+.alt .irow.cur{background:#38304C}
+.alt .ic1{flex:1;min-width:0}
+.alt .ic2{width:120px}
+.alt .ic3{width:130px;color:#A5B1BD}
+.alt .ic4{width:64px}
+.alt .look{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:-6px}
+.alt .smps{display:flex;gap:48px}
+.alt .smp{display:flex;flex-direction:column;align-items:center;gap:8px}
+.alt .smp .mm{outline-offset:0}
+.alt .smp.on .mm{outline:2px solid #C6B5F4 !important;outline-offset:2px}
+.alt .smpn{display:flex;align-items:center;gap:8px;font-weight:600}
+.alt .mm{display:flex;flex-direction:column;overflow:hidden}
+.alt .accs,.alt .tbrow{display:flex;align-items:center;gap:4px;height:28px}
+.alt .accl{color:#E8EDF2;margin-right:10px}
+.alt .accn{color:#A5B1BD;font-size:12px;margin-left:10px}
+.alt .accc{width:20px;height:20px;border-radius:50%;margin:0 2px}
+.alt .accc.on{outline:2px solid #E8EDF2;outline-offset:2px}
+.alt .tbrow{margin-top:2px}
+.alt .lcs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.alt .lc{padding:8px;outline:1px solid #414B57;background:#171D24;display:flex;flex-direction:column;gap:6px;min-width:0}
+.alt .lc .lcd{min-height:48px}
+.alt .lcn{display:flex;align-items:center;gap:8px;font-weight:600}
+.alt .lcd{color:#A5B1BD;font-size:12px;line-height:1.4}
+.alt .lt{height:104px;background:#171B20;outline:1px solid #414B57;padding:2px;display:flex}
+.alt .lcol{display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0}
+.alt .lrowb{display:flex;gap:2px;min-width:0;min-height:0}
+.alt .lb{background:#20262D;outline:1px solid #414B57;display:flex;align-items:center;justify-content:center;
+    min-width:0;min-height:0;font-size:10px;color:#A5B1BD;text-align:center;overflow:hidden}
+.alt .lb.vid{background:#0B0E12;color:#C8CED4}
+.alt .lb.aud{background:#171D24;color:#C6B5F4}
+.alt .fcol{display:flex;flex-direction:column;align-items:flex-start;width:620px}
+.alt .fl{width:124px;flex:none;color:#E8EDF2}
+.alt .frame{position:relative;width:620px;height:150px;margin-top:6px;outline:1px solid #414B57;
+       background:linear-gradient(160deg,#41566B 0%,#7A8C78 55%,#C7A27A 100%);display:flex;align-items:flex-end;justify-content:center}
+.alt .fsub{font:600 22px 'Liberation Sans',Arial,sans-serif;color:#FFFFFF;margin-bottom:18px;
+      text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 2px 0 #000,0 -2px 0 #000,2px 0 0 #000,-2px 0 0 #000,3px 4px 3px rgba(0,0,0,.6)}
+.alt .fcap{position:absolute;right:6px;top:4px;font-size:10px;color:#fff;background:rgba(0,0,0,.45);padding:1px 5px}
+.alt .meter{width:80px;height:6px;background:#171D24;outline:1px solid #414B57;display:flex}
+.alt .meter span{background:#C6B5F4}
+.alt .editor.sl{height:34px;font-size:14px;width:100%}
+.alt .sp1{background:#940000}
+.alt .gr1{text-decoration:underline wavy #7FB2FF;text-decoration-thickness:1.5px;text-underline-offset:4px}
+.alt .legend{display:flex;align-items:center;gap:8px;color:#A5B1BD;font-size:12px;margin-top:6px}
+.alt .legend .sw{color:#E8EDF2;padding:0 3px;margin-left:8px}
+.alt .legend .sw:first-child{margin-left:0}
+.alt .tree{width:100%;margin-top:10px;outline:1px solid #414B57;background:#171D24;padding:4px 0}
+.alt .tr{display:flex;gap:16px;align-items:center;height:26px;padding:0 12px}
+.alt .tr .mono{width:200px}
+.alt .tr .lmeta{margin-left:0}
+.alt .menu{width:260px}
+.alt .mbar{display:flex;gap:2px;background:#20262D;padding:0 4px;height:28px;align-items:center;box-shadow:inset 0 -1px #414B57}
+.alt .mbar span{padding:4px 8px}
+.alt .mbar span.on{background:#38304C}
+.alt .mdrop{background:#20262D;outline:1px solid #414B57;padding:4px 0;box-shadow:0 6px 20px rgba(0,0,0,.55);width:240px}
+.alt .mi{display:flex;align-items:center;gap:10px;height:28px;padding:0 12px;color:#E8EDF2}
+.alt .mi .ic{color:#A5B1BD}
+.alt .mi.hot{background:#38304C;box-shadow:inset 2px 0 #C6B5F4}
+.alt .wn{background:#20262D;outline:1px solid #414B57;padding:12px 16px;line-height:1.5}
+.alt .wnh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.alt .wn ul{padding-left:18px}
+.alt .wn li{margin:2px 0}</style></head><body><svg width="0" height="0" style="position:absolute"><defs><symbol id="i-notice-error" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z"/><g class="acc"><path d="M8 4.75v4"/><circle cx="8" cy="11.25" r=".75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-calendar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="12" rx="1"/><path d="M1.5 6h13M5 1v3M11 1v3"/><g class="acc"><path d="M4.5 9h1M7.5 9h1M10.5 9h1M4.5 11.5h1M7.5 11.5h1"/></g></g></symbol><symbol id="i-chevron-down" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5l3.5 3.5 3.5-3.5"/></g></symbol><symbol id="i-chevron-right" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5l3.5 3.5-3.5 3.5"/></g></symbol><symbol id="i-chevron-left" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5l-3.5 3.5 3.5 3.5"/></g></symbol><symbol id="i-check" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></g></symbol><symbol id="i-about" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4"/><circle cx="8" cy="5" r="0.75" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-notice-warning" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></g></symbol><symbol id="i-tab-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></g></symbol><symbol id="i-log" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M7 5.5h5M7 8h4M7 10.5h5"/><g class="acc"><path d="M4 5.5h1.5M4 8h1.5M4 10.5h1.5"/></g></g></symbol><symbol id="i-styles" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z"/><g class="acc"><circle cx="4.75" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="6.75" cy="4.5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="4.5" r="1" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-hotkeys" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></g></symbol><symbol id="i-open-audio" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 11.5V2.5l4 1.5"/><circle cx="4.5" cy="11.5" r="2" fill="currentColor" stroke="none"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></g></symbol><symbol id="i-spellchecker" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></g></symbol><symbol id="i-remove-temporary" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M4.5 3.5V2h3v1.5"/><path d="M2.5 4.5l.75 9a1 1 0 0 0 1 1H8M9.5 4.5l-.25 3.5"/><path d="M5 6.5v5M7 6.5v3"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-check-updates" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></g></symbol><symbol id="i-window-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></g></symbol><symbol id="i-window-maximize" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="9" height="9" rx="0.5"/></g></symbol><symbol id="i-edit-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2"/><rect x="2.5" y="4.5" width="8" height="10" rx="1"/></g></symbol><symbol id="i-save" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h7v4"/></g></symbol><symbol id="i-menu-more" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></g></symbol><symbol id="i-filter" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2.5h13L9.5 8.5V13l-3 1.5v-6z"/></g></symbol><symbol id="i-panels" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M6.5 2.5v11M6.5 8h8"/></g></symbol><symbol id="i-show" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8C3 5 5.25 3.5 8 3.5s5 1.5 6.5 4.5c-1.5 3-3.75 4.5-6.5 4.5S3 11 1.5 8z"/><g class="acc"><circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-hide" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8C3 5 5.25 3.5 8 3.5s5 1.5 6.5 4.5c-1.5 3-3.75 4.5-6.5 4.5S3 11 1.5 8z"/><circle cx="8" cy="8" r="2"/><g class="acc"><path d="M2.5 13.5l11-11"/></g></g></symbol><symbol id="i-panel-float" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 2.5h-5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-5"/><g class="acc"><path d="M9.5 6.5l5-5M10.5 1.5h4v4"/></g></g></symbol><symbol id="i-last-session" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2h9v7h-2"/><rect x="1.5" y="6.5" width="11" height="7" rx="1"/><path d="M1.5 8.5h11"/><g class="acc"><path d="M5 11.5h4M7.5 10l1.5 1.5L7.5 13"/></g></g></symbol><symbol id="i-panel-menu" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="3.5" cy="8" r="1.25" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1.25" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8" r="1.25" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-language" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5c-2 1.75-3 4-3 6.5s1 4.75 3 6.5c2-1.75 3-4 3-6.5s-1-4.75-3-6.5z"/><g class="acc"><path d="M1.5 8h13"/></g></g></symbol><symbol id="i-import" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3"/><g class="acc"><path d="M7.5 4.5v10M4.5 11.5l3 3 3-3"/></g></g></symbol><symbol id="i-appearance" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-theme" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 10A6 6 0 1 1 6 2.5a5 5 0 0 0 7.5 7.5z"/><g class="acc"><path d="M11.5 1.5v2M10.5 2.5h2"/></g></g></symbol><symbol id="i-layout" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="1.5" width="5" height="5" rx="1"/><rect x="9.5" y="1.5" width="5" height="5" rx="1"/><rect x="1.5" y="9.5" width="5" height="5" rx="1"/><path d="M1.5 3.5h5M9.5 3.5h5M1.5 11.5h5"/><g class="acc"><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 11.5h5"/></g></g></symbol><symbol id="i-settings-video" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></g></symbol><symbol id="i-settings-audio" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></g></symbol><symbol id="i-editor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></g></symbol><symbol id="i-folder-open" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 13.5v-10a1 1 0 0 1 1-1h3l1.5 1.5h5a1 1 0 0 1 1 1v1.5"/><path d="M1.5 13.5l2.25-7h10.75l-2.25 7z"/></g></symbol><symbol id="i-show-in-folder" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5h-6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3.5l1.5 1.5h6a1 1 0 0 1 1 1v4"/><path d="M1.5 6h13"/><g class="acc"><path d="M10 14.5l4.5-4.5M11.5 10h3v3"/></g></g></symbol><symbol id="i-autosave" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5h-6v-11h9l2 2v4"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h4"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-dictionary" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13V3a1.5 1.5 0 0 1 1.5-1.5h7.5v10H5a1.5 1.5 0 0 0 0 3h7.5"/><g class="acc"><path d="M6.5 4.5h3.5M6.5 6.5h2"/></g></g></symbol><symbol id="i-renderer" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M6.5 4.5v3.5l3-1.75z" fill="currentColor"/><g class="acc"><path d="M4 9.5h8M5.5 11.5h5"/></g></g></symbol><symbol id="i-audio-device" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="1.5" width="9" height="13" rx="1"/><circle cx="8" cy="10" r="2.5"/><g class="acc"><circle cx="8" cy="5" r="1.25" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-audio-play" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 3v10l8-5z" fill="currentColor"/></g></symbol><symbol id="i-whats-new" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h-6v11h9v-6"/><path d="M5.5 9.5h5M5.5 11.5h3"/><g class="acc"><path d="M12.5 1v4M10.5 3h4"/></g></g></symbol><symbol id="i-help" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M6 6.25a2 2 0 1 1 3 1.75c-.5.25-1 .5-1 1.25v.5"/><circle cx="8" cy="11.5" r="0.75" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-settings" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></g></symbol><symbol id="i-translation-mode" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h8M1.5 6h5"/><g class="acc"><path d="M1.5 10.5h8M1.5 13h5M12.5 3v9M11 10.5l1.5 1.5 1.5-1.5"/></g></g></symbol><symbol id="i-karaoke" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="4.5" width="13" height="7" rx="1"/><path d="M5.5 4.5v7M10.5 4.5v7"/><g class="acc"><rect x="2" y="5" width="3" height="6" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-report-issue" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 6.5a2.5 2.5 0 0 1 5 0v4a2.5 2.5 0 0 1-5 0z"/><path d="M6.5 4.5l-1-2M9.5 4.5l1-2"/><path d="M2.5 7.5h3M10.5 7.5h3M2.5 11h3M10.5 11h3"/><g class="acc"><path d="M8 6.5v6"/></g></g></symbol><symbol id="i-credits" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.5"/><path d="M1.5 13.5a4.5 4.5 0 0 1 9 0"/><g class="acc"><circle cx="11.5" cy="5.5" r="2"/><path d="M12 9.5a3 3 0 0 1 2.5 3"/></g></g></symbol><symbol id="i-monitor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="9" rx="1"/><path d="M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7"/><g class="acc"><path d="M3.5 6v-1.5h2M12.5 6v-1.5h-2M3.5 8v1.5h2M12.5 8v1.5h-2"/></g></g></symbol><symbol id="i-media-play" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5v11l9-5.5z" fill="currentColor"/></g></symbol><symbol id="i-window-minimize" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5h9"/></g></symbol><symbol id="i-link" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></g></symbol></defs></svg><h1>FR1 Getting started, version 2: Dark (1 of 2)</h1><p class="note">Closer to MuseScore 4’s first-launch setup: a compact window, page dots on top, a centred title and explanation, Back on the left, Next and Finish on the right. Every choice applies at Finish; Skip setup, Close and Esc keep the defaults and import nothing. The legacy-upgrade run has 8 pages, a fresh install 7 (no Import).</p><div class="row"><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="gsh">Welcome to HikariSub</div><div class="gsi">Let’s get started by choosing your language. Nothing is saved until Finish, and every choice can be changed later.</div><div class="gsc"><div class="llist pl" style="width:340px"><div class="lrow cur"><span class="rad on"></span><span class="lnat ">English</span><span class="lmeta">English</span></div><div class="lrow"><span class="rad"></span><span class="lnat ko">한국어</span><span class="lmeta">Korean</span></div><div class="lrow"><span class="rad"></span><span class="lnat ">Polski</span><span class="lmeta">Polish</span></div><div class="lrow"><span class="rad"></span><span class="lnat ta">தமிழ்</span><span class="lmeta">Tamil</span></div><div class="lrow"><span class="rad"></span><span class="lnat th">ไทย</span><span class="lmeta">Thai</span></div></div><div class="gsn">Chosen from the system language. This window switches to the one you pick.</div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: Settings › General › Language</span></div></div><div class="dfoot gsfoot"><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div><div class="cap">1. Language: the shipped translations by their own names.</div></div><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="gsh">Bring over your old settings?</div><div class="gsi">HikariSub 0.0.2 is installed on this computer. Nothing in it is changed.</div><div class="gsc"><div class="opts"><div class="opt on" style="width:300px"><svg class="ic oic" width="32" height="32"><use href="#i-import"/></svg><div class="optn"><span class="rad on"></span>Import my old settings</div><span class="badge">Recommended</span><div class="optd">Theme, hotkeys, fonts, audio and video options and your dictionary words. You review them on this page, and the next pages start from them.</div></div><div class="opt" style="width:300px"><svg class="ic oic" width="32" height="32"><use href="#i-settings"/></svg><div class="optn"><span class="rad"></span>Set up from scratch</div><div class="optd">Start from HikariSub’s defaults. File › Import legacy settings… can still bring them over later.</div></div></div><div class="ccx"><svg class="ic " width="14" height="14"><use href="#i-folder-open"/></svg><span class="mono">~/.local/share/HikariSub/Legacy</span><span class="lnk2">Choose another…</span></div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: File › Import legacy settings…</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div><div class="cap">2. Import (only when legacy is installed).</div></div><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="gsh">Choose what to bring over</div><div class="gsi">The next pages start from these values; a change there wins over the imported one.</div><div class="gsc"><div class="frow wide"><span class="seg sm"><span class="on">Import my old settings</span><span class="">Set up from scratch</span></span><span class="cnt">213 of 214 chosen</span></div><div class="frow wide"><span class="seg sm"><span class="on">Conflicts 5</span><span class="">All 214</span></span><span class="fld ph" style="width:200px;"><svg class="ic fic" width="16" height="16"><use href="#i-search"/></svg><span class="ftext">Search settings</span></span><span class="sp" style="flex:1"></span><span class="b sm">Proposed choice</span><span class="b sm">All conflicts</span><span class="b sm">None</span></div><div class="itable"><div class="ihead"><span style="width:16px"></span><span class="ic1">Setting</span><span class="ic2">Legacy</span><span class="ic3">Now</span><span class="ic4">Status</span></div><div class="irow cur"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="ic1">Interface theme</span><span class="ic2">Light</span><span class="ic3">Dark</span><span class="ic4 warn">Conflict</span></div><div class="irow"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="ic1">Subtitle grid font</span><span class="ic2">Tahoma 10</span><span class="ic3">Liberation Sans 10</span><span class="ic4 warn">Conflict</span></div><div class="irow"><span class="box"></span><span class="ic1">Autosave files kept</span><span class="ic2">10</span><span class="ic3">3</span><span class="ic4 warn">Conflict</span></div><div class="irow"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="ic1">Dictionary</span><span class="ic2">Polish</span><span class="ic3">English (US)</span><span class="ic4 warn">Conflict</span></div><div class="irow"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="ic1">Play line (Audio hotkey)</span><span class="ic2">S</span><span class="ic3">Ctrl+Space</span><span class="ic4 warn">Conflict</span></div></div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: File › Import legacy settings…</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div><div class="cap">2. Import chosen: the import wizard’s review table on the page.</div></div><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="gsh">Look</div><div class="gsi">Choose a theme. This window changes as you choose.</div><div class="gsc"><div class="look"><div class="cb"><span class="box"></span><span class="cbt">Follow system theme</span></div><div class="smps"><div class="smp"><div class="mm" style="width:220px;height:136px;background:#E5E9EC;outline:1px solid #AAB5BE"><div style="height:10px;background:#F9FAFB;display:flex;gap:4px;padding:3px 4px"><span style="width:12px;background:#202832;opacity:.55"></span><span style="width:12px;background:#202832;opacity:.55"></span><span style="width:12px;background:#202832;opacity:.55"></span><span style="width:12px;background:#202832;opacity:.55"></span><span style="width:12px;background:#202832;opacity:.55"></span></div><div style="display:flex;gap:2px;padding:2px;height:70px"><div style="flex:44;background:#0B0E12;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px"><span style="width:46%;height:3px;background:#fff"></span></div><div style="flex:56;display:flex;flex-direction:column;gap:2px"><div style="flex:2;background:#FFFFFF;outline:1px solid #AAB5BE;position:relative;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 60 12" preserveAspectRatio="none"><path d="M0 6 L4 3 L8 9 L12 2 L16 10 L20 5 L24 7 L28 1 L32 11 L36 4 L40 8 L44 3 L48 9 L52 5 L56 7 L60 6" fill="none" stroke="#145C4C" stroke-width="1"/></svg></div><div style="flex:3;background:#F9FAFB;outline:1px solid #AAB5BE"><div style="margin:4px;height:10px;background:#FFFFFF;outline:1px solid #145C4C"></div></div></div></div><div style="margin:0 2px;background:#F9FAFB;height:47px;outline:1px solid #AAB5BE"><div style="height:5px;background:#D6EBE4;margin-top:2px"></div><div style="height:4px;margin:3px 4px 0;background:#526170;opacity:.45;width:70%"></div><div style="height:4px;margin:3px 4px 0;background:#526170;opacity:.45;width:55%"></div><div style="height:4px;margin:3px 4px 0;background:#526170;opacity:.45;width:80%"></div><div style="height:4px;margin:3px 4px 0;background:#526170;opacity:.45;width:62%"></div></div></div><div class="smpn"><span class="rad"></span>Light</div></div><div class="smp on"><div class="mm" style="width:220px;height:136px;background:#171B20;outline:1px solid #414B57"><div style="height:10px;background:#20262D;display:flex;gap:4px;padding:3px 4px"><span style="width:12px;background:#E8EDF2;opacity:.55"></span><span style="width:12px;background:#E8EDF2;opacity:.55"></span><span style="width:12px;background:#E8EDF2;opacity:.55"></span><span style="width:12px;background:#E8EDF2;opacity:.55"></span><span style="width:12px;background:#E8EDF2;opacity:.55"></span></div><div style="display:flex;gap:2px;padding:2px;height:70px"><div style="flex:44;background:#0B0E12;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px"><span style="width:46%;height:3px;background:#fff"></span></div><div style="flex:56;display:flex;flex-direction:column;gap:2px"><div style="flex:2;background:#171D24;outline:1px solid #414B57;position:relative;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 60 12" preserveAspectRatio="none"><path d="M0 6 L4 3 L8 9 L12 2 L16 10 L20 5 L24 7 L28 1 L32 11 L36 4 L40 8 L44 3 L48 9 L52 5 L56 7 L60 6" fill="none" stroke="#9CDBC9" stroke-width="1"/></svg></div><div style="flex:3;background:#20262D;outline:1px solid #414B57"><div style="margin:4px;height:10px;background:#171D24;outline:1px solid #9CDBC9"></div></div></div></div><div style="margin:0 2px;background:#20262D;height:47px;outline:1px solid #414B57"><div style="height:5px;background:#304C47;margin-top:2px"></div><div style="height:4px;margin:3px 4px 0;background:#A5B1BD;opacity:.45;width:70%"></div><div style="height:4px;margin:3px 4px 0;background:#A5B1BD;opacity:.45;width:55%"></div><div style="height:4px;margin:3px 4px 0;background:#A5B1BD;opacity:.45;width:80%"></div><div style="height:4px;margin:3px 4px 0;background:#A5B1BD;opacity:.45;width:62%"></div></div></div><div class="smpn"><span class="rad on"></span>Dark</div></div></div><div class="accs"><span class="accl">Accent colour</span><span class="accc" style="background:#F4A9A3" title="Red"></span><span class="accc" style="background:#F5BB8A" title="Orange"></span><span class="accc" style="background:#E3CF7E" title="Gold"></span><span class="accc on" style="background:#9CDBC9" title="Green"></span><span class="accc" style="background:#A6C8F2" title="Blue"></span><span class="accc" style="background:#C6B5F4" title="Purple"></span><span class="accc" style="background:#EFAAD3" title="Pink"></span><span class="accn">Green</span></div><div class="cb"><span class="box"></span><span class="cbt">Enable high contrast</span></div><div class="tbrow"><span class="accl">Title bar</span><span class="seg sm"><span class="on">HikariSub’s</span><span class="">The system’s</span></span><span class="accn">Suits this desktop</span></div></div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: Settings › Appearance</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div><div class="cap">3. Look, as MuseScore’s theme page: Follow system theme, two theme samples, the seven accent colours (Settings › Appearance’s presets; hover names them), Enable high contrast, and the title bar.</div></div><div class="col" style="width:760px"><div class="alt"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="gsh">Look</div><div class="gsi">Choose a theme. This window changes as you choose.</div><div class="gsc"><div class="look"><div class="cb"><span class="box"></span><span class="cbt">Follow system theme</span></div><div class="smps"><div class="smp"><div class="mm" style="width:220px;height:136px;background:#E5E9EC;outline:1px solid #AAB5BE"><div style="height:10px;background:#F9FAFB;display:flex;gap:4px;padding:3px 4px"><span style="width:12px;background:#202832;opacity:.55"></span><span style="width:12px;background:#202832;opacity:.55"></span><span style="width:12px;background:#202832;opacity:.55"></span><span style="width:12px;background:#202832;opacity:.55"></span><span style="width:12px;background:#202832;opacity:.55"></span></div><div style="display:flex;gap:2px;padding:2px;height:70px"><div style="flex:44;background:#0B0E12;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px"><span style="width:46%;height:3px;background:#fff"></span></div><div style="flex:56;display:flex;flex-direction:column;gap:2px"><div style="flex:2;background:#FFFFFF;outline:1px solid #AAB5BE;position:relative;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 60 12" preserveAspectRatio="none"><path d="M0 6 L4 3 L8 9 L12 2 L16 10 L20 5 L24 7 L28 1 L32 11 L36 4 L40 8 L44 3 L48 9 L52 5 L56 7 L60 6" fill="none" stroke="#5B3FB0" stroke-width="1"/></svg></div><div style="flex:3;background:#F9FAFB;outline:1px solid #AAB5BE"><div style="margin:4px;height:10px;background:#FFFFFF;outline:1px solid #5B3FB0"></div></div></div></div><div style="margin:0 2px;background:#F9FAFB;height:47px;outline:1px solid #AAB5BE"><div style="height:5px;background:#DBD6EB;margin-top:2px"></div><div style="height:4px;margin:3px 4px 0;background:#526170;opacity:.45;width:70%"></div><div style="height:4px;margin:3px 4px 0;background:#526170;opacity:.45;width:55%"></div><div style="height:4px;margin:3px 4px 0;background:#526170;opacity:.45;width:80%"></div><div style="height:4px;margin:3px 4px 0;background:#526170;opacity:.45;width:62%"></div></div></div><div class="smpn"><span class="rad"></span>Light</div></div><div class="smp on"><div class="mm" style="width:220px;height:136px;background:#171B20;outline:1px solid #414B57"><div style="height:10px;background:#20262D;display:flex;gap:4px;padding:3px 4px"><span style="width:12px;background:#E8EDF2;opacity:.55"></span><span style="width:12px;background:#E8EDF2;opacity:.55"></span><span style="width:12px;background:#E8EDF2;opacity:.55"></span><span style="width:12px;background:#E8EDF2;opacity:.55"></span><span style="width:12px;background:#E8EDF2;opacity:.55"></span></div><div style="display:flex;gap:2px;padding:2px;height:70px"><div style="flex:44;background:#0B0E12;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px"><span style="width:46%;height:3px;background:#fff"></span></div><div style="flex:56;display:flex;flex-direction:column;gap:2px"><div style="flex:2;background:#171D24;outline:1px solid #414B57;position:relative;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 60 12" preserveAspectRatio="none"><path d="M0 6 L4 3 L8 9 L12 2 L16 10 L20 5 L24 7 L28 1 L32 11 L36 4 L40 8 L44 3 L48 9 L52 5 L56 7 L60 6" fill="none" stroke="#C6B5F4" stroke-width="1"/></svg></div><div style="flex:3;background:#20262D;outline:1px solid #414B57"><div style="margin:4px;height:10px;background:#171D24;outline:1px solid #C6B5F4"></div></div></div></div><div style="margin:0 2px;background:#20262D;height:47px;outline:1px solid #414B57"><div style="height:5px;background:#38304C;margin-top:2px"></div><div style="height:4px;margin:3px 4px 0;background:#A5B1BD;opacity:.45;width:70%"></div><div style="height:4px;margin:3px 4px 0;background:#A5B1BD;opacity:.45;width:55%"></div><div style="height:4px;margin:3px 4px 0;background:#A5B1BD;opacity:.45;width:80%"></div><div style="height:4px;margin:3px 4px 0;background:#A5B1BD;opacity:.45;width:62%"></div></div></div><div class="smpn"><span class="rad on"></span>Dark</div></div></div><div class="accs"><span class="accl">Accent colour</span><span class="accc" style="background:#F4A9A3" title="Red"></span><span class="accc" style="background:#F5BB8A" title="Orange"></span><span class="accc" style="background:#E3CF7E" title="Gold"></span><span class="accc" style="background:#9CDBC9" title="Green"></span><span class="accc" style="background:#A6C8F2" title="Blue"></span><span class="accc on" style="background:#C6B5F4" title="Purple"></span><span class="accc" style="background:#EFAAD3" title="Pink"></span><span class="accn">Purple</span></div><div class="cb"><span class="box"></span><span class="cbt">Enable high contrast</span></div><div class="tbrow"><span class="accl">Title bar</span><span class="seg sm"><span class="on">HikariSub’s</span><span class="">The system’s</span></span><span class="accn">Suits this desktop</span></div></div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: Settings › Appearance</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div></div><div class="cap">3. Look with Purple picked: the window takes the accent at once. Enable high contrast swaps the two samples for High contrast white and black.</div></div><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="gsh">What do you mostly do?</div><div class="gsi">Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit of everything.</div><div class="gsc"><div class="lcs"><div class="lc"><div class="lt"><div class="lcol" style="flex:1"><div class="lrowb" style="flex:58"><div class="lb vid" style="flex:44"><span>Video</span></div><div class="lcol" style="flex:56"><div class="lb " style="flex:2"><span>Original text</span></div><div class="lb " style="flex:3"><span>Line editor</span></div></div></div><div class="lb " style="flex:42"><span>Grid</span></div></div></div><div class="lcn"><span class="rad"></span>Translate</div><div class="lcd">The original text above your translation, with Translation mode on.</div></div><div class="lc"><div class="lt"><div class="lcol" style="flex:1"><div class="lb aud" style="flex:30"><span>Audio</span></div><div class="lb " style="flex:26"><span>Line editor</span></div><div class="lb " style="flex:44"><span>Grid</span></div></div></div><div class="lcn"><span class="rad"></span>Time</div><div class="lcd">Audio across the top for timing Lines by ear.</div></div><div class="lc"><div class="lt"><div class="lcol" style="flex:1"><div class="lrowb" style="flex:64"><div class="lb vid" style="flex:74"><span>Video</span></div><div class="lb " style="flex:26"><span>Styles</span></div></div><div class="lrowb" style="flex:36"><div class="lb " style="flex:55"><span>Line editor</span></div><div class="lb " style="flex:45"><span>Grid</span></div></div></div></div><div class="lcn"><span class="rad"></span>Typeset</div><div class="lcd">A large video with the visual tools and the Styles panel.</div></div><div class="lc"><div class="lt"><div class="lcol" style="flex:1"><div class="lrowb" style="flex:44"><div class="lb vid" style="flex:44"><span>Video</span></div><div class="lb " style="flex:56"><span>Template editor</span></div></div><div class="lb aud" style="flex:30"><span>Audio · Karaoke</span></div><div class="lb " style="flex:26"><span>Grid</span></div></div></div><div class="lcn"><span class="rad"></span>Karaoke</div><div class="lcd">The Template editor beside the video, the audio in Karaoke mode.</div></div></div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: View › Layout, or the layout switcher in the title bar</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div><div class="cap">4. What you do: each thumbnail is that layout’s arrangement.</div></div></div></body></html>

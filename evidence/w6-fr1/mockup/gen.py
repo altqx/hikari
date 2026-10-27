@@ -354,51 +354,8 @@ REPO_ICONS += ["language", "import", "appearance", "theme", "layout", "settings-
 GRAMMAR = {"light": "#1F5FBF", "dark": "#7FB2FF", "hcwhite": "#0037B3", "hcblack": "#00E5FF"}
 SPELL = {"light": "#FF6968", "dark": "#940000", "hcwhite": "#FF9C9C", "hcblack": "#C00000"}  # Theme.spellcheck
 
-STEPS = [("language", "Language"), ("import", "Import"), ("appearance", "Look"), ("layout", "What you do"),
-         ("settings-video", "Video and audio"), ("editor", "Editing"), ("check-updates", "Updates"),
-         ("folder-open", "Your files")]
-
-
-def steps(cur, legacy=True):
-    shown = [s for s in STEPS if legacy or s[1] != "Import"]
-    names = [s[1] for s in shown]
-    at = names.index(cur)
-    rows = []
-    for i, (icon, name) in enumerate(shown):
-        cls = "st" + (" cur" if i == at else "") + (" done" if i < at else "")
-        tail = ic("check", 14, "stchk") if i < at else ""
-        rows.append(f'<div class="{cls}">{ic(icon)}<span class="stn">{name}</span>{tail}</div>')
-    return (f'<div class="steps"><div class="stof">Step {at + 1} of {len(shown)}</div>' + "".join(rows)
-            + '</div>')
-
-
-def where(text):
-    return f'<div class="where">{ic("settings", 14)}<span>{text}</span></div>'
-
-
-def gs_window(cur, body, legacy=True, last=False, first=False, wh="Settings"):
-    foot = (btn("Skip setup", lead=True) + ("" if first else btn("Back"))
-            + btn("Finish" if last else "Next", primary=True, focus=True))
-    return (f'<div class="dlg gs" style="width:920px">{titlebar("Getting started")}'
-            f'<div class="gsbody">{steps(cur, legacy)}<div class="gspage">{body}</div></div>'
-            f'<div class="dfoot gsfoot">{foot}</div></div>')
-
-
-def head(title, intro):
-    return f'<div class="gsh">{title}</div><div class="gsi">{intro}</div>'
-
-
 def radio(on, focus=False):
     return f'<span class="rad{" on" if on else ""}{" ring" if focus else ""}"></span>'
-
-
-def choice_card(title, text, on, extra="", badge=""):
-    b = f'<span class="badge">{badge}</span>' if badge else ""
-    return (f'<div class="cc{" on" if on else ""}">{radio(on)}<div class="cct"><div class="cctt">{title}{b}</div>'
-            f'<div class="ccd">{text}</div>{extra}</div></div>')
-
-
-# Mini pictures --------------------------------------------------------------------------------
 
 
 def mini_main(t, w=170, h=104):
@@ -422,25 +379,6 @@ def mini_main(t, w=170, h=104):
             f'</div></div><div style="margin:0 2px;background:{t["panel"]};height:{int(h * .48) - 18}px;'
             f'outline:1px solid {t["line"]}"><div style="height:5px;background:{t["select"]};margin-top:2px"></div>'
             f'{rows}</div></div>')
-
-
-def theme_card(key, chosen):
-    t = THEMES[key]
-    return (f'<div class="tc{" on" if chosen else ""}">{mini_main(t, 142, 90)}<div class="tcn">{radio(chosen)}'
-            f'{t["name"]}</div></div>')
-
-
-def mini_titlebar(custom):
-    if custom:
-        bar = ('<div class="mtb"><span class="mmenu">File</span><span class="mmenu">Edit</span>'
-               '<span class="mmenu">Video</span><span class="mmenu">…</span><span class="msw">Editing</span>'
-               f'<span class="mwb">{ic("window-minimize", 12)}{ic("window-maximize", 12)}{ic("window-close", 12)}'
-               '</span></div>')
-    else:
-        bar = ('<div class="msys"><span>HikariSub</span><span class="mwb">●&nbsp;●&nbsp;●</span></div>'
-               '<div class="mtb"><span class="mmenu">File</span><span class="mmenu">Edit</span>'
-               '<span class="mmenu">Video</span><span class="mmenu">…</span><span class="msw">Editing</span></div>')
-    return f'<div class="mtbx">{bar}<div class="mtbbody"></div></div>'
 
 
 def block(label, flex, cls=""):
@@ -470,48 +408,8 @@ def layout_thumb(kind):
     return f'<div class="lt">{inner}</div>'
 
 
-def layout_card(kind, text, on=False):
-    return (f'<div class="lc{" on" if on else ""}">{layout_thumb(kind)}<div class="lcn">{radio(on)}{kind}</div>'
-            f'<div class="lcd">{text}</div></div>')
-
-
-# Pages ----------------------------------------------------------------------------------------
-
-
 LANGS = [("English", "English", ""), ("한국어", "Korean", "ko"), ("Polski", "Polish", ""), ("தமிழ்", "Tamil", "ta"),
          ("ไทย", "Thai", "th")]
-
-
-def p_language(legacy=True):
-    rows = "".join(
-        f'<div class="lrow{" cur" if i == 0 else ""}">{radio(i == 0)}<span class="lnat {cls}">{nat}</span>'
-        f'<span class="lmeta">{eng}</span></div>'
-        for i, (nat, eng, cls) in enumerate(LANGS))
-    body = (head("Welcome to HikariSub",
-                 "A few questions set up the things most people change first. Every page can be changed later in "
-                 "Settings, and nothing is saved until Finish.")
-            + '<div class="gsl">Interface language</div>'
-            + f'<div class="llist pl" style="width:360px">{rows}</div>'
-            + '<div class="gsn">Chosen from the system language. This window switches to the language you pick.</div>'
-            + where("Later: Settings › General › Language"))
-    return gs_window("Language", body, legacy, first=True)
-
-
-def p_import_choice():
-    body = (head("Your HikariSub 0.0.x settings",
-                 "HikariSub 0.0.2 is installed on this computer. Its settings can be brought over.")
-            + choice_card("Import my old settings",
-                          "Theme, hotkeys, fonts, audio and video options and your dictionary words. "
-                          "You see each one before Finish, and the next pages start from them.", True,
-                          extra=f'<div class="ccx">{ic("folder-open", 14)}<span class="mono">'
-                                '~/.local/share/HikariSub/Legacy</span><span class="lnk2">Choose another…</span></div>',
-                          badge="Recommended")
-            + choice_card("Set up from scratch",
-                          "Start from HikariSub's defaults. File › Import legacy settings… can still bring them over "
-                          "later.", False)
-            + '<div class="gsn">Nothing in the old installation is changed.</div>'
-            + where("Later: File › Import legacy settings…"))
-    return gs_window("Import", body)
 
 
 IMPORT_ROWS = [
@@ -523,137 +421,10 @@ IMPORT_ROWS = [
 ]
 
 
-def p_import_review():
-    rows = "".join(
-        f'<div class="irow{" cur" if i == 0 else ""}">{box(on)}<span class="ic1">{n}</span><span class="ic2">{a}</span>'
-        f'<span class="ic3">{b}</span><span class="ic4 warn">{s}</span></div>'
-        for i, (on, n, a, b, s) in enumerate(IMPORT_ROWS))
-    body = (f'<div class="impsw">{radio(True)}<b>Import my old settings</b>'
-            f'<span class="sp"></span>{radio(False)}Set up from scratch</div>'
-            + '<div class="frow" style="margin:10px 0 0">' + segmented(["Conflicts 5", "All 214"], "Conflicts 5")
-            + field("Search settings", 200, placeholder=True, icon="search")
-            + '<span class="cnt">213 of 214 chosen</span></div>'
-            + '<div class="itable"><div class="ihead"><span style="width:16px"></span><span class="ic1">Setting</span>'
-              '<span class="ic2">Legacy</span><span class="ic3">Now</span><span class="ic4">Status</span></div>'
-            + rows + '</div>'
-            + '<div class="frow" style="margin-top:8px"><span class="gsn" style="margin:0">Choose:</span>'
-            + btn("Proposed choice", small=True) + btn("All conflicts", small=True) + btn("None", small=True) + '</div>'
-            + '<div class="gsn">The next pages start from the chosen values: the theme on Look, the dictionary on Editing. '
-              'A change there wins over the imported value.</div>'
-            + where("Later: File › Import legacy settings…"))
-    return gs_window("Import", body)
-
-
-def p_look(key):
-    cards = "".join(theme_card(k, k == key) for k in THEMES)
-    body = (head("Look", "This window changes as you choose.")
-            + f'<div class="gsl">Theme</div><div class="tcs">{cards}</div>'
-            + f'<div style="margin-top:8px">{checkbox("Follow the system: Light or Dark as the system sets it", False)}</div>'
-            + '<div class="gsl" style="margin-top:14px">Title bar</div><div class="tbs">'
-            + f'<div class="tbc on">{mini_titlebar(True)}<div class="tcn">{radio(True)}HikariSub’s'
-              '<span class="badge">Suits this desktop</span></div><div class="lcd">Menus and the layout switcher '
-              'share the title bar.</div></div>'
-            + f'<div class="tbc">{mini_titlebar(False)}<div class="tcn">{radio(False)}The system’s</div>'
-              '<div class="lcd">The desktop draws the title bar above the menus.</div></div></div>'
-            + where("Later: Settings › Appearance › Theme, and › Window › Use system title bar"))
-    return gs_window("Look", body)
-
-
-def p_layout():
-    cards = (layout_card("Translate", "The original text above your translation. Turns Translation mode on for "
-                                      "the files you open in it.")
-             + layout_card("Time", "Audio across the top for timing Lines by ear.")
-             + layout_card("Typeset", "A large video with the visual tools and the Styles panel.")
-             + layout_card("Karaoke", "The Template editor beside the video and the audio in Karaoke mode."))
-    body = (head("What do you mostly do?", "Pick one to set the layout your first tab opens with. Each tab can "
-                                            "switch layouts at any time.")
-            + f'<div class="lcs">{cards}</div>'
-            + '<div class="gsn">Not sure? Leave all four unpicked to keep the Editing layout, which has a bit of '
-              'everything: video, audio, the Line editor and the Grid.</div>'
-            + where("Later: View › Layout, or the layout switcher in the title bar"))
-    return gs_window("What you do", body)
-
-
-def frame_sample(renderer):
-    return (f'<div class="frame"><div class="fsub">{"I said I’d be there by nine." }</div>'
-            f'<span class="fcap">{renderer} · sample frame</span></div>')
-
-
-def p_video_audio(linux=True):
-    if linux:
-        rend = (f'<div class="frow">{field("libass", 260)}<span class="gsn" style="margin:0">The only subtitle '
-                'renderer on Linux.</span></div>')
-    else:
-        rend = (f'<div class="frow">{combo("libass", 260)}</div>'
-                '<div class="gsn" style="margin-top:2px">Also offered: xy-VSFilter, and VSFilterMod (slow; only for '
-                'VSFilterMod tags).</div>')
-    meter = '<span class="meter"><span style="width:62%"></span></span>'
-    body = (head("Video and audio", "How subtitles are drawn on the video, and where the sound goes.")
-            + f'<div class="va"><div class="vacol"><div class="gsl">Subtitle renderer</div>{rend}'
-            + frame_sample("libass") + '</div></div>'
-            + '<div class="gsl" style="margin-top:14px">Audio output</div>'
-            + f'<div class="frow">{combo("System default (Built-in Audio Analog Stereo)", 360)}'
-            + f'<span class="b sm lead0">{ic("audio-play", 14)}&nbsp;Play a test sound</span>{meter}</div>'
-            + where("Later: Settings › Video › Subtitles on video, and Settings › Audio › Output"))
-    return gs_window("Video and audio", body, wh="")
-
-
-def sample_line(grammar_on, spelling_on=True):
-    teh = '<span class="sp1">teh</span>' if spelling_on else "teh"
-    has = '<span class="gr1">has</span>' if grammar_on else "has"
-    return (f'<div class="editor sl"><span style="white-space:pre">She {has} seen {teh} last episode already.</span></div>')
-
-
-def p_editing():
-    gram = segmented(["Off", "English (US)", "(UK)", "(Canada)", "(Australia)"], "English (US)", small=True)
-    body = (head("Editing", "Backups while you work, and the checks on the Line editor’s text.")
-            + '<div class="gsl">Backups</div>'
-            + f'<div class="frow">Save a backup after every {field("1", 56)} edits</div>'
-            + f'<div class="frow">Keep the last {field("3", 56)} backups of each file</div>'
-            + '<div class="gsn" style="margin-top:0">0 edits turns backups while editing off. Backups go to '
-              '<span class="mono">autosave/</span> in your user folder.</div>'
-            + '<div class="gsl" style="margin-top:12px">Spelling and grammar</div>'
-            + f'<div class="frow">{checkbox("Check spelling", True)}<span class="sp"></span>Dictionary '
-            + combo("English (United States)", 220) + '</div>'
-            + f'<div class="frow"><span style="width:110px">Grammar check</span>{gram}</div>'
-            + '<div class="gsn" style="margin-top:0">Off by default. Grammar is checked by Harper on this computer; '
-              'nothing is sent anywhere.</div>'
-            + '<div class="gsl2">Example</div>' + sample_line(True)
-            + '<div class="legend"><span class="sw sp1">teh</span> spelling<span class="sw gr1">has</span> grammar</div>'
-            + where("Later: Settings › General › Saving, and Settings › Spelling &amp; grammar"))
-    return gs_window("Editing", body)
-
-
-def p_updates():
-    body = (head("Updates", "Which versions HikariSub offers you, and whether it looks for them by itself.")
-            + choice_card("Stable versions only", "Tested releases.", True, badge="Recommended")
-            + choice_card("Pre-releases too", "Beta versions as well, to try what’s coming. They can have bugs.",
-                          False)
-            + f'<div style="margin-top:12px">{checkbox("Check for updates automatically", False)}</div>'
-            + '<div class="gsn" style="margin:2px 0 0 24px">At most once a day, when HikariSub starts. It asks GitHub '
-              'for the latest version; What’s new on the Home page needs it too.</div>'
-            + where("Later: Settings › Updates › Checking"))
-    return gs_window("Updates", body)
-
-
 TREE_ROWS = [("hikari.ini", "your settings"), ("automation/", "your scripts and DependencyControl’s modules"),
              ("dictionaries/", "spelling dictionaries and your own words"), ("catalogs/", "font and style catalogs"),
              ("presets/", "karaoke templates, layouts and dialog presets"),
              ("autosave/  recovery/  log/", "backups and logs")]
-
-
-def p_files():
-    rows = "".join(f'<div class="tr"><span class="mono">{a}</span><span class="lmeta">{b}</span></div>'
-                   for a, b in TREE_ROWS)
-    body = (head("Your files", "Everything of yours that HikariSub keeps is in one folder. Copy it to move your "
-                                "setup to another computer.")
-            + f'<div class="frow">{field("~/.config/hikarisub", 360, mono=True, icon="folder-open")}'
-            + btn("Open folder", lead=False) + '</div>'
-            + f'<div class="tree">{rows}</div>'
-            + '<div class="gsn">Caches (video index files, audio cache) are kept apart in '
-              '<span class="mono">~/.cache/hikarisub</span>. Uninstalling HikariSub leaves this folder alone.</div>'
-            + where("Later: Settings › General › User folder, and Help › Open user folder"))
-    return gs_window("Your files", body, last=True)
 
 
 # Entry points ---------------------------------------------------------------------------------
@@ -682,133 +453,348 @@ def skip_toast():
                  "Help › Getting started opens the setup again.", "")
 
 
-# Sheets ---------------------------------------------------------------------------------------
+
+# Version 2 (owner, 2026-10-27): closer to MuseScore 4's first-launch setup (FirstLaunchSetupDialog.qml, v4.7.5):
+# a compact window, page dots on top, a centred title and explanation, centred content, Back on the left and
+# Next/Finish on the right; the Look page is MuseScore's ThemesPage with HikariSub's seven accent presets.
+
+ACCENTS = {  # src/ui/theme.cpp kLightAccents / kDarkAccents: key, name, accent, onAccent, selected
+    False: [("red", "Red", "#B3261E", "#FFFFFF", "#EBD7D6"), ("orange", "Orange", "#9C4600", "#FFFFFF", "#EBDFD6"),
+            ("gold", "Gold", "#7A5E00", "#FFFFFF", "#EBE6D6"), ("green", "Green", "#145C4C", "#FFFFFF", "#D6EBE4"),
+            ("blue", "Blue", "#1D5BA8", "#FFFFFF", "#D6DFEB"), ("purple", "Purple", "#5B3FB0", "#FFFFFF", "#DBD6EB"),
+            ("pink", "Pink", "#9E2A73", "#FFFFFF", "#EBD6E3")],
+    True: [("red", "Red", "#F4A9A3", "#2C1210", "#4C3230"), ("orange", "Orange", "#F5BB8A", "#2C1D10", "#4C3D30"),
+           ("gold", "Gold", "#E3CF7E", "#2C2610", "#4C4630"), ("green", "Green", "#9CDBC9", "#102C24", "#304C47"),
+           ("blue", "Blue", "#A6C8F2", "#101D2C", "#303D4C"), ("purple", "Purple", "#C6B5F4", "#18102C", "#38304C"),
+           ("pink", "Pink", "#EFAAD3", "#2C1021", "#4C3041")],
+}
+NPAGES = 8
+
+
+def with_accent(key, acc):
+    t = dict(THEMES[key])
+    for a in ACCENTS[key == "dark"]:
+        if a[0] == acc:
+            t.update(accent=a[2], onaccent=a[3], select=a[4])
+    return t
+
+
+def dots(i, n=NPAGES):
+    return ('<div class="dots">' + "".join(
+        f'<span class="dot{" on" if j == i else ""}"></span>' for j in range(n)) + '</div>')
+
+
+def where(text):
+    return f'<div class="where">{ic("settings", 14)}<span>{text}</span></div>'
+
+
+def gs_window(i, title, intro, content, wh, last=False, extra=""):
+    foot = ((btn("Back") if i > 0 else "") + '<span class="sp" style="flex:1"></span>' + btn("Skip setup")
+            + extra + btn("Finish" if last else "Next", primary=True, focus=True))
+    return (f'<div class="dlg gs" style="width:760px">{titlebar("Getting started")}'
+            f'<div class="gsbody">{dots(i)}<div class="gsh">{title}</div><div class="gsi">{intro}</div>'
+            f'<div class="gsc">{content}</div>{where(wh)}</div><div class="dfoot gsfoot">{foot}</div></div>')
+
+
+def option(icon, title, text, on, badge="", width=300):
+    b = f'<span class="badge">{badge}</span>' if badge else ""
+    return (f'<div class="opt{" on" if on else ""}" style="width:{width}px">{ic(icon, 32, "oic")}'
+            f'<div class="optn">{radio(on)}{title}</div>{b}<div class="optd">{text}</div></div>')
+
+
+def sample(t, on):
+    return (f'<div class="smp{" on" if on else ""}">{mini_main(t, 220, 136)}<div class="smpn">{radio(on)}'
+            f'{t["name"]}</div></div>')
+
+
+def accent_row(key, chosen):
+    dark = key == "dark"
+    circles = "".join(f'<span class="accc{" on" if k == chosen else ""}" style="background:{a}" title="{n}"></span>'
+                      for k, n, a, _, _ in ACCENTS[dark])
+    name = next(n for k, n, *_ in ACCENTS[dark] if k == chosen)
+    return f'<div class="accs"><span class="accl">Accent colour</span>{circles}<span class="accn">{name}</span></div>'
+
+
+def layout_card(kind, text, on=False):
+    return (f'<div class="lc{" on" if on else ""}">{layout_thumb(kind)}<div class="lcn">{radio(on)}{kind}</div>'
+            f'<div class="lcd">{text}</div></div>')
 
 
 def item(content, cap, width):
     return f'<div class="col" style="width:{width}px">{content}<div class="cap">{cap}</div></div>'
 
 
+
+# Pages ----------------------------------------------------------------------------------------
+
+
+def p_language():
+    rows = "".join(
+        f'<div class="lrow{" cur" if i == 0 else ""}">{radio(i == 0)}<span class="lnat {cls}">{nat}</span>'
+        f'<span class="lmeta">{eng}</span></div>' for i, (nat, eng, cls) in enumerate(LANGS))
+    return gs_window(0, "Welcome to HikariSub",
+                     "Let’s get started by choosing your language. Nothing is saved until Finish, and every choice "
+                     "can be changed later.",
+                     f'<div class="llist pl" style="width:340px">{rows}</div>'
+                     '<div class="gsn">Chosen from the system language. This window switches to the one you pick.</div>',
+                     "Later: Settings › General › Language")
+
+
+def p_import_choice():
+    return gs_window(1, "Bring over your old settings?",
+                     "HikariSub 0.0.2 is installed on this computer. Nothing in it is changed.",
+                     '<div class="opts">'
+                     + option("import", "Import my old settings", "Theme, hotkeys, fonts, audio and video options and "
+                              "your dictionary words. You review them on this page, and the next pages start from "
+                              "them.", True, "Recommended")
+                     + option("settings", "Set up from scratch", "Start from HikariSub’s defaults. File › Import "
+                              "legacy settings… can still bring them over later.", False)
+                     + '</div><div class="ccx">' + ic("folder-open", 14)
+                     + '<span class="mono">~/.local/share/HikariSub/Legacy</span>'
+                       '<span class="lnk2">Choose another…</span></div>',
+                     "Later: File › Import legacy settings…")
+
+
+def p_import_review():
+    rows = "".join(
+        f'<div class="irow{" cur" if i == 0 else ""}">{box(on)}<span class="ic1">{n}</span><span class="ic2">{a}</span>'
+        f'<span class="ic3">{b}</span><span class="ic4 warn">{s}</span></div>'
+        for i, (on, n, a, b, s) in enumerate(IMPORT_ROWS))
+    content = ('<div class="frow wide">' + segmented(["Import my old settings", "Set up from scratch"],
+                                                     "Import my old settings", small=True)
+               + '<span class="cnt">213 of 214 chosen</span></div>'
+               + '<div class="frow wide">' + segmented(["Conflicts 5", "All 214"], "Conflicts 5", small=True)
+               + field("Search settings", 200, placeholder=True, icon="search")
+               + '<span class="sp" style="flex:1"></span>' + btn("Proposed choice", small=True)
+               + btn("All conflicts", small=True) + btn("None", small=True) + '</div>'
+               + '<div class="itable"><div class="ihead"><span style="width:16px"></span><span class="ic1">Setting</span>'
+                 '<span class="ic2">Legacy</span><span class="ic3">Now</span><span class="ic4">Status</span></div>'
+               + rows + '</div>')
+    return gs_window(1, "Choose what to bring over",
+                     "The next pages start from these values; a change there wins over the imported one.",
+                     content, "Later: File › Import legacy settings…")
+
+
+def p_look(key, acc="green"):
+    hc = key in HC
+    t = THEMES[key] if hc else with_accent(key, acc)
+    pair = ("hcwhite", "hcblack") if hc else ("light", "dark")
+    samples = "".join(sample(THEMES[k] if k in HC else with_accent(k, acc), k == key) for k in pair)
+    mid = (f'<div class="gsn" style="margin:0;height:28px;display:flex;align-items:center">Further high contrast '
+           'settings are in Settings › Appearance.</div>' if hc else accent_row(key, acc))
+    content = (f'<div class="look">{checkbox("Follow system theme", False)}<div class="smps">{samples}</div>{mid}'
+               f'{checkbox("Enable high contrast", hc)}'
+               '<div class="tbrow"><span class="accl">Title bar</span>'
+               + segmented(["HikariSub’s", "The system’s"], "HikariSub’s", small=True)
+               + '<span class="accn">Suits this desktop</span></div></div>')
+    return gs_window(2, "Look", "Choose a theme. This window changes as you choose.", content,
+                     "Later: Settings › Appearance")
+
+
+def p_layout():
+    cards = (layout_card("Translate", "The original text above your translation, with Translation mode on.")
+             + layout_card("Time", "Audio across the top for timing Lines by ear.")
+             + layout_card("Typeset", "A large video with the visual tools and the Styles panel.")
+             + layout_card("Karaoke", "The Template editor beside the video, the audio in Karaoke mode."))
+    return gs_window(3, "What do you mostly do?",
+                     "Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit "
+                     "of everything.", f'<div class="lcs">{cards}</div>',
+                     "Later: View › Layout, or the layout switcher in the title bar")
+
+
+def p_video_audio(linux=True):
+    rend = (field("libass", 240) + '<span class="accn">The only renderer on Linux.</span>' if linux
+            else combo("libass", 240) + '<span class="accn">or xy-VSFilter, VSFilterMod</span>')
+    content = (f'<div class="fcol"><div class="frow"><span class="fl">Subtitles drawn by</span>{rend}</div>'
+               '<div class="frame"><div class="fsub">I said I’d be there by nine.</div>'
+               '<span class="fcap">libass · sample frame</span></div>'
+               f'<div class="frow" style="margin-top:16px"><span class="fl">Sound plays on</span>'
+               + combo("System default (Built-in Audio Analog Stereo)" if linux else "System default (Speakers)", 330)
+               + f'<span class="b sm">{ic("audio-play", 14)}&nbsp;Test sound</span>'
+                 '<span class="meter"><span style="width:62%"></span></span></div></div>')
+    return gs_window(4, "Video and audio", "How subtitles are drawn on the video, and where the sound goes.",
+                     content, "Later: Settings › Video and Settings › Audio")
+
+
+def sample_line():
+    return ('<div class="editor sl"><span style="white-space:pre">She <span class="gr1">has</span> seen '
+            '<span class="sp1">teh</span> last episode already.</span></div>')
+
+
+def p_editing():
+    gram = segmented(["Off", "English (US)", "(UK)", "(Canada)", "(Australia)"], "English (US)", small=True)
+    content = ('<div class="fcol">'
+               f'<div class="frow"><span class="fl">Backups</span>after every {field("1", 48)} edits, keep '
+               f'{field("3", 48)} per file</div>'
+               f'<div class="frow"><span class="fl">Spelling</span>{checkbox("Check spelling", True)}'
+               + combo("English (United States)", 220) + '</div>'
+               f'<div class="frow"><span class="fl">Grammar</span>{gram}</div>'
+               '<div class="gsn" style="margin:0 0 0 132px">Off by default. Harper checks grammar on this computer.</div>'
+               '<div class="gsl2">Example</div>' + sample_line()
+               + '<div class="legend"><span class="sw sp1">teh</span> spelling<span class="sw gr1">has</span> grammar'
+                 '</div></div>')
+    return gs_window(5, "Editing", "Backups while you work, and the checks on the Line editor’s text.", content,
+                     "Later: Settings › General › Saving and Settings › Spelling &amp; grammar")
+
+
+def p_updates():
+    content = ('<div class="opts">'
+               + option("check-updates", "Stable versions only", "Tested releases.", True, "Recommended", 260)
+               + option("whats-new", "Pre-releases too", "Beta versions as well, to try what’s coming. They can have "
+                        "bugs.", False, width=260)
+               + f'</div><div style="margin-top:18px">{checkbox("Check for updates automatically", False)}</div>'
+               '<div class="gsn" style="text-align:center">At most once a day, when HikariSub starts. What’s new on '
+               'Home needs it too.</div>')
+    return gs_window(6, "Updates", "Which versions HikariSub offers you, and whether it looks for them by itself.",
+                     content, "Later: Settings › Updates")
+
+
+def p_files():
+    rows = "".join(f'<div class="tr"><span class="mono">{a}</span><span class="lmeta">{b}</span></div>'
+                   for a, b in TREE_ROWS)
+    content = (f'<div class="fcol"><div class="frow">{field("~/.config/hikarisub", 420, mono=True, icon="folder-open")}'
+               + btn("Open folder") + f'</div><div class="tree">{rows}</div>'
+               '<div class="gsn">Caches stay apart in <span class="mono">~/.cache/hikarisub</span>. Uninstalling '
+               'leaves this folder alone.</div></div>')
+    return gs_window(7, "Your files", "Everything of yours is in one folder. Copy it to move your setup to another "
+                                      "computer.", content,
+                     "Later: Settings › General › User folder, and Help › Open user folder", last=True)
+
+
+# Sheets ---------------------------------------------------------------------------------------
+
+
+def alt_css(key, acc):
+    """The whole sheet CSS again with another accent, scoped to .alt: the Look page with that accent picked."""
+    t = with_accent(key, acc)
+    css = (CSS % dict(t, page=t["bg"], body="", shadow=".55" if key in DARKISH else ".28", focus=t["accent"],
+                      tbline="") + fr1_css(key, t))
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    out = []
+    for rule in css.split("}"):
+        if "{" not in rule:
+            continue
+        sel, body = rule.split("{", 1)
+        sel = ",".join(".alt " + s.strip() for s in sel.split(",") if s.strip())
+        out.append(f"{sel}{{{body}}}")
+    return "\n".join(out)
+
+
+ALT = {"light": "blue", "dark": "purple"}
+
+
 def sheet_a(key):
     t = THEMES[key]
-    return (f'<h1>FR1 Getting started: {t["name"]} (1 of 2)</h1>'
-            '<p class="note">A DG1 window with the steps on the left and Skip setup / Back / Next. Every choice applies '
-            'at Finish; Skip setup, the window’s Close and Esc keep the defaults, import nothing, and the window does '
-            'not open by itself again. This sheet is the legacy-upgrade run (8 steps); a fresh install has no Import '
-            'step (7 steps).</p>'
-            '<div class="row">'
-            + item(p_language(), "1. Language. The list is the shipped translations by their own names; the system "
-                                 "language is chosen at first.", 920)
-            + item(p_import_choice(), "2. Import, shown only when legacy is installed. Import my old settings is "
-                                      "chosen at first.", 920)
-            + item(p_import_review(), "2. Import chosen: the import wizard’s review table (its Conflicts / All filter, "
-                                      "search and choices) on the page. Nothing is written before Finish.", 920)
-            + item(p_look(key), "3. Look. The four themes as small main windows; choosing one restyles this window "
-                                "at once. The title bar choice the desktop suits is chosen at first.", 920)
-            + item(p_layout(), "4. What you do. Each thumbnail is that layout’s arrangement (TP1’s Typesetting, "
-                               "KP1’s Karaoke).", 920)
+    second = (item(f'<div class="alt">{p_look(key, ALT[key])}</div>',
+                   f"3. Look with {ALT[key].capitalize()} picked: the window takes the accent at once. Enable high "
+                   "contrast swaps the two samples for High contrast white and black.", 760)
+              if key in ALT else
+              item(p_look("hcwhite" if key == "hcblack" else "light"),
+                   "3. Look, Light picked: Enable high contrast unticked brings back Light, Dark and the accents.",
+                   760))
+    return (f'<h1>FR1 Getting started, version 2: {t["name"]} (1 of 2)</h1>'
+            '<p class="note">Closer to MuseScore 4’s first-launch setup: a compact window, page dots on top, a centred '
+            'title and explanation, Back on the left, Next and Finish on the right. Every choice applies at Finish; '
+            'Skip setup, Close and Esc keep the defaults and import nothing. The legacy-upgrade run has 8 pages, a '
+            'fresh install 7 (no Import).</p><div class="row">'
+            + item(p_language(), "1. Language: the shipped translations by their own names.", 760)
+            + item(p_import_choice(), "2. Import (only when legacy is installed).", 760)
+            + item(p_import_review(), "2. Import chosen: the import wizard’s review table on the page.", 760)
+            + item(p_look(key, "green" if key in ALT else "green"),
+                   "3. Look, as MuseScore’s theme page: Follow system theme, two theme samples, the seven accent "
+                   "colours (Settings › Appearance’s presets; hover names them), Enable high contrast, and the title "
+                   "bar." if key not in HC else
+                   "3. Look with Enable high contrast ticked: the samples are the two high contrast themes and the "
+                   "accents give way to a pointer to Settings.", 760)
+            + second
+            + item(p_layout(), "4. What you do: each thumbnail is that layout’s arrangement.", 760)
             + '</div>')
 
 
 def sheet_b(key):
     t = THEMES[key]
-    return (f'<h1>FR1 Getting started: {t["name"]} (2 of 2)</h1>'
-            '<p class="note">Pages 5–8, then the ways in: Help › Getting started, the What’s new line for people who '
-            'already use HikariSub, and the notice after Skip setup.</p>'
-            '<div class="row">'
-            + item(p_video_audio(), "5. Video and audio on Linux: libass is the only renderer. The sample frame is "
-                                    "drawn by the chosen renderer; Play a test sound plays through the chosen device "
-                                    "and the meter moves with it.", 920)
-            + item(p_video_audio(linux=False).replace("Built-in Audio Analog Stereo", "Speakers (Realtek Audio)"),
-                   "5. On Windows the renderer is a choice; the sample frame redraws with it.", 920)
-            + item(p_editing(), "6. Editing. The example Line updates as you change the choices: spelling in the Line "
-                                "editor’s spelling colour, grammar as GR1’s wavy underline (GR1’s mockup sets its "
-                                "colour). Shown with English (US) picked; Off is the default.", 920)
-            + item(p_updates(), "7. Updates.", 920)
-            + item(p_files(), "8. Your files (UD1’s folder). Finish replaces Next.", 920)
+    return (f'<h1>FR1 Getting started, version 2: {t["name"]} (2 of 2)</h1>'
+            '<p class="note">Pages 5–8, then the ways in.</p><div class="row">'
+            + item(p_video_audio(), "5. Video and audio on Linux. The sample frame is drawn by the renderer; Test "
+                                    "sound plays on the chosen device.", 760)
+            + item(p_video_audio(False), "5. On Windows the renderer is a choice and the frame redraws with it.", 760)
+            + item(p_editing(), "6. Editing. The example Line follows the choices (shown with English (US) grammar; "
+                                "Off is the default). GR1’s mockup sets the underline colour.", 760)
+            + item(p_updates(), "7. Updates.", 760)
+            + item(p_files(), "8. Your files (UD1’s folder). Finish replaces Next.", 760)
+            + '<div class="col" style="width:760px"></div>'
             + '</div><h2>Ways in</h2><div class="row" style="align-items:flex-start">'
-            + item(help_menu(), "Help › Getting started, first in the menu (a command: hotkey id 5176).", 300)
+            + item(help_menu(), "Help › Getting started (a command: hotkey id 5176).", 300)
             + item(whats_new_card(), "What’s new for existing users points to it.", 420)
             + item(f'<div style="width:360px">{skip_toast()}</div>', "After Skip setup, Close or Esc.", 360)
             + '</div>')
 
 
 FR1_CSS = """
-.gs .gsbody{display:flex;height:560px;box-shadow:inset 0 -1px %(line)s}
-.steps{width:196px;flex:none;background:%(raised)s;box-shadow:inset -1px 0 %(line)s;padding:10px 0}
-.stof{color:%(muted)s;font-size:12px;padding:2px 16px 8px}
-.st{display:flex;align-items:center;gap:10px;height:32px;padding:0 12px 0 16px;color:%(muted)s}
-.st .ic{color:%(muted)s}
-.st.done{color:%(text)s}
-.st.cur{background:%(select)s;color:%(text)s;font-weight:650;box-shadow:inset 3px 0 %(accent)s}
-.st.cur .ic{color:%(text)s}
-.stn{flex:1}
-.st .stchk{color:%(accent)s}
-.gspage{flex:1;min-width:0;padding:20px 28px 16px;display:flex;flex-direction:column;position:relative}
-.gsh{font-size:17px;font-weight:650;margin-bottom:6px}
-.gsi{color:%(muted)s;line-height:1.45;margin-bottom:14px;max-width:620px}
-.gsl{font-weight:650;margin:2px 0 8px}
-.gsl2{color:%(muted)s;font-size:12px;margin:12px 0 4px}
+.gs .gsbody{position:relative;display:flex;flex-direction:column;align-items:center;height:500px;padding:18px 28px 0;
+            box-shadow:inset 0 -1px %(line)s}
+.dots{display:flex;gap:8px;margin-bottom:18px}
+.dot{width:8px;height:8px;border-radius:50%%;background:%(disabled)s;opacity:.6}
+.dot.on{background:%(accent)s}
+.gsh{font-size:16px;font-weight:650;margin-bottom:6px;text-align:center}
+.gsi{color:%(muted)s;line-height:1.45;text-align:center;max-width:600px}
+.gsc{width:100%%;display:flex;flex-direction:column;align-items:center;margin-top:22px}
 .gsn{color:%(muted)s;font-size:12px;line-height:1.45;margin:10px 0 0;max-width:640px}
-.where{position:absolute;left:28px;right:28px;bottom:14px;display:flex;align-items:center;gap:6px;color:%(muted)s;
-       font-size:12px;padding-top:10px;box-shadow:inset 0 1px %(line)s}
-.gsfoot{padding:16px 24px}
+.gsl2{color:%(muted)s;font-size:12px;margin:14px 0 4px}
+.where{position:absolute;left:0;right:0;bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;
+       color:%(muted)s;font-size:12px}
+.gsfoot{padding:16px 20px}
 .mono{font-family:'Liberation Mono',Consolas,monospace;font-size:12px}
 .sp{width:16px;flex:none}
 .rad{width:16px;height:16px;border-radius:50%%;border:1px solid %(control)s;background:%(field)s;flex:none;position:relative}
 .rad.on{border-color:%(accent)s}
 .rad.on::after{content:"";position:absolute;inset:3px;border-radius:50%%;background:%(accent)s}
 .lrow .rad{margin-right:2px}
-.lnat{width:120px}
+.lnat{width:130px}
 .lnat.ko{font-family:'Noto Sans CJK KR','Noto Sans CJK JP',sans-serif}
 .lnat.ta{font-family:'Noto Sans Tamil',sans-serif}
 .lnat.th{font-family:'IBM Plex Sans Thai Looped','Kanit',sans-serif}
 .lrow .lmeta{margin-left:0}
-.cc{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin-bottom:8px;outline:1px solid %(line)s;
-    background:%(field)s;max-width:640px}
-.cc.on{outline:2px solid %(accent)s;background:%(select)s}
-.cc .rad{margin-top:1px}
-.cct{display:flex;flex-direction:column;gap:4px;min-width:0}
-.cctt{font-weight:650;display:flex;align-items:center;gap:8px}
-.ccd{color:%(muted)s;line-height:1.45}
-.cc.on .ccd{color:%(text)s}
-.ccx{display:flex;align-items:center;gap:6px;margin-top:4px;color:%(muted)s}
+.badge{font-size:11px;font-weight:600;padding:1px 6px;border-radius:1px;outline:1px solid %(accent)s;color:%(accent)s}
+.opts{display:flex;gap:16px;justify-content:center}
+.opt{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 16px;outline:1px solid %(line)s;
+     background:%(field)s;text-align:center}
+.opt.on{outline:2px solid %(accent)s;background:%(select)s}
+.oic{color:%(text)s}
+.optn{display:flex;align-items:center;gap:8px;font-weight:650}
+.optd{color:%(muted)s;line-height:1.45;font-size:12px}
+.opt.on .optd{color:%(text)s}
+.ccx{display:flex;align-items:center;gap:6px;margin-top:14px;color:%(muted)s}
 .ccx .lnk2{margin-left:10px}
-.badge{font-size:11px;font-weight:600;padding:1px 6px;border-radius:1px;outline:1px solid %(accent)s;color:%(accent)s;
-       margin-left:6px}
-.impsw{display:flex;align-items:center;gap:8px;padding:10px 12px;background:%(select)s;outline:1px solid %(line)s}
-.impsw b{font-weight:650}
+.frow.wide{width:100%%;margin:0 0 8px}
 .cnt{color:%(muted)s;margin-left:auto}
-.itable{margin-top:8px;outline:1px solid %(line)s;background:%(field)s}
+.itable{width:100%%;outline:1px solid %(line)s;background:%(field)s}
 .ihead,.irow{display:flex;align-items:center;gap:10px;height:28px;padding:0 10px}
 .ihead{color:%(muted)s;font-size:12px;background:%(raised)s;box-shadow:inset 0 -1px %(line)s}
 .irow+.irow{box-shadow:inset 0 1px %(line)s}
 .irow.cur{background:%(select)s}
 .ic1{flex:1;min-width:0}
-.ic2{width:120px;color:%(text)s}
+.ic2{width:120px}
 .ic3{width:130px;color:%(muted)s}
 .ic4{width:64px}
-.tcs{display:flex;gap:10px}
-.tc,.tbc,.lc{padding:8px;outline:1px solid %(line)s;background:%(field)s;display:flex;flex-direction:column;gap:6px}
-.tc.on,.tbc.on,.lc.on{outline:2px solid %(accent)s;background:%(select)s}
-.tc{width:158px}
-.tc .tcn{font-size:12px;white-space:nowrap}
-.tcn,.lcn{display:flex;align-items:center;gap:8px;font-weight:600}
-.mm{display:flex;flex-direction:column;gap:0;overflow:hidden}
-.tbs{display:flex;gap:10px}
-.tbc{width:300px}
+.look{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:-6px}
+.smps{display:flex;gap:48px}
+.smp{display:flex;flex-direction:column;align-items:center;gap:8px}
+.smp .mm{outline-offset:0}
+.smp.on .mm{outline:2px solid %(accent)s !important;outline-offset:2px}
+.smpn{display:flex;align-items:center;gap:8px;font-weight:600}
+.mm{display:flex;flex-direction:column;overflow:hidden}
+.accs,.tbrow{display:flex;align-items:center;gap:4px;height:28px}
+.accl{color:%(text)s;margin-right:10px}
+.accn{color:%(muted)s;font-size:12px;margin-left:10px}
+.accc{width:20px;height:20px;border-radius:50%%;margin:0 2px}
+.accc.on{outline:2px solid %(text)s;outline-offset:2px}
+.tbrow{margin-top:2px}
+.lcs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%%}
+.lc{padding:8px;outline:1px solid %(line)s;background:%(field)s;display:flex;flex-direction:column;gap:6px;min-width:0}
+.lc .lcd{min-height:48px}
+.lcn{display:flex;align-items:center;gap:8px;font-weight:600}
 .lcd{color:%(muted)s;font-size:12px;line-height:1.4}
-.tbc.on .lcd,.lc.on .lcd{color:%(text)s}
-.mtbx{height:74px;outline:1px solid %(line)s;background:%(bg)s;display:flex;flex-direction:column}
-.mtb{display:flex;align-items:center;gap:8px;height:24px;padding:0 0 0 8px;background:%(panel)s;font-size:11px;
-     box-shadow:inset 0 -1px %(line)s}
-.msw{outline:1px solid %(line)s;padding:1px 6px;font-size:10px}
-.mwb{display:flex;gap:10px;margin-left:auto;padding-right:8px;align-items:center}
-.msys{display:flex;align-items:center;height:20px;padding:0 8px;background:%(sysbar)s;color:%(systext)s;font-size:11px}
-.msys .mwb{font-size:8px;letter-spacing:1px}
-.mtbbody{flex:1}
-.lcs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.lc{min-width:0}
 .lt{height:104px;background:%(bg)s;outline:1px solid %(line)s;padding:2px;display:flex}
 .lcol{display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0}
 .lrowb{display:flex;gap:2px;min-width:0;min-height:0}
@@ -816,23 +802,22 @@ FR1_CSS = """
     min-width:0;min-height:0;font-size:10px;color:%(muted)s;text-align:center;overflow:hidden}
 .lb.vid{background:%(vid)s;color:#C8CED4}
 .lb.aud{background:%(field)s;color:%(accent)s}
-.lc .lcd{min-height:48px}
-.va{display:flex;gap:20px}
-.frame{position:relative;width:520px;height:150px;margin-top:8px;outline:1px solid %(line)s;
+.fcol{display:flex;flex-direction:column;align-items:flex-start;width:620px}
+.fl{width:124px;flex:none;color:%(text)s}
+.frame{position:relative;width:620px;height:150px;margin-top:6px;outline:1px solid %(line)s;
        background:linear-gradient(160deg,#41566B 0%%,#7A8C78 55%%,#C7A27A 100%%);display:flex;align-items:flex-end;justify-content:center}
 .fsub{font:600 22px 'Liberation Sans',Arial,sans-serif;color:#FFFFFF;margin-bottom:18px;
       text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 2px 0 #000,0 -2px 0 #000,2px 0 0 #000,-2px 0 0 #000,3px 4px 3px rgba(0,0,0,.6)}
 .fcap{position:absolute;right:6px;top:4px;font-size:10px;color:#fff;background:rgba(0,0,0,.45);padding:1px 5px}
-.lead0{gap:0}
-.meter{width:90px;height:6px;background:%(field)s;outline:1px solid %(line)s;display:flex}
+.meter{width:80px;height:6px;background:%(field)s;outline:1px solid %(line)s;display:flex}
 .meter span{background:%(accent)s}
-.sl{height:34px;font-size:14px}
+.editor.sl{height:34px;font-size:14px;width:100%%}
 .sp1{background:%(spell)s}
 .gr1{text-decoration:underline wavy %(grammar)s;text-decoration-thickness:1.5px;text-underline-offset:4px}
 .legend{display:flex;align-items:center;gap:8px;color:%(muted)s;font-size:12px;margin-top:6px}
 .legend .sw{color:%(text)s;padding:0 3px;margin-left:8px}
 .legend .sw:first-child{margin-left:0}
-.tree{margin-top:12px;outline:1px solid %(line)s;background:%(field)s;padding:4px 0}
+.tree{width:100%%;margin-top:10px;outline:1px solid %(line)s;background:%(field)s;padding:4px 0}
 .tr{display:flex;gap:16px;align-items:center;height:26px;padding:0 12px}
 .tr .mono{width:200px}
 .tr .lmeta{margin-left:0}
@@ -850,19 +835,17 @@ FR1_CSS = """
 .wn li{margin:2px 0}
 """
 
-SYSBAR = {"light": ("#DADFE3", "#202832"), "dark": ("#2B2F33", "#E8EDF2"), "hcwhite": ("#FFFFFF", "#000000"),
-          "hcblack": ("#000000", "#FFFFFF")}
+
+def fr1_css(key, t):
+    return FR1_CSS % dict(t, shadow=".55" if key in DARKISH else ".28", grammar=GRAMMAR[key], spell=SPELL[key],
+                          vid="#0B0E12" if key != "hcwhite" else "#1A1A1A")
 
 
 def fr1_main():
     for key in THEMES:
-        th = THEMES[key]
-        extra = FR1_CSS % dict(th, shadow=".55" if key in DARKISH else ".28", grammar=GRAMMAR[key], spell=SPELL[key],
-                               vid="#0B0E12" if key != "hcwhite" else "#1A1A1A", sysbar=SYSBAR[key][0],
-                               systext=SYSBAR[key][1])
+        extra = fr1_css(key, THEMES[key]) + (alt_css(key, ALT[key]) if key in ALT else "")
         for name, fn in (("pages", sheet_a), ("more", sheet_b)):
-            html = page(key, fn(key)).replace("</style>", extra + "</style>", 1)
-            html = html.replace("width:1328px", "width:1920px")
+            html = page(key, fn(key)).replace("</style>", extra + "</style>", 1).replace("width:1328px", "width:1596px")
             (OUT / f"fr1-{key}-{name}.html").write_text(html)
 
 
