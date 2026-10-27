@@ -46,6 +46,8 @@ DialogWindow {
     property bool legacy: false
     // Import my old settings (else Set up from scratch).
     property bool importing: true
+    // Why Finish could not stage the import (the importer's status).
+    property string importProblem
     // The layout the first tab opens with; empty keeps Editing.
     property string layout: ""
     property int page: 0
@@ -75,6 +77,7 @@ DialogWindow {
         outputDevices = r.outputDevices
         legacy = r.legacy === true
         importing = legacy
+        importProblem = ""
         layout = ""
         page = 0
         if (legacy) {
@@ -117,14 +120,21 @@ DialogWindow {
     function next() {
         if (pageId === "import")
             fillFromImport()
-        if (lastPage)
-            accept()
-        else
+        if (!lastPage) {
             page++
+            return
+        }
+        // The import could not be staged: nothing was written, and the
+        // Import page says why.
+        if (!app.finishGettingStarted(values, legacy && importing)) {
+            importProblem = importer.status
+            page = pages.indexOf("import")
+            return
+        }
+        accept()
     }
 
     onAccepted: {
-        app.finishGettingStarted(values, legacy && importing)
         Theme.endPreview()
         finished(layout)
     }
@@ -163,6 +173,7 @@ DialogWindow {
         checkable: false
         implicitWidth: 260
         implicitHeight: cardColumn.implicitHeight + 32
+        Layout.fillHeight: true // a row of cards is as tall as its tallest
         Accessible.role: Accessible.RadioButton
         Accessible.name: text
         Accessible.description: description
@@ -259,6 +270,7 @@ DialogWindow {
         property string description
         implicitWidth: 150
         implicitHeight: layoutColumn.implicitHeight + 16
+        padding: 8
         Accessible.role: Accessible.RadioButton
         Accessible.name: text
         Accessible.description: description
@@ -400,7 +412,7 @@ DialogWindow {
     ColumnLayout {
         spacing: 0
         Layout.preferredWidth: 704
-        Layout.preferredHeight: 470
+        Layout.preferredHeight: 520
 
         // The page dots.
         Row {
@@ -511,6 +523,7 @@ DialogWindow {
 
             // 2. Import (a legacy installation was found).
             SetupPage {
+                id: importPage
                 objectName: "gettingStartedImport"
                 title: setup.importing ? qsTr("Choose what to bring over") : qsTr("Bring over your old settings?")
                 explanation: setup.importing
@@ -518,6 +531,7 @@ DialogWindow {
                              : qsTr("HikariSub 0.0.x is installed on this computer. Nothing in it is changed.")
                 later: qsTr("Later: File › Import legacy settings…")
                 RowLayout {
+                    id: importChoices
                     spacing: 16
                     Layout.alignment: Qt.AlignHCenter
                     OptionCard {
@@ -540,6 +554,40 @@ DialogWindow {
                         Layout.preferredWidth: 300
                     }
                 }
+                RowLayout {
+                    id: importProblemRow
+                    visible: setup.importing && setup.importProblem.length > 0
+                    spacing: 8
+                    Layout.fillWidth: true
+                    Icon {
+                        iconRole: "notice-error"
+                        size: 14
+                        color: Theme.danger
+                        accentColor: Theme.danger
+                        Layout.alignment: Qt.AlignTop
+                        Layout.topMargin: 2
+                    }
+                    Label {
+                        objectName: "gettingStartedImportProblem"
+                        text: setup.importProblem
+                        color: Theme.danger
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                        Accessible.role: Accessible.AlertMessage
+                    }
+                    LinkButton {
+                        objectName: "gettingStartedReadAgain"
+                        iconRole: "refresh"
+                        text: qsTr("Read again")
+                        onClicked: {
+                            if (setup.importer.choose(setup.importer.root))
+                                setup.importProblem = ""
+                            else
+                                setup.importProblem = setup.importer.status
+                            review.reset()
+                        }
+                    }
+                }
                 SettingsImportReview {
                     id: review
                     objectName: "gettingStartedReview"
@@ -547,7 +595,9 @@ DialogWindow {
                     importer: setup.importer
                     window: setup
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 230
+                    // The rest of the page, so its buttons stay above the Later line.
+                    Layout.preferredHeight: Math.max(140, importPage.height - importChoices.height - 16
+                                                     - (setup.importProblem.length > 0 ? importProblemRow.height + 16 : 0))
                 }
             }
 

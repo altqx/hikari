@@ -5902,20 +5902,25 @@ void Application::endLanguagePreview()
     switchLanguage();
 }
 
-void Application::finishGettingStarted(const QVariantMap &values, bool import)
+bool Application::finishGettingStarted(const QVariantMap &values, bool import)
 {
-    // The stored language first: Finish's own switch (settingChanged)
-    // happens only when the language changes.
-    endLanguagePreview();
-    applySettings(values);
+    // The import first: when it cannot be staged (the legacy files changed,
+    // staging failed) nothing is written and the window stays open with the
+    // importer's status.
     if (import) {
         std::set<std::string, std::less<>> pages;
         for (const auto id : application::gettingStartedSettings())
             pages.emplace(id);
         pages.emplace("audio.outputDeviceName");
-        m_settingsImport->importChosenBut(pages);
+        if (!m_settingsImport->importChosenBut(pages))
+            return false;
     }
+    // The stored language first: Finish's own switch (settingChanged)
+    // happens only when the language changes.
+    endLanguagePreview();
+    applySettings(values);
     m_settings->set("workspace.gettingStarted", QStringLiteral("done"));
+    return true;
 }
 
 void Application::skipGettingStarted()
@@ -6019,8 +6024,14 @@ void Application::playTestSound(int device)
                                                                                                         : choice.name);
     m_audioPlayer->switchOutput();
     m_audioPlayer->playClip(std::move(tone));
-    // The next open is the route's again.
+    // The next open is the route's again: once the tone is over its stream
+    // closes (or what plays by then moves to the route), unless another Test
+    // sound came since.
     m_audioPlayer->setOutputDevice(m_noticedRoute.systemDefault ? std::string() : m_noticedRoute.name);
+    QTimer::singleShot(frames * 1000 / rate + 200, this, [this, test = ++m_testSounds] {
+        if (test == m_testSounds)
+            m_audioPlayer->switchOutput();
+    });
 }
 
 QString Application::userFolder() const

@@ -17106,6 +17106,87 @@ private slots:
         QVERIFY(!gettingStarted()->property("visible").toBool());
     }
 
+    // When Finish cannot stage the import (the legacy files changed since
+    // they were read) nothing is written, the window stays on the Import page
+    // with why, and Read again lets Finish go through.
+    void gettingStartedImportFailureKeepsTheWindowOpen()
+    {
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        const LegacyHere legacy(config + "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\n");
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        restartWithSpelling(home.path(), false, {}, true);
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        while (setupPage() != u"files")
+            setupNext();
+        QFile file(legacy.data.filePath(QStringLiteral("HikariSub/Legacy/Config/Config.txt")));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(config + "GRID_FONT=Verdana\r\nAUTOSAVE_MAX_FILES=10\r\n");
+        file.close();
+        setupNext(); // Finish
+        QVERIFY(gettingStarted()->property("visible").toBool());
+        QCOMPARE(setupPage(), QStringLiteral("import"));
+        QTRY_VERIFY(setupItem("gettingStartedImportProblem")->isVisible());
+        QCOMPARE(setupItem("gettingStartedImportProblem")->property("text").toString(), application->settingsImport().status());
+        auto *store = application->settingsStore();
+        QCOMPARE(store->text("workspace.gettingStarted"), QStringLiteral("due"));
+        QVERIFY(!store->isSet(QStringLiteral("autosave.maxFiles")));
+        QVERIFY(!application->settingsImport().pending());
+        QVERIFY(application->settingsImport().chosen().contains("setting:grid.font"));
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedReadAgain"), "click"));
+        QTRY_VERIFY(!setupItem("gettingStartedImportProblem")->isVisible());
+        while (setupPage() != u"files")
+            setupNext();
+        setupNext(); // Finish
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        QCOMPARE(store->text("workspace.gettingStarted"), QStringLiteral("done"));
+        QVERIFY(application->settingsImport().pending());
+        restartWithSpelling(home.path(), false, {}, true);
+        QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Verdana"));
+    }
+
+    // Every page in the four themes, written to HIKARI_SURFACE_SHOT_DIR when
+    // it is set (fr1-<n>-<page>-<theme>.png), with a legacy installation so
+    // the Import page shows.
+    void gettingStartedScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\nPROGRAM_THEME=Mine\r\n";
+        const LegacyHere legacy(config);
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        restartWithSpelling(home.path(), false);
+        auto *store = application->settingsStore();
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            store->setValue(QStringLiteral("appearance.followSystem"), false);
+            store->setValue(QStringLiteral("appearance.theme"), theme);
+            QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
+            QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+            auto *box = qobject_cast<QQuickWindow *>(gettingStarted());
+            QVERIFY(box);
+            const QStringList pages = gettingStarted()->property("pages").toStringList();
+            for (int n = 0; n < pages.size(); ++n) {
+                QCOMPARE(setupPage(), pages[n]);
+                QTest::qWait(400); // laid out and painted
+                QVERIFY(box->grabWindow().save(out + QStringLiteral("/fr1-%1-%2-%3.png").arg(n + 1).arg(pages[n], theme)));
+                if (n + 1 < pages.size())
+                    setupNext();
+            }
+            QTest::keyClick(box, Qt::Key_Escape);
+            QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        }
+        restartWith(app::Application::Options());
+    }
+
     // R6-dictionary-location: the Main page lists the settings folder's
     // Dictionary first (user dictionaries), then the program folder's.
     void settingsDictionariesComeFromTheSettingsFolder()

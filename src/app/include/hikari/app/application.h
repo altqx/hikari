@@ -750,10 +750,12 @@ public:
     // the window shows it, and back to the stored one; neither is saved.
     Q_INVOKABLE void previewLanguage(int index);
     Q_INVOKABLE void endLanguagePreview();
-    // Finish: every page's value, as OK writes the Settings window's; with
-    // `import`, then the import's chosen rows but the settings the pages set
-    // (their values win), in effect at the next start as an import is.
-    Q_INVOKABLE void finishGettingStarted(const QVariantMap &values, bool import);
+    // Finish: with `import`, first the import's chosen rows but the settings
+    // the pages set, in effect at the next start as an import is; then every
+    // page's value, as OK writes the Settings window's (a live edit, so it
+    // wins over the import). False, with nothing written, when the import
+    // cannot be staged (the importer's status says why).
+    Q_INVOKABLE bool finishGettingStarted(const QVariantMap &values, bool import);
     // Skip setup, Close and Esc: the defaults stay, nothing is imported.
     Q_INVOKABLE void skipGettingStarted();
     // The Editing page's example: the misspelt words of `text` (pairs of
@@ -1442,6 +1444,7 @@ private:
     QString m_sampleCheckerLanguage;
     bool m_sampleCheckerReady = false;
     std::unique_ptr<backends::SubtitleRendererSelection> m_sampleRenderer;
+    int m_testSounds = 0; // FR1: the last Test sound's number (its stream closes after it)
     bool m_spellingOn = true; // the Line editor's switch (TextEditor::SpellCheckerOnOff)
     QString m_dictionaryDir;
     QString m_bundledDictionaryDir;
