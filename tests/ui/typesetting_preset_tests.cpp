@@ -173,6 +173,9 @@ class TypesettingPresetTest : public QObject {
         QVERIFY2(video.height() > 1.3 * editor.height(),
                  qPrintable(QStringLiteral("%1 vs %2").arg(video.height()).arg(editor.height())));
         QTRY_VERIFY(!item("editorScroll")->property("overflows").toBool()); // its rows whole
+        QVERIFY2(item("lineInspector")->property("wide").toBool(), // LE1: its fields in two rows
+                 qPrintable(QStringLiteral("%1 < %2").arg(item("lineInspector")->parentItem()->width())
+                                .arg(item("lineInspector")->property("wideMinimum").toReal())));
     }
 
     // The default (Editing) arrangement, untouched by building Typesetting's:

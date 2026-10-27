@@ -42,6 +42,7 @@ ApplicationWindow {
     required property var updates
     required property var whatsNew // SH3: WhatsNew
     required property var styleManager
+    required property var kanjiTimer // KA3: KanjiTimerController
     required property var fontCollector // Y8: FontCollectorController
     required property var fontCatalogs // Y6: FontCatalogsController
     required property var matroska // Y9: MatroskaController (GRID_SUBS_FROM_MKV)
@@ -91,12 +92,14 @@ ApplicationWindow {
     // E2: a custom tag button. Types 0 and 1 work in the focused field like
     // Bold; plain text (type 2) goes, as in legacy, into the main field (the
     // translation in translation mode, unless it is empty).
-    function applyTagButton(index) {
+    // `edited`: the text field edited before a menu took the focus (LE1's
+    // More), else the one edited now.
+    function applyTagButton(index, edited) {
         // EditBox::OnButtonTag reads the button's option as stored now.
         const b = root.tagButtons.pressed(index)
         if (b.tag === undefined || b.tag.length === 0)
             return false
-        let field = root.editedField()
+        let field = edited ?? root.editedField()
         if (b.type === 2)
             field = root.editor.translationMode && translationText.text.length > 0 ? translationText : lineText
         return root.editor.applyTagButton(field.role, b.tag, b.type, field.selectionStart, field.selectionEnd)
@@ -313,6 +316,12 @@ ApplicationWindow {
         // move, then closed again).
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnLeft, gridDock,
                                   Qt.size(Math.round(area * 0.44), 0))
+        // LE1: wide enough for the Line editor's two rows of fields (narrow,
+        // their names go above them and the rows double), up to half.
+        const fieldsShort = Math.ceil(editorInspector.wideMinimum - editorColumn.width)
+        const room = Math.round(area * 0.5) - root.workspaceLayout.panelSize(editorDock).width
+        if (fieldsShort > 0 && room > 0)
+            Docking.resizeInLayout("Editor", 0, 0, Math.min(fieldsShort, room), 0)
         const original = originalDock.isOpen
         originalDock.open()
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 200))
@@ -2235,6 +2244,16 @@ ApplicationWindow {
                 text: qsTr("Check karaoke")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) root.openKaraokeCheck()
+            }
+            // KA3: the Kanji timer window, after Check karaoke.
+            ShellMenuItem {
+                help: qsTr("Copies the karaoke timing of romaji lines to their kanji lines")
+                id: kanjiTimerItem
+                iconRole: "karaoke-split"
+                objectName: "kanjiTimerMenuItem"
+                text: qsTr("Kanji timer…")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
             }
             MenuSeparator {}
             // TM1 (#232): the editing target's Translation mode, which the
@@ -5102,14 +5121,14 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "editorPanel"
                 dockName: "Editor"
-                // The rows that do not wrap; the Line inspector's fields
-                // wrap onto two rows below 850 (and its narrow layout fits
-                // these), so its width-dependent implicit width is not used,
-                // nor the translation buttons' (they wrap too). In height,
-                // the tag buttons and a line of each text field shown: the
-                // rest scrolls.
-                minimumBodySize: Qt.size(Math.max(tagRow.implicitWidth, editorCounters.implicitWidth),
-                                         tagRow.implicitHeight
+                // LE1: the strip at its narrowest (its groups fold into
+                // More) or the Line inspector's narrow grid, with the
+                // content's side margins; its width-dependent implicit
+                // width is not used. In height, the strip and a line of each
+                // text field shown: the rest scrolls.
+                minimumBodySize: Qt.size(Math.max(editorStrip.minimumWidth, editorInspector.minimumWidth)
+                                         + 2 * (editorColumn.x - 4),
+                                         editorStrip.implicitHeight
                                          + (lineTextSlot.visible ? editorColumn.spacing + lineText.Layout.minimumHeight : 0)
                                          + (translationText.visible ? editorColumn.spacing
                                             + translationText.Layout.minimumHeight : 0))
@@ -5231,208 +5250,44 @@ ApplicationWindow {
                     ColumnLayout {
                         id: editorColumn
                         objectName: "editorContent"
-                        // the body's margin, in the scrolled area
-                        x: 4
+                        // LE1: 12 at the sides (the dock title's inset, as
+                        // MuseScore's Properties panel), the body's 4 above
+                        // and below, in the scrolled area; rows 6 apart.
+                        x: 12
                         y: 4
-                        width: editorScroll.contentWidth - 8
+                        width: editorScroll.contentWidth - 2 * x
+                        spacing: 6
                         // The rows' own heights, or the dock's when it is taller
                         // (the text fields take the rest).
                         height: Math.max(editorScroll.height - 8, implicitHeight)
 
-                        // The tag and colour buttons (legacy BoxSizer4).
-                        RowLayout {
-                            id: tagRow
+                        // LE1: the tag strip and the counters (LineEditorStrip).
+                        LineEditorStrip {
+                            id: editorStrip
+                            shellRoot: root
+                            editor: root.editor
+                            app: root.app
+                            tagButtons: root.tagButtons
+                            fontPicker: fontPicker
+                            original: lineText
+                            translated: translationText
+                            translationTools: root.editor.translationMode && !root.originalShown
                             Layout.fillWidth: true
-                            // Ordinary ASS controls; they keep focus (and the
-                            // selection) in the text field.
-                            Repeater {
-                                // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
-                                // maps the hotkey, the tooltip shows it.
-                                // K1: the set's icons in place of the letters
-                                // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
-                                // bitmaps, EditBox.cpp:168-195).
-                                model: [
-                                    { tag: "b", name: qsTranslate("HikariSub.Editor", "Bold"), symbol: "EDITBOX_INSERT_BOLD" },
-                                    { tag: "i", name: qsTranslate("HikariSub.Editor", "Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
-                                    { tag: "u", name: qsTranslate("HikariSub.Editor", "Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
-                                    { tag: "s", name: qsTranslate("HikariSub.Editor", "Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
-                                ]
-                                IconToolButton {
-                                    required property var modelData
-                                    required property int index
-                                    objectName: "tag_" + modelData.tag
-                                    iconRole: ["tag-bold", "tag-italic", "tag-underline", "tag-strikeout"][index]
-                                    text: modelData.name
-                                    focusPolicy: Qt.NoFocus
-                                    enabled: root.editor.editable
-                                    tip: root.mappedTip(modelData.name, modelData.symbol, 2)
-                                    onClicked: {
-                                        if (root.hotkeyGesture(modelData.symbol, 2, true))
-                                            return
-                                        const field = root.editedField()
-                                        root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
-                                    }
-                                }
-                            }
-                            // E1: Font selection and the four colours
-                            // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
-                            IconToolButton {
-                                objectName: "changeFont"
-                                iconRole: "tag-font"
-                                text: qsTranslate("HikariSub.Editor", "Font selection")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                tip: root.mappedTip(qsTranslate("HikariSub.Editor", "Font selection"), "EDITBOX_CHANGE_FONT", 2)
-                                onClicked: {
-                                    if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
-                                        return
-                                    const field = root.editedField()
-                                    fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd)
-                                }
-                            }
-                            Repeater {
-                                id: colourButtons
-                                model: [
-                                    { number: 1, name: qsTranslate("HikariSub.Editor", "Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
-                                    { number: 2, name: qsTranslate("HikariSub.Editor", "Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
-                                    { number: 3, name: qsTranslate("HikariSub.Editor", "Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
-                                    { number: 4, name: qsTranslate("HikariSub.Editor", "Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
-                                ]
-                                IconToolButton {
-                                    required property var modelData
-                                    objectName: "changeColour" + modelData.number
-                                    iconRole: ["colour-primary", "colour-secondary", "colour-outline", "colour-shadow"][modelData.number - 1]
-                                    text: modelData.name
-                                    focusPolicy: Qt.NoFocus
-                                    enabled: root.editor.editable
-                                    tip: root.mappedTip(modelData.name, modelData.symbol, 2)
-                                    onClicked: {
-                                        if (root.hotkeyGesture(modelData.symbol, 2, true))
-                                            return
-                                        root.colourClick(modelData.number, true, root.editedField())
-                                    }
-                                    // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
-                                    TapHandler {
-                                        acceptedButtons: Qt.RightButton
-                                        onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
-                                                                                    root.editedField())
-                                    }
-                                }
-                            }
-                            // E4: Text position (legacy Ban, after the colours).
-                            AlignmentChoice {
-                                editor: root.editor
-                                // TM1: the Original text may be in its own panel, floating or a hidden tab.
-                                onChosen: root.focusPanel(root.editor.translationMode && root.editor.translationText.length ? translationText : lineText,
-                                                          Qt.OtherFocusReason)
-                            }
-                            // E2: custom tag buttons. LE5: a button without a tag
-                            // opens its popover; the right click its menu.
-                            Repeater {
-                                model: root.tagButtons.buttons
-                                TagButton {
-                                    id: tagButton
-                                    required property var modelData
-                                    required property int index
-                                    objectName: "tagButton" + index
-                                    text: modelData.name
-                                    iconRole: modelData.icon
-                                    focusPolicy: Qt.NoFocus
-                                    enabled: root.editor.editable
-                                    // An icon-only button reads as its tag, as in Settings' list.
-                                    Accessible.name: modelData.name.length > 0 ? modelData.name : modelData.tag
-                                    Accessible.description: modelData.tag
-                                    tip: root.mappedTip(modelData.name.length > 0 && modelData.icon.length > 0
-                                                        ? modelData.name + ": " + modelData.tag : modelData.tag,
-                                                        "EDITBOX_TAG_BUTTON" + (index + 1), 2)
-                                    onClicked: {
-                                        if (root.hotkeyGesture("EDITBOX_TAG_BUTTON" + (index + 1), 2, true))
-                                            return
-                                        if (modelData.tag.length === 0)
-                                            tagButtonEditor.openFor(tagButton, index, modelData)
-                                        else
-                                            root.applyTagButton(index)
-                                    }
-                                    TapHandler {
-                                        acceptedButtons: Qt.RightButton
-                                        onTapped: eventPoint => tagButtonMenu.openFor(tagButton, tagButton.index, eventPoint.position)
-                                    }
-                                }
-                            }
-                            IconToolButton {
-                                id: addTagButton
-                                objectName: "addTagButton"
-                                iconRole: "add"
-                                text: qsTranslate("HikariSub.Editor", "Add a tag button")
-                                focusPolicy: Qt.NoFocus
-                                visible: root.tagButtons.count < root.tagButtons.maximum
-                                onClicked: tagButtonEditor.openFor(addTagButton, -1, null)
-                            }
-                            TagButtonEditor {
-                                id: tagButtonEditor
-                                tagButtons: root.tagButtons
-                                onSaved: (index, b) => index < 0 ? root.tagButtons.add(b.name, b.tag, b.type, b.icon)
-                                                                 : root.tagButtons.edit(index, b.name, b.tag, b.type, b.icon)
-                            }
-                            // LE5: a button's context menu.
-                            ShellMenu {
-                                id: tagButtonMenu
-                                objectName: "tagButtonMenu"
-                                property Item button: null
-                                property int index: -1
-                                // Left is toward the first button, unless the layout is mirrored.
-                                readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
-                                // At the click, inside the button it is for.
-                                function openFor(b, i, at) {
-                                    button = b
-                                    index = i
-                                    popup(b, at)
-                                }
-                                function canMove(step) {
-                                    return index >= 0 && index + step >= 0 && index + step < root.tagButtons.count
-                                }
-                                ShellMenuItem {
-                                    objectName: "tagButtonEdit"
-                                    iconRole: "edit"
-                                    text: qsTranslate("HikariSub.Editor", "Edit...")
-                                    onTriggered: tagButtonEditor.openFor(tagButtonMenu.button, tagButtonMenu.index,
-                                                                         root.tagButtons.buttons[tagButtonMenu.index])
-                                }
-                                ShellMenuItem {
-                                    objectName: "tagButtonMoveLeft"
-                                    iconRole: "move-left"
-                                    text: qsTranslate("HikariSub.Editor", "Move left")
-                                    enabled: tagButtonMenu.canMove(tagButtonMenu.leftStep)
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, tagButtonMenu.leftStep)
-                                }
-                                ShellMenuItem {
-                                    objectName: "tagButtonMoveRight"
-                                    iconRole: "move-right"
-                                    text: qsTranslate("HikariSub.Editor", "Move right")
-                                    enabled: tagButtonMenu.canMove(-tagButtonMenu.leftStep)
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -tagButtonMenu.leftStep)
-                                }
-                                MenuSeparator {}
-                                ShellMenuItem {
-                                    objectName: "tagButtonRemove"
-                                    iconRole: "remove"
-                                    text: qsTranslate("HikariSub.Editor", "Remove")
-                                    onTriggered: root.tagButtons.remove(tagButtonMenu.index)
-                                }
-                            }
-                            // LE3-tags-shown: the hidden-tag view's switch left the
-                            // strip for Settings > Editor and GLOBAL_EDITOR_HIDE_TAGS
-                            // (Subtitles > "Hide tags in the line editor").
+                            // Its groups fold instead (not their widths' sum).
+                            Layout.minimumWidth: minimumWidth
                         }
                         // TM1-translator-check-removed: legacy's "Translator mode"
                         // check box (BoxSizer5, EditBox.cpp:233-239, 308) is
                         // Subtitles > Translation mode and the Translation preset.
 
-                        // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
-                        LineCounters {
-                            id: editorCounters
-                            editor: root.editor
-                            Layout.fillWidth: true
+                        // LE1: with both text fields here (translation mode,
+                        // the Original text panel closed) each is named above it.
+                        Label {
+                            objectName: "originalCaption"
+                            visible: lineTextSlot.visible && root.editor.translationMode
+                            text: qsTranslate("HikariSub.Editor", "Original text")
+                            color: Theme.muted
+                            Layout.bottomMargin: -4
                         }
 
                         // TM1: the Line's text field, the Original text in
@@ -5459,6 +5314,13 @@ ApplicationWindow {
                                 Accessible.name: root.editor.translationMode ? qsTranslate("HikariSub.Editor", "Original text") : qsTranslate("HikariSub.Editor", "Line text")
                             }
                         }
+                        Label {
+                            objectName: "translatedCaption"
+                            visible: lineTextSlot.visible && root.editor.translationMode
+                            text: qsTranslate("HikariSub.Editor", "Translated text")
+                            color: Theme.muted
+                            Layout.bottomMargin: -4
+                        }
                         RoleField {
                             id: translationText
                             objectName: "translationText"
@@ -5484,77 +5346,60 @@ ApplicationWindow {
                             wrapMode: Text.Wrap
                             Layout.fillWidth: true
                         }
-                        // Legacy translation-mode buttons (EDITBOX_PASTE_*,
-                        // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
-                        // They wrap: a narrow editor, a larger font or longer
-                        // translated labels must not push them past the panel's
-                        // edge, out of reach. TM1: they are the Original text
-                        // panel's header (OriginalTextTools) while it shows;
-                        // here only while it is closed, with the Original text.
-                        Flow {
-                            objectName: "translationButtons"
-                            visible: root.editor.translationMode && !root.originalShown
+                        // TM1: legacy's translation-mode buttons (EDITBOX_PASTE_*,
+                        // EDITBOX_HIDE_ORIGINAL renamed Comment out original) and
+                        // toggles are the Original text panel's header
+                        // (OriginalTextTools) while it shows; LE1: the strip's
+                        // translation group while it is closed.
+
+                        // LE1: the editor's problem and what it did not apply,
+                        // right under the text they concern.
+                        RowLayout {
+                            objectName: "editorMessages"
+                            visible: root.editor.problem.length > 0 || root.editor.attempted.length > 0
+                            spacing: 6
                             Layout.fillWidth: true
-                            spacing: 5
-                            Button {
-                                objectName: "pasteAllToTranslation"
-                                text: qsTranslate("HikariSub.Editor", "Paste all")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_ALL_TO_TRANSLATION", 2)
-                                onClicked: if (!root.hotkeyGesture("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2, true)) root.editor.pasteAllToTranslation()
+                            Icon {
+                                iconRole: "notice-error"
+                                size: 12
+                                color: Theme.danger
+                                accentColor: Theme.danger
+                                Layout.alignment: Qt.AlignTop
+                                Layout.topMargin: 3
                             }
-                            Button {
-                                objectName: "pasteSelectionToTranslation"
-                                text: qsTranslate("HikariSub.Editor", "Paste the selected")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
-                                onClicked: {
-                                    if (root.hotkeyGesture("EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2, true))
-                                        return
-                                    root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd,
-                                                                            translationText.cursorPosition)
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+                                Label {
+                                    id: editorProblem
+                                    objectName: "editorProblem"
+                                    visible: text.length > 0
+                                    text: root.editor.problem
+                                    color: Theme.danger
+                                    wrapMode: Text.Wrap
+                                    Layout.fillWidth: true
+                                    Accessible.role: Accessible.AlertMessage
+                                }
+                                Label {
+                                    id: editorAttempted
+                                    objectName: "editorAttempted"
+                                    visible: root.editor.attempted.length > 0
+                                    text: qsTranslate("HikariSub.Editor", "Not applied: %1").arg(root.editor.attempted)
+                                    color: Theme.danger
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
                                 }
                             }
-                            Button {
-                                objectName: "commentOutOriginal"
-                                text: qsTranslate("HikariSub.Editor", "Comment out original")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
-                                onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
-                            }
-                            TranslationToggles { app: root.app; editor: root.editor } // E5
                         }
 
                         // E4: the Line's fields (legacy BoxSizer2, below the text).
                         LineInspector {
+                            id: editorInspector
                             objectName: "lineInspector"
                             editor: root.editor
                             hotkeys: root.hotkeys
                             Layout.fillWidth: true
                             onStyleEditRequested: style => styleManagerWindow.editStyle(style) // LE6
-                        }
-
-                        Label {
-                            objectName: "editorProblem"
-                            visible: text.length > 0
-                            text: root.editor.problem
-                            color: Theme.danger
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                            Accessible.role: Accessible.AlertMessage
-                        }
-                        Label {
-                            objectName: "editorAttempted"
-                            visible: root.editor.attempted.length > 0
-                            text: qsTranslate("HikariSub.Editor", "Not applied: %1").arg(root.editor.attempted)
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
                         }
                     }
                 }
@@ -7436,6 +7281,19 @@ ApplicationWindow {
         karaokeCheckLoader.active = true
         karaokeCheckLoader.item.openDialog()
     }
+    // KA3: the Kanji timer window, made at its first opening too.
+    Loader {
+        id: kanjiTimerLoader
+        active: false
+        sourceComponent: KanjiTimerDialog {
+            timer: root.kanjiTimer
+            settings: root.app.settings
+        }
+    }
+    function openKanjiTimer() {
+        kanjiTimerLoader.active = true
+        kanjiTimerLoader.item.openDialog()
+    }
     // W1: DirectShow could not open the video: legacy VideoBox::LoadVideo's
     // HikariMessageBox is a warning toast (NT1, application_directshow.cpp).
     // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK's "Fix suggestions", on PK1's list
@@ -7495,13 +7353,12 @@ ApplicationWindow {
     function colourClick(number, leftClick, field) {
         if (root.colourPicker.switchClicks)
             leftClick = !leftClick
-        const button = colourButtons.itemAt(number - 1)
-        colourPopover.openFor(button, root.editor, () => {
+        colourPopover.openFor(editorStrip.colourAnchor(number), root.editor, () => {
             const c = root.editor.beginColour(number, field.role, field.selectionStart, field.selectionEnd)
             if (c.r !== undefined)
                 root.app.colourPickerOpened()
             return c
-        }, { title: button ? button.text : "", dropper: !leftClick, focus: field })
+        }, { title: editorStrip.colourName(number), dropper: !leftClick, focus: field })
     }
 
     // Legacy TreeDialog ("Tree description"), PU2 (#304): a popover under
@@ -7727,6 +7584,7 @@ ApplicationWindow {
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem, // KA7
+        GLOBAL_KANJI_TIMER: kanjiTimerItem, // KA3
     }
     }
     // The menu bar's items show their Global binding at the right (legacy

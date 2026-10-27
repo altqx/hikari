@@ -13,7 +13,7 @@ priority: optional
 maintainer: altqx
 vendor: altqx
 homepage: https://github.com/altqx/hikari
-license: GPL-3.0-or-later
+license: GPL-3.0-or-later AND BSD-3-Clause
 description: |-
   Subtitle editor for ASS/SSA, SRT and MicroDVD
   HikariSub edits and times subtitles, with audio and video preview,

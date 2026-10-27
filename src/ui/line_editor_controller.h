@@ -89,6 +89,9 @@ class LineEditorController : public QObject {
     Q_PROPERTY(QString style READ style NOTIFY changed)
     Q_PROPERTY(QStringList styleNames READ styleNames NOTIFY changed)
     Q_PROPERTY(int styleIndex READ styleIndex NOTIFY changed)
+    // LE1: the shown Line's Style's left, right and vertical margins (what a
+    // Line margin of 0 stands for); empty without that Style.
+    Q_PROPERTY(QStringList styleMargins READ styleMargins NOTIFY changed)
     Q_PROPERTY(QString actor READ actor NOTIFY changed)
     Q_PROPERTY(QString effect READ effect NOTIFY changed)
     Q_PROPERTY(QStringList actors READ actors NOTIFY changed)
@@ -98,8 +101,10 @@ class LineEditorController : public QObject {
     // LE4: several Lines selected whose alignments differ (the picker's
     // mixed icon); the shown Line's is alignmentIndex.
     Q_PROPERTY(bool alignmentMixed READ alignmentMixed NOTIFY changed)
-    // The counters (EditBox::UpdateChars): "Wraps: ..." and "Characters per
-    // second: ..." with their warnings; empty for a comment.
+    // The counters (EditBox::UpdateChars) with their warnings: each wrap's
+    // characters and the limit ("5/10/43"), and the characters per second
+    // and the limit ("8/15"); empty for a comment. LE1: the Line editor
+    // names them (Wraps, CPS) beside the numbers.
     Q_PROPERTY(QString charsText READ charsText NOTIFY changed)
     Q_PROPERTY(bool charsWarning READ charsWarning NOTIFY changed)
     Q_PROPERTY(QString cpsText READ cpsText NOTIFY changed)
@@ -211,6 +216,7 @@ public:
     QString style() const;
     QStringList styleNames() const;
     int styleIndex() const;
+    QStringList styleMargins() const;
     QString actor() const;
     QString effect() const;
     QStringList actors() const { return m_actors; }

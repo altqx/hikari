@@ -6,6 +6,7 @@
 ld-linux-x86-64.so.2 @glibc
 libc.so.6 @glibc
 libm.so.6 @glibc
+libmvec.so.1 @glibc
 libdl.so.2 @glibc
 libpthread.so.0 @glibc
 librt.so.1 @glibc

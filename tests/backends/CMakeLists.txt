@@ -325,6 +325,11 @@ target_compile_definitions(hikari_backends_legacy_spelling_tests PRIVATE
     HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling"
     HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs")
 
+# KA4 (#279): MeCab over the shipped UniDic 2.1.2, and the suggestions it gives.
+hikari_add_gtest(hikari_backends_mecab_readings_tests SOURCES mecab_readings_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+target_compile_definitions(hikari_backends_mecab_readings_tests PRIVATE HIKARI_UNIDIC_DIR="${HIKARI_UNIDIC_DIR}")
+
 # Y8: the font collector through the renderer, over the same private
 # fontconfig fixtures as I5; the archives are read back with zlib. On Windows
 # (Y8W) the fixtures are installed for the current user while the tests run

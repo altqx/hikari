@@ -436,29 +436,6 @@ bool pastTransferLimit(std::u8string_view translation)
            || core::toUtf16(translation).size() > core::kMaxTagTransferUnits;
 }
 
-// Whether a draft with `runs` just placed in it is saved as placed: each
-// is found again, over the same text, on reading the composed translation
-// (one past the reader's limits is not, its tags left as the translator's
-// own; one opened by the translator's own tags before it reads over more),
-// and the translator's own formatting around them draws as it did.
-bool placementHolds(const core::OriginalTags &tags, const core::TranslationDraft &draft, std::span<const int> runs)
-{
-    const auto order = core::runOrder(draft.placements);
-    auto back = core::readTranslation(tags, core::composeTranslation(tags, draft), order);
-    core::relabelRuns(tags, back, order);
-    if (back.body != draft.body)
-        return false;
-    for (const int run : runs) {
-        const auto of = [&](const core::RunPlacement &p) { return p.run == run; };
-        const auto placed = std::ranges::find_if(draft.placements, of);
-        const auto read = std::ranges::find_if(back.placements, of);
-        if (placed == draft.placements.end() || read == back.placements.end() || read->start != placed->start
-            || read->end != placed->end)
-            return false;
-    }
-    return core::keepsOwnFormatting(tags, draft);
-}
-
 // "#rrggbb" for a run that changes the primary colour (stored as BBGGRR).
 QString runColour(const core::TagRun &run)
 {
@@ -571,7 +548,7 @@ bool LineEditorController::placeRun(int number, int selectionStart, int selectio
         return false;
     // Taking one off (the same selection again) needs no check.
     const auto isRun = [&](const core::RunPlacement &p) { return p.run == number; };
-    if (std::ranges::any_of(draft.placements, isRun) && !placementHolds(*tags, draft, std::array{number}))
+    if (std::ranges::any_of(draft.placements, isRun) && !core::placementHolds(*tags, draft, std::array{number}))
         return false;
     if (!saveTranslationDraft(*tags, std::move(draft)))
         return false;
@@ -599,7 +576,7 @@ std::vector<core::RunPlacement> LineEditorController::suggestedRuns(const core::
         core::placeRun(accepted.placements, p.start, p.end, p.run);
         runs.push_back(p.run);
     }
-    if (!placementHolds(tags, accepted, runs))
+    if (!core::placementHolds(tags, accepted, runs))
         out.clear();
     return out;
 }
@@ -1645,6 +1622,7 @@ bool LineEditorController::editPlacedBody(int selectionStart, int selectionEnd,
         draft.placements[i].start = core::rawOffset(after, placed[i].first, true);
         draft.placements[i].end = core::rawOffset(after, placed[i].second, false);
     }
+    core::keepHeldPlacements(*tags, draft);
     if (!saveTranslationDraft(*tags, std::move(draft)))
         return false;
     const auto selStart = core::displayOffset(after, static_cast<std::size_t>(result.selectionStart));
@@ -1724,6 +1702,7 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
                                 auto inserted = core::legacy::insertTagButtonTextAt(draft.body, static_cast<long>(at), text);
                                 core::shiftPlacements(draft.placements, at, at, inserted.size() - draft.body.size());
                                 draft.body = std::move(inserted);
+                                core::keepHeldPlacements(c->tags, draft);
                                 composedBody(c->tags, draft, l.id);
                                 field = core::toUtf8(core::composeTranslation(c->tags, draft));
                                 return;
@@ -1852,6 +1831,7 @@ bool LineEditorController::applyDialogToPlacedBody(
         draft.placements[i].start = core::rawOffset(after, placed[i].first, true);
         draft.placements[i].end = core::rawOffset(after, placed[i].second, false);
     }
+    core::keepHeldPlacements(*tags, draft);
     if (result.state.text != state.text && !saveTranslationDraft(*tags, std::move(draft)))
         return false;
     const auto text = core::toUtf16(record()->translation);
@@ -1923,6 +1903,7 @@ bool LineEditorController::applyDialogChange(
                                 draft.placements[i].start = core::rawOffset(after, placed[i].first, true);
                                 draft.placements[i].end = core::rawOffset(after, placed[i].second, false);
                             }
+                            core::keepHeldPlacements(c->tags, draft);
                             composedBody(c->tags, draft, l.id);
                             translation = core::composeTranslation(c->tags, draft);
                         } else if (c && translation.size() > lead + trail) {
@@ -2553,6 +2534,21 @@ int LineEditorController::styleIndex() const
     return static_cast<int>(styleNames().indexOf(qs(r->style))); // case-sensitive
 }
 
+QStringList LineEditorController::styleMargins() const
+{
+    const auto r = record();
+    auto *s = session();
+    if (!r || !s)
+        return {};
+    for (const auto &style : core::decodeStyles(s->document())) {
+        if (style.name != r->style)
+            continue;
+        const auto margin = [](const std::u8string &v) { return QString::number(qs(v).trimmed().toInt()); }; // "0010" is 10
+        return {margin(style.marginLeft), margin(style.marginRight), margin(style.marginVertical)};
+    }
+    return {};
+}
+
 QString LineEditorController::actor() const
 {
     const auto r = record();
@@ -2633,7 +2629,7 @@ QString LineEditorController::charsText() const
 {
     const auto r = record();
     if (!r)
-        return QCoreApplication::translate("HikariSub.Editor", "Wraps: 0/86"); // the label before any Line (EditBox.cpp:219)
+        return QStringLiteral("0/86"); // the label before any Line (EditBox.cpp:219)
     if (r->comment)
         return {};
     // EditBox::UpdateChars (EditBox.cpp:497-525): the edited field's
@@ -2648,7 +2644,7 @@ QString LineEditorController::charsText() const
         const qsizetype slash = head.lastIndexOf(QLatin1Char('/'));
         wraps = (slash < 0 ? QString() : head.left(slash)) + QStringLiteral("/.../");
     }
-    return QCoreApplication::translate("HikariSub.Editor", "Wraps: ") + wraps + QStringLiteral("43");
+    return wraps + QStringLiteral("43");
 }
 
 bool LineEditorController::charsWarning() const
@@ -2680,15 +2676,15 @@ QString LineEditorController::cpsText() const
 {
     const auto r = record();
     if (!r)
-        return QCoreApplication::translate("HikariSub.Editor", "Characters per second: %1<=15").arg(0);
+        return QStringLiteral("0/15");
     if (r->comment)
         return {};
     // TextData::GetCPS over the Line copy's times: the draft's with live
     // editing (OnEdit), the committed ones without.
     const auto o = options();
     const auto times = o.liveEditing ? r : committedRecord();
-    return QCoreApplication::translate("HikariSub.Editor", "Characters per second: %1<=15")
-        .arg(editorCps(*r, times ? *times : *r, translationMode(), session()->document().format(), o));
+    return QString::number(editorCps(*r, times ? *times : *r, translationMode(), session()->document().format(), o))
+        + QStringLiteral("/15");
 }
 
 bool LineEditorController::cpsWarning() const
