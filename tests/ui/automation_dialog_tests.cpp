@@ -1414,8 +1414,9 @@ private slots:
             QQuickItem *presetsEntry = nullptr;
             QVERIFY(QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, presetsEntry), Q_ARG(int, 1)));
             QVERIFY(presetsEntry);
-            QTest::mouseMove(presetsEntry->window(), presetsEntry->mapToScene(QPointF(presetsEntry->width() / 2,
-                                                                                         presetsEntry->height() / 2)).toPoint());
+            // Opened as Enter on the entry opens it: a synthetic hover does not
+            // open a submenu on the offscreen platform (#391).
+            QVERIFY(QMetaObject::invokeMethod(presetsEntry, "triggered"));
             auto *presets = window->findChild<QObject *>(QStringLiteral("dialogPresetsMenu"));
             QTRY_VERIFY(presets->property("opened").toBool());
             saveAround(QStringLiteral("more-menu"), theme);
