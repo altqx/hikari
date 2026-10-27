@@ -322,6 +322,7 @@ private slots:
         QTRY_VERIFY(toastButton(QStringLiteral("Undo")));
         QVERIFY(QMetaObject::invokeMethod(toastButton(QStringLiteral("Undo")), "click"));
         QTRY_COMPARE(application->settingsStore()->boolean("grammar.group.miscellaneous"), true);
+        QTRY_VERIFY(!toastButton(QStringLiteral("Undo"))); // the toast closes with it
         QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
     }
 
@@ -487,6 +488,82 @@ private slots:
         QVERIFY(!item("spellReplaceAll")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(panel, "setMode", Q_ARG(QVariant, QStringLiteral("spelling"))));
         QVERIFY(!application->grammarWalkState().contains(QStringLiteral("walking")));
+    }
+
+    // For review (HIKARI_SURFACE_SHOT_DIR; skipped without it), in the four
+    // themes (gr1-<part>-<theme>.png): the Line editor's underlines with a
+    // finding's menu, the toast after Ignore this rule, the Spellchecker
+    // panel's Grammar walk and Settings › Spelling & grammar.
+    void screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        start();
+        window->resize(1280, 800);
+        grammarOn();
+        const QString text = QStringLiteral(R"({\i1}Their{\i0} going to the store tomorow, I has a apple.)");
+        QByteArray events = dialogue(text.toUtf8());
+        for (int i = 0; i < 8; ++i)
+            events += dialogue(i % 3 == 1 ? "She dont like the the rain." : "This line is fine.", i + 2);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/shots.ass"), events)));
+        auto *field = item("lineText");
+        QTRY_COMPARE(field->property("text").toString(), text);
+        const int article = text.indexOf(QStringLiteral("a apple"));
+        QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto save = [&](QQuickWindow *w, const QString &name) {
+            QTest::qWait(400);
+            QImage image = QGuiApplication::platformName() == QLatin1String("xcb")
+                               ? w->screen()->grabWindow(0, w->x(), w->y(), w->width(), w->height()).toImage()
+                               : w->grabWindow();
+            QVERIFY(image.save(out + QStringLiteral("/gr1-") + name + QStringLiteral(".png")));
+        };
+        auto *menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            QTest::qWait(300);
+            rightClick(fieldPoint(field, article));
+            QTRY_VERIFY(menu->property("visible").toBool());
+            save(window, QStringLiteral("menu-") + code);
+            QVERIFY(QMetaObject::invokeMethod(field->findChild<QQuickItem *>(QStringLiteral("lineTextIgnoreRule")),
+                                              "triggered"));
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(toastButton(QStringLiteral("Undo")));
+            // The other groups' marks, found again under the new rules.
+            QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("Their")), kHarperWait);
+            QTRY_VERIFY(!item("lineTextGrammar")->property("rows").toList().isEmpty());
+            QTest::qWait(1500); // the helper's restart slows the next frames
+            save(window, QStringLiteral("toast-") + code);
+            QVERIFY(QMetaObject::invokeMethod(toastButton(QStringLiteral("Undo")), "click"));
+            QTRY_COMPARE(settings.boolean("grammar.group.miscellaneous"), true);
+            QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
+
+            auto *dock = named(QStringLiteral("spellDock"));
+            QVERIFY(QMetaObject::invokeMethod(window, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+            QQuickItem *panel = nullptr;
+            QTRY_VERIFY((panel = item("spellCheckerPanel")));
+            QVERIFY(QMetaObject::invokeMethod(panel, "setMode", Q_ARG(QVariant, QStringLiteral("grammar"))));
+            QVERIFY(QMetaObject::invokeMethod(panel, "start"));
+            QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+            QTRY_VERIFY(item("grammarMessage") && item("grammarMessage")->isVisible());
+            save(window, QStringLiteral("panel-") + code);
+            QVERIFY(QMetaObject::invokeMethod(panel, "setMode", Q_ARG(QVariant, QStringLiteral("spelling"))));
+
+            QVERIFY(QMetaObject::invokeMethod(window, "openSettings", Q_ARG(QVariant, QStringLiteral("spelling")),
+                                              Q_ARG(QVariant, QVariant())));
+            auto *dialog = qobject_cast<QQuickWindow *>(named(QStringLiteral("settingsDialog")));
+            QVERIFY(dialog);
+            QTRY_VERIFY(dialog->isVisible());
+            QTRY_VERIFY(item("setting_grammar.group.properNouns") && item("setting_grammar.group.properNouns")->isEnabled());
+            save(dialog, QStringLiteral("settings-") + code);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+            QTRY_VERIFY(!dialog->isVisible());
+        }
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
     }
 
     // Switched off, the helper ends at once.
