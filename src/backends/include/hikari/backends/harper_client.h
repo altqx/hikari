@@ -50,7 +50,8 @@ public:
     // Checks `text`; checked(ticket, findings) follows, or failed() when the
     // process ends before it. Starts the process when it isn't running.
     quint64 check(const QString &text);
-    // The ticket's result is dropped (a newer text replaced it).
+    // The ticket's result is dropped (a newer text replaced it). A text
+    // harper-ls has open stays in until it is done with it.
     void cancel(quint64 ticket);
     // Ends the process and drops every check (grammar check turned off).
     void stop();
@@ -67,6 +68,7 @@ private:
         QString text;
         QString uri;
         bool opened = false;
+        bool cancelled = false; // open: finished without a result
         QList<GrammarFinding> findings;
         int actionsPending = 0;
     };

@@ -9,11 +9,15 @@
 #include <QFile>
 #include <QJsonArray>
 #include <QTemporaryDir>
+#include <QTimer>
 #include <gtest/gtest.h>
 
 #include <functional>
 #include <map>
 #include <optional>
+#include <set>
+#include <utility>
+#include <vector>
 
 using hikari::backends::GrammarFinding;
 using hikari::backends::HarperClient;
@@ -214,6 +218,40 @@ TEST_F(HarperClientTest, ChecksSentWhileOthersRunAllEnd)
     EXPECT_TRUE(waitFor([&] { return c.results.size() == 80 || !c.failures.isEmpty(); }))
         << c.results.size() << " of 80";
     EXPECT_TRUE(c.failures.isEmpty());
+}
+
+// The walk's Cancel: every check it has in is cancelled at once, the one
+// harper-ls has open too, and new ones follow. The next text goes in only once
+// harper-ls is done with the open one (texts in together deadlock harper-ls
+// 3.0.0); a cancelled check never reports.
+TEST_F(HarperClientTest, ChecksCancelledTogetherLetTheNextEnd)
+{
+    Checker c;
+    std::vector<quint64> waiting;
+    std::set<quint64> cancelled;
+    int ended = 0;
+    const auto send = [&] {
+        for (int i = 0; i < 4; ++i)
+            waiting.push_back(c.client.check(i % 2 ? QStringLiteral("I has a apple.") : QStringLiteral("This line is fine.")));
+    };
+    QObject::connect(&c.client, &HarperClient::checked, [&](quint64 ticket) {
+        std::erase(waiting, ticket);
+        if (++ended >= 20)
+            return;
+        // At once, or while harper-ls reads the open one or answers its code actions.
+        QTimer::singleShot(ended % 4 * 5, [&] {
+            for (const quint64 t : std::exchange(waiting, {})) {
+                cancelled.insert(t);
+                c.client.cancel(t);
+            }
+            send();
+        });
+    });
+    send();
+    EXPECT_TRUE(waitFor([&] { return ended >= 20 || !c.failures.isEmpty(); })) << ended << " of 20";
+    EXPECT_TRUE(c.failures.isEmpty());
+    for (const quint64 ticket : cancelled)
+        EXPECT_FALSE(c.results.contains(ticket)) << ticket;
 }
 
 TEST_F(HarperClientTest, AMissingProgramFailsTheCheck)

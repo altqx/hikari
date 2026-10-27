@@ -90,13 +90,12 @@ void HarperClient::cancel(quint64 ticket)
     const auto it = m_checks.find(ticket);
     if (it == m_checks.end())
         return;
-    const bool opened = it->second.opened;
-    if (opened && m_ready)
-        notify(QStringLiteral("textDocument/didClose"),
-               {{QStringLiteral("textDocument"), QJsonObject{{QStringLiteral("uri"), it->second.uri}}}});
-    m_checks.erase(it);
-    if (opened)
-        openNext();
+    // Closing an open text at once would let the next one's didOpen overlap
+    // its own: harper-ls 3.0.0 deadlocks (see openNext). finish drops it.
+    if (it->second.opened)
+        it->second.cancelled = true;
+    else
+        m_checks.erase(it);
 }
 
 void HarperClient::stop()
@@ -260,7 +259,7 @@ void HarperClient::diagnostics(const QJsonObject &params)
         check.findings.append({start, end, diagnostic.value(QStringLiteral("code")).toVariant().toString(),
                                diagnostic.value(QStringLiteral("message")).toString(), {}, false});
     }
-    if (check.findings.isEmpty()) {
+    if (check.findings.isEmpty() || check.cancelled) {
         finish(ticket);
         return;
     }
@@ -317,11 +316,13 @@ void HarperClient::finish(quint64 ticket)
     if (it == m_checks.end())
         return;
     const QList<GrammarFinding> findings = std::move(it->second.findings);
+    const bool cancelled = it->second.cancelled;
     notify(QStringLiteral("textDocument/didClose"),
            {{QStringLiteral("textDocument"), QJsonObject{{QStringLiteral("uri"), it->second.uri}}}});
     m_checks.erase(it);
     openNext();
-    emit checked(ticket, findings);
+    if (!cancelled)
+        emit checked(ticket, findings);
 }
 
 void HarperClient::lost(const QString &message)
