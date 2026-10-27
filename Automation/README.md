@@ -12,7 +12,7 @@ them; `git log` on this directory is the history from there on:
 | Source | Revision |
 |---|---|
 | `TypesettingTools/Aegisub` (`automation/include`, `automation/autoload`) | `ce97a367c611` |
-| `TypesettingTools/DependencyControl` (`modules/l0`, `macros`) | `8cd732eae9cb` |
+| `TypesettingTools/DependencyControl` (`modules/l0`, `macros`), release v0.9.1 | `c4101aeed1a9` |
 | `TypesettingTools/ASSFoundation` | `8fbb4f4261ef` |
 | `TypesettingTools/Functional` | `5a28339d6d8b` |
 | `TypesettingTools/Yutils` | `364f8fa5a9d9` |
@@ -33,6 +33,27 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
   before use.
 - The `a-mo/*.moon` modules carry the version numbers DependencyControl
   substitutes into `##__X_VERSION__##` placeholders.
+- DependencyControl's own files are the v0.9.1 release. The legacy package had
+  mixed its 0.6.4 core with newer modules, which broke its feeds
+  (DC1-depctrl-release). Twelve fixes are marked `HikariSub (DC1)`: the
+  Toolbox releases the updater lock after Install and Update Script, its log
+  level field starts at 2 (lower levels make ordinary messages raise), and
+  Package Source Configuration writes into the reloaded config and clears
+  the override feed when another kind is chosen;
+  `ConfigHandler.getSerializableCopy` keeps a table referenced twice, a
+  save keeps another writer's keys on the next save, a schema migration
+  rereads and writes the file under one lock, and a corrupted file is set
+  aside under the lock it was read with; an `UpdateFeed` built without
+  `FeedLoader` loads without a cache;
+  `DependencyControl.ConfigHandler` is the class of what `getConfigHandler`
+  returns (`ConfigView`), which scripts written for 0.6 compare against; and
+  an installed package updates only from its own feeds, and a missing one
+  that names its feed takes another feed's build only when the user agrees.
+- `automation/include/moonscript.lua` is MoonScript 0.5.0, from
+  `TypesettingTools/Aegisub` `3c5b61429a49` (what arch1t3cht's Aegisub ships).
+  The released package's 0.3.0 cannot compile DependencyControl 0.9's
+  Toolbox; 0.7.0, at the revision above, rejects Aegisub-Motion's
+  `TrimHandler` (DC1-moonscript).
 - `BM/`, `DM/`, `PT/` are HikariSub's DependencyControl modules; their `.lua` is
   what the released package ships and their DLLs are built from this repository
   (`Thirdparty/DependencyControl/`) and installed into those directories by

@@ -1,5 +1,5 @@
 {
- "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux; SubInspector built for Linux: A33-subinspector-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results were observed in the Windows VM (2026-10-14, job-a6dfbb66): they match these except where load_windows pins its own (clipper2 is looked for as clipper2.dll, with Windows' loader message). A platform not yet observed would be listed in unobserved_platforms; its results are recorded, not pinned.",
+ "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux; SubInspector built for Linux: A33-subinspector-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results were observed in the Windows VM (2026-10-14, job-a6dfbb66): they match these except where load_windows pins its own (clipper2 is looked for as clipper2.dll, with Windows' loader message). A platform not yet observed would be listed in unobserved_platforms; its results are recorded, not pinned. DependencyControl v0.9.1 with MoonScript 0.5.0 (DC1, 2026-10-27): its messages read [DepCtrl]; myaa.Bounce and arch.ConvertFolds now parse and load; lyger.FbfTransform and lyger.GradientEverything start without their first-run example preset (DC1-depctrl-fresh-config).",
  "loaded_only": {
   "myaa.MergeScripts.moon": "DependencyControl tries to install its missing module myaa.pl (Myaamori's Penlight, not in this corpus) from the module's feed while the script loads, even with the updater off, so the reason it gives depends on the network; it fails to load either way."
  },
@@ -9,12 +9,12 @@
  },
  "load": {
   "ILL.ChangeAlign.moon": {
-   "error": "Error initializing Lua script \"ILL.ChangeAlign.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
+   "error": "Error initializing Lua script \"ILL.ChangeAlign.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
    "loaded": false,
    "project": "ILL-Aegisub-Scripts"
   },
   "ILL.SplitText.moon": {
-   "error": "Error initializing Lua script \"ILL.SplitText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
+   "error": "Error initializing Lua script \"ILL.SplitText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
    "loaded": false,
    "project": "ILL-Aegisub-Scripts"
   },
@@ -35,9 +35,20 @@
    "version": "1.1"
   },
   "arch.ConvertFolds.moon": {
-   "error": "Failed to parse:\n [36] >>    button, results = aegisub.dialog.display({{",
-   "loaded": false,
-   "project": "arch1t3cht-Aegisub-Scripts"
+   "author": "arch1t3cht",
+   "description": "Convert folds stored in the project properties to extradata folds.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Convert Folds",
+     "validate": false
+    }
+   ],
+   "name": "Convert Folds",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "1.1.2"
   },
   "arch.FocusLines.moon": {
    "author": "arch1t3cht",
@@ -407,12 +418,6 @@
     {
      "description": "",
      "is_active": false,
-     "name": "Frame-by-frame transform/Presets/All",
-     "validate": true
-    },
-    {
-     "description": "",
-     "is_active": false,
      "name": "Frame-by-frame transform/Presets/Default",
      "validate": true
     },
@@ -458,12 +463,6 @@
      "description": "",
      "is_active": false,
      "name": "Gradient Everything/Gradient Everything",
-     "validate": true
-    },
-    {
-     "description": "",
-     "is_active": false,
-     "name": "Gradient Everything/Presets/Horizontal all",
      "validate": true
     },
     {
@@ -516,12 +515,23 @@
    "version": "1.3.1"
   },
   "myaa.Bounce.moon": {
-   "error": "Failed to parse:\n [95] >>    cur_shift = math.max(0, math.min((2 * anim_size - anim_stop) / (2 * anim_size),",
-   "loaded": false,
-   "project": "Myaamori-Aegisub-Scripts"
+   "author": "Myaamori",
+   "description": "Make text bounce",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Bounce/Make bouncy",
+     "validate": false
+    }
+   ],
+   "name": "Bounce",
+   "project": "Myaamori-Aegisub-Scripts",
+   "version": "0.0.2"
   },
   "myaa.MergeScripts.moon": {
-   "error": "Error initializing Lua script \"myaa.MergeScripts.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Include/l0/DependencyControl/Logger.moon\", line 65 error\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Include/l0/DependencyControl.moon\", line 372 requireModules\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Autoload/myaa.MergeScripts.moon\", line 21  <main>\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\n.",
+   "error": "Error initializing Lua script \"myaa.MergeScripts.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Include/l0/DependencyControl/Logger.moon\", line 65 error\nError: [DepCtrl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Include/l0/DependencyControl.moon\", line 372 requireModules\nError: [DepCtrl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Autoload/myaa.MergeScripts.moon\", line 21  <main>\nError: [DepCtrl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\n.",
    "loaded": false,
    "project": "Myaamori-Aegisub-Scripts"
   },
@@ -818,7 +828,7 @@
    "version": "1.3.2"
   },
   "phos.RemoveTags.moon": {
-   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module phos.AssfPlus: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
+   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module phos.AssfPlus: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
    "loaded": false,
    "project": "PhosCity-Aegisub-Scripts"
   },
@@ -1219,17 +1229,17 @@
  },
  "load_windows": {
   "ILL.ChangeAlign.moon": {
-   "error": "Error initializing Lua script \"ILL.ChangeAlign.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
+   "error": "Error initializing Lua script \"ILL.ChangeAlign.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
    "loaded": false,
    "project": "ILL-Aegisub-Scripts"
   },
   "ILL.SplitText.moon": {
-   "error": "Error initializing Lua script \"ILL.SplitText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
+   "error": "Error initializing Lua script \"ILL.SplitText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
    "loaded": false,
    "project": "ILL-Aegisub-Scripts"
   },
   "phos.RemoveTags.moon": {
-   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module phos.AssfPlus: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
+   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module phos.AssfPlus: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
    "loaded": false,
    "project": "PhosCity-Aegisub-Scripts"
   }

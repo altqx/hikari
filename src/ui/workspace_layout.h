@@ -77,6 +77,8 @@ class WorkspaceLayoutController : public QObject {
     // Translation, Typesetting, Karaoke); Reset layout returns to it unless the
     // arrangement started from a saved layout.
     Q_PROPERTY(QString preset READ preset WRITE setPreset NOTIFY changed)
+    // FR1 (#363): the built-in templates in menu order, for Getting started.
+    Q_PROPERTY(QStringList presets READ presets CONSTANT)
     // WS3: the saved layout the current tab's arrangement started from, or
     // empty (a preset, or a layout since deleted); and the name the layout
     // switcher shows for it (the saved layout's, else the preset's).

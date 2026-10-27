@@ -1,0 +1,21 @@
+[Script Info]
+; A HikariSub karaoke effect preset (KE3, docs/qt/karaoke-presets.md): original
+; work under HikariSub's licence. Give the Comment Lines the karaoke Lines' Style.
+Title: Bounce
+Description: Each syllable hops up and lands again while it is sung.
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank,!retime("start2syl",-300,0)!{\an5\pos($center,$middle)\fad(300,0)}
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank,!retime("sylpct",0,50)!{\an5\move($center,$middle,$center,!$middle-16!)\1c&H70E8FF&}
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank,!retime("sylpct",50,100)!{\an5\move($center,!$middle-16!,$center,$middle)\1c&H70E8FF&}
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl noblank,!retime("syl2end",0,300)!{\an5\pos($center,$middle)\1c&H70E8FF&\fad(0,300)}

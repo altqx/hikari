@@ -150,6 +150,9 @@ public:
         QString userAutomationDir;
         // Load the Autoload scripts at start (the application does; tests choose).
         bool autoload = false;
+        // FR1: the first start marks Getting started due (the application
+        // does; tests choose).
+        bool gettingStarted = false;
         // INI file holding the settings registry; empty: in memory only (tests).
         QString settingsFile;
         // O5: the system's interface languages, most preferred first
@@ -395,8 +398,12 @@ public:
     void setSaveWithVideoName(bool on);
     // GLOBAL_ANSI ("Report an issue"): the issue tracker in the browser.
     Q_INVOKABLE void reportIssue();
-    // GLOBAL_HELP ("HikariSub website"): the website in the browser.
+    // About's "HikariSub website": the site's home page in the browser.
     Q_INVOKABLE void openWebsite();
+    // DX1 (#367): GLOBAL_HELP ("User guide", F1) and a DG1 window's "?": the
+    // guide's page for a surface, `kind` "panel" or "window" (guide_links.h),
+    // else the guide's home, in the browser.
+    Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
     // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
     // F1: a find and replace question waits for its answer.
@@ -737,6 +744,43 @@ public:
     // but the appearance, the hotkeys and the recent files goes back to its
     // default first (legacy ResetDefault, PF1-staged-reset).
     Q_INVOKABLE void applySettings(const QVariantMap &values, bool resetAll = false);
+    // FR1 (#363): Getting started. Whether it opens by itself now: the first
+    // start (no settings file) marks it due, and Finish, Skip setup, Close
+    // and Esc mark it done (workspace.gettingStarted).
+    Q_INVOKABLE bool gettingStartedDue() const;
+    // Opening it: what openSettingsDialog() gives (the pages are a few of the
+    // Settings window's controls, and Finish applies them as OK does), with
+    // `legacy`: whether a legacy installation was found, for the Import page.
+    Q_INVOKABLE QVariantMap openGettingStarted();
+    // The pages' values with the settings the import's chosen rows would
+    // leave (the live ones otherwise); nothing is written.
+    Q_INVOKABLE QVariantMap gettingStartedImported(const QVariantMap &values);
+    // The interface in the language at `index` of the opening's list while
+    // the window shows it, and back to the stored one; neither is saved.
+    Q_INVOKABLE void previewLanguage(int index);
+    Q_INVOKABLE void endLanguagePreview();
+    // Finish: with `import`, first the import's chosen rows but the settings
+    // the pages set, in effect at the next start as an import is; then every
+    // page's value, as OK writes the Settings window's (a live edit, so it
+    // wins over the import). False, with nothing written, when the import
+    // cannot be staged (the importer's status says why).
+    Q_INVOKABLE bool finishGettingStarted(const QVariantMap &values, bool import);
+    // Skip setup, Close and Esc: the defaults stay, nothing is imported.
+    Q_INVOKABLE void skipGettingStarted();
+    // The Editing page's example: the misspelt words of `text` (pairs of
+    // [start, end)) with the dictionary at `dictionary` of the opening's
+    // list, none while `on` is off.
+    Q_INVOKABLE QVariantList sampleSpellingMarks(const QString &text, bool on, int dictionary);
+    // The Video and audio page's example: a frame with a subtitle drawn by
+    // the renderer at `renderer` of the opening's list, as a PNG data URL.
+    Q_INVOKABLE QString sampleFrame(int renderer, int width, int height);
+    // A short tone through the device at `device` of the opening's list;
+    // the editor's output goes back to its own device after it.
+    Q_INVOKABLE void playTestSound(int device);
+    // The folder holding the user's settings, and opening it in the file
+    // manager.
+    Q_INVOKABLE QString userFolder() const;
+    Q_INVOKABLE void openUserFolder() const;
     // "Reset all settings…": the controls' state at the defaults, as legacy
     // ResetDefault refreshes them (its defects included); nothing is
     // stored until OK or Apply (PF1-staged-reset).
@@ -1409,6 +1453,14 @@ private:
     std::unique_ptr<application::SpellChecker> m_spellChecker;
     bool m_spellingStarted = false;
     application::SpellingText m_spellingText;
+    // FR1: Getting started's examples: the spelling loader, a checker for
+    // the dictionary the Editing page shows, a renderer for the sample frame.
+    application::SpellingBackendLoader m_spellingLoader;
+    std::unique_ptr<application::SpellChecker> m_sampleChecker;
+    QString m_sampleCheckerLanguage;
+    bool m_sampleCheckerReady = false;
+    std::unique_ptr<backends::SubtitleRendererSelection> m_sampleRenderer;
+    int m_testSounds = 0; // FR1: the last Test sound's number (its stream closes after it)
     bool m_spellingOn = true; // the Line editor's switch (TextEditor::SpellCheckerOnOff)
     QString m_dictionaryDir;
     QString m_bundledDictionaryDir;

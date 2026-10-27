@@ -30,6 +30,10 @@ Window {
     // The id its place is kept under (dialog_placement.h); empty: centred
     // on every open, nothing kept.
     property string dialogId: ""
+    // DX1 (#367): its page of the user guide (guide_links.h), which User
+    // guide (F1) and the title bar's "?" open; the dialogId unless the
+    // window names another (the Automation windows, one id per script).
+    property string guideId: dialogId
     // Where its place is kept and "Use system title bar" is read.
     property SettingsStore settings: null
     property bool resizable: false
@@ -260,6 +264,7 @@ Window {
             DialogTitleBar {
                 frame: frame
                 closable: dialog.closable
+                guideId: dialog.guideId
                 Layout.fillWidth: true
             }
             ColumnLayout {
