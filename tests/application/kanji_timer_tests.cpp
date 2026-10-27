@@ -953,6 +953,43 @@ TEST(KanjiTimer, ALinesReadingThatSpellsNoneOfItsKanaStaysWhole)
     EXPECT_EQ(s(*timer.view()->output), "{\\k40}愛を|あいを");
 }
 
+TEST(KanjiTimer, AReadingOverNoKanjiIsKeptToo)
+{
+    const auto read = kanjiText(u("{\\k40}きみ|キミ{\\k30}の"));
+    EXPECT_EQ(s(read.text), "きみの");
+    EXPECT_EQ(read.readings, (std::vector<KanjiText::Reading>{{0, 2, u("キミ")}}));
+    auto timer = furiganaTimer("{\\k40}kimi{\\k30}no", "{\\k40}きみ|キミ{\\k30}の");
+    EXPECT_EQ(readings(timer), "きみ|キミ ");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.acceptLine());
+    EXPECT_EQ(s(timer.pending()[0].second), "{\\k40}きみ|キミ{\\k30}の");
+    // typed over and taken back like any other
+    timer.setFurigana(true);
+    EXPECT_TRUE(timer.undo());
+    EXPECT_TRUE(timer.setReading(u("きみ")));
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}きみ|きみ{\\k30}の");
+    EXPECT_TRUE(timer.useSuggestion());
+    EXPECT_EQ(s(*timer.view()->output), "{\\k40}きみ{\\k30}の");
+}
+
+TEST(KanjiTimer, TheSpacesAfterAReadingStayInTheText)
+{
+    const auto read = kanjiText(u("{\\k40}君|きみ {\\k30}の"));
+    EXPECT_EQ(s(read.text), "君 の");
+    EXPECT_EQ(read.readings, (std::vector<KanjiText::Reading>{{0, 1, u("きみ")}}));
+    // grouped as one, the space stays in the text, and the reading spells の
+    auto timer = furiganaTimer("{\\k40}kimi {\\k30}no", "{\\k40}君|きみ {\\k30}の");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.growSyllables());
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_EQ(s(*timer.view()->output), "{\\k70}君 の|きみの");
+    // a group that ends at the space: the reading before it
+    auto apart = furiganaTimer("{\\k40}kimi {\\k30}no", "{\\k40}君|きみ {\\k30}の");
+    apart.setFurigana(false);
+    EXPECT_TRUE(apart.acceptLine());
+    EXPECT_EQ(s(apart.pending()[0].second), "{\\k40}君|きみ {\\k30}の");
+}
+
 TEST(KanjiTimer, TheDictionaryReadsAKanjiRunThroughItsBlocks)
 {
     auto timer = furiganaTimer("{\\k45}love", "愛{\\i1}情");
