@@ -169,7 +169,7 @@ Nothing is code-signed; each release lists SHA-256 sums in `SHA256SUMS`. HikariS
 
 ## Updates and privacy
 
-HikariSub does not connect to the internet unless you turn on **Settings > Updates > Check for updates automatically** (settings imported from legacy keep legacy's choice). It then asks GitHub at most once a day for new releases. The installer, AppImage, deb and rpm download the update, check its SHA-256 and install it when you choose Restart now or quit.
+HikariSub looks for updates only when you choose **Help > Check for updates**, or once a day at most after you turn on **Settings > Updates > Check for updates automatically** (settings imported from legacy keep legacy's choice). The installer, AppImage, deb and rpm download the update, check its SHA-256 and install it when you choose Restart now or quit.
 
 <details>
 <summary>What is sent and how updates install</summary>
