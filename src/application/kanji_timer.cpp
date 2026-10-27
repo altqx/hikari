@@ -747,14 +747,16 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
             if (const auto sung = sungKana(syllables, syllable, groups[g].syllables))
                 parts = splitOver(kanji.units, from, to, *sung);
         // a Line's own readings over no kanji in this group, up to `upTo`
+        // (one over kanji stops it only when it reaches a run from there)
         const auto bare = [&](std::size_t upTo) {
             for (; entry != fitted.end() && entry->first.first < upTo; ++entry) {
-                if (entry->first.first >= from && noKanji(kanji, entry->first)) {
+                const bool none = noKanji(kanji, entry->first);
+                if (none && entry->first.first >= from) {
                     KanjiReading k{g, entry->first.first, entry->first.second};
                     k.typed = entry->second;
                     std::tie(k.spellsFrom, k.spellsTo) = entry->first;
                     out.push_back(std::move(k));
-                } else if (entry->first.second > from) {
+                } else if (!none && entry->first.second > upTo) {
                     break;
                 }
             }
@@ -778,6 +780,9 @@ std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllab
                     std::tie(k.spellsFrom, k.spellsTo) = entry->first;
                 whole = entry;
             }
+            // (one read to its end is done with)
+            if (entry != fitted.end() && entry->first.second <= runs[r].second)
+                ++entry;
             if (suggest || k.typed)
                 out.push_back(std::move(k));
         }
@@ -1815,6 +1820,11 @@ void KanjiTimer::applied()
         Work &work = m_state.works[keyOf(pair)];
         const auto syllables = kanjiSyllables(pair.romaji->text, pair.romaji->startMs, pair.romaji->endMs);
         work.kanjiText = outputOf(work, syllables, kanjiText(pair.kanji->text), work.linked);
+        // KA4-furigana: the readings written are the Line's own now, as when
+        // it is opened (so Furigana off keeps them)
+        work.typed.clear();
+        for (const auto &reading : kanjiText(work.kanjiText).readings)
+            work.typed[{reading.begin, reading.end}] = reading.text;
         work.done = false;
         work.applied = true;
     }

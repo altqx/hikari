@@ -981,6 +981,30 @@ TEST(KanjiTimer, AReadingOverNoKanjiIsKeptToo)
     EXPECT_EQ(s(*timer.view()->output), "{\\k40}きみ{\\k30}の");
 }
 
+TEST(KanjiTimer, AReadingOverNoKanjiAfterOneOverKanjiInTheSameGroup)
+{
+    auto timer = furiganaTimer("{\\k40}kimi{\\k40}wa", "{\\k40}君|きみ{\\k40}は|わ");
+    timer.setFurigana(false);
+    EXPECT_TRUE(timer.growSyllables());
+    EXPECT_TRUE(timer.growCharacters());
+    EXPECT_EQ(s(*timer.view()->output), "{\\k80}君は|きみわ");
+}
+
+TEST(KanjiTimer, TheReadingsAppliedAreTheLinesOwnAfter)
+{
+    auto timer = furiganaTimer("{\\k40}kimi", "君");
+    EXPECT_TRUE(timer.acceptLine());
+    const std::string out = s(timer.pending()[0].second);
+    EXPECT_EQ(out, "{\\k40}君|きみ");
+    timer.applied();
+    timer.setLines({line(1, "{\\k40}kimi", 0, 3000)}, {line(2, out, 0, 3000)});
+    EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::Applied);
+    // as when it is opened: Furigana off keeps them
+    timer.setFurigana(false);
+    EXPECT_EQ(s(*timer.view()->output), out);
+    ASSERT_TRUE(timer.view());
+}
+
 TEST(KanjiTimer, TheSpacesAfterAReadingStayInTheText)
 {
     const auto read = kanjiText(u("{\\k40}君|きみ {\\k30}の"));
