@@ -14,6 +14,9 @@ target_sources(hikari_application PRIVATE audio_playback.cpp)
 target_sources(hikari_application PRIVATE audio_karaoke.cpp)
 # KA1 (#276): Karaoke's language-aware Auto split.
 target_sources(hikari_application PRIVATE karaoke_split.cpp include/hikari/application/karaoke_split.h)
+# KA3 (#278): the Kanji timer and the kana readings KA4 shares.
+target_sources(hikari_application PRIVATE kana.cpp include/hikari/application/kana.h kanji_timer.cpp
+    include/hikari/application/kanji_timer.h)
 # KA2 (#277): tap-to-time karaoke timing and the latency calibration.
 target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/application/karaoke_tap.h)
 # KA5 (#280): vocal onsets for snapping syllable boundaries.

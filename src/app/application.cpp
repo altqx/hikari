@@ -792,6 +792,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {
+        // KA3: the Kanji timer window over the editing target.
+        KanjiTimerController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.targetId = [this] { return m_workspace.editingTarget() ? m_workspace.editingTarget()->value : 0; };
+        hooks.refresh = [this] {
+            m_editor->reloadFromSession();
+            refreshViews();
+        };
+        m_kanjiTimer = std::make_unique<KanjiTimerController>(*m_settings, std::move(hooks));
+    }
+    {
         // Y8: the font collector reads every tab's Document (a copy for the
         // run) and goes to a Line or Style from its log.
         FontCollectorController::Hooks hooks;
@@ -1799,6 +1810,8 @@ void Application::refreshViews()
     // panel picks the active Line's Style when its own is gone).
     if (m_styleManager)
         m_styleManager->documentEdited();
+    if (m_kanjiTimer) // KA3
+        m_kanjiTimer->documentEdited();
     refreshVideo();
     refreshAudio();
     if (m_statusBar)
@@ -2016,7 +2029,8 @@ QVariantList Application::reviewClose(const QString &then)
     QVariantList rows;
     for (const auto id : scope) {
         auto *session = m_files->session(id);
-        if (!session || !session->isDirty())
+        // KA3-close-review: the Kanji timer's pairs not applied are unsaved work too
+        if (!session || (!session->isDirty() && !(m_kanjiTimer && m_kanjiTimer->pendingFor(id.value) > 0)))
             continue;
         const std::string *title = m_workspace.title(id);
         const auto destination = m_files->destination(id);
@@ -2044,6 +2058,13 @@ void Application::resolveClose(const QVariantList &choices)
         if (!session)
             continue;
         Closing c{id, row.value(QStringLiteral("save")).toBool(), 0, std::nullopt};
+        // KA3-close-review: Save writes the Kanji timer's pairs not applied first
+        if (c.save && m_kanjiTimer && !m_kanjiTimer->applyTo(id.value, *session)) {
+            m_closing.clear();
+            emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
+                                                                  "A document could not be saved; nothing was closed."));
+            return;
+        }
         if (c.save) {
             QString path = row.value(QStringLiteral("path")).toString();
             // A file picked for an Untitled row gets its format's extension,
@@ -5444,6 +5465,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
+            {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},

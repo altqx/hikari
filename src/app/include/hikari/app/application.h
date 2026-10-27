@@ -11,6 +11,7 @@
 #include "hikari/app/update_checker.h"
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
+#include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
@@ -835,6 +836,7 @@ public:
     UpdateChecker &updates() { return *m_updates; }
     WhatsNew &whatsNew() { return *m_whatsNew; } // SH3
     StyleManagerController &styleManager() { return *m_styleManager; }
+    KanjiTimerController &kanjiTimer() { return *m_kanjiTimer; } // KA3
     // Y8: the font collector (GLOBAL_OPEN_FONT_COLLECTOR).
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; } // Y6
@@ -1181,6 +1183,7 @@ private:
     std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector; // Y8
+    std::unique_ptr<KanjiTimerController> m_kanjiTimer; // KA3
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;         // Y6: without a settings file
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;   // Y6
     std::unique_ptr<MatroskaController> m_matroska; // Y9
