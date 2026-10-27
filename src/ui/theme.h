@@ -129,6 +129,7 @@ QPalette palette(const Roles &roles);
 // Owner-drawn content colours, fixed per theme.
 struct Content {
     QColor spellcheck;   // GRID_SPELLCHECKER / EDITOR_SPELLCHECKER
+    QColor grammar;      // GR1: the Line editor's wavy underline under a Harper finding
     QColor gridAlternate; // the Grid's every other row
     QColor gridWarning;   // a fast CPS or bad wraps cell
     // GR4: a Comment row's background (legacy GRID_COMMENT), fixed per theme;
@@ -218,6 +219,7 @@ class Theme : public QObject {
     Q_PROPERTY(QColor disabled READ disabled NOTIFY changed FINAL)
     Q_PROPERTY(QColor control READ control NOTIFY changed FINAL)
     Q_PROPERTY(QColor spellcheck READ spellcheck NOTIFY changed FINAL)
+    Q_PROPERTY(QColor grammar READ grammar NOTIFY changed FINAL)
     // E4: the Line editor's text colours, by core::syntax::Role.
     Q_PROPERTY(QVariantList syntax READ syntax NOTIFY changed FINAL)
 public:
@@ -246,6 +248,7 @@ public:
     QColor disabled() const { return roles().disabled; }
     QColor control() const { return roles().control; }
     QColor spellcheck() const { return theme::current().content.spellcheck; }
+    QColor grammar() const { return theme::current().content.grammar; }
     QVariantList syntax() const;
 
     // The Appearance page: the themes ({code, name, dark, highContrast}), a
