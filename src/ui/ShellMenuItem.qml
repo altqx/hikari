@@ -63,6 +63,9 @@ MenuItem {
     onHighlightedChanged: if (highlighted) holdMenu()
     onPressed: holdMenu()
     property string iconRole
+    // DX1 (#367): the hotkey symbol of the command the item runs, for the
+    // docs export's menu paths (Main.commandMenus); "" for none.
+    property string command
     // The binding shown at the right (Main.applyMenuShortcuts fills the menu
     // bar's); a text with a tab carries its own.
     property string shortcutText

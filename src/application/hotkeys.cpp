@@ -447,7 +447,7 @@ constexpr NameRow kNames[] = {
         {5019, "Close audio"}, // GLOBAL_CLOSE_AUDIO
         {5010, "Find and replace"}, // GLOBAL_FIND_REPLACE
         {5028, "Font collector"}, // GLOBAL_OPEN_FONT_COLLECTOR
-        {5112, "HikariSub website"}, // GLOBAL_HELP
+        {5112, "User guide"}, // GLOBAL_HELP (DX1: was "HikariSub website")
         {5111, "Credits"}, // GLOBAL_HELPERS
         {5029, "Hide tags"}, // GLOBAL_HIDE_TAGS
         {5008, "History"}, // GLOBAL_HISTORY
@@ -626,7 +626,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5154, GlobalHotkey, "Next tab", "Ctrl-PgDn"}, // GLOBAL_NEXT_TAB
         {5155, GlobalHotkey, "Previous tab", "Ctrl-PgUp"}, // GLOBAL_PREVIOUS_TAB
         {5166, GlobalHotkey, "Select line at current video position", "F2"}, // GLOBAL_SELECT_FROM_VIDEO
-        {5112, GlobalHotkey, "HikariSub website", "F1"}, // GLOBAL_HELP
+        {5112, GlobalHotkey, "User guide", "F1"}, // GLOBAL_HELP
         {4527, GridHotkey, "Duplicate lines", "Ctrl-D"}, // GRID_DUPLICATE_LINES
         {4554, GridHotkey, "Copy columns", "Ctrl-Shift-C"}, // GRID_COPY_COLUMNS
         {4553, GridHotkey, "Paste columns", "Ctrl-Shift-V"}, // GRID_PASTE_COLUMNS

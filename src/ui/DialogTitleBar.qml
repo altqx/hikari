@@ -8,8 +8,10 @@ import Hikari.Ui
 // 32-pixel row on `panel`, the title at the leading edge (the owner's
 // answer of 2026-10-21) and the window buttons at the trailing one: Close,
 // and Maximise (or Restore) only while the dialog can be resized; no
-// Minimise and no application icon. Its free parts move the window, a
-// double-click maximises a resizable one, a right click opens the window
+// Minimise and no application icon. DX1 (#367): before them, "?" (Help)
+// opens the window's page of the user guide, on windows that have one;
+// User guide's key (F1) opens it from the keyboard. Its free parts move the
+// window, a double-click maximises a resizable one, a right click opens the window
 // system's window menu (TitleBarMoveArea). While the window is not active
 // the title and the glyphs take the disabled role. In the high-contrast
 // themes a 1-pixel `line` parts the row from the body. Drawn only while the
@@ -26,6 +28,9 @@ Rectangle {
     property string title: window ? window.title : ""
     // PU7 (#309): false for a window the user cannot close (Install update).
     property bool closable: true
+    // DX1 (#367): the window's page of the user guide (DialogWindow.guideId);
+    // with one, a "?" button before the window buttons opens it.
+    property string guideId
     visible: frame.custom
     implicitHeight: visible ? 32 : 0
     implicitWidth: titleLabel.implicitWidth + 12 + 24 + buttons.implicitWidth
@@ -71,6 +76,14 @@ Rectangle {
         objectName: "dialogTitleBarButtons"
         anchors.right: parent.right
         anchors.top: parent.top
+        TitleBarButton {
+            objectName: "dialogTitleBarHelp"
+            visible: UserGuide.hasPage("window", bar.guideId)
+            active: bar.active
+            iconRole: "help"
+            text: qsTr("Help")
+            onClicked: UserGuide.open("window", bar.guideId)
+        }
         TitleBarButton {
             id: maximizeButton
             objectName: "dialogTitleBarMaximize"
