@@ -828,6 +828,48 @@ TEST(KanjiTimer, MultiHighlightGivesEachSyllableItsKana)
     EXPECT_EQ(s(*towa.view()->output), "{\\k30}永遠|えいえん{\\k35}#{\\k40}に");
 }
 
+TEST(KanjiTimer, ALineOfManyFuriganaSyllablesReadsQuickly)
+{
+    // readings out of the text in one pass, as the # syllables: 128,000
+    // kanji, each sung over two syllables
+    std::string text;
+    for (int i = 0; i < 128000; ++i)
+        text += "{\\k1}君|き{\\k1}#|み";
+    const auto line = u(text);
+    const auto start = std::chrono::steady_clock::now();
+    const auto read = kanjiText(line);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(10));
+    ASSERT_EQ(read.units.size(), 128000u);
+    ASSERT_EQ(read.readings.size(), 128000u);
+    EXPECT_EQ(read.readings.back(), (KanjiText::Reading{127999, 128000, u("きみ")}));
+    EXPECT_EQ(read.tagged.size(), 128000u);
+}
+
+TEST(KanjiTimer, TheReadingsOfALongLineComeQuickly)
+{
+    // every run against the dictionary's words in one pass: 64,000 groups
+    // of 君 over ki mi, the dictionary reading each as きみ and 君君 as one word
+    std::string romaji, text;
+    for (int i = 0; i < 64000; ++i) {
+        romaji += "{\\k1}ki{\\k1}mi";
+        text += "君";
+    }
+    const auto syls = kanjiSyllables(u(romaji), 0, 0);
+    const auto kanji = kanjiText(u(text));
+    std::vector<KanjiGroup> groups(64000, KanjiGroup{2, 1});
+    std::vector<FuriganaRun> words;
+    for (std::size_t i = 0; i < 64000; i += 2)
+        words.push_back({i, i + 2, u("君君"), u("きみきみ"), std::nullopt});
+    const auto start = std::chrono::steady_clock::now();
+    const auto rs = kanjiReadings(syls, kanji, groups, words, {});
+    const auto out = kanjiOutput(syls, kanji, groups, true, &rs);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(10));
+    ASSERT_EQ(rs.size(), 64000u);
+    EXPECT_EQ(s(rs.back().dictionary), "きみきみ");
+    EXPECT_FALSE(rs.back().differs);
+    EXPECT_EQ(s(out.substr(0, 16)), "{\\k1}君|き{\\k1}#|み");
+}
+
 TEST(KanjiTimer, FuriganaReadsBackAsTypedReadings)
 {
     const auto read = kanjiText(u("{\\k40}君|きみ{\\k30}の{\\k20}声｜！こ{\\k25}#|え{\\k10}二人|ふたり"));
