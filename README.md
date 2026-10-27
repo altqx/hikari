@@ -6,6 +6,8 @@
 
 <p align="center">A subtitle editor and player for everything from quick fixes to full typesetting.</p>
 
+<p align="center"><a href="https://hikarisub.altqx.com">Website and user guide</a></p>
+
 <img src="docs/readme/hero.webp" alt="HikariSub legacy with a karaoke music video: the video with typeset karaoke, the audio waveform, the line editor and the subtitle grid">
 <p align="center"><sub>Subtitles: Jibrill</sub></p>
 
