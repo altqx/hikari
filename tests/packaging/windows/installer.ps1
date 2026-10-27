@@ -1,7 +1,7 @@
 # Installer checks on the Winix VM (installers SPEC 8.3), run by the tasks in
 # tests/packaging/windows/winix.yaml. Every value comes from the environment:
 #
-#   ACTION    run | check-installed | check-removed | icon-ids | start-app | stop-app | state | dir | open-file | update | cleanup | end-setups
+#   ACTION    run | check-installed | check-removed | user-file | icon-ids | start-app | stop-app | state | dir | open-file | update | cleanup | end-setups
 #   SETUP     run: the installer or uninstaller to start
 #   ARGS      run: its command line (NSIS rules: /D= last, unquoted)
 #   EXPECT    run: the exit code it must return (default 0)
@@ -10,6 +10,8 @@
 #   INSTDIR   the install folder (default: SPEC 1.4's folder for SCOPE)
 #   ORPHANS   check-installed: |-separated payload paths that must be gone
 #   KEEP      check-installed, check-removed: |-separated paths that must remain
+#   KEEP_USER check-removed: |-separated paths in the user folder (%APPDATA%\HikariSub, UD1) that must remain
+#   FILE      user-file: a file to write in the user folder
 #   LEGACY    check-installed: 1 when the install is legacy's (HikariSub_AVX.exe allowed)
 #
 # Every failed check is printed as "FAIL <what>"; the exit code is the number
@@ -26,6 +28,7 @@ $defaultDir = if ($scope -eq 'machine') { Join-Path $env:ProgramW6432 'HikariSub
 $instDir = if ($env:INSTDIR) { $env:INSTDIR.TrimEnd('\') } else { $defaultDir }
 $exe = Join-Path $instDir 'HikariSub.exe'
 $uninstallKey = "$hive\Software\Microsoft\Windows\CurrentVersion\Uninstall\HikariSub"
+$userFolder = Join-Path $env:APPDATA 'HikariSub'
 $installKey = "$hive\Software\HikariSub\Install"
 $classes = "$hive\Software\Classes"
 $programs = if ($scope -eq 'machine') { [Environment]::GetFolderPath('CommonPrograms') } else { [Environment]::GetFolderPath('Programs') }
@@ -186,6 +189,15 @@ switch ($env:ACTION) {
             Check ((Value "$classes\$ext" '(default)') -ne "HikariSub$ext") "$ext default no longer HikariSub$ext"
         }
         Check (-not (Test-Path "$classes\Applications\HikariSub.exe")) 'Applications\HikariSub.exe removed'
+        # UD1: uninstalling never deletes the user folder.
+        foreach ($k in @($env:KEEP_USER -split '\|' | Where-Object { $_ })) {
+            Check (Test-Path -LiteralPath (Join-Path $userFolder $k)) "user folder kept $k"
+        }
+    }
+    'user-file' {
+        New-Item -ItemType Directory -Force -Path $userFolder | Out-Null
+        Set-Content -LiteralPath (Join-Path $userFolder $env:FILE) -Value 'kept by the uninstaller'
+        Check (Test-Path -LiteralPath (Join-Path $userFolder $env:FILE)) "wrote $env:FILE in the user folder"
     }
     'icon-ids' {
         $target = if ($env:EXE) { $env:EXE } else { $exe }
