@@ -547,6 +547,24 @@ private slots:
         stop();
     }
 
+    // Find landing on a folded run's first Line selects that Line alone, so
+    // the run unfolds rather than show a row that stands for all five.
+    void aSelectionOfPartOfARunUnfoldsIt()
+    {
+        start();
+        openSong();
+        shell().setFoldGenerated(true);
+        application->clickLine(lineId(4).value, Qt::NoModifier);
+        application->runFindReplace(QStringLiteral("find"),
+                                    {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("ki")}});
+        QTRY_COMPARE(active(), std::optional(lineId(5)));
+        QCOMPARE(selected(), ids({5}));
+        QCOMPARE(fold(5), 2);
+        QCOMPARE(gridRows(), (QList<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
+        QCOMPARE(fold(11), 1);
+        stop();
+    }
+
     // The Karaoke arrangement and its Grid (a folded run selected, the other
     // unfolded) in the four themes, for review: written to
     // HIKARI_SURFACE_SHOT_DIR when it is set (karaoke-<part>-<theme>.png).

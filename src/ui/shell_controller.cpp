@@ -160,11 +160,20 @@ application::Selection ShellController::foldedWhole(application::Selection selec
 
 void ShellController::setSelection(const application::Selection &selection)
 {
-    // KP1: a Line made active inside a folded run (Find, Go to, the audio's
-    // next Line) unfolds it.
-    if (selection.active)
-        if (const auto first = runFirst(*selection.active); first && *first != *selection.active && runFolded(*first))
-            setRunFolded(*first, false);
+    // KP1: a folded run's row stands for all its Lines, so a selection that
+    // makes a later Line of the run active or selects the run only in part
+    // (Find, Go to, the audio's next Line, Select Lines) unfolds it.
+    std::vector<core::LineId> unfold;
+    for (const int row : m_lines.foldedRuns()) {
+        const auto lines = m_lines.runLines(row);
+        const auto picked = std::ranges::count_if(lines, [&](core::LineId id) { return selection.selected.contains(id); });
+        const bool activeInside =
+            selection.active && std::find(lines.begin() + 1, lines.end(), *selection.active) != lines.end();
+        if (activeInside || (picked > 0 && picked < std::ssize(lines)))
+            unfold.push_back(lines.front());
+    }
+    for (const auto first : unfold)
+        setRunFolded(first, false);
     m_lines.setSelection(selection, selection.anchor);
     const auto row = selection.active ? m_lines.rowOf(*selection.active) : std::nullopt;
     const core::LineRecord *record = row ? m_lines.recordAt(*row) : nullptr;

@@ -1062,9 +1062,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // KP1: the Grid's Fold generated lines.
     m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
     connect(m_shell.get(), &ui::ShellController::foldGeneratedChanged, this, [this] {
+        selectFoldedRunsWhole();
         if (m_settings->boolean("grid.foldGenerated") != m_shell->foldGenerated())
             m_settings->set("grid.foldGenerated", m_shell->foldGenerated());
-        selectFoldedRunsWhole();
     });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened")); // SH2
@@ -1874,7 +1874,6 @@ void Application::refreshViews()
         m_shell->setDraft(targetSession->draftRecord()); // GR2
         m_shell->setSelection(targetSession->selection());
         m_editor->selectionChanged(); // LE4: the mixed position
-        selectFoldedRunsWhole(); // KP1
     }
     if (referenceSession) // R2: the reference's own selection
         m_shell->setReferenceSelection(referenceSession->selection());
@@ -2862,8 +2861,9 @@ void Application::toggleFold(qulonglong first)
     m_shell->setRunFolded(id, fold);
 }
 
-// KP1: the folded runs selected whole or not at all once folding turns on
-// or the Grid shows a Document anew (an edit, another tab, a file opened).
+// KP1: the folded runs selected whole or not at all once folding turns on.
+// Afterwards a selection that reaches a run in part unfolds it instead
+// (ShellController::setSelection).
 void Application::selectFoldedRunsWhole()
 {
     auto *session = targetSession();
