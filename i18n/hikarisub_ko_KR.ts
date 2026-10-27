@@ -4260,6 +4260,24 @@ Failed to copy %2 fonts.</source>
         <source>Line wraps</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Fold generated lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n generated lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>folded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unfolded</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -13155,6 +13173,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Delete</source>
         <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

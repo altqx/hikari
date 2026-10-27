@@ -21,6 +21,7 @@
 #include <functional>
 #include <optional>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace hikari::ui {
@@ -96,6 +97,17 @@ public:
         // translation leaves a run of its Original unplaced
         // (core::hasUnplacedRuns); apart from Unconfirmed.
         UnplacedRunsRole,
+        // KP1 (#286): the first row of a run of generated Lines
+        // (application::generatedRuns): 1 while the run is folded, the row
+        // then standing for the whole run, 2 while it is unfolded; 0 on any
+        // other row.
+        FoldRole,
+        // KP1: on a run's first row, how many Lines the run holds.
+        FoldCountRole,
+        // The Document row whose HiddenBlockRole mark the row shows, and
+        // toggles from: the row's own, or on a folded run's row its last
+        // Line the Grid filter shows (KP1).
+        HiddenBlockRowRole,
     };
     // E6: the number cell's colour index in LabelColoursRole for a State
     // (SubsGridWindow.cpp:478-479): 0 normal, 1 modified, 2 saved, 3 doubtful
@@ -189,6 +201,26 @@ public:
     // it (SubsGridWindow.cpp:348-357); nullopt shows times.
     void setFrameTimebase(std::optional<application::LegacyTimebase> frames);
 
+    // KP1 (#286): the Grid folds each run of generated Lines into its first
+    // row while folding is on, except the runs unfolded since (by their
+    // first Line). Turning folding on or off forgets those. The view's
+    // state only: the Document is untouched. Rows to filter out change with
+    // it: LineFilterModel::changeFolds.
+    void setFoldGenerated(bool on);
+    bool foldGenerated() const { return m_foldGenerated; }
+    void setRunFolded(core::LineId first, bool folded);
+    // The first row of the run `row` is in, or -1.
+    int runFirstRow(int row) const;
+    bool runFolded(int firstRow) const;
+    // In a folded run, after its first row: not shown.
+    bool foldedMember(int row) const;
+    // The first rows of the folded runs.
+    std::vector<int> foldedRuns() const;
+    // The Lines of the run whose first row is `firstRow`, in order.
+    std::vector<core::LineId> runLines(int firstRow) const;
+    // How many rows the run whose first row is `firstRow` holds, or 0.
+    int runSize(int firstRow) const;
+
     std::optional<int> rowOf(core::LineId id) const;
     std::optional<core::LineId> lineAt(int row) const;
     const core::LineRecord *recordAt(int row) const; // valid until the next setDocument
@@ -218,7 +250,20 @@ private:
         int state = 0;               // E6: LineStateRole
         mutable std::optional<QString> shownText; // E6: the Text column, tags swapped when hidden
         mutable std::optional<bool> unplacedRuns;  // TM1: UnplacedRunsRole, read when first shown
+        int run = -1;                               // KP1: its index in m_runs, or -1
     };
+    // KP1: a run of generated Lines, its summary as its folded row shows it.
+    struct Run {
+        int first = 0, count = 0;
+        int earliest = 0, latest = 0; // the rows with the earliest start and the latest end
+        int blockRow = 0;             // the last Line the Grid filter shows: its hidden-block mark
+        QString styles, effects;      // each one once, in order
+    };
+    // KP1: the folded row's cells.
+    QString startText(const core::LineRecord &line) const;
+    QString endText(const core::LineRecord &line) const;
+    QVariant foldedData(const Run &run, int column) const;
+    void emitFoldsChanged();
     const QString &shownTextOf(const Row &row) const;
     // The row as shown: the draft's for the drafted row (GR2).
     const Row &shownRow(int row) const;
@@ -246,6 +291,9 @@ private:
     std::vector<core::StyleValues> m_styles; // TM1: the runs' base
     bool m_tooManyStyles = false;            // past core::kMaxTagTransferStyles: no marks
     bool m_filtered = false;
+    std::vector<Run> m_runs;                     // KP1
+    bool m_foldGenerated = false;                // KP1
+    std::unordered_set<std::uint64_t> m_unfolded; // KP1: the runs unfolded, by their first Line
     int m_headerBlock = 0;
     int m_hidden = 0;
     bool m_autoHide = false; // GR3
@@ -266,9 +314,20 @@ public:
     void setLineModel(LineTableModel *model);
     void setPredicate(Predicate predicate); // empty predicate shows every Line
     int hiddenSelectedCount() const;
+    // Whether the Grid filter shows the source row's Line, folding aside
+    // (KP1: a folded run's row is shown while any of its Lines passes).
+    bool passes(int sourceRow) const;
     // Proxy row of the shown Line nearest (in document order) to `id`, which
     // may itself be hidden; ties prefer the following Line. -1 if none shown.
     int nearestVisibleRow(core::LineId id) const;
+    // KP1: the folds change in `change` (LineTableModel::setFoldGenerated,
+    // setRunFolded); the rows shown follow.
+    template <typename Change> void changeFolds(Change &&change)
+    {
+        beginFilterChange();
+        change();
+        endFilterChange(Direction::Rows);
+    }
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
