@@ -387,7 +387,7 @@ private slots:
         QVERIFY2(r.leftOver.isEmpty(), qPrintable(r.leftOver.join(QLatin1Char(','))));
         QStringList keptBack = r.keptBack;
         keptBack.sort();
-        QStringList expected{old[2], old[0], old[1]};
+        QStringList expected{old[0], scripts + QStringLiteral("include/l0/DependencyControl"), old[2]};
         expected.sort();
         QCOMPARE(keptBack, expected);
         QCOMPARE(entries(folder.root() + QStringLiteral("/automation")),

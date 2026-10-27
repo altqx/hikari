@@ -17422,9 +17422,14 @@ private slots:
             QTRY_VERIFY(helpMenu->property("opened").toBool());
             auto *openItem = qobject_cast<QQuickItem *>(named("openUserFolderMenuItem"));
             QTRY_VERIFY(openItem && openItem->isVisible() && openItem->width() > 0);
-            QTest::mouseMove(openItem->window(),
-                             openItem->mapToScene(QPointF(openItem->width() / 2, openItem->height() / 2)).toPoint());
-            QTRY_VERIFY(openItem->property("hovered").toBool());
+            // Highlighted as the pointer would (offscreen has none over a popup).
+            for (int i = 0; i < helpMenu->property("count").toInt(); ++i) {
+                QQuickItem *at = nullptr;
+                QVERIFY(QMetaObject::invokeMethod(helpMenu, "itemAt", Q_RETURN_ARG(QQuickItem *, at), Q_ARG(int, i)));
+                if (at == openItem)
+                    helpMenu->setProperty("currentIndex", i);
+            }
+            QTRY_VERIFY(openItem->property("highlighted").toBool());
             save(window, QStringLiteral("help-menu-") + code);
             QVERIFY(QMetaObject::invokeMethod(helpMenu, "close"));
             QTRY_VERIFY(!helpMenu->property("visible").toBool());
@@ -17434,6 +17439,7 @@ private slots:
             auto *settingsWindow = qobject_cast<QQuickWindow *>(dialog);
             QTRY_VERIFY(settingsWindow->isVisible());
             QVERIFY(QTest::qWaitForWindowExposed(settingsWindow));
+            settingsWindow->resize(1040, 620);
             showSettingsPage("general");
             auto *row = qobject_cast<QQuickItem *>(dialogItem("settingsDialog", "settingsUserFolderRow"));
             QTRY_VERIFY(row && row->isVisible());
