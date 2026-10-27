@@ -17,8 +17,9 @@ pragma Translator: "HikariSub.MainWindow"
 //
 // ask(options, done): title, text, detail, details, severity, plainText, choices
 // ([{id, text, role: "accept" | "reject" | "destructive" | "action",
-// isDefault}]), dontAsk; done(id, dontAskAgain). Closing it (Esc, its
-// Close) answers the "reject" choice, or "" without one.
+// isDefault}]), dontAsk, from (the window it opens over; else the one with
+// the keyboard); done(id, dontAskAgain). Closing it (Esc, its Close)
+// answers the "reject" choice, or "" without one.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -55,7 +56,7 @@ DialogWindow {
         showDetails = false
         choices = o.choices || [{ id: "ok", text: qsTr("OK"), role: "accept", isDefault: true }]
         done = callback || null
-        open()
+        openFrom(o.from || null)
     }
     function answer(id) {
         const callback = done

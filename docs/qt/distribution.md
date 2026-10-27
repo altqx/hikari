@@ -79,7 +79,7 @@ A rewrite release always names `"offer_to": ["qt"]`. Legacy users are offered it
 
 ## Payload and licences
 
-Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter and SoundTouch (LGPL-2.1-or-later, static), dictionaries, translations, helpers). Qt is linked dynamically and shipped with its licence notices; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs; deb and rpm declare their host dependencies.
+Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter and SoundTouch (LGPL-2.1-or-later, static), MeCab (BSD-3-Clause, static) and its UniDic 2.1.2 dictionary (BSD-3-Clause, `Dictionary/unidic-lite`, 248 MB), dictionaries, translations, helpers). Qt is linked dynamically and shipped with its licence notices; MeCab's and UniDic's BSD notices are in `licenses/mecab/LICENSE` and `licenses/unidic/LICENSE` (UniDic's also beside the dictionary), and the AUR package copies them to `/usr/share/licenses/<package>/` and declares `BSD-3-Clause` beside `GPL-3.0-or-later`, as the rpm's License tag does; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs; deb and rpm declare their host dependencies.
 
 ## Testing an update
 

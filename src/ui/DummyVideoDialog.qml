@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Video"
 import QtQuick
 import QtQuick.Controls
@@ -8,30 +9,36 @@ import Hikari.Ui
 // options", DummyVideo.cpp:20-116): the resolution presets (1920x1080 chosen)
 // and the width and height (300 to 8000, 200 to 4500), the colour and the
 // checkerboard, the frames per second (typed or one of six, digits and dots
-// only) and the duration, with legacy's "This gives %i frames" computed once
-// for the default and never updated. OK hands the values to
-// App.openDummyVideo, which logs "Invalid FPS value." for a rate it refuses.
+// only) and the duration. Open hands the values to App.openDummyVideo.
 // The colour is legacy's ButtonColorPicker value as ASS text (&HBBGGRR&),
 // shown beside a swatch (V3-dummy-colour-text); SY2: the swatch opens the
 // colour popover, whose changes write the text.
-Dialog {
+// PU4 (#306, PU4-dummy-video): a window on DG1's frame titled with the
+// command, Open for OK; "This gives %1 frames" follows the rate and the
+// duration as they are typed (legacy computed it once, for the defaults); a
+// rate outside 15 to 120 or a duration that is no time is said under its
+// field and Open is off (legacy's "Invalid FPS value." came after OK); the
+// presets show Custom for a size that is none of them.
+DialogWindow {
     id: dialog
     objectName: "dummyVideoDialog"
+    dialogId: "dummyVideo"
     required property var app
     required property ColourPickerController colourPicker
-    title: qsTr("Dummy video options")
-    // K1: the title with its icon, as the other dialogs show theirs.
-    header: IconDialogHeader { objectName: "dummyVideoDialogTitle"; iconRole: "open-video"; text: dialog.title }
+    title: qsTr("Open dummy video")
     modal: true
-    standardButtons: Dialog.Ok | Dialog.Cancel
+    defaultButton: openButton
     property var defaults: ({})
     // the text to log when the values are refused ("Invalid FPS value.")
     signal refused(string message)
 
+    readonly property int frames: app.dummyVideoFrames(fps.editText, Math.max(0, durationMs(duration.text)))
+    readonly property bool fpsValid: frames >= 0
+    readonly property bool durationValid: durationMs(duration.text) >= 0
+
     function show() {
         defaults = app.dummyVideoDefaults()
         resolution.model = defaults.resolutions
-        resolution.currentIndex = defaults.resolution
         widthBox.value = defaults.width
         heightBox.value = defaults.height
         colour.text = defaults.colour
@@ -39,7 +46,7 @@ Dialog {
         fps.model = defaults.fpsChoices
         fps.editText = defaults.fps
         duration.text = defaults.duration
-        frames.text = qsTr("This gives %1 frames").arg(defaults.frames)
+        syncPreset()
         open()
     }
     // SubsTime from the TimeCtrl's "H:MM:SS.CC" (ms; -1 unreadable)
@@ -62,17 +69,28 @@ Dialog {
                  width: widthBox.value, height: heightBox.value,
                  red: c.red, green: c.green, blue: c.blue, pattern: pattern.checked }
     }
+    // The preset of the size shown, or none (Custom).
+    function syncPreset() {
+        const list = resolution.model || []
+        resolution.currentIndex = list.findIndex(r => {
+            const m = /^(\d+)x(\d+)/.exec(r)
+            return m && +m[1] === widthBox.value && +m[2] === heightBox.value
+        })
+    }
 
     GridLayout {
         columns: 2
-        anchors.fill: parent
-        Label { text: qsTr("Video resolution:") }
+        columnSpacing: 12
+        rowSpacing: 12
+        Label { text: qsTr("Video resolution"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
         ColumnLayout {
+            spacing: 6
             ComboBox {
                 id: resolution
                 objectName: "dummyResolution"
                 Layout.fillWidth: true
-                Accessible.name: qsTr("Video resolution:")
+                displayText: currentIndex < 0 ? qsTr("Custom") : currentText
+                Accessible.name: qsTr("Video resolution")
                 // OnResolutionChoose: "<w>x<h> (...)" into the two fields
                 onActivated: {
                     const m = /^(\d+)x(\d+)/.exec(currentText)
@@ -83,59 +101,67 @@ Dialog {
                 }
             }
             RowLayout {
+                spacing: 6
                 SpinBox {
                     id: widthBox
                     objectName: "dummyWidth"
                     from: 300; to: 8000; editable: true
                     Accessible.name: qsTr("Width")
+                    onValueChanged: dialog.syncPreset()
                 }
-                Label { text: "×" }
+                Label { text: "×"; color: Theme.muted }
                 SpinBox {
                     id: heightBox
                     objectName: "dummyHeight"
                     from: 200; to: 4500; editable: true
                     Accessible.name: qsTr("Height")
+                    onValueChanged: dialog.syncPreset()
                 }
             }
         }
-        Label { text: qsTr("Color:") }
-        RowLayout {
-            Button {
-                id: swatch
-                objectName: "dummyColourSwatch"
-                implicitWidth: 32
-                implicitHeight: 24
-                readonly property var c: dialog.rgb(colour.text)
-                readonly property color color: c ? Qt.rgba(c.red / 255, c.green / 255, c.blue / 255, 1) : "transparent"
-                text: qsTr("Choose the colour")
-                Accessible.name: text
-                ToolTip.visible: hovered
-                ToolTip.text: text
-                ToolTip.delay: 500
-                background: Rectangle {
-                    color: swatch.color
-                    radius: 2
-                    border.color: swatch.visualFocus ? Theme.focus : Theme.control
+        Label { text: qsTr("Colour"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
+        ColumnLayout {
+            spacing: 6
+            RowLayout {
+                spacing: 6
+                Button {
+                    id: swatch
+                    objectName: "dummyColourSwatch"
+                    implicitWidth: 32
+                    implicitHeight: 24
+                    readonly property var c: dialog.rgb(colour.text)
+                    readonly property color color: c ? Qt.rgba(c.red / 255, c.green / 255, c.blue / 255, 1) : "transparent"
+                    text: qsTr("Choose the colour")
+                    Accessible.name: text
+                    ToolTip.visible: hovered
+                    ToolTip.text: text
+                    ToolTip.delay: 500
+                    background: Rectangle {
+                        color: swatch.color
+                        radius: 2
+                        border.color: swatch.visualFocus ? Theme.focus : Theme.control
+                    }
+                    contentItem: Item {}
+                    onClicked: {
+                        let before = colour.text
+                        colourPopover.openFor(swatch, {
+                            changeColour: v => colour.text = dialog.colourPicker.assText(v, false),
+                            endDialog: accepted => { if (!accepted) colour.text = before }
+                        }, () => {
+                            before = colour.text
+                            const c = dialog.rgb(before) || dialog.rgb(dialog.defaults.colour) || { red: 0, green: 0, blue: 0 }
+                            dialog.colourPicker.opened("dummyVideo")
+                            return { r: c.red, g: c.green, b: c.blue, a: 0 }
+                        }, { title: qsTr("Colour"), alpha: false, focus: swatch })
+                    }
                 }
-                contentItem: Item {}
-                onClicked: {
-                    let before = colour.text
-                    colourPopover.openFor(swatch, {
-                        changeColour: v => colour.text = dialog.colourPicker.assText(v, false),
-                        endDialog: accepted => { if (!accepted) colour.text = before }
-                    }, () => {
-                        before = colour.text
-                        const c = dialog.rgb(before) || dialog.rgb(dialog.defaults.colour) || { red: 0, green: 0, blue: 0 }
-                        dialog.colourPicker.opened("dummyVideo")
-                        return { r: c.red, g: c.green, b: c.blue, a: 0 }
-                    }, { title: qsTr("Color:"), alpha: false, focus: swatch })
+                TextField {
+                    id: colour
+                    objectName: "dummyColour"
+                    font.family: "monospace"
+                    Layout.preferredWidth: 112
+                    Accessible.name: qsTr("Colour")
                 }
-            }
-            TextField {
-                id: colour
-                objectName: "dummyColour"
-                Layout.fillWidth: true
-                Accessible.name: qsTr("Color:")
             }
             CheckBox {
                 id: pattern
@@ -143,29 +169,72 @@ Dialog {
                 text: qsTr("Checkerboard pattern")
             }
         }
-        Label { text: qsTr("Frames per second:") }
-        ComboBox {
-            id: fps
-            objectName: "dummyFps"
-            editable: true
-            Layout.fillWidth: true
-            validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-            Accessible.name: qsTr("Frames per second:")
-        }
-        Label { text: qsTr("Duration:") }
+        Label { text: qsTr("Frames per second"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
         ColumnLayout {
+            spacing: 6
+            ComboBox {
+                id: fps
+                objectName: "dummyFps"
+                editable: true
+                Layout.preferredWidth: 112
+                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
+                Accessible.name: qsTr("Frames per second")
+                Accessible.description: dialog.fpsValid ? "" : fpsProblem.text
+            }
+            Label {
+                id: fpsProblem
+                objectName: "dummyFpsProblem"
+                visible: !dialog.fpsValid
+                text: qsTr("Must be from 15 to 120.")
+                color: Theme.danger
+                Accessible.role: Accessible.AlertMessage
+            }
+        }
+        Label { text: qsTr("Duration"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
+        ColumnLayout {
+            spacing: 6
             TextField {
                 id: duration
                 objectName: "dummyDuration"
-                Layout.fillWidth: true
-                Accessible.name: qsTr("Duration:")
+                font.family: "monospace"
+                Layout.preferredWidth: 112
+                Accessible.name: qsTr("Duration")
+                Accessible.description: dialog.durationValid ? frameCount.text : durationProblem.text
             }
             Label {
-                id: frames
+                id: durationProblem
+                objectName: "dummyDurationProblem"
+                visible: !dialog.durationValid
+                text: qsTr("Type a time such as 0:25:00.00.")
+                color: Theme.danger
+                Accessible.role: Accessible.AlertMessage
+            }
+            Label {
+                id: frameCount
                 objectName: "dummyFrames"
+                // The count waits for a rate it can use.
+                visible: dialog.fpsValid && dialog.durationValid
+                text: qsTr("This gives %1 frames").arg(Math.max(0, dialog.frames))
+                color: Theme.muted
             }
         }
     }
+    buttons: [
+        PrimaryButton {
+            id: openButton
+            objectName: "dummyVideoOpen"
+            text: qsTr("Open")
+            enabled: dialog.fpsValid && dialog.durationValid
+            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            onClicked: dialog.accept()
+        },
+        Button {
+            objectName: "dummyVideoCancel"
+            text: qsTr("Cancel")
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: dialog.reject()
+        }
+    ]
     onAccepted: {
         const problem = dialog.app.openDummyVideo(dialog.values())
         if (problem.length > 0)

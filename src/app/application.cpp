@@ -3,6 +3,7 @@
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
+#include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/qt_audio_devices.h"
 #include "hikari/backends/simulated_output.h"
@@ -58,6 +59,7 @@
 #include <QVariantMap>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <QFileInfo>
 
@@ -766,6 +768,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                  : QDir::temp().filePath(QStringLiteral("hikari-catalogs-%1").arg(QCoreApplication::applicationPid()));
         StyleManagerController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
+        hooks.targetDocument = [this] { return m_workspace.editingTarget(); };
+        hooks.session = [this](application::DocumentId id) -> application::EditSession * {
+            return id == m_workspace.reference() ? nullptr : m_files->session(id); // R2-reference-tray
+        };
         hooks.documents = [this] {
             // Every Document but the reference, which is never written (R2-reference-tray).
             std::vector<application::EditSession *> out;
@@ -781,6 +787,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.fonts = [this] { // Y6: the external fonts render in the preview; 38c: the script's attached fonts too
             return subtitleFonts(m_workspace.editingTarget());
         };
+        hooks.lastCatalog = [this] { return m_settings->text("styles.lastCatalog"); };
+        hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {
@@ -1770,6 +1778,8 @@ void Application::refreshViews()
         spellChecker();
     reportGroupBreak();
     scheduleAutosave();
+    if (m_styleManager) // SY1: an open Style manager follows
+        m_styleManager->targetRefreshed();
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -1881,6 +1891,22 @@ bool Application::setVideoFonts(std::optional<application::DocumentId> document)
     if (std::ranges::equal(fonts, m_videoFonts, same))
         return false;
     m_videoFonts = fonts;
+    if (m_visualTools) {
+        // VT3: the Perspective tool does not measure a font only the renderer
+        // sees. Each lease's names are read from its bytes once.
+        decltype(m_leasedFontNames) read;
+        std::vector<std::string> names;
+        for (const auto &font : m_videoFonts) {
+            if (!font.bytes)
+                continue;
+            const auto known = std::ranges::find(m_leasedFontNames, font.bytes, &decltype(read)::value_type::first);
+            auto own = known != m_leasedFontNames.end() ? known->second : backends::fontNames(*font.bytes);
+            names.insert(names.end(), own.begin(), own.end());
+            read.emplace_back(font.bytes, std::move(own));
+        }
+        m_leasedFontNames = std::move(read);
+        m_visualTools->setLeasedFonts(names);
+    }
     m_video->session().setFonts(std::move(fonts));
     return true;
 }
@@ -2256,6 +2282,12 @@ void Application::cancelClose()
     // (OpenFile returned true; OpenFiles went on with the next).
     if (auto files = std::exchange(m_pendingFiles, std::nullopt))
         applyFiles(std::move(*files), true);
+}
+
+qulonglong Application::editingTargetId() const
+{
+    const auto target = m_workspace.editingTarget();
+    return target ? target->value : 0;
 }
 
 bool Application::targetUntitled() const
@@ -4191,6 +4223,7 @@ void Application::restartSpellChecker()
     if (m_spellChecker)
         m_spellChecker->clear();
     m_spellingStarted = false;
+    emit spellCheckerRestarted();
 }
 
 void Application::spellingRefresh()
@@ -4374,7 +4407,43 @@ QVariantMap Application::spellCheckState(bool changed, const QString &problem)
     if (current)
         for (const auto &s : current->suggestions)
             suggestions << qstr(s);
+    // PU6: the panel names the word's Line (the Grid's number) and shows the
+    // text around it as the Line editor does (tags hidden or not, \N as a
+    // space), at most kContext characters a side.
+    int row = 0;
+    QString before, after;
+    if (const auto *session = current ? targetSession() : nullptr) {
+        const auto lines = session->document().lines();
+        for (std::size_t i = 0; i < lines.size(); ++i)
+            if (lines[i]->id == current->line)
+                row = static_cast<int>(i) + 1;
+        const auto raw = session->selection().active == current->line ? editorRaw(spellingRole()) : std::nullopt;
+        if (raw) {
+            QString text = qstr(*raw);
+            int from = current->start, to = current->end + 1;
+            if (!m_editor->showTags()) {
+                const auto projection = core::project(*raw);
+                if (const auto range = displayRange(projection, current->start, current->end)) {
+                    text = QString::fromStdU16String(projection.text);
+                    from = range->first;
+                    to = range->second;
+                }
+            }
+            if (from >= 0 && to <= text.size() && from <= to) {
+                constexpr int kContext = 40;
+                const auto plain = [](QString s) {
+                    return s.replace(QLatin1String("\\N"), QLatin1String(" ")).replace(QLatin1String("\\n"), QLatin1String(" "));
+                };
+                before = plain(text.left(from).right(kContext));
+                after = plain(text.mid(to).left(kContext));
+            }
+        }
+    }
     return {{QStringLiteral("found"), current != nullptr},
+            {QStringLiteral("available"), m_spellChecker && m_spellChecker->ready()},
+            {QStringLiteral("line"), row},
+            {QStringLiteral("before"), before},
+            {QStringLiteral("after"), after},
             {QStringLiteral("word"), current ? qstr(current->word) : QString()},
             {QStringLiteral("suggestions"), suggestions},
             {QStringLiteral("replacement"), suggestions.isEmpty() ? QString() : suggestions.front()},
@@ -4822,12 +4891,14 @@ QVariantMap Application::resampleValues() const
         return {};
     const auto subs = application::scriptResolution(session->document());
     application::Resolution video = subs;
-    if (m_video->session().state() == application::VideoSession::State::Ready && m_video->session().lastFrame())
+    const bool hasVideo = m_video->session().state() == application::VideoSession::State::Ready && m_video->session().lastFrame();
+    if (hasVideo)
         video = {m_video->session().lastFrame()->width, m_video->session().lastFrame()->height};
     return {{QStringLiteral("subsWidth"), subs.width},
             {QStringLiteral("subsHeight"), subs.height},
             {QStringLiteral("videoWidth"), video.width},
-            {QStringLiteral("videoHeight"), video.height}};
+            {QStringLiteral("videoHeight"), video.height},
+            {QStringLiteral("hasVideo"), hasVideo}};
 }
 
 bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch)
@@ -4954,6 +5025,15 @@ QStringList Application::conversionTargets() const
     return out;
 }
 
+QStringList Application::conversionStyles(const QString &catalog) const
+{
+    QStringList out;
+    if (const auto styles = m_styleManager->catalogStore().list(utf8(catalog)))
+        for (const auto &style : *styles)
+            out << QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), qsizetype(style.name.size()));
+    return out;
+}
+
 QVariantMap Application::previewConversion(const QString &targetName)
 {
     m_conversionPlan.reset();
@@ -4972,8 +5052,11 @@ QVariantMap Application::previewConversion(const QString &targetName)
     options.fps = o.value(QStringLiteral("fpsFromVideo")).toBool() && hasVideo && frameMs > 0.f
                       ? 1000.0 / frameMs
                       : o.value(QStringLiteral("fps")).toString().toDouble();
-    if (options.fps < 1)
+    // PU6: not a number ("nan", "inf") or past any real frame rate is
+    // invalid too (legacy refused only a rate under 1).
+    if (!std::isfinite(options.fps) || options.fps < 1 || options.fps > 1000)
         return {{QStringLiteral("ok"), false},
+                {QStringLiteral("fpsInvalid"), true},
                 {QStringLiteral("problem"),
                  QCoreApplication::translate("HikariSub.Conversion", "Invalid FPS. Correct it in options and try again.")}};
     options.videoFps = hasVideo && frameMs > 0.f ? 1000.0 / frameMs : 23.976;
@@ -5000,37 +5083,51 @@ QVariantMap Application::previewConversion(const QString &targetName)
                  QCoreApplication::translate("HikariSub.Conversion", "This document can't be converted to that format.")}};
     const auto &r = result->report;
     QStringList losses;
+    // PU6: what each one is, "warning" for what the conversion removes.
+    QStringList kinds;
+    const auto add = [&](const QString &text, bool removes) {
+        losses << text;
+        kinds << (removes ? QStringLiteral("warning") : QStringLiteral("info"));
+    };
     if (r.headerDropped)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "The script properties and styles are removed.");
+        add(QCoreApplication::translate("HikariSub.Conversion", "The script properties and styles are removed."), true);
     if (r.commentsRemoved)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved);
+        add(QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved), true);
     if (r.drawingsCleared)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared);
+        add(QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared), true);
     if (r.emptyRemoved)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved);
+        add(QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved), true);
     if (r.duplicatesRemoved)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved);
+        add(QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved), true);
     if (r.reordered)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time.");
+        add(QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time."), false);
+    // Into ASS the markup is converted; into another format some of it is
+    // stripped for good, a warning.
     if (r.textChanged)
-        losses << QCoreApplication::translate("HikariSub.Conversion",
-                                              "Formatting tags converted or removed in %n line(s).", nullptr, r.textChanged);
+        add(QCoreApplication::translate("HikariSub.Conversion", "Formatting tags converted or removed in %n line(s).", nullptr,
+                                        r.textChanged),
+            *target != core::SubtitleFormat::Ass);
     if (r.fieldsDropped)
-        losses << (*target == core::SubtitleFormat::Ass
-                       ? QCoreApplication::translate("HikariSub.Conversion",
-                                                     "%n line(s) get the conversion style \"%1\".", nullptr, r.fieldsDropped)
-                             .arg(o.value(QStringLiteral("style")).toString())
-                       : QCoreApplication::translate("HikariSub.Conversion",
-                                                     "Layer, style, actor, margins or effect removed from %n line(s).", nullptr, r.fieldsDropped));
+        add(*target == core::SubtitleFormat::Ass
+                ? QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style \"%1\".", nullptr,
+                                              r.fieldsDropped)
+                      .arg(o.value(QStringLiteral("style")).toString())
+                : QCoreApplication::translate("HikariSub.Conversion",
+                                              "Layer, style, actor, margins or effect removed from %n line(s).", nullptr,
+                                              r.fieldsDropped),
+            *target != core::SubtitleFormat::Ass);
     if (r.markersDropped)
-        losses << QCoreApplication::translate("HikariSub.Conversion",
-                                              "Bookmarks, hidden lines and groups removed from %n line(s).", nullptr, r.markersDropped);
+        add(QCoreApplication::translate("HikariSub.Conversion", "Bookmarks, hidden lines and groups removed from %n line(s).",
+                                        nullptr, r.markersDropped),
+            true);
     if (r.timesChanged)
-        losses << QCoreApplication::translate("HikariSub.Conversion",
-                                              "Times changed (rounding, frames or new end times) in %n line(s).", nullptr, r.timesChanged);
+        add(QCoreApplication::translate("HikariSub.Conversion",
+                                        "Times changed (rounding, frames or new end times) in %n line(s).", nullptr,
+                                        r.timesChanged),
+            false);
     m_conversionPlan = std::make_unique<ConversionPlan>(
-        ConversionPlan{m_workspace.editingTarget()->value, session->revision(), o, std::move(result->document)});
-    return {{QStringLiteral("ok"), true}, {QStringLiteral("losses"), losses}};
+        ConversionPlan{m_workspace.editingTarget()->value, session->revision(), o, frameMs, std::move(result->document)});
+    return {{QStringLiteral("ok"), true}, {QStringLiteral("losses"), losses}, {QStringLiteral("kinds"), kinds}};
 }
 
 bool Application::acceptConversion()
@@ -5038,9 +5135,13 @@ bool Application::acceptConversion()
     auto plan = std::move(m_conversionPlan);
     auto *session = targetSession();
     const auto target = m_workspace.editingTarget();
-    // A changed Document or options invalidates the plan (C02).
+    // A changed Document or options invalidates the plan (C02), and so does
+    // another video (or none): its frame rate is in the plan.
+    const auto &video = m_video->session();
+    const float frameMs =
+        video.state() == application::VideoSession::State::Ready ? video.legacyTimebase().frameDuration() : 0.f;
     if (!plan || !session || !target || target->value != plan->document || session->revision() != plan->revision ||
-        conversionOptions() != plan->options)
+        conversionOptions() != plan->options || frameMs != plan->frameMs)
         return false;
     std::set<core::LineId> touches;
     for (const auto *line : session->document().lines())
@@ -5133,6 +5234,18 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     p.scaledBorderAndShadow = values.value(QStringLiteral("scaledBorderAndShadow")).toBool();
     application::ScriptPropertiesEdits e;
     auto edited = [&](const char *key) { return edits.value(QLatin1String(key)).toBool(); };
+    // PU6: the rendering fields the user left alone are the Document's now,
+    // not the dialog's snapshot (the main window can change or undo them
+    // while the dialog is open beside a floating panel).
+    const auto now = application::scriptProperties(session->document());
+    if (!edited("matrix"))
+        p.matrix = now.matrix;
+    if (!edited("wrapStyle"))
+        p.wrapStyle = now.wrapStyle;
+    if (!edited("reverseCollisions"))
+        p.reverseCollisions = now.reverseCollisions;
+    if (!edited("scaledBorderAndShadow"))
+        p.scaledBorderAndShadow = now.scaledBorderAndShadow;
     e.title = edited("title");
     e.originalScript = edited("originalScript");
     e.originalTranslation = edited("originalTranslation");
@@ -5574,7 +5687,7 @@ QVariantMap Application::openSettingsDialog()
     lists.catalogs = stdList(m_styleManager->catalogs());
     lists.currentCatalog = m_styleManager->catalog().toStdString();
     if (const auto load = application::optionsCatalogToLoad(m_settings->settings(), lists)) {
-        m_styleManager->chooseCatalog(QString::fromStdString(*load));
+        m_styleManager->loadCatalog(QString::fromStdString(*load)); // not the manager's choice (SY1)
         lists.currentCatalog = *load;
     }
     lists.styles = stdList(m_styleManager->storeStyles());
@@ -5818,7 +5931,7 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
     // choosing it does, so the default Style is found among them.
     if (*which == application::OptionsPage::Conversion)
         if (const auto load = application::optionsCatalogToLoad(defaults, m_optionsLists)) {
-            m_styleManager->chooseCatalog(QString::fromStdString(*load));
+            m_styleManager->loadCatalog(QString::fromStdString(*load)); // not the manager's choice (SY1)
             m_optionsLists.currentCatalog = *load;
             m_optionsLists.styles = stdList(m_styleManager->storeStyles());
         }
@@ -5912,7 +6025,7 @@ QVariantMap Application::chooseSettingsCatalog(const QVariantMap &values, int in
     auto state = fromVariant(values);
     if (index >= 0 && index < qsizetype(m_optionsLists.catalogs.size())) {
         // Options.SaveOptions(false) then LoadStyles: the current catalog is saved first.
-        m_styleManager->chooseCatalog(QString::fromStdString(m_optionsLists.catalogs[std::size_t(index)]));
+        m_styleManager->loadCatalog(QString::fromStdString(m_optionsLists.catalogs[std::size_t(index)]));
         m_optionsLists.currentCatalog = m_optionsLists.catalogs[std::size_t(index)];
         m_optionsLists.styles = stdList(m_styleManager->storeStyles());
     }

@@ -64,6 +64,12 @@ mkdir -p "$stage"
 tree=$stage/tree
 cmake --install "$build_dir" --prefix "$tree" --component hikari_app
 [ -x "$tree/hikarisub" ] || { echo "error: the install produced no hikarisub" >&2; exit 1; }
+# KA4 (#279): the furigana suggestions' dictionary and the BSD notices.
+for f in Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin Dictionary/unidic-lite/char.bin \
+    Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc Dictionary/unidic-lite/mecabrc \
+    Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE; do
+    [ -f "$tree/$f" ] || { echo "error: the install produced no $f" >&2; exit 1; }
+done
 "$here/check-payload.sh" --min-glibc "$min_glibc" "$tree"
 
 normalize_modes() # <dir>: directories and executables 0755, other files 0644

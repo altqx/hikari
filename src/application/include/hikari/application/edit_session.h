@@ -71,6 +71,13 @@ struct DraftChange {
     std::optional<std::int64_t> layer;
     std::optional<std::u8string> style, actor, effect;
     std::optional<std::optional<std::int64_t>> startFrame, endFrame;
+    // TM1: the translation cell only follows the text or Style cells (the
+    // Original's carried tags written again), it was not typed. Several
+    // selected Lines then keep their own translations (commitDraftToSelected).
+    bool translationCarried = false;
+    // Undo and Redo in the field put back a step's translation as it was,
+    // carried or typed: translationCarried then replaces the draft's.
+    bool restoresProvenance = false;
 };
 
 // A command declares the Lines it touches and mutates a working copy. Returning
@@ -94,6 +101,9 @@ public:
     const core::Document &document() const { return m_states[m_cursor].document; }
     const Selection &selection() const { return m_selection; }
     std::uint64_t revision() const { return m_revision; }
+    // Unique among the process's sessions: what scopes a cache keyed by
+    // LineId, which is unique only within one Document.
+    std::uint64_t serial() const { return m_serial; }
     ContentId contentId() const { return m_states[m_cursor].content; }
 
     // While a macro runs on this Document it is read-only: drafts, commands,
@@ -141,8 +151,12 @@ public:
     // goes to each selected Line in one step; otherwise this is
     // commitDraftAs(name). E63-invalid-commit blocks as commitDraft does;
     // `leaving` is the commit on leave's legacy End correction for the edited
-    // Line (EditBox::SetLine on the next Line).
-    bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false);
+    // Line (EditBox::SetLine on the next Line). A carried translation cell
+    // (DraftChange::translationCarried) is not copied: each other Line keeps
+    // its own, which `companion` may then write again from the Line before
+    // and after; so too when only the text or Style changed.
+    using Companion = std::function<void(const core::LineRecord &before, core::LineRecord &after)>;
+    bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false, const Companion &companion = {});
     void discardDraft();
     // KA1: these fields of the pending draft (those `fields` holds) are sent
     // to its own Line alone, however many Lines are selected, until it is
@@ -238,6 +252,7 @@ private:
     // write is reported (its step may leave history meanwhile).
     std::map<std::uint64_t, std::vector<std::uint64_t>> m_preparedVersions;
     std::uint64_t m_revision = 0;
+    std::uint64_t m_serial = 0;
     std::uint64_t m_nextContent = 1;
     bool m_protected = false;
     bool m_readOnly = false;

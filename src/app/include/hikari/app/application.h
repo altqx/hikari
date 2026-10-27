@@ -106,6 +106,9 @@ signals:
     // when the spell checker cannot start, legacy's message box is a toast
     // (NT1).
     void spellingChanged();
+    // PU6: the spell checker was made again (another dictionary): a check
+    // going on starts again with it.
+    void spellCheckerRestarted();
     // W1: the chosen player changed (video.playbackPlayer).
     void playbackPlayerChanged();
     // AV1: the route both audio paths follow changed.
@@ -476,6 +479,9 @@ public:
     // means shifted, otherwise the legacy message. Frames need an exact
     // (indexed) timebase.
     Q_INVOKABLE QString shiftTimes();
+    // PU4: the editing target's document id (0: none). Ids are never reused,
+    // so a question can tell the target it asked about from a later one.
+    Q_INVOKABLE qulonglong editingTargetId() const;
     Q_INVOKABLE bool exactTimebase() const;
     // F6: GLOBAL_OPEN_KEYFRAMES. Empty result: loaded (or kept until a video
     // opens, as legacy does); otherwise the legacy message.
@@ -488,17 +494,21 @@ public:
     // The formats the editing target can be converted to ("ass", "srt",
     // "mdvd", "mpl2", "tmp"); none in translation mode.
     Q_INVOKABLE QStringList conversionTargets() const;
+    // PU6: the Style names of a catalog, for the conversion's Style choice
+    // (empty for a catalog that is not there).
+    Q_INVOKABLE QStringList conversionStyles(const QString &catalog) const;
     // Y1: the active Line's Style, which the Style manager selects when it opens.
     Q_INVOKABLE QString activeLineStyle() const;
     // C02-loss-preview: converts a copy and lists what it removes or
-    // synthesizes ({ok, problem, losses}); acceptConversion applies that
-    // plan as one "Subtitles conversion" step unless the Document or the
-    // options changed since.
+    // synthesizes ({ok, problem, fpsInvalid, losses, kinds}, kinds "warning"
+    // for what is removed, else "info"); acceptConversion applies that plan
+    // as one "Subtitles conversion" step unless the Document or the options
+    // changed since.
     Q_INVOKABLE QVariantMap previewConversion(const QString &target);
     Q_INVOKABLE bool acceptConversion();
     // Y4: GLOBAL_OPEN_SUBS_RESAMPLE ("Change resolution"): {subsWidth,
-    // subsHeight, videoWidth, videoHeight}, the video's being the subtitles'
-    // without a video; empty for a Document that is not ASS.
+    // subsHeight, videoWidth, videoHeight, hasVideo}, the video's being the
+    // subtitles' without a video; empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
     // OK: nothing when the sizes match, else "Changing subtitles resolution".
     Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch);
@@ -587,10 +597,13 @@ public:
     Q_INVOKABLE QVariantMap editorMisspellAt(int role, int position);
     Q_INVOKABLE bool replaceEditorMisspell(int role, int position, const QString &replacement);
     Q_INVOKABLE bool addEditorWord(const QString &word);
-    // GLOBAL_OPEN_SPELLCHECKER: the Spellchecker window. Each call takes the
-    // window's {ignoreComments, ignoreUpperCase} and returns its state
-    // {found, word, suggestions, replacement, changed, problem, unchanged,
-    // restarted}; found false is "No spelling errors were found". unchanged:
+    // GLOBAL_OPEN_SPELLCHECKER: the Spellchecker panel (PU6). Each call takes
+    // the panel's {ignoreComments, ignoreUpperCase} and returns its state
+    // {found, available, line, before, after, word, suggestions, replacement,
+    // changed, problem, unchanged, restarted}; found false is "No spelling
+    // errors were found", available false that no dictionary is loaded; line
+    // is the word's Line (the Grid's number), before and after the text
+    // around the word as the Line editor shows it. unchanged:
     // the action did nothing (legacy returns without touching the window).
     // restarted: the active Line or its text changed since the word was
     // shown (the editor's draft commits when the window acts), so the walk
@@ -756,6 +769,16 @@ public:
     Q_INVOKABLE QVariantMap dummyVideoDefaults() const;
     Q_INVOKABLE QString openDummyVideo(const QVariantMap &values);
     Q_INVOKABLE bool nextVideoFile(bool next);
+    // PU4 (#306): the dummy video's frames for a typed rate and duration
+    // (-1: a rate it refuses), and the file name the previous / next file
+    // would open, asked before the walk ("" when it would open none).
+    Q_INVOKABLE int dummyVideoFrames(const QString &fps, int durationMs) const;
+    Q_INVOKABLE QString nextVideoFileName(bool next) const;
+    // The file itself ("" when the walk would open none), and the walk made
+    // only while it still leads to `expected` (the question's answer, when
+    // another video opened while it was asked: false, nothing done).
+    Q_INVOKABLE QString nextVideoFilePath(bool next) const;
+    Q_INVOKABLE bool nextVideoFileIfStill(bool next, const QString &expected);
     // A3: GLOBAL_SET_AUDIO_FROM_VIDEO and GLOBAL_SET_AUDIO_MARK_FROM_VIDEO (the
     // Video menu, enabled while the audio box exists): the box centred on the
     // video's time (VideoBox::Tell, 0 without video), with the mark there too.
@@ -884,6 +907,10 @@ public:
     QVariantList tabs() const;
     bool home() const { return m_workspace.tabs().empty() && !m_workspace.reference(); }
     int currentTab() const;
+    // PU6: the editing target's id (a tab row's `id`), 0 without one. A
+    // document window remembers it at its opening and applies to that
+    // Document only (tabsChanged tells when it changes).
+    Q_INVOKABLE qulonglong editingDocument() const;
     int sessionRestore() const;
     void setSessionRestore(int value);
     QVariantList unresolvedRestores() const;
@@ -1194,6 +1221,7 @@ private:
         std::uint64_t document = 0;
         std::uint64_t revision = 0;
         QVariantMap options;
+        float frameMs = 0.f; // the video's frame duration it was made with, 0 without one
         core::Document converted;
     };
     std::unique_ptr<ConversionPlan> m_conversionPlan;
@@ -1285,6 +1313,8 @@ private:
     // they changed.
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<application::FontLease> m_videoFonts;
+    // VT3: the names read from m_videoFonts' leases, by their bytes.
+    std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
     std::unique_ptr<ui::StatusBarController> m_statusBar; // P10
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
@@ -1433,6 +1463,9 @@ private:
     // the previous / next file in natural name order, letters lowered as
     // Unicode does (V3-next-file-natural-order)
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};
+    // VideoBox::NextFile's step from the current video with `walker`
+    // (nullopt: no video and no recent one).
+    std::optional<application::NextFileStep> nextVideoStep(application::NextFileWalker &walker, bool next) const;
     QString m_recentVideoSeen; // the ready video last added to the list
     void rememberRecentAudio(const QString &path);
     void trimAudioCache();

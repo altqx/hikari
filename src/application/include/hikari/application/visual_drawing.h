@@ -103,6 +103,12 @@ public:
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
+    // PU5: the presets changed in "Edit shapes" (each change kept at once):
+    // the list's entry `listSelection` chosen and read again, even at the
+    // place chosen before (legacy's SetShape kept the preset it had). A
+    // hidden tool (another family shown) only takes them: it reads its Line
+    // when it comes back (reset).
+    void presetsChanged(int listSelection, VisualHost &host, bool shown = true);
 
     // Legacy's state, for the tests.
     VectorEditor &editor() { return m_editor; }
@@ -163,6 +169,7 @@ private:
     int m_shapeSelection = 0;
 
     int m_shape = -1;
+    static constexpr int kNoPresetRead = -2; // presetsChanged: none read yet
     ShapePreset m_current;
     std::vector<VectorPoint> m_shapePoints;
     PointF m_shapeSize{0, 0};

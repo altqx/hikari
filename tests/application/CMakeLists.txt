@@ -116,6 +116,9 @@ hikari_add_gtest(hikari_application_karaoke_tap_tests SOURCES karaoke_tap_tests.
 # KA5 (#280): vocal-onset detection and the snap.
 hikari_add_gtest(hikari_application_vocal_onsets_tests SOURCES vocal_onsets_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# KA4 (#279): furigana reading suggestions and the furigana karaoke syntax.
+hikari_add_gtest(hikari_application_furigana_tests SOURCES furigana_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # A5: the audio box's karaoke mode, with the legacy probe's observations.
 hikari_add_gtest(hikari_application_audio_karaoke_tests SOURCES audio_karaoke_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
@@ -188,6 +191,9 @@ target_compile_definitions(hikari_application_visual_transform_tests PRIVATE
     HIKARI_VISUAL_T3_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-visual-20261005/observations.jsonl"
     HIKARI_VISUAL_T3_MEASURE_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-t3-measure-cases.txt"
     HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-measure-20261012/observations.jsonl")
+# VT3: the Perspective tool's quad-to-tags maths, tags and gestures.
+hikari_add_gtest(hikari_application_visual_perspective_tests SOURCES visual_perspective_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
 # T4: the rectangle and vector clips and the shared vector point editor, with
 # the legacy probe's observations.
 hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.cpp

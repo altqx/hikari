@@ -106,9 +106,11 @@ enum class DummyVideoError { InvalidFps };
 std::expected<std::string, DummyVideoError> dummyVideoText(std::string_view fps, int durationMs, int width, int height,
                                                            std::uint8_t red, std::uint8_t green, std::uint8_t blue,
                                                            bool pattern);
-// The dialog's "This gives %i frames" (DummyVideo.cpp:94-97): computed once
-// from the default 0:25:00.00 at 23.976 and never updated.
-int dummyVideoDialogFrames();
+// The frames of that text: duration / (1000 / fps), truncated, for a frame
+// rate from 15 to 120 (else InvalidFps). The dialog's "This gives %i frames"
+// (DummyVideo.cpp:94-97) shows it as the rate and duration are typed
+// (PU4-dummy-video; legacy computed it once, for the defaults).
+std::expected<int, DummyVideoError> dummyVideoFrames(std::string_view fps, int durationMs);
 
 // ProviderDummy::ParseDummyData (ProviderDummy.cpp:144-223): nullopt for a
 // text it refuses (too few fields, a frame rate that does not parse, fewer

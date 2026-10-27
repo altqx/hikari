@@ -66,11 +66,8 @@ protected:
             mouseClick("mainWindow/loadAssociated");
             for (int i = 0; i < 200 && field("statusVideoResolution") == "-"; ++i)
                 wait(100ms);
-            // (Y4's resolution question comes a moment after the video)
-            for (int i = 0; i < 30 && !existsAndVisible("mainWindow/mismatchDialog"); ++i)
-                wait(100ms);
-            if (existsAndVisible("mainWindow/mismatchDialog"))
-                invokeMethod("mainWindow/mismatchDialog", "close", {});
+            // (Y4's resolution question, a message box of its own since PU6,
+            // comes a moment after the video and changes none of the fields)
             wait(300ms);
             readFields(after);
             resolutionColour = getStringProperty("mainWindow/statusVideoResolution", "color");

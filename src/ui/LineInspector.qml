@@ -1,8 +1,16 @@
-// E4: the Line editor's metadata row (legacy EditBox's BoxSizer2,
+// E4: the Line editor's metadata fields (legacy EditBox's BoxSizer2,
 // EditBox.cpp:262-305): Comment, Layer, Start, End, Duration, the Style
-// choice with its Edit button, Actor, the three margins and Effect. Below
-// 850 pixels legacy moves Comment, Actor, the margins and Effect to a second
-// row (EditBox::OnSize, EditBox.cpp:1374-1407); so does this one.
+// choice with its Edit button, Actor, the three margins and Effect.
+// LE1-inspector-rows (#233): each field shows its name, beside it while the
+// rows fit, above it in a narrow editor (MuseScore's Properties panel). Wide:
+// Start, End, Duration and Style in one row, Comment, Layer, Actor, Effect
+// and the margins in the next. Narrow: two to a row (Start and End,
+// Duration and Layer, Style alone, Actor and Effect, the margins and
+// Comment). Legacy's one row above 850 pixels and its two unnamed rows below
+// (EditBox::OnSize, EditBox.cpp:1374-1407) are gone. The margins share one
+// name, each field marked by its edge's icon; a margin of 0 (the Style's)
+// shows the Style's margin in the secondary colour while the field is not
+// being edited, its text still 0.
 //
 // Fields change the editor's draft when their editing finishes; with live
 // video editing on, Start, End and Duration also change it as they are typed
@@ -31,8 +39,24 @@ ColumnLayout {
 
     // The column's width, not its own: laid out at its one-row size, the
     // inspector would stay wide in a column that has narrowed (D3).
-    readonly property bool wide: (parent ? parent.width : width) > 850
-    spacing: 2
+    readonly property bool wide: (parent ? parent.width : width) >= wideMinimum
+    spacing: 6
+    readonly property int slotSpacing: 8 // between named fields in a row
+    readonly property int timeWidth: 90 // Start, End and Duration (TimeCtrl's text)
+    readonly property int marginWidth: 56
+    readonly property int marginMinimum: 48
+    // The narrowest the two rows get, each field at its minimum.
+    readonly property real wideMinimum: Math.max(rowMinimum(wideFirst), rowMinimum(wideSecond))
+    function rowMinimum(slots) {
+        let w = (slots.length - 1) * slotSpacing
+        for (const slot of slots)
+            w += slot.wideMinimum
+        return w
+    }
+    // The narrow grid's columns, equal, and its width (the Line editor's
+    // minimum).
+    readonly property real narrowColumn: Math.max(...narrowOrder.filter(s => s !== styleSlot).map(s => s.narrowMinimum))
+    readonly property real minimumWidth: Math.max(2 * narrowColumn + narrowGrid.columnSpacing, styleSlot.narrowMinimum)
 
     // Enter and Ctrl+Enter as the Editor binds them (EditBox's accelerators).
     function commitKey(event, field, timeField) {
@@ -67,6 +91,10 @@ ColumnLayout {
         id: field
         property string value
         property string tip
+        // LE1: a margin's edge icon, and the Style's margin shown for 0.
+        property string iconRole
+        property string hint
+        readonly property bool hinting: hint.length > 0 && text === "0" && !activeFocus && !pending
         property int numberRole: -1 // the editor's NumberFieldRole: 0 Layer, 1-3 the margins
         signal applied(string text)
         text: value
@@ -95,8 +123,25 @@ ColumnLayout {
         Keys.onPressed: event => event.accepted = inspector.commitKey(event, field, false)
         // A step not yet sent: the warning colour (E4-stepped-field-warning).
         readonly property bool pending: modified || (inspector.editor.steppedNumbers & (1 << numberRole)) !== 0
-        color: pending ? Theme.warning : palette.text
+        color: hinting ? "transparent" : pending ? Theme.warning : palette.text
         PendingMark {}
+        leftPadding: iconRole.length > 0 ? 4 + 16 + 2 : padding
+        rightPadding: iconRole.length > 0 ? 4 : padding
+        Icon {
+            visible: field.iconRole.length > 0
+            iconRole: field.iconRole
+            x: 4
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        Label {
+            objectName: field.objectName + "Hint"
+            visible: field.hinting
+            x: field.leftPadding
+            anchors.verticalCenter: parent.verticalCenter
+            text: field.hint
+            font: field.font
+            color: Theme.muted
+        }
         Connections {
             target: inspector.editor
             function onDiscarded() {
@@ -104,9 +149,10 @@ ColumnLayout {
                 field.given(field.value)
             }
         }
-        Accessible.description: pending ? inspector.pendingText : ""
+        readonly property string hintText: hinting ? qsTr("0: the Style's (%1)").arg(hint) : ""
+        Accessible.description: pending ? inspector.pendingText : hintText
         ToolTip.visible: hovered && tip.length > 0
-        ToolTip.text: pending ? tip + "\n" + inspector.pendingText : tip
+        ToolTip.text: pending ? tip + "\n" + inspector.pendingText : hinting ? tip + "\n" + hintText : tip
         ToolTip.delay: 500
     }
 
@@ -124,7 +170,9 @@ ColumnLayout {
         mouseForm: inspector.editor.timeCtrlForm
         frames: inspector.editor.framesShown
         text: value
-        Layout.preferredWidth: 90
+        Layout.preferredWidth: inspector.timeWidth
+        Layout.minimumWidth: inspector.timeWidth
+        Layout.fillWidth: !inspector.wide
         // Legacy WINDOW_WARNING_ELEMENTS: the theme layer's warning role,
         // also while the field holds a mouse step not yet sent
         // (E4-stepped-field-warning).
@@ -198,7 +246,7 @@ ColumnLayout {
         editable: true
         currentIndex: -1
         Layout.fillWidth: true
-        Layout.minimumWidth: 90
+        Layout.minimumWidth: 56
         validator: RegularExpressionValidator { regularExpression: /[^,]*/ }
         function sync() {
             if (editText === value)
@@ -234,205 +282,330 @@ ColumnLayout {
         ToolTip.delay: 500
     }
 
+    // A field and its name: beside it in the rows, above it in the grid.
+    // `minimum` is the controls' narrowest.
+    component Slot: GridLayout {
+        id: slot
+        property string label
+        property real minimum
+        default property alias controls: box.data
+        readonly property real wideMinimum: (label.length > 0 ? name.implicitWidth + columnSpacing : 0) + minimum
+        readonly property real narrowMinimum: Math.max(name.implicitWidth, minimum)
+        columns: inspector.wide ? 2 : 1
+        columnSpacing: 5
+        rowSpacing: 2
+        Label {
+            id: name
+            objectName: slot.objectName + "Label"
+            visible: slot.label.length > 0
+            text: slot.label
+            color: Theme.muted
+            Layout.alignment: inspector.wide ? Qt.AlignVCenter : Qt.AlignLeft
+        }
+        RowLayout {
+            id: box
+            spacing: 2
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+        }
+    }
+
     RowLayout {
         id: firstRow
         Layout.fillWidth: true
-        spacing: 2
+        visible: inspector.wide
+        spacing: inspector.slotSpacing
     }
     RowLayout {
         id: secondRow
         Layout.fillWidth: true
-        visible: !inspector.wide
-        spacing: 2
+        visible: inspector.wide
+        spacing: inspector.slotSpacing
     }
-    // Where each control goes: the wide order in one row, or legacy's two
-    // narrow rows. Parents are assigned in order, so the rows keep it.
-    readonly property var wideOrder: [comment, layer, startField, endField, duration, styleChoice, styleEdit, actor,
-                                      marginLeft, marginRight, marginVertical, effect]
-    readonly property var narrowFirst: [layer, startField, endField, duration, styleChoice, styleEdit]
-    readonly property var narrowSecond: [comment, actor, marginLeft, marginRight, marginVertical, effect]
+    GridLayout {
+        id: narrowGrid
+        Layout.fillWidth: true
+        visible: !inspector.wide
+        columns: 2
+        columnSpacing: 8
+        rowSpacing: 6
+    }
+    // Where each named field goes: the two wide rows, or the narrow grid.
+    // Parents are assigned in order, so the rows keep it.
+    readonly property var wideFirst: [startSlot, endSlot, durationSlot, styleSlot]
+    readonly property var wideSecond: [commentSlot, layerSlot, actorSlot, effectSlot, marginsSlot]
+    readonly property var narrowOrder: [startSlot, endSlot, durationSlot, layerSlot, styleSlot, actorSlot, effectSlot,
+                                        marginsSlot, commentSlot]
     function arrange() {
-        for (const item of wideOrder)
+        for (const item of narrowOrder)
             item.parent = holder
         if (wide) {
-            for (const item of wideOrder)
+            for (const item of wideFirst)
                 item.parent = firstRow
-        } else {
-            for (const item of narrowFirst)
-                item.parent = firstRow
-            for (const item of narrowSecond)
+            for (const item of wideSecond)
                 item.parent = secondRow
+        } else {
+            for (const item of narrowOrder)
+                item.parent = narrowGrid
         }
     }
     onWideChanged: arrange()
     Component.onCompleted: arrange()
+    // In the grid the halves are equal; Style takes the whole row. In a
+    // row the ones that do not grow give way down to their minimum, which
+    // the wide test counts (a layout keeps an item that does not fill at its
+    // preferred width).
+    component Half: Slot {
+        Layout.fillWidth: true
+        Layout.maximumWidth: inspector.wide && !grows ? implicitWidth : Number.POSITIVE_INFINITY
+        Layout.minimumWidth: inspector.wide ? wideMinimum : inspector.narrowColumn
+        Layout.preferredWidth: inspector.wide ? -1 : inspector.narrowColumn
+        property bool grows: false
+    }
     Item {
         id: holder
         visible: false
         Layout.preferredWidth: 0
         Layout.preferredHeight: 0
 
-        CheckBox {
-            id: comment
-            objectName: "commentBox"
-            text: qsTr("Comment")
-            checked: inspector.editor.comment
-            enabled: inspector.editor.editable && inspector.editor.assFields
-            focusPolicy: Qt.TabFocus
-            Accessible.name: text
-            Accessible.description: qsTr("Sets the line as a comment. Comments are not shown")
-            ToolTip.visible: hovered
-            ToolTip.text: Accessible.description
-            ToolTip.delay: 500
-            onToggled: {
-                inspector.editor.setComment(checked)
-                checked = Qt.binding(() => inspector.editor.comment)
+        Half {
+            id: commentSlot
+            objectName: "commentSlot"
+            minimum: comment.implicitWidth
+            Layout.alignment: inspector.wide ? Qt.AlignVCenter : Qt.AlignBottom
+            CheckBox {
+                id: comment
+                objectName: "commentBox"
+                text: qsTr("Comment")
+                checked: inspector.editor.comment
+                enabled: inspector.editor.editable && inspector.editor.assFields
+                focusPolicy: Qt.TabFocus
+                Accessible.name: text
+                Accessible.description: qsTr("Sets the line as a comment. Comments are not shown")
+                ToolTip.visible: hovered
+                ToolTip.text: Accessible.description
+                ToolTip.delay: 500
+                onToggled: {
+                    inspector.editor.setComment(checked)
+                    checked = Qt.binding(() => inspector.editor.comment)
+                }
             }
         }
-        Field {
-            id: layer
-            objectName: "layerField"
-            value: inspector.editor.layerText
-            enabled: inspector.editor.editable && inspector.editor.assFields
-            Layout.preferredWidth: 50
-            maximumLength: 10 // NumCtrl::SetMaxLength
-            validator: RegularExpressionValidator { regularExpression: /[-0-9.,]*/ }
-            Accessible.name: qsTr("Layer")
-            tip: qsTr("Line layer. Higher layers are on top")
-            numberRole: 0
-            from: -10000000
-            to: 10000000
-            onApplied: text => inspector.editor.setLayerText(text)
+        Half {
+            id: layerSlot
+            objectName: "layerSlot"
+            label: qsTr("Layer")
+            minimum: layer.Layout.minimumWidth
+            Field {
+                id: layer
+                objectName: "layerField"
+                value: inspector.editor.layerText
+                enabled: inspector.editor.editable && inspector.editor.assFields
+                Layout.preferredWidth: 50
+                Layout.minimumWidth: 40
+                Layout.maximumWidth: inspector.wide ? 50 : Number.POSITIVE_INFINITY
+                Layout.fillWidth: true
+                maximumLength: 10 // NumCtrl::SetMaxLength
+                validator: RegularExpressionValidator { regularExpression: /[-0-9.,]*/ }
+                Accessible.name: qsTr("Layer")
+                tip: qsTr("Line layer. Higher layers are on top")
+                numberRole: 0
+                from: -10000000
+                to: 10000000
+                onApplied: text => inspector.editor.setLayerText(text)
+            }
         }
-        TimeBox {
-            id: startField
-            objectName: "startField"
-            value: inspector.editor.startText
-            enabled: inspector.editor.editable
-            timeRole: 1
-            warning: inspector.editor.startWarning
-            Accessible.name: qsTr("Start")
-            tip: qsTr("Line start time")
-            onApplied: text => inspector.editor.setStartText(text)
+        Half {
+            id: startSlot
+            objectName: "startSlot"
+            label: qsTr("Start")
+            minimum: inspector.timeWidth
+            TimeBox {
+                id: startField
+                objectName: "startField"
+                value: inspector.editor.startText
+                enabled: inspector.editor.editable
+                timeRole: 1
+                warning: inspector.editor.startWarning
+                Accessible.name: qsTr("Start")
+                tip: qsTr("Line start time")
+                onApplied: text => inspector.editor.setStartText(text)
+            }
         }
-        TimeBox {
-            id: endField
-            objectName: "endField"
-            value: inspector.editor.endText
-            enabled: inspector.editor.editable && inspector.editor.hasEnd
-            timeRole: 2
-            warning: inspector.editor.endWarning
-            Accessible.name: qsTr("End")
-            tip: qsTr("Line end time")
-            onApplied: text => inspector.editor.setEndText(text)
+        Half {
+            id: endSlot
+            objectName: "endSlot"
+            label: qsTr("End")
+            minimum: inspector.timeWidth
+            TimeBox {
+                id: endField
+                objectName: "endField"
+                value: inspector.editor.endText
+                enabled: inspector.editor.editable && inspector.editor.hasEnd
+                timeRole: 2
+                warning: inspector.editor.endWarning
+                Accessible.name: qsTr("End")
+                tip: qsTr("Line end time")
+                onApplied: text => inspector.editor.setEndText(text)
+            }
         }
-        TimeBox {
-            id: duration
-            objectName: "durationField"
-            value: inspector.editor.durationText
-            enabled: inspector.editor.editable && inspector.editor.hasEnd
-            timeRole: 0
-            warning: inspector.editor.durationWarning
-            Accessible.name: qsTr("Duration")
-            tip: qsTr("Line duration")
-            onApplied: text => inspector.editor.setDurationText(text)
+        Half {
+            id: durationSlot
+            objectName: "durationSlot"
+            label: qsTr("Duration")
+            minimum: inspector.timeWidth
+            TimeBox {
+                id: duration
+                objectName: "durationField"
+                value: inspector.editor.durationText
+                enabled: inspector.editor.editable && inspector.editor.hasEnd
+                timeRole: 0
+                warning: inspector.editor.durationWarning
+                Accessible.name: qsTr("Duration")
+                tip: qsTr("Line duration")
+                onApplied: text => inspector.editor.setDurationText(text)
+            }
         }
-        ComboBox {
-            id: styleChoice
-            objectName: "styleChoice"
-            model: inspector.editor.styleNames
-            currentIndex: inspector.editor.styleIndex
-            enabled: inspector.editor.editable && inspector.editor.assFields
-            focusPolicy: Qt.TabFocus
+        Slot {
+            id: styleSlot
+            objectName: "styleSlot"
+            label: qsTr("Style")
+            minimum: styleChoice.Layout.minimumWidth + 2 + styleEdit.implicitWidth
             Layout.fillWidth: true
             Layout.horizontalStretchFactor: 4
-            Layout.minimumWidth: 100
-            Accessible.name: qsTr("Style")
-            Accessible.description: qsTr("Line style")
-            ToolTip.visible: hovered
-            ToolTip.text: Accessible.description
-            ToolTip.delay: 500
-            onActivated: index => {
-                inspector.editor.chooseStyle(textAt(index))
-                currentIndex = Qt.binding(() => inspector.editor.styleIndex)
+            Layout.minimumWidth: inspector.wide ? wideMinimum : narrowMinimum
+            Layout.columnSpan: inspector.wide ? 1 : 2
+            ComboBox {
+                id: styleChoice
+                objectName: "styleChoice"
+                model: inspector.editor.styleNames
+                currentIndex: inspector.editor.styleIndex
+                enabled: inspector.editor.editable && inspector.editor.assFields
+                focusPolicy: Qt.TabFocus
+                Layout.fillWidth: true
+                Layout.minimumWidth: 100
+                Accessible.name: qsTr("Style")
+                Accessible.description: qsTr("Line style")
+                ToolTip.visible: hovered
+                ToolTip.text: Accessible.description
+                ToolTip.delay: 500
+                onActivated: index => {
+                    inspector.editor.chooseStyle(textAt(index))
+                    currentIndex = Qt.binding(() => inspector.editor.styleIndex)
+                }
+            }
+            IconToolButton {
+                id: styleEdit
+                objectName: "styleEditButton"
+                iconRole: "edit"
+                text: qsTr("Edit style")
+                tip: qsTr("Edit style: allows quick editing of the current line's style")
+                enabled: inspector.editor.hasLine && inspector.editor.assFields
+                focusPolicy: Qt.TabFocus
+                Accessible.description: qsTr("Allows quick editing of the current line's style")
+                ToolTip.delay: 500
+                onClicked: inspector.styleEditRequested(inspector.editor.style)
             }
         }
-        IconToolButton {
-            id: styleEdit
-            objectName: "styleEditButton"
-            iconRole: "edit"
-            text: qsTr("Edit style")
-            tip: qsTr("Edit style: allows quick editing of the current line's style")
-            enabled: inspector.editor.hasLine && inspector.editor.assFields
-            focusPolicy: Qt.TabFocus
-            Accessible.description: qsTr("Allows quick editing of the current line's style")
-            ToolTip.delay: 500
-            onClicked: inspector.styleEditRequested(inspector.editor.style)
-        }
-        ValueBox {
-            id: actor
-            objectName: "actorBox"
-            value: inspector.editor.actor
-            model: inspector.editor.actors
-            placeholderText: qsTr("Actor")
-            enabled: inspector.editor.editable && inspector.editor.assFields
+        Half {
+            id: actorSlot
+            objectName: "actorSlot"
+            label: qsTr("Actor")
+            minimum: actor.Layout.minimumWidth
+            grows: true
             Layout.horizontalStretchFactor: 3
-            Accessible.name: qsTr("Actor")
-            tip: qsTr("Line actor label. Does not affect the appearance of the subtitles")
-            onTyped: text => inspector.editor.setActorText(text)
-            onChosen: text => inspector.editor.chooseActor(text)
+            ValueBox {
+                id: actor
+                objectName: "actorBox"
+                value: inspector.editor.actor
+                model: inspector.editor.actors
+                enabled: inspector.editor.editable && inspector.editor.assFields
+                Layout.horizontalStretchFactor: 3
+                Accessible.name: qsTr("Actor")
+                tip: qsTr("Line actor label. Does not affect the appearance of the subtitles")
+                onTyped: text => inspector.editor.setActorText(text)
+                onChosen: text => inspector.editor.chooseActor(text)
+            }
         }
-        Field {
-            id: marginLeft
-            objectName: "marginLeftField"
-            value: inspector.editor.marginLeftText
-            enabled: inspector.editor.editable && inspector.editor.assFields
-            Layout.preferredWidth: 50
-            Accessible.name: qsTr("Left margin")
-            numberRole: 1
-            from: 0
-            to: 9999
-            tip: qsTr("Line left margin")
-            onApplied: text => inspector.editor.setMarginText(0, text)
-        }
-        Field {
-            id: marginRight
-            objectName: "marginRightField"
-            value: inspector.editor.marginRightText
-            enabled: inspector.editor.editable && inspector.editor.assFields
-            Layout.preferredWidth: 50
-            Accessible.name: qsTr("Right margin")
-            numberRole: 2
-            from: 0
-            to: 9999
-            tip: qsTr("Line right margin")
-            onApplied: text => inspector.editor.setMarginText(1, text)
-        }
-        Field {
-            id: marginVertical
-            objectName: "marginVerticalField"
-            value: inspector.editor.marginVerticalText
-            enabled: inspector.editor.editable && inspector.editor.assFields
-            Layout.preferredWidth: 50
-            Accessible.name: qsTr("Vertical margin")
-            numberRole: 3
-            from: 0
-            to: 9999
-            tip: qsTr("Line top and bottom margins")
-            onApplied: text => inspector.editor.setMarginText(2, text)
-        }
-        ValueBox {
-            id: effect
-            objectName: "effectBox"
-            value: inspector.editor.effect
-            model: inspector.editor.effects
-            placeholderText: qsTr("Effect")
-            enabled: inspector.editor.editable && inspector.editor.assFields
+        Half {
+            id: effectSlot
+            objectName: "effectSlot"
+            label: qsTr("Effect")
+            minimum: effect.Layout.minimumWidth
+            grows: true
             Layout.horizontalStretchFactor: 3
-            Accessible.name: qsTr("Effect")
-            tip: qsTr("Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied")
-            onTyped: text => inspector.editor.setEffectText(text)
-            onChosen: text => inspector.editor.chooseEffect(text)
+            ValueBox {
+                id: effect
+                objectName: "effectBox"
+                value: inspector.editor.effect
+                model: inspector.editor.effects
+                enabled: inspector.editor.editable && inspector.editor.assFields
+                Layout.horizontalStretchFactor: 3
+                Accessible.name: qsTr("Effect")
+                tip: qsTr("Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied")
+                onTyped: text => inspector.editor.setEffectText(text)
+                onChosen: text => inspector.editor.chooseEffect(text)
+            }
+        }
+        Half {
+            id: marginsSlot
+            objectName: "marginsSlot"
+            label: qsTr("Margins")
+            minimum: 3 * inspector.marginMinimum + 2 * 2
+            Field {
+                id: marginLeft
+                objectName: "marginLeftField"
+                value: inspector.editor.marginLeftText
+                enabled: inspector.editor.editable && inspector.editor.assFields
+                Layout.preferredWidth: inspector.marginWidth
+                Layout.minimumWidth: inspector.marginMinimum
+                Layout.maximumWidth: inspector.wide ? inspector.marginWidth : Number.POSITIVE_INFINITY
+                Layout.fillWidth: true
+                iconRole: "margin-left"
+                hint: inspector.editor.styleMargins[0] ?? ""
+                Accessible.name: qsTr("Left margin")
+                numberRole: 1
+                from: 0
+                to: 9999
+                tip: qsTr("Line left margin")
+                onApplied: text => inspector.editor.setMarginText(0, text)
+            }
+            Field {
+                id: marginRight
+                objectName: "marginRightField"
+                value: inspector.editor.marginRightText
+                enabled: inspector.editor.editable && inspector.editor.assFields
+                Layout.preferredWidth: inspector.marginWidth
+                Layout.minimumWidth: inspector.marginMinimum
+                Layout.maximumWidth: inspector.wide ? inspector.marginWidth : Number.POSITIVE_INFINITY
+                Layout.fillWidth: true
+                iconRole: "margin-right"
+                hint: inspector.editor.styleMargins[1] ?? ""
+                Accessible.name: qsTr("Right margin")
+                numberRole: 2
+                from: 0
+                to: 9999
+                tip: qsTr("Line right margin")
+                onApplied: text => inspector.editor.setMarginText(1, text)
+            }
+            Field {
+                id: marginVertical
+                objectName: "marginVerticalField"
+                value: inspector.editor.marginVerticalText
+                enabled: inspector.editor.editable && inspector.editor.assFields
+                Layout.preferredWidth: inspector.marginWidth
+                Layout.minimumWidth: inspector.marginMinimum
+                Layout.maximumWidth: inspector.wide ? inspector.marginWidth : Number.POSITIVE_INFINITY
+                Layout.fillWidth: true
+                iconRole: "margin-vertical"
+                hint: inspector.editor.styleMargins[2] ?? ""
+                Accessible.name: qsTr("Vertical margin")
+                numberRole: 3
+                from: 0
+                to: 9999
+                tip: qsTr("Line top and bottom margins")
+                onApplied: text => inspector.editor.setMarginText(2, text)
+            }
         }
     }
 
