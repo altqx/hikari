@@ -728,6 +728,31 @@ private slots:
         QCOMPARE(lineText(1), QStringLiteral("This line is fine."));
     }
 
+    // A draft the editor cannot commit (its end before its start, under the
+    // Block policy) keeps the editor and the selection where they are when a
+    // finding comes in.
+    void walkLeavesAnUncommittableDraft()
+    {
+        start();
+        grammarOn();
+        QByteArray events;
+        for (int i = 0; i < 6; ++i)
+            events += dialogue(i == 4 ? "I has a apple." : "This line is fine.", i + 1);
+        QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/draft.ass"), events)));
+        QTRY_VERIFY(target());
+        const auto first = target()->document().lines()[0]->id;
+        QVERIFY(target()->editDraft(first, application::DraftChange{.text = u8"Not yet sent",
+                                                                    .start = core::DocumentTime(5000000)}));
+        QVERIFY(target()->draftProblem());
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("Not yet sent"));
+        application->startGrammarWalk();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("found")).toBool(), kHarperWait);
+        QCOMPARE(target()->draftLine(), std::optional(first));
+        QCOMPARE(target()->selection().active, std::optional(first));
+        QCOMPARE(item("lineText")->property("text").toString(), QStringLiteral("Not yet sent"));
+    }
+
     // Replacing the walk's last finding: the editor and the Grid show the
     // correction though no finding is left to show.
     void replacingTheLastFindingShowsIt()

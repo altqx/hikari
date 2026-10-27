@@ -680,10 +680,13 @@ void Application::showGrammarFinding()
     const auto &check = walk.checks.at(found.line);
     const auto line = walk.lines[found.line];
     // The finding's Line alone is selected, as the spelling walk does: Enter
-    // in the editor commits to the selection.
+    // in the editor commits to the selection. A draft the editor cannot
+    // commit (Block) keeps it where it is.
+    auto *session = targetSession();
     m_editor->commit();
-    if (auto *session = targetSession())
-        session->setSelection(application::Selection{line, {line}, line, {}});
+    if (!session || (session->draftLine() && *session->draftLine() != line))
+        return;
+    session->setSelection(application::Selection{line, {line}, line, {}});
     m_editor->reloadFromSession();
     m_editor->showLine(line.value);
     refreshViews(); // the Grid's selection
