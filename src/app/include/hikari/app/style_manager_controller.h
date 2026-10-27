@@ -32,6 +32,8 @@ class StyleManagerController : public QObject {
     Q_PROPERTY(int previewKey READ previewKey NOTIFY previewChanged)
     // SV1: the device pixel ratio the preview was drawn at.
     Q_PROPERTY(qreal previewScale READ previewScale NOTIFY previewChanged)
+    // SV1: whether the preview takes the screen's pixels; open windows draw again when it changes.
+    Q_PROPERTY(bool previewAtScreenSize READ previewAtScreenSize NOTIFY previewAtScreenSizeChanged)
 public:
     struct Hooks {
         std::function<application::EditSession *()> target;                  // the editing target
@@ -148,11 +150,19 @@ public:
     Q_INVOKABLE void renderPreview(const QVariantMap &values, int width, int height, const QString &text,
                                    qreal scale = 1);
     // SV1-screen-size-subtitles: previews drawn at the screen's pixels.
-    void setPreviewAtScreenSize(bool on) { m_atScreenSize = on; }
+    void setPreviewAtScreenSize(bool on)
+    {
+        if (on == m_atScreenSize)
+            return;
+        m_atScreenSize = on;
+        emit previewAtScreenSizeChanged();
+    }
+    bool previewAtScreenSize() const { return m_atScreenSize; }
 
 signals:
     void changed();
     void previewChanged();
+    void previewAtScreenSizeChanged();
     void targetEdited(bool switched);
     // TP1: the Styles panel reads panelRows() again; `retargeted` when the
     // editing target is another Document than last time.

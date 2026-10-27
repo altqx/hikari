@@ -118,6 +118,14 @@ DialogWindow {
         selectedFont = f
         refreshPreview()
     }
+    // SV1: drawn again on a screen of another scale, or when the setting
+    // changes (Window.devicePixelRatio, Qt 6.11).
+    readonly property real previewPixelRatio: preview.Window.window ? preview.Window.window.devicePixelRatio : 1
+    onPreviewPixelRatioChanged: refreshPreview()
+    Connections {
+        target: window.catalogs
+        function onPreviewAtScreenSizeChanged() { window.refreshPreview() }
+    }
     function refreshPreview() {
         if (currentFont.length === 0) {
             // No row (nothing matches): no preview and no resolution.
@@ -126,7 +134,7 @@ DialogWindow {
             return
         }
         catalogs.renderPreview(currentFont, Math.max(1, preview.width), Math.max(1, preview.height),
-                               preview.Window.window ? preview.Window.window.devicePixelRatio : 1)
+                               previewPixelRatio)
         // The preview Style is bold: the bold face is the one drawn, with
         // the preview text's characters. Until this request's answer no
         // other face is said.

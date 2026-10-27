@@ -735,6 +735,14 @@ DialogWindow {
     }
     // SY3: the sample line follows every field at once; while the font list
     // is open it shows the family under the keyboard or the pointer.
+    // SV1: drawn again on a screen of another scale, or when the setting
+    // changes (Window.devicePixelRatio, Qt 6.11).
+    readonly property real previewPixelRatio: preview.Window.window ? preview.Window.window.devicePixelRatio : 1
+    onPreviewPixelRatioChanged: updatePreview()
+    Connections {
+        target: manager.styles
+        function onPreviewAtScreenSizeChanged() { manager.updatePreview() }
+    }
     function updatePreview() {
         if (!editing)
             return
@@ -743,7 +751,7 @@ DialogWindow {
         if (browsed.length)
             v.fontname = browsed
         styles.renderPreview(v, Math.max(1, preview.width), Math.max(1, preview.height), previewText.text,
-                             preview.Window.window ? preview.Window.window.devicePixelRatio : 1)
+                             previewPixelRatio)
     }
     readonly property string nameProblem: {
         if (!editing || multi)

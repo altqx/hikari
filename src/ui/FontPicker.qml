@@ -199,11 +199,18 @@ DialogWindow {
         resolvedFor = own ? catalogs.samplePlain(sampleText, sampleAss) : catalogs.samplePlain(catalogs.previewText, true)
         resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked, true, resolvedFor)
     }
+    // SV1: drawn again on a screen of another scale, or when the setting
+    // changes (Window.devicePixelRatio, Qt 6.11).
+    readonly property real previewPixelRatio: preview.Window.window ? preview.Window.window.devicePixelRatio : 1
+    onPreviewPixelRatioChanged: renderTimer.restart()
+    Connections {
+        target: picker.catalogs
+        function onPreviewAtScreenSizeChanged() { renderTimer.restart() }
+    }
     function render() {
         const own = sampleText.trim().length > 0
         catalogs.renderSample(current(), own ? sampleText : catalogs.previewText, !own || sampleAss,
-                              Math.max(1, preview.width), Math.max(1, preview.height),
-                              preview.Window.window ? preview.Window.window.devicePixelRatio : 1)
+                              Math.max(1, preview.width), Math.max(1, preview.height), previewPixelRatio)
     }
     function flush() {
         if (changeTimer.running) {

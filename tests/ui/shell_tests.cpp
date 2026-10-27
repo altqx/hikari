@@ -3538,6 +3538,12 @@ private slots:
         catalogs.setPreviewText(QStringLiteral("Zz"));
         QTRY_COMPARE(window->property("resolvedFor").toString(), QStringLiteral("Zz"));
         QVERIFY(catalogs.property("previewKey").toInt() > previewKey);
+        // SV1: and when Preview subtitles at changes.
+        const int sharpKey = catalogs.property("previewKey").toInt();
+        application->settingsStore()->set("video.previewSubtitlesAt", 1);
+        QVERIFY(catalogs.property("previewAtScreenSize").toBool());
+        QTRY_VERIFY(catalogs.property("previewKey").toInt() > sharpKey);
+        application->settingsStore()->reset(QStringLiteral("video.previewSubtitlesAt"));
         // The window's preview draws those characters only: an override in
         // the preview text draws no other face than the one named.
         application->settingsStore()->set("styles.previewText", QStringLiteral("AB"));
@@ -4695,6 +4701,13 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
         QTRY_COMPARE(colour(1), (QList<int>{255, 0, 0, 0x40}));
         QVERIFY(application->styleManager().previewKey() > key);
+        // SV1: the open preview is drawn again when Preview subtitles at changes.
+        const int sharpKey = application->styleManager().previewKey();
+        application->settingsStore()->set("video.previewSubtitlesAt", 1);
+        QVERIFY(application->styleManager().previewAtScreenSize());
+        QTRY_VERIFY(application->styleManager().previewKey() > sharpKey);
+        application->settingsStore()->reset(QStringLiteral("video.previewSubtitlesAt"));
+        QVERIFY(!application->styleManager().previewAtScreenSize());
         auto *alpha = inPopover("alpha");
         alpha->setProperty("value", 0x60);
         QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
