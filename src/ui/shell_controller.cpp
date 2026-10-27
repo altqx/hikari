@@ -6,6 +6,7 @@
 #include <QDateTime>
 
 #include <algorithm>
+#include <set>
 
 namespace hikari::ui {
 
@@ -145,12 +146,10 @@ void ShellController::setSelection(const application::Selection &selection)
     m_activeText = record ? qs(record->text) : QString();
     m_activeStyle = record ? qs(record->style) : QString();
     m_activeNumber = record ? *row + 1 : 0;
-    const auto shown = displayedLines();
-    const auto hidden = std::count_if(selection.selected.begin(), selection.selected.end(), [&](core::LineId id) {
-        if (const auto row = m_lines.rowOf(id); row && m_lines.foldedMember(*row))
-            return false; // KP1: its folded row shows it
-        return std::find(shown.begin(), shown.end(), id) == shown.end();
-    });
+    const auto shown = actionLines();
+    const std::set<core::LineId> shownSet(shown.begin(), shown.end());
+    const auto hidden = std::count_if(selection.selected.begin(), selection.selected.end(),
+                                      [&](core::LineId id) { return !shownSet.contains(id); });
     m_selectedCount = static_cast<qsizetype>(selection.selected.size());
     m_hiddenCount = hidden;
     m_selectionStatus = selectionText();
@@ -183,6 +182,19 @@ std::vector<core::LineId> ShellController::displayedLines() const
     for (int row = 0; row < m_shown.rowCount(); ++row)
         if (const auto id = m_lines.lineAt(m_shown.mapToSource(m_shown.index(row, 0)).row()))
             out.push_back(*id);
+    return out;
+}
+
+std::vector<core::LineId> ShellController::actionLines() const
+{
+    std::vector<core::LineId> out;
+    for (int row = 0; row < m_shown.rowCount(); ++row) {
+        const int source = m_shown.mapToSource(m_shown.index(row, 0)).row();
+        const int end = m_lines.runFolded(source) ? source + m_lines.runSize(source) : source + 1;
+        for (int r = source; r < end; ++r)
+            if (const auto id = m_lines.lineAt(r); id && m_shown.passes(r))
+                out.push_back(*id);
+    }
     return out;
 }
 

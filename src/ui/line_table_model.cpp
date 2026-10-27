@@ -728,6 +728,11 @@ std::vector<int> LineTableModel::foldedRuns() const
     return out;
 }
 
+int LineTableModel::runSize(int firstRow) const
+{
+    return runFirstRow(firstRow) == firstRow ? m_runs[std::size_t(m_rows[std::size_t(firstRow)].run)].count : 0;
+}
+
 std::vector<core::LineId> LineTableModel::runLines(int firstRow) const
 {
     std::vector<core::LineId> out;
@@ -850,7 +855,19 @@ bool LineFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &) const
         return true;
     if (m_lines->foldedMember(sourceRow))
         return false;
-    if (!m_predicate)
+    if (m_lines->runFolded(sourceRow)) {
+        const int end = sourceRow + m_lines->runSize(sourceRow);
+        for (int row = sourceRow; row < end; ++row)
+            if (passes(row))
+                return true;
+        return false;
+    }
+    return passes(sourceRow);
+}
+
+bool LineFilterModel::passes(int sourceRow) const
+{
+    if (!m_lines || !m_predicate)
         return true;
     const core::LineRecord *record = m_lines->recordAt(sourceRow);
     return record && m_predicate(*record);
@@ -863,7 +880,7 @@ int LineFilterModel::hiddenSelectedCount() const
     int hidden = 0;
     for (const auto &id : m_lines->selection().selected) {
         const auto row = m_lines->rowOf(id);
-        if (row && !filterAcceptsRow(*row, {}) && !m_lines->foldedMember(*row)) // KP1: folded is shown
+        if (row && !passes(*row)) // KP1: a Line folded into a shown row is not hidden
             ++hidden;
     }
     return hidden;

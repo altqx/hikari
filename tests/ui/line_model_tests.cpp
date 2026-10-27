@@ -610,6 +610,31 @@ private slots:
         QCOMPARE(model.index(0, LineTableModel::EffectColumn).data().toString(), QStringLiteral("fx"));
     }
 
+    // KP1: a folded run's row stays while any of its Lines passes the
+    // filter, its first one hidden or not; a Line filtered out of it counts
+    // as hidden when selected, one folded into the row does not.
+    void aFoldedRunShowsWhileAnyOfItsLinesPasses()
+    {
+        constexpr std::string_view text = "[Events]\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,before\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,fx,first\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,fx,second\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,fx,third\n";
+        LineTableModel model;
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        model.setDocument(load(text));
+        model.setFoldGenerated(true);
+        filter.setPredicate([](const core::LineRecord &l) { return l.style != u8"Sign"; });
+        QCOMPARE(filter.rowCount(), 1);
+        QCOMPARE(filter.index(0, 0).data(LineTableModel::DocumentRowRole).toInt(), 1);
+        QCOMPARE(filter.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("3 generated Lines"));
+        const qulonglong first = idAt(model, 1), second = idAt(model, 2);
+        model.setSelection({core::LineId{first}, {core::LineId{first}, core::LineId{second}}}, core::LineId{first});
+        QCOMPARE(filter.hiddenSelectedCount(), 1); // the first Line, filtered out
+        filter.setPredicate([](const core::LineRecord &l) { return l.style == u8"Nothing"; });
+        QCOMPARE(filter.rowCount(), 0);
+    }
 };
 
 QTEST_MAIN(LineModelTest)

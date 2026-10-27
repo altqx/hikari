@@ -200,8 +200,11 @@ public:
     Q_INVOKABLE void selectLine(qulonglong id);
     // Shows the editing target's whole selection (G1).
     void setSelection(const application::Selection &selection);
-    // The editing target's Lines in the order the Grid shows them.
+    // The editing target's Lines in the order the Grid shows them, one per row.
     std::vector<core::LineId> displayedLines() const;
+    // The Lines actions take as shown: displayedLines with every Line a
+    // folded row stands for that the Grid filter passes (KP1).
+    std::vector<core::LineId> actionLines() const;
     // O5: the interface language changed: the selection status, the titles
     // and both Grids' headings again.
     void retranslate();

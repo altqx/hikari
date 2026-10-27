@@ -214,6 +214,8 @@ public:
     std::vector<int> foldedRuns() const;
     // The Lines of the run whose first row is `firstRow`, in order.
     std::vector<core::LineId> runLines(int firstRow) const;
+    // How many rows the run whose first row is `firstRow` holds, or 0.
+    int runSize(int firstRow) const;
 
     std::optional<int> rowOf(core::LineId id) const;
     std::optional<core::LineId> lineAt(int row) const;
@@ -307,6 +309,9 @@ public:
     void setLineModel(LineTableModel *model);
     void setPredicate(Predicate predicate); // empty predicate shows every Line
     int hiddenSelectedCount() const;
+    // Whether the Grid filter shows the source row's Line, folding aside
+    // (KP1: a folded run's row is shown while any of its Lines passes).
+    bool passes(int sourceRow) const;
     // Proxy row of the shown Line nearest (in document order) to `id`, which
     // may itself be hidden; ties prefer the following Line. -1 if none shown.
     int nearestVisibleRow(core::LineId id) const;
