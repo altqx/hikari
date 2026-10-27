@@ -150,9 +150,13 @@ ScrollView {
                 text: qsTr("Accent")
                 Row {
                     spacing: 8
-                    readonly property string docsSetting: page.accentSetting
-                    readonly property string docsControl: "choice"
-                    readonly property var docsValues: Theme.accents(Theme.dark).map(a => ({value: a.key, label: a.name}))
+                    // DX1: Light's and Dark's accents, whichever is shown.
+                    readonly property var docsEntries: Theme.themes().filter(t => !t.highContrast).map(t => ({
+                        setting: t.dark ? "appearance.darkAccent" : "appearance.lightAccent",
+                        control: "choice",
+                        label: "Accent (" + t.name + ")",
+                        values: Theme.accents(t.dark).map(a => ({value: a.key, label: a.name}))
+                    }))
                     Repeater {
                         model: Theme.accents(Theme.dark)
                         delegate: AbstractButton {
@@ -192,6 +196,9 @@ ScrollView {
             Layout.leftMargin: 24
             Layout.rightMargin: 24
             Repeater {
+                // DX1: both high contrast themes' colors, whichever is shown.
+                readonly property var docsEntries: [].concat(...Theme.themes().filter(t => t.highContrast).map(
+                    t => Theme.picks(t.code).map(p => ({setting: p.setting, control: "colour", label: p.name + " (" + t.name + ")"}))))
                 model: Theme.picks(page.shownTheme)
                 delegate: SettingsRow {
                     id: pick

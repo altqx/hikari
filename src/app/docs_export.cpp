@@ -236,6 +236,18 @@ struct SettingsWalk {
 
     void walk(QQuickItem *item)
     {
+        // A control for each theme's setting, only one of them shown at a
+        // time (the accents, the high contrast colors): every one, named.
+        if (has(item, "docsEntries")) {
+            for (const QVariant &v : plain(item->property("docsEntries")).toList()) {
+                const QVariantMap entry = v.toMap();
+                QJsonObject extra{{QStringLiteral("label"), entry.value(QStringLiteral("label")).toString()}};
+                if (entry.contains(QStringLiteral("values")))
+                    extra.insert(QStringLiteral("values"), QJsonArray::fromVariantList(entry.value(QStringLiteral("values")).toList()));
+                add(item, entry.value(QStringLiteral("setting")).toString(), entry.value(QStringLiteral("control")).toString(), extra);
+            }
+            return;
+        }
         QString key = has(item, "docsSetting") ? text(item, "docsSetting") : QString();
         if (key.isEmpty() && has(item, "setting") && item->property("setting").userType() == QMetaType::QString)
             key = text(item, "setting");

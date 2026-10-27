@@ -9,6 +9,7 @@
 #include "hikari/application/guide_links.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/options_dialog.h"
+#include "hikari/application/settings.h"
 #include "settings_store.h"
 
 #include <QFile>
@@ -206,6 +207,17 @@ private slots:
         for (const char *key : {"appearance.theme", "appearance.followSystem", "appearance.titleBar", "program.font",
                                 "program.fontSize"})
             QVERIFY2(byKey.contains(QLatin1String(key)), key);
+        // Every theme's settings, not only those of the theme shown.
+        for (const application::SettingDefinition &definition : application::settingDefinitions())
+            if (definition.id.starts_with("appearance."))
+                QVERIFY2(byKey.contains(qs(definition.id)), definition.id.data());
+        QCOMPARE(byKey.value(QStringLiteral("appearance.lightAccent")).value(QStringLiteral("label")).toString(),
+                 QStringLiteral("Accent (Light)"));
+        QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("label")).toString(),
+                 QStringLiteral("Border color (High contrast black)"));
+        QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("section")).toString(),
+                 QStringLiteral("UI colors"));
+        QVERIFY(!byKey.value(QStringLiteral("appearance.darkAccent")).value(QStringLiteral("values")).toArray().isEmpty());
 
         const QJsonObject tabs = byKey.value(QStringLiteral("program.tabTextMaxChars"));
         QCOMPARE(tabs.value(QStringLiteral("page")).toString(), QStringLiteral("general"));
