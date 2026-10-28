@@ -645,7 +645,8 @@ DialogWindow {
                             Label {
                                 objectName: "fontCatalogSample"
                                 textFormat: Text.PlainText
-                                text: window.catalogs.previewText
+                                // #403: its characters, as the Styles panel's swatches draw them.
+                                text: window.catalogs.samplePlain(window.catalogs.previewText, true)
                                 font.family: row.modelData
                                 font.pixelSize: 15
                                 elide: Text.ElideRight

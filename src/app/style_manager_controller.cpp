@@ -875,13 +875,13 @@ void StyleManagerController::renderPreview(const QVariantMap &values, int width,
     const core::StyleValues style = styleOf(values, m_edit ? m_edit->opened : application::defaultStyle());
     m_preview = renderStylePreview(m_renderer, style, width, height, text,
                                    m_hooks.fonts ? m_hooks.fonts() : std::vector<application::FontLease>(),
-                                   m_atScreenSize ? scale : 1);
+                                   m_atScreenSize ? scale : 1, false);
     ++m_previewKey;
     emit previewChanged();
 }
 
 QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues style, int width, int height,
-                          const QString &text, std::vector<application::FontLease> fonts, qreal scale)
+                          const QString &text, std::vector<application::FontLease> fonts, qreal scale, bool wrap)
 {
     // StylePreview::SubsText: the Style at alignment 5 on a script the preview's size.
     style.alignment = u8"5";
@@ -891,7 +891,8 @@ QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues 
         line += (i ? u8"," : u8"") + fields[i];
     const std::u8string script =
         u8"[Script Info]\r\nPlayResX: " + u8(QString::number(width)) + u8"\r\nPlayResY: " + u8(QString::number(height)) +
-        u8"\r\nScaledBorderAndShadow: Yes\r\nScriptType: v4.00+\r\nWrapStyle: 0\r\n[V4+ Styles]\r\n"
+        u8"\r\nScaledBorderAndShadow: Yes\r\nScriptType: v4.00+\r\nWrapStyle: " + (wrap ? u8"0" : u8"2") +
+        u8"\r\n[V4+ Styles]\r\n"
         u8"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
         u8"Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, "
         u8"MarginV, Encoding\r\n" + line + u8"\r\n \r\n[Events]\r\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, "
