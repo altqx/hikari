@@ -323,7 +323,7 @@ private slots:
         auto *action = named("hideEditorTagsMenuItem")->property("action").value<QObject *>();
         QVERIFY(action);
         QVERIFY(!action->property("checked").toBool());
-        // The command (Subtitles > Hide tags in the line editor).
+        // The command (View > Hide tags in the line editor).
         QVERIFY(runGlobal(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS")));
         QVERIFY(!application->editor().showTags());
         QTRY_COMPARE(shownText(), QStringLiteral("Hi there"));

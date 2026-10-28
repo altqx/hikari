@@ -73,6 +73,14 @@ for f in Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin Dictio
     licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt; do
     [ -f "$tree/$f" ] || { echo "error: the install produced no $f" >&2; exit 1; }
 done
+# DK1 (#473): the pinned spell-check dictionaries and their notices.
+for name in en_US pl th_TH ko_KR ta_IN; do
+    for f in "Dictionary/$name.aff" "Dictionary/$name.dic"; do
+        [ -f "$tree/$f" ] || { echo "error: the install produced no $f" >&2; exit 1; }
+    done
+    [ -n "$(ls -A "$tree/licenses/dictionaries/$name" 2>/dev/null)" ] ||
+        { echo "error: the install produced no licenses/dictionaries/$name" >&2; exit 1; }
+done
 "$here/check-payload.sh" --min-glibc "$min_glibc" "$tree"
 
 # CR1 (#452): debug info a build carries (HIKARI_DEBUG_SYMBOLS) leaves the
