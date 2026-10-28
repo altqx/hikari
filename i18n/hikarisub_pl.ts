@@ -6725,6 +6725,14 @@ gdy okno wyników szukania jest otwarte</translation>
 <context>
     <name>HikariSub.GettingStarted</name>
     <message>
+        <source>Updates and privacy</source>
+        <translation>Aktualizacje i prywatność</translation>
+    </message>
+    <message>
+        <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
+        <translation>Które wersje HikariSub Ci proponuje, czy sam ich szuka i czy wysyła anonimowe dane o użytkowaniu.</translation>
+    </message>
+    <message>
         <source>Later: Settings › Updates and privacy</source>
         <translation>Później: Ustawienia › Aktualizacje i prywatność</translation>
     </message>

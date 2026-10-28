@@ -146,11 +146,13 @@ const Table &table()
                               QStringLiteral("stopped")})},
                       {QStringLiteral("script"),
                        pattern(QStringLiteral("^(user script|[A-Za-z0-9_.-]{1,64}\\.(lua|moon))$"))}});
-        const std::map<QString, Rule> media{
+        std::map<QString, Rule> media{
             {QStringLiteral("open_time"), oneOf(kTimeBuckets)},
             {QStringLiteral("outcome"), oneOf({QStringLiteral("ready"), QStringLiteral("failed")})},
-            {QStringLiteral("kind"), oneOf({QStringLiteral("file"), QStringLiteral("from_video"), QStringLiteral("dummy")})}};
+            {QStringLiteral("kind"), oneOf({QStringLiteral("file"), QStringLiteral("dummy")})}};
         t.emplace(QStringLiteral("video_opened"), media);
+        // Only audio comes from a video.
+        media[QStringLiteral("kind")] = oneOf({QStringLiteral("file"), QStringLiteral("from_video"), QStringLiteral("dummy")});
         t.emplace(QStringLiteral("audio_opened"), media);
         t.emplace(QStringLiteral("$exception"),
                   std::map<QString, Rule>{{QStringLiteral("$exception_list"), {Rule::Exceptions, {}, {}}},
