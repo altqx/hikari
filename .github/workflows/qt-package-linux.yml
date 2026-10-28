@@ -51,6 +51,10 @@ on:
     secrets:
       QT_INSTALLER_JWT_TOKEN:
         required: true
+      # AN1 (#404): the PostHog project key a release build sends usage data
+      # with; test packages are built without it.
+      HIKARI_POSTHOG_KEY:
+        required: false
 
 permissions:
   contents: read
@@ -120,6 +124,8 @@ jobs:
       - name: Configure and build on the floor
         env:
           SUFFIX: ${{ inputs.version_suffix }}
+          # AN1: release builds only (test packages send nothing).
+          POSTHOG_KEY: ${{ inputs.release && secrets.HIKARI_POSTHOG_KEY || '' }}
         run: |
           set -eu
           . /etc/profile.d/hikari-floor.sh
@@ -127,6 +133,7 @@ jobs:
           test ! -e out/sdk/qt-install-private
           set -- --preset linux-floor-x64-release -DHIKARI_INSTALL_DICTIONARY_DIR=/usr/share/myspell
           [ -z "$SUFFIX" ] || set -- "$@" "-DHIKARI_VERSION_SUFFIX=$SUFFIX"
+          [ -z "$POSTHOG_KEY" ] || set -- "$@" "-DHIKARI_POSTHOG_KEY=$POSTHOG_KEY"
           cmake "$@"
           cmake --build --preset linux-floor-x64-release
 
