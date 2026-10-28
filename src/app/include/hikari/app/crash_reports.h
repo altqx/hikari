@@ -67,7 +67,7 @@ public:
 
     // The names of the files open now and their Lines' texts (the scrubber's).
     void setKnown(std::function<QStringList()> names, std::function<QStringList()> texts);
-    // The editing target's subtitle file, "" without one (Report an issue).
+    // The editing target's subtitle file, "" without one (beginIssue).
     void setCurrentFile(std::function<QString()> file) { m_currentFile = std::move(file); }
     // Once the window shows: this system. A pending report is completed,
     // its $exception queued while usage data is on, and with "Always send"
@@ -102,7 +102,9 @@ public:
 
     // Help › Report an issue. `kind`: bug, feature or question; `fields`
     // the form's by id. System and settings always go; the Log's lines
-    // when `withLog`.
+    // when `withLog`. beginIssue, as the form opens, takes the Log's lines
+    // and the editing target's file the form shows and sends.
+    Q_INVOKABLE void beginIssue();
     Q_INVOKABLE QString issueSystemText() const;
     Q_INVOKABLE QString issueLogText() const;
     Q_INVOKABLE QString issueMarkdown(const QString &kind, const QString &title, const QVariantMap &fields,
@@ -129,12 +131,14 @@ public:
 signals:
     void changed();
     void sendingChanged();
-    // A Send report finished.
+    // A Send report finished; a report that failed is kept in `source`
+    // ("" when a newer freeze took its place).
     void sent(const QString &source, bool ok);
     // A freeze the window came back from, offered (the notice).
     void freezeNoticed(int seconds);
-    // "Always send" sent the start's report (or a freeze's) by itself.
-    void autoSent(const QString &kind, bool ok);
+    // "Always send" sent the start's report (or a freeze's) by itself;
+    // `source` as sent's.
+    void autoSent(const QString &kind, bool ok, const QString &source);
 
 private:
     std::optional<report::Report> *slot(const QString &source);
@@ -147,7 +151,7 @@ private:
                     const QString &details);
     void writeTail();
     report::Issue issue(const QString &kind, const QString &title, const QVariantMap &fields, bool withLog) const;
-    void sendAuto(const QString &source);
+    bool sendAuto(const QString &source);
     QVariantMap open(const report::Issue &issue);
 
     ui::SettingsStore &m_settings;
@@ -160,6 +164,8 @@ private:
     QStringList m_tail;
     QString m_sentText;
     std::function<QString()> m_currentFile;
+    QString m_issueLog;
+    QString m_issueFile;
     QTimer m_tailTimer;
     bool m_started = false;
     bool m_sending = false;

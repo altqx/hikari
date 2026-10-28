@@ -20,6 +20,8 @@
 #include <utility>
 
 #ifdef Q_OS_UNIX
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -38,17 +40,40 @@ QString severityName(int severity)
     }
 }
 
-QStringList readLines(const QString &path)
+constexpr qint64 kMaxRead = 1024 * 1024;
+
+// A report file read back: on Unix a regular file of the user's, opened
+// without following a link; "" otherwise.
+QByteArray readPrivate(const QString &path)
 {
-    QFile file(path);
-    if (file.size() > 1024 * 1024 || !file.open(QIODevice::ReadOnly))
+    if (path.isEmpty())
         return {};
-    return report::boundLog(QString::fromUtf8(file.readAll()).split(u'\n', Qt::SkipEmptyParts));
+#ifdef Q_OS_UNIX
+    const int fd = ::open(QFile::encodeName(path).constData(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+    if (fd < 0)
+        return {};
+    struct stat st {};
+    QFile file;
+    if (::fstat(fd, &st) != 0 || !S_ISREG(st.st_mode) || st.st_uid != ::getuid() || st.st_size > kMaxRead ||
+        !file.open(fd, QIODevice::ReadOnly, QFileDevice::AutoCloseHandle)) {
+        ::close(fd);
+        return {};
+    }
+    return file.read(kMaxRead);
+#else
+    QFile file(path);
+    if (QFileInfo(path).isSymLink() || file.size() > kMaxRead || !file.open(QIODevice::ReadOnly))
+        return {};
+    return file.readAll();
+#endif
 }
 
 // The folder a report's files go in (scrubbed Logs, a screenshot, a
 // subtitle file): made when missing, never through a link, and on Unix the
-// user's alone (0700), whatever the umask. False when it cannot be so.
+// user's alone (0700), whatever the umask. Its parent must not let another
+// account swap it: one of the user's that others could write to is closed
+// to them, any other must be closed or sticky (/tmp). False when it cannot
+// be so.
 bool privateFolder(const QString &folder)
 {
     if (folder.isEmpty() || QFileInfo(folder).isSymLink() || !QDir().mkpath(folder))
@@ -57,8 +82,18 @@ bool privateFolder(const QString &folder)
     if (info.isSymLink() || !info.isDir())
         return false;
 #ifdef Q_OS_UNIX
-    if (info.ownerId() != ::getuid())
+    struct stat parent {};
+    const QByteArray parentPath = QFile::encodeName(info.absolutePath());
+    if (info.ownerId() != ::getuid() || ::stat(parentPath.constData(), &parent) != 0)
         return false;
+    if (parent.st_mode & (S_IWGRP | S_IWOTH)) {
+        if (parent.st_uid == ::getuid()) {
+            if (::chmod(parentPath.constData(), parent.st_mode & 07755) != 0)
+                return false;
+        } else if (!(parent.st_mode & S_ISVTX)) {
+            return false;
+        }
+    }
     return QFile::setPermissions(folder, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
 #else
     return true;
@@ -101,24 +136,30 @@ CrashReports::CrashReports(ui::SettingsStore &settings, Analytics &analytics, ui
         // A newer freeze may have taken the slot while it went.
         const auto *r = slot(source);
         const bool current = *r && (*r)->id == sentReport.id;
+        // Where a report that failed is kept: nothing tries again by itself.
+        QString kept = source;
         if (ok) {
             if (current)
                 done(source);
         } else if (source != kStart) {
-            // Kept for the next start; nothing tries again before.
+            // A freeze: for the next start when no report waits there, else
+            // for this run, unless a newer freeze took its place.
             if (!m_pending) {
                 m_pending = sentReport;
                 savePending();
+                if (current)
+                    m_freeze.reset();
+                kept = kStart;
+            } else if (!current) {
+                kept.clear();
             }
-            if (current)
-                m_freeze.reset();
             emit changed();
         }
         emit sendingChanged();
         if (automatic)
-            emit autoSent(kind, ok);
+            emit autoSent(kind, ok, kept);
         else
-            emit sent(source, ok);
+            emit sent(kept, ok);
     });
     // Usage data off drops what it had queued, perhaps a report's
     // $exception: Send report sends the record again.
@@ -151,7 +192,7 @@ void CrashReports::collect()
 {
     // The last run's Log, then the records it left: a crash, or a freeze
     // it was closed in (the later, when both).
-    const QStringList lastLog = readLines(m_config.logTail);
+    const QStringList lastLog = report::boundLog(QString::fromUtf8(readPrivate(m_config.logTail)).split(u'\n', Qt::SkipEmptyParts));
     QFile::remove(m_config.logTail);
     std::optional<crash::Record> record;
     QDateTime when;
@@ -173,9 +214,8 @@ void CrashReports::collect()
         savePending();
         return;
     }
-    QFile file(m_config.pendingFile);
-    if (!m_config.pendingFile.isEmpty() && file.size() < 1024 * 1024 && file.open(QIODevice::ReadOnly)) {
-        m_pending = report::Report::fromJson(QJsonDocument::fromJson(file.readAll()).object());
+    if (const QByteArray json = readPrivate(m_config.pendingFile); !json.isEmpty()) {
+        m_pending = report::Report::fromJson(QJsonDocument::fromJson(json).object());
         if (!m_pending || !m_pending->record) {
             m_pending.reset();
             QFile::remove(m_config.pendingFile);
@@ -228,16 +268,17 @@ void CrashReports::freezeRecovered(const crash::Record &record)
     if (m_analytics.active() && m_analytics.capture(QStringLiteral("$exception"), m_freeze->exceptionProperties()))
         m_freeze->exceptionSent = true;
     emit changed();
-    if (m_settings.boolean(kAlwaysSend) && canSend())
-        sendAuto(QStringLiteral("freeze"));
-    else
+    // "Always send" offers it as well when it cannot go now (another send).
+    if (!m_settings.boolean(kAlwaysSend) || !canSend() || !sendAuto(QStringLiteral("freeze")))
         emit freezeNoticed(record.seconds);
 }
 
-void CrashReports::sendAuto(const QString &source)
+bool CrashReports::sendAuto(const QString &source)
 {
-    if (send(source, {}))
-        m_sendingAuto = true;
+    if (!send(source, {}))
+        return false;
+    m_sendingAuto = true;
+    return true;
 }
 
 QString CrashReports::pending() const
@@ -356,9 +397,15 @@ QString CrashReports::issueSystemText() const
     return r.systemText() + QStringLiteral("\n\n") + r.settingsText();
 }
 
+void CrashReports::beginIssue()
+{
+    m_issueLog = m_tail.join(u'\n');
+    m_issueFile = m_currentFile ? m_currentFile() : QString();
+}
+
 QString CrashReports::issueLogText() const
 {
-    return m_tail.join(u'\n');
+    return m_issueLog;
 }
 
 report::Issue CrashReports::issue(const QString &kind, const QString &title, const QVariantMap &fields,
@@ -419,8 +466,7 @@ QString CrashReports::systemSummary() const
 
 QString CrashReports::subtitleFileName() const
 {
-    const QString file = m_currentFile ? m_currentFile() : QString();
-    return QFileInfo(file).isFile() ? QFileInfo(file).fileName() : QString();
+    return QFileInfo(m_issueFile).isFile() ? QFileInfo(m_issueFile).fileName() : QString();
 }
 
 QString CrashReports::takeScreenshot(QObject *window)
@@ -436,7 +482,7 @@ QString CrashReports::takeScreenshot(QObject *window)
 
 QString CrashReports::zipSubtitleFile()
 {
-    const QString file = m_currentFile ? m_currentFile() : QString();
+    const QString &file = m_issueFile;
     QFile in(file);
     if (!QFileInfo(file).isFile() || in.size() > 64 * 1024 * 1024 || !in.open(QIODevice::ReadOnly) ||
         !privateFolder(m_config.attachments))

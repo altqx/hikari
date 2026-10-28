@@ -31,7 +31,8 @@ DialogWindow {
     property bool complete: true
     property string screenshot: ""
     property string subtitleZip: ""
-    readonly property string subtitleName: visible ? reports.subtitleFileName() : ""
+    // The editing target's file as the form opened ("" without one).
+    property string subtitleName: ""
     readonly property var kinds: ["bug", "feature", "question"]
     readonly property var kindNames: [qsTr("Bug"), qsTr("Feature request"), qsTr("Question")]
     readonly property bool bug: kind === "bug"
@@ -47,6 +48,9 @@ DialogWindow {
 
     function openForm() {
         reports.discardAttachments()
+        // The Log and the file it shows and sends, as it opens.
+        reports.beginIssue()
+        subtitleName = reports.subtitleFileName()
         // The window as it is, before the form opens over it.
         screenshot = mainWindow ? reports.takeScreenshot(mainWindow) : ""
         subtitleZip = ""

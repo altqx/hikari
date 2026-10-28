@@ -7492,15 +7492,18 @@ ApplicationWindow {
                 root.notices.post("info", qsTranslate("HikariSub.Reports", "Crash report sent. Thank you."), "")
                 return
             }
+            // `source`: where the report is kept ("" when a newer freeze took its place).
             const note = crashReportWindow.lastNote
-            root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"), qsTranslate("HikariSub.Reports", "It is kept for the next start."),
-                              { actions: [{ text: qsTranslate("HikariSub.Reports", "Try again"), run: () => root.crashReports.send("start", note) },
-                                          { text: qsTranslate("HikariSub.Reports", "Open GitHub issue"), run: () => crashReportWindow.openOnGitHub("start", note) }] })
+            root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"),
+                              source === "start" ? qsTranslate("HikariSub.Reports", "It is kept for the next start.") : "",
+                              { actions: source === "" ? [] : [{ text: qsTranslate("HikariSub.Reports", "Try again"), run: () => root.crashReports.send(source, note) },
+                                                               { text: qsTranslate("HikariSub.Reports", "Open GitHub issue"), run: () => crashReportWindow.openOnGitHub(source, note) }] })
         }
-        function onAutoSent(kind, ok) {
+        function onAutoSent(kind, ok, source) {
             if (!ok) {
-                root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"), qsTranslate("HikariSub.Reports", "It is kept for the next start."),
-                                  { actions: [{ text: qsTranslate("HikariSub.Reports", "Show report"), run: () => crashReportWindow.showReport("start") }] })
+                root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"),
+                                  source === "start" ? qsTranslate("HikariSub.Reports", "It is kept for the next start.") : "",
+                                  { actions: source === "" ? [] : [{ text: qsTranslate("HikariSub.Reports", "Show report"), run: () => crashReportWindow.showReport(source) }] })
                 return
             }
             root.notices.post("info", kind === "freeze" ? qsTranslate("HikariSub.Reports", "HikariSub stopped responding. A freeze report was sent.")

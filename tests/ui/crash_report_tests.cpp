@@ -469,6 +469,8 @@ private slots:
         QTemporaryDir elsewhere;
         QVERIFY(QFile::link(elsewhere.path(), path("linked")));
         writeRecord("Episode 03.ass", "[Script Info]\n");
+        // A cache folder others can write to is closed to them.
+        QVERIFY(QFile::setPermissions(dir.path(), QFile::permissions(dir.path()) | QFileDevice::WriteGroup | QFileDevice::WriteOther));
         const mode_t was = ::umask(0);
         hikari::ui::SettingsStore settings;
         settings.set("privacy.usageData", false);
@@ -478,17 +480,135 @@ private slots:
         reports.setCurrentFile([this] { return path("Episode 03.ass"); });
         log.log(QStringLiteral("a line of the Log"));
         QTRY_VERIFY(QFile::exists(path("reports/log-tail.txt")));
+        reports.beginIssue();
         const QString zip = reports.zipSubtitleFile();
         ::umask(was);
         QVERIFY(QFile::exists(path("reports/crash-report.json")));
         QCOMPARE(QFileInfo(path("reports")).permissions() & ~(QFileDevice::ReadUser | QFileDevice::WriteUser | QFileDevice::ExeUser),
                  QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+        QVERIFY(!(QFile::permissions(dir.path()) & (QFileDevice::WriteGroup | QFileDevice::WriteOther)));
         QVERIFY(zip.isEmpty());
         QVERIFY(QDir(elsewhere.path()).isEmpty());
         QFile::remove(path("linked"));
         QFile::remove(path("Episode 03.ass"));
         QDir(path("reports")).removeRecursively();
 #endif
+    }
+
+    // A Log tail or a kept report that is a link is not read: another
+    // account's file never goes into a report.
+    void linkedReportFilesAreNotRead()
+    {
+#ifndef Q_OS_UNIX
+        QSKIP("Unix links");
+#else
+        QTemporaryDir elsewhere;
+        QFile secret(elsewhere.filePath(QStringLiteral("secret.txt")));
+        QVERIFY(secret.open(QIODevice::WriteOnly));
+        secret.write("14:00:00 Info    Secret Show\n");
+        secret.close();
+        QVERIFY(QFile::link(secret.fileName(), path("log-tail.txt")));
+        writeRecord("crash-record.txt", crashRecordText());
+        hikari::ui::SettingsStore settings;
+        Analytics analytics(settings, analyticsConfig(QUrl(QStringLiteral("http://127.0.0.1:9/batch/"))));
+        hikari::ui::LogController log;
+        {
+            CrashReports reports(settings, analytics, log, config());
+            QCOMPARE(reports.pending(), QStringLiteral("crash"));
+            QVERIFY(!reports.text(kStart, {}).contains(QStringLiteral("Secret Show")));
+        }
+        QFile::remove(path("crash-report.json"));
+        QVERIFY(QFile::link(secret.fileName(), path("crash-report.json")));
+        CrashReports next(settings, analytics, log, config());
+        QCOMPARE(next.pending(), QString());
+        QFile::remove(path("crash-report.json"));
+#endif
+    }
+
+    // A freeze report that fails while the start's report still waits is
+    // kept for this run, and the failure names it.
+    void failedFreezeSendIsKept()
+    {
+        writeRecord("crash-record.txt", crashRecordText());
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.usageData", false);
+        quint16 port = 0;
+        {
+            AnalyticsEndpoint closed;
+            port = closed.port();
+        }
+        Analytics analytics(settings, analyticsConfig(QUrl(QStringLiteral("http://127.0.0.1:%1/batch/").arg(port))));
+        hikari::ui::LogController log;
+        CrashReports reports(settings, analytics, log, config());
+        reports.started(QStringLiteral("appimage"), 1, 1, QStringLiteral("editing"));
+        reports.freezeRecovered({QStringLiteral("APP_HANG"), QStringLiteral("watchdog"), QStringLiteral("0.1.0-beta.1"),
+                                 {{QStringLiteral("hikarisub"), 0x31c0a8}}, 12});
+        QSignalSpy sent(&reports, &CrashReports::sent);
+        QVERIFY(reports.send(QStringLiteral("freeze"), {}));
+        QVERIFY(sent.wait(10000));
+        QCOMPARE(sent.first().at(0).toString(), QStringLiteral("freeze"));
+        QCOMPARE(sent.first().at(1).toBool(), false);
+        QVERIFY(reports.freezeOffered());
+        QCOMPARE(reports.seconds(QStringLiteral("freeze")), 12);
+        QCOMPARE(reports.pending(), QStringLiteral("crash"));
+    }
+
+    // "Always send" with a send still on its way: the newer freeze gets the notice.
+    void alwaysSendBusyOffersTheFreeze()
+    {
+        AnalyticsEndpoint endpoint;
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.usageData", false);
+        settings.set(CrashReports::kAlwaysSend, true);
+        Analytics analytics(settings, analyticsConfig(endpoint.url()));
+        hikari::ui::LogController log;
+        CrashReports reports(settings, analytics, log, config());
+        reports.started(QStringLiteral("appimage"), 1, 1, QStringLiteral("editing"));
+        const auto freeze = [](int seconds) {
+            return crash::Record{QStringLiteral("APP_HANG"), QStringLiteral("watchdog"), QStringLiteral("0.1.0-beta.1"),
+                                 {{QStringLiteral("hikarisub"), 0x31c0a8}}, seconds};
+        };
+        QSignalSpy noticed(&reports, &CrashReports::freezeNoticed);
+        QSignalSpy autoSent(&reports, &CrashReports::autoSent);
+        reports.freezeRecovered(freeze(12));
+        QVERIFY(reports.sending());
+        QCOMPARE(noticed.size(), 0);
+        reports.freezeRecovered(freeze(30));
+        QCOMPARE(noticed.size(), 1);
+        QCOMPARE(noticed.first().at(0).toInt(), 30);
+        QVERIFY(autoSent.wait(5000));
+        QVERIFY(reports.freezeOffered());
+        QCOMPARE(reports.seconds(QStringLiteral("freeze")), 30);
+    }
+
+    // Report an issue shows and sends the Log and the file as the form
+    // opened, whatever comes after.
+    void issueTakesWhatTheFormShowed()
+    {
+        writeRecord("first.ass", "[Script Info]\n");
+        writeRecord("second.ass", "[Script Info]\n");
+        hikari::ui::SettingsStore settings;
+        Analytics analytics(settings, analyticsConfig(QUrl(QStringLiteral("http://127.0.0.1:9/batch/"))));
+        hikari::ui::LogController log;
+        CrashReports::Config c = config();
+        c.attachments = path("issue");
+        CrashReports reports(settings, analytics, log, c);
+        QString current = path("first.ass");
+        reports.setCurrentFile([&current] { return current; });
+        log.log(QStringLiteral("a line before"));
+        reports.beginIssue();
+        current = path("second.ass");
+        log.log(QStringLiteral("a line after"));
+        QCOMPARE(reports.subtitleFileName(), QStringLiteral("first.ass"));
+        QVERIFY(reports.issueLogText().contains(QStringLiteral("a line before")));
+        QVERIFY(!reports.issueLogText().contains(QStringLiteral("a line after")));
+        const QString md = reports.issueMarkdown(QStringLiteral("bug"), QStringLiteral("A bug"),
+                                                 {{QStringLiteral("what-happened"), QStringLiteral("It froze")}}, true);
+        QVERIFY(!md.contains(QStringLiteral("a line after")));
+        QCOMPARE(QFileInfo(reports.zipSubtitleFile()).fileName(), QStringLiteral("first.zip"));
+        reports.discardAttachments();
+        QFile::remove(path("first.ass"));
+        QFile::remove(path("second.ass"));
     }
 
     // A build without a key can't send; Send report does nothing.
@@ -586,7 +706,9 @@ private slots:
         QVERIFY2(text.contains(QStringLiteral("Opened file1.ass")), qPrintable(text));
         QSignalSpy sent(&next, &CrashReports::sent);
         const QVariantMap issueFields{{QStringLiteral("what-happened"), QStringLiteral("It froze")}};
+        reports.beginIssue();
         const QString issue = reports.issueMarkdown(QStringLiteral("bug"), QStringLiteral("A bug"), issueFields, true);
+        QVERIFY(issue.contains(QStringLiteral("Opened file1.ass")));
         QVERIFY(next.send(kStart, {}));
         QVERIFY(sent.wait(5000));
         const QString payload = QString::fromUtf8(QJsonDocument(endpoint.events()).toJson());
@@ -712,6 +834,7 @@ private slots:
         hikari::ui::LogController log;
         CrashReports reports(settings, analytics, log, config());
         log.log(QStringLiteral("Opened file1.ass"));
+        reports.beginIssue();
         QVariantMap fields;
         for (const QString &id : ids)
             fields.insert(id, QStringLiteral("text for ") + id);
