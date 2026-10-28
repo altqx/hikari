@@ -304,8 +304,8 @@ private slots:
     }
 
     // #385: a count reads in English through the English numerus catalog,
-    // below every other: in English, and in Polish where its entry is still
-    // unfinished. Without the Localisation the source text shows.
+    // below every other: in English, and in Polish the pl catalog's own forms
+    // (TR1 #475 finished it). Without the Localisation the source text shows.
     void englishCountsHaveTheirPlural()
     {
         const auto remove = [](int n) {
@@ -316,7 +316,8 @@ private slots:
             QCOMPARE(remove(1), QStringLiteral("Remove 1 word"));
             QCOMPARE(remove(3), QStringLiteral("Remove 3 words"));
             QVERIFY(localisation.setLanguage(QStringLiteral("pl")));
-            QCOMPARE(remove(2), QStringLiteral("Remove 2 words"));
+            QCOMPARE(remove(2), QStringLiteral("Usuń 2 słowa"));
+            QCOMPARE(remove(5), QStringLiteral("Usuń 5 słów"));
             QVERIFY(!localisation.catalogLanguages().contains(QStringLiteral("en"))); // not a language to choose
         }
         QCOMPARE(remove(1), QStringLiteral("Remove 1 word(s)"));
@@ -433,12 +434,11 @@ private slots:
         QAccessibleInterface *a = QAccessible::queryAccessibleInterface(dialogItem("setting_subtitles.openInNewTab"));
         QVERIFY(a);
         QCOMPARE(a->text(QAccessible::Name), QStringLiteral("Otwieraj napisy zawsze w nowej karcie"));
-        // PF1's keys (the window's title, the language label) are new and
-        // unfinished until translator review: English, never the legacy
-        // restart text.
-        QCOMPARE(settingsDialog()->property("title").toString(), QStringLiteral("Settings"));
-        QCOMPARE(dialogItem("settingsLanguageGroup")->property("title").toString(), QStringLiteral("Language"));
-        QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Interface language"));
+        // PF1's keys (the window's title, the language label), translated
+        // by TR1 #475: never the legacy restart text.
+        QCOMPARE(settingsDialog()->property("title").toString(), QStringLiteral("Ustawienia"));
+        QCOMPARE(dialogItem("settingsLanguageGroup")->property("title").toString(), QStringLiteral("Język"));
+        QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Język interfejsu"));
         // A string the application keeps: the Untitled tab's name; a tab
         // named after its file keeps it.
         QCOMPARE(tabTitle(0), QStringLiteral("episode.ass"));
