@@ -12,7 +12,6 @@ File > Save translation [GLOBAL_SAVE_TRANSLATION]
 File > Save subtitles using the video name [GLOBAL_SAVE_WITH_VIDEO_NAME]
 File > Open auto save [GLOBAL_OPEN_AUTO_SAVE]
 File > Remove temporary files [GLOBAL_DELETE_TEMPORARY_FILES]
-File > Log
 File > Last session >
 File > Last session > Load last session [GLOBAL_LOAD_LAST_SESSION]
 File > Last session > Load session from file [GLOBAL_LOAD_EXTERNAL_SESSION]
@@ -46,15 +45,24 @@ Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
 Edit > Find and replace [GLOBAL_FIND_REPLACE]
 Edit > Find [GLOBAL_SEARCH]
 Edit > Find next [GLOBAL_FIND_NEXT]
-Automation
-Automation > Load script… [GLOBAL_AUTOMATION_LOAD_SCRIPT]
-Automation > Refresh autoload scripts [GLOBAL_AUTOMATION_RELOAD_AUTOLOAD]
-Automation > Run the last loaded script [GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT]
-Automation > Rerun last macro
-Automation > Repeat last run [GLOBAL_AUTOMATION_REPEAT_LAST_RUN]
-Automation > Cancel macro
-Automation > Show panel
-Automation > -
+Subtitles
+Subtitles > Shift times... [GLOBAL_SHOW_SHIFT_TIMES]
+Subtitles > Shift times / run time post processor [GLOBAL_SHIFT_TIMES]
+Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
+Subtitles > ASS file properties [GLOBAL_OPEN_ASS_PROPERTIES]
+Subtitles > Conversion >
+Subtitles > Conversion > Convert to ASS [GLOBAL_CONVERT_TO_ASS]
+Subtitles > Conversion > Convert to SRT [GLOBAL_CONVERT_TO_SRT]
+Subtitles > Conversion > Convert to MDVD [GLOBAL_CONVERT_TO_MDVD]
+Subtitles > Conversion > Convert to MPL2 [GLOBAL_CONVERT_TO_MPL2]
+Subtitles > Conversion > Convert to TMP [GLOBAL_CONVERT_TO_TMP]
+Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
+Subtitles > Resample subtitles [GLOBAL_OPEN_SUBS_RESAMPLE]
+Subtitles > Check spelling [GLOBAL_OPEN_SPELLCHECKER]
+Subtitles > Check karaoke [GLOBAL_CHECK_KARAOKE]
+Subtitles > Kanji timer… [GLOBAL_KANJI_TIMER]
+Subtitles > -
+Subtitles > Translation mode [GLOBAL_TRANSLATION_MODE]
 Video
 Video > Open video… [GLOBAL_OPEN_VIDEO]
 Video > Recently opened videos >
@@ -72,8 +80,6 @@ Video > Go to end time of line [GLOBAL_SET_VIDEO_AT_END_TIME]
 Video > Play / Pause [GLOBAL_PLAY_PAUSE]
 Video > Go to previous keyframe [GLOBAL_GO_TO_PREVIOUS_KEYFRAME]
 Video > Go to next keyframe [GLOBAL_GO_TO_NEXT_KEYFRAME]
-Video > Set audio position to video time [GLOBAL_SET_AUDIO_FROM_VIDEO]
-Video > Set audio marker to video time [GLOBAL_SET_AUDIO_MARK_FROM_VIDEO]
 Video > -
 Video > Unload video
 Video > Streams >
@@ -87,6 +93,18 @@ Audio > Recently opened audio >
 Audio > Recently opened audio > None
 Audio > Open audio from video [GLOBAL_AUDIO_FROM_VIDEO]
 Audio > Close audio [GLOBAL_CLOSE_AUDIO]
+Audio > -
+Audio > Set audio position to video time [GLOBAL_SET_AUDIO_FROM_VIDEO]
+Audio > Set audio marker to video time [GLOBAL_SET_AUDIO_MARK_FROM_VIDEO]
+Automation
+Automation > Load script… [GLOBAL_AUTOMATION_LOAD_SCRIPT]
+Automation > Refresh autoload scripts [GLOBAL_AUTOMATION_RELOAD_AUTOLOAD]
+Automation > Run the last loaded script [GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT]
+Automation > Rerun last macro
+Automation > Repeat last run [GLOBAL_AUTOMATION_REPEAT_LAST_RUN]
+Automation > Cancel macro
+Automation > Show panel
+Automation > -
 View
 View > Layout >
 View > Layout > Editing
@@ -117,27 +135,10 @@ View > Panels > Fix minor errors >
 View > Panels > Template editor >
 View > Move panel…
 View > Restore the previous layout
-Subtitles
-Subtitles > Shift times... [GLOBAL_SHOW_SHIFT_TIMES]
-Subtitles > Shift times / run time post processor [GLOBAL_SHIFT_TIMES]
-Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
-Subtitles > ASS file properties [GLOBAL_OPEN_ASS_PROPERTIES]
-Subtitles > Conversion >
-Subtitles > Conversion > Convert to ASS [GLOBAL_CONVERT_TO_ASS]
-Subtitles > Conversion > Convert to SRT [GLOBAL_CONVERT_TO_SRT]
-Subtitles > Conversion > Convert to MDVD [GLOBAL_CONVERT_TO_MDVD]
-Subtitles > Conversion > Convert to MPL2 [GLOBAL_CONVERT_TO_MPL2]
-Subtitles > Conversion > Convert to TMP [GLOBAL_CONVERT_TO_TMP]
-Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
-Subtitles > Resample subtitles [GLOBAL_OPEN_SUBS_RESAMPLE]
-Subtitles > Check spelling [GLOBAL_OPEN_SPELLCHECKER]
-Subtitles > Check karaoke [GLOBAL_CHECK_KARAOKE]
-Subtitles > Kanji timer… [GLOBAL_KANJI_TIMER]
-Subtitles > -
-Subtitles > Translation mode [GLOBAL_TRANSLATION_MODE]
-Subtitles > -
-Subtitles > Hide tags [GLOBAL_HIDE_TAGS]
-Subtitles > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]
+View > -
+View > Log
+View > Hide tags [GLOBAL_HIDE_TAGS]
+View > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]
 Help
 Help > Getting started [GLOBAL_GETTING_STARTED]
 Help > User guide [GLOBAL_HELP]

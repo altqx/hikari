@@ -2134,7 +2134,7 @@ private slots:
         QTRY_COMPARE(editor.text(), QStringLiteral("first"));
     }
 
-    // E6: GLOBAL_HIDE_TAGS, Subtitles > Hide tags (legacy SubsGrid::
+    // E6: GLOBAL_HIDE_TAGS, View > Hide tags (legacy SubsGrid::
     // HideOverrideTags): the Grid's text with each block swapped for
     // GRID_TAGS_SWAP_CHARACTER, kept in GRID_HIDE_TAGS.
     void hideTagsSwitchesTheGridsTags()
@@ -2828,7 +2828,7 @@ private slots:
     }
     // NT1 (#302): a failed open is an error toast titled with the command;
     // the Log is a panel that never opens by itself, opened by a toast's
-    // Details at its entry (marked) and by File > Log.
+    // Details at its entry (marked) and by View > Log.
     void aFailedOpenIsAToastAndTheLogAPanel()
     {
         auto *root = engine->rootObjects().first();
@@ -2878,7 +2878,7 @@ private slots:
                                           Q_ARG(int, quotedText->property("length").toInt())));
         QCOMPARE(shown, QStringLiteral("Open subtitles <img src=\"x\"> & <b>"));
         QVERIFY(log.history().contains(QStringLiteral("Save: nt1 could not be saved.\n    disk full\n")));
-        // File > Log toggles the panel.
+        // View > Log toggles the panel.
         auto *menuItem = root->findChild<QObject *>(QStringLiteral("logMenuItem"));
         QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Log"));
         QVERIFY(QMetaObject::invokeMethod(menuItem, "click"));

@@ -666,7 +666,7 @@ DialogWindow {
                         title: qsTr("Display")
                         ruled: false
                         // LE3-tags-shown: the Line editor shows ASS override tags unless this is on
-                        // (Subtitles > "Hide tags in the line editor" switches it too).
+                        // (View > "Hide tags in the line editor" switches it too).
                         SettingCheck { setting: "editor.hideTags"; text: qsTr("Hide tags") }
                         // LE2: legacy's Time / Frames radios under the Line editor
                         // (EDITBOX_TIMES_TO_FRAMES_SWITCH); the Video panel's "⋯" menu has it too.
