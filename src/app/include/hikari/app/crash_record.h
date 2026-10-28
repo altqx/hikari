@@ -7,6 +7,9 @@
 // only when it is the program's own (in its folder) or the system's (/usr,
 // /lib; the Windows folder), by file name; any other is "other", so no path
 // and no name of the user's own files is written.
+// CR1 (#452): a freeze the hang watchdog saw is a record of the same form,
+// type APP_HANG, mechanism "watchdog", with how long the window did not
+// answer (`seconds`).
 
 #include <QList>
 #include <QString>
@@ -23,11 +26,15 @@ struct Frame {
 };
 
 struct Record {
-    QString type;      // SIGSEGV, …, or the SEH code's name (EXCEPTION_ACCESS_VIOLATION) or 0x… code
-    QString mechanism; // "signal" or "seh"
+    QString type;      // SIGSEGV, …, or the SEH code's name (EXCEPTION_ACCESS_VIOLATION) or 0x… code, or APP_HANG
+    QString mechanism; // "signal", "seh" or "watchdog"
     QString version;
     QList<Frame> frames;
+    int seconds = 0;   // a freeze: how long the window did not answer (so far)
+    bool freeze() const { return mechanism == QLatin1String("watchdog"); }
 };
+
+inline constexpr char kFreezeType[] = "APP_HANG";
 
 // Installs the handlers, which write `recordPath` when the process crashes.
 // `programFolder` names the program's own modules. Once per process; a
@@ -40,5 +47,11 @@ bool installed();
 // The record at `path`, when it is one. Anything that does not read as one
 // (a field outside its set, a module name that could be a path) is none.
 std::optional<Record> read(const QString &path);
+// Writes `record` to `path` in the form read() takes (outside a handler).
+bool write(const QString &path, const Record &record);
+// The frames of return addresses taken outside a handler (the hang
+// watchdog's), named as the handler names them: the program's own and the
+// system's modules by file name, any other "other". install() first.
+QList<Frame> framesOf(const quintptr *addresses, int count);
 
 } // namespace hikari::app::crash

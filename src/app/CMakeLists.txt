@@ -61,7 +61,10 @@ set_source_files_properties(docs_export.cpp PROPERTIES COMPILE_DEFINITIONS "HIKA
 # Only release workflows pass the key; without one nothing is queued or sent.
 set(HIKARI_POSTHOG_KEY "" CACHE STRING "PostHog project key for anonymous usage data (release builds only)")
 target_sources(hikari_composition PRIVATE analytics.cpp analytics_key.cpp include/hikari/app/analytics.h
-    crash_record.cpp include/hikari/app/crash_record.h)
+    crash_record.cpp include/hikari/app/crash_record.h
+    crash_report.cpp include/hikari/app/crash_report.h # CR1 (#452): crash, freeze and issue reports
+    crash_reports.cpp include/hikari/app/crash_reports.h
+    hang_watchdog.cpp include/hikari/app/hang_watchdog.h)
 set_source_files_properties(analytics_key.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_POSTHOG_KEY=\"${HIKARI_POSTHOG_KEY}\"")
 if(NOT WIN32)
     target_link_libraries(hikari_composition PRIVATE ${CMAKE_DL_LIBS}) # dladdr

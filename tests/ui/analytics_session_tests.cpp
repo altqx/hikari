@@ -93,7 +93,6 @@ class AnalyticsSessionTest : public QObject {
         c.key = QStringLiteral("phc_test");
         c.endpoint = endpoint->url();
         c.queueFile = folder + QStringLiteral("/analytics-queue.json");
-        c.crashRecord = folder + QStringLiteral("/crash-record.txt");
         c.version = QStringLiteral("0.1.0-beta.1");
         c.firstFlushMs = 60 * 60 * 1000;
         return c;

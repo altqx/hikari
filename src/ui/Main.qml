@@ -42,6 +42,7 @@ ApplicationWindow {
     required property var updates
     required property var whatsNew // SH3: WhatsNew
     required property var analytics // AN1 (#404): Analytics, anonymous usage data
+    required property var crashReports // CR1 (#452): CrashReports, crash, freeze and issue reports
     required property var styleManager
     required property var kanjiTimer // KA3: KanjiTimerController
     required property var fontCollector // Y8: FontCollectorController

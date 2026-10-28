@@ -347,8 +347,14 @@ add_executable(hikari_crash_probe crash_probe.cpp)
 target_link_libraries(hikari_crash_probe PRIVATE hikari_composition)
 hikari_add_qttest(hikari_ui_analytics_tests SOURCES analytics_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_analytics_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
-target_compile_definitions(hikari_ui_analytics_tests PRIVATE HIKARI_CRASH_PROBE="$<TARGET_FILE:hikari_crash_probe>")
-add_dependencies(hikari_ui_analytics_tests hikari_crash_probe)
+# CR1 (#452): crash, freeze and issue reports: forced crashes and freezes
+# (the probe), sending against the fake endpoint, the privacy of what goes,
+# and the GitHub links against .github/ISSUE_TEMPLATE.
+hikari_add_qttest(hikari_ui_crash_report_tests SOURCES crash_report_tests.cpp LIBRARIES hikari_composition)
+target_include_directories(hikari_ui_crash_report_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_ui_crash_report_tests PRIVATE HIKARI_CRASH_PROBE="$<TARGET_FILE:hikari_crash_probe>"
+    HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+add_dependencies(hikari_ui_crash_report_tests hikari_crash_probe)
 # AN1: a scripted session through the window sends only the table's events.
 hikari_add_qttest(hikari_ui_analytics_session_tests SOURCES analytics_session_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)

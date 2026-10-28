@@ -120,6 +120,9 @@ signals:
     void markedChanged();
     void noticed(int id, hikari::ui::LogController::Severity severity, const QString &title, const QString &text,
                  const QString &details);
+    // Every entry as it is added (CR1's Log tail for reports).
+    void added(const QString &time, hikari::ui::LogController::Severity severity, const QString &title,
+               const QString &text, const QString &details);
     void revealRequested();
 
 private:

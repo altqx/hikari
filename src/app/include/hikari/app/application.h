@@ -9,6 +9,7 @@
 #include "hikari/app/settings_import_store.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/analytics.h"
+#include "hikari/app/crash_reports.h"
 #include "hikari/app/update_checker.h"
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
@@ -250,6 +251,9 @@ public:
         // AN1 (#404): anonymous usage data; the default has no key, so
         // nothing is queued or sent (tests give a fake endpoint).
         Analytics::Config analytics;
+        // CR1 (#452): crash, freeze and issue reports; empty paths keep
+        // nothing on disk.
+        CrashReports::Config crashReports;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -972,6 +976,7 @@ public:
     HotkeysController &hotkeys() { return *m_hotkeys; }
     UpdateChecker &updates() { return *m_updates; }
     Analytics &analytics() { return *m_analytics; }
+    CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; } // SH3
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() { return *m_kanjiTimer; } // KA3
@@ -1325,6 +1330,7 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys; // O2: after the automation hotkeys it shares
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics; // AN1
+    std::unique_ptr<CrashReports> m_crashReports; // CR1
     // AN1: how long the video and audio opens take (video_opened, audio_opened).
     application::VideoSession::State m_videoUsageState = application::VideoSession::State::Closed;
     application::AudioBox::State m_audioUsageState = application::AudioBox::State::Closed;
