@@ -13740,7 +13740,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation>갱신 정보</translation>
+        <translation>편집</translation>
     </message>
     <message>
         <source>Timing</source>
@@ -13748,7 +13748,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Translation</source>
-        <translation>번역본</translation>
+        <translation>번역</translation>
     </message>
     <message>
         <source>Typesetting</source>
