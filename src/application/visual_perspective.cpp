@@ -1227,7 +1227,9 @@ bool stylesTooLarge(const StyleIndex &styles, const core::LineRecord &line)
     const core::StyleValues &style = styles.line(line.style);
     if (styles.tooLarge(style))
         return true;
-    const Leading lead = leadingOf(transform::lineText(line));
+    // Held while the tags (views into it) are read (#382).
+    const u16 text = transform::lineText(line);
+    const Leading lead = leadingOf(text);
     const std::size_t from = afterLastReset(lead.tags);
     return from > 0 && styles.tooLarge(resetStyle(styles, style, lead.tags[from - 1].value));
 }
