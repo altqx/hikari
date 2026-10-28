@@ -1,6 +1,5 @@
 // T3: Scale and the Z and X/Y rotations. The tools replay the legacy probe's
-// captures (tools/legacy-capture/visual_t3_capture.cpp over
-// inputs/visual-t3-cases.txt; tests/fixtures/legacy-observations/
+// captures (tests/fixtures/legacy-cases/inputs/visual-t3-cases.txt; tests/fixtures/legacy-observations/
 // local-t3-visual-20261005): every Line's text and translation after each
 // step, the editor's text on the one-Line path and the tools' handles must
 // be legacy's exactly.

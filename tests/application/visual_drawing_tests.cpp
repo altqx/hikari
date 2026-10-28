@@ -1,6 +1,6 @@
 // T5: the drawing tool and its shape presets. The tool replays the legacy
-// probe's captures (tools/legacy-capture/clip_capture.cpp built as
-// legacy_drawing_capture over inputs/drawing-cases.txt; tests/fixtures/
+// probe's captures (legacy_drawing_capture over
+// tests/fixtures/legacy-cases/inputs/drawing-cases.txt; tests/fixtures/
 // legacy-observations/local-t5-drawing-20261005), which ran the legacy
 // VisualClips.cpp and VisualDrawingShapes.cpp's Shapes unchanged: every
 // committed text, the editor's text during a gesture, the points, the

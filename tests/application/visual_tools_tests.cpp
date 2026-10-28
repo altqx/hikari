@@ -1,7 +1,6 @@
 // T1: the visual tools' transform, crosshair, VIDEO_COPY_COORDS, gestures
 // and batch picker. The transform and crosshair replay the legacy probe's
-// captures (tools/legacy-capture/visual_capture.cpp over
-// inputs/visual-cases.txt; tests/fixtures/legacy-observations/
+// captures (tests/fixtures/legacy-cases/inputs/visual-cases.txt; tests/fixtures/legacy-observations/
 // local-t1-visual-20261005) and must give legacy's numbers exactly, but for
 // the approved departures T1-copy-coords-view and T1-wheel-zoom-stale
 // (docs/qt/compatibility-decisions.md), whose captures stay as the old

@@ -33175,7 +33175,7 @@ private slots:
     }
 
     // V3: the previous/next file over legacy's own NextFile capture folder
-    // (tools/legacy-capture/next_file, the observation for this platform in
+    // (the observation for this platform in
     // tests/fixtures/legacy-observations/local-v3-next-file-20261013). Legacy
     // (at the baseline) walked wxDir::GetAllFiles(..., wxDIR_FILES) as the
     // system enumerates the folder, unsorted (readdir on Linux, FindFirstFileW
@@ -33194,8 +33194,7 @@ private slots:
 #endif
         const QString observationFile = QStringLiteral(HIKARI_NEXT_FILE_OBSERVATIONS "/") + platform + QStringLiteral(".json");
         if (!QFileInfo::exists(observationFile))
-            QSKIP(qPrintable(QStringLiteral("no legacy NextFile observation for %1 (%2); the winix task "
-                                            "legacy-win-next-file records the Windows one")
+            QSKIP(qPrintable(QStringLiteral("no legacy NextFile observation for %1 (%2)")
                                  .arg(platform, observationFile)));
         QFile in(observationFile);
         QVERIFY(in.open(QIODevice::ReadOnly));
