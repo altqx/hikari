@@ -1,0 +1,186 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#FFFFFF;color:#000000;font:13px 'Liberation Sans',Arial,sans-serif;padding:24px;width:1328px}
+.acc{color:#0037B3}
+.ic{display:block;flex:none}
+h1{font-size:18px;font-weight:600;margin:0 0 8px}
+h2{font-size:13px;font-weight:650;margin:28px 0 10px}
+p.note{color:#1A1A1A;font-size:12px;margin:0 0 8px;max-width:1280px;line-height:1.45}
+.cap{font-size:11px;color:#1A1A1A;margin:8px 0 0;max-width:520px;line-height:1.4}
+.row{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.col{display:flex;flex-direction:column}
+.notes{background:#EBEBEB;outline:1px solid #000000;padding:12px 16px;width:1280px;line-height:1.5}
+.notes td{padding:3px 14px 3px 0;vertical-align:top}
+.notes td:first-child{font-weight:650;white-space:nowrap}
+
+/* main window backdrop */
+.app{position:relative;width:1280px;height:800px;background:url(shots/body-highContrastWhite.png) 0 0 no-repeat;outline:1px solid #000000;margin-top:12px}
+.barslot{position:absolute;left:0;top:64px;width:1280px}
+.stack{position:absolute;right:12px;bottom:34px;width:360px;display:flex;flex-direction:column;gap:8px}
+
+/* DG1 window */
+.dlg{background:#FFFFFF;color:#000000;display:flex;flex-direction:column;outline:1px solid #000000;
+     box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.dtb{display:flex;align-items:center;height:32px;flex:none;background:#FFFFFF;box-shadow:inset 0 -1px #000000}
+.dtitle{flex:1;min-width:0;padding-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wbs{display:flex;margin-left:auto;flex:none}
+.wb{display:flex;align-items:center;justify-content:center;width:46px;height:32px;color:#000000}
+.dbody{padding:12px 24px 0;display:flex;flex-direction:column}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;padding:24px}
+.dfoot .lead,.pfoot .lead{margin-right:auto}
+
+/* controls */
+.b{display:inline-flex;align-items:center;justify-content:center;min-width:80px;height:30px;padding:0 10px;border-radius:1px;
+   background:#EBEBEB;border:1px solid #000000;color:#000000;white-space:nowrap;flex:none}
+.b.sm{min-width:0;height:26px;padding:0 10px}
+.b.on{background:#C9DAF8;border-color:#0037B3}
+.b.flat{background:none;border-color:transparent;color:#0037B3;padding:0 6px;height:24px}
+.b.pri{background:#0037B3;border-color:#0037B3;color:#FFFFFF;font-weight:650}
+.b.dng{color:#A00000;border-color:#A00000}
+.ring{outline:1px solid #000000;outline-offset:1px}
+.qb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:1px;color:#000000}
+.cb{display:flex;align-items:center;gap:8px;height:24px}
+.box{width:16px;height:16px;border:1px solid #000000;background:#FFFFFF;border-radius:1px;display:flex;
+     align-items:center;justify-content:center;flex:none}
+.box.on{background:#0037B3;border-color:#0037B3;color:#FFFFFF}
+.fld{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:#FFFFFF;border:1px solid #000000;
+     border-radius:1px;color:#000000;min-width:0}
+.fld.wide{display:flex;width:100%}
+.fld.focus{border-color:#000000;box-shadow:inset 0 0 0 1px #000000}
+.fld.ph .ftext{color:#1A1A1A}
+.ftext{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fic,.ftail{color:#1A1A1A}
+.ftail{display:flex;margin-left:auto}
+.frow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.flabel{width:56px;color:#000000;flex:none}
+.seg{display:inline-flex;border:1px solid #000000;border-radius:1px;overflow:hidden;flex:none}
+.seg span{padding:0 10px;height:26px;display:flex;align-items:center;background:#EBEBEB;border-left:1px solid #000000}
+.seg span:first-child{border-left:none}
+.seg span.on{background:#C9DAF8;color:#000000;box-shadow:inset 0 -2px #0037B3;font-weight:650}
+.seg.sm span{height:24px;padding:0 8px}
+.sbar{position:absolute;right:3px;width:4px;border-radius:2px;background:#000000;opacity:.8}
+.big{color:#000000}
+.warn,.warn .acc{color:#6B4500}
+.err,.err .acc{color:#A00000}
+.lnk2{color:#0037B3;cursor:pointer}
+
+/* message box */
+.mb{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+.mbtext{display:flex;flex-direction:column;gap:6px;padding-top:4px;min-width:0}
+.mbmain{font-size:14px;font-weight:650;line-height:1.4}
+.mbdetail{color:#1A1A1A;line-height:1.45}
+.mbcheck{margin-top:8px}
+.disc{display:flex;align-items:center;gap:4px;margin:14px 0 0 48px;color:#000000}
+.dets{position:relative;margin:6px 0 0 48px;background:#FFFFFF;outline:1px solid #000000;padding:8px 34px 8px 10px}
+.dets pre{font:12px 'Liberation Mono',Consolas,monospace;color:#000000;white-space:pre-wrap}
+.dets .qb{position:absolute;right:6px;top:6px}
+
+/* notices */
+.toast{display:flex;gap:10px;align-items:flex-start;padding:10px 8px 10px 12px;background:#FFFFFF;outline:1px solid #000000;
+       border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.28);color:#000000}
+.toast.hover{background:#EBEBEB}
+.toast>.ic{margin-top:1px}
+.tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ttitle{font-weight:650;line-height:1.35}
+.ttext{color:#1A1A1A;line-height:1.4}
+.tacts{display:flex;gap:4px;margin:4px 0 0 -6px}
+.tx{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#1A1A1A;flex:none}
+.ibar{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 10px;background:#EBEBEB;
+      box-shadow:inset 0 -1px #000000,inset 0 1px #000000;color:#000000}
+.ibt{flex:1}
+
+/* popover */
+.pop{position:relative;background:#FFFFFF;outline:1px solid #000000;border-radius:4px;padding:12px;
+     box-shadow:0 6px 22px rgba(0,0,0,.28);color:#000000;z-index:2}
+.ptitle{font-weight:650;margin-bottom:8px}
+.pfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.pfoot.wrap{flex-wrap:wrap;justify-content:flex-start}
+.anchorbox{position:relative}
+
+/* clash review */
+.allrow{display:flex;align-items:center;gap:10px;margin-top:14px}
+.ctable{margin-top:10px;outline:1px solid #000000;background:#FFFFFF}
+.chead,.crow2{display:flex;align-items:center;gap:10px;padding:0 10px;min-height:38px}
+.chead{min-height:28px;color:#1A1A1A;font-size:12px;box-shadow:inset 0 -1px #000000;background:#EBEBEB}
+.crow2+.crow2{box-shadow:inset 0 1px #000000}
+.crow2 .cname{font-weight:650}
+.cname{width:110px;flex:none}
+.cdiff{width:170px;flex:none;color:#1A1A1A}
+.cact{flex:1;display:flex;gap:8px;align-items:center}
+
+/* choose styles */
+.slist{position:relative;margin-top:8px;height:186px;overflow:hidden;outline:1px solid #000000;background:#FFFFFF;padding:2px 0}
+.srow{display:flex;align-items:center;gap:8px;height:22px;padding:0 14px 0 8px}
+.srow.cur{background:#C9DAF8}
+.sname{flex:1}
+.scount{color:#1A1A1A;font-size:12px}
+.sfoot{display:flex;gap:14px;align-items:center;margin-top:10px}
+
+/* hotkeys */
+.htable{outline:1px solid #000000;background:#FFFFFF}
+.hhead,.hrow{display:grid;grid-template-columns:1fr 130px;padding:0 10px;height:26px;align-items:center}
+.hhead{color:#1A1A1A;font-size:12px;background:#EBEBEB;box-shadow:inset 0 -1px #000000}
+.hrow.sel{background:#C9DAF8}
+.keys{color:#1A1A1A}
+.capture{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;background:#FFFFFF;
+         border:1px solid #000000;border-radius:1px}
+.capture.focus{border-color:#000000;box-shadow:inset 0 0 0 1px #000000}
+.wait{color:#1A1A1A}
+.kc{display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid #000000;border-bottom-width:2px;
+    border-radius:3px;background:#EBEBEB;font-weight:650}
+.plus{color:#1A1A1A}
+.conf{display:flex;gap:8px;align-items:flex-start;margin-top:10px;line-height:1.4}
+
+/* lists */
+.llist{margin-top:10px;outline:1px solid #000000;background:#FFFFFF;padding:2px 0}
+.llist.pl{margin-top:0}
+.lrow{display:flex;gap:10px;align-items:center;height:28px;padding:0 10px}
+.lrow.cur{background:#C9DAF8;box-shadow:inset 2px 0 #0037B3}
+.lnum{color:#1A1A1A;width:12px}
+.lmeta{color:#1A1A1A;margin-left:auto}
+.editor{height:30px;display:flex;align-items:center;padding:0 10px;background:#FFFFFF;border:1px solid #000000}
+.miss{text-decoration:underline wavy #A00000;text-underline-offset:3px;background:#C9DAF8}
+
+/* calendar */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calm{font-weight:650}
+.cal{display:grid;grid-template-columns:repeat(7,32px);row-gap:2px}
+.dh{height:24px;display:flex;align-items:center;justify-content:center;color:#1A1A1A;font-size:11px}
+.dd{height:28px;display:flex;align-items:center;justify-content:center;border-radius:1px}
+.dd.out{color:#6E6E6E}
+.dd.sel{background:#0037B3;color:#FFFFFF;font-weight:650;outline:1px solid #000000;outline-offset:1px}
+
+.notes tr.th td{font-weight:650;color:#1A1A1A}
+.notes td:first-child{font-weight:400}
+.ulist{position:relative;margin-top:12px;outline:1px solid #000000;background:#FFFFFF;height:236px;overflow:hidden}
+.urow,.arow{display:flex;align-items:center;gap:12px;padding:6px 14px 6px 10px;min-height:46px}
+.urow+.urow,.arow+.arow{box-shadow:inset 0 1px #000000}
+.urow.cur,.arow.cur{background:#C9DAF8}
+.udoc{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.uname{font-weight:650;display:flex;align-items:center;gap:8px}
+.uwhere{display:flex;align-items:center;gap:8px}
+.upath{color:#1A1A1A;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upath.none{font-style:italic}
+.usum{margin-top:8px;color:#1A1A1A;font-size:12px}
+.ahead{display:flex;gap:12px;align-items:center;padding:0 14px 0 10px;height:26px;margin-top:10px;color:#1A1A1A;
+       font-size:12px;background:#EBEBEB;outline:1px solid #000000}
+.alist{outline:1px solid #000000;background:#FFFFFF;height:236px;overflow:hidden}
+.awhen{width:110px;flex:none;color:#000000}
+.ahead .awhen{color:#1A1A1A}
+.tag{font-weight:400;font-size:11px;color:#1A1A1A;border:1px solid #000000;border-radius:3px;padding:0 5px}
+.qb.dim{color:#6E6E6E}
+.cover{position:absolute;left:0;width:1280px;background:#FFFFFF}
+.slice{position:absolute;left:0;width:1280px;background-repeat:no-repeat}
+.homecards{position:absolute;left:80px;width:1120px;display:flex;flex-direction:column;gap:8px}
+.hcard{display:flex;gap:16px;align-items:flex-start;padding:16px 10px 16px 16px;background:#FFFFFF;
+       outline:1px solid #000000}
+.hcard.warnc{box-shadow:inset 3px 0 #6B4500}
+.hctext{flex:1;display:flex;flex-direction:column;gap:6px}
+.hcacts{display:flex;gap:8px;align-items:center;margin-top:8px}
+.bars{position:absolute;left:0;width:1280px;display:flex;flex-direction:column}
+.ibar .b.sm{height:24px}
+.ibar b{font-weight:650}
+.prog{display:inline-block;height:6px;background:#FFFFFF;outline:1px solid #000000;flex:none}
+.prog span{display:block;height:100%;background:#0037B3}
+.pmeta{color:#1A1A1A;font-size:12px;width:80px}
+</style></head><body><svg width="0" height="0" style="position:absolute"><defs><symbol id="i-notice-error" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z"/><g class="acc"><path d="M8 4.75v4"/><circle cx="8" cy="11.25" r=".75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-calendar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="12" rx="1"/><path d="M1.5 6h13M5 1v3M11 1v3"/><g class="acc"><path d="M4.5 9h1M7.5 9h1M10.5 9h1M4.5 11.5h1M7.5 11.5h1"/></g></g></symbol><symbol id="i-chevron-down" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5l3.5 3.5 3.5-3.5"/></g></symbol><symbol id="i-chevron-right" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5l3.5 3.5-3.5 3.5"/></g></symbol><symbol id="i-chevron-left" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5l-3.5 3.5 3.5 3.5"/></g></symbol><symbol id="i-check" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></g></symbol><symbol id="i-delete" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4"/><path d="M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9"/><path d="M6.75 7v5M9.25 7v5"/></g></symbol><symbol id="i-autosave" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5h-6v-11h9l2 2v4"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h4"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-last-session" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2h9v7h-2"/><rect x="1.5" y="6.5" width="11" height="7" rx="1"/><path d="M1.5 8.5h11"/><g class="acc"><path d="M5 11.5h4M7.5 10l1.5 1.5L7.5 13"/></g></g></symbol><symbol id="i-compare" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="6" height="11" rx="1"/><rect x="8.5" y="2.5" width="6" height="11" rx="1"/><path d="M3.5 5.5h2M3.5 8h2M3.5 10.5h2M10.5 5.5h2M10.5 8h2"/><g class="acc"><path d="M10.5 10.5h2"/></g></g></symbol><symbol id="i-refresh" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 0 1 9.75-3.5"/><path d="M12.5 1.5v3h-3"/><path d="M13.5 8a5.5 5.5 0 0 1-9.75 3.5"/><path d="M3.5 14.5v-3h3"/></g></symbol><symbol id="i-folder-open" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 13.5v-10a1 1 0 0 1 1-1h3l1.5 1.5h5a1 1 0 0 1 1 1v1.5"/><path d="M1.5 13.5l2.25-7h10.75l-2.25 7z"/></g></symbol><symbol id="i-link" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></g></symbol><symbol id="i-save-as" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5h-6v-11h9l2 2v4"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h4"/><g class="acc"><path d="M9.5 14.5l.5-2 3.5-3.5 1.5 1.5-3.5 3.5z"/></g></g></symbol><symbol id="i-open-subtitles" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></g></symbol><symbol id="i-about" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4"/><circle cx="8" cy="5" r="0.75" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-notice-warning" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></g></symbol><symbol id="i-tab-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></g></symbol><symbol id="i-log" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M7 5.5h5M7 8h4M7 10.5h5"/><g class="acc"><path d="M4 5.5h1.5M4 8h1.5M4 10.5h1.5"/></g></g></symbol><symbol id="i-styles" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z"/><g class="acc"><circle cx="4.75" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="6.75" cy="4.5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="4.5" r="1" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-hotkeys" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></g></symbol><symbol id="i-open-audio" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 11.5V2.5l4 1.5"/><circle cx="4.5" cy="11.5" r="2" fill="currentColor" stroke="none"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></g></symbol><symbol id="i-spellchecker" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></g></symbol><symbol id="i-remove-temporary" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M4.5 3.5V2h3v1.5"/><path d="M2.5 4.5l.75 9a1 1 0 0 0 1 1H8M9.5 4.5l-.25 3.5"/><path d="M5 6.5v5M7 6.5v3"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-check-updates" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></g></symbol><symbol id="i-window-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></g></symbol><symbol id="i-window-maximize" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="9" height="9" rx="0.5"/></g></symbol><symbol id="i-edit-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2"/><rect x="2.5" y="4.5" width="8" height="10" rx="1"/></g></symbol><symbol id="i-save" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h7v4"/></g></symbol><symbol id="i-menu-more" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></g></symbol></defs></svg><h1>PU1: closing and saving (High contrast white)</h1><h2>Unsaved changes (a window on DG1’s frame, modal to the main window)</h2><div class="row"><div class="col"><div class="dlg" style="width:640px;"><div class="dtb"><span class="dtitle">Quit</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-maximize"/></svg></span><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mbmain" style="margin-top:6px">Save the changes to 5 documents before quitting?</div><div class="mbdetail">Changes you don’t save are lost.</div><div class="ulist"><div class="urow"><div class="udoc"><span class="uname">Episode 03.ass</span><span class="uwhere"><span class="upath">~/Subs/Station</span></span></div><span class="seg sm"><span class="on">Save</span><span class="">Don’t save</span></span></div><div class="urow"><div class="udoc"><span class="uname">Episode 04.ass</span><span class="uwhere"><span class="upath">~/Subs/Station</span></span></div><span class="seg sm"><span class="on">Save</span><span class="">Don’t save</span></span></div><div class="urow"><div class="udoc"><span class="uname">Signs.ass</span><span class="uwhere"><span class="upath">~/Subs/Station/typesetting</span></span></div><span class="seg sm"><span class="">Save</span><span class="on">Don’t save</span></span></div><div class="urow"><div class="udoc"><span class="uname">Untitled 2</span><span class="uwhere"><span class="upath none">Not saved yet</span><span class="b sm flat" style="margin-left:auto"><svg class="ic " width="14" height="14"><use href="#i-save-as"/></svg>&nbsp;Choose file…</span></span></div><span class="seg sm"><span class="on">Save</span><span class="">Don’t save</span></span></div><div class="urow"><div class="udoc"><span class="uname">Karaoke OP.ass</span><span class="uwhere"><span class="upath">~/Subs/Station/songs</span></span></div><span class="seg sm"><span class="on">Save</span><span class="">Don’t save</span></span></div><span class="sbar" style="top:4px;height:150px"></span></div><div class="usum">Saves 4 · Discards 1</div></div><div class="dfoot "><span class="b lead dng">Quit without saving</span><span class="b pri ring">Save and quit</span><span class="b">Cancel</span></div></div></div><p class="cap" style="max-width:600px">One row per Document with unsaved changes, in tab order: the tab name, its folder, and a Save / Don’t save switch (Save to start). More than five rows scroll; the window can be made taller. An Untitled Document has no folder: Choose file… picks one now, or Save and quit asks for it then. The line under the list counts what the button will do.<br><br>The title and the buttons name the command that asked: Quit (Save and quit, Quit without saving), Close all tabs (Save and close, Close without saving), Load session and Load last session (Save and load, Load without saving). The one that loses work sits at the leading edge in the danger colour, never the default. Esc and × are Cancel. A save that fails keeps the window open with the error under its row.</p></div><h2>One Document: a plain message box</h2><div class="row"><div class="col"><div class="dlg" style="width:468px;"><div class="dtb"><span class="dtitle">Close tab</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mb"><svg class="ic big warn" width="32" height="32"><use href="#i-notice-warning"/></svg><div class="mbtext"><div class="mbmain">Save the changes to “Signs.ass” before closing?</div><div class="mbdetail">Changes you don’t save are lost.</div></div></div></div><div class="dfoot "><span class="b lead dng">Don’t save</span><span class="b pri ring">Save</span><span class="b">Cancel</span></div></div><p class="cap" style="max-width:520px">Close tab, New, Open into this tab and dropped files ask about one Document, so the message box asks. Untitled: Save is Save as….</p></div><div class="col"><div class="dlg" style="width:468px;"><div class="dtb"><span class="dtitle">Load subtitles from MKV</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mb"><svg class="ic big warn" width="32" height="32"><use href="#i-notice-warning"/></svg><div class="mbtext"><div class="mbmain">Save the changes to “Signs.ass” first?</div><div class="mbdetail">The subtitles from Episode 03.mkv replace this tab’s.</div></div></div></div><div class="dfoot "><span class="b lead dng">Load without saving</span><span class="b pri ring">Save and load</span><span class="b">Cancel</span></div></div><p class="cap" style="max-width:520px">Load subtitles from MKV (MatroskaSubtitles saveQuestion): today Yes / No / Cancel under “Confirmation”.</p></div></div><h2>Read-only file</h2><div class="row"><div class="col"><div class="dlg" style="width:468px;"><div class="dtb"><span class="dtitle">Save</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mb"><svg class="ic big warn" width="32" height="32"><use href="#i-notice-warning"/></svg><div class="mbtext"><div class="mbmain">“Signs.ass” is read-only.</div><div class="mbdetail">Save it under another name, or make the file writable and save again.</div></div></div></div><div class="dfoot "><span class="b pri ring">Save as…</span><span class="b">Cancel</span></div></div><p class="cap" style="max-width:520px">Save onto a read-only file (Main.qml readOnlyWarning; Save session’s readOnlyNotice says “session file” and is titled Save session). Today an OK-only “Warning” whose OK opens the Save dialog; Cancel now leaves it unsaved.</p></div></div><h2>Two tab questions no card names (open question 8)</h2><div class="row"><div class="col"><div class="dlg" style="width:468px;"><div class="dtb"><span class="dtitle">Close all tabs</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mb"><svg class="ic big " width="32" height="32"><use href="#i-about"/></svg><div class="mbtext"><div class="mbmain">Close all 6 tabs?</div><div class="mbdetail">You are asked about unsaved changes next.</div></div></div></div><div class="dfoot "><span class="b">Close all tabs</span><span class="b pri ring">Cancel</span></div></div><p class="cap" style="max-width:520px">Close all tabs (TabCommands closeAllPrompt, “Prompt”, Yes / No with No the default).</p></div><div class="col"><div class="dlg" style="width:468px;"><div class="dtb"><span class="dtitle">Open video</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mb"><svg class="ic big " width="32" height="32"><use href="#i-about"/></svg><div class="mbtext"><div class="mbmain">Open “Episode 03.ass” with the video?</div><div class="mbdetail">It is next to Episode 03.mkv and has the same name.</div></div></div></div><div class="dfoot "><span class="b pri ring">Open both</span><span class="b">Video only</span></div></div><p class="cap" style="max-width:520px">Opening a video with same-named subtitles beside it (subtitlesPrompt, “Confirmation”, Yes / No).</p></div></div><h2>File pickers stay native</h2><div class="notes"><table><tr class="th"><td style="width:300px">Picker</td><td>Title</td><td>Filters</td><td>Starts in, and remembers</td></tr><tr><td>File › Open subtitles</td><td>Open subtitles</td><td>Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl), Videos with embedded subtitles (*.mkv *.ogm), All files</td><td>Subtitles folder</td></tr><tr><td>Save as, Save of an Untitled Document, Choose file… above</td><td>Save “Signs.ass” as</td><td>The Document’s format first (ASS subtitles (*.ass), …), All files</td><td>The Document’s folder, else the subtitles folder</td></tr><tr><td>File › Load session…</td><td>Load session</td><td>Sessions (*.kls), All files</td><td>Sessions folder</td></tr><tr><td>File › Save session…</td><td>Save session</td><td>Sessions (*.kls)</td><td>Sessions folder</td></tr><tr><td>Relink… on a session entry</td><td>Find “Episode 03.mkv”</td><td>The entry’s kind (Video …, Subtitles …, Audio …, Keyframes …), All files</td><td>The missing file’s folder when it exists, else that kind’s folder</td></tr></table></div></body></html>

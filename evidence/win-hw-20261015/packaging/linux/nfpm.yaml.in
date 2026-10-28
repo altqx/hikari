@@ -1,0 +1,86 @@
+# nFPM config for the deb and the rpm (installers spec 5.4), Qt rewrite.
+# make-packages.sh fills the @...@ values; the dependency lists are YAML
+# flow sequences generated from the app tree and the deps maps.
+name: hikarisub
+arch: amd64
+platform: linux
+version: "@VERSION@"
+version_schema: none
+prerelease: "@PRERELEASE@"
+release: "1"
+section: video
+priority: optional
+maintainer: altqx
+vendor: altqx
+homepage: https://github.com/altqx/hikari
+license: GPL-3.0-or-later
+description: |-
+  Subtitle editor for ASS/SSA, SRT and MicroDVD
+  HikariSub edits and times subtitles, with audio and video preview,
+  typesetting tools, spell checking and Lua automation.
+
+contents:
+  # The app tree, identical to the tar.gz and the AppImage.
+  - src: "@TREE@/"
+    dst: /opt/hikarisub/
+    type: tree
+  - src: "@STAGE@/package-kind-deb.txt"
+    dst: /opt/hikarisub/package-kind.txt
+    packager: deb
+    file_info: {mode: 0644}
+  - src: "@STAGE@/package-kind-rpm.txt"
+    dst: /opt/hikarisub/package-kind.txt
+    packager: rpm
+    file_info: {mode: 0644}
+  # The updater's root helper and its polkit action (spec 4.4). The rpm
+  # must own libexec/, which is outside the tree, or removal leaves it.
+  - dst: /opt/hikarisub/libexec
+    type: dir
+    file_info: {mode: 0755}
+  - src: "@HELPER@"
+    dst: /opt/hikarisub/libexec/hikarisub-update-helper
+    file_info: {mode: 0755}
+  - src: "@POLICY@"
+    dst: /usr/share/polkit-1/actions/io.github.altqx.HikariSub.update.policy
+    file_info: {mode: 0644}
+  - src: /opt/hikarisub/hikarisub
+    dst: /usr/bin/hikarisub
+    type: symlink
+  # Desktop integration (spec 1.6).
+  - src: "@GEN@/io.github.altqx.HikariSub.desktop"
+    dst: /usr/share/applications/io.github.altqx.HikariSub.desktop
+    file_info: {mode: 0644}
+  - src: "@GEN@/io.github.altqx.HikariSub.metainfo.xml"
+    dst: /usr/share/metainfo/io.github.altqx.HikariSub.metainfo.xml
+    file_info: {mode: 0644}
+  - src: "@SOURCE@/packaging/linux/mime/hikarisub.xml"
+    dst: /usr/share/mime/packages/hikarisub.xml
+    file_info: {mode: 0644}
+  - src: "@SOURCE@/packaging/linux/icons/hicolor/"
+    dst: /usr/share/icons/hicolor/
+    type: tree
+  # The license.
+  - src: "@SOURCE@/LICENSE"
+    dst: /usr/share/doc/hikarisub/copyright
+    packager: deb
+    file_info: {mode: 0644}
+  - src: "@SOURCE@/LICENSE"
+    dst: /usr/share/licenses/hikarisub/LICENSE
+    packager: rpm
+    type: license
+    file_info: {mode: 0644}
+
+overrides:
+  deb:
+    depends: @DEB_DEPENDS@
+    recommends: @DEB_RECOMMENDS@
+  rpm:
+    depends: @RPM_DEPENDS@
+    recommends: @RPM_RECOMMENDS@
+
+rpm:
+  summary: Subtitle editor for ASS/SSA, SRT and MicroDVD
+  group: Applications/Multimedia
+  compression: zstd
+deb:
+  compression: xz

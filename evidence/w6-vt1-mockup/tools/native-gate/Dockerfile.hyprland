@@ -1,0 +1,16 @@
+# The gate image plus the host's NVIDIA user-space driver, for session
+# hyprland on a host with an NVIDIA GPU: Hyprland nested in KWin (it has no
+# headless backend) allocates GBM buffers on the render node, which Mesa
+# cannot do on NVIDIA's (dumb buffers are refused there). The driver must
+# be the host kernel module's version; stage the host's packages first:
+#   mkdir -p tools/native-gate/hyprland-pkgs && cp /var/cache/pacman/pkg/\
+#     {nvidia-580xx-utils-<version>,egl-gbm-*,egl-x11-*}.pkg.tar.zst tools/native-gate/hyprland-pkgs/
+#   docker build -f tools/native-gate/Dockerfile.hyprland -t hikari-d1-gate-hypr tools/native-gate
+# then GATE_IMAGE=hikari-d1-gate-hypr tools/native-gate/run.sh hyprland.
+# On a Mesa GPU the base image is enough.
+ARG BASE=hikari-d1-gate
+FROM ${BASE}
+USER root
+COPY hyprland-pkgs/ /tmp/pkgs/
+RUN pacman -U --noconfirm /tmp/pkgs/*.pkg.tar.zst && rm -rf /tmp/pkgs
+USER gate

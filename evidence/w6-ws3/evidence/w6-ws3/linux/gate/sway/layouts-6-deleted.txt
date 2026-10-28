@@ -1,0 +1,57 @@
+# compositor windows
+con          id=9 hikarisub 'HikariSub' 0,27 1600x973 client=2,27 1596x971 output=HEADLESS-1 fullscreen=0 FOCUSED visible=True border=normal
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "HikariSub",
+   "id": "HikariSub",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 1596,
+   "h": 971
+  }
+ ],
+ "panels": [
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 97,
+   "w": 796,
+   "h": 529
+  },
+  {
+   "name": "Line editor",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 797,
+   "y": 97,
+   "w": 799,
+   "h": 529
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 670,
+   "w": 1596,
+   "h": 267
+  }
+ ],
+ "focus": null,
+ "focusPath": null,
+ "texts": {
+  "Line text": "",
+  "Start": "",
+  "End": ""
+ },
+ "labels": [
+  "Video times",
+  "Editing"
+ ]
+}

@@ -1,0 +1,76 @@
+//  Copyright (c) 2016 - 2026, Marcin Drob
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+#pragma once
+
+typedef wchar_t* PTCHAR;
+
+#ifdef _WIN32
+#include <streams.h>
+
+enum {    
+	RGB32,
+	RGB24,
+	YUY2,
+	YV12,
+	IYUV,
+	NV12,
+	ARGB32
+};
+
+struct VideoInf{
+	int width;
+	int height;
+	float fps;
+	int ARatioX;
+	int ARatioY;
+	unsigned char CT;
+	float bytes;
+};
+
+#define HR1(x) if(FAILED(x)) { return x; }
+
+class RendererDirectShow;
+
+class CD2DVideoRender : public CBaseVideoRenderer
+{
+public:
+
+	CD2DVideoRender(RendererDirectShow *_Vrend, HRESULT* phr);
+	virtual ~CD2DVideoRender();
+
+	long Render(IMediaSample *pMediaSample);
+	long DoRenderSample(IMediaSample *pMediaSample){return 0;}
+	long CheckMediaType(const CMediaType *pmt);
+	long SetMediaType(const CMediaType *pmt);
+	long EndOfStream();
+	long StopStreaming();
+	void OnReceiveFirstSample(IMediaSample *pMediaSample);
+	
+	long GetVidInfo(VideoInf &vi);
+
+private:
+	RendererDirectShow *Vrend;
+	VideoInf Vinfo;
+	int time;
+	bool norender;
+	bool noRefresh;
+};
+#else
+enum { RGB32, RGB24, YUY2, YV12, IYUV, NV12, ARGB32 };
+struct VideoInf { int width{}; int height{}; float fps{}; int ARatioX{}; int ARatioY{}; unsigned char CT{}; float bytes{}; };
+class RendererVideo;
+class CD2DVideoRender {};
+#endif

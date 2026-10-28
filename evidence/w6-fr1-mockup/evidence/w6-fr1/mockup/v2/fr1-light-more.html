@@ -1,0 +1,484 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E5E9EC;color:#202832;font:13px 'Liberation Sans',Arial,sans-serif;padding:24px;width:1596px}
+.acc{color:#145C4C}
+.ic{display:block;flex:none}
+h1{font-size:18px;font-weight:600;margin:0 0 8px}
+h2{font-size:13px;font-weight:650;margin:28px 0 10px}
+p.note{color:#526170;font-size:12px;margin:0 0 8px;max-width:1280px;line-height:1.45}
+.cap{font-size:11px;color:#526170;margin:8px 0 0;max-width:520px;line-height:1.4}
+.row{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.col{display:flex;flex-direction:column}
+.notes{background:#EDF0F3;outline:1px solid #AAB5BE;padding:12px 16px;width:1280px;line-height:1.5}
+.notes td{padding:3px 14px 3px 0;vertical-align:top}
+.notes td:first-child{font-weight:650;white-space:nowrap}
+
+/* main window backdrop */
+.app{position:relative;width:1280px;height:800px;background:url(shots/body-light.png) 0 0 no-repeat;outline:1px solid #AAB5BE;margin-top:12px}
+.barslot{position:absolute;left:0;top:64px;width:1280px}
+.stack{position:absolute;right:12px;bottom:34px;width:360px;display:flex;flex-direction:column;gap:8px}
+
+/* DG1 window */
+.dlg{background:#F9FAFB;color:#202832;display:flex;flex-direction:column;outline:1px solid #AAB5BE;
+     box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.dtb{display:flex;align-items:center;height:32px;flex:none;background:#F9FAFB;}
+.dtitle{flex:1;min-width:0;padding-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wbs{display:flex;margin-left:auto;flex:none}
+.wb{display:flex;align-items:center;justify-content:center;width:46px;height:32px;color:#202832}
+.dbody{padding:12px 24px 0;display:flex;flex-direction:column}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;padding:24px}
+.dfoot .lead,.pfoot .lead{margin-right:auto}
+
+/* controls */
+.b{display:inline-flex;align-items:center;justify-content:center;min-width:80px;height:30px;padding:0 10px;border-radius:1px;
+   background:#EDF0F3;border:1px solid #AAB5BE;color:#202832;white-space:nowrap;flex:none}
+.b.sm{min-width:0;height:26px;padding:0 10px}
+.b.on{background:#D6EBE4;border-color:#145C4C}
+.b.flat{background:none;border-color:transparent;color:#145C4C;padding:0 6px;height:24px}
+.b.pri{background:#145C4C;border-color:#145C4C;color:#FFFFFF;font-weight:650}
+.b.dng{color:#A51F31;border-color:#A51F31}
+.ring{outline:1px solid #202832;outline-offset:1px}
+.qb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:1px;color:#202832}
+.cb{display:flex;align-items:center;gap:8px;height:24px}
+.box{width:16px;height:16px;border:1px solid #76828D;background:#FFFFFF;border-radius:1px;display:flex;
+     align-items:center;justify-content:center;flex:none}
+.box.on{background:#145C4C;border-color:#145C4C;color:#FFFFFF}
+.fld{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:#FFFFFF;border:1px solid #AAB5BE;
+     border-radius:1px;color:#202832;min-width:0}
+.fld.wide{display:flex;width:100%}
+.fld.focus{border-color:#145C4C;box-shadow:inset 0 0 0 1px #145C4C}
+.fld.ph .ftext{color:#526170}
+.ftext{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fic,.ftail{color:#526170}
+.ftail{display:flex;margin-left:auto}
+.frow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.flabel{width:56px;color:#202832;flex:none}
+.seg{display:inline-flex;border:1px solid #AAB5BE;border-radius:1px;overflow:hidden;flex:none}
+.seg span{padding:0 10px;height:26px;display:flex;align-items:center;background:#EDF0F3;border-left:1px solid #AAB5BE}
+.seg span:first-child{border-left:none}
+.seg span.on{background:#D6EBE4;color:#202832;box-shadow:inset 0 -2px #145C4C;font-weight:650}
+.seg.sm span{height:24px;padding:0 8px}
+.sbar{position:absolute;right:3px;width:4px;border-radius:2px;background:#76828D;opacity:.8}
+.big{color:#202832}
+.warn,.warn .acc{color:#8A5A00}
+.err,.err .acc{color:#A51F31}
+.lnk2{color:#145C4C;cursor:pointer}
+
+/* message box */
+.mb{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+.mbtext{display:flex;flex-direction:column;gap:6px;padding-top:4px;min-width:0}
+.mbmain{font-size:14px;font-weight:650;line-height:1.4}
+.mbdetail{color:#526170;line-height:1.45}
+.mbcheck{margin-top:8px}
+.disc{display:flex;align-items:center;gap:4px;margin:14px 0 0 48px;color:#202832}
+.dets{position:relative;margin:6px 0 0 48px;background:#FFFFFF;outline:1px solid #AAB5BE;padding:8px 34px 8px 10px}
+.dets pre{font:12px 'Liberation Mono',Consolas,monospace;color:#202832;white-space:pre-wrap}
+.dets .qb{position:absolute;right:6px;top:6px}
+
+/* notices */
+.toast{display:flex;gap:10px;align-items:flex-start;padding:10px 8px 10px 12px;background:#F9FAFB;outline:1px solid #AAB5BE;
+       border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.28);color:#202832}
+.toast.hover{background:#EDF0F3}
+.toast>.ic{margin-top:1px}
+.tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ttitle{font-weight:650;line-height:1.35}
+.ttext{color:#526170;line-height:1.4}
+.tacts{display:flex;gap:4px;margin:4px 0 0 -6px}
+.tx{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#526170;flex:none}
+.ibar{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 10px;background:#EDF0F3;
+      box-shadow:inset 0 -1px #AAB5BE,inset 0 1px #AAB5BE;color:#202832}
+.ibt{flex:1}
+
+/* popover */
+.pop{position:relative;background:#F9FAFB;outline:1px solid #AAB5BE;border-radius:4px;padding:12px;
+     box-shadow:0 6px 22px rgba(0,0,0,.28);color:#202832;z-index:2}
+.ptitle{font-weight:650;margin-bottom:8px}
+.pfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.pfoot.wrap{flex-wrap:wrap;justify-content:flex-start}
+.anchorbox{position:relative}
+
+/* clash review */
+.allrow{display:flex;align-items:center;gap:10px;margin-top:14px}
+.ctable{margin-top:10px;outline:1px solid #AAB5BE;background:#FFFFFF}
+.chead,.crow2{display:flex;align-items:center;gap:10px;padding:0 10px;min-height:38px}
+.chead{min-height:28px;color:#526170;font-size:12px;box-shadow:inset 0 -1px #AAB5BE;background:#EDF0F3}
+.crow2+.crow2{box-shadow:inset 0 1px #AAB5BE}
+.crow2 .cname{font-weight:650}
+.cname{width:110px;flex:none}
+.cdiff{width:170px;flex:none;color:#526170}
+.cact{flex:1;display:flex;gap:8px;align-items:center}
+
+/* choose styles */
+.slist{position:relative;margin-top:8px;height:186px;overflow:hidden;outline:1px solid #AAB5BE;background:#FFFFFF;padding:2px 0}
+.srow{display:flex;align-items:center;gap:8px;height:22px;padding:0 14px 0 8px}
+.srow.cur{background:#D6EBE4}
+.sname{flex:1}
+.scount{color:#526170;font-size:12px}
+.sfoot{display:flex;gap:14px;align-items:center;margin-top:10px}
+
+/* hotkeys */
+.htable{outline:1px solid #AAB5BE;background:#FFFFFF}
+.hhead,.hrow{display:grid;grid-template-columns:1fr 130px;padding:0 10px;height:26px;align-items:center}
+.hhead{color:#526170;font-size:12px;background:#EDF0F3;box-shadow:inset 0 -1px #AAB5BE}
+.hrow.sel{background:#D6EBE4}
+.keys{color:#526170}
+.capture{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;background:#FFFFFF;
+         border:1px solid #AAB5BE;border-radius:1px}
+.capture.focus{border-color:#145C4C;box-shadow:inset 0 0 0 1px #145C4C}
+.wait{color:#526170}
+.kc{display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid #76828D;border-bottom-width:2px;
+    border-radius:3px;background:#EDF0F3;font-weight:650}
+.plus{color:#526170}
+.conf{display:flex;gap:8px;align-items:flex-start;margin-top:10px;line-height:1.4}
+
+/* lists */
+.llist{margin-top:10px;outline:1px solid #AAB5BE;background:#FFFFFF;padding:2px 0}
+.llist.pl{margin-top:0}
+.lrow{display:flex;gap:10px;align-items:center;height:28px;padding:0 10px}
+.lrow.cur{background:#D6EBE4;box-shadow:inset 2px 0 #145C4C}
+.lnum{color:#526170;width:12px}
+.lmeta{color:#526170;margin-left:auto}
+.editor{height:30px;display:flex;align-items:center;padding:0 10px;background:#FFFFFF;border:1px solid #AAB5BE}
+.miss{text-decoration:underline wavy #A51F31;text-underline-offset:3px;background:#D6EBE4}
+
+/* calendar */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calm{font-weight:650}
+.cal{display:grid;grid-template-columns:repeat(7,32px);row-gap:2px}
+.dh{height:24px;display:flex;align-items:center;justify-content:center;color:#526170;font-size:11px}
+.dd{height:28px;display:flex;align-items:center;justify-content:center;border-radius:1px}
+.dd.out{color:#74808B}
+.dd.sel{background:#145C4C;color:#FFFFFF;font-weight:650;outline:1px solid #202832;outline-offset:1px}
+
+.gs .gsbody{position:relative;display:flex;flex-direction:column;align-items:center;height:500px;padding:18px 28px 0;
+            box-shadow:inset 0 -1px #AAB5BE}
+.dots{display:flex;gap:8px;margin-bottom:18px}
+.dot{width:8px;height:8px;border-radius:50%;background:#74808B;opacity:.6}
+.dot.on{background:#145C4C}
+.gsh{font-size:16px;font-weight:650;margin-bottom:6px;text-align:center}
+.gsi{color:#526170;line-height:1.45;text-align:center;max-width:600px}
+.gsc{width:100%;display:flex;flex-direction:column;align-items:center;margin-top:22px}
+.gsn{color:#526170;font-size:12px;line-height:1.45;margin:10px 0 0;max-width:640px}
+.gsl2{color:#526170;font-size:12px;margin:14px 0 4px}
+.where{position:absolute;left:0;right:0;bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;
+       color:#526170;font-size:12px}
+.gsfoot{padding:16px 20px}
+.mono{font-family:'Liberation Mono',Consolas,monospace;font-size:12px}
+.sp{width:16px;flex:none}
+.rad{width:16px;height:16px;border-radius:50%;border:1px solid #76828D;background:#FFFFFF;flex:none;position:relative}
+.rad.on{border-color:#145C4C}
+.rad.on::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#145C4C}
+.lrow .rad{margin-right:2px}
+.lnat{width:130px}
+.lnat.ko{font-family:'Noto Sans CJK KR','Noto Sans CJK JP',sans-serif}
+.lnat.ta{font-family:'Noto Sans Tamil',sans-serif}
+.lnat.th{font-family:'IBM Plex Sans Thai Looped','Kanit',sans-serif}
+.lrow .lmeta{margin-left:0}
+.badge{font-size:11px;font-weight:600;padding:1px 6px;border-radius:1px;outline:1px solid #145C4C;color:#145C4C}
+.opts{display:flex;gap:16px;justify-content:center}
+.opt{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 16px;outline:1px solid #AAB5BE;
+     background:#FFFFFF;text-align:center}
+.opt.on{outline:2px solid #145C4C;background:#D6EBE4}
+.oic{color:#202832}
+.optn{display:flex;align-items:center;gap:8px;font-weight:650}
+.optd{color:#526170;line-height:1.45;font-size:12px}
+.opt.on .optd{color:#202832}
+.ccx{display:flex;align-items:center;gap:6px;margin-top:14px;color:#526170}
+.ccx .lnk2{margin-left:10px}
+.frow.wide{width:100%;margin:0 0 8px}
+.cnt{color:#526170;margin-left:auto}
+.itable{width:100%;outline:1px solid #AAB5BE;background:#FFFFFF}
+.ihead,.irow{display:flex;align-items:center;gap:10px;height:28px;padding:0 10px}
+.ihead{color:#526170;font-size:12px;background:#EDF0F3;box-shadow:inset 0 -1px #AAB5BE}
+.irow+.irow{box-shadow:inset 0 1px #AAB5BE}
+.irow.cur{background:#D6EBE4}
+.ic1{flex:1;min-width:0}
+.ic2{width:120px}
+.ic3{width:130px;color:#526170}
+.ic4{width:64px}
+.look{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:-6px}
+.smps{display:flex;gap:48px}
+.smp{display:flex;flex-direction:column;align-items:center;gap:8px}
+.smp .mm{outline-offset:0}
+.smp.on .mm{outline:2px solid #145C4C !important;outline-offset:2px}
+.smpn{display:flex;align-items:center;gap:8px;font-weight:600}
+.mm{display:flex;flex-direction:column;overflow:hidden}
+.accs,.tbrow{display:flex;align-items:center;gap:4px;height:28px}
+.accl{color:#202832;margin-right:10px}
+.accn{color:#526170;font-size:12px;margin-left:10px}
+.accc{width:20px;height:20px;border-radius:50%;margin:0 2px}
+.accc.on{outline:2px solid #202832;outline-offset:2px}
+.tbrow{margin-top:2px}
+.lcs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.lc{padding:8px;outline:1px solid #AAB5BE;background:#FFFFFF;display:flex;flex-direction:column;gap:6px;min-width:0}
+.lc .lcd{min-height:48px}
+.lcn{display:flex;align-items:center;gap:8px;font-weight:600}
+.lcd{color:#526170;font-size:12px;line-height:1.4}
+.lt{height:104px;background:#E5E9EC;outline:1px solid #AAB5BE;padding:2px;display:flex}
+.lcol{display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0}
+.lrowb{display:flex;gap:2px;min-width:0;min-height:0}
+.lb{background:#F9FAFB;outline:1px solid #AAB5BE;display:flex;align-items:center;justify-content:center;
+    min-width:0;min-height:0;font-size:10px;color:#526170;text-align:center;overflow:hidden}
+.lb.vid{background:#0B0E12;color:#C8CED4}
+.lb.aud{background:#FFFFFF;color:#145C4C}
+.fcol{display:flex;flex-direction:column;align-items:flex-start;width:620px}
+.fl{width:124px;flex:none;color:#202832}
+.frame{position:relative;width:620px;height:150px;margin-top:6px;outline:1px solid #AAB5BE;
+       background:linear-gradient(160deg,#41566B 0%,#7A8C78 55%,#C7A27A 100%);display:flex;align-items:flex-end;justify-content:center}
+.fsub{font:600 22px 'Liberation Sans',Arial,sans-serif;color:#FFFFFF;margin-bottom:18px;
+      text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 2px 0 #000,0 -2px 0 #000,2px 0 0 #000,-2px 0 0 #000,3px 4px 3px rgba(0,0,0,.6)}
+.fcap{position:absolute;right:6px;top:4px;font-size:10px;color:#fff;background:rgba(0,0,0,.45);padding:1px 5px}
+.meter{width:80px;height:6px;background:#FFFFFF;outline:1px solid #AAB5BE;display:flex}
+.meter span{background:#145C4C}
+.editor.sl{height:34px;font-size:14px;width:100%}
+.sp1{background:#FF6968}
+.gr1{text-decoration:underline wavy #1F5FBF;text-decoration-thickness:1.5px;text-underline-offset:4px}
+.legend{display:flex;align-items:center;gap:8px;color:#526170;font-size:12px;margin-top:6px}
+.legend .sw{color:#202832;padding:0 3px;margin-left:8px}
+.legend .sw:first-child{margin-left:0}
+.tree{width:100%;margin-top:10px;outline:1px solid #AAB5BE;background:#FFFFFF;padding:4px 0}
+.tr{display:flex;gap:16px;align-items:center;height:26px;padding:0 12px}
+.tr .mono{width:200px}
+.tr .lmeta{margin-left:0}
+.menu{width:260px}
+.mbar{display:flex;gap:2px;background:#F9FAFB;padding:0 4px;height:28px;align-items:center;box-shadow:inset 0 -1px #AAB5BE}
+.mbar span{padding:4px 8px}
+.mbar span.on{background:#D6EBE4}
+.mdrop{background:#F9FAFB;outline:1px solid #AAB5BE;padding:4px 0;box-shadow:0 6px 20px rgba(0,0,0,.28);width:240px}
+.mi{display:flex;align-items:center;gap:10px;height:28px;padding:0 12px;color:#202832}
+.mi .ic{color:#526170}
+.mi.hot{background:#D6EBE4;box-shadow:inset 2px 0 #145C4C}
+.wn{background:#F9FAFB;outline:1px solid #AAB5BE;padding:12px 16px;line-height:1.5}
+.wnh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.wn ul{padding-left:18px}
+.wn li{margin:2px 0}
+.alt *{box-sizing:border-box;margin:0;padding:0}
+.alt body{background:#E5E9EC;color:#202832;font:13px 'Liberation Sans',Arial,sans-serif;padding:24px;width:1596px}
+.alt .acc{color:#1D5BA8}
+.alt .ic{display:block;flex:none}
+.alt h1{font-size:18px;font-weight:600;margin:0 0 8px}
+.alt h2{font-size:13px;font-weight:650;margin:28px 0 10px}
+.alt p.note{color:#526170;font-size:12px;margin:0 0 8px;max-width:1280px;line-height:1.45}
+.alt .cap{font-size:11px;color:#526170;margin:8px 0 0;max-width:520px;line-height:1.4}
+.alt .row{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.alt .col{display:flex;flex-direction:column}
+.alt .notes{background:#EDF0F3;outline:1px solid #AAB5BE;padding:12px 16px;width:1280px;line-height:1.5}
+.alt .notes td{padding:3px 14px 3px 0;vertical-align:top}
+.alt .notes td:first-child{font-weight:650;white-space:nowrap}
+.alt .app{position:relative;width:1280px;height:800px;background:url() 0 0 no-repeat;outline:1px solid #AAB5BE;margin-top:12px}
+.alt .barslot{position:absolute;left:0;top:64px;width:1280px}
+.alt .stack{position:absolute;right:12px;bottom:34px;width:360px;display:flex;flex-direction:column;gap:8px}
+.alt .dlg{background:#F9FAFB;color:#202832;display:flex;flex-direction:column;outline:1px solid #AAB5BE;
+     box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.alt .dtb{display:flex;align-items:center;height:32px;flex:none;background:#F9FAFB;}
+.alt .dtitle{flex:1;min-width:0;padding-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alt .wbs{display:flex;margin-left:auto;flex:none}
+.alt .wb{display:flex;align-items:center;justify-content:center;width:46px;height:32px;color:#202832}
+.alt .dbody{padding:12px 24px 0;display:flex;flex-direction:column}
+.alt .dfoot{display:flex;gap:8px;justify-content:flex-end;padding:24px}
+.alt .dfoot .lead,.alt .pfoot .lead{margin-right:auto}
+.alt .b{display:inline-flex;align-items:center;justify-content:center;min-width:80px;height:30px;padding:0 10px;border-radius:1px;
+   background:#EDF0F3;border:1px solid #AAB5BE;color:#202832;white-space:nowrap;flex:none}
+.alt .b.sm{min-width:0;height:26px;padding:0 10px}
+.alt .b.on{background:#D6DFEB;border-color:#1D5BA8}
+.alt .b.flat{background:none;border-color:transparent;color:#1D5BA8;padding:0 6px;height:24px}
+.alt .b.pri{background:#1D5BA8;border-color:#1D5BA8;color:#FFFFFF;font-weight:650}
+.alt .b.dng{color:#A51F31;border-color:#A51F31}
+.alt .ring{outline:1px solid #202832;outline-offset:1px}
+.alt .qb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:1px;color:#202832}
+.alt .cb{display:flex;align-items:center;gap:8px;height:24px}
+.alt .box{width:16px;height:16px;border:1px solid #76828D;background:#FFFFFF;border-radius:1px;display:flex;
+     align-items:center;justify-content:center;flex:none}
+.alt .box.on{background:#1D5BA8;border-color:#1D5BA8;color:#FFFFFF}
+.alt .fld{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:#FFFFFF;border:1px solid #AAB5BE;
+     border-radius:1px;color:#202832;min-width:0}
+.alt .fld.wide{display:flex;width:100%}
+.alt .fld.focus{border-color:#1D5BA8;box-shadow:inset 0 0 0 1px #1D5BA8}
+.alt .fld.ph .ftext{color:#526170}
+.alt .ftext{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alt .fic,.alt .ftail{color:#526170}
+.alt .ftail{display:flex;margin-left:auto}
+.alt .frow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.alt .flabel{width:56px;color:#202832;flex:none}
+.alt .seg{display:inline-flex;border:1px solid #AAB5BE;border-radius:1px;overflow:hidden;flex:none}
+.alt .seg span{padding:0 10px;height:26px;display:flex;align-items:center;background:#EDF0F3;border-left:1px solid #AAB5BE}
+.alt .seg span:first-child{border-left:none}
+.alt .seg span.on{background:#D6DFEB;color:#202832;box-shadow:inset 0 -2px #1D5BA8;font-weight:650}
+.alt .seg.sm span{height:24px;padding:0 8px}
+.alt .sbar{position:absolute;right:3px;width:4px;border-radius:2px;background:#76828D;opacity:.8}
+.alt .big{color:#202832}
+.alt .warn,.alt .warn .acc{color:#8A5A00}
+.alt .err,.alt .err .acc{color:#A51F31}
+.alt .lnk2{color:#1D5BA8;cursor:pointer}
+.alt .mb{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+.alt .mbtext{display:flex;flex-direction:column;gap:6px;padding-top:4px;min-width:0}
+.alt .mbmain{font-size:14px;font-weight:650;line-height:1.4}
+.alt .mbdetail{color:#526170;line-height:1.45}
+.alt .mbcheck{margin-top:8px}
+.alt .disc{display:flex;align-items:center;gap:4px;margin:14px 0 0 48px;color:#202832}
+.alt .dets{position:relative;margin:6px 0 0 48px;background:#FFFFFF;outline:1px solid #AAB5BE;padding:8px 34px 8px 10px}
+.alt .dets pre{font:12px 'Liberation Mono',Consolas,monospace;color:#202832;white-space:pre-wrap}
+.alt .dets .qb{position:absolute;right:6px;top:6px}
+.alt .toast{display:flex;gap:10px;align-items:flex-start;padding:10px 8px 10px 12px;background:#F9FAFB;outline:1px solid #AAB5BE;
+       border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.28);color:#202832}
+.alt .toast.hover{background:#EDF0F3}
+.alt .toast>.ic{margin-top:1px}
+.alt .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.alt .ttitle{font-weight:650;line-height:1.35}
+.alt .ttext{color:#526170;line-height:1.4}
+.alt .tacts{display:flex;gap:4px;margin:4px 0 0 -6px}
+.alt .tx{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#526170;flex:none}
+.alt .ibar{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 10px;background:#EDF0F3;
+      box-shadow:inset 0 -1px #AAB5BE,inset 0 1px #AAB5BE;color:#202832}
+.alt .ibt{flex:1}
+.alt .pop{position:relative;background:#F9FAFB;outline:1px solid #AAB5BE;border-radius:4px;padding:12px;
+     box-shadow:0 6px 22px rgba(0,0,0,.28);color:#202832;z-index:2}
+.alt .ptitle{font-weight:650;margin-bottom:8px}
+.alt .pfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.alt .pfoot.wrap{flex-wrap:wrap;justify-content:flex-start}
+.alt .anchorbox{position:relative}
+.alt .allrow{display:flex;align-items:center;gap:10px;margin-top:14px}
+.alt .ctable{margin-top:10px;outline:1px solid #AAB5BE;background:#FFFFFF}
+.alt .chead,.alt .crow2{display:flex;align-items:center;gap:10px;padding:0 10px;min-height:38px}
+.alt .chead{min-height:28px;color:#526170;font-size:12px;box-shadow:inset 0 -1px #AAB5BE;background:#EDF0F3}
+.alt .crow2+.crow2{box-shadow:inset 0 1px #AAB5BE}
+.alt .crow2 .cname{font-weight:650}
+.alt .cname{width:110px;flex:none}
+.alt .cdiff{width:170px;flex:none;color:#526170}
+.alt .cact{flex:1;display:flex;gap:8px;align-items:center}
+.alt .slist{position:relative;margin-top:8px;height:186px;overflow:hidden;outline:1px solid #AAB5BE;background:#FFFFFF;padding:2px 0}
+.alt .srow{display:flex;align-items:center;gap:8px;height:22px;padding:0 14px 0 8px}
+.alt .srow.cur{background:#D6DFEB}
+.alt .sname{flex:1}
+.alt .scount{color:#526170;font-size:12px}
+.alt .sfoot{display:flex;gap:14px;align-items:center;margin-top:10px}
+.alt .htable{outline:1px solid #AAB5BE;background:#FFFFFF}
+.alt .hhead,.alt .hrow{display:grid;grid-template-columns:1fr 130px;padding:0 10px;height:26px;align-items:center}
+.alt .hhead{color:#526170;font-size:12px;background:#EDF0F3;box-shadow:inset 0 -1px #AAB5BE}
+.alt .hrow.sel{background:#D6DFEB}
+.alt .keys{color:#526170}
+.alt .capture{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;background:#FFFFFF;
+         border:1px solid #AAB5BE;border-radius:1px}
+.alt .capture.focus{border-color:#1D5BA8;box-shadow:inset 0 0 0 1px #1D5BA8}
+.alt .wait{color:#526170}
+.alt .kc{display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid #76828D;border-bottom-width:2px;
+    border-radius:3px;background:#EDF0F3;font-weight:650}
+.alt .plus{color:#526170}
+.alt .conf{display:flex;gap:8px;align-items:flex-start;margin-top:10px;line-height:1.4}
+.alt .llist{margin-top:10px;outline:1px solid #AAB5BE;background:#FFFFFF;padding:2px 0}
+.alt .llist.pl{margin-top:0}
+.alt .lrow{display:flex;gap:10px;align-items:center;height:28px;padding:0 10px}
+.alt .lrow.cur{background:#D6DFEB;box-shadow:inset 2px 0 #1D5BA8}
+.alt .lnum{color:#526170;width:12px}
+.alt .lmeta{color:#526170;margin-left:auto}
+.alt .editor{height:30px;display:flex;align-items:center;padding:0 10px;background:#FFFFFF;border:1px solid #AAB5BE}
+.alt .miss{text-decoration:underline wavy #A51F31;text-underline-offset:3px;background:#D6DFEB}
+.alt .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.alt .calm{font-weight:650}
+.alt .cal{display:grid;grid-template-columns:repeat(7,32px);row-gap:2px}
+.alt .dh{height:24px;display:flex;align-items:center;justify-content:center;color:#526170;font-size:11px}
+.alt .dd{height:28px;display:flex;align-items:center;justify-content:center;border-radius:1px}
+.alt .dd.out{color:#74808B}
+.alt .dd.sel{background:#1D5BA8;color:#FFFFFF;font-weight:650;outline:1px solid #202832;outline-offset:1px}
+.alt .gs .gsbody{position:relative;display:flex;flex-direction:column;align-items:center;height:500px;padding:18px 28px 0;
+            box-shadow:inset 0 -1px #AAB5BE}
+.alt .dots{display:flex;gap:8px;margin-bottom:18px}
+.alt .dot{width:8px;height:8px;border-radius:50%;background:#74808B;opacity:.6}
+.alt .dot.on{background:#1D5BA8}
+.alt .gsh{font-size:16px;font-weight:650;margin-bottom:6px;text-align:center}
+.alt .gsi{color:#526170;line-height:1.45;text-align:center;max-width:600px}
+.alt .gsc{width:100%;display:flex;flex-direction:column;align-items:center;margin-top:22px}
+.alt .gsn{color:#526170;font-size:12px;line-height:1.45;margin:10px 0 0;max-width:640px}
+.alt .gsl2{color:#526170;font-size:12px;margin:14px 0 4px}
+.alt .where{position:absolute;left:0;right:0;bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;
+       color:#526170;font-size:12px}
+.alt .gsfoot{padding:16px 20px}
+.alt .mono{font-family:'Liberation Mono',Consolas,monospace;font-size:12px}
+.alt .sp{width:16px;flex:none}
+.alt .rad{width:16px;height:16px;border-radius:50%;border:1px solid #76828D;background:#FFFFFF;flex:none;position:relative}
+.alt .rad.on{border-color:#1D5BA8}
+.alt .rad.on::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#1D5BA8}
+.alt .lrow .rad{margin-right:2px}
+.alt .lnat{width:130px}
+.alt .lnat.ko{font-family:'Noto Sans CJK KR','Noto Sans CJK JP',sans-serif}
+.alt .lnat.ta{font-family:'Noto Sans Tamil',sans-serif}
+.alt .lnat.th{font-family:'IBM Plex Sans Thai Looped','Kanit',sans-serif}
+.alt .lrow .lmeta{margin-left:0}
+.alt .badge{font-size:11px;font-weight:600;padding:1px 6px;border-radius:1px;outline:1px solid #1D5BA8;color:#1D5BA8}
+.alt .opts{display:flex;gap:16px;justify-content:center}
+.alt .opt{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 16px;outline:1px solid #AAB5BE;
+     background:#FFFFFF;text-align:center}
+.alt .opt.on{outline:2px solid #1D5BA8;background:#D6DFEB}
+.alt .oic{color:#202832}
+.alt .optn{display:flex;align-items:center;gap:8px;font-weight:650}
+.alt .optd{color:#526170;line-height:1.45;font-size:12px}
+.alt .opt.on .optd{color:#202832}
+.alt .ccx{display:flex;align-items:center;gap:6px;margin-top:14px;color:#526170}
+.alt .ccx .lnk2{margin-left:10px}
+.alt .frow.wide{width:100%;margin:0 0 8px}
+.alt .cnt{color:#526170;margin-left:auto}
+.alt .itable{width:100%;outline:1px solid #AAB5BE;background:#FFFFFF}
+.alt .ihead,.alt .irow{display:flex;align-items:center;gap:10px;height:28px;padding:0 10px}
+.alt .ihead{color:#526170;font-size:12px;background:#EDF0F3;box-shadow:inset 0 -1px #AAB5BE}
+.alt .irow+.irow{box-shadow:inset 0 1px #AAB5BE}
+.alt .irow.cur{background:#D6DFEB}
+.alt .ic1{flex:1;min-width:0}
+.alt .ic2{width:120px}
+.alt .ic3{width:130px;color:#526170}
+.alt .ic4{width:64px}
+.alt .look{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:-6px}
+.alt .smps{display:flex;gap:48px}
+.alt .smp{display:flex;flex-direction:column;align-items:center;gap:8px}
+.alt .smp .mm{outline-offset:0}
+.alt .smp.on .mm{outline:2px solid #1D5BA8 !important;outline-offset:2px}
+.alt .smpn{display:flex;align-items:center;gap:8px;font-weight:600}
+.alt .mm{display:flex;flex-direction:column;overflow:hidden}
+.alt .accs,.alt .tbrow{display:flex;align-items:center;gap:4px;height:28px}
+.alt .accl{color:#202832;margin-right:10px}
+.alt .accn{color:#526170;font-size:12px;margin-left:10px}
+.alt .accc{width:20px;height:20px;border-radius:50%;margin:0 2px}
+.alt .accc.on{outline:2px solid #202832;outline-offset:2px}
+.alt .tbrow{margin-top:2px}
+.alt .lcs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.alt .lc{padding:8px;outline:1px solid #AAB5BE;background:#FFFFFF;display:flex;flex-direction:column;gap:6px;min-width:0}
+.alt .lc .lcd{min-height:48px}
+.alt .lcn{display:flex;align-items:center;gap:8px;font-weight:600}
+.alt .lcd{color:#526170;font-size:12px;line-height:1.4}
+.alt .lt{height:104px;background:#E5E9EC;outline:1px solid #AAB5BE;padding:2px;display:flex}
+.alt .lcol{display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0}
+.alt .lrowb{display:flex;gap:2px;min-width:0;min-height:0}
+.alt .lb{background:#F9FAFB;outline:1px solid #AAB5BE;display:flex;align-items:center;justify-content:center;
+    min-width:0;min-height:0;font-size:10px;color:#526170;text-align:center;overflow:hidden}
+.alt .lb.vid{background:#0B0E12;color:#C8CED4}
+.alt .lb.aud{background:#FFFFFF;color:#1D5BA8}
+.alt .fcol{display:flex;flex-direction:column;align-items:flex-start;width:620px}
+.alt .fl{width:124px;flex:none;color:#202832}
+.alt .frame{position:relative;width:620px;height:150px;margin-top:6px;outline:1px solid #AAB5BE;
+       background:linear-gradient(160deg,#41566B 0%,#7A8C78 55%,#C7A27A 100%);display:flex;align-items:flex-end;justify-content:center}
+.alt .fsub{font:600 22px 'Liberation Sans',Arial,sans-serif;color:#FFFFFF;margin-bottom:18px;
+      text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 2px 0 #000,0 -2px 0 #000,2px 0 0 #000,-2px 0 0 #000,3px 4px 3px rgba(0,0,0,.6)}
+.alt .fcap{position:absolute;right:6px;top:4px;font-size:10px;color:#fff;background:rgba(0,0,0,.45);padding:1px 5px}
+.alt .meter{width:80px;height:6px;background:#FFFFFF;outline:1px solid #AAB5BE;display:flex}
+.alt .meter span{background:#1D5BA8}
+.alt .editor.sl{height:34px;font-size:14px;width:100%}
+.alt .sp1{background:#FF6968}
+.alt .gr1{text-decoration:underline wavy #1F5FBF;text-decoration-thickness:1.5px;text-underline-offset:4px}
+.alt .legend{display:flex;align-items:center;gap:8px;color:#526170;font-size:12px;margin-top:6px}
+.alt .legend .sw{color:#202832;padding:0 3px;margin-left:8px}
+.alt .legend .sw:first-child{margin-left:0}
+.alt .tree{width:100%;margin-top:10px;outline:1px solid #AAB5BE;background:#FFFFFF;padding:4px 0}
+.alt .tr{display:flex;gap:16px;align-items:center;height:26px;padding:0 12px}
+.alt .tr .mono{width:200px}
+.alt .tr .lmeta{margin-left:0}
+.alt .menu{width:260px}
+.alt .mbar{display:flex;gap:2px;background:#F9FAFB;padding:0 4px;height:28px;align-items:center;box-shadow:inset 0 -1px #AAB5BE}
+.alt .mbar span{padding:4px 8px}
+.alt .mbar span.on{background:#D6DFEB}
+.alt .mdrop{background:#F9FAFB;outline:1px solid #AAB5BE;padding:4px 0;box-shadow:0 6px 20px rgba(0,0,0,.28);width:240px}
+.alt .mi{display:flex;align-items:center;gap:10px;height:28px;padding:0 12px;color:#202832}
+.alt .mi .ic{color:#526170}
+.alt .mi.hot{background:#D6DFEB;box-shadow:inset 2px 0 #1D5BA8}
+.alt .wn{background:#F9FAFB;outline:1px solid #AAB5BE;padding:12px 16px;line-height:1.5}
+.alt .wnh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.alt .wn ul{padding-left:18px}
+.alt .wn li{margin:2px 0}</style></head><body><svg width="0" height="0" style="position:absolute"><defs><symbol id="i-notice-error" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z"/><g class="acc"><path d="M8 4.75v4"/><circle cx="8" cy="11.25" r=".75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-calendar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="12" rx="1"/><path d="M1.5 6h13M5 1v3M11 1v3"/><g class="acc"><path d="M4.5 9h1M7.5 9h1M10.5 9h1M4.5 11.5h1M7.5 11.5h1"/></g></g></symbol><symbol id="i-chevron-down" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5l3.5 3.5 3.5-3.5"/></g></symbol><symbol id="i-chevron-right" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5l3.5 3.5-3.5 3.5"/></g></symbol><symbol id="i-chevron-left" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5l-3.5 3.5 3.5 3.5"/></g></symbol><symbol id="i-check" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></g></symbol><symbol id="i-about" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4"/><circle cx="8" cy="5" r="0.75" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-notice-warning" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></g></symbol><symbol id="i-tab-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></g></symbol><symbol id="i-log" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M7 5.5h5M7 8h4M7 10.5h5"/><g class="acc"><path d="M4 5.5h1.5M4 8h1.5M4 10.5h1.5"/></g></g></symbol><symbol id="i-styles" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z"/><g class="acc"><circle cx="4.75" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="6.75" cy="4.5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="4.5" r="1" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-hotkeys" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></g></symbol><symbol id="i-open-audio" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 11.5V2.5l4 1.5"/><circle cx="4.5" cy="11.5" r="2" fill="currentColor" stroke="none"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></g></symbol><symbol id="i-spellchecker" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></g></symbol><symbol id="i-remove-temporary" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M4.5 3.5V2h3v1.5"/><path d="M2.5 4.5l.75 9a1 1 0 0 0 1 1H8M9.5 4.5l-.25 3.5"/><path d="M5 6.5v5M7 6.5v3"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-check-updates" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></g></symbol><symbol id="i-window-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></g></symbol><symbol id="i-window-maximize" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="9" height="9" rx="0.5"/></g></symbol><symbol id="i-edit-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2"/><rect x="2.5" y="4.5" width="8" height="10" rx="1"/></g></symbol><symbol id="i-save" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h7v4"/></g></symbol><symbol id="i-menu-more" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></g></symbol><symbol id="i-filter" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2.5h13L9.5 8.5V13l-3 1.5v-6z"/></g></symbol><symbol id="i-panels" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M6.5 2.5v11M6.5 8h8"/></g></symbol><symbol id="i-show" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8C3 5 5.25 3.5 8 3.5s5 1.5 6.5 4.5c-1.5 3-3.75 4.5-6.5 4.5S3 11 1.5 8z"/><g class="acc"><circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-hide" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8C3 5 5.25 3.5 8 3.5s5 1.5 6.5 4.5c-1.5 3-3.75 4.5-6.5 4.5S3 11 1.5 8z"/><circle cx="8" cy="8" r="2"/><g class="acc"><path d="M2.5 13.5l11-11"/></g></g></symbol><symbol id="i-panel-float" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 2.5h-5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-5"/><g class="acc"><path d="M9.5 6.5l5-5M10.5 1.5h4v4"/></g></g></symbol><symbol id="i-last-session" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2h9v7h-2"/><rect x="1.5" y="6.5" width="11" height="7" rx="1"/><path d="M1.5 8.5h11"/><g class="acc"><path d="M5 11.5h4M7.5 10l1.5 1.5L7.5 13"/></g></g></symbol><symbol id="i-panel-menu" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="3.5" cy="8" r="1.25" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1.25" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8" r="1.25" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-language" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5c-2 1.75-3 4-3 6.5s1 4.75 3 6.5c2-1.75 3-4 3-6.5s-1-4.75-3-6.5z"/><g class="acc"><path d="M1.5 8h13"/></g></g></symbol><symbol id="i-import" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3"/><g class="acc"><path d="M7.5 4.5v10M4.5 11.5l3 3 3-3"/></g></g></symbol><symbol id="i-appearance" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-theme" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 10A6 6 0 1 1 6 2.5a5 5 0 0 0 7.5 7.5z"/><g class="acc"><path d="M11.5 1.5v2M10.5 2.5h2"/></g></g></symbol><symbol id="i-layout" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="1.5" width="5" height="5" rx="1"/><rect x="9.5" y="1.5" width="5" height="5" rx="1"/><rect x="1.5" y="9.5" width="5" height="5" rx="1"/><path d="M1.5 3.5h5M9.5 3.5h5M1.5 11.5h5"/><g class="acc"><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 11.5h5"/></g></g></symbol><symbol id="i-settings-video" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></g></symbol><symbol id="i-settings-audio" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></g></symbol><symbol id="i-editor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></g></symbol><symbol id="i-folder-open" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 13.5v-10a1 1 0 0 1 1-1h3l1.5 1.5h5a1 1 0 0 1 1 1v1.5"/><path d="M1.5 13.5l2.25-7h10.75l-2.25 7z"/></g></symbol><symbol id="i-show-in-folder" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5h-6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3.5l1.5 1.5h6a1 1 0 0 1 1 1v4"/><path d="M1.5 6h13"/><g class="acc"><path d="M10 14.5l4.5-4.5M11.5 10h3v3"/></g></g></symbol><symbol id="i-autosave" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5h-6v-11h9l2 2v4"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h4"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-dictionary" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13V3a1.5 1.5 0 0 1 1.5-1.5h7.5v10H5a1.5 1.5 0 0 0 0 3h7.5"/><g class="acc"><path d="M6.5 4.5h3.5M6.5 6.5h2"/></g></g></symbol><symbol id="i-renderer" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M6.5 4.5v3.5l3-1.75z" fill="currentColor"/><g class="acc"><path d="M4 9.5h8M5.5 11.5h5"/></g></g></symbol><symbol id="i-audio-device" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="1.5" width="9" height="13" rx="1"/><circle cx="8" cy="10" r="2.5"/><g class="acc"><circle cx="8" cy="5" r="1.25" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-audio-play" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 3v10l8-5z" fill="currentColor"/></g></symbol><symbol id="i-whats-new" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h-6v11h9v-6"/><path d="M5.5 9.5h5M5.5 11.5h3"/><g class="acc"><path d="M12.5 1v4M10.5 3h4"/></g></g></symbol><symbol id="i-help" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M6 6.25a2 2 0 1 1 3 1.75c-.5.25-1 .5-1 1.25v.5"/><circle cx="8" cy="11.5" r="0.75" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-settings" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></g></symbol><symbol id="i-translation-mode" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h8M1.5 6h5"/><g class="acc"><path d="M1.5 10.5h8M1.5 13h5M12.5 3v9M11 10.5l1.5 1.5 1.5-1.5"/></g></g></symbol><symbol id="i-karaoke" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="4.5" width="13" height="7" rx="1"/><path d="M5.5 4.5v7M10.5 4.5v7"/><g class="acc"><rect x="2" y="5" width="3" height="6" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-report-issue" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 6.5a2.5 2.5 0 0 1 5 0v4a2.5 2.5 0 0 1-5 0z"/><path d="M6.5 4.5l-1-2M9.5 4.5l1-2"/><path d="M2.5 7.5h3M10.5 7.5h3M2.5 11h3M10.5 11h3"/><g class="acc"><path d="M8 6.5v6"/></g></g></symbol><symbol id="i-credits" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.5"/><path d="M1.5 13.5a4.5 4.5 0 0 1 9 0"/><g class="acc"><circle cx="11.5" cy="5.5" r="2"/><path d="M12 9.5a3 3 0 0 1 2.5 3"/></g></g></symbol><symbol id="i-monitor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="9" rx="1"/><path d="M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7"/><g class="acc"><path d="M3.5 6v-1.5h2M12.5 6v-1.5h-2M3.5 8v1.5h2M12.5 8v1.5h-2"/></g></g></symbol><symbol id="i-media-play" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5v11l9-5.5z" fill="currentColor"/></g></symbol><symbol id="i-window-minimize" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5h9"/></g></symbol><symbol id="i-link" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></g></symbol></defs></svg><h1>FR1 Getting started, version 2: Light (2 of 2)</h1><p class="note">Pages 5–8, then the ways in.</p><div class="row"><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="gsh">Video and audio</div><div class="gsi">How subtitles are drawn on the video, and where the sound goes.</div><div class="gsc"><div class="fcol"><div class="frow"><span class="fl">Subtitles drawn by</span><span class="fld" style="width:240px;"><span class="ftext">libass</span></span><span class="accn">The only renderer on Linux.</span></div><div class="frame"><div class="fsub">I said I’d be there by nine.</div><span class="fcap">libass · sample frame</span></div><div class="frow" style="margin-top:16px"><span class="fl">Sound plays on</span><span class="fld" style="width:330px;"><span class="ftext">System default (Built-in Audio Analog Stereo)</span><span class="ftail"><svg class="ic " width="14" height="14"><use href="#i-chevron-down"/></svg></span></span><span class="b sm"><svg class="ic " width="14" height="14"><use href="#i-audio-play"/></svg>&nbsp;Test sound</span><span class="meter"><span style="width:62%"></span></span></div></div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: Settings › Video and Settings › Audio</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div><div class="cap">5. Video and audio on Linux. The sample frame is drawn by the renderer; Test sound plays on the chosen device.</div></div><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="gsh">Video and audio</div><div class="gsi">How subtitles are drawn on the video, and where the sound goes.</div><div class="gsc"><div class="fcol"><div class="frow"><span class="fl">Subtitles drawn by</span><span class="fld" style="width:240px;"><span class="ftext">libass</span><span class="ftail"><svg class="ic " width="14" height="14"><use href="#i-chevron-down"/></svg></span></span><span class="accn">or xy-VSFilter, VSFilterMod</span></div><div class="frame"><div class="fsub">I said I’d be there by nine.</div><span class="fcap">libass · sample frame</span></div><div class="frow" style="margin-top:16px"><span class="fl">Sound plays on</span><span class="fld" style="width:330px;"><span class="ftext">System default (Speakers)</span><span class="ftail"><svg class="ic " width="14" height="14"><use href="#i-chevron-down"/></svg></span></span><span class="b sm"><svg class="ic " width="14" height="14"><use href="#i-audio-play"/></svg>&nbsp;Test sound</span><span class="meter"><span style="width:62%"></span></span></div></div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: Settings › Video and Settings › Audio</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div><div class="cap">5. On Windows the renderer is a choice and the frame redraws with it.</div></div><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span></div><div class="gsh">Editing</div><div class="gsi">Backups while you work, and the checks on the Line editor’s text.</div><div class="gsc"><div class="fcol"><div class="frow"><span class="fl">Backups</span>after every <span class="fld" style="width:48px;"><span class="ftext">1</span></span> edits, keep <span class="fld" style="width:48px;"><span class="ftext">3</span></span> per file</div><div class="frow"><span class="fl">Spelling</span><div class="cb"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="cbt">Check spelling</span></div><span class="fld" style="width:220px;"><span class="ftext">English (United States)</span><span class="ftail"><svg class="ic " width="14" height="14"><use href="#i-chevron-down"/></svg></span></span></div><div class="frow"><span class="fl">Grammar</span><span class="seg sm"><span class="">Off</span><span class="on">English (US)</span><span class="">(UK)</span><span class="">(Canada)</span><span class="">(Australia)</span></span></div><div class="gsn" style="margin:0 0 0 132px">Off by default. Harper checks grammar on this computer.</div><div class="gsl2">Example</div><div class="editor sl"><span style="white-space:pre">She <span class="gr1">has</span> seen <span class="sp1">teh</span> last episode already.</span></div><div class="legend"><span class="sw sp1">teh</span> spelling<span class="sw gr1">has</span> grammar</div></div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: Settings › General › Saving and Settings › Spelling &amp; grammar</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div><div class="cap">6. Editing. The example Line follows the choices (shown with English (US) grammar; Off is the default). GR1’s mockup sets the underline colour.</div></div><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span></div><div class="gsh">Updates</div><div class="gsi">Which versions HikariSub offers you, and whether it looks for them by itself.</div><div class="gsc"><div class="opts"><div class="opt on" style="width:260px"><svg class="ic oic" width="32" height="32"><use href="#i-check-updates"/></svg><div class="optn"><span class="rad on"></span>Stable versions only</div><span class="badge">Recommended</span><div class="optd">Tested releases.</div></div><div class="opt" style="width:260px"><svg class="ic oic" width="32" height="32"><use href="#i-whats-new"/></svg><div class="optn"><span class="rad"></span>Pre-releases too</div><div class="optd">Beta versions as well, to try what’s coming. They can have bugs.</div></div></div><div style="margin-top:18px"><div class="cb"><span class="box"></span><span class="cbt">Check for updates automatically</span></div></div><div class="gsn" style="text-align:center">At most once a day, when HikariSub starts. What’s new on Home needs it too.</div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: Settings › Updates</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Next</span></div></div><div class="cap">7. Updates.</div></div><div class="col" style="width:760px"><div class="dlg gs" style="width:760px"><div class="dtb"><span class="dtitle">Getting started</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="gsbody"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot on"></span></div><div class="gsh">Your files</div><div class="gsi">Everything of yours is in one folder. Copy it to move your setup to another computer.</div><div class="gsc"><div class="fcol"><div class="frow"><span class="fld mono" style="width:420px;"><svg class="ic fic" width="16" height="16"><use href="#i-folder-open"/></svg><span class="ftext">~/.config/hikarisub</span></span><span class="b">Open folder</span></div><div class="tree"><div class="tr"><span class="mono">hikari.ini</span><span class="lmeta">your settings</span></div><div class="tr"><span class="mono">automation/</span><span class="lmeta">your scripts and DependencyControl’s modules</span></div><div class="tr"><span class="mono">dictionaries/</span><span class="lmeta">spelling dictionaries and your own words</span></div><div class="tr"><span class="mono">catalogs/</span><span class="lmeta">font and style catalogs</span></div><div class="tr"><span class="mono">presets/</span><span class="lmeta">karaoke templates, layouts and dialog presets</span></div><div class="tr"><span class="mono">autosave/  recovery/  log/</span><span class="lmeta">backups and logs</span></div></div><div class="gsn">Caches stay apart in <span class="mono">~/.cache/hikarisub</span>. Uninstalling leaves this folder alone.</div></div></div><div class="where"><svg class="ic " width="14" height="14"><use href="#i-settings"/></svg><span>Later: Settings › General › User folder, and Help › Open user folder</span></div></div><div class="dfoot gsfoot"><span class="b">Back</span><span class="sp" style="flex:1"></span><span class="b">Skip setup</span><span class="b pri ring">Finish</span></div></div><div class="cap">8. Your files (UD1’s folder). Finish replaces Next.</div></div><div class="col" style="width:760px"></div></div><h2>Ways in</h2><div class="row" style="align-items:flex-start"><div class="col" style="width:300px"><div class="menu"><div class="mbar"><span>View</span><span>Subtitles</span><span class="on">Help</span></div><div class="mdrop"><div class="mi hot"><svg class="ic " width="16" height="16"><use href="#i-help"/></svg><span>Getting started</span></div><div class="mi"><svg class="ic " width="16" height="16"><use href="#i-link"/></svg><span>HikariSub website</span></div><div class="mi"><svg class="ic " width="16" height="16"><use href="#i-report-issue"/></svg><span>Report an issue</span></div><div class="mi"><svg class="ic " width="16" height="16"><use href="#i-check-updates"/></svg><span>Check for updates</span></div><div class="mi"><svg class="ic " width="16" height="16"><use href="#i-whats-new"/></svg><span>What's new</span></div><div class="mi"><svg class="ic " width="16" height="16"><use href="#i-about"/></svg><span>About</span></div><div class="mi"><svg class="ic " width="16" height="16"><use href="#i-credits"/></svg><span>Credits</span></div></div></div><div class="cap">Help › Getting started (a command: hotkey id 5176).</div></div><div class="col" style="width:420px"><div class="wn"><div class="wnh"><svg class="ic " width="16" height="16"><use href="#i-whats-new"/></svg><b>What’s new in 0.1.0</b></div><ul><li><b>Getting started</b> walks through the settings most people change first. Open it any time from <span class="lnk2">Help › Getting started</span>.</li><li>One user folder for your scripts, dictionaries and presets.</li></ul></div><div class="cap">What’s new for existing users points to it.</div></div><div class="col" style="width:360px"><div style="width:360px"><div class="toast"><svg class="ic " width="16" height="16"><use href="#i-about"/></svg><div class="tt"><div class="ttitle">Default settings in use</div><div class="ttext">Help › Getting started opens the setup again.</div></div><span class="tx" title="Dismiss"><svg class="ic " width="14" height="14"><use href="#i-tab-close"/></svg></span></div></div><div class="cap">After Skip setup, Close or Esc.</div></div></div></body></html>

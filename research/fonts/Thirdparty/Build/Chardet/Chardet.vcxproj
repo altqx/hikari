@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{ef29e253-0356-42b1-b314-aec24ab1d028}</ProjectGuid>
+    <RootNamespace>Chardet</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Uchardet</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;HAVE_DLL_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Thirdparty\uchardet\src;$(SolutionDir)Thirdparty\uchardet\include</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;HAVE_DLL_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Thirdparty\uchardet\src;$(SolutionDir)Thirdparty\uchardet\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\uchardet\src\CharDistribution.cpp" />
+    <ClCompile Include="..\..\uchardet\src\JpCntx.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangArabicModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangBelarusianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangBulgarianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangCatalanModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangCroatianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangCzechModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangDanishModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangEnglishModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangEsperantoModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangEstonianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangFinnishModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangFrenchModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangGeorgianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangGermanModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangGreekModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangHebrewModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangHindiModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangHungarianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangIrishModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangItalianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangLatvianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangLithuanianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangMacedonianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangMalteseModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangNorwegianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangPolishModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangPortugueseModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangRomanianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangRussianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangSerbianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangSlovakModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangSloveneModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangSpanishModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangSwedishModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangThaiModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangTurkishModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangUkrainianModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\LangModels\LangVietnameseModel.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsBig5Prober.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsCharSetProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsCJKDetector.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsEscCharsetProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsEscSM.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsEUCJPProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsEUCKRProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsEUCTWProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsGB2312Prober.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsHebrewProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsJohabProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsLanguageDetector.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsLatin1Prober.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsMBCSGroupProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsMBCSSM.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsSBCharSetProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsSBCSGroupProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsSJISProber.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsUniversalDetector.cpp" />
+    <ClCompile Include="..\..\uchardet\src\nsUTF8Prober.cpp" />
+    <ClCompile Include="..\..\uchardet\src\uchardet.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\uchardet\src\CharDistribution.h" />
+    <ClInclude Include="..\..\uchardet\src\JpCntx.h" />
+    <ClInclude Include="..\..\uchardet\src\nsBig5Prober.h" />
+    <ClInclude Include="..\..\uchardet\src\nsCharSetProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsCodingStateMachine.h" />
+    <ClInclude Include="..\..\uchardet\src\nsEscCharsetProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsEUCJPProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsEUCKRProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsEUCTWProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsGB2312Prober.h" />
+    <ClInclude Include="..\..\uchardet\src\nsHebrewProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsLatin1Prober.h" />
+    <ClInclude Include="..\..\uchardet\src\nsMBCSGroupProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsPkgInt.h" />
+    <ClInclude Include="..\..\uchardet\src\nsSBCharSetProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsSBCSGroupProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsSJISProber.h" />
+    <ClInclude Include="..\..\uchardet\src\nsUniversalDetector.h" />
+    <ClInclude Include="..\..\uchardet\src\nsUTF8Prober.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

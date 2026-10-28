@@ -1,0 +1,237 @@
+-- Running vcpkg install
+Detecting compiler hash for triplet x64-windows...
+Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+Detecting compiler hash for triplet x64-hikari-windows-release...
+Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+The following packages will be built and installed:
+    ffmpeg[avcodec,avformat,core,swresample,swscale]:x64-hikari-windows-release@7.1.2#5
+    hikari-ffms2:x64-hikari-windows-release@5.1.0-hikari-45d5f721 -- C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/ports\hikari-ffms2
+  * pkgconf:x64-windows@3.0.3#1
+  * vcpkg-cmake:x64-windows@2025-08-07
+  * vcpkg-cmake-config:x64-windows@2026-07-21
+  * vcpkg-cmake-get-vars:x64-windows@2025-05-29
+  * vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03
+  * vcpkg-tool-meson:x64-windows@1.9.0#10
+  * zlib:x64-hikari-windows-release@1.3.2#2
+Additional packages (*) will be modified to complete this operation.
+Installing 1/9 vcpkg-cmake:x64-windows@2025-08-07...
+vcpkg-cmake:x64-windows@2025-08-07 package ABI: 429a4d78fb5b0d086d890b7521326f2aa4d65dc24cb450e58a99aea3ae41f79f
+Building vcpkg-cmake:x64-windows@2025-08-07...
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake_x64-windows/share/vcpkg-cmake/vcpkg_cmake_configure.cmake
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake_x64-windows/share/vcpkg-cmake/vcpkg_cmake_build.cmake
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake_x64-windows/share/vcpkg-cmake/vcpkg_cmake_install.cmake
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake_x64-windows/share/vcpkg-cmake/vcpkg-port-config.cmake
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake_x64-windows/share/vcpkg-cmake/copyright
+-- Performing post-build validation
+Elapsed time to handle vcpkg-cmake:x64-windows: 100 ms
+Installing 2/9 vcpkg-cmake-get-vars:x64-windows@2025-05-29...
+vcpkg-cmake-get-vars:x64-windows@2025-05-29 package ABI: c0164b1230c3b78d36b56c91d6f8640161ad4efb653b608507ef185557ab3544
+Building vcpkg-cmake-get-vars:x64-windows@2025-05-29...
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake-get-vars_x64-windows/share/vcpkg-cmake-get-vars/vcpkg_cmake_get_vars.cmake
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake-get-vars_x64-windows/share/vcpkg-cmake-get-vars/cmake_get_vars
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake-get-vars_x64-windows/share/vcpkg-cmake-get-vars/cmake_get_vars/CMakeLists.txt
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake-get-vars_x64-windows/share/vcpkg-cmake-get-vars/cmake-get-vars.cmake.in
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake-get-vars_x64-windows/share/vcpkg-cmake-get-vars/vcpkg-port-config.cmake
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake-get-vars_x64-windows/share/vcpkg-cmake-get-vars/copyright
+-- Performing post-build validation
+Elapsed time to handle vcpkg-cmake-get-vars:x64-windows: 81.3 ms
+Installing 3/9 vcpkg-tool-meson:x64-windows@1.9.0#10...
+vcpkg-tool-meson:x64-windows@1.9.0#10 package ABI: 2caee1833440e1918c4ec9183baee1003f04589331756fa99edcc46eeafb8a77
+Building vcpkg-tool-meson:x64-windows@1.9.0#10...
+-- Installing: C:/Work/HikariF48/p/vcpkg-tool-meson_x64-windows/share/vcpkg-tool-meson/copyright
+-- Found Python version '3.14.7 at C:/Users/altqx/AppData/Local/Microsoft/WindowsApps/python.exe'
+-- Using meson: C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/meson-1.9.0-633807/meson.py
+-- Performing post-build validation
+Elapsed time to handle vcpkg-tool-meson:x64-windows: 230 ms
+Installing 4/9 pkgconf:x64-windows@3.0.3#1...
+pkgconf:x64-windows@3.0.3#1 package ABI: 7baa9935126398686653f9a413e452c13de748ae7dce6f6f7ca551f1dffb60bd
+Building pkgconf:x64-windows@3.0.3#1...
+-- Found Python version '3.14.7 at C:/Users/altqx/AppData/Local/Microsoft/WindowsApps/python.exe'
+-- Using meson: C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/meson-1.9.0-633807/meson.py
+-- Using cached pkgconf-pkgconf-pkgconf-3.0.3.tar.gz
+-- Extracting source C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/pkgconf-pkgconf-pkgconf-3.0.3.tar.gz
+-- Using source at C:/Work/HikariF48/b/pkgconf/src/conf-3.0.3-bff6744efe.clean
+-- Configuring x64-windows-dbg
+-- Getting CMake variables for x64-windows
+-- Loading CMake variables from C:/Work/HikariF48/b/pkgconf/cmake-get-vars_C_CXX-x64-windows.cmake.log
+-- Configuring x64-windows-dbg done
+-- Configuring x64-windows-rel
+-- Configuring x64-windows-rel done
+-- Package x64-windows-dbg
+-- Package x64-windows-rel
+-- Fixing pkgconfig file: C:/Work/HikariF48/p/pkgconf_x64-windows/lib/pkgconfig/libpkgconf.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Fixing pkgconfig file: C:/Work/HikariF48/p/pkgconf_x64-windows/debug/lib/pkgconfig/libpkgconf.pc
+-- Performing post-build validation
+Elapsed time to handle pkgconf:x64-windows: 12 s
+Installing 5/9 vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03...
+vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03 package ABI: e6a1d932f1f10a550bb05e3850c807d9bca9c016bdde02211fdc7f45577f0e1a
+Building vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03...
+-- Installing: C:/Work/HikariF48/p/vcpkg-pkgconfig-get-modules_x64-windows/share/vcpkg-pkgconfig-get-modules/copyright
+-- Performing post-build validation
+Elapsed time to handle vcpkg-pkgconfig-get-modules:x64-windows: 71.7 ms
+Installing 6/9 ffmpeg[avcodec,avformat,core,swresample,swscale]:x64-hikari-windows-release@7.1.2#5...
+ffmpeg[avcodec,avformat,core,swresample,swscale]:x64-hikari-windows-release@7.1.2#5 package ABI: eab7a4158a5a3cb9a2f4b3a95ad8b43916bc10943ab07bcffbc5b46ccfcbe05f
+Building ffmpeg[avcodec,avformat,core,swresample,swscale]:x64-hikari-windows-release@7.1.2#5...
+C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\triplets\x64-hikari-windows-release.cmake: info: loaded overlay triplet from here
+-- Using cached ffmpeg-ffmpeg-n7.1.2.tar.gz
+-- Extracting source C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/ffmpeg-ffmpeg-n7.1.2.tar.gz
+-- Applying patch 0001-create-lib-libraries.patch
+-- Applying patch 0002-fix-msvc-link.patch
+-- Applying patch 0003-fix-windowsinclude.patch
+-- Applying patch 0004-dependencies.patch
+-- Applying patch 0005-fix-nasm.patch
+-- Applying patch 0007-fix-lib-naming.patch
+-- Applying patch 0013-define-WINVER.patch
+-- Applying patch 0020-fix-aarch64-libswscale.patch
+-- Applying patch 0024-fix-osx-host-c11.patch
+-- Applying patch 0040-ffmpeg-add-av_stream_get_first_dts-for-chromium.patch
+-- Applying patch 0041-add-const-for-opengl-definition.patch
+-- Applying patch 0043-fix-miss-head.patch
+-- Applying patch 0044-fix-vulkan-debug-callback-abi.patch
+-- Using source at C:/Work/HikariF48/b/ffmpeg/src/n7.1.2-a0bd95c46c.clean
+-- Getting CMake variables for x64-hikari-windows-release
+-- Loading CMake variables from C:/Work/HikariF48/b/ffmpeg/cmake-get-vars_C_CXX-x64-hikari-windows-release.cmake.log
+Downloading msys2-automake-wrapper-20250528-1-any.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/automake-wrapper-20250528-1-any.pkg.tar.zst
+Successfully downloaded msys2-automake-wrapper-20250528-1-any.pkg.tar.zst
+Downloading msys2-bash-5.3.009-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/bash-5.3.009-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-bash-5.3.009-1-x86_64.pkg.tar.zst
+Downloading msys2-coreutils-8.32-5-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/coreutils-8.32-5-x86_64.pkg.tar.zst
+Successfully downloaded msys2-coreutils-8.32-5-x86_64.pkg.tar.zst
+Downloading msys2-file-5.46-2-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/file-5.46-2-x86_64.pkg.tar.zst
+Successfully downloaded msys2-file-5.46-2-x86_64.pkg.tar.zst
+Downloading msys2-gawk-5.3.2-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/gawk-5.3.2-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-gawk-5.3.2-1-x86_64.pkg.tar.zst
+Downloading msys2-grep-1~3.0-7-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/grep-1~3.0-7-x86_64.pkg.tar.zst
+Successfully downloaded msys2-grep-1~3.0-7-x86_64.pkg.tar.zst
+Downloading msys2-gzip-1.14-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/gzip-1.14-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-gzip-1.14-1-x86_64.pkg.tar.zst
+Downloading msys2-diffutils-3.12-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/diffutils-3.12-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-diffutils-3.12-1-x86_64.pkg.tar.zst
+Downloading msys2-make-4.4.1-2-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/make-4.4.1-2-x86_64.pkg.tar.zst
+Successfully downloaded msys2-make-4.4.1-2-x86_64.pkg.tar.zst
+Downloading msys2-pkgconf-2.5.1-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/pkgconf-2.5.1-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-pkgconf-2.5.1-1-x86_64.pkg.tar.zst
+Downloading msys2-sed-4.9-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/sed-4.9-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-sed-4.9-1-x86_64.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+Downloading msys2-automake1.16-1.16.5-1-any.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst
+Successfully downloaded msys2-automake1.16-1.16.5-1-any.pkg.tar.zst
+Downloading msys2-automake1.17-1.17-1-any.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/automake1.17-1.17-1-any.pkg.tar.zst
+Successfully downloaded msys2-automake1.17-1.17-1-any.pkg.tar.zst
+Downloading msys2-automake1.18-1.18.1-1-any.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/automake1.18-1.18.1-1-any.pkg.tar.zst
+Successfully downloaded msys2-automake1.18-1.18.1-1-any.pkg.tar.zst
+Downloading msys2-libiconv-1.18-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libiconv-1.18-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libiconv-1.18-1-x86_64.pkg.tar.zst
+Downloading msys2-libintl-0.22.5-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libintl-0.22.5-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libintl-0.22.5-1-x86_64.pkg.tar.zst
+Downloading msys2-gmp-6.3.0-2-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/gmp-6.3.0-2-x86_64.pkg.tar.zst
+Successfully downloaded msys2-gmp-6.3.0-2-x86_64.pkg.tar.zst
+Downloading msys2-gcc-libs-15.2.0-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/gcc-libs-15.2.0-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-gcc-libs-15.2.0-1-x86_64.pkg.tar.zst
+Downloading msys2-libbz2-1.0.8-4-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libbz2-1.0.8-4-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libbz2-1.0.8-4-x86_64.pkg.tar.zst
+Downloading msys2-liblzma-5.8.2-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/liblzma-5.8.2-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-liblzma-5.8.2-1-x86_64.pkg.tar.zst
+Downloading msys2-libzstd-1.5.7-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libzstd-1.5.7-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libzstd-1.5.7-1-x86_64.pkg.tar.zst
+Downloading msys2-zlib-1.3.1-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/zlib-1.3.1-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-zlib-1.3.1-1-x86_64.pkg.tar.zst
+Downloading msys2-libreadline-8.3.003-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libreadline-8.3.003-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libreadline-8.3.003-1-x86_64.pkg.tar.zst
+Downloading msys2-mpfr-4.2.2-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/mpfr-4.2.2-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-mpfr-4.2.2-1-x86_64.pkg.tar.zst
+Downloading msys2-libpcre-8.45-5-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libpcre-8.45-5-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libpcre-8.45-5-x86_64.pkg.tar.zst
+Downloading msys2-perl-5.40.3-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/perl-5.40.3-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-perl-5.40.3-1-x86_64.pkg.tar.zst
+Downloading msys2-ncurses-6.5.20240831-2-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/ncurses-6.5.20240831-2-x86_64.pkg.tar.zst
+Successfully downloaded msys2-ncurses-6.5.20240831-2-x86_64.pkg.tar.zst
+Downloading msys2-libxcrypt-4.5.2-1-x86_64.pkg.tar.zst, trying https://mirror.msys2.org/msys/x86_64/libxcrypt-4.5.2-1-x86_64.pkg.tar.zst
+Successfully downloaded msys2-libxcrypt-4.5.2-1-x86_64.pkg.tar.zst
+-- Applying patch C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/scripts/cmake/compile_wrapper_consider_clang-cl.patch
+-- Using msys root at C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/msys2/0fcfdbb60b602f3c
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Building Options: --toolchain=msvc --enable-pic --disable-doc --enable-debug --enable-runtime-cpudetect --disable-autodetect --target-os=win32 --enable-w32threads --enable-d3d11va --enable-d3d12va --enable-dxva2 --enable-mediafoundation --disable-inline-asm --cc=cl.exe --host_cc=cl.exe --cxx=cl.exe --windres=rc.exe --ld=link.exe --ar='ar-lib lib.exe' --ranlib=: --disable-ffmpeg --disable-ffplay --disable-ffprobe --enable-avcodec --disable-avdevice --enable-avformat --disable-avfilter --disable-postproc --enable-swresample --enable-swscale --disable-alsa --disable-amf --disable-libaom --disable-libass --disable-avisynth --disable-bzlib --disable-libdav1d --disable-libfdk-aac --disable-libfontconfig --disable-libharfbuzz --disable-libfreetype --disable-libfribidi --disable-iconv --disable-libilbc --disable-lzma --disable-libmp3lame --disable-libmodplug --disable-cuda --disable-nvenc --disable-nvdec  --disable-cuvid --disable-ffnvcodec --disable-opencl --disable-opengl --disable-libopenh264 --disable-libopenjpeg --disable-libopenmpt --disable-openssl --enable-schannel --disable-libopus --disable-sdl2 --disable-libsnappy --disable-libsoxr --disable-libspeex --disable-libssh --disable-libtensorflow --disable-libtesseract --disable-libtheora --disable-libvorbis --disable-libvpx --disable-vulkan --disable-libwebp --disable-libx264 --disable-libx265 --disable-libxml2 --disable-zlib --disable-libsrt --disable-libmfx --disable-vaapi --disable-libzmq --disable-librubberband --enable-cross-compile --extra-cflags=-DHAVE_UNISTD_H=0 --pkg-config="C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/msys2/3e71d1f8e22ab23f/mingw64/bin/pkg-config.exe" --pkg-config-flags=--static
+-- Building Release Options: --enable-optimizations --extra-ldflags=-libpath:"C:/Work/HikariF48/installed/x64-hikari-windows-release/lib"
+-- Building ffmpeg for Release
+-- Fixing pkgconfig file: C:/Work/HikariF48/p/ffmpeg_x64-hikari-windows-release/lib/pkgconfig/libavcodec.pc
+-- Fixing pkgconfig file: C:/Work/HikariF48/p/ffmpeg_x64-hikari-windows-release/lib/pkgconfig/libavformat.pc
+-- Fixing pkgconfig file: C:/Work/HikariF48/p/ffmpeg_x64-hikari-windows-release/lib/pkgconfig/libavutil.pc
+-- Fixing pkgconfig file: C:/Work/HikariF48/p/ffmpeg_x64-hikari-windows-release/lib/pkgconfig/libswresample.pc
+-- Fixing pkgconfig file: C:/Work/HikariF48/p/ffmpeg_x64-hikari-windows-release/lib/pkgconfig/libswscale.pc
+-- Dependencies (release): secur32;ws2_32;mfuuid;strmiids;ole32;user32;bcrypt
+-- Dependencies (debug):   
+-- Installing: C:/Work/HikariF48/p/ffmpeg_x64-hikari-windows-release/share/ffmpeg/usage
+-- Installing: C:/Work/HikariF48/p/ffmpeg_x64-hikari-windows-release/share/ffmpeg/copyright
+-- Performing post-build validation
+Elapsed time to handle ffmpeg:x64-hikari-windows-release: 12 min
+Installing 7/9 vcpkg-cmake-config:x64-windows@2026-07-21...
+vcpkg-cmake-config:x64-windows@2026-07-21 package ABI: 1ce3ec39d11f02e363402d580af4ae621036decb38e72036c4d51a492d8711de
+Building vcpkg-cmake-config:x64-windows@2026-07-21...
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake-config_x64-windows/share/vcpkg-cmake-config/vcpkg_cmake_config_fixup.cmake
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake-config_x64-windows/share/vcpkg-cmake-config/vcpkg-port-config.cmake
+-- Installing: C:/Work/HikariF48/p/vcpkg-cmake-config_x64-windows/share/vcpkg-cmake-config/copyright
+-- Skipping post-build validation due to VCPKG_POLICY_EMPTY_PACKAGE
+Elapsed time to handle vcpkg-cmake-config:x64-windows: 101 ms
+Installing 8/9 zlib:x64-hikari-windows-release@1.3.2#2...
+zlib:x64-hikari-windows-release@1.3.2#2 package ABI: 2687e0029973f020f2e574a5daaf82f1b15b8f36b1433af184d9c744a2896c57
+Building zlib:x64-hikari-windows-release@1.3.2#2...
+C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\triplets\x64-hikari-windows-release.cmake: info: loaded overlay triplet from here
+Downloading https://github.com/madler/zlib/archive/v1.3.2.tar.gz -> madler-zlib-v1.3.2.tar.gz
+Successfully downloaded madler-zlib-v1.3.2.tar.gz
+-- Extracting source C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/madler-zlib-v1.3.2.tar.gz
+-- Applying patch 0001-no-version-script-on-ohos.patch
+-- Using source at C:/Work/HikariF48/b/zlib/src/v1.3.2-c19a0bfd23.clean
+-- Configuring x64-hikari-windows-release
+-- Building x64-hikari-windows-release-rel
+-- Fixing pkgconfig file: C:/Work/HikariF48/p/zlib_x64-hikari-windows-release/lib/pkgconfig/zlib.pc
+-- Using cached msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst
+-- Using cached msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst
+-- Using msys root at C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/msys2/3e71d1f8e22ab23f
+-- Installing: C:/Work/HikariF48/p/zlib_x64-hikari-windows-release/share/zlib/vcpkg-cmake-wrapper.cmake
+-- Installing: C:/Work/HikariF48/p/zlib_x64-hikari-windows-release/share/zlib/copyright
+-- Performing post-build validation
+Elapsed time to handle zlib:x64-hikari-windows-release: 6.5 s
+Installing 9/9 hikari-ffms2:x64-hikari-windows-release@5.1.0-hikari-45d5f721...
+hikari-ffms2:x64-hikari-windows-release@5.1.0-hikari-45d5f721 package ABI: ac22b1e4da7a09c9d8beb029d0c1f26d842783968957949b66aafb623b90c192
+Building hikari-ffms2:x64-hikari-windows-release@5.1.0-hikari-45d5f721...
+C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\triplets\x64-hikari-windows-release.cmake: info: loaded overlay triplet from here
+C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/ports\hikari-ffms2: info: installing overlay port from here
+-- Fetching https://github.com/altqx/ffms2.git 45d5f72100d88c52acdd54bfedcc0315a44c735d...
+-- Extracting source C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/hikari-ffms2-45d5f72100d88c52acdd54bfedcc0315a44c735d.tar.gz
+-- Using source at C:/Work/HikariF48/b/hikari-ffms2/src/15a44c735d-564a801070.clean
+Downloading https://raw.githubusercontent.com/altqx/hikari/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/Thirdparty/Build/FFMS2/indexing_additional.cpp -> hikari-indexing_additional-20d647c4.cpp
+Successfully downloaded hikari-indexing_additional-20d647c4.cpp
+-- Configuring x64-hikari-windows-release
+CMake Error at scripts/cmake/vcpkg_execute_required_process.cmake:127 (message):
+    Command failed: "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe" -v
+    Working Directory: C:/Work/HikariF48/b/hikari-ffms2/x64-hikari-windows-release-rel/vcpkg-parallel-configure
+    Error code: 1
+    See logs for more information:
+      C:\Work\HikariF48\b\hikari-ffms2\config-x64-hikari-windows-release-rel-CMakeCache.txt.log
+      C:\Work\HikariF48\b\hikari-ffms2\config-x64-hikari-windows-release-rel-CMakeConfigureLog.yaml.log
+      C:\Work\HikariF48\b\hikari-ffms2\config-x64-hikari-windows-release-out.log
+
+Call Stack (most recent call first):
+  C:/Work/HikariF48/installed/x64-windows/share/vcpkg-cmake/vcpkg_cmake_configure.cmake:271 (vcpkg_execute_required_process)
+  C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/ports/hikari-ffms2/portfile.cmake:13 (vcpkg_cmake_configure)
+  scripts/ports.cmake:209 (include)
+
+
+error: building hikari-ffms2:x64-hikari-windows-release failed with: BUILD_FAILED
+See https://learn.microsoft.com/vcpkg/troubleshoot/build-failures?WT.mc_id=vcpkg_inproduct_cli for more information.
+Elapsed time to handle hikari-ffms2:x64-hikari-windows-release: 4.3 s
+Please ensure you're using the latest port files with `git pull` and `vcpkg update`.
+Then check for known issues at:
+  https://github.com/microsoft/vcpkg/issues?q=is%3Aissue+is%3Aopen+in%3Atitle+hikari-ffms2
+You can submit a new issue at:
+  https://github.com/microsoft/vcpkg/issues/new?title=%5Bhikari-ffms2%5D%20build%20error%20on%20x64-hikari-windows-release&body=Copy%20issue%20body%20from%20C%3A%2FWork%2FHikariF48%2Finstalled%2Fvcpkg%2Fissue_body.md
+You can also submit an issue by running (GitHub CLI must be installed):
+  "C:\Program Files\GitHub CLI\gh.exe" issue create -R microsoft/vcpkg --title "[hikari-ffms2] Build failure on x64-hikari-windows-release" --body-file C:/Work/HikariF48/installed/vcpkg/issue_body.md
+-- Running vcpkg install - failed
+-- Configuring incomplete, errors occurred!

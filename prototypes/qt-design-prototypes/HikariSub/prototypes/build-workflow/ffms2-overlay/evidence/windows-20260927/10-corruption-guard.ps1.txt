@@ -1,0 +1,24 @@
+. (Join-Path $PSScriptRoot 'environment.ps1')
+$shortRoot='C:/Work/HikariF48'
+if(-not (Test-Path -LiteralPath (Join-Path $shortRoot 'OWNED-FFMS2-PROTOTYPE.txt'))) { throw 'Owned short root marker absent' }
+$source=Join-Path $shortRoot 'guard-corrupt-source-final'
+if(Test-Path -LiteralPath $source) { throw 'Use a fresh corruption specimen' }
+New-Item -ItemType Directory -Path $source | Out-Null
+$original=Join-Path $shortRoot 'b/hikari-ffms2/src/15a44c735d-564a801070.clean'
+$lock=Get-Content -Raw -LiteralPath (Join-Path $ownedRoot 'ports/hikari-ffms2/source-sha256.json') | ConvertFrom-Json -AsHashtable
+foreach($file in $lock.Keys) {
+    $dest=Join-Path $source $file
+    New-Item -ItemType Directory -Path (Split-Path -Parent $dest) -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $original $file) -Destination $dest
+}
+$bad=Join-Path $source 'COPYING'
+[IO.File]::WriteAllText($bad,([IO.File]::ReadAllText($bad).Replace("`r`n","`n").Replace("`n","`r`n")),[Text.UTF8Encoding]::new($false))
+[IO.File]::AppendAllText($bad,'PROTOTYPE_CORRUPTION',[Text.UTF8Encoding]::new($false))
+$before=(Get-FileHash -Algorithm SHA256 -LiteralPath $bad).Hash
+$cmake=Join-Path $env:VCPKG_DOWNLOADS 'tools/cmake-4.4.3-windows/cmake-4.4.3-windows-x86_64/bin/cmake.exe'
+& $cmake -S (Join-Path $ownedRoot 'ports/hikari-ffms2') -B (Join-Path $shortRoot 'guard-corrupt-build-final') -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=OFF -DVCPKG_TARGET_TRIPLET=x64-hikari-windows-release "-DVCPKG_OVERLAY_TRIPLETS=$ownedRoot/triplets" "-DVCPKG_INSTALLED_DIR=$shortRoot/installed" "-DFFMS2_SOURCE_DIR=$source" "-DFFMS2_ADDITIONAL_SOURCE=$env:VCPKG_DOWNLOADS/hikari-indexing_additional-20d647c4.cpp" *> (Join-Path $PSScriptRoot 'guard-corrupt-configure.log')
+$code=$LASTEXITCODE
+$diagnostic=Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'guard-corrupt-configure.log')
+$after=(Get-FileHash -Algorithm SHA256 -LiteralPath $bad).Hash
+if($code -eq 0 -or -not $diagnostic.Contains('Pinned fork source bytes changed: COPYING') -or $before -ne $after) { throw 'Corrupt specimen was not rejected by the intended guard without rewriting' }
+[ordered]@{nonLineEndingCorruptionRejected=$true;configureExitCode=$code;diagnostic='Pinned fork source bytes changed: COPYING';corruptInputHashBefore=$before;corruptInputHashAfter=$after;inputPreserved=$true} | ConvertTo-Json | Tee-Object -LiteralPath (Join-Path $ownedRoot 'evidence/windows-20260927/corruption-guard.json')

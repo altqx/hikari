@@ -1,0 +1,144 @@
+//  Copyright (c) 2020 - 2026, Marcin Drob
+//  Copyright (c) 2026, altqx
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+#include "SubtitlesProvider.h"
+#include "config.h"
+
+
+std::vector< SubtitlesProviderManager*> SubtitlesProviderManager::gs_Base;
+
+SubtitlesProviderManager::~SubtitlesProviderManager()
+{
+	SAFE_DELETE(SP);
+}
+
+SubtitlesProvider *SubtitlesProviderManager::GetProvider()
+{
+	if (!SP){
+		wxString provider = Options.GetString(VSFILTER_INSTANCE);
+#ifndef _WIN32
+		// Default to libass on wxGTK when no provider is configured.
+		if (provider.empty())
+			provider = L"libass";
+#endif
+		if (provider == L"libass")
+			SP = new SubtitlesLibass();
+		else
+			SP = new SubtitlesVSFilter();
+
+	}
+	return SP;
+}
+
+void SubtitlesProviderManager::GetProviders(wxArrayString *providerList)
+{
+	SubtitlesVSFilter::GetProviders(providerList);
+	providerList->Add(L"libass");
+}
+
+void SubtitlesProviderManager::DestroyProviders()
+{
+	for (auto *spm : gs_Base) {
+		SAFE_DELETE(spm->SP)
+	}
+}
+
+
+void SubtitlesProviderManager::DestroySubsProvider()
+{
+	SubtitlesProvider::DestroySubtitlesProvider();
+	//if there is some providers I may destroy it here
+	for (auto *spm : gs_Base) {
+		SAFE_DELETE(spm)
+	}
+	gs_Base.clear();
+}
+
+SubtitlesProviderManager *SubtitlesProviderManager::Get()
+{
+	auto * spm = new SubtitlesProviderManager();
+	gs_Base.push_back(spm);
+	return spm;
+}
+
+void SubtitlesProviderManager::Release()
+{
+
+	for (size_t i = 0; i < gs_Base.size(); i++) {
+		auto *spm = gs_Base[i];
+		if (spm == this) {
+			delete spm;
+			gs_Base.erase(gs_Base.begin() + i);
+			return;
+		}
+	}
+	//if it goes here it means that some alocation was outside base = memory leaks
+	return;
+}
+
+void SubtitlesProviderManager::Draw(unsigned char* buffer, int time)
+{
+	GetProvider()->Draw(buffer, time);
+}
+
+bool SubtitlesProviderManager::DrawOverlay(unsigned char* overlay, int time, wxRect* dirty)
+{
+	return GetProvider()->DrawOverlay(overlay, time, dirty);
+}
+
+bool SubtitlesProviderManager::Open(int flag, wxString *text)
+{
+	bool result = GetProvider()->Open(text);
+	m_ShowsWholeSubtitles = result && flag == OPEN_WHOLE_SUBTITLES;
+	return result;
+}
+//for styles preview
+bool SubtitlesProviderManager::OpenString(wxString *text)
+{
+	return GetProvider()->OpenString(text);
+}
+
+void SubtitlesProviderManager::SetVideoParameters(const wxSize& size, unsigned char format, bool isSwapped)
+{
+	GetProvider()->SetVideoParameters(size, format, isSwapped);
+}
+
+bool SubtitlesProviderManager::IsLibass()
+{
+	return GetProvider()->IsLibass();
+}
+
+bool SubtitlesProviderManager::CanPrepare()
+{
+	return GetProvider()->CanPrepare();
+}
+
+void SubtitlesProviderManager::Prepare(wxString *text)
+{
+	GetProvider()->Prepare(text);
+}
+
+bool SubtitlesProviderManager::ReloadLibraries()
+{
+	wxString provider = Options.GetString(VSFILTER_INSTANCE);
+	if (provider == L"libass") {
+		if (gs_Base.size() > 0) {
+			gs_Base[0]->GetProvider()->ReloadLibraries(true);
+		}
+		return true;
+	}
+	return false;
+}

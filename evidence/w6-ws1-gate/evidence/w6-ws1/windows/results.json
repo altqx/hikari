@@ -1,0 +1,42 @@
+{
+ "submenu-right-arrow": {
+  "status": "observed",
+  "detail": "Right on View > Panels opens its submenu and Right on Audio opens the panel's: View > Panels > Audio > Float with Right and Return floated it",
+  "evidence": [],
+  "at": "2026-10-19T15:46:57"
+ },
+ "tab-new-copies-arrangement": {
+  "status": "observed",
+  "detail": "Ctrl+T: the new tab shows the first tab's arrangement, Audio floating",
+  "evidence": [
+   "tabs-0-first-tab.png",
+   "tabs-0-first-tab.txt",
+   "tabs-1-new-tab.png",
+   "tabs-1-new-tab.txt"
+  ],
+  "at": "2026-10-19T15:48:15"
+ },
+ "tab-switch-floating": {
+  "status": "observed",
+  "detail": "tabs differ (True); Ctrl+PgUp back to the first tab: same windows, rectangles and floating windows True; Ctrl+PgDn to the second: True",
+  "evidence": [
+   "tabs-0-first-tab.png",
+   "tabs-0-first-tab.txt",
+   "tabs-2-second-tab-own.png",
+   "tabs-2-second-tab-own.txt",
+   "tabs-3-first-tab-again.png",
+   "tabs-3-first-tab-again.txt",
+   "tabs-4-second-tab-again.png",
+   "tabs-4-second-tab-again.txt"
+  ],
+  "at": "2026-10-19T15:48:15"
+ },
+ "test-executables": {
+  "status": "observed",
+  "detail": "exits [('hikari_ui_shell_tests', '0'), ('hikari_ui_line_grid_a11y_tests', '0'), ('hikari_ui_docking_qualification_tests', '0'), ('hikari_ui_workspace_layout_tests', '0'), ('hikari_ui_view_arrangements_tests', '0'), ('hikari_ui_tab_layouts_tests', '0')]; Totals: 16 passed, 0 failed, 0 skipped; Totals: 11 passed, 0 failed, 0 skipped; Totals: 25 passed, 0 failed, 7 skipped; Totals: 13 passed, 0 failed, 0 skipped; Totals: 13 passed, 0 failed, 1 skipped; Totals: 16 passed, 0 failed, 0 skipped; skips: [\"SKIP   : DockingQualification::floatingPanelKeepsItsSizeAcrossAScaleChange() the screen's scale changes through the offscreen platform's configuration\", \"SKIP   : DockingQualification::floatingPanelComesBackWholeWhenItsScreenGoesAway() screens come and go through the offscreen platform's configuration\", 'SKIP   : DockingQualification::dragShowsTheDropHighlight() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)', 'SKIP   : DockingQualification::wholeFloatingHeaderDocksWhereItDoesNotSplit() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)', 'SKIP   : DockingQualification::floatingHeaderDocksByItsTitleAndMovesByTheRest() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)', 'SKIP   : DockingQualification::floatingTabBarMovesRightOfItsTabs() the window follows a declined system move only where the platform declines it (offscreen)', 'SKIP   : DockingQualification::x11HeaderMovesThroughTheWindowSystem() X11 only (the .xvfb run)', 'SKIP   : ViewArrangementsTest::surfaceScreenshots() HIKARI_SURFACE_SHOT_DIR is not set']",
+  "evidence": [
+   "test-executables.txt"
+  ],
+  "at": "2026-10-19T15:53:57"
+ }
+}

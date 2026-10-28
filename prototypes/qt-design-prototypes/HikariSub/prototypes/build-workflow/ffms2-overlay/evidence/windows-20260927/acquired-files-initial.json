@@ -1,0 +1,228 @@
+{
+  "status": "Snapshot during build, not final closure. Includes retained generated extraction file7z2603-x64.7z; excludes Git transfer and extracted tools.",
+  "ffmpeg_source_digest_matches_lock": true,
+  "files": [
+    {
+      "file": "7z2603-x64.7z",
+      "retained_bytes": 1615671,
+      "sha256": "e45b1aeef4d6c2a8dddf4c89551e593573adc939062fae537d953c5916ce3d5d",
+      "sha512": "02b22bfb9bad0567e61590815f25b444bc228f084d4b3b3a270b7bbf6a51946003a44b28cbd19dda6b686047b8f2979c828506abaa445bd96c8ca86654e914b7"
+    },
+    {
+      "file": "7z2603-x64.7z.exe",
+      "retained_bytes": 1661239,
+      "sha256": "0859c524b8a63551848f0c246abddcb1d0b7b656b0fbfe879f8d85e61a9e6edd",
+      "sha512": "50025bab628b69f8eb35a590900093814e540ce7ffef8c676a1198e2d2a3f1dcdc44f04f92c28ca89bf6ee869fad3710786e14073c7db36281e8f7a4c495ea7f"
+    },
+    {
+      "file": "cmake-4.4.3-windows-x86_64.zip",
+      "retained_bytes": 54408599,
+      "sha256": "4d52ebab7193a698651639ed80d8d04fd903358843572cf44c7fd234cb7c26ab",
+      "sha512": "5f8527e18bffdf5113a64238442093468fce80c8a5f99e1b5eb217e0d73796eb7a2a236ee0c522de3424cb87a1abb3153fcecdb20d8d338c8a607667c9b37c90"
+    },
+    {
+      "file": "ffmpeg-ffmpeg-n7.1.2.tar.gz",
+      "retained_bytes": 15907335,
+      "sha256": "8cb1bb8cfa9aeae13279b4da42ae8307ae6777456d4270f2e603c95aa08ca8ef",
+      "sha512": "8411c45f71d2d61184b11e2a786137044a80d9b979a7e2e8513efc5e716b3360bff4533a13875dd4bca492b97b97f0384f7fb4f3d796802e81981b0857d18a2b"
+    },
+    {
+      "file": "meson-1.9.0.tar.gz",
+      "retained_bytes": 4925665,
+      "sha256": "12ca5979a3a625c8944e093c17c32c4c2bd03a48c8877354d88a7077860ef740",
+      "sha512": "ecd69b6734be14c467f7db67dd88c0e57ebfad83ce3ddada131ff3e43ac964523e1083d7c7f3803033a9a76adbc32ad26dd2e3aca69884269000ca64130bde07"
+    },
+    {
+      "file": "msys2-automake-wrapper-20250528-1-any.pkg.tar.zst",
+      "retained_bytes": 4462,
+      "sha256": "c82643326a35605b98e5b5da35aec846ca38d2b08f390ce13077ad1fa96e79e4",
+      "sha512": "d1c45179feb0b9b25002943f2a29f603c816e9e440ecc8d073733767bcd5b223bf6daad70f4a8aa513471d4967c71e1236724ba77279adc219963a3985dbdb97"
+    },
+    {
+      "file": "msys2-automake1.16-1.16.5-1-any.pkg.tar.zst",
+      "retained_bytes": 538941,
+      "sha256": "1963b5fa0ab5eaf1bdc311501cd742c6bb19941e831dcc8ab1e51a8c7f1634fe",
+      "sha512": "62c9dfe28d6f1d60310f49319723862d29fc1a49f7be82513a4bf1e2187ecd4023086faf9914ddb6701c7c1e066ac852c0209db2c058f3865910035372a4840a"
+    },
+    {
+      "file": "msys2-automake1.17-1.17-1-any.pkg.tar.zst",
+      "retained_bytes": 547861,
+      "sha256": "bb069dbb6f580c2346d2f6d74268b5e12e625f7ba57299426f9cd6c0fa714191",
+      "sha512": "cb935efc2e303e6f88eee3ab12ca1311c32d3c92e73e04b00b6b9269ce512649efa09af03d22a733f9cc4ebbb99fc64d8dcc123bf68fb914a20bf3cc651375f5"
+    },
+    {
+      "file": "msys2-automake1.18-1.18.1-1-any.pkg.tar.zst",
+      "retained_bytes": 556123,
+      "sha256": "c045d9eddf900dbacae06d9e0e19e250cc32d849def7d06b833253f85e3fc941",
+      "sha512": "d994eb278c5f341d6fe4b89a9034d486b2eaa880c0bd84160862352f964786d7d2220d91549515f02c2d01b5a978be7e8e1551ed2e89ddd449cfbcf05f6354e5"
+    },
+    {
+      "file": "msys2-bash-5.3.009-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 2583004,
+      "sha256": "e193b6e35c4b5397d3603960e4fa4600f2e0bce75ec8c090319e3b59f05d594a",
+      "sha512": "b142bab3f4ae6b17a397c80186eab2e564be75dbc6a16f8b4d010e2be7d0e99a8053518a7b050a34c7914b4d2eae731c8ca41fd9061ef4f825540db063fe5c6c"
+    },
+    {
+      "file": "msys2-coreutils-8.32-5-x86_64.pkg.tar.zst",
+      "retained_bytes": 2755209,
+      "sha256": "62dfee1c39fd15f99c39802b35e82643bc14fffc16d6c76d4001caa385ec77e3",
+      "sha512": "63f99348e654440458f26e9f52ae3289759a5a03428cf2fcf5ac7b47fdf7bf7f51d08e3346f074a21102bee6fa0aeaf88b8ebeba1e1f02a45c8f98f69c8db59c"
+    },
+    {
+      "file": "msys2-diffutils-3.12-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 394515,
+      "sha256": "7902c8ce3d4dd69a0f5e98dc9d5c83c17b23314ba486169db57ef6e2835ce3b6",
+      "sha512": "9b486fa45e827392eda39cff268530b0f3bdc5cc80881b55ae610828f861e6a63b790f395976277085b469423264ade705e5a0ecdf7b22fc8c017fc3d90acc78"
+    },
+    {
+      "file": "msys2-file-5.46-2-x86_64.pkg.tar.zst",
+      "retained_bytes": 449148,
+      "sha256": "f1f81dad30fc927a3b7ad58b9b5a54e2b284bd6dc396e67746a5a3903ed339c2",
+      "sha512": "1225311082642b094991c7467ba88eaca3b16e680d736979b6b7f750468b05f5a410e88f7d211e2159e1e80b6aa84c882b26e68296a27f5ee9c3998b61f73fb5"
+    },
+    {
+      "file": "msys2-gawk-5.3.2-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 1465788,
+      "sha256": "5cc13c15f7be5b328c2b1f9d8a21d9e95b76d0782aeb469c2762f32f0e7e509e",
+      "sha512": "8d33ff3772fcfd666ebf2211b92942f9ee4af6cd80d4f69762cdac0afb8522aad85244a1701df80a9980c8dba58e7b70d757146945e28cb77e80160b27f2a49f"
+    },
+    {
+      "file": "msys2-gcc-libs-15.2.0-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 1081723,
+      "sha256": "d77e7228e596283cb5fbdcba67bbf9c3abd4bc3e21fc225a9752c0c8cdc8b91d",
+      "sha512": "1d7705870a3e65f4c485d9572f179b8ae1e9837c558ca1448ba1e94faa836ae0a87b19b8b53965f5c783267f2497926589b42112c9e3a9ef64aae21918d9dc63"
+    },
+    {
+      "file": "msys2-gmp-6.3.0-2-x86_64.pkg.tar.zst",
+      "retained_bytes": 396914,
+      "sha256": "f84536138e618d47a1df2da83916cfebbd449f159ffad52f994a71060a41cf34",
+      "sha512": "739ef6b80f98cac58020d559f407fdabf0f70a1fd8ced4d2473d67427a263ea87ded3efd6c38c221e0a80c7791991c940d7823364eee594ad40cd03694a6d36e"
+    },
+    {
+      "file": "msys2-grep-1~3.0-7-x86_64.pkg.tar.zst",
+      "retained_bytes": 249241,
+      "sha256": "2909b3bbef8d33d66980339fb7bd2d3d9145bae0f04191e6671df39868aea427",
+      "sha512": "8a5248d0aa7c8d9e57a810f0b03b76db31ebc3c64158886804fdc82095709d496fee433d3aa744484c6cdcb5877ebe95d03b15486cc7bdb13ba33cfbf71e4e14"
+    },
+    {
+      "file": "msys2-gzip-1.14-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 104389,
+      "sha256": "0816b19ef2dae3988d5e9150058dfdf83ed994b80ca6075a88b5618bbd9c0c25",
+      "sha512": "cc316915d1dc0090b5acb385ce392a3ac2c37e1df4f72198a976f9b0f7c4b42d15cf14229bc06c19c22ce39dca79389e426cff592437e05df77f453ecc6f42c5"
+    },
+    {
+      "file": "msys2-libbz2-1.0.8-4-x86_64.pkg.tar.zst",
+      "retained_bytes": 30786,
+      "sha256": "89fb0e1478b22b80effda55ab4ae7549388d01245d3841a096d8a2d63236c2a1",
+      "sha512": "5a7be6d04e55e6fb1dc0770a8c020ca24a317807c8c8a4813146cd5d559c12a6c61040797b062e441645bc2257b390e12dd6df42519e56278a1fe849fe76a1c4"
+    },
+    {
+      "file": "msys2-libiconv-1.18-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 726928,
+      "sha256": "9e298b072b86fa7f4ba4d8c00176b80fb5ab2c5eae2b9dc05e781ae4958efb77",
+      "sha512": "77979ed35af45aa5bb7fb6b07d649e8eafa69ebdc8e421c2a7bf69ee567f814b38623a12be0736fb56c17c0aeff69ba769bc52110f62f8e5fdc5bcf334d88d44"
+    },
+    {
+      "file": "msys2-libintl-0.22.5-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 50537,
+      "sha256": "336d66b9d95cf9c1804958f8e260762a3e83bf158ed5981f783bc772a31073cf",
+      "sha512": "1f1826763bcc252f15a0a5a27fbf596a2b5fad5e092bdff17af8231c373c0de17be7411938068aac0f0a617edbb32533de6619f6c58ebcdec7480c210673af45"
+    },
+    {
+      "file": "msys2-liblzma-5.8.2-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 90117,
+      "sha256": "cd1d3359623bf6673e41dd3bb8908266e0938d9200ee3d4236cc431b4fa0b572",
+      "sha512": "1a9353996e7da8b90ff6a95b4199953a0c72350f6e1b7133373161ce221640ae63260ebaf95278bb099432bd3e30b1138b3da98b6e5a1a4b9af1223e0cda8b54"
+    },
+    {
+      "file": "msys2-libpcre-8.45-5-x86_64.pkg.tar.zst",
+      "retained_bytes": 96135,
+      "sha256": "b4dc2eb7795cbacaa683101d720fa67f536262497a1d89934a58f5dab8d17d17",
+      "sha512": "3a0fffaf4d24bac07847220bac70b0e3f15645ea04171c5f4079966cbec01cee9138e36e5100b989af2dcce67660756c060fb3298c86fa120779c15d083231eb"
+    },
+    {
+      "file": "msys2-libreadline-8.3.003-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 388315,
+      "sha256": "f78e11a496010305fb80b6804518d5c1257794fc87bc8caaf8c4a65d7a983dec",
+      "sha512": "216c30e8307c0f72994d52955e4c00ef08f16d8bd9bd82db92c0294a81db05849202c670c62cd5060e871fdcc6d3cb34fbb51e9b0a9ea3a67c6104d384aeb5d3"
+    },
+    {
+      "file": "msys2-libxcrypt-4.5.2-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 87371,
+      "sha256": "e63db0aa2b708359e25f61f506e2d2c92c315febf5f88cc9f386e4ec0bdf4fa5",
+      "sha512": "98b775bc22fe120846b60353483f3ce8f9aacb33941392a49c96720e0217a76ee44cf867dcd61055d65933e0eae157af6d99bcd2221ab512de876030d76ccb9a"
+    },
+    {
+      "file": "msys2-libzstd-1.5.7-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 399681,
+      "sha256": "5e370b2e725a0a7e5ff58d84653c9a0cd5a10b9cfe930f2d949a28ad2a11c1f2",
+      "sha512": "02cf577567773f7f93f4df404d3b0a62d0cab4b2b63c76d572ef3af591e9fe6571b3d7e79e868ae5d7967b8f540941489a4004367c64113e1688f392827fc6cd"
+    },
+    {
+      "file": "msys2-make-4.4.1-2-x86_64.pkg.tar.zst",
+      "retained_bytes": 519783,
+      "sha256": "2408af61717dae87b00c855b132769a125c708907fc94a46bb16dae076113e5c",
+      "sha512": "b55caaf0d54b784b5dffcbb75a1862fc7359b91caa1e60234e208de03c74159fd003d68f5dddd387adef752bb13805e654f17ec5cb6add51546b9e30a1091b61"
+    },
+    {
+      "file": "msys2-mingw-w64-x86_64-pkgconf-1~2.5.1-1-any.pkg.tar.zst",
+      "retained_bytes": 102496,
+      "sha256": "9faee63c5288908333aeaed390fd9b78b2c4c5dfb6d8f452e54dea03938fc39a",
+      "sha512": "2e604ccb004e2afa151e870112c95cab7106e43ee3cdfe67ac8815f3ec6754ccbc25211732eec8ac9ffe491071c63c9af18c8fa2bbfd6521a1b467bb11b1da03"
+    },
+    {
+      "file": "msys2-mpfr-4.2.2-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 395839,
+      "sha256": "8f1b6c17c53e00494a488e03dfdf8fc742027ed03a5bd7b1b3a6a33f595a7498",
+      "sha512": "80fa09c637c4ff3943b20a5b74e945c7084e1f7d571d7124a5b45926533a24125a0027167f99eb9c1e9f96fc3d61344e23c0b4471815846d90367bcfb8f89eba"
+    },
+    {
+      "file": "msys2-msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 1987651,
+      "sha256": "16a1729511b553314bed8d9af6d52ae4489007c35a6b4752205869f321963d9d",
+      "sha512": "974dbe29e35b04a4a4f5ffbfed1327702c5eb34cfbfafd45e00df3553e66ca3a4a92cf8b69dbb42b8e3c2ef034281ea73888c03c271ad28ce12fee32ce1bbf3d"
+    },
+    {
+      "file": "msys2-ncurses-6.5.20240831-2-x86_64.pkg.tar.zst",
+      "retained_bytes": 1249697,
+      "sha256": "9f2db80641574caa58636d1bf3f4737f9b572f148a644dbb02a854b38e008dce",
+      "sha512": "ff84849e3857e31fd4f3acc48e8a9bc2fa6ff226f848636c206fb322e7c49de9677c24784575ad5d13620f31d6203739b0f7ab068081bef0d8ab873c4473ee4d"
+    },
+    {
+      "file": "msys2-perl-5.40.3-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 7389217,
+      "sha256": "48a87fd3d9a0c3c1b47bd8097f694233a90e0f53b71872458301c380f6dddb3b",
+      "sha512": "99128c78b10cefea1ebea3352e6305b31a22062d7d7a5f2ba31289a1c41621d2a14a31e21371b6e2459207a3d832cd4f94d40ab59adf5827a564060d529d0892"
+    },
+    {
+      "file": "msys2-pkgconf-2.5.1-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 76390,
+      "sha256": "38efd4928ac0cb06e9bd558baa533fc923c0592115bf9bd44970250f3ae2cb7e",
+      "sha512": "5af92108c94896a0bef549ef248909a30627259e25d845f08e028bd23ac1d10004868d2bf8bf35d6e27a363aa30d0a8b1bb312ac15fc8fc18207e2c92e37c2c1"
+    },
+    {
+      "file": "msys2-sed-4.9-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 249918,
+      "sha256": "3748af28f69e946ec5a42e6670c9bbf6da7352dc93baaa537f69e99c5483b9fc",
+      "sha512": "8006a83f0cc6417e3f23ffd15d0cbca2cd332f2d2690232a872ae59795ac63e8919eb361111b78f6f2675c843758cc4782d816ca472fe841f7be8a42c36e8237"
+    },
+    {
+      "file": "msys2-zlib-1.3.1-1-x86_64.pkg.tar.zst",
+      "retained_bytes": 50170,
+      "sha256": "8f027ac1b9404196a146efbf46ab12edf7fa20c7d9f6ca500d5cd275e492ef30",
+      "sha512": "a432b0f927d342b678df706487595eff1b780371548933f956adcf697eea11ddbca2863d9d9fb88675a7040dcfddab56f8f71a8ae4d0cd4969e715545c77e87c"
+    },
+    {
+      "file": "nasm-3.01-win64.zip",
+      "retained_bytes": 594502,
+      "sha256": "e0ba5157007abc7b1a65118a96657a961ddf55f7e3f632ee035366dfce039ca4",
+      "sha512": "771c238ddb17c98d5736ccaba4ade1d1601d896f09e588489cb43a4f6381bc0ae14d1869f5316fe94f847f54867e65cf12665529b1e7ad88e5e7d3e162719a4f"
+    },
+    {
+      "file": "pkgconf-pkgconf-pkgconf-3.0.3.tar.gz",
+      "retained_bytes": 252030,
+      "sha256": "90bb12369d296f2e0bea14832b421c4ba40d442e1519758e6e1e7855afab3149",
+      "sha512": "4e49bb7b10c6fdebfa1175b4c33138b8aeca2582e49adb5c7ba66d08e8614771ef060b0c2673bd098c1aed821c8ade1a6dd276c1f4ac6e29bd7efcb8f4c0402e"
+    }
+  ]
+}

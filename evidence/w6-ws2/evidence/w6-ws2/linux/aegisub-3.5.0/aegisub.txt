@@ -1,0 +1,9 @@
+Aegisub 3.5.0-3 (Arch package) on a private Xvfb (vx11), script aegisub-roundtrip.sh: each fixture copy opened (opened.png), the layer of line 1 raised with the + button (edited.png), saved with the toolbar's Save (saved.png), killed.
+plain.ass: opened with 1 window(s): plain.ass - Aegisub 3.5.0;
+plain-hikari.ass: opened with 1 window(s): plain-hikari.ass - Aegisub 3.5.0;
+fonts.ass: opened with 1 window(s): fonts.ass - Aegisub 3.5.0;
+fonts-hikari.ass: opened with 1 window(s): fonts-hikari.ass - Aegisub 3.5.0;
+plain.ass vs plain-hikari.ass saves: byte-identical
+fonts.ass vs fonts-hikari.ass saves: byte-identical
+[Hikari] / Layout= lines in any save: 0
+[Fonts] data of fonts-hikari.ass's save equals fonts.ass's input (Aegisub moves the section before [Events]): yes

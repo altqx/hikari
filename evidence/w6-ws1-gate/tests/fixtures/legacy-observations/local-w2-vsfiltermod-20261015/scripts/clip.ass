@@ -1,0 +1,15 @@
+﻿[Script Info]
+ScriptType: v4.00+
+PlayResX: 640
+PlayResY: 360
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an5\pos(320,120)\fs80\clip(250,90,390,140)}CLIPPED
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an5\pos(320,200)\fs80\iclip(250,170,390,220)}INVERSE
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an5\pos(320,290)\fs80\clip(m 220 250 l 420 250 320 330)}VECTOR
+Comment: 0,0:00:01.00,0:00:01.05,Default,,0,0,0,,w2 capture 1000 ms

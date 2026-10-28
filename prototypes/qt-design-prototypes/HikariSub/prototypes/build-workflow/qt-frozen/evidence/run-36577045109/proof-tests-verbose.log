@@ -1,0 +1,47 @@
+UpdateCTestConfiguration  from :/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/DartConfiguration.tcl
+Test project /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/proof
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: qtproof-selftest
+
+1: Test command: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/proof/proof/qtproof
+1: Working Directory: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/proof/proof
+1: Environment variables: 
+1:  QT_QPA_PLATFORM=offscreen
+1: Test timeout computed to be: 120
+1: qt.multimedia.symbolsresolver: Couldn't load pipewire-0.3 library
+1: qt.multimedia.symbolsresolver: Couldn't resolve pipewire-0.3 symbols
+1: qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+1: qt_runtime=6.11.2
+1: qt_prefix=/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64
+1: platform=offscreen
+1: media_decode_formats=11
+1: PASS selftest
+1/2 Test #1: qtproof-selftest .................   Passed    0.03 sec
+test 2
+    Start 2: qtproof-render-xvfb
+
+2: Test command: /usr/bin/xvfb-run "-a" "/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/proof/proof/qtproof" "--render"
+2: Working Directory: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/proof/proof
+2: Environment variables: 
+2:  QT_QPA_PLATFORM=xcb
+2: Test timeout computed to be: 120
+2: qt.multimedia.symbolsresolver: Couldn't load pipewire-0.3 library
+2: qt.multimedia.symbolsresolver: Couldn't resolve pipewire-0.3 symbols
+2: qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+2: qt_runtime=6.11.2
+2: qt_prefix=/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64
+2: platform=xcb
+2: media_decode_formats=11
+2: graphics_api=3 center=ffff00ff
+2: PASS render
+2/2 Test #2: qtproof-render-xvfb ..............   Passed    1.64 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   1.68 sec

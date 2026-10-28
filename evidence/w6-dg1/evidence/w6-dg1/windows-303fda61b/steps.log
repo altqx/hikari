@@ -1,0 +1,35 @@
+06:45:03 layout {"root": "C:\\Winix\\work\\hikari-qt", "scratch": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win", "app": "C:\\Winix\\work\\hikari-qt\\out\\build\\windows-x64-release\\hikarisub.exe", "qt_bin": "C:\\Winix\\work\\hikari-qt\\out\\sdk\\qt-6.11.2-windows\\6.11.2\\msvc2022_64\\bin", "qt_bin_exists": true, "docs": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\docs", "episode": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\docs\\episode.ass", "ep1_ass": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\docs\\ep1.ass", "fixture": "C:\\Winix\\work\\hikari-qt\\out\\build\\windows-x64-release\\tests\\backends\\media-fixtures\\cfr.mkv", "nvda_exe": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\nvda\\portable-2026.2\\nvda.exe", "nvda_config": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\nvda\\config", "nvda_dir": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\nvda", "profile": {"local": "C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub", "roaming": "C:\\Users\\winix\\AppData\\Roaming\\HikariSub\\HikariSub"}, "windows": "Microsoft Windows 11 Pro 10.0.26200 build 26200"}
+06:45:03 --- windows: dialogframe
+06:45:05 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234503-718\local
+06:45:05 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234503-718\roaming
+06:45:07 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"auto","theme":"dark"}
+06:45:09 launched {'pid': 19312, 'profile': None, 'log': 'C:\\Winix\\launch\\19312.log'}
+06:45:38 == dialog-frame-window: observed - About (250, 242, 460, 275) beside the main window (0, 0, 960, 720): its own buttons {'Close': True, 'Minimise': False, 'Maximise': False} (Close only on a fixed-size dialog), Close 0 px below the window's top (no caption of Windows' above the bar); window style 0x96c80000 (WS_CAPTION and WS_SYSMENU kept, no WS_MINIMIZEBOX, WS_MAXIMIZEBOX or WS_THICKFRAME: True)
+06:45:38 == dialog-frame-centred: observed - About's centre off the main window's centre + (0, 20) by (0, 1)
+06:45:43 == dialog-frame-system-menu: observed - Windows' system menu from a right click on the title bar: ['Restore', 'Move', 'Size', 'Minimize', 'Maximize', 'Close'], enabled ['Close', 'Move'] (Move and Close; Restore, Size, Minimize and Maximize greyed on a fixed-size dialog)
+06:45:49 == dialog-frame-no-maximise: observed - Win+Up on About: (250, 242, 460, 275) -> (250, 242, 460, 275) (its size kept)
+06:46:09 == dialog-frame-move-remembered: observed - title bar dragged by (-60,+40): (250, 242, 460, 275) -> (190, 282, 460, 275); Esc closed it: True; opened again at (190, 282, 460, 275)
+06:46:21 == dialog-frame-modeless: observed - About and Credits open at once: True (Credits (210, 128, 540, 503))
+06:46:29 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234627-445\local
+06:46:29 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234627-445\roaming
+06:46:30 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"system","theme":"dark"}
+06:46:31 launched {'pid': 112604, 'profile': None, 'log': 'C:\\Winix\\launch\\112604.log'}
+06:46:55 == dialog-frame-system: observed - About with the system's title bar: Windows' caption buttons ['Close'], HikariSub's drawn buttons []
+06:46:57 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234656-274\local
+06:46:57 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234656-274\roaming
+06:46:59 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"custom","theme":"light"}
+06:46:59 launched {'pid': 106672, 'profile': None, 'log': 'C:\\Winix\\launch\\106672.log'}
+06:47:26 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234724-884\local
+06:47:26 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234724-884\roaming
+06:47:28 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"custom","theme":"dark"}
+06:47:28 launched {'pid': 118652, 'profile': None, 'log': 'C:\\Winix\\launch\\118652.log'}
+06:47:57 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234756-159\local
+06:47:57 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234756-159\roaming
+06:47:59 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"custom","theme":"highContrastWhite"}
+06:47:59 launched {'pid': 53004, 'profile': None, 'log': 'C:\\Winix\\launch\\53004.log'}
+06:48:28 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234826-560\local
+06:48:28 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234826-560\roaming
+06:48:30 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"custom","theme":"highContrastBlack"}
+06:48:30 launched {'pid': 68648, 'profile': None, 'log': 'C:\\Winix\\launch\\68648.log'}
+06:48:53 == dialog-frame-themes: observed - About's title bar in each theme's panel colour
+06:48:56 profile: set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234854-852\local | set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234854-852\roaming | restored C:\Users\winix\AppData\Local\HikariSub\HikariSub from C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234503-718\local | restored C:\Users\winix\AppData\Roaming\HikariSub\HikariSub from C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261020-234503-718\roaming

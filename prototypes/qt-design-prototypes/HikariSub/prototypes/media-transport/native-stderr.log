@@ -1,0 +1,110 @@
+Input #0, matroska,webm, from 'C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/media-handoff/_run/20260926T223838Z/cfr.mkv':
+  Metadata:
+    title           : Hikari synthetic handoff fixture
+    ENCODER         : Lavf61.7.100
+  Duration: 00:00:05.00, start: 0.000000, bitrate: 1682 kb/s
+  Chapters:
+    Chapter #0:0: start 0.000000, end 2.000000
+      Metadata:
+        title           : Departure
+    Chapter #0:1: start 2.000000, end 4.000000
+      Metadata:
+        title           : Arrival
+  Stream #0:0: Video: h264 (High), yuv420p(tv, bt709/unknown/unknown, progressive), 320x180 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 1k tbn
+      Metadata:
+        ENCODER         : Lavc61.19.101 libx264
+        DURATION        : 00:00:04.000000000
+  Stream #0:1(eng): Audio: pcm_s16le, 48000 Hz, 1 channels, s16, 768 kb/s (default)
+      Metadata:
+        title           : Original 440 Hz
+        ENCODER         : Lavc61.19.101 pcm_s16le
+        DURATION        : 00:00:05.000000000
+  Stream #0:2(jpn): Audio: pcm_s16le, 48000 Hz, 1 channels, s16, 768 kb/s
+      Metadata:
+        title           : Original 660 Hz
+        ENCODER         : Lavc61.19.101 pcm_s16le
+        DURATION        : 00:00:05.000000000
+  Stream #0:3(eng): Subtitle: ass (ssa) (default)
+      Metadata:
+        title           : Original vector ASS
+        ENCODER         : Lavc61.19.101 ass
+        DURATION        : 00:00:03.000000000
+  Stream #0:4(jpn): Subtitle: subrip (srt)
+      Metadata:
+        title           : Original SRT
+        ENCODER         : Lavc61.19.101 srt
+        DURATION        : 00:00:03.000000000
+[h264_mf @ 0000019610356440] MFT name: 'H264 Encoder MFT'
+[hevc_mf @ 0000019610356440] MFT name: 'HEVCVideoExtensionEncoder'
+Input #0, matroska,webm, from 'C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/media-handoff/_run/20260926T223838Z/cfr.mkv':
+  Metadata:
+    title           : Hikari synthetic handoff fixture
+    ENCODER         : Lavf61.7.100
+  Duration: 00:00:05.00, start: 0.000000, bitrate: 1682 kb/s
+  Chapters:
+    Chapter #0:0: start 0.000000, end 2.000000
+      Metadata:
+        title           : Departure
+    Chapter #0:1: start 2.000000, end 4.000000
+      Metadata:
+        title           : Arrival
+  Stream #0:0: Video: h264 (High), yuv420p(tv, bt709/unknown/unknown, progressive), 320x180 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 1k tbn
+      Metadata:
+        ENCODER         : Lavc61.19.101 libx264
+        DURATION        : 00:00:04.000000000
+  Stream #0:1(eng): Audio: pcm_s16le, 48000 Hz, 1 channels, s16, 768 kb/s (default)
+      Metadata:
+        title           : Original 440 Hz
+        ENCODER         : Lavc61.19.101 pcm_s16le
+        DURATION        : 00:00:05.000000000
+  Stream #0:2(jpn): Audio: pcm_s16le, 48000 Hz, 1 channels, s16, 768 kb/s
+      Metadata:
+        title           : Original 660 Hz
+        ENCODER         : Lavc61.19.101 pcm_s16le
+        DURATION        : 00:00:05.000000000
+  Stream #0:3(eng): Subtitle: ass (ssa) (default)
+      Metadata:
+        title           : Original vector ASS
+        ENCODER         : Lavc61.19.101 ass
+        DURATION        : 00:00:03.000000000
+  Stream #0:4(jpn): Subtitle: subrip (srt)
+      Metadata:
+        title           : Original SRT
+        ENCODER         : Lavc61.19.101 srt
+        DURATION        : 00:00:03.000000000
+Input #0, matroska,webm, from 'C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/media-handoff/_run/20260926T223838Z/vfr.mkv':
+  Metadata:
+    title           : Hikari synthetic handoff fixture
+    ENCODER         : Lavf61.7.100
+  Duration: 00:00:05.00, start: 0.000000, bitrate: 1687 kb/s
+  Chapters:
+    Chapter #0:0: start 0.000000, end 2.000000
+      Metadata:
+        title           : Departure
+    Chapter #0:1: start 2.000000, end 4.000000
+      Metadata:
+        title           : Arrival
+  Stream #0:0: Video: h264 (High), yuv420p(tv, bt709/unknown/unknown, progressive), 320x180 [SAR 1:1 DAR 16:9], 50 tbr, 1k tbn
+      Metadata:
+        ENCODER         : Lavc61.19.101 libx264
+        DURATION        : 00:00:04.620000000
+  Stream #0:1(eng): Audio: pcm_s16le, 48000 Hz, 1 channels, s16, 768 kb/s (default)
+      Metadata:
+        title           : Original 440 Hz
+        ENCODER         : Lavc61.19.101 pcm_s16le
+        DURATION        : 00:00:05.000000000
+  Stream #0:2(jpn): Audio: pcm_s16le, 48000 Hz, 1 channels, s16, 768 kb/s
+      Metadata:
+        title           : Original 660 Hz
+        ENCODER         : Lavc61.19.101 pcm_s16le
+        DURATION        : 00:00:05.000000000
+  Stream #0:3(eng): Subtitle: ass (ssa) (default)
+      Metadata:
+        title           : Original vector ASS
+        ENCODER         : Lavc61.19.101 ass
+        DURATION        : 00:00:03.000000000
+  Stream #0:4(jpn): Subtitle: subrip (srt)
+      Metadata:
+        title           : Original SRT
+        ENCODER         : Lavc61.19.101 srt
+        DURATION        : 00:00:03.000000000

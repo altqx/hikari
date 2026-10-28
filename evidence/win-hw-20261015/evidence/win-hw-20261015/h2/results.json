@@ -1,0 +1,184 @@
+{
+  "card": "H2 #125",
+  "date": "2026-10-15",
+  "host": "RUBY (Windows 11 Pro 26H2 build 26300.9457)",
+  "build": "hikarisub-qt-windows-payload, run 38686574527, evidence head 3e2b145d3; HikariSub.exe sha256 d3276860dc8108a3439b43baa0685f201a5802fb888ae5ff3760e81744c84a00",
+  "path": "in-app Line audition (A4) through the PortAudio editor output (WASAPI, then DirectSound, then WASAPI) for part A; Qt Multimedia general playback for part B; hikari_h2_audition was not built",
+  "fixture": "make_fixture.py at 3e2b145d3, peak -24 dBFS (levels.json); hashes in env/fixture-sha256.txt",
+  "volume": "default output 22E1W at 23 %, unmuted, before the first sound",
+  "outputs": [
+    "Speakers (Razer BlackShark V2 X USB), USB headset",
+    "22E1W (NVIDIA High Definition Audio), HDMI to the AOC 22E1W monitor"
+  ],
+  "listener": "the owner (altqx)",
+  "steps": [
+    {
+      "step": "A2",
+      "action": "Play the current line (Line 1 3000-5000)",
+      "expected": "one rising whoop ~2 s, no hum, no ticks, no clicks",
+      "answer": "yes",
+      "heard": "Whoop only, clean (owner); output not stated"
+    },
+    {
+      "step": "A3",
+      "action": "Play 500ms before the start time (2500-3000)",
+      "expected": "only the low hum, 0.5 s",
+      "answer": "yes",
+      "heard": "Hum only, from the monitor (22E1W, the default output); A2 also from the monitor"
+    },
+    {
+      "step": "A4",
+      "action": "Play 500 ms after the start time (3000-3500)",
+      "expected": "low beginning of the whoop only",
+      "answer": "yes",
+      "heard": "Low whoop start"
+    },
+    {
+      "step": "A5",
+      "action": "Play 500ms before the end time (4500-5000)",
+      "expected": "high end of the whoop only, no ticks",
+      "answer": "yes",
+      "heard": "High end, no ticks"
+    },
+    {
+      "step": "A6",
+      "action": "Play 500ms after the end time (5000-5500)",
+      "expected": "four fast ticks only",
+      "answer": "yes",
+      "heard": "Four ticks only"
+    },
+    {
+      "step": "A7",
+      "action": "Play the current line, Line 2 (9000-11000) from h2-44k1.mkv on the 48 kHz-class output",
+      "expected": "same whoop as A2, same pitch and length, no crackle",
+      "answer": "yes",
+      "heard": "Same as A2, clean"
+    },
+    {
+      "step": "A8",
+      "action": "Play to the end from Line 2, Stop after ~0.9 s",
+      "expected": "stops at once, no tail/click",
+      "answer": "yes",
+      "heard": "Stopped at once"
+    },
+    {
+      "step": "A9",
+      "action": "Play to the end from Line 2; owner switched the Windows default output 22E1W -> Razer at +4.4 s (18:32:17), back at 18:32:25",
+      "expected": "observation: does the sound move, stay or stop",
+      "answer": "observed",
+      "heard": "Stayed on the monitor (22E1W) to the end; nothing on the Razer. First attempt 18:29:48: owner did not switch (no change)"
+    },
+    {
+      "step": "A10",
+      "action": "(variant) Windows default set to the Razer before playing, then Play the current line (Line 2)",
+      "expected": "plays on the chosen output (app has no device chooser: only host API WASAPI/DirectSound)",
+      "answer": "no",
+      "heard": "Played on the monitor (22E1W), not on the Razer: the editor output stays on the device it opened earlier; default at play time was Speakers (Razer)"
+    },
+    {
+      "step": "A10b",
+      "action": "Editor output switched WASAPI -> DirectSound in Options (Razer still the Windows default), then Play the current line (Line 2)",
+      "expected": "plays on the current default",
+      "answer": "yes",
+      "heard": "Razer, clean whoop: changing the host API reopens the output on the current default"
+    },
+    {
+      "step": "A11",
+      "action": "DirectSound: Play to the end (Line 2 onward) on the Razer (Windows default), Razer USB unplugged at 18:37:37 (+1.9 s)",
+      "expected": "device-lost/failed or quiet; no hang or crash",
+      "answer": "observed",
+      "heard": "Sound moved to the monitor (22E1W, the new Windows default) and kept playing; app stayed responsive (Process.Responding true throughout); no message in the UI; nothing in the app log"
+    },
+    {
+      "step": "A11b",
+      "action": "DirectSound: Razer reconnected (OK at 18:38:55, Windows default = Speakers/Razer), Play the current line (Line 2)",
+      "expected": "the device opens again; whoop from that device",
+      "answer": "yes",
+      "heard": "Razer, clean"
+    },
+    {
+      "step": "A11-wasapi",
+      "action": "WASAPI: Play to the end (Line 2 onward) on the Razer (default), Razer unplugged at 18:40:00 (+2.7 s)",
+      "expected": "device-lost/failed; quiet; no hang or crash",
+      "answer": "observed",
+      "heard": "App showed \"Log window: Audio player failed.\"; app stayed responsive; Windows default moved to 22E1W (owner screenshot of the Log window)"
+    },
+    {
+      "step": "A11-wasapi (sound)",
+      "action": "-",
+      "expected": "-",
+      "answer": "observed",
+      "heard": "Silence at the unplug (sound stopped), then the message"
+    },
+    {
+      "step": "A11b-wasapi",
+      "action": "WASAPI: Razer reconnected (OK 18:41:56, default Speakers/Razer), Play the current line (Line 2)",
+      "expected": "reopens; whoop from that device",
+      "answer": "yes",
+      "heard": "Razer, clean; no message"
+    },
+    {
+      "step": "B3",
+      "action": "Stop, then Play (Video panel transport) from frame 0",
+      "expected": "beeps, hum 2-3 s, whoop 3-5 s, ticks 5-6 s, in step with the counter",
+      "answer": "yes",
+      "heard": "All in sync, but on the MONITOR (22E1W) although the Windows default was the Razer at play time (18:42:21): Qt Multimedia output did not follow the default"
+    },
+    {
+      "step": "B4",
+      "action": "Play 3 s, Pause 2 s, Play 2 s, Stop",
+      "expected": "Pause silences at once; Play resumes; Stop silences and goes to frame 0",
+      "answer": "yes",
+      "heard": "All as expected; Stop -> 00:00:00,000 frame 0 (b4-stopped.png)"
+    },
+    {
+      "step": "B5",
+      "action": "Video panel \"Play the current line\" on Line 2; then click seek bar (landed 00:00:14,056) and Play",
+      "expected": "whoop at once for Line 2; hum then whoop at 15 s after the seek",
+      "answer": "yes",
+      "heard": "Both as expected (b5-after-seek.png)"
+    },
+    {
+      "step": "B6",
+      "action": "Video playing from 0 (18:45:26); owner switched the Windows default Speakers -> 22E1W -> Speakers several times (18:45:33-18:45:47)",
+      "expected": "observation: where the sound goes; any gap",
+      "answer": "observed",
+      "heard": "Stayed on the monitor (22E1W) throughout; no gap or glitch; never moved to the Razer"
+    },
+    {
+      "step": "B7",
+      "action": "Video playing from 0 (18:47:09); owner pressed Win+P \"PC screen only\", 22E1W HDMI audio endpoint gone at 18:47:17 (+7.7 s)",
+      "expected": "sound stops or moves; app keeps running and responding",
+      "answer": "observed",
+      "heard": "Sound stopped (did not move to the Razer); app responsive throughout; no message. The video kept running to the end silently (counter at 19 s when captured)"
+    },
+    {
+      "step": "B7b",
+      "action": "22E1W restored (Extend; HDMI endpoint OK 18:48:31, Windows default 22E1W), Stop then Play from 0",
+      "expected": "sound again (which device)",
+      "answer": "yes",
+      "heard": "Plays on the monitor (22E1W)"
+    },
+    {
+      "step": "B8",
+      "action": "Close the app (window close button), no edits",
+      "expected": "closes cleanly; copy any Log window text",
+      "answer": "yes",
+      "heard": "Closed with no prompt; process gone within 3 s. Log window during the session showed only \"Audio player failed.\" (WASAPI unplug)"
+    }
+  ],
+  "notObserved": [
+    {
+      "step": "A1",
+      "reason": "no driver: the app has no \"open <device id>\" or rate readout; the output rate is not shown in the UI"
+    },
+    {
+      "step": "A10 as written",
+      "reason": "the app offers no output-device choice, only the host API (WASAPI or DirectSound)"
+    },
+    {
+      "step": "finished-event numbers (tail, outputLatency, underruns)",
+      "reason": "the in-app path has no audition report; needs hikari_h2_audition"
+    }
+  ]
+}

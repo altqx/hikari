@@ -1,0 +1,249 @@
+{
+ "peakDbfs": -24.0,
+ "durationMs": 20000,
+ "lines": [
+  {
+   "n": 1,
+   "startMs": 3000,
+   "endMs": 5000
+  },
+  {
+   "n": 2,
+   "startMs": 9000,
+   "endMs": 11000
+  },
+  {
+   "n": 3,
+   "startMs": 15000,
+   "endMs": 17000
+  }
+ ],
+ "segments": [
+  {
+   "startMs": 0,
+   "endMs": 100,
+   "kind": "beep",
+   "hz": 1000.0
+  },
+  {
+   "startMs": 200,
+   "endMs": 300,
+   "kind": "beep",
+   "hz": 1000.0
+  },
+  {
+   "startMs": 400,
+   "endMs": 500,
+   "kind": "beep",
+   "hz": 1000.0
+  },
+  {
+   "startMs": 2000,
+   "endMs": 3000,
+   "kind": "hum",
+   "hz": 300.0
+  },
+  {
+   "startMs": 3000,
+   "endMs": 5000,
+   "kind": "sweep",
+   "from": 500.0,
+   "to": 1500.0
+  },
+  {
+   "startMs": 5000,
+   "endMs": 5008,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 5125,
+   "endMs": 5133,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 5250,
+   "endMs": 5258,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 5375,
+   "endMs": 5383,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 5500,
+   "endMs": 5508,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 5625,
+   "endMs": 5633,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 5750,
+   "endMs": 5758,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 5875,
+   "endMs": 5883,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 8000,
+   "endMs": 9000,
+   "kind": "hum",
+   "hz": 300.0
+  },
+  {
+   "startMs": 9000,
+   "endMs": 11000,
+   "kind": "sweep",
+   "from": 500.0,
+   "to": 1500.0
+  },
+  {
+   "startMs": 11000,
+   "endMs": 11008,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 11125,
+   "endMs": 11133,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 11250,
+   "endMs": 11258,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 11375,
+   "endMs": 11383,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 11500,
+   "endMs": 11508,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 11625,
+   "endMs": 11633,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 11750,
+   "endMs": 11758,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 11875,
+   "endMs": 11883,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 14000,
+   "endMs": 15000,
+   "kind": "hum",
+   "hz": 300.0
+  },
+  {
+   "startMs": 15000,
+   "endMs": 17000,
+   "kind": "sweep",
+   "from": 500.0,
+   "to": 1500.0
+  },
+  {
+   "startMs": 17000,
+   "endMs": 17008,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 17125,
+   "endMs": 17133,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 17250,
+   "endMs": 17258,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 17375,
+   "endMs": 17383,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 17500,
+   "endMs": 17508,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 17625,
+   "endMs": 17633,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 17750,
+   "endMs": 17758,
+   "kind": "tick",
+   "hz": 2000.0
+  },
+  {
+   "startMs": 17875,
+   "endMs": 17883,
+   "kind": "tick",
+   "hz": 2000.0
+  }
+ ],
+ "files": {
+  "h2-48k.wav": {
+   "rate": 48000,
+   "peakDbfs": -24.0,
+   "sha256": "834c63055cb86ef715e7aa883f22d3d63eda5e7f8881f545fca466727b8f80b7"
+  },
+  "h2-48k.mkv": {
+   "rate": 48000,
+   "peakDbfs": -24.0,
+   "sha256": "3cdaf407aef0ab812741f7ef0a72f322627980a3372000fc2cf4a79aeb3a064d"
+  },
+  "h2-44k1.wav": {
+   "rate": 44100,
+   "peakDbfs": -24.0,
+   "sha256": "7f6eeeb097055a4e66148b51eb31c3b1a121fbc7f9e9e0a97c02645fc2628567"
+  },
+  "h2-44k1.mkv": {
+   "rate": 44100,
+   "peakDbfs": -24.0,
+   "sha256": "808aefa044abf6bd92845a981d268427d10a68b3828927d381789559787135e8"
+  },
+  "h2-script.ass": {
+   "sha256": "728934df6cec1af235d553696d856503a70b174766f89b3dca47ef2ebf5671f2"
+  }
+ }
+}

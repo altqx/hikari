@@ -1,0 +1,119 @@
+{
+  "captured_utc": "2026-09-27T07:06:19.951660+00:00",
+  "published_draft_commit": "43b2b9845addfe94c2c8141c27934f1402568bec",
+  "note": "Actual filesystem bytes used by Windows build; canonical published Git blobs kept separately. Manifest correction is intentional and not merely line endings. README evidence addendum may be appended later.",
+  "recipes": [
+    {
+      "path": ".gitignore",
+      "actual_raw_sha256": "3b2e99678d154b28acb250b37f34081586c4f05e92dd9fcf4c04c6cdf9a3ba1d",
+      "canonical_published_blob_sha256": "3b2e99678d154b28acb250b37f34081586c4f05e92dd9fcf4c04c6cdf9a3ba1d",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "README.md",
+      "actual_raw_sha256": "d3ce59109fddce1a022981529050c03726c3e037f283a01ea76ea6515c4400ad",
+      "canonical_published_blob_sha256": "d3ce59109fddce1a022981529050c03726c3e037f283a01ea76ea6515c4400ad",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "inputs.lock.json",
+      "actual_raw_sha256": "ff3ef50b2ae23038a1847f8449a6dfdba93d273f10d18744a26d2910f34994f0",
+      "canonical_published_blob_sha256": "ff3ef50b2ae23038a1847f8449a6dfdba93d273f10d18744a26d2910f34994f0",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "dependency-plan.json",
+      "actual_raw_sha256": "a91c7c32808793b402652eb7ecbbbfe1a7b5b870f56cd0bb97272777a2153390",
+      "canonical_published_blob_sha256": "957e07551ef7fcc638b84cca92f1f9572f7a7aaea69faa42b6fc7c46138580b8",
+      "actual_crlf_count": 627,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "CMakeLists.txt",
+      "actual_raw_sha256": "0fb15a444b6dd020c75f74d6c4c570564449ef7a81711c6a28b207d2701b6143",
+      "canonical_published_blob_sha256": "0fb15a444b6dd020c75f74d6c4c570564449ef7a81711c6a28b207d2701b6143",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "CMakePresets.json",
+      "actual_raw_sha256": "c22b1ed2148a9a81bf8ceb84ca6d7a570c93be182a534a87590cc8890f7b51b5",
+      "canonical_published_blob_sha256": "c22b1ed2148a9a81bf8ceb84ca6d7a570c93be182a534a87590cc8890f7b51b5",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "probe.cpp",
+      "actual_raw_sha256": "46293c5ac6657178312b517f8cc1dc0a88d4f1e346b1c8489d582ed8766df78a",
+      "canonical_published_blob_sha256": "46293c5ac6657178312b517f8cc1dc0a88d4f1e346b1c8489d582ed8766df78a",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "vcpkg.json",
+      "actual_raw_sha256": "db5ad73bf0ad8059bc03ed3ea25348e7b5de918955823e7669512fe368dd5f77",
+      "canonical_published_blob_sha256": "558caa1a6edcce6ac866fa1a955d2ae02067d688a20a755dbb1421de07d01b39",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": false
+    },
+    {
+      "path": "vcpkg-configuration.json",
+      "actual_raw_sha256": "c3e253e9c32db34acbbda6cbe22ba6908a258188fe1ca06efa2fbab91952bc60",
+      "canonical_published_blob_sha256": "c3e253e9c32db34acbbda6cbe22ba6908a258188fe1ca06efa2fbab91952bc60",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "triplets/x64-hikari-windows-release.cmake",
+      "actual_raw_sha256": "54e6cbf8e867f4841a09875f7a2e19b71070507b1501ff754660990a6ede9da9",
+      "canonical_published_blob_sha256": "54e6cbf8e867f4841a09875f7a2e19b71070507b1501ff754660990a6ede9da9",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "triplets/x64-hikari-linux-release.cmake",
+      "actual_raw_sha256": "f72b7e6dbaa6f4c65119cce188f17990a2684b39154a40ca4db93ee997218d73",
+      "canonical_published_blob_sha256": "f72b7e6dbaa6f4c65119cce188f17990a2684b39154a40ca4db93ee997218d73",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "ports/hikari-ffms2/vcpkg.json",
+      "actual_raw_sha256": "fcaba9cde2b23c3a27b99e1122ed39fd32ff80b91efaace7406440fac4770227",
+      "canonical_published_blob_sha256": "fcaba9cde2b23c3a27b99e1122ed39fd32ff80b91efaace7406440fac4770227",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "ports/hikari-ffms2/portfile.cmake",
+      "actual_raw_sha256": "16235c62a635b5848b87c217c88f0485696ebeeb291a8d6bcf09b5e9e6983395",
+      "canonical_published_blob_sha256": "16235c62a635b5848b87c217c88f0485696ebeeb291a8d6bcf09b5e9e6983395",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "ports/hikari-ffms2/CMakeLists.txt",
+      "actual_raw_sha256": "7a6c3517f46642b96b6f27c9c311df9b2c4e565e905a2c249ac77e893652fbef",
+      "canonical_published_blob_sha256": "7a6c3517f46642b96b6f27c9c311df9b2c4e565e905a2c249ac77e893652fbef",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "ports/hikari-ffms2/HikariFFMS2Config.cmake.in",
+      "actual_raw_sha256": "4fc548651fba150182f20069de5d50d418b8fc16c7b68c13e88b447330d487dc",
+      "canonical_published_blob_sha256": "4fc548651fba150182f20069de5d50d418b8fc16c7b68c13e88b447330d487dc",
+      "actual_crlf_count": 0,
+      "same_after_crlf_to_lf": true
+    },
+    {
+      "path": "ports/hikari-ffms2/source-sha256.json",
+      "actual_raw_sha256": "31995cce268b83d703a66c3a96dafc792c2601eb6cb08cb223cf29b2bb61f3a9",
+      "canonical_published_blob_sha256": "3f45163aa5db90363fffdbb1d344109a7709563acb07dd11c4b94427f3c687e8",
+      "actual_crlf_count": 22,
+      "same_after_crlf_to_lf": true
+    }
+  ]
+}

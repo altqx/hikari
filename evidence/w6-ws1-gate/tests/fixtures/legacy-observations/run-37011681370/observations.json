@@ -1,0 +1,325 @@
+{
+ "schema": 1,
+ "legacy_commit": "20d647c4c769ab7f5d383cf3c1c33f03876a94e9",
+ "package_sha256": "e7280968c41faa92e8ea0dee8808518f58240d41aa65dc9648aa3864e3b214ad",
+ "probe_sha256": "ecadc68fa3ee26bf512cba07306e611d9a95e32545e3219d9444d04925f5dcbb",
+ "host": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+ "captured_utc": "2026-10-02T13:20:59Z",
+ "cases": [
+  {
+   "id": "C03-preservation",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "unknown-sections.ass",
+     "input_sha256": "e9776521ca7e1360ad2aff8499369dbaeb200dfe8e1a625ec88327917a2a476e",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-unknown-sections.ass",
+     "output_bytes": 935,
+     "output_sha256": "765d058664b9cab766044c119e29638682c82a40a9e22370a37211e360862863",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:10197): dbind-WARNING **: 13:21:00.572: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "supplement-TLMode",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "tlmode-pairs.ass",
+     "input_sha256": "a21923298b11d55bb503671ba44aa76ff9ab9b0a592474f29eeac18b3991ea9f",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-tlmode-pairs.ass",
+     "output_bytes": 1001,
+     "output_sha256": "e01a98eba071d6ed514ac14a11814449f05c7f791140497beb464446eaea5a30",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:10237): dbind-WARNING **: 13:21:13.122: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "supplement-format-precision",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "precision.srt",
+     "input_sha256": "0d233d1622b444ea58c9fc0dcdca7ae3575918dbb82ff213a5c0ebbd50ee44ca",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-precision.srt",
+     "output_bytes": 76,
+     "output_sha256": "e1465e47d57bd24da793e4815ce2d808dba0f3bef88ba6394a11f30627a62676",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:10268): dbind-WARNING **: 13:21:25.362: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "C01-equality",
+   "route": "time",
+   "observations": [
+    {
+     "input": {
+      "lhs": "0",
+      "rhs": "0",
+      "expected": {
+       "ge": true,
+       "le": true,
+       "eq": true,
+       "gt": false,
+       "lt": false
+      }
+     },
+     "probe_command": "cmp 0 0",
+     "observed": {
+      "ge": 0,
+      "le": 0,
+      "eq": 1,
+      "gt": 0,
+      "lt": 0
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "lhs": "1000",
+      "rhs": "1000",
+      "expected": {
+       "ge": true,
+       "le": true,
+       "eq": true,
+       "gt": false,
+       "lt": false
+      }
+     },
+     "probe_command": "cmp 1 1",
+     "observed": {
+      "ge": 0,
+      "le": 0,
+      "eq": 1,
+      "gt": 0,
+      "lt": 0
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "lhs": "1123000",
+      "rhs": "1123000",
+      "expected": {
+       "ge": true,
+       "le": true,
+       "eq": true,
+       "gt": false,
+       "lt": false
+      }
+     },
+     "probe_command": "cmp 1123 1123",
+     "observed": {
+      "ge": 0,
+      "le": 0,
+      "eq": 1,
+      "gt": 0,
+      "lt": 0
+     },
+     "status": "captured"
+    }
+   ]
+  },
+  {
+   "id": "T42-A",
+   "route": "time",
+   "observations": [
+    {
+     "input": {
+      "starts": [
+       0,
+       40000,
+       81000,
+       120000
+      ],
+      "anchor": 40000,
+      "target": 81000,
+      "expected_offset": 1,
+      "source_predicted_old_offset": 2
+     },
+     "probe_command": "offset 40 81 0 40 81 120",
+     "observed": {
+      "legacy": 2
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "starts": [
+       0,
+       40000,
+       81000,
+       120000
+      ],
+      "anchor": 81000,
+      "target": 40000,
+      "expected_offset": -1
+     },
+     "probe_command": "offset 81 40 0 40 81 120",
+     "observed": {
+      "legacy": 0
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "starts": [
+       1000000,
+       1040000,
+       1081000,
+       1120000
+      ],
+      "anchor": 1040000,
+      "target": 1081000,
+      "expected_offset": 1
+     },
+     "probe_command": "offset 1040 1081 1000 1040 1081 1120",
+     "observed": {
+      "legacy": 0
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "starts": [
+       0,
+       40000,
+       80000,
+       120000
+      ],
+      "anchor": 40000,
+      "target": 80000,
+      "expected_offset": 1
+     },
+     "probe_command": "offset 40 80 0 40 80 120",
+     "observed": {
+      "legacy": 1
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "starts": [
+       0,
+       40000,
+       81000,
+       120000
+      ],
+      "anchor": 41000,
+      "target": 81000,
+      "expected_offset": 0
+     },
+     "probe_command": "offset 41 81 0 40 81 120",
+     "observed": {
+      "legacy": 1
+     },
+     "status": "captured"
+    }
+   ]
+  },
+  {
+   "id": "C02-loss-preview",
+   "route": "none",
+   "status": "not-captured",
+   "reason": "Needs the conversion dialog flow (cancel, then accept); not driven yet."
+  },
+  {
+   "id": "C05-audio-association",
+   "route": "none",
+   "status": "not-captured",
+   "reason": "Needs Session restore with controlled audio resources bound to scratch paths."
+  },
+  {
+   "id": "C01-fps-isolation",
+   "route": "none",
+   "status": "not-captured",
+   "reason": "Needs two open Documents and explicit frame-rate operations in the grid."
+  },
+  {
+   "id": "srt-crlf-blank-lines",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "crlf-two-cues.srt",
+     "input_sha256": "6ee937aadaca073b2ec318e35baf644a40449d2e9536a141f5d3e9eb56b19052",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-crlf-two-cues.srt",
+     "output_bytes": 89,
+     "output_sha256": "e826fdcf7a3aed423a9fdb84a07e75c285c9d9b788d44693eb6c8da704c5c6ac",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:10300): dbind-WARNING **: 13:21:37.565: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  }
+ ]
+}

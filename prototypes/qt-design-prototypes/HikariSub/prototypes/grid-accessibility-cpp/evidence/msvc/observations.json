@@ -1,0 +1,989 @@
+{
+    "accessible_update_handler": "in-process replacement; not OS event delivery",
+    "all_observations_matched": true,
+    "application_fonts": [
+        {
+            "qt_application_font_id": 0,
+            "sha256": "8134dbcd09e7b123c9a7f229d49cffbcb01352cc72ea5e1076b65d0dca9f73cd",
+            "source": "C:/Windows/Fonts/segoeui.ttf"
+        },
+        {
+            "qt_application_font_id": 1,
+            "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+            "source": "C:/Windows/Fonts/arial.ttf"
+        },
+        {
+            "qt_application_font_id": 2,
+            "sha256": "4bde3e6392b96910fb59094c6c1a4dbfae18fee78d0bf13dc30616837c4f95db",
+            "source": "C:/Windows/Fonts/msgothic.ttc"
+        }
+    ],
+    "cached_cells_at_end": 10,
+    "cells_created": 13,
+    "cells_destroyed": 3,
+    "compiler": "MSVC 195136260",
+    "fixture_bytes": 2194455,
+    "fixture_sha256": "9c80ec43283ebffcb11f3bece6a96e79d4331580f3105385a6bf4f3237e50287",
+    "interface_events": [
+        {
+            "accessible_id": 2147483648,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483648,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483648,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483649,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483649,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483649,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483650,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483656,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483656,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483656,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483657,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483657,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483657,
+            "type": 32783
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483650,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483650,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483650,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483657,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483657,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483656,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483656,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483650,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483650,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483650,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483650,
+            "type": 32768
+        },
+        {
+            "accessible_id": 2147483650,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483654,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483653,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483652,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483651,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483649,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483649,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483648,
+            "type": 32770
+        },
+        {
+            "accessible_id": 2147483648,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483658,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483657,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483657,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483656,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483656,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483649,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483649,
+            "type": 32779
+        },
+        {
+            "accessible_id": 2147483659,
+            "type": 32778
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483661,
+            "type": 32773
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 278
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32772
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 278
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32772
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483667,
+            "type": 32773
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483668,
+            "type": 32773
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483667,
+            "type": 32773
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483669,
+            "type": 32773
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 278
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32772
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 278
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32772
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 290
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483670,
+            "type": 32773
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483671,
+            "type": 32769
+        },
+        {
+            "accessible_id": 2147483672,
+            "type": 32769
+        },
+        {
+            "accessible_id": 2147483673,
+            "type": 32769
+        },
+        {
+            "accessible_id": 2147483674,
+            "type": 32769
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 278
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32772
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 278
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32772
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        },
+        {
+            "accessible_id": 2147483655,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483663,
+            "type": 32773
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32780
+        },
+        {
+            "accessible_id": 2147483660,
+            "type": 32777
+        }
+    ],
+    "loaded_qt_paths": {
+        "Qt6Core.dll": "C:\\Qt\\6.11.2\\msvc2022_64\\bin\\Qt6Core.dll",
+        "Qt6Gui.dll": "C:\\Qt\\6.11.2\\msvc2022_64\\bin\\Qt6Gui.dll",
+        "Qt6Qml.dll": "C:\\Qt\\6.11.2\\msvc2022_64\\bin\\Qt6Qml.dll",
+        "Qt6Quick.dll": "C:\\Qt\\6.11.2\\msvc2022_64\\bin\\Qt6Quick.dll"
+    },
+    "max_rows_painted_in_one_callback": 21,
+    "observations": [
+        {
+            "case": "Real C++ table and selection interfaces",
+            "detail": {
+            },
+            "matched": true
+        },
+        {
+            "case": "50k rows, four columns, lazy cells",
+            "detail": {
+                "accessible_selected_rows": 1,
+                "active_focus": true,
+                "anchor": 1,
+                "cached_cells": 0,
+                "current": 1,
+                "current_row": 0,
+                "displayed": 50000,
+                "hidden_selected": 0,
+                "selected_ids": [
+                    1
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Virtual offscreen cell has identity and table-cell interface",
+            "detail": {
+                "cached_cells": 1,
+                "id": 2147483661,
+                "name": "Subtitle text: {\\b1}橋の灯り · Harbor 50000{\\b0}"
+            },
+            "matched": true
+        },
+        {
+            "case": "Repeat lookup preserves interface identity",
+            "detail": {
+            },
+            "matched": true
+        },
+        {
+            "case": "Invalid lookup rejected",
+            "detail": {
+            },
+            "matched": true
+        },
+        {
+            "case": "Row selection projects four cells",
+            "detail": {
+                "accessible_selected_rows": 1,
+                "active_focus": true,
+                "anchor": 1,
+                "cached_cells": 2,
+                "current": 1,
+                "current_row": 0,
+                "displayed": 50000,
+                "hidden_selected": 0,
+                "selected_ids": [
+                    5
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Accessible focus action moves current without selection",
+            "detail": {
+                "accessible_selected_rows": 1,
+                "active_focus": true,
+                "anchor": 1,
+                "cached_cells": 5,
+                "current": 50000,
+                "current_row": 49999,
+                "displayed": 50000,
+                "hidden_selected": 0,
+                "selected_ids": [
+                    5
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Visible cell screen rect resolves through childAt",
+            "detail": {
+            },
+            "matched": true
+        },
+        {
+            "case": "Selection interface adds a row",
+            "detail": {
+                "accessible_selected_rows": 2,
+                "active_focus": true,
+                "anchor": 1,
+                "cached_cells": 6,
+                "current": 50000,
+                "current_row": 49999,
+                "displayed": 50000,
+                "hidden_selected": 0,
+                "selected_ids": [
+                    5,
+                    8
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Sort changes row position, not Line/cell identity",
+            "detail": {
+                "accessible_selected_rows": 2,
+                "active_focus": true,
+                "anchor": 1,
+                "cached_cells": 6,
+                "current": 50000,
+                "current_row": 0,
+                "displayed": 50000,
+                "hidden_selected": 0,
+                "selected_ids": [
+                    5,
+                    8
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Hidden selection retained outside exposed rows",
+            "detail": {
+                "accessible_selected_rows": 0,
+                "active_focus": true,
+                "anchor": 1,
+                "cached_cells": 6,
+                "current": 50000,
+                "current_row": -1,
+                "displayed": 16666,
+                "hidden_selected": 2,
+                "selected_ids": [
+                    5,
+                    8
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Dispatched Home follows filtered reverse order",
+            "detail": {
+                "accessible_selected_rows": 1,
+                "active_focus": true,
+                "anchor": 49998,
+                "cached_cells": 7,
+                "current": 49998,
+                "current_row": 0,
+                "displayed": 16666,
+                "hidden_selected": 0,
+                "selected_ids": [
+                    49998
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Dispatched Ctrl-End retains selection/anchor",
+            "detail": {
+                "accessible_selected_rows": 1,
+                "active_focus": true,
+                "anchor": 49998,
+                "cached_cells": 8,
+                "current": 3,
+                "current_row": 16665,
+                "displayed": 16666,
+                "hidden_selected": 0,
+                "selected_ids": [
+                    49998
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Dispatched Shift range follows displayed IDs",
+            "detail": {
+                "accessible_selected_rows": 2,
+                "active_focus": true,
+                "anchor": 49998,
+                "cached_cells": 9,
+                "current": 49995,
+                "current_row": 1,
+                "displayed": 16666,
+                "hidden_selected": 0,
+                "selected_ids": [
+                    49995,
+                    49998
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Empty view retains current/hidden selection",
+            "detail": {
+                "accessible_selected_rows": 0,
+                "active_focus": true,
+                "anchor": 49998,
+                "cached_cells": 9,
+                "current": 49995,
+                "current_row": -1,
+                "displayed": 0,
+                "hidden_selected": 2,
+                "selected_ids": [
+                    49995,
+                    49998
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Restore reuses queried cell identity",
+            "detail": {
+            },
+            "matched": true
+        },
+        {
+            "case": "Displayed accessible text changes without raw mutation",
+            "detail": {
+                "displayed": "مرحبا · سطر 3",
+                "raw": "{\\i1}مرحبا · سطر 3{\\i0}"
+            },
+            "matched": true
+        },
+        {
+            "case": "Accessible press selects and focuses exact Line",
+            "detail": {
+                "accessible_selected_rows": 1,
+                "active_focus": true,
+                "anchor": 3,
+                "cached_cells": 10,
+                "current": 3,
+                "current_row": 49997,
+                "displayed": 50000,
+                "hidden_selected": 0,
+                "selected_ids": [
+                    3
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Accessible toggle leaves current while clearing selected Line",
+            "detail": {
+                "accessible_selected_rows": 0,
+                "active_focus": true,
+                "anchor": 3,
+                "cached_cells": 10,
+                "current": 3,
+                "current_row": 49997,
+                "displayed": 50000,
+                "hidden_selected": 0,
+                "selected_ids": [
+                ]
+            },
+            "matched": true
+        },
+        {
+            "case": "Column descriptions supplied, column selection explicitly unsupported",
+            "detail": {
+            },
+            "matched": true
+        },
+        {
+            "case": "Grid destruction releases registered lazy cells",
+            "detail": {
+                "created": 3,
+                "destroyed": 3
+            },
+            "matched": true
+        },
+        {
+            "case": "In-process update handler received model, selection and focus events",
+            "detail": {
+                "received_events": 152
+            },
+            "matched": true
+        }
+    ],
+    "os": "Windows 11 Version 25H2",
+    "performance_gate_measured": false,
+    "platform_plugin": "offscreen",
+    "qt_version": "6.11.2",
+    "screen_reader_observed": false,
+    "source_row_count": 50000,
+    "uia_observed": false
+}

@@ -1,0 +1,123 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "pyside": "6.11.2",
+  "qt_platform": "windows",
+  "explicit_setActive": true,
+  "uia_skipped_by_request": true,
+  "has_QAccessibleTableInterface": false,
+  "has_tableInterface_accessor": false,
+  "interface_cast_signature": "QtGui.pyi: interface_cast(InterfaceType) -> int",
+  "factory_calls": [
+    "PaintedStudy"
+  ],
+  "keyboard_observations": [
+    {
+      "case": "Reversed RTL Home chooses first displayed ID",
+      "displayed": 21,
+      "current_id": 63,
+      "selected_ids": [
+        63
+      ],
+      "active_focus": true,
+      "expected_current": 63,
+      "expected_selection": [
+        63
+      ],
+      "matched": true
+    },
+    {
+      "case": "Ctrl End moves current while retaining selected ID",
+      "displayed": 21,
+      "current_id": 3,
+      "selected_ids": [
+        63
+      ],
+      "active_focus": true,
+      "expected_current": 3,
+      "expected_selection": [
+        63
+      ],
+      "matched": true
+    },
+    {
+      "case": "Shift Home extends using stable source-ID anchor",
+      "displayed": 21,
+      "current_id": 63,
+      "selected_ids": [
+        63
+      ],
+      "active_focus": true,
+      "expected_current": 63,
+      "expected_selection": [
+        63
+      ],
+      "matched": true
+    },
+    {
+      "case": "Shift Down extends in displayed order",
+      "displayed": 21,
+      "current_id": 60,
+      "selected_ids": [
+        60,
+        63
+      ],
+      "active_focus": true,
+      "expected_current": 60,
+      "expected_selection": [
+        60,
+        63
+      ],
+      "matched": true
+    },
+    {
+      "case": "Empty result does not discard current or selection",
+      "displayed": 0,
+      "current_id": 60,
+      "selected_ids": [
+        60,
+        63
+      ],
+      "active_focus": true,
+      "expected_current": 60,
+      "expected_selection": [
+        60,
+        63
+      ],
+      "matched": true
+    }
+  ],
+  "limitations": [
+    "No C++ table adapter",
+    "No virtual row/cell semantics",
+    "No NVDA/Orca run",
+    "64 synthetic logical rows only",
+    "No performance, CPU/GPU, memory or reference-host acceptance"
+  ],
+  "fixture": {
+    "source": "probe.py deterministic 64-row generator; tab-separated ID/raw ASS, LF, UTF-8, no final LF",
+    "bytes": 2821,
+    "sha256": "e6386563c387886bad8c99361f03efa9d6ece42650b24e8f25638c8dc4100247",
+    "probe_sha256": "bff2cfe2e96554131d0f4ceb7457f7a568819575e7cca713c533579996ac92f6"
+  },
+  "qt_interface": {
+    "python_type": "PaintedAccessible",
+    "role": "Table",
+    "name": "Painted subtitle study. 64 displayed rows. Current source ID 1. Selected IDs [1]. No native table interface.",
+    "child_count": 0,
+    "table_interface_pointer": null
+  },
+  "tag_hidden": true,
+  "restored_displayed_rows": 64,
+  "evidence_note": "Published subset of local native observations from 2026-09-27. Qt observations/provenance preserved from the latest run; the first UIA attempt outcome is summarized without local paths or unrelated logs. No rerun performed for publication.",
+  "first_uia_attempt": {
+    "observer": "Windows PowerShell -NoProfile -File uia-observe.ps1, targeting only the study process ID",
+    "exit_code": 1,
+    "error_id": "UnauthorizedAccess",
+    "reason": "The observer script could not be loaded because running scripts is disabled on this system.",
+    "tree_observed": false,
+    "patterns_observed": false,
+    "execution_policy_changed": false,
+    "execution_policy_bypassed": false
+  }
+}

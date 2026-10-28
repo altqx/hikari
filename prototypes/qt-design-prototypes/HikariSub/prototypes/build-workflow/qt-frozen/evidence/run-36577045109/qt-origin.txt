@@ -1,0 +1,3 @@
+Qt6_DIR=/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64/lib/cmake/Qt6
+Qt6_VERSION=6.11.2
+CXX=GNU 15.2.0

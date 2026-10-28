@@ -1,0 +1,4 @@
+SAME plain.ass plain-hikari.ass (40 frames, 7 distinct)
+SAME fonts.ass fonts-hikari.ass (40 frames, 7 distinct)
+libass 0.17.5-1
+ffmpeg 2:9.0.2-2

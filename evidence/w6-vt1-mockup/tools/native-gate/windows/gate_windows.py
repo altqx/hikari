@@ -1,0 +1,2553 @@
+#!/usr/bin/env python3
+"""D1 native gate on Windows: HikariSub on the Winix VM desktop.
+
+  WINIX_OWNER=<lease owner> gate_windows.py [--dpi] [--config winix.yaml] [--vm dev] [STEP...]
+
+The Windows half of tools/native-gate/gate.py, with the same step names and
+the same evidence layout under out/native-gate-evidence/windows/: one PNG and
+one TXT (the app's windows and its UI Automation view as JSON) per
+observation, steps.log, and results.json with a verdict per gate item:
+observed, failed or not-observable (with the reason).
+
+Everything goes through `winix ui` (winix 0.2.0):
+  keys      `ui keys` (SendInput with scan codes, the extended flag on navigation keys)
+  text      `ui text` (Unicode input)
+  pointer   `ui pointer` / `ui calibrate` (the VM's USB HID tablet, host-side QMP)
+  view      one `ui batch`: `windows --pid`, `state` (focus, its ancestors, the
+            cursor) and `tree --pid --window N` for every window of the app
+  focus     `ui focus --pid --window hwnd:N`
+  app       `ui launch --exe --arg --env --cwd --no-console`, `ui kill`
+  monitors  `ui monitors`, `ui screenshot [--monitor N]`
+Guest tasks (gate.ps1, uia.ps1, display.ps1, nvda.ps1) remain for what winix
+does not do: the profile (Qt ignores the APPDATA variables `--fresh-profile`
+sets), pressing controls through UIA patterns only, GetDpiForWindow, the
+borderless fullscreen and display changes, NVDA, the test executables. Task
+parameters go through `run TASK --env K=V`. The VM definition is never changed.
+"""
+import argparse
+import base64
+import json
+import os
+import re
+import subprocess
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+# GATE_EVIDENCE_WIN: another evidence directory (a card's own run).
+EVID = Path(os.environ.get("GATE_EVIDENCE_WIN") or ROOT / "out" / "native-gate-evidence" / "windows")
+PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Search"]
+MAIN = "HikariSub"
+# Windows maps the absolute HID tablet to the primary monitor only (step
+# pointer measures it), so pointer coordinates map over the primary.
+POINTER_MAP = "primary"
+
+W = None        # Winix
+LAYOUT = {}     # gate-win-prepare's GATE_LAYOUT
+APP = {"pid": None, "log": None}
+# The profile the first fresh() set aside: put back when the run ends.
+PROFILE = {"original": None}
+results = {}
+LOG = None
+
+
+def log(*a):
+    line = " ".join(str(x) for x in a)
+    print(line, flush=True)
+    LOG.write(time.strftime("%H:%M:%S ") + line + "\n")
+    LOG.flush()
+
+
+def verdict(item, status, detail, evidence=()):
+    results[item] = {"status": status, "detail": detail, "evidence": list(evidence),
+                     "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+    (EVID / "results.json").write_text(json.dumps(results, indent=1, ensure_ascii=False))
+    log(f"== {item}: {status} - {detail}")
+
+
+# ---------------------------------------------------------------- Winix
+class Winix:
+    """`winix --json`; the lease owner comes from WINIX_OWNER."""
+
+    def __init__(self, config, vm):
+        self.config = Path(config).resolve()
+        self.vm = vm
+
+    def lines(self, *args, timeout=900):
+        cmd = ["winix", "--json", "--vm", self.vm, "--config", str(self.config), *args]
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=ROOT)
+        out = []
+        for line in p.stdout.splitlines():
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+        if not out:
+            out.append({"error": "unparsed", "message": (p.stdout[-500:] + p.stderr[-500:]).strip()})
+        return out
+
+    def call(self, *args, timeout=900):
+        return self.lines(*args, timeout=timeout)[-1]
+
+    def ui(self, action, **args):
+        return self.call("ui", action, "--args", json.dumps(args))
+
+    def batch(self, steps):
+        return self.call("ui", "batch", "--args", json.dumps(steps), "--continue-on-error")
+
+    def screenshot(self, path, monitor=None):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return self.call("ui", "screenshot", "--output", str(path), *(["--monitor", str(monitor)] if monitor is not None else []))
+
+    def task(self, name, env=None, timeout=3600):
+        """Runs a winix.yaml task to its end; returns (job record, output lines)."""
+        args = ["run", name, "--wait"]
+        for k, v in (env or {}).items():
+            args += ["--env", f"{k}={v}"]
+        job = next((j for j in reversed(self.lines(*args, timeout=timeout)) if j.get("type") == "job" or j.get("state")), {})
+        if not job.get("id"):
+            raise RuntimeError(f"task {name} did not start: {job}")
+        # `job logs --all` pages the log: one JSON record per 64 KiB.
+        text = "".join(r.get("text", "") for r in self.lines("job", "logs", job["id"], "--all") if isinstance(r, dict))
+        lines = [l[6:] if l.startswith(("[out] ", "[err] ")) else l for l in text.splitlines()]
+        return job, lines
+
+    def pull(self, guest, host):
+        return self.call("pull", guest, str(host))
+
+
+def line_value(lines, prefix):
+    return next((l[len(prefix):] for l in lines if l.startswith(prefix)), None)
+
+
+def sections(lines):
+    """"== name" sections of a task's output."""
+    out, current = {}, None
+    for line in lines:
+        if line.startswith("== "):
+            current = line[3:].strip()
+            out[current] = []
+        elif current:
+            out[current].append(line)
+    return out
+
+
+# ---------------------------------------------------------------- input
+def keys(*seq, delay=0.35):
+    """Chords ("alt+w", "down") and pauses (seconds): each run of chords is
+    one `ui keys` call, DELAY seconds between chords."""
+    run = []
+
+    def flush():
+        if run:
+            r = W.ui("keys", keys=" ".join(run), delayMs=int(delay * 1000))
+            if isinstance(r, dict) and r.get("error"):
+                log("keys", run, "->", r)
+            time.sleep(delay)
+            run.clear()
+    for item in seq:
+        if isinstance(item, (int, float)):
+            flush()
+            time.sleep(item)
+        else:
+            run.append(item.upper())
+    flush()
+
+
+def combo(*names):
+    keys("+".join(names), delay=0)
+
+
+def type_text(text):
+    W.ui("text", text=text)
+
+
+def pointer(path, **kw):
+    """The tablet along PATH ([(x, y), ...]): pressed at the first point and
+    released at the last (button "none": moves only); hold=True keeps it down."""
+    r = W.ui("pointer", path=";".join(f"{x},{y}" for x, y in path), map=POINTER_MAP, **kw)
+    if isinstance(r, dict) and r.get("error"):
+        log("pointer", path, kw, "->", r)
+    return r
+
+
+def park_pointer():
+    """The tablet cursor to the primary monitor's bottom-right corner (the
+    taskbar's clock): a menu that opens under the cursor takes its current item
+    from the hover, which would turn the keyboard's Down and Right into other
+    moves (Right then goes to the next menu of the bar)."""
+    m = next((x for x in monitors() if x["primary"]), None)
+    if m:
+        W.ui("pointer", path=f"{m['x'] + m['w'] - 30},{m['y'] + m['h'] - 20}", button="none", map="primary")
+
+
+def release():
+    return W.ui("pointer", release=True)
+
+
+def double_click(x, y):
+    """Two tablet clicks, one `ui pointer` call each (winix has no double-click
+    at a point): a double-click only when the second press comes within the
+    double-click time (500 ms) of the first; a call takes about 0.3 s, more
+    when the VM is busy. Returns the seconds between the two calls' ends."""
+    pointer([(x, y)])
+    t1 = time.monotonic()
+    pointer([(x, y)])
+    return round(time.monotonic() - t1, 2)
+
+
+def double_click_until(x, y, done, title=None):
+    """A tablet double-click at X,Y, again (up to three times) while DONE(view)
+    is false; then, as a last resort, `ui doubleclick` on the UIA title bar
+    TITLE ((automationId, name, window): SendInput mouse, not the tablet).
+    Returns (view, how, gaps)."""
+    gaps = []
+    for _ in range(3):
+        gaps.append(double_click(x, y))
+        time.sleep(1.5)
+        st = wait_for(done, timeout=4)
+        if done(st):
+            return st, "tablet", gaps
+        log("tablet double-click at", x, y, "had no effect (gap", gaps[-1], "s); again")
+    if title:
+        aid, name, window = title
+        r = W.ui("doubleclick", pid=APP["pid"], automationId=aid, name=name, window=window)
+        log("ui doubleclick", name, "->", r)
+        time.sleep(1.5)
+        st = wait_for(done, timeout=4)
+        if done(st):
+            return st, "ui doubleclick (SendInput)", gaps
+    return uia(), None, gaps
+
+
+def monitors():
+    m = W.ui("monitors") or {}
+    return [{"device": x["deviceName"], "primary": x["primary"], "x": x["bounds"]["x"], "y": x["bounds"]["y"],
+             "w": x["bounds"]["width"], "h": x["bounds"]["height"], "dpi": x["dpi"]} for x in m.get("monitors") or []]
+
+
+def displays(mode=None, scale2=None, second=None):
+    """The guest's monitors (display.ps1): unchanged, or extended / detached
+    (SECOND: the second monitor's (w, h)), and the second monitor's scale."""
+    env = {"GATE_DISPLAY": mode or "status"}
+    if second:
+        env["GATE_WIDTH2"], env["GATE_HEIGHT2"] = second
+    if scale2:
+        env["GATE_SCALE2"] = scale2
+    _, lines = W.task("gate-win-display", env=env)
+    raw = line_value(lines, "DISPLAY_RESULT ")
+    return json.loads(raw) if raw else {"error": lines[-10:]}
+
+
+# ---------------------------------------------------------------- UI Automation
+def frame_id(name):
+    """The main window is titled "<document> - HikariSub" once a Document is open."""
+    return MAIN if name == MAIN or name.endswith(" - " + MAIN) else name
+
+
+def panel_id(name):
+    if name.startswith("Editing:") or name == "No document open":
+        return "Grid"
+    return name.split(":")[0]
+
+
+def el_path(els, e):
+    parts = []
+    while e is not None:
+        parts.append(f"{e['t']}:'{e['n']}'")
+        e = els[e["p"]] if e["p"] >= 0 else None
+    return " > ".join(reversed(parts))
+
+
+def ancestors(els, e):
+    while e["p"] >= 0:
+        e = els[e["p"]]
+        yield e
+
+
+def guest_uia(do=None, settle_ms=None):
+    """uia.ps1: controls pressed through UIA patterns, and GetDpiForWindow."""
+    env = {}
+    if do:
+        env["GATE_UIA_DO"] = json.dumps(do)
+    if settle_ms is not None:
+        env["GATE_UIA_SETTLE_MS"] = settle_ms
+    try:
+        _, lines = W.task("gate-win-uia", env=env, timeout=600)
+        raw = line_value(lines, "UIA_JSON_B64 ")
+        return json.loads(base64.b64decode(raw).decode("utf-8")) if raw else {"error": lines[-10:]}
+    except Exception as e:  # keep the step going; the result says why it is empty
+        return {"error": repr(e)}
+
+
+def flatten(node, parent, depth, win, els):
+    """A `ui tree` node into the element list; owned windows (walked on their
+    own) are skipped where they appear under their owner."""
+    if node.get("separateWindow"):
+        return
+    e = node["element"]
+    b = e.get("bounds") or {}
+    t = e.get("controlType") or ""
+    n = e.get("name") or ""
+    i = len(els)
+    els.append({"i": i, "p": parent, "d": depth, "win": win, "hw": e.get("hwnd") or 0, "t": t, "n": n,
+                "id": e.get("automationId") or "", "x": b.get("x", 0), "y": b.get("y", 0), "w": b.get("width", 0),
+                "h": b.get("height", 0), "en": bool(e.get("enabled")), "val": e.get("value"),
+                # winix reports no IsOffscreen: an element without area counts as off screen.
+                "off": not b.get("width") or not b.get("height")})
+    for c in node.get("children") or []:
+        flatten(c, i, depth + 1, win, els)
+
+
+def uia(do=None, settle_ms=None, dpi=False):
+    """The app's UI Automation view, shaped like atspi_tool.py json (frames,
+    panels, focus, focusPath, texts, labels) plus the raw elements: one
+    `ui batch` (windows, state, a tree per window). DO presses controls first
+    (uia.ps1); DPI adds GetDpiForWindow per window (uia.ps1)."""
+    pressed = guest_uia(do, settle_ms) if do or dpi else {}
+    st = {"frames": [], "windows": [], "elements": [], "panels": [], "focus": None, "focusPath": None,
+          "texts": {}, "labels": [], "popupMenuItems": [], "videoLabels": [], "combos": {},
+          "actions": pressed.get("actions") or [], "windowInfo": pressed.get("windowDpi") or [],
+          "cursor": None, "foreground": None}
+    pid = APP["pid"]
+    if not pid:
+        st["error"] = "no app running"
+        return st
+    steps = [{"action": "windows", "pid": pid}, {"action": "state"}]
+    steps += [{"action": "tree", "pid": pid, "window": i, "depth": 12, "limit": 1000} for i in range(6)]
+    for attempt in range(3):
+        r = W.batch(steps)
+        res = r.get("steps") or []
+        # A window changing under the walk (a menu opening) can fail a step: once more.
+        if len(res) > 2 and res[1].get("ok") and res[2].get("ok"):
+            break
+        log("ui batch incomplete, again:", json.dumps([t.get("error") for t in res[:3]])[:300])
+        time.sleep(0.5)
+    if len(res) < 2 or not res[0].get("ok"):
+        st["error"] = json.dumps(r)[:500]
+        return st
+    windows = res[0]["result"]
+    state = res[1].get("result") or {}
+    st["windows"] = windows
+    st["cursor"] = state.get("cursor")
+    st["foreground"] = state.get("foreground")
+    fg = (state.get("foreground") or {}).get("hwnd")
+    dpis = {w["hwnd"]: w["dpi"] for w in pressed.get("windowDpi") or []}
+    els = []
+    # Out-of-range window indexes fail by design; anything else is kept.
+    st["errors"] = [t for t in res[1:] if not t.get("ok") and "out of range" not in (t.get("error") or "")]
+    for t in res[2:]:
+        if t.get("ok"):
+            node = t["result"]
+            flatten(node, -1, 0, node["element"].get("name") or "", els)
+    st["elements"] = els
+    # Every titled window: the main window and the windows it owns (floating
+    # panels, the placement window, dialogs). Nameless windows are popups.
+    st["frames"] = [{"name": w["title"], "type": "Window", "x": w["bounds"]["x"], "y": w["bounds"]["y"],
+                     "w": w["bounds"]["width"], "h": w["bounds"]["height"], "hwnd": w["hwnd"], "dpi": dpis.get(w["hwnd"]),
+                     "active": w["hwnd"] == fg, "id": frame_id(w["title"])}
+                    for w in windows if w["title"] and w.get("visible", True) and not w.get("minimized")]
+    for e in els:
+        if e["off"]:
+            continue
+        if e["t"] == "Pane" and e["n"]:
+            st["panels"].append({"name": e["n"], "id": panel_id(e["n"]), "frame": frame_id(e["win"]),
+                                 "x": e["x"], "y": e["y"], "w": e["w"], "h": e["h"]})
+        if e["t"] == "Edit" and e["n"] in ("Line text", "Start", "End"):
+            st["texts"][e["n"]] = e["val"]
+        if e["t"] == "Text" and e["n"] and (e["n"].startswith(("Editing", "No editing")) or e["n"] == "Video times"):
+            st["labels"].append(e["n"])
+        if e["t"] == "MenuItem" and not any(a["t"] in ("MenuBar", "TitleBar") for a in ancestors(els, e)):
+            st["popupMenuItems"].append(e["n"])
+        if e["t"] == "Text" and any(a["t"] == "Pane" and panel_id(a["n"]) == "Video" for a in ancestors(els, e)):
+            st["videoLabels"].append((e["n"], e["val"]))
+        if e["t"] == "ComboBox":
+            kids = [c for c in els if c["p"] == e["i"]]
+            # Qt Quick's ComboBox reports an empty Value; its text is the child Edit's.
+            st["combos"][e["n"]] = e["val"] or next((c["val"] or c["n"] for c in kids if c["t"] in ("Text", "Edit")), None)
+    focused = state.get("focused")
+    if focused and focused.get("pid") == pid:
+        chain = [a for a in reversed(state.get("ancestors") or []) if a.get("pid") == pid] + [focused]
+        st["focusPath"] = " > ".join(f"{a['controlType']}:'{a.get('name') or ''}'" for a in chain)
+        st["focus"] = f"[{focused['controlType']}] {focused.get('name') or ''!r} in {(state.get('foreground') or {}).get('title')!r}"
+    else:
+        st["focus"] = f"not in the app: {json.dumps(focused)[:200]}"
+    return st
+
+
+def frames(st):
+    return {f["id"]: f for f in st["frames"]}
+
+
+def active_frames(st):
+    return [f["id"] for f in st["frames"] if f.get("active")]
+
+
+def panel(st, pid):
+    return next((p for p in st["panels"] if p["id"] == pid), None)
+
+
+def panel_frame(st, pid):
+    p = panel(st, pid)
+    return p["frame"] if p else None
+
+
+def find(st, ctype, name):
+    els = st.get("elements") or []
+    return [dict(e, path=el_path(els, e)) for e in els
+            if e["t"] == ctype and e["n"] == name and not e["off"]]
+
+
+def wait_for(pred, timeout=8.0, step=0.4):
+    end = time.time() + timeout
+    while True:
+        st = uia()
+        if pred(st) or time.time() > end:
+            return st
+        time.sleep(step)
+
+
+def panel_of(path):
+    """The innermost panel on a focus path."""
+    found = None
+    for part in (path or "").split(" > "):
+        m = re.match(r"(\w+):'(.*)'$", part)
+        if m and m.group(1) == "Pane" and panel_id(m.group(2)) in PANELS:
+            found = panel_id(m.group(2))
+    return found
+
+
+def snap(name, extra=None, monitor=None):
+    png = EVID / f"{name}.png"
+    W.screenshot(png, monitor)
+    st = uia()
+    with open(EVID / f"{name}.txt", "w") as f:
+        f.write("# windows of the app (winix ui windows --pid)\n" + json.dumps(st["windows"], indent=1, ensure_ascii=False)
+                + "\n# UI Automation (winix ui batch: state, tree per window)\n" + json.dumps(st, indent=1, ensure_ascii=False) + "\n")
+        if extra:
+            f.write(extra + "\n")
+    return [f"{name}.png", f"{name}.txt"], st
+
+
+# ---------------------------------------------------------------- app control
+def prepare():
+    job, lines = W.task("gate-win-prepare")
+    raw = line_value(lines, "GATE_LAYOUT ")
+    if job.get("state") != "succeeded" or not raw:
+        raise SystemExit("gate-win-prepare failed:\n" + "\n".join(lines[-30:]))
+    LAYOUT.update(json.loads(raw))
+    log("layout", json.dumps({k: v for k, v in LAYOUT.items() if k != "path"}))
+    if not LAYOUT.get("app"):
+        raise SystemExit("no hikarisub.exe under out/build/windows-x64-release in the VM (run the build task)")
+
+
+def main_window():
+    if not APP["pid"]:
+        return None
+    listed = W.ui("windows", pid=APP["pid"])
+    for w in listed if isinstance(listed, list) else []:
+        if frame_id(w.get("title") or "") == MAIN:
+            return w
+    return None
+
+
+def app_start(doc=None):
+    """HikariSub from the VM's build with the Qt SDK it links on PATH; its
+    output goes to the winix launch log."""
+    r = W.ui("launch", exe=LAYOUT["app"], arguments=[doc] if doc else [], cwd=LAYOUT["docs"], noConsole=True,
+             env={"PATH": LAYOUT["qt_bin"] + ";" + LAYOUT["path"], "QT_FORCE_STDERR_LOGGING": "1"})
+    APP["pid"], APP["log"] = r.get("pid"), r.get("log")
+    log("launched", r)
+    deadline = time.time() + 90
+    while time.time() < deadline:
+        main = main_window()
+        if main:
+            time.sleep(2)
+            focus_main_compositor()
+            return main
+        time.sleep(2)
+    hidden = W.ui("windows", pid=APP["pid"], includeHidden=True)
+    log("app_start: no main window after 90 s; its windows, hidden ones included:",
+        json.dumps([(w.get("title"), w.get("visible")) for w in hidden] if isinstance(hidden, list) else hidden)[:600])
+    return None
+
+
+def app_kill():
+    if APP["pid"]:
+        r = W.ui("kill", pid=APP["pid"])
+        if r.get("error") and "pid" not in r:
+            log("kill", APP["pid"], "->", r)
+        APP["pid"] = None
+
+
+def app_status():
+    _, lines = W.task("gate-win-status")
+    s = sections(lines)
+    applog = []
+    if APP["log"]:
+        local = EVID / ".winix" / "app.log"
+        local.parent.mkdir(parents=True, exist_ok=True)
+        W.pull(APP["log"], local)
+        if local.exists():
+            applog = local.read_text(errors="replace").splitlines()[-40:]
+    return {"alive": "ALIVE yes" in lines, "layout_files": [l for l in s.get("layout files", []) if l.strip()],
+            "app_log": applog}
+
+
+def fresh(doc=None):
+    app_kill()
+    job, lines = W.task("gate-win-fresh")
+    for l in lines:
+        if l.startswith("set aside"):
+            log(l)
+            if not PROFILE["original"]:
+                PROFILE["original"] = l.split(" -> ", 1)[1].rsplit("\\", 1)[0]
+    if job.get("state") != "succeeded":
+        raise RuntimeError("gate-win-fresh failed (the profile was not set aside): " + " | ".join(lines[-6:]))
+    app_start(doc)
+    return uia()
+
+
+def dismiss_notices():
+    """Opening a Document may raise the spelling notice; press its OK."""
+    st = uia(do=[{"action": "invoke", "name": "OK", "type": "Button", "all": True}], settle_ms=500)
+    others = [f["id"] for f in st["frames"] if f["id"] != MAIN]
+    if others:
+        log("windows besides the main one after the notices:", others)
+
+
+def set_focus(name):
+    """The keyboard focus onto the app's element NAME (`ui setfocus`, UIA SetFocus)."""
+    r = W.ui("setfocus", pid=APP["pid"], name=name)
+    if r.get("error"):
+        log("setfocus", name, "->", r)
+    time.sleep(0.5)
+    return r
+
+
+def focus_main_compositor():
+    """The main window in the foreground (`ui focus`)."""
+    main = main_window()
+    if not main:
+        return False
+    W.ui("focus", pid=APP["pid"], window=f"hwnd:{main['hwnd']}")
+    time.sleep(0.8)
+    return True
+
+
+def focus_main():
+    """F6 until a panel of the main window has the focus (the shell activates
+    the window of the panel it moves to); else `ui focus`."""
+    for _ in range(6):
+        st = uia()
+        main = frames(st).get(MAIN)
+        if main and main.get("active") and st["focusPath"] and panel_of(st["focusPath"]) \
+                and not st["focusPath"].startswith("Window:'Line editor'") \
+                and "> Window:'Line editor'" not in st["focusPath"]:
+            return True
+        combo("f6")
+        time.sleep(0.8)
+    focus_main_compositor()
+    return False
+
+
+def open_view():
+    """Alt+W opens the View menu ("Vie&w": Alt+V stays with legacy's &Video).
+    Retried until the View menu (its "Move panel…" item) shows."""
+    park_pointer()
+    for _ in range(3):
+        keys("alt+w", 0.6)
+        st = uia()
+        if any("Move panel" in (n or "") for n in st["popupMenuItems"]):
+            return True
+        keys("escape", 0.3)
+    log("open_view: the View menu did not open")
+    return False
+
+
+# The key that opens a submenu: Right, as on Linux. Should Right not open
+# View > Panels, float_panel() records that once and switches to Return.
+SUBMENU = {"key": "right", "checked": False}
+
+
+def menu_to(name, opener=None):
+    """Open a menu (the View menu by default) and press Down until the
+    highlight is on the item NAME. D2 put the five arrangements first in the
+    View menu, enabled by what is open, and Down skips disabled items, so the
+    Downs are counted among the enabled popup menu items UI Automation lists."""
+    if opener is None:
+        if not open_view():
+            return False
+    else:
+        park_pointer()
+        keys(opener, 0.6)
+    st = uia()
+    els = st.get("elements") or []
+    items = [e for e in els if e["t"] == "MenuItem" and not e["off"]
+             and not any(a["t"] in ("MenuBar", "TitleBar") for a in ancestors(els, e))]
+    enabled = [e["n"] for e in items if e["en"]]
+    if name not in enabled:
+        log(f"menu_to: {name!r} is not an enabled item of {[(e['n'], e['en']) for e in items]}")
+        return False
+    keys(*(["down"] * (enabled.index(name) + 1)), delay=0.3)
+    return True
+
+
+def view_to(name):
+    return menu_to(name)
+
+
+def panel_menu(name, item):
+    """View > Panels > NAME > ITEM (Show, Hide, Float, Dock) from the keyboard."""
+    view_to("Panels")
+    k = SUBMENU["key"]
+    seq = [k, 0.3] + ["down"] * PANELS.index(name) + [k, 0.3]
+    seq += ["down"] * ["Show", "Hide", "Float", "Dock"].index(item) + ["return"]
+    keys(*seq)
+    time.sleep(1.2)
+
+
+def close_window(title):
+    W.ui("close", pid=APP["pid"], window=title)
+    time.sleep(0.5)
+
+
+def float_panel(name, tag):
+    """View > Panels > NAME > Float, or View > Move panel… with Place: Float."""
+    panel_menu(name, "Float")
+    st = wait_for(lambda s: name in frames(s), timeout=4)
+    if name in frames(st):
+        if not SUBMENU["checked"]:
+            SUBMENU["checked"] = True
+            verdict("submenu-right-arrow", "observed",
+                    f"Right on View > Panels opens its submenu and Right on {name} opens the panel's: "
+                    f"View > Panels > {name} > Float with Right and Return floated it", [])
+        return "menu" if SUBMENU["key"] == "right" else "menu-return"
+    if not SUBMENU["checked"]:
+        SUBMENU["checked"] = True
+        ev, _ = snap(f"{tag}-submenu-right")
+        keys("escape", "escape", "escape", "escape")
+        focus_main_compositor()
+        SUBMENU["key"] = "return"
+        panel_menu(name, "Float")
+        st = wait_for(lambda s: name in frames(s), timeout=4)
+        if name in frames(st):
+            verdict("submenu-right-arrow", "failed",
+                    "Right on View > Panels (focused item) does not open its submenu, so View > Panels > "
+                    f"{name} > Float with Right did nothing; Return opens the submenus and floats it. The keys "
+                    "reach the menu (Down moves the focus); `ui keys` sends Right with its scan code and the "
+                    "extended-key flag. The rest of the run opens submenus with Return", ev)
+            return "menu-return"
+        SUBMENU["key"] = "right"
+    log(f"{tag}: View > Panels > {name} > Float did not float it; using View > Move panel…")
+    keys("escape", "escape", "escape", "escape")
+    focus_main_compositor()
+    view_to("Move panel…")
+    keys("return", 1.2, "home", *(["down"] * PANELS.index(name)), "tab", "home",
+         *(["down"] * 5), "tab", "space", 1.5)
+    st = wait_for(lambda s: name in frames(s), timeout=4)
+    if "Move panel" in frames(st):
+        close_window("Move panel")
+    return "move-panel" if name in frames(st) else None
+
+
+def f6_walk(n=5, key="f6"):
+    seq = []
+    for _ in range(n):
+        combo(*key.split("+"))
+        time.sleep(0.8)
+        st = uia()
+        seq.append({"focus": st["focus"], "path": st["focusPath"], "active": active_frames(st)})
+    return seq
+
+
+def image_diff(a, b):
+    r = subprocess.run(["magick", "compare", "-metric", "AE", "-fuzz", "2%", str(EVID / a), str(EVID / b), "null:"],
+                       capture_output=True, text=True)
+    try:
+        return int(float(r.stderr.split()[0]))
+    except (ValueError, IndexError):
+        return r.stderr.strip()
+
+
+# ---------------------------------------------------------------- steps
+def step_default():
+    fresh()
+    ev, st = snap("default-arrangement")
+    fr = frames(st)
+    docked = {p["id"]: p["frame"] for p in st["panels"] if p["id"] in ("Video", "Audio", "Line editor", "Grid")}
+    ok = len(fr) == 1 and MAIN in fr and len(docked) == 4 and all(v == MAIN for v in docked.values())
+    pos = {p["id"]: (p["x"], p["y"]) for p in st["panels"]}
+    shape = (ok and pos["Video"][0] < pos["Audio"][0] and pos["Audio"][1] < pos["Line editor"][1]
+             and pos["Grid"][1] > pos["Video"][1])
+    verdict("default-arrangement", "observed" if shape else "failed",
+            f"one window ({list(fr)}); panels {docked}; Video left, Audio over Line editor, Grid below: {bool(shape)}", ev)
+
+
+def step_keyboard_float_dock():
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    set_focus("Line text")
+    keys("end")
+    type_text(" draft")
+    time.sleep(0.8)
+    keys("f6", 0.5)
+    st = uia()
+    before = st["texts"].get("Line text")
+    labels_before = st["labels"]
+    ev0, _ = snap("kbd-0-draft")
+    how = float_panel("Line editor", "kbd")
+    st = wait_for(lambda s: "Line editor" in frames(s))
+    ev1, st = snap("kbd-1-floated")
+    floated = "Line editor" in frames(st) and panel_frame(st, "Line editor") == "Line editor"
+    text_float = st["texts"].get("Line text")
+    verdict("keyboard-float", "observed" if how in ("menu", "menu-return") and floated else "failed",
+            f"View > Panels > Line editor > Float from the keyboard: own window={floated} (floated by {how})", ev0 + ev1)
+    if how == "move-panel":
+        verdict("keyboard-float-move-panel", "observed" if floated else "failed",
+                f"View > Move panel… Place: Float (fallback after the View > Panels path failed): own window {floated}", ev1)
+    if not floated:
+        verdict("keyboard-dock", "not-observable", "the Line editor could not be floated from the keyboard")
+        return
+    verdict("draft-kept-across-float",
+            "observed" if text_float == before and (before or "").endswith(" draft") else "failed",
+            f"Line text before {before!r}, floating {text_float!r}; status {labels_before} -> {st['labels']}", ev0 + ev1)
+    focus_main()
+    panel_menu("Line editor", "Dock")
+    st = wait_for(lambda s: "Line editor" not in frames(s))
+    if "Line editor" in frames(st):
+        log("Dock at the 4th position did not dock; trying the 3rd (disabled items skipped)")
+        keys("escape", "escape", "escape")
+        focus_main()
+        view_to("Panels")
+        k = SUBMENU["key"]
+        keys(k, 0.3, "down", "down", k, 0.3, "down", "down", "return")
+        st = wait_for(lambda s: "Line editor" not in frames(s))
+    ev2, st = snap("kbd-2-docked")
+    docked = "Line editor" not in frames(st) and panel_frame(st, "Line editor") == MAIN
+    verdict("keyboard-dock", "observed" if docked else "failed",
+            f"View > Panels > Line editor > Dock from the keyboard: back in the main window={docked}", ev2)
+    text_dock = st["texts"].get("Line text")
+    verdict("draft-kept-across-dock", "observed" if docked and text_dock == before else "failed",
+            f"Line text after docking {text_dock!r}; status {st['labels']}", ev2)
+
+
+def step_f6_floating():
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    how = float_panel("Line editor", "f6")
+    ev0, st = snap("f6-0-after-float")
+    after_float = {"active": active_frames(st), "focus": st["focusPath"]}
+    walk_a = f6_walk(4)
+    ev1, _ = snap("f6-1-after-f6-from-float")
+    focus_main_compositor()
+    st = uia()
+    start_b = {"active": active_frames(st), "focus": st["focusPath"]}
+    walk_b = f6_walk(5)
+    back = f6_walk(3, "shift+f6")
+    ev2, st = snap("f6-2-walk-from-main")
+    (EVID / "f6-floating.json").write_text(json.dumps(
+        {"floated_by": how, "after_float": after_float, "f6_after_float": walk_a, "main_focused": start_b,
+         "f6_from_main": walk_b, "shift_f6": back}, indent=1, ensure_ascii=False))
+    reached_a = [panel_of(w["path"]) for w in walk_a]
+    reached_b = [panel_of(w["path"]) for w in walk_b]
+    float_active_b = any("Line editor" in w["active"] for w in walk_b)
+    verdict("focus-after-float", "observed" if after_float["focus"] else "failed",
+            f"floated by {how}; then active windows {after_float['active']}, focused object {after_float['focus']}", ev0)
+    verdict("f6-from-floating-panel", "observed" if any(x and x != "Line editor" for x in reached_a) else "failed",
+            f"F6 x4 right after Float reached {reached_a} (active {[w['active'] for w in walk_a]})", ev1)
+    verdict("f6-into-floating-panel", "observed" if "Line editor" in reached_b and float_active_b else "failed",
+            f"main window brought to the foreground with `ui focus` (focus {start_b['focus']}); F6 x5 reached {reached_b} "
+            f"(active {[w['active'] for w in walk_b]}); Shift+F6 x3 {[panel_of(w['path']) for w in back]}",
+            ev2 + ["f6-floating.json"])
+    for _ in range(6):
+        if panel_of(uia()["focusPath"]) == "Line editor":
+            break
+        combo("f6")
+        time.sleep(0.8)
+    in_float = panel_of(uia()["focusPath"]) == "Line editor"
+    combo("ctrl", "shift", "h")
+    st = wait_for(lambda s: any(f["name"].startswith("History") for f in s["frames"]))
+    ev3, st = snap("ctrl-shift-h-from-floating")
+    hist = any(f["name"].startswith("History") for f in st["frames"])
+    verdict("shortcut-from-floating-panel", ("observed" if hist else "failed") if in_float else "not-observable",
+            f"focus in the floating Line editor: {in_float}; Ctrl+Shift+H opened History: {hist}", ev3)
+    keys("escape")
+
+
+def window_combos(st, frame):
+    """The combo boxes of one window (the Line editor's Style, Actor and
+    Effect, empty, are in the main window)."""
+    els = st.get("elements") or []
+    return {e["n"]: e["val"] or next((c["val"] or c["n"] for c in els if c["p"] == e["i"] and c["t"] in ("Text", "Edit")), None)
+            for e in els if e["t"] == "ComboBox" and not e["off"] and frame_id(e["win"]) == frame}
+
+
+def step_move_panel():
+    fresh()
+    view_to("Move panel…")
+    keys("return", 1.2)
+    st = wait_for(lambda s: "Move panel" in frames(s))
+    combos_open = window_combos(st, "Move panel")
+    ev0, st = snap("move-panel-0-open", extra="# combo boxes\n" + json.dumps(combos_open, ensure_ascii=False))
+    if "Move panel" not in frames(st):
+        verdict("keyboard-move-panel", "failed", "View > Move panel… did not open the placement window", ev0)
+        return
+    verdict("move-panel-defaults", "observed" if combos_open and all(v for v in combos_open.values()) else "failed",
+            f"placement window on open (Grid focused): {combos_open}", ev0)
+    # Panel: Grid -> Audio (Up x2); Place: Left of (Down); Next to: Grid (Up x6, Down x3); Move.
+    keys("up", "up", "tab", "down", "tab", *(["up"] * 6), *(["down"] * 3), 0.3)
+    combos_set = window_combos(uia(), "Move panel")
+    keys("tab", "space", 1.5)
+    ev1, st = snap("move-panel-1-left-of-grid", extra="# combo boxes before Move\n" + json.dumps(combos_set, ensure_ascii=False))
+    pos = {p["id"]: p for p in st["panels"]}
+    a, g = pos.get("Audio"), pos.get("Grid")
+    # D3: side by side their headers share a row (Audio's a title bar, the
+    # Grid's a tab bar, whose content starts 8 lower), as in the Linux gate.
+    ah = next((t for t in find(st, "TitleBar", "Audio") if frame_id(t["win"]) == MAIN), None)
+    gh = next((t for t in find(st, "TabItem", "Grid") if frame_id(t["win"]) == MAIN), None)
+    ok = a and g and a["frame"] == g["frame"] == MAIN and a["x"] < g["x"] and ah and gh and abs(ah["y"] - gh["y"]) < 3
+    verdict("keyboard-move-panel", "observed" if ok else "failed",
+            f"Move panel ({combos_set}) -> Audio {a and (a['x'], a['y'], a['w'], a['h'])} header "
+            f"{ah and (ah['x'], ah['y'], ah['w'], ah['h'])}, Grid {g and (g['x'], g['y'], g['w'], g['h'])} header "
+            f"{gh and (gh['x'], gh['y'], gh['w'], gh['h'])}; focus {st['focusPath']}", ev0 + ev1)
+    close_window("Move panel")
+
+
+def title_point(st, pid, frame_name, dx=120):
+    """A point on PID's title bar, DX px in from its left edge: the UIA
+    TitleBar KDDockWidgets exposes (named after the panel), else the row of
+    its Float/Dock button, else (neither found) the window's native caption."""
+    tb = next((t for t in st.get("elements") or [] if t["t"] == "TitleBar" and not t["off"]
+               and panel_id(t["n"]) == pid and frame_id(t["win"]) == frame_name), None)
+    if tb:
+        return tb["x"] + dx, tb["y"] + tb["h"] // 2, "UIA TitleBar"
+    p = next((q for q in st["panels"] if q["id"] == pid and q["frame"] == frame_name), None)
+    btn = next((b for n in (f"Float {pid}", f"Dock {pid}") for b in find(st, "Button", n)
+                if frame_id(b["win"]) == frame_name), None)
+    if btn and p:
+        return p["x"] + dx, btn["y"] + btn["h"] // 2, "title-bar button row"
+    f = frames(st).get(frame_name)
+    if f:
+        return f["x"] + dx, f["y"] + 12, "window caption"
+    return None
+
+
+def title_ref(st, pid, frame_name):
+    """(automationId, name, window hwnd) of PID's UIA title bar in FRAME_NAME, for `ui doubleclick`."""
+    tb = next((t for t in st.get("elements") or [] if t["t"] == "TitleBar" and not t["off"]
+               and panel_id(t["n"]) == pid and frame_id(t["win"]) == frame_name), None)
+    f = frames(st).get(frame_name)
+    return (tb["id"], tb["n"], f"hwnd:{f['hwnd']}") if tb and f else None
+
+
+def calibrate_pointer():
+    """Where the guest cursor lands (`ui calibrate`) on two targets per
+    monitor, with the tablet mapped over the whole desktop (virtual) and over
+    the primary monitor: the mapping that hits the targets is used."""
+    global POINTER_MAP
+    mons = monitors()
+    points = []
+    for m in mons:
+        for fx, fy in ((0.25, 0.25), (0.75, 0.75)):
+            x, y = m["x"] + int(m["w"] * fx), m["y"] + int(m["h"] * fy)
+            for mapping in ("virtual", "primary"):
+                r = W.ui("calibrate", point=f"{x},{y}", map=mapping)
+                off = r.get("offset") or {}
+                points.append({"monitor": m["device"], "map": mapping, "target": [x, y], "cursor": r.get("actual"),
+                               "off": abs(off.get("x", 9999)) + abs(off.get("y", 9999))})
+    hits = {mp: [p for p in points if p["map"] == mp and p["off"] <= 4] for mp in ("virtual", "primary")}
+    POINTER_MAP = max(hits, key=lambda mp: len(hits[mp]))
+    reachable = {p["monitor"] for p in hits[POINTER_MAP]}
+    unreachable = [m["device"] for m in mons if m["device"] not in reachable]
+    (EVID / "pointer-calibration.json").write_text(json.dumps(
+        {"monitors": mons, "points": points, "map": POINTER_MAP, "unreachable": unreachable}, indent=1))
+    return mons, points, reachable, unreachable
+
+
+def step_pointer():
+    """With real pointer input (the VM's HID tablet): the header's ⋯ menu, double-click on headers (a title
+    bar, a tab), drag-to-dock with the drop highlight, and a floating window's move and resize."""
+    fresh()
+    # The main window opens 1280x800, larger than the 1024x768 primary, and
+    # the tablet reaches the primary only: maximized, its title bars are there.
+    focus_main_compositor()
+    keys("win+up", 1.0)
+    mons, points, reachable, unreachable = calibrate_pointer()
+    used = [p for p in points if p["map"] == POINTER_MAP and p["monitor"] in reachable]
+    off = [p["off"] for p in used]
+    log("tablet calibration:", POINTER_MAP, off, "unreachable", unreachable)
+    verdict("pointer-calibration", "observed" if off and max(off) <= 4 else "failed",
+            f"`ui calibrate` with the tablet mapped over the {POINTER_MAP} area: the guest cursor landed {off} px "
+            f"(|dx|+|dy|) from the targets on {sorted(reachable)}; not reachable with either mapping: {unreachable} "
+            "(Windows maps the absolute HID pointer to the primary monitor) (pointer-calibration.json)",
+            ["pointer-calibration.json"])
+    st = uia()
+    btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == MAIN), None)
+    if not btn:
+        verdict("pointer-menu-undock", "not-observable", "no 'Audio options' button (the header's ⋯) found")
+        return
+    tx, ty = btn["x"] + btn["w"] // 2, btn["y"] + btn["h"] // 2
+    pointer([(tx, ty)])
+    st = wait_for(lambda s: "Undock" in s["popupMenuItems"], timeout=4)
+    ev0, st = snap("ptr-1-menu-open")
+    items = menu_items(st)
+    undock = next((e for e in find(st, "MenuItem", "Undock")), None)
+    if undock:
+        pointer([(undock["x"] + undock["w"] // 2, undock["y"] + undock["h"] // 2)])
+        time.sleep(1.2)
+    st = wait_for(lambda s: "Audio" in frames(s))
+    ev, st = snap("ptr-1-undocked")
+    verdict("pointer-menu-undock", "observed" if undock and "Audio" in frames(st) else "failed",
+            f"tablet click on the Audio header's ⋯ ('Audio options' at {tx},{ty}) opened {items}; a click on "
+            f"Undock: own window={'Audio' in frames(st)}", ev0 + ev + ["pointer-calibration.json"])
+    # Double-click the docked Video title bar: floats; double-click its floating title bar: docks.
+    pt = title_point(st, "Video", MAIN)
+    dfloat, redock, ev1, ev2, how1, how2, gaps = False, False, [], [], None, None, []
+    if pt:
+        vx, vy, _ = pt
+        st, how1, g1 = double_click_until(vx, vy, lambda s: "Video" in frames(s), title_ref(st, "Video", MAIN))
+        gaps.append(g1)
+        ev1, st = snap("ptr-2-dblclick-float")
+        dfloat = "Video" in frames(st)
+    if dfloat:
+        pt2 = title_point(st, "Video", "Video")
+        if pt2:
+            fx, fy, where = pt2
+            log("floating Video title at", fx, fy, where)
+            st, how2, g2 = double_click_until(fx, fy, lambda s: "Video" not in frames(s), title_ref(st, "Video", "Video"))
+            gaps.append(g2)
+            ev2, st = snap("ptr-3-dblclick-redock")
+            redock = "Video" not in frames(st)
+    verdict("pointer-dblclick-float-redock", "observed" if dfloat and redock else "failed",
+            f"double-click on the docked Video title at {pt}: floated={dfloat} (by {how1}); double-click its "
+            f"floating title: redocked={redock} (by {how2}); tablet attempts, seconds between the two clicks' "
+            f"calls: {gaps}", ev1 + ev2)
+    # Drag the floating Audio panel by its title onto the Grid's centre (on
+    # Windows the whole header is the engine's drag since 2026-10-15; the part
+    # right of the title is pointer_floating_move_resize's).
+    st = uia()
+    src = title_point(st, "Audio", "Audio", dx=30)
+    grid = panel(st, "Grid")
+    if not src or not grid or grid["frame"] != MAIN:
+        verdict("pointer-drag-dock", "not-observable", f"could not locate the floating Audio window ({src}) or the Grid")
+        return
+    sx, sy, where = src
+    gx, gy = grid["x"] + grid["w"] // 2, grid["y"] + grid["h"] // 2 - 15
+    try:
+        # Pressed on the title, along to the Grid's centre in 30 steps, a small
+        # wiggle there, and held while the drop indicators are captured.
+        pointer([(sx, sy)], hold=True)
+        time.sleep(0.25)
+        pointer([(sx, sy), (gx + 3, gy + 3), (gx, gy)], button="none", steps=30, delayMs=40)
+        time.sleep(0.7)
+        ev3, _ = snap("ptr-4-drag-over-grid")  # the drop indicators, button still held
+    finally:
+        release()
+        time.sleep(1.5)
+        pointer([(gx + 5, gy + 5)], button="none")
+    ev4, st = snap("ptr-5-dropped")
+    docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == MAIN
+    verdict("pointer-drag-dock", "observed" if docked else "failed",
+            f"tablet drag of floating Audio by its title ({where}) from {sx},{sy} to the Grid centre {gx},{gy} and "
+            f"release: docked={docked}, windows {list(frames(st))} (drop highlight: ptr-4-drag-over-grid.png)", ev3 + ev4)
+    pointer_tab_dblclick()
+    pointer_floating_move_resize()
+
+
+def menu_items(st):
+    """The open menu's items with their enabled state ("Undock", "Close (disabled)", ...)."""
+    out = []
+    for e in st.get("elements") or []:
+        if e["t"] == "MenuItem" and not e["off"] and e["n"] in st["popupMenuItems"]:
+            out.append(e["n"] + ("" if e["en"] else " (disabled)"))
+    return out
+
+
+def pointer_tab_dblclick():
+    """D3: a double-click on a tab (the Grid's one-tab bar) floats the panel and one on its floating tab docks it."""
+    st = uia()
+    tab = next((t for t in find(st, "TabItem", "Grid") if frame_id(t["win"]) == MAIN), None)
+    if not tab:
+        verdict("pointer-dblclick-tab", "not-observable", "no 'Grid' tab in the main window")
+        return
+    x, y = tab["x"] + 18, tab["y"] + tab["h"] // 2
+    st, how1, g1 = double_click_until(x, y, lambda s: "Grid" in frames(s))
+    ev1, st = snap("ptr-6-dblclick-tab-float")
+    floated = "Grid" in frames(st)
+    how2, g2, docked, ev2 = None, [], False, []
+    if floated:
+        tab = next((t for t in find(st, "TabItem", "Grid") if frame_id(t["win"]) == "Grid"), None)
+        if tab:
+            st, how2, g2 = double_click_until(tab["x"] + 18, tab["y"] + tab["h"] // 2, lambda s: "Grid" not in frames(s))
+        ev2, st = snap("ptr-7-dblclick-tab-dock")
+        docked = "Grid" not in frames(st) and panel_frame(st, "Grid") == MAIN
+    verdict("pointer-dblclick-tab", "observed" if floated and docked else "failed",
+            f"double-click on the Grid's tab at {x},{y}: floated={floated} (by {how1}); on its floating tab: "
+            f"docked={docked} (by {how2}); tablet gaps {g1} {g2}", ev1 + ev2)
+
+
+def shadow_check(png, f, mons):
+    """The drawn shadow on screen: around the floating window's frame (its
+    window rectangle less 8 px), the outermost ring is the background
+    showing through (the window is transparent there), not black, and the
+    ring next to the frame is a little darker than the background."""
+    from PIL import Image
+    ox = min(m["x"] for m in mons)
+    oy = min(m["y"] for m in mons)
+    img = Image.open(EVID / png).convert("RGB")
+    x0, y0, x1, y1 = f["x"] - ox, f["y"] - oy, f["x"] - ox + f["w"] - 1, f["y"] - oy + f["h"] - 1
+
+    def mean(points):
+        px = [img.getpixel(p) for p in points if 0 <= p[0] < img.width and 0 <= p[1] < img.height]
+        return round(sum(sum(c) / 3 for c in px) / len(px), 1) if px else None
+    ys = range(y0 + 20, y1 - 20, 7)
+    outside = mean([(x0 - 3, y) for y in ys] + [(x1 + 3, y) for y in ys])
+    outer = mean([(x0, y) for y in ys] + [(x1, y) for y in ys])
+    inner = mean([(x0 + 7, y) for y in ys] + [(x1 - 7, y) for y in ys])
+    frame = mean([(x0 + 8, y) for y in ys] + [(x1 - 8, y) for y in ys])
+    crop = png.replace(".png", "-shadow.png")
+    img.crop((max(0, x0 - 24), max(0, y0 - 24), min(img.width, x1 + 25), min(img.height, y0 + 120))).save(EVID / crop)
+    ok = (outside is not None and outer is not None and abs(outer - outside) <= 12 and outer > 8
+          and inner is not None and inner <= outside)
+    return ok, {"background": outside, "outermost ring": outer, "ring by the frame": inner, "frame line": frame}, crop
+
+
+def pointer_floating_move_resize():
+    """D3: a floating panel is a borderless tool window (no caption or system
+    frame) with a drawn shadow; dragging its header's title moves it (the
+    engine's drag), dragging the header right of its title shows the drop
+    highlight and docks it as the title does (on Windows the whole header is
+    the engine's drag: the owner's choice of 2026-10-15, as Snap never takes
+    the tool window; until then that part was the window system's move),
+    dragging the shadow resizes it (startSystemResize)."""
+    placed = narrow_main()
+    log("main window on the left:", placed)
+    try:
+        time.sleep(1.0)
+        mons = monitors()
+        focus_main_compositor()
+        float_panel("Audio", "move")
+        st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
+        st = uia(dpi=True)
+        fa = frames(st).get("Audio")
+        if not fa:
+            for item in ("floating-borderless", "floating-shadow", "floating-move", "floating-free-part-docks",
+                         "floating-resize"):
+                verdict(item, "not-observable", "Audio did not float")
+            return
+        styles = next((w for w in st["windowInfo"] if w["hwnd"] == fa["hwnd"]), {})
+        style, ex = styles.get("style", 0), styles.get("exStyle", 0)
+        caption, thick, tool = (style & 0x00C00000) == 0x00C00000, bool(style & 0x00040000), bool(ex & 0x80)
+        system_bar = [e["path"] for e in st["elements"] if e["win"] == "Audio" and e["t"] == "TitleBar"
+                      and panel_id(e["n"]) != "Audio"]
+        ev0, st = snap("ptr-8-floating", extra="# window styles\n" + json.dumps(styles))
+        verdict("floating-borderless", "observed" if not caption and not thick and tool and not system_bar else "failed",
+                f"floating Audio window style {style:#x} (WS_CAPTION {caption}, WS_THICKFRAME {thick}), ex style "
+                f"{ex:#x} (WS_EX_TOOLWINDOW {tool}); system title bars in UIA: {system_bar}", ev0)
+        # Move: the header's title (the engine's drag; the free part starts
+        # 48 px in, logical) dragged over bare desktop, right of the main window.
+        src = title_point(st, "Audio", "Audio", dx=30)
+        main = frames(st).get(MAIN)
+        prim = next(m for m in mons if m["primary"])
+        left = (main["x"] + main["w"] if main else prim["x"] + 480) + 30
+        sx, sy, where = src
+        tx, ty = left + (sx - fa["x"]), prim["y"] + 40 + (sy - fa["y"])
+        try:
+            pointer([(sx, sy)], hold=True)
+            time.sleep(0.25)
+            pointer([(sx, sy), (tx + 3, ty + 3), (tx, ty)], button="none", steps=25, delayMs=40)
+            time.sleep(0.5)
+        finally:
+            release()
+            time.sleep(1.2)
+        st = uia()
+        fb = frames(st).get("Audio")
+        want = (fa["x"] + tx - sx, fa["y"] + ty - sy)
+        moved = bool(fb) and abs(fb["x"] - want[0]) <= 6 and abs(fb["y"] - want[1]) <= 6
+        ev1, st = snap("ptr-9-floating-moved")
+        if fb:
+            ok, shades, crop = shadow_check(ev1[0], fb, mons)
+            verdict("floating-shadow", "observed" if ok else "failed",
+                    f"over the desktop, mean grey left and right of the frame {shades}: the background shows "
+                    f"through the outer ring (not black) and the ring by the frame is darker ({crop})", ev1 + [crop])
+        verdict("floating-move", "observed" if moved else "failed",
+                f"tablet drag of the floating Audio header ({where}) from {sx},{sy} to {tx},{ty} over the desktop: "
+                f"window {fa['x']},{fa['y']} -> {fb and (fb['x'], fb['y'])} (expected {want}), still floating "
+                f"{bool(fb)}", ev1)
+        if not fb:
+            verdict("floating-resize", "not-observable", "the floating Audio window is gone after the move")
+            return
+        # The header right of its title, just left of its ⋯: the engine's drag
+        # as from the title (the whole header since 2026-10-15; until then the
+        # window system's move, which never docked, and the owner's first drag
+        # to dock on real hardware started there). Dragged onto the Grid's
+        # centre and held for the drop highlight, then released: it docks.
+        # Floated again for the items below.
+        btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
+        grid = panel(st, "Grid")
+        if btn and grid and grid["frame"] == MAIN:
+            sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
+            # The centre of the Grid's visible part (before decision 63 the
+            # Grid ran on past the narrowed main window's right edge, cut off).
+            mw = frames(st).get(MAIN) or {"x": grid["x"], "w": grid["w"]}
+            vx0, vx1 = max(grid["x"], mw["x"]), min(grid["x"] + grid["w"], mw["x"] + mw["w"])
+            gx, gy = (vx0 + vx1) // 2, grid["y"] + grid["h"] // 2 - 15
+            try:
+                pointer([(sx, sy)], hold=True)
+                time.sleep(0.25)
+                pointer([(sx, sy), (gx + 3, gy + 3), (gx, gy)], button="none", steps=30, delayMs=40)
+                time.sleep(0.7)
+                evh, _ = snap("ptr-9-free-part-over-grid")  # the drop highlight, button still held
+            finally:
+                release()
+                time.sleep(1.5)
+                pointer([(gx + 5, gy + 5)], button="none")
+            ev, st = snap("ptr-9-free-part-docked")
+            docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == MAIN
+            verdict("floating-free-part-docks", "observed" if docked else "failed",
+                    f"tablet drag of the floating Audio header right of its title (just left of its ⋯) from "
+                    f"{sx},{sy} to the Grid centre {gx},{gy} and release: docked={docked}, windows {list(frames(st))} "
+                    f"(drop highlight: ptr-9-free-part-over-grid.png)", evh + ev)
+            if docked:
+                focus_main_compositor()
+                float_panel("Audio", "move")
+                st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
+            fb = frames(st).get("Audio") or fb
+        else:
+            verdict("floating-free-part-docks", "not-observable",
+                    f"the floating Audio header's ⋯ ({bool(btn)}) or the docked Grid ({grid}) is not in UIA")
+        # The floating header's ⋯ by the tablet: its menu (Main.qml's, in the
+        # main window) opens under the button, in the floating panel's place.
+        btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
+        dock_item, ev2 = None, []
+        if btn:
+            pointer([(btn["x"] + btn["w"] // 2, btn["y"] + btn["h"] // 2)])
+            st = wait_for(lambda s: "Dock" in s["popupMenuItems"], timeout=4)
+            ev2, st = snap("ptr-9-floating-menu")
+            dock_item = next(iter(find(st, "MenuItem", "Dock")), None)
+            keys("escape", 0.5)
+        below = bool(btn and dock_item) and btn["y"] + btn["h"] - 4 <= dock_item["y"] <= btn["y"] + btn["h"] + 80 \
+            and abs(dock_item["x"] - btn["x"]) <= 320
+        verdict("floating-menu-position", "observed" if below else "failed",
+                f"tablet click on the floating Audio's ⋯ {btn and (btn['x'], btn['y'], btn['w'], btn['h'])}: its "
+                f"menu's Dock item at {dock_item and (dock_item['x'], dock_item['y'])} (expected just below the "
+                f"button); menu {menu_items(st) if btn else None}", ev2)
+        # Resize: the left edge (in the shadow) 90 px out, then the top edge 30 px up.
+        shots, out = [], []
+        top_x = max(fb["x"] + 30, min(fb["x"] + fb["w"] // 2, prim["x"] + prim["w"] - 20))
+        for edge, (px, py), (dx, dy) in (("left", (fb["x"] + 4, fb["y"] + fb["h"] // 2), (-90, 0)),
+                                         ("top", (top_x, fb["y"] + 4), (0, -30))):
+            before = frames(uia()).get("Audio")
+            try:
+                pointer([(px, py)], hold=True)
+                time.sleep(0.3)
+                pointer([(px, py), (px + dx, py + dy)], button="none", steps=15, delayMs=40)
+                time.sleep(0.4)
+            finally:
+                release()
+                time.sleep(1.2)
+            after = frames(uia()).get("Audio")
+            out.append({"edge": edge, "pressed": [px, py], "by": [dx, dy],
+                        "before": before and [before["x"], before["y"], before["w"], before["h"]],
+                        "after": after and [after["x"], after["y"], after["w"], after["h"]]})
+            ev, _ = snap(f"ptr-10-resized-{edge}")
+            shots += ev
+        grew = [abs((o["after"][2] - o["before"][2]) - abs(o["by"][0])) <= 6
+                and abs((o["after"][3] - o["before"][3]) - abs(o["by"][1])) <= 6 if o["before"] and o["after"] else False
+                for o in out]
+        verdict("floating-resize", "observed" if all(grew) else "failed",
+                f"tablet drags on the shadow edges of the floating Audio window: {out}", shots)
+    finally:
+        wide_main()
+
+
+def step_video():
+    if not LAYOUT.get("ep1_ass"):
+        verdict("video-float-redock", "error", "no cfr.mkv media fixture in the VM's build tree (run the test task once)")
+        return
+    fresh(LAYOUT["ep1_ass"])
+    dismiss_notices()
+    uia(do=[{"action": "invoke", "name": "Load associated", "type": "Button", "all": True}])
+    time.sleep(5)
+    focus_main()
+    shots = []
+
+    def state(tag):
+        ev, st = snap(f"video-{tag}")
+        shots.append(ev[0])
+        return ev, " | ".join(f"{n!r} {t!r}" for n, t in st["videoLabels"])
+
+    def step_frames():
+        # The panel's own Next frame button, pressed through UI Automation.
+        uia(do=[{"action": "invoke", "name": "Next frame", "type": "Button", "all": True, "repeat": 3}], settle_ms=1500)
+
+    ev0, l0 = state("0-docked")
+    step_frames()
+    ev1, l1 = state("1-docked-stepped")
+    how = float_panel("Video", "video")
+    time.sleep(2)
+    ev2, l2 = state("2-floating")
+    step_frames()
+    ev3, l3 = state("3-floating-stepped")
+    focus_main()
+    panel_menu("Video", "Dock")
+    st = wait_for(lambda s: "Video" not in frames(s), timeout=4)
+    if "Video" in frames(st):
+        keys("escape", "escape", "escape", "escape")
+        focus_main_compositor()
+        view_to("Panels")
+        k = SUBMENU["key"]
+        keys(k, 0.3, k, 0.3, "down", "down", "return")
+        wait_for(lambda s: "Video" not in frames(s), timeout=4)
+    time.sleep(2)
+    ev4, l4 = state("4-redocked")
+    step_frames()
+    ev5, l5 = state("5-redocked-stepped")
+    diffs = {"docked step": image_diff(shots[0], shots[1]), "floating step": image_diff(shots[2], shots[3]),
+             "redocked step": image_diff(shots[4], shots[5])}
+    applog = "\n".join(app_status()["app_log"])
+    (EVID / "video-labels.txt").write_text(
+        "\n".join(f"{k}: {v}" for k, v in [("0 docked", l0), ("1 docked stepped", l1), ("2 floating", l2),
+                                            ("3 floating stepped", l3), ("4 redocked", l4), ("5 redocked stepped", l5)])
+        + f"\nfloated by: {how}\npixel differences: {diffs}\n\n# app log\n{applog}\n")
+    opened = "No video open" not in l0
+    changed = all(isinstance(v, int) and v > 50 for v in diffs.values())
+    verdict("video-float-redock", "observed" if opened and changed and how else "failed",
+            f"video opened: {opened}; floated by {how}; screen pixels changed by 3 frame steps: {diffs}; "
+            f"labels docked {l1!r} floating {l3!r} redocked {l5!r}",
+            ev0 + ev1 + ev2 + ev3 + ev4 + ev5 + ["video-labels.txt"])
+
+
+def step_persistence():
+    fresh()
+    float_panel("Audio", "persist")
+    ev0, st = snap("persist-0-before-exit")
+    # Close the main window the way a user does: its title bar, then Alt+F4
+    # (WM_CLOSE reaches onClosing, which saves the layout).
+    focus_main_compositor()
+    keys("alt+f4")
+    time.sleep(2.5)
+    status = app_status()
+    gone = not status["alive"]
+    if not gone:
+        log("Alt+F4 did not end the app; ending it after the 5 s layout check")
+        time.sleep(6)
+        app_kill()
+        status = app_status()
+    cfg = "\n".join(status["layout_files"])
+    app_start()
+    st = wait_for(lambda s: "Audio" in frames(s))
+    ev1, st = snap("persist-1-after-restart", extra="# layout files\n" + cfg)
+    floating = "Audio" in frames(st)
+    # The panels left docked come back docked too (the layout saved at the
+    # close had them closed until 2026-10-12: an empty main window).
+    docked = {p["id"]: p["frame"] for p in st["panels"] if p["id"] in ("Video", "Line editor", "Grid")}
+    in_main = len(docked) == 3 and all(v == MAIN for v in docked.values())
+    ok = floating and in_main
+    verdict("layout-persistence", "observed" if ok else "failed",
+            f"main window closed with Alt+F4 (process ended: {gone}); layout files: {cfg.strip()!r}; "
+            f"after restart Audio floating: {floating}; docked in the main window: {docked}", ev0 + ev1)
+
+
+def fullscreen(mode, width=None):
+    env = {"GATE_FULLSCREEN": mode}
+    if width:
+        env["GATE_LEFT_WIDTH"] = width
+    _, lines = W.task("gate-win-fullscreen", env=env)
+    raw = line_value(lines, "FULLSCREEN_RESULT ")
+    return json.loads(raw) if raw else {"error": lines[-10:]}
+
+
+def narrow_main(hidden=("Video", "Line editor")):
+    """The main window on the left at 480 pixels, with bare desktop right of
+    it on the 1024-pixel primary. Since decision 63 (2026-10-16) the main
+    window is at least as large as its docked layout's minimum (1005 x 720
+    with Video, the Line editor and the Grid docked), so the panels in
+    `hidden` are hidden first (View > Panels > NAME > Hide); wide_main() shows
+    them again."""
+    for name in hidden:
+        panel_menu(name, "Hide")
+    return fullscreen("left", width=480)
+
+
+def wide_main(hidden=("Video", "Line editor")):
+    fullscreen("off")
+    for name in hidden:
+        panel_menu(name, "Show")
+
+
+def step_fullscreen():
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    float_panel("Line editor", "fullscreen")
+    # Windows has no compositor fullscreen request for another application's
+    # window and HikariSub has no fullscreen command: the main window is made
+    # borderless over the whole monitor (taskbar included), as a borderless
+    # fullscreen tool does. Windows treats such a window as fullscreen.
+    fs = fullscreen("on")
+    try:
+        time.sleep(1.5)
+        ev0, st0 = snap("fullscreen-0-main-fullscreen", extra="# FULLSCREEN_RESULT\n" + json.dumps(fs))
+        focus_main()
+        walk = f6_walk(5)
+        ev1, st = snap("fullscreen-1-after-f6")
+    finally:
+        restored = fullscreen("off")
+    reached = [panel_of(w["path"]) for w in walk]
+    float_active = any("Line editor" in w["active"] for w in walk)
+    (EVID / "fullscreen-f6.json").write_text(json.dumps({"fullscreen": fs, "walk": walk, "restored": restored},
+                                                        indent=1, ensure_ascii=False))
+    main_reached = [panel_of(w["path"]) for w in walk if w["active"] == [MAIN] and panel_of(w["path"])]
+    verdict("fullscreen-coexistence", "observed" if "Line editor" in reached and float_active and main_reached
+            and not fs.get("caption", True) else "failed",
+            f"main window borderless over the monitor ({fs}) with Line editor floating (windows "
+            f"{list(frames(st0))}); F6 reached {reached}, main-window panels {main_reached}, "
+            f"floating window active at some step: {float_active} (see screenshots: is the floating panel visible "
+            f"above the fullscreen window?)", ev0 + ev1 + ["fullscreen-f6.json"])
+
+
+def step_menu_from_text():
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    set_focus("Line text")
+    st = uia()
+    before = st["texts"].get("Line text")
+    keys("alt+v", 1.0)
+    ev, st = snap("menu-from-text")
+    after = st["texts"].get("Line text")
+    menu_open = bool(st["popupMenuItems"])
+    keys("escape")
+    verdict("menu-mnemonic-from-text-field", "observed" if menu_open and after == before else "failed",
+            f"Alt+V in Line text: a menu open={menu_open} ({st['popupMenuItems'][:6]}); text {before!r} -> {after!r}", ev)
+
+
+def step_test_executables():
+    app_kill()  # the tests' windows need the desktop to themselves
+    job, lines = W.task("gate-win-tests", timeout=3000)
+    text = "\n".join(lines)
+    (EVID / "test-executables.txt").write_text(f"# winix job {job.get('id')} ({job.get('state')})\n{text}\n")
+    exits = re.findall(r"^### (\S+) .*\(exit (.+)\)$", text, re.M)
+    ok = len(exits) == 6 and all(code == "0" for _, code in exits)
+    summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", text))
+    skips = re.findall(r"SKIP\s*:.*", text)
+    # Skips declared as platform limits, each observed for real by another
+    # item (as in the Linux gate): a synthetic drag between windows needs the
+    # offscreen platform (pointer); the window follows the pointer itself only
+    # where the platform declines a system move, and Windows makes none (its
+    # whole header is the engine's drag, floating-free-part-docks); the X11
+    # system move is the Linux gate's. D2's
+    # screenshots run only with HIKARI_SURFACE_SHOT_DIR.
+    known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
+             "the window follows a declined system move only where the platform declines it",
+             "X11 only (the .xvfb run)", "HIKARI_SURFACE_SHOT_DIR is not set",
+             # the floating panel across a real scale change is the dpi step's
+             "the screen's scale changes through the offscreen platform",
+             # and across a real monitor removal the outputs step's
+             "screens come and go through the offscreen platform's configuration")
+    unexpected = [k for k in skips if not any(reason in k for reason in known)]
+    log("tests", exits, summary, skips)
+    verdict("test-executables", "observed" if ok and not unexpected else "failed",
+            f"exits {exits}; {summary}; skips: {skips}", ["test-executables.txt"])
+
+
+def step_nvda():
+    """NVDA (portable, "No speech" synthesizer, io log level) while F6 moves
+    through the panels and a panel is floated from the View menu."""
+    if not LAYOUT.get("nvda_exe"):
+        job, lines = W.task("nvda-setup", timeout=1500)
+        raw = line_value(lines, "NVDA_LAYOUT ")
+        (EVID / "nvda-setup.txt").write_text("\n".join(lines) + "\n")
+        if not raw:
+            verdict("nvda", "error", "nvda-setup did not create the portable copy (nvda-setup.txt)", ["nvda-setup.txt"])
+            return
+        LAYOUT["nvda_exe"] = json.loads(raw)["exe"]
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    nvda_log = LAYOUT["nvda_dir"] + "\\nvda-" + time.strftime("%Y%m%d-%H%M%S") + ".log"
+    W.ui("launch", exe=LAYOUT["nvda_exe"], arguments=[
+        "--minimal", "--replace", "--disable-addons", "--log-level=12", f"--log-file={nvda_log}",
+        f"--config-path={LAYOUT['nvda_config']}"], cwd=LAYOUT["nvda_dir"])
+    time.sleep(10)
+    header_how, ev, st = None, [], {"frames": []}
+    try:
+        focus_main_compositor()
+        f6_walk(4)
+        view_to("Panels")
+        k = SUBMENU["key"]
+        keys(k, 0.6, "down", 0.6, "down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, "return", 2.0)
+        f6_walk(3)
+        ev, st = snap("nvda-0-after-float")
+        # D3: the Grid's tab, Right to its ⋯ button, Space opens the menu,
+        # Down reaches its first item (as the Linux gate's Orca step does).
+        focus_main_compositor()
+        header_how, _ = focus_header_control("TabItem", "Grid", "Grid")
+        keys("right", 0.8, "space", 1.2, "down", 0.8)
+        ev += snap("nvda-1-header-menu")[0]
+        keys("escape", 0.8)
+        time.sleep(2)
+    finally:
+        job, lines = W.task("nvda-output", env={"GATE_NVDA_LOG": nvda_log})
+    s = sections(lines)
+    speech = [l.strip() for l in s.get("speech", []) if l.strip()]
+    (EVID / "nvda-speech.txt").write_text("\n".join(speech) + "\n")
+    (EVID / "nvda-output.txt").write_text("\n".join(lines) + "\n")
+    W.pull(LAYOUT["nvda_dir"] + "\\nvda-last.log", EVID / "nvda.log")
+    got_log = (EVID / "nvda.log").exists()
+    synth = s.get("synth", [])
+    silent = any("silence" in l for l in synth)
+    spoke = [p for p in ("Video", "Audio", "Line editor", "Grid", "Panels", "Float", "Grid options", "Move panel",
+                         "Undock") if any(p in l for l in speech)]
+    evidence = ["nvda-speech.txt", "nvda-output.txt"] + (["nvda.log"] if got_log else []) + ev
+    header_spoken = all(any(p in l for l in speech) for p in ("Grid options", "Move panel"))
+    verdict("nvda-header-menu", "observed" if header_spoken else "failed",
+            f"NVDA spoke the ⋯ button's name and the menu: {header_spoken} ('Grid options', 'Move panel')",
+            ["nvda-speech.txt"])
+    verdict("nvda", "observed" if speech and silent else "failed",
+            f"{len(speech)} speech lines; panel/menu names spoken: {spoke}; synthesizer lines {synth[:3]} "
+            f"(silent: {silent}); floating windows after the menu {list(frames(st))}; the Grid tab reached by "
+            f"{header_how}, then Right and Space on its ⋯ (nvda-speech.txt; full log nvda.log)",
+            evidence)
+    verdict("nvda-float-from-menu", "observed" if "Line editor" in frames(st) else "failed",
+            f"with NVDA running, View > Panels > Line editor > Float from the keyboard: windows {list(frames(st))}", ev)
+
+
+def inside(f, m):
+    """Whether window F's centre lies on monitor M."""
+    cx, cy = f["x"] + f["w"] // 2, f["y"] + f["h"] // 2
+    return m["x"] <= cx < m["x"] + m["w"] and m["y"] <= cy < m["y"] + m["h"]
+
+
+def head_shot(name, monitor):
+    """One monitor's pixels (`ui screenshot --monitor N`; the worker is per-monitor DPI aware)."""
+    out = EVID / f"{name}.png"
+    W.screenshot(out, monitor)
+    return [out.name] if out.exists() else []
+
+
+def step_outputs():
+    """Mixed DPI and monitor removal on the VM's two QXL monitors: a floating
+    panel (Audio) dragged with the real pointer onto the second monitor at
+    150 % (primary 100 %), then that monitor removed from the desktop."""
+    d = displays("extend")
+    mons = d.get("monitors") or []
+    if len(mons) < 2:
+        reason = f"only {len(mons)} monitor(s) on the guest desktop after extending ({d.get('steps')})"
+        for item in ("mixed-dpi", "monitor-removal", "monitor-removal-show-focus"):
+            verdict(item, "not-observable", reason)
+        return
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    try:
+        how = float_panel("Audio", "outputs")
+        st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
+        before = frames(st).get("Audio")
+        # Windows offers 150 % only on a larger mode (about 1920x1200 and up).
+        d2 = displays("extend", scale2=150, second=(1920, 1200))
+        mons = d2.get("monitors") or mons
+        prim = next(m for m in mons if m["primary"])
+        sec = next(m for m in mons if not m["primary"])
+        st = uia()
+        moved_by = None
+        src = title_point(st, "Audio", "Audio", dx=30)
+        if src and before:
+            sx, sy, _ = src
+            tx, ty = sec["x"] + sec["w"] // 3, sec["y"] + 120
+            # Can the tablet reach the second monitor (`ui calibrate` over the whole desktop)?
+            cal = W.ui("calibrate", point=f"{tx},{ty}", map="virtual")
+            off = cal.get("offset") or {}
+            if abs(off.get("x", 9999)) + abs(off.get("y", 9999)) <= 4:
+                try:
+                    W.ui("pointer", path=f"{sx},{sy}", map="virtual", hold=True)
+                    time.sleep(0.25)
+                    W.ui("pointer", path=f"{sx},{sy};{tx},{ty}", map="virtual", button="none", steps=30, delayMs=40)
+                    time.sleep(0.5)
+                finally:
+                    release()
+                    time.sleep(1.5)
+                moved_by = f"tablet drag of its title bar from {sx},{sy} to {tx},{ty}"
+            else:
+                # Windows maps the tablet to the primary only, and a borderless
+                # tool window (D3) takes no Win+Shift+Right. With the main
+                # window on the monitor's left (bare desktop to drop on), the
+                # header's title is dragged (the engine's drag) to the
+                # primary's right edge: the window's centre goes onto the
+                # second monitor.
+                placed = fullscreen("left", width=480)
+                time.sleep(1)
+                st = uia()
+                src = title_point(st, "Audio", "Audio", dx=20)
+                ex, ey = prim["x"] + prim["w"] - 3, prim["y"] + 120
+                if src:
+                    sx, sy, _ = src
+                    try:
+                        pointer([(sx, sy)], hold=True)
+                        time.sleep(0.25)
+                        pointer([(sx, sy), (ex - 3, ey + 3), (ex, ey)], button="none", steps=25, delayMs=40)
+                        time.sleep(0.5)
+                    finally:
+                        release()
+                        time.sleep(1.5)
+                moved_by = (f"a tablet drag of its title from {src and src[:2]} to the primary's right edge {ex},{ey}, "
+                            f"the main window on the left ({placed}); the tablet does not reach the second monitor: "
+                            f"`ui calibrate` {tx},{ty} landed at {cal.get('actual')}")
+        st = wait_for(lambda s: "Audio" in frames(s) and inside(frames(s)["Audio"], sec), timeout=6)
+        st = uia(dpi=True)
+        fa = frames(st).get("Audio")
+        ev0, st = snap("outputs-0-on-scale2", extra="# DISPLAY_RESULT\n" + json.dumps(d2))
+        ev0 += head_shot("outputs-0-monitor2", 1) + head_shot("outputs-0-monitor1", 0)
+        on2 = bool(fa) and inside(fa, sec)
+        ratio = round(fa["w"] / before["w"], 2) if fa and before and before["w"] else None
+        verdict("mixed-dpi", "observed" if on2 and sec.get("dpi") == 144 and fa.get("dpi") == 144 and prim.get("dpi") == 96
+                else "failed",
+                f"floating Audio (floated by {how}) moved by {moved_by} onto {sec['device']} at {sec['dpi']} dpi "
+                f"(primary {prim['device']} at {prim['dpi']}): on it={on2}, window {fa and (fa['x'], fa['y'], fa['w'], fa['h'])}, "
+                f"GetDpiForWindow {fa and fa.get('dpi')} (96 would mean bitmap-scaled by Windows), width x{ratio} of "
+                f"its 100 % width {before and before['w']}; second monitor {sec['w']}x{sec['h']}, scale call {d2.get('scale2')} "
+                "(outputs-0-monitor2.png: that monitor's pixels)", ev0)
+        # Monitor removal with the panel on the second monitor.
+        d3 = displays("detach")
+        left = d3.get("monitors") or []
+        st = wait_for(lambda s: "Audio" in frames(s) and len(left) == 1 and inside(frames(s)["Audio"], left[0]), timeout=8)
+        ev1, st = snap("outputs-1-after-removal", extra="# DISPLAY_RESULT\n" + json.dumps(d3))
+        st = uia(dpi=True)
+        fa = frames(st).get("Audio")
+        back = len(left) == 1 and bool(fa) and inside(fa, left[0])
+        verdict("monitor-removal", "observed" if back else "failed",
+                f"second monitor removed ({d3.get('steps')}; monitors now {[(m['device'], m['x'], m['y'], m['w'], m['h']) for m in left]}): "
+                f"floating Audio present={bool(fa)}, window {fa and (fa['x'], fa['y'], fa['w'], fa['h'])} dpi {fa and fa.get('dpi')}, "
+                f"on the remaining monitor={back}", ev1)
+        focus_main_compositor()
+        panel_menu("Audio", "Show")
+        time.sleep(1)
+        ev2, st = snap("outputs-2-show-after-removal")
+        focused_in = panel_of(st["focusPath"])
+        verdict("monitor-removal-show-focus", "observed" if focused_in == "Audio" else "failed",
+                f"then View > Panels > Audio > Show gives the focus to {focused_in!r} (active windows "
+                f"{active_frames(st)}; focus {st['focusPath']})", ev2)
+    finally:
+        fullscreen("off")  # the main window back where it was, if step moved it
+        r = displays("extend", scale2=100)
+        ok = len(r.get("monitors") or []) == 2 and all(m["dpi"] == 96 and m["w"] == 1024 and m["h"] == 768
+                                                      for m in r["monitors"])
+        (EVID / "outputs-restored.txt").write_text(json.dumps(r, indent=1))
+        verdict("outputs-restored", "observed" if ok else "failed",
+                f"both monitors back at 1024x768 (vm.displays), 100 %, extended: {[(m['device'], m['x'], m['w'], m['h'], m['dpi']) for m in r.get('monitors') or []]}",
+                ["outputs-restored.txt"])
+
+
+def dpi_set(percent):
+    _, lines = W.task("gate-win-dpi", env={"GATE_DPI_PERCENT": percent})
+    raw = line_value(lines, "DPI_RESULT ")
+    return json.loads(raw) if raw else {"error": lines[-10:]}
+
+
+def step_dpi():
+    """The one monitor's display scale changed to 150 % live (a guest setting)
+    with a floating panel, then restored to 100 %. Windows offers 150 % only
+    from about 1920x1200 and stops a 1024x768 monitor at 125 %: the step then
+    observes the live change at the scale the guest took and says so."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    how = float_panel("Line editor", "dpi")
+    ev0, st0 = snap("dpi-0-at-100")
+    res = dpi_set(150)
+    try:
+        after = res.get("after")
+        if not isinstance(after, int) or after <= 100:
+            verdict("dpi-scale-change", "not-observable",
+                    f"the guest did not change its scale without signing out: {res}", ev0)
+            return
+        time.sleep(3)
+        ev1, st = snap(f"dpi-1-at-{after}", extra="# DPI_RESULT\n" + json.dumps(res))
+        kept, how_kept = floating_kept(st0, st, "Line editor", after / 100)
+        verdict("dpi-floating-keeps-size", "observed" if kept else "failed",
+                f"floating Line editor after 100 -> {after} %: {how_kept} (dpi-1-at-{after}.png)", ev0 + ev1)
+        set_focus("Line text")
+        keys("end")
+        type_text(" hidpi")
+        time.sleep(0.8)
+        txt = uia()["texts"].get("Line text")
+        both = MAIN in frames(st) and "Line editor" in frames(st)
+        verdict("dpi-scale-change", "observed" if both and txt and txt.endswith(" hidpi") else "failed",
+                f"scale 100 -> {res.get('after')} % live ({res}); floating Line editor (floated by {how}) and main "
+                f"window still shown: {both}; typing there gives {txt!r} (dpi-1-at-{after}*.png)"
+                + ("" if after == 150 else f"; 150 % asked, the guest took {after} % (the most it offers at this "
+                                           "resolution)"),
+                ev0 + ev1)
+    finally:
+        back = dpi_set(100)
+        time.sleep(3)
+        ev2, st2 = snap("dpi-2-restored", extra="# DPI_RESULT\n" + json.dumps(back))
+        verdict("dpi-restored", "observed" if back.get("after") == 100 else "failed",
+                f"scale restored: {back}", ev2)
+        if back.get("after") == 100 and isinstance(res.get("after"), int) and res["after"] > 100:
+            kept, how_kept = floating_kept(st0, st2, "Line editor", 1.0)
+            verdict("dpi-floating-keeps-size-back", "observed" if kept else "failed",
+                    f"floating Line editor after {res['after']} -> 100 %: {how_kept} (dpi-2-restored.png)", ev0 + ev2)
+
+
+def floating_kept(st0, st1, name, ratio):
+    """A floating panel's window across a scale change: its pixel size grew
+    by the scale's ratio (its size in device-independent pixels kept, within
+    3 px), and its panel fits whole inside it (not cut off): the panel's
+    header and pane together, as wide and as high as UI Automation reports
+    them, within the window's size. Sizes, not places: after a live scale
+    change on the VM's two monitors Qt's UI Automation places some elements
+    of the window by the other monitor's origin (siblings 52 px apart at
+    100 % came out 322 px apart at 125 %, the header left of the window),
+    while their sizes scale as drawn. The places are recorded too."""
+    f0, f1 = frames(st0).get(name), frames(st1).get(name)
+    if not f0 or not f1:
+        return False, f"window {name!r} at 100 %: {bool(f0)}, after: {bool(f1)}"
+    want = (round(f0["w"] * ratio), round(f0["h"] * ratio))
+    sized = abs(f1["w"] - want[0]) <= 3 and abs(f1["h"] - want[1]) <= 3
+    els = [e for e in st1.get("elements") or [] if e["win"] == name and not e["off"]]
+    panes = [e for e in els if e["t"] == "Pane" and panel_id(e["n"]) == panel_id(name)]
+    pane = panes[0] if panes else None
+    bars = [e for e in els if e["t"] == "TitleBar" and e["n"] == name]
+    bar = bars[0] if bars else None
+    high = (pane["h"] if pane else 0) + (bar["h"] if bar else 0)
+    wide = max(pane["w"] if pane else 0, bar["w"] if bar else 0)
+    whole = bool(pane) and wide <= f1["w"] + 1 and high <= f1["h"] + 1
+    placed = bool(pane) and (pane["x"] >= f1["x"] and pane["y"] >= f1["y"]
+                             and pane["x"] + pane["w"] <= f1["x"] + f1["w"] + 1
+                             and pane["y"] + pane["h"] <= f1["y"] + f1["h"] + 1)
+    return sized and whole, (f"window {f0['w']}x{f0['h']} -> {f1['w']}x{f1['h']} (kept would be {want[0]}x{want[1]}): "
+                             f"{sized}; header and panel {wide}x{high} within the window's {f1['w']}x{f1['h']}: "
+                             f"{whole}; UI Automation places the panel at "
+                             f"{pane and (pane['x'], pane['y'], pane['w'], pane['h'])}, the window at "
+                             f"{(f1['x'], f1['y'], f1['w'], f1['h'])} (inside by place: {placed})")
+
+
+def title_bar_shade(png, f, mons):
+    """The mean grey of the window's title bar on screen: a strip of its top
+    20 px, away from the icon and the caption buttons."""
+    from PIL import Image
+    ox = min(m["x"] for m in mons)
+    oy = min(m["y"] for m in mons)
+    img = Image.open(EVID / png).convert("RGB")
+    x0, y0 = max(f["x"], 0) - ox, max(f["y"], 0) - oy
+    x1 = min(f["x"] + f["w"], img.width + ox) - ox
+    px = [img.getpixel((x, y)) for x in range(x0 + 40, max(x0 + 41, x1 - 160), 9) for y in range(y0 + 2, y0 + 20, 3)
+          if 0 <= x < img.width and 0 <= y < img.height]
+    return round(sum(sum(c) / 3 for c in px) / len(px), 1) if px else None
+
+
+def system_theme(light):
+    """The system's app colour scheme (gate.ps1 systemtheme); returns (before, now)."""
+    _, lines = W.task("gate-win-system-theme", env={"GATE_APPS_LIGHT": light})
+    return line_value(lines, "APPS_LIGHT="), line_value(lines, "APPS_LIGHT_NOW=")
+
+
+def step_dark():
+    """K2 on Windows: the title bar of every framed window follows the theme
+    (src/ui/title_bars.h). With the system's apps light: Dark chosen in a
+    fresh profile, then Light chosen; then following the system, its scheme
+    switched dark and light again while HikariSub runs. Each: the title bar
+    as DWM has it (uia.ps1 darkTitleBar) for every window with a caption,
+    and the main window's title bar on screen. The system's scheme is put
+    back at the end."""
+    original, _ = system_theme("status")
+    mons = monitors()
+    WS_CAPTION = 0x00C00000
+
+    def check(tag, item, dark, what):
+        time.sleep(2)
+        ev, _ = snap(f"titlebar-{tag}")
+        st = uia(dpi=True)
+        framed = [w for w in st.get("windowInfo") or [] if (w.get("style") or 0) & WS_CAPTION == WS_CAPTION]
+        flags = {w.get("name"): w.get("darkTitleBar") for w in framed}
+        main = frames(st).get(MAIN)
+        shade = title_bar_shade(ev[0], main, mons) if main else None
+        on_screen = shade is not None and (shade < 90 if dark else shade > 170)
+        ok = bool(framed) and all(v == (1 if dark else 0) for v in flags.values()) and on_screen
+        verdict(item, "observed" if ok else "failed",
+                f"{what}: title bars {'dark' if dark else 'light'} expected; DWMWA_USE_IMMERSIVE_DARK_MODE per framed "
+                f"window {flags}; the main window's title bar on screen grey {shade} ({ev[0]})", ev)
+
+    def start(theme, follow):
+        app_kill()
+        job, lines = W.task("gate-win-fresh")
+        for l in lines:
+            if l.startswith("set aside"):
+                log(l)
+                if not PROFILE["original"]:
+                    PROFILE["original"] = l.split(" -> ", 1)[1].rsplit("\\", 1)[0]
+        if job.get("state") != "succeeded":
+            raise RuntimeError("gate-win-fresh failed (the profile was not set aside): " + " | ".join(lines[-6:]))
+        _, lines = W.task("gate-win-theme", env={"GATE_THEME": theme, "GATE_FOLLOW": follow})
+        log("theme:", line_value(lines, "THEME_RESULT "))
+        app_start(LAYOUT["episode"])
+        dismiss_notices()
+
+    try:
+        log("system apps light before:", original, "now:", system_theme("1"))
+        start("dark", "false")
+        check("0-dark", "titlebar-dark-chosen", True, "Dark chosen (follow the system off), the system light")
+        start("light", "false")
+        check("1-light", "titlebar-light-chosen", False, "Light chosen, the system light")
+        start("dark", "true")
+        check("2-follow-light", "titlebar-follow-system", False, "following the system, the system light")
+        log("system dark:", system_theme("0"))
+        check("3-follow-dark-live", "titlebar-follow-system-live", True,
+              "following the system, the system switched to dark while HikariSub runs")
+        log("system light:", system_theme("1"))
+        check("4-follow-light-live", "titlebar-follow-system-live-back", False,
+              "following the system, the system switched back to light")
+    finally:
+        app_kill()
+        if original in ("0", "1"):
+            log("system theme restored:", system_theme(original))
+
+
+def step_a11y():
+    """What a screen reader finds of the docking controls and the Grid through
+    UI Automation; the buttons pressed through UIA float and dock a panel."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    st = uia()
+    els = st.get("elements") or []
+    tree = "\n".join("  " * e["d"] + f"[{e['t']}] {e['n']!r} id={e['id']!r} @{e['x']},{e['y']} {e['w']}x{e['h']}"
+                     + (" off" if e["off"] else "") + ("" if e["en"] else " disabled")
+                     + (f" val={e['val']!r}" if e["val"] is not None else "") + (f" hwnd={e['hw']}" if e["hw"] else "")
+                     + f"  <{e['win']}>" for e in els)
+    (EVID / "a11y-tree.txt").write_text(tree + "\n")
+    table = find(st, "Table", "Subtitle lines") or find(st, "DataGrid", "Subtitle lines")
+    grid_panel = [p for p in st["panels"] if p["id"] == "Grid"]
+    in_grid = bool(table) and panel_of(table[0]["path"]) == "Grid"
+    verdict("grid-accessible", "observed" if in_grid and grid_panel else "failed",
+            f"table 'Subtitle lines': {[t['path'] for t in table[:1]]}; Grid panel: {grid_panel[:1]}", ["a11y-tree.txt"])
+    # D3: one header per group. A lone panel's is a title bar named after it,
+    # tabs sit in a tab list ("Panels"), and the ⋯ button is "<panel> options".
+    headers = {n: [e["path"] for e in find(st, "TitleBar", n)] for n in ("Video", "Audio", "Line editor")}
+    grid_tab = [e["path"] for e in find(st, "TabItem", "Grid")]
+    buttons = {n: bool(find(st, "Button", f"{n} options")) for n in ("Video", "Audio", "Line editor", "Grid")}
+    old = [n for n in ("Float Audio", "Close Audio", "Float Grid", "Close Grid") if find(st, "Button", n)]
+    # The header's title is its name only once: no Text repeats it inside the header.
+    repeats = [el_path(els, e) for e in els if e["t"] == "Text" and e["n"] in ("Video", "Audio", "Line editor", "Grid")
+               and any(a["t"] in ("TitleBar", "Tab", "TabItem") for a in ancestors(els, e))]
+    (EVID / "a11y-headers.txt").write_text(json.dumps({"title bars": headers, "grid tab": grid_tab, "menu buttons": buttons,
+                                                       "old float/close buttons": old, "repeated titles": repeats},
+                                                      indent=1, ensure_ascii=False))
+    verdict("headers-accessible",
+            "observed" if all(headers.values()) and grid_tab and all(buttons.values()) and not old and not repeats
+            else "failed",
+            f"title bars { {n: bool(v) for n, v in headers.items()} }; Grid tab {grid_tab[:1]}; ⋯ buttons {buttons}; "
+            f"float/close buttons left over: {old}; titles repeated as text: {repeats}", ["a11y-headers.txt", "a11y-tree.txt"])
+    # The ⋯ button and the menu's items pressed through the Invoke pattern.
+    st = uia(do=[{"action": "invoke", "name": "Audio options", "type": "Button", "after": 1000}])
+    by_invoke = bool(st["actions"]) and st["actions"][0].get("done") == ["Invoke"]
+    items = menu_items(st)
+    ev0, _ = snap("a11y-0-audio-menu")
+    st = uia(do=[{"action": "invoke", "name": "Undock", "type": "MenuItem"}])
+    undock = st["actions"]
+    st = wait_for(lambda s: "Audio" in frames(s))
+    floated = "Audio" in frames(st)
+    ev1, st = snap("a11y-1-undocked-by-uia")
+    st = uia(do=[{"action": "invoke", "name": "Audio options", "type": "Button", "window": "Audio", "after": 1000}])
+    items_floating = menu_items(st)
+    uia(do=[{"action": "invoke", "name": "Dock", "type": "MenuItem"}])
+    st = wait_for(lambda s: "Audio" not in frames(s))
+    docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == MAIN
+    want = ["Move panel…", "Undock", "Close"]
+    verdict("panel-menu-accessible",
+            "observed" if by_invoke and items == want and floated and "Dock" in items_floating and docked else "failed",
+            f"'Audio options' pressed through Invoke: {by_invoke}; its menu {items} (expected {want}); 'Undock' "
+            f"invoked ({undock}) -> own window={floated}; the floating panel's menu {items_floating}; 'Dock' "
+            f"invoked -> docked={docked}", ev0 + ev1)
+    focus_main()
+    panel_menu("Timing", "Show")
+    time.sleep(1)
+    st = uia()
+    # Timing is titled Shift times (its tab, its "⋯" and its window).
+    tabs = {n: find(st, "TabItem", n) for n in ("Line editor", "Shift times")}
+    lists = [el_path(st["elements"], e) for e in st["elements"] if e["t"] == "Tab" and e["n"] == "Panels" and not e["off"]]
+    tab_button = bool(find(st, "Button", "Shift times options"))
+    ev2, st = snap("a11y-2-tabs")
+    uia(do=[{"action": "invoke", "name": "Shift times options", "type": "Button", "after": 1000},
+            {"action": "invoke", "name": "Undock", "type": "MenuItem"}])
+    st = wait_for(lambda s: "Shift times" in frames(s))
+    tab_floated = "Shift times" in frames(st)
+    ev3, st = snap("a11y-3-undock-timing-tab")
+    (EVID / "a11y-tabs.txt").write_text(json.dumps(
+        {"tabs": {n: [h["path"] for h in hits] for n, hits in tabs.items()}, "tab lists": lists,
+         "menu button": tab_button}, indent=1, ensure_ascii=False))
+    verdict("tabs-accessible",
+            "observed" if all(tabs.values()) and lists and tab_button and tab_floated else "failed",
+            f"tab items { {n: bool(h) for n, h in tabs.items()} } in a tab list 'Panels' ({len(lists)}); the selected "
+            f"tab's 'Shift times options': {tab_button}; its menu's Undock invoked -> own window={tab_floated}",
+            ev2 + ev3 + ["a11y-tabs.txt"])
+
+
+def focus_header_control(ctype, name, panel_name, tries=12):
+    """The keyboard focus onto a header control the way a keyboard user gets
+    there: F6 to the panel, then Shift+Tab (the header is the panel's first
+    stop). Returns how it got there (or UI Automation's SetFocus as a last
+    resort) and the focus path."""
+    for _ in range(6):
+        if panel_of(uia()["focusPath"]) == panel_name:
+            break
+        combo("f6")
+        time.sleep(0.6)
+    want = f"{ctype}:'{name}'"
+    for i in range(tries):
+        st = uia()
+        if (st["focusPath"] or "").endswith(want):
+            return f"F6, Shift+Tab x{i}", st["focusPath"]
+        combo("shift", "tab")
+        time.sleep(0.4)
+    uia(do=[{"action": "focus", "name": name, "type": ctype}])
+    st = uia()
+    return ("UIA SetFocus" if (st["focusPath"] or "").endswith(want) else None), st["focusPath"]
+
+
+def step_header():
+    """D3 from the keyboard: the ⋯ menu from a tab (Right, then Space), from
+    Shift+F10 on a tab and from a title bar's button (Return); Undock and Dock
+    from the menu."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    park_pointer()
+    focus_main_compositor()
+    how, path = focus_header_control("TabItem", "Grid", "Grid")
+    keys("right", 0.4)
+    on_button = (uia()["focusPath"] or "").endswith("Button:'Grid options'")
+    keys("space", 0.8)
+    st = uia()
+    items = menu_items(st)
+    ev0, _ = snap("header-0-grid-menu-by-keys")
+    keys("escape", 0.5)
+    back = uia()["focusPath"]
+    keys("left", 0.3, "shift+f10", 0.8)
+    items_f10 = menu_items(uia())
+    ev1, _ = snap("header-1-shift-f10")
+    keys("escape", 0.5)
+    want = ["Move panel…", "Undock", "Close"]
+    verdict("header-menu-keyboard",
+            "observed" if how and on_button and [i.split(" (")[0] for i in items] == want and items_f10 else "failed",
+            f"the Grid tab focused by {how} ({path}); Right -> on 'Grid options'={on_button}; Space opened {items}; "
+            f"Escape left the focus at {back}; Left, Shift+F10 opened {items_f10}", ev0 + ev1)
+    # A lone panel: its title bar's ⋯ button, Return, Down to Undock, Return.
+    how2, path2 = focus_header_control("Button", "Audio options", "Audio")
+    keys("return", 0.8)
+    items_audio = menu_items(uia())
+    keys("down", "down", "return", 1.5)
+    st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
+    floated = "Audio" in frames(st)
+    ev2, st = snap("header-2-audio-undocked-by-keys")
+    docked, how3 = False, None
+    if floated:
+        how3, _ = focus_header_control("Button", "Audio options", "Audio")
+        keys("return", 0.8, "down", "down", "return", 1.5)
+        st = wait_for(lambda s: "Audio" not in frames(s), timeout=4)
+        docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == MAIN
+    ev3, st = snap("header-3-audio-docked-by-keys")
+    verdict("header-menu-undock-dock-keyboard", "observed" if how2 and floated and docked else "failed",
+            f"'Audio options' focused by {how2} ({path2}); Return opened {items_audio}; Down Down Return: own "
+            f"window={floated}; in the floating window ('Audio options' by {how3}) Return Down Down Return: "
+            f"docked={docked}; focus {st['focusPath']}", ev2 + ev3)
+
+
+# ---------------------------------------------------------------- D2
+CORE = ("Video", "Audio", "Line editor", "Grid")
+# Legacy's View menu (HikariSubFrame.cpp:308-312) and the core panels each
+# arrangement shows (OnMenuSelected, HikariSubFrame.cpp:849-892), in the
+# order the gate applies them (All last: the round trip). As gate.py.
+ARRANGEMENTS = [("Only subtitles", {"Line editor", "Grid"}), ("Only video", {"Video"}),
+                ("Video and subs", {"Video", "Line editor", "Grid"}), ("Audio and subs", {"Audio", "Line editor", "Grid"}),
+                ("All", set(CORE))]
+
+
+def core_panels(st):
+    """The core panels shown docked in the main window, with their places."""
+    return {p["id"]: (p["x"], p["y"], p["w"], p["h"]) for p in st["panels"] if p["id"] in CORE and p["frame"] == MAIN}
+
+
+def same_places(a, b, slack=2):
+    return set(a) == set(b) and all(all(abs(x - y) <= slack for x, y in zip(a[k], b[k])) for k in a)
+
+
+def type_draft():
+    """A draft in the Line editor (" draft" typed at the end of the Line
+    text), then F6 to the Grid, where the menus open from."""
+    set_focus("Line text")
+    keys("end")
+    type_text(" draft")
+    time.sleep(0.8)
+    keys("f6", 0.5)
+    return uia()["texts"].get("Line text")
+
+
+def step_views():
+    """D2: View > All, Video and subs, Audio and subs, Only video and Only
+    subtitles from the keyboard over the docked Workspace: the panels each
+    shows, the focus on a shown panel, the draft kept, and All back to the
+    places the panels had."""
+    if not LAYOUT.get("ep1_ass"):
+        verdict("view-arrangements", "error", "no cfr.mkv media fixture in the VM's build tree (run the test task once)")
+        return
+    fresh(LAYOUT["ep1_ass"])
+    dismiss_notices()
+    uia(do=[{"action": "invoke", "name": "Load associated", "type": "Button", "all": True}])
+    time.sleep(5)
+    focus_main()
+    # Audio for the box: a dummy video after the episode brings its own
+    # silent audio (AV3 #240 retired "Open blank 2h30m audio").
+    blank = menu_to("Open dummy video", opener="alt+v")
+    keys("return", 2.5)
+    uia(do=[{"action": "invoke", "name": "OK", "type": "Button", "all": True}], settle_ms=500)
+    time.sleep(3)
+    focus_main()
+    draft = type_draft()
+    ev, st = snap("views-0-editing")
+    evidence = list(ev)
+    base = core_panels(st)
+    rows, shown_ok, focus_ok, draft_ok = [], True, True, True
+    for i, (label, want) in enumerate(ARRANGEMENTS, 1):
+        reached = view_to(label)
+        keys("return", 1.5)
+        st = wait_for(lambda s: set(core_panels(s)) == want, timeout=5)
+        ev, st = snap(f"views-{i}-" + label.lower().replace(" ", "-"))
+        evidence += ev
+        shown = set(core_panels(st))
+        focus = panel_of(st["focusPath"])
+        text = st["texts"].get("Line text")
+        shown_ok &= reached and shown == want
+        focus_ok &= focus in want
+        if "Line editor" in want:
+            draft_ok &= text == draft
+        rows.append(f"{label}: reached={reached} shown={sorted(shown)} focus={focus} Line text={text!r}")
+    back = same_places(core_panels(st), base)
+    (EVID / "views.txt").write_text(
+        f"dummy video with its silence from the keyboard: {blank}\nediting: {base}\nafter All: {core_panels(st)}\n" + "\n".join(rows))
+    evidence.append("views.txt")
+    detail = "; ".join(rows)
+    verdict("view-arrangements", "observed" if shown_ok and base and set(base) == set(CORE) else "failed",
+            f"from the keyboard, the core panels each arrangement shows: {detail}", evidence)
+    verdict("view-focus-on-shown-panel", "observed" if focus_ok else "failed",
+            f"the focus after each arrangement is on a shown panel: {detail}", evidence)
+    verdict("view-draft-kept", "observed" if draft_ok and draft and draft.endswith(" draft") else "failed",
+            f"Line text with the draft {draft!r}: {detail}", evidence)
+    verdict("view-all-round-trip", "observed" if back else "failed",
+            f"View > All returns each panel to its place (2 px): before {base}, after {core_panels(st)}", evidence)
+
+
+def step_editor():
+    """D2: GLOBAL_EDITOR (Ctrl+E, SendInput): the player layout (only the
+    Video panel, with the focus), and back to the arrangement it held, the
+    focus on the Grid and the draft kept."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    draft = type_draft()
+    ev0, st = snap("editor-0-on")
+    base = core_panels(st)
+    keys("ctrl+e", 1.5)
+    st = wait_for(lambda s: set(core_panels(s)) == {"Video"}, timeout=5)
+    ev1, st = snap("editor-1-off")
+    off = set(core_panels(st))
+    focus_off = panel_of(st["focusPath"])
+    keys("ctrl+e", 1.5)
+    st = wait_for(lambda s: set(core_panels(s)) == set(base), timeout=5)
+    time.sleep(1)
+    ev2, st = snap("editor-2-on-again")
+    on = core_panels(st)
+    focus_on = panel_of(st["focusPath"])
+    text = st["texts"].get("Line text")
+    evidence = ev0 + ev1 + ev2
+    verdict("editor-player-layout", "observed" if off == {"Video"} and focus_off == "Video" else "failed",
+            f"Ctrl+E: panels shown {sorted(off)}, focus on {focus_off}", evidence)
+    verdict("editor-round-trip", "observed" if base and same_places(on, base) else "failed",
+            f"Ctrl+E again: before {base}, after {on}", evidence)
+    verdict("editor-focus-and-draft", "observed" if focus_on == "Grid" and draft and text == draft else "failed",
+            f"focus on {focus_on}; Line text {draft!r} -> {text!r}", evidence)
+
+
+# ---------------------------------------------------------------- WS1 (#215)
+def tab_arrangement(st):
+    """Each shown panel's window (the main window or its floating one), its
+    rectangle in that window, and each floating window's rectangle."""
+    fr = frames(st)
+    out = {}
+    for p in st["panels"]:
+        if p["id"] not in PANELS or p["id"] in out:
+            continue
+        f = fr.get(p["frame"], {})
+        entry = {"window": "main" if p["frame"] == MAIN else "floating",
+                 "rect": (p["x"] - f.get("x", 0), p["y"] - f.get("y", 0), p["w"], p["h"])}
+        if p["frame"] != MAIN:
+            entry["frame"] = (f.get("x"), f.get("y"), f.get("w"), f.get("h"))
+        out[p["id"]] = entry
+    return out
+
+
+def tab_differences(before, after, tolerance=2):
+    diffs = []
+    for pid in sorted(set(before) | set(after)):
+        a, b = before.get(pid), after.get(pid)
+        if a is None or b is None:
+            diffs.append(f"{pid}: {'shown' if a else 'not shown'} before, {'shown' if b else 'not shown'} after")
+        elif a["window"] != b["window"]:
+            diffs.append(f"{pid}: {a['window']} before, {b['window']} after")
+        else:
+            for key in ("rect", "frame"):
+                if key in a and not all(x is not None and y is not None and abs(x - y) <= tolerance
+                                        for x, y in zip(a[key], b.get(key, ()))):
+                    diffs.append(f"{pid}: {key} {a[key]} before, {b.get(key)} after")
+    return diffs
+
+
+def step_tabs():
+    """WS1 (ADR 0020): each Document tab keeps its own panel arrangement.
+    Audio floats in the first tab; Ctrl+T opens a tab that copies it; there
+    Audio docks again and the Line editor floats. Ctrl+PgUp and Ctrl+PgDn
+    (SendInput) switch back and forth: each time the tab's panels come back
+    in the same windows with the same rectangles, and the floating windows
+    at the same place and size (within 2 px)."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    float_panel("Audio", "tabs")
+    st = wait_for(lambda s: "Audio" in frames(s))
+    time.sleep(1)
+    ev0, st = snap("tabs-0-first-tab")
+    first = tab_arrangement(st)
+    focus_main()
+    keys("ctrl+t", 1.5)
+    ev1, st = snap("tabs-1-new-tab")
+    copied = tab_differences(first, tab_arrangement(st))
+    panel_menu("Audio", "Dock")
+    float_panel("Line editor", "tabs")
+    st = wait_for(lambda s: "Line editor" in frames(s) and "Audio" not in frames(s))
+    time.sleep(1)
+    ev2, st = snap("tabs-2-second-tab-own")
+    second = tab_arrangement(st)
+    focus_main()
+    keys("ctrl+pgup", 1.5)
+    st = wait_for(lambda s: "Audio" in frames(s) and "Line editor" not in frames(s))
+    time.sleep(1)
+    ev3, st = snap("tabs-3-first-tab-again")
+    to_first = tab_differences(first, tab_arrangement(st))
+    focus_main()
+    keys("ctrl+pgdn", 1.5)
+    st = wait_for(lambda s: "Line editor" in frames(s) and "Audio" not in frames(s))
+    time.sleep(1)
+    ev4, st = snap("tabs-4-second-tab-again")
+    to_second = tab_differences(second, tab_arrangement(st))
+    distinct = bool(tab_differences(first, second))
+    verdict("tab-new-copies-arrangement", "observed" if not copied else "failed",
+            "Ctrl+T: the new tab shows the first tab's arrangement, Audio floating"
+            + (f"; differences: {copied}" if copied else ""), ev0 + ev1)
+    verdict("tab-switch-floating", "observed" if distinct and not to_first and not to_second else "failed",
+            f"tabs differ ({distinct}); Ctrl+PgUp back to the first tab: same windows, rectangles and floating "
+            f"windows {not to_first}" + (f" {to_first}" if to_first else "") + f"; Ctrl+PgDn to the second: "
+            f"{not to_second}" + (f" {to_second}" if to_second else ""), ev0 + ev2 + ev3 + ev4)
+
+
+# ---------------------------------------------------------------- V5 (#184)
+def fs_frames(st, mons):
+    """(fullscreen, main): the fullscreen video window carries the main
+    window's title; it is the one covering a whole monitor."""
+    full = main = None
+    for f in st["frames"]:
+        if f["id"] != MAIN:
+            continue
+        if any((f["x"], f["y"], f["w"], f["h"]) == (m["x"], m["y"], m["w"], m["h"]) for m in mons):
+            full = f
+        else:
+            main = f
+    return full, main
+
+
+def fs_value(st, ctype, name):
+    return next((e["val"] for e in st.get("elements") or [] if e["t"] == ctype and e["n"] == name and not e["off"]),
+                None)
+
+
+def fs_has(st, ctype, name):
+    return bool(find(st, ctype, name))
+
+
+def step_video_fullscreen():
+    """V5 (#184): F in the Video panel shows the video fullscreen on the main
+    window's monitor; Space and Left work there; Esc leaves with the main
+    window's geometry and the keyboard focus as they were; the context menu's
+    "Open in full screen on monitor 2" puts it on the second monitor, at 100 %
+    and at 150 % (mixed DPI: GetDpiForWindow), and Esc brings the docked video
+    back. Real keys (SendInput); the menu items through UI Automation."""
+    if not LAYOUT.get("ep1_ass"):
+        verdict("videofs-enter-leave", "error", "no cfr.mkv media fixture in the VM's build tree (run the test task once)")
+        return
+    d = displays("extend")
+    mons = monitors()
+    fresh(LAYOUT["ep1_ass"])
+    dismiss_notices()
+    uia(do=[{"action": "invoke", "name": "Load associated", "type": "Button", "all": True}])
+    time.sleep(5)
+    focus_main()
+    for _ in range(8):
+        if panel_of(uia()["focusPath"]) == "Video":
+            break
+        combo("f6")
+        time.sleep(0.8)
+    st0 = uia()
+    in_video = panel_of(st0["focusPath"]) == "Video"
+    _, main0 = fs_frames(st0, mons)
+    m0 = next((i for i, m in enumerate(mons) if main0 and inside(main0, m)), 0)
+    keys("f")
+    st1 = wait_for(lambda s: fs_frames(s, mons)[0] is not None and fs_frames(s, mons)[0]["active"], timeout=8)
+    full1, _ = fs_frames(st1, mons)
+    ev1, st1 = snap("videofs-1-fullscreen", monitor=m0, extra=f"# monitors\n{json.dumps(mons)}\n# displays\n{json.dumps(d)[:2000]}")
+    on1 = full1 is not None and inside(full1, mons[m0])
+    keys("space")
+    stp = wait_for(lambda s: fs_has(s, "Button", "Pause"), timeout=5)
+    playing = fs_has(stp, "Button", "Pause")
+    time.sleep(0.6)
+    keys("space")
+    sts = wait_for(lambda s: fs_has(s, "Button", "Play"), timeout=5)
+    paused = fs_has(sts, "Button", "Play")
+    # UI Automation shows no slider value or label text of Qt Quick's here:
+    # the monitor's pixels before and after Right (cfr.mkv's block moves).
+    time.sleep(1.0)
+    shot_a = head_shot("videofs-1b-paused", m0)
+    # Left (GLOBAL_PREVIOUS_FRAME): a slow guest can play the two-second
+    # clip to its last frame before the second Space, where Right has no
+    # frame to go to.
+    keys("left")
+    time.sleep(1.5)
+    shot_b = head_shot("videofs-1c-stepped", m0)
+    diff = image_diff(shot_a[0], shot_b[0]) if shot_a and shot_b else None
+    keys("escape")
+    st2 = wait_for(lambda s: fs_frames(s, mons)[0] is None and fs_frames(s, mons)[1] is not None
+                   and fs_frames(s, mons)[1]["active"] and panel_of(s["focusPath"]) == "Video", timeout=8)
+    ev2, st2 = snap("videofs-2-left")
+    full2, main2 = fs_frames(st2, mons)
+    keys4 = ("x", "y", "w", "h")
+    same = main0 is not None and main2 is not None and all(main0[k] == main2[k] for k in keys4)
+    focus_back = panel_of(st2["focusPath"]) == "Video"
+    stepped = isinstance(diff, int) and diff > 50
+    verdict("videofs-enter-leave", "observed" if in_video and on1 and full1["active"] and full2 is None and main2
+            and main2["active"] and same and focus_back else "failed",
+            f"F in the Video panel (focus there: {in_video}): fullscreen window {full1} on monitor {m0} {mons[m0]}: {on1}; "
+            f"Esc: fullscreen gone {full2 is None}, main window active {main2 and main2['active']}, geometry before "
+            f"{main0 and {k: main0[k] for k in keys4}} after {main2 and {k: main2[k] for k in keys4}} same {same}; focus "
+            f"back in the Video panel: {focus_back} ({st2['focusPath']})", ev1 + ev2)
+    verdict("videofs-transport-keys", "observed" if playing and paused and stepped else "failed",
+            f"in fullscreen Space played (Pause shown: {playing}) and paused (Play shown again: {paused}); Left "
+            f"changed {diff} pixels of the fullscreen monitor (videofs-1b-paused, videofs-1c-stepped)",
+            ev1 + shot_a + shot_b)
+
+    def second_monitor(tag, scale):
+        mons2 = monitors()
+        if len(mons2) < 2:
+            verdict(f"videofs-monitor-choice{tag}", "not-observable", f"only {len(mons2)} monitor(s) on the guest desktop")
+            return
+        second = next(i for i, m in enumerate(mons2) if not m["primary"])
+        focus_main()
+        for _ in range(8):
+            if panel_of(uia()["focusPath"]) == "Video":
+                break
+            combo("f6")
+            time.sleep(0.8)
+        _, main3a = fs_frames(uia(), mons2)
+        park_pointer()
+        keys("apps")
+        stm = wait_for(lambda s: "Open in full screen on monitor 2" in s["popupMenuItems"], timeout=4)
+        offered = "Open in full screen on monitor 2" in stm["popupMenuItems"]
+        if offered:
+            uia(do=[{"action": "invoke", "name": "Open in full screen on monitor 2", "type": "MenuItem"}], settle_ms=1500)
+        else:
+            keys("escape")
+        st3 = wait_for(lambda s: fs_frames(s, mons2)[0] is not None and fs_frames(s, mons2)[0]["active"], timeout=8)
+        st3 = uia(dpi=True)
+        full3, main3 = fs_frames(st3, mons2)
+        ev3, _ = snap(f"videofs-3-monitor2{tag}", monitor=second,
+                      extra=f"# monitors\n{json.dumps(mons2)}\n# popup menu items\n{json.dumps(stm['popupMenuItems'])}")
+        on2 = full3 is not None and (full3["x"], full3["y"], full3["w"], full3["h"]) == \
+            (mons2[second]["x"], mons2[second]["y"], mons2[second]["w"], mons2[second]["h"])
+        dpi_ok = full3 is not None and full3.get("dpi") == mons2[second]["dpi"]
+        dock_hidden = not any(p["id"] == "Video" for p in st3["panels"])
+        keys("escape")
+        st4 = wait_for(lambda s: fs_frames(s, mons2)[0] is None and any(p["id"] == "Video" for p in s["panels"])
+                       and panel_of(s["focusPath"]) == "Video", timeout=8)
+        ev4, st4 = snap(f"videofs-4-left-monitor2{tag}")
+        full4, main4 = fs_frames(st4, mons2)
+        dock_back = any(p["id"] == "Video" for p in st4["panels"])
+        same4 = main3a is not None and main4 is not None and all(main3a[k] == main4[k] for k in keys4)
+        focus4 = panel_of(st4["focusPath"]) == "Video"
+        verdict(f"videofs-monitor-choice{tag}", "observed" if offered and on2 and full3["active"] and dpi_ok and dock_hidden
+                and full4 is None and dock_back and same4 and focus4 else "failed",
+                f"monitors {mons2}; the menu key offered 'Open in full screen on monitor 2': {offered}; fullscreen window "
+                f"{full3} covering monitor {second} ({scale} %): {on2}, GetDpiForWindow {full3 and full3.get('dpi')} = the "
+                f"monitor's {mons2[second]['dpi']}: {dpi_ok}; docked Video hidden meanwhile: {dock_hidden}; Esc: fullscreen "
+                f"gone {full4 is None}, docked Video back {dock_back}, main geometry unchanged {same4}, focus back in the "
+                f"Video panel {focus4}", ev3 + ev4)
+
+    second_monitor("", 100)
+    # Mixed DPI: the second monitor at 150 % (Windows offers it from about 1920x1200).
+    d2 = displays("extend", scale2=150, second=(1920, 1200))
+    log("displays at 150 %:", json.dumps(d2)[:600])
+    second_monitor("-150", 150)
+    app_kill()
+    displays("extend", scale2=100)
+
+
+# ---------------------------------------------------------------- wave-5 sweep steps
+def nvda_start():
+    """The portable NVDA (nvda-setup the first time), silent, logging speech;
+    returns its log's guest path (nvda_stop reads it back)."""
+    if not LAYOUT.get("nvda_exe"):
+        job, lines = W.task("nvda-setup", timeout=1500)
+        raw = line_value(lines, "NVDA_LAYOUT ")
+        (EVID / "nvda-setup.txt").write_text("\n".join(lines) + "\n")
+        if not raw:
+            return None
+        LAYOUT["nvda_exe"] = json.loads(raw)["exe"]
+    nvda_log = LAYOUT["nvda_dir"] + "\\nvda-" + time.strftime("%Y%m%d-%H%M%S") + ".log"
+    W.ui("launch", exe=LAYOUT["nvda_exe"], arguments=[
+        "--minimal", "--replace", "--disable-addons", "--log-level=12", f"--log-file={nvda_log}",
+        f"--config-path={LAYOUT['nvda_config']}"], cwd=LAYOUT["nvda_dir"])
+    time.sleep(10)
+    return nvda_log
+
+
+def nvda_stop(nvda_log, tag):
+    """Quits NVDA; its speech lines (TAG-nvda-speech.txt) and whether the
+    silent synthesizer spoke them."""
+    job, lines = W.task("nvda-output", env={"GATE_NVDA_LOG": nvda_log})
+    s = sections(lines)
+    speech = [l.strip() for l in s.get("speech", []) if l.strip()]
+    (EVID / f"{tag}-nvda-speech.txt").write_text("\n".join(speech) + "\n")
+    (EVID / f"{tag}-nvda-output.txt").write_text("\n".join(lines) + "\n")
+    W.pull(LAYOUT["nvda_dir"] + "\\nvda-last.log", EVID / f"{tag}-nvda.log")
+    silent = any("silence" in l for l in s.get("synth", []))
+    return speech, silent, [f"{tag}-nvda-speech.txt", f"{tag}-nvda-output.txt", f"{tag}-nvda.log"]
+
+
+def step_snap():
+    """D3 (#207): the floating tool window's header right of its title
+    (just left of its "⋯") dragged to the primary monitor's left edge and to
+    its top edge, the pointer held at the edge 1.5 s. Since 2026-10-15 the
+    whole floating header is the engine's drag on Windows (no window-system
+    move, startSystemMove, from any part of it), so Snap is not offered by
+    design: the window follows the pointer as the engine moves it, Snap does
+    not take it (no half or maximized size) and it stays a floating panel.
+    Until then this step dragged the free part's system move and recorded
+    whether Snap took it (it never did: D3-windows-snap)."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    placed = narrow_main()
+    log("main window on the left:", placed)
+    try:
+        time.sleep(1.0)
+        mons = monitors()
+        prim = next(m for m in mons if m["primary"])
+        focus_main_compositor()
+        float_panel("Audio", "snap")
+        st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
+        if "Audio" not in frames(st):
+            verdict("floating-snap", "not-observable", "Audio did not float")
+            return
+        out, shots = [], []
+        # Top first: the left drag leaves the window mostly off the monitor
+        # (x -403), where the tablet cannot press its header for a second
+        # drag; after the top one the window comes back to y 0.
+        for edge, target in (("top", (prim["x"] + prim["w"] // 2, prim["y"] + 1)),
+                             ("left", (prim["x"] + 1, prim["y"] + prim["h"] // 2))):
+            st = uia()
+            before = frames(st).get("Audio")
+            btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
+            if not before or not btn:
+                out.append({"edge": edge, "error": "no floating Audio or its ⋯ in UIA"})
+                continue
+            # Right of the title, just left of the "⋯"; the tablet reaches the
+            # primary monitor only, so no further right than its edge (the
+            # floating window placed at 649 reached into the second monitor,
+            # and a press at 1223 landed at 1023).
+            sx, sy = min(btn["x"] - 24, prim["x"] + prim["w"] - 8), btn["y"] + btn["h"] // 2
+            # Over bare desktop first (the drag distance starts the engine's drag), then to the edge.
+            mid = (max(prim["x"] + 520, sx - 60), min(prim["y"] + prim["h"] - 200, sy + 60))
+            try:
+                pointer([(sx, sy)], hold=True)
+                time.sleep(0.25)
+                pointer([(sx, sy), mid], button="none", steps=20, delayMs=40)
+                pointer([mid, target], button="none", steps=30, delayMs=40)
+                time.sleep(1.5)  # Snap would show its preview while the pointer rests at the edge
+                held = frames(uia()).get("Audio")  # the engine moves the window under the held pointer
+                ev, _ = snap(f"snap-{edge}-held")
+                shots += ev
+            finally:
+                release()
+                time.sleep(2.0)
+            st = uia(dpi=True)
+            after = frames(st).get("Audio")
+            ev, st = snap(f"snap-{edge}-released")
+            shots += ev
+            half = bool(after) and abs(after["x"] - prim["x"]) <= 12 and abs(after["w"] - prim["w"] // 2) <= 24 \
+                and after["h"] >= prim["h"] - 90
+            full = bool(after) and after["w"] >= prim["w"] - 24 and after["h"] >= prim["h"] - 90
+            # The engine's drag keeps the pressed point under the pointer, so the
+            # window follows it by the pointer's travel; its size does not change.
+            want = (before["x"] + target[0] - sx, before["y"] + target[1] - sy)
+            follows = bool(held) and abs(held["x"] - want[0]) <= 24 and abs(held["y"] - want[1]) <= 24
+            out.append({"edge": edge, "pressed": [sx, sy], "to": list(target),
+                        "before": before and [before["x"], before["y"], before["w"], before["h"]],
+                        "held": held and [held["x"], held["y"], held["w"], held["h"]],
+                        "expected while held": list(want), "follows the pointer": follows,
+                        "after": after and [after["x"], after["y"], after["w"], after["h"]],
+                        "snapped": "left half" if edge == "left" and half else "maximized" if edge == "top" and full
+                        else "no", "still floating": bool(after),
+                        "size kept": bool(after) and (after["w"], after["h"]) == (before["w"], before["h"])})
+            if after:  # back to the middle of the free desktop for the next edge
+                fullscreen("left", width=480)
+        (EVID / "snap.json").write_text(json.dumps({"monitors": mons, "drags": out}, indent=1))
+        floating = all(o.get("still floating") for o in out)
+        follows = all(o.get("follows the pointer") for o in out)
+        unsnapped = all(o.get("snapped") == "no" and o.get("size kept") for o in out)
+        taken = [o["edge"] + ": " + o.get("snapped", "?") for o in out]
+        ok = out and floating and follows and unsnapped and not any("error" in o for o in out)
+        verdict("floating-snap", "observed" if ok else "failed",
+                f"the floating Audio window's header right of its title dragged to the primary monitor's left and "
+                f"top edges and held there 1.5 s: the engine's drag (the window followed the pointer: {follows}); "
+                f"Snap took it {taken} (expected no: not offered on Windows since 2026-10-15); size kept and still a "
+                f"floating panel after each: {unsnapped and floating} (snap.json: window rectangles before, while "
+                f"held and after)", ["snap.json"] + shots)
+    finally:
+        wide_main()
+
+
+def step_tags():
+    """E6 (#188): NVDA reads the Line text's tag list: with tags shown (the
+    Line editor's "Hide tags" switch off), `{\\` opens the list under the
+    caret, the focus stays in the text field, and Down announces the selected
+    tag ("\be, Edge blur, 2 of 20": Accessible.announce, a UIA notification)."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    nvda_log = nvda_start()
+    if not nvda_log:
+        verdict("nvda-tag-list", "error", "nvda-setup did not create the portable copy (nvda-setup.txt)", ["nvda-setup.txt"])
+        return
+    ev, st, typed = [], {"texts": {}}, None
+    try:
+        focus_main_compositor()
+        # "Hide tags" is a check box (UIA Toggle), on in a fresh profile.
+        st0 = uia(do=[{"action": "invoke", "name": "Hide tags", "type": "CheckBox"}], settle_ms=800)
+        set_focus("Line text")
+        keys("home", 0.5)
+        type_text("{\\")
+        time.sleep(1.5)
+        ev, st = snap("tags-0-list-open")
+        typed = st["texts"].get("Line text")
+        keys("down", 1.2, "down", 1.2)
+        ev += snap("tags-1-down-down")[0]
+        st1 = uia()
+        keys("escape", 0.8)
+        ev += snap("tags-2-escape")[0]
+    finally:
+        speech, silent, nev = nvda_stop(nvda_log, "tags")
+    rows = [e for e in st.get("elements") or [] if e["t"] in ("ListItem", "DataItem") and not e["off"]]
+    # The switch was really pressed, and the list really opened: its rows
+    # are the tag names (alpha, be, blur, ...), not the grid's cells.
+    toggled = any(a.get("matches") and a.get("done") and not a.get("errors") for a in st0.get("actions") or [])
+    list_open = {"alpha", "be", "blur"} <= {e["n"] for e in rows if e["t"] == "ListItem"}
+    # A tag's announcement: "\be, Edge blur, 2 of 20" (the name, its
+    # description and its place in the list).
+    announced = [l for l in speech if re.search(r"\\+[a-z0-9]+, [^,']+(?:, [^,']+)*, \d+ of \d+", l)]
+    focus_kept = "Line text" in (st1.get("focus") or "")
+    (EVID / "tags.json").write_text(json.dumps({"hide-tags pressed": st0.get("actions"), "text after typing": typed,
+                                                "focus with the list open": st1.get("focus"),
+                                                "list rows in UIA": [(e["t"], e["n"]) for e in rows][:40],
+                                                "announcements": announced}, indent=1, ensure_ascii=False))
+    verdict("tag-list-raw-view", "observed" if toggled and list_open and typed and typed.startswith("{\\") else "failed",
+            f"with Hide tags pressed through UIA ({st0.get('actions')}), typing {{\\ at the start left the Line text "
+            f"{typed!r}, and the tag list {'opened' if list_open else 'did not open'}", ["tags.json"] + ev)
+    verdict("tag-list-focus-kept", "observed" if list_open and focus_kept else "failed",
+            f"with the list {'open' if list_open else 'not open'} and Down pressed twice the focus is "
+            f"{st1.get('focus')!r}", ["tags.json"] + ev)
+    verdict("nvda-tag-list", "observed" if list_open and any("Edge blur" in l for l in announced) and silent else "failed",
+            f"NVDA spoke the tag list's selection: {announced[:6]} ({len(speech)} speech lines, silent synthesizer "
+            f"{silent})", ["tags.json"] + nev + ev)
+
+
+def step_statusbar():
+    """P10 (#200): the status bar as a screen reader finds it: UIA's
+    StatusBar element and its fields, and NVDA's "read status bar" command
+    (NVDA+End, the desktop layout) with the main window in the foreground."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    nvda_log = nvda_start()
+    if not nvda_log:
+        verdict("nvda-status-bar", "error", "nvda-setup did not create the portable copy (nvda-setup.txt)", ["nvda-setup.txt"])
+        return
+    try:
+        focus_main_compositor()
+        set_focus("Line text")
+        time.sleep(1.0)
+        ev, st = snap("statusbar-0")
+        keys("insert+end", 2.5)
+        keys("insert+end", 2.5)  # twice: NVDA spells it on a double press, but each press speaks it
+        ev += snap("statusbar-1-read")[0]
+    finally:
+        speech, silent, nev = nvda_stop(nvda_log, "statusbar")
+    els = st.get("elements") or []
+    bars = [e for e in els if e["t"] == "StatusBar" and not e["off"]]
+    fields = [(c["t"], c["n"], c["val"]) for b in bars for c in els
+              if any(a["i"] == b["i"] for a in ancestors(els, c)) and not c["off"]]
+    (EVID / "statusbar.json").write_text(json.dumps({"status bars": [el_path(els, b) for b in bars],
+                                                     "fields": fields}, indent=1, ensure_ascii=False))
+    verdict("uia-status-bar", "observed" if bars and fields else "failed",
+            f"UIA StatusBar elements {[el_path(els, b) for b in bars]} with {len(fields)} named descendants: "
+            f"{fields[:12]}", ["statusbar.json"] + ev)
+    none = [l for l in speech if "no status bar" in l.lower()]
+    read = [l for l in speech if "status bar" in l.lower() and l not in none] or \
+        [l for l in speech if any(n and n in l for _, n, _ in fields if n and len(n) > 3)]
+    verdict("nvda-status-bar", "observed" if read and not none and silent else "failed",
+            f"NVDA+End (read status bar): {read[:6]}; 'no status bar' answers {none[:2]} ({len(speech)} speech lines, "
+            f"silent synthesizer {silent})", ["statusbar.json"] + nev + ev)
+
+
+def new_elements(before, st, frame=None):
+    seen = {(e["win"], el_path(before.get("elements") or [], e)) for e in before.get("elements") or []}
+    els = st.get("elements") or []
+    return [dict(e, path=el_path(els, e)) for e in els if not e["off"] and (e["win"], el_path(els, e)) not in seen
+            and (frame is None or frame_id(e["win"]) == frame)]
+
+
+def step_dialogs():
+    """K1 (#204): the names UI Automation gives the controls of windows and
+    dialogs outside the main window's own surfaces (the Style manager with
+    its move and transfer arrows, the time shift window, Find and replace,
+    Settings): every button, check box and menu button has a name."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    named = ("Button", "CheckBox", "RadioButton", "SplitButton", "ComboBox", "Edit", "Slider", "Spinner", "TabItem",
+             "ListItem", "MenuItem", "Hyperlink")
+    found, ev = {}, []
+    for title, opener in (("Style manager", ("ctrl+m",)), ("Time shift", ("ctrl+i",)),
+                          ("Find and replace", ("ctrl+h",)), ("Settings", None)):
+        focus_main_compositor()
+        # From the Grid: in the Line text Ctrl+I is italic (legacy's edit box
+        # context), not the time shift.
+        set_focus("Subtitle lines")
+        before = uia()
+        if opener:
+            keys(*opener, 2.0)
+        else:
+            # File > &Settings (Main.qml); one try, as a failed menu_to leaves
+            # the File menu open and a second Alt+F would close it.
+            ok = menu_to("Settings", opener="alt+f")
+            if ok:
+                keys("return", 2.0)
+        st = uia()
+        new = new_elements(before, st)
+        tag = re.sub(r"\W+", "-", title.lower())
+        ev += snap(f"dialogs-{tag}")[0]
+        controls = [e for e in new if e["t"] in named]
+        unnamed = [e["path"] + f" id={e['id']!r}" for e in controls if not (e["n"] or "").strip()]
+        found[title] = {"opened": bool(new), "windows": sorted({e["win"] for e in new}),
+                        "controls": [(e["t"], e["n"]) for e in controls], "unnamed": unnamed}
+        keys("escape", 1.0)
+        for f in [f for f in uia()["frames"] if f["id"] not in (MAIN,) and f["id"] not in PANELS]:
+            close_window(f["name"])
+    (EVID / "dialogs.json").write_text(json.dumps(found, indent=1, ensure_ascii=False))
+    opened = [t for t, v in found.items() if v["opened"]]
+    unnamed = {t: v["unnamed"] for t, v in found.items() if v["unnamed"]}
+    verdict("uia-names-outside-main", "observed" if opened and not unnamed else "failed",
+            f"opened {opened} (not opened: {[t for t in found if t not in opened]}); controls with no UIA name: "
+            f"{unnamed or 'none'}; counts { {t: len(v['controls']) for t, v in found.items()} } (dialogs.json)",
+            ["dialogs.json"] + ev)
+
+
+def step_reference():
+    """R2 (#194): the reference tray through UI Automation and NVDA: a second
+    tab (Ctrl+T), back to the first (Ctrl+PgUp), Ctrl+Q in the Grid shows the
+    next tab as the linked reference; the tray's controls and its status are
+    named, and NVDA speaks them when F6 and Tab reach the tray."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    nvda_log = nvda_start()
+    if not nvda_log:
+        verdict("nvda-reference-tray", "error", "nvda-setup did not create the portable copy", ["nvda-setup.txt"])
+        return
+    ev, st = [], {}
+    try:
+        focus_main_compositor()
+        keys("ctrl+t", 1.5, "ctrl+pgup", 1.5)
+        set_focus("Subtitle lines")
+        keys("home", 0.5, "ctrl+q", 2.0)
+        ev, st = snap("reference-0-tray")
+        # The tray's table, then back through its header's controls.
+        set_focus("Reference lines (protected, read-only)")
+        time.sleep(1.0)
+        for _ in range(4):
+            keys("shift+tab", 0.9)
+        ev += snap("reference-1-tabbed")[0]
+    finally:
+        speech, silent, nev = nvda_stop(nvda_log, "reference")
+    want = ("Follow the editing line", "Show nearest line", "Previous match", "Next match",
+            "Reference lines (protected, read-only)")
+    els = st.get("elements") or []
+    status = [e["n"] for e in els if re.match(r"(Match \d+ of \d+|No matching line|Independent navigation)$", e["n"] or "")]
+    # "Show nearest line" is shown only when no reference line matches.
+    present = {n: bool([e for e in els if e["n"] == n and not e["off"]]) for n in want
+               if n != "Show nearest line" or "No matching line" in status}
+    spoken = [n for n in want + tuple(status) if any(n in l for l in speech)]
+    (EVID / "reference.json").write_text(json.dumps({"present": present, "status": status, "spoken": spoken},
+                                                    indent=1, ensure_ascii=False))
+    verdict("uia-reference-tray", "observed" if all(present.values()) and status else "failed",
+            f"tray controls in UIA {present}; status {status}", ["reference.json"] + ev)
+    verdict("nvda-reference-tray", "observed" if spoken and silent else "failed",
+            f"NVDA spoke {spoken} ({len(speech)} speech lines, silent synthesizer {silent})",
+            ["reference.json"] + nev + ev)
+
+
+STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
+         "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
+         "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
+         "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi, "dark": step_dark,
+         "views": step_views, "editor": step_editor, "tabs": step_tabs, "videofs": step_video_fullscreen,
+         "snap": step_snap, "tags": step_tags, "statusbar": step_statusbar, "dialogs": step_dialogs,
+         "reference": step_reference}
+
+
+def main():
+    global W, LOG
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("steps", nargs="*", help=f"steps (default: all but dpi): {', '.join(STEPS)}")
+    ap.add_argument("--config", default=str(ROOT / "winix.yaml"))
+    ap.add_argument("--vm", default="dev")
+    ap.add_argument("--dpi", action="store_true", help="allow the dpi step (changes the guest's display scale "
+                                                       "to 150 %% and back to 100 %%)")
+    a = ap.parse_args()
+    wanted = a.steps or [s for s in STEPS if s != "dpi" or a.dpi]
+    unknown = [s for s in wanted if s not in STEPS]
+    if unknown:
+        raise SystemExit(f"unknown steps {unknown}; steps: {', '.join(STEPS)}")
+    if "dpi" in wanted and not a.dpi:
+        raise SystemExit("the dpi step changes the guest's display scale; pass --dpi to run it")
+    EVID.mkdir(parents=True, exist_ok=True)
+    results.update(json.loads((EVID / "results.json").read_text()) if (EVID / "results.json").exists() else {})
+    LOG = open(EVID / "steps.log", "a")
+    W = Winix(a.config, a.vm)
+    ready = W.call("vm", "ready", a.vm) or {}
+    if not ready.get("desktopReady") or ready.get("activeJob"):
+        raise SystemExit(f"the VM desktop is not ready or busy: {json.dumps(ready)[:300]}")
+    prepare()
+    try:
+        for name in wanted:
+            log(f"--- windows: {name}")
+            try:
+                STEPS[name]()
+            except Exception as e:  # keep going: one broken step must not hide the others
+                import traceback
+                traceback.print_exc()
+                verdict(name, "error", f"harness error: {e!r}")
+    finally:
+        release()  # never leave the left button held
+        app_kill()
+        if PROFILE["original"]:
+            _, lines = W.task("gate-win-restore", env={"GATE_PROFILE_FROM": PROFILE["original"]})
+            log("profile:", " | ".join(l for l in lines if l.startswith(("restored", "set aside"))))
+
+
+if __name__ == "__main__":
+    main()

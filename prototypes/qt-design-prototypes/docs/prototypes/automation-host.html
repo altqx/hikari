@@ -1,0 +1,404 @@
+<!doctype html>
+<!-- THROWAWAY: two automation manager arrangements in the accepted Classic shell. ?variant=window|panel. All state is synthetic and memory-only. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HikariSub · Automation host study</title><style>
+*{box-sizing:border-box}:root{color-scheme:dark;font:12px "Segoe UI",sans-serif;--bg:#171b20;--panel:#20262d;--raised:#29313a;--field:#171d24;--text:#e8edf2;--muted:#a5b1bd;--line:#414b57;--accent:#9cdbc9;--select:#304c47;--focus:#f9d784}body{margin:0;background:var(--bg);color:var(--text);padding-bottom:88px}button,input,select,textarea{font:inherit;color:inherit;border:1px solid var(--line);border-radius:1px;background:var(--raised);max-width:100%}button{cursor:pointer;min-height:27px;padding:3px 8px}button:hover{border-color:var(--accent)}button[aria-pressed=true],button.primary{background:var(--accent);border-color:var(--accent);color:#102c24}input,select{min-height:27px;padding:3px 6px;min-width:0}input[type=checkbox]{accent-color:var(--accent);min-height:14px}textarea{padding:8px;resize:vertical;min-height:58px;width:100%;background:var(--field);font:12px/1.45 Consolas,monospace}a{color:var(--accent)}:focus-visible{outline:2px solid var(--focus);outline-offset:2px}p{line-height:1.5}h1{font-size:18px;margin:3px 0}h2,h3{font-size:12px;margin:0}small,.muted{color:var(--muted)}label{display:flex;flex-direction:column;gap:3px;color:var(--muted);font-size:10px}.inline{flex-direction:row;align-items:center}.grow{flex:1}.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent)}
+.study{padding:9px 18px;background:var(--panel);border-bottom:1px solid var(--line)}.study p{margin:4px 0;color:var(--muted);font-size:11px}.application{margin:10px 18px;border:1px solid var(--line);background:var(--panel)}.appbar,.docbar,.ownership,.commandbar,.menubar{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:4px 8px;border-bottom:1px solid var(--line)}.appbar{padding:5px 9px}.mark{background:var(--accent);color:#102c24;font-weight:800;padding:2px 6px}.brand{font-size:13px;font-weight:650;margin-right:8px}.docbar button{font-size:11px}.ownership{background:#23362e;color:#c3ded1;font-size:10px;justify-content:space-between}.menubar,.commandbar{background:var(--field)}.menubar button{border-color:transparent;background:transparent}.menubar button[aria-expanded=true]{background:var(--raised);border-color:var(--line)}.menuwrap{position:relative}.dropdown{position:absolute;z-index:15;top:31px;left:0;min-width:240px;max-height:65vh;overflow:auto;padding:5px;background:var(--panel);border:1px solid var(--line);box-shadow:0 10px 30px #0009}.dropdown button{display:block;width:100%;text-align:left;min-height:29px;border:0;background:transparent}.dropdown h3{color:var(--accent);font-size:10px;padding:7px 6px 3px}.dropdown p{font-size:10px;padding:0 6px;color:var(--muted)}.dropdown.allcommands{width:360px}.commandbar .active-context{padding:4px 8px;border-left:2px solid var(--accent);font-size:11px}
+.workspace{display:grid;gap:4px;padding:4px;grid-template-columns:minmax(0,44fr) minmax(0,56fr);grid-template-rows:106px 195px auto;grid-template-areas:"video audio" "video editor" "grid grid"}.workspace.has-aside{grid-template-columns:minmax(0,44fr) minmax(0,56fr) 265px;grid-template-areas:"video audio aside" "video editor aside" "grid grid grid"}.panel{min-width:0;min-height:0;border:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}.panelhead{display:flex;gap:7px;align-items:center;justify-content:space-between;background:var(--raised);padding:4px 7px;min-height:26px;font-size:10px}.panelhead h2{font-size:10px;text-transform:uppercase;letter-spacing:.07em}.panelhead button{font-size:10px;padding:1px 5px;min-height:21px}.panel.focused{border-color:#8fb8b0}.panel.focused .panelhead{box-shadow:inset 2px 0 var(--accent)}#video{grid-area:video}#audio{grid-area:audio}#editor{grid-area:editor}#grid{grid-area:grid}#aside{grid-area:aside;background:var(--field);overflow:auto}.scene{position:relative;flex:1;min-height:0;background:linear-gradient(150deg,#385657,#819185 50%,#344e44);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:9px;overflow:hidden}.scene:before{content:"";position:absolute;inset:25% 0 0;background:#233e36;clip-path:polygon(0 74%,23% 8%,42% 44%,67% 11%,100% 61%,100% 100%,0 100%)}.scene>*{z-index:1}.scene small{color:#edf6ef;font-size:9px}.scene b{font-size:18px;text-shadow:0 1px 3px #000;padding:0 10px 10px;text-align:center}.localbar,.readout{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:4px 6px;background:var(--field);border-top:1px solid var(--line);font-size:10px}.localbar button{font-size:10px;min-height:23px;padding:2px 5px}.localbar label{flex-direction:row;align-items:center}.localbar select{font-size:10px;min-height:23px}.wave{display:block;width:100%;flex:1;min-height:0;background:#111821}.editbody{display:flex;flex-direction:column;gap:5px;padding:6px 8px;overflow:auto;flex:1}.properties{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.properties input,.properties select{width:100%;min-height:24px;font-size:11px}.editorlabel{flex:1;min-height:62px}.editorlabel textarea{flex:1}.editing-hint{font-size:10px;color:var(--muted)}.time{font-family:Consolas,monospace;font-variant-numeric:tabular-nums}.tablewrap{max-height:260px;overflow:auto}table{width:100%;border-collapse:collapse;font-size:11px;text-align:left}th{font-size:10px;background:var(--raised);position:sticky;top:0;color:var(--muted);font-weight:500}td,th{padding:4px 7px;border-bottom:1px solid #35404a;white-space:nowrap}td:last-child{white-space:normal}tr[aria-selected=true]{background:var(--select);box-shadow:inset 3px 0 var(--accent)}.linebutton{border:0;background:transparent;padding:0 3px;min-height:18px;font:11px Consolas,monospace}.status{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:6px 9px;border-top:1px solid var(--line);font-size:10px;color:var(--muted)}.status .message{color:var(--accent);flex:1;min-width:160px}.context-tabs{display:flex;flex-wrap:wrap;gap:3px;padding:5px;border-bottom:1px solid var(--line)}.context-tabs button{font-size:10px;padding:3px 6px}.asidebody{padding:8px;display:flex;flex-direction:column;gap:8px}.asidebody .properties{grid-template-columns:1fr 1fr}.asidebody p{font-size:11px;margin:0}.target{border:1px solid #526b5f;background:#23362e;padding:6px;line-height:1.5;font-size:10px}.target strong{display:block;font-size:11px}.target select{width:100%;margin-top:4px;font-size:10px}.asidebody ul{font-size:11px;margin:0;padding-left:17px;color:var(--muted)}.aside-note{border-left:2px solid var(--focus);padding:5px 7px;font-size:10px;color:var(--muted)}.mediafacts{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:10px}.mediafacts span{padding:4px;background:var(--panel)}.reference{padding:7px 9px;border-top:1px solid #7c94b1;background:#22303d;font-size:11px}.home{padding:24px;min-height:330px}.home h2{font-size:21px}
+.review,.state{margin:10px 18px;border:1px solid var(--line);background:var(--panel);padding:10px;font-size:11px}.review summary,.state summary{cursor:pointer;color:var(--accent)}.review p{color:var(--muted)}.review table{margin:10px 0}.review td,.review th{white-space:normal;vertical-align:top;padding:8px}.review td:first-child{width:20%}.tasklist{display:flex;gap:5px;flex-wrap:wrap}.tasklist button{font-size:10px}.questions{margin:12px 18px;font-size:12px;line-height:1.65;color:var(--muted)}.questions strong{color:var(--text)}.state pre{max-height:250px;overflow:auto;font-size:11px}.state-line{color:var(--text);font-size:11px;margin-bottom:7px}.switcher{position:fixed;bottom:13px;left:50%;transform:translateX(-50%);z-index:25;background:#e8edf2;color:#171b20;display:flex;align-items:center;gap:8px;padding:8px 10px;max-width:96vw;border-radius:6px;box-shadow:0 8px 30px #0009}.switcher button{color:#171b20;background:transparent;border-color:#8b99a2;font-size:11px}.switcher button[aria-pressed=true]{background:#273e36;color:#effaf5}.switcher strong{font-size:12px;display:block;text-align:center;min-width:170px}.switcher small{font-size:10px;color:#4b5961;display:block;text-align:center}
+dialog{width:540px;max-width:94vw;max-height:85vh;overflow:auto;color:var(--text);background:var(--panel);border:1px solid var(--line);padding:18px}dialog::backdrop{background:#081019bd}dialog h2{font-size:17px}dialog header{display:flex;align-items:center;justify-content:space-between;gap:10px}dialog p{font-size:12px;color:var(--muted)}.dialogfields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.dialogfields .wide{grid-column:1/-1}.dialogfields input{width:100%}.dialogfields input[type=checkbox]{width:auto}dialog footer{display:flex;gap:7px;justify-content:end;margin-top:16px}dialog output{display:block;min-height:25px;font-size:11px;color:var(--accent);line-height:1.5}.dialogtarget{font-size:11px;padding:6px;border:1px solid #526b5f;background:#23362e;margin-top:10px}[hidden]{display:none!important}body[data-variant=inspector] .localbar{display:none}body[data-variant=inspector] #editorProps{display:none}
+@media(min-width:1500px){.workspace{grid-template-rows:115px 210px auto}.workspace.has-aside{grid-template-columns:minmax(0,44fr) minmax(0,56fr) 285px}}@media(max-width:1050px){.workspace.has-aside{grid-template-columns:minmax(0,44fr) minmax(0,56fr) 230px}.properties{grid-template-columns:repeat(3,minmax(0,1fr))}.workspace{grid-template-rows:110px 215px auto}.status{gap:8px}}@media(max-width:780px){.study{padding:10px}.application,.review,.questions,.state{margin:10px}.workspace,.workspace.has-aside{grid-template-columns:1fr;grid-template-rows:230px 110px 225px auto auto;grid-template-areas:"video" "audio" "editor" "aside" "grid"}.workspace:not(.has-aside){grid-template-rows:230px 110px 225px auto;grid-template-areas:"video" "audio" "editor" "grid"}#aside{max-height:350px}.switcher .pick{display:none}.dropdown.allcommands{max-width:84vw}.appbar small{display:none}}
+
+
+/* Prototype-specific layout; accepted Classic shell geometry stays intact. */
+.workspace.with-manager{grid-template-columns:minmax(0,44fr) minmax(0,56fr) 315px;grid-template-areas:"video audio manager" "video editor manager" "grid grid grid"}
+#managerPanel{grid-area:manager;background:var(--field);max-height:640px;overflow:auto}
+.manager{padding:10px;display:flex;flex-direction:column;gap:10px;font-size:11px}.manager p{margin:0}.manager h3{font-size:11px;color:var(--accent)}.manager select{width:100%}.manager header{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.script-list{display:flex;flex-direction:column;gap:4px}.script-list button{text-align:left;display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:6px}.script-list small{font-size:10px}.manager dl{margin:0;display:grid;grid-template-columns:60px 1fr;gap:3px}.manager dt{color:var(--muted)}.manager dd{margin:0;overflow-wrap:anywhere}.manager .target label{display:block}.macro-description{min-height:36px}
+.notice{padding:7px 9px;border-left:2px solid var(--focus);background:#302d24;color:#e7ddbe;font-size:11px;line-height:1.45}
+.taskstrip{margin:4px;border:1px solid #668d7b;background:#1c2d27;padding:8px;display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr);gap:8px;font-size:11px}.taskstrip h2{color:var(--accent);margin-bottom:4px}.taskstrip p{margin:4px 0}.taskstrip progress{width:100%;accent-color:var(--accent);height:9px}.taskstrip .row button{font-size:10px}.taskstrip .danger{border-color:#c1847f;color:#ffd0cc}
+.manager-window{width:730px;padding:0}.manager-window>header{padding:12px;border-bottom:1px solid var(--line)}.manager-window .manager{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;padding:14px}.manager-window .manager-heading,.manager-window .manager-footer{grid-column:1/-1}.manager-left,.manager-right{display:flex;flex-direction:column;gap:10px}.manager-window .manager-footer{border-top:1px solid var(--line);padding-top:10px}
+.script-dialog{width:650px}.script-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:14px 0}.script-fields .span2{grid-column:span 2}.script-fields .span3{grid-column:1/-1}.script-fields input,.script-fields textarea{width:100%}.script-fields input[type=checkbox]{width:auto}.script-fields label{font-size:11px}.script-fields .hint{font-size:10px;color:var(--muted)}.script-fields textarea{min-height:64px}.label-sample{background:var(--raised);padding:8px;line-height:1.45}
+.return-preview{max-height:240px;overflow:auto;font:11px/1.4 Consolas,monospace;background:var(--field);padding:8px}.scenario-buttons{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}.scenario-buttons button{font-size:10px}.resultlog{max-height:110px;overflow:auto;background:var(--field);padding:6px;white-space:pre-wrap;font:10px/1.5 Consolas,monospace}.helper-badge{border:1px solid var(--line);padding:3px 7px;font-size:10px}.script-error{color:#ffc7c1}.manager-left .row button{font-size:10px}
+.workspace .editbody{display:block}.workspace .editbody>*+*{margin-top:6px}.workspace .editorlabel{min-height:0}.workspace .editorlabel textarea{height:62px;min-height:62px}.properties{grid-template-columns:repeat(4,minmax(0,1fr))}button:disabled{opacity:.45;cursor:default}
+.menu-popover{position:absolute;z-index:20;width:260px;background:var(--panel);border:1px solid var(--line);box-shadow:0 10px 30px #0009;padding:5px}.menu-popover button{display:block;width:100%;text-align:left;font-size:11px}.menu-popover p{font-size:10px;padding:3px 6px;color:var(--muted)}
+@media(max-width:1100px){.workspace.with-manager{grid-template-columns:minmax(0,44fr) minmax(0,56fr) 280px}.workspace.with-manager .properties{grid-template-columns:1fr 1fr}.workspace{grid-template-rows:106px 215px auto}}
+@media(max-width:850px){.workspace.with-manager{grid-template-columns:minmax(0,44fr) minmax(0,56fr);grid-template-rows:106px 215px auto auto;grid-template-areas:"video audio" "video editor" "grid grid" "manager manager"}#managerPanel{max-height:none}.taskstrip{grid-template-columns:1fr}}
+@media(max-width:600px){.workspace,.workspace.with-manager{grid-template-columns:1fr;grid-template-rows:200px 100px 225px auto auto;grid-template-areas:"video" "audio" "editor" "grid" "manager"}.manager-window .manager{display:flex}.script-fields{grid-template-columns:1fr 1fr}.script-fields .span3,.script-fields .span2{grid-column:1/-1}.switcher strong{min-width:150px}.study h1{font-size:16px}}
+</style></head><body data-variant="window">
+<header class="study"><div class="eyebrow">HikariSub / automation host / throwaway prototype</div><h1>Where should automation management and recovery live?</h1><p>Two arrangements in the accepted Compact Studio / Classic shell. Separate-process Lua is accepted. Manager placement, one active macro, helper lifetime, staged edits and recovery details below remain <b>proposals</b>.</p><div class="row"><a href="shell-chrome.html?variant=classic">Classic shell study ↗</a><a href="workspace-tools.html?variant=B">Accepted workspace behavior ↗</a><span class="grow"></span><small>Simulation · no Lua, IPC, files, network or native modules execute</small></div></header>
+<div class="application"><header class="appbar"><span class="mark">H</span><span class="brand">HikariSub</span><span id="titleDoc"></span><span class="grow"></span><span class="helper-badge" id="helperBadge"></span><button data-action="home">Optional Home</button></header>
+<nav class="menubar" aria-label="Classic menu"><span class="muted">File · Edit · Subtitles · Timing · Video · Audio</span><div class="menuwrap"><button id="automationMenuButton" aria-expanded="false" data-action="menu">Automation ▾</button><div class="menu-popover" id="automationMenu" hidden><button data-action="manager">Automation manager…</button><button data-action="rerun">Rerun last macro</button><button data-action="reloadAll">Reload all sample scripts</button><button data-action="shortcuts">Macro shortcuts…</button><p>Synthetic registrations. Other Classic commands are outside this study.</p></div></div><button data-action="manager">Manage scripts…</button><button data-action="rerun" id="rerunButton">Rerun last</button></nav>
+<nav class="docbar" aria-label="Open documents"><div class="row" id="docButtons"></div><span class="grow"></span><label class="inline"><input type="checkbox" id="comparison" checked>Protected comparison</label></nav><div class="ownership"><span id="ownership"></span><span>Shared workspace · tools follow editing with optional pin</span></div>
+<div class="home" id="home" hidden><h2>Optional Home</h2><p>Editing remains the normal destination. Sample tasks and documents stay in memory.</p><button data-action="home">Return to editing workspace</button></div>
+<main class="workspace" id="workspace">
+<section class="panel" id="video"><div class="panelhead"><h2>Video</h2><span>Synthetic preview</span></div><div class="scene"><small>GARDEN / NO MEDIA PLAYBACK</small><b id="subtitle"></b></div><div class="localbar"><button data-action="previous">◀ Line</button><button data-action="next">Line ▶</button><span class="grow"></span><span class="time" id="videoTime"></span></div></section>
+<section class="panel" id="audio"><div class="panelhead"><h2>Audio / spectrum</h2><span>Illustrative</span></div><svg class="wave" viewBox="0 0 600 66" preserveAspectRatio="none" aria-label="Synthetic waveform" role="img"><path stroke="#7dceba" fill="none" d="M0 33 10 29 20 38 30 18 40 42 50 27 60 34 70 8 80 58 90 19 100 36 110 29 120 42 130 26 140 34 150 32 160 11 170 54 180 21 190 41 200 25 210 35 220 28 230 44 240 17 250 56 260 26 270 37 280 22 290 39 300 33 310 27 320 48 330 12 340 53 350 26 360 39 370 24 380 35 390 32 400 18 410 50 420 24 430 38 440 28 450 32 460 13 470 50 480 25 490 35 500 18 510 45 520 26 530 38 540 31 550 20 560 42 570 29 580 36 590 31 600 33"/><rect x="210" y="0" width="170" height="66" fill="#75cbb320" stroke="#d4c88a"/></svg><div class="localbar">Audio selection belongs to the editing document</div></section>
+<section class="panel" id="editor"><div class="panelhead"><h2>Subtitle text</h2><span id="lineLabel"></span></div><div class="editbody"><div class="properties"><label>Style<select disabled><option>Default</option></select></label><label>Actor<input value="Mira" readonly></label><label>Layer<input value="0" readonly></label><label>State<input id="editState" readonly></label></div><label class="editorlabel">Text · sample edits remain in memory<textarea id="text" spellcheck="false"></textarea></label><div class="row"><button data-action="commitText" id="commitText">Apply text draft</button><button data-action="undo" id="undoButton">Undo sample edit</button><small id="editHint"></small></div></div></section>
+<section class="panel" id="grid"><div class="panelhead"><h2>Subtitle grid</h2><span>10 synthetic Lines · click a number</span></div><div class="tablewrap"><table><thead><tr><th>#</th><th>Start</th><th>End</th><th>Style</th><th>Actor</th><th>Text</th></tr></thead><tbody id="lines"></tbody></table></div></section>
+<aside class="panel" id="managerPanel" hidden></aside>
+</main><div class="reference" id="reference"></div>
+<section class="taskstrip" aria-label="Automation task" id="taskStrip"><div><h2 id="runTitle"></h2><p id="runTarget"></p><progress id="progress" max="100" value="0"></progress><p id="progressLabel"></p><div class="row" id="runActions"></div></div><div><div class="notice" id="runNotice"></div><pre class="resultlog" id="runLog"></pre><button data-action="results">Inspect last reply / result</button></div></section>
+<footer class="status"><span class="message" id="message" role="status" aria-live="polite"></span><span id="statusDetail"></span></footer></div>
+<details class="review"><summary>Walkthroughs and precise review questions</summary><p>Walkthrough buttons reset only this sample. Progress advances by button, with no real elapsed-time guarantee. Switching arrangement preserves all sample state.</p><div class="scenario-buttons"><button data-scenario="options">1 · Typed options → result</button><button data-scenario="cancel">2 · Cooperative cancellation</button><button data-scenario="stuck">3 · Stuck call → force stop</button><button data-scenario="crash">4 · Crash → restart</button><button data-scenario="protected">5 · Protected target</button></div><ol><li><b>Placement:</b> a manager task window with independent task strip, or a persistent manager tool beside the workspace?</li><li><b>Recovery:</b> does Cancel → “still waiting” → explicit Force stop → explicit Restart explain the consequences clearly? The grace period and automatic escalation policy remain undecided.</li><li><b>Concurrency and edits:</b> accept one active macro application-wide and a captured target reserved until completion, or require another interaction? Atomic staged apply / undo semantics still need their named C06–C08 decisions.</li></ol><p>Script-created options remain task dialogs in both arrangements. This study does not approve native compatibility, default-button fixes, timing deadlines, callback semantics or helper lifetime.</p></details>
+<details class="state"><summary>Full relevant simulation state</summary><p id="stateLine"></p><pre id="stateDump"></pre></details>
+<div class="switcher" aria-label="Prototype arrangement"><button data-action="variantPrevious" aria-label="Previous arrangement">←</button><div><strong id="variantLabel"></strong><small>Proposed placement · ← / → outside fields</small></div><button data-action="variantNext" aria-label="Next arrangement">→</button></div>
+<dialog id="managerDialog" class="manager-window"><header><h2>Automation manager</h2><div class="row"><button data-action="variantNext">Compare persistent tool →</button><button data-action="closeManager">Close</button></div></header></dialog>
+<section class="manager" id="manager"><header class="manager-heading"><h2>Automation manager</h2><button data-action="closeManager" id="panelClose">Hide</button></header><div class="manager-left"><h3>Sample scripts</h3><div class="script-list" id="scriptList"></div><div class="row"><button data-action="load">Load sample…</button><button data-action="reload">Reload</button><button data-action="reloadAll">Reload all</button></div><label>Registered macro<select id="macroSelect"></select></label><p class="macro-description" id="macroDescription"></p></div><div class="manager-right"><div class="target"><strong id="targetLabel"></strong><label>Target binding<select id="targetMode"><option value="follow">Follow editing document</option><option value="pin-a">Pin Garden.ass</option><option value="pin-b">Pin Translation.ass</option><option value="pin-ref">Pin Reference.ass · protected</option></select></label><span id="targetDetail"></span></div><dl id="scriptFacts"></dl><div class="row"><button data-action="editScript">View / edit source…</button><button data-action="shortcuts">Shortcut…</button></div><label>Options button schema<select id="buttonMode"><option value="custom">Custom: Apply / Preview / Cancel</option><option value="default">Default: OK / Cancel</option></select></label><div class="notice" id="eligibility"></div><div class="row"><button data-action="run" id="runButton" class="primary">Run selected macro</button><button data-action="rerun" id="managerRerun">Rerun last</button></div></div><div class="manager-footer"><small>Proposed: persistent script states in one helper, one active macro application-wide. Reload executes synthetic top-level registration again; restarting loses simulated globals. No actual scripts execute.</small></div></section>
+<dialog id="scriptDialog" class="script-dialog"><header><h2>Script-created options</h2><div class="row"><button data-action="cancel">Cancel run</button><button data-action="crash">Simulate helper loss</button></div><button data-action="closeOptions" aria-label="Close options window">×</button></header><div class="dialogtarget" id="optionsTarget"></div><p>Synchronous <code>dialog.display</code> request; the application stays responsive. Grid cells/spans and return types are sampled. Fixed controls, not script-generated QML.</p><form id="optionsForm"><div class="script-fields"><div class="label-sample span3">label · “Apply a synthetic marker to the captured Line.” No returned value.</div><label class="span2">edit · prefix<input name="prefix" value="[Demo] " title="Synthetic line prefix"></label><label>intedit · count<input name="count" type="number" min="1" max="20" step="1" value="1"></label><label class="span3">textbox · note<textarea name="note">こんにちは / Hello
+Synthetic dialog data only.</textarea></label><label>floatedit · strength<input name="strength" type="number" min="0" max="10" step="any" value="1.5"><span class="hint">Legacy step is ignored; no new step behavior approved.</span></label><label>dropdown · style<select name="style"><option>Default</option><option>Sign</option><option>Translated</option></select><span class="hint">Returns a string, not an index.</span></label><label class="inline">checkbox<input name="enabled" type="checkbox" checked> Enabled</label><label>color · primary<input name="primary" value="&amp;HFFFFFF&amp;"><span class="hint">ASS color string sample.</span></label><label>coloralpha · overlay<input name="overlay" value="&amp;H80FFFFFF&amp;"></label><label>alpha · alphaText<input name="alphaText" value="&amp;H80&amp;"><span class="hint">Legacy plain edit; not a new alpha widget.</span></label></div><div class="notice">Custom “Cancel” is a string button label. Window close / Escape returns false plus values. Default OK is shown as the source-observed empty string. Third-argument button IDs are not honored in the current entry point; C08 remains pending.</div><footer id="optionsButtons"></footer></form></dialog>
+<dialog id="pickerDialog"><header><h2>Script file picker · simulation</h2><button data-action="cancel">Cancel run</button><button data-action="pickerCancel" aria-label="Close file picker">×</button></header><div class="dialogtarget" id="pickerTarget"></div><p>No files are read or written. Select a synthetic path or cancel to compare string / array / nil results.</p><label>API shape<select id="pickerMode"><option value="open">dialog.open · one path</option><option value="multiple">dialog.open · multiple paths</option><option value="save">dialog.save · destination path</option></select></label><label style="margin-top:10px">Synthetic choice<select id="pickerPath"><option value="C:/sample/notes.ass">C:/sample/notes.ass</option><option value="C:/sample/signs.ass">C:/sample/signs.ass</option></select></label><p>Existence filters, wildcard syntax and the inverted save overwrite flag need native fixtures. This picker does not approve replacing their behavior.</p><footer><button data-action="pickerCancel">Cancel → nil</button><button data-action="pickerAccept" class="primary">Return sample choice</button></footer></dialog>
+<dialog id="inspectDialog"><header><h2 id="inspectTitle"></h2><button data-action="closeInspect">Close</button></header><div id="inspectBody"></div></dialog>
+<script>
+
+
+"use strict";
+const $ = id => document.getElementById(id);
+const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+const variants = ["window", "panel"];
+const variantNames = { window: "A · Manager task window", panel: "B · Persistent manager tool" };
+const sampleLines = ["The garden is still quiet.", "Did you hear the bell?", "We should leave before sunrise.", "この道をまっすぐ。", "The lantern is beside the gate.", "Attends-moi ici.", "A small light across the water.", "We have one more chance.", "ขอบคุณสำหรับทุกอย่าง", "See you tomorrow."];
+const macros = {
+  options: { name: "Label selected Line…", description: "Requests typed options, then stages a prefix on the captured Line.", active: false },
+  progress: { name: "Sample slow marker", description: "Manual progress / cancellation demo; stages a prefix without an options dialog.", active: false },
+  files: { name: "Choose sample file…", description: "Samples dialog.open / dialog.save return shapes; no document edit.", active: false },
+  active: { name: "Marker mode · active sample", description: "Synthetic active-state indicator; runs the same prefix sample. Callback ordering is not modeled.", active: true },
+  disabled: { name: "Needs multiple selected Lines", description: "Sample validation disables this macro: this study selects one Line.", active: false }
+};
+function newState() {
+  const requested = new URLSearchParams(location.search).get("variant");
+  const docs = {};
+  ["a","b","ref"].forEach((id,index) => {
+    const lines = sampleLines.map((text,line) => ({ id:id+"-"+(line+1), text:index===1 ? "訳 / "+text : text, start:line*2100, end:line*2100+1750 }));
+    docs[id] = { id, name:["Garden.ass","Translation.ass","Reference.ass"][index], protected:id==="ref", revision:1, selected:2, draft:lines[2].text, dirty:false, undo:null, lines };
+  });
+  return {
+    variant:variants.includes(requested) ? requested : "window", editing:"a", comparison:true,
+    targetMode:"follow", home:false, managerVisible:true, selectedScript:"label", selectedMacro:"options", buttonMode:"custom", docs,
+    scripts:[
+      {id:"label",name:"Sample labeling.lua",source:"Autoload · synthetic",version:1,loaded:true,error:null,globals:0,macros:["options","progress","active"]},
+      {id:"files",name:"Sample choices.lua",source:"Document association · synthetic",version:1,loaded:true,error:null,globals:0,macros:["files","disabled"]},
+      {id:"broken",name:"Broken sample.lua",source:"Manual load · synthetic",version:1,loaded:false,error:"line 4: synthetic registration error",globals:0,macros:[]}
+    ],
+    helper:{status:"ready",generation:1}, nextRun:1, nextRequest:1, run:null, lastRun:null,
+    lastOutcome:null, lastReply:null, shortcut:"Ctrl+Alt+L", message:"Choose an arrangement and try a synthetic macro.", audit:[]
+  };
+}
+let state = newState();
+function editingDoc() { return state.docs[state.editing]; }
+function targetId() { return state.targetMode==="follow" ? state.editing : state.targetMode.slice(4); }
+function targetDoc() { return state.docs[targetId()]; }
+function selectedScript() { return state.scripts.find(script=>script.id===state.selectedScript); }
+function isBusy() { return state.run && ["running","waiting-options","waiting-picker","cancel-requested","unresponsive"].includes(state.run.status); }
+function record(message) { state.message=message; state.audit.push({sequence:state.audit.length+1,message}); }
+function eligibility(script=selectedScript(), macro=state.selectedMacro) {
+  if (isBusy()) return "One active macro proposal: another run must finish first.";
+  if (state.helper.status!=="ready") return "Helper unavailable. Restart and reload before running.";
+  if (!script?.loaded || script.error) return script?.error || "No usable script selected.";
+  if (!script.macros.includes(macro)) return "Choose a registered macro.";
+  if (targetDoc().protected) return "Reference.ass is protected. Inspect-only; macros cannot mutate this target.";
+  if (targetDoc().draft!==targetDoc().lines[targetDoc().selected].text) return "Apply the sample text draft before running. This study guard does not settle the command / draft policy.";
+  if (macro==="disabled") return "Disabled by sample validation: requires multiple selected Lines (outside this sample).";
+  return "Ready. Target and current Line will be captured when Run starts.";
+}
+function canRun(script=selectedScript(),macro=state.selectedMacro) { return eligibility(script,macro).startsWith("Ready."); }
+function stamp(ms) { return "0:"+String(Math.floor(ms/1000)).padStart(2,"0")+"."+String(ms%1000).padStart(3,"0"); }
+function button(action,text,disabled=false,classes="") { return '<button data-action="'+action+'" class="'+classes+'" '+(disabled?"disabled":"")+'>'+text+'</button>'; }
+function render() {
+  const doc=editingDoc(), line=doc.lines[doc.selected];
+  document.body.dataset.variant=state.variant;
+  $("variantLabel").textContent=variantNames[state.variant];
+  $("titleDoc").textContent=doc.name+(doc.dirty?" *":"");
+  $("helperBadge").textContent="Helper "+state.helper.status+" · generation "+state.helper.generation;
+  $("docButtons").innerHTML=["a","b"].map(id=>'<button data-document="'+id+'" aria-pressed="'+(state.editing===id)+'">'+escapeHTML(state.docs[id].name)+'</button>').join("");
+  $("ownership").textContent="Editing: "+doc.name+" · automation "+(state.targetMode==="follow"?"follows editing":"pinned to "+targetDoc().name);
+  $("comparison").checked=state.comparison;
+  $("home").hidden=!state.home;
+  $("workspace").hidden=state.home;
+  $("subtitle").textContent=line.text;
+  $("videoTime").textContent=stamp(line.start);
+  $("lineLabel").textContent="Line "+(doc.selected+1)+" · "+line.id;
+  $("editState").value=doc.dirty?"Modified":"Saved sample";
+  if (document.activeElement!==$("text")) $("text").value=doc.draft;
+  const reserved=isBusy() && state.run.targetId===doc.id;
+  $("text").disabled=reserved; $("commitText").disabled=reserved; $("undoButton").disabled=reserved || !doc.undo;
+  $("editHint").textContent=reserved?"Captured target reserved by run "+state.run.id+" · proposal":"Enter commits + advances (outside IME); button commits in place.";
+  $("lines").innerHTML=doc.lines.map((row,index)=>'<tr aria-selected="'+(index===doc.selected)+'"><td><button class="linebutton" data-line="'+index+'" aria-label="Select Line '+(index+1)+'">'+(index+1)+'</button></td><td class="time">'+stamp(row.start)+'</td><td class="time">'+stamp(row.end)+'</td><td>Default</td><td>'+(index%2?"Sol":"Mira")+'</td><td>'+escapeHTML(row.text)+'</td></tr>').join("");
+  $("reference").hidden=!state.comparison;
+  $("reference").textContent="Reference: Reference.ass · protected / inspect-only · Line "+(state.docs.ref.selected+1)+": "+state.docs.ref.lines[state.docs.ref.selected].text;
+  renderManager(); renderRun();
+  $("message").textContent=state.message;
+  $("statusDetail").textContent="Document rev "+doc.revision+" · Line "+(doc.selected+1)+" · Reference protected";
+  $("rerunButton").disabled=!state.lastRun || isBusy() || state.helper.status!=="ready";
+  $("stateLine").textContent="Arrangement "+state.variant+"; editing "+doc.name+"; target "+targetDoc().name+"; run "+(state.run?.status || "idle")+"; helper generation "+state.helper.generation+".";
+  $("stateDump").textContent=JSON.stringify(state,null,2);
+}
+function renderManager() {
+  const manager=$("manager"), panel=state.variant==="panel", container=panel?$("managerPanel"):$("managerDialog");
+  if (manager.parentElement!==container) container.append(manager);
+  $("workspace").classList.toggle("with-manager",panel && state.managerVisible);
+  $("managerPanel").hidden=!panel || !state.managerVisible;
+  $("panelClose").hidden=!panel;
+  if (panel && $("managerDialog").open) $("managerDialog").close();
+  if (!panel && state.managerVisible && !$("managerDialog").open && !$("scriptDialog").open && !$("pickerDialog").open && !$("inspectDialog").open) $("managerDialog").showModal();
+  if (!state.managerVisible && $("managerDialog").open) $("managerDialog").close();
+  const script=selectedScript();
+  $("scriptList").innerHTML=state.scripts.map(item=>'<button data-script="'+item.id+'" aria-pressed="'+(item.id===script.id)+'"><span>'+escapeHTML(item.name)+'</span><small>'+(item.error?"Load error":item.loaded?item.macros.length+" macros":"Unavailable")+'</small></button>').join("");
+  $("macroSelect").innerHTML=script.macros.length?script.macros.map(key=>'<option value="'+key+'" '+(key===state.selectedMacro?"selected":"")+'>'+(macros[key].active?"● ":"")+macros[key].name+'</option>').join(""):'<option value="">No registered macros</option>';
+  $("macroSelect").disabled=!script.macros.length;
+  $("macroDescription").textContent=macros[state.selectedMacro]?.description || script.error;
+  $("targetMode").value=state.targetMode;
+  $("targetLabel").textContent="Tool target: "+targetDoc().name;
+  $("targetDetail").textContent=" "+(targetDoc().protected?"Protected reference":"Editable")+" · selected Line "+(targetDoc().selected+1)+". "+(isBusy()?"Active run keeps its captured target.":"");
+  $("scriptFacts").innerHTML='<dt>Origin</dt><dd>'+escapeHTML(script.source)+'</dd><dt>Load</dt><dd>'+(script.loaded?"Registered":"Unavailable")+' · version '+script.version+'</dd><dt>Globals</dt><dd>'+(script.globals===null?'lost':script.globals)+' simulated runs since reload</dd><dt>Shortcut</dt><dd>'+escapeHTML(state.shortcut || "Unassigned")+'</dd><dt>Active</dt><dd>'+(macros[state.selectedMacro]?.active?"● sample toggle on":"Not a toggle")+'</dd>';
+  $("buttonMode").value=state.buttonMode;
+  $("eligibility").textContent=eligibility();
+  $("runButton").disabled=!canRun();
+  $("managerRerun").disabled=!state.lastRun || isBusy() || state.helper.status!=="ready";
+  manager.querySelectorAll('[data-action="reload"],[data-action="reloadAll"],[data-action="load"],[data-action="editScript"]').forEach(control=>control.disabled=isBusy() || state.helper.status!=="ready");
+}
+function renderRun() {
+  const run=state.run;
+  $("runTitle").textContent=run?run.macroName+" · "+run.status:"Automation task · idle";
+  $("runTarget").textContent=run?"Captured: "+state.docs[run.targetId].name+" / "+run.lineId+" / revision "+run.revision+" · run "+run.id+", generation "+run.generation:"No captured target. Start a sample macro from Automation manager.";
+  $("progress").value=run?.progress || 0;
+  $("progressLabel").textContent=run?run.progress+"% · "+run.task:"No real timer, helper or IPC transport is running.";
+  let actions=button("manager","Manager…");
+  if (run?.status==="running") actions+=button("advance",run.progress<100?"Advance simulated work":"Apply staged result")+button("cancel","Cancel")+button("scriptError","Simulate script error")+button("crash","Simulate helper crash");
+  if (["waiting-options","waiting-picker"].includes(run?.status)) actions+=button("resumeDialog","Return to pending dialog")+button("cancel","Cancel run");
+  if (run?.status==="cancel-requested") actions+=button("ackCancel","Simulate cancellation acknowledged")+button("stuck","Simulate still waiting / stuck call");
+  if (run?.status==="unresponsive") actions+=button("ackCancel","Simulate late cooperative acknowledgment")+button("forceStop","Force stop helper",false,"danger");
+  if (state.helper.status!=="ready") actions+=button("restart","Restart helper + reload scripts");
+  if (run && !isBusy()) actions+=button("lateReply","Simulate a late reply");
+  $("runActions").innerHTML=actions;
+  $("runNotice").textContent=run?.status==="unresponsive"?"Cancellation remains requested. No timeout is selected here. Force stop terminates the simulated helper and loses all script globals; external side effects cannot be rolled back.":state.helper.status!=="ready"?"Restart visibly reloads script top-level registrations. It never reruns the interrupted macro. No real process is started.":"Proposal: one active macro, captured target reservation, staged document apply. C06–C08 validation / undo / dialog changes remain unapproved. Process isolation is not a sandbox.";
+  $("runLog").textContent=(run?.log || ["Ready for a sample run."]).join("\n");
+}
+function changeVariant(direction) {
+  state.variant=variants[(variants.indexOf(state.variant)+direction+variants.length)%variants.length];
+  const url=new URL(location.href); url.searchParams.set("variant",state.variant); history.replaceState(null,"",url);
+  state.managerVisible=true; record("Arrangement changed to "+variantNames[state.variant]+"; all simulation state retained."); render();
+}
+function openManager() { state.managerVisible=true; $("automationMenu").hidden=true; $("automationMenuButton").setAttribute("aria-expanded","false"); render(); }
+function closeManager() { state.managerVisible=false; if ($("managerDialog").open) $("managerDialog").close(); render(); }
+function showInspector(title,markup) {
+  if ($("managerDialog").open) $("managerDialog").close();
+  $("inspectTitle").textContent=title; $("inspectBody").innerHTML=markup; $("inspectDialog").showModal();
+}
+function selectLine(index) {
+  const doc=editingDoc();
+  if (doc.draft!==doc.lines[doc.selected].text) { record("Apply this sample draft before selecting another Line; command / draft policy remains a separate decision."); render(); return; }
+  doc.selected=(index+doc.lines.length)%doc.lines.length; doc.draft=doc.lines[doc.selected].text;
+  $("text").value=doc.draft;
+  record("Selected "+doc.name+" Line "+(doc.selected+1)+". Active automation keeps its captured Line."); render();
+}
+function reload(all=false) {
+  if (isBusy() || state.helper.status!=="ready") { record("Reload unavailable while a macro is active or the helper is stopped."); render(); return; }
+  (all?state.scripts:[selectedScript()]).forEach(script=>{script.version++;script.globals=0;script.loaded=!script.error;});
+  record("Reloaded "+(all?"all synthetic scripts":selectedScript().name)+". Top-level registration reran; globals reset. Broken samples remain errors."); render();
+}
+function startRun(rerun=false) {
+  if (rerun && state.lastRun) { state.selectedScript=state.lastRun.scriptId; state.selectedMacro=state.lastRun.macro; }
+  if (!canRun()) { record(eligibility()); render(); return; }
+  const doc=targetDoc(), script=selectedScript(), macro=state.selectedMacro;
+  state.run={id:state.nextRun++,generation:state.helper.generation,scriptId:script.id,macro,macroName:macros[macro].name,targetId:doc.id,revision:doc.revision,lineId:doc.lines[doc.selected].id,selectedLineIndex:doc.selected,status:"running",progress:0,task:"Captured sample document / selection",cancelRequested:false,pendingRequest:null,staged:null,log:[],buttonMode:state.buttonMode};
+  state.lastRun={scriptId:script.id,macro}; state.lastReply=null; state.lastOutcome=null; script.globals++;
+  state.run.log.push("run "+state.run.id+": snapshot captured; no authoritative edit yet.");
+  state.managerVisible=state.variant==="panel";
+  if ($("managerDialog").open) $("managerDialog").close();
+  record("Started "+state.run.macroName+" on "+doc.name+" Line "+(doc.selected+1)+".");
+  if (macro==="options") requestOptions();
+  else if (macro==="files") requestPicker();
+  else stagePrefix("[Demo] ");
+  render();
+}
+function requestOptions() {
+  const run=state.run; run.status="waiting-options"; run.task="Waiting for synchronous dialog.display reply";
+  run.pendingRequest={id:state.nextRequest++,type:"dialog.display",resolved:false};
+  $("optionsForm").reset();
+  run.pendingRequest.values=readOptions();
+  $("optionsTarget").textContent="Run "+run.id+" · "+state.docs[run.targetId].name+" · "+run.lineId+" · request "+run.pendingRequest.id;
+  $("optionsButtons").innerHTML=run.buttonMode==="custom"?'<button type="button" data-option-result="Apply" class="primary">Apply → string</button><button type="button" data-option-result="Preview">Preview → string</button><button type="button" data-option-result="Cancel">Cancel → string</button>':'<button type="button" data-option-result="" class="primary">OK → empty string</button><button type="button" data-option-cancel>Cancel → false</button>';
+  $("scriptDialog").showModal();
+}
+function readOptions() {
+  const fields=$("optionsForm").elements;
+  return {prefix:fields.prefix.value,count:Number(fields.count.value),note:fields.note.value,strength:Number(fields.strength.value),style:fields.style.value,enabled:fields.enabled.checked,primary:fields.primary.value,overlay:fields.overlay.value,alphaText:fields.alphaText.value};
+}
+function typed(value) { return {luaType:value===null?"nil":typeof value==="number"?"number":typeof value==="boolean"?"boolean":Array.isArray(value)?"table (array)":"string",value}; }
+function resolveOptions(result,cancelRun=false) {
+  const run=state.run; if (!run || run.status!=="waiting-options" || !run.pendingRequest) return;
+  const values=readOptions();
+  state.lastReply={requestId:run.pendingRequest.id,api:"dialog.display",button:typed(result),values:Object.fromEntries(Object.entries(values).map(([key,value])=>[key,typed(value)])),note:"label omitted; colors shown as entered, not native normalization proof"};
+  run.pendingRequest=null; $("scriptDialog").close();
+  run.log.push("dialog reply: "+JSON.stringify(result)+" ("+typeof result+"); values table retained.");
+  if (cancelRun) { requestCancelAfterDialog(); return; }
+  if (result==="Apply" || result==="") {
+    run.status="running"; run.task="Options returned; sample macro resumed";
+    stagePrefix(values.enabled?values.prefix:""); record("Typed reply returned once. Advance simulated work before applying.");
+  } else finishRun(result==="Preview"?"completed-preview":"cancelled-by-sample-script",result==="Preview"?"Sample script chose preview only; no document edit.":"Sample script stopped after this reply; dialog return itself is not a host cancellation.");
+  render();
+}
+function requestPicker() {
+  const run=state.run; run.status="waiting-picker"; run.task="Waiting for synchronous file picker reply";
+  run.pendingRequest={id:state.nextRequest++,type:"dialog.open/save",resolved:false};
+  $("pickerTarget").textContent="Run "+run.id+" · "+state.docs[run.targetId].name+" · request "+run.pendingRequest.id;
+  $("pickerDialog").showModal();
+}
+function resolvePicker(accept,cancelRun=false) {
+  const run=state.run; if (!run || run.status!=="waiting-picker" || !run.pendingRequest) return;
+  const mode=$("pickerMode").value;
+  const value=!accept?null:mode==="multiple"?[$("pickerPath").value,"C:/sample/extra.ass"]:$("pickerPath").value;
+  state.lastReply={requestId:run.pendingRequest.id,api:mode==="save"?"dialog.save":"dialog.open",result:typed(value),nilShownAsJSONNull:!accept};
+  run.pendingRequest=null; $("pickerDialog").close();
+  if (cancelRun) { requestCancelAfterDialog(); return; }
+  finishRun("completed","File picker returned "+(value===null?"nil":Array.isArray(value)?"path array":"path string")+". No real file operation or document edit."); render();
+}
+function stagePrefix(prefix) {
+  const run=state.run, line=state.docs[run.targetId].lines.find(row=>row.id===run.lineId);
+  run.staged={lineId:line.id,before:line.text,after:prefix+line.text}; run.log.push("Sample staged edit prepared; document unchanged.");
+}
+function advanceRun() {
+  const run=state.run; if (!run || run.status!=="running") return;
+  if (run.progress<100) {
+    run.progress=Math.min(100,run.progress+50); run.task=run.progress===100?"Work ready; awaiting simulated apply boundary":"Analyzing synthetic Lines";
+    run.log.push("progress.set("+run.progress+"); "+run.task); record("Advanced simulated work. Progress is not measured runtime.");
+  } else applyResult();
+  render();
+}
+function applyResult() {
+  const run=state.run, doc=state.docs[run.targetId];
+  if (run.cancelRequested || run.generation!==state.helper.generation || run.revision!==doc.revision || doc.protected || state.helper.status!=="ready") {
+    finishRun("rejected","Stale, cancelled or protected result rejected; no target substitution."); return;
+  }
+  const line=doc.lines.find(row=>row.id===run.lineId);
+  if (run.staged && line) {
+    doc.undo={lineId:line.id,text:line.text,dirty:doc.dirty}; line.text=run.staged.after; doc.revision++; doc.dirty=true;
+    if (doc.lines[doc.selected].id===line.id) doc.draft=line.text;
+  }
+  finishRun("completed","Staged result applied to captured Line. One sample undo is available; exact legacy transaction semantics remain C06–C08 decisions.");
+}
+function finishRun(status,message) {
+  const run=state.run; run.status=status; run.task=message; run.pendingRequest=null; run.log.push(message);
+  state.lastOutcome={runId:run.id,status,targetId:run.targetId,message}; record(message);
+}
+function requestCancelAfterDialog() {
+  state.run.cancelRequested=true; state.run.status="cancel-requested"; state.run.task="Cancellation requested; waiting for cooperative acknowledgment";
+  state.run.log.push("Cancellation latched; later success cannot apply in the proposed model.");
+  record("Cancellation requested. Simulate acknowledgment or a stuck native call next."); render();
+}
+function cancelRun() {
+  if (!isBusy()) return;
+  if (state.run.status==="waiting-options") { resolveOptions(false,true); return; }
+  if (state.run.status==="waiting-picker") { resolvePicker(false,true); return; }
+  requestCancelAfterDialog();
+}
+function stopHelper(crash) {
+  if (!isBusy()) return;
+  if ($("scriptDialog").open) resolveOptions(false,true);
+  if ($("pickerDialog").open) resolvePicker(false,true);
+  state.helper.status=crash?"crashed":"stopped"; state.scripts.forEach(script=>{script.loaded=false;script.globals=null;});
+  state.run.staged=null;
+  finishRun(crash?"helper-crashed":"force-stopped",crash?"Simulated helper crash: staged document edits discarded; script states unavailable.":"Helper force-stopped in simulation. Staged edits discarded; script globals lost. External effects cannot be rolled back.");
+  render();
+}
+function restartHelper() {
+  if (isBusy() || state.helper.status==="ready") return;
+  state.helper.status="ready"; state.helper.generation++;
+  state.scripts.forEach(script=>{script.version++;script.globals=0;script.loaded=!script.error;});
+  record("New helper generation; synthetic script top-level registrations reloaded. Interrupted macro was not rerun."); render();
+}
+function showResults() {
+  showInspector("Typed reply and terminal result",'<p>Lua nil is JSON null in this viewer. False and empty string remain distinct. Color normalization, coercion and native controls are not proved.</p><pre class="return-preview">'+escapeHTML(JSON.stringify({reply:state.lastReply,outcome:state.lastOutcome},null,2))+'</pre><p>Script error, cancellation, helper loss and success remain distinct. No Lua execution or file persistence.</p>');
+}
+function scenario(kind) {
+  ["managerDialog","scriptDialog","pickerDialog","inspectDialog"].forEach(id=>{if ($(id).open) $(id).close();});
+  const variant=state.variant; state=newState(); state.variant=variant; state.managerVisible=variant==="panel";
+  if (kind==="protected") { state.targetMode="pin-ref"; state.managerVisible=true; record("Protected target: Run disabled with a reason. Choose Follow editing to recover."); render(); return; }
+  state.selectedMacro=kind==="options"?"options":"progress"; startRun();
+  if (kind==="cancel") cancelRun();
+  if (kind==="stuck") { cancelRun(); state.run.status="unresponsive"; state.run.task="Simulated stuck native call; no elapsed-time threshold implied"; }
+  if (kind==="crash") stopHelper(true);
+  render();
+}
+const actions = {
+  menu() { $("automationMenu").hidden=!$("automationMenu").hidden; $("automationMenuButton").setAttribute("aria-expanded",String(!$("automationMenu").hidden)); },
+  manager:openManager, closeManager,
+  home() { state.home=!state.home; record(state.home?"Optional Home opened; sample tasks continue.":"Returned to editing workspace."); render(); },
+  variantPrevious() { changeVariant(-1); }, variantNext() { changeVariant(1); },
+  previous() { selectLine(editingDoc().selected-1); }, next() { selectLine(editingDoc().selected+1); },
+  run() { startRun(); }, rerun() { if (state.lastRun) startRun(true); },
+  reload() { reload(); }, reloadAll() { reload(true); },
+  load() {
+    if (isBusy() || state.helper.status!=="ready") return;
+    if (!state.scripts.some(script=>script.id==="extra")) state.scripts.push({id:"extra",name:"Extra sample.lua",source:"Manual load · synthetic",version:1,loaded:true,error:null,globals:0,macros:["progress"]});
+    state.selectedScript="extra"; state.selectedMacro="progress"; record("Synthetic manual script registration added. No disk load occurred."); render();
+  },
+  editScript() {
+    const script=selectedScript();
+    const source=script.sourceDraft ?? "-- Synthetic illustrative text only\n-- No Lua evaluator exists in this HTML.\n-- Save only changes this sample registration.";
+    showInspector("Script source / error · sample",'<p>'+escapeHTML(script.name)+' · '+escapeHTML(script.source)+'. An external editor is not launched.</p>'+(script.error?'<p class="script-error">'+escapeHTML(script.error)+'</p>':'')+'<label>Editable synthetic source<textarea id="sourceDraft" spellcheck="false">'+escapeHTML(source)+'</textarea></label><footer>'+button("saveScript",script.error?"Simulate fix + reload":"Simulate save + reload")+'</footer><p>Real source editing, paths and save/reload integration remain implementation work.</p>');
+  },
+  saveScript() {
+    if (isBusy() || state.helper.status!=="ready") return;
+    const script=selectedScript(); script.error=null; script.loaded=true; script.version++; script.globals=0; script.sourceDraft=$("sourceDraft").value;
+    if (!script.macros.length) script.macros=["progress"];
+    state.selectedMacro=script.macros[0]; $("inspectDialog").close(); record("Synthetic source stored in memory and registration reloaded. No Lua evaluated."); render();
+  },
+  shortcuts() { showInspector("Macro shortcut · sample mapping",'<p>Mapping for the synthetic study. Conflict routing and stable macro identity belong to the settings design.</p><label>Stored in memory<input id="shortcutDraft" value="'+escapeHTML(state.shortcut)+'"></label><footer>'+button("saveShortcut","Save sample mapping")+'</footer><p>No browser or application shortcut is installed.</p>'); },
+  saveShortcut() { state.shortcut=$("shortcutDraft").value; $("inspectDialog").close(); record("Sample mapping retained in memory; no key dispatch installed."); render(); },
+  closeInspect() { $("inspectDialog").close(); render(); },
+  advance:advanceRun, cancel:cancelRun,
+  ackCancel() { if (!["cancel-requested","unresponsive"].includes(state.run?.status)) return; state.run.staged=null; finishRun("cancelled","Cooperative cancellation acknowledged. Proposed staged edit discarded; helper remains ready."); render(); },
+  stuck() { if (state.run?.status!=="cancel-requested") return; state.run.status="unresponsive"; state.run.task="Simulated stuck native call; no elapsed-time threshold implied"; record("Still waiting. Explicit Force stop available; no automatic timeout approved."); render(); },
+  forceStop() { if (state.run?.status==="unresponsive") stopHelper(false); },
+  crash() { stopHelper(true); }, restart:restartHelper,
+  scriptError() { if (!isBusy()) return; state.run.staged=null; finishRun("script-error","Sample labeling.lua:12: synthetic error. Staged edits discarded in proposed model; helper ready."); render(); },
+  lateReply() { if (!state.run || isBusy()) return; record("Rejected sample reply for terminal run "+state.run.id+" / generation "+state.run.generation+"; no document changed."); state.run.log.push(state.message); render(); },
+  results:showResults, closeOptions() { resolveOptions(false); }, pickerCancel() { resolvePicker(false); }, pickerAccept() { resolvePicker(true); },
+  resumeDialog() { if (state.run?.status==="waiting-options" && !$("scriptDialog").open) $("scriptDialog").showModal(); if (state.run?.status==="waiting-picker" && !$("pickerDialog").open) $("pickerDialog").showModal(); },
+  commitText() {
+    const doc=editingDoc(); if (isBusy() && state.run.targetId===doc.id) return;
+    const line=doc.lines[doc.selected]; doc.undo={lineId:line.id,text:line.text,dirty:doc.dirty}; line.text=doc.draft; doc.revision++; doc.dirty=true;
+    record("Sample text draft applied in memory."); render();
+  },
+  undo() {
+    const doc=editingDoc(); if (!doc.undo || (isBusy() && state.run.targetId===doc.id)) return;
+    const row=doc.lines.find(line=>line.id===doc.undo.lineId); row.text=doc.undo.text; doc.dirty=doc.undo.dirty; doc.revision++; doc.undo=null; doc.draft=doc.lines[doc.selected].text;
+    record("One sample edit undone. This does not prove legacy macro undo grouping."); render();
+  }
+};
+document.addEventListener("click",event=>{
+  const control=event.target.closest("button"); if (!control || control.disabled) return;
+  if (control.dataset.action) actions[control.dataset.action]?.();
+  if (control.dataset.document) { state.editing=control.dataset.document; record("Editing "+editingDoc().name+". Pinned tools and active run retain targets."); render(); }
+  if (control.dataset.line!==undefined) selectLine(Number(control.dataset.line));
+  if (control.dataset.script) { state.selectedScript=control.dataset.script; state.selectedMacro=selectedScript().macros[0] || ""; record("Selected synthetic script registration."); render(); }
+  if (control.dataset.optionResult!==undefined && $("optionsForm").reportValidity()) resolveOptions(control.dataset.optionResult);
+  if (control.hasAttribute("data-option-cancel")) resolveOptions(false);
+  if (control.dataset.scenario) scenario(control.dataset.scenario);
+});
+$("text").addEventListener("input",()=>{editingDoc().draft=$("text").value;$("stateDump").textContent=JSON.stringify(state,null,2);});
+$("text").addEventListener("keydown",event=>{
+  if (event.key==="Enter" && !event.isComposing && event.keyCode!==229) { event.preventDefault(); actions.commitText(); selectLine(editingDoc().selected+1); }
+});
+$("macroSelect").addEventListener("change",event=>{state.selectedMacro=event.target.value;record("Macro selected; availability and active state updated.");render();});
+$("targetMode").addEventListener("change",event=>{state.targetMode=event.target.value;record("Tool binding changed; active run keeps its captured target.");render();});
+$("buttonMode").addEventListener("change",event=>{state.buttonMode=event.target.value;render();});
+$("comparison").addEventListener("change",event=>{state.comparison=event.target.checked;record("Comparison visibility changed; Reference.ass remains protected.");render();});
+$("optionsForm").addEventListener("submit",event=>event.preventDefault());
+$("optionsForm").addEventListener("input",()=>{
+  if (state.run?.status!=="waiting-options") return;
+  state.run.pendingRequest.values=readOptions();
+  $("stateDump").textContent=JSON.stringify(state,null,2);
+});
+$("managerDialog").addEventListener("cancel",event=>{event.preventDefault();closeManager();});
+$("scriptDialog").addEventListener("cancel",event=>{event.preventDefault();resolveOptions(false);});
+$("pickerDialog").addEventListener("cancel",event=>{event.preventDefault();resolvePicker(false);});
+$("inspectDialog").addEventListener("cancel",event=>{event.preventDefault();$("inspectDialog").close();render();});
+document.addEventListener("keydown",event=>{
+  if (event.key==="Escape" && !$("automationMenu").hidden) { $("automationMenu").hidden=true; $("automationMenuButton").setAttribute("aria-expanded","false"); }
+  if (!["ArrowLeft","ArrowRight"].includes(event.key) || event.target.closest("input,textarea,select,[contenteditable],dialog")) return;
+  event.preventDefault(); changeVariant(event.key==="ArrowLeft"?-1:1);
+});
+render();
+</script></body></html>

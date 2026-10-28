@@ -1,0 +1,126 @@
+# compositor windows
+hikarisub "Untitled - HikariSub" 160,82 1280x836 output=Virtual-0 active=true fullscreen=false minimized=false type=0
+hikarisub "Audio" 480.5,411 639x178 output=Virtual-0 active=false fullscreen=false minimized=false type=0
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "Untitled - HikariSub",
+   "id": "HikariSub",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "active": false,
+   "x": 641,
+   "y": 30,
+   "w": 639,
+   "h": 178
+  }
+ ],
+ "panels": [
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 529,
+   "w": 1280,
+   "h": 214
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 65,
+   "w": 640,
+   "h": 420
+  },
+  {
+   "name": "Line editor: Untitled",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 65,
+   "w": 639,
+   "h": 420
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "Audio",
+   "x": 9,
+   "y": 44,
+   "w": 621,
+   "h": 125
+  }
+ ],
+ "focus": "[panel] 'Line editor: Untitled' <focused,showing,visible,enabled> @641,65 639x420 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'Untitled - HikariSub' > filler:'' > panel:'Line editor: Untitled'",
+ "texts": {
+  "Line text": "",
+  "Start": "0:00:00.00",
+  "End": "0:00:05.00"
+ },
+ "labels": [
+  "Video times"
+ ]
+}
+# arrangement
+{
+ "Grid": {
+  "window": "main",
+  "rect": [
+   0,
+   529,
+   1280,
+   214
+  ]
+ },
+ "Video": {
+  "window": "main",
+  "rect": [
+   0,
+   65,
+   640,
+   420
+  ]
+ },
+ "Line editor": {
+  "window": "main",
+  "rect": [
+   641,
+   65,
+   639,
+   420
+  ]
+ },
+ "Audio": {
+  "window": "floating",
+  "rect": [
+   9,
+   44,
+   621,
+   125
+  ],
+  "size": [
+   639,
+   178
+  ],
+  "position": null
+ },
+ "(main window)": {
+  "window": "main",
+  "size": [
+   1280,
+   800
+  ]
+ }
+}

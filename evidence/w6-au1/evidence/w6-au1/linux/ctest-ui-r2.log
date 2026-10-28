@@ -1,0 +1,158 @@
+Test project /home/altq/.t3/worktrees/hikari/w6-au1/out/build/au1
+      Start 1479: hikari_ui_shell_tests.visual.offscreen
+      Start 1473: hikari_ui_shell_tests.panels.offscreen
+      Start 1477: hikari_ui_shell_tests.hotkeys.offscreen
+ 1/73 Test #1477: hikari_ui_shell_tests.hotkeys.offscreen .................   Passed  114.19 sec
+      Start 1481: hikari_ui_shell_tests.video.offscreen
+ 2/73 Test #1479: hikari_ui_shell_tests.visual.offscreen ..................   Passed  115.45 sec
+      Start 1475: hikari_ui_shell_tests.translation.offscreen
+ 3/73 Test #1473: hikari_ui_shell_tests.panels.offscreen ..................   Passed  121.39 sec
+      Start 1471: hikari_ui_shell_tests.documents.offscreen
+ 4/73 Test #1475: hikari_ui_shell_tests.translation.offscreen .............   Passed   87.34 sec
+      Start 1557: hikari_ui_saved_layouts_tests.layouts.offscreen
+ 5/73 Test #1481: hikari_ui_shell_tests.video.offscreen ...................   Passed   98.58 sec
+      Start 1594: hikari_ui_reference_tests.offscreen
+ 6/73 Test #1557: hikari_ui_saved_layouts_tests.layouts.offscreen .........   Passed   34.50 sec
+      Start 1617: hikari_ui_language_tests.offscreen
+ 7/73 Test #1594: hikari_ui_reference_tests.offscreen .....................   Passed   27.84 sec
+      Start 1586: hikari_ui_single_instance_tests.offscreen
+ 8/73 Test #1471: hikari_ui_shell_tests.documents.offscreen ...............   Passed  125.26 sec
+      Start 1592: hikari_ui_comparison_tests.offscreen
+ 9/73 Test #1617: hikari_ui_language_tests.offscreen ......................   Passed   23.71 sec
+      Start 1588: hikari_ui_forwarded_launches_tests.offscreen
+10/73 Test #1592: hikari_ui_comparison_tests.offscreen ....................   Passed   16.17 sec
+      Start 1553: hikari_ui_workspace_layout_tests.offscreen
+11/73 Test #1586: hikari_ui_single_instance_tests.offscreen ...............   Passed   29.42 sec
+      Start 1562: hikari_ui_line_editor_options_tests.offscreen
+12/73 Test #1553: hikari_ui_workspace_layout_tests.offscreen ..............   Passed   14.74 sec
+      Start 1584: hikari_ui_tab_menu_tests.offscreen
+13/73 Test #1588: hikari_ui_forwarded_launches_tests.offscreen ............   Passed   22.50 sec
+      Start 1555: hikari_ui_tab_layouts_tests.offscreen
+14/73 Test #1562: hikari_ui_line_editor_options_tests.offscreen ...........   Passed   16.12 sec
+      Start 1559: hikari_ui_saved_layouts_tests.kept.offscreen
+15/73 Test #1584: hikari_ui_tab_menu_tests.offscreen ......................   Passed   18.06 sec
+      Start 1546: hikari_ui_docking_qualification_tests.offscreen
+16/73 Test #1555: hikari_ui_tab_layouts_tests.offscreen ...................   Passed   13.01 sec
+      Start 1611: hikari_ui_video_timing_workflow.offscreen
+17/73 Test #1559: hikari_ui_saved_layouts_tests.kept.offscreen ............   Passed   12.25 sec
+      Start 1580: hikari_ui_playing_frame_tests.offscreen
+18/73 Test #1546: hikari_ui_docking_qualification_tests.offscreen .........   Passed    8.99 sec
+      Start 1536: hikari_ui_automation_document_scripts_tests.offscreen
+19/73 Test #1611: hikari_ui_video_timing_workflow.offscreen ...............   Passed    9.55 sec
+      Start 1500: hikari_ui_automation_dialog_tests.offscreen
+20/73 Test #1580: hikari_ui_playing_frame_tests.offscreen .................   Passed    8.25 sec
+      Start 1566: hikari_ui_update_installer_tests.offscreen
+21/73 Test #1536: hikari_ui_automation_document_scripts_tests.offscreen ...   Passed    8.75 sec
+      Start 1544: hikari_ui_automation_workflow.offscreen
+22/73 Test #1500: hikari_ui_automation_dialog_tests.offscreen .............   Passed    7.89 sec
+      Start 1510: hikari_ui_status_workflow.offscreen
+23/73 Test #1566: hikari_ui_update_installer_tests.offscreen ..............   Passed    7.99 sec
+      Start 1582: hikari_ui_tabs_workflow.offscreen
+24/73 Test #1544: hikari_ui_automation_workflow.offscreen .................   Passed    3.27 sec
+      Start 1498: hikari_ui_line_fields_workflow.offscreen
+25/73 Test #1510: hikari_ui_status_workflow.offscreen .....................   Passed    5.73 sec
+      Start 1540: hikari_ui_close_workflow.offscreen
+26/73 Test #1582: hikari_ui_tabs_workflow.offscreen .......................   Passed    5.92 sec
+      Start 1596: hikari_ui_reference_workflow.offscreen
+27/73 Test #1498: hikari_ui_line_fields_workflow.offscreen ................   Passed    5.09 sec
+      Start 1512: hikari_ui_video_fullscreen_workflow.offscreen
+28/73 Test #1540: hikari_ui_close_workflow.offscreen ......................   Passed    4.89 sec
+      Start 1602: hikari_ui_visual_clips_workflow.offscreen
+29/73 Test #1596: hikari_ui_reference_workflow.offscreen ..................   Passed    4.68 sec
+      Start 1542: hikari_ui_open_workflow.offscreen
+30/73 Test #1512: hikari_ui_video_fullscreen_workflow.offscreen ...........   Passed    4.47 sec
+      Start 1524: hikari_ui_audio_timing_workflow.offscreen
+31/73 Test #1602: hikari_ui_visual_clips_workflow.offscreen ...............   Passed    3.62 sec
+      Start 1516: hikari_ui_playback_workflow.offscreen
+32/73 Test #1542: hikari_ui_open_workflow.offscreen .......................   Passed    3.86 sec
+      Start 1522: hikari_ui_history_workflow.offscreen
+33/73 Test #1524: hikari_ui_audio_timing_workflow.offscreen ...............   Passed    3.74 sec
+      Start 1576: hikari_ui_shortcuts_workflow.offscreen
+34/73 Test #1516: hikari_ui_playback_workflow.offscreen ...................   Passed    3.66 sec
+      Start 1494: hikari_ui_editor_workflow.offscreen
+35/73 Test #1522: hikari_ui_history_workflow.offscreen ....................   Passed    3.62 sec
+      Start 1600: hikari_ui_visual_position_workflow.offscreen
+36/73 Test #1576: hikari_ui_shortcuts_workflow.offscreen ..................   Passed    3.63 sec
+      Start 1598: hikari_ui_visual_tools_workflow.offscreen
+37/73 Test #1600: hikari_ui_visual_position_workflow.offscreen ............   Passed    2.13 sec
+      Start 1520: hikari_ui_clipboard_workflow.offscreen
+38/73 Test #1494: hikari_ui_editor_workflow.offscreen .....................   Passed    3.21 sec
+      Start 1518: hikari_ui_grid_workflow.offscreen
+39/73 Test #1598: hikari_ui_visual_tools_workflow.offscreen ...............   Passed    2.37 sec
+      Start 1605: hikari_ui_theme_tests.offscreen
+40/73 Test #1518: hikari_ui_grid_workflow.offscreen .......................   Passed    2.42 sec
+      Start 1532: hikari_ui_recovery_tests.offscreen
+41/73 Test #1520: hikari_ui_clipboard_workflow.offscreen ..................   Passed    2.79 sec
+      Start 1538: hikari_ui_automation_resolution_tests.offscreen
+42/73 Test #1605: hikari_ui_theme_tests.offscreen .........................   Passed    3.18 sec
+      Start 1508: hikari_ui_video_workflow.offscreen
+43/73 Test #1538: hikari_ui_automation_resolution_tests.offscreen .........   Passed    2.69 sec
+      Start 1502: hikari_ui_presenter_tests.offscreen
+44/73 Test #1508: hikari_ui_video_workflow.offscreen ......................   Passed    1.97 sec
+      Start 1613: hikari_ui_colour_picker_tests.offscreen
+45/73 Test #1502: hikari_ui_presenter_tests.offscreen .....................   Passed    2.22 sec
+      Start 1604: hikari_ui_icon_tests.offscreen
+46/73 Test #1532: hikari_ui_recovery_tests.offscreen ......................   Passed    5.69 sec
+      Start 1496: hikari_ui_line_editor_a11y_tests.offscreen
+47/73 Test #1613: hikari_ui_colour_picker_tests.offscreen .................   Passed    2.34 sec
+      Start 1528: hikari_ui_theme_startup_tests.offscreen
+48/73 Test #1604: hikari_ui_icon_tests.offscreen ..........................   Passed    1.14 sec
+      Start 1590: hikari_ui_desktop_handoff_tests.offscreen
+49/73 Test #1496: hikari_ui_line_editor_a11y_tests.offscreen ..............   Passed    1.31 sec
+      Start 1467: hikari_ui_line_grid_tests.offscreen
+50/73 Test #1528: hikari_ui_theme_startup_tests.offscreen .................   Passed    1.44 sec
+      Start 1578: hikari_ui_session_tabs_tests.offscreen
+51/73 Test #1590: hikari_ui_desktop_handoff_tests.offscreen ...............   Passed    1.43 sec
+      Start 1526: hikari_ui_close_review_tests.offscreen
+52/73 Test #1467: hikari_ui_line_grid_tests.offscreen .....................   Passed    1.08 sec
+      Start 1504: hikari_ui_automation_manager_tests.offscreen
+53/73 Test #1504: hikari_ui_automation_manager_tests.offscreen ............   Passed    0.53 sec
+      Start   20: hikari_ui_failing_control.offscreen
+54/73 Test #1578: hikari_ui_session_tabs_tests.offscreen ..................   Passed    1.24 sec
+      Start 1506: hikari_ui_automation_services_tests.offscreen
+55/73 Test #1506: hikari_ui_automation_services_tests.offscreen ...........   Passed    0.31 sec
+      Start   18: hikari_ui_controls.offscreen
+56/73 Test   #20: hikari_ui_failing_control.offscreen .....................   Passed    0.45 sec
+      Start 1534: hikari_ui_automation_hotkeys_tests.offscreen
+57/73 Test #1534: hikari_ui_automation_hotkeys_tests.offscreen ............   Passed    0.33 sec
+      Start 1574: hikari_ui_settings_import_tests.offscreen
+58/73 Test   #18: hikari_ui_controls.offscreen ............................   Passed    0.45 sec
+      Start 1606: hikari_ui_title_bar_tests.offscreen
+59/73 Test #1606: hikari_ui_title_bar_tests.offscreen .....................   Passed    0.16 sec
+      Start 1530: hikari_ui_open_reload_tests.offscreen
+60/73 Test #1574: hikari_ui_settings_import_tests.offscreen ...............   Passed    0.22 sec
+      Start 1564: hikari_ui_update_checker_tests.offscreen
+61/73 Test #1564: hikari_ui_update_checker_tests.offscreen ................   Passed    0.10 sec
+      Start 1469: hikari_ui_line_grid_a11y_tests.offscreen
+62/73 Test #1530: hikari_ui_open_reload_tests.offscreen ...................   Passed    0.34 sec
+      Start 1568: hikari_ui_update_apply_tests.offscreen
+63/73 Test #1469: hikari_ui_line_grid_a11y_tests.offscreen ................   Passed    0.23 sec
+      Start 1465: hikari_ui_line_model_tests.offscreen
+64/73 Test #1568: hikari_ui_update_apply_tests.offscreen ..................   Passed    0.07 sec
+      Start 1615: hikari_ui_font_faces_tests.offscreen
+65/73 Test #1465: hikari_ui_line_model_tests.offscreen ....................   Passed    0.07 sec
+      Start 1490: hikari_ui_status_bar_tests.offscreen
+66/73 Test #1615: hikari_ui_font_faces_tests.offscreen ....................   Passed    0.09 sec
+      Start 1570: hikari_ui_spelling_tests.offscreen
+67/73 Test #1526: hikari_ui_close_review_tests.offscreen ..................   Passed    2.44 sec
+      Start 1484: hikari_ui_log_controller_tests.offscreen
+68/73 Test #1490: hikari_ui_status_bar_tests.offscreen ....................   Passed    0.07 sec
+      Start 1572: hikari_ui_settings_store_tests.offscreen
+69/73 Test #1570: hikari_ui_spelling_tests.offscreen ......................   Passed    0.07 sec
+      Start 1488: hikari_ui_line_measures_tests.offscreen
+70/73 Test #1484: hikari_ui_log_controller_tests.offscreen ................   Passed    0.06 sec
+      Start 1486: hikari_ui_tag_buttons_tests.offscreen
+71/73 Test #1572: hikari_ui_settings_store_tests.offscreen ................   Passed    0.07 sec
+72/73 Test #1488: hikari_ui_line_measures_tests.offscreen .................   Passed    0.05 sec
+73/73 Test #1486: hikari_ui_tag_buttons_tests.offscreen ...................   Passed    0.06 sec
+
+100% tests passed out of 73
+
+Label Time Summary:
+control      =   0.91 sec*proc (2 tests)
+offscreen    = 1042.93 sec*proc (73 tests)
+qttest       = 961.41 sec*proc (51 tests)
+ui           =  81.52 sec*proc (22 tests)
+
+Total Test time (real) = 350.58 sec
+exit 0

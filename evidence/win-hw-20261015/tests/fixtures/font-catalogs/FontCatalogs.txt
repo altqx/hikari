@@ -1,0 +1,12 @@
+﻿Anime={
+	Arial
+	Gandhi Sans
+	Łódź Sans
+}
+Napisy={
+	Verdana
+	Times New Roman
+}
+Ąęść={
+	Comic Sans MS
+}

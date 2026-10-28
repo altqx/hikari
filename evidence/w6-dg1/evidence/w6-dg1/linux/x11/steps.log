@@ -1,0 +1,8 @@
+22:07:17 --- x11: dialogframe
+22:07:28 == dialog-frame-window: observed - x11: About 460x286 with its own buttons {'Close': True, 'Maximise': False, 'Minimise': False}; window system frame False (_NET_FRAME_EXTENTS _NET_FRAME_EXTENTS(CARDINAL) = 0, 0, 0, 0)
+22:07:29 == dialog-frame-centred: observed - About (1370, 377, 460, 286) on the main window (960, 100, 1280, 800): its centre off the main window's + (0, 20) by (0, 0)
+22:07:42 == dialog-frame-move: observed - title bar dragged by (-80,+50): (1370, 377, 460, 286) -> (1298, 422, 460, 286); Esc closed it: True
+22:07:42 == dialog-frame-remembered: observed - opened again at (1298, 422, 460, 286) (left at (1298, 422, 460, 286))
+22:07:47 == dialog-frame-modeless: observed - About and Credits open at once: True
+22:07:58 == dialog-frame-system: observed - About with the system's title bar: HikariSub's drawn buttons []; window system frame True (_NET_FRAME_EXTENTS _NET_FRAME_EXTENTS(CARDINAL) = 1, 1, 22, 1)
+22:08:40 == dialog-frame-themes: observed - About on HikariSub's frame in the four themes (screenshots)

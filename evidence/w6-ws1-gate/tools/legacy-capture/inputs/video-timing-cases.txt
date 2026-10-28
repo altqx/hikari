@@ -1,0 +1,1594 @@
+# V6 legacy capture cases (tools/legacy-capture/video_timing_capture.cpp).
+# CFR: 24000/1001 frame starts as FFMS2 reports them (truncated ms); VFR: 24, 60, then 30 fps.
+case cfr-insert-times
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 0 1000 S
+line 1000 2000 S
+line 3000 4000 -
+line 500 600 HS
+active 1
+video paused 0 0
+at 0 frametime
+at 0 setstart 0
+at 0 setend 0
+at 20 frametime
+at 20 setstart 0
+at 20 setend 0
+at 41 frametime
+at 41 setstart 0
+at 41 setend 0
+at 1001 frametime
+at 1001 setstart 0
+at 1001 setend 0
+at 1020 frametime
+at 1020 setstart 0
+at 1020 setend 0
+at 1042 frametime
+at 1042 setstart 0
+at 1042 setend 0
+at 2961 frametime
+at 2961 setstart 0
+at 2961 setend 0
+at 3500 frametime
+at 3500 setstart 0
+at 3500 setend 0
+at 1001 setstart 15
+at 1001 setend -30
+at 41 setstart -100
+at 41 setend -100
+at 1001 setstart 2500
+at 1001 setend 400
+end
+case vfr-insert-times
+timebase 0 0 42 83 125 142 158 175 192 225 258 292
+line 0 1000 S
+line 1000 2000 S
+line 3000 4000 -
+line 500 600 HS
+active 1
+video paused 0 0
+at 0 frametime
+at 0 setstart 0
+at 0 setend 0
+at 42 frametime
+at 42 setstart 0
+at 42 setend 0
+at 100 frametime
+at 100 setstart 0
+at 100 setend 0
+at 125 frametime
+at 125 setstart 0
+at 125 setend 0
+at 141 frametime
+at 141 setstart 0
+at 141 setend 0
+at 142 frametime
+at 142 setstart 0
+at 142 setend 0
+at 160 frametime
+at 160 setstart 0
+at 160 setend 0
+at 292 frametime
+at 292 setstart 0
+at 292 setend 0
+at 1001 setstart 15
+at 1001 setend -30
+at 41 setstart -100
+at 41 setend -100
+at 1001 setstart 2500
+at 1001 setend 400
+end
+case insert-times-playing
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 0 1000 S
+line 1000 2000 S
+line 3000 4000 -
+line 500 600 HS
+active 1
+video playing 1500 2961
+setstart 0
+setend 0
+end
+case insert-times-no-video
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 0 1000 S
+line 1000 2000 S
+line 3000 4000 -
+line 500 600 HS
+active 1
+video none 1001 0
+setstart 0
+setend 0
+end
+case insert-times-nothing-selected
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 0 1000 -
+line 1000 2000 -
+active 1
+video paused 1001 2961
+setstart 0
+setend 0
+end
+case select-from-video
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 2500 3000 C
+line 3000 3500 E
+line 4000 5000 T
+line 6000 7000 H
+line 8000 9000 -
+active 0
+video paused 0 10000
+at 0 selvideo
+at 999 selvideo
+at 1000 selvideo
+at 1500 selvideo
+at 2000 selvideo
+at 2001 selvideo
+at 2700 selvideo
+at 3200 selvideo
+at 3250 selvideo
+at 3999 selvideo
+at 4000 selvideo
+at 5000 selvideo
+at 5400 selvideo
+at 5600 selvideo
+at 6500 selvideo
+at 7400 selvideo
+at 7500 selvideo
+at 8500 selvideo
+at 9001 selvideo
+at 12000 selvideo
+end
+case select-from-video-no-video
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 2500 3000 C
+line 3000 3500 E
+line 4000 5000 T
+line 6000 7000 H
+line 8000 9000 -
+active 0
+video none 1500 0
+selvideo
+end
+case select-from-video-short-duration
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 2500 3000 C
+line 3000 3500 E
+line 4000 5000 T
+line 6000 7000 H
+line 8000 9000 -
+active 0
+video paused 0 7000
+at 7400 selvideo
+at 7600 selvideo
+end
+case select-from-video-first-hidden
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 0 500 H
+line 1000 2000 -
+line 3000 4000 -
+active 1
+video paused 0 10000
+at 200 selvideo
+at 600 selvideo
+at 2600 selvideo
+at 2400 selvideo
+end
+case select-visible
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 S
+line 1500 2500 C
+line 1500 2500 N
+line 1200 2200 H
+line 1990 3000 -
+line 0 1500 -
+active 4
+video paused 0 10000
+at 994 selvisible 0
+at 994 selvisible 1
+at 995 selvisible 0
+at 995 selvisible 1
+at 996 selvisible 0
+at 996 selvisible 1
+at 1494 selvisible 0
+at 1494 selvisible 1
+at 1495 selvisible 0
+at 1495 selvisible 1
+at 1984 selvisible 0
+at 1984 selvisible 1
+at 1985 selvisible 0
+at 1985 selvisible 1
+at 1994 selvisible 0
+at 1994 selvisible 1
+at 1995 selvisible 0
+at 1995 selvisible 1
+at 2994 selvisible 0
+at 2994 selvisible 1
+at 2995 selvisible 0
+at 2995 selvisible 1
+at 4000 selvisible 0
+at 4000 selvisible 1
+end
+case select-visible-edited-line
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 S
+line 1500 2500 C
+line 1500 2500 N
+line 1200 2200 H
+line 1990 3000 -
+line 0 1500 -
+active 4
+editline 2500 2600
+video paused 0 10000
+at 2000 selvisible 0
+at 2550 selvisible 0
+end
+case select-visible-no-video
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 S
+line 1500 2500 C
+line 1500 2500 N
+line 1200 2200 H
+line 1990 3000 -
+line 0 1500 -
+active 0
+video none 0 0
+selvisible 0
+end
+case snap-mode-0
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes 0 500 1001 1501 2002 2502 3003 4004 9009
+line 0 900 -
+line 950 1990 -
+line 1960 2980 -
+line 3100 3500 H
+line 3600 4500 -
+active 1
+inactive 0
+video paused 0 2961
+snap start 1
+snap end 1
+snap start 0
+end
+case snap-mode-1
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes 0 500 1001 1501 2002 2502 3003 4004 9009
+line 0 900 -
+line 950 1990 -
+line 1960 2980 -
+line 3100 3500 H
+line 3600 4500 -
+active 1
+inactive 1
+video paused 0 2961
+snap start 1
+snap end 1
+snap start 0
+end
+case snap-mode-2
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes 0 500 1001 1501 2002 2502 3003 4004 9009
+line 0 900 -
+line 950 1990 -
+line 1960 2980 -
+line 3100 3500 H
+line 3600 4500 -
+active 1
+inactive 2
+video paused 0 2961
+snap start 1
+snap end 1
+snap start 0
+end
+case snap-mode-3
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes 0 500 1001 1501 2002 2502 3003 4004 9009
+line 0 900 -
+line 950 1990 -
+line 1960 2980 -
+line 3100 3500 H
+line 3600 4500 -
+active 1
+inactive 3
+video paused 0 2961
+snap start 1
+snap end 1
+snap start 0
+end
+case snap-tie
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes 1001 1501
+line 1000 1253 -
+line 1240 1990 -
+active 1
+inactive 0
+video paused 0 2961
+snap start 1
+snap end 1
+end
+case snap-edited-line
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes 0 500 1001 1501 2002 2502 3003 4004 9009
+line 0 900 -
+line 950 1990 -
+line 1960 2980 -
+line 3100 3500 H
+line 3600 4500 -
+active 1
+editline 1490 1700
+inactive 2
+video paused 0 2961
+snap start 1
+snap end 1
+end
+case snap-keyframe-on-time
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes 1001 2002
+line 1000 2000 -
+active 0
+inactive 0
+video paused 0 2961
+snap start 1
+snap end 1
+end
+case snap-far
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes 9009
+line 1000 2000 -
+line 2100 2200 -
+active 0
+inactive 0
+video paused 0 2961
+snap start 1
+snap end 1
+end
+case snap-blocked
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes 1001 2002
+line 1000 1500 -
+active 0
+inactive 0
+video paused 0 2961
+snap end 1
+snap start 1
+end
+case snap-last-line-mode-1
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes
+line 0 900 -
+line 950 1990 -
+line 2100 2980 -
+active 2
+inactive 1
+video paused 0 2961
+snap start 1
+snap end 1
+end
+case snap-first-line-mode-1
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes
+line 0 900 -
+line 950 1990 -
+line 2100 2980 -
+active 0
+inactive 1
+video paused 0 2961
+snap start 1
+snap end 1
+end
+case snap-vfr
+timebase 0 0 42 83 125 142 158 175 192 225 258 292
+keyframes 0 125 192
+line 100 180 -
+active 0
+inactive 0
+video paused 0 292
+snap start 1
+snap end 1
+end
+case setline-paused
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 2500 3000 -
+line 2900 3500 H
+line 3200 3400 -
+active 0
+video paused 1500 2961
+setline 1 0 0 0 0 1
+setline 1 0 0 0 1 1
+setline 1 0 0 1 1 1
+setline 1 0 1 0 0 1
+setline 1 0 1 0 1 1
+setline 1 0 1 1 1 1
+setline 1 0 2 0 0 1
+setline 1 0 2 0 1 1
+setline 1 0 2 1 1 1
+setline 1 0 3 0 0 1
+setline 1 0 3 0 1 1
+setline 1 0 3 1 1 1
+setline 0 0 0 0 1 1
+setline 0 0 1 1 1 1
+setline 1 1 0 0 0 1
+setline 1 1 0 0 1 1
+setline 1 1 0 1 1 1
+setline 1 1 1 0 0 1
+setline 1 1 1 0 1 1
+setline 1 1 1 1 1 1
+setline 1 1 2 0 0 1
+setline 1 1 2 0 1 1
+setline 1 1 2 1 1 1
+setline 1 1 3 0 0 1
+setline 1 1 3 0 1 1
+setline 1 1 3 1 1 1
+setline 0 1 0 0 1 1
+setline 0 1 1 1 1 1
+setline 1 2 0 0 0 1
+setline 1 2 0 0 1 1
+setline 1 2 0 1 1 1
+setline 1 2 1 0 0 1
+setline 1 2 1 0 1 1
+setline 1 2 1 1 1 1
+setline 1 2 2 0 0 1
+setline 1 2 2 0 1 1
+setline 1 2 2 1 1 1
+setline 1 2 3 0 0 1
+setline 1 2 3 0 1 1
+setline 1 2 3 1 1 1
+setline 0 2 0 0 1 1
+setline 0 2 1 1 1 1
+setline 1 3 0 0 0 1
+setline 1 3 0 0 1 1
+setline 1 3 0 1 1 1
+setline 1 3 1 0 0 1
+setline 1 3 1 0 1 1
+setline 1 3 1 1 1 1
+setline 1 3 2 0 0 1
+setline 1 3 2 0 1 1
+setline 1 3 2 1 1 1
+setline 1 3 3 0 0 1
+setline 1 3 3 0 1 1
+setline 1 3 3 1 1 1
+setline 0 3 0 0 1 1
+setline 0 3 1 1 1 1
+setline 1 4 0 0 0 1
+setline 1 4 0 0 1 1
+setline 1 4 0 1 1 1
+setline 1 4 1 0 0 1
+setline 1 4 1 0 1 1
+setline 1 4 1 1 1 1
+setline 1 4 2 0 0 1
+setline 1 4 2 0 1 1
+setline 1 4 2 1 1 1
+setline 1 4 3 0 0 1
+setline 1 4 3 0 1 1
+setline 1 4 3 1 1 1
+setline 0 4 0 0 1 1
+setline 0 4 1 1 1 1
+setline 1 5 0 0 0 1
+setline 1 5 0 0 1 1
+setline 1 5 0 1 1 1
+setline 1 5 1 0 0 1
+setline 1 5 1 0 1 1
+setline 1 5 1 1 1 1
+setline 1 5 2 0 0 1
+setline 1 5 2 0 1 1
+setline 1 5 2 1 1 1
+setline 1 5 3 0 0 1
+setline 1 5 3 0 1 1
+setline 1 5 3 1 1 1
+setline 0 5 0 0 1 1
+setline 0 5 1 1 1 1
+setline 1 0 1 1 1 0
+setline 1 1 1 0 0 0
+setline 3 0 3 1 1 1
+setline 3 0 2 1 1 1
+setline 0 0 3 1 1 1
+setline 0 0 2 1 1 1
+end
+case setline-playing
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 2500 3000 -
+line 2900 3500 H
+line 3200 3400 -
+active 0
+video playing 1500 2961
+setline 1 0 0 0 0 1
+setline 1 0 0 0 1 1
+setline 1 0 0 1 1 1
+setline 1 0 1 0 0 1
+setline 1 0 1 0 1 1
+setline 1 0 1 1 1 1
+setline 1 0 2 0 0 1
+setline 1 0 2 0 1 1
+setline 1 0 2 1 1 1
+setline 1 0 3 0 0 1
+setline 1 0 3 0 1 1
+setline 1 0 3 1 1 1
+setline 0 0 0 0 1 1
+setline 0 0 1 1 1 1
+setline 1 1 0 0 0 1
+setline 1 1 0 0 1 1
+setline 1 1 0 1 1 1
+setline 1 1 1 0 0 1
+setline 1 1 1 0 1 1
+setline 1 1 1 1 1 1
+setline 1 1 2 0 0 1
+setline 1 1 2 0 1 1
+setline 1 1 2 1 1 1
+setline 1 1 3 0 0 1
+setline 1 1 3 0 1 1
+setline 1 1 3 1 1 1
+setline 0 1 0 0 1 1
+setline 0 1 1 1 1 1
+setline 1 2 0 0 0 1
+setline 1 2 0 0 1 1
+setline 1 2 0 1 1 1
+setline 1 2 1 0 0 1
+setline 1 2 1 0 1 1
+setline 1 2 1 1 1 1
+setline 1 2 2 0 0 1
+setline 1 2 2 0 1 1
+setline 1 2 2 1 1 1
+setline 1 2 3 0 0 1
+setline 1 2 3 0 1 1
+setline 1 2 3 1 1 1
+setline 0 2 0 0 1 1
+setline 0 2 1 1 1 1
+setline 1 3 0 0 0 1
+setline 1 3 0 0 1 1
+setline 1 3 0 1 1 1
+setline 1 3 1 0 0 1
+setline 1 3 1 0 1 1
+setline 1 3 1 1 1 1
+setline 1 3 2 0 0 1
+setline 1 3 2 0 1 1
+setline 1 3 2 1 1 1
+setline 1 3 3 0 0 1
+setline 1 3 3 0 1 1
+setline 1 3 3 1 1 1
+setline 0 3 0 0 1 1
+setline 0 3 1 1 1 1
+setline 1 4 0 0 0 1
+setline 1 4 0 0 1 1
+setline 1 4 0 1 1 1
+setline 1 4 1 0 0 1
+setline 1 4 1 0 1 1
+setline 1 4 1 1 1 1
+setline 1 4 2 0 0 1
+setline 1 4 2 0 1 1
+setline 1 4 2 1 1 1
+setline 1 4 3 0 0 1
+setline 1 4 3 0 1 1
+setline 1 4 3 1 1 1
+setline 0 4 0 0 1 1
+setline 0 4 1 1 1 1
+setline 1 5 0 0 0 1
+setline 1 5 0 0 1 1
+setline 1 5 0 1 1 1
+setline 1 5 1 0 0 1
+setline 1 5 1 0 1 1
+setline 1 5 1 1 1 1
+setline 1 5 2 0 0 1
+setline 1 5 2 0 1 1
+setline 1 5 2 1 1 1
+setline 1 5 3 0 0 1
+setline 1 5 3 0 1 1
+setline 1 5 3 1 1 1
+setline 0 5 0 0 1 1
+setline 0 5 1 1 1 1
+setline 1 0 1 1 1 0
+setline 1 1 1 0 0 0
+setline 3 0 3 1 1 1
+setline 3 0 2 1 1 1
+setline 0 0 3 1 1 1
+setline 0 0 2 1 1 1
+end
+case setline-stopped
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 2500 3000 -
+line 2900 3500 H
+line 3200 3400 -
+active 0
+video stopped 1500 2961
+setline 1 0 0 0 0 1
+setline 1 0 0 0 1 1
+setline 1 0 0 1 1 1
+setline 1 0 1 0 0 1
+setline 1 0 1 0 1 1
+setline 1 0 1 1 1 1
+setline 1 0 2 0 0 1
+setline 1 0 2 0 1 1
+setline 1 0 2 1 1 1
+setline 1 0 3 0 0 1
+setline 1 0 3 0 1 1
+setline 1 0 3 1 1 1
+setline 0 0 0 0 1 1
+setline 0 0 1 1 1 1
+setline 1 1 0 0 0 1
+setline 1 1 0 0 1 1
+setline 1 1 0 1 1 1
+setline 1 1 1 0 0 1
+setline 1 1 1 0 1 1
+setline 1 1 1 1 1 1
+setline 1 1 2 0 0 1
+setline 1 1 2 0 1 1
+setline 1 1 2 1 1 1
+setline 1 1 3 0 0 1
+setline 1 1 3 0 1 1
+setline 1 1 3 1 1 1
+setline 0 1 0 0 1 1
+setline 0 1 1 1 1 1
+setline 1 2 0 0 0 1
+setline 1 2 0 0 1 1
+setline 1 2 0 1 1 1
+setline 1 2 1 0 0 1
+setline 1 2 1 0 1 1
+setline 1 2 1 1 1 1
+setline 1 2 2 0 0 1
+setline 1 2 2 0 1 1
+setline 1 2 2 1 1 1
+setline 1 2 3 0 0 1
+setline 1 2 3 0 1 1
+setline 1 2 3 1 1 1
+setline 0 2 0 0 1 1
+setline 0 2 1 1 1 1
+setline 1 3 0 0 0 1
+setline 1 3 0 0 1 1
+setline 1 3 0 1 1 1
+setline 1 3 1 0 0 1
+setline 1 3 1 0 1 1
+setline 1 3 1 1 1 1
+setline 1 3 2 0 0 1
+setline 1 3 2 0 1 1
+setline 1 3 2 1 1 1
+setline 1 3 3 0 0 1
+setline 1 3 3 0 1 1
+setline 1 3 3 1 1 1
+setline 0 3 0 0 1 1
+setline 0 3 1 1 1 1
+setline 1 4 0 0 0 1
+setline 1 4 0 0 1 1
+setline 1 4 0 1 1 1
+setline 1 4 1 0 0 1
+setline 1 4 1 0 1 1
+setline 1 4 1 1 1 1
+setline 1 4 2 0 0 1
+setline 1 4 2 0 1 1
+setline 1 4 2 1 1 1
+setline 1 4 3 0 0 1
+setline 1 4 3 0 1 1
+setline 1 4 3 1 1 1
+setline 0 4 0 0 1 1
+setline 0 4 1 1 1 1
+setline 1 5 0 0 0 1
+setline 1 5 0 0 1 1
+setline 1 5 0 1 1 1
+setline 1 5 1 0 0 1
+setline 1 5 1 0 1 1
+setline 1 5 1 1 1 1
+setline 1 5 2 0 0 1
+setline 1 5 2 0 1 1
+setline 1 5 2 1 1 1
+setline 1 5 3 0 0 1
+setline 1 5 3 0 1 1
+setline 1 5 3 1 1 1
+setline 0 5 0 0 1 1
+setline 0 5 1 1 1 1
+setline 1 0 1 1 1 0
+setline 1 1 1 0 0 0
+setline 3 0 3 1 1 1
+setline 3 0 2 1 1 1
+setline 0 0 3 1 1 1
+setline 0 0 2 1 1 1
+end
+case setline-none
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 2500 3000 -
+line 2900 3500 H
+line 3200 3400 -
+active 0
+video none 1500 2961
+setline 1 0 0 0 0 1
+setline 1 0 0 0 1 1
+setline 1 0 0 1 1 1
+setline 1 0 1 0 0 1
+setline 1 0 1 0 1 1
+setline 1 0 1 1 1 1
+setline 1 0 2 0 0 1
+setline 1 0 2 0 1 1
+setline 1 0 2 1 1 1
+setline 1 0 3 0 0 1
+setline 1 0 3 0 1 1
+setline 1 0 3 1 1 1
+setline 0 0 0 0 1 1
+setline 0 0 1 1 1 1
+setline 1 1 0 0 0 1
+setline 1 1 0 0 1 1
+setline 1 1 0 1 1 1
+setline 1 1 1 0 0 1
+setline 1 1 1 0 1 1
+setline 1 1 1 1 1 1
+setline 1 1 2 0 0 1
+setline 1 1 2 0 1 1
+setline 1 1 2 1 1 1
+setline 1 1 3 0 0 1
+setline 1 1 3 0 1 1
+setline 1 1 3 1 1 1
+setline 0 1 0 0 1 1
+setline 0 1 1 1 1 1
+setline 1 2 0 0 0 1
+setline 1 2 0 0 1 1
+setline 1 2 0 1 1 1
+setline 1 2 1 0 0 1
+setline 1 2 1 0 1 1
+setline 1 2 1 1 1 1
+setline 1 2 2 0 0 1
+setline 1 2 2 0 1 1
+setline 1 2 2 1 1 1
+setline 1 2 3 0 0 1
+setline 1 2 3 0 1 1
+setline 1 2 3 1 1 1
+setline 0 2 0 0 1 1
+setline 0 2 1 1 1 1
+setline 1 3 0 0 0 1
+setline 1 3 0 0 1 1
+setline 1 3 0 1 1 1
+setline 1 3 1 0 0 1
+setline 1 3 1 0 1 1
+setline 1 3 1 1 1 1
+setline 1 3 2 0 0 1
+setline 1 3 2 0 1 1
+setline 1 3 2 1 1 1
+setline 1 3 3 0 0 1
+setline 1 3 3 0 1 1
+setline 1 3 3 1 1 1
+setline 0 3 0 0 1 1
+setline 0 3 1 1 1 1
+setline 1 4 0 0 0 1
+setline 1 4 0 0 1 1
+setline 1 4 0 1 1 1
+setline 1 4 1 0 0 1
+setline 1 4 1 0 1 1
+setline 1 4 1 1 1 1
+setline 1 4 2 0 0 1
+setline 1 4 2 0 1 1
+setline 1 4 2 1 1 1
+setline 1 4 3 0 0 1
+setline 1 4 3 0 1 1
+setline 1 4 3 1 1 1
+setline 0 4 0 0 1 1
+setline 0 4 1 1 1 1
+setline 1 5 0 0 0 1
+setline 1 5 0 0 1 1
+setline 1 5 0 1 1 1
+setline 1 5 1 0 0 1
+setline 1 5 1 0 1 1
+setline 1 5 1 1 1 1
+setline 1 5 2 0 0 1
+setline 1 5 2 0 1 1
+setline 1 5 2 1 1 1
+setline 1 5 3 0 0 1
+setline 1 5 3 0 1 1
+setline 1 5 3 1 1 1
+setline 0 5 0 0 1 1
+setline 0 5 1 1 1 1
+setline 1 0 1 1 1 0
+setline 1 1 1 0 0 0
+setline 3 0 3 1 1 1
+setline 3 0 2 1 1 1
+setline 0 0 3 1 1 1
+setline 0 0 2 1 1 1
+end
+case setline-next-before-end
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 1500 2500 -
+line 3000 3500 -
+active 2
+video paused 0 2961
+setline 0 0 3 1 1 1
+setline 0 0 2 1 1 1
+setline 1 0 3 1 1 1
+end
+case setline-vfr
+timebase 0 0 42 83 125 142 158 175 192 225 258 292
+line 100 180 -
+line 200 250 -
+active 1
+video paused 0 292
+setline 0 1 0 0 0 1
+setline 0 0 2 1 1 1
+setline 0 0 3 1 1 1
+end
+case press-paused
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 300 800 -
+active 0
+video paused 1500 2961
+press 0 0 0 0 0 1 1
+press 0 0 0 0 1 1 1
+press 0 0 0 1 0 1 1
+press 0 0 0 1 1 1 1
+press 0 0 1 0 0 1 1
+press 0 0 1 0 1 1 1
+press 0 0 1 1 0 1 1
+press 0 0 1 1 1 1 1
+press 0 1 0 0 0 1 1
+press 0 1 0 0 1 1 1
+press 0 1 0 1 0 1 1
+press 0 1 0 1 1 1 1
+press 0 1 1 0 0 1 1
+press 0 1 1 0 1 1 1
+press 0 1 1 1 0 1 1
+press 0 1 1 1 1 1 1
+press 0 2 0 0 0 1 1
+press 0 2 0 0 1 1 1
+press 0 2 0 1 0 1 1
+press 0 2 0 1 1 1 1
+press 0 2 1 0 0 1 1
+press 0 2 1 0 1 1 1
+press 0 2 1 1 0 1 1
+press 0 2 1 1 1 1 1
+press 0 0 0 0 0 0 1
+press 1 0 0 0 0 1 1
+press 1 0 0 0 1 1 1
+press 1 0 0 1 0 1 1
+press 1 0 0 1 1 1 1
+press 1 0 1 0 0 1 1
+press 1 0 1 0 1 1 1
+press 1 0 1 1 0 1 1
+press 1 0 1 1 1 1 1
+press 1 1 0 0 0 1 1
+press 1 1 0 0 1 1 1
+press 1 1 0 1 0 1 1
+press 1 1 0 1 1 1 1
+press 1 1 1 0 0 1 1
+press 1 1 1 0 1 1 1
+press 1 1 1 1 0 1 1
+press 1 1 1 1 1 1 1
+press 1 2 0 0 0 1 1
+press 1 2 0 0 1 1 1
+press 1 2 0 1 0 1 1
+press 1 2 0 1 1 1 1
+press 1 2 1 0 0 1 1
+press 1 2 1 0 1 1 1
+press 1 2 1 1 0 1 1
+press 1 2 1 1 1 1 1
+press 1 0 0 0 0 0 1
+press 2 0 0 0 0 1 1
+press 2 0 0 0 1 1 1
+press 2 0 0 1 0 1 1
+press 2 0 0 1 1 1 1
+press 2 0 1 0 0 1 1
+press 2 0 1 0 1 1 1
+press 2 0 1 1 0 1 1
+press 2 0 1 1 1 1 1
+press 2 1 0 0 0 1 1
+press 2 1 0 0 1 1 1
+press 2 1 0 1 0 1 1
+press 2 1 0 1 1 1 1
+press 2 1 1 0 0 1 1
+press 2 1 1 0 1 1 1
+press 2 1 1 1 0 1 1
+press 2 1 1 1 1 1 1
+press 2 2 0 0 0 1 1
+press 2 2 0 0 1 1 1
+press 2 2 0 1 0 1 1
+press 2 2 0 1 1 1 1
+press 2 2 1 0 0 1 1
+press 2 2 1 0 1 1 1
+press 2 2 1 1 0 1 1
+press 2 2 1 1 1 1 1
+press 2 0 0 0 0 0 1
+press 3 0 0 0 0 1 1
+press 3 0 0 0 1 1 1
+press 3 0 0 1 0 1 1
+press 3 0 0 1 1 1 1
+press 3 0 1 0 0 1 1
+press 3 0 1 0 1 1 1
+press 3 0 1 1 0 1 1
+press 3 0 1 1 1 1 1
+press 3 1 0 0 0 1 1
+press 3 1 0 0 1 1 1
+press 3 1 0 1 0 1 1
+press 3 1 0 1 1 1 1
+press 3 1 1 0 0 1 1
+press 3 1 1 0 1 1 1
+press 3 1 1 1 0 1 1
+press 3 1 1 1 1 1 1
+press 3 2 0 0 0 1 1
+press 3 2 0 0 1 1 1
+press 3 2 0 1 0 1 1
+press 3 2 0 1 1 1 1
+press 3 2 1 0 0 1 1
+press 3 2 1 0 1 1 1
+press 3 2 1 1 0 1 1
+press 3 2 1 1 1 1 1
+press 3 0 0 0 0 0 1
+press 4 0 0 0 0 1 1
+press 4 0 0 0 1 1 1
+press 4 0 0 1 0 1 1
+press 4 0 0 1 1 1 1
+press 4 0 1 0 0 1 1
+press 4 0 1 0 1 1 1
+press 4 0 1 1 0 1 1
+press 4 0 1 1 1 1 1
+press 4 1 0 0 0 1 1
+press 4 1 0 0 1 1 1
+press 4 1 0 1 0 1 1
+press 4 1 0 1 1 1 1
+press 4 1 1 0 0 1 1
+press 4 1 1 0 1 1 1
+press 4 1 1 1 0 1 1
+press 4 1 1 1 1 1 1
+press 4 2 0 0 0 1 1
+press 4 2 0 0 1 1 1
+press 4 2 0 1 0 1 1
+press 4 2 0 1 1 1 1
+press 4 2 1 0 0 1 1
+press 4 2 1 0 1 1 1
+press 4 2 1 1 0 1 1
+press 4 2 1 1 1 1 1
+press 4 0 0 0 0 0 1
+press 5 0 0 0 0 1 1
+press 5 0 0 0 1 1 1
+press 5 0 0 1 0 1 1
+press 5 0 0 1 1 1 1
+press 5 0 1 0 0 1 1
+press 5 0 1 0 1 1 1
+press 5 0 1 1 0 1 1
+press 5 0 1 1 1 1 1
+press 5 1 0 0 0 1 1
+press 5 1 0 0 1 1 1
+press 5 1 0 1 0 1 1
+press 5 1 0 1 1 1 1
+press 5 1 1 0 0 1 1
+press 5 1 1 0 1 1 1
+press 5 1 1 1 0 1 1
+press 5 1 1 1 1 1 1
+press 5 2 0 0 0 1 1
+press 5 2 0 0 1 1 1
+press 5 2 0 1 0 1 1
+press 5 2 0 1 1 1 1
+press 5 2 1 0 0 1 1
+press 5 2 1 0 1 1 1
+press 5 2 1 1 0 1 1
+press 5 2 1 1 1 1 1
+press 5 0 0 0 0 0 1
+end
+case press-playing
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 300 800 -
+active 0
+video playing 1500 2961
+press 0 0 0 0 0 1 1
+press 0 0 0 0 1 1 1
+press 0 0 0 1 0 1 1
+press 0 0 0 1 1 1 1
+press 0 0 1 0 0 1 1
+press 0 0 1 0 1 1 1
+press 0 0 1 1 0 1 1
+press 0 0 1 1 1 1 1
+press 0 1 0 0 0 1 1
+press 0 1 0 0 1 1 1
+press 0 1 0 1 0 1 1
+press 0 1 0 1 1 1 1
+press 0 1 1 0 0 1 1
+press 0 1 1 0 1 1 1
+press 0 1 1 1 0 1 1
+press 0 1 1 1 1 1 1
+press 0 2 0 0 0 1 1
+press 0 2 0 0 1 1 1
+press 0 2 0 1 0 1 1
+press 0 2 0 1 1 1 1
+press 0 2 1 0 0 1 1
+press 0 2 1 0 1 1 1
+press 0 2 1 1 0 1 1
+press 0 2 1 1 1 1 1
+press 0 0 0 0 0 0 1
+press 1 0 0 0 0 1 1
+press 1 0 0 0 1 1 1
+press 1 0 0 1 0 1 1
+press 1 0 0 1 1 1 1
+press 1 0 1 0 0 1 1
+press 1 0 1 0 1 1 1
+press 1 0 1 1 0 1 1
+press 1 0 1 1 1 1 1
+press 1 1 0 0 0 1 1
+press 1 1 0 0 1 1 1
+press 1 1 0 1 0 1 1
+press 1 1 0 1 1 1 1
+press 1 1 1 0 0 1 1
+press 1 1 1 0 1 1 1
+press 1 1 1 1 0 1 1
+press 1 1 1 1 1 1 1
+press 1 2 0 0 0 1 1
+press 1 2 0 0 1 1 1
+press 1 2 0 1 0 1 1
+press 1 2 0 1 1 1 1
+press 1 2 1 0 0 1 1
+press 1 2 1 0 1 1 1
+press 1 2 1 1 0 1 1
+press 1 2 1 1 1 1 1
+press 1 0 0 0 0 0 1
+press 2 0 0 0 0 1 1
+press 2 0 0 0 1 1 1
+press 2 0 0 1 0 1 1
+press 2 0 0 1 1 1 1
+press 2 0 1 0 0 1 1
+press 2 0 1 0 1 1 1
+press 2 0 1 1 0 1 1
+press 2 0 1 1 1 1 1
+press 2 1 0 0 0 1 1
+press 2 1 0 0 1 1 1
+press 2 1 0 1 0 1 1
+press 2 1 0 1 1 1 1
+press 2 1 1 0 0 1 1
+press 2 1 1 0 1 1 1
+press 2 1 1 1 0 1 1
+press 2 1 1 1 1 1 1
+press 2 2 0 0 0 1 1
+press 2 2 0 0 1 1 1
+press 2 2 0 1 0 1 1
+press 2 2 0 1 1 1 1
+press 2 2 1 0 0 1 1
+press 2 2 1 0 1 1 1
+press 2 2 1 1 0 1 1
+press 2 2 1 1 1 1 1
+press 2 0 0 0 0 0 1
+press 3 0 0 0 0 1 1
+press 3 0 0 0 1 1 1
+press 3 0 0 1 0 1 1
+press 3 0 0 1 1 1 1
+press 3 0 1 0 0 1 1
+press 3 0 1 0 1 1 1
+press 3 0 1 1 0 1 1
+press 3 0 1 1 1 1 1
+press 3 1 0 0 0 1 1
+press 3 1 0 0 1 1 1
+press 3 1 0 1 0 1 1
+press 3 1 0 1 1 1 1
+press 3 1 1 0 0 1 1
+press 3 1 1 0 1 1 1
+press 3 1 1 1 0 1 1
+press 3 1 1 1 1 1 1
+press 3 2 0 0 0 1 1
+press 3 2 0 0 1 1 1
+press 3 2 0 1 0 1 1
+press 3 2 0 1 1 1 1
+press 3 2 1 0 0 1 1
+press 3 2 1 0 1 1 1
+press 3 2 1 1 0 1 1
+press 3 2 1 1 1 1 1
+press 3 0 0 0 0 0 1
+press 4 0 0 0 0 1 1
+press 4 0 0 0 1 1 1
+press 4 0 0 1 0 1 1
+press 4 0 0 1 1 1 1
+press 4 0 1 0 0 1 1
+press 4 0 1 0 1 1 1
+press 4 0 1 1 0 1 1
+press 4 0 1 1 1 1 1
+press 4 1 0 0 0 1 1
+press 4 1 0 0 1 1 1
+press 4 1 0 1 0 1 1
+press 4 1 0 1 1 1 1
+press 4 1 1 0 0 1 1
+press 4 1 1 0 1 1 1
+press 4 1 1 1 0 1 1
+press 4 1 1 1 1 1 1
+press 4 2 0 0 0 1 1
+press 4 2 0 0 1 1 1
+press 4 2 0 1 0 1 1
+press 4 2 0 1 1 1 1
+press 4 2 1 0 0 1 1
+press 4 2 1 0 1 1 1
+press 4 2 1 1 0 1 1
+press 4 2 1 1 1 1 1
+press 4 0 0 0 0 0 1
+press 5 0 0 0 0 1 1
+press 5 0 0 0 1 1 1
+press 5 0 0 1 0 1 1
+press 5 0 0 1 1 1 1
+press 5 0 1 0 0 1 1
+press 5 0 1 0 1 1 1
+press 5 0 1 1 0 1 1
+press 5 0 1 1 1 1 1
+press 5 1 0 0 0 1 1
+press 5 1 0 0 1 1 1
+press 5 1 0 1 0 1 1
+press 5 1 0 1 1 1 1
+press 5 1 1 0 0 1 1
+press 5 1 1 0 1 1 1
+press 5 1 1 1 0 1 1
+press 5 1 1 1 1 1 1
+press 5 2 0 0 0 1 1
+press 5 2 0 0 1 1 1
+press 5 2 0 1 0 1 1
+press 5 2 0 1 1 1 1
+press 5 2 1 0 0 1 1
+press 5 2 1 0 1 1 1
+press 5 2 1 1 0 1 1
+press 5 2 1 1 1 1 1
+press 5 0 0 0 0 0 1
+end
+case press-stopped
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 300 800 -
+active 0
+video stopped 1500 2961
+press 0 0 0 0 0 1 0
+press 0 0 0 0 1 1 1
+press 0 0 0 1 0 1 0
+press 0 0 0 1 1 1 1
+press 0 0 1 0 0 1 1
+press 0 0 1 0 1 1 0
+press 0 0 1 1 0 1 1
+press 0 0 1 1 1 1 0
+press 0 1 0 0 0 1 0
+press 0 1 0 0 1 1 1
+press 0 1 0 1 0 1 0
+press 0 1 0 1 1 1 1
+press 0 1 1 0 0 1 1
+press 0 1 1 0 1 1 0
+press 0 1 1 1 0 1 1
+press 0 1 1 1 1 1 0
+press 0 2 0 0 0 1 0
+press 0 2 0 0 1 1 1
+press 0 2 0 1 0 1 0
+press 0 2 0 1 1 1 1
+press 0 2 1 0 0 1 1
+press 0 2 1 0 1 1 0
+press 0 2 1 1 0 1 1
+press 0 2 1 1 1 1 0
+press 0 0 0 0 0 0 1
+press 1 0 0 0 0 1 0
+press 1 0 0 0 1 1 1
+press 1 0 0 1 0 1 0
+press 1 0 0 1 1 1 1
+press 1 0 1 0 0 1 1
+press 1 0 1 0 1 1 0
+press 1 0 1 1 0 1 1
+press 1 0 1 1 1 1 0
+press 1 1 0 0 0 1 0
+press 1 1 0 0 1 1 1
+press 1 1 0 1 0 1 0
+press 1 1 0 1 1 1 1
+press 1 1 1 0 0 1 1
+press 1 1 1 0 1 1 0
+press 1 1 1 1 0 1 1
+press 1 1 1 1 1 1 0
+press 1 2 0 0 0 1 0
+press 1 2 0 0 1 1 1
+press 1 2 0 1 0 1 0
+press 1 2 0 1 1 1 1
+press 1 2 1 0 0 1 1
+press 1 2 1 0 1 1 0
+press 1 2 1 1 0 1 1
+press 1 2 1 1 1 1 0
+press 1 0 0 0 0 0 1
+press 2 0 0 0 0 1 0
+press 2 0 0 0 1 1 1
+press 2 0 0 1 0 1 0
+press 2 0 0 1 1 1 1
+press 2 0 1 0 0 1 1
+press 2 0 1 0 1 1 0
+press 2 0 1 1 0 1 1
+press 2 0 1 1 1 1 0
+press 2 1 0 0 0 1 0
+press 2 1 0 0 1 1 1
+press 2 1 0 1 0 1 0
+press 2 1 0 1 1 1 1
+press 2 1 1 0 0 1 1
+press 2 1 1 0 1 1 0
+press 2 1 1 1 0 1 1
+press 2 1 1 1 1 1 0
+press 2 2 0 0 0 1 0
+press 2 2 0 0 1 1 1
+press 2 2 0 1 0 1 0
+press 2 2 0 1 1 1 1
+press 2 2 1 0 0 1 1
+press 2 2 1 0 1 1 0
+press 2 2 1 1 0 1 1
+press 2 2 1 1 1 1 0
+press 2 0 0 0 0 0 1
+press 3 0 0 0 0 1 0
+press 3 0 0 0 1 1 1
+press 3 0 0 1 0 1 0
+press 3 0 0 1 1 1 1
+press 3 0 1 0 0 1 1
+press 3 0 1 0 1 1 0
+press 3 0 1 1 0 1 1
+press 3 0 1 1 1 1 0
+press 3 1 0 0 0 1 0
+press 3 1 0 0 1 1 1
+press 3 1 0 1 0 1 0
+press 3 1 0 1 1 1 1
+press 3 1 1 0 0 1 1
+press 3 1 1 0 1 1 0
+press 3 1 1 1 0 1 1
+press 3 1 1 1 1 1 0
+press 3 2 0 0 0 1 0
+press 3 2 0 0 1 1 1
+press 3 2 0 1 0 1 0
+press 3 2 0 1 1 1 1
+press 3 2 1 0 0 1 1
+press 3 2 1 0 1 1 0
+press 3 2 1 1 0 1 1
+press 3 2 1 1 1 1 0
+press 3 0 0 0 0 0 1
+press 4 0 0 0 0 1 0
+press 4 0 0 0 1 1 1
+press 4 0 0 1 0 1 0
+press 4 0 0 1 1 1 1
+press 4 0 1 0 0 1 1
+press 4 0 1 0 1 1 0
+press 4 0 1 1 0 1 1
+press 4 0 1 1 1 1 0
+press 4 1 0 0 0 1 0
+press 4 1 0 0 1 1 1
+press 4 1 0 1 0 1 0
+press 4 1 0 1 1 1 1
+press 4 1 1 0 0 1 1
+press 4 1 1 0 1 1 0
+press 4 1 1 1 0 1 1
+press 4 1 1 1 1 1 0
+press 4 2 0 0 0 1 0
+press 4 2 0 0 1 1 1
+press 4 2 0 1 0 1 0
+press 4 2 0 1 1 1 1
+press 4 2 1 0 0 1 1
+press 4 2 1 0 1 1 0
+press 4 2 1 1 0 1 1
+press 4 2 1 1 1 1 0
+press 4 0 0 0 0 0 1
+press 5 0 0 0 0 1 0
+press 5 0 0 0 1 1 1
+press 5 0 0 1 0 1 0
+press 5 0 0 1 1 1 1
+press 5 0 1 0 0 1 1
+press 5 0 1 0 1 1 0
+press 5 0 1 1 0 1 1
+press 5 0 1 1 1 1 0
+press 5 1 0 0 0 1 0
+press 5 1 0 0 1 1 1
+press 5 1 0 1 0 1 0
+press 5 1 0 1 1 1 1
+press 5 1 1 0 0 1 1
+press 5 1 1 0 1 1 0
+press 5 1 1 1 0 1 1
+press 5 1 1 1 1 1 0
+press 5 2 0 0 0 1 0
+press 5 2 0 0 1 1 1
+press 5 2 0 1 0 1 0
+press 5 2 0 1 1 1 1
+press 5 2 1 0 0 1 1
+press 5 2 1 0 1 1 0
+press 5 2 1 1 0 1 1
+press 5 2 1 1 1 1 0
+press 5 0 0 0 0 0 1
+end
+case press-none
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 300 800 -
+active 0
+video none 1500 2961
+press 0 0 0 0 0 1 1
+press 0 0 0 0 1 1 1
+press 0 0 0 1 0 1 1
+press 0 0 0 1 1 1 1
+press 0 0 1 0 0 1 1
+press 0 0 1 0 1 1 1
+press 0 0 1 1 0 1 1
+press 0 0 1 1 1 1 1
+press 0 1 0 0 0 1 1
+press 0 1 0 0 1 1 1
+press 0 1 0 1 0 1 1
+press 0 1 0 1 1 1 1
+press 0 1 1 0 0 1 1
+press 0 1 1 0 1 1 1
+press 0 1 1 1 0 1 1
+press 0 1 1 1 1 1 1
+press 0 2 0 0 0 1 1
+press 0 2 0 0 1 1 1
+press 0 2 0 1 0 1 1
+press 0 2 0 1 1 1 1
+press 0 2 1 0 0 1 1
+press 0 2 1 0 1 1 1
+press 0 2 1 1 0 1 1
+press 0 2 1 1 1 1 1
+press 0 0 0 0 0 0 1
+press 1 0 0 0 0 1 1
+press 1 0 0 0 1 1 1
+press 1 0 0 1 0 1 1
+press 1 0 0 1 1 1 1
+press 1 0 1 0 0 1 1
+press 1 0 1 0 1 1 1
+press 1 0 1 1 0 1 1
+press 1 0 1 1 1 1 1
+press 1 1 0 0 0 1 1
+press 1 1 0 0 1 1 1
+press 1 1 0 1 0 1 1
+press 1 1 0 1 1 1 1
+press 1 1 1 0 0 1 1
+press 1 1 1 0 1 1 1
+press 1 1 1 1 0 1 1
+press 1 1 1 1 1 1 1
+press 1 2 0 0 0 1 1
+press 1 2 0 0 1 1 1
+press 1 2 0 1 0 1 1
+press 1 2 0 1 1 1 1
+press 1 2 1 0 0 1 1
+press 1 2 1 0 1 1 1
+press 1 2 1 1 0 1 1
+press 1 2 1 1 1 1 1
+press 1 0 0 0 0 0 1
+press 2 0 0 0 0 1 1
+press 2 0 0 0 1 1 1
+press 2 0 0 1 0 1 1
+press 2 0 0 1 1 1 1
+press 2 0 1 0 0 1 1
+press 2 0 1 0 1 1 1
+press 2 0 1 1 0 1 1
+press 2 0 1 1 1 1 1
+press 2 1 0 0 0 1 1
+press 2 1 0 0 1 1 1
+press 2 1 0 1 0 1 1
+press 2 1 0 1 1 1 1
+press 2 1 1 0 0 1 1
+press 2 1 1 0 1 1 1
+press 2 1 1 1 0 1 1
+press 2 1 1 1 1 1 1
+press 2 2 0 0 0 1 1
+press 2 2 0 0 1 1 1
+press 2 2 0 1 0 1 1
+press 2 2 0 1 1 1 1
+press 2 2 1 0 0 1 1
+press 2 2 1 0 1 1 1
+press 2 2 1 1 0 1 1
+press 2 2 1 1 1 1 1
+press 2 0 0 0 0 0 1
+press 3 0 0 0 0 1 1
+press 3 0 0 0 1 1 1
+press 3 0 0 1 0 1 1
+press 3 0 0 1 1 1 1
+press 3 0 1 0 0 1 1
+press 3 0 1 0 1 1 1
+press 3 0 1 1 0 1 1
+press 3 0 1 1 1 1 1
+press 3 1 0 0 0 1 1
+press 3 1 0 0 1 1 1
+press 3 1 0 1 0 1 1
+press 3 1 0 1 1 1 1
+press 3 1 1 0 0 1 1
+press 3 1 1 0 1 1 1
+press 3 1 1 1 0 1 1
+press 3 1 1 1 1 1 1
+press 3 2 0 0 0 1 1
+press 3 2 0 0 1 1 1
+press 3 2 0 1 0 1 1
+press 3 2 0 1 1 1 1
+press 3 2 1 0 0 1 1
+press 3 2 1 0 1 1 1
+press 3 2 1 1 0 1 1
+press 3 2 1 1 1 1 1
+press 3 0 0 0 0 0 1
+press 4 0 0 0 0 1 1
+press 4 0 0 0 1 1 1
+press 4 0 0 1 0 1 1
+press 4 0 0 1 1 1 1
+press 4 0 1 0 0 1 1
+press 4 0 1 0 1 1 1
+press 4 0 1 1 0 1 1
+press 4 0 1 1 1 1 1
+press 4 1 0 0 0 1 1
+press 4 1 0 0 1 1 1
+press 4 1 0 1 0 1 1
+press 4 1 0 1 1 1 1
+press 4 1 1 0 0 1 1
+press 4 1 1 0 1 1 1
+press 4 1 1 1 0 1 1
+press 4 1 1 1 1 1 1
+press 4 2 0 0 0 1 1
+press 4 2 0 0 1 1 1
+press 4 2 0 1 0 1 1
+press 4 2 0 1 1 1 1
+press 4 2 1 0 0 1 1
+press 4 2 1 0 1 1 1
+press 4 2 1 1 0 1 1
+press 4 2 1 1 1 1 1
+press 4 0 0 0 0 0 1
+press 5 0 0 0 0 1 1
+press 5 0 0 0 1 1 1
+press 5 0 0 1 0 1 1
+press 5 0 0 1 1 1 1
+press 5 0 1 0 0 1 1
+press 5 0 1 0 1 1 1
+press 5 0 1 1 0 1 1
+press 5 0 1 1 1 1 1
+press 5 1 0 0 0 1 1
+press 5 1 0 0 1 1 1
+press 5 1 0 1 0 1 1
+press 5 1 0 1 1 1 1
+press 5 1 1 0 0 1 1
+press 5 1 1 0 1 1 1
+press 5 1 1 1 0 1 1
+press 5 1 1 1 1 1 1
+press 5 2 0 0 0 1 1
+press 5 2 0 0 1 1 1
+press 5 2 0 1 0 1 1
+press 5 2 0 1 1 1 1
+press 5 2 1 0 0 1 1
+press 5 2 1 0 1 1 1
+press 5 2 1 1 0 1 1
+press 5 2 1 1 1 1 1
+press 5 0 0 0 0 0 1
+end
+case press-srt
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 300 800 -
+active 0
+format srt
+video paused 1500 2961
+press 0 0 1 0 1 1 1
+press 0 0 1 0 0 1 1
+end
+case press-tmplayer
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 300 800 -
+active 0
+format tmp
+video paused 1500 2961
+press 0 0 1 0 1 1 1
+press 0 0 1 1 1 1 0
+end
+case press-early-line
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+line 300 800 -
+active 1
+video paused 1500 2961
+press 0 0 1 1 0 1 1
+press 0 0 1 1 1 1 1
+end
+case edit-paused
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+active 0
+video paused 1500 2961
+edit 0 0
+edit 0 1
+edit 0 2
+edit 1 0
+edit 1 1
+edit 1 2
+edit 2 0
+edit 2 1
+edit 2 2
+edit 3 0
+edit 3 1
+edit 3 2
+edit 4 0
+edit 4 1
+edit 4 2
+edit 5 0
+edit 5 1
+edit 5 2
+end
+case edit-playing
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+active 0
+video playing 1500 2961
+edit 0 0
+edit 0 1
+edit 0 2
+edit 1 0
+edit 1 1
+edit 1 2
+edit 2 0
+edit 2 1
+edit 2 2
+edit 3 0
+edit 3 1
+edit 3 2
+edit 4 0
+edit 4 1
+edit 4 2
+edit 5 0
+edit 5 1
+edit 5 2
+end
+case edit-stopped
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+active 0
+video stopped 1500 2961
+edit 0 0
+edit 0 1
+edit 0 2
+edit 1 0
+edit 1 1
+edit 1 2
+edit 2 0
+edit 2 1
+edit 2 2
+edit 3 0
+edit 3 1
+edit 3 2
+edit 4 0
+edit 4 1
+edit 4 2
+edit 5 0
+edit 5 1
+edit 5 2
+end
+case edit-none
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 -
+active 0
+video none 1500 2961
+edit 0 0
+edit 0 1
+edit 0 2
+edit 1 0
+edit 1 1
+edit 1 2
+edit 2 0
+edit 2 1
+edit 2 2
+edit 3 0
+edit 3 1
+edit 3 2
+edit 4 0
+edit 4 1
+edit 4 2
+edit 5 0
+edit 5 1
+edit 5 2
+end
+# Added for the approved V6 departures (2026-10-05): legacy's results stay the old evidence.
+# V6-insert-time-no-op: the selected Line already has the frame's times; legacy still records a step.
+case insert-times-unchanged
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 980 1020 S
+line 3000 4000 -
+active 0
+video paused 1001 2961
+setstart 0
+setend 0
+end
+# V6-select-shown-fallback: every Line hidden; legacy falls back to row 0.
+case select-from-video-all-hidden
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+line 1000 2000 H
+line 3000 4000 H
+active 1
+video paused 500 10000
+selvideo
+end
+# V6-snap-both-boundaries: the other Line's Start is before the active Start, so legacy
+# skips its End too, 10 ms from the active End.
+case snap-end-blocked-start
+timebase 23.976024 0 41 83 125 166 208 250 291 333 375 417 458 500 542 583 625 667 709 750 792 834 875 917 959 1001 1042 1084 1126 1167 1209 1251 1292 1334 1376 1418 1459 1501 1543 1584 1626 1668 1710 1751 1793 1835 1876 1918 1960 2002 2043 2085 2127 2168 2210 2252 2293 2335 2377 2419 2460 2502 2544 2585 2627 2669 2711 2752 2794 2836 2877 2919 2961
+keyframes
+line 1000 2000 -
+line 500 1990 -
+active 0
+inactive 2
+video paused 0 2961
+snap end 1
+snap start 1
+end

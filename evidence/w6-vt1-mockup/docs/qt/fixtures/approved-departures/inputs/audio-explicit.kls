@@ -1,0 +1,20 @@
+[HikariSub]
+[Close session]
+Tab: 0
+Video: 
+Position: 0
+FFMS2: 1
+Subtitles: PROTOTYPE_A.ass
+Active: 0
+Scroll: 0
+Editor: 1
+Audio: PROTOTYPE_A.wav
+Tab: 1
+Video: 
+Position: 0
+FFMS2: 1
+Subtitles: PROTOTYPE_B.ass
+Active: 0
+Scroll: 0
+Editor: 1
+Audio: PROTOTYPE_B.wav

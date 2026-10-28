@@ -1,0 +1,157 @@
+# compositor windows
+Monitors:
+├──Monitor Meta-0 (MetaVendor)
+│  ├──Vendor: MetaVendor
+│  ├──Product: MetaVirtualMonitor
+│  ├──Serial: 0x00
+│  ├──Current mode
+│  │   └──1600x1000@60.000
+│  └──Preferences
+│      └──Backlight: None
+└──Monitor Meta-1 (MetaVendor)
+   ├──Vendor: MetaVendor
+   ├──Product: MetaVirtualMonitor
+   ├──Serial: 0x01
+   ├──Current mode
+   │   └──1600x1000@60.000
+   └──Preferences
+       └──Backlight: None
+
+Logical monitors:
+├──Logical monitor #1
+│  ├──Position: (0, 0)
+│  ├──Scale: 1.0
+│  ├──Transform: normal
+│  ├──Primary: yes
+│  └──Monitors: (1)
+│      └──Meta-0 (MetaVendor)
+└──Logical monitor #2
+   ├──Position: (1600, 0)
+   ├──Scale: 1.0
+   ├──Transform: normal
+   ├──Primary: no
+   └──Monitors: (1)
+       └──Meta-1 (MetaVendor)
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "Untitled - HikariSub",
+   "id": "HikariSub",
+   "active": false,
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800
+  },
+  {
+   "name": "Line editor",
+   "id": "Line editor",
+   "active": true,
+   "x": 641,
+   "y": 244,
+   "w": 639,
+   "h": 206
+  }
+ ],
+ "panels": [
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 65,
+   "w": 640,
+   "h": 420
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 65,
+   "w": 639,
+   "h": 420
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 529,
+   "w": 1280,
+   "h": 214
+  },
+  {
+   "name": "Line editor: Untitled",
+   "id": "Line editor",
+   "frame": "Line editor",
+   "x": 9,
+   "y": 44,
+   "w": 621,
+   "h": 153
+  }
+ ],
+ "focus": null,
+ "focusPath": null,
+ "texts": {
+  "Line text": "",
+  "Start": "0:00:00.00",
+  "End": "0:00:05.00"
+ },
+ "labels": [
+  "Video times"
+ ]
+}
+# arrangement
+{
+ "Video": {
+  "window": "main",
+  "rect": [
+   0,
+   65,
+   640,
+   420
+  ]
+ },
+ "Audio": {
+  "window": "main",
+  "rect": [
+   641,
+   65,
+   639,
+   420
+  ]
+ },
+ "Grid": {
+  "window": "main",
+  "rect": [
+   0,
+   529,
+   1280,
+   214
+  ]
+ },
+ "Line editor": {
+  "window": "floating",
+  "rect": [
+   9,
+   44,
+   621,
+   153
+  ],
+  "size": [
+   639,
+   206
+  ],
+  "position": null
+ },
+ "(main window)": {
+  "window": "main",
+  "size": [
+   1280,
+   800
+  ]
+ }
+}

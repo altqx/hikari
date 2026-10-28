@@ -1,0 +1,3098 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lua isolation — native evidence</title><style>body{font:15px system-ui;background:#15181e;color:#e8ebf2;max-width:1150px;margin:32px auto;padding:0 20px}h1,h2{color:#c6bcff}table{width:100%;border-collapse:collapse}td,th{padding:9px;text-align:left;border-bottom:1px solid #414753;vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}li{margin:8px 0}a{color:#aebeff}.note{padding:16px;border:1px solid #8173ba;background:#252337}</style><h1>LuaJIT helper → typed QML dialog</h1><p class="note">Bounded Windows native experiment. Real LuaJIT and named-pipe messages; original synthetic QML controls. No production host, lifetime, transaction or UI-policy acceptance follows.</p><p>2026-09-27T01:04:31.552981+00:00 · Windows-11-10.0.26200-SP0 · Qt 6.11.2 · offscreen</p><p><a href="README.md">Run guide / source and limits</a> · <a href="evidence/observations.json">Exact observations</a></p><h2>Observed checks</h2><table><tr><td>all scenarios completed without watchdog</td><td>Observed</td></tr><tr><td>luajit ffi pid agrees with owned process</td><td>Observed</td></tr><tr><td>two invocations retain experimental state</td><td>Observed</td></tr><tr><td>typed qml readback matches native lua</td><td>Observed</td></tr><tr><td>actual qml dialog constructed</td><td>Observed</td></tr><tr><td>qml ticks while lua waits</td><td>Observed</td></tr><tr><td>custom cancel is string</td><td>Observed</td></tr><tr><td>default ok is empty string</td><td>Observed</td></tr><tr><td>default close false with values</td><td>Observed</td></tr><tr><td>cancel while waiting reaches lua</td><td>Observed</td></tr><tr><td>unchanged edgeblur selected only and noop undo</td><td>Observed</td></tr><tr><td>lua error is terminal diagnostic</td><td>Observed</td></tr><tr><td>cooperative cancel at polled boundary</td><td>Observed</td></tr><tr><td>owned stuck helper terminated</td><td>Observed</td></tr><tr><td>restart does not restore lost lua state</td><td>Observed</td></tr><tr><td>abrupt helper loss observed</td><td>Observed</td></tr><tr><td>separate stdout contains native and lua noise</td><td>Observed</td></tr><tr><td>controlled stale generation rejected on both sides</td><td>Observed</td></tr><tr><td>controlled duplicate reply rejected</td><td>Observed</td></tr><tr><td>version mismatch rejected</td><td>Observed</td></tr><tr><td>truncated frame rejected</td><td>Observed</td></tr><tr><td>oversized frame rejected</td><td>Observed</td></tr><tr><td>bundled script source unchanged</td><td>Observed</td></tr></table><h2>Scenario results</h2><p>Heartbeat counts show QML event-loop activity during each scenario; they are not calibrated latency or OS-input measurements.</p><table><tr><th>Fixture</th><th>Outcome</th><th>QML ticks</th><th>Lua result / process exit</th></tr><tr><td>dialog_one</td><td>result</td><td>18</td><td><pre>{
+  &quot;values&quot;: {
+    &quot;count&quot;: 37.0,
+    &quot;text&quot;: &quot;静かな港 🌙&quot;,
+    &quot;choice&quot;: &quot;beta&quot;,
+    &quot;enabled&quot;: true
+  },
+  &quot;button_type&quot;: &quot;string&quot;,
+  &quot;cancelled&quot;: false,
+  &quot;runtime&quot;: {
+    &quot;arch&quot;: &quot;x64&quot;,
+    &quot;version_num&quot;: 20199.0,
+    &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+    &quot;os&quot;: &quot;Windows&quot;,
+    &quot;jit_enabled&quot;: true,
+    &quot;ffi_pid&quot;: 18500.0
+  },
+  &quot;button&quot;: &quot;Apply&quot;,
+  &quot;counter&quot;: 1.0
+}</pre></td></tr><tr><td>dialog_two</td><td>result</td><td>16</td><td><pre>{
+  &quot;values&quot;: {
+    &quot;count&quot;: 37.0,
+    &quot;text&quot;: &quot;静かな港 🌙&quot;,
+    &quot;choice&quot;: &quot;beta&quot;,
+    &quot;enabled&quot;: true
+  },
+  &quot;button_type&quot;: &quot;string&quot;,
+  &quot;cancelled&quot;: false,
+  &quot;runtime&quot;: {
+    &quot;arch&quot;: &quot;x64&quot;,
+    &quot;version_num&quot;: 20199.0,
+    &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+    &quot;os&quot;: &quot;Windows&quot;,
+    &quot;jit_enabled&quot;: true,
+    &quot;ffi_pid&quot;: 18500.0
+  },
+  &quot;button&quot;: &quot;Apply&quot;,
+  &quot;counter&quot;: 2.0
+}</pre></td></tr><tr><td>custom_cancel</td><td>result</td><td>16</td><td><pre>{
+  &quot;values&quot;: {
+    &quot;count&quot;: 37.0,
+    &quot;text&quot;: &quot;静かな港 🌙&quot;,
+    &quot;choice&quot;: &quot;beta&quot;,
+    &quot;enabled&quot;: true
+  },
+  &quot;button_type&quot;: &quot;string&quot;,
+  &quot;cancelled&quot;: false,
+  &quot;runtime&quot;: {
+    &quot;arch&quot;: &quot;x64&quot;,
+    &quot;version_num&quot;: 20199.0,
+    &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+    &quot;os&quot;: &quot;Windows&quot;,
+    &quot;jit_enabled&quot;: true,
+    &quot;ffi_pid&quot;: 18500.0
+  },
+  &quot;button&quot;: &quot;Cancel&quot;,
+  &quot;counter&quot;: 3.0
+}</pre></td></tr><tr><td>default_ok</td><td>result</td><td>16</td><td><pre>{
+  &quot;values&quot;: {
+    &quot;count&quot;: 37.0,
+    &quot;text&quot;: &quot;静かな港 🌙&quot;,
+    &quot;choice&quot;: &quot;beta&quot;,
+    &quot;enabled&quot;: true
+  },
+  &quot;button_type&quot;: &quot;string&quot;,
+  &quot;cancelled&quot;: false,
+  &quot;runtime&quot;: {
+    &quot;arch&quot;: &quot;x64&quot;,
+    &quot;version_num&quot;: 20199.0,
+    &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+    &quot;os&quot;: &quot;Windows&quot;,
+    &quot;jit_enabled&quot;: true,
+    &quot;ffi_pid&quot;: 18500.0
+  },
+  &quot;button&quot;: &quot;&quot;,
+  &quot;counter&quot;: 4.0
+}</pre></td></tr><tr><td>default_close</td><td>result</td><td>16</td><td><pre>{
+  &quot;values&quot;: {
+    &quot;count&quot;: 37.0,
+    &quot;text&quot;: &quot;静かな港 🌙&quot;,
+    &quot;choice&quot;: &quot;beta&quot;,
+    &quot;enabled&quot;: true
+  },
+  &quot;button_type&quot;: &quot;boolean&quot;,
+  &quot;cancelled&quot;: false,
+  &quot;runtime&quot;: {
+    &quot;arch&quot;: &quot;x64&quot;,
+    &quot;version_num&quot;: 20199.0,
+    &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+    &quot;os&quot;: &quot;Windows&quot;,
+    &quot;jit_enabled&quot;: true,
+    &quot;ffi_pid&quot;: 18500.0
+  },
+  &quot;button&quot;: false,
+  &quot;counter&quot;: 5.0
+}</pre></td></tr><tr><td>cancel_dialog</td><td>result</td><td>16</td><td><pre>{
+  &quot;values&quot;: {
+    &quot;count&quot;: 37.0,
+    &quot;text&quot;: &quot;静かな港 🌙&quot;,
+    &quot;choice&quot;: &quot;beta&quot;,
+    &quot;enabled&quot;: true
+  },
+  &quot;button_type&quot;: &quot;boolean&quot;,
+  &quot;cancelled&quot;: true,
+  &quot;runtime&quot;: {
+    &quot;arch&quot;: &quot;x64&quot;,
+    &quot;version_num&quot;: 20199.0,
+    &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+    &quot;os&quot;: &quot;Windows&quot;,
+    &quot;jit_enabled&quot;: true,
+    &quot;ffi_pid&quot;: 18500.0
+  },
+  &quot;button&quot;: false,
+  &quot;counter&quot;: 6.0
+}</pre></td></tr><tr><td>unchanged_edgeblur</td><td>result</td><td>0</td><td><pre>{
+  &quot;unselected&quot;: &quot;Unselected&quot;,
+  &quot;writebacks&quot;: 1.0,
+  &quot;limitation&quot;: &quot;Two-record proxy only; not full subtitle userdata or application undo.&quot;,
+  &quot;undo_stub_calls&quot;: 1.0,
+  &quot;selected&quot;: &quot;{\\be1}Harbor&quot;
+}</pre></td></tr><tr><td>lua_error</td><td>lua_error</td><td>0</td><td><pre>&quot;...\\Kainote\\HikariSub\\prototypes\\lua-isolation\\fixtures.lua:22: original fixture error&quot;</pre></td></tr><tr><td>cooperative_cancel</td><td>lua_error</td><td>17</td><td><pre>&quot;...\\Kainote\\HikariSub\\prototypes\\lua-isolation\\fixtures.lua:25: fixture cooperative cancellation&quot;</pre></td></tr><tr><td>owned_force_stop</td><td>helper_exit</td><td>19</td><td><pre>{
+  &quot;exit_code&quot;: 62097
+}</pre></td></tr><tr><td>restart_after_force_stop</td><td>result</td><td>18</td><td><pre>{
+  &quot;button&quot;: &quot;Apply&quot;,
+  &quot;values&quot;: {
+    &quot;choice&quot;: &quot;beta&quot;,
+    &quot;enabled&quot;: true,
+    &quot;count&quot;: 37.0,
+    &quot;text&quot;: &quot;静かな港 🌙&quot;
+  },
+  &quot;button_type&quot;: &quot;string&quot;,
+  &quot;cancelled&quot;: false,
+  &quot;runtime&quot;: {
+    &quot;os&quot;: &quot;Windows&quot;,
+    &quot;arch&quot;: &quot;x64&quot;,
+    &quot;version_num&quot;: 20199.0,
+    &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+    &quot;ffi_pid&quot;: 39480.0,
+    &quot;jit_enabled&quot;: true
+  },
+  &quot;counter&quot;: 1.0
+}</pre></td></tr><tr><td>abrupt_helper_loss</td><td>helper_exit</td><td>1</td><td><pre>{
+  &quot;exit_code&quot;: 77
+}</pre></td></tr><tr><td>restart_after_loss</td><td>result</td><td>17</td><td><pre>{
+  &quot;button&quot;: &quot;Apply&quot;,
+  &quot;values&quot;: {
+    &quot;count&quot;: 37.0,
+    &quot;enabled&quot;: true,
+    &quot;text&quot;: &quot;静かな港 🌙&quot;,
+    &quot;choice&quot;: &quot;beta&quot;
+  },
+  &quot;button_type&quot;: &quot;string&quot;,
+  &quot;cancelled&quot;: false,
+  &quot;counter&quot;: 1.0,
+  &quot;runtime&quot;: {
+    &quot;arch&quot;: &quot;x64&quot;,
+    &quot;version_num&quot;: 20199.0,
+    &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+    &quot;ffi_pid&quot;: 30932.0,
+    &quot;os&quot;: &quot;Windows&quot;,
+    &quot;jit_enabled&quot;: true
+  }
+}</pre></td></tr><tr><td>version_mismatch</td><td>helper_exit</td><td>0</td><td><pre>{
+  &quot;exit_code&quot;: 21
+}</pre></td></tr><tr><td>truncated_frame</td><td>helper_exit</td><td>2</td><td><pre>{
+  &quot;exit_code&quot;: 21
+}</pre></td></tr><tr><td>oversized_frame</td><td>helper_exit</td><td>2</td><td><pre>{
+  &quot;exit_code&quot;: 21
+}</pre></td></tr></table><h2>Proof limits</h2><ul><li>Windows offscreen QML event loop and original fixtures only; no OS focus, IME, screen reader, GPU or calibrated latency qualification.</li><li>One experimental persistent Lua state, not accepted helper lifetime/concurrency. No authoritative Document, native application undo, transaction atomicity or complete userdata implementation.</li><li>Edgeblur source unchanged, but only a two-record proxy and minimal host functions. Synthetic dialog is separate, not an unchanged bundled dialog compatibility run.</li><li>Abrupt loss is an explicit TerminateProcess call in the owned helper, not a memory-corruption/SEH crash or external-side-effect rollback proof.</li><li>Stale result and duplicate reply are controlled replays; cancellation/exit/IPC actions execute natively. No exhaustive scheduling/protocol fuzzing or security sandbox claim.</li><li>No Linux, native third-party Lua modules, DependencyControl, media/font/clipboard IPC, complete controls/coercions, all ASS/scripts or production deployment proof.</li><li>Existing hashed Debug archive plus installed MSVC2026 is prototype provenance, not reproducible source attestation or the accepted official Qt/MSVC2022 build workflow.</li></ul><details><summary>Full provenance, events and stdout/stderr</summary><pre>{
+  &quot;utc&quot;: &quot;2026-09-27T01:04:31.552981+00:00&quot;,
+  &quot;platform&quot;: &quot;Windows-11-10.0.26200-SP0&quot;,
+  &quot;python&quot;: &quot;3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]&quot;,
+  &quot;pyside&quot;: &quot;6.11.2&quot;,
+  &quot;qt&quot;: &quot;6.11.2&quot;,
+  &quot;qpa&quot;: &quot;offscreen&quot;,
+  &quot;quick_backend_requested&quot;: &quot;software&quot;,
+  &quot;runtime_sha256&quot;: {
+    &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Scripts\\python.exe&quot;: &quot;2204195cec25879507d958a8b6949add67091244b8b4da9cf3672f993548fa49&quot;,
+    &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Core.dll&quot;: &quot;d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653&quot;,
+    &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Gui.dll&quot;: &quot;ae29b005f51b6850bf57fa06fced0dc8c7039fd6fafc3bfbcfe76e38adc7abf1&quot;,
+    &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Qml.dll&quot;: &quot;514fc8d9ff0754d2bcb446bbe0f6cc421213d92c8c1870e4cf787e4e176d51f6&quot;,
+    &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Quick.dll&quot;: &quot;900a493625af1f7d9fe6071b9aaee15e560cc7afc122702656723539ed81975f&quot;,
+    &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Network.dll&quot;: &quot;dd3512d1c5ed062d30c98426cd0a850f13e0cf31437afb5b0b474132b9c52922&quot;
+  },
+  &quot;gui_loaded_modules_after_scenarios&quot;: {
+    &quot;sha256&quot;: {
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe&quot;: &quot;372c2eae555b344520bf147be0096e009069aeca4e7f78d6aecea6d53158056a&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\ntdll.dll&quot;: &quot;a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b29880bdbb24179ecb8b&quot;,
+      &quot;C:\\WINDOWS\\System32\\KERNEL32.DLL&quot;: &quot;8f8629741558b5df71def4e1dd8ef9645d4f806b949762c47757c50fea1a9e6d&quot;,
+      &quot;C:\\WINDOWS\\System32\\KERNELBASE.dll&quot;: &quot;becad014fb8efa8cb5e314931cca92778ad42c649b12a6909632cacd68af4f40&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\apphelp.dll&quot;: &quot;6915f018bd5261cccbbda0f50d8585a0d86172e8aac54b2642cdd3efeca75e74&quot;,
+      &quot;C:\\WINDOWS\\System32\\ucrtbase.dll&quot;: &quot;5c52e3a303baaac0e0af8bd9b96134993da34bc9d834a31ef37e1d2cdc7fe192&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\VCRUNTIME140.dll&quot;: &quot;d5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python312.dll&quot;: &quot;c1ce6d603041759061139f482c4b90c4ac9db676e30abf52fda66a794aab1bd0&quot;,
+      &quot;C:\\WINDOWS\\System32\\WS2_32.dll&quot;: &quot;535d7a8336ddbae77b1f2c68339e5e7dbeb5f06445d6e42b19c794ef0e26f6a3&quot;,
+      &quot;C:\\WINDOWS\\System32\\RPCRT4.dll&quot;: &quot;89af87b6387bde4243306036fce2be89c67a328f93c25c53542e4c665b114747&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\VERSION.dll&quot;: &quot;cea99f212af557a9613150c5509631403ed0f05f5d9a06ac42039bd59b40e39a&quot;,
+      &quot;C:\\WINDOWS\\System32\\msvcrt.dll&quot;: &quot;a1bd0acd64e1a60368b8878d3987f603d966ed45be2252d2d4d0f92feb10fa8e&quot;,
+      &quot;C:\\WINDOWS\\System32\\ADVAPI32.dll&quot;: &quot;e036c9baecd170d7ef4759a5a7eb76036158cacc4cd9e3f697dbf410a3457224&quot;,
+      &quot;C:\\WINDOWS\\System32\\sechost.dll&quot;: &quot;c760d6c0dfa2705446aa7a2260206c9076182d92231854c04aa526403217eb9a&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\bcrypt.dll&quot;: &quot;b5691584e857caf0c6c590dda13779966b383d66be3c87d5b3cbbc2f5005495b&quot;,
+      &quot;C:\\WINDOWS\\System32\\bcryptprimitives.dll&quot;: &quot;46c06a0f0323d25a32c2b16da1a4a09e9234d282be7714469b7985bb98031ab6&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python3.DLL&quot;: &quot;c57bc21e131857f26db78d1512fbfcf67cac3273ee8b1cd704ed5645ec250884&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\_hashlib.pyd&quot;: &quot;d99963665f72156067b432753d153ea456d0a0fa49d235c9b61bdb0a0d372ba4&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\libcrypto-3-x64.dll&quot;: &quot;35e0ae43af2876903b00ba955e400f6da1787defb1ba18b7ff35e540c7f4ed66&quot;,
+      &quot;C:\\WINDOWS\\System32\\CRYPT32.dll&quot;: &quot;c720af58976a3624dbc5b74ec4e470d8fec8a4645dc06947906c49e929862dc3&quot;,
+      &quot;C:\\WINDOWS\\System32\\USER32.dll&quot;: &quot;93a4310e66a47fa359f588c2ebda64fe3651771c6f9ff30d462a77215a2e558e&quot;,
+      &quot;C:\\WINDOWS\\System32\\win32u.dll&quot;: &quot;9cd636e8a1b300e2f4b16f339d650eda71fa02b92b100e4b2f89ce7c04811767&quot;,
+      &quot;C:\\WINDOWS\\System32\\GDI32.dll&quot;: &quot;772c73e294a4c5f5e0d4146288af95287a85c074d3aee3fa9f320dc010d7dbfe&quot;,
+      &quot;C:\\WINDOWS\\System32\\gdi32full.dll&quot;: &quot;bde2077a56c90f68c5fa1ce5ebd4a40755c97a5080b91a87d2beff47349dd01e&quot;,
+      &quot;C:\\WINDOWS\\System32\\msvcp_win.dll&quot;: &quot;c50165e6aaf74395c059564d65fa78b0911844828cbcf791d78f80d964a60f4e&quot;,
+      &quot;C:\\WINDOWS\\System32\\IMM32.DLL&quot;: &quot;7e45f12c1c555e2407c5ca082bd925b34655278fde4dbfac53a0468cc1e77411&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\_wmi.pyd&quot;: &quot;ea6ee0a2091687f2d68bfa6f871af2377c073a1b980db87082fb8887cca12a65&quot;,
+      &quot;C:\\WINDOWS\\System32\\OLEAUT32.dll&quot;: &quot;e276bb09983606469c50f0f03c9604bbeffd7d669d996526c8c1af89042fbae0&quot;,
+      &quot;C:\\WINDOWS\\System32\\combase.dll&quot;: &quot;39a2e2ba1ca6012953c94c10011fff5a18783120a2a34f5b66deb2d374a362c9&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\PROPSYS.dll&quot;: &quot;78911871779f2231f59e5705cf4ad1746c25ea2b7a0b0d64ec91723a209a465d&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\VCRUNTIME140_1.dll&quot;: &quot;1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\_uuid.pyd&quot;: &quot;894f95ed8be644b3778a9836afd9bdbd6bd31df7788fd2683aff830b60badefa&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\_bz2.pyd&quot;: &quot;54268c5cbefd96d9df377b40817cc09447d3a0a6734c300c442c0dde30cc75d7&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\_lzma.pyd&quot;: &quot;6337c7e78b7753865b2759cf296449b9d7af6aae0708b364ab9550dad00272be&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\kernel.appcore.dll&quot;: &quot;ed6d62f2555d260547cc94a5cdfe2a6fcb684f18b8e182f78f9e4de224321fc9&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\shiboken6\\Shiboken.pyd&quot;: &quot;2f6f3a694f675b1dafdae26903191613c02866ab48e02591ae34ca1a3b1284f1&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\shiboken6\\shiboken6.abi3.dll&quot;: &quot;de3c6b2ed5f75c9ac0de4a6844b653b3b9d09263ce68c2b5fc25a96c5c3e8469&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\shiboken6\\MSVCP140.dll&quot;: &quot;fd4a8c046fa3fea9ca6132f50cf8a56cf1e783b2d3093ba5c85fa063bc6b3845&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\QtCore.pyd&quot;: &quot;74f96322c5e9cea73aefd2ed5870e5275336b31f552fcd32f12fc81d23f1bc6f&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\pyside6.abi3.dll&quot;: &quot;d0b5c701fb3a8ea839e72b602058f3960935156ebeca084893c54c99e54dd707&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Core.dll&quot;: &quot;d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653&quot;,
+      &quot;C:\\WINDOWS\\System32\\ole32.dll&quot;: &quot;4b81e4a4cb982915ceb3ebef0148227689306c274d5b2f6068ea143ae4db3e40&quot;,
+      &quot;C:\\WINDOWS\\System32\\SHELL32.dll&quot;: &quot;57231c16611c536a5905395858af37120bce730092786238b1a9dfab0db7afac&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\MPR.dll&quot;: &quot;8bb319c8c8255e915c05c03eccc24981cf9653025d2f720fb7fffdd4d524309c&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\USERENV.dll&quot;: &quot;e5e77885cbac08ac247fa45916eca36d2fde292a8527ac2c428f36a691827fea&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\AUTHZ.dll&quot;: &quot;bf7adcdf69a4069116377707e048c8f7e3e4f52dc2644e20f23aea7464a95a49&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\NETAPI32.dll&quot;: &quot;d5b12248b116177329bf72cb517d515637cf2476dff1c159a0e1e7d28420be09&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\WINMM.dll&quot;: &quot;b79ba5420f10d76fddc718534c37db671b04fdb07d3bef4152a799b85a4368b7&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\MSVCP140_1.dll&quot;: &quot;d419d24b0a76366f5c9d908b0e45fe70e9e9154bb8ad5f3de42070f2337f857b&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\icuuc.dll&quot;: &quot;59d134ddc15ae0594f0a328979f8201662fc82634ddb7c537b156e7cf871f5eb&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\CRYPTBASE.DLL&quot;: &quot;d77b19df871b5a2f02e826ebeb5de86735f5cd0806294fe9143ba138c964ee16&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\SRVCLI.DLL&quot;: &quot;6170dddf6a03b2b3e9520e301fb3a06fae7fb4c617b2c7d7cceb2160e829fd4d&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\NETUTILS.DLL&quot;: &quot;71e1eb4a3027cf348d71bfdfebf0ede76d05d521293250d627417f7c2d9478d8&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\icu.DLL&quot;: &quot;7e28c779e6015cc794677ffb00fef38ed76f0f0734130f8c85deaa2ff22fe703&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\QtGui.pyd&quot;: &quot;7bef20046045199c037b7cbfedaa1c5464730fa948b2c9ec8afbf718e63774d4&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\MSVCP140_2.dll&quot;: &quot;89917964abb6ca16a260cab258e180c3abc239b5af00eed659d0edf0efdd339c&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Gui.dll&quot;: &quot;ae29b005f51b6850bf57fa06fced0dc8c7039fd6fafc3bfbcfe76e38adc7abf1&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\d3d11.dll&quot;: &quot;ae2777002f5a0ff543b5b9bec5124746559fd01d6c7c0c216d3194632f084502&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\dxgi.dll&quot;: &quot;b12aebf0f077d6c1394b50e2eecdd5e16072c9a0c871f30887b5d170cbf2eaae&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\UxTheme.dll&quot;: &quot;6a55672f8ab09bbe36d5376e109dd89f263b37cf478412ff5b9e8bd0e1ab77a0&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\d3d12.dll&quot;: &quot;6b32181599d4d6373f0b49905236b122ed5545c5d061ab4350a80cc095dc15e4&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\DWrite.dll&quot;: &quot;54e9f869b951f0cbcad02440f9dad5a3d3a79b106e8eb98de05c68feaa615956&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\powrprof.dll&quot;: &quot;096b3c77ad7fece122be0362c72530b1edc024fe7107d1d40d8bcd8fa5428a0e&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\UMPDC.dll&quot;: &quot;b3407a812c7f34ac6b5beefb2a78e8f2d7c4376f7c7012f880aab4fe07235e4e&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\QtNetwork.pyd&quot;: &quot;c5038bb71fc9d57330fa2d8eeec65aab69fcf02687cc8f54dbfb5995cfec6a71&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Network.dll&quot;: &quot;dd3512d1c5ed062d30c98426cd0a850f13e0cf31437afb5b0b474132b9c52922&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\IPHLPAPI.DLL&quot;: &quot;8521026d021cc5193a7cd7c0256bd14c7ab39738d22c019e6d544b37deee12c0&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\Secur32.dll&quot;: &quot;4050dfd0d4e04e8d013cb16c09d90c2177e2b7e4f102f5931187b2bd0c9d14fc&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\DNSAPI.dll&quot;: &quot;717eed809c8b79df7258c51e46c8fbb876f29f4cf35ea2875ae19fc35c2c69a4&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\WINHTTP.dll&quot;: &quot;d15f756221196eea7d2d8099bdb68f9500d8f2ad45ab7a0fb68bea100c44e7f8&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\DSPARSE.dll&quot;: &quot;c78ac36d970b6fa79206a161d4ded0886879c4df80791dd22650a8a7afd9c2eb&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\SSPICLI.DLL&quot;: &quot;45b06eb4050fb92d859664d98aa3bc89f732d87f72fbb721e0c99af3d2d2c807&quot;,
+      &quot;C:\\WINDOWS\\System32\\NSI.dll&quot;: &quot;d22f4cc243548dda81e274f95e92433ae8187eddfde39adaaf5996985bb41ef3&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\QtQml.pyd&quot;: &quot;2a6b5b8e904a2dbf1efd8bede950605bd05e27fb6f403764715bc133fe386d23&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\pyside6qml.abi3.dll&quot;: &quot;045b18fcee846bdd4c546daa3a20346fcf9e812f126d70382aad427bc6bb40c3&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Qml.dll&quot;: &quot;514fc8d9ff0754d2bcb446bbe0f6cc421213d92c8c1870e4cf787e4e176d51f6&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\windows.storage.dll&quot;: &quot;cf4793b9e7570f1c6621515d634e2fee115b51f6009a19e0d1a5d24cefb55703&quot;,
+      &quot;C:\\WINDOWS\\System32\\SHCORE.dll&quot;: &quot;e7b47e7b381849dd1b32fd67deedd16ad46b50aaf614cdd28e03a7bac7fd72c8&quot;,
+      &quot;C:\\WINDOWS\\System32\\shlwapi.dll&quot;: &quot;6b86e4abc06ae40b2b8c1ceebcd300cbcaa5790c3ba377c630f1f0e8b36fb92c&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\profapi.dll&quot;: &quot;ce53b082348fae6b4bef396c542a7415f39e1b28928233a9cc1b516311fb32c6&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\plugins\\platforms\\qoffscreen.dll&quot;: &quot;e776251668440169ed18a2fe1b236762d514ef5244639cbb559b5a77ddd38954&quot;,
+      &quot;C:\\WINDOWS\\System32\\clbcatq.dll&quot;: &quot;4059070f234d10b4f8446eb6a27d35523861cd9564333574013c2ab5da51d1c0&quot;,
+      &quot;C:\\Windows\\System32\\Windows.Globalization.dll&quot;: &quot;d50a31702a4199cb31b729d5113f4693a18a9b735fdbcd736d0a679f0efeaa53&quot;,
+      &quot;C:\\Windows\\System32\\wintypes.dll&quot;: &quot;5a94b019c7190d9ec47f98e0bc28dced70036f1f97e9a84ef9d75340e364158a&quot;,
+      &quot;C:\\Windows\\System32\\Bcp47Langs.dll&quot;: &quot;69a8a3a2cbf45add28bd44b3ed06a7a3420928ccd717544fdc5b3a0aa8da15a7&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\qtquick2plugin.dll&quot;: &quot;c836bbb05df5aa7d434cc1f55b4fc2cc587054f024c6f7e3e0d9af83954f2976&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6Quick.dll&quot;: &quot;900a493625af1f7d9fe6071b9aaee15e560cc7afc122702656723539ed81975f&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QmlMeta.dll&quot;: &quot;c6e8b02ad52e01e0e865a085b629b08629fbe5c68146425d4cefdcaaef7a8462&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QmlModels.dll&quot;: &quot;066e72ad668ff02dcf530805d071313f9e89d9f1fb49a522aa4ed52712741bf2&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6OpenGL.dll&quot;: &quot;d51088f16db8c96dba7ef3c1474e611adb3ebdb211fea35b8e755d2a7407f7ad&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QmlWorkerScript.dll&quot;: &quot;c037ab72fb9c1c1ebbe47f70b8a35d440537765ef6207424aae0c16fea26eda1&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Controls\\qtquickcontrols2plugin.dll&quot;: &quot;e855789cec1c35c2328eb8610cc8c17114ce74c4983f29ecf7a3c72a2dafab6e&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QuickControls2.dll&quot;: &quot;724b3aa080627846ee67f09ab72b879f332c7890564ecd9ccd82bacc24d244c0&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QuickTemplates2.dll&quot;: &quot;60855b9af083723f547f282d0fa93044135d6489f72aa3bcefc02403957423b7&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Controls\\Windows\\qtquickcontrols2windowsstyleplugin.dll&quot;: &quot;d9061835f39e5c02517cbb916e99239ea1b768691dc672a07e41ac75d220cadb&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Controls\\Basic\\qtquickcontrols2basicstyleplugin.dll&quot;: &quot;35739f2ea4c95336ce581eca0757d6f8aeb87bf8e235585b02f9b28d3348367e&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QuickControls2Basic.dll&quot;: &quot;61fc5a35e1f2a7c14319bbc6d34d33a6d97ec95f94f6bcbba32010f8399aa818&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Controls\\Fusion\\qtquickcontrols2fusionstyleplugin.dll&quot;: &quot;ad96ad30df93ea2bd01e79dde64e82b57d13bc70740ce96bd394b342046c8b9a&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QuickControls2Fusion.dll&quot;: &quot;16ea87b9fa42bbc88854b886fa417a89c3a294f0e7770ea18001e0b51837e35d&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Layouts\\qquicklayoutsplugin.dll&quot;: &quot;beda5876e73dae1b7ba821904479afee7356b44342e0ad0cdaa1568d1b66debd&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QuickLayouts.dll&quot;: &quot;6dea3b782fc02bddf4ba46cea60065368875854be881e4dfa7df5fd36f47ed49&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Templates\\qtquicktemplates2plugin.dll&quot;: &quot;6de57692e911a791be3ab6c7c6d51b163cb2ce7dba581643900b581b0eadd99e&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Controls\\impl\\qtquickcontrols2implplugin.dll&quot;: &quot;79e340576ea558fe50ab90f38ec9fe4c5f24a331802f82b9e441f42d64439684&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QuickControls2Impl.dll&quot;: &quot;a08c628795c8e6cc3e51a0c763a8a3b3fb4288905febb15fa74c6c6ba86e2744&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\NativeStyle\\qtquickcontrols2nativestyleplugin.dll&quot;: &quot;3aa7209129359c051ff316e7dab099939990507110be1d234d1827e466ac5be2&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Controls\\Windows\\impl\\qtquickcontrols2windowsstyleimplplugin.dll&quot;: &quot;822e9ae144c5891c11e34e677e988ee52c557fe868c8f1aed26dfecee412cf64&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QuickControls2WindowsStyleImpl.dll&quot;: &quot;f17b343a7e926d12fb14ebb1f04219df987e368b03d4a38f1a4c5922d6d3c605&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Window\\quickwindowplugin.dll&quot;: &quot;1e36ed3b9945a7025dffbe07e3a41b1d7363e802a7a8e90eae0906d4a420e79f&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\qml\\QtQuick\\Effects\\effectsplugin.dll&quot;: &quot;0297a92d101548330fb5546280f9cc65fde8c26f453bce724e744e1189c6b2b9&quot;,
+      &quot;C:\\Users\\altqx\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\HikariSub\\prototype-runtime\\Lib\\site-packages\\PySide6\\Qt6QuickEffects.dll&quot;: &quot;42a6a8fdb652ae997c883d624ceb5b19ddb70096706c23c7cc3b19d5d6cab8bb&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\_ctypes.pyd&quot;: &quot;eb533050b0b61203cc4918da1826372add87fe4acddb3f6e7b31301c7f93e67d&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\libffi-8.dll&quot;: &quot;34985fc0a2d5942dd6c0cf3205549dc56ed6ebef410884419c87e5fe4e00e988&quot;,
+      &quot;C:\\WINDOWS\\System32\\psapi.DLL&quot;: &quot;6c8ebe6621224d11ded0c920873d67b5255fd515e8c4ea803cd587c8232bee5c&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\_socket.pyd&quot;: &quot;371ae9f492330c021cb371a2e5be88ecb38b4e0dcb45a9f47376502b7920ff17&quot;,
+      &quot;C:\\Users\\altqx\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\DLLs\\select.pyd&quot;: &quot;f04b6cb67a4fe77545bf7ebfb320b6ad216b5dc743215a33d70cd081233c94ac&quot;,
+      &quot;C:\\WINDOWS\\system32\\wbem\\wbemprox.dll&quot;: &quot;456c0bef9e6b2becedbc4de6cb477eceac7d749827472ccfae0f619a6ca0bf80&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\wbemcomn.dll&quot;: &quot;a386929986d12222169bb945a64df70c19da01c2d87c6425a0b3f9d2d8b8bc36&quot;,
+      &quot;C:\\WINDOWS\\system32\\wbem\\wbemsvc.dll&quot;: &quot;703bf06075e75c2bf87e7ed45dab2050dec64cd7ef7f5eb6c15cda89fc02d76e&quot;,
+      &quot;C:\\WINDOWS\\system32\\wbem\\fastprox.dll&quot;: &quot;c0732dbad773b7d30077e2b94f738c1e396652a613c57451f980dd47189b9e6a&quot;,
+      &quot;C:\\WINDOWS\\SYSTEM32\\amsi.dll&quot;: &quot;9df7ad9e6826ab76294a91bef274696ee13d18a8cebabcd5c4c352a3d1141df3&quot;,
+      &quot;C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\4.18.26080.4-0\\MpOav.dll&quot;: &quot;f8f28a74dfb504e85b87cbc156855c98784d4035916a304cf20d86e20769b977&quot;
+    },
+    &quot;snapshot_only&quot;: true,
+    &quot;truncated&quot;: false
+  },
+  &quot;cases&quot;: [
+    {
+      &quot;name&quot;: &quot;dialog_one&quot;,
+      &quot;mode&quot;: &quot;apply&quot;,
+      &quot;run&quot;: 1,
+      &quot;start_ticks&quot;: 5,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 3,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 1,
+          &quot;request&quot;: 1,
+          &quot;body&quot;: {
+            &quot;controls&quot;: {
+              &quot;1.0&quot;: {
+                &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+                &quot;class&quot;: &quot;label&quot;
+              },
+              &quot;2.0&quot;: {
+                &quot;name&quot;: &quot;text&quot;,
+                &quot;class&quot;: &quot;edit&quot;,
+                &quot;text&quot;: &quot;Harbor&quot;
+              },
+              &quot;3.0&quot;: {
+                &quot;value&quot;: 7.0,
+                &quot;class&quot;: &quot;intedit&quot;,
+                &quot;min&quot;: 0.0,
+                &quot;max&quot;: 99.0,
+                &quot;name&quot;: &quot;count&quot;
+              },
+              &quot;4.0&quot;: {
+                &quot;label&quot;: &quot;Enabled&quot;,
+                &quot;name&quot;: &quot;enabled&quot;,
+                &quot;value&quot;: false,
+                &quot;class&quot;: &quot;checkbox&quot;
+              },
+              &quot;5.0&quot;: {
+                &quot;value&quot;: &quot;alpha&quot;,
+                &quot;name&quot;: &quot;choice&quot;,
+                &quot;class&quot;: &quot;dropdown&quot;,
+                &quot;items&quot;: [
+                  &quot;alpha&quot;,
+                  &quot;beta&quot;
+                ]
+              }
+            },
+            &quot;buttons&quot;: {
+              &quot;1.0&quot;: &quot;Apply&quot;,
+              &quot;2.0&quot;: &quot;Cancel&quot;
+            }
+          }
+        },
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 5,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 1,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: {
+            &quot;values&quot;: {
+              &quot;count&quot;: 37.0,
+              &quot;text&quot;: &quot;静かな港 🌙&quot;,
+              &quot;choice&quot;: &quot;beta&quot;,
+              &quot;enabled&quot;: true
+            },
+            &quot;button_type&quot;: &quot;string&quot;,
+            &quot;cancelled&quot;: false,
+            &quot;runtime&quot;: {
+              &quot;arch&quot;: &quot;x64&quot;,
+              &quot;version_num&quot;: 20199.0,
+              &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+              &quot;os&quot;: &quot;Windows&quot;,
+              &quot;jit_enabled&quot;: true,
+              &quot;ffi_pid&quot;: 18500.0
+            },
+            &quot;button&quot;: &quot;Apply&quot;,
+            &quot;counter&quot;: 1.0
+          }
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;dialog_tick&quot;: 7,
+      &quot;qml_control_classes&quot;: [
+        &quot;label&quot;,
+        &quot;edit&quot;,
+        &quot;intedit&quot;,
+        &quot;checkbox&quot;,
+        &quot;dropdown&quot;
+      ],
+      &quot;qml_reply&quot;: {
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;count&quot;: 37,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;python_types&quot;: {
+          &quot;choice&quot;: &quot;str&quot;,
+          &quot;count&quot;: &quot;int&quot;,
+          &quot;enabled&quot;: &quot;bool&quot;,
+          &quot;text&quot;: &quot;str&quot;
+        }
+      },
+      &quot;qml_dialog_class&quot;: &quot;Dialog_QMLTYPE_38&quot;,
+      &quot;qml_dialog_inheritance&quot;: [
+        &quot;Dialog_QMLTYPE_38&quot;,
+        &quot;QPlatformDialogHelper&quot;,
+        &quot;QQuickDialog&quot;,
+        &quot;QQuickPopup&quot;,
+        &quot;QObject&quot;
+      ],
+      &quot;heartbeat_ticks_while_dialog_waited&quot;: 16,
+      &quot;terminal&quot;: &quot;result&quot;,
+      &quot;value&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;counter&quot;: 1.0
+      },
+      &quot;elapsed_ms&quot;: 384.459,
+      &quot;heartbeat_ticks&quot;: 18,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;dialog_two&quot;,
+      &quot;mode&quot;: &quot;apply&quot;,
+      &quot;run&quot;: 2,
+      &quot;start_ticks&quot;: 29,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 3,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 2,
+          &quot;request&quot;: 2,
+          &quot;body&quot;: {
+            &quot;controls&quot;: {
+              &quot;1.0&quot;: {
+                &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+                &quot;class&quot;: &quot;label&quot;
+              },
+              &quot;2.0&quot;: {
+                &quot;name&quot;: &quot;text&quot;,
+                &quot;class&quot;: &quot;edit&quot;,
+                &quot;text&quot;: &quot;Harbor&quot;
+              },
+              &quot;3.0&quot;: {
+                &quot;value&quot;: 7.0,
+                &quot;class&quot;: &quot;intedit&quot;,
+                &quot;min&quot;: 0.0,
+                &quot;max&quot;: 99.0,
+                &quot;name&quot;: &quot;count&quot;
+              },
+              &quot;4.0&quot;: {
+                &quot;label&quot;: &quot;Enabled&quot;,
+                &quot;name&quot;: &quot;enabled&quot;,
+                &quot;value&quot;: false,
+                &quot;class&quot;: &quot;checkbox&quot;
+              },
+              &quot;5.0&quot;: {
+                &quot;value&quot;: &quot;alpha&quot;,
+                &quot;name&quot;: &quot;choice&quot;,
+                &quot;class&quot;: &quot;dropdown&quot;,
+                &quot;items&quot;: [
+                  &quot;alpha&quot;,
+                  &quot;beta&quot;
+                ]
+              }
+            },
+            &quot;buttons&quot;: {
+              &quot;1.0&quot;: &quot;Apply&quot;,
+              &quot;2.0&quot;: &quot;Cancel&quot;
+            }
+          }
+        },
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 5,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 2,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: {
+            &quot;values&quot;: {
+              &quot;count&quot;: 37.0,
+              &quot;text&quot;: &quot;静かな港 🌙&quot;,
+              &quot;choice&quot;: &quot;beta&quot;,
+              &quot;enabled&quot;: true
+            },
+            &quot;button_type&quot;: &quot;string&quot;,
+            &quot;cancelled&quot;: false,
+            &quot;runtime&quot;: {
+              &quot;arch&quot;: &quot;x64&quot;,
+              &quot;version_num&quot;: 20199.0,
+              &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+              &quot;os&quot;: &quot;Windows&quot;,
+              &quot;jit_enabled&quot;: true,
+              &quot;ffi_pid&quot;: 18500.0
+            },
+            &quot;button&quot;: &quot;Apply&quot;,
+            &quot;counter&quot;: 2.0
+          }
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;dialog_tick&quot;: 29,
+      &quot;qml_control_classes&quot;: [
+        &quot;label&quot;,
+        &quot;edit&quot;,
+        &quot;intedit&quot;,
+        &quot;checkbox&quot;,
+        &quot;dropdown&quot;
+      ],
+      &quot;qml_reply&quot;: {
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;count&quot;: 37,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;python_types&quot;: {
+          &quot;choice&quot;: &quot;str&quot;,
+          &quot;count&quot;: &quot;int&quot;,
+          &quot;enabled&quot;: &quot;bool&quot;,
+          &quot;text&quot;: &quot;str&quot;
+        }
+      },
+      &quot;qml_dialog_class&quot;: &quot;Dialog_QMLTYPE_38&quot;,
+      &quot;qml_dialog_inheritance&quot;: [
+        &quot;Dialog_QMLTYPE_38&quot;,
+        &quot;QPlatformDialogHelper&quot;,
+        &quot;QQuickDialog&quot;,
+        &quot;QQuickPopup&quot;,
+        &quot;QObject&quot;
+      ],
+      &quot;heartbeat_ticks_while_dialog_waited&quot;: 15,
+      &quot;terminal&quot;: &quot;result&quot;,
+      &quot;value&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;counter&quot;: 2.0
+      },
+      &quot;elapsed_ms&quot;: 315.897,
+      &quot;heartbeat_ticks&quot;: 16,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;custom_cancel&quot;,
+      &quot;mode&quot;: &quot;custom_cancel&quot;,
+      &quot;run&quot;: 3,
+      &quot;start_ticks&quot;: 50,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 3,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 3,
+          &quot;request&quot;: 3,
+          &quot;body&quot;: {
+            &quot;controls&quot;: {
+              &quot;1.0&quot;: {
+                &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+                &quot;class&quot;: &quot;label&quot;
+              },
+              &quot;2.0&quot;: {
+                &quot;name&quot;: &quot;text&quot;,
+                &quot;class&quot;: &quot;edit&quot;,
+                &quot;text&quot;: &quot;Harbor&quot;
+              },
+              &quot;3.0&quot;: {
+                &quot;value&quot;: 7.0,
+                &quot;class&quot;: &quot;intedit&quot;,
+                &quot;min&quot;: 0.0,
+                &quot;max&quot;: 99.0,
+                &quot;name&quot;: &quot;count&quot;
+              },
+              &quot;4.0&quot;: {
+                &quot;label&quot;: &quot;Enabled&quot;,
+                &quot;name&quot;: &quot;enabled&quot;,
+                &quot;value&quot;: false,
+                &quot;class&quot;: &quot;checkbox&quot;
+              },
+              &quot;5.0&quot;: {
+                &quot;value&quot;: &quot;alpha&quot;,
+                &quot;name&quot;: &quot;choice&quot;,
+                &quot;class&quot;: &quot;dropdown&quot;,
+                &quot;items&quot;: [
+                  &quot;alpha&quot;,
+                  &quot;beta&quot;
+                ]
+              }
+            },
+            &quot;buttons&quot;: {
+              &quot;1.0&quot;: &quot;Apply&quot;,
+              &quot;2.0&quot;: &quot;Cancel&quot;
+            }
+          }
+        },
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 5,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 3,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: {
+            &quot;values&quot;: {
+              &quot;count&quot;: 37.0,
+              &quot;text&quot;: &quot;静かな港 🌙&quot;,
+              &quot;choice&quot;: &quot;beta&quot;,
+              &quot;enabled&quot;: true
+            },
+            &quot;button_type&quot;: &quot;string&quot;,
+            &quot;cancelled&quot;: false,
+            &quot;runtime&quot;: {
+              &quot;arch&quot;: &quot;x64&quot;,
+              &quot;version_num&quot;: 20199.0,
+              &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+              &quot;os&quot;: &quot;Windows&quot;,
+              &quot;jit_enabled&quot;: true,
+              &quot;ffi_pid&quot;: 18500.0
+            },
+            &quot;button&quot;: &quot;Cancel&quot;,
+            &quot;counter&quot;: 3.0
+          }
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;dialog_tick&quot;: 50,
+      &quot;qml_control_classes&quot;: [
+        &quot;label&quot;,
+        &quot;edit&quot;,
+        &quot;intedit&quot;,
+        &quot;checkbox&quot;,
+        &quot;dropdown&quot;
+      ],
+      &quot;qml_reply&quot;: {
+        &quot;button&quot;: &quot;Cancel&quot;,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;count&quot;: 37,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;python_types&quot;: {
+          &quot;choice&quot;: &quot;str&quot;,
+          &quot;count&quot;: &quot;int&quot;,
+          &quot;enabled&quot;: &quot;bool&quot;,
+          &quot;text&quot;: &quot;str&quot;
+        }
+      },
+      &quot;qml_dialog_class&quot;: &quot;Dialog_QMLTYPE_38&quot;,
+      &quot;qml_dialog_inheritance&quot;: [
+        &quot;Dialog_QMLTYPE_38&quot;,
+        &quot;QPlatformDialogHelper&quot;,
+        &quot;QQuickDialog&quot;,
+        &quot;QQuickPopup&quot;,
+        &quot;QObject&quot;
+      ],
+      &quot;heartbeat_ticks_while_dialog_waited&quot;: 15,
+      &quot;terminal&quot;: &quot;result&quot;,
+      &quot;value&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: &quot;Cancel&quot;,
+        &quot;counter&quot;: 3.0
+      },
+      &quot;elapsed_ms&quot;: 303.418,
+      &quot;heartbeat_ticks&quot;: 16,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;default_ok&quot;,
+      &quot;mode&quot;: &quot;default_ok&quot;,
+      &quot;run&quot;: 4,
+      &quot;start_ticks&quot;: 71,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 3,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 4,
+          &quot;request&quot;: 4,
+          &quot;body&quot;: {
+            &quot;controls&quot;: {
+              &quot;1.0&quot;: {
+                &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+                &quot;class&quot;: &quot;label&quot;
+              },
+              &quot;2.0&quot;: {
+                &quot;name&quot;: &quot;text&quot;,
+                &quot;class&quot;: &quot;edit&quot;,
+                &quot;text&quot;: &quot;Harbor&quot;
+              },
+              &quot;3.0&quot;: {
+                &quot;value&quot;: 7.0,
+                &quot;class&quot;: &quot;intedit&quot;,
+                &quot;min&quot;: 0.0,
+                &quot;max&quot;: 99.0,
+                &quot;name&quot;: &quot;count&quot;
+              },
+              &quot;4.0&quot;: {
+                &quot;label&quot;: &quot;Enabled&quot;,
+                &quot;name&quot;: &quot;enabled&quot;,
+                &quot;value&quot;: false,
+                &quot;class&quot;: &quot;checkbox&quot;
+              },
+              &quot;5.0&quot;: {
+                &quot;value&quot;: &quot;alpha&quot;,
+                &quot;name&quot;: &quot;choice&quot;,
+                &quot;class&quot;: &quot;dropdown&quot;,
+                &quot;items&quot;: [
+                  &quot;alpha&quot;,
+                  &quot;beta&quot;
+                ]
+              }
+            },
+            &quot;buttons&quot;: {}
+          }
+        },
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 5,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 4,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: {
+            &quot;values&quot;: {
+              &quot;count&quot;: 37.0,
+              &quot;text&quot;: &quot;静かな港 🌙&quot;,
+              &quot;choice&quot;: &quot;beta&quot;,
+              &quot;enabled&quot;: true
+            },
+            &quot;button_type&quot;: &quot;string&quot;,
+            &quot;cancelled&quot;: false,
+            &quot;runtime&quot;: {
+              &quot;arch&quot;: &quot;x64&quot;,
+              &quot;version_num&quot;: 20199.0,
+              &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+              &quot;os&quot;: &quot;Windows&quot;,
+              &quot;jit_enabled&quot;: true,
+              &quot;ffi_pid&quot;: 18500.0
+            },
+            &quot;button&quot;: &quot;&quot;,
+            &quot;counter&quot;: 4.0
+          }
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;dialog_tick&quot;: 71,
+      &quot;qml_control_classes&quot;: [
+        &quot;label&quot;,
+        &quot;edit&quot;,
+        &quot;intedit&quot;,
+        &quot;checkbox&quot;,
+        &quot;dropdown&quot;
+      ],
+      &quot;qml_reply&quot;: {
+        &quot;button&quot;: &quot;&quot;,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;count&quot;: 37,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;python_types&quot;: {
+          &quot;choice&quot;: &quot;str&quot;,
+          &quot;count&quot;: &quot;int&quot;,
+          &quot;enabled&quot;: &quot;bool&quot;,
+          &quot;text&quot;: &quot;str&quot;
+        }
+      },
+      &quot;qml_dialog_class&quot;: &quot;Dialog_QMLTYPE_38&quot;,
+      &quot;qml_dialog_inheritance&quot;: [
+        &quot;Dialog_QMLTYPE_38&quot;,
+        &quot;QPlatformDialogHelper&quot;,
+        &quot;QQuickDialog&quot;,
+        &quot;QQuickPopup&quot;,
+        &quot;QObject&quot;
+      ],
+      &quot;heartbeat_ticks_while_dialog_waited&quot;: 16,
+      &quot;terminal&quot;: &quot;result&quot;,
+      &quot;value&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: &quot;&quot;,
+        &quot;counter&quot;: 4.0
+      },
+      &quot;elapsed_ms&quot;: 308.14,
+      &quot;heartbeat_ticks&quot;: 16,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;default_close&quot;,
+      &quot;mode&quot;: &quot;default_close&quot;,
+      &quot;run&quot;: 5,
+      &quot;start_ticks&quot;: 92,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 3,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 5,
+          &quot;request&quot;: 5,
+          &quot;body&quot;: {
+            &quot;controls&quot;: {
+              &quot;1.0&quot;: {
+                &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+                &quot;class&quot;: &quot;label&quot;
+              },
+              &quot;2.0&quot;: {
+                &quot;name&quot;: &quot;text&quot;,
+                &quot;class&quot;: &quot;edit&quot;,
+                &quot;text&quot;: &quot;Harbor&quot;
+              },
+              &quot;3.0&quot;: {
+                &quot;value&quot;: 7.0,
+                &quot;class&quot;: &quot;intedit&quot;,
+                &quot;min&quot;: 0.0,
+                &quot;max&quot;: 99.0,
+                &quot;name&quot;: &quot;count&quot;
+              },
+              &quot;4.0&quot;: {
+                &quot;label&quot;: &quot;Enabled&quot;,
+                &quot;name&quot;: &quot;enabled&quot;,
+                &quot;value&quot;: false,
+                &quot;class&quot;: &quot;checkbox&quot;
+              },
+              &quot;5.0&quot;: {
+                &quot;value&quot;: &quot;alpha&quot;,
+                &quot;name&quot;: &quot;choice&quot;,
+                &quot;class&quot;: &quot;dropdown&quot;,
+                &quot;items&quot;: [
+                  &quot;alpha&quot;,
+                  &quot;beta&quot;
+                ]
+              }
+            },
+            &quot;buttons&quot;: {}
+          }
+        },
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 5,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 5,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: {
+            &quot;values&quot;: {
+              &quot;count&quot;: 37.0,
+              &quot;text&quot;: &quot;静かな港 🌙&quot;,
+              &quot;choice&quot;: &quot;beta&quot;,
+              &quot;enabled&quot;: true
+            },
+            &quot;button_type&quot;: &quot;boolean&quot;,
+            &quot;cancelled&quot;: false,
+            &quot;runtime&quot;: {
+              &quot;arch&quot;: &quot;x64&quot;,
+              &quot;version_num&quot;: 20199.0,
+              &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+              &quot;os&quot;: &quot;Windows&quot;,
+              &quot;jit_enabled&quot;: true,
+              &quot;ffi_pid&quot;: 18500.0
+            },
+            &quot;button&quot;: false,
+            &quot;counter&quot;: 5.0
+          }
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;dialog_tick&quot;: 93,
+      &quot;qml_control_classes&quot;: [
+        &quot;label&quot;,
+        &quot;edit&quot;,
+        &quot;intedit&quot;,
+        &quot;checkbox&quot;,
+        &quot;dropdown&quot;
+      ],
+      &quot;qml_reply&quot;: {
+        &quot;button&quot;: false,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;count&quot;: 37,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;python_types&quot;: {
+          &quot;choice&quot;: &quot;str&quot;,
+          &quot;count&quot;: &quot;int&quot;,
+          &quot;enabled&quot;: &quot;bool&quot;,
+          &quot;text&quot;: &quot;str&quot;
+        }
+      },
+      &quot;qml_dialog_class&quot;: &quot;Dialog_QMLTYPE_38&quot;,
+      &quot;qml_dialog_inheritance&quot;: [
+        &quot;Dialog_QMLTYPE_38&quot;,
+        &quot;QPlatformDialogHelper&quot;,
+        &quot;QQuickDialog&quot;,
+        &quot;QQuickPopup&quot;,
+        &quot;QObject&quot;
+      ],
+      &quot;heartbeat_ticks_while_dialog_waited&quot;: 15,
+      &quot;terminal&quot;: &quot;result&quot;,
+      &quot;value&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;boolean&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: false,
+        &quot;counter&quot;: 5.0
+      },
+      &quot;elapsed_ms&quot;: 305.967,
+      &quot;heartbeat_ticks&quot;: 16,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;cancel_dialog&quot;,
+      &quot;mode&quot;: &quot;cancel_dialog&quot;,
+      &quot;run&quot;: 6,
+      &quot;start_ticks&quot;: 113,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 3,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 6,
+          &quot;request&quot;: 6,
+          &quot;body&quot;: {
+            &quot;controls&quot;: {
+              &quot;1.0&quot;: {
+                &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+                &quot;class&quot;: &quot;label&quot;
+              },
+              &quot;2.0&quot;: {
+                &quot;name&quot;: &quot;text&quot;,
+                &quot;class&quot;: &quot;edit&quot;,
+                &quot;text&quot;: &quot;Harbor&quot;
+              },
+              &quot;3.0&quot;: {
+                &quot;value&quot;: 7.0,
+                &quot;class&quot;: &quot;intedit&quot;,
+                &quot;min&quot;: 0.0,
+                &quot;max&quot;: 99.0,
+                &quot;name&quot;: &quot;count&quot;
+              },
+              &quot;4.0&quot;: {
+                &quot;label&quot;: &quot;Enabled&quot;,
+                &quot;name&quot;: &quot;enabled&quot;,
+                &quot;value&quot;: false,
+                &quot;class&quot;: &quot;checkbox&quot;
+              },
+              &quot;5.0&quot;: {
+                &quot;value&quot;: &quot;alpha&quot;,
+                &quot;name&quot;: &quot;choice&quot;,
+                &quot;class&quot;: &quot;dropdown&quot;,
+                &quot;items&quot;: [
+                  &quot;alpha&quot;,
+                  &quot;beta&quot;
+                ]
+              }
+            },
+            &quot;buttons&quot;: {
+              &quot;1.0&quot;: &quot;Apply&quot;,
+              &quot;2.0&quot;: &quot;Cancel&quot;
+            }
+          }
+        },
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 5,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 6,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: {
+            &quot;values&quot;: {
+              &quot;count&quot;: 37.0,
+              &quot;text&quot;: &quot;静かな港 🌙&quot;,
+              &quot;choice&quot;: &quot;beta&quot;,
+              &quot;enabled&quot;: true
+            },
+            &quot;button_type&quot;: &quot;boolean&quot;,
+            &quot;cancelled&quot;: true,
+            &quot;runtime&quot;: {
+              &quot;arch&quot;: &quot;x64&quot;,
+              &quot;version_num&quot;: 20199.0,
+              &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+              &quot;os&quot;: &quot;Windows&quot;,
+              &quot;jit_enabled&quot;: true,
+              &quot;ffi_pid&quot;: 18500.0
+            },
+            &quot;button&quot;: false,
+            &quot;counter&quot;: 6.0
+          }
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;dialog_tick&quot;: 114,
+      &quot;qml_control_classes&quot;: [
+        &quot;label&quot;,
+        &quot;edit&quot;,
+        &quot;intedit&quot;,
+        &quot;checkbox&quot;,
+        &quot;dropdown&quot;
+      ],
+      &quot;qml_reply&quot;: {
+        &quot;button&quot;: false,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;count&quot;: 37,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;python_types&quot;: {
+          &quot;choice&quot;: &quot;str&quot;,
+          &quot;count&quot;: &quot;int&quot;,
+          &quot;enabled&quot;: &quot;bool&quot;,
+          &quot;text&quot;: &quot;str&quot;
+        }
+      },
+      &quot;qml_dialog_class&quot;: &quot;Dialog_QMLTYPE_38&quot;,
+      &quot;qml_dialog_inheritance&quot;: [
+        &quot;Dialog_QMLTYPE_38&quot;,
+        &quot;QPlatformDialogHelper&quot;,
+        &quot;QQuickDialog&quot;,
+        &quot;QQuickPopup&quot;,
+        &quot;QObject&quot;
+      ],
+      &quot;heartbeat_ticks_while_dialog_waited&quot;: 15,
+      &quot;terminal&quot;: &quot;result&quot;,
+      &quot;value&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;boolean&quot;,
+        &quot;cancelled&quot;: true,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: false,
+        &quot;counter&quot;: 6.0
+      },
+      &quot;elapsed_ms&quot;: 305.993,
+      &quot;heartbeat_ticks&quot;: 16,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;unchanged_edgeblur&quot;,
+      &quot;mode&quot;: &quot;edgeblur&quot;,
+      &quot;run&quot;: 7,
+      &quot;start_ticks&quot;: 134,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 5,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 7,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: {
+            &quot;unselected&quot;: &quot;Unselected&quot;,
+            &quot;writebacks&quot;: 1.0,
+            &quot;limitation&quot;: &quot;Two-record proxy only; not full subtitle userdata or application undo.&quot;,
+            &quot;undo_stub_calls&quot;: 1.0,
+            &quot;selected&quot;: &quot;{\\be1}Harbor&quot;
+          }
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;terminal&quot;: &quot;result&quot;,
+      &quot;value&quot;: {
+        &quot;unselected&quot;: &quot;Unselected&quot;,
+        &quot;writebacks&quot;: 1.0,
+        &quot;limitation&quot;: &quot;Two-record proxy only; not full subtitle userdata or application undo.&quot;,
+        &quot;undo_stub_calls&quot;: 1.0,
+        &quot;selected&quot;: &quot;{\\be1}Harbor&quot;
+      },
+      &quot;elapsed_ms&quot;: 0.299,
+      &quot;heartbeat_ticks&quot;: 0,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;lua_error&quot;,
+      &quot;mode&quot;: &quot;error&quot;,
+      &quot;run&quot;: 8,
+      &quot;start_ticks&quot;: 140,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 9,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 8,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: &quot;...\\Kainote\\HikariSub\\prototypes\\lua-isolation\\fixtures.lua:22: original fixture error&quot;
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;terminal&quot;: &quot;lua_error&quot;,
+      &quot;value&quot;: &quot;...\\Kainote\\HikariSub\\prototypes\\lua-isolation\\fixtures.lua:22: original fixture error&quot;,
+      &quot;elapsed_ms&quot;: 0.305,
+      &quot;heartbeat_ticks&quot;: 0,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;cooperative_cancel&quot;,
+      &quot;mode&quot;: &quot;cooperative&quot;,
+      &quot;run&quot;: 9,
+      &quot;start_ticks&quot;: 145,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 7,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 9,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: 20.0
+        },
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 9,
+          &quot;generation&quot;: 1,
+          &quot;run&quot;: 9,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: &quot;...\\Kainote\\HikariSub\\prototypes\\lua-isolation\\fixtures.lua:25: fixture cooperative cancellation&quot;
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;cancel_sent&quot;: true,
+      &quot;terminal&quot;: &quot;lua_error&quot;,
+      &quot;value&quot;: &quot;...\\Kainote\\HikariSub\\prototypes\\lua-isolation\\fixtures.lua:25: fixture cooperative cancellation&quot;,
+      &quot;elapsed_ms&quot;: 329.72,
+      &quot;heartbeat_ticks&quot;: 17,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;owned_force_stop&quot;,
+      &quot;mode&quot;: &quot;stuck&quot;,
+      &quot;run&quot;: 10,
+      &quot;start_ticks&quot;: 167,
+      &quot;messages&quot;: [],
+      &quot;expects_exit&quot;: true,
+      &quot;kill_requested_for_owned_pid&quot;: 18500,
+      &quot;exit_code&quot;: 62097,
+      &quot;exit_status&quot;: &quot;ExitStatus.CrashExit&quot;,
+      &quot;terminal&quot;: &quot;helper_exit&quot;,
+      &quot;stderr&quot;: &quot;LUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\n&quot;,
+      &quot;elapsed_ms&quot;: 364.393,
+      &quot;heartbeat_ticks&quot;: 19,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;name&quot;: &quot;restart_after_force_stop&quot;,
+      &quot;mode&quot;: &quot;apply&quot;,
+      &quot;run&quot;: 11,
+      &quot;start_ticks&quot;: 190,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 3,
+          &quot;generation&quot;: 2,
+          &quot;run&quot;: 11,
+          &quot;request&quot;: 1,
+          &quot;body&quot;: {
+            &quot;buttons&quot;: {
+              &quot;1.0&quot;: &quot;Apply&quot;,
+              &quot;2.0&quot;: &quot;Cancel&quot;
+            },
+            &quot;controls&quot;: {
+              &quot;1.0&quot;: {
+                &quot;class&quot;: &quot;label&quot;,
+                &quot;label&quot;: &quot;Original synthetic dialog&quot;
+              },
+              &quot;2.0&quot;: {
+                &quot;text&quot;: &quot;Harbor&quot;,
+                &quot;name&quot;: &quot;text&quot;,
+                &quot;class&quot;: &quot;edit&quot;
+              },
+              &quot;3.0&quot;: {
+                &quot;min&quot;: 0.0,
+                &quot;value&quot;: 7.0,
+                &quot;name&quot;: &quot;count&quot;,
+                &quot;max&quot;: 99.0,
+                &quot;class&quot;: &quot;intedit&quot;
+              },
+              &quot;4.0&quot;: {
+                &quot;label&quot;: &quot;Enabled&quot;,
+                &quot;name&quot;: &quot;enabled&quot;,
+                &quot;class&quot;: &quot;checkbox&quot;,
+                &quot;value&quot;: false
+              },
+              &quot;5.0&quot;: {
+                &quot;items&quot;: [
+                  &quot;alpha&quot;,
+                  &quot;beta&quot;
+                ],
+                &quot;name&quot;: &quot;choice&quot;,
+                &quot;class&quot;: &quot;dropdown&quot;,
+                &quot;value&quot;: &quot;alpha&quot;
+              }
+            }
+          }
+        },
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 5,
+          &quot;generation&quot;: 2,
+          &quot;run&quot;: 11,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: {
+            &quot;button&quot;: &quot;Apply&quot;,
+            &quot;values&quot;: {
+              &quot;choice&quot;: &quot;beta&quot;,
+              &quot;enabled&quot;: true,
+              &quot;count&quot;: 37.0,
+              &quot;text&quot;: &quot;静かな港 🌙&quot;
+            },
+            &quot;button_type&quot;: &quot;string&quot;,
+            &quot;cancelled&quot;: false,
+            &quot;runtime&quot;: {
+              &quot;os&quot;: &quot;Windows&quot;,
+              &quot;arch&quot;: &quot;x64&quot;,
+              &quot;version_num&quot;: 20199.0,
+              &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+              &quot;ffi_pid&quot;: 39480.0,
+              &quot;jit_enabled&quot;: true
+            },
+            &quot;counter&quot;: 1.0
+          }
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;dialog_tick&quot;: 192,
+      &quot;qml_control_classes&quot;: [
+        &quot;label&quot;,
+        &quot;edit&quot;,
+        &quot;intedit&quot;,
+        &quot;checkbox&quot;,
+        &quot;dropdown&quot;
+      ],
+      &quot;qml_reply&quot;: {
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;count&quot;: 37,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;python_types&quot;: {
+          &quot;choice&quot;: &quot;str&quot;,
+          &quot;count&quot;: &quot;int&quot;,
+          &quot;enabled&quot;: &quot;bool&quot;,
+          &quot;text&quot;: &quot;str&quot;
+        }
+      },
+      &quot;qml_dialog_class&quot;: &quot;Dialog_QMLTYPE_38&quot;,
+      &quot;qml_dialog_inheritance&quot;: [
+        &quot;Dialog_QMLTYPE_38&quot;,
+        &quot;QPlatformDialogHelper&quot;,
+        &quot;QQuickDialog&quot;,
+        &quot;QQuickPopup&quot;,
+        &quot;QObject&quot;
+      ],
+      &quot;heartbeat_ticks_while_dialog_waited&quot;: 16,
+      &quot;terminal&quot;: &quot;result&quot;,
+      &quot;value&quot;: {
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true,
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;ffi_pid&quot;: 39480.0,
+          &quot;jit_enabled&quot;: true
+        },
+        &quot;counter&quot;: 1.0
+      },
+      &quot;elapsed_ms&quot;: 343.864,
+      &quot;heartbeat_ticks&quot;: 18,
+      &quot;generation&quot;: 2
+    },
+    {
+      &quot;name&quot;: &quot;abrupt_helper_loss&quot;,
+      &quot;mode&quot;: &quot;loss&quot;,
+      &quot;run&quot;: 12,
+      &quot;start_ticks&quot;: 213,
+      &quot;messages&quot;: [],
+      &quot;expects_exit&quot;: true,
+      &quot;exit_code&quot;: 77,
+      &quot;exit_status&quot;: &quot;ExitStatus.NormalExit&quot;,
+      &quot;terminal&quot;: &quot;helper_exit&quot;,
+      &quot;stderr&quot;: &quot;LUA_STDERR diagnostic, not protocol\r\n&quot;,
+      &quot;elapsed_ms&quot;: 1.797,
+      &quot;heartbeat_ticks&quot;: 1,
+      &quot;generation&quot;: 2
+    },
+    {
+      &quot;name&quot;: &quot;restart_after_loss&quot;,
+      &quot;mode&quot;: &quot;apply&quot;,
+      &quot;run&quot;: 13,
+      &quot;start_ticks&quot;: 219,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 3,
+          &quot;generation&quot;: 3,
+          &quot;run&quot;: 13,
+          &quot;request&quot;: 1,
+          &quot;body&quot;: {
+            &quot;buttons&quot;: {
+              &quot;1.0&quot;: &quot;Apply&quot;,
+              &quot;2.0&quot;: &quot;Cancel&quot;
+            },
+            &quot;controls&quot;: {
+              &quot;1.0&quot;: {
+                &quot;class&quot;: &quot;label&quot;,
+                &quot;label&quot;: &quot;Original synthetic dialog&quot;
+              },
+              &quot;2.0&quot;: {
+                &quot;class&quot;: &quot;edit&quot;,
+                &quot;text&quot;: &quot;Harbor&quot;,
+                &quot;name&quot;: &quot;text&quot;
+              },
+              &quot;3.0&quot;: {
+                &quot;class&quot;: &quot;intedit&quot;,
+                &quot;value&quot;: 7.0,
+                &quot;name&quot;: &quot;count&quot;,
+                &quot;max&quot;: 99.0,
+                &quot;min&quot;: 0.0
+              },
+              &quot;4.0&quot;: {
+                &quot;class&quot;: &quot;checkbox&quot;,
+                &quot;value&quot;: false,
+                &quot;label&quot;: &quot;Enabled&quot;,
+                &quot;name&quot;: &quot;enabled&quot;
+              },
+              &quot;5.0&quot;: {
+                &quot;class&quot;: &quot;dropdown&quot;,
+                &quot;value&quot;: &quot;alpha&quot;,
+                &quot;items&quot;: [
+                  &quot;alpha&quot;,
+                  &quot;beta&quot;
+                ],
+                &quot;name&quot;: &quot;choice&quot;
+              }
+            }
+          }
+        },
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 5,
+          &quot;generation&quot;: 3,
+          &quot;run&quot;: 13,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: {
+            &quot;button&quot;: &quot;Apply&quot;,
+            &quot;values&quot;: {
+              &quot;count&quot;: 37.0,
+              &quot;enabled&quot;: true,
+              &quot;text&quot;: &quot;静かな港 🌙&quot;,
+              &quot;choice&quot;: &quot;beta&quot;
+            },
+            &quot;button_type&quot;: &quot;string&quot;,
+            &quot;cancelled&quot;: false,
+            &quot;counter&quot;: 1.0,
+            &quot;runtime&quot;: {
+              &quot;arch&quot;: &quot;x64&quot;,
+              &quot;version_num&quot;: 20199.0,
+              &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+              &quot;ffi_pid&quot;: 30932.0,
+              &quot;os&quot;: &quot;Windows&quot;,
+              &quot;jit_enabled&quot;: true
+            }
+          }
+        }
+      ],
+      &quot;expects_exit&quot;: false,
+      &quot;dialog_tick&quot;: 220,
+      &quot;qml_control_classes&quot;: [
+        &quot;label&quot;,
+        &quot;edit&quot;,
+        &quot;intedit&quot;,
+        &quot;checkbox&quot;,
+        &quot;dropdown&quot;
+      ],
+      &quot;qml_reply&quot;: {
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;count&quot;: 37,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;python_types&quot;: {
+          &quot;choice&quot;: &quot;str&quot;,
+          &quot;count&quot;: &quot;int&quot;,
+          &quot;enabled&quot;: &quot;bool&quot;,
+          &quot;text&quot;: &quot;str&quot;
+        }
+      },
+      &quot;qml_dialog_class&quot;: &quot;Dialog_QMLTYPE_38&quot;,
+      &quot;qml_dialog_inheritance&quot;: [
+        &quot;Dialog_QMLTYPE_38&quot;,
+        &quot;QPlatformDialogHelper&quot;,
+        &quot;QQuickDialog&quot;,
+        &quot;QQuickPopup&quot;,
+        &quot;QObject&quot;
+      ],
+      &quot;heartbeat_ticks_while_dialog_waited&quot;: 16,
+      &quot;terminal&quot;: &quot;result&quot;,
+      &quot;value&quot;: {
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;counter&quot;: 1.0,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;ffi_pid&quot;: 30932.0,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true
+        }
+      },
+      &quot;elapsed_ms&quot;: 343.717,
+      &quot;heartbeat_ticks&quot;: 17,
+      &quot;generation&quot;: 3
+    },
+    {
+      &quot;name&quot;: &quot;version_mismatch&quot;,
+      &quot;mode&quot;: &quot;wire_version&quot;,
+      &quot;run&quot;: 14,
+      &quot;start_ticks&quot;: 241,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 9,
+          &quot;generation&quot;: 3,
+          &quot;run&quot;: 13,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: &quot;protocol version mismatch&quot;
+        }
+      ],
+      &quot;expects_exit&quot;: true,
+      &quot;exit_code&quot;: 21,
+      &quot;exit_status&quot;: &quot;ExitStatus.NormalExit&quot;,
+      &quot;terminal&quot;: &quot;helper_exit&quot;,
+      &quot;stderr&quot;: &quot;LUA_STDERR diagnostic, not protocol\r\nPROTOCOL_FAILURE: protocol version mismatch\r\n&quot;,
+      &quot;elapsed_ms&quot;: 2.533,
+      &quot;heartbeat_ticks&quot;: 0,
+      &quot;generation&quot;: 3
+    },
+    {
+      &quot;name&quot;: &quot;truncated_frame&quot;,
+      &quot;mode&quot;: &quot;wire_truncated&quot;,
+      &quot;run&quot;: 15,
+      &quot;start_ticks&quot;: 247,
+      &quot;messages&quot;: [],
+      &quot;expects_exit&quot;: true,
+      &quot;exit_code&quot;: 21,
+      &quot;exit_status&quot;: &quot;ExitStatus.NormalExit&quot;,
+      &quot;terminal&quot;: &quot;helper_exit&quot;,
+      &quot;stderr&quot;: &quot;PROTOCOL_FAILURE: truncated frame body\r\n&quot;,
+      &quot;elapsed_ms&quot;: 40.938,
+      &quot;heartbeat_ticks&quot;: 2,
+      &quot;generation&quot;: 4
+    },
+    {
+      &quot;name&quot;: &quot;oversized_frame&quot;,
+      &quot;mode&quot;: &quot;wire_oversized&quot;,
+      &quot;run&quot;: 16,
+      &quot;start_ticks&quot;: 254,
+      &quot;messages&quot;: [
+        {
+          &quot;version&quot;: 1,
+          &quot;kind&quot;: 9,
+          &quot;generation&quot;: 5,
+          &quot;run&quot;: 0,
+          &quot;request&quot;: 0,
+          &quot;body&quot;: &quot;invalid bounded frame length&quot;
+        }
+      ],
+      &quot;expects_exit&quot;: true,
+      &quot;exit_code&quot;: 21,
+      &quot;exit_status&quot;: &quot;ExitStatus.NormalExit&quot;,
+      &quot;terminal&quot;: &quot;helper_exit&quot;,
+      &quot;stderr&quot;: &quot;PROTOCOL_FAILURE: invalid bounded frame length\r\n&quot;,
+      &quot;elapsed_ms&quot;: 41.271,
+      &quot;heartbeat_ticks&quot;: 2,
+      &quot;generation&quot;: 5
+    }
+  ],
+  &quot;sessions&quot;: [
+    {
+      &quot;generation&quot;: 1,
+      &quot;pipe&quot;: &quot;\\\\.\\pipe\\hikari-lua-probe-55df3b84a79a40d8a2ed2ad95889f1df&quot;,
+      &quot;stdout&quot;: &quot;C_STDOUT helper ready; this channel is not protocol\r\nLUA_STDOUT fixture apply 1\r\nLUA_STDOUT fixture apply 2\r\nLUA_STDOUT fixture custom_cancel 3\r\nLUA_STDOUT fixture default_ok 4\r\nLUA_STDOUT fixture default_close 5\r\nLUA_STDOUT fixture cancel_dialog 6\r\n&quot;,
+      &quot;stderr&quot;: &quot;LUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\nLUA_STDERR diagnostic, not protocol\r\n&quot;,
+      &quot;started_ms&quot;: 175.049,
+      &quot;runtime&quot;: {
+        &quot;arch&quot;: &quot;x64&quot;,
+        &quot;version_num&quot;: 20199.0,
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;os&quot;: &quot;Windows&quot;,
+        &quot;jit_enabled&quot;: true,
+        &quot;ffi_pid&quot;: 18500.0
+      },
+      &quot;process_id&quot;: 18500,
+      &quot;loaded_modules_at_hello&quot;: {
+        &quot;sha256&quot;: {
+          &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\_run\\20260927T010423691636Z\\lua-helper.exe&quot;: &quot;4a21782e126ce3d5f599cb715f55decb5c91ea71e2d0f19f5ffc8d4cb46891db&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ntdll.dll&quot;: &quot;a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b29880bdbb24179ecb8b&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNEL32.DLL&quot;: &quot;8f8629741558b5df71def4e1dd8ef9645d4f806b949762c47757c50fea1a9e6d&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNELBASE.dll&quot;: &quot;becad014fb8efa8cb5e314931cca92778ad42c649b12a6909632cacd68af4f40&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\apphelp.dll&quot;: &quot;6915f018bd5261cccbbda0f50d8585a0d86172e8aac54b2642cdd3efeca75e74&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\VCRUNTIME140D.dll&quot;: &quot;ab6d0cc02fa70bb739fbae00e5de7544cb2dad33a563731a91fb692158d21160&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ucrtbased.dll&quot;: &quot;1d769955ca1c4f5997baee5e762de79a23ed5d2660ed7c32c84e6bc7dade60c4&quot;,
+          &quot;C:\\WINDOWS\\System32\\advapi32.dll&quot;: &quot;e036c9baecd170d7ef4759a5a7eb76036158cacc4cd9e3f697dbf410a3457224&quot;,
+          &quot;C:\\WINDOWS\\System32\\msvcrt.dll&quot;: &quot;a1bd0acd64e1a60368b8878d3987f603d966ed45be2252d2d4d0f92feb10fa8e&quot;,
+          &quot;C:\\WINDOWS\\System32\\sechost.dll&quot;: &quot;c760d6c0dfa2705446aa7a2260206c9076182d92231854c04aa526403217eb9a&quot;,
+          &quot;C:\\WINDOWS\\System32\\RPCRT4.dll&quot;: &quot;89af87b6387bde4243306036fce2be89c67a328f93c25c53542e4c665b114747&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\CRYPTBASE.DLL&quot;: &quot;d77b19df871b5a2f02e826ebeb5de86735f5cd0806294fe9143ba138c964ee16&quot;,
+          &quot;C:\\WINDOWS\\System32\\bcryptPrimitives.dll&quot;: &quot;46c06a0f0323d25a32c2b16da1a4a09e9234d282be7714469b7985bb98031ab6&quot;
+        },
+        &quot;snapshot_only&quot;: true,
+        &quot;truncated&quot;: false
+      },
+      &quot;exit_code&quot;: 62097,
+      &quot;exit_status&quot;: &quot;ExitStatus.CrashExit&quot;
+    },
+    {
+      &quot;generation&quot;: 2,
+      &quot;pipe&quot;: &quot;\\\\.\\pipe\\hikari-lua-probe-a76cad0fa44148a3bc3f5cbd51e8601c&quot;,
+      &quot;stdout&quot;: &quot;C_STDOUT helper ready; this channel is not protocol\r\nLUA_STDOUT fixture apply 1\r\n&quot;,
+      &quot;stderr&quot;: &quot;LUA_STDERR diagnostic, not protocol\r\n&quot;,
+      &quot;started_ms&quot;: 3889.641,
+      &quot;runtime&quot;: {
+        &quot;os&quot;: &quot;Windows&quot;,
+        &quot;arch&quot;: &quot;x64&quot;,
+        &quot;version_num&quot;: 20199.0,
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;ffi_pid&quot;: 39480.0,
+        &quot;jit_enabled&quot;: true
+      },
+      &quot;process_id&quot;: 39480,
+      &quot;loaded_modules_at_hello&quot;: {
+        &quot;sha256&quot;: {
+          &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\_run\\20260927T010423691636Z\\lua-helper.exe&quot;: &quot;4a21782e126ce3d5f599cb715f55decb5c91ea71e2d0f19f5ffc8d4cb46891db&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ntdll.dll&quot;: &quot;a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b29880bdbb24179ecb8b&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNEL32.DLL&quot;: &quot;8f8629741558b5df71def4e1dd8ef9645d4f806b949762c47757c50fea1a9e6d&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNELBASE.dll&quot;: &quot;becad014fb8efa8cb5e314931cca92778ad42c649b12a6909632cacd68af4f40&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\apphelp.dll&quot;: &quot;6915f018bd5261cccbbda0f50d8585a0d86172e8aac54b2642cdd3efeca75e74&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\VCRUNTIME140D.dll&quot;: &quot;ab6d0cc02fa70bb739fbae00e5de7544cb2dad33a563731a91fb692158d21160&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ucrtbased.dll&quot;: &quot;1d769955ca1c4f5997baee5e762de79a23ed5d2660ed7c32c84e6bc7dade60c4&quot;,
+          &quot;C:\\WINDOWS\\System32\\advapi32.dll&quot;: &quot;e036c9baecd170d7ef4759a5a7eb76036158cacc4cd9e3f697dbf410a3457224&quot;,
+          &quot;C:\\WINDOWS\\System32\\msvcrt.dll&quot;: &quot;a1bd0acd64e1a60368b8878d3987f603d966ed45be2252d2d4d0f92feb10fa8e&quot;,
+          &quot;C:\\WINDOWS\\System32\\sechost.dll&quot;: &quot;c760d6c0dfa2705446aa7a2260206c9076182d92231854c04aa526403217eb9a&quot;,
+          &quot;C:\\WINDOWS\\System32\\RPCRT4.dll&quot;: &quot;89af87b6387bde4243306036fce2be89c67a328f93c25c53542e4c665b114747&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\CRYPTBASE.DLL&quot;: &quot;d77b19df871b5a2f02e826ebeb5de86735f5cd0806294fe9143ba138c964ee16&quot;,
+          &quot;C:\\WINDOWS\\System32\\bcryptPrimitives.dll&quot;: &quot;46c06a0f0323d25a32c2b16da1a4a09e9234d282be7714469b7985bb98031ab6&quot;
+        },
+        &quot;snapshot_only&quot;: true,
+        &quot;truncated&quot;: false
+      },
+      &quot;exit_code&quot;: 77,
+      &quot;exit_status&quot;: &quot;ExitStatus.NormalExit&quot;
+    },
+    {
+      &quot;generation&quot;: 3,
+      &quot;pipe&quot;: &quot;\\\\.\\pipe\\hikari-lua-probe-324babc32acc4db2aa9fa41516cbde63&quot;,
+      &quot;stdout&quot;: &quot;C_STDOUT helper ready; this channel is not protocol\r\nLUA_STDOUT fixture apply 1\r\n&quot;,
+      &quot;stderr&quot;: &quot;LUA_STDERR diagnostic, not protocol\r\nPROTOCOL_FAILURE: protocol version mismatch\r\n&quot;,
+      &quot;started_ms&quot;: 4454.554,
+      &quot;runtime&quot;: {
+        &quot;arch&quot;: &quot;x64&quot;,
+        &quot;version_num&quot;: 20199.0,
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;ffi_pid&quot;: 30932.0,
+        &quot;os&quot;: &quot;Windows&quot;,
+        &quot;jit_enabled&quot;: true
+      },
+      &quot;process_id&quot;: 30932,
+      &quot;loaded_modules_at_hello&quot;: {
+        &quot;sha256&quot;: {
+          &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\_run\\20260927T010423691636Z\\lua-helper.exe&quot;: &quot;4a21782e126ce3d5f599cb715f55decb5c91ea71e2d0f19f5ffc8d4cb46891db&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ntdll.dll&quot;: &quot;a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b29880bdbb24179ecb8b&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNEL32.DLL&quot;: &quot;8f8629741558b5df71def4e1dd8ef9645d4f806b949762c47757c50fea1a9e6d&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNELBASE.dll&quot;: &quot;becad014fb8efa8cb5e314931cca92778ad42c649b12a6909632cacd68af4f40&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\apphelp.dll&quot;: &quot;6915f018bd5261cccbbda0f50d8585a0d86172e8aac54b2642cdd3efeca75e74&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\VCRUNTIME140D.dll&quot;: &quot;ab6d0cc02fa70bb739fbae00e5de7544cb2dad33a563731a91fb692158d21160&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ucrtbased.dll&quot;: &quot;1d769955ca1c4f5997baee5e762de79a23ed5d2660ed7c32c84e6bc7dade60c4&quot;,
+          &quot;C:\\WINDOWS\\System32\\advapi32.dll&quot;: &quot;e036c9baecd170d7ef4759a5a7eb76036158cacc4cd9e3f697dbf410a3457224&quot;,
+          &quot;C:\\WINDOWS\\System32\\msvcrt.dll&quot;: &quot;a1bd0acd64e1a60368b8878d3987f603d966ed45be2252d2d4d0f92feb10fa8e&quot;,
+          &quot;C:\\WINDOWS\\System32\\sechost.dll&quot;: &quot;c760d6c0dfa2705446aa7a2260206c9076182d92231854c04aa526403217eb9a&quot;,
+          &quot;C:\\WINDOWS\\System32\\RPCRT4.dll&quot;: &quot;89af87b6387bde4243306036fce2be89c67a328f93c25c53542e4c665b114747&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\CRYPTBASE.DLL&quot;: &quot;d77b19df871b5a2f02e826ebeb5de86735f5cd0806294fe9143ba138c964ee16&quot;,
+          &quot;C:\\WINDOWS\\System32\\bcryptPrimitives.dll&quot;: &quot;46c06a0f0323d25a32c2b16da1a4a09e9234d282be7714469b7985bb98031ab6&quot;
+        },
+        &quot;snapshot_only&quot;: true,
+        &quot;truncated&quot;: false
+      },
+      &quot;exit_code&quot;: 21,
+      &quot;exit_status&quot;: &quot;ExitStatus.NormalExit&quot;
+    },
+    {
+      &quot;generation&quot;: 4,
+      &quot;pipe&quot;: &quot;\\\\.\\pipe\\hikari-lua-probe-571b1a098210481fa6ea1976e4c8880b&quot;,
+      &quot;stdout&quot;: &quot;C_STDOUT helper ready; this channel is not protocol\r\n&quot;,
+      &quot;stderr&quot;: &quot;PROTOCOL_FAILURE: truncated frame body\r\n&quot;,
+      &quot;started_ms&quot;: 5014.956,
+      &quot;runtime&quot;: {
+        &quot;version_num&quot;: 20199.0,
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;os&quot;: &quot;Windows&quot;,
+        &quot;ffi_pid&quot;: 33728.0,
+        &quot;jit_enabled&quot;: true,
+        &quot;arch&quot;: &quot;x64&quot;
+      },
+      &quot;process_id&quot;: 33728,
+      &quot;loaded_modules_at_hello&quot;: {
+        &quot;sha256&quot;: {
+          &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\_run\\20260927T010423691636Z\\lua-helper.exe&quot;: &quot;4a21782e126ce3d5f599cb715f55decb5c91ea71e2d0f19f5ffc8d4cb46891db&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ntdll.dll&quot;: &quot;a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b29880bdbb24179ecb8b&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNEL32.DLL&quot;: &quot;8f8629741558b5df71def4e1dd8ef9645d4f806b949762c47757c50fea1a9e6d&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNELBASE.dll&quot;: &quot;becad014fb8efa8cb5e314931cca92778ad42c649b12a6909632cacd68af4f40&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\apphelp.dll&quot;: &quot;6915f018bd5261cccbbda0f50d8585a0d86172e8aac54b2642cdd3efeca75e74&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\VCRUNTIME140D.dll&quot;: &quot;ab6d0cc02fa70bb739fbae00e5de7544cb2dad33a563731a91fb692158d21160&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ucrtbased.dll&quot;: &quot;1d769955ca1c4f5997baee5e762de79a23ed5d2660ed7c32c84e6bc7dade60c4&quot;,
+          &quot;C:\\WINDOWS\\System32\\advapi32.dll&quot;: &quot;e036c9baecd170d7ef4759a5a7eb76036158cacc4cd9e3f697dbf410a3457224&quot;,
+          &quot;C:\\WINDOWS\\System32\\msvcrt.dll&quot;: &quot;a1bd0acd64e1a60368b8878d3987f603d966ed45be2252d2d4d0f92feb10fa8e&quot;,
+          &quot;C:\\WINDOWS\\System32\\sechost.dll&quot;: &quot;c760d6c0dfa2705446aa7a2260206c9076182d92231854c04aa526403217eb9a&quot;,
+          &quot;C:\\WINDOWS\\System32\\RPCRT4.dll&quot;: &quot;89af87b6387bde4243306036fce2be89c67a328f93c25c53542e4c665b114747&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\CRYPTBASE.DLL&quot;: &quot;d77b19df871b5a2f02e826ebeb5de86735f5cd0806294fe9143ba138c964ee16&quot;,
+          &quot;C:\\WINDOWS\\System32\\bcryptPrimitives.dll&quot;: &quot;46c06a0f0323d25a32c2b16da1a4a09e9234d282be7714469b7985bb98031ab6&quot;
+        },
+        &quot;snapshot_only&quot;: true,
+        &quot;truncated&quot;: false
+      },
+      &quot;exit_code&quot;: 21,
+      &quot;exit_status&quot;: &quot;ExitStatus.NormalExit&quot;
+    },
+    {
+      &quot;generation&quot;: 5,
+      &quot;pipe&quot;: &quot;\\\\.\\pipe\\hikari-lua-probe-ed0c04aa54e0420ba8eba5328b503759&quot;,
+      &quot;stdout&quot;: &quot;C_STDOUT helper ready; this channel is not protocol\r\n&quot;,
+      &quot;stderr&quot;: &quot;PROTOCOL_FAILURE: invalid bounded frame length\r\n&quot;,
+      &quot;started_ms&quot;: 5154.608,
+      &quot;runtime&quot;: {
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;ffi_pid&quot;: 5764.0,
+        &quot;jit_enabled&quot;: true,
+        &quot;version_num&quot;: 20199.0,
+        &quot;arch&quot;: &quot;x64&quot;,
+        &quot;os&quot;: &quot;Windows&quot;
+      },
+      &quot;process_id&quot;: 5764,
+      &quot;loaded_modules_at_hello&quot;: {
+        &quot;sha256&quot;: {
+          &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\_run\\20260927T010423691636Z\\lua-helper.exe&quot;: &quot;4a21782e126ce3d5f599cb715f55decb5c91ea71e2d0f19f5ffc8d4cb46891db&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ntdll.dll&quot;: &quot;a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b29880bdbb24179ecb8b&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNEL32.DLL&quot;: &quot;8f8629741558b5df71def4e1dd8ef9645d4f806b949762c47757c50fea1a9e6d&quot;,
+          &quot;C:\\WINDOWS\\System32\\KERNELBASE.dll&quot;: &quot;becad014fb8efa8cb5e314931cca92778ad42c649b12a6909632cacd68af4f40&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\apphelp.dll&quot;: &quot;6915f018bd5261cccbbda0f50d8585a0d86172e8aac54b2642cdd3efeca75e74&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\VCRUNTIME140D.dll&quot;: &quot;ab6d0cc02fa70bb739fbae00e5de7544cb2dad33a563731a91fb692158d21160&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\ucrtbased.dll&quot;: &quot;1d769955ca1c4f5997baee5e762de79a23ed5d2660ed7c32c84e6bc7dade60c4&quot;,
+          &quot;C:\\WINDOWS\\System32\\advapi32.dll&quot;: &quot;e036c9baecd170d7ef4759a5a7eb76036158cacc4cd9e3f697dbf410a3457224&quot;,
+          &quot;C:\\WINDOWS\\System32\\msvcrt.dll&quot;: &quot;a1bd0acd64e1a60368b8878d3987f603d966ed45be2252d2d4d0f92feb10fa8e&quot;,
+          &quot;C:\\WINDOWS\\System32\\sechost.dll&quot;: &quot;c760d6c0dfa2705446aa7a2260206c9076182d92231854c04aa526403217eb9a&quot;,
+          &quot;C:\\WINDOWS\\System32\\RPCRT4.dll&quot;: &quot;89af87b6387bde4243306036fce2be89c67a328f93c25c53542e4c665b114747&quot;,
+          &quot;C:\\WINDOWS\\SYSTEM32\\CRYPTBASE.DLL&quot;: &quot;d77b19df871b5a2f02e826ebeb5de86735f5cd0806294fe9143ba138c964ee16&quot;,
+          &quot;C:\\WINDOWS\\System32\\bcryptPrimitives.dll&quot;: &quot;46c06a0f0323d25a32c2b16da1a4a09e9234d282be7714469b7985bb98031ab6&quot;
+        },
+        &quot;snapshot_only&quot;: true,
+        &quot;truncated&quot;: false
+      },
+      &quot;exit_code&quot;: 21,
+      &quot;exit_status&quot;: &quot;ExitStatus.NormalExit&quot;
+    }
+  ],
+  &quot;rejections&quot;: [
+    {
+      &quot;where&quot;: &quot;helper&quot;,
+      &quot;reason&quot;: &quot;duplicate dialog reply at polling boundary&quot;,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;where&quot;: &quot;GUI&quot;,
+      &quot;reason&quot;: &quot;version/generation&quot;,
+      &quot;message&quot;: {
+        &quot;version&quot;: 1,
+        &quot;kind&quot;: 5,
+        &quot;generation&quot;: 1,
+        &quot;run&quot;: 10,
+        &quot;request&quot;: 0,
+        &quot;body&quot;: {
+          &quot;fixture&quot;: &quot;late result from old generation&quot;
+        }
+      },
+      &quot;controlled_replay&quot;: true
+    },
+    {
+      &quot;where&quot;: &quot;helper&quot;,
+      &quot;reason&quot;: &quot;stale generation at dispatcher&quot;,
+      &quot;generation&quot;: 2
+    }
+  ],
+  &quot;events&quot;: [
+    {
+      &quot;ms&quot;: 174.42,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;dialog_one&quot;,
+      &quot;run&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 215.82,
+      &quot;event&quot;: &quot;pipe_connected&quot;,
+      &quot;generation&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 218.048,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 1,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 0,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;arch&quot;: &quot;x64&quot;,
+        &quot;version_num&quot;: 20199.0,
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;os&quot;: &quot;Windows&quot;,
+        &quot;jit_enabled&quot;: true,
+        &quot;ffi_pid&quot;: 18500.0
+      }
+    },
+    {
+      &quot;ms&quot;: 235.702,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 1,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 236.441,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 3,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 1,
+      &quot;request&quot;: 1,
+      &quot;body&quot;: {
+        &quot;controls&quot;: {
+          &quot;1.0&quot;: {
+            &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+            &quot;class&quot;: &quot;label&quot;
+          },
+          &quot;2.0&quot;: {
+            &quot;name&quot;: &quot;text&quot;,
+            &quot;class&quot;: &quot;edit&quot;,
+            &quot;text&quot;: &quot;Harbor&quot;
+          },
+          &quot;3.0&quot;: {
+            &quot;value&quot;: 7.0,
+            &quot;class&quot;: &quot;intedit&quot;,
+            &quot;min&quot;: 0.0,
+            &quot;max&quot;: 99.0,
+            &quot;name&quot;: &quot;count&quot;
+          },
+          &quot;4.0&quot;: {
+            &quot;label&quot;: &quot;Enabled&quot;,
+            &quot;name&quot;: &quot;enabled&quot;,
+            &quot;value&quot;: false,
+            &quot;class&quot;: &quot;checkbox&quot;
+          },
+          &quot;5.0&quot;: {
+            &quot;value&quot;: &quot;alpha&quot;,
+            &quot;name&quot;: &quot;choice&quot;,
+            &quot;class&quot;: &quot;dropdown&quot;,
+            &quot;items&quot;: [
+              &quot;alpha&quot;,
+              &quot;beta&quot;
+            ]
+          }
+        },
+        &quot;buttons&quot;: {
+          &quot;1.0&quot;: &quot;Apply&quot;,
+          &quot;2.0&quot;: &quot;Cancel&quot;
+        }
+      }
+    },
+    {
+      &quot;ms&quot;: 558.254,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 1,
+      &quot;request&quot;: 1,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 558.304,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 1,
+      &quot;request&quot;: 1,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 558.83,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 11,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 1,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: &quot;duplicate dialog reply at polling boundary&quot;
+    },
+    {
+      &quot;ms&quot;: 558.867,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 1,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;counter&quot;: 1.0
+      }
+    },
+    {
+      &quot;ms&quot;: 654.285,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;dialog_two&quot;,
+      &quot;run&quot;: 2
+    },
+    {
+      &quot;ms&quot;: 654.364,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 2,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 654.701,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 3,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 2,
+      &quot;request&quot;: 2,
+      &quot;body&quot;: {
+        &quot;controls&quot;: {
+          &quot;1.0&quot;: {
+            &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+            &quot;class&quot;: &quot;label&quot;
+          },
+          &quot;2.0&quot;: {
+            &quot;name&quot;: &quot;text&quot;,
+            &quot;class&quot;: &quot;edit&quot;,
+            &quot;text&quot;: &quot;Harbor&quot;
+          },
+          &quot;3.0&quot;: {
+            &quot;value&quot;: 7.0,
+            &quot;class&quot;: &quot;intedit&quot;,
+            &quot;min&quot;: 0.0,
+            &quot;max&quot;: 99.0,
+            &quot;name&quot;: &quot;count&quot;
+          },
+          &quot;4.0&quot;: {
+            &quot;label&quot;: &quot;Enabled&quot;,
+            &quot;name&quot;: &quot;enabled&quot;,
+            &quot;value&quot;: false,
+            &quot;class&quot;: &quot;checkbox&quot;
+          },
+          &quot;5.0&quot;: {
+            &quot;value&quot;: &quot;alpha&quot;,
+            &quot;name&quot;: &quot;choice&quot;,
+            &quot;class&quot;: &quot;dropdown&quot;,
+            &quot;items&quot;: [
+              &quot;alpha&quot;,
+              &quot;beta&quot;
+            ]
+          }
+        },
+        &quot;buttons&quot;: {
+          &quot;1.0&quot;: &quot;Apply&quot;,
+          &quot;2.0&quot;: &quot;Cancel&quot;
+        }
+      }
+    },
+    {
+      &quot;ms&quot;: 969.799,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 2,
+      &quot;request&quot;: 2,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 970.163,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 2,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;counter&quot;: 2.0
+      }
+    },
+    {
+      &quot;ms&quot;: 1086.016,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;custom_cancel&quot;,
+      &quot;run&quot;: 3
+    },
+    {
+      &quot;ms&quot;: 1086.198,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 3,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 1086.584,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 3,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 3,
+      &quot;request&quot;: 3,
+      &quot;body&quot;: {
+        &quot;controls&quot;: {
+          &quot;1.0&quot;: {
+            &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+            &quot;class&quot;: &quot;label&quot;
+          },
+          &quot;2.0&quot;: {
+            &quot;name&quot;: &quot;text&quot;,
+            &quot;class&quot;: &quot;edit&quot;,
+            &quot;text&quot;: &quot;Harbor&quot;
+          },
+          &quot;3.0&quot;: {
+            &quot;value&quot;: 7.0,
+            &quot;class&quot;: &quot;intedit&quot;,
+            &quot;min&quot;: 0.0,
+            &quot;max&quot;: 99.0,
+            &quot;name&quot;: &quot;count&quot;
+          },
+          &quot;4.0&quot;: {
+            &quot;label&quot;: &quot;Enabled&quot;,
+            &quot;name&quot;: &quot;enabled&quot;,
+            &quot;value&quot;: false,
+            &quot;class&quot;: &quot;checkbox&quot;
+          },
+          &quot;5.0&quot;: {
+            &quot;value&quot;: &quot;alpha&quot;,
+            &quot;name&quot;: &quot;choice&quot;,
+            &quot;class&quot;: &quot;dropdown&quot;,
+            &quot;items&quot;: [
+              &quot;alpha&quot;,
+              &quot;beta&quot;
+            ]
+          }
+        },
+        &quot;buttons&quot;: {
+          &quot;1.0&quot;: &quot;Apply&quot;,
+          &quot;2.0&quot;: &quot;Cancel&quot;
+        }
+      }
+    },
+    {
+      &quot;ms&quot;: 1389.109,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 3,
+      &quot;request&quot;: 3,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 1389.417,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 3,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: &quot;Cancel&quot;,
+        &quot;counter&quot;: 3.0
+      }
+    },
+    {
+      &quot;ms&quot;: 1506.613,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;default_ok&quot;,
+      &quot;run&quot;: 4
+    },
+    {
+      &quot;ms&quot;: 1506.671,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 4,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 1506.983,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 3,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 4,
+      &quot;request&quot;: 4,
+      &quot;body&quot;: {
+        &quot;controls&quot;: {
+          &quot;1.0&quot;: {
+            &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+            &quot;class&quot;: &quot;label&quot;
+          },
+          &quot;2.0&quot;: {
+            &quot;name&quot;: &quot;text&quot;,
+            &quot;class&quot;: &quot;edit&quot;,
+            &quot;text&quot;: &quot;Harbor&quot;
+          },
+          &quot;3.0&quot;: {
+            &quot;value&quot;: 7.0,
+            &quot;class&quot;: &quot;intedit&quot;,
+            &quot;min&quot;: 0.0,
+            &quot;max&quot;: 99.0,
+            &quot;name&quot;: &quot;count&quot;
+          },
+          &quot;4.0&quot;: {
+            &quot;label&quot;: &quot;Enabled&quot;,
+            &quot;name&quot;: &quot;enabled&quot;,
+            &quot;value&quot;: false,
+            &quot;class&quot;: &quot;checkbox&quot;
+          },
+          &quot;5.0&quot;: {
+            &quot;value&quot;: &quot;alpha&quot;,
+            &quot;name&quot;: &quot;choice&quot;,
+            &quot;class&quot;: &quot;dropdown&quot;,
+            &quot;items&quot;: [
+              &quot;alpha&quot;,
+              &quot;beta&quot;
+            ]
+          }
+        },
+        &quot;buttons&quot;: {}
+      }
+    },
+    {
+      &quot;ms&quot;: 1814.489,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 4,
+      &quot;request&quot;: 4,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 1814.741,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 4,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: &quot;&quot;,
+        &quot;counter&quot;: 4.0
+      }
+    },
+    {
+      &quot;ms&quot;: 1929.192,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;default_close&quot;,
+      &quot;run&quot;: 5
+    },
+    {
+      &quot;ms&quot;: 1929.263,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 5,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 1929.654,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 3,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 5,
+      &quot;request&quot;: 5,
+      &quot;body&quot;: {
+        &quot;controls&quot;: {
+          &quot;1.0&quot;: {
+            &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+            &quot;class&quot;: &quot;label&quot;
+          },
+          &quot;2.0&quot;: {
+            &quot;name&quot;: &quot;text&quot;,
+            &quot;class&quot;: &quot;edit&quot;,
+            &quot;text&quot;: &quot;Harbor&quot;
+          },
+          &quot;3.0&quot;: {
+            &quot;value&quot;: 7.0,
+            &quot;class&quot;: &quot;intedit&quot;,
+            &quot;min&quot;: 0.0,
+            &quot;max&quot;: 99.0,
+            &quot;name&quot;: &quot;count&quot;
+          },
+          &quot;4.0&quot;: {
+            &quot;label&quot;: &quot;Enabled&quot;,
+            &quot;name&quot;: &quot;enabled&quot;,
+            &quot;value&quot;: false,
+            &quot;class&quot;: &quot;checkbox&quot;
+          },
+          &quot;5.0&quot;: {
+            &quot;value&quot;: &quot;alpha&quot;,
+            &quot;name&quot;: &quot;choice&quot;,
+            &quot;class&quot;: &quot;dropdown&quot;,
+            &quot;items&quot;: [
+              &quot;alpha&quot;,
+              &quot;beta&quot;
+            ]
+          }
+        },
+        &quot;buttons&quot;: {}
+      }
+    },
+    {
+      &quot;ms&quot;: 2234.893,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 5,
+      &quot;request&quot;: 5,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 2235.145,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 5,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;boolean&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: false,
+        &quot;counter&quot;: 5.0
+      }
+    },
+    {
+      &quot;ms&quot;: 2348.819,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;cancel_dialog&quot;,
+      &quot;run&quot;: 6
+    },
+    {
+      &quot;ms&quot;: 2348.874,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 6,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 2349.21,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 3,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 6,
+      &quot;request&quot;: 6,
+      &quot;body&quot;: {
+        &quot;controls&quot;: {
+          &quot;1.0&quot;: {
+            &quot;label&quot;: &quot;Original synthetic dialog&quot;,
+            &quot;class&quot;: &quot;label&quot;
+          },
+          &quot;2.0&quot;: {
+            &quot;name&quot;: &quot;text&quot;,
+            &quot;class&quot;: &quot;edit&quot;,
+            &quot;text&quot;: &quot;Harbor&quot;
+          },
+          &quot;3.0&quot;: {
+            &quot;value&quot;: 7.0,
+            &quot;class&quot;: &quot;intedit&quot;,
+            &quot;min&quot;: 0.0,
+            &quot;max&quot;: 99.0,
+            &quot;name&quot;: &quot;count&quot;
+          },
+          &quot;4.0&quot;: {
+            &quot;label&quot;: &quot;Enabled&quot;,
+            &quot;name&quot;: &quot;enabled&quot;,
+            &quot;value&quot;: false,
+            &quot;class&quot;: &quot;checkbox&quot;
+          },
+          &quot;5.0&quot;: {
+            &quot;value&quot;: &quot;alpha&quot;,
+            &quot;name&quot;: &quot;choice&quot;,
+            &quot;class&quot;: &quot;dropdown&quot;,
+            &quot;items&quot;: [
+              &quot;alpha&quot;,
+              &quot;beta&quot;
+            ]
+          }
+        },
+        &quot;buttons&quot;: {
+          &quot;1.0&quot;: &quot;Apply&quot;,
+          &quot;2.0&quot;: &quot;Cancel&quot;
+        }
+      }
+    },
+    {
+      &quot;ms&quot;: 2654.261,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 6,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 6,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 2654.304,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 6,
+      &quot;request&quot;: 6,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 2654.801,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 6,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true
+        },
+        &quot;button_type&quot;: &quot;boolean&quot;,
+        &quot;cancelled&quot;: true,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true,
+          &quot;ffi_pid&quot;: 18500.0
+        },
+        &quot;button&quot;: false,
+        &quot;counter&quot;: 6.0
+      }
+    },
+    {
+      &quot;ms&quot;: 2764.947,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;unchanged_edgeblur&quot;,
+      &quot;run&quot;: 7
+    },
+    {
+      &quot;ms&quot;: 2765.014,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 7,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 2765.233,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 7,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;unselected&quot;: &quot;Unselected&quot;,
+        &quot;writebacks&quot;: 1.0,
+        &quot;limitation&quot;: &quot;Two-record proxy only; not full subtitle userdata or application undo.&quot;,
+        &quot;undo_stub_calls&quot;: 1.0,
+        &quot;selected&quot;: &quot;{\\be1}Harbor&quot;
+      }
+    },
+    {
+      &quot;ms&quot;: 2874.507,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;lua_error&quot;,
+      &quot;run&quot;: 8
+    },
+    {
+      &quot;ms&quot;: 2874.564,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 8,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 2874.8,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 9,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 8,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: &quot;...\\Kainote\\HikariSub\\prototypes\\lua-isolation\\fixtures.lua:22: original fixture error&quot;
+    },
+    {
+      &quot;ms&quot;: 2986.159,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;cooperative_cancel&quot;,
+      &quot;run&quot;: 9
+    },
+    {
+      &quot;ms&quot;: 2986.23,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 9,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 3285.695,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 7,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 9,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: 20.0
+    },
+    {
+      &quot;ms&quot;: 3300.839,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 6,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 9,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 3315.863,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 9,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 9,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: &quot;...\\Kainote\\HikariSub\\prototypes\\lua-isolation\\fixtures.lua:25: fixture cooperative cancellation&quot;
+    },
+    {
+      &quot;ms&quot;: 3426.648,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;owned_force_stop&quot;,
+      &quot;run&quot;: 10
+    },
+    {
+      &quot;ms&quot;: 3426.714,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 10,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 3789.339,
+      &quot;event&quot;: &quot;owned_process_kill&quot;,
+      &quot;pid&quot;: 18500
+    },
+    {
+      &quot;ms&quot;: 3790.763,
+      &quot;event&quot;: &quot;process_error&quot;,
+      &quot;generation&quot;: 1,
+      &quot;error&quot;: &quot;ProcessError.Crashed&quot;
+    },
+    {
+      &quot;ms&quot;: 3790.796,
+      &quot;event&quot;: &quot;process_exit&quot;,
+      &quot;generation&quot;: 1,
+      &quot;code&quot;: 62097,
+      &quot;status&quot;: &quot;ExitStatus.CrashExit&quot;
+    },
+    {
+      &quot;ms&quot;: 3889.104,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;restart_after_force_stop&quot;,
+      &quot;run&quot;: 11
+    },
+    {
+      &quot;ms&quot;: 3912.168,
+      &quot;event&quot;: &quot;pipe_connected&quot;,
+      &quot;generation&quot;: 2
+    },
+    {
+      &quot;ms&quot;: 3914.32,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 1,
+      &quot;generation&quot;: 2,
+      &quot;run&quot;: 0,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;os&quot;: &quot;Windows&quot;,
+        &quot;arch&quot;: &quot;x64&quot;,
+        &quot;version_num&quot;: 20199.0,
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;ffi_pid&quot;: 39480.0,
+        &quot;jit_enabled&quot;: true
+      }
+    },
+    {
+      &quot;ms&quot;: 3927.129,
+      &quot;event&quot;: &quot;controlled_replay&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 10,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;fixture&quot;: &quot;late result from old generation&quot;
+      }
+    },
+    {
+      &quot;ms&quot;: 3927.138,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 1,
+      &quot;run&quot;: 10,
+      &quot;request&quot;: 1,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 3927.187,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 2,
+      &quot;run&quot;: 11,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 3927.513,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 11,
+      &quot;generation&quot;: 2,
+      &quot;run&quot;: 0,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: &quot;stale generation at dispatcher&quot;
+    },
+    {
+      &quot;ms&quot;: 3927.572,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 3,
+      &quot;generation&quot;: 2,
+      &quot;run&quot;: 11,
+      &quot;request&quot;: 1,
+      &quot;body&quot;: {
+        &quot;buttons&quot;: {
+          &quot;1.0&quot;: &quot;Apply&quot;,
+          &quot;2.0&quot;: &quot;Cancel&quot;
+        },
+        &quot;controls&quot;: {
+          &quot;1.0&quot;: {
+            &quot;class&quot;: &quot;label&quot;,
+            &quot;label&quot;: &quot;Original synthetic dialog&quot;
+          },
+          &quot;2.0&quot;: {
+            &quot;text&quot;: &quot;Harbor&quot;,
+            &quot;name&quot;: &quot;text&quot;,
+            &quot;class&quot;: &quot;edit&quot;
+          },
+          &quot;3.0&quot;: {
+            &quot;min&quot;: 0.0,
+            &quot;value&quot;: 7.0,
+            &quot;name&quot;: &quot;count&quot;,
+            &quot;max&quot;: 99.0,
+            &quot;class&quot;: &quot;intedit&quot;
+          },
+          &quot;4.0&quot;: {
+            &quot;label&quot;: &quot;Enabled&quot;,
+            &quot;name&quot;: &quot;enabled&quot;,
+            &quot;class&quot;: &quot;checkbox&quot;,
+            &quot;value&quot;: false
+          },
+          &quot;5.0&quot;: {
+            &quot;items&quot;: [
+              &quot;alpha&quot;,
+              &quot;beta&quot;
+            ],
+            &quot;name&quot;: &quot;choice&quot;,
+            &quot;class&quot;: &quot;dropdown&quot;,
+            &quot;value&quot;: &quot;alpha&quot;
+          }
+        }
+      }
+    },
+    {
+      &quot;ms&quot;: 4232.654,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 2,
+      &quot;run&quot;: 11,
+      &quot;request&quot;: 1,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 4232.956,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 2,
+      &quot;run&quot;: 11,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;values&quot;: {
+          &quot;choice&quot;: &quot;beta&quot;,
+          &quot;enabled&quot;: true,
+          &quot;count&quot;: 37.0,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;runtime&quot;: {
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;ffi_pid&quot;: 39480.0,
+          &quot;jit_enabled&quot;: true
+        },
+        &quot;counter&quot;: 1.0
+      }
+    },
+    {
+      &quot;ms&quot;: 4349.247,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;abrupt_helper_loss&quot;,
+      &quot;run&quot;: 12
+    },
+    {
+      &quot;ms&quot;: 4349.31,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 2,
+      &quot;run&quot;: 12,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 4350.8,
+      &quot;event&quot;: &quot;process_exit&quot;,
+      &quot;generation&quot;: 2,
+      &quot;code&quot;: 77,
+      &quot;status&quot;: &quot;ExitStatus.NormalExit&quot;
+    },
+    {
+      &quot;ms&quot;: 4454.029,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;restart_after_loss&quot;,
+      &quot;run&quot;: 13
+    },
+    {
+      &quot;ms&quot;: 4477.053,
+      &quot;event&quot;: &quot;pipe_connected&quot;,
+      &quot;generation&quot;: 3
+    },
+    {
+      &quot;ms&quot;: 4479.228,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 1,
+      &quot;generation&quot;: 3,
+      &quot;run&quot;: 0,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;arch&quot;: &quot;x64&quot;,
+        &quot;version_num&quot;: 20199.0,
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;ffi_pid&quot;: 30932.0,
+        &quot;os&quot;: &quot;Windows&quot;,
+        &quot;jit_enabled&quot;: true
+      }
+    },
+    {
+      &quot;ms&quot;: 4492.027,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 3,
+      &quot;run&quot;: 13,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 4492.31,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 3,
+      &quot;generation&quot;: 3,
+      &quot;run&quot;: 13,
+      &quot;request&quot;: 1,
+      &quot;body&quot;: {
+        &quot;buttons&quot;: {
+          &quot;1.0&quot;: &quot;Apply&quot;,
+          &quot;2.0&quot;: &quot;Cancel&quot;
+        },
+        &quot;controls&quot;: {
+          &quot;1.0&quot;: {
+            &quot;class&quot;: &quot;label&quot;,
+            &quot;label&quot;: &quot;Original synthetic dialog&quot;
+          },
+          &quot;2.0&quot;: {
+            &quot;class&quot;: &quot;edit&quot;,
+            &quot;text&quot;: &quot;Harbor&quot;,
+            &quot;name&quot;: &quot;text&quot;
+          },
+          &quot;3.0&quot;: {
+            &quot;class&quot;: &quot;intedit&quot;,
+            &quot;value&quot;: 7.0,
+            &quot;name&quot;: &quot;count&quot;,
+            &quot;max&quot;: 99.0,
+            &quot;min&quot;: 0.0
+          },
+          &quot;4.0&quot;: {
+            &quot;class&quot;: &quot;checkbox&quot;,
+            &quot;value&quot;: false,
+            &quot;label&quot;: &quot;Enabled&quot;,
+            &quot;name&quot;: &quot;enabled&quot;
+          },
+          &quot;5.0&quot;: {
+            &quot;class&quot;: &quot;dropdown&quot;,
+            &quot;value&quot;: &quot;alpha&quot;,
+            &quot;items&quot;: [
+              &quot;alpha&quot;,
+              &quot;beta&quot;
+            ],
+            &quot;name&quot;: &quot;choice&quot;
+          }
+        }
+      }
+    },
+    {
+      &quot;ms&quot;: 4797.474,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 4,
+      &quot;generation&quot;: 3,
+      &quot;run&quot;: 13,
+      &quot;request&quot;: 1,
+      &quot;version&quot;: 1
+    },
+    {
+      &quot;ms&quot;: 4797.733,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 5,
+      &quot;generation&quot;: 3,
+      &quot;run&quot;: 13,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;button&quot;: &quot;Apply&quot;,
+        &quot;values&quot;: {
+          &quot;count&quot;: 37.0,
+          &quot;enabled&quot;: true,
+          &quot;text&quot;: &quot;静かな港 🌙&quot;,
+          &quot;choice&quot;: &quot;beta&quot;
+        },
+        &quot;button_type&quot;: &quot;string&quot;,
+        &quot;cancelled&quot;: false,
+        &quot;counter&quot;: 1.0,
+        &quot;runtime&quot;: {
+          &quot;arch&quot;: &quot;x64&quot;,
+          &quot;version_num&quot;: 20199.0,
+          &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+          &quot;ffi_pid&quot;: 30932.0,
+          &quot;os&quot;: &quot;Windows&quot;,
+          &quot;jit_enabled&quot;: true
+        }
+      }
+    },
+    {
+      &quot;ms&quot;: 4904.126,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;version_mismatch&quot;,
+      &quot;run&quot;: 14
+    },
+    {
+      &quot;ms&quot;: 4904.201,
+      &quot;event&quot;: &quot;sent&quot;,
+      &quot;kind&quot;: 2,
+      &quot;generation&quot;: 3,
+      &quot;run&quot;: 14,
+      &quot;request&quot;: 0,
+      &quot;version&quot;: 99
+    },
+    {
+      &quot;ms&quot;: 4904.494,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 9,
+      &quot;generation&quot;: 3,
+      &quot;run&quot;: 13,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: &quot;protocol version mismatch&quot;
+    },
+    {
+      &quot;ms&quot;: 4906.419,
+      &quot;event&quot;: &quot;process_exit&quot;,
+      &quot;generation&quot;: 3,
+      &quot;code&quot;: 21,
+      &quot;status&quot;: &quot;ExitStatus.NormalExit&quot;
+    },
+    {
+      &quot;ms&quot;: 5014.36,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;truncated_frame&quot;,
+      &quot;run&quot;: 15
+    },
+    {
+      &quot;ms&quot;: 5037.388,
+      &quot;event&quot;: &quot;pipe_connected&quot;,
+      &quot;generation&quot;: 4
+    },
+    {
+      &quot;ms&quot;: 5039.619,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 1,
+      &quot;generation&quot;: 4,
+      &quot;run&quot;: 0,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;version_num&quot;: 20199.0,
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;os&quot;: &quot;Windows&quot;,
+        &quot;ffi_pid&quot;: 33728.0,
+        &quot;jit_enabled&quot;: true,
+        &quot;arch&quot;: &quot;x64&quot;
+      }
+    },
+    {
+      &quot;ms&quot;: 5054.989,
+      &quot;event&quot;: &quot;process_exit&quot;,
+      &quot;generation&quot;: 4,
+      &quot;code&quot;: 21,
+      &quot;status&quot;: &quot;ExitStatus.NormalExit&quot;
+    },
+    {
+      &quot;ms&quot;: 5154.084,
+      &quot;event&quot;: &quot;case_start&quot;,
+      &quot;name&quot;: &quot;oversized_frame&quot;,
+      &quot;run&quot;: 16
+    },
+    {
+      &quot;ms&quot;: 5178.039,
+      &quot;event&quot;: &quot;pipe_connected&quot;,
+      &quot;generation&quot;: 5
+    },
+    {
+      &quot;ms&quot;: 5180.271,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 1,
+      &quot;generation&quot;: 5,
+      &quot;run&quot;: 0,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: {
+        &quot;version&quot;: &quot;LuaJIT 2.1.ROLLING&quot;,
+        &quot;ffi_pid&quot;: 5764.0,
+        &quot;jit_enabled&quot;: true,
+        &quot;version_num&quot;: 20199.0,
+        &quot;arch&quot;: &quot;x64&quot;,
+        &quot;os&quot;: &quot;Windows&quot;
+      }
+    },
+    {
+      &quot;ms&quot;: 5193.266,
+      &quot;event&quot;: &quot;received&quot;,
+      &quot;version&quot;: 1,
+      &quot;kind&quot;: 9,
+      &quot;generation&quot;: 5,
+      &quot;run&quot;: 0,
+      &quot;request&quot;: 0,
+      &quot;body&quot;: &quot;invalid bounded frame length&quot;
+    },
+    {
+      &quot;ms&quot;: 5195.097,
+      &quot;event&quot;: &quot;process_exit&quot;,
+      &quot;generation&quot;: 5,
+      &quot;code&quot;: 21,
+      &quot;status&quot;: &quot;ExitStatus.NormalExit&quot;
+    }
+  ],
+  &quot;qml_heartbeat_count&quot;: 266,
+  &quot;experiment_limits&quot;: {
+    &quot;frame_bytes&quot;: 65536,
+    &quot;value_depth&quot;: 12,
+    &quot;table_entries&quot;: 128,
+    &quot;stdout_stderr_chars_each&quot;: 131072,
+    &quot;case_watchdog_ms&quot;: 10000,
+    &quot;auto_dialog_reply_ms&quot;: 300,
+    &quot;owned_force_stop_ms&quot;: 350
+  },
+  &quot;limits_note&quot;: &quot;Harness bounds and delays are experiment parameters, not accepted product policy or calibrated responsiveness thresholds.&quot;,
+  &quot;provenance&quot;: {
+    &quot;command&quot;: [
+      &quot;C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\cl.exe&quot;,
+      &quot;/nologo&quot;,
+      &quot;/TC&quot;,
+      &quot;/std:c17&quot;,
+      &quot;/utf-8&quot;,
+      &quot;/MDd&quot;,
+      &quot;/Od&quot;,
+      &quot;/W3&quot;,
+      &quot;/D_CRT_SECURE_NO_WARNINGS&quot;,
+      &quot;/IC:\\Work\\Kainote\\Thirdparty\\LuaJIT\\src&quot;,
+      &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\helper.c&quot;,
+      &quot;/FoC:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\_run\\20260927T010423691636Z\\helper.obj&quot;,
+      &quot;/FdC:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\_run\\20260927T010423691636Z\\compile.pdb&quot;,
+      &quot;/FeC:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\_run\\20260927T010423691636Z\\lua-helper.exe&quot;,
+      &quot;/link&quot;,
+      &quot;C:\\Work\\Kainote\\bin\\x64\\Debug\\LuaJit.lib&quot;,
+      &quot;/PDB:C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\_run\\20260927T010423691636Z\\helper.pdb&quot;
+    ],
+    &quot;compiler&quot;: &quot;C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\cl.exe&quot;,
+    &quot;compiler_sha256&quot;: &quot;b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57&quot;,
+    &quot;archive&quot;: &quot;C:\\Work\\Kainote\\bin\\x64\\Debug\\LuaJit.lib&quot;,
+    &quot;archive_bytes&quot;: 5167468,
+    &quot;archive_sha256&quot;: &quot;53045303e129de91e13a389d59ce83ebd49e3747374fe9eda96012b25b7059d4&quot;,
+    &quot;helper_sha256&quot;: &quot;4a21782e126ce3d5f599cb715f55decb5c91ea71e2d0f19f5ffc8d4cb46891db&quot;,
+    &quot;helper_bytes&quot;: 899584,
+    &quot;source_head&quot;: &quot;20d647c4c769ab7f5d383cf3c1c33f03876a94e9&quot;,
+    &quot;luajit_source_tree&quot;: &quot;33e8be4371e80732d26b3f831509f0f8f5b83a05&quot;,
+    &quot;input_sha256&quot;: {
+      &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\run.py&quot;: &quot;a598b1eddd41fb124035c96806b6128bb5acb0514bc07f4d857be8817f5bfe32&quot;,
+      &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\helper.c&quot;: &quot;cc1d3e6c5448a86e3c99d6d906a1aa8258a9674a931f0ad9653e94007c27727d&quot;,
+      &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\fixtures.lua&quot;: &quot;94ccf6204ac73f6fd134847e71d0e928909fafc99d51dffb088d6bec1c230454&quot;,
+      &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\lua-isolation\\Dialog.qml&quot;: &quot;f9009f3e8a069e44a8814a4f63bb2bbd83eb42936302db838f558e4d713e3f47&quot;,
+      &quot;C:\\Work\\Kainote\\Thirdparty\\LuaJIT\\src\\lua.h&quot;: &quot;b3992febdcd6e2e108915667706cf9b0f288830d0624c271cd1e6911a3d2a702&quot;,
+      &quot;C:\\Work\\Kainote\\Thirdparty\\LuaJIT\\src\\lauxlib.h&quot;: &quot;bd8649d24bea582aa5bafeed66dc6f60d3196deca5d9ab017f5ba2f768437575&quot;,
+      &quot;C:\\Work\\Kainote\\Thirdparty\\LuaJIT\\src\\lualib.h&quot;: &quot;781e89f0c2172dd07f96b4b9a9753083376b6754355c0e3ef3780dbb58437f69&quot;,
+      &quot;C:\\Work\\Kainote\\Thirdparty\\LuaJIT\\src\\luaconf.h&quot;: &quot;792e0070334d8f0d482b16ce5b1557ef4b68bc62768a3c5118f9d4d2aaf054d5&quot;,
+      &quot;C:\\Work\\Kainote\\Thirdparty\\LuaJIT\\src\\luajit.h&quot;: &quot;cd169e2d28e8f5542cdb3d3e3c9b51038f911389529252867702d91211b713e2&quot;,
+      &quot;C:\\Work\\Kainote\\Thirdparty\\LuaJIT\\src\\luajit_relver.txt&quot;: &quot;799cc790309b6b7683ed9d2422e37b3a181bbf6ddeb986e310fa2c473141c8f1&quot;
+    },
+    &quot;limitation&quot;: &quot;Existing Debug archive was not rebuilt or attested to these headers/source; runtime identity is observed separately. MSVC2026 prototype, not accepted MSVC2022 build-workflow proof.&quot;
+  },
+  &quot;edgeblur&quot;: {
+    &quot;path&quot;: &quot;C:\\Work\\Kainote\\Automation\\automation\\Autoload\\macro-1-edgeblur.lua&quot;,
+    &quot;before_sha256&quot;: &quot;47963f2587798f6c7ba4ecbfdc63cf46123ff0b6671883e73949c1530968c442&quot;,
+    &quot;after_sha256&quot;: &quot;47963f2587798f6c7ba4ecbfdc63cf46123ff0b6671883e73949c1530968c442&quot;,
+    &quot;unchanged_source&quot;: true,
+    &quot;license_note&quot;: &quot;Read existing bundled source in place; no script copy or modification.&quot;
+  },
+  &quot;observations&quot;: {
+    &quot;all_scenarios_completed_without_watchdog&quot;: true,
+    &quot;luajit_ffi_pid_agrees_with_owned_process&quot;: true,
+    &quot;two_invocations_retain_experimental_state&quot;: true,
+    &quot;typed_qml_readback_matches_native_lua&quot;: true,
+    &quot;actual_qml_dialog_constructed&quot;: true,
+    &quot;qml_ticks_while_lua_waits&quot;: true,
+    &quot;custom_cancel_is_string&quot;: true,
+    &quot;default_ok_is_empty_string&quot;: true,
+    &quot;default_close_false_with_values&quot;: true,
+    &quot;cancel_while_waiting_reaches_lua&quot;: true,
+    &quot;unchanged_edgeblur_selected_only_and_noop_undo&quot;: true,
+    &quot;lua_error_is_terminal_diagnostic&quot;: true,
+    &quot;cooperative_cancel_at_polled_boundary&quot;: true,
+    &quot;owned_stuck_helper_terminated&quot;: true,
+    &quot;restart_does_not_restore_lost_lua_state&quot;: true,
+    &quot;abrupt_helper_loss_observed&quot;: true,
+    &quot;separate_stdout_contains_native_and_lua_noise&quot;: true,
+    &quot;controlled_stale_generation_rejected_on_both_sides&quot;: true,
+    &quot;controlled_duplicate_reply_rejected&quot;: true,
+    &quot;version_mismatch_rejected&quot;: true,
+    &quot;truncated_frame_rejected&quot;: true,
+    &quot;oversized_frame_rejected&quot;: true,
+    &quot;bundled_script_source_unchanged&quot;: true
+  },
+  &quot;proof_limits&quot;: [
+    &quot;Windows offscreen QML event loop and original fixtures only; no OS focus, IME, screen reader, GPU or calibrated latency qualification.&quot;,
+    &quot;One experimental persistent Lua state, not accepted helper lifetime/concurrency. No authoritative Document, native application undo, transaction atomicity or complete userdata implementation.&quot;,
+    &quot;Edgeblur source unchanged, but only a two-record proxy and minimal host functions. Synthetic dialog is separate, not an unchanged bundled dialog compatibility run.&quot;,
+    &quot;Abrupt loss is an explicit TerminateProcess call in the owned helper, not a memory-corruption/SEH crash or external-side-effect rollback proof.&quot;,
+    &quot;Stale result and duplicate reply are controlled replays; cancellation/exit/IPC actions execute natively. No exhaustive scheduling/protocol fuzzing or security sandbox claim.&quot;,
+    &quot;No Linux, native third-party Lua modules, DependencyControl, media/font/clipboard IPC, complete controls/coercions, all ASS/scripts or production deployment proof.&quot;,
+    &quot;Existing hashed Debug archive plus installed MSVC2026 is prototype provenance, not reproducible source attestation or the accepted official Qt/MSVC2022 build workflow.&quot;
+  ]
+}</pre></details></html>

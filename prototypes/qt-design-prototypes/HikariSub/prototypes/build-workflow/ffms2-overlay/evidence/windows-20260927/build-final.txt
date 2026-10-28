@@ -1,0 +1,101 @@
+-- Running vcpkg install
+Detecting compiler hash for triplet x64-windows...
+Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+Detecting compiler hash for triplet x64-hikari-windows-release...
+Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+The following packages are already installed:
+    ffmpeg[core,swscale,swresample,avformat,avcodec]:x64-hikari-windows-release@7.1.2#5
+  * pkgconf:x64-windows@3.0.3#1
+  * vcpkg-cmake:x64-windows@2025-08-07
+  * vcpkg-cmake-config:x64-windows@2026-07-21
+  * vcpkg-cmake-get-vars:x64-windows@2025-05-29
+  * vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03
+  * vcpkg-tool-meson:x64-windows@1.9.0#10
+  * zlib:x64-hikari-windows-release@1.3.2#2
+The following packages will be built and installed:
+    hikari-ffms2:x64-hikari-windows-release@5.1.0-hikari-45d5f721 -- C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/ports\hikari-ffms2
+Installing 1/1 hikari-ffms2:x64-hikari-windows-release@5.1.0-hikari-45d5f721...
+hikari-ffms2:x64-hikari-windows-release@5.1.0-hikari-45d5f721 package ABI: 851680bf80037103bb59b5c8effeaf3f94d1483c4d020f53d5114ae1adbe2803
+Building hikari-ffms2:x64-hikari-windows-release@5.1.0-hikari-45d5f721...
+C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\triplets\x64-hikari-windows-release.cmake: info: loaded overlay triplet from here
+C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/ports\hikari-ffms2: info: installing overlay port from here
+-- Using cached C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/hikari-ffms2-45d5f72100d88c52acdd54bfedcc0315a44c735d.tar.gz
+-- Cleaning sources at C:/Work/HikariF48/b/hikari-ffms2/src/15a44c735d-564a801070.clean. Use --editable to skip cleaning for the packages you specify.
+-- Extracting source C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/hikari-ffms2-45d5f72100d88c52acdd54bfedcc0315a44c735d.tar.gz
+-- Using source at C:/Work/HikariF48/b/hikari-ffms2/src/15a44c735d-564a801070.clean
+-- Using cached hikari-indexing_additional-20d647c4.cpp
+-- Configuring x64-hikari-windows-release
+-- Building x64-hikari-windows-release-rel
+-- Performing post-build validation
+Elapsed time to handle hikari-ffms2:x64-hikari-windows-release: 6.4 s
+Installed contents are licensed to you by owners. Microsoft is not responsible for, nor does it grant any licenses to, third-party packages.
+Packages installed in this vcpkg installation declare the following licenses:
+MIT
+ffmpeg provides CMake integration:
+
+  find_package(FFMPEG REQUIRED)
+  target_include_directories(main PRIVATE ${FFMPEG_INCLUDE_DIRS})
+  target_link_directories(main PRIVATE ${FFMPEG_LIBRARY_DIRS})
+  target_link_libraries(main PRIVATE ${FFMPEG_LIBRARIES})
+
+ffmpeg provides pkg-config modules:
+
+  # FFmpeg codec library
+  libavcodec
+
+  # FFmpeg device handling library
+  libavdevice
+
+  # FFmpeg audio/video filtering library
+  libavfilter
+
+  # FFmpeg container format library
+  libavformat
+
+  # FFmpeg utility library
+  libavutil
+
+  # FFmpeg audio resampling library
+  libswresample
+
+  # FFmpeg image rescaling library
+  libswscale
+
+hikari-ffms2 provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(HikariFFMS2 CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE HikariFFMS2::ffms2)
+
+All requested installations completed successfully in: 6.4 s
+-- Running vcpkg install - done
+-- The CXX compiler identification is MSVC 19.51.36260.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found FFMPEG: C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/avformat.lib;C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/avcodec.lib;C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/swresample.lib;C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/swscale.lib;C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/avutil.lib;secur32;ws2_32;mfuuid;strmiids;ole32;user32;bcrypt
+-- Found ZLIB: C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/zs.lib (found version "1.3.2")
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - not found
+-- Found Threads: TRUE
+-- Found PkgConfig: C:/Work/HikariF48/installed/x64-windows/tools/pkgconf/pkgconf.exe (found version "3.0.3")
+-- Checking for module 'libavcodec'
+--   Found libavcodec, version 61.19.101
+-- Configuring done (15.3s)
+-- Generating done (0.0s)
+-- Build files have been written to: C:/Work/HikariF48/out
+[1/2] Building CXX object CMakeFiles\ffms2_overlay_probe.dir\probe.cpp.obj
+[2/2] Linking CXX executable ffms2_overlay_probe.exe
+Test project C:/Work/HikariF48/out
+    Start 1: private_api_and_frames
+1/1 Test #1: private_api_and_frames ...........   Passed    0.05 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.06 sec

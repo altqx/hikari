@@ -1,0 +1,62 @@
+{
+ "comment": "The Qt plugins a HikariSub package carries beside the Qt libraries, per platform (docs/qt/proposals/backend-interfaces.md: deployment manifests enumerate Qt plugins). Each entry is a plugin file name without prefix or suffix under <Qt>/plugins/<category>, the Qt module archive that provides it (checked against cmake/locks/qt-<platform>.lock.json) and why the application loads it. Checked by cmake/manifest/QtDeploymentManifest.cmake (ctest qt-deployment-manifest), which itself requires K1's imageformats/qsvg and iconengines/qsvgicon on every platform; dependency-load loads those two. The other entries are the plan for Phase 5 packaging: the check only finds each in the Qt lock and, on the platform it runs on, in the provisioned Qt; nothing yet shows the application loads it, and no package is built from this file yet. The QML modules and the Qt libraries themselves are Phase 5 packaging's.",
+ "qtVersion": "6.11.2",
+ "platforms": {
+  "linux": {
+   "platforms": [
+    {"plugin": "qxcb", "module": "qtbase", "why": "X11 sessions"},
+    {"plugin": "qwayland", "module": "qtwayland", "why": "Wayland sessions"}
+   ],
+   "wayland-shell-integration": [
+    {"plugin": "xdg-shell", "module": "qtwayland", "why": "top-level and floating panel windows on Wayland"}
+   ],
+   "wayland-graphics-integration-client": [
+    {"plugin": "qt-plugin-wayland-egl", "module": "qtwayland", "why": "Qt Quick's OpenGL surfaces on Wayland"}
+   ],
+   "wayland-decoration-client": [
+    {"plugin": "adwaita", "module": "qtwayland", "why": "window frames where the compositor draws none (mutter)"},
+    {"plugin": "bradient", "module": "qtwayland", "why": "Qt's fallback window frame"}
+   ],
+   "xcbglintegrations": [
+    {"plugin": "qxcb-glx-integration", "module": "qtbase", "why": "Qt Quick's OpenGL on X11 (GLX)"},
+    {"plugin": "qxcb-egl-integration", "module": "qtbase", "why": "Qt Quick's OpenGL on X11 (EGL)"}
+   ],
+   "platformthemes": [
+    {"plugin": "qxdgdesktopportal", "module": "qtbase", "why": "the desktop's file dialogs and colour scheme through xdg-desktop-portal"}
+   ],
+   "platforminputcontexts": [
+    {"plugin": "ibusplatforminputcontextplugin", "module": "qtbase", "why": "input methods through IBus"},
+    {"plugin": "composeplatforminputcontextplugin", "module": "qtbase", "why": "dead keys and compose sequences"}
+   ],
+   "imageformats": [
+    {"plugin": "qsvg", "module": "qtsvg", "why": "K1: SVG images (the Qt SVG image plugin)"}
+   ],
+   "iconengines": [
+    {"plugin": "qsvgicon", "module": "qtsvg", "why": "K1: SVG icons (the Qt SVG icon engine)"}
+   ],
+   "tls": [
+    {"plugin": "qopensslbackend", "module": "qtbase", "why": "P8: the update check's https feed"}
+   ],
+   "multimedia": [
+    {"plugin": "ffmpegmediaplugin", "module": "qtmultimedia", "why": "the general player (Qt Multimedia's FFmpeg backend)"}
+   ]
+  },
+  "windows": {
+   "platforms": [
+    {"plugin": "qwindows", "module": "qtbase", "why": "the Windows platform"}
+   ],
+   "imageformats": [
+    {"plugin": "qsvg", "module": "qtsvg", "why": "K1: SVG images (the Qt SVG image plugin)"}
+   ],
+   "iconengines": [
+    {"plugin": "qsvgicon", "module": "qtsvg", "why": "K1: SVG icons (the Qt SVG icon engine)"}
+   ],
+   "tls": [
+    {"plugin": "qschannelbackend", "module": "qtbase", "why": "P8: the update check's https feed (Schannel, the system's TLS)"}
+   ],
+   "multimedia": [
+    {"plugin": "ffmpegmediaplugin", "module": "qtmultimedia", "why": "the general player (Qt Multimedia's FFmpeg backend)"}
+   ]
+  }
+ }
+}

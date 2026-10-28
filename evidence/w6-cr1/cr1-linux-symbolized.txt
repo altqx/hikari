@@ -1,0 +1,8 @@
+HikariSub 0.1.0, 6 frames
+#0  hikarisub                +0x5ed92  hikari::app::(anonymous namespace)::crashForTest(QByteArray const&, QString const&) [clone .cold]  /__w/hikari/hikari/src/app/composition.cpp:98 (discriminator 4)
+#1  hikarisub                +0x12d64a  hikari::app::(anonymous namespace)::runWindow(int, char**, hikari::app::StartupMode, hikari::application::StartupArguments const&, hikari::app::UpdateInstaller::ExitAction&)  /__w/hikari/hikari/src/app/composition.cpp:347
+#2  hikarisub                +0x12f5d2  hikari::app::run(int, char**, hikari::app::StartupMode)  /__w/hikari/hikari/src/app/composition.cpp:528
+#3  libc.so.6                +0x2a610  ?
+#4  libc.so.6                +0x2a6c0  ?
+#5  hikarisub                +0x129bb5  _start  ??:?
+4 of 6 frames resolved

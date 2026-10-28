@@ -1,0 +1,6 @@
+Legacy HikariSub v0.0.1-rc.1 (HEAD 20d647c, out/legacy-win/bundled/HikariSub_x64 from the winix task legacy-win-setup, job job-39a16983721d4785aa7abb321926b51d) on Windows 11 (Winix VM dev), 2026-10-19, driven with winix ui.
+Each fixture copy (C:\ws2): launched with the file (opened.png), ' x' appended to line 1's text in the editor (edited.png), Ctrl+S (saved.png, title without '*'), killed by pid.
+fonts.ass vs fonts-hikari.ass saves: byte-identical
+plain.ass vs plain-hikari.ass saves: byte-identical
+[Hikari] / Layout= lines in any save: 0
+[Fonts] data of fonts-hikari.ass's save equals fonts.ass's input: yes

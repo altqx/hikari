@@ -1,0 +1,474 @@
+# T3: Scale's rectangle mode on legacy's own text measure
+# (visual_t3_capture.cpp built with PROBE_LEGACY_MEASURE, target
+# legacy_visual_t3_measure_capture). The view is the T3 cases' (a 1280x720
+# frame in a 640x400 client, the script 1920x1080, coefficient 3); every
+# Style is Titillium Web (the Qt examples' TitilliumWeb-Regular.ttf and
+# TitilliumWeb-Bold.ttf, given to the probe and to the rewrite's test as
+# installed fonts).
+#
+# Each Scale case: the tool with the rectangle, both axes and the original
+# rectangle (27: GetTextSize gives originalSize and the border, and
+# SetSecondRectScale draws the measured rectangle), a left drag that draws the
+# target rectangle in the free top-left corner (SetScale writes \fscx and
+# \fscy from it against the original rectangle), the original rectangle
+# turned off (11: ChangeTool measures the scaled text again) and a second
+# rectangle drawn (the scale from originalSize).
+
+case measure-plain
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 7 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(900,600)}Hello world
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-two-lines
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 2 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\an5\pos(960,540)}First line\Nsecond one
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-blank-line
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 2 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\an2\pos(960,900)}Top \N  \N bottom
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-tags
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 2 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\an9\pos(1800,100)\fs40\b1}Bold {\b0\i1\fs80}big italic
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-scale-spacing
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 1 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(100,1000)\fscx150\fscy80\fsp3}Spaced out
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-style-bold-spacing
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Wide 50 110 90 0 3 1 3 20 20 20
+stylefont 1 0 2 Titillium Web
+line 1000 2000 Wide 0 0 0 0|{\pos(1800,1000)}Wide words
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-italic-style
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Slant 70 100 100 0 0 0 2 20 20 20
+stylefont 0 1 0 Titillium Web
+line 1000 2000 Slant 0 0 0 0|{\pos(960,700)}Slanted words
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-border-shadow
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 3 1 5 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\bord4\xbord6\yshad-3\shad2}Shadowed
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-rotations
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 2 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\an5\pos(960,540)\frz30\frx20\fry-15\org(900,500)}Turned
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-clip-rect
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 7 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(900,600)\clip(840,540,1500,900)}Clipped text
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-clip-vector
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 5 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\iclip(m 0 0 l 300 0 300 300 0 300)}Inverse clip
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-drawing-square
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 7 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(900,600)\p1}m 0 0 l 360 0 360 240 0 240{\p0}
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-drawing-bezier
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 0 0 5 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\p1}m 0 0 b 150 -120 300 120 450 0 l 450 180 0 180
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-text-drawing
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 7 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(900,600)}Text {\p1}m 0 0 l 120 0 120 120 0 120{\p0} after
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-unicode
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 5 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Zażółć gęślą jaźń
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+option 11
+state
+press 600 340 left
+move 500 250 left
+release 500 250 left
+state
+end
+
+case measure-tags-only
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 5 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\bord5}
+active 0
+tool scale 27
+state
+press 20 20 left
+move 100 60 left
+move 180 110 left
+release 180 110 left
+state
+end
+
+# The empty Line after a measured one: GetTextSize returns at once without
+# writing the border, so Scale keeps the previous Line's (T3-empty-line-border).
+case measure-empty-line
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 5 20 20 20
+stylefont 0 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\bord5\shad3}Before
+line 1000 2000 Default 0 0 0 0|
+active 0
+tool scale 27
+state
+active 1
+setvisual
+state
+end
+
+# GetDialogueAdditionalPosition (keepExtraLead, the extra lead kept) on
+# Lines stacked without \pos: RotationZ on the active Line and an
+# unpositioned one, as rotz-org-stacked.
+case measure-stacked
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 2 2 2 20 20 20
+stylefont 0 0 0 Titillium Web
+style Top 45 120 100 0 1 1 8 20 20 30
+stylefont 1 0 0 Titillium Web
+line 1000 2000 Default 0 0 0 0|First bottom line
+line 1000 2000 Default 0 0 0 0|{\bord4}Second\Nbottom
+line 1000 2000 Top 0 0 0 0|Top one
+line 1000 2000 Default 0 0 0 0|Third bottom
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Active
+active 4
+select 3 4
+tool rotz 0
+press 320 180 left
+move 335 170 left
+release 335 170 left
+state
+end

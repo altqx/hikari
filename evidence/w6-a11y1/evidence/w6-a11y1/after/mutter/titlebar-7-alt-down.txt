@@ -1,0 +1,107 @@
+# compositor windows
+Monitors:
+├──Monitor Meta-0 (MetaVendor)
+│  ├──Vendor: MetaVendor
+│  ├──Product: MetaVirtualMonitor
+│  ├──Serial: 0x00
+│  ├──Current mode
+│  │   └──1600x1000@60.000
+│  └──Preferences
+│      └──Backlight: None
+└──Monitor Meta-1 (MetaVendor)
+   ├──Vendor: MetaVendor
+   ├──Product: MetaVirtualMonitor
+   ├──Serial: 0x01
+   ├──Current mode
+   │   └──1600x1000@60.000
+   └──Preferences
+       └──Backlight: None
+
+Logical monitors:
+├──Logical monitor #1
+│  ├──Position: (0, 0)
+│  ├──Scale: 1.0
+│  ├──Transform: normal
+│  ├──Primary: yes
+│  └──Monitors: (1)
+│      └──Meta-0 (MetaVendor)
+└──Logical monitor #2
+   ├──Position: (1600, 0)
+   ├──Scale: 1.0
+   ├──Transform: normal
+   ├──Primary: no
+   └──Monitors: (1)
+       └──Meta-1 (MetaVendor)
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "HikariSub",
+   "id": "HikariSub",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 1400,
+   "h": 880
+  }
+ ],
+ "panels": [
+  {
+   "name": "Home",
+   "id": "Home",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 64,
+   "w": 1400,
+   "h": 787
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 601,
+   "w": 1400,
+   "h": 250
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 99,
+   "w": 700,
+   "h": 458
+  },
+  {
+   "name": "Line editor",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 701,
+   "y": 337,
+   "w": 699,
+   "h": 220
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "HikariSub",
+   "x": 701,
+   "y": 99,
+   "w": 699,
+   "h": 202
+  }
+ ],
+ "focus": "[popup menu] '' <focused,showing,visible,enabled> @34,28 275x512 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'HikariSub' > popup menu:''",
+ "texts": {
+  "Line text": "",
+  "Start": "",
+  "End": ""
+ },
+ "labels": [
+  "Editing",
+  "Video times"
+ ]
+}

@@ -1,0 +1,59 @@
+# compositor windows
+hikarisub "HikariSub" 160,82 1280x836 output=Virtual-0 active=true fullscreen=false minimized=false type=0
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "HikariSub",
+   "id": "HikariSub",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800
+  }
+ ],
+ "panels": [
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 97,
+   "w": 640,
+   "h": 420
+  },
+  {
+   "name": "Line editor",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 97,
+   "w": 639,
+   "h": 420
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 561,
+   "w": 1280,
+   "h": 205
+  }
+ ],
+ "focus": "[panel] 'Grid' desc='No document open' <focused,showing,visible,enabled> @0,561 1280x205 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'HikariSub' > filler:'' > panel:'Grid'",
+ "texts": {
+  "Line text": "",
+  "Start": "",
+  "End": ""
+ },
+ "labels": [
+  "Video times"
+ ]
+}
+# layouts files
+/tmp/gate-home-kwin/.config/HikariSub/HikariSub/layouts.json 26356
+

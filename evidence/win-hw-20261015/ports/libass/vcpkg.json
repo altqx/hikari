@@ -1,0 +1,20 @@
+{
+  "name": "libass",
+  "version-string": "0.17.5-altqx-4f5ea436",
+  "description": "libass subtitle renderer from the altqx/libass fork (Hikari-owned port: explicit font providers, no libunibreak, font identity diagnostics)",
+  "homepage": "https://github.com/altqx/libass",
+  "license": "ISC",
+  "dependencies": [
+    {
+      "name": "fontconfig",
+      "platform": "linux"
+    },
+    "freetype",
+    "fribidi",
+    "harfbuzz",
+    {
+      "name": "vcpkg-tool-meson",
+      "host": true
+    }
+  ]
+}

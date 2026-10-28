@@ -1,0 +1,26 @@
+# V3 (#182): the folder legacy_next_file_capture makes and the rewrite's
+# NextFileCapture test makes again, created in this order (deliberately not
+# a sorted one). "file" a file, "dir" a folder, "hidden" a file with
+# FILE_ATTRIBUTE_HIDDEN on Windows (a plain file elsewhere). The names mix
+# case (a, B, c.MKV), numbers (ep1, ep2, ep10), non-ASCII letters (é
+# precomposed, Ä, CJK), punctuation sorting around letters (_ and ~), dots
+# (a.b.mkv, x.mkv.txt, a name without one), a leading dot (hidden on Linux
+# only), and files NextFile skips (.txt, a folder named like a video).
+file ep10.mkv
+file B.mkv
+file notes.txt
+file ep2.mkv
+file .dotted.mkv
+file a.b.mkv
+file Ärger.mkv
+file ep1.mkv
+hidden attr-hidden.mkv
+file 日本語.mkv
+file c.MKV
+dir folder.mkv
+file x.mkv.txt
+file ~tilde.avi
+file a.mkv
+file _under.mp4
+file noext
+file é.mkv

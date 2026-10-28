@@ -1,0 +1,14 @@
+titlebar-default: observed - mutter: expected HikariSub's title bar by default; window buttons shown True; menus True; switcher 'Layout: Editing'; window system frame None (mutter publishes no frame geometry (see the screenshot))
+titlebar-names: observed - AT-SPI: {'Window menu': True, 'Application menu': True, 'Minimise': True, 'Maximise': True, 'Close': True}, switcher 'Layout: Editing'
+titlebar-frameless: not-observable - no frame of the window system's round HikariSub's title bar: mutter publishes no frame geometry (see the screenshot)
+titlebar-move: not-observable - mutter publishes no window position
+titlebar-double-click: observed - double click on the free part: Restore shown True, size (1280, 800) -> (1600, 1000); again: Maximise shown True, size (1280, 800)
+titlebar-maximise-button: observed - Maximise: Restore shown True, size (1280, 800) -> (1600, 1000); Restore: (1280, 800)
+titlebar-resize: observed - bottom-right band dragged by (+120,+80): size (1280, 800) -> (1400, 880)
+titlebar-window-menu: not-observable - mutter has no window menu of its own (sway none; mutter's is gnome-shell's): the request is made (40 pixels changed)
+titlebar-keyboard: observed - Alt, Down: the File menu (['Open…', 'Recently opened subtitles', 'Remove subtitles from the editor', 'Close']); F10, Right, Down: the Edit menu (['Undo', 'Redo', 'Sort all lines', 'Sort selected lines'])
+titlebar-close: observed - Close: the app still running no
+titlebar-minimise: observed - Minimise: minimised True; the title bar's free part on screen is #123251 (the bar's #20262D)
+titlebar-system: observed - menus True, switcher 'Layout: Editing', window buttons []; window system frame None (mutter publishes no frame geometry (see the screenshot))
+titlebar-themes: observed - the title bar in each theme's panel colour
+titlebar-mixed-dpi: observed - main window moved by Super+Shift+Right to Meta-1 (scale 2; Meta-0 at 1): controls ['Application menu', 'Close', 'Maximise', 'Minimise', 'Window menu', 'switcher'] (the screenshot holds Meta-1's physical pixels right of Meta-0's 1600)

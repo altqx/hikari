@@ -1,0 +1,17 @@
+stray line
+  Spaced ={
+	  Arial  
+	Arial
+	ARIAL
+
+   
+} 
+outside
+NoEquals{
+	Verdana
+Second={
+		Third={
+}
+	Tabbed={
+Empty={
+}

@@ -1,0 +1,5 @@
+# Keep the four hashed experiment inputs stable across Windows checkouts.
+helper.c text eol=lf
+fixtures.lua text eol=lf
+Dialog.qml text eol=lf
+run.py text eol=lf

@@ -1,0 +1,80 @@
+# Composition root: constructs services once, starts the engine, shuts down in
+# order. The library lets tests start the same composition without shipping a
+# test hook in the executable.
+add_library(hikari_composition STATIC composition.cpp application.cpp include/hikari/app/application.h
+    application_tabs.cpp # P6: tabs and session restore
+    application_comparison.cpp # R1: subtitle comparison
+    application_video.cpp # V3: video sources, tracks and chapters
+    application_reference.cpp # R2: reference navigation and the subtitles preview
+    application_tab_menu.cpp # P9: the tab menu, folders, drops and associated files
+    automation_shell.cpp include/hikari/app/automation_shell.h
+    automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
+    hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h
+    update_checker.cpp include/hikari/app/update_checker.h
+    update_installer.cpp include/hikari/app/update_installer.h # ADR 0019: download, verify, hand-off
+    update_apply.cpp include/hikari/app/update_apply.h # ADR 0019: the Windows installing side
+    package_kind.cpp include/hikari/app/package_kind.h
+    style_manager_controller.cpp include/hikari/app/style_manager_controller.h)
+set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
+target_include_directories(hikari_composition PUBLIC include)
+target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_application hikari_core
+    Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
+# Running from the build tree, the media helper is not next to the executable.
+target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"
+    HIKARI_VERSION="${HIKARI_VERSION}")
+add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_automation_stage)
+# ADR 0019: test builds read HIKARISUB_UPDATE_FEED (a local release feed) and
+# HIKARISUB_PACKAGE_KIND; a release build has neither name in it.
+option(HIKARI_UPDATE_TEST_FEED "Read the update feed and package kind from the environment (test builds only)" OFF)
+if(HIKARI_UPDATE_TEST_FEED)
+    target_compile_definitions(hikari_composition PRIVATE HIKARI_UPDATE_TEST_FEED)
+endif()
+if(WIN32)
+    # ShellExecuteExW and CommandLineToArgvW, and the installing side's
+    # WinHTTP, random folder name and folder ACL.
+    target_link_libraries(hikari_composition PRIVATE shell32 winhttp bcrypt crypt32 advapi32)
+endif()
+hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends
+    hikari_application hikari_core "Qt6::*" "hikari_ui*")
+
+qt_add_executable(hikarisub main.cpp)
+target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations) # O4: QM under :/i18n
+hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
+# Y8: the font collector's window state.
+target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
+# O3: the legacy settings importer's generations and window state.
+target_sources(hikari_composition PRIVATE settings_import_store.cpp include/hikari/app/settings_import_store.h
+    settings_import_controller.cpp include/hikari/app/settings_import_controller.h)
+# Y6: Font catalogs, the font picker's lists and the external fonts folder.
+target_sources(hikari_composition PRIVATE font_catalogs_controller.cpp include/hikari/app/font_catalogs_controller.h)
+# Y9: GRID_SUBS_FROM_MKV.
+target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)
+# V6: timing and selecting Lines from the video, and the video following the active Line.
+target_sources(hikari_composition PRIVATE application_video_timing.cpp)
+# E5: translation mode controls (Translator mode, Moving tags, the Grid's
+# Original text / Translation columns, the original hidden on video).
+target_sources(hikari_composition PRIVATE application_translation.cpp)
+# O5: the interface language (catalogs, live switching, aegisub.gettext's lookup).
+target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)
+# W1: the optional DirectShow playback adapter (Windows), chosen in the settings.
+target_sources(hikari_composition PRIVATE application_directshow.cpp)
+if(WIN32)
+    target_link_libraries(hikari_composition PUBLIC hikari_directshow)
+    set_property(TARGET hikari_composition APPEND PROPERTY HIKARI_ALLOWED_LINKS hikari_directshow)
+endif()
+# Installers SPEC 1.4, 1.5 and 6.5: on Windows the program is HikariSub.exe,
+# the name legacy's shortcut, App Paths key and file associations point at, a
+# GUI program carrying legacy's icon resources with legacy's ids. The
+# installer's payload is staged by the hikari_package_windows target.
+if(WIN32)
+    set(HIKARI_LEGACY_DIR "${PROJECT_SOURCE_DIR}/HikariSub")
+    set(HIKARI_RC_VERSION "${PROJECT_VERSION}")
+    if(HIKARI_VERSION_SUFFIX)
+        string(APPEND HIKARI_RC_VERSION "-${HIKARI_VERSION_SUFFIX}")
+    endif()
+    configure_file(windows/hikarisub.rc.in "${CMAKE_CURRENT_BINARY_DIR}/hikarisub.rc" @ONLY)
+    target_sources(hikarisub PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/hikarisub.rc")
+    set_target_properties(hikarisub PROPERTIES OUTPUT_NAME HikariSub WIN32_EXECUTABLE TRUE)
+    include("${PROJECT_SOURCE_DIR}/cmake/HikariPackageWindows.cmake")
+endif()

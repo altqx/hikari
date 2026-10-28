@@ -1,0 +1,627 @@
+{
+  "status": "Source-derived plan, not an executed vcpkg resolver result. HEAD metadata only; no archive body downloaded or digest verified.",
+  "observed_utc": "2026-09-27T06:40:04.424940+00:00",
+  "registry_commit": "ee6a47dac031930715bea2e6dfb9ad60caaa5d83",
+  "target_dependencies": [
+    {
+      "name": "hikari-ffms2",
+      "version": "5.1.0-hikari-45d5f721",
+      "source": "owned overlay"
+    },
+    {
+      "name": "ffmpeg",
+      "version": "7.1.2#5",
+      "default_features": false,
+      "features": [
+        "avcodec",
+        "avformat",
+        "swresample",
+        "swscale"
+      ],
+      "dependencies": [
+        "vcpkg-cmake-get-vars:host",
+        "vcpkg-pkgconfig-get-modules:host"
+      ]
+    },
+    {
+      "name": "zlib",
+      "version": "1.3.2#2",
+      "dependencies": [
+        "vcpkg-cmake:host",
+        "vcpkg-cmake-config:host"
+      ]
+    }
+  ],
+  "host_dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "version": "2025-08-07",
+      "dependencies": []
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "version": "2026-07-21",
+      "dependencies": []
+    },
+    {
+      "name": "vcpkg-cmake-get-vars",
+      "version": "2025-05-29",
+      "dependencies": [
+        "vcpkg-cmake"
+      ]
+    },
+    {
+      "name": "vcpkg-pkgconfig-get-modules",
+      "version": "2024-04-03",
+      "dependencies": [
+        "pkgconf"
+      ]
+    },
+    {
+      "name": "pkgconf",
+      "version": "3.0.3#1",
+      "dependencies": [
+        "vcpkg-tool-meson"
+      ]
+    },
+    {
+      "name": "vcpkg-tool-meson",
+      "version": "1.9.0#10",
+      "dependencies": [
+        "vcpkg-cmake-get-vars"
+      ]
+    }
+  ],
+  "primary_metadata": [
+    "https://github.com/microsoft/vcpkg/blob/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/scripts/vcpkg-tools.json",
+    "https://github.com/microsoft/vcpkg/blob/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/scripts/cmake/vcpkg_acquire_msys.cmake",
+    "https://github.com/microsoft/vcpkg/blob/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/scripts/cmake/vcpkg_find_acquire_program(NASM).cmake",
+    "https://github.com/microsoft/vcpkg/blob/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/ports/vcpkg-tool-meson/vcpkg-port-config.cmake",
+    "https://github.com/microsoft/vcpkg/blob/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/ports/pkgconf/portfile.cmake",
+    "https://github.com/microsoft/vcpkg/blob/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/ports/zlib/portfile.cmake",
+    "https://github.com/microsoft/vcpkg/tree/bf414f1e4f2a63ff7410444dc4eabb5b392f6d16"
+  ],
+  "windows_msys_count": 29,
+  "download_candidates": [
+    {
+      "name": "python3",
+      "os": "windows",
+      "version": "3.14.7",
+      "url": "https://www.python.org/ftp/python/3.14.7/python-3.14.7-embed-amd64.zip",
+      "sha512": "c62810365c120d192767c02b471ea38d100d29ae8332fa00318d1ee66fa7f75b14f01962d3a1b47e935994d2b1e4a76f3bc44bc2bc67cbf0618a2214dfb73a02",
+      "kind": "tool-candidate",
+      "selection": "Depends on actual executable resolution; not all are necessarily acquired.",
+      "head_status": 200,
+      "declared_bytes": 12673227
+    },
+    {
+      "name": "cmake",
+      "os": "windows",
+      "version": "4.4.3",
+      "url": "https://github.com/Kitware/CMake/releases/download/v4.4.3/cmake-4.4.3-windows-x86_64.zip",
+      "sha512": "5f8527e18bffdf5113a64238442093468fce80c8a5f99e1b5eb217e0d73796eb7a2a236ee0c522de3424cb87a1abb3153fcecdb20d8d338c8a607667c9b37c90",
+      "kind": "tool-candidate",
+      "selection": "Depends on actual executable resolution; not all are necessarily acquired.",
+      "head_status": 200,
+      "declared_bytes": 54408599
+    },
+    {
+      "name": "cmake",
+      "os": "linux",
+      "version": "4.4.3",
+      "url": "https://github.com/Kitware/CMake/releases/download/v4.4.3/cmake-4.4.3-linux-x86_64.tar.gz",
+      "sha512": "24a4299dfe25d09a89879218f03c9471c2fbe38763820ac19378aa7d12b43ae9d7777628364aeae759b7117d81fe95c9c30c8fe2d36bf89b52b9884f810444ad",
+      "kind": "tool-candidate",
+      "selection": "Depends on actual executable resolution; not all are necessarily acquired.",
+      "head_status": 200,
+      "declared_bytes": 64872980
+    },
+    {
+      "name": "7zip",
+      "os": "windows",
+      "version": "26.03",
+      "url": "https://github.com/ip7z/7zip/releases/download/26.03/7z2603-x64.exe",
+      "sha512": "50025bab628b69f8eb35a590900093814e540ce7ffef8c676a1198e2d2a3f1dcdc44f04f92c28ca89bf6ee869fad3710786e14073c7db36281e8f7a4c495ea7f",
+      "kind": "tool-candidate",
+      "selection": "Depends on actual executable resolution; not all are necessarily acquired.",
+      "head_status": 200,
+      "declared_bytes": 1661239
+    },
+    {
+      "name": "ninja",
+      "os": "windows",
+      "version": "1.13.2",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip",
+      "sha512": "55d3d891e8fc6c8ad7f92e172125319896761e57c5125944613d9bbfa5b9374387e9fc1468ad5bcb31464f43fb1c455ea251343942595f42955dc67090aa12ee",
+      "kind": "tool-candidate",
+      "selection": "Depends on actual executable resolution; not all are necessarily acquired.",
+      "head_status": 200,
+      "declared_bytes": 291570
+    },
+    {
+      "name": "ninja",
+      "os": "linux",
+      "version": "1.13.2",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip",
+      "sha512": "714b900cf10b7ecb1b641c91f4ef696250c64984e5955a8088e4a538d6e8077f43e55f6da47efcedbe316c68d51a9e98feff51734eb0eac1b17aa85af5698753",
+      "kind": "tool-candidate",
+      "selection": "Depends on actual executable resolution; not all are necessarily acquired.",
+      "head_status": 200,
+      "declared_bytes": 134040
+    },
+    {
+      "name": "automake-wrapper",
+      "url": "https://mirror.msys2.org/msys/x86_64/automake-wrapper-20250528-1-any.pkg.tar.zst",
+      "sha512": "d1c45179feb0b9b25002943f2a29f603c816e9e440ecc8d073733767bcd5b223bf6daad70f4a8aa513471d4967c71e1236724ba77279adc219963a3985dbdb97",
+      "dependencies": [
+        "automake1.16",
+        "automake1.17",
+        "automake1.18",
+        "bash",
+        "gawk"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 4462
+    },
+    {
+      "name": "bash",
+      "url": "https://mirror.msys2.org/msys/x86_64/bash-5.3.009-1-x86_64.pkg.tar.zst",
+      "sha512": "b142bab3f4ae6b17a397c80186eab2e564be75dbc6a16f8b4d010e2be7d0e99a8053518a7b050a34c7914b4d2eae731c8ca41fd9061ef4f825540db063fe5c6c",
+      "dependencies": [],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 2583004
+    },
+    {
+      "name": "coreutils",
+      "url": "https://mirror.msys2.org/msys/x86_64/coreutils-8.32-5-x86_64.pkg.tar.zst",
+      "sha512": "63f99348e654440458f26e9f52ae3289759a5a03428cf2fcf5ac7b47fdf7bf7f51d08e3346f074a21102bee6fa0aeaf88b8ebeba1e1f02a45c8f98f69c8db59c",
+      "dependencies": [
+        "libiconv",
+        "libintl",
+        "gmp"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 2755209
+    },
+    {
+      "name": "file",
+      "url": "https://mirror.msys2.org/msys/x86_64/file-5.46-2-x86_64.pkg.tar.zst",
+      "sha512": "1225311082642b094991c7467ba88eaca3b16e680d736979b6b7f750468b05f5a410e88f7d211e2159e1e80b6aa84c882b26e68296a27f5ee9c3998b61f73fb5",
+      "dependencies": [
+        "gcc-libs",
+        "libbz2",
+        "liblzma",
+        "libzstd",
+        "zlib"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 449148
+    },
+    {
+      "name": "gawk",
+      "url": "https://mirror.msys2.org/msys/x86_64/gawk-5.3.2-1-x86_64.pkg.tar.zst",
+      "sha512": "8d33ff3772fcfd666ebf2211b92942f9ee4af6cd80d4f69762cdac0afb8522aad85244a1701df80a9980c8dba58e7b70d757146945e28cb77e80160b27f2a49f",
+      "dependencies": [
+        "libintl",
+        "libreadline",
+        "mpfr",
+        "sh"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 1465788
+    },
+    {
+      "name": "grep",
+      "url": "https://mirror.msys2.org/msys/x86_64/grep-1~3.0-7-x86_64.pkg.tar.zst",
+      "sha512": "8a5248d0aa7c8d9e57a810f0b03b76db31ebc3c64158886804fdc82095709d496fee433d3aa744484c6cdcb5877ebe95d03b15486cc7bdb13ba33cfbf71e4e14",
+      "dependencies": [
+        "libiconv",
+        "libintl",
+        "libpcre",
+        "sh"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 249241
+    },
+    {
+      "name": "gzip",
+      "url": "https://mirror.msys2.org/msys/x86_64/gzip-1.14-1-x86_64.pkg.tar.zst",
+      "sha512": "cc316915d1dc0090b5acb385ce392a3ac2c37e1df4f72198a976f9b0f7c4b42d15cf14229bc06c19c22ce39dca79389e426cff592437e05df77f453ecc6f42c5",
+      "dependencies": [
+        "bash"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 104389
+    },
+    {
+      "name": "diffutils",
+      "url": "https://mirror.msys2.org/msys/x86_64/diffutils-3.12-1-x86_64.pkg.tar.zst",
+      "sha512": "9b486fa45e827392eda39cff268530b0f3bdc5cc80881b55ae610828f861e6a63b790f395976277085b469423264ade705e5a0ecdf7b22fc8c017fc3d90acc78",
+      "dependencies": [
+        "libiconv",
+        "libintl",
+        "sh"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 394515
+    },
+    {
+      "name": "make",
+      "url": "https://mirror.msys2.org/msys/x86_64/make-4.4.1-2-x86_64.pkg.tar.zst",
+      "sha512": "b55caaf0d54b784b5dffcbb75a1862fc7359b91caa1e60234e208de03c74159fd003d68f5dddd387adef752bb13805e654f17ec5cb6add51546b9e30a1091b61",
+      "dependencies": [
+        "libintl",
+        "sh"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 519783
+    },
+    {
+      "name": "pkgconf",
+      "url": "https://mirror.msys2.org/msys/x86_64/pkgconf-2.5.1-1-x86_64.pkg.tar.zst",
+      "sha512": "5af92108c94896a0bef549ef248909a30627259e25d845f08e028bd23ac1d10004868d2bf8bf35d6e27a363aa30d0a8b1bb312ac15fc8fc18207e2c92e37c2c1",
+      "dependencies": [],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 76390
+    },
+    {
+      "name": "sed",
+      "url": "https://mirror.msys2.org/msys/x86_64/sed-4.9-1-x86_64.pkg.tar.zst",
+      "sha512": "8006a83f0cc6417e3f23ffd15d0cbca2cd332f2d2690232a872ae59795ac63e8919eb361111b78f6f2675c843758cc4782d816ca472fe841f7be8a42c36e8237",
+      "dependencies": [
+        "libintl",
+        "sh"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 249918
+    },
+    {
+      "name": "msys2-runtime",
+      "url": "https://mirror.msys2.org/msys/x86_64/msys2-runtime-3.6.5-1-x86_64.pkg.tar.zst",
+      "sha512": "974dbe29e35b04a4a4f5ffbfed1327702c5eb34cfbfafd45e00df3553e66ca3a4a92cf8b69dbb42b8e3c2ef034281ea73888c03c271ad28ce12fee32ce1bbf3d",
+      "dependencies": [],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 1987651
+    },
+    {
+      "name": "automake1.16",
+      "url": "https://mirror.msys2.org/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst",
+      "sha512": "62c9dfe28d6f1d60310f49319723862d29fc1a49f7be82513a4bf1e2187ecd4023086faf9914ddb6701c7c1e066ac852c0209db2c058f3865910035372a4840a",
+      "dependencies": [
+        "bash",
+        "perl"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": "HTTP Error 404: Not Found",
+      "declared_bytes": null,
+      "fallback_mirror_heads": [
+        {
+          "url": "https://repo.msys2.org/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 538941
+        },
+        {
+          "url": "https://mirror.yandex.ru/mirrors/msys2/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 538941
+        },
+        {
+          "url": "https://mirrors.tuna.tsinghua.edu.cn/msys2/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 538941
+        },
+        {
+          "url": "https://mirrors.ustc.edu.cn/msys2/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 538941
+        },
+        {
+          "url": "https://mirror.selfnet.de/msys2/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 538941
+        }
+      ]
+    },
+    {
+      "name": "automake1.17",
+      "url": "https://mirror.msys2.org/msys/x86_64/automake1.17-1.17-1-any.pkg.tar.zst",
+      "sha512": "cb935efc2e303e6f88eee3ab12ca1311c32d3c92e73e04b00b6b9269ce512649efa09af03d22a733f9cc4ebbb99fc64d8dcc123bf68fb914a20bf3cc651375f5",
+      "dependencies": [
+        "bash",
+        "perl"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 547861
+    },
+    {
+      "name": "automake1.18",
+      "url": "https://mirror.msys2.org/msys/x86_64/automake1.18-1.18.1-1-any.pkg.tar.zst",
+      "sha512": "d994eb278c5f341d6fe4b89a9034d486b2eaa880c0bd84160862352f964786d7d2220d91549515f02c2d01b5a978be7e8e1551ed2e89ddd449cfbcf05f6354e5",
+      "dependencies": [
+        "bash",
+        "perl"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 556123
+    },
+    {
+      "name": "libiconv",
+      "url": "https://mirror.msys2.org/msys/x86_64/libiconv-1.18-1-x86_64.pkg.tar.zst",
+      "sha512": "77979ed35af45aa5bb7fb6b07d649e8eafa69ebdc8e421c2a7bf69ee567f814b38623a12be0736fb56c17c0aeff69ba769bc52110f62f8e5fdc5bcf334d88d44",
+      "dependencies": [
+        "gcc-libs",
+        "libintl"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 726928
+    },
+    {
+      "name": "libintl",
+      "url": "https://mirror.msys2.org/msys/x86_64/libintl-0.22.5-1-x86_64.pkg.tar.zst",
+      "sha512": "1f1826763bcc252f15a0a5a27fbf596a2b5fad5e092bdff17af8231c373c0de17be7411938068aac0f0a617edbb32533de6619f6c58ebcdec7480c210673af45",
+      "dependencies": [
+        "gcc-libs",
+        "libiconv"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 50537
+    },
+    {
+      "name": "gmp",
+      "url": "https://mirror.msys2.org/msys/x86_64/gmp-6.3.0-2-x86_64.pkg.tar.zst",
+      "sha512": "739ef6b80f98cac58020d559f407fdabf0f70a1fd8ced4d2473d67427a263ea87ded3efd6c38c221e0a80c7791991c940d7823364eee594ad40cd03694a6d36e",
+      "dependencies": [],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 396914
+    },
+    {
+      "name": "gcc-libs",
+      "url": "https://mirror.msys2.org/msys/x86_64/gcc-libs-15.2.0-1-x86_64.pkg.tar.zst",
+      "sha512": "1d7705870a3e65f4c485d9572f179b8ae1e9837c558ca1448ba1e94faa836ae0a87b19b8b53965f5c783267f2497926589b42112c9e3a9ef64aae21918d9dc63",
+      "dependencies": [],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 1081723
+    },
+    {
+      "name": "libbz2",
+      "url": "https://mirror.msys2.org/msys/x86_64/libbz2-1.0.8-4-x86_64.pkg.tar.zst",
+      "sha512": "5a7be6d04e55e6fb1dc0770a8c020ca24a317807c8c8a4813146cd5d559c12a6c61040797b062e441645bc2257b390e12dd6df42519e56278a1fe849fe76a1c4",
+      "dependencies": [
+        "gcc-libs"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 30786
+    },
+    {
+      "name": "liblzma",
+      "url": "https://mirror.msys2.org/msys/x86_64/liblzma-5.8.2-1-x86_64.pkg.tar.zst",
+      "sha512": "1a9353996e7da8b90ff6a95b4199953a0c72350f6e1b7133373161ce221640ae63260ebaf95278bb099432bd3e30b1138b3da98b6e5a1a4b9af1223e0cda8b54",
+      "dependencies": [],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 90117
+    },
+    {
+      "name": "libzstd",
+      "url": "https://mirror.msys2.org/msys/x86_64/libzstd-1.5.7-1-x86_64.pkg.tar.zst",
+      "sha512": "02cf577567773f7f93f4df404d3b0a62d0cab4b2b63c76d572ef3af591e9fe6571b3d7e79e868ae5d7967b8f540941489a4004367c64113e1688f392827fc6cd",
+      "dependencies": [
+        "gcc-libs"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 399681
+    },
+    {
+      "name": "zlib",
+      "url": "https://mirror.msys2.org/msys/x86_64/zlib-1.3.1-1-x86_64.pkg.tar.zst",
+      "sha512": "a432b0f927d342b678df706487595eff1b780371548933f956adcf697eea11ddbca2863d9d9fb88675a7040dcfddab56f8f71a8ae4d0cd4969e715545c77e87c",
+      "dependencies": [
+        "gcc-libs"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": "HTTP Error 404: Not Found",
+      "declared_bytes": null,
+      "fallback_mirror_heads": [
+        {
+          "url": "https://repo.msys2.org/msys/x86_64/zlib-1.3.1-1-x86_64.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 50170
+        },
+        {
+          "url": "https://mirror.yandex.ru/mirrors/msys2/msys/x86_64/zlib-1.3.1-1-x86_64.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 50170
+        },
+        {
+          "url": "https://mirrors.tuna.tsinghua.edu.cn/msys2/msys/x86_64/zlib-1.3.1-1-x86_64.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 50170
+        },
+        {
+          "url": "https://mirrors.ustc.edu.cn/msys2/msys/x86_64/zlib-1.3.1-1-x86_64.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 50170
+        },
+        {
+          "url": "https://mirror.selfnet.de/msys2/msys/x86_64/zlib-1.3.1-1-x86_64.pkg.tar.zst",
+          "head_status": 200,
+          "declared_bytes": 50170
+        }
+      ]
+    },
+    {
+      "name": "libreadline",
+      "url": "https://mirror.msys2.org/msys/x86_64/libreadline-8.3.003-1-x86_64.pkg.tar.zst",
+      "sha512": "216c30e8307c0f72994d52955e4c00ef08f16d8bd9bd82db92c0294a81db05849202c670c62cd5060e871fdcc6d3cb34fbb51e9b0a9ea3a67c6104d384aeb5d3",
+      "dependencies": [
+        "ncurses"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 388315
+    },
+    {
+      "name": "mpfr",
+      "url": "https://mirror.msys2.org/msys/x86_64/mpfr-4.2.2-1-x86_64.pkg.tar.zst",
+      "sha512": "80fa09c637c4ff3943b20a5b74e945c7084e1f7d571d7124a5b45926533a24125a0027167f99eb9c1e9f96fc3d61344e23c0b4471815846d90367bcfb8f89eba",
+      "dependencies": [
+        "gmp"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 395839
+    },
+    {
+      "name": "libpcre",
+      "url": "https://mirror.msys2.org/msys/x86_64/libpcre-8.45-5-x86_64.pkg.tar.zst",
+      "sha512": "3a0fffaf4d24bac07847220bac70b0e3f15645ea04171c5f4079966cbec01cee9138e36e5100b989af2dcce67660756c060fb3298c86fa120779c15d083231eb",
+      "dependencies": [
+        "gcc-libs"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 96135
+    },
+    {
+      "name": "perl",
+      "url": "https://mirror.msys2.org/msys/x86_64/perl-5.40.3-1-x86_64.pkg.tar.zst",
+      "sha512": "99128c78b10cefea1ebea3352e6305b31a22062d7d7a5f2ba31289a1c41621d2a14a31e21371b6e2459207a3d832cd4f94d40ab59adf5827a564060d529d0892",
+      "dependencies": [
+        "coreutils",
+        "libxcrypt",
+        "sh"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 7389217
+    },
+    {
+      "name": "ncurses",
+      "url": "https://mirror.msys2.org/msys/x86_64/ncurses-6.5.20240831-2-x86_64.pkg.tar.zst",
+      "sha512": "ff84849e3857e31fd4f3acc48e8a9bc2fa6ff226f848636c206fb322e7c49de9677c24784575ad5d13620f31d6203739b0f7ab068081bef0d8ab873c4473ee4d",
+      "dependencies": [
+        "gcc-libs"
+      ],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 1249697
+    },
+    {
+      "name": "libxcrypt",
+      "url": "https://mirror.msys2.org/msys/x86_64/libxcrypt-4.5.2-1-x86_64.pkg.tar.zst",
+      "sha512": "98b775bc22fe120846b60353483f3ce8f9aacb33941392a49c96720e0217a76ee44cf867dcd61055d65933e0eae157af6d99bcd2221ab512de876030d76ccb9a",
+      "dependencies": [],
+      "kind": "windows-msys",
+      "os": "windows",
+      "head_status": 200,
+      "declared_bytes": 87371
+    },
+    {
+      "name": "nasm",
+      "version": "3.01",
+      "os": "windows",
+      "kind": "tool-candidate",
+      "url": "https://www.nasm.us/pub/nasm/releasebuilds/3.01/win64/nasm-3.01-win64.zip",
+      "sha512": "771c238ddb17c98d5736ccaba4ade1d1601d896f09e588489cb43a4f6381bc0ae14d1869f5316fe94f847f54867e65cf12665529b1e7ad88e5e7d3e162719a4f",
+      "head_status": 200,
+      "declared_bytes": 594502
+    },
+    {
+      "name": "ffmpeg",
+      "version": "7.1.2#5",
+      "os": "both",
+      "kind": "source",
+      "url": "https://github.com/FFmpeg/FFmpeg/archive/n7.1.2.tar.gz",
+      "sha512": "8411c45f71d2d61184b11e2a786137044a80d9b979a7e2e8513efc5e716b3360bff4533a13875dd4bca492b97b97f0384f7fb4f3d796802e81981b0857d18a2b",
+      "head_status": 200,
+      "declared_bytes": null
+    },
+    {
+      "name": "zlib",
+      "version": "1.3.2#2",
+      "os": "both",
+      "kind": "source",
+      "url": "https://github.com/madler/zlib/archive/v1.3.2.tar.gz",
+      "sha512": "16fea4df307a68cf0035858abe2fd550250618a97590e202037acd18a666f57afc10f8836cbbd472d54a0e76539d0e558cb26f059d53de52ff90634bbf4f47d4",
+      "head_status": 200,
+      "declared_bytes": 1566911
+    },
+    {
+      "name": "pkgconf",
+      "version": "3.0.3#1",
+      "os": "both",
+      "kind": "source",
+      "url": "https://github.com/pkgconf/pkgconf/archive/pkgconf-3.0.3.tar.gz",
+      "sha512": "4e49bb7b10c6fdebfa1175b4c33138b8aeca2582e49adb5c7ba66d08e8614771ef060b0c2673bd098c1aed821c8ade1a6dd276c1f4ac6e29bd7efcb8f4c0402e",
+      "head_status": 200,
+      "declared_bytes": 252030
+    },
+    {
+      "name": "meson",
+      "version": "1.9.0",
+      "os": "both",
+      "kind": "tool-source",
+      "url": "https://github.com/mesonbuild/meson/archive/1.9.0.tar.gz",
+      "sha512": "ecd69b6734be14c467f7db67dd88c0e57ebfad83ce3ddada131ff3e43ac964523e1083d7c7f3803033a9a76adbc32ad26dd2e3aca69884269000ca64130bde07",
+      "head_status": 200,
+      "declared_bytes": 4925665
+    }
+  ],
+  "unknowns": [
+    "Pinned Git registry and older FFmpeg port-tree acquisition size; no complete checkout/history fetched.",
+    "FFMS2 Git source transfer size; twenty compiled-input hashes are pinned separately.",
+    "Actual host triplet/package ABI and executable tool resolution; no manifest install --dry-run executed.",
+    "Missing Content-Length or failed HEAD is unknown, not zero. Header sizes are declared, not measured transfer or verified archives.",
+    "Linux NASM is absent on observed runner and this recipe only provides a Windows download. System NASM prerequisite needs explicit provisioning.",
+    "Build memory/time and unpacked/scratch output size require a bounded real build; current ceilings are proposals, not estimates.",
+    "Acquisition may include extraction support selected by vcpkg; tool candidates here are not an exhaustive executed acquisition trace."
+  ]
+}

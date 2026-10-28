@@ -1,0 +1,11 @@
+{
+  "time": "2026-10-15T17:31:15.9699356+07:00",
+  "keyboardLayout": "0x04110411",
+  "imeOpen": 1,
+  "imeConversionMode": "0x9",
+  "focusedName": "Line text",
+  "focusedType": "ControlType.Edit",
+  "focusedClass": "RoleField",
+  "textPattern": "{\\",
+  "value": "{\\"
+}

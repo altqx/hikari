@@ -1,0 +1,3 @@
+﻿[Aegisub Project]
+Tab: 0
+Subtitles: C:\a.ass

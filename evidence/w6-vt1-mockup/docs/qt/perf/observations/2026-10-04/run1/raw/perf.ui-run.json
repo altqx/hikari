@@ -1,0 +1,10 @@
+{
+  "name": "perf.ui",
+  "binary": "out/perfbin/hikari_ui_perf",
+  "sha256": "60bd13fbc975e15c8ae38f5b369281712dc2f34c532510c5c90ba0b0a6279fb9",
+  "builtAt": "2026-10-04T12:10:49+07:00",
+  "started": "2026-10-04T13:20:11,639766554+07:00",
+  "ended": "2026-10-04T13:20:23,878129694+07:00",
+  "exitCode": 0,
+  "pid": 2707335
+}

@@ -1,0 +1,15 @@
+CMake Warning (author) at C:/Work/HikariF48/installed/x64-hikari-windows-release/share/ffmpeg/FindFFMPEG.cmake:45 (cmake_parse_arguments):
+  The NAMES keyword was followed by an empty string or no value at all.
+  Policy CMP0174 is not set, so cmake_parse_arguments() will unset the
+  arg_NAMES variable rather than setting it to an empty string.
+Call Stack (most recent call first):
+  C:/Work/HikariF48/installed/x64-hikari-windows-release/share/ffmpeg/FindFFMPEG.cmake:148 (append_dependencies)
+  C:/Work/HikariF48/installed/x64-hikari-windows-release/share/ffmpeg/vcpkg-cmake-wrapper.cmake:27 (_find_package)
+  _work/vcpkg/scripts/buildsystems/vcpkg.cmake:893 (include)
+  _work/downloads/tools/cmake-4.4.3-windows/cmake-4.4.3-windows-x86_64/share/cmake-4.4/Modules/CMakeFindDependencyMacro.cmake:93 (find_package)
+  _work/downloads/tools/cmake-4.4.3-windows/cmake-4.4.3-windows-x86_64/share/cmake-4.4/Modules/CMakeFindDependencyMacro.cmake:125 (__find_dependency_common)
+  C:/Work/HikariF48/installed/x64-hikari-windows-release/share/HikariFFMS2/HikariFFMS2Config.cmake:27 (find_dependency)
+  _work/vcpkg/scripts/buildsystems/vcpkg.cmake:939 (_find_package)
+  CMakeLists.txt:8 (find_package)
+This warning is for project developers.  Use -Wno-author to suppress it.
+

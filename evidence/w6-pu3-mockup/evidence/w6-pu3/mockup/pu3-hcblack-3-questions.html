@@ -1,0 +1,234 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000000;color:#FFFFFF;font:13px 'Liberation Sans',Arial,sans-serif;padding:24px;width:1328px}
+.acc{color:#FFFF00}
+.ic{display:block;flex:none}
+h1{font-size:18px;font-weight:600;margin:0 0 8px}
+h2{font-size:13px;font-weight:650;margin:28px 0 10px}
+p.note{color:#EEEEEE;font-size:12px;margin:0 0 8px;max-width:1280px;line-height:1.45}
+.cap{font-size:11px;color:#EEEEEE;margin:8px 0 0;max-width:520px;line-height:1.4}
+.row{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.col{display:flex;flex-direction:column}
+.notes{background:#151515;outline:1px solid #FFFFFF;padding:12px 16px;width:1280px;line-height:1.5}
+.notes td{padding:3px 14px 3px 0;vertical-align:top}
+.notes td:first-child{font-weight:650;white-space:nowrap}
+
+/* main window backdrop */
+.app{position:relative;width:1280px;height:800px;background:url(shots/body-highContrastBlack.png) 0 0 no-repeat;outline:1px solid #FFFFFF;margin-top:12px}
+.barslot{position:absolute;left:0;top:64px;width:1280px}
+.stack{position:absolute;right:12px;bottom:34px;width:360px;display:flex;flex-direction:column;gap:8px}
+
+/* DG1 window */
+.dlg{background:#080808;color:#FFFFFF;display:flex;flex-direction:column;outline:1px solid #FFFFFF;
+     box-shadow:0 8px 28px rgba(0,0,0,.55)}
+.dtb{display:flex;align-items:center;height:32px;flex:none;background:#080808;box-shadow:inset 0 -1px #FFFFFF}
+.dtitle{flex:1;min-width:0;padding-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wbs{display:flex;margin-left:auto;flex:none}
+.wb{display:flex;align-items:center;justify-content:center;width:46px;height:32px;color:#FFFFFF}
+.dbody{padding:12px 24px 0;display:flex;flex-direction:column}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;padding:24px}
+.dfoot .lead,.pfoot .lead{margin-right:auto}
+
+/* controls */
+.b{display:inline-flex;align-items:center;justify-content:center;min-width:80px;height:30px;padding:0 10px;border-radius:1px;
+   background:#151515;border:1px solid #FFFFFF;color:#FFFFFF;white-space:nowrap;flex:none}
+.b.sm{min-width:0;height:26px;padding:0 10px}
+.b.on{background:#253F60;border-color:#FFFF00}
+.b.flat{background:none;border-color:transparent;color:#FFFF00;padding:0 6px;height:24px}
+.b.pri{background:#FFFF00;border-color:#FFFF00;color:#000000;font-weight:650}
+.b.dng{color:#FFADAD;border-color:#FFADAD}
+.ring{outline:1px solid #FFFFFF;outline-offset:1px}
+.qb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:1px;color:#FFFFFF}
+.cb{display:flex;align-items:center;gap:8px;height:24px}
+.box{width:16px;height:16px;border:1px solid #FFFFFF;background:#000000;border-radius:1px;display:flex;
+     align-items:center;justify-content:center;flex:none}
+.box.on{background:#FFFF00;border-color:#FFFF00;color:#000000}
+.fld{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:#000000;border:1px solid #FFFFFF;
+     border-radius:1px;color:#FFFFFF;min-width:0}
+.fld.wide{display:flex;width:100%}
+.fld.focus{border-color:#FFFFFF;box-shadow:inset 0 0 0 1px #FFFFFF}
+.fld.ph .ftext{color:#EEEEEE}
+.ftext{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fic,.ftail{color:#EEEEEE}
+.ftail{display:flex;margin-left:auto}
+.frow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.flabel{width:56px;color:#FFFFFF;flex:none}
+.seg{display:inline-flex;border:1px solid #FFFFFF;border-radius:1px;overflow:hidden;flex:none}
+.seg span{padding:0 10px;height:26px;display:flex;align-items:center;background:#151515;border-left:1px solid #FFFFFF}
+.seg span:first-child{border-left:none}
+.seg span.on{background:#253F60;color:#FFFFFF;box-shadow:inset 0 -2px #FFFF00;font-weight:650}
+.seg.sm span{height:24px;padding:0 8px}
+.sbar{position:absolute;right:3px;width:4px;border-radius:2px;background:#FFFFFF;opacity:.8}
+.big{color:#FFFFFF}
+.warn,.warn .acc{color:#FFD54A}
+.err,.err .acc{color:#FFADAD}
+.lnk2{color:#FFFF00;cursor:pointer}
+
+/* message box */
+.mb{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+.mbtext{display:flex;flex-direction:column;gap:6px;padding-top:4px;min-width:0}
+.mbmain{font-size:14px;font-weight:650;line-height:1.4}
+.mbdetail{color:#EEEEEE;line-height:1.45}
+.mbcheck{margin-top:8px}
+.disc{display:flex;align-items:center;gap:4px;margin:14px 0 0 48px;color:#FFFFFF}
+.dets{position:relative;margin:6px 0 0 48px;background:#000000;outline:1px solid #FFFFFF;padding:8px 34px 8px 10px}
+.dets pre{font:12px 'Liberation Mono',Consolas,monospace;color:#FFFFFF;white-space:pre-wrap}
+.dets .qb{position:absolute;right:6px;top:6px}
+
+/* notices */
+.toast{display:flex;gap:10px;align-items:flex-start;padding:10px 8px 10px 12px;background:#080808;outline:1px solid #FFFFFF;
+       border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.55);color:#FFFFFF}
+.toast.hover{background:#151515}
+.toast>.ic{margin-top:1px}
+.tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ttitle{font-weight:650;line-height:1.35}
+.ttext{color:#EEEEEE;line-height:1.4}
+.tacts{display:flex;gap:4px;margin:4px 0 0 -6px}
+.tx{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#EEEEEE;flex:none}
+.ibar{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 10px;background:#151515;
+      box-shadow:inset 0 -1px #FFFFFF,inset 0 1px #FFFFFF;color:#FFFFFF}
+.ibt{flex:1}
+
+/* popover */
+.pop{position:relative;background:#080808;outline:1px solid #FFFFFF;border-radius:4px;padding:12px;
+     box-shadow:0 6px 22px rgba(0,0,0,.55);color:#FFFFFF;z-index:2}
+.ptitle{font-weight:650;margin-bottom:8px}
+.pfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.pfoot.wrap{flex-wrap:wrap;justify-content:flex-start}
+.anchorbox{position:relative}
+
+/* clash review */
+.allrow{display:flex;align-items:center;gap:10px;margin-top:14px}
+.ctable{margin-top:10px;outline:1px solid #FFFFFF;background:#000000}
+.chead,.crow2{display:flex;align-items:center;gap:10px;padding:0 10px;min-height:38px}
+.chead{min-height:28px;color:#EEEEEE;font-size:12px;box-shadow:inset 0 -1px #FFFFFF;background:#151515}
+.crow2+.crow2{box-shadow:inset 0 1px #FFFFFF}
+.crow2 .cname{font-weight:650}
+.cname{width:110px;flex:none}
+.cdiff{width:170px;flex:none;color:#EEEEEE}
+.cact{flex:1;display:flex;gap:8px;align-items:center}
+
+/* choose styles */
+.slist{position:relative;margin-top:8px;height:186px;overflow:hidden;outline:1px solid #FFFFFF;background:#000000;padding:2px 0}
+.srow{display:flex;align-items:center;gap:8px;height:22px;padding:0 14px 0 8px}
+.srow.cur{background:#253F60}
+.sname{flex:1}
+.scount{color:#EEEEEE;font-size:12px}
+.sfoot{display:flex;gap:14px;align-items:center;margin-top:10px}
+
+/* hotkeys */
+.htable{outline:1px solid #FFFFFF;background:#000000}
+.hhead,.hrow{display:grid;grid-template-columns:1fr 130px;padding:0 10px;height:26px;align-items:center}
+.hhead{color:#EEEEEE;font-size:12px;background:#151515;box-shadow:inset 0 -1px #FFFFFF}
+.hrow.sel{background:#253F60}
+.keys{color:#EEEEEE}
+.capture{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;background:#000000;
+         border:1px solid #FFFFFF;border-radius:1px}
+.capture.focus{border-color:#FFFFFF;box-shadow:inset 0 0 0 1px #FFFFFF}
+.wait{color:#EEEEEE}
+.kc{display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid #FFFFFF;border-bottom-width:2px;
+    border-radius:3px;background:#151515;font-weight:650}
+.plus{color:#EEEEEE}
+.conf{display:flex;gap:8px;align-items:flex-start;margin-top:10px;line-height:1.4}
+
+/* lists */
+.llist{margin-top:10px;outline:1px solid #FFFFFF;background:#000000;padding:2px 0}
+.llist.pl{margin-top:0}
+.lrow{display:flex;gap:10px;align-items:center;height:28px;padding:0 10px}
+.lrow.cur{background:#253F60;box-shadow:inset 2px 0 #FFFF00}
+.lnum{color:#EEEEEE;width:12px}
+.lmeta{color:#EEEEEE;margin-left:auto}
+.editor{height:30px;display:flex;align-items:center;padding:0 10px;background:#000000;border:1px solid #FFFFFF}
+.miss{text-decoration:underline wavy #FFADAD;text-underline-offset:3px;background:#253F60}
+
+/* calendar */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calm{font-weight:650}
+.cal{display:grid;grid-template-columns:repeat(7,32px);row-gap:2px}
+.dh{height:24px;display:flex;align-items:center;justify-content:center;color:#EEEEEE;font-size:11px}
+.dd{height:28px;display:flex;align-items:center;justify-content:center;border-radius:1px}
+.dd.out{color:#8C8C8C}
+.dd.sel{background:#FFFF00;color:#000000;font-weight:650;outline:1px solid #FFFFFF;outline-offset:1px}
+
+.grow1{flex:1}
+.anchor{position:relative}
+.lbl{font-size:11px;color:#EEEEEE;margin-bottom:4px}
+.lbl2{color:#EEEEEE;font-size:12px;margin:0 2px 0 6px}
+.lbl3{color:#FFFFFF;align-self:center}
+.hint{color:#EEEEEE;font-size:12px;line-height:1.4}
+.ptop{display:flex;align-items:center;gap:6px;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 6px 0 8px;border:1px solid #FFFFFF;
+      border-radius:13px;background:#151515;color:#FFFFFF;white-space:nowrap}
+.chip.on{background:#253F60;border-color:#FFFF00;font-weight:650}
+.chip .ic{color:#EEEEEE}
+.chip.on .ic{color:#FFFFFF}
+.pmid{display:flex;gap:16px;margin-top:8px}
+.pside{width:150px;flex:none}
+.tgl{display:inline-flex;gap:2px}
+.qb{border:1px solid transparent}
+.qb.qon{background:#253F60;border-color:#FFFF00}
+.flist{position:relative;flex:1;overflow:hidden;outline:1px solid #FFFFFF;background:#000000;padding:2px 0}
+.frow2{display:flex;align-items:center;gap:12px;height:28px;padding:0 10px}
+.frow2.sel{background:#253F60;box-shadow:inset 3px 0 #FFFF00}
+.frow2.use{margin-top:8px;color:#FFFFFF}
+.fname{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fsample{font-size:15px;color:#EEEEEE}
+.fcats{margin-left:auto;color:#EEEEEE;font-size:11px;white-space:nowrap}
+.fempty{padding:12px 10px 0;color:#EEEEEE}
+.fempty .frow2{margin-left:-10px;margin-right:-10px}
+.pcount{color:#EEEEEE;font-size:11px;margin-top:4px}
+.pv{margin-top:10px}
+.pvbox{height:96px;display:flex;align-items:center;justify-content:center;outline:1px solid #FFFFFF;overflow:hidden;
+       background-color:#5d6670;background-image:linear-gradient(45deg,#535b64 25%,transparent 25%,transparent 75%,#535b64 75%),
+       linear-gradient(45deg,#535b64 25%,transparent 25%,transparent 75%,#535b64 75%);background-size:16px 16px;
+       background-position:0 0,8px 8px}
+.pvtext{color:#fff;-webkit-text-stroke:0;text-shadow:0 0 2px #000,0 0 2px #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,2px 2px 1px rgba(0,0,0,.6);white-space:nowrap}
+.pvnote{display:flex;align-items:center;gap:6px;margin-top:6px;color:#EEEEEE;font-size:12px}
+.pvnote b{color:#FFFFFF;font-weight:650}
+.pvnote.warn,.pvnote.warn b{color:#FFD54A}
+.pvsub{color:#EEEEEE;font-size:11px;margin-top:2px}
+.menu{background:#080808;outline:1px solid #FFFFFF;border-radius:5px;padding:4px 0;box-shadow:0 10px 30px rgba(0,0,0,.33);z-index:3;position:relative}
+.mrow{display:flex;align-items:center;height:26px;padding:0 12px 0 6px;gap:6px}
+.mrow.cur{background:#253F60}
+.mrow.dis{color:#8C8C8C}
+.mchk{width:16px;display:flex;justify-content:center}
+.mt{flex:1}
+.mk{color:#EEEEEE;font-size:12px}
+.msep{height:1px;background:#FFFFFF;margin:4px 0}
+.sepanel{background:#080808;outline:1px solid #FFFFFF;padding:14px 18px;width:616px}
+.serow{display:flex;align-items:center;gap:6px}
+.serow .b{min-width:30px;padding:0 8px}
+.cwin{display:flex;gap:16px;height:520px}
+.cside{width:200px;flex:none;display:flex;flex-direction:column}
+.cside .strip{margin:0 0 6px}
+.clist{flex:1;outline:1px solid #FFFFFF;background:#000000;padding:2px 0}
+.crow{display:flex;align-items:center;height:28px;padding:0 10px}
+.crow.sel{background:#253F60;box-shadow:inset 3px 0 #FFFF00;font-weight:650}
+.ccount{margin-left:auto;color:#EEEEEE;font-size:12px;font-weight:400}
+.strip{display:flex;align-items:center;gap:2px}
+.sep{width:1px;height:18px;background:#FFFFFF;margin:0 4px}
+.cmain{flex:1;display:flex;flex-direction:column;min-width:0}
+.cmain .ptop{margin-top:0}
+.mtable{position:relative;flex:1;outline:1px solid #FFFFFF;background:#000000;margin-top:8px;overflow:hidden}
+.mhead,.mrow2{display:flex;align-items:center;gap:10px;height:28px;padding:0 10px}
+.mhead{height:26px;background:#151515;color:#EEEEEE;font-size:12px;box-shadow:inset 0 -1px #FFFFFF}
+.mrow2.sel{background:#253F60;box-shadow:inset 3px 0 #FFFF00}
+.mname{width:170px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcats{width:130px;flex:none;color:#EEEEEE;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msample{flex:1;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved{display:flex;align-items:center;gap:6px;color:#EEEEEE}
+.fld.bad{border-color:#FFADAD;box-shadow:inset 0 0 0 1px #FFADAD}
+.ferr{display:flex;align-items:center;gap:6px;margin-top:6px;color:#FFADAD;font-size:12px}
+.b.off{opacity:.46}
+.form{display:grid;grid-template-columns:64px 1fr;column-gap:10px;row-gap:8px;margin-top:8px;align-items:center}
+.stack2{width:360px;display:flex;flex-direction:column;gap:8px}
+.allrow{display:flex;align-items:center;gap:10px;margin-top:14px}
+.ctable{margin-top:10px;outline:1px solid #FFFFFF;background:#000000}
+.chead,.crow3{display:flex;align-items:center;gap:10px;padding:0 10px;min-height:38px}
+.chead{min-height:28px;color:#EEEEEE;font-size:12px;box-shadow:inset 0 -1px #FFFFFF;background:#151515}
+.crow3+.crow3{box-shadow:inset 0 1px #FFFFFF}
+.crow3 .cname{font-weight:650}
+.cname{width:90px;flex:none}
+.cdiff{width:200px;flex:none;color:#EEEEEE}
+.cact{flex:1;display:flex;gap:8px;align-items:center}
+</style></head><body><svg width="0" height="0" style="position:absolute"><defs><symbol id="i-notice-error" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z"/><g class="acc"><path d="M8 4.75v4"/><circle cx="8" cy="11.25" r=".75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-calendar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="12" rx="1"/><path d="M1.5 6h13M5 1v3M11 1v3"/><g class="acc"><path d="M4.5 9h1M7.5 9h1M10.5 9h1M4.5 11.5h1M7.5 11.5h1"/></g></g></symbol><symbol id="i-chevron-down" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5l3.5 3.5 3.5-3.5"/></g></symbol><symbol id="i-chevron-right" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5l3.5 3.5-3.5 3.5"/></g></symbol><symbol id="i-chevron-left" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5l-3.5 3.5 3.5 3.5"/></g></symbol><symbol id="i-check" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></g></symbol><symbol id="i-about" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4"/><circle cx="8" cy="5" r="0.75" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-notice-warning" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></g></symbol><symbol id="i-tab-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></g></symbol><symbol id="i-log" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M7 5.5h5M7 8h4M7 10.5h5"/><g class="acc"><path d="M4 5.5h1.5M4 8h1.5M4 10.5h1.5"/></g></g></symbol><symbol id="i-styles" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z"/><g class="acc"><circle cx="4.75" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="6.75" cy="4.5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="4.5" r="1" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-hotkeys" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></g></symbol><symbol id="i-open-audio" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 11.5V2.5l4 1.5"/><circle cx="4.5" cy="11.5" r="2" fill="currentColor" stroke="none"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></g></symbol><symbol id="i-spellchecker" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></g></symbol><symbol id="i-remove-temporary" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M4.5 3.5V2h3v1.5"/><path d="M2.5 4.5l.75 9a1 1 0 0 0 1 1H8M9.5 4.5l-.25 3.5"/><path d="M5 6.5v5M7 6.5v3"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-check-updates" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></g></symbol><symbol id="i-window-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></g></symbol><symbol id="i-window-maximize" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="9" height="9" rx="0.5"/></g></symbol><symbol id="i-edit-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2"/><rect x="2.5" y="4.5" width="8" height="10" rx="1"/></g></symbol><symbol id="i-save" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h7v4"/></g></symbol><symbol id="i-menu-more" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></g></symbol><symbol id="i-add" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></g></symbol><symbol id="i-edit" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g class="acc"><path d="M9.5 3.5l3 3"/></g></g></symbol><symbol id="i-delete" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4"/><path d="M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9"/><path d="M6.75 7v5M9.25 7v5"/></g></symbol><symbol id="i-import" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3"/><g class="acc"><path d="M7.5 4.5v10M4.5 11.5l3 3 3-3"/></g></g></symbol><symbol id="i-refresh" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 0 1 9.75-3.5"/><path d="M12.5 1.5v3h-3"/><path d="M13.5 8a5.5 5.5 0 0 1-9.75 3.5"/><path d="M3.5 14.5v-3h3"/></g></symbol><symbol id="i-fonts-from-subtitles" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M11 10h3v1h-3zM11 11h1v1h-1zM11 12h2v1h-2zM11 13h1v1h-1zM11 14h1v1h-1z" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-filter" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2.5h13L9.5 8.5V13l-3 1.5v-6z"/></g></symbol><symbol id="i-tag-bold" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h6a2 2 0 0 1 2 2v1.5c0 .75-.25 1.5-1 2 1.25.25 2 1.25 2 2.5v1.5a2.5 2.5 0 0 1-2.5 2.5H4zM6 4h3.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H6zM6 9h4.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H6z" fill="currentColor" stroke="none" fill-rule="evenodd"/></g></symbol><symbol id="i-tag-italic" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2.5h5M4 13.5h5M9.5 2.5l-3 11"/></g></symbol><symbol id="i-tag-underline" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5V7a3.5 3.5 0 0 0 7 0V2.5"/><g class="acc"><path d="M3.5 13.5h9"/></g></g></symbol><symbol id="i-tag-strikeout" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11.25 4.25C10.75 3 9.5 2.5 8 2.5c-2 0-3.25 1-3.25 2.5 0 1.25.75 2 2 2.5M10.25 9.25c.5.5.75 1 .75 1.75 0 1.5-1.25 2.5-3 2.5-1.75 0-3-.75-3.5-2"/><g class="acc"><path d="M2.5 8h11"/></g></g></symbol><symbol id="i-tag-font" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h6v2H7v3h3v2H7v5H5z" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-panel-menu" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="3.5" cy="8" r="1.25" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1.25" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8" r="1.25" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-folder-open" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 13.5v-10a1 1 0 0 1 1-1h3l1.5 1.5h5a1 1 0 0 1 1 1v1.5"/><path d="M1.5 13.5l2.25-7h10.75l-2.25 7z"/></g></symbol></defs></svg><h1>PU3 catalog questions and notices (High contrast black)</h1><p class="note">The catalog prompts (legacy “Prompt” and “Info”, Yes / No) become PK1 message boxes with verb buttons; loading a file whose catalogs clash uses the clash review. Platform order as on Windows and KDE; the default is filled, a destructive verb outlined in the danger colour and never the default.</p><div class="row" style="gap:28px;margin-top:8px"><div class="col"><div class="dlg" style="width:468px;"><div class="dtb"><span class="dtitle">Delete font catalog</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mb"><svg class="ic big warn" width="32" height="32"><use href="#i-notice-warning"/></svg><div class="mbtext"><div class="mbmain">Delete the catalog “Signs”?</div><div class="mbdetail">Its 4 fonts stay installed and in their other catalogs.</div></div></div></div><div class="dfoot "><span class="b dng">Delete</span><span class="b pri ring">Cancel</span></div></div><p class="cap" style="max-width:468px">Delete in Manage font catalogs (legacy: “Are you sure you want to delete this catalog?”, Yes / No). Cancel is the default.</p></div><div class="col"><div class="dlg" style="width:468px;"><div class="dtb"><span class="dtitle">Rename font catalog</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mb"><svg class="ic big warn" width="32" height="32"><use href="#i-notice-warning"/></svg><div class="mbtext"><div class="mbmain">A catalog named “Signs” already exists.</div><div class="mbdetail">Merge adds the fonts of “Typesetting” to it. Replace deletes the old “Signs” first.</div></div></div></div><div class="dfoot "><span class="b dng">Replace</span><span class="b pri ring">Merge</span><span class="b">Cancel</span></div></div><p class="cap" style="max-width:468px">Rename to a name that exists (legacy “Prompt”: Merge / Delete / Cancel). Merge loses nothing, so it is the default; Replace (legacy Delete) is outlined.</p></div></div><div class="row" style="gap:28px;margin-top:28px"><div class="col"><div class="dlg" style="width:780px;"><div class="dtb"><span class="dtitle">Load font catalogs</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-maximize"/></svg></span><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mbmain" style="margin-top:6px">3 of 5 catalogs in “catalogs-2025.txt” already exist.</div><div class="mbdetail">The other 2 are added.</div><div class="allrow"><span>All:</span><span class="seg sm"><span class="">Merge</span><span class="">Replace</span><span class="">Rename</span><span class="">Skip</span></span></div><div class="ctable"><div class="chead"><span class="cname">Catalog</span><span class="cdiff">Fonts</span><span class="cact">Action</span></div><div class="crow3"><span class="cname">Signs</span><span class="cdiff">4 here, 6 in the file (3 new)</span><span class="cact"><span class="seg sm"><span class="on">Merge</span><span class="">Replace</span><span class="">Rename</span><span class="">Skip</span></span></span></div><div class="crow3"><span class="cname">Karaoke</span><span class="cdiff">3 here, 3 in the file (1 new)</span><span class="cact"><span class="seg sm"><span class="">Merge</span><span class="">Replace</span><span class="on">Rename</span><span class="">Skip</span></span><span class="fld focus" style="width:140px;"><span class="ftext">Karaoke (2)</span></span></span></div><div class="crow3"><span class="cname">Dialogue</span><span class="cdiff">4 here, 5 in the file (1 new)</span><span class="cact"><span class="seg sm"><span class="">Merge</span><span class="">Replace</span><span class="">Rename</span><span class="on">Skip</span></span></span></div></div></div><div class="dfoot "><span class="b pri ring">Load 4 catalogs</span><span class="b">Cancel</span></div></div><p class="cap" style="max-width:780px">Load from a file (legacy merged every clashing catalog silently): PK1’s clash review, one row per catalog that exists, with Merge (legacy’s, the default), Replace, Rename (a free name, editable) or Skip. Catalogs that would not change are left out and counted.</p></div><div class="col"><div class="stack2"><div class="toast"><svg class="ic " width="16" height="16"><use href="#i-about"/></svg><div class="tt"><div class="ttitle">Added 7 fonts to “Signs”</div><div class="ttext">From the styles and \fn tags of Episode 03.ass.</div></div><span class="tx" title="Dismiss"><svg class="ic " width="14" height="14"><use href="#i-tab-close"/></svg></span></div><div class="toast"><svg class="ic " width="16" height="16"><use href="#i-about"/></svg><div class="tt"><div class="ttitle">Loaded 4 font catalogs</div><div class="ttext">From catalogs-2025.txt: 2 new, 1 merged, 1 renamed.</div></div><span class="tx" title="Dismiss"><svg class="ic " width="14" height="14"><use href="#i-tab-close"/></svg></span></div><div class="toast"><svg class="ic warn" width="16" height="16"><use href="#i-notice-warning"/></svg><div class="tt"><div class="ttitle">Cannot read “catalogs-2025.txt”</div><div class="ttext">The file is not a font catalog file.</div><div class="tacts"><span class="b sm flat">Details</span></div></div><span class="tx" title="Dismiss"><svg class="ic " width="14" height="14"><use href="#i-tab-close"/></svg></span></div></div><p class="cap" style="max-width:360px">Toasts for what needs no answer: what Add fonts from subtitles and Load did, and a file that cannot be read (legacy said nothing).</p></div></div></body></html>

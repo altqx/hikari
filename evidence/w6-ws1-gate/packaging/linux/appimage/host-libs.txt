@@ -1,0 +1,79 @@
+# Libraries that always come from the host and are never bundled, in any
+# HikariSub package of either codebase (the tar.gz, deb, rpm and AUR trees and
+# the AppImage). One shell glob per line, matched against the file name of a
+# library (its soname). Lines starting with # and blank lines are ignored.
+#
+# This file has the same bytes on the legacy (main) and Qt (qt) branches.
+# The packaging scripts read it; a CI check fails when a package tree holds a
+# file that matches it. Anything one of these libraries needs is host-side too
+# (the closure rule): the collectors resolve their dependencies in the build
+# container and leave those out of the bundle as well.
+
+# glibc and the ELF loader
+ld-linux*.so*
+linux-vdso.so*
+libc.so*
+libm.so*
+libdl.so*
+libpthread.so*
+librt.so*
+libresolv.so*
+libnsl.so*
+libutil.so*
+libanl.so*
+
+# The C++ runtime: a bundled older copy would win over the host's and break
+# host plugins that need a newer one.
+libstdc++.so*
+libgcc_s.so*
+
+# GPU and drivers: GLVND loads the host's vendor library, which must match.
+libGL.so*
+libEGL.so*
+libGLX.so*
+libGLX_*.so*
+libOpenGL.so*
+libGLdispatch.so*
+libglapi.so*
+libgbm.so*
+libdrm.so*
+libdrm_*.so*
+
+# X11 and Wayland client libraries
+libX11.so*
+libX11-xcb.so*
+libxcb.so*
+libxcb-dri2.so*
+libxcb-dri3.so*
+libxcb-glx.so*
+libxcb-present.so*
+libxcb-sync.so*
+libxcb-xfixes.so*
+libxcb-randr.so*
+libxcb-shm.so*
+libxcb-render.so*
+libxcb-shape.so*
+libxshmfence.so*
+libSM.so*
+libICE.so*
+libwayland-*.so*
+
+# Fonts: they read the host's /etc/fonts configuration.
+libfontconfig.so*
+libfreetype.so*
+
+# Audio
+libasound.so*
+libpulse.so*
+libpulse-*.so*
+libpulsecommon-*.so*
+libjack.so*
+libpipewire-0.3.so*
+
+# Base system libraries that the host's own libraries (libmount, D-Bus)
+# need in the host's version.
+libz.so*
+libexpat.so*
+libdbus-1.so*
+libsystemd.so*
+libudev.so*

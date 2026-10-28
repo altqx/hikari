@@ -1,0 +1,43 @@
+//  Copyright (c) 2021 - 2026, Marcin Drob
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+#pragma once
+
+#include "Provider.h"
+#include <wx/string.h>
+
+class ProviderDummy : public Provider 
+{
+public:
+	virtual ~ProviderDummy();
+	ProviderDummy(const wxString& filename, RendererFFMS2* renderer, wxWindow* progressSinkWindow, bool* success);
+	void GetFrameBuffer(int frame, unsigned char** buffer) override;
+	void GetFrame(int frame, unsigned char* buff) override;
+	void GetBuffer(void* buf, long long start, long long count, double vol = 1.0) override;
+	void GetChapters(std::vector<chapter>* _chapters) override;
+	void DeleteOldAudioCache() override;
+	void SetColorSpace(const wxString& matrix) override;
+	bool HasVideo();
+private:
+	static unsigned int __stdcall DummyProc(void* cls);
+	void Processing();
+	bool FetchPlaybackFrame(int frame, unsigned char* buffer) override;
+	void GenerateTimecodes();
+	void GenerateFrame();
+	bool ParseDummyData(const wxString& data);
+	byte *m_FrameBuffer = nullptr;
+	wxColour m_frameColor;
+	bool m_pattern = false;
+};

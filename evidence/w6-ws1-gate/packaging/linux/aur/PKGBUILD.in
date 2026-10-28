@@ -1,0 +1,29 @@
+# Maintainer: altqx
+pkgname=@PKGNAME@
+_version=@VERSION@
+_channel=@CHANNEL@
+pkgver=@PKGVER@
+pkgrel=1
+pkgdesc=@PKGDESC@
+arch=('x86_64')
+url='https://github.com/altqx/hikari'
+license=('GPL-3.0-or-later')
+depends=(@DEPENDS@)
+optdepends=(@OPTDEPENDS@)
+provides=('hikarisub')
+conflicts=('hikarisub')
+options=('!strip' '!debug')
+source=("hikarisub-${_version}-linux-x86_64.tar.gz::https://github.com/altqx/hikari/releases/download/v${_version}/hikarisub-${_version}-linux-x86_64.tar.gz")
+sha256sums=('@SHA256@')
+
+package() {
+  cd hikarisub-linux-x86_64
+  install -d "$pkgdir/opt/hikarisub" "$pkgdir/usr/bin" "$pkgdir/usr/share"
+  cp -a --no-preserve=ownership share/. "$pkgdir/usr/share/"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  rm -rf share install-desktop-integration.sh SHA256SUMS
+  cp -a --no-preserve=ownership . "$pkgdir/opt/hikarisub/"
+  printf 'arch\n' > "$pkgdir/opt/hikarisub/package-kind.txt"
+  printf '%s\n' "$_channel" > "$pkgdir/opt/hikarisub/aur-channel.txt"
+  ln -s /opt/hikarisub/hikarisub "$pkgdir/usr/bin/hikarisub"
+}

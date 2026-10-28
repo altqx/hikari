@@ -1,0 +1,404 @@
+[TRACE] 13:08:29 • [DepCtrl] Writing updated module data to config file...
+[TRACE] 13:08:29 • [DepCtrl] Writing updated module data to config file...
+[TRACE] 13:08:29 • [DepCtrl] Writing updated automation script data to config file...
+[TRACE] 13:08:31 • [DepCtrl] Skipping update check for module 'dkjson': its entry point (C:\Program Files\HikariSub\Automation\automation\include\l0\dkjson.moon) is in Aegisub's data automation directory, managed outside of DependencyControl.
+[TRACE] 13:08:31 • [DepCtrl] Skipped update of module 'dkjson' because its entry point (C:\Program Files\HikariSub\Automation\automation\include\l0\dkjson.moon) is in Aegisub's data automation directory. If it's managed by a system package manager, please update it through that instead.
+[TRACE] 13:08:32 • [DepCtrl] Skipping update check for automation script 'DependencyControl Toolbox': its entry point (C:\Program Files\HikariSub\Automation\automation\autoload\l0.DependencyControl.Toolbox.moon) is in Aegisub's data automation directory, managed outside of DependencyControl.
+[TRACE] 13:08:32 • [DepCtrl] Skipped update of automation script 'DependencyControl Toolbox' because its entry point (C:\Program Files\HikariSub\Automation\automation\autoload\l0.DependencyControl.Toolbox.moon) is in Aegisub's data automation directory. If it's managed by a system package manager, please update it through that instead.
+[TRACE] 13:08:32 • [DepCtrl] Skipping update of unmanaged module 'a-mo.Log'.
+[TRACE] 13:08:32 • [DepCtrl] Skipping update check for module 'DependencyControl': its entry point (C:\Program Files\HikariSub\Automation\automation\include\l0\DependencyControl.moon) is in Aegisub's data automation directory, managed outside of DependencyControl.
+[TRACE] 13:08:32 • [DepCtrl] Skipped update of module 'DependencyControl' because its entry point (C:\Program Files\HikariSub\Automation\automation\include\l0\DependencyControl.moon) is in Aegisub's data automation directory. If it's managed by a system package manager, please update it through that instead.
+[TRACE] 13:08:33 • [DepCtrl] Skipping update check for module 'ConfigHandler': its entry point (C:\Program Files\HikariSub\Automation\automation\include\a-mo\ConfigHandler.moon) is in Aegisub's data automation directory, managed outside of DependencyControl.
+[TRACE] 13:08:33 • [DepCtrl] Skipped update of module 'ConfigHandler' because its entry point (C:\Program Files\HikariSub\Automation\automation\include\a-mo\ConfigHandler.moon) is in Aegisub's data automation directory. If it's managed by a system package manager, please update it through that instead.
+[TRACE] 13:09:32 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_43C4.json.
+[TRACE] 13:09:32 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (0ceec6cd-a6d1-4ae1-8cf1-83f9b7c11a2a); timeout: 5000ms...
+[TRACE] 13:09:32 + [DepCtrl] 'FileCache' (0ceec6cd-a6d1-4ae1-8cf1-83f9b7c11a2a) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:33 + [DepCtrl] 'FileCache' (0ceec6cd-a6d1-4ae1-8cf1-83f9b7c11a2a) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:34 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_1034.json.
+[TRACE] 13:09:34 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (c8026efd-015d-44b1-b221-8596c414acc7); timeout: 5000ms...
+[TRACE] 13:09:34 + [DepCtrl] 'FileCache' (c8026efd-015d-44b1-b221-8596c414acc7) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:36 + [DepCtrl] 'FileCache' (c8026efd-015d-44b1-b221-8596c414acc7) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:40 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_3743.json.
+[TRACE] 13:09:40 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (5d8083ab-eefb-4a8e-8abf-0db0e36f0f83); timeout: 5000ms...
+[TRACE] 13:09:41 + [DepCtrl] 'FileCache' (5d8083ab-eefb-4a8e-8abf-0db0e36f0f83) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:42 + [DepCtrl] 'FileCache' (5d8083ab-eefb-4a8e-8abf-0db0e36f0f83) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:43 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_5E8D.json.
+[TRACE] 13:09:43 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (a4d85b16-dd47-46a6-a079-b28b03b52342); timeout: 5000ms...
+[TRACE] 13:09:43 + [DepCtrl] 'FileCache' (a4d85b16-dd47-46a6-a079-b28b03b52342) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:44 + [DepCtrl] 'FileCache' (a4d85b16-dd47-46a6-a079-b28b03b52342) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:45 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_34A9.json.
+[TRACE] 13:09:45 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (a9fcbbe0-a812-421b-a620-52fc7e49d9a6); timeout: 5000ms...
+[TRACE] 13:09:45 + [DepCtrl] 'FileCache' (a9fcbbe0-a812-421b-a620-52fc7e49d9a6) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:50 + [DepCtrl] 'FileCache' (a9fcbbe0-a812-421b-a620-52fc7e49d9a6) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:51 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_C7F8.json.
+[TRACE] 13:09:52 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (1c1479c9-0be2-44e7-bf4e-fa8c32be343d); timeout: 5000ms...
+[TRACE] 13:09:52 + [DepCtrl] 'FileCache' (1c1479c9-0be2-44e7-bf4e-fa8c32be343d) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:53 + [DepCtrl] 'FileCache' (1c1479c9-0be2-44e7-bf4e-fa8c32be343d) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:54 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_94A0.json.
+[TRACE] 13:09:54 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (f33cf53e-defb-45ac-88d1-6c06fb4ef740); timeout: 5000ms...
+[TRACE] 13:09:54 + [DepCtrl] 'FileCache' (f33cf53e-defb-45ac-88d1-6c06fb4ef740) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:55 + [DepCtrl] 'FileCache' (f33cf53e-defb-45ac-88d1-6c06fb4ef740) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:56 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_D847.json.
+[TRACE] 13:09:56 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (1b74f7e3-0ca7-48cc-b2e5-d3851659858c); timeout: 5000ms...
+[TRACE] 13:09:56 + [DepCtrl] 'FileCache' (1b74f7e3-0ca7-48cc-b2e5-d3851659858c) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:58 + [DepCtrl] 'FileCache' (1b74f7e3-0ca7-48cc-b2e5-d3851659858c) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:09:58 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_AD3C.json.
+[TRACE] 13:09:59 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (f6908524-05b5-4afc-9593-4a307002012d); timeout: 5000ms...
+[TRACE] 13:09:59 + [DepCtrl] 'FileCache' (f6908524-05b5-4afc-9593-4a307002012d) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:00 + [DepCtrl] 'FileCache' (f6908524-05b5-4afc-9593-4a307002012d) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:01 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_754E.json.
+[TRACE] 13:10:01 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (6f737247-af5f-450d-a9c4-6324aa56b35a); timeout: 5000ms...
+[TRACE] 13:10:01 + [DepCtrl] 'FileCache' (6f737247-af5f-450d-a9c4-6324aa56b35a) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:03 + [DepCtrl] 'FileCache' (6f737247-af5f-450d-a9c4-6324aa56b35a) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:04 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_3C6E.json.
+[TRACE] 13:10:04 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (806a570a-7364-4c4d-a386-76d07ff9fc35); timeout: 5000ms...
+[TRACE] 13:10:04 + [DepCtrl] 'FileCache' (806a570a-7364-4c4d-a386-76d07ff9fc35) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:06 + [DepCtrl] 'FileCache' (806a570a-7364-4c4d-a386-76d07ff9fc35) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:06 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_F764.json.
+[TRACE] 13:10:07 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (0af63155-898d-4d79-bdde-9313d44c709f); timeout: 5000ms...
+[TRACE] 13:10:07 + [DepCtrl] 'FileCache' (0af63155-898d-4d79-bdde-9313d44c709f) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:07 + [DepCtrl] 'FileCache' (0af63155-898d-4d79-bdde-9313d44c709f) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:07 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:08 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_7B84.json.
+[TRACE] 13:10:09 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (0efaa9f7-2e7d-427c-ba53-6d24c28fad5d); timeout: 5000ms...
+[TRACE] 13:10:09 + [DepCtrl] 'FileCache' (0efaa9f7-2e7d-427c-ba53-6d24c28fad5d) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:11 + [DepCtrl] 'FileCache' (0efaa9f7-2e7d-427c-ba53-6d24c28fad5d) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:26 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_DE57.json.
+[TRACE] 13:10:26 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (f987c2d9-defd-44aa-b357-d2d0eb42fa5f); timeout: 5000ms...
+[TRACE] 13:10:27 + [DepCtrl] 'FileCache' (f987c2d9-defd-44aa-b357-d2d0eb42fa5f) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:28 + [DepCtrl] 'FileCache' (f987c2d9-defd-44aa-b357-d2d0eb42fa5f) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:29 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_70B8.json.
+[TRACE] 13:10:29 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (5aa59d76-5745-4ddf-97ec-d5d1e1b550c3); timeout: 5000ms...
+[TRACE] 13:10:29 + [DepCtrl] 'FileCache' (5aa59d76-5745-4ddf-97ec-d5d1e1b550c3) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:30 + [DepCtrl] 'FileCache' (5aa59d76-5745-4ddf-97ec-d5d1e1b550c3) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:31 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_AEAA.json.
+[TRACE] 13:10:31 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (d552a886-b06c-49a0-8e20-dcf3b3bdada6); timeout: 5000ms...
+[TRACE] 13:10:31 + [DepCtrl] 'FileCache' (d552a886-b06c-49a0-8e20-dcf3b3bdada6) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:32 + [DepCtrl] 'FileCache' (d552a886-b06c-49a0-8e20-dcf3b3bdada6) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:33 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_9A0C.json.
+[TRACE] 13:10:33 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (23e9421f-f383-4269-8fee-5b5fb9e872aa); timeout: 5000ms...
+[TRACE] 13:10:33 + [DepCtrl] 'FileCache' (23e9421f-f383-4269-8fee-5b5fb9e872aa) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:35 + [DepCtrl] 'FileCache' (23e9421f-f383-4269-8fee-5b5fb9e872aa) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:36 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_CF62.json.
+[TRACE] 13:10:36 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (7027e3fc-76bd-4c08-b087-de7004d461f8); timeout: 5000ms...
+[TRACE] 13:10:36 + [DepCtrl] 'FileCache' (7027e3fc-76bd-4c08-b087-de7004d461f8) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:37 + [DepCtrl] 'FileCache' (7027e3fc-76bd-4c08-b087-de7004d461f8) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:37 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_FE33.json.
+[TRACE] 13:10:37 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (40ca8d66-32f2-4111-94eb-2c32a455bc66); timeout: 5000ms...
+[TRACE] 13:10:37 + [DepCtrl] 'FileCache' (40ca8d66-32f2-4111-94eb-2c32a455bc66) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:39 + [DepCtrl] 'FileCache' (40ca8d66-32f2-4111-94eb-2c32a455bc66) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:39 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_8316.json.
+[TRACE] 13:10:40 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (66947292-1f15-4980-be2a-d0dfe7875d8a); timeout: 5000ms...
+[TRACE] 13:10:40 + [DepCtrl] 'FileCache' (66947292-1f15-4980-be2a-d0dfe7875d8a) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:40 + [DepCtrl] 'FileCache' (66947292-1f15-4980-be2a-d0dfe7875d8a) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:41 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_AD91.json.
+[TRACE] 13:10:42 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (7448c8c6-b2aa-4a11-831d-0a1422afc4fe); timeout: 5000ms...
+[TRACE] 13:10:42 + [DepCtrl] 'FileCache' (7448c8c6-b2aa-4a11-831d-0a1422afc4fe) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[TRACE] 13:10:44 + [DepCtrl] 'FileCache' (7448c8c6-b2aa-4a11-831d-0a1422afc4fe) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[HINT] 13:10:45 + [DepCtrl] Scanning 21 available feeds...
+[TRACE] 13:10:45 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:45 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:45 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:45 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:45 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:45 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:45 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:45 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:46 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:46 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:46 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:46 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:46 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:46 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:46 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:46 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:47 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:47 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:47 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:47 + [DepCtrl] Using cached feed.
+[TRACE] 13:10:47 + [DepCtrl] Using cached feed.
+[HINT] 13:12:21 + [DepCtrl] Starting installation of module '(Almost) Functional Suite'... 
+[HINT] 13:12:22 + [DepCtrl] Skipped installation of module '(Almost) Functional Suite' because its entry point (C:\Program Files\HikariSub\Automation\automation\include\l0\Functional.moon) is in Aegisub's data automation directory. If it's managed by a system package manager, please update it through that instead.
+[TRACE] 13:13:29 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:29 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:29 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:30 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:30 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:30 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:30 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:30 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:30 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:30 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:30 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:30 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:31 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:31 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:31 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:31 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:31 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:31 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:31 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:31 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:32 + [DepCtrl] Using cached feed.
+[HINT] 13:13:33 + [DepCtrl] Scanning 21 available feeds...
+[TRACE] 13:13:33 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:33 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:33 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:33 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:33 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:34 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:35 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:35 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:35 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:35 + [DepCtrl] Using cached feed.
+[TRACE] 13:13:35 + [DepCtrl] Using cached feed.
+[HINT] 13:14:36 + [DepCtrl] Starting installation of module '(Almost) Functional Suite'... 
+[HINT] 13:14:36 + [DepCtrl] Skipped installation of module '(Almost) Functional Suite' because its entry point (C:\Program Files\HikariSub\Automation\automation\include\l0\Functional.moon) is in Aegisub's data automation directory. If it's managed by a system package manager, please update it through that instead.
+[HINT] 13:14:36 + [DepCtrl] Starting installation of automation script 'Abacus'... 
+[TRACE] 13:14:37 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.Updater.run' for holder 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8); timeout: 0ms...
+[TRACE] 13:14:37 + [DepCtrl] 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8) attained the lock on resource 'l0.DependencyControl.Updater.run'.
+— [TRACE] 13:14:37 + [DepCtrl] Checking feed https://raw.githubusercontent.com/PhosCity/Aegisub-Scripts/main/DependencyControl.json...
+— [TRACE] 13:14:38 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_1C8C.json.
+— [TRACE] 13:14:38 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (9f208ded-d129-4c55-af7b-9595261fbca1); timeout: 5000ms...
+— [TRACE] 13:14:38 + [DepCtrl] 'FileCache' (9f208ded-d129-4c55-af7b-9595261fbca1) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+— [TRACE] 13:14:40 + [DepCtrl] 'FileCache' (9f208ded-d129-4c55-af7b-9595261fbca1) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+[HINT] 13:14:40 + [DepCtrl] Checking requirements...
+— [TRACE] 13:14:48 + [DepCtrl] 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8) released its lock on resource 'l0.DependencyControl.Updater.run'.
+— [TRACE] 13:14:49 + [DepCtrl] Writing updated module data to config file...
+— [TRACE] 13:14:51 + [DepCtrl] Writing updated module data to config file...
+— [TRACE] 13:14:54 + [DepCtrl] Writing updated module data to config file...
+— [TRACE] 13:14:55 + [DepCtrl] Writing updated module data to config file...
+— [HINT] 13:14:59 + [DepCtrl] Installing required module 'AegiGui'...
+— [HINT] 13:14:59 + [DepCtrl] Starting installation of module 'AegiGui'... 
+— [TRACE] 13:15:00 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.Updater.run' for holder 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8); timeout: 60000ms...
+— [TRACE] 13:15:00 + [DepCtrl] 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8) attained the lock on resource 'l0.DependencyControl.Updater.run'.
+—— [TRACE] 13:15:00 + [DepCtrl] Checking feed https://raw.githubusercontent.com/PhosCity/Aegisub-Scripts/main/DependencyControl.json...
+—— [TRACE] 13:15:01 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_3596.json.
+—— [TRACE] 13:15:01 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (439a9176-2b0d-4662-84be-fb56a4f7ac48); timeout: 5000ms...
+—— [TRACE] 13:15:01 + [DepCtrl] 'FileCache' (439a9176-2b0d-4662-84be-fb56a4f7ac48) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+—— [TRACE] 13:15:03 + [DepCtrl] 'FileCache' (439a9176-2b0d-4662-84be-fb56a4f7ac48) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+— [HINT] 13:15:03 + [DepCtrl] Checking requirements...
+— [HINT] 13:15:03 + [DepCtrl] Update ready. Using temporary directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_8464'.
+— [TRACE] 13:15:04 + [DepCtrl] Added Download https://raw.githubusercontent.com/PhosCity/Aegisub-Scripts/main/modules/phos/AegiGui.moon ==> 'phos/AegiGui.moon'.
+— [HINT] 13:15:04 + [DepCtrl] Downloading 1 files... [■■■■■■■■■■]
+— [HINT] 13:15:04 + [DepCtrl] Downloads complete. Now moving files to Aegisub automation directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include'...
+—— [TRACE] 13:15:04 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_8464/script/phos/AegiGui.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\phos\AegiGui.moon'.
+— [TRACE] 13:15:05 + [DepCtrl] Writing updated module data to config file...
+— [TRACE] 13:15:06 + [DepCtrl] 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8) released its lock on resource 'l0.DependencyControl.Updater.run'.
+— [HINT] 13:15:06 + [DepCtrl] Installation of module 'AegiGui' (v1.0.0) complete.
+— [HINT] 13:15:06 + [DepCtrl] Please rescan your autoload directory for the changes to take effect.
+— [HINT] 13:15:07 + [DepCtrl] Installing required module 'AssfPlus'...
+— [HINT] 13:15:07 + [DepCtrl] Starting installation of module 'AssfPlus'... 
+— [TRACE] 13:15:08 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.Updater.run' for holder 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8); timeout: 60000ms...
+— [TRACE] 13:15:10 + [DepCtrl] 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8) attained the lock on resource 'l0.DependencyControl.Updater.run'.
+—— [TRACE] 13:15:10 + [DepCtrl] Checking feed https://raw.githubusercontent.com/PhosCity/Aegisub-Scripts/main/DependencyControl.json...
+—— [TRACE] 13:15:10 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_03CC.json.
+—— [TRACE] 13:15:11 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (24c7e87d-cdc6-482e-ac84-f3b87c91dd59); timeout: 5000ms...
+—— [TRACE] 13:15:11 + [DepCtrl] 'FileCache' (24c7e87d-cdc6-482e-ac84-f3b87c91dd59) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+—— [TRACE] 13:15:12 + [DepCtrl] 'FileCache' (24c7e87d-cdc6-482e-ac84-f3b87c91dd59) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+— [HINT] 13:15:12 + [DepCtrl] Checking requirements...
+—— [HINT] 13:15:13 + [DepCtrl] Installing required module 'Perspective'...
+—— [HINT] 13:15:13 + [DepCtrl] Starting installation of module 'Perspective'... 
+——— [TRACE] 13:15:13 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/arch1t3cht-Aegisub-Scripts/main/DependencyControl.json...
+——— [TRACE] 13:15:13 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_5E5C.json.
+——— [TRACE] 13:15:14 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (4b1753e2-5f02-4d47-a056-0ddc23f7e7f0); timeout: 5000ms...
+——— [TRACE] 13:15:14 + [DepCtrl] 'FileCache' (4b1753e2-5f02-4d47-a056-0ddc23f7e7f0) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+——— [TRACE] 13:15:15 + [DepCtrl] 'FileCache' (4b1753e2-5f02-4d47-a056-0ddc23f7e7f0) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+—— [HINT] 13:15:15 + [DepCtrl] Checking requirements...
+——— [HINT] 13:15:16 + [DepCtrl] Installing required module 'ArchMath'...
+——— [HINT] 13:15:16 + [DepCtrl] Starting installation of module 'ArchMath'... 
+———— [TRACE] 13:15:17 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/arch1t3cht-Aegisub-Scripts/main/DependencyControl.json...
+———— [TRACE] 13:15:17 + [DepCtrl] Using cached feed.
+———— [TRACE] 13:15:17 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/DependencyControl.json...
+———— [TRACE] 13:15:18 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_F5A6.json.
+———— [TRACE] 13:15:18 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (f4b625c3-e07d-4951-97ac-5cab712091a7); timeout: 5000ms...
+———— [TRACE] 13:15:18 + [DepCtrl] 'FileCache' (f4b625c3-e07d-4951-97ac-5cab712091a7) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:19 + [DepCtrl] 'FileCache' (f4b625c3-e07d-4951-97ac-5cab712091a7) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:19 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/line0-Aegisub-Scripts/master/DependencyControl.json...
+———— [TRACE] 13:15:20 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_4DDA.json.
+———— [TRACE] 13:15:21 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (99d2b279-d0c6-4b78-a4a9-0b355ecc78c5); timeout: 5000ms...
+———— [TRACE] 13:15:21 + [DepCtrl] 'FileCache' (99d2b279-d0c6-4b78-a4a9-0b355ecc78c5) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:23 + [DepCtrl] 'FileCache' (99d2b279-d0c6-4b78-a4a9-0b355ecc78c5) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:23 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/lyger-Aegisub-Scripts/master/DependencyControl.json...
+———— [TRACE] 13:15:23 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_4455.json.
+———— [TRACE] 13:15:24 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (8570440d-b455-4155-81b3-5c9d46c23061); timeout: 5000ms...
+———— [TRACE] 13:15:24 + [DepCtrl] 'FileCache' (8570440d-b455-4155-81b3-5c9d46c23061) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:27 + [DepCtrl] 'FileCache' (8570440d-b455-4155-81b3-5c9d46c23061) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:27 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/master/DependencyControl.json...
+———— [TRACE] 13:15:27 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_078F.json.
+———— [TRACE] 13:15:28 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (ec500f90-c5b8-49ef-8b67-603669f6d18f); timeout: 5000ms...
+———— [TRACE] 13:15:28 + [DepCtrl] 'FileCache' (ec500f90-c5b8-49ef-8b67-603669f6d18f) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:28 + [DepCtrl] 'FileCache' (ec500f90-c5b8-49ef-8b67-603669f6d18f) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:28 + [DepCtrl] Checking feed https://raw.githubusercontent.com/petzku/Aegisub-Scripts/master/DependencyControl.json...
+———— [TRACE] 13:15:29 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_19D3.json.
+———— [TRACE] 13:15:29 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (4f9d8786-e7d6-4448-a0b3-5493f0be18a3); timeout: 5000ms...
+———— [TRACE] 13:15:29 + [DepCtrl] 'FileCache' (4f9d8786-e7d6-4448-a0b3-5493f0be18a3) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:31 + [DepCtrl] 'FileCache' (4f9d8786-e7d6-4448-a0b3-5493f0be18a3) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:31 + [DepCtrl] Checking feed https://raw.githubusercontent.com/PhosCity/Aegisub-Scripts/main/DependencyControl.json...
+———— [TRACE] 13:15:31 + [DepCtrl] Using cached feed.
+———— [TRACE] 13:15:31 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/SubInspector/master/DependencyControl.json...
+———— [TRACE] 13:15:31 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_E94B.json.
+———— [TRACE] 13:15:31 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (b0132dac-4b23-4bf2-8fbf-c2d811f162c1); timeout: 5000ms...
+———— [TRACE] 13:15:31 + [DepCtrl] 'FileCache' (b0132dac-4b23-4bf2-8fbf-c2d811f162c1) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:33 + [DepCtrl] 'FileCache' (b0132dac-4b23-4bf2-8fbf-c2d811f162c1) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:33 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/unanimated-Aegisub-Scripts/master/DependencyControl.json...
+———— [TRACE] 13:15:33 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_DAC7.json.
+———— [TRACE] 13:15:34 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (9fe89522-d9c5-4b05-95a3-a233425d03da); timeout: 5000ms...
+———— [TRACE] 13:15:34 + [DepCtrl] 'FileCache' (9fe89522-d9c5-4b05-95a3-a233425d03da) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:35 + [DepCtrl] 'FileCache' (9fe89522-d9c5-4b05-95a3-a233425d03da) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:35 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/Yutils/master/DependencyControl.json...
+———— [TRACE] 13:15:35 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_AFCD.json.
+———— [TRACE] 13:15:35 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (6d6fa68b-30f7-4435-ae04-bcb6ac36cb03); timeout: 5000ms...
+———— [TRACE] 13:15:36 + [DepCtrl] 'FileCache' (6d6fa68b-30f7-4435-ae04-bcb6ac36cb03) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:37 + [DepCtrl] 'FileCache' (6d6fa68b-30f7-4435-ae04-bcb6ac36cb03) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:37 + [DepCtrl] Checking feed https://raw.githubusercontent.com/Zahuczky/Zahuczkys-Aegisub-Scripts/main/DependencyControl.json...
+———— [TRACE] 13:15:37 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_81AE.json.
+———— [TRACE] 13:15:37 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (0ac18189-9961-49ea-8fee-5144af6fc8b9); timeout: 5000ms...
+———— [TRACE] 13:15:38 + [DepCtrl] 'FileCache' (0ac18189-9961-49ea-8fee-5144af6fc8b9) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:39 + [DepCtrl] 'FileCache' (0ac18189-9961-49ea-8fee-5144af6fc8b9) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:39 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/zeref-Aegisub-Scripts/main/DependencyControl.json...
+———— [TRACE] 13:15:39 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_7F1F.json.
+———— [TRACE] 13:15:40 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (bbeb0cac-3dc2-454f-8f26-062384a811e5); timeout: 5000ms...
+———— [TRACE] 13:15:40 + [DepCtrl] 'FileCache' (bbeb0cac-3dc2-454f-8f26-062384a811e5) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:41 + [DepCtrl] 'FileCache' (bbeb0cac-3dc2-454f-8f26-062384a811e5) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:41 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/DependencyControl/publish/DependencyControl.json...
+———— [TRACE] 13:15:42 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_6BED.json.
+———— [TRACE] 13:15:42 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (26e5b379-e69f-4868-b4b6-1a50a34f90c3); timeout: 5000ms...
+———— [TRACE] 13:15:42 + [DepCtrl] 'FileCache' (26e5b379-e69f-4868-b4b6-1a50a34f90c3) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:44 + [DepCtrl] 'FileCache' (26e5b379-e69f-4868-b4b6-1a50a34f90c3) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:44 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/ASSFoundation/master/DependencyControl.json...
+———— [TRACE] 13:15:45 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_6918.json.
+———— [TRACE] 13:15:45 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (cdafd1c0-4f57-4814-8b8a-40ff3b07cbdd); timeout: 5000ms...
+———— [TRACE] 13:15:45 + [DepCtrl] 'FileCache' (cdafd1c0-4f57-4814-8b8a-40ff3b07cbdd) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:46 + [DepCtrl] 'FileCache' (cdafd1c0-4f57-4814-8b8a-40ff3b07cbdd) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:46 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/CoffeeFlux-Aegisub-Scripts/master/DependencyControl.json...
+———— [TRACE] 13:15:46 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_A2C9.json.
+———— [TRACE] 13:15:47 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (39ba91c1-400b-4400-80c1-9648b31b0934); timeout: 5000ms...
+———— [TRACE] 13:15:47 + [DepCtrl] 'FileCache' (39ba91c1-400b-4400-80c1-9648b31b0934) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:48 + [DepCtrl] 'FileCache' (39ba91c1-400b-4400-80c1-9648b31b0934) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:48 + [DepCtrl] Checking feed https://raw.githubusercontent.com/torque/ffi-experiments/master/DependencyControl.json...
+———— [TRACE] 13:15:48 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_0469.json.
+———— [TRACE] 13:15:48 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (e8470015-7739-40e9-bc4e-dcd992226fcb); timeout: 5000ms...
+———— [TRACE] 13:15:48 + [DepCtrl] 'FileCache' (e8470015-7739-40e9-bc4e-dcd992226fcb) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:49 + [DepCtrl] 'FileCache' (e8470015-7739-40e9-bc4e-dcd992226fcb) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:49 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/Aegisub-Motion/DepCtrl/DependencyControl.json...
+———— [TRACE] 13:15:50 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_83FC.json.
+———— [TRACE] 13:15:50 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (b22981ce-b5fe-4cb0-ae8c-7abfba541e9d); timeout: 5000ms...
+———— [TRACE] 13:15:50 + [DepCtrl] 'FileCache' (b22981ce-b5fe-4cb0-ae8c-7abfba541e9d) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+———— [TRACE] 13:15:52 + [DepCtrl] 'FileCache' (b22981ce-b5fe-4cb0-ae8c-7abfba541e9d) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+——— [HINT] 13:15:52 + [DepCtrl] Update ready. Using temporary directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_CEFC'.
+——— [TRACE] 13:15:52 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/arch1t3cht-Aegisub-Scripts/arch.Math-v0.1.10/modules/arch/Math.moon ==> 'arch/Math.moon'.
+——— [HINT] 13:15:52 + [DepCtrl] Downloading 1 files... [■■■■■■■■■■]
+——— [HINT] 13:15:52 + [DepCtrl] Downloads complete. Now moving files to Aegisub automation directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include'...
+———— [TRACE] 13:15:52 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_CEFC/script/arch/Math.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\arch\Math.moon'.
+——— [TRACE] 13:15:53 + [DepCtrl] Writing updated module data to config file...
+——— [HINT] 13:15:53 + [DepCtrl] Installation of module 'ArchMath' (v0.1.10) complete.
+——— [HINT] 13:15:53 + [DepCtrl] Please rescan your autoload directory for the changes to take effect.
+—— [HINT] 13:15:53 + [DepCtrl] Update ready. Using temporary directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_00A5'.
+—— [TRACE] 13:15:54 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/arch1t3cht-Aegisub-Scripts/arch.Perspective-v1.2.1/modules/arch/Perspective.moon ==> 'arch/Perspective.moon'.
+—— [HINT] 13:15:54 + [DepCtrl] Downloading 1 files... [■■■■■■■■■■]
+—— [HINT] 13:15:54 + [DepCtrl] Downloads complete. Now moving files to Aegisub automation directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include'...
+——— [TRACE] 13:15:54 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_00A5/script/arch/Perspective.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\arch\Perspective.moon'.
+—— [TRACE] 13:15:55 + [DepCtrl] Writing updated module data to config file...
+—— [TRACE] 13:15:56 + [DepCtrl] 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8) released its lock on resource 'l0.DependencyControl.Updater.run'.
+—— [HINT] 13:15:56 + [DepCtrl] Installation of module 'Perspective' (v1.2.1) complete.
+—— [HINT] 13:15:56 + [DepCtrl] Please rescan your autoload directory for the changes to take effect.
+—— [HINT] 13:15:57 + [DepCtrl] Installing required module 'ILL Library'...
+—— [HINT] 13:15:57 + [DepCtrl] Starting installation of module 'ILL Library'... 
+—— [TRACE] 13:15:58 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.Updater.run' for holder 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8); timeout: 60000ms...
+—— [TRACE] 13:15:58 + [DepCtrl] 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8) attained the lock on resource 'l0.DependencyControl.Updater.run'.
+——— [TRACE] 13:15:59 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/DependencyControl.json...
+——— [TRACE] 13:15:59 + [DepCtrl] Downloaded feed to C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_feedCache\l0.DependencyControl_182D.json.
+——— [TRACE] 13:15:59 + [DepCtrl] Trying to get a lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds' for holder 'FileCache' (3e2312e6-4890-47aa-abe8-4a21a8b56a1f); timeout: 5000ms...
+——— [TRACE] 13:15:59 + [DepCtrl] 'FileCache' (3e2312e6-4890-47aa-abe8-4a21a8b56a1f) attained the lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+——— [TRACE] 13:16:00 + [DepCtrl] 'FileCache' (3e2312e6-4890-47aa-abe8-4a21a8b56a1f) released its lock on resource 'l0.DependencyControl.FileCache.C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\cache/l0.DependencyControl/feeds'.
+—— [HINT] 13:16:00 + [DepCtrl] Checking requirements...
+——— [HINT] 13:16:00 + [DepCtrl] Installing required module 'clipper2.clipper2'...
+——— [HINT] 13:16:00 + [DepCtrl] Starting installation of module 'clipper2.clipper2'... 
+———— [TRACE] 13:16:01 + [DepCtrl] Checking feed https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/DependencyControl.json...
+———— [TRACE] 13:16:01 + [DepCtrl] Using cached feed.
+——— [HINT] 13:16:01 + [DepCtrl] Checking requirements...
+——— [HINT] 13:16:01 + [DepCtrl] Update ready. Using temporary directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_334E'.
+——— [TRACE] 13:16:01 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/clipper2/clipper2.moon ==> 'clipper2/clipper2.moon'.
+——— [TRACE] 13:16:01 + [DepCtrl] Added Download https://github.com/TypesettingTools/ILL-Aegisub-Scripts/releases/download/clipper2-1.4.0/clipper2.dll ==> 'clipper2/clipper2/clipper2.dll'.
+——— [HINT] 13:16:04 + [DepCtrl] Downloading 2 files... [■■■■■■■■■■]
+——— [HINT] 13:16:04 + [DepCtrl] Downloads complete. Now moving files to Aegisub automation directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include'...
+———— [TRACE] 13:16:05 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_334E/script/clipper2/clipper2.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\clipper2\clipper2.moon'.
+———— [TRACE] 13:16:05 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_334E/script/clipper2/clipper2/clipper2.dll' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\clipper2\clipper2\clipper2.dll'.
+——— [TRACE] 13:16:05 + [DepCtrl] Writing updated module data to config file...
+——— [TRACE] 13:16:06 + [DepCtrl] 'l0.DependencyControl.Toolbox' (a6566ac0-515f-48e7-8406-cb21105ebeb8) released its lock on resource 'l0.DependencyControl.Updater.run'.
+——— [HINT] 13:16:07 + [DepCtrl] Installation of module 'clipper2' (v1.4.0) complete.
+——— [HINT] 13:16:07 + [DepCtrl] Please rescan your autoload directory for the changes to take effect.
+—— [HINT] 13:16:08 + [DepCtrl] Update ready. Using temporary directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861'.
+—— [TRACE] 13:16:08 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL.moon ==> 'ILL/ILL.moon'.
+—— [TRACE] 13:16:09 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Ass/Shape/Curve.moon ==> 'ILL/ILL/Ass/Shape/Curve.moon'.
+—— [TRACE] 13:16:09 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Ass/Shape/Path.moon ==> 'ILL/ILL/Ass/Shape/Path.moon'.
+—— [TRACE] 13:16:09 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Ass/Shape/Point.moon ==> 'ILL/ILL/Ass/Shape/Point.moon'.
+—— [TRACE] 13:16:09 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Ass/Shape/Segment.moon ==> 'ILL/ILL/Ass/Shape/Segment.moon'.
+—— [TRACE] 13:16:10 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Ass/Text/Tag.moon ==> 'ILL/ILL/Ass/Text/Tag.moon'.
+—— [TRACE] 13:16:10 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Ass/Text/Tags.moon ==> 'ILL/ILL/Ass/Text/Tags.moon'.
+—— [TRACE] 13:16:10 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Ass/Text/Text.moon ==> 'ILL/ILL/Ass/Text/Text.moon'.
+—— [TRACE] 13:16:11 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Ass/Ass.moon ==> 'ILL/ILL/Ass/Ass.moon'.
+—— [TRACE] 13:16:11 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Ass/Line.moon ==> 'ILL/ILL/Ass/Line.moon'.
+—— [TRACE] 13:16:12 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Font/Font.moon ==> 'ILL/ILL/Font/Font.moon'.
+—— [TRACE] 13:16:12 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Font/Init.moon ==> 'ILL/ILL/Font/Init.moon'.
+—— [TRACE] 13:16:13 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Font/Unx.moon ==> 'ILL/ILL/Font/Unx.moon'.
+—— [TRACE] 13:16:13 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Font/Win.moon ==> 'ILL/ILL/Font/Win.moon'.
+—— [TRACE] 13:16:13 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Aegi.moon ==> 'ILL/ILL/Aegi.moon'.
+—— [TRACE] 13:16:13 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Config.moon ==> 'ILL/ILL/Config.moon'.
+—— [TRACE] 13:16:13 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Math.moon ==> 'ILL/ILL/Math.moon'.
+—— [TRACE] 13:16:13 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Table.moon ==> 'ILL/ILL/Table.moon'.
+—— [TRACE] 13:16:13 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/Util.moon ==> 'ILL/ILL/Util.moon'.
+—— [TRACE] 13:16:13 + [DepCtrl] Added Download https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/main/modules/ILL/ILL/UTF8.moon ==> 'ILL/ILL/UTF8.moon'.
+—— [HINT] 13:16:18 + [DepCtrl] Downloading 20 files... [■■■■■■■■■■]
+—— [HINT] 13:16:26 + [DepCtrl] Downloads complete. Now moving files to Aegisub automation directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include'...
+——— [TRACE] 13:16:27 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL.moon'.
+——— [TRACE] 13:16:27 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Ass/Shape/Curve.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Ass\Shape\Curve.moon'.
+——— [TRACE] 13:16:27 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Ass/Shape/Path.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Ass\Shape\Path.moon'.
+——— [TRACE] 13:16:27 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Ass/Shape/Point.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Ass\Shape\Point.moon'.
+——— [TRACE] 13:16:27 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Ass/Shape/Segment.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Ass\Shape\Segment.moon'.
+——— [TRACE] 13:16:27 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Ass/Text/Tag.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Ass\Text\Tag.moon'.
+——— [TRACE] 13:16:27 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Ass/Text/Tags.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Ass\Text\Tags.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Ass/Text/Text.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Ass\Text\Text.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Ass/Ass.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Ass\Ass.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Ass/Line.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Ass\Line.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Font/Font.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Font\Font.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Font/Init.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Font\Init.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Font/Unx.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Font\Unx.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Font/Win.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Font\Win.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Aegi.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Aegi.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Config.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Config.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Math.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Math.moon'.
+——— [TRACE] 13:16:28 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Table.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Table.moon'.
+——— [TRACE] 13:16:29 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/Util.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\Util.moon'.
+——— [TRACE] 13:16:29 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_7861/script/ILL/ILL/UTF8.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\ILL\ILL\UTF8.moon'.
+—— [WARNING] 13:16:31 + [DepCtrl] A required-module entry for ILL carries extra names that are ignored: json. Give each required module its own entry.
+—— [TRACE] 13:16:31 + [DepCtrl] Writing updated module data to config file...
+—— [HINT] 13:16:32 + [DepCtrl] Installation of module 'ILL' (v1.8.5) complete.
+—— [HINT] 13:16:32 + [DepCtrl] Please rescan your autoload directory for the changes to take effect.
+— [HINT] 13:16:33 + [DepCtrl] Update ready. Using temporary directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_29BB'.
+— [TRACE] 13:16:34 + [DepCtrl] Added Download https://raw.githubusercontent.com/PhosCity/Aegisub-Scripts/main/modules/phos/AssfPlus.moon ==> 'phos/AssfPlus.moon'.
+— [HINT] 13:16:34 + [DepCtrl] Downloading 1 files... [■■■■■■■■■■]
+— [HINT] 13:16:34 + [DepCtrl] Downloads complete. Now moving files to Aegisub automation directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include'...
+—— [TRACE] 13:16:34 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_29BB/script/phos/AssfPlus.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\include\phos\AssfPlus.moon'.
+— [TRACE] 13:16:35 + [DepCtrl] Writing updated module data to config file...
+— [HINT] 13:16:36 + [DepCtrl] Installation of module 'AssfPlus' (v1.0.5) complete.
+— [HINT] 13:16:36 + [DepCtrl] Please rescan your autoload directory for the changes to take effect.
+[HINT] 13:16:37 + [DepCtrl] Update ready. Using temporary directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_2C84'.
+[TRACE] 13:16:38 + [DepCtrl] Added Download https://raw.githubusercontent.com/PhosCity/Aegisub-Scripts/main/macros/phos.Abacus.moon ==> 'phos.Abacus.moon'.
+[HINT] 13:16:38 + [DepCtrl] Downloading 1 files... [■■■■■■■■■■]
+[HINT] 13:16:38 + [DepCtrl] Downloads complete. Now moving files to Aegisub automation directory 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\autoload'...
+— [TRACE] 13:16:38 + [DepCtrl] Moved 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\temp\l0.DependencyControl_2C84/script/phos.Abacus.moon' ==> 'C:\Users\winix\AppData\Roaming\HikariSub\HikariSub\Automation\automation\autoload\phos.Abacus.moon'.
+[TRACE] 13:16:38 + [DepCtrl] Writing updated automation script data to config file...
+[HINT] 13:16:38 + [DepCtrl] Installation of automation script 'Abacus' (v1.1.0) complete.
+[HINT] 13:16:38 + [DepCtrl] Please rescan your autoload directory for the changes to take effect.

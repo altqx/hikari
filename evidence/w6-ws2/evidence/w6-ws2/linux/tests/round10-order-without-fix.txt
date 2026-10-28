@@ -1,0 +1,33 @@
+Running main() from /kache/cc-root/.t3/worktrees/hikari/w6-ws2/out/sdk/vcpkg/buildtrees/gtest/src/v1.18.0-e6987f02b9.clean/googletest/src/gtest_main.cc
+Note: Google Test filter = *KeepsTheOrderOfLinesBefore*
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from AssSave
+[ RUN      ] AssSave.RendererScriptKeepsTheOrderOfLinesBeforeTheEventsFormat
+/home/altq/.t3/worktrees/hikari/w6-ws2/tests/core/ass_save_tests.cpp:330: Failure
+Expected equality of these values:
+  text(encodeAss(r.document, AssSaveOptions{.renderer = true}))
+    Which is: "[Script Info]\nTitle: t\n\n[Events]\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\nDialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,C\n"
+  "[Script Info]\nTitle: t\n" "\n[Events]\n" "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n" "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\n" "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\n" "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,C\n"
+    Which is: "[Script Info]\nTitle: t\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\nDialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,C\n"
+With diff:
+@@ -3,6 +3,6 @@
+ 
+ [Events]
+-Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B
+ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+ Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A
++Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B
+ Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,C\n
+
+
+[  FAILED  ] AssSave.RendererScriptKeepsTheOrderOfLinesBeforeTheEventsFormat (0 ms)
+[----------] 1 test from AssSave (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] AssSave.RendererScriptKeepsTheOrderOfLinesBeforeTheEventsFormat
+
+ 1 FAILED TEST

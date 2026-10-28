@@ -1,0 +1,10 @@
+hikari-crash 1
+version 0.1.0
+type SIGSEGV
+mechanism signal
+frame hikarisub 0x5ed92
+frame hikarisub 0x12d64a
+frame hikarisub 0x12f5d2
+frame libc.so.6 0x2a610
+frame libc.so.6 0x2a6c0
+frame hikarisub 0x129bb5

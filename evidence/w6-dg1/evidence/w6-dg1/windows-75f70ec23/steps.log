@@ -1,0 +1,36 @@
+10:49:47 layout {"root": "C:\\Winix\\work\\hikari-qt", "scratch": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win", "app": "C:\\Winix\\work\\hikari-qt\\out\\build\\windows-x64-release\\hikarisub.exe", "qt_bin": "C:\\Winix\\work\\hikari-qt\\out\\sdk\\qt-6.11.2-windows\\6.11.2\\msvc2022_64\\bin", "qt_bin_exists": true, "docs": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\docs", "episode": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\docs\\episode.ass", "ep1_ass": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\docs\\ep1.ass", "fixture": "C:\\Winix\\work\\hikari-qt\\out\\build\\windows-x64-release\\tests\\backends\\media-fixtures\\cfr.mkv", "nvda_exe": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\nvda\\portable-2026.2\\nvda.exe", "nvda_config": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\nvda\\config", "nvda_dir": "C:\\Winix\\work\\hikari-qt\\out\\native-gate-win\\nvda", "profile": {"local": "C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub", "roaming": "C:\\Users\\winix\\AppData\\Roaming\\HikariSub\\HikariSub"}, "windows": "Microsoft Windows 11 Pro 10.0.26200 build 26200"}
+10:49:47 --- windows: dialogframe
+10:49:51 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-034949-543\local
+10:49:51 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-034949-543\roaming
+10:49:54 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"auto","theme":"dark"}
+10:49:55 launched {'pid': 11552, 'profile': None, 'log': 'C:\\Winix\\launch\\11552.log'}
+10:50:39 == dialog-frame-window: observed - About (250, 242, 460, 275) beside the main window (0, 0, 960, 720): its own buttons {'Close': True, 'Minimise': False, 'Maximise': False} (Close only on a fixed-size dialog), Close 0 px below the window's top (no caption of Windows' above the bar); window style 0x96c80000 (WS_CAPTION and WS_SYSMENU kept, no WS_MINIMIZEBOX, WS_MAXIMIZEBOX or WS_THICKFRAME: True)
+10:50:39 == dialog-frame-centred: observed - About's centre off the main window's centre + (0, 20) by (0, 1)
+10:50:46 == dialog-frame-system-menu: observed - Windows' system menu from a right click on the title bar: ['Restore', 'Move', 'Size', 'Minimize', 'Maximize', 'Close'], enabled ['Close', 'Move'] (Move and Close; Restore, Size, Minimize and Maximize greyed on a fixed-size dialog)
+10:50:55 == dialog-frame-no-maximise: observed - Win+Up on About: (250, 242, 460, 275) -> (250, 242, 460, 275) (its size kept)
+10:51:07 == dialog-frame-focus-back: observed - Esc on About: the foreground window 'HikariSub', active ['HikariSub'], focus [Button] 'New' in 'HikariSub'
+10:51:24 == dialog-frame-move-remembered: observed - title bar dragged by (-60,+40): (250, 242, 460, 275) -> (190, 282, 460, 275); Esc closed it: True; opened again at (190, 282, 460, 275)
+10:51:49 == dialog-frame-modeless: observed - About and Credits open at once: True (Credits (210, 128, 540, 503))
+10:51:58 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035156-787\local
+10:51:58 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035156-787\roaming
+10:52:00 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"system","theme":"dark"}
+10:52:01 launched {'pid': 12388, 'profile': None, 'log': 'C:\\Winix\\launch\\12388.log'}
+10:52:32 == dialog-frame-system: observed - About with the system's title bar: Windows' caption buttons ['Close'], HikariSub's drawn buttons []
+10:52:37 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035235-614\local
+10:52:37 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035235-614\roaming
+10:52:40 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"custom","theme":"light"}
+10:52:40 launched {'pid': 9260, 'profile': None, 'log': 'C:\\Winix\\launch\\9260.log'}
+10:53:14 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035312-759\local
+10:53:14 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035312-759\roaming
+10:53:16 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"custom","theme":"dark"}
+10:53:16 launched {'pid': 12636, 'profile': None, 'log': 'C:\\Winix\\launch\\12636.log'}
+10:53:45 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035343-463\local
+10:53:45 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035343-463\roaming
+10:53:47 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"custom","theme":"highContrastWhite"}
+10:53:47 launched {'pid': 13600, 'profile': None, 'log': 'C:\\Winix\\launch\\13600.log'}
+10:54:16 set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035414-814\local
+10:54:16 set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035414-814\roaming
+10:54:18 theme: {"ini":"C:\\Users\\winix\\AppData\\Local\\HikariSub\\HikariSub\\hikari.ini","followSystem":"false","titleBar":"custom","theme":"highContrastBlack"}
+10:54:18 launched {'pid': 13004, 'profile': None, 'log': 'C:\\Winix\\launch\\13004.log'}
+10:54:50 == dialog-frame-themes: observed - About's title bar in each theme's panel colour
+10:54:53 profile: set aside C:\Users\winix\AppData\Local\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035451-823\local | set aside C:\Users\winix\AppData\Roaming\HikariSub\HikariSub -> C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-035451-823\roaming | restored C:\Users\winix\AppData\Local\HikariSub\HikariSub from C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-034949-543\local | restored C:\Users\winix\AppData\Roaming\HikariSub\HikariSub from C:\Winix\work\hikari-qt\out\native-gate-win\old-profiles\20261021-034949-543\roaming

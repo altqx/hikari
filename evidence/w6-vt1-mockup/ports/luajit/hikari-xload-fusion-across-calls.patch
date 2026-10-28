@@ -1,0 +1,20 @@
+--- a/src/lj_asm_x86.h	2026-10-03 19:03:25.284950579 +0700
++++ b/src/lj_asm_x86.h	2026-10-03 19:03:25.301781648 +0700
+@@ -140,6 +140,8 @@
+       return 0;
+     else if ((check & 2) && (ir[i].op1 == ref || ir[i].op2 == ref))
+       return 0;
++    else if ((check & 4) && ir[i].o == IR_CALLXS)
++      return 0;  /* A C call may free or write the memory (Hikari). */
+   }
+   return 1;  /* Ok, no conflict. */
+ }
+@@ -503,7 +505,7 @@
+       ** Fusing unaligned memory operands is ok on x86 (except for SIMD types).
+       */
+       if ((!irt_typerange(ir->t, IRT_I8, IRT_U16)) &&
+-	  noconflict(as, ref, IR_XSTORE, 2)) {
++	  noconflict(as, ref, IR_XSTORE, 2+4)) {
+ 	asm_fusexref(as, ir->op1, xallow);
+ 	return RID_MRM;
+       }

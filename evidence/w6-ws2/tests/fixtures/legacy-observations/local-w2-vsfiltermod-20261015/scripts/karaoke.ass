@@ -1,0 +1,19 @@
+﻿[Script Info]
+ScriptType: v4.00+
+PlayResX: 640
+PlayResY: 360
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:04.00,Default,,0,0,0,,{\an8\k50}ka{\k50}ra{\k100}o{\k100}ke
+Dialogue: 0,0:00:00.00,0:00:04.00,Default,,0,0,0,,{\an5\kf100}fill{\kf100}sweep
+Dialogue: 0,0:00:00.00,0:00:04.00,Default,,0,0,0,,{\an2\ko100}out{\ko100}line
+Comment: 0,0:00:00.00,0:00:00.05,Default,,0,0,0,,w2 capture 0 ms
+Comment: 0,0:00:00.25,0:00:00.30,Default,,0,0,0,,w2 capture 250 ms
+Comment: 0,0:00:00.75,0:00:00.80,Default,,0,0,0,,w2 capture 750 ms
+Comment: 0,0:00:01.50,0:00:01.55,Default,,0,0,0,,w2 capture 1500 ms
+Comment: 0,0:00:02.60,0:00:02.65,Default,,0,0,0,,w2 capture 2600 ms

@@ -1,0 +1,182 @@
+{
+  "host": "ruby",
+  "recordedAt": "2026-10-15T19:05:51.7369764+07:00",
+  "platform": "windows",
+  "recordedBy": "by hand in PowerShell (CIM/WMI, powercfg, MMDevices registry, nvidia-smi); no committed script",
+  "cpu": {
+    "model": "AMD Ryzen 5 5600 6-Core Processor",
+    "physicalCores": 6,
+    "logicalCores": 12,
+    "threadsPerCore": 2,
+    "baseMHz": 3501,
+    "l2KiB": 3072,
+    "l3KiB": 32768,
+    "virtualization": true
+  },
+  "board": "Gigabyte B450 AORUS ELITE",
+  "memory": {
+    "totalGiB": 31.92,
+    "modules": [
+      {
+        "capacityGiB": 8,
+        "configuredMTs": 3000,
+        "ratedMTs": 3000,
+        "partNumber": "CMU16GX4M2C3200C16"
+      },
+      {
+        "capacityGiB": 8,
+        "configuredMTs": 3000,
+        "ratedMTs": 3000,
+        "partNumber": "CMU16GX4M2C3200C16"
+      },
+      {
+        "capacityGiB": 8,
+        "configuredMTs": 3000,
+        "ratedMTs": 3000,
+        "partNumber": "CL17-17-17 D4-2400"
+      },
+      {
+        "capacityGiB": 8,
+        "configuredMTs": 3000,
+        "ratedMTs": 3000,
+        "partNumber": "Unknown"
+      }
+    ],
+    "note": "four 8 GiB modules of two kits at 3000 MT/s configured"
+  },
+  "storage": {
+    "disks": [
+      {
+        "name": "HS-SSD-FUTURE 1024G",
+        "mediaType": "SSD",
+        "bus": "NVMe",
+        "sizeGB": 954.0
+      },
+      {
+        "name": "ST6000VX0003-1ZH110",
+        "mediaType": "HDD",
+        "bus": "SATA",
+        "sizeGB": 5589.0
+      },
+      {
+        "name": "Seagate BarraCuda 510 SSD ZP250CM30001",
+        "mediaType": "SSD",
+        "bus": "NVMe",
+        "sizeGB": 233.0
+      },
+      {
+        "name": "WDC WD5000AAKX-001CA0",
+        "mediaType": "Unspecified",
+        "bus": "SATA",
+        "sizeGB": 466.0
+      }
+    ],
+    "systemAndRepository": "C: NTFS on Seagate BarraCuda 510 SSD ZP250CM30001 (NVMe); repository C:\\Users\\altqx\\work\\hikari, payload C:\\hw-test\\payload"
+  },
+  "gpu": {
+    "model": "NVIDIA GeForce GTX 1070 Ti",
+    "driverWddm": "32.0.15.8266",
+    "driverDate": "2026-06-09",
+    "nvidiaSmi": "NVIDIA GeForce GTX 1070 Ti, 582.66, 8192 MiB, 180.00 W",
+    "integratedPresent": false
+  },
+  "displays": [
+    {
+      "name": "LM30-E330C",
+      "device": "\\\\.\\DISPLAY1",
+      "primary": true,
+      "width": 2560,
+      "height": 1080,
+      "refreshHz": 144,
+      "scalePercent": 100
+    },
+    {
+      "name": "AOC 22E1W",
+      "device": "\\\\.\\DISPLAY2",
+      "primary": false,
+      "width": 1920,
+      "height": 1080,
+      "refreshHz": 60,
+      "scalePercent": 100,
+      "note": "set to 150 % for the D3 run, back to 100 % before H3"
+    }
+  ],
+  "os": {
+    "name": "Microsoft Windows 11 Pro",
+    "displayVersion": "26H2",
+    "build": "26300.9457",
+    "arch": "64-bit"
+  },
+  "graphicsBackend": {
+    "qtPlatform": "windows",
+    "sceneGraphBackend": "Qt default on Windows (D3D11 RHI); QSG_RHI_BACKEND not set"
+  },
+  "audio": {
+    "endpointsActive": [
+      "Speakers (Razer BlackShark V2 X USB)",
+      "22E1W (NVIDIA High Definition Audio, HDMI)"
+    ],
+    "endpointsInactive": [
+      "LM30-E330C (NVIDIA HDA)",
+      "Realtek Digital Output"
+    ],
+    "editorOutput": "PortAudio, WASAPI (default) or DirectSound (Options > Audio > Audio output)",
+    "generalPlayer": "Qt Multimedia (FFmpeg 7.1.5 backend, WASAPI sink)"
+  },
+  "power": {
+    "plan": "Balanced (381b4222-f694-41f0-9685-ff5bb260df2e)",
+    "maxProcessorStateAC": "100 %",
+    "acNote": "desktop on mains power; no battery"
+  },
+  "softwareBuild": {
+    "package": "hikarisub-qt-windows-payload, run 38686574527",
+    "commit": "3e2b145d3de0f2bf7aad077ed610c07e9b390a8c (ci/evidence-H2; qt d8d90b078 + W2 and decisions 49-53)",
+    "appVersion": "0.1.0-ci.29 (portable)",
+    "exeSha256": "d3276860dc8108a3439b43baa0685f201a5802fb888ae5ff3760e81744c84a00",
+    "mediaHelperSha256": "38a56586ddeb170ef4f8316ad2d3e1d6b493c24dac6ec1dfb89a91f4b3a11972",
+    "compiler": "MSVC 2022 x64 (CI, windows-x64-release)",
+    "qt": "6.11.2 (msvc2022_64)",
+    "qtMultimediaFfmpeg": "7.1.5 (avcodec-61.19.101, avformat-61.7.103, avutil-59.39.100)",
+    "ffmpegForFfms2": "7.1.2#5 (vcpkg override)",
+    "ffms2": "5.1.0-hikari-45d5f721",
+    "libass": "0.17.5-altqx-4f5ea436 (API 0x1705020; FreeType, HarfBuzz 14.5.0, FriBidi 1.0.17, DirectWrite font provider)",
+    "portaudio": "19.7#100",
+    "kddockwidgets": "2.4.1#101",
+    "luajit": "2026-09-08#3",
+    "vcpkgBaseline": "ee6a47dac031930715bea2e6dfb9ad60caaa5d83"
+  },
+  "referenceClass": {
+    "physicalCores": {
+      "reference": 4,
+      "host": 6,
+      "matches": false
+    },
+    "ramGiB": {
+      "reference": 8,
+      "host": 31.92,
+      "matches": false
+    },
+    "ssd": {
+      "reference": true,
+      "host": true,
+      "matches": true
+    },
+    "integratedGraphics": {
+      "reference": true,
+      "host": false,
+      "matches": false
+    },
+    "refresh60Hz": {
+      "reference": 60,
+      "host": [
+        144,
+        60
+      ],
+      "matches": false
+    }
+  },
+  "calibration": {
+    "status": "uncalibrated",
+    "note": "No measurement tooling calibration, presentation traces or A/V loopback capture are bound to this host; its results are observations."
+  }
+}

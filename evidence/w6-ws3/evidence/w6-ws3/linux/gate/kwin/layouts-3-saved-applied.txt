@@ -1,0 +1,56 @@
+# compositor windows
+hikarisub "episode.ass - HikariSub" 160,82 1280x836 output=Virtual-0 active=true fullscreen=false minimized=false type=0
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "episode.ass - HikariSub",
+   "id": "HikariSub",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800
+  }
+ ],
+ "panels": [
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 97,
+   "w": 640,
+   "h": 420
+  },
+  {
+   "name": "Line editor: episode.ass",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 97,
+   "w": 639,
+   "h": 420
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 561,
+   "w": 1280,
+   "h": 205
+  }
+ ],
+ "focus": null,
+ "focusPath": null,
+ "texts": {
+  "Line text": "first",
+  "Start": "0:00:01.00",
+  "End": "0:00:02.00"
+ },
+ "labels": [
+  "Video times"
+ ]
+}

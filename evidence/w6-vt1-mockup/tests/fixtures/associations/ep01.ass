@@ -1,0 +1,9 @@
+[Script Info]
+ScriptType: v4.00+
+Video File: ep01.mkv
+Audio File: audio/ep01.flac
+Keyframes File: ep01_keyframes.txt
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first

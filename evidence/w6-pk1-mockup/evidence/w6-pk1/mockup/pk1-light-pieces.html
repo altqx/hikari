@@ -1,0 +1,152 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E5E9EC;color:#202832;font:13px 'Liberation Sans',Arial,sans-serif;padding:24px;width:1328px}
+.acc{color:#145C4C}
+.ic{display:block;flex:none}
+h1{font-size:18px;font-weight:600;margin:0 0 8px}
+h2{font-size:13px;font-weight:650;margin:28px 0 10px}
+p.note{color:#526170;font-size:12px;margin:0 0 8px;max-width:1280px;line-height:1.45}
+.cap{font-size:11px;color:#526170;margin:8px 0 0;max-width:520px;line-height:1.4}
+.row{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.col{display:flex;flex-direction:column}
+.notes{background:#EDF0F3;outline:1px solid #AAB5BE;padding:12px 16px;width:1280px;line-height:1.5}
+.notes td{padding:3px 14px 3px 0;vertical-align:top}
+.notes td:first-child{font-weight:650;white-space:nowrap}
+
+/* main window backdrop */
+.app{position:relative;width:1280px;height:800px;background:url(shots/body-light.png) 0 0 no-repeat;outline:1px solid #AAB5BE;margin-top:12px}
+.barslot{position:absolute;left:0;top:64px;width:1280px}
+.stack{position:absolute;right:12px;bottom:34px;width:360px;display:flex;flex-direction:column;gap:8px}
+
+/* DG1 window */
+.dlg{background:#F9FAFB;color:#202832;display:flex;flex-direction:column;outline:1px solid #AAB5BE;
+     box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.dtb{display:flex;align-items:center;height:32px;flex:none;background:#F9FAFB;}
+.dtitle{flex:1;min-width:0;padding-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wbs{display:flex;margin-left:auto;flex:none}
+.wb{display:flex;align-items:center;justify-content:center;width:46px;height:32px;color:#202832}
+.dbody{padding:12px 24px 0;display:flex;flex-direction:column}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;padding:24px}
+.dfoot .lead,.pfoot .lead{margin-right:auto}
+
+/* controls */
+.b{display:inline-flex;align-items:center;justify-content:center;min-width:80px;height:30px;padding:0 10px;border-radius:1px;
+   background:#EDF0F3;border:1px solid #AAB5BE;color:#202832;white-space:nowrap;flex:none}
+.b.sm{min-width:0;height:26px;padding:0 10px}
+.b.on{background:#D6EBE4;border-color:#145C4C}
+.b.flat{background:none;border-color:transparent;color:#145C4C;padding:0 6px;height:24px}
+.b.pri{background:#145C4C;border-color:#145C4C;color:#FFFFFF;font-weight:650}
+.b.dng{color:#A51F31;border-color:#A51F31}
+.ring{outline:1px solid #202832;outline-offset:1px}
+.qb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:1px;color:#202832}
+.cb{display:flex;align-items:center;gap:8px;height:24px}
+.box{width:16px;height:16px;border:1px solid #76828D;background:#FFFFFF;border-radius:1px;display:flex;
+     align-items:center;justify-content:center;flex:none}
+.box.on{background:#145C4C;border-color:#145C4C;color:#FFFFFF}
+.fld{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:#FFFFFF;border:1px solid #AAB5BE;
+     border-radius:1px;color:#202832;min-width:0}
+.fld.wide{display:flex;width:100%}
+.fld.focus{border-color:#145C4C;box-shadow:inset 0 0 0 1px #145C4C}
+.fld.ph .ftext{color:#526170}
+.ftext{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fic,.ftail{color:#526170}
+.ftail{display:flex;margin-left:auto}
+.frow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.flabel{width:56px;color:#202832;flex:none}
+.seg{display:inline-flex;border:1px solid #AAB5BE;border-radius:1px;overflow:hidden;flex:none}
+.seg span{padding:0 10px;height:26px;display:flex;align-items:center;background:#EDF0F3;border-left:1px solid #AAB5BE}
+.seg span:first-child{border-left:none}
+.seg span.on{background:#D6EBE4;color:#202832;box-shadow:inset 0 -2px #145C4C;font-weight:650}
+.seg.sm span{height:24px;padding:0 8px}
+.sbar{position:absolute;right:3px;width:4px;border-radius:2px;background:#76828D;opacity:.8}
+.big{color:#202832}
+.warn,.warn .acc{color:#8A5A00}
+.err,.err .acc{color:#A51F31}
+.lnk2{color:#145C4C;cursor:pointer}
+
+/* message box */
+.mb{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+.mbtext{display:flex;flex-direction:column;gap:6px;padding-top:4px;min-width:0}
+.mbmain{font-size:14px;font-weight:650;line-height:1.4}
+.mbdetail{color:#526170;line-height:1.45}
+.mbcheck{margin-top:8px}
+.disc{display:flex;align-items:center;gap:4px;margin:14px 0 0 48px;color:#202832}
+.dets{position:relative;margin:6px 0 0 48px;background:#FFFFFF;outline:1px solid #AAB5BE;padding:8px 34px 8px 10px}
+.dets pre{font:12px 'Liberation Mono',Consolas,monospace;color:#202832;white-space:pre-wrap}
+.dets .qb{position:absolute;right:6px;top:6px}
+
+/* notices */
+.toast{display:flex;gap:10px;align-items:flex-start;padding:10px 8px 10px 12px;background:#F9FAFB;outline:1px solid #AAB5BE;
+       border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.28);color:#202832}
+.toast.hover{background:#EDF0F3}
+.toast>.ic{margin-top:1px}
+.tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ttitle{font-weight:650;line-height:1.35}
+.ttext{color:#526170;line-height:1.4}
+.tacts{display:flex;gap:4px;margin:4px 0 0 -6px}
+.tx{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#526170;flex:none}
+.ibar{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 10px;background:#EDF0F3;
+      box-shadow:inset 0 -1px #AAB5BE,inset 0 1px #AAB5BE;color:#202832}
+.ibt{flex:1}
+
+/* popover */
+.pop{position:relative;background:#F9FAFB;outline:1px solid #AAB5BE;border-radius:4px;padding:12px;
+     box-shadow:0 6px 22px rgba(0,0,0,.28);color:#202832;z-index:2}
+.ptitle{font-weight:650;margin-bottom:8px}
+.pfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.pfoot.wrap{flex-wrap:wrap;justify-content:flex-start}
+.anchorbox{position:relative}
+
+/* clash review */
+.allrow{display:flex;align-items:center;gap:10px;margin-top:14px}
+.ctable{margin-top:10px;outline:1px solid #AAB5BE;background:#FFFFFF}
+.chead,.crow2{display:flex;align-items:center;gap:10px;padding:0 10px;min-height:38px}
+.chead{min-height:28px;color:#526170;font-size:12px;box-shadow:inset 0 -1px #AAB5BE;background:#EDF0F3}
+.crow2+.crow2{box-shadow:inset 0 1px #AAB5BE}
+.crow2 .cname{font-weight:650}
+.cname{width:110px;flex:none}
+.cdiff{width:170px;flex:none;color:#526170}
+.cact{flex:1;display:flex;gap:8px;align-items:center}
+
+/* choose styles */
+.slist{position:relative;margin-top:8px;height:186px;overflow:hidden;outline:1px solid #AAB5BE;background:#FFFFFF;padding:2px 0}
+.srow{display:flex;align-items:center;gap:8px;height:22px;padding:0 14px 0 8px}
+.srow.cur{background:#D6EBE4}
+.sname{flex:1}
+.scount{color:#526170;font-size:12px}
+.sfoot{display:flex;gap:14px;align-items:center;margin-top:10px}
+
+/* hotkeys */
+.htable{outline:1px solid #AAB5BE;background:#FFFFFF}
+.hhead,.hrow{display:grid;grid-template-columns:1fr 130px;padding:0 10px;height:26px;align-items:center}
+.hhead{color:#526170;font-size:12px;background:#EDF0F3;box-shadow:inset 0 -1px #AAB5BE}
+.hrow.sel{background:#D6EBE4}
+.keys{color:#526170}
+.capture{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;background:#FFFFFF;
+         border:1px solid #AAB5BE;border-radius:1px}
+.capture.focus{border-color:#145C4C;box-shadow:inset 0 0 0 1px #145C4C}
+.wait{color:#526170}
+.kc{display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid #76828D;border-bottom-width:2px;
+    border-radius:3px;background:#EDF0F3;font-weight:650}
+.plus{color:#526170}
+.conf{display:flex;gap:8px;align-items:flex-start;margin-top:10px;line-height:1.4}
+
+/* lists */
+.llist{margin-top:10px;outline:1px solid #AAB5BE;background:#FFFFFF;padding:2px 0}
+.llist.pl{margin-top:0}
+.lrow{display:flex;gap:10px;align-items:center;height:28px;padding:0 10px}
+.lrow.cur{background:#D6EBE4;box-shadow:inset 2px 0 #145C4C}
+.lnum{color:#526170;width:12px}
+.lmeta{color:#526170;margin-left:auto}
+.editor{height:30px;display:flex;align-items:center;padding:0 10px;background:#FFFFFF;border:1px solid #AAB5BE}
+.miss{text-decoration:underline wavy #A51F31;text-underline-offset:3px;background:#D6EBE4}
+
+/* calendar */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calm{font-weight:650}
+.cal{display:grid;grid-template-columns:repeat(7,32px);row-gap:2px}
+.dh{height:24px;display:flex;align-items:center;justify-content:center;color:#526170;font-size:11px}
+.dd{height:28px;display:flex;align-items:center;justify-content:center;border-radius:1px}
+.dd.out{color:#74808B}
+.dd.sel{background:#145C4C;color:#FFFFFF;font-weight:650;outline:1px solid #202832;outline-offset:1px}
+</style></head><body><svg width="0" height="0" style="position:absolute"><defs><symbol id="i-notice-error" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z"/><g class="acc"><path d="M8 4.75v4"/><circle cx="8" cy="11.25" r=".75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-calendar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="12" rx="1"/><path d="M1.5 6h13M5 1v3M11 1v3"/><g class="acc"><path d="M4.5 9h1M7.5 9h1M10.5 9h1M4.5 11.5h1M7.5 11.5h1"/></g></g></symbol><symbol id="i-chevron-down" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5l3.5 3.5 3.5-3.5"/></g></symbol><symbol id="i-chevron-right" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5l3.5 3.5-3.5 3.5"/></g></symbol><symbol id="i-chevron-left" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5l-3.5 3.5 3.5 3.5"/></g></symbol><symbol id="i-check" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></g></symbol><symbol id="i-about" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4"/><circle cx="8" cy="5" r="0.75" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-notice-warning" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></g></symbol><symbol id="i-tab-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></g></symbol><symbol id="i-log" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M7 5.5h5M7 8h4M7 10.5h5"/><g class="acc"><path d="M4 5.5h1.5M4 8h1.5M4 10.5h1.5"/></g></g></symbol><symbol id="i-styles" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z"/><g class="acc"><circle cx="4.75" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="6.75" cy="4.5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="4.5" r="1" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-hotkeys" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></g></symbol><symbol id="i-open-audio" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 11.5V2.5l4 1.5"/><circle cx="4.5" cy="11.5" r="2" fill="currentColor" stroke="none"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></g></symbol><symbol id="i-spellchecker" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></g></symbol><symbol id="i-remove-temporary" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M4.5 3.5V2h3v1.5"/><path d="M2.5 4.5l.75 9a1 1 0 0 0 1 1H8M9.5 4.5l-.25 3.5"/><path d="M5 6.5v5M7 6.5v3"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-check-updates" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></g></symbol><symbol id="i-window-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></g></symbol><symbol id="i-window-maximize" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="9" height="9" rx="0.5"/></g></symbol><symbol id="i-edit-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2"/><rect x="2.5" y="4.5" width="8" height="10" rx="1"/></g></symbol><symbol id="i-save" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h7v4"/></g></symbol><symbol id="i-menu-more" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></g></symbol></defs></svg><h1>PK1 popup kit: the shared pieces (Light)</h1><p class="note">Built once and used everywhere; the copies named under each one are replaced in this card. Style names, files, keys and dates are examples.</p><h2>Clash review (a window on DG1’s frame)</h2><div class="row"><div class="col"><div class="dlg" style="width:720px;"><div class="dtb"><span class="dtitle">Load styles from catalog</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-maximize"/></svg></span><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mbmain" style="margin-top:6px">3 of 8 styles already exist in Episode 03.ass.</div><div class="mbdetail">The other 5 are added. Two more are the same as the ones in the file and are left as they are.</div><div class="allrow"><span>All:</span><span class="seg sm"><span class="">Replace</span><span class="">Rename</span><span class="">Skip</span></span></div><div class="ctable"><div class="chead"><span class="cname">Style</span><span class="cdiff">Difference</span><span class="cact">Action</span></div><div class="crow2"><span class="cname">Default</span><span class="cdiff">Font, size and outline differ</span><span class="cact"><span class="seg sm"><span class="on">Replace</span><span class="">Rename</span><span class="">Skip</span></span></span></div><div class="crow2"><span class="cname">Song romaji</span><span class="cdiff">Colours differ</span><span class="cact"><span class="seg sm"><span class="">Replace</span><span class="on">Rename</span><span class="">Skip</span></span><span class="fld focus" style="width:168px;"><span class="ftext">Song romaji (catalog)</span></span></span></div><div class="crow2"><span class="cname">Sign</span><span class="cdiff">Alignment differs</span><span class="cact"><span class="seg sm"><span class="">Replace</span><span class="">Rename</span><span class="on">Skip</span></span></span></div></div></div><div class="dfoot "><span class="b pri ring">Load 6 styles</span><span class="b">Cancel</span></div></div></div><p class="cap" style="max-width:480px;margin-top:0">Replaces the chained “Yes to all / Yes / No / Cancel” questions of style copy and load, catalogs and shape names. One row per clash, each with its own action; “All” sets every row. Rename suggests a free name and lets it be edited. Clashes that are the same both sides are not listed. The button counts what will be written.</p></div><h2>Choose styles (popover)</h2><p class="note">Replaces the four copies: Find and replace, Select lines, Shift times and the Style manager’s “Choose styles”.</p><div class="row"><div class="col"><div class="col"><div class="frow"><span class="flabel">Styles</span><span class="fld" style="width:190px;"><span class="ftext">Default,Sign,Song romaji</span></span><span class="b sm on">Choose…</span></div><div style="margin-left:192px"><div class="pop " style="width:260px;margin-top:4px"><span class="fld wide ph" style=""><svg class="ic fic" width="16" height="16"><use href="#i-search"/></svg><span class="ftext">Search styles</span></span><div class="slist"><div class="srow"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="sname">Default</span><span class="scount">214</span></div><div class="srow"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="sname">Sign</span><span class="scount">9</span></div><div class="srow cur"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="sname">Song romaji</span><span class="scount">31</span></div><div class="srow"><span class="box"></span><span class="sname">Song English</span><span class="scount">31</span></div><div class="srow"><span class="box"></span><span class="sname">Notes</span><span class="scount">4</span></div><div class="srow"><span class="box"></span><span class="sname">Title</span><span class="scount">1</span></div><div class="srow"><span class="box"></span><span class="sname">Flashback</span><span class="scount">22</span></div><div class="srow"><span class="box"></span><span class="sname">Kenta thoughts</span><span class="scount">6</span></div><span class="sbar" style="top:4px;height:150px"></span></div><div class="sfoot"><span class="lnk2">Select all</span><span class="lnk2">None</span><span class="scount" style="margin-left:auto">3 of 12 selected</span></div></div></div></div><p class="cap">Search, scroll, Select all / None, the count. Each style shows how many lines use it. A tick changes the field at once; Esc puts the field back.</p></div><div class="col"><div class="col"><div class="frow"><span class="flabel">Styles</span><span class="fld" style="width:190px;"><span class="ftext">Default,Sign,Song romaji</span></span><span class="b sm on">Choose…</span></div><div style="margin-left:192px"><div class="pop " style="width:260px;margin-top:4px"><span class="fld wide focus" style=""><svg class="ic fic" width="16" height="16"><use href="#i-search"/></svg><span class="ftext">s</span></span><div class="slist"><div class="srow"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="sname">Sign</span><span class="scount">9</span></div><div class="srow"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="sname">Song romaji</span><span class="scount">31</span></div><div class="srow"><span class="box"></span><span class="sname">Song English</span><span class="scount">31</span></div><div class="srow"><span class="box"></span><span class="sname">Notes</span><span class="scount">4</span></div><div class="srow"><span class="box"></span><span class="sname">Flashback</span><span class="scount">22</span></div><div class="srow"><span class="box"></span><span class="sname">Kenta thoughts</span><span class="scount">6</span></div><div class="srow"><span class="box"></span><span class="sname">Station board</span><span class="scount">3</span></div><div class="srow"><span class="box"></span><span class="sname">Credits</span><span class="scount">18</span></div><div class="srow"><span class="box"></span><span class="sname">Sign – blue</span><span class="scount">2</span></div></div><div class="sfoot"><span class="lnk2">Select all</span><span class="lnk2">None</span><span class="scount" style="margin-left:auto">3 of 12 selected</span></div></div></div></div><p class="cap">Typing filters the list (here “s”); Select all and None act on the rows shown.</p></div></div><h2>Hotkey capture (popover from the hotkey list)</h2><p class="note">Replaces Main.qml’s hotkeyCapture (Automation hotkeys) and HotkeyMapping.qml (Settings › Hotkeys).</p><div class="row"><div class="col"><div class="col" style="width:340px"><div class="htable"><div class="hhead"><span>Command</span><span>Keys</span></div><div class="hrow"><span>Save</span><span class="keys">Ctrl+S</span></div><div class="hrow"><span>Save as</span><span class="keys">Ctrl+Shift+S</span></div><div class="hrow sel"><span>Save all</span><span class="keys"></span></div><div class="hrow"><span>Close</span><span class="keys">Ctrl+W</span></div></div><div style="margin-left:24px"><div class="pop " style="width:312px;margin-top:2px"><div class="ptitle">Keys for “Save all”</div><div class="capture focus"><span class="wait">Press the keys…</span></div><div class="frow"><span class="flabel">In</span><span class="fld" style="width:180px;"><span class="ftext">Every window</span><span class="ftail"><svg class="ic " width="14" height="14"><use href="#i-chevron-down"/></svg></span></span></div><div class="pfoot"><span class="b lead sm">Clear</span><span class="b sm">Cancel</span></div></div></div></div><p class="cap">Waiting for keys. Esc cancels, so Esc alone cannot be a hotkey (as legacy). Clear removes the keys. “In” is the window the hotkey works in, where the command has a choice.</p></div><div class="col"><div class="col" style="width:340px"><div class="htable"><div class="hhead"><span>Command</span><span>Keys</span></div><div class="hrow"><span>Save</span><span class="keys">Ctrl+S</span></div><div class="hrow"><span>Save as</span><span class="keys">Ctrl+Shift+S</span></div><div class="hrow sel"><span>Save all</span><span class="keys"></span></div><div class="hrow"><span>Close</span><span class="keys">Ctrl+W</span></div></div><div style="margin-left:24px"><div class="pop " style="width:312px;margin-top:2px"><div class="ptitle">Keys for “Save all”</div><div class="capture focus"><span class="kc">Ctrl</span><span class="plus">+</span><span class="kc">S</span></div><div class="conf"><svg class="ic warn" width="16" height="16"><use href="#i-notice-warning"/></svg><span>Ctrl+S is already used by <b>Save</b>.</span></div><div class="pfoot wrap"><span class="b pri ring sm">Swap with Save</span><span class="b sm">Take it from Save</span><span class="b sm">Keep both</span></div></div></div></div><p class="cap">The keys are taken: the choice is made here, with buttons named for it (legacy’s “Switch hotkeys / Delete hotkey / Set anyway” warning). Pressing other keys starts again.</p></div></div><h2>List chooser</h2><p class="note">Replaces the three 220 × 160 list dialogs: audio track, MKV subtitle track and fix suggestions.</p><div class="row"><div class="col"><div class="dlg" style="width:400px;"><div class="dtb"><span class="dtitle">Choose the audio track</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mbmain" style="margin-top:4px">Episode 03.mkv has 3 audio tracks.</div><div class="llist"><div class="lrow cur"><span class="lnum">1</span><span>Japanese</span><span class="lmeta">AAC 2.0 · default</span></div><div class="lrow"><span class="lnum">2</span><span>English</span><span class="lmeta">AAC 2.0</span></div><div class="lrow"><span class="lnum">3</span><span>Japanese</span><span class="lmeta">Commentary · Opus 2.0</span></div></div></div><div class="dfoot "><span class="b pri ring">Open</span><span class="b">Cancel</span></div></div><p class="cap">As a compact window when nothing on screen asked for it (opening a file with several audio or subtitle tracks). Rows carry the track’s language and format; double-click or Enter opens.</p></div><div class="col"><div class="col" style="width:400px"><div class="editor"><span>We’ll meet again at the <span class="miss">statoin</span>,\NI promise.</span></div><div style="margin-left:150px"><div class="pop " style="width:180px;margin-top:2px"><div class="llist pl"><div class="lrow cur"><span>station</span></div><div class="lrow"><span>stations</span></div><div class="lrow"><span>stating</span></div><div class="lrow"><span>statin</span></div></div></div></div></div><p class="cap">As a popover at the word for spelling suggestions. Enter or a click replaces the word.</p></div></div><h2>Date picker (a date field with a calendar popover)</h2><div class="row"><div class="col"><div class="col"><div class="frow"><span class="flabel" style="width:auto">Remove auto saves older than</span><span class="fld focus" style="width:128px;"><span class="ftext">21/09/2026</span><span class="ftail"><svg class="ic " width="16" height="16"><use href="#i-calendar"/></svg></span></span></div><div style="margin-left:186px"><div class="pop " style="width:252px;margin-top:2px"><div class="calhead"><span class="qb"><svg class="ic " width="14" height="14"><use href="#i-chevron-left"/></svg></span><span class="calm">September 2026</span><span class="qb"><svg class="ic " width="14" height="14"><use href="#i-chevron-right"/></svg></span></div><div class="cal"><span class="dh">Mo</span><span class="dh">Tu</span><span class="dh">We</span><span class="dh">Th</span><span class="dh">Fr</span><span class="dh">Sa</span><span class="dh">Su</span><span class="dd out">31</span><span class="dd">1</span><span class="dd">2</span><span class="dd">3</span><span class="dd">4</span><span class="dd">5</span><span class="dd">6</span><span class="dd">7</span><span class="dd">8</span><span class="dd">9</span><span class="dd">10</span><span class="dd">11</span><span class="dd">12</span><span class="dd">13</span><span class="dd">14</span><span class="dd">15</span><span class="dd">16</span><span class="dd">17</span><span class="dd">18</span><span class="dd">19</span><span class="dd">20</span><span class="dd sel">21</span><span class="dd">22</span><span class="dd">23</span><span class="dd">24</span><span class="dd">25</span><span class="dd">26</span><span class="dd">27</span><span class="dd">28</span><span class="dd">29</span><span class="dd">30</span><span class="dd out">1</span><span class="dd out">2</span><span class="dd out">3</span><span class="dd out">4</span></div><div class="sfoot"><span class="lnk2">A week ago</span><span class="lnk2">A month ago</span><span class="lnk2" style="margin-left:auto">Today</span></div></div></div></div></div><p class="cap" style="max-width:420px;margin-top:40px">The date is typed in the system’s short date format, or picked: arrows move the day, Page Up and Page Down the month. The week starts on the system’s first day. Shortcuts for the common choices. Replaces the day / month / year boxes in Remove temporary files.</p></div></body></html>

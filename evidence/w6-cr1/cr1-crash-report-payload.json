@@ -1,0 +1,84 @@
+[
+    {
+        "distinct_id": "0a89ded5-7061-4965-8d52-a83cbae1ba8a",
+        "event": "$exception",
+        "properties": {
+            "$exception_level": "fatal",
+            "$exception_list": [
+                {
+                    "mechanism": {
+                        "handled": false,
+                        "type": "signal"
+                    },
+                    "stacktrace": {
+                        "frames": [
+                            {
+                                "module": "hikarisub",
+                                "offset": "0x1f3a2c",
+                                "platform": "native"
+                            },
+                            {
+                                "module": "libQt6Core.so.6",
+                                "offset": "0x2c41b8",
+                                "platform": "native"
+                            },
+                            {
+                                "module": "other",
+                                "offset": "0x4d2a0",
+                                "platform": "native"
+                            }
+                        ],
+                        "type": "raw"
+                    },
+                    "type": "SIGSEGV",
+                    "value": "SIGSEGV"
+                }
+            ],
+            "$geoip_disable": true,
+            "$lib": "hikarisub",
+            "$lib_version": "0.1.0-beta.1",
+            "$process_person_profile": false,
+            "crashed_version": "0.1.0-beta.1",
+            "distinct_id": "0a89ded5-7061-4965-8d52-a83cbae1ba8a",
+            "report_id": "d87ec5d6-0373-47cf-93b6-7f994acd1afb"
+        },
+        "timestamp": "2026-10-28T10:59:12Z"
+    },
+    {
+        "distinct_id": "0a89ded5-7061-4965-8d52-a83cbae1ba8a",
+        "event": "crash_report",
+        "properties": {
+            "$geoip_disable": true,
+            "$lib": "hikarisub",
+            "$lib_version": "0.1.0-beta.1",
+            "$os": "linux",
+            "$os_version": "4.0.0.r7235.g967bbdd",
+            "$process_person_profile": false,
+            "arch": "x86_64",
+            "channel": "prerelease",
+            "distinct_id": "0a89ded5-7061-4965-8d52-a83cbae1ba8a",
+            "kind": "crash",
+            "log": "",
+            "note": "I had just switched to the Perspective tool.",
+            "package": "appimage",
+            "qt_version": "6.11.2",
+            "report_id": "d87ec5d6-0373-47cf-93b6-7f994acd1afb",
+            "settings": {
+                "always send crash reports": "off",
+                "audio output": "0",
+                "autosave": "every 1 edits, keep 3",
+                "grammar check": "0",
+                "language": "system",
+                "spellchecker": "on, en_US",
+                "subtitle renderer": "default",
+                "theme": "dark",
+                "theme follows system": "on",
+                "title bar": "auto",
+                "usage data": "off",
+                "video player": "0"
+            },
+            "version": "0.1.0-beta.1"
+        },
+        "timestamp": "2026-10-28T10:59:12Z"
+    }
+]

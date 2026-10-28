@@ -1,0 +1,65 @@
+# W2: the winix task that runs the VSFilterMod tests must set every HIKARI_*
+# variable those tests read with getenv; a variable it leaves unset can turn
+# its tests into skips (HIKARI_VSFILTERMOD_CSRI skipped the VSFilterMod
+# overlay test until the task set it).
+#
+#   cmake -DTASKS=<winix.yaml> -DTASK=<task name> -DSOURCE=<test source>
+#         [-DDROP=<text removed from the script first, for the control>] -P vsfilter_task_environment.cmake
+foreach(var TASKS TASK SOURCE)
+    if(NOT DEFINED ${var})
+        message(FATAL_ERROR "vsfilter_task_environment: ${var} is required")
+    endif()
+endforeach()
+
+file(READ "${SOURCE}" source)
+string(REGEX MATCHALL "getenv\\(\"HIKARI_[A-Z0-9_]+\"\\)" reads "${source}")
+set(names)
+foreach(read IN LISTS reads)
+    string(REGEX REPLACE "getenv\\(\"(HIKARI_[A-Z0-9_]+)\"\\)" "\\1" name "${read}")
+    list(APPEND names "${name}")
+endforeach()
+list(REMOVE_DUPLICATES names)
+if(NOT names)
+    message(FATAL_ERROR "FAIL: ${SOURCE} reads no HIKARI_* variable")
+endif()
+
+# The task's script: the first "script:" line after "  <TASK>:".
+file(STRINGS "${TASKS}" lines)
+set(in_task FALSE)
+set(script)
+foreach(line IN LISTS lines)
+    if(line MATCHES "^  ${TASK}:[ ]*$")
+        set(in_task TRUE)
+    elseif(in_task AND line MATCHES "^  [^ #]")
+        break()
+    elseif(in_task AND line MATCHES "^    script:(.*)$")
+        set(script "${CMAKE_MATCH_1}")
+        break()
+    endif()
+endforeach()
+if(script STREQUAL "")
+    message(FATAL_ERROR "FAIL: ${TASKS} has no script for the task ${TASK}")
+endif()
+if(DEFINED DROP)
+    string(FIND "${script}" "${DROP}" at)
+    if(at EQUAL -1)
+        # Exit 0, so the control (WILL_FAIL) fails rather than failing for the wrong reason.
+        message(STATUS "the task ${TASK} no longer contains the text the control drops: ${DROP}")
+        return()
+    endif()
+    string(REPLACE "${DROP}" "" script "${script}")
+endif()
+
+set(missing)
+foreach(name IN LISTS names)
+    string(FIND "${script}" "$env:${name} =" at)
+    if(at EQUAL -1)
+        list(APPEND missing "${name}")
+    endif()
+endforeach()
+if(missing)
+    string(REPLACE ";" ", " missing "${missing}")
+    message(FATAL_ERROR "FAIL: the task ${TASK} does not set ${missing}, which ${SOURCE} reads")
+endif()
+string(REPLACE ";" ", " names "${names}")
+message(STATUS "PASS: the task ${TASK} sets ${names}")

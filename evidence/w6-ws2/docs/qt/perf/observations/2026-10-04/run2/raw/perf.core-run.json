@@ -1,0 +1,10 @@
+{
+  "name": "perf.core",
+  "binary": "out/perfbin/hikari_core_perf",
+  "sha256": "30c1ff3213d849fc392c2abff4b17990ea1b2e2a2e77ff67dbc578346e8c4638",
+  "builtAt": "2026-10-04T11:51:10+07:00",
+  "started": "2026-10-04T14:07:26,992518024+07:00",
+  "ended": "2026-10-04T14:08:31,629736987+07:00",
+  "exitCode": 0,
+  "pid": 2865164
+}

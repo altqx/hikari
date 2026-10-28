@@ -1,0 +1,2001 @@
+{
+ "schema": 1,
+ "legacy_commit": "20d647c4c769ab7f5d383cf3c1c33f03876a94e9",
+ "package": "HikariSub-0.0.1-rc.1-windows-x64.zip",
+ "release": "v0.0.1-rc.1",
+ "package_sha256": "20a1b0fa164026522feab399cef521242203c6a1adaced0e6dddd3cb315e9a1e",
+ "probe_sha256": "45c417b6dcb5f5b305fbf5c4f975f216efeecc815817aa38e8f8d70b22337a82",
+ "host": "windows (Winix VM dev, Windows build 26200)",
+ "captured_utc": "2026-10-04T10:08:59Z",
+ "cases": [
+  {
+   "id": "S3-automation",
+   "route": "automation",
+   "observations": [
+    {
+     "part": "bundled-autoload-startup",
+     "autoload_scripts": [
+      "a-mo.Aegisub-Motion.moon",
+      "BezierToText.lua",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "karaoke-auto-leadin.lua",
+      "kara-templater.lua",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "status": "captured",
+     "popups": [],
+     "main_window": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+     "screenshot": "screens/automation-bundled-autoload.png"
+    },
+    {
+     "part": "probe",
+     "probe_sha256": "45c417b6dcb5f5b305fbf5c4f975f216efeecc815817aa38e8f8d70b22337a82",
+     "corpus": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "status": "incomplete",
+     "steps": [
+      {
+       "case": "defaults-ok",
+       "macro": 0,
+       "keys": [
+        "Return"
+       ],
+       "status": "timeout",
+       "hotkey": "Ctrl+Shift+F1",
+       "hotkey_reply": {
+        "ok": true
+       },
+       "dialog_windows": [],
+       "dialog_screenshot": "screens/automation-defaults-ok-dialog.png",
+       "keys_sent": [
+        {
+         "chord": "Return",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "windows_after": [],
+       "responding_after": false,
+       "process_after": [
+        "4296 responding=False session=1 probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ],
+       "screenshot": "screens/automation-defaults-ok.png",
+       "thread_states": [
+        "pid 4296 responding=False",
+        "thread 5292 Wait UserRequest",
+        "thread 6140 Wait UserRequest",
+        "thread 8788 Wait EventPairLow",
+        "thread 3100 Wait EventPairLow",
+        "thread 9252 Wait UserRequest",
+        "thread 2180 Wait EventPairLow",
+        "thread 8820 Wait EventPairLow",
+        "thread 4640 Wait EventPairLow",
+        "thread 4908 Wait EventPairLow",
+        "thread 9284 Wait EventPairLow",
+        "thread 3584 Wait UserRequest",
+        "thread 4928 Wait UserRequest",
+        "cdb not found"
+       ]
+      },
+      {
+       "case": "defaults-escape",
+       "macro": 1,
+       "keys": [
+        "Escape"
+       ],
+       "status": "timeout",
+       "hotkey": "Ctrl+Shift+F2",
+       "fresh_launch": true,
+       "hotkey_reply": {
+        "ok": true
+       },
+       "dialog_windows": [],
+       "dialog_screenshot": "screens/automation-defaults-escape-dialog.png",
+       "keys_sent": [
+        {
+         "chord": "Escape",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "windows_after": [],
+       "responding_after": false,
+       "process_after": [
+        "7392 responding=False session=1 probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ],
+       "screenshot": "screens/automation-defaults-escape.png",
+       "thread_states": [
+        "pid 7392 responding=False",
+        "thread 4868 Wait UserRequest",
+        "thread 1788 Wait UserRequest",
+        "thread 4540 Wait EventPairLow",
+        "thread 5480 Wait UserRequest",
+        "thread 6068 Wait EventPairLow",
+        "thread 828 Wait EventPairLow",
+        "thread 5036 Wait UserRequest",
+        "thread 9660 Wait UserRequest",
+        "thread 2576 Wait EventPairLow",
+        "cdb not found"
+       ]
+      },
+      {
+       "case": "buttons-return",
+       "macro": 2,
+       "keys": [
+        "Return"
+       ],
+       "status": "timeout",
+       "hotkey": "Ctrl+Shift+F3",
+       "fresh_launch": true,
+       "hotkey_reply": {
+        "ok": true
+       },
+       "dialog_windows": [],
+       "dialog_screenshot": "screens/automation-buttons-return-dialog.png",
+       "keys_sent": [
+        {
+         "chord": "Return",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "windows_after": [],
+       "responding_after": false,
+       "process_after": [
+        "7700 responding=False session=1 probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ],
+       "screenshot": "screens/automation-buttons-return.png",
+       "thread_states": [
+        "pid 7700 responding=False",
+        "thread 6492 Wait UserRequest",
+        "thread 10040 Wait UserRequest",
+        "thread 5608 Wait EventPairLow",
+        "thread 8280 Wait UserRequest",
+        "thread 240 Wait EventPairLow",
+        "thread 7416 Wait EventPairLow",
+        "thread 9592 Wait UserRequest",
+        "thread 3144 Wait UserRequest",
+        "thread 9236 Wait EventPairLow",
+        "cdb not found"
+       ]
+      },
+      {
+       "case": "buttons-escape",
+       "macro": 3,
+       "keys": [
+        "Escape"
+       ],
+       "status": "timeout",
+       "hotkey": "Ctrl+Shift+F4",
+       "fresh_launch": true,
+       "hotkey_reply": {
+        "ok": true
+       },
+       "dialog_windows": [],
+       "dialog_screenshot": "screens/automation-buttons-escape-dialog.png",
+       "keys_sent": [
+        {
+         "chord": "Escape",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "windows_after": [],
+       "responding_after": false,
+       "process_after": [
+        "2296 responding=False session=1 probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ],
+       "screenshot": "screens/automation-buttons-escape.png",
+       "thread_states": [
+        "pid 2296 responding=False",
+        "thread 7964 Wait UserRequest",
+        "thread 6528 Wait UserRequest",
+        "thread 4908 Wait EventPairLow",
+        "thread 8168 Wait UserRequest",
+        "thread 10028 Wait EventPairLow",
+        "thread 6724 Wait EventPairLow",
+        "thread 4932 Wait UserRequest",
+        "thread 9344 Wait UserRequest",
+        "cdb not found"
+       ]
+      },
+      {
+       "case": "button-id-unknown",
+       "macro": 4,
+       "keys": [
+        "Return"
+       ],
+       "status": "timeout",
+       "hotkey": "Ctrl+Shift+F5",
+       "fresh_launch": true,
+       "hotkey_reply": {
+        "ok": true
+       },
+       "dialog_windows": [],
+       "dialog_screenshot": "screens/automation-button-id-unknown-dialog.png",
+       "keys_sent": [
+        {
+         "chord": "Return",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "windows_after": [],
+       "responding_after": false,
+       "process_after": [
+        "2108 responding=False session=1 probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ],
+       "screenshot": "screens/automation-button-id-unknown.png",
+       "thread_states": [
+        "pid 2108 responding=False",
+        "thread 1020 Wait UserRequest",
+        "thread 4612 Wait UserRequest",
+        "thread 252 Wait EventPairLow",
+        "thread 7808 Wait EventPairLow",
+        "thread 9196 Wait UserRequest",
+        "thread 1268 Wait EventPairLow",
+        "thread 7944 Wait EventPairLow",
+        "thread 2488 Wait UserRequest",
+        "thread 7696 Wait UserRequest",
+        "thread 3496 Wait EventPairLow",
+        "cdb not found"
+       ]
+      },
+      {
+       "case": "button-id-invalid",
+       "macro": 5,
+       "keys": [],
+       "status": "timeout",
+       "hotkey": "Ctrl+Shift+F6",
+       "fresh_launch": true,
+       "hotkey_reply": {
+        "ok": true
+       },
+       "windows_after": [],
+       "responding_after": false,
+       "process_after": [
+        "5300 responding=False session=1 probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ],
+       "screenshot": "screens/automation-button-id-invalid.png",
+       "thread_states": [
+        "pid 5300 responding=False",
+        "thread 7300 Wait UserRequest",
+        "thread 9940 Wait EventPairLow",
+        "thread 2996 Wait EventPairLow",
+        "thread 9240 Wait UserRequest",
+        "thread 5208 Wait EventPairLow",
+        "thread 7072 Wait EventPairLow",
+        "thread 240 Wait UserRequest",
+        "thread 1976 Wait EventPairLow",
+        "thread 2056 Wait EventPairLow",
+        "thread 304 Wait UserRequest",
+        "thread 1656 Wait UserRequest",
+        "cdb not found"
+       ]
+      },
+      {
+       "case": "float-step-up",
+       "macro": 6,
+       "keys": [
+        "Up",
+        "Return"
+       ],
+       "status": "timeout",
+       "hotkey": "Ctrl+Shift+F7",
+       "fresh_launch": true,
+       "hotkey_reply": {
+        "ok": true
+       },
+       "dialog_windows": [],
+       "dialog_screenshot": "screens/automation-float-step-up-dialog.png",
+       "keys_sent": [
+        {
+         "chord": "Up",
+         "reply": {
+          "ok": true
+         }
+        },
+        {
+         "chord": "Return",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "windows_after": [],
+       "responding_after": false,
+       "process_after": [
+        "5836 responding=False session=1 probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ],
+       "screenshot": "screens/automation-float-step-up.png",
+       "thread_states": [
+        "pid 5836 responding=False",
+        "thread 9880 Wait UserRequest",
+        "thread 3044 Wait UserRequest",
+        "thread 9532 Wait EventPairLow",
+        "thread 912 Wait EventPairLow",
+        "thread 7412 Wait UserRequest",
+        "thread 3912 Wait EventPairLow",
+        "thread 8332 Wait EventPairLow",
+        "thread 4928 Wait UserRequest",
+        "thread 7636 Wait UserRequest",
+        "thread 2016 Wait EventPairLow",
+        "cdb not found"
+       ]
+      },
+      {
+       "case": "int-step-up",
+       "macro": 7,
+       "keys": [
+        "Up",
+        "Return"
+       ],
+       "status": "timeout",
+       "hotkey": "Ctrl+Shift+F8",
+       "fresh_launch": true,
+       "hotkey_reply": {
+        "ok": true
+       },
+       "dialog_windows": [],
+       "dialog_screenshot": "screens/automation-int-step-up-dialog.png",
+       "keys_sent": [
+        {
+         "chord": "Up",
+         "reply": {
+          "ok": true
+         }
+        },
+        {
+         "chord": "Return",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "windows_after": [],
+       "responding_after": false,
+       "process_after": [
+        "4772 responding=False session=1 probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ],
+       "screenshot": "screens/automation-int-step-up.png",
+       "thread_states": [
+        "pid 4772 responding=False",
+        "thread 1916 Wait UserRequest",
+        "thread 3664 Wait UserRequest",
+        "thread 2104 Wait EventPairLow",
+        "thread 5292 Wait EventPairLow",
+        "thread 1700 Wait UserRequest",
+        "thread 3056 Wait EventPairLow",
+        "thread 9032 Wait EventPairLow",
+        "thread 6696 Wait UserRequest",
+        "thread 3308 Wait UserRequest",
+        "cdb not found"
+       ]
+      },
+      {
+       "case": "edit-typed",
+       "macro": 8,
+       "keys": [
+        "type:héllo",
+        "Return"
+       ],
+       "status": "timeout",
+       "hotkey": "Ctrl+Shift+F9",
+       "fresh_launch": true,
+       "hotkey_reply": {
+        "ok": true
+       },
+       "dialog_windows": [],
+       "dialog_screenshot": "screens/automation-edit-typed-dialog.png",
+       "keys_sent": [
+        {
+         "chord": "type:héllo",
+         "reply": {
+          "error": "no-edit",
+          "message": "no dialog edit with an automation id to type into"
+         }
+        },
+        {
+         "chord": "Return",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "windows_after": [],
+       "responding_after": false,
+       "process_after": [
+        "7992 responding=False session=1 probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ],
+       "screenshot": "screens/automation-edit-typed.png",
+       "thread_states": [
+        "pid 7992 responding=False",
+        "thread 7984 Wait UserRequest",
+        "thread 9836 Wait UserRequest",
+        "thread 8288 Wait EventPairLow",
+        "thread 8916 Wait EventPairLow",
+        "thread 10032 Wait UserRequest",
+        "thread 5440 Wait EventPairLow",
+        "thread 8752 Wait EventPairLow",
+        "thread 6272 Wait UserRequest",
+        "thread 1840 Wait UserRequest",
+        "thread 3976 Wait EventPairLow",
+        "cdb not found"
+       ]
+      },
+      {
+       "case": "corpus",
+       "macro": 9,
+       "keys": [],
+       "status": "captured",
+       "hotkey": "Ctrl+Shift+F10",
+       "fresh_launch": true,
+       "hotkey_reply": {
+        "ok": true
+       },
+       "result": {
+        "aegisub_api": [
+         "__init_clipboard:function",
+         "cancel:function",
+         "debug:table",
+         "decode_path:function",
+         "dialog:table",
+         "file_name:function",
+         "frame_from_ms:function",
+         "get_audio_selection:function",
+         "get_frame:function",
+         "get_frequency_peaks:function",
+         "gettext:function",
+         "gui:table",
+         "keyframes:function",
+         "log:function",
+         "lua_automation_version:number",
+         "ms_from_frame:function",
+         "parse_karaoke_data:function",
+         "progress:table",
+         "project_properties:function",
+         "register_filter:function",
+         "register_macro:function",
+         "set_status_text:function",
+         "set_undo_point:function",
+         "text_extents:function",
+         "video_size:function"
+        ],
+        "case": "corpus",
+        "jit": "LuaJIT 2.1.ROLLING",
+        "lua_version": "Lua 5.1",
+        "modules": {
+         "aegisub.clipboard": {
+          "ok": true,
+          "type": "table"
+         },
+         "aegisub.lfs": {
+          "ok": true,
+          "type": "table"
+         },
+         "aegisub.re": {
+          "ok": true,
+          "type": "table"
+         },
+         "aegisub.unicode": {
+          "ok": true,
+          "type": "table"
+         },
+         "aegisub.util": {
+          "ok": true,
+          "type": "table"
+         },
+         "bit": {
+          "ok": true,
+          "type": "table"
+         },
+         "clipboard": {
+          "ok": true,
+          "type": "table"
+         },
+         "ffi": {
+          "ok": true,
+          "type": "table"
+         },
+         "json": {
+          "ok": true,
+          "type": "table"
+         },
+         "karaskel": {
+          "ok": true,
+          "type": "boolean"
+         },
+         "l0.DependencyControl": {
+          "ok": true,
+          "type": "table"
+         },
+         "lfs": {
+          "ok": true,
+          "type": "table"
+         },
+         "lpeg": {
+          "ok": true,
+          "type": "table"
+         },
+         "luabins": {
+          "ok": true,
+          "type": "table"
+         },
+         "moonscript": {
+          "ok": true,
+          "type": "table"
+         },
+         "re": {
+          "ok": true,
+          "type": "table"
+         },
+         "unicode": {
+          "ok": true,
+          "type": "table"
+         },
+         "utils": {
+          "ok": true,
+          "type": "boolean"
+         }
+        },
+        "package_cpath": ".\\?.dll;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\?.dll;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\loadall.dll",
+        "package_path": "C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\/?.lua;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\/?/init.lua;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Include\\/?.lua;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Include\\/?/init.lua;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\tests/?.lua;",
+        "scripts": [
+         {
+          "file": "BezierToText.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Impose test onto a Bezier curve"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Bezier"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "an eer? & Bakura"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "An effect to impose text onto a Bezier curve"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Bezier Curve Imposition"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.0"
+          }
+         },
+         {
+          "file": "a-mo.Aegisub-Motion.moon",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Applies properly formatted motion tracking data to selected subtitles."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Aegisub-Motion/Apply"
+            },
+            "processing": "function",
+            "validation": "function"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Removes properly formatted motion tracking data from selected subtitles."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Aegisub-Motion/Revert"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Cuts and encodes the current scene for use with motion tracking software."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Aegisub-Motion/Trim"
+            },
+            "processing": "function",
+            "validation": "function"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Cuts and encodes selected scenes for use with motion tracking software."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Aegisub-Motion/Trim Each"
+            },
+            "processing": "function",
+            "validation": "function"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Opens a gui to configure the trim tool."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Aegisub-Motion/Trim Settings"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "torque"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "A set of tools for simplifying the process of creating and applying motion tracking data with Aegisub."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Aegisub-Motion"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "a-mo.Aegisub-Motion"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.0.9"
+          }
+         },
+         {
+          "file": "cleantags-autoload.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Clean subtitle lines by re-arranging ASS tags and override blocks within the lines"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Clean Tags"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "configuration": "nil",
+            "description": {
+             "type": "string",
+             "value": "Clean subtitle lines by re-arranging ASS tags and override blocks within the lines"
+            },
+            "kind": "filter",
+            "name": {
+             "type": "string",
+             "value": "Clean Tags"
+            },
+            "priority": {
+             "type": "number",
+             "value": 0
+            },
+            "processing": "function"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "Muhammad Lukman Nasaruddin (ai-chan)"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Clean subtitle lines by re-arranging ASS tags and override blocks within the lines"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Clean Tags"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.20"
+          }
+         },
+         {
+          "file": "gradient-factory.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Generate color gradient"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Generate color gradient"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "Muhammad Lukman Nasaruddin (ai-chan) and Bakura"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Color gradient generator by ai-chan and Bakura"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Gradient Factory v2.6"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "2.6"
+          }
+         },
+         {
+          "file": "kara-templater.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Applies karaoke effects from templates"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Apply karaoke template"
+            },
+            "processing": "function",
+            "validation": "function"
+           },
+           {
+            "configuration": "nil",
+            "description": {
+             "type": "string",
+             "value": "Apply karaoke effect templates to the subtitles.\n\nSee the help file for information on how to use this."
+            },
+            "kind": "filter",
+            "name": {
+             "type": "string",
+             "value": "Karaoke template"
+            },
+            "priority": {
+             "type": "number",
+             "value": 2000
+            },
+            "processing": "function"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "Niels Martin Hansen"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Macro and export filter to apply karaoke effects using the template language"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Karaoke Templater"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "2.1.7"
+          }
+         },
+         {
+          "file": "karaoke-auto-leadin.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Join up the ends of selected lines and add \\k tags to shift karaoke"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Automatic karaoke lead-in"
+            },
+            "processing": "function",
+            "validation": "function"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "Niels Martin Hansen"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Join up the ends of selected lines and add \\k tags to shift karaoke"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Automatic karaoke lead-in"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.0"
+          }
+         },
+         {
+          "file": "l0.DependencyControl.Toolbox.moon",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Installs an automation script or module on your system."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "DependencyControl/Install Script"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Manually check and perform updates to any installed script."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "DependencyControl/Update Script"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Removes an automation script or module from your system."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "DependencyControl/Uninstall Script"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Lets you change per-automation script settings."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "DependencyControl/Macro Configuration"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "line0"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Provides DependencyControl maintenance and configuration tools."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "DependencyControl Toolbox"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "l0.DependencyControl.Toolbox"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.1.3"
+          }
+         },
+         {
+          "file": "macro-1-edgeblur.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Adds \\be1 tags to all selected lines"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Add edgeblur"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "Niels Martin Hansen"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "A demo macro showing how to do simple line modification in Automation 4"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Add edgeblur"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1"
+          }
+         },
+         {
+          "file": "macro-2-mkfullwitdh.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Convert Latin letters to SJIS fullwidth letters"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Make fullwidth"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "Niels Martin Hansen"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Shows how to use the unicode include to iterate over characters and a lookup table to convert those characters to something else."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Make text fullwidth"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1"
+          }
+         },
+         {
+          "file": "select-overlaps.moon",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Select lines which begin while another non-comment line is active"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Select overlaps"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "Thomas Goyne"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Select lines which begin while another non-comment line is active"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Select overlaps"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "2"
+          }
+         },
+         {
+          "file": "skew gradient.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": ""
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Skew gradient"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "Bakura"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "makes gradient from skew clip from 4 points"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Skew gradient"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.5"
+          }
+         },
+         {
+          "file": "strip-tags.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Remove all override tags from selected lines"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Strip tags"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "Thomas Goyne"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Remove all override tags from selected lines"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Strip tags"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1"
+          }
+         }
+        ],
+        "shared_package_loaded": true,
+        "stubs": {
+         "cancel": "function",
+         "debug": "table",
+         "progress": "table",
+         "set_undo_point": "function",
+         "set_undo_point_call": {
+          "ok": true,
+          "result": {
+           "type": "nil"
+          }
+         }
+        }
+       },
+       "windows_after": [],
+       "responding_after": true,
+       "process_after": [
+        "5592 responding=True session=1 1*probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c "
+       ]
+      }
+     ],
+     "launches": [
+      {
+       "reason": "first",
+       "pid": 4296,
+       "main_window": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      },
+      {
+       "reason": "before defaults-escape",
+       "pid": 7392,
+       "main_window": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      },
+      {
+       "reason": "before buttons-return",
+       "pid": 7700,
+       "main_window": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      },
+      {
+       "reason": "before buttons-escape",
+       "pid": 2296,
+       "main_window": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      },
+      {
+       "reason": "before button-id-unknown",
+       "pid": 2108,
+       "main_window": "Untitled - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      },
+      {
+       "reason": "before button-id-invalid",
+       "pid": 5300,
+       "main_window": "Untitled - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      },
+      {
+       "reason": "before float-step-up",
+       "pid": 5836,
+       "main_window": "Untitled - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      },
+      {
+       "reason": "before int-step-up",
+       "pid": 4772,
+       "main_window": "Untitled - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      },
+      {
+       "reason": "before edit-typed",
+       "pid": 7992,
+       "main_window": "Untitled - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      },
+      {
+       "reason": "before corpus",
+       "pid": 5592,
+       "main_window": "Untitled - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "popups": []
+      }
+     ],
+     "startup_popups": [],
+     "load_time": [
+      {
+       "aegisub_api": [
+        "__init_clipboard:function",
+        "cancel:function",
+        "decode_path:function",
+        "file_name:function",
+        "frame_from_ms:function",
+        "get_audio_selection:function",
+        "get_frame:function",
+        "gettext:function",
+        "gui:table",
+        "keyframes:function",
+        "lua_automation_version:number",
+        "ms_from_frame:function",
+        "project_properties:function",
+        "register_filter:function",
+        "register_macro:function",
+        "set_status_text:function",
+        "text_extents:function",
+        "video_size:function"
+       ],
+       "case": "corpus",
+       "jit": "LuaJIT 2.1.ROLLING",
+       "lua_version": "Lua 5.1",
+       "modules": {
+        "aegisub.clipboard": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.lfs": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.re": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.unicode": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.util": {
+         "ok": true,
+         "type": "table"
+        },
+        "bit": {
+         "ok": true,
+         "type": "table"
+        },
+        "clipboard": {
+         "ok": true,
+         "type": "table"
+        },
+        "ffi": {
+         "ok": true,
+         "type": "table"
+        },
+        "json": {
+         "ok": true,
+         "type": "table"
+        },
+        "karaskel": {
+         "ok": true,
+         "type": "boolean"
+        },
+        "l0.DependencyControl": {
+         "ok": true,
+         "type": "table"
+        },
+        "lfs": {
+         "ok": true,
+         "type": "table"
+        },
+        "lpeg": {
+         "ok": true,
+         "type": "table"
+        },
+        "luabins": {
+         "ok": true,
+         "type": "table"
+        },
+        "moonscript": {
+         "ok": true,
+         "type": "table"
+        },
+        "re": {
+         "ok": true,
+         "type": "table"
+        },
+        "unicode": {
+         "ok": true,
+         "type": "table"
+        },
+        "utils": {
+         "ok": true,
+         "type": "boolean"
+        }
+       },
+       "package_cpath": ".\\?.dll;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\?.dll;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\loadall.dll",
+       "package_path": "C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\/?.lua;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\/?/init.lua;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Include\\/?.lua;C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Include\\/?/init.lua;",
+       "scripts": [
+        {
+         "file": "BezierToText.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Impose test onto a Bezier curve"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Bezier"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "an eer? & Bakura"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "An effect to impose text onto a Bezier curve"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Bezier Curve Imposition"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0"
+         }
+        },
+        {
+         "file": "a-mo.Aegisub-Motion.moon",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Applies properly formatted motion tracking data to selected subtitles."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Apply"
+           },
+           "processing": "function",
+           "validation": "function"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Removes properly formatted motion tracking data from selected subtitles."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Revert"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Cuts and encodes the current scene for use with motion tracking software."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Trim"
+           },
+           "processing": "function",
+           "validation": "function"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Cuts and encodes selected scenes for use with motion tracking software."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Trim Each"
+           },
+           "processing": "function",
+           "validation": "function"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Opens a gui to configure the trim tool."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Trim Settings"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "torque"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "A set of tools for simplifying the process of creating and applying motion tracking data with Aegisub."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Aegisub-Motion"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "a-mo.Aegisub-Motion"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0.9"
+         }
+        },
+        {
+         "file": "cleantags-autoload.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Clean subtitle lines by re-arranging ASS tags and override blocks within the lines"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Clean Tags"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "configuration": "nil",
+           "description": {
+            "type": "string",
+            "value": "Clean subtitle lines by re-arranging ASS tags and override blocks within the lines"
+           },
+           "kind": "filter",
+           "name": {
+            "type": "string",
+            "value": "Clean Tags"
+           },
+           "priority": {
+            "type": "number",
+            "value": 0
+           },
+           "processing": "function"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Muhammad Lukman Nasaruddin (ai-chan)"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Clean subtitle lines by re-arranging ASS tags and override blocks within the lines"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Clean Tags"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.20"
+         }
+        },
+        {
+         "file": "gradient-factory.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Generate color gradient"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Generate color gradient"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Muhammad Lukman Nasaruddin (ai-chan) and Bakura"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Color gradient generator by ai-chan and Bakura"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Gradient Factory v2.6"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.6"
+         }
+        },
+        {
+         "file": "kara-templater.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Applies karaoke effects from templates"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Apply karaoke template"
+           },
+           "processing": "function",
+           "validation": "function"
+          },
+          {
+           "configuration": "nil",
+           "description": {
+            "type": "string",
+            "value": "Apply karaoke effect templates to the subtitles.\n\nSee the help file for information on how to use this."
+           },
+           "kind": "filter",
+           "name": {
+            "type": "string",
+            "value": "Karaoke template"
+           },
+           "priority": {
+            "type": "number",
+            "value": 2000
+           },
+           "processing": "function"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Niels Martin Hansen"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Macro and export filter to apply karaoke effects using the template language"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Karaoke Templater"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.1.7"
+         }
+        },
+        {
+         "file": "karaoke-auto-leadin.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Join up the ends of selected lines and add \\k tags to shift karaoke"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Automatic karaoke lead-in"
+           },
+           "processing": "function",
+           "validation": "function"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Niels Martin Hansen"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Join up the ends of selected lines and add \\k tags to shift karaoke"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Automatic karaoke lead-in"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0"
+         }
+        },
+        {
+         "file": "l0.DependencyControl.Toolbox.moon",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Installs an automation script or module on your system."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "DependencyControl/Install Script"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Manually check and perform updates to any installed script."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "DependencyControl/Update Script"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Removes an automation script or module from your system."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "DependencyControl/Uninstall Script"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Lets you change per-automation script settings."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "DependencyControl/Macro Configuration"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "line0"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Provides DependencyControl maintenance and configuration tools."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "DependencyControl Toolbox"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "l0.DependencyControl.Toolbox"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.1.3"
+         }
+        },
+        {
+         "file": "macro-1-edgeblur.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Adds \\be1 tags to all selected lines"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Add edgeblur"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Niels Martin Hansen"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "A demo macro showing how to do simple line modification in Automation 4"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Add edgeblur"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1"
+         }
+        },
+        {
+         "file": "macro-2-mkfullwitdh.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Convert Latin letters to SJIS fullwidth letters"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Make fullwidth"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Niels Martin Hansen"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Shows how to use the unicode include to iterate over characters and a lookup table to convert those characters to something else."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Make text fullwidth"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1"
+         }
+        },
+        {
+         "file": "select-overlaps.moon",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Select lines which begin while another non-comment line is active"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Select overlaps"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Thomas Goyne"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Select lines which begin while another non-comment line is active"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Select overlaps"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2"
+         }
+        },
+        {
+         "file": "skew gradient.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": ""
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Skew gradient"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Bakura"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "makes gradient from skew clip from 4 points"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Skew gradient"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.5"
+         }
+        },
+        {
+         "file": "strip-tags.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Remove all override tags from selected lines"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Strip tags"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Thomas Goyne"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Remove all override tags from selected lines"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Strip tags"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1"
+         }
+        }
+       ],
+       "shared_package_loaded": true,
+       "stubs": {
+        "cancel": "function",
+        "debug": "nil",
+        "progress": "nil",
+        "set_undo_point": "nil",
+        "set_undo_point_call": {
+         "ok": false,
+         "result": {
+          "type": "string",
+          "value": "[string \"C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\...\"]:176: attempt to call field 'set_undo_point' (a nil value)"
+         }
+        }
+       }
+      }
+     ],
+     "automation_menu": null,
+     "hang_dump": {
+      "case": "defaults-ok",
+      "job": "job-ff9d1812691d497aaf70a380d11285fe",
+      "log": [
+       "pid 4296 responding=False dump=True size=85662"
+      ],
+      "artifact": "out/legacy-win/job-ff9d1812691d497aaf70a380d11285fe.zip"
+     },
+     "config_files": [
+      "Config.txt",
+      "Hotkeys.txt",
+      "LastSession.txt"
+     ],
+     "hotkeys_after": "[HikariSub 0.0.1.9999]\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-0=Ctrl-Shift-F1\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-1=Ctrl-Shift-F2\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-2=Ctrl-Shift-F3\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-3=Ctrl-Shift-F4\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-4=Ctrl-Shift-F5\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-5=Ctrl-Shift-F6\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-6=Ctrl-Shift-F7\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-7=Ctrl-Shift-F8\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-8=Ctrl-Shift-F9\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-9=Ctrl-Shift-F10\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-10=Ctrl-Shift-F11\nScript C:\\Winix\\work\\hikari-qt\\out\\legacy-win\\probe\\HikariSub_x64\\Automation\\automation\\Autoload\\capture-probe.lua-11=Ctrl-Shift-F12",
+     "capture_lines": "{\"aegisub_api\":[\"__init_clipboard:function\",\"cancel:function\",\"decode_path:function\",\"file_name:function\",\"frame_from_ms:function\",\"get_audio_selection:function\",\"get_frame:function\",\"gettext:function\",\"gui:table\",\"keyframes:function\",\"lua_automation_version:number\",\"ms_from_frame:function\",\"project_properties:function\",\"register_filter:function\",\"register_macro:function\",\"set_status_text:function\",\"text_extents:function\",\"video_size:function\"],\"case\":\"corpus\",\"jit\":\"LuaJIT 2.1.ROLLING\",\"lua_version\":\"Lua 5.1\",\"modules\":{\"aegisub.clipboard\":{\"ok\":true,\"type\":\"table\"},\"aegisub.lfs\":{\"ok\":true,\"type\":\"table\"},\"aegisub.re\":{\"ok\":true,\"type\":\"table\"},\"aegisub.unicode\":{\"ok\":true,\"type\":\"table\"},\"aegisub.util\":{\"ok\":true,\"type\":\"table\"},\"bit\":{\"ok\":true,\"type\":\"table\"},\"clipboard\":{\"ok\":true,\"type\":\"table\"},\"ffi\":{\"ok\":true,\"type\":\"table\"},\"json\":{\"ok\":true,\"type\":\"table\"},\"karaskel\":{\"ok\":true,\"type\":\"boolean\"},\"l0.DependencyControl\":{\"ok\":true,\"type\":\"table\"},\"lfs\":{\"ok\":true,\"type\":\"table\"},\"lpeg\":{\"ok\":true,\"type\":\"table\"},\"luabins\":{\"ok\":true,\"type\":\"table\"},\"moonscript\":{\"ok\":true,\"type\":\"table\"},\"re\":{\"ok\":true,\"type\":\"table\"},\"unicode\":{\"ok\":true,\"type\":\"table\"},\"utils\":{\"ok\":true,\"type\":\"boolean\"}},\"package_cpath\":\".\\\\?.dll;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\?.dll;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\loadall.dll\",\"package_path\":\"C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\Automation\\\\automation\\\\Autoload\\\\/?.lua;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\Automation\\\\automation\\\\Autoload\\\\/?/init.lua;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\Automation\\\\automation\\\\Include\\\\/?.lua;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\Automation\\\\automation\\\\Include\\\\/?/init.lua;\",\"scripts\":[{\"file\":\"BezierToText.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Impose test onto a Bezier curve\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Bezier\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"an eer? & Bakura\"},\"script_description\":{\"type\":\"string\",\"value\":\"An effect to impose text onto a Bezier curve\"},\"script_name\":{\"type\":\"string\",\"value\":\"Bezier Curve Imposition\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0\"}},{\"file\":\"a-mo.Aegisub-Motion.moon\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Applies properly formatted motion tracking data to selected subtitles.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Apply\"},\"processing\":\"function\",\"validation\":\"function\"},{\"description\":{\"type\":\"string\",\"value\":\"Removes properly formatted motion tracking data from selected subtitles.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Revert\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Cuts and encodes the current scene for use with motion tracking software.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Trim\"},\"processing\":\"function\",\"validation\":\"function\"},{\"description\":{\"type\":\"string\",\"value\":\"Cuts and encodes selected scenes for use with motion tracking software.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Trim Each\"},\"processing\":\"function\",\"validation\":\"function\"},{\"description\":{\"type\":\"string\",\"value\":\"Opens a gui to configure the trim tool.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Trim Settings\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"torque\"},\"script_description\":{\"type\":\"string\",\"value\":\"A set of tools for simplifying the process of creating and applying motion tracking data with Aegisub.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"a-mo.Aegisub-Motion\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0.9\"}},{\"file\":\"cleantags-autoload.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Clean subtitle lines by re-arranging ASS tags and override blocks within the lines\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Clean Tags\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"configuration\":\"nil\",\"description\":{\"type\":\"string\",\"value\":\"Clean subtitle lines by re-arranging ASS tags and override blocks within the lines\"},\"kind\":\"filter\",\"name\":{\"type\":\"string\",\"value\":\"Clean Tags\"},\"priority\":{\"type\":\"number\",\"value\":0},\"processing\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Muhammad Lukman Nasaruddin (ai-chan)\"},\"script_description\":{\"type\":\"string\",\"value\":\"Clean subtitle lines by re-arranging ASS tags and override blocks within the lines\"},\"script_name\":{\"type\":\"string\",\"value\":\"Clean Tags\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.20\"}},{\"file\":\"gradient-factory.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Generate color gradient\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Generate color gradient\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Muhammad Lukman Nasaruddin (ai-chan) and Bakura\"},\"script_description\":{\"type\":\"string\",\"value\":\"Color gradient generator by ai-chan and Bakura\"},\"script_name\":{\"type\":\"string\",\"value\":\"Gradient Factory v2.6\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"2.6\"}},{\"file\":\"kara-templater.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Applies karaoke effects from templates\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Apply karaoke template\"},\"processing\":\"function\",\"validation\":\"function\"},{\"configuration\":\"nil\",\"description\":{\"type\":\"string\",\"value\":\"Apply karaoke effect templates to the subtitles.\\n\\nSee the help file for information on how to use this.\"},\"kind\":\"filter\",\"name\":{\"type\":\"string\",\"value\":\"Karaoke template\"},\"priority\":{\"type\":\"number\",\"value\":2000},\"processing\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"Macro and export filter to apply karaoke effects using the template language\"},\"script_name\":{\"type\":\"string\",\"value\":\"Karaoke Templater\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"2.1.7\"}},{\"file\":\"karaoke-auto-leadin.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Join up the ends of selected lines and add \\\\k tags to shift karaoke\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Automatic karaoke lead-in\"},\"processing\":\"function\",\"validation\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"Join up the ends of selected lines and add \\\\k tags to shift karaoke\"},\"script_name\":{\"type\":\"string\",\"value\":\"Automatic karaoke lead-in\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0\"}},{\"file\":\"l0.DependencyControl.Toolbox.moon\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Installs an automation script or module on your system.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"DependencyControl/Install Script\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Manually check and perform updates to any installed script.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"DependencyControl/Update Script\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Removes an automation script or module from your system.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"DependencyControl/Uninstall Script\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Lets you change per-automation script settings.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"DependencyControl/Macro Configuration\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"line0\"},\"script_description\":{\"type\":\"string\",\"value\":\"Provides DependencyControl maintenance and configuration tools.\"},\"script_name\":{\"type\":\"string\",\"value\":\"DependencyControl Toolbox\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"l0.DependencyControl.Toolbox\"},\"script_version\":{\"type\":\"string\",\"value\":\"0.1.3\"}},{\"file\":\"macro-1-edgeblur.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Adds \\\\be1 tags to all selected lines\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Add edgeblur\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"A demo macro showing how to do simple line modification in Automation 4\"},\"script_name\":{\"type\":\"string\",\"value\":\"Add edgeblur\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1\"}},{\"file\":\"macro-2-mkfullwitdh.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Convert Latin letters to SJIS fullwidth letters\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Make fullwidth\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"Shows how to use the unicode include to iterate over characters and a lookup table to convert those characters to something else.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Make text fullwidth\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1\"}},{\"file\":\"select-overlaps.moon\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Select lines which begin while another non-comment line is active\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Select overlaps\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Thomas Goyne\"},\"script_description\":{\"type\":\"string\",\"value\":\"Select lines which begin while another non-comment line is active\"},\"script_name\":{\"type\":\"string\",\"value\":\"Select overlaps\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"2\"}},{\"file\":\"skew gradient.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Skew gradient\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Bakura\"},\"script_description\":{\"type\":\"string\",\"value\":\"makes gradient from skew clip from 4 points\"},\"script_name\":{\"type\":\"string\",\"value\":\"Skew gradient\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.5\"}},{\"file\":\"strip-tags.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Remove all override tags from selected lines\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Strip tags\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Thomas Goyne\"},\"script_description\":{\"type\":\"string\",\"value\":\"Remove all override tags from selected lines\"},\"script_name\":{\"type\":\"string\",\"value\":\"Strip tags\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1\"}}],\"shared_package_loaded\":true,\"stubs\":{\"cancel\":\"function\",\"debug\":\"nil\",\"progress\":\"nil\",\"set_undo_point\":\"nil\",\"set_undo_point_call\":{\"ok\":false,\"result\":{\"type\":\"string\",\"value\":\"[string \\\"C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\...\\\"]:176: attempt to call field 'set_undo_point' (a nil value)\"}}}}\r\n{\"aegisub_api\":[\"__init_clipboard:function\",\"cancel:function\",\"decode_path:function\",\"file_name:function\",\"frame_from_ms:function\",\"get_audio_selection:function\",\"get_frame:function\",\"gettext:function\",\"gui:table\",\"keyframes:function\",\"lua_automation_version:number\",\"ms_from_frame:function\",\"project_properties:function\",\"register_filter:function\",\"register_macro:function\",\"set_status_text:function\",\"text_extents:function\",\"video_size:function\"],\"case\":\"corpus\",\"jit\":\"LuaJIT 2.1.ROLLING\",\"lua_version\":\"Lua 5.1\",\"modules\":{\"aegisub.clipboard\":{\"ok\":true,\"type\":\"table\"},\"aegisub.lfs\":{\"ok\":true,\"type\":\"table\"},\"aegisub.re\":{\"ok\":true,\"type\":\"table\"},\"aegisub.unicode\":{\"ok\":true,\"type\":\"table\"},\"aegisub.util\":{\"ok\":true,\"type\":\"table\"},\"bit\":{\"ok\":true,\"type\":\"table\"},\"clipboard\":{\"ok\":true,\"type\":\"table\"},\"ffi\":{\"ok\":true,\"type\":\"table\"},\"json\":{\"ok\":true,\"type\":\"table\"},\"karaskel\":{\"ok\":true,\"type\":\"boolean\"},\"l0.DependencyControl\":{\"ok\":true,\"type\":\"table\"},\"lfs\":{\"ok\":true,\"type\":\"table\"},\"lpeg\":{\"ok\":true,\"type\":\"table\"},\"luabins\":{\"ok\":true,\"type\":\"table\"},\"moonscript\":{\"ok\":true,\"type\":\"table\"},\"re\":{\"ok\":true,\"type\":\"table\"},\"unicode\":{\"ok\":true,\"type\":\"table\"},\"utils\":{\"ok\":true,\"type\":\"boolean\"}},\"package_cpath\":\".\\\\?.dll;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\?.dll;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\loadall.dll\",\"package_path\":\"C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\Automation\\\\automation\\\\Autoload\\\\/?.lua;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\Automation\\\\automation\\\\Autoload\\\\/?/init.lua;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\Automation\\\\automation\\\\Include\\\\/?.lua;C:\\\\Winix\\\\work\\\\hikari-qt\\\\out\\\\legacy-win\\\\probe\\\\HikariSub_x64\\\\Automation\\\\automation\\\\Include\\\\/?/init.lua;\",\"scripts\":[{\"file\":\"BezierToText.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Impose test onto a Bezier curve\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Bezier\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"an eer? & Bakura\"},\"script_description\":{\"type\":\"string\",\"value\":\"An effect to impose text onto a Bezier curve\"},\"script_name\":{\"type\":\"string\",\"value\":\"Bezier Curve Imposition\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0\"}},{\"file\":\"a-mo.Aegisub-Motion.moon\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Applies properly formatted motion tracking data to selected subtitles.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Apply\"},\"processing\":\"function\",\"validation\":\"function\"},{\"description\":{\"type\":\"string\",\"value\":\"Removes properly formatted motion tracking data from selected subtitles.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Revert\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Cuts and encodes the current scene for use with motion tracking software.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Trim\"},\"processing\":\"function\",\"validation\":\"function\"},{\"description\":{\"type\":\"string\",\"value\":\"Cuts and encodes selected scenes for use with motion tracking software.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Trim Each\"},\"processing\":\"function\",\"validation\":\"function\"},{\"description\":{\"type\":\"string\",\"value\":\"Opens a gui to configure the trim tool.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Trim Settings\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"torque\"},\"script_description\":{\"type\":\"string\",\"value\":\"A set of tools for simplifying the process of creating and applying motion tracking data with Aegisub.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"a-mo.Aegisub-Motion\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0.9\"}},{\"file\":\"cleantags-autoload.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Clean subtitle lines by re-arranging ASS tags and override blocks within the lines\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Clean Tags\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"configuration\":\"nil\",\"description\":{\"type\":\"string\",\"value\":\"Clean subtitle lines by re-arranging ASS tags and override blocks within the lines\"},\"kind\":\"filter\",\"name\":{\"type\":\"string\",\"value\":\"Clean Tags\"},\"priority\":{\"type\":\"number\",\"value\":0},\"processing\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Muhammad Lukman Nasaruddin (ai-chan)\"},\"script_description\":{\"type\":\"string\",\"value\":\"Clean subtitle lines by re-arranging ASS tags and override blocks within the lines\"},\"script_name\":{\"type\":\"string\",\"value\":\"Clean Tags\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.20\"}},{\"file\":\"gradient-factory.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Generate color gradient\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Generate color gradient\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Muhammad Lukman Nasaruddin (ai-chan) and Bakura\"},\"script_description\":{\"type\":\"string\",\"value\":\"Color gradient generator by ai-chan and Bakura\"},\"script_name\":{\"type\":\"string\",\"value\":\"Gradient Factory v2.6\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"2.6\"}},{\"file\":\"kara-templater.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Applies karaoke effects from templates\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Apply karaoke template\"},\"processing\":\"function\",\"validation\":\"function\"},{\"configuration\":\"nil\",\"description\":{\"type\":\"string\",\"value\":\"Apply karaoke effect templates to the subtitles.\\n\\nSee the help file for information on how to use this.\"},\"kind\":\"filter\",\"name\":{\"type\":\"string\",\"value\":\"Karaoke template\"},\"priority\":{\"type\":\"number\",\"value\":2000},\"processing\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"Macro and export filter to apply karaoke effects using the template language\"},\"script_name\":{\"type\":\"string\",\"value\":\"Karaoke Templater\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"2.1.7\"}},{\"file\":\"karaoke-auto-leadin.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Join up the ends of selected lines and add \\\\k tags to shift karaoke\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Automatic karaoke lead-in\"},\"processing\":\"function\",\"validation\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"Join up the ends of selected lines and add \\\\k tags to shift karaoke\"},\"script_name\":{\"type\":\"string\",\"value\":\"Automatic karaoke lead-in\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0\"}},{\"file\":\"l0.DependencyControl.Toolbox.moon\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Installs an automation script or module on your system.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"DependencyControl/Install Script\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Manually check and perform updates to any installed script.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"DependencyControl/Update Script\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Removes an automation script or module from your system.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"DependencyControl/Uninstall Script\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Lets you ch"
+    }
+   ]
+  }
+ ],
+ "screenshots_committed": [
+  "screens/automation-bundled-autoload.png",
+  "screens/automation-defaults-ok-dialog.png",
+  "screens/automation-defaults-ok.png"
+ ],
+ "screenshots_note": "Committed screenshots are reduced to 64 colours; the full set is in out/legacy-win/run1/screens of the capturing worktree. Every hung-step screenshot shows the main window unchanged with no dialog."
+}

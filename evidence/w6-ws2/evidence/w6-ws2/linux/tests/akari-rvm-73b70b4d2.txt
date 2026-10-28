@@ -1,0 +1,12 @@
+# akari-rvm, head 73b70b4d2 (qt 1989b6636 merged; e6a2a1a90 changes only tests/ui/shell_tests.cpp), ctest -E '^hikari_ui_' -j8
+100% tests passed out of 1527
+The following tests did not run:
+	1277 - PortAudioDevice.RefusesUnsupportedChannelCounts (Skipped)
+	1278 - PortAudioDevice.ConsumesQueuedAudioAndPublishesAClock (Skipped)
+	1279 - PortAudioDevice.NegotiatesTheRateOrRefuses (Skipped)
+	1280 - PortAudioDevice.ReopensByIdAfterARescan (Skipped)
+	1281 - PortAudioDevice.LostStreamInvalidatesAndReopenRecovers (Skipped)
+	1282 - PortAudioDevice.RescanWaitsWhileAStreamIsOpen (Skipped)
+	1283 - PortAudioHotplug.RealDeviceLossInvalidatesAndTheReturnedDeviceReopens (Skipped)
+	1353 - ThirdPartyCorpus.FetchedProjectsAreAvailable (Skipped)
+	1377 - Audition.ThroughPortAudio (Skipped)

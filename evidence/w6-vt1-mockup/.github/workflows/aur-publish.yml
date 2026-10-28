@@ -1,0 +1,114 @@
+name: AUR publish
+
+# Publishes an existing release to the AUR (installers spec, 5.5), for when
+# the release job could not: no AUR account or key yet, or the AUR was
+# down. The same rules as the release jobs: a stable vX.Y.Z goes to
+# hikarisub-stable-bin and hikarisub-beta-bin, a prerelease to
+# hikarisub-beta-bin only; a package is refused when a newer release of its
+# channel exists or the AUR has a higher version. The packages follow legacy
+# (0.0.x) until the repository variable HIKARISUB_OFFER_QT_TO_LEGACY is
+# true, then the Qt rewrite (0.1.0 and up); a tag of the other codebase is
+# refused. Here a missing key, a refused push or a run that publishes to no
+# package fails the run.
+#
+#   gh workflow run aur-publish.yml -f tag=v0.0.2-rc.1 [-f dry_run=true]
+#
+# This file has the same bytes on the legacy (main) and Qt (qt) branches.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The release tag to publish, for example v0.0.2-rc.1'
+        required: true
+        type: string
+      dry_run:
+        description: 'Everything but the push'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aur-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish ${{ inputs.tag }} to the AUR
+    runs-on: ubuntu-24.04
+    env:
+      TAG: ${{ inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Check the tag
+        id: tag
+        env:
+          OFFER_QT_TO_LEGACY: ${{ vars.HIKARISUB_OFFER_QT_TO_LEGACY }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$TAG" =~ ^v(([0-9]+)\.([0-9]+)\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?)$ ]]; then
+            echo "::error::$TAG is not vX.Y.Z or vX.Y.Z-{alpha,beta,rc}.N."
+            exit 1
+          fi
+          version=${BASH_REMATCH[1]}
+          if [[ "${BASH_REMATCH[2]}.${BASH_REMATCH[3]}" == 0.0 ]]; then codebase=legacy; else codebase=qt; fi
+          follows=legacy
+          [[ "$OFFER_QT_TO_LEGACY" == true ]] && follows=qt
+          if [[ "$codebase" != "$follows" ]]; then
+            echo "::error::$TAG is a $codebase release, but the AUR packages follow $follows (HIKARISUB_OFFER_QT_TO_LEGACY)."
+            exit 1
+          fi
+          if [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" != false ]]; then
+            echo "::error::$TAG is not a published release."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # The tag's own dependency map: the tar.gz was built from the tag.
+      - name: Download and check the tar.gz
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          name="hikarisub-$VERSION-linux-x86_64.tar.gz"
+          gh release download "$TAG" -p "$name" -p SHA256SUMS -D release
+          lines=$(grep -c " \*\?$name\$" release/SHA256SUMS || true)
+          if [[ "$lines" != 1 ]]; then
+            echo "::error::The release's SHA256SUMS lists $name $lines times."
+            exit 1
+          fi
+          (cd release && grep " \*\?$name\$" SHA256SUMS | sha256sum -c -)
+          if ! gh api -H 'Accept: application/vnd.github.raw' \
+              "repos/$GH_REPO/contents/packaging/linux/deps-arch.map?ref=$TAG" > deps-arch.map; then
+            echo "::notice::$TAG has no packaging/linux/deps-arch.map; using this branch's."
+            cp packaging/linux/deps-arch.map deps-arch.map
+          fi
+
+      - name: Render, build, install and push
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq '.[] | {tag_name, draft, prerelease}' | jq -s . > releases.json
+          flags=(--strict --releases releases.json --deps-map deps-arch.map)
+          [[ "$DRY_RUN" == true ]] && flags+=(--dry-run)
+          packaging/linux/aur/release-aur.sh "${flags[@]}" \
+            "$VERSION" "release/hikarisub-$VERSION-linux-x86_64.tar.gz" aur
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: hikarisub-aur
+          path: aur/
+          include-hidden-files: true
+          if-no-files-found: warn

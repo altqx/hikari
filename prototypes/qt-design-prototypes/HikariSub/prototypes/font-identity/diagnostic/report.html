@@ -1,0 +1,3371 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Font fallback replay diagnosis</title><style>
+body{margin:0;background:#171a20;color:#e8edf4;font:16px/1.55 system-ui,sans-serif}main{max-width:1050px;padding:32px;margin:auto}h1{line-height:1.2}a{color:#9bbdff}article{background:#232830;border:1px solid #495365;padding:18px;margin:20px 0;border-radius:8px}img{display:block;width:min(800px,100%);height:auto;margin-top:14px}code,.hash{overflow-wrap:anywhere}pre{overflow:auto;max-height:460px;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid #495365;padding:8px;text-align:left}.callout{border-left:5px solid #eeb75e;padding:14px 20px;background:#332d24}h2{font-size:20px}</style><main><h1>Captured fonts are usable.<br>Provider NONE lacks the fallback policy.</h1>
+<p class="callout"><strong>The original 17/18 result remains incomplete.</strong> This diagnosis explains the multilingual failure; it does not certify portable collection or replace the original evidence.</p>
+<p>The original mismatch reproduces with a single CJK character or emoji. Configuring the appropriate captured fallback family restores each isolated glyph. Same-host DirectWrite restores the full frame, while reversed attachment order does not. Explicit font tags select the expected identities but still change full pixels.</p>
+<p><a href="README.md">Diagnosis, pinned source explanation and reproduction</a> · <a href="observations.json">Exact native observations</a> · <a href="../evidence/report.html">Preserved original report</a></p><p>Capture: 2026-09-27T01:28:11.797736+00:00. Nineteen cases repeated twice; all repeat frame hashes agree: True. Original baseline hashes agree: True.</p><table><tr><th>Case</th><th>Reference</th><th>Pixels</th></tr><tr><td>full</td><td>DirectWrite versus NONE</td><td>different</td></tr><tr><td>ascii</td><td>DirectWrite versus NONE</td><td>same</td></tr><tr><td>cjk</td><td>DirectWrite versus NONE</td><td>different</td></tr><tr><td>emoji</td><td>DirectWrite versus NONE</td><td>different</td></tr><tr><td>arabic_combining</td><td>DirectWrite versus NONE</td><td>same</td></tr><tr><td>full_none_reverse</td><td>full_none</td><td>same</td></tr><tr><td>full_directwrite_captured</td><td>full_directwrite</td><td>same</td></tr><tr><td>cjk_none_default_yu</td><td>cjk_directwrite</td><td>same</td></tr><tr><td>emoji_none_default_segoe</td><td>emoji_directwrite</td><td>same</td></tr><tr><td>cjk_none_explicit_yu</td><td>cjk_directwrite</td><td>same</td></tr><tr><td>emoji_none_explicit_segoe</td><td>emoji_directwrite</td><td>same</td></tr><tr><td>full_none_default_yu</td><td>full_directwrite</td><td>different</td></tr><tr><td>full_none_default_segoe</td><td>full_directwrite</td><td>different</td></tr><tr><td>full_none_authored_families</td><td>full_directwrite</td><td>different</td></tr></table><article><h2>Original system DirectWrite frame</h2><code>full_directwrite</code><img alt="Recorded libass output for full_directwrite" src="data:image/png;base64,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"><p class="hash">PPM SHA-256 b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5</p><details><summary>Captured identity evidence</summary><pre>[
+  {
+    &quot;case&quot;: &quot;full_directwrite&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;ArialMT&quot;,
+    &quot;postscript&quot;: &quot;ArialMT&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 1,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_directwrite-0.font&quot;,
+    &quot;size&quot;: 1045720,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 1,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;ArialMT&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+    &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+    &quot;face&quot;: 2,
+    &quot;uid_local&quot;: 29,
+    &quot;codepoint&quot;: 20013,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_directwrite-1.font&quot;,
+    &quot;size&quot;: 14729372,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 29,
+    &quot;face&quot;: 2,
+    &quot;face_count&quot;: 3,
+    &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+    &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 30,
+    &quot;codepoint&quot;: 128512,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_directwrite-2.font&quot;,
+    &quot;size&quot;: 12934920,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 30,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+  }
+]</pre></details></article><article><h2>Captured bytes, provider NONE — still incomplete</h2><code>full_none</code><img alt="Recorded libass output for full_none" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAADICAIAAACf7RJNAAAMaklEQVR4nO3d+4uU9R7A8fNnnMw2tzYsLS1aJCvSKNPINIkM0y6gXSxcw1DCtLRF/EELM60sUylL204qqV0MIjMrKAxT1G6GYosXVk0T0vVyBvYwPM3eZh8/Z2Z35vX6SWa+8/1+nt/ePM4+869/AwAQ6l/FHgAAoNQILACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksoFO75JJL7mmm2EMBtENgAZ3anDlzzv3T3Llziz0UQDsEFtB5VVVVNTQ0JOtq7dq1xR4KoH0CC+i8nn/++WRd7dixo0ePHsUeCqB9AgvopCorKw8ePJitqwMHDlRXVxd7KIC8CCygk5o6dWq2rs6cOTNkyJBiTwSQL4EFdEbdu3f/448/soE1ceLEYk8E0AECC+iMnnrqqWxdvfLKK8UeB6BjBBbQGV2YUOxZADpMYAEABBNYUL6eeOKJ+n+aPHlysYcCKAUCC8rXt99+m/OQ9J9++qnYQwGUAoEFZap///7nWjJixIhijwbQ5QksKFPz589vMbBWr15d7NEAujyBBWUq+ZD0H374IfvvxsbG3r17F3s6gK5NYEE5GjNmTLaozp49e+eddyZvYs2aNSv1zsOGDduzZ88vQX777beZM2cGXngKixcvjrqcjL1791577bXFvSKgAAQWlKP169dnc2r79u2ZV7Zu3Zp9Zd++fal3vueeexYtWhQ150MPPfTiiy9G7ZbO+++/f+utt0bt9tFHH1133XVRuwGdlsCCstOrV6/Tp09nc2rp0qWZF2tra5M3sUaPHp1uc4HVNoEFZUJgQdmZMWNG85aqrq5Ovrhhw4Z0mwustgksKBMCC8rOrl27siF19OjRioqKpte/++67ZGNdc801KTYXWG0TWFAmBBaUl9tvvz1ZUZl6yL41ffr05Fvz5s1LsX+xAquqqmrmzJnff/99Q0NDY2Pj77///t577w0fPvz8ZxBYQAoCC8rLW2+9layoTMFk3+rTp0/yrUOHDqX4oeWiBNaECRMyXXWuJRs2bOjbt+/5zCCwgBQEFpSRysrKY8eOZeMjEyUXXXRRcsHmzZuTdfLwww939IjCB9asWbNaTKvkZY4fPz71DAILSEFgQRmZMGFCsjwWL17c9oJMb3X0iAIH1qRJk3Jy6vDhw19//fWSJUtqa2snT56cacSRI0cOGTIk9QwCC0hBYEEZyblBNXjw4JwFlZWVx48fT6658cYbO3REIQMrUyp///1305wbN2589tlnb7jhhqijswQWkILAgnLRr1+/ZDnt3LmzxWXvvvtuctnrr7/eoVMKGVirV69uupCBAwdGndicwAJSEFhQLubNm5cspxkzZrS4bNiwYcllR48e7dGjR/6nFCywqqqqTp48eezYscsvvzzquBYJLCAFgQXl4sCBA9lsOnPmTBu/6Lx79+5kY02cODH/UwoWWJmDMrNt27Yt9eaZRMtnmcACUhBYUBbuu+++ZDO1/aD22bNnJxdv2bIl/4MKFliPPvpo03gjRozIf8OKiorRo0e/8847DQ0Nef7HosACUhBYUBY+/PDDZDONGzeujcVXX331uX8aNGhQngcVLLBGjRrVNNuJEydqamra3Wrs2LFr1qz566+/mj61f//+PGcQWEAKAgtK3xVXXHHq1KlsLR05ciTn8VfNbdy4MRlYy5cvz/OsggVW7969kxNu3779ySefvPTSS3OWdevWLZNfv/76a04y1tXV5TmDwAJSEFhQ+nJ+A2fJkiXtfuTxxx9PfuTEiROXXXZZPmcV8q8Iv/rqq5xsysz5wQcfPP3004MGDaqqqpo2bVp9ff25ljzyyCN5ziCwgBQEFpS+HTt2JNti0qRJt7Rn6NChyZteGVOnTs3nrEIGVmbO7HOwmmtsbGz+YqbAli9fftttt+U/g8ACUhBYUOIGDx7cWoJ0yK5du/I5rsBPcn/ggQdOnz6dz/w///zz9OnTe/bs2dEZBBaQgsCCErds2bKQwMq466672j2u8L9FePPNN+/cubO1mc+cObNu3bqRI0emnkFgASkILChlF1988Z9//hkVWKtXr273xMIHVpOampqTJ0/mDFxXV9evX7/znEFgASkILChlOd9VP3v27N8dlPz4qVOnevXq1faJxQqsZ555Jjnq559/HvX7OQILSEFgQSnbtGlTMjumT5/eoY/37t075xtOtbW1bX+kKIE1ceLE7IT19fWZGaIG+LfAAlIRWFCyqqurk23U9s/jtObjjz9ObrJ379621xc+sMaMGZMdb/369Sm+xt42gQWkILCgZL3wwgvJNvrss89SbPLggw/mfLFp1KhRbawvcGD16dPn0KFDTfk4bdq0qHOTBBaQgsCCkpXzjM3HHnssxSbdunVrKpisTz75pI31BQ6s9evXN001fvz4qENzCCwgBYEFpenee+9NVtHx48crKyvTbbVgwYKcm1h9+/ZtbXEhA2vAgAFN88yePTvqxOYEFpCCwILStGbNmmQSrVixIvVW119/fU5gzZ07t7XFhQyslStXZob58ccfo45rkcACUhBYUIJ69uyZ81Cou++++3w2/Oabb5K7HTx48IILLmhxZSEDq+n/LseMGRN1XIsEFpCCwIISNHXq1GQP1dfXn+eGNTU1OTexxo4d2+LKggXWLbfckhnjyJEjF154YdRxLRJYQAoCC0rQtm3bkjH08ssvn+eGlZWVx44dS+755ZdftriyYIE1ZcqUzBibN2+OOqs1AgtIQWBBqcnUQM7dpgEDBpz/tm+//XbOti2GQsECa86cOZkZ1q1bF3VWawQWkILAglKzZMmSZAZt3bo1ZNs77rgjJ7BeffXV5ssygbVq1arBQZ577rnWAuvNN9/MzLBp06aQq2tDJrDGjx8fdUWbN28WWFAOBBaUmkxg/Sdh3Lhx/6edM4nTfM1NN930n1Ctzd/0J4QNDQ1RV9eaKVOmxF5RiufpA12OwAK6pIULFzbdSBs+fHixZwHIJbCALmnmzJlNgbVly5ZizwKQS2ABXVLyO2FLly4t9jgA/yCwgK4q+SOJa9euvfLKK4s9EcD/CCygq5o9e3byrxpPnjw5f/78/v37F3suAIEFdFkVFRX79u0718yePXtWrlxZU1OTia3u3bsXe0ygHAksoAsbOHDg4cOHmzdW1tmzZw8dOrR169ZPP/101apVK1asWLp06WuvvfbSSy/NmzdvwYIFCxcufOONN6ZNm1bsSwFKisACurZBgwYdPHiwjcZq16JFiyorK4t9HUBJEVhAl1dVVbVs2bLGxsaOptXu3buHDh1a7PGBEiSwgBJx1VVXzZ07d/v27XnW1cKFCysqKoo9NVCaBBZQaqqrq++///45c+bU1dV98cUXmeTav3//0aNHT5w40XSX65dffhkyZEixxwRKmcACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACCCSwAgGACCwAgmMACAAgmsAAAggksAIBgAgsAIJjAAgAIJrAAAIIJLACAYAILACCYwAIACCawAACC/RfRjw68Uq0gYAAAAABJRU5ErkJggg=="><p class="hash">PPM SHA-256 b0b1d571712be645e7f49ad1508014d8e745f480d948030a522622f45e6cd790</p><details><summary>Captured identity evidence</summary><pre>[
+  {
+    &quot;case&quot;: &quot;full_none&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;ArialMT&quot;,
+    &quot;postscript&quot;: &quot;ArialMT&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 1,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_none-3.font&quot;,
+    &quot;size&quot;: 1045720,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_none&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 1,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;ArialMT&quot;
+  }
+]</pre></details></article><article><h2>Captured bytes + same-host DirectWrite — original pixels</h2><code>full_directwrite_captured</code><img alt="Recorded libass output for full_directwrite_captured" src="data:image/png;base64,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"><p class="hash">PPM SHA-256 b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5</p><details><summary>Captured identity evidence</summary><pre>[
+  {
+    &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;ArialMT&quot;,
+    &quot;postscript&quot;: &quot;ArialMT&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 1,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_directwrite_captured-15.font&quot;,
+    &quot;size&quot;: 1045720,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 1,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;ArialMT&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+    &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+    &quot;face&quot;: 2,
+    &quot;uid_local&quot;: 4,
+    &quot;codepoint&quot;: 20013,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_directwrite_captured-16.font&quot;,
+    &quot;size&quot;: 14729372,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 4,
+    &quot;face&quot;: 2,
+    &quot;face_count&quot;: 3,
+    &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+    &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 5,
+    &quot;codepoint&quot;: 128512,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_directwrite_captured-17.font&quot;,
+    &quot;size&quot;: 12934920,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 5,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+  }
+]</pre></details></article><article><h2>Single CJK character, NONE/Arial — missing fallback</h2><code>cjk_none</code><img alt="Recorded libass output for cjk_none" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAADICAIAAACf7RJNAAAEM0lEQVR4nO3WMW0DARBFQcMIo7RnFK7t3jSMIoxSmEoOQ/SkldYzAL52u3f5AgAgdZk+AABgG4EFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWMCw2+32fr9/I+fUOTj9E/DpBBYw7PF4PJ/Pau2cut/v1RrA/wgsYJjAAvYRWMAwgQXsI7CAYQIL2EdgAcMEFrCPwAKGCSxgH4EFDBNYwD4CCxgmsIB9BBYwTGAB+wgsYJjAAvYRWMAwgQXsI7CAYQIL2EdgAcMEFrCPwAKGCSxgH4EFDBNYwD4CCxgmsIB9BBYwTGAB+wgsYJjAAvYRWMAwgQXsI7CAYQIL2EdgAcMEFrCPwAKGCSxgH4EFDBNYwD4CCxgmsIB9BBYwTGAB+wgsYJjAAvYRWMAwgQXsI7CAYQIL2EdgAcMEFrCPwAKGCSxgH4EFDBNYwD4CCxh2Btbr9fqOnFMCCxgnsIBh1+v1J3Ucx/RPwKcTWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAsT/vyNrGCqUwygAAAABJRU5ErkJggg=="><p class="hash">PPM SHA-256 474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1</p><details><summary>Captured identity evidence</summary><pre>[
+  {
+    &quot;case&quot;: &quot;cjk_none&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;ArialMT&quot;,
+    &quot;postscript&quot;: &quot;ArialMT&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 1,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/cjk_none-8.font&quot;,
+    &quot;size&quot;: 1045720,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+  },
+  {
+    &quot;case&quot;: &quot;cjk_none&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 1,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;ArialMT&quot;
+  }
+]</pre></details></article><article><h2>Only default family changed — original isolated glyph</h2><code>cjk_none_default_yu</code><img alt="Recorded libass output for cjk_none_default_yu" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAADICAIAAACf7RJNAAAGVklEQVR4nO3dP2tUWxTGYT/GlWuTWsEiEiJBIoHgl1CUWF5RVIRoogT/EyQIfobb20YhKIgQlBRWWtiJjYWNlY33cKuN6BwCL7OOM89TL/Zeu/sxMDMH/gIAIOpA9QIAAJNGYAEAhAksAIAwgQUAECawAADCBBYAQJjAAgAIE1gAAGECCwAgTGABAIQJLACAMIEFABAmsAAAwgQWAECYwAIACBNYAABhAgsAIExgAQCECSwAgDCBBQAQJrAAAMIEFgBAmMACAAgTWAAAYQILACBMYAEAhAksAIAwgQUAECawAADCBBYAQJjAAgAIE1gAAGECCwAgTGABAIQJLACAMIEFABAmsAAAwgQWAECYwAIACBNYAABhAgsAIExgAQCECSwAgDCBBQAQJrAAAMIEFgBAmMACAAgTWAAAYQILACBMYAEAhAksAIAwgQUAECawAADCBBYAQJjAAgAIE1gAAGECCwAgTGABAIQJLACAMIEFABAmsAAAwgQWAECYwAIACBNYAABhAgsAIExgAQCECSwAgDCBBQAQJrAAAMIEFgBAmMACAAgTWAAAYQILACBMYAEAhAksAIAwgQUAECawAADCBBYAQJjAAgAIE1jA0B09enRmZqZ6C4B9EFjAoB06dOjH/75///7ly5ePHz/euXOneimAHgILGLpv3779aDx58qR6I4AeAgsYus+fP7eBtbKyUr0RQA+BBQzd+/fv28BaXl6u3gigh8AChu7NmzdtYC0sLFRvBNBDYAFDt7Oz0wbW7Oxs9UYAPQQWMHTb29ttYM3NzVVvBNBDYAFDJ7CAP47AAgqcPHlyY2NjfX19dXX12rVrly9fvnjx4oULF/75lXfv3rWBtba29suxTnfCpUuXrl692h3bHd5dsbS0VP1WYBoJLKDA1tbWj7F4/Phx9VuBaSSwgAKbm5vjCazuouq3AtNIYAEF7t+/P57A6i6qfiswjQQWUOD27dvjCazuouq3AtNIYAEFNjY22gxaWVn5+/eeP3/eDs/NzY0Y7o5qh2/dulX9VmAaCSygwPr6eptBZ8+eHTH8U2AdO3ZsxPC5c+fa4evXr6d3B+gnsIACq6urAguYYAILKNB1j8ACJpjAAgoILGCyCSyggMACJpvAAgoILGCyCSygwI0bN8YTWGtra+ndAfoJLKDAzZs3xxNYfgcLKCGwgAI//dDoixcv/v29T58+tcNPnz4dMdwd1Q53F1W/FZhGAgso4K9ygMkmsIACd+/eHU9g3bt3r/qtwDQSWECBBw8ejCewHj58WP1WYBoJLKDA5uZmm0EfPnzY/b2vX7+2w3t7eyOGu6Pa4e6i6rcC00hgAQUePXrUZtDobxE+e/asHR79LcLz58+3w91F6d0B+gksoMDW1labQadPnx4xvK/AOnPmjMACygksoMDx48evNA4fPjxieF+BdfDgwcXGzMxMeneAfgILGLp9BRbAEAgsYOgEFvDHEVjA0G1vb7eBNTs7W70RQA+BBQzdT/9FOD8/X70RQA+BBQzdzs5OG1gLCwvVGwH0EFjA0L18+bINrBMnTlRvBNBDYAFD9+rVqzawFhcXqzcC6CGwgKF7/fp1G1hLS0vVGwH0EFjA0O3u7raBtby8XL0RQA+BBQzd27dv28A6depU9UYAPQQWMHR7e3s+wQL+LAILGLojR47MN6rXAegnsAAAwgQWAECYwAIACBNYAABhAgsAIExgAQCECSwAgDCBBQAQJrAAAMIEFgBAmMACAAgTWAAAYQILACBMYAEAhAksAIAwgQUAECawAADCBBYAQJjAAgAIE1gAAGECCwAgTGABAIQJLACAMIEFABAmsAAAwgQWAECYwAIACBNYAABhAgsAIExgAQCECSwAgDCBBQAQJrAAAMIEFgBAmMACAAgTWAAAYQILACBMYAEAhAksAIAwgQUAECawAADCBBYAQJjAAgAIE1gAAGECCwAgTGABAIQJLACAMIEFABAmsAAAwgQWAECYwAIACBNYAABhAgsAIExgAQCECSwAgDCBBQAQJrAAAMIEFgBAmMACAAgTWAAAYQILACBMYAEAhAksAIAwgQUAECawAADCBBYAQJjAAgAIE1gAAGECCwAgTGABAIQJLACAMIEFABAmsAAAwgQWAECYwAIACBNYAABhAgsAIOw/1f/vpsmUY7UAAAAASUVORK5CYII="><p class="hash">PPM SHA-256 1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf</p><details><summary>Captured identity evidence</summary><pre>[
+  {
+    &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;ArialMT&quot;,
+    &quot;postscript&quot;: &quot;ArialMT&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 1,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/cjk_none_default_yu-18.font&quot;,
+    &quot;size&quot;: 1045720,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+  },
+  {
+    &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 1,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;ArialMT&quot;
+  },
+  {
+    &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+    &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+    &quot;face&quot;: 2,
+    &quot;uid_local&quot;: 4,
+    &quot;codepoint&quot;: 20013,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/cjk_none_default_yu-19.font&quot;,
+    &quot;size&quot;: 14729372,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+  },
+  {
+    &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 4,
+    &quot;face&quot;: 2,
+    &quot;face_count&quot;: 3,
+    &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+  }
+]</pre></details></article><article><h2>Single emoji, NONE/Arial — missing fallback</h2><code>emoji_none</code><img alt="Recorded libass output for emoji_none" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAADICAIAAACf7RJNAAAEM0lEQVR4nO3WMW0DARBFQcMIo7RnFK7t3jSMIoxSmEoOQ/SkldYzAL52u3f5AgAgdZk+AABgG4EFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWMCw2+32fr9/I+fUOTj9E/DpBBYw7PF4PJ/Pau2cut/v1RrA/wgsYJjAAvYRWMAwgQXsI7CAYQIL2EdgAcMEFrCPwAKGCSxgH4EFDBNYwD4CCxgmsIB9BBYwTGAB+wgsYJjAAvYRWMAwgQXsI7CAYQIL2EdgAcMEFrCPwAKGCSxgH4EFDBNYwD4CCxgmsIB9BBYwTGAB+wgsYJjAAvYRWMAwgQXsI7CAYQIL2EdgAcMEFrCPwAKGCSxgH4EFDBNYwD4CCxgmsIB9BBYwTGAB+wgsYJjAAvYRWMAwgQXsI7CAYQIL2EdgAcMEFrCPwAKGCSxgH4EFDBNYwD4CCxh2Btbr9fqOnFMCCxgnsIBh1+v1J3Ucx/RPwKcTWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAMYEFABATWAAAsT/vyNrGCqUwygAAAABJRU5ErkJggg=="><p class="hash">PPM SHA-256 474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1</p><details><summary>Captured identity evidence</summary><pre>[
+  {
+    &quot;case&quot;: &quot;emoji_none&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;ArialMT&quot;,
+    &quot;postscript&quot;: &quot;ArialMT&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 1,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/emoji_none-11.font&quot;,
+    &quot;size&quot;: 1045720,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+  },
+  {
+    &quot;case&quot;: &quot;emoji_none&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 1,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;ArialMT&quot;
+  }
+]</pre></details></article><article><h2>Only default family changed — original isolated glyph</h2><code>emoji_none_default_segoe</code><img alt="Recorded libass output for emoji_none_default_segoe" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAADICAIAAACf7RJNAAANo0lEQVR4nO3d6W9V1cLA4ftngIiljAUMWGVWSQSqBQRBxAhG8AtRkgbDoIKCqaABwqAyJIrKIAG8YDAICFIQcYhWSBMliEHDGAFFZbBMFfGu677vznl7ii9c1zk1b5/nQ7OHtdc+69sv55zu849GAABE9Y/6fgEAAP/fCCwAgMgEFgBAZAILACAygQUAEJnAAgCITGABAEQmsAAAIhNYAACRCSwAgMgEFgBAZAILACAygQUAEJnAAgCITGABAEQmsAAAIhNYAACRCSwAgMgEFgBAZAILACAygQUAEJnAAgCITGABAEQmsAAAIhNYAACRCSwAgMgEFgBAZAILACAygQUAEJnAAgCITGABAEQmsAAAIhNYAACRCSwAgMgEFgBAZAILACAygQUAEJnAAgCITGABAEQmsAAAIhNYAACRCSwAgMgEFgBAZAILACAygQUAEJnAAgCITGABAEQmsAAAIhNYAACRCSwAgMgEFgBAZAILACAygQUAEJnAAgCITGABAEQmsAAAIhNYAACRCSwAgMgEFgBAZAILACAygQUAEJnAAgCITGABAEQmsAAAIhNYAACRCSwAgMgEFgBAZAILACAygQUAEJnAAgCITGABAEQmsAAAIhNYAACRCSwAgMgEFgBAZAILACAygQUAEJnAAgCITGABfztt27YdOXLkvHnz1qxZs3379i+++OK77767+IewsXv37nAwnAoDwrD27dvX9+sFqE1gAX8XIZUmT55cVVX1+zUKl4QLQ5bV9woA/kNgAfWvW7duy5Ytu3jx4rWmVaYLFy4sWbKka9eu9b0aAIEF1KumTZvOmjUrO61OnTq1ZcuWefPmlZeXl5WVDR8+/M477ywtLQ0bY8aMCQcXLFiwefPmn3/+udaFYaowYZi2vlcGNGgCC6g3PXr0+PLLLzPz6Ny5c4sWLerXr9/VTxKqK1wSLsycJ0wbJs/dKwf4cwILqB/Dhg3LrKLz588vWLCgqKjov5utTZs28+fPz5wwbIdbxH3NAFdJYAH1YOTIkZlvOK1cubK4uLh169YlJSX33XffNX2Pqlu3buGSPn36hMvDJGGqzJlHjBiRu1UAXInAAvJtwIABaQDV1NSMHj363nvv3bRpU2YYnThxYs6cOc2aNbvSJAUFBWFA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qv58cJcuXSZOnFhRUbF3797vv//+4h/CRtgNBydNmlTnPwymCgsLv/322+Re4abZz98CyB2BBeTV448/nr7/tG7dutzd6N13301v9OSTT+buRgDZBBaQb6tXr07TZ/369dddd13c+Zs0abJx48b0Fp59BeSfwALy7YYbbvj000/TAPrqq6+6d+8ea/IePXp8/fXX6eSfffZZQUFBrMkBrpLAAupBaKzKyso0g2pqal599dX27dv/lTnD5WGSzCfCh1uEG8V6zQBXT2AB9WbFihWZ/xJ45syZWbNmtWnT5lrnKSoqChf+8ssvmbP9ybMbAHJNYAH16bHHHjt58mRmGF26dGnr1q2TJk0qKSlp2rTplS4sKCjo3bt38m+Gv/32W+YMYcIwbT5XAVCLwALqWbt27ZYuXXr58uU6n3R15syZ/fv379q1a/PmzVu2bAkbBw8eTJ/1UEsorSVLloQJ63tNQEMnsIC/heLi4ldeeeXHH3+ss5z+TydPngyX33TTTfW9DoB/E1jA30jjxo0feOCBxYsX79mz50rvaaXCgN27d4fBDz74YJ0/bghQXwQW8DfVvHnzzp079+3b96GHHho7duzzfwgbYTccDKdatGhR368RoG4CCwAgMoEFABCZwAIAiExgAQBEJrAAACITWAAAkQksAIDIBBYAQGQCCwAgMoEFABCZwAIAiExgAQBEJrAAACITWAAAkQksAIDIBBYAQGQCCwAgMoEFABCZwAIAiExgAQBEJrAAACITWAAAkQksAIDIBBYAQGQCCwAgMoEFABCZwAIAiExgAQBEJrAAACITWAAAkQksAIDIBBYAQGQCCwAgMoEFABCZwAIAiExgAQBEJrAAACITWAAAkQksAIDIBBYAQGQCCwAgMoEFABCZwAIAiExgAQBEJrAAACITWAAAkQksAIDIBBYAQGQCCwAgMoEFABCZwAIAiExgAQBEJrAAACITWAAAkQksAIDIBBYAQGQCCwAgMoEFABCZwAIAiExgAQBEJrAAACITWAAAkQksAIDIBBYAQGQCCwAgMoEFABCZwAIAiExgAQBEJrAAACITWAAAkQksAIDIBBYAQGQCCwAgsn8BKmg6q5vM/5oAAAAASUVORK5CYII="><p class="hash">PPM SHA-256 52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f</p><details><summary>Captured identity evidence</summary><pre>[
+  {
+    &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;ArialMT&quot;,
+    &quot;postscript&quot;: &quot;ArialMT&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 1,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/emoji_none_default_segoe-20.font&quot;,
+    &quot;size&quot;: 1045720,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+  },
+  {
+    &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 1,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;ArialMT&quot;
+  },
+  {
+    &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+    &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 5,
+    &quot;codepoint&quot;: 128512,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/emoji_none_default_segoe-21.font&quot;,
+    &quot;size&quot;: 12934920,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+  },
+  {
+    &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 5,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+  }
+]</pre></details></article><article><h2>Synthetic explicit font tags — different full pixels</h2><code>full_none_authored_families</code><img alt="Recorded libass output for full_none_authored_families" src="data:image/png;base64,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"><p class="hash">PPM SHA-256 0e54190138a3fc8565d84cb5a0e6954d979543347a972ad8f6ba661309d02ff2</p><details><summary>Captured identity evidence</summary><pre>[
+  {
+    &quot;case&quot;: &quot;full_none_authored_families&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;ArialMT&quot;,
+    &quot;postscript&quot;: &quot;ArialMT&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 1,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_none_authored_families-28.font&quot;,
+    &quot;size&quot;: 1045720,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_none_authored_families&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 1,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;ArialMT&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_none_authored_families&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+    &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+    &quot;face&quot;: 2,
+    &quot;uid_local&quot;: 4,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_none_authored_families-29.font&quot;,
+    &quot;size&quot;: 14729372,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_none_authored_families&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 4,
+    &quot;face&quot;: 2,
+    &quot;face_count&quot;: 3,
+    &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_none_authored_families&quot;,
+    &quot;event&quot;: &quot;selected_v1&quot;,
+    &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+    &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+    &quot;face&quot;: 0,
+    &quot;uid_local&quot;: 5,
+    &quot;codepoint&quot;: 0,
+    &quot;weight&quot;: 400,
+    &quot;italic_request&quot;: 0,
+    &quot;file&quot;: &quot;selected/full_none_authored_families-30.font&quot;,
+    &quot;size&quot;: 12934920,
+    &quot;failure&quot;: &quot;&quot;,
+    &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+  },
+  {
+    &quot;case&quot;: &quot;full_none_authored_families&quot;,
+    &quot;event&quot;: &quot;opened_face_v1&quot;,
+    &quot;uid_local&quot;: 5,
+    &quot;face&quot;: 0,
+    &quot;face_count&quot;: 1,
+    &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+  }
+]</pre></details></article><h2>Proof limits</h2><p>Real libass ASS_Image composites, not screenshots. Windows existing Debug archives and previously generated hook objects; no production resolver, Linux, whole-document, variable-instance, concurrency or performance proof. Same-host DirectWrite reproduction still depends on the installed provider environment. No user ASS names were changed; the tagged text is a separate original fixture.</p><details><summary>Full captured observations</summary><pre>{
+  &quot;utc&quot;: &quot;2026-09-27T01:28:11.797736+00:00&quot;,
+  &quot;run_directory&quot;: &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z&quot;,
+  &quot;platform&quot;: &quot;Windows-11-10.0.26200-SP0&quot;,
+  &quot;python&quot;: &quot;3.12.14&quot;,
+  &quot;libass_source_commit&quot;: &quot;4a05d8127f525943ebf45fdc6497c9e665947f0d&quot;,
+  &quot;original_evidence_sha256&quot;: &quot;618a44e2b8f7facf26792e0476e4ece94913af8416d095974ff8a4b3a2e82112&quot;,
+  &quot;original_evidence_unchanged&quot;: true,
+  &quot;original_report_sha256&quot;: &quot;8d1514c29001a9a553d182e10ee27f4b6e9814099f9734bbc7539079f8c402b5&quot;,
+  &quot;original_report_unchanged&quot;: true,
+  &quot;command&quot;: [
+    &quot;C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\cl.exe&quot;,
+    &quot;/nologo&quot;,
+    &quot;/std:c++17&quot;,
+    &quot;/EHsc&quot;,
+    &quot;/utf-8&quot;,
+    &quot;/MDd&quot;,
+    &quot;/Od&quot;,
+    &quot;/IC:\\Work\\Kainote\\Thirdparty\\libass\\libass&quot;,
+    &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\probe.cpp&quot;,
+    &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\_run\\20260926T215219440218Z\\hook_selector.obj&quot;,
+    &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\_run\\20260926T215219440218Z\\hook_font.obj&quot;,
+    &quot;/FoC:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z\\diagnostic.obj&quot;,
+    &quot;/FdC:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z\\compile.pdb&quot;,
+    &quot;/FeC:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z\\diagnostic.exe&quot;,
+    &quot;/link&quot;,
+    &quot;/LIBPATH:C:\\Work\\Kainote\\bin\\x64\\Debug&quot;,
+    &quot;Libass.lib&quot;,
+    &quot;FreeType2.lib&quot;,
+    &quot;Fribidi.lib&quot;,
+    &quot;HarfBuzz.lib&quot;,
+    &quot;Zlib.lib&quot;,
+    &quot;dwrite.lib&quot;,
+    &quot;gdi32.lib&quot;,
+    &quot;user32.lib&quot;,
+    &quot;ole32.lib&quot;,
+    &quot;advapi32.lib&quot;,
+    &quot;usp10.lib&quot;,
+    &quot;/PDB:C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z\\link.pdb&quot;
+  ],
+  &quot;compiler_sha256&quot;: &quot;b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57&quot;,
+  &quot;executable_sha256&quot;: &quot;77cf39428e46ed4b51c5b6f5f46fc0874218ac3448030294adead2e3a3059368&quot;,
+  &quot;source_sha256&quot;: {
+    &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\run.py&quot;: &quot;7daf80335b3970aa3fddf0b375f46be3613d0d214635554e33e5c5b5789e6c77&quot;,
+    &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\probe.cpp&quot;: &quot;19c53128a93c438926eb4ebd476de9499ccb618741122c1f209a2623b00a7af1&quot;,
+    &quot;C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\probe.cpp&quot;: &quot;6326ccfcd21b3aa514fe7b74f93078091b51b0c2c3c36ad40d226a15d794c148&quot;
+  },
+  &quot;reused_objects_sha256&quot;: {
+    &quot;hook_selector.obj&quot;: &quot;e2028534017fda2b2d6d7f6a77f5d855aafee626b6f0a1def38e8fc1e362ba21&quot;,
+    &quot;hook_font.obj&quot;: &quot;543dc4dca2fb3ebce71d33126e8f05519615236ae60b77e6bff22de4507d3e9c&quot;
+  },
+  &quot;libraries_sha256&quot;: {
+    &quot;Libass.lib&quot;: &quot;16d1b42b0fcd00537a8d99bb23667b728d04bdf79d7bfb522346c2e556223be2&quot;,
+    &quot;FreeType2.lib&quot;: &quot;af8f84e06c1bdad90aee3ed25dae99e36a2ff4df6b2db4d083f963fb1ab3cdd2&quot;,
+    &quot;Fribidi.lib&quot;: &quot;84fea16c046d7fe3fa1f8cf60b0f1cf68325544c6f76545addd1c997fd9c2b0d&quot;,
+    &quot;HarfBuzz.lib&quot;: &quot;b3af8239ce33047d5b037f1ae674be0d8a193d55b13464a571e926d6acc6007a&quot;,
+    &quot;Zlib.lib&quot;: &quot;191ecd3de1f613fed36fdc89cc0e77c064ef920aef600b1e4b80e4c48e0398f1&quot;
+  },
+  &quot;input_fonts&quot;: [
+    {
+      &quot;case&quot;: &quot;system_multilingual&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/system_multilingual-17.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;,
+      &quot;matching_fixture_names&quot;: [],
+      &quot;byte_count&quot;: 1045720
+    },
+    {
+      &quot;case&quot;: &quot;system_multilingual&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;face&quot;: 2,
+      &quot;uid_local&quot;: 29,
+      &quot;codepoint&quot;: 20013,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/system_multilingual-18.font&quot;,
+      &quot;size&quot;: 14729372,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;,
+      &quot;matching_fixture_names&quot;: [],
+      &quot;byte_count&quot;: 14729372
+    },
+    {
+      &quot;case&quot;: &quot;system_multilingual&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 30,
+      &quot;codepoint&quot;: 128512,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/system_multilingual-19.font&quot;,
+      &quot;size&quot;: 12934920,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;,
+      &quot;matching_fixture_names&quot;: [],
+      &quot;byte_count&quot;: 12934920
+    }
+  ],
+  &quot;records&quot;: [
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;A中ع́😀&quot;,
+      &quot;provider_requested&quot;: 4,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Using font provider directwrite (with GDI)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9BB41060] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_directwrite-0.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;face&quot;: 2,
+      &quot;uid_local&quot;: 29,
+      &quot;codepoint&quot;: 20013,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_directwrite-1.font&quot;,
+      &quot;size&quot;: 14729372,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; YuGothicUI-Semibold, 2, YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 29,
+      &quot;face&quot;: 2,
+      &quot;face_count&quot;: 3,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 30,
+      &quot;codepoint&quot;: 128512,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_directwrite-2.font&quot;,
+      &quot;size&quot;: 12934920,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; SegoeUIEmoji, 0, SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 30,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 36,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 29,
+      &quot;glyph&quot;: 2982,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 1171,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 969,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 30,
+      &quot;glyph&quot;: 2317,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;a2bf8a3aa1825faf&quot;,
+      &quot;file&quot;: &quot;renders/full_directwrite.ppm&quot;,
+      &quot;sha256&quot;: &quot;b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;A中ع́😀&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9BAB5220] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_none-3.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: failed to find any fallback with glyph 0x4E2D for font: (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: failed to find any fallback with glyph 0x1F600 for font: (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 36,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 0,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 1171,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 969,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;c8f410668fb19a0b&quot;,
+      &quot;file&quot;: &quot;renders/full_none.ppm&quot;,
+      &quot;sha256&quot;: &quot;b0b1d571712be645e7f49ad1508014d8e745f480d948030a522622f45e6cd790&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;A&quot;,
+      &quot;provider_requested&quot;: 4,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Using font provider directwrite (with GDI)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9BAB5CB0] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/ascii_directwrite-4.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 36,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;ascii_directwrite&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;aed81fb170977d4&quot;,
+      &quot;file&quot;: &quot;renders/ascii_directwrite.ppm&quot;,
+      &quot;sha256&quot;: &quot;30f588e3b9774da7ce7a4b941632af06d65933a4611ba30a547fd8bd2c3f41ae&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;A&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9BAB4EE0] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/ascii_none-5.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 36,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;ascii_none&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;aed81fb170977d4&quot;,
+      &quot;file&quot;: &quot;renders/ascii_none.ppm&quot;,
+      &quot;sha256&quot;: &quot;30f588e3b9774da7ce7a4b941632af06d65933a4611ba30a547fd8bd2c3f41ae&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;中&quot;,
+      &quot;provider_requested&quot;: 4,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Using font provider directwrite (with GDI)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D5FA850] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/cjk_directwrite-6.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;face&quot;: 2,
+      &quot;uid_local&quot;: 29,
+      &quot;codepoint&quot;: 20013,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/cjk_directwrite-7.font&quot;,
+      &quot;size&quot;: 14729372,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; YuGothicUI-Semibold, 2, YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 29,
+      &quot;face&quot;: 2,
+      &quot;face_count&quot;: 3,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 29,
+      &quot;glyph&quot;: 2982,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;cjk_directwrite&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;1c4d6e61c3d2376b&quot;,
+      &quot;file&quot;: &quot;renders/cjk_directwrite.ppm&quot;,
+      &quot;sha256&quot;: &quot;1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;中&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D5FAD30] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/cjk_none-8.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: failed to find any fallback with glyph 0x4E2D for font: (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 0,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;7c3e0b72b4066b30&quot;,
+      &quot;file&quot;: &quot;renders/cjk_none.ppm&quot;,
+      &quot;sha256&quot;: &quot;474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;😀&quot;,
+      &quot;provider_requested&quot;: 4,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Using font provider directwrite (with GDI)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D6F6A70] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/emoji_directwrite-9.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 29,
+      &quot;codepoint&quot;: 128512,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/emoji_directwrite-10.font&quot;,
+      &quot;size&quot;: 12934920,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; SegoeUIEmoji, 0, SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 29,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 29,
+      &quot;glyph&quot;: 2317,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;emoji_directwrite&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;93d07764ade40d1c&quot;,
+      &quot;file&quot;: &quot;renders/emoji_directwrite.ppm&quot;,
+      &quot;sha256&quot;: &quot;52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;😀&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D6F71C0] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/emoji_none-11.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: failed to find any fallback with glyph 0x1F600 for font: (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 0,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;7c3e0b72b4066b30&quot;,
+      &quot;file&quot;: &quot;renders/emoji_none.ppm&quot;,
+      &quot;sha256&quot;: &quot;474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;ع́&quot;,
+      &quot;provider_requested&quot;: 4,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Using font provider directwrite (with GDI)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D9F3E10] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/arabic_combining_directwrite-12.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 1171,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 969,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_directwrite&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;79628c0d040e017&quot;,
+      &quot;file&quot;: &quot;renders/arabic_combining_directwrite.ppm&quot;,
+      &quot;sha256&quot;: &quot;26aca33bfe4a7c7c1a5814ed9b224de387388cf9f8633ac7ef914238153ccb57&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;ع́&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D9F4A40] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/arabic_combining_none-13.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 1171,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 969,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;arabic_combining_none&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;79628c0d040e017&quot;,
+      &quot;file&quot;: &quot;renders/arabic_combining_none.ppm&quot;,
+      &quot;sha256&quot;: &quot;26aca33bfe4a7c7c1a5814ed9b224de387388cf9f8633ac7ef914238153ccb57&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;A中ع́😀&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D5FB140] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 5,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_none_reverse-14.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: failed to find any fallback with glyph 0x4E2D for font: (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: failed to find any fallback with glyph 0x1F600 for font: (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;glyph&quot;: 36,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;glyph&quot;: 0,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;glyph&quot;: 1171,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;glyph&quot;: 969,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_reverse&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;c8f410668fb19a0b&quot;,
+      &quot;file&quot;: &quot;renders/full_none_reverse.ppm&quot;,
+      &quot;sha256&quot;: &quot;b0b1d571712be645e7f49ad1508014d8e745f480d948030a522622f45e6cd790&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;A中ع́😀&quot;,
+      &quot;provider_requested&quot;: 4,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Using font provider directwrite (with GDI)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D5FB480] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_directwrite_captured-15.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;face&quot;: 2,
+      &quot;uid_local&quot;: 4,
+      &quot;codepoint&quot;: 20013,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_directwrite_captured-16.font&quot;,
+      &quot;size&quot;: 14729372,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; YuGothicUI-Semibold, 2, YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;face&quot;: 2,
+      &quot;face_count&quot;: 3,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 5,
+      &quot;codepoint&quot;: 128512,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_directwrite_captured-17.font&quot;,
+      &quot;size&quot;: 12934920,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; SegoeUIEmoji, 0, SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 36,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;glyph&quot;: 2982,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 1171,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 969,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;glyph&quot;: 2317,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_directwrite_captured&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;a2bf8a3aa1825faf&quot;,
+      &quot;file&quot;: &quot;renders/full_directwrite_captured.ppm&quot;,
+      &quot;sha256&quot;: &quot;b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;中&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D5FAB90] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/cjk_none_default_yu-18.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;face&quot;: 2,
+      &quot;uid_local&quot;: 4,
+      &quot;codepoint&quot;: 20013,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/cjk_none_default_yu-19.font&quot;,
+      &quot;size&quot;: 14729372,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: Using default font family: (Arial, 400, 0) -&gt; YuGothicUI-Semibold, 2, YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; YuGothicUI-Semibold, 2, YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;face&quot;: 2,
+      &quot;face_count&quot;: 3,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;glyph&quot;: 2982,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_default_yu&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;1c4d6e61c3d2376b&quot;,
+      &quot;file&quot;: &quot;renders/cjk_none_default_yu.ppm&quot;,
+      &quot;sha256&quot;: &quot;1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;😀&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D5FB210] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/emoji_none_default_segoe-20.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 5,
+      &quot;codepoint&quot;: 128512,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/emoji_none_default_segoe-21.font&quot;,
+      &quot;size&quot;: 12934920,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: Using default font family: (Arial, 400, 0) -&gt; SegoeUIEmoji, 0, SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; SegoeUIEmoji, 0, SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;glyph&quot;: 2317,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;93d07764ade40d1c&quot;,
+      &quot;file&quot;: &quot;renders/emoji_none_default_segoe.ppm&quot;,
+      &quot;sha256&quot;: &quot;52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Yu Gothic UI Semibold&quot;,
+      &quot;text&quot;: &quot;中&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D5FB140] Style: Default,Yu Gothic UI Semibold,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;face&quot;: 2,
+      &quot;uid_local&quot;: 4,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/cjk_none_explicit_yu-22.font&quot;,
+      &quot;size&quot;: 14729372,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Yu Gothic UI Semibold, 400, 0) -&gt; YuGothicUI-Semibold, 2, YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;face&quot;: 2,
+      &quot;face_count&quot;: 3,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;glyph&quot;: 2982,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;cjk_none_explicit_yu&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;1c4d6e61c3d2376b&quot;,
+      &quot;file&quot;: &quot;renders/cjk_none_explicit_yu.ppm&quot;,
+      &quot;sha256&quot;: &quot;1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Segoe UI Emoji&quot;,
+      &quot;text&quot;: &quot;😀&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D5FB2E0] Style: Default,Segoe UI Emoji,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 5,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/emoji_none_explicit_segoe-23.font&quot;,
+      &quot;size&quot;: 12934920,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Segoe UI Emoji, 400, 0) -&gt; SegoeUIEmoji, 0, SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;glyph&quot;: 2317,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;emoji_none_explicit_segoe&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;93d07764ade40d1c&quot;,
+      &quot;file&quot;: &quot;renders/emoji_none_explicit_segoe.ppm&quot;,
+      &quot;sha256&quot;: &quot;52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;A中ع́😀&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9D5FAE00] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_none_default_yu-24.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;face&quot;: 2,
+      &quot;uid_local&quot;: 4,
+      &quot;codepoint&quot;: 20013,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_none_default_yu-25.font&quot;,
+      &quot;size&quot;: 14729372,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: Using default font family: (Arial, 400, 0) -&gt; YuGothicUI-Semibold, 2, YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; YuGothicUI-Semibold, 2, YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;face&quot;: 2,
+      &quot;face_count&quot;: 3,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: failed to find any fallback with glyph 0x1F600 for font: (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 36,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;glyph&quot;: 2982,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 1171,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 969,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 0,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_yu&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;d0a3ca0f3537bc1b&quot;,
+      &quot;file&quot;: &quot;renders/full_none_default_yu.ppm&quot;,
+      &quot;sha256&quot;: &quot;171fdb3e59a2021f5ae505cc6b479d19cdd4df86fd9e4874791995eaa9352264&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;A中ع́😀&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9BB75F20] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_none_default_segoe-26.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: failed to find any fallback with glyph 0x4E2D for font: (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 5,
+      &quot;codepoint&quot;: 128512,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_none_default_segoe-27.font&quot;,
+      &quot;size&quot;: 12934920,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 2,
+      &quot;text&quot;: &quot;fontselect: Using default font family: (Arial, 400, 0) -&gt; SegoeUIEmoji, 0, SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; SegoeUIEmoji, 0, SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 36,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 0,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 1171,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 969,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;glyph&quot;: 2317,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_default_segoe&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 1,
+      &quot;fnv1a64&quot;: &quot;81ebf098cca9ad84&quot;,
+      &quot;file&quot;: &quot;renders/full_none_default_segoe.ppm&quot;,
+      &quot;sha256&quot;: &quot;16973040d1b2d49957126c4036b7b31caa9cb819eaad2695fde259823bfff6e9&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;request&quot;,
+      &quot;family&quot;: &quot;Arial&quot;,
+      &quot;text&quot;: &quot;A{\\fnYu Gothic UI Semibold}中{\\fnArial}ع́{\\fnSegoe UI Emoji}😀&quot;,
+      &quot;provider_requested&quot;: 0,
+      &quot;bold&quot;: 0,
+      &quot;italic&quot;: 0
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;libass API version: 0x1705000&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;archive_source_label_invalid&quot;,
+      &quot;pointer_value&quot;: 1
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Raster: FreeType 2.14.3&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;Initialized&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 6,
+      &quot;text&quot;: &quot;[000001DC9BB7A330] Style: Default,Arial,60,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 7,
+      &quot;text&quot;: &quot;Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;Added subtitle file: &lt;memory&gt; (2 styles, 1 events)&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;ArialMT&quot;,
+      &quot;postscript&quot;: &quot;ArialMT&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 1,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_none_authored_families-28.font&quot;,
+      &quot;size&quot;: 1045720,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Arial, 400, 0) -&gt; ArialMT, 0, ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;ArialMT&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;,
+      &quot;face&quot;: 2,
+      &quot;uid_local&quot;: 4,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_none_authored_families-29.font&quot;,
+      &quot;size&quot;: 14729372,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Yu Gothic UI Semibold, 400, 0) -&gt; YuGothicUI-Semibold, 2, YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;face&quot;: 2,
+      &quot;face_count&quot;: 3,
+      &quot;postscript&quot;: &quot;YuGothicUI-Semibold&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;selected_v1&quot;,
+      &quot;display&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;,
+      &quot;face&quot;: 0,
+      &quot;uid_local&quot;: 5,
+      &quot;codepoint&quot;: 0,
+      &quot;weight&quot;: 400,
+      &quot;italic_request&quot;: 0,
+      &quot;file&quot;: &quot;selected/full_none_authored_families-30.font&quot;,
+      &quot;size&quot;: 12934920,
+      &quot;failure&quot;: &quot;&quot;,
+      &quot;sha256&quot;: &quot;451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;log&quot;,
+      &quot;level&quot;: 4,
+      &quot;text&quot;: &quot;fontselect: (Segoe UI Emoji, 400, 0) -&gt; SegoeUIEmoji, 0, SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;opened_face_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;face&quot;: 0,
+      &quot;face_count&quot;: 1,
+      &quot;postscript&quot;: &quot;SegoeUIEmoji&quot;
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 36,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 4,
+      &quot;glyph&quot;: 2982,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 1171,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 1,
+      &quot;glyph&quot;: 969,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;glyph_simulation_v1&quot;,
+      &quot;uid_local&quot;: 5,
+      &quot;glyph&quot;: 2317,
+      &quot;embolden&quot;: false,
+      &quot;italicize&quot;: false
+    },
+    {
+      &quot;case&quot;: &quot;full_none_authored_families&quot;,
+      &quot;event&quot;: &quot;render&quot;,
+      &quot;images&quot;: 4,
+      &quot;fnv1a64&quot;: &quot;57a8df3814b5cd7d&quot;,
+      &quot;file&quot;: &quot;renders/full_none_authored_families.ppm&quot;,
+      &quot;sha256&quot;: &quot;0e54190138a3fc8565d84cb5a0e6954d979543347a972ad8f6ba661309d02ff2&quot;
+    }
+  ],
+  &quot;provider_pair_same_pixels&quot;: {
+    &quot;full&quot;: false,
+    &quot;ascii&quot;: true,
+    &quot;cjk&quot;: false,
+    &quot;emoji&quot;: false,
+    &quot;arabic_combining&quot;: true
+  },
+  &quot;variation_same_pixels&quot;: {
+    &quot;full_none_reverse&quot;: true,
+    &quot;full_directwrite_captured&quot;: true,
+    &quot;cjk_none_default_yu&quot;: true,
+    &quot;emoji_none_default_segoe&quot;: true,
+    &quot;cjk_none_explicit_yu&quot;: true,
+    &quot;emoji_none_explicit_segoe&quot;: true,
+    &quot;full_none_default_yu&quot;: false,
+    &quot;full_none_default_segoe&quot;: false,
+    &quot;full_none_authored_families&quot;: false
+  },
+  &quot;variation_reference_cases&quot;: {
+    &quot;full_none_reverse&quot;: &quot;full_none&quot;,
+    &quot;full_directwrite_captured&quot;: &quot;full_directwrite&quot;,
+    &quot;cjk_none_default_yu&quot;: &quot;cjk_directwrite&quot;,
+    &quot;emoji_none_default_segoe&quot;: &quot;emoji_directwrite&quot;,
+    &quot;cjk_none_explicit_yu&quot;: &quot;cjk_directwrite&quot;,
+    &quot;emoji_none_explicit_segoe&quot;: &quot;emoji_directwrite&quot;,
+    &quot;full_none_default_yu&quot;: &quot;full_directwrite&quot;,
+    &quot;full_none_default_segoe&quot;: &quot;full_directwrite&quot;,
+    &quot;full_none_authored_families&quot;: &quot;full_directwrite&quot;
+  },
+  &quot;repeat_frame_sha256&quot;: {
+    &quot;full_directwrite&quot;: &quot;b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5&quot;,
+    &quot;full_none&quot;: &quot;b0b1d571712be645e7f49ad1508014d8e745f480d948030a522622f45e6cd790&quot;,
+    &quot;ascii_directwrite&quot;: &quot;30f588e3b9774da7ce7a4b941632af06d65933a4611ba30a547fd8bd2c3f41ae&quot;,
+    &quot;ascii_none&quot;: &quot;30f588e3b9774da7ce7a4b941632af06d65933a4611ba30a547fd8bd2c3f41ae&quot;,
+    &quot;cjk_directwrite&quot;: &quot;1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf&quot;,
+    &quot;cjk_none&quot;: &quot;474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1&quot;,
+    &quot;emoji_directwrite&quot;: &quot;52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f&quot;,
+    &quot;emoji_none&quot;: &quot;474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1&quot;,
+    &quot;arabic_combining_directwrite&quot;: &quot;26aca33bfe4a7c7c1a5814ed9b224de387388cf9f8633ac7ef914238153ccb57&quot;,
+    &quot;arabic_combining_none&quot;: &quot;26aca33bfe4a7c7c1a5814ed9b224de387388cf9f8633ac7ef914238153ccb57&quot;,
+    &quot;full_none_reverse&quot;: &quot;b0b1d571712be645e7f49ad1508014d8e745f480d948030a522622f45e6cd790&quot;,
+    &quot;full_directwrite_captured&quot;: &quot;b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5&quot;,
+    &quot;cjk_none_default_yu&quot;: &quot;1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf&quot;,
+    &quot;emoji_none_default_segoe&quot;: &quot;52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f&quot;,
+    &quot;cjk_none_explicit_yu&quot;: &quot;1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf&quot;,
+    &quot;emoji_none_explicit_segoe&quot;: &quot;52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f&quot;,
+    &quot;full_none_default_yu&quot;: &quot;171fdb3e59a2021f5ae505cc6b479d19cdd4df86fd9e4874791995eaa9352264&quot;,
+    &quot;full_none_default_segoe&quot;: &quot;16973040d1b2d49957126c4036b7b31caa9cb819eaad2695fde259823bfff6e9&quot;,
+    &quot;full_none_authored_families&quot;: &quot;0e54190138a3fc8565d84cb5a0e6954d979543347a972ad8f6ba661309d02ff2&quot;
+  },
+  &quot;repeat_all_frames_agree&quot;: true,
+  &quot;original_baseline_frames_agree&quot;: {
+    &quot;full_directwrite&quot;: true,
+    &quot;full_none&quot;: true
+  },
+  &quot;limits&quot;: &quot;Windows existing Debug archives and original hook objects; no dependency rebuild, production patch, Linux or full-document qualification.&quot;
+}</pre></details><p class="hash">Observations JSON SHA-256: 1f371d1ca8ebf28719a99ebc471bdea93bc8c4a360545f9cb18de441cd44d20b</p></main></html>

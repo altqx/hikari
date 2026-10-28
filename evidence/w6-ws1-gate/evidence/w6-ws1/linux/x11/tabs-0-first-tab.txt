@@ -1,0 +1,128 @@
+# compositor windows
+4194318 'episode.ass - HikariSub' Window 4194318   Position: 960,108 (screen: 0)   Geometry: 1280x800 
+4194341 'Audio' Window 4194341   Position: 1601,138 (screen: 0)   Geometry: 639x178 
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "episode.ass - HikariSub",
+   "id": "HikariSub",
+   "active": false,
+   "x": 960,
+   "y": 108,
+   "w": 1280,
+   "h": 800
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "active": true,
+   "x": 1601,
+   "y": 138,
+   "w": 639,
+   "h": 178
+  }
+ ],
+ "panels": [
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 529,
+   "w": 1280,
+   "h": 214
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 65,
+   "w": 640,
+   "h": 420
+  },
+  {
+   "name": "Line editor: episode.ass",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 65,
+   "w": 639,
+   "h": 420
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "Audio",
+   "x": 1,
+   "y": 36,
+   "w": 637,
+   "h": 141
+  }
+ ],
+ "focus": "[panel] 'Audio' <focused,showing,visible,enabled> @1602,174 637x141 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'Audio' > panel:'Audio'",
+ "texts": {
+  "Line text": "first",
+  "Start": "0:00:01.00",
+  "End": "0:00:02.00"
+ },
+ "labels": [
+  "Video times"
+ ]
+}
+# arrangement
+{
+ "Grid": {
+  "window": "main",
+  "rect": [
+   0,
+   529,
+   1280,
+   214
+  ]
+ },
+ "Video": {
+  "window": "main",
+  "rect": [
+   0,
+   65,
+   640,
+   420
+  ]
+ },
+ "Line editor": {
+  "window": "main",
+  "rect": [
+   641,
+   65,
+   639,
+   420
+  ]
+ },
+ "Audio": {
+  "window": "floating",
+  "rect": [
+   1,
+   36,
+   637,
+   141
+  ],
+  "size": [
+   639,
+   178
+  ],
+  "position": [
+   1601,
+   138
+  ]
+ },
+ "(main window)": {
+  "window": "main",
+  "size": [
+   1280,
+   800
+  ]
+ }
+}

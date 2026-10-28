@@ -1,0 +1,1 @@
+DM OK: 102795 bytes to /home/altq/.cache/dc1/ev-appimage-dm/data/HikariSub/HikariSub/Automation/temp/dc1-dm-check.json

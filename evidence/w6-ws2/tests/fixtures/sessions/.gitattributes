@@ -1,0 +1,3 @@
+# Legacy session files: exact bytes (BOM, CRLF).
+* -text
+.gitattributes text

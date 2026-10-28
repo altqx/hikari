@@ -1,0 +1,2 @@
+# Preserve verification.json's CSV hashes on Windows checkouts.
+*.csv text eol=lf

@@ -1,0 +1,244 @@
+[
+    {
+        "api_key": "phc_test",
+        "batch": [
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "app_started",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$os": "linux",
+                    "$os_version": "4.0.0.r7235.g967bbdd",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "arch": "x86_64",
+                    "channel": "prerelease",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "language": "en",
+                    "layout": "editing",
+                    "package": "build_tree",
+                    "qt_version": "6.11.2",
+                    "scale": "1x",
+                    "screens": "1",
+                    "startup_time": "1-2s",
+                    "theme": "dark",
+                    "theme_follows_system": true,
+                    "version": "0.1.0-beta.1"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "getting_started_skipped",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "getting_started_finished",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "pages_changed": [
+                        "look"
+                    ]
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "video_opened",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "kind": "file",
+                    "open_time": "<250ms",
+                    "outcome": "ready"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "panel_opened",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "panel": "audio"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "audio_opened",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "kind": "dummy",
+                    "open_time": "<250ms",
+                    "outcome": "ready"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "dialog_opened",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "dialog": "styleManager",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "command_used",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "command": "GLOBAL_OPEN_STYLE_MANAGER",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "via": "key"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "command_used",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "command": "GLOBAL_ABOUT",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "via": "pointer"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "dialog_opened",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "dialog": "about",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "panel_opened",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "panel": "log"
+                },
+                "timestamp": "2026-10-28T04:40:54Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "layout_changed",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "layout": "karaoke"
+                },
+                "timestamp": "2026-10-28T04:40:55Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "layout_changed",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "layout": "saved"
+                },
+                "timestamp": "2026-10-28T04:40:55Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "automation_error",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "kind": "load_failed",
+                    "script": "user script"
+                },
+                "timestamp": "2026-10-28T04:40:55Z"
+            },
+            {
+                "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                "event": "app_closed",
+                "properties": {
+                    "$geoip_disable": true,
+                    "$lib": "hikarisub",
+                    "$lib_version": "0.1.0-beta.1",
+                    "$process_person_profile": false,
+                    "$session_id": "66f6fc1e-2339-4e1e-b86c-d2f602e4c85e",
+                    "distinct_id": "f0447324-a9d4-48dc-9bf3-892a79ae379b",
+                    "render_frames_16_33ms": 0,
+                    "render_frames_200ms_plus": 0,
+                    "render_frames_33_66ms": 0,
+                    "render_frames_66_200ms": 0,
+                    "render_frames_8_16ms": 0,
+                    "render_frames_lt8ms": 1,
+                    "session_length": "<1m"
+                },
+                "timestamp": "2026-10-28T04:40:55Z"
+            }
+        ]
+    }
+]

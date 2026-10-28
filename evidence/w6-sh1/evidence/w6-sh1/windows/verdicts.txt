@@ -1,0 +1,16 @@
+titlebar-default: observed - Windows: HikariSub's title bar by default: {'Window menu': True, 'Application menu': True, 'Minimise': True, 'Maximise': True, 'Close': True}, switcher 'Layout: Editing'
+titlebar-frameless: observed - the window menu button 0 px below the window's top (no caption of Windows' above the bar); window style 0x96cf0000 (the caption styles kept for Snap and the system menu)
+titlebar-names: observed - UI Automation names in the title bar: ['Application menu', 'Audio', 'Automation', 'Close', 'Edit', 'File', 'Help', 'HikariSub', 'Layout: Editing', 'Maximise', 'Minimise', 'Subtitles', 'Video', 'View', 'Window menu']; controls with no name []
+titlebar-move: observed - free part (806, 16) dragged by (+40,+30): window (0, 0, 960, 720) -> (40, 30, 960, 720)
+titlebar-double-click: observed - double click on the free part (tablet, gaps [0.38]): window (40, 30, 960, 720) -> (-8, -8, 1040, 736) (the primary's width 1024, covered: True); again (tablet): (40, 30, 960, 720)
+titlebar-maximise-button: observed - Maximise clicked: (40, 30, 960, 720) -> (-8, -8, 1040, 736), Restore shown True; Restore clicked: (40, 30, 960, 720)
+titlebar-snap-layouts: observed - pointer resting on Maximise 2 s: 44069 pixels changed under it in (648, 66, 1014, 262) (Windows 11's snap layouts flyout); the button's background #20262D -> #29313A (its hover, from WM_NCMOUSEMOVE)
+titlebar-aero-snap: observed - free part dragged to the primary's top edge: window (40, 30, 960, 720) -> (-8, -8, 1040, 736), maximised (Restore shown) True; Win+Left: (40, 30, 960, 720) -> (0, 0, 821, 720), the left half of 1024x768 (or the minimum width): True
+titlebar-resize: observed - bottom-right corner dragged by (-120,-80): (0, 0, 960, 720) -> (0, 0, 840, 640)
+titlebar-window-menu: observed - Windows' system menu (Move, Size, Minimize, Close expected) from a right click on the free part and a click on the icon, each closed with Escape: {'right-click': ['Restore', 'Move', 'Size', 'Minimize', 'Maximize', 'Close'], 'icon': ['Restore', 'Move', 'Size', 'Minimize', 'Maximize', 'Close'], 'alt-space': ['Restore', 'Move', 'Size', 'Minimize', 'Maximize', 'Close']}; the window still open after the Escapes: True. Alt+Space is HikariSub's own (legacy's Play binding), so it opens the menu only where unbound (['Restore', 'Move', 'Size', 'Minimize', 'Maximize', 'Close'])
+titlebar-keyboard: observed - Alt, Down: ['Open…', 'Recently opened subtitles', 'Remove subtitles from the editor', 'Close'] (File); F10, Right, Down: ['Undo', 'Redo', 'Sort all lines', 'Sort selected lines'] (Edit); Alt+E: ['Undo', 'Redo', 'Sort all lines', 'Sort selected lines']
+titlebar-minimise: observed - Minimise: the main window {"title": "HikariSub", "minimized": true, "visible": true}
+titlebar-close: observed - Close: HikariSub still running False
+titlebar-system: observed - menus True, switcher 'Layout: Editing', HikariSub's window buttons []; the menus 33 px below the window's top (Windows' caption above them)
+titlebar-themes: observed - the title bar in each theme's panel colour, Close's hover in the theme's (no red)
+titlebar-mixed-dpi: observed - main window (1016, -8, 1936, 1216) on \\.\DISPLAY2 at 144 dpi: True, GetDpiForWindow 144; Close (69, 48) px (46x32 at 150 %: 69x48) (titlebar-12-monitor2.png)

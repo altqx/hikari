@@ -1,0 +1,71 @@
+{
+ "dialog-frame-window": {
+  "status": "observed",
+  "detail": "x11: About 460x286 with its own buttons {'Close': True, 'Maximise': False, 'Minimise': False}; window system frame False (_NET_FRAME_EXTENTS _NET_FRAME_EXTENTS(CARDINAL) = 0, 0, 0, 0)",
+  "evidence": [
+   "dialogs-0-about.png",
+   "dialogs-0-about.txt"
+  ],
+  "at": "2026-10-20T22:07:28"
+ },
+ "dialog-frame-centred": {
+  "status": "observed",
+  "detail": "About (1370, 377, 460, 286) on the main window (960, 100, 1280, 800): its centre off the main window's + (0, 20) by (0, 0)",
+  "evidence": [
+   "dialogs-0-about.png",
+   "dialogs-0-about.txt"
+  ],
+  "at": "2026-10-20T22:07:29"
+ },
+ "dialog-frame-move": {
+  "status": "observed",
+  "detail": "title bar dragged by (-80,+50): (1370, 377, 460, 286) -> (1298, 422, 460, 286); Esc closed it: True",
+  "evidence": [
+   "dialogs-1-moved-reopened.png",
+   "dialogs-1-moved-reopened.txt"
+  ],
+  "at": "2026-10-20T22:07:42"
+ },
+ "dialog-frame-remembered": {
+  "status": "observed",
+  "detail": "opened again at (1298, 422, 460, 286) (left at (1298, 422, 460, 286))",
+  "evidence": [
+   "dialogs-1-moved-reopened.png",
+   "dialogs-1-moved-reopened.txt"
+  ],
+  "at": "2026-10-20T22:07:42"
+ },
+ "dialog-frame-modeless": {
+  "status": "observed",
+  "detail": "About and Credits open at once: True",
+  "evidence": [
+   "dialogs-2-about-and-credits.png",
+   "dialogs-2-about-and-credits.txt"
+  ],
+  "at": "2026-10-20T22:07:47"
+ },
+ "dialog-frame-system": {
+  "status": "observed",
+  "detail": "About with the system's title bar: HikariSub's drawn buttons []; window system frame True (_NET_FRAME_EXTENTS _NET_FRAME_EXTENTS(CARDINAL) = 1, 1, 22, 1)",
+  "evidence": [
+   "dialogs-3-system-title-bar.png",
+   "dialogs-3-system-title-bar.txt"
+  ],
+  "at": "2026-10-20T22:07:58"
+ },
+ "dialog-frame-themes": {
+  "status": "observed",
+  "detail": "About on HikariSub's frame in the four themes (screenshots)",
+  "evidence": [
+   "dialogs-4-theme-light.png",
+   "dialogs-4-theme-light.txt",
+   "dialogs-4-theme-dark.png",
+   "dialogs-4-theme-dark.txt",
+   "dialogs-4-theme-highContrastWhite.png",
+   "dialogs-4-theme-highContrastWhite.txt",
+   "dialogs-4-theme-highContrastBlack.png",
+   "dialogs-4-theme-highContrastBlack.txt"
+  ],
+  "at": "2026-10-20T22:08:40"
+ }
+}

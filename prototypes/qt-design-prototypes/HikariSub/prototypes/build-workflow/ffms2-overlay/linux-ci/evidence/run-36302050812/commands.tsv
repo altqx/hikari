@@ -1,0 +1,10 @@
+registry-init	exit=0
+registry-origin	exit=0
+registry-promisor	exit=0
+registry-filter	exit=0
+registry-fetch	exit=0
+registry-checkout	exit=0
+registry-fsck	exit=0
+vcpkg-version	exit=0
+resolved-plan	exit=0
+linux-overlay-workflow	exit=0

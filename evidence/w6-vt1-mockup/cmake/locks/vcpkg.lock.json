@@ -1,0 +1,43 @@
+{
+ "schema": 1,
+ "repository": "https://github.com/microsoft/vcpkg",
+ "commit": "ee6a47dac031930715bea2e6dfb9ad60caaa5d83",
+ "tree": "7312bd1d162dc2b9a2795fb6c9d67e7f364f47c4",
+ "tool_release": "2026-07-27",
+ "tools": {
+  "linux": {
+   "asset": "vcpkg-glibc",
+   "sha256": "7e97ef6bcd58f74d079f40d086b801a0222c5d15e4ea0d8d507a538033493d04",
+   "bytes": 8548168
+  },
+  "windows": {
+   "asset": "vcpkg.exe",
+   "sha256": "13b8175e99a884c5ad34249218754b45541a1a63f216e92603aee57a285ac741",
+   "bytes": 6745912
+  }
+ },
+ "ffms2": {
+  "repository": "https://github.com/altqx/ffms2.git",
+  "commit": "45d5f72100d88c52acdd54bfedcc0315a44c735d",
+  "tree": "c093bf1d2884985a48a922a2c0eebcd99fb6e395",
+  "built_source_sha256_manifest": "ports/hikari-ffms2/source-sha256.json",
+  "additional_repository_commit": "20d647c4c769ab7f5d383cf3c1c33f03876a94e9",
+  "additional_path": "Thirdparty/Build/FFMS2/indexing_additional.cpp",
+  "additional_git_blob": "be378044fff07bac704f04dc57caa4fc5f95691e",
+  "additional_bytes": 5578,
+  "additional_sha512": "881b43761897a1c75204de2249b91fa744e72a6e88dc6d7c94ccf6d472eba6869cea34700e469443f2de92c0ba472a64594ece974201e9cbbec4f4f290ca3e4f"
+ },
+ "ffmpeg": {
+  "version": "7.1.2",
+  "port_version": 5,
+  "vcpkg_port_git_tree": "bf414f1e4f2a63ff7410444dc4eabb5b392f6d16",
+  "upstream_ref": "n7.1.2",
+  "upstream_archive_sha512_from_pinned_recipe": "8411c45f71d2d61184b11e2a786137044a80d9b979a7e2e8513efc5e716b3360bff4533a13875dd4bca492b97b97f0384f7fb4f3d796802e81981b0857d18a2b",
+  "features": [
+   "avcodec",
+   "avformat",
+   "swresample",
+   "swscale"
+  ]
+ }
+}

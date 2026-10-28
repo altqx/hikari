@@ -1,0 +1,69 @@
+Test project /home/altq/.t3/worktrees/hikari/w6-ws2/out/build/ws2
+    Start 80: AssSave.RendererScriptPutsEveryLineUnderEvents
+1/2 Test #80: AssSave.RendererScriptPutsEveryLineUnderEvents ............   Passed    0.00 sec
+    Start 81: AssSave.RendererScriptPutsHeldLinesAfterTheEventsFormat
+2/2 Test #81: AssSave.RendererScriptPutsHeldLinesAfterTheEventsFormat ...***Failed    0.00 sec
+Running main() from /kache/cc-root/.t3/worktrees/hikari/w6-ws2/out/sdk/vcpkg/buildtrees/gtest/src/v1.18.0-e6987f02b9.clean/googletest/src/gtest_main.cc
+Note: Google Test filter = AssSave.RendererScriptPutsHeldLinesAfterTheEventsFormat
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from AssSave
+[ RUN      ] AssSave.RendererScriptPutsHeldLinesAfterTheEventsFormat
+/home/altq/.t3/worktrees/hikari/w6-ws2/tests/core/ass_save_tests.cpp:301: Failure
+Expected equality of these values:
+  text(encodeAss(r.document, AssSaveOptions{.renderer = true}))
+    Which is: "[Script Info]\r\nTitle: t\r\n\r\n[Events]\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n; made by hand\r\n\r\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n"
+  "[Script Info]\r\nTitle: t\r\n" "\r\n[Events]\r\n; made by hand\r\n\r\n" "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n" "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n" "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n"
+    Which is: "[Script Info]\r\nTitle: t\r\n\r\n[Events]\r\n; made by hand\r\n\r\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n"
+With diff:
+@@ -3,7 +3,7 @@
+ \r
+ [Events]\r
+-Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r
+ ; made by hand\r
+ \r
+ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r
++Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r
+ Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n
+
+
+/home/altq/.t3/worktrees/hikari/w6-ws2/tests/core/ass_save_tests.cpp:312: Failure
+Expected equality of these values:
+  text(encodeAss(r.document, AssSaveOptions{.renderer = true}))
+    Which is: "[Script Info]\n[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\n; made by hand\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\n"
+  "[Script Info]\n[Events]\n; made by hand\n" "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\n" "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\n"
+    Which is: "[Script Info]\n[Events]\n; made by hand\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\n"
+With diff:
+@@ -1,5 +1,5 @@
+ [Script Info]
+ [Events]
+-Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info
+-; made by hand
++; made by hand
++Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info
+ Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\n
+
+
+[  FAILED  ] AssSave.RendererScriptPutsHeldLinesAfterTheEventsFormat (0 ms)
+[----------] 1 test from AssSave (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] AssSave.RendererScriptPutsHeldLinesAfterTheEventsFormat
+
+ 1 FAILED TEST
+
+
+50% tests passed, 1 tests failed out of 2
+
+Label Time Summary:
+core     =   0.01 sec*proc (2 tests)
+gtest    =   0.01 sec*proc (2 tests)
+
+Total Test time (real) =   0.09 sec
+
+The following tests FAILED:
+	 81 - AssSave.RendererScriptPutsHeldLinesAfterTheEventsFormat (Failed) core gtest
+Errors while running CTest

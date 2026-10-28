@@ -1,0 +1,19 @@
+Start testing: Sep 27 07:12 UTC
+----------------------------------------------------------
+1/1 Testing: private_api_and_frames
+1/1 Test: private_api_and_frames
+Command: "/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay/ffms2_overlay_probe" "/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay/authored-fixture.mkv"
+Directory: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay
+"private_api_and_frames" start time: Sep 27 07:12 UTC
+Output:
+----------------------------------------------------------
+{"private_track_title":true,"private_track_language":true,"frames_checked":3,"request_order":[2,0,1],"ffms_version":83951616,"ffmpeg_version":"7.1.2"}
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"private_api_and_frames" end time: Sep 27 07:12 UTC
+"private_api_and_frames" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 27 07:12 UTC

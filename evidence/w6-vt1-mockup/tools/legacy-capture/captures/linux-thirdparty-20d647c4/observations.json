@@ -1,0 +1,4830 @@
+{
+ "schema": 1,
+ "legacy_commit": "20d647c4c769ab7f5d383cf3c1c33f03876a94e9",
+ "package_sha256": "e8d901b3ff73d0af520f047bef213655cfde812cbd5c37ef00e88f87c611c0ed",
+ "probe_sha256": "def37ba63daf63195d61d1237d0e0efa5b796b7c51d308b0ba88c0e2b88395d8",
+ "host": "Linux-7.2.5-4-omarchy-x86_64-with-glibc2.39",
+ "captured_utc": "2026-10-04T16:57:02Z",
+ "cases": [
+  {
+   "id": "S3-automation-thirdparty",
+   "route": "automation",
+   "observations": [
+    {
+     "part": "probe",
+     "probe_sha256": "def37ba63daf63195d61d1237d0e0efa5b796b7c51d308b0ba88c0e2b88395d8",
+     "corpus": [
+      "ILL.ChangeAlign.moon",
+      "ILL.SplitText.moon",
+      "arch.CenterTimes.lua",
+      "arch.ConvertFolds.moon",
+      "arch.FocusLines.moon",
+      "arch.Line2Fbf.moon",
+      "arch.NoteBrowser.moon",
+      "arch.RWTools.lua",
+      "arch.SplitSections.moon",
+      "l0.CascadeTransforms.moon",
+      "l0.Nudge.moon",
+      "l0.SplitLines.moon",
+      "l0.VerticalText.moon",
+      "lyger.FbfTransform.moon",
+      "lyger.GradientByChar.lua",
+      "lyger.GradientEverything.moon",
+      "lyger.LayerIncrement.lua",
+      "lyger.LuaInterpret.lua",
+      "myaa.Bounce.moon",
+      "myaa.MergeScripts.moon",
+      "myaa.PasteFromPad.moon",
+      "petzku.Accenter.lua",
+      "petzku.CellsBox.lua",
+      "petzku.JumpToNextPlus.lua",
+      "petzku.NewClipShape.moon",
+      "petzku.SmartQuotify.moon",
+      "petzku.Snapper.moon",
+      "petzku.Typewriter.lua",
+      "phos.EditTags.moon",
+      "phos.FoldOperations.moon",
+      "phos.RemoveTags.moon",
+      "phos.snap.lua",
+      "phos.wave.lua",
+      "split-tags.lua",
+      "ua.BlurAndGlow.lua",
+      "ua.ChangeCase.lua",
+      "ua.Cycles.lua",
+      "ua.HYDRA.lua",
+      "ua.JumpToNext.lua",
+      "ua.MultiLineEditor.lua",
+      "ua.iBus.lua"
+     ],
+     "status": "captured",
+     "steps": [
+      {
+       "case": "corpus",
+       "macro": 9,
+       "keys": [],
+       "status": "captured",
+       "result": {
+        "aegisub_api": [
+         "__init_clipboard:function",
+         "cancel:function",
+         "debug:table",
+         "decode_path:function",
+         "dialog:table",
+         "file_name:function",
+         "frame_from_ms:function",
+         "get_audio_selection:function",
+         "get_frame:function",
+         "get_frequency_peaks:function",
+         "gettext:function",
+         "gui:table",
+         "keyframes:function",
+         "log:function",
+         "lua_automation_version:number",
+         "ms_from_frame:function",
+         "parse_karaoke_data:function",
+         "progress:table",
+         "project_properties:function",
+         "register_filter:function",
+         "register_macro:function",
+         "set_status_text:function",
+         "set_undo_point:function",
+         "text_extents:function",
+         "video_size:function"
+        ],
+        "case": "corpus",
+        "jit": "LuaJIT 2.1.1703358377",
+        "lua_features": {
+         "break_anywhere": false,
+         "ipairs_metamethod": false,
+         "string_buffer": true,
+         "table_pack": "nil"
+        },
+        "lua_version": "Lua 5.1",
+        "modules": {
+         "aegisub.clipboard": {
+          "ok": true,
+          "type": "table"
+         },
+         "aegisub.lfs": {
+          "ok": true,
+          "type": "table"
+         },
+         "aegisub.re": {
+          "ok": true,
+          "type": "table"
+         },
+         "aegisub.unicode": {
+          "ok": true,
+          "type": "table"
+         },
+         "aegisub.util": {
+          "ok": true,
+          "type": "table"
+         },
+         "bit": {
+          "ok": true,
+          "type": "table"
+         },
+         "clipboard": {
+          "ok": true,
+          "type": "table"
+         },
+         "ffi": {
+          "ok": true,
+          "type": "table"
+         },
+         "json": {
+          "ok": true,
+          "type": "table"
+         },
+         "karaskel": {
+          "ok": true,
+          "type": "boolean"
+         },
+         "l0.DependencyControl": {
+          "error": "loop or previous error loading module 'l0.DependencyControl'",
+          "ok": false,
+          "type": "string"
+         },
+         "lfs": {
+          "ok": true,
+          "type": "table"
+         },
+         "lpeg": {
+          "ok": true,
+          "type": "table"
+         },
+         "luabins": {
+          "ok": true,
+          "type": "table"
+         },
+         "moonscript": {
+          "ok": true,
+          "type": "table"
+         },
+         "re": {
+          "ok": true,
+          "type": "table"
+         },
+         "unicode": {
+          "ok": true,
+          "type": "table"
+         },
+         "utils": {
+          "ok": true,
+          "type": "boolean"
+         }
+        },
+        "package_cpath": "./?.so;/usr/local/lib/lua/5.1/?.so;/usr/lib/x86_64-linux-gnu/lua/5.1/?.so;/usr/local/lib/lua/5.1/loadall.so",
+        "package_path": "/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload//?.lua;/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload//?/init.lua;/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include//?.lua;/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include//?/init.lua;",
+        "scripts": [
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/ILL.ChangeAlign.moon:26: loop or previous error loading module 'ILL.ILL'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/ILL.ChangeAlign.moon:26: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "ILL.ChangeAlign.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "ILLTeam"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Changes the alignment of a text or shape without changing its original position"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Change Alignment"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "ILL.ChangeAlign"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.1.2"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/ILL.SplitText.moon:22: loop or previous error loading module 'ILL.ILL'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/ILL.SplitText.moon:22: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "ILL.SplitText.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "ILLTeam"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Splits the text in several ways"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "ILL - Split Text"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "ILL.SplitText"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "2.1.2"
+          }
+         },
+         {
+          "file": "arch.CenterTimes.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Centering times of lines in frame ranges"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Center Times"
+            },
+            "processing": "function",
+            "validation": "function"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "arch1t3cht"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Centering times of lines in frame ranges"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Center Times"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "arch.CenterTimes"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.1"
+          }
+         },
+         {
+          "error": "Failed to parse:\n [36] >>    button, results = aegisub.dialog.display({{",
+          "file": "arch.ConvertFolds.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "nil"
+          },
+          "script_description": {
+           "type": "nil"
+          },
+          "script_name": {
+           "type": "nil"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "nil"
+          }
+         },
+         {
+          "file": "arch.FocusLines.moon",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Draws moving focus lines."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Focus Lines"
+            },
+            "processing": "function",
+            "validation": "function"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "arch1t3cht"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Draws moving focus lines."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Focus Lines"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "arch.FocusLines"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.0.1"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/arch.Line2Fbf.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/arch.Line2Fbf.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "arch.Line2Fbf.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "arch1t3cht"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Convert lines into frame-by-frame chunks"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "FBF-ifier"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "arch.Line2Fbf"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.1.0"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/arch.NoteBrowser.moon:39: loop or previous error loading module 'l0.Functional'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/arch.NoteBrowser.moon:39: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "arch.NoteBrowser.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "arch1t3cht"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Loads a set of timestamped notes and adds options to mark them or jump between them."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Note Browser"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "arch.NoteBrowser"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.3.6"
+          }
+         },
+         {
+          "file": "arch.RWTools.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Deactivates the active line and activates any inactive lines marked with !- ."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Rewriting Tools/Switch Active Lines"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Deactivates the active line and copies it to a new line for rewriting."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Rewriting Tools/Prepare Rewrite"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Shifts the line break in the currently active line forward by one word."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Rewriting Tools/Shift Line Break Forward"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Shifts the line break in the currently active line backward by one word."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Rewriting Tools/Shift Line Break Backward"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Removes all pipe ('|') characters from the end of styling blocks."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Rewriting Tools/Clean Up Styling Tag Escapes"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Configure Rewriting Tools"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Rewriting Tools/Configure"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "arch1t3cht"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Shortcuts for managing multiple rewrites of a line in one .ass event line."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Rewriting Tools"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "arch.RWTools"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.3.2"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/arch.SplitSections.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/arch.SplitSections.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "arch.SplitSections.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "arch1t3cht"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Split subtitle lines at tags, creating a separate event for each section"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Split Tag Sections"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "arch.SplitSections"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.1.1"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/l0.CascadeTransforms.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/l0.CascadeTransforms.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "l0.CascadeTransforms.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "line0"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Changes transforms in a line to be transformed in a consecutive fashion, with the transform time being split evenly."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Cascade Transforms"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "l0.CascadeTransforms"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.1.0"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/l0.Nudge.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/l0.Nudge.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "l0.Nudge.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "line0"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Provides configurable and hotkeyable tag/line modification macros."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Nudge"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "l0.Nudge"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.5.0"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/l0.SplitLines.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/l0.SplitLines.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "l0.SplitLines.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "line0"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Splits a line while maintaining appearance."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Split Lines"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "l0.SplitLines"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.2.0"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/l0.VerticalText.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/l0.VerticalText.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "l0.VerticalText.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "line0"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Splits a line into vertical text."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Vertical Text"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "l0.VerticalText"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.2.0"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/lyger.FbfTransform.moon:82: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.FbfTransform.moon:82: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "lyger.FbfTransform.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "nil"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Smoothly transforms between the first and last selected lines."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Frame-by-frame transform"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "lyger.FbfTransform"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "2.0.1"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/lyger.GradientByChar.lua:25: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.GradientByChar.lua:25: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "lyger.GradientByChar.lua",
+          "loaded": false,
+          "registrations": [],
+          "runs": [
+           {
+            "error": "probe: the script did not load",
+            "macro": "Gradient by character/Apply Gradient",
+            "ok": false
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "lyger"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Smoothly transforms tags across your line, by character."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Gradient by character"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "lyger.GradientByChar"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.3.1"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/lyger.GradientEverything.moon:60: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.GradientEverything.moon:60: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "lyger.GradientEverything.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "nil"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "This will gradient everything."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Gradient Everything"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "lyger.GradientEverything"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "2.0.4"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/lyger.LayerIncrement.lua:16: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.LayerIncrement.lua:16: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "lyger.LayerIncrement.lua",
+          "loaded": false,
+          "registrations": [],
+          "runs": [
+           {
+            "error": "probe: the script did not load",
+            "macro": "Layer increment",
+            "ok": false
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "lyger"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Makes increasing or decreasing layer numbers."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Layer increment"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "lyger.LayerIncrement"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.1.0"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/lyger.LuaInterpret.lua:185: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.LuaInterpret.lua:185: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "lyger.LuaInterpret.lua",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "lyger"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Run Lua code on the fly."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Lua Interpreter"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "lyger.LuaInterpret"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.3.1"
+          }
+         },
+         {
+          "error": "Failed to parse:\n [95] >>    cur_shift = math.max(0, math.min((2 * anim_size - anim_stop) / (2 * anim_size),",
+          "file": "myaa.Bounce.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "nil"
+          },
+          "script_description": {
+           "type": "nil"
+          },
+          "script_name": {
+           "type": "nil"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "nil"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/myaa.MergeScripts.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/myaa.MergeScripts.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "myaa.MergeScripts.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "Myaamori"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Experimental automation for QC merging/exporting"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Merge Scripts"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "myaa.MergeScripts"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.0.13"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/myaa.PasteFromPad.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/myaa.PasteFromPad.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "myaa.PasteFromPad.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "Myaamori"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Paste text from pad over existing lines"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Paste From Pad"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "myaa.PasteFromPad"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.0.2"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/petzku.Accenter.lua:42: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/petzku.Accenter.lua:42: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "petzku.Accenter.lua",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "petzku"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Automatically create accents for lines"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Accenter"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "petzku.Accenter"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.2.6"
+          }
+         },
+         {
+          "file": "petzku.CellsBox.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Generate info boxes for Cells at Work"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Cells Box"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "petzku"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Generate info boxes for Cells at Work"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Cells Box"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "petzku.CellsBox"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.3.0"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/petzku.JumpToNextPlus.lua:15: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/petzku.JumpToNextPlus.lua:15: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "petzku.JumpToNextPlus.lua",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "petzku"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Jumps to next 'sign' in the subtitle grid"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Jump to Next++"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "petzku.JumpToNextPlus"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.1.5"
+          }
+         },
+         {
+          "file": "petzku.NewClipShape.moon",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Converts the last point of a vectorial clip into a new origin point"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "New Clip Shape"
+            },
+            "processing": "function",
+            "validation": "function"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "petzku"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Converts the last point of a vectorial clip into a new origin point"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "New Clip Shape"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "petzku.NewClipShape"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.3.2"
+          }
+         },
+         {
+          "file": "petzku.SmartQuotify.moon",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Change all your \"normal\" quotes into “smart” ones"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "SmartQuotify"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "runs": [
+           {
+            "active": 1,
+            "dialogs": [],
+            "document": {
+             "events": [
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 3000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 1000,
+               "style": "Default",
+               "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+              },
+              {
+               "actor": "Bob",
+               "comment": false,
+               "effect": "",
+               "end_time": 5500,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 3000,
+               "style": "Default",
+               "text": "{\\an8\\bord2}two words\\Nand a break"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "",
+               "end_time": 8000,
+               "layer": 1,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 5500,
+               "style": "Sign",
+               "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+              },
+              {
+               "actor": "",
+               "comment": true,
+               "effect": "",
+               "end_time": 9000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 8000,
+               "style": "Default",
+               "text": "note: a comment line"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "karaoke",
+               "end_time": 11000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 9000,
+               "style": "Default",
+               "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+              },
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 13000,
+               "layer": 2,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 11000,
+               "style": "Sign",
+               "text": "Äpfel und straße, ½ 日本語 text"
+              }
+             ],
+             "header": [
+              "info Title=L6 third-party fixture",
+              "info ScriptType=v4.00+",
+              "info PlayResX=1920",
+              "info PlayResY=1080",
+              "info WrapStyle=0",
+              "info ScaledBorderAndShadow=yes",
+              "info YCbCr Matrix=TV.601",
+              "style Default",
+              "style Sign"
+             ]
+            },
+            "error": "/t/legacy/cap-e1f5o081/corpus/petzku.SmartQuotify.moon:9: bad argument #1 to 'ipairs' (table expected, got userdata)",
+            "log": [],
+            "macro": "SmartQuotify",
+            "ok": false,
+            "selection": [
+             1
+            ]
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "petzku"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Change all your \"normal\" quotes into “smart” ones"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "SmartQuotify"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "petzku.SmartQuotify"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.2.1"
+          }
+         },
+         {
+          "file": "petzku.Snapper.moon",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Snaps line start to previous keyframe"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Snapper/start"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Snaps line end to next keyframe"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Snapper/end"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Snaps line start and end to surrounding keyframes"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Snapper/both"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "petzku"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Snaps line start and end times to keyframes"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Snapper"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "petzku.Snapper"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.0.1"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/petzku.Typewriter.lua:36: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/petzku.Typewriter.lua:36: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "petzku.Typewriter.lua",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "petzku"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Makes text appear one character at a time"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Typewriter"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "petzku.Typewriter"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.7.0"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/phos.EditTags.moon:1011: 'until' expected (to close 'repeat' at line 1001) near '_continue_0'",
+          "file": "phos.EditTags.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "nil"
+          },
+          "script_description": {
+           "type": "nil"
+          },
+          "script_name": {
+           "type": "nil"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "nil"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/phos.FoldOperations.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/phos.FoldOperations.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "phos.FoldOperations.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "PhosCity"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Different operations on folds"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Fold Operations"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "phos.FoldOperations"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.3.2"
+          }
+         },
+         {
+          "error": "/t/legacy/cap-e1f5o081/corpus/phos.RemoveTags.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/phos.RemoveTags.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:389: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:388>",
+          "file": "phos.RemoveTags.moon",
+          "loaded": false,
+          "registrations": [],
+          "script_author": {
+           "type": "string",
+           "value": "PhosCity"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Dynamically remove tags based on selection"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Remove Tags"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "phos.RemoveTags"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.0.3"
+          }
+         },
+         {
+          "file": "phos.snap.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Snap to close keyframes during timing."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "PhosCity/Bidirectional Snapping/Snap both to keyframes"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Snap to close keyframes during timing."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "PhosCity/Bidirectional Snapping/Snap start to keyframe"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Snap to close keyframes during timing."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "PhosCity/Bidirectional Snapping/Snap end to keyframe"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "PhosCity"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Snap to close keyframes during timing."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Bidirectional Snapping"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "phos.snap"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.0.3"
+          }
+         },
+         {
+          "file": "phos.wave.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Make the string wavy"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "PhosCity/Wave"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "PhosCity"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Make the string wavy"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Wave"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "phos.wave"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.0.3"
+          }
+         },
+         {
+          "file": "split-tags.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Splits the line into separate lines based on tag boundaries"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Split at tags"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "nil"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Splits the line into separate lines based on tag boundaries"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Split at tags"
+          },
+          "script_namespace": {
+           "type": "nil"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "0.3"
+          }
+         },
+         {
+          "file": "ua.BlurAndGlow.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Add blur and/or glow to signs"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Blur and Glow"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "unanimated"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Add blur and/or glow to signs"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Blur and Glow"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "ua.BlurAndGlow"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "2.5"
+          }
+         },
+         {
+          "file": "ua.ChangeCase.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Capitalises text or makes it lowercase / uppercase"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Change Case"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "runs": [
+           {
+            "active": 2,
+            "dialogs": [
+             {
+              "buttons": [
+               "Words",
+               "Lines",
+               "Sentences",
+               "lowercase",
+               "UPPERCASE",
+               "Cancel"
+              ],
+              "controls": [
+               "label:",
+               "label:",
+               "label:",
+               "label:",
+               "label:",
+               "label:",
+               "checkbox:mod"
+              ]
+             }
+            ],
+            "document": {
+             "events": [
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 3000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 1000,
+               "style": "Default",
+               "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+              },
+              {
+               "actor": "Bob",
+               "comment": false,
+               "effect": "",
+               "end_time": 5500,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 3000,
+               "style": "Default",
+               "text": "{\\an8\\bord2}TWO WORDS\\NAND A BREAK"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "",
+               "end_time": 8000,
+               "layer": 1,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 5500,
+               "style": "Sign",
+               "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+              },
+              {
+               "actor": "",
+               "comment": true,
+               "effect": "",
+               "end_time": 9000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 8000,
+               "style": "Default",
+               "text": "note: a comment line"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "karaoke",
+               "end_time": 11000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 9000,
+               "style": "Default",
+               "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+              },
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 13000,
+               "layer": 2,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 11000,
+               "style": "Sign",
+               "text": "ÄPFEL UND STRASSE, ½ 日本語 TEXT"
+              }
+             ],
+             "header": [
+              "info Title=L6 third-party fixture",
+              "info ScriptType=v4.00+",
+              "info PlayResX=1920",
+              "info PlayResY=1080",
+              "info WrapStyle=0",
+              "info ScaledBorderAndShadow=yes",
+              "info YCbCr Matrix=TV.601",
+              "style Default",
+              "style Sign"
+             ]
+            },
+            "log": [],
+            "macro": "Change Case",
+            "ok": true,
+            "returned_selection": [
+             2,
+             6
+            ],
+            "selection": [
+             2,
+             6
+            ]
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "unanimated"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Capitalises text or makes it lowercase / uppercase"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Change Case"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "ua.ChangeCase"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "3.0"
+          }
+         },
+         {
+          "file": "ua.Cycles.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Cycles Blur"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Cycles/Blur Cycle"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Cycles Border"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Cycles/Border Cycle"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Cycles Shadow"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Cycles/Shadow Cycle"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Cycles Alpha"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Cycles/Alpha Cycle"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Cycles Alignment"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Cycles/Alignment Cycle"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Cycles Font Spacing"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Cycles/FontSpacing Cycle"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Switches sequence direction"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Cycles/Switch"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "runs": [
+           {
+            "active": 1,
+            "dialogs": [],
+            "document": {
+             "events": [
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 3000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 1000,
+               "style": "Default",
+               "text": "{\\blur1.2}\"Hello,\" she said. \"It's 'fine'.\""
+              },
+              {
+               "actor": "Bob",
+               "comment": false,
+               "effect": "",
+               "end_time": 5500,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 3000,
+               "style": "Default",
+               "text": "{\\blur0.6\\an8\\bord2}two words\\Nand a break"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "",
+               "end_time": 8000,
+               "layer": 1,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 5500,
+               "style": "Sign",
+               "text": "{\\blur0.6\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+              },
+              {
+               "actor": "",
+               "comment": true,
+               "effect": "",
+               "end_time": 9000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 8000,
+               "style": "Default",
+               "text": "note: a comment line"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "karaoke",
+               "end_time": 11000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 9000,
+               "style": "Default",
+               "text": "{\\blur0.6\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+              },
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 13000,
+               "layer": 2,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 11000,
+               "style": "Sign",
+               "text": "{\\blur0.6}Äpfel und straße, ½ 日本語 text"
+              }
+             ],
+             "header": [
+              "info Title=L6 third-party fixture",
+              "info ScriptType=v4.00+",
+              "info PlayResX=1920",
+              "info PlayResY=1080",
+              "info WrapStyle=0",
+              "info ScaledBorderAndShadow=yes",
+              "info YCbCr Matrix=TV.601",
+              "style Default",
+              "style Sign"
+             ]
+            },
+            "log": [],
+            "macro": "Cycles/Blur Cycle",
+            "ok": true,
+            "selection": [
+             1,
+             2,
+             3,
+             5,
+             6
+            ]
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "unanimated"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Cycles blur, border, shadow, alpha, alignment, font spacing"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Cycles"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "ua.Cycles"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "2.0"
+          }
+         },
+         {
+          "file": "ua.HYDRA.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "A multi-headed typesetting beast. Scary as Hell."
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "HYDRA"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "HYDRA"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": HELP : / HYDRA"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Sort tags in set order"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Sort tags in set order"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Move colour tag to 1st block"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Move colour tag to 1st block"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Convert clip <-> iclip"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Convert clip <-> iclip"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "shad -> xshad+yshad"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: shad -> xshad+yshad"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Create shadow from clip"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Create shadow from clip"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Convert clip to drawing"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Convert clip to drawing"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Convert drawing to clip"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Convert drawing to clip"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Shifts Bell"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Bell Shifter"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Shifts Tilde"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Wave Shifter"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Shifts '>'"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Arrow Shifter"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Comments/uncomments lines"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/HYDRA: Comment on-off"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "unanimated"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "A multi-headed typesetting beast. Scary as Hell."
+          },
+          "script_name": {
+           "type": "string",
+           "value": "HYDRA"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "ua.HYDRA"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "6.1"
+          }
+         },
+         {
+          "file": "ua.JumpToNext.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to next 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Next/_GUI"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to next 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Next/Text"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to next 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Next/Style"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to next 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Next/Actor"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to next 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Next/Effect"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to next 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Next/Layer"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to next 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Next/Commented Line"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to previous 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Previous/Text"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to previous 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Previous/Style"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to previous 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Previous/Actor"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to previous 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Previous/Effect"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to previous 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Previous/Layer"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Jumps to previous 'sign' in the subtitle grid"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Jump to Previous/Commented Line"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "runs": [
+           {
+            "active": 1,
+            "dialogs": [],
+            "document": {
+             "events": [
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 3000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 1000,
+               "style": "Default",
+               "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+              },
+              {
+               "actor": "Bob",
+               "comment": false,
+               "effect": "",
+               "end_time": 5500,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 3000,
+               "style": "Default",
+               "text": "{\\an8\\bord2}two words\\Nand a break"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "",
+               "end_time": 8000,
+               "layer": 1,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 5500,
+               "style": "Sign",
+               "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+              },
+              {
+               "actor": "",
+               "comment": true,
+               "effect": "",
+               "end_time": 9000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 8000,
+               "style": "Default",
+               "text": "note: a comment line"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "karaoke",
+               "end_time": 11000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 9000,
+               "style": "Default",
+               "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+              },
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 13000,
+               "layer": 2,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 11000,
+               "style": "Sign",
+               "text": "Äpfel und straße, ½ 日本語 text"
+              }
+             ],
+             "header": [
+              "info Title=L6 third-party fixture",
+              "info ScriptType=v4.00+",
+              "info PlayResX=1920",
+              "info PlayResY=1080",
+              "info WrapStyle=0",
+              "info ScaledBorderAndShadow=yes",
+              "info YCbCr Matrix=TV.601",
+              "style Default",
+              "style Sign"
+             ]
+            },
+            "log": [],
+            "macro": "Jump to Next/Style",
+            "ok": true,
+            "returned_selection": [
+             3
+            ],
+            "selection": [
+             1
+            ]
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "unanimated"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Jumps to next 'sign' in the subtitle grid"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Jump to Next"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "ua.JumpToNext"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "2.0"
+          }
+         },
+         {
+          "file": "ua.MultiLineEditor.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Multi-Line Editor"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "Multi-Line Editor"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Resplits lines at a different place"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/MultiEdit: ReSplit - Backward"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Resplits lines at a different place"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/MultiEdit: ReSplit - Forward"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Reverses texts of selected lines, keeping times"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/MultiEdit: Reverse"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Switch style"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": ": Non-GUI macros :/MultiEdit: Switch style"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "runs": [
+           {
+            "active": 1,
+            "dialogs": [
+             {
+              "buttons": [
+               "OK",
+               "Cancel"
+              ],
+              "controls": [
+               "label:",
+               "dropdown:rv"
+              ]
+             }
+            ],
+            "document": {
+             "events": [
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 3000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 1000,
+               "style": "Default",
+               "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+              },
+              {
+               "actor": "Bob",
+               "comment": false,
+               "effect": "",
+               "end_time": 5500,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 3000,
+               "style": "Default",
+               "text": "{\\an8\\bord2}two words\\Nand a break"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "",
+               "end_time": 8000,
+               "layer": 1,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 5500,
+               "style": "Sign",
+               "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+              },
+              {
+               "actor": "",
+               "comment": true,
+               "effect": "",
+               "end_time": 9000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 8000,
+               "style": "Default",
+               "text": "note: a comment line"
+              },
+              {
+               "actor": "",
+               "comment": false,
+               "effect": "karaoke",
+               "end_time": 11000,
+               "layer": 0,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 9000,
+               "style": "Default",
+               "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+              },
+              {
+               "actor": "Alice",
+               "comment": false,
+               "effect": "",
+               "end_time": 13000,
+               "layer": 2,
+               "margin_l": 0,
+               "margin_r": 0,
+               "margin_t": 0,
+               "start_time": 11000,
+               "style": "Sign",
+               "text": "Äpfel und straße, ½ 日本語 text"
+              }
+             ],
+             "header": [
+              "info Title=L6 third-party fixture",
+              "info ScriptType=v4.00+",
+              "info PlayResX=1920",
+              "info PlayResY=1080",
+              "info WrapStyle=0",
+              "info ScaledBorderAndShadow=yes",
+              "info YCbCr Matrix=TV.601",
+              "style Default",
+              "style Sign"
+             ]
+            },
+            "log": [],
+            "macro": ": Non-GUI macros :/MultiEdit: Reverse",
+            "ok": true,
+            "returned_selection": [
+             1,
+             2,
+             3
+            ],
+            "selection": [
+             1,
+             2,
+             3
+            ]
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "unanimated"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Multi-Line Editor"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "Multi-Line Editor"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "ua.MultiLineEditor"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.8"
+          }
+         },
+         {
+          "file": "ua.iBus.lua",
+          "loaded": true,
+          "registrations": [
+           {
+            "description": {
+             "type": "string",
+             "value": "Italy Bold Under Strike"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "iBus/Italics"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Italy Bold Under Strike"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "iBus/Bold"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Italy Bold Under Strike"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "iBus/Underline"
+            },
+            "processing": "function",
+            "validation": "nil"
+           },
+           {
+            "description": {
+             "type": "string",
+             "value": "Italy Bold Under Strike"
+            },
+            "is_active": "nil",
+            "kind": "macro",
+            "name": {
+             "type": "string",
+             "value": "iBus/Strikeout"
+            },
+            "processing": "function",
+            "validation": "nil"
+           }
+          ],
+          "script_author": {
+           "type": "string",
+           "value": "unanimated"
+          },
+          "script_description": {
+           "type": "string",
+           "value": "Italy Bold Under Strike"
+          },
+          "script_name": {
+           "type": "string",
+           "value": "iBus"
+          },
+          "script_namespace": {
+           "type": "string",
+           "value": "ua.iBus"
+          },
+          "script_version": {
+           "type": "string",
+           "value": "1.7"
+          }
+         }
+        ],
+        "shared_package_loaded": true,
+        "stubs": {
+         "cancel": "function",
+         "debug": "table",
+         "progress": "table",
+         "set_undo_point": "function",
+         "set_undo_point_call": {
+          "ok": true,
+          "result": {
+           "type": "nil"
+          }
+         }
+        }
+       },
+       "windows_after": [],
+       "main_title_after": "1*probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c"
+      }
+     ],
+     "include_added": [
+      "ILL/ILL/Aegi.moon",
+      "ILL/ILL/Ass/Ass.moon",
+      "ILL/ILL/Ass/Line.moon",
+      "ILL/ILL/Ass/Shape/Curve.moon",
+      "ILL/ILL/Ass/Shape/Path.moon",
+      "ILL/ILL/Ass/Shape/Point.moon",
+      "ILL/ILL/Ass/Shape/Segment.moon",
+      "ILL/ILL/Ass/Text/Tag.moon",
+      "ILL/ILL/Ass/Text/Tags.moon",
+      "ILL/ILL/Ass/Text/Text.moon",
+      "ILL/ILL/Config.moon",
+      "ILL/ILL/Font/Font.moon",
+      "ILL/ILL/Font/Init.moon",
+      "ILL/ILL/Font/Unx.moon",
+      "ILL/ILL/Font/Win.moon",
+      "ILL/ILL/Math.moon",
+      "ILL/ILL/Table.moon",
+      "ILL/ILL/UTF8.moon",
+      "ILL/ILL/Util.moon",
+      "ILL/ILL.moon",
+      "ILL/IMG/Potrace.moon",
+      "ILL/IMG/Tracer.moon",
+      "ILL/IMG/bitmap/bitmap.moon",
+      "ILL/IMG/buffer/buffer.moon",
+      "ILL/IMG/giflib/giflib.moon",
+      "ILL/IMG/lodepng/lodepng.moon",
+      "ILL/IMG/turbojpeg/turbojpeg.moon",
+      "ILL/IMG.moon",
+      "arch/Math.moon",
+      "arch/Perspective.moon",
+      "arch/Util.moon",
+      "clipper2/clipper2.moon",
+      "myaa/ASSParser.moon",
+      "petzku/easings.moon",
+      "petzku/tags.moon",
+      "petzku/util.moon",
+      "phos/AegiGui.moon",
+      "phos/AssfPlus.moon"
+     ],
+     "document_sha256": "12f42c75c40a7fdad1f583f8ba1e60b890510f05cc84a3e39495b5518bfaed64",
+     "runs_sha256": "0cd0f25727a84483df284c4679dec49e43cb09157da6713ef45cdbce4fc9fa54",
+     "startup_popups": [],
+     "load_time": [
+      {
+       "aegisub_api": [
+        "__init_clipboard:function",
+        "cancel:function",
+        "decode_path:function",
+        "file_name:function",
+        "frame_from_ms:function",
+        "get_audio_selection:function",
+        "get_frame:function",
+        "gettext:function",
+        "gui:table",
+        "keyframes:function",
+        "lua_automation_version:number",
+        "ms_from_frame:function",
+        "project_properties:function",
+        "register_filter:function",
+        "register_macro:function",
+        "set_status_text:function",
+        "text_extents:function",
+        "video_size:function"
+       ],
+       "case": "corpus",
+       "jit": "LuaJIT 2.1.1703358377",
+       "lua_features": {
+        "break_anywhere": false,
+        "ipairs_metamethod": false,
+        "string_buffer": true,
+        "table_pack": "nil"
+       },
+       "lua_version": "Lua 5.1",
+       "modules": {
+        "aegisub.clipboard": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.lfs": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.re": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.unicode": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.util": {
+         "ok": true,
+         "type": "table"
+        },
+        "bit": {
+         "ok": true,
+         "type": "table"
+        },
+        "clipboard": {
+         "ok": true,
+         "type": "table"
+        },
+        "ffi": {
+         "ok": true,
+         "type": "table"
+        },
+        "json": {
+         "ok": true,
+         "type": "table"
+        },
+        "karaskel": {
+         "ok": true,
+         "type": "boolean"
+        },
+        "l0.DependencyControl": {
+         "error": "[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:13: FFI could not load \"PT.PreciseTimer.PreciseTimer\". Search paths:",
+         "ok": false,
+         "type": "string"
+        },
+        "lfs": {
+         "ok": true,
+         "type": "table"
+        },
+        "lpeg": {
+         "ok": true,
+         "type": "table"
+        },
+        "luabins": {
+         "ok": true,
+         "type": "table"
+        },
+        "moonscript": {
+         "ok": true,
+         "type": "table"
+        },
+        "re": {
+         "ok": true,
+         "type": "table"
+        },
+        "unicode": {
+         "ok": true,
+         "type": "table"
+        },
+        "utils": {
+         "ok": true,
+         "type": "boolean"
+        }
+       },
+       "package_cpath": "./?.so;/usr/local/lib/lua/5.1/?.so;/usr/lib/x86_64-linux-gnu/lua/5.1/?.so;/usr/local/lib/lua/5.1/loadall.so",
+       "package_path": "/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload//?.lua;/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload//?/init.lua;/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include//?.lua;/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include//?/init.lua;",
+       "scripts": [
+        {
+         "error": "[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:32: FFI could not load \"clipper2.clipper2.clipper2\". Search paths:\n  - \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/clipper2/clipper2/libclipper2.so\" (/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/clipper2/clipper2/libclipper2.so: cannot open shared object file: No such file or directory)\n  - \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include/clipper2/clipper2/libclipper2.so\" (/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include/clipper2/clipper2/libclipper2.so: cannot open shared object file: No such file or directory)\n  - \"clipper2\" (libclipper2.so: cannot open shared object file: No such file or directory)\nstack traceback:\n\t[C]: in function 'requireffi'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:32: in main chunk\n\t[C]: in function 'require'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:1: in main chunk\n\t[C]: in function 'require'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:44: in main chunk\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/ILL.ChangeAlign.moon:26: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "ILL.ChangeAlign.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "ILLTeam"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Changes the alignment of a text or shape without changing its original position"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Change Alignment"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "ILL.ChangeAlign"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.1.2"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/ILL.SplitText.moon:22: loop or previous error loading module 'ILL.ILL'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/ILL.SplitText.moon:22: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "ILL.SplitText.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "ILLTeam"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Splits the text in several ways"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "ILL - Split Text"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "ILL.SplitText"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.1.2"
+         }
+        },
+        {
+         "file": "arch.CenterTimes.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Centering times of lines in frame ranges"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Center Times"
+           },
+           "processing": "function",
+           "validation": "function"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "arch1t3cht"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Centering times of lines in frame ranges"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Center Times"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "arch.CenterTimes"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.1"
+         }
+        },
+        {
+         "error": "Failed to parse:\n [36] >>    button, results = aegisub.dialog.display({{",
+         "file": "arch.ConvertFolds.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "nil"
+         },
+         "script_description": {
+          "type": "nil"
+         },
+         "script_name": {
+          "type": "nil"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "nil"
+         }
+        },
+        {
+         "file": "arch.FocusLines.moon",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Draws moving focus lines."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Focus Lines"
+           },
+           "processing": "function",
+           "validation": "function"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "arch1t3cht"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Draws moving focus lines."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Focus Lines"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "arch.FocusLines"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0.1"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/arch.Line2Fbf.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/arch.Line2Fbf.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "arch.Line2Fbf.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "arch1t3cht"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Convert lines into frame-by-frame chunks"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "FBF-ifier"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "arch.Line2Fbf"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.1.0"
+         }
+        },
+        {
+         "error": "[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:1: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:1: in main chunk\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/arch.NoteBrowser.moon:39: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "arch.NoteBrowser.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "arch1t3cht"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Loads a set of timestamped notes and adds options to mark them or jump between them."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Note Browser"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "arch.NoteBrowser"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.3.6"
+         }
+        },
+        {
+         "file": "arch.RWTools.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Deactivates the active line and activates any inactive lines marked with !- ."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Rewriting Tools/Switch Active Lines"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Deactivates the active line and copies it to a new line for rewriting."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Rewriting Tools/Prepare Rewrite"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Shifts the line break in the currently active line forward by one word."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Rewriting Tools/Shift Line Break Forward"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Shifts the line break in the currently active line backward by one word."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Rewriting Tools/Shift Line Break Backward"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Removes all pipe ('|') characters from the end of styling blocks."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Rewriting Tools/Clean Up Styling Tag Escapes"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Configure Rewriting Tools"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Rewriting Tools/Configure"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "arch1t3cht"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Shortcuts for managing multiple rewrites of a line in one .ass event line."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Rewriting Tools"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "arch.RWTools"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.3.2"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/arch.SplitSections.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/arch.SplitSections.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "arch.SplitSections.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "arch1t3cht"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Split subtitle lines at tags, creating a separate event for each section"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Split Tag Sections"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "arch.SplitSections"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.1.1"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/l0.CascadeTransforms.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/l0.CascadeTransforms.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "l0.CascadeTransforms.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "line0"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Changes transforms in a line to be transformed in a consecutive fashion, with the transform time being split evenly."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Cascade Transforms"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "l0.CascadeTransforms"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.1.0"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/l0.Nudge.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/l0.Nudge.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "l0.Nudge.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "line0"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Provides configurable and hotkeyable tag/line modification macros."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Nudge"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "l0.Nudge"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.5.0"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/l0.SplitLines.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/l0.SplitLines.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "l0.SplitLines.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "line0"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Splits a line while maintaining appearance."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Split Lines"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "l0.SplitLines"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.2.0"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/l0.VerticalText.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/l0.VerticalText.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "l0.VerticalText.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "line0"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Splits a line into vertical text."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Vertical Text"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "l0.VerticalText"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.2.0"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/lyger.FbfTransform.moon:82: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.FbfTransform.moon:82: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "lyger.FbfTransform.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "nil"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Smoothly transforms between the first and last selected lines."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Frame-by-frame transform"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "lyger.FbfTransform"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.0.1"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/lyger.GradientByChar.lua:25: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.GradientByChar.lua:25: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "lyger.GradientByChar.lua",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "lyger"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Smoothly transforms tags across your line, by character."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Gradient by character"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "lyger.GradientByChar"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.3.1"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/lyger.GradientEverything.moon:60: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.GradientEverything.moon:60: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "lyger.GradientEverything.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "nil"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "This will gradient everything."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Gradient Everything"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "lyger.GradientEverything"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.0.4"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/lyger.LayerIncrement.lua:16: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.LayerIncrement.lua:16: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "lyger.LayerIncrement.lua",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "lyger"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Makes increasing or decreasing layer numbers."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Layer increment"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "lyger.LayerIncrement"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.1.0"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/lyger.LuaInterpret.lua:185: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/lyger.LuaInterpret.lua:185: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "lyger.LuaInterpret.lua",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "lyger"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Run Lua code on the fly."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Lua Interpreter"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "lyger.LuaInterpret"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.3.1"
+         }
+        },
+        {
+         "error": "Failed to parse:\n [95] >>    cur_shift = math.max(0, math.min((2 * anim_size - anim_stop) / (2 * anim_size),",
+         "file": "myaa.Bounce.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "nil"
+         },
+         "script_description": {
+          "type": "nil"
+         },
+         "script_name": {
+          "type": "nil"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "nil"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/myaa.MergeScripts.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/myaa.MergeScripts.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "myaa.MergeScripts.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "Myaamori"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Experimental automation for QC merging/exporting"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Merge Scripts"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "myaa.MergeScripts"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.0.13"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/myaa.PasteFromPad.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/myaa.PasteFromPad.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "myaa.PasteFromPad.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "Myaamori"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Paste text from pad over existing lines"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Paste From Pad"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "myaa.PasteFromPad"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.0.2"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/petzku.Accenter.lua:42: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/petzku.Accenter.lua:42: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "petzku.Accenter.lua",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "petzku"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Automatically create accents for lines"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Accenter"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "petzku.Accenter"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.2.6"
+         }
+        },
+        {
+         "file": "petzku.CellsBox.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Generate info boxes for Cells at Work"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Cells Box"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "petzku"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Generate info boxes for Cells at Work"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Cells Box"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "petzku.CellsBox"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.3.0"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/petzku.JumpToNextPlus.lua:15: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/petzku.JumpToNextPlus.lua:15: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "petzku.JumpToNextPlus.lua",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "petzku"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Jumps to next 'sign' in the subtitle grid"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Jump to Next++"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "petzku.JumpToNextPlus"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.1.5"
+         }
+        },
+        {
+         "file": "petzku.NewClipShape.moon",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Converts the last point of a vectorial clip into a new origin point"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "New Clip Shape"
+           },
+           "processing": "function",
+           "validation": "function"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "petzku"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Converts the last point of a vectorial clip into a new origin point"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "New Clip Shape"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "petzku.NewClipShape"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.3.2"
+         }
+        },
+        {
+         "file": "petzku.SmartQuotify.moon",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Change all your \"normal\" quotes into “smart” ones"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "SmartQuotify"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "petzku"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Change all your \"normal\" quotes into “smart” ones"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "SmartQuotify"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "petzku.SmartQuotify"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.2.1"
+         }
+        },
+        {
+         "file": "petzku.Snapper.moon",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Snaps line start to previous keyframe"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Snapper/start"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Snaps line end to next keyframe"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Snapper/end"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Snaps line start and end to surrounding keyframes"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Snapper/both"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "petzku"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Snaps line start and end times to keyframes"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Snapper"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "petzku.Snapper"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0.1"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/petzku.Typewriter.lua:36: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/petzku.Typewriter.lua:36: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "petzku.Typewriter.lua",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "petzku"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Makes text appear one character at a time"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Typewriter"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "petzku.Typewriter"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.7.0"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/phos.EditTags.moon:1011: 'until' expected (to close 'repeat' at line 1001) near '_continue_0'",
+         "file": "phos.EditTags.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "nil"
+         },
+         "script_description": {
+          "type": "nil"
+         },
+         "script_name": {
+          "type": "nil"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "nil"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/phos.FoldOperations.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/phos.FoldOperations.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "phos.FoldOperations.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "PhosCity"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Different operations on folds"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Fold Operations"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "phos.FoldOperations"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.3.2"
+         }
+        },
+        {
+         "error": "/t/legacy/cap-e1f5o081/corpus/phos.RemoveTags.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t/t/legacy/cap-e1f5o081/corpus/phos.RemoveTags.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:356: in function <[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:282>\n\t[C]: in function 'pcall'\n\t[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:396: in main chunk",
+         "file": "phos.RemoveTags.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "PhosCity"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Dynamically remove tags based on selection"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Remove Tags"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "phos.RemoveTags"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0.3"
+         }
+        },
+        {
+         "file": "phos.snap.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Snap to close keyframes during timing."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "PhosCity/Bidirectional Snapping/Snap both to keyframes"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Snap to close keyframes during timing."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "PhosCity/Bidirectional Snapping/Snap start to keyframe"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Snap to close keyframes during timing."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "PhosCity/Bidirectional Snapping/Snap end to keyframe"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "PhosCity"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Snap to close keyframes during timing."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Bidirectional Snapping"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "phos.snap"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0.3"
+         }
+        },
+        {
+         "file": "phos.wave.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Make the string wavy"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "PhosCity/Wave"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "PhosCity"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Make the string wavy"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Wave"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "phos.wave"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0.3"
+         }
+        },
+        {
+         "file": "split-tags.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Splits the line into separate lines based on tag boundaries"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Split at tags"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "nil"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Splits the line into separate lines based on tag boundaries"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Split at tags"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.3"
+         }
+        },
+        {
+         "file": "ua.BlurAndGlow.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Add blur and/or glow to signs"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Blur and Glow"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "unanimated"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Add blur and/or glow to signs"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Blur and Glow"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "ua.BlurAndGlow"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.5"
+         }
+        },
+        {
+         "file": "ua.ChangeCase.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Capitalises text or makes it lowercase / uppercase"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Change Case"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "unanimated"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Capitalises text or makes it lowercase / uppercase"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Change Case"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "ua.ChangeCase"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "3.0"
+         }
+        },
+        {
+         "file": "ua.Cycles.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Cycles Blur"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Cycles/Blur Cycle"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Cycles Border"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Cycles/Border Cycle"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Cycles Shadow"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Cycles/Shadow Cycle"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Cycles Alpha"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Cycles/Alpha Cycle"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Cycles Alignment"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Cycles/Alignment Cycle"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Cycles Font Spacing"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Cycles/FontSpacing Cycle"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Switches sequence direction"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Cycles/Switch"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "unanimated"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Cycles blur, border, shadow, alpha, alignment, font spacing"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Cycles"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "ua.Cycles"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.0"
+         }
+        },
+        {
+         "file": "ua.HYDRA.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "A multi-headed typesetting beast. Scary as Hell."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "HYDRA"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "HYDRA"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": HELP : / HYDRA"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Sort tags in set order"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Sort tags in set order"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Move colour tag to 1st block"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Move colour tag to 1st block"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Convert clip <-> iclip"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Convert clip <-> iclip"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "shad -> xshad+yshad"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: shad -> xshad+yshad"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Create shadow from clip"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Create shadow from clip"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Convert clip to drawing"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Convert clip to drawing"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Convert drawing to clip"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Convert drawing to clip"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Shifts Bell"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Bell Shifter"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Shifts Tilde"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Wave Shifter"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Shifts '>'"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Arrow Shifter"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Comments/uncomments lines"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/HYDRA: Comment on-off"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "unanimated"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "A multi-headed typesetting beast. Scary as Hell."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "HYDRA"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "ua.HYDRA"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "6.1"
+         }
+        },
+        {
+         "file": "ua.JumpToNext.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to next 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Next/_GUI"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to next 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Next/Text"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to next 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Next/Style"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to next 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Next/Actor"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to next 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Next/Effect"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to next 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Next/Layer"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to next 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Next/Commented Line"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to previous 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Previous/Text"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to previous 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Previous/Style"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to previous 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Previous/Actor"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to previous 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Previous/Effect"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to previous 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Previous/Layer"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Jumps to previous 'sign' in the subtitle grid"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Jump to Previous/Commented Line"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "unanimated"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Jumps to next 'sign' in the subtitle grid"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Jump to Next"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "ua.JumpToNext"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.0"
+         }
+        },
+        {
+         "file": "ua.MultiLineEditor.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Multi-Line Editor"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Multi-Line Editor"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Resplits lines at a different place"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/MultiEdit: ReSplit - Backward"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Resplits lines at a different place"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/MultiEdit: ReSplit - Forward"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Reverses texts of selected lines, keeping times"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/MultiEdit: Reverse"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Switch style"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": ": Non-GUI macros :/MultiEdit: Switch style"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "unanimated"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Multi-Line Editor"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Multi-Line Editor"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "ua.MultiLineEditor"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.8"
+         }
+        },
+        {
+         "file": "ua.iBus.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Italy Bold Under Strike"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "iBus/Italics"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Italy Bold Under Strike"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "iBus/Bold"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Italy Bold Under Strike"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "iBus/Underline"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Italy Bold Under Strike"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "iBus/Strikeout"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "unanimated"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Italy Bold Under Strike"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "iBus"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "ua.iBus"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.7"
+         }
+        }
+       ],
+       "shared_package_loaded": true,
+       "stubs": {
+        "cancel": "function",
+        "debug": "nil",
+        "progress": "nil",
+        "set_undo_point": "nil",
+        "set_undo_point_call": {
+         "ok": false,
+         "result": {
+          "type": "string",
+          "value": "[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:310: attempt to call field 'set_undo_point' (a nil value)"
+         }
+        }
+       }
+      }
+     ],
+     "automation_menu": "screens/automation-menu.png",
+     "app_log_tail": "",
+     "config_files": [
+      "Config.txt",
+      "Hotkeys.txt",
+      "LastSession.txt"
+     ],
+     "hotkeys_after": "[HikariSub 0.0.1.9999]\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-0=Ctrl-Shift-F1\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-1=Ctrl-Shift-F2\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-2=Ctrl-Shift-F3\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-3=Ctrl-Shift-F4\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-4=Ctrl-Shift-F5\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-5=Ctrl-Shift-F6\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-6=Ctrl-Shift-F7\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-7=Ctrl-Shift-F8\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-8=Ctrl-Shift-F9\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-9=Ctrl-Shift-F10\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-10=Ctrl-Shift-F11\nScript /t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-11=Ctrl-Shift-F12\n",
+     "capture_lines": "{\"aegisub_api\":[\"__init_clipboard:function\",\"cancel:function\",\"decode_path:function\",\"file_name:function\",\"frame_from_ms:function\",\"get_audio_selection:function\",\"get_frame:function\",\"gettext:function\",\"gui:table\",\"keyframes:function\",\"lua_automation_version:number\",\"ms_from_frame:function\",\"project_properties:function\",\"register_filter:function\",\"register_macro:function\",\"set_status_text:function\",\"text_extents:function\",\"video_size:function\"],\"case\":\"corpus\",\"jit\":\"LuaJIT 2.1.1703358377\",\"lua_features\":{\"break_anywhere\":false,\"ipairs_metamethod\":false,\"string_buffer\":true,\"table_pack\":\"nil\"},\"lua_version\":\"Lua 5.1\",\"modules\":{\"aegisub.clipboard\":{\"ok\":true,\"type\":\"table\"},\"aegisub.lfs\":{\"ok\":true,\"type\":\"table\"},\"aegisub.re\":{\"ok\":true,\"type\":\"table\"},\"aegisub.unicode\":{\"ok\":true,\"type\":\"table\"},\"aegisub.util\":{\"ok\":true,\"type\":\"table\"},\"bit\":{\"ok\":true,\"type\":\"table\"},\"clipboard\":{\"ok\":true,\"type\":\"table\"},\"ffi\":{\"ok\":true,\"type\":\"table\"},\"json\":{\"ok\":true,\"type\":\"table\"},\"karaskel\":{\"ok\":true,\"type\":\"boolean\"},\"l0.DependencyControl\":{\"error\":\"[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:13: FFI could not load \\\"PT.PreciseTimer.PreciseTimer\\\". Search paths:\",\"ok\":false,\"type\":\"string\"},\"lfs\":{\"ok\":true,\"type\":\"table\"},\"lpeg\":{\"ok\":true,\"type\":\"table\"},\"luabins\":{\"ok\":true,\"type\":\"table\"},\"moonscript\":{\"ok\":true,\"type\":\"table\"},\"re\":{\"ok\":true,\"type\":\"table\"},\"unicode\":{\"ok\":true,\"type\":\"table\"},\"utils\":{\"ok\":true,\"type\":\"boolean\"}},\"package_cpath\":\"./?.so;/usr/local/lib/lua/5.1/?.so;/usr/lib/x86_64-linux-gnu/lua/5.1/?.so;/usr/local/lib/lua/5.1/loadall.so\",\"package_path\":\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload//?.lua;/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload//?/init.lua;/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include//?.lua;/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include//?/init.lua;\",\"scripts\":[{\"error\":\"[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:32: FFI could not load \\\"clipper2.clipper2.clipper2\\\". Search paths:\\n  - \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/clipper2/clipper2/libclipper2.so\\\" (/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Autoload/clipper2/clipper2/libclipper2.so: cannot open shared object file: No such file or directory)\\n  - \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include/clipper2/clipper2/libclipper2.so\\\" (/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64/Automation/automation/Include/clipper2/clipper2/libclipper2.so: cannot open shared object file: No such file or directory)\\n  - \\\"clipper2\\\" (libclipper2.so: cannot open shared object file: No such file or directory)\\nstack traceback:\\n\\t[C]: in function 'requireffi'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:32: in main chunk\\n\\t[C]: in function 'require'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:1: in main chunk\\n\\t[C]: in function 'require'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:44: in main chunk\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/ILL.ChangeAlign.moon:26: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"ILL.ChangeAlign.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"ILLTeam\"},\"script_description\":{\"type\":\"string\",\"value\":\"Changes the alignment of a text or shape without changing its original position\"},\"script_name\":{\"type\":\"string\",\"value\":\"Change Alignment\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"ILL.ChangeAlign\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.1.2\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/ILL.SplitText.moon:22: loop or previous error loading module 'ILL.ILL'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/ILL.SplitText.moon:22: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"ILL.SplitText.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"ILLTeam\"},\"script_description\":{\"type\":\"string\",\"value\":\"Splits the text in several ways\"},\"script_name\":{\"type\":\"string\",\"value\":\"ILL - Split Text\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"ILL.SplitText\"},\"script_version\":{\"type\":\"string\",\"value\":\"2.1.2\"}},{\"file\":\"arch.CenterTimes.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Centering times of lines in frame ranges\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Center Times\"},\"processing\":\"function\",\"validation\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"arch1t3cht\"},\"script_description\":{\"type\":\"string\",\"value\":\"Centering times of lines in frame ranges\"},\"script_name\":{\"type\":\"string\",\"value\":\"Center Times\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"arch.CenterTimes\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.1\"}},{\"error\":\"Failed to parse:\\n [36] >>    button, results = aegisub.dialog.display({{\",\"file\":\"arch.ConvertFolds.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"nil\"},\"script_description\":{\"type\":\"nil\"},\"script_name\":{\"type\":\"nil\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"nil\"}},{\"file\":\"arch.FocusLines.moon\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Draws moving focus lines.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Focus Lines\"},\"processing\":\"function\",\"validation\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"arch1t3cht\"},\"script_description\":{\"type\":\"string\",\"value\":\"Draws moving focus lines.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Focus Lines\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"arch.FocusLines\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0.1\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/arch.Line2Fbf.moon:6: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/arch.Line2Fbf.moon:6: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"arch.Line2Fbf.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"arch1t3cht\"},\"script_description\":{\"type\":\"string\",\"value\":\"Convert lines into frame-by-frame chunks\"},\"script_name\":{\"type\":\"string\",\"value\":\"FBF-ifier\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"arch.Line2Fbf\"},\"script_version\":{\"type\":\"string\",\"value\":\"0.1.0\"}},{\"error\":\"[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:1: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:1: in main chunk\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/arch.NoteBrowser.moon:39: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"arch.NoteBrowser.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"arch1t3cht\"},\"script_description\":{\"type\":\"string\",\"value\":\"Loads a set of timestamped notes and adds options to mark them or jump between them.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Note Browser\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"arch.NoteBrowser\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.3.6\"}},{\"file\":\"arch.RWTools.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Deactivates the active line and activates any inactive lines marked with !- .\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Rewriting Tools/Switch Active Lines\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Deactivates the active line and copies it to a new line for rewriting.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Rewriting Tools/Prepare Rewrite\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Shifts the line break in the currently active line forward by one word.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Rewriting Tools/Shift Line Break Forward\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Shifts the line break in the currently active line backward by one word.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Rewriting Tools/Shift Line Break Backward\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Removes all pipe ('|') characters from the end of styling blocks.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Rewriting Tools/Clean Up Styling Tag Escapes\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Configure Rewriting Tools\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Rewriting Tools/Configure\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"arch1t3cht\"},\"script_description\":{\"type\":\"string\",\"value\":\"Shortcuts for managing multiple rewrites of a line in one .ass event line.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Rewriting Tools\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"arch.RWTools\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.3.2\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/arch.SplitSections.moon:6: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/arch.SplitSections.moon:6: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"arch.SplitSections.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"arch1t3cht\"},\"script_description\":{\"type\":\"string\",\"value\":\"Split subtitle lines at tags, creating a separate event for each section\"},\"script_name\":{\"type\":\"string\",\"value\":\"Split Tag Sections\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"arch.SplitSections\"},\"script_version\":{\"type\":\"string\",\"value\":\"0.1.1\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/l0.CascadeTransforms.moon:6: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/l0.CascadeTransforms.moon:6: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"l0.CascadeTransforms.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"line0\"},\"script_description\":{\"type\":\"string\",\"value\":\"Changes transforms in a line to be transformed in a consecutive fashion, with the transform time being split evenly.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Cascade Transforms\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"l0.CascadeTransforms\"},\"script_version\":{\"type\":\"string\",\"value\":\"0.1.0\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/l0.Nudge.moon:6: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/l0.Nudge.moon:6: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"l0.Nudge.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"line0\"},\"script_description\":{\"type\":\"string\",\"value\":\"Provides configurable and hotkeyable tag/line modification macros.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Nudge\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"l0.Nudge\"},\"script_version\":{\"type\":\"string\",\"value\":\"0.5.0\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/l0.SplitLines.moon:6: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/l0.SplitLines.moon:6: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"l0.SplitLines.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"line0\"},\"script_description\":{\"type\":\"string\",\"value\":\"Splits a line while maintaining appearance.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Split Lines\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"l0.SplitLines\"},\"script_version\":{\"type\":\"string\",\"value\":\"0.2.0\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/l0.VerticalText.moon:6: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/l0.VerticalText.moon:6: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"l0.VerticalText.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"line0\"},\"script_description\":{\"type\":\"string\",\"value\":\"Splits a line into vertical text.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Vertical Text\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"l0.VerticalText\"},\"script_version\":{\"type\":\"string\",\"value\":\"0.2.0\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/lyger.FbfTransform.moon:82: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/lyger.FbfTransform.moon:82: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"lyger.FbfTransform.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"nil\"},\"script_description\":{\"type\":\"string\",\"value\":\"Smoothly transforms between the first and last selected lines.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Frame-by-frame transform\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"lyger.FbfTransform\"},\"script_version\":{\"type\":\"string\",\"value\":\"2.0.1\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/lyger.GradientByChar.lua:25: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/lyger.GradientByChar.lua:25: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"lyger.GradientByChar.lua\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"lyger\"},\"script_description\":{\"type\":\"string\",\"value\":\"Smoothly transforms tags across your line, by character.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Gradient by character\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"lyger.GradientByChar\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.3.1\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/lyger.GradientEverything.moon:60: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/lyger.GradientEverything.moon:60: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"lyger.GradientEverything.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"nil\"},\"script_description\":{\"type\":\"string\",\"value\":\"This will gradient everything.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Gradient Everything\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"lyger.GradientEverything\"},\"script_version\":{\"type\":\"string\",\"value\":\"2.0.4\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/lyger.LayerIncrement.lua:16: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/lyger.LayerIncrement.lua:16: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"lyger.LayerIncrement.lua\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"lyger\"},\"script_description\":{\"type\":\"string\",\"value\":\"Makes increasing or decreasing layer numbers.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Layer increment\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"lyger.LayerIncrement\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.1.0\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/lyger.LuaInterpret.lua:185: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t/t/legacy/cap-e1f5o081/corpus/lyger.LuaInterpret.lua:185: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:356: in function <[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:282>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\\\"]:396: in main chunk\",\"file\":\"lyger.LuaInterpret.lua\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"lyger\"},\"script_description\":{\"type\":\"string\",\"value\":\"Run Lua code on the fly.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Lua Interpreter\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"lyger.LuaInterpret\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.3.1\"}},{\"error\":\"Failed to parse:\\n [95] >>    cur_shift = math.max(0, math.min((2 * anim_size - anim_stop) / (2 * anim_size),\",\"file\":\"myaa.Bounce.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"nil\"},\"script_description\":{\"type\":\"nil\"},\"script_name\":{\"type\":\"nil\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"nil\"}},{\"error\":\"/t/legacy/cap-e1f5o081/corpus/myaa.MergeScrip"
+    }
+   ]
+  }
+ ]
+}

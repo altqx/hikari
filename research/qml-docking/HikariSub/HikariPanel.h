@@ -1,0 +1,77 @@
+//  Copyright (c) 2021 - 2026, Marcin Drob
+//  Copyright (c) 2026, altqx
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+#pragma once
+
+#include <wx/window.h>
+
+class HikariContainer 
+{
+public:
+	HikariContainer() {
+		
+	};
+	void SetContainer(wxWindow* navigation) {
+		container = navigation;
+	};
+	void OnNavigation(wxNavigationKeyEvent& evt);
+	void FindFocusable(bool next, wxWindowList::compatibility_iterator * node, wxWindow **window = nullptr);
+	wxWindow* FindCheckedRadiobutton(bool next, wxWindowList::compatibility_iterator * listWithRadioButton, wxWindow* focused);
+	void OnSetFocus(wxFocusEvent& evt);
+	wxWindow * container;
+};
+
+template <class Window>
+class HikariNavigation : public Window
+{
+public:
+	HikariNavigation() {
+		container.SetContainer(this);
+
+		Window::Connect(wxEVT_NAVIGATION_KEY,
+			wxNavigationKeyEventHandler(HikariNavigation::OnNavigationKey));
+
+		Window::Connect(wxEVT_SET_FOCUS,
+			wxFocusEventHandler(HikariNavigation::OnFocus));
+
+		//Window::Connect(wxEVT_CHILD_FOCUS,
+			//wxChildFocusEventHandler(HikariNavigation::OnChildFocus));
+	}
+
+private:
+	void OnNavigationKey(wxNavigationKeyEvent& evt) {
+		container.OnNavigation(evt);
+	}
+
+	void OnFocus(wxFocusEvent& evt) {
+		container.OnSetFocus(evt);
+	}
+
+	HikariContainer container;
+};
+
+class HikariPanel : public HikariNavigation<wxWindow> 
+{
+public:
+	HikariPanel(wxWindow* parent,
+		wxWindowID winid = wxID_ANY,
+		const wxPoint& pos = wxDefaultPosition,
+		const wxSize& size = wxDefaultSize,
+		long style = wxNO_BORDER) 
+	{
+		Create(parent, winid, pos, size, style | wxTAB_TRAVERSAL);
+	};
+};

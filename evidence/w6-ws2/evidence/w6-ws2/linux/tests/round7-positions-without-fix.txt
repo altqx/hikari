@@ -1,0 +1,19 @@
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(far floating window) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(892)]
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(next floating window) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(892)]
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(floating window below) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(892)]
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(no floating window) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(892)]
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(floating window as text) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(892)]
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(tab below) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(892)]
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(tab past an int) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(892)]
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(place past an int) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(892)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 8 failed, 0 skipped, 0 blacklisted, 8830ms

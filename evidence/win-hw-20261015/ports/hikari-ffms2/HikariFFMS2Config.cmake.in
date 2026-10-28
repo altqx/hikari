@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(FFMPEG)
+find_dependency(ZLIB)
+find_dependency(Threads)
+include("${CMAKE_CURRENT_LIST_DIR}/HikariFFMS2Targets.cmake")
+# Resolve transitive FFmpeg libraries in this installation, not the producer's paths.
+target_link_libraries(HikariFFMS2::ffms2 INTERFACE ${FFMPEG_LIBRARIES})

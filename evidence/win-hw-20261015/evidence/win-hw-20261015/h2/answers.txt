@@ -1,0 +1,22 @@
+A2|Play the current line (Line 1 3000-5000)|one rising whoop ~2 s, no hum, no ticks, no clicks|yes|Whoop only, clean (owner); output not stated
+A3|Play 500ms before the start time (2500-3000)|only the low hum, 0.5 s|yes|Hum only, from the monitor (22E1W, the default output); A2 also from the monitor
+A4|Play 500 ms after the start time (3000-3500)|low beginning of the whoop only|yes|Low whoop start
+A5|Play 500ms before the end time (4500-5000)|high end of the whoop only, no ticks|yes|High end, no ticks
+A6|Play 500ms after the end time (5000-5500)|four fast ticks only|yes|Four ticks only
+A7|Play the current line, Line 2 (9000-11000) from h2-44k1.mkv on the 48 kHz-class output|same whoop as A2, same pitch and length, no crackle|yes|Same as A2, clean
+A8|Play to the end from Line 2, Stop after ~0.9 s|stops at once, no tail/click|yes|Stopped at once
+A9|Play to the end from Line 2; owner switched the Windows default output 22E1W -> Razer at +4.4 s (18:32:17), back at 18:32:25|observation: does the sound move, stay or stop|observed|Stayed on the monitor (22E1W) to the end; nothing on the Razer. First attempt 18:29:48: owner did not switch (no change)
+A10|(variant) Windows default set to the Razer before playing, then Play the current line (Line 2)|plays on the chosen output (app has no device chooser: only host API WASAPI/DirectSound)|no|Played on the monitor (22E1W), not on the Razer: the editor output stays on the device it opened earlier; default at play time was Speakers (Razer)
+A10b|Editor output switched WASAPI -> DirectSound in Options (Razer still the Windows default), then Play the current line (Line 2)|plays on the current default|yes|Razer, clean whoop: changing the host API reopens the output on the current default
+A11|DirectSound: Play to the end (Line 2 onward) on the Razer (Windows default), Razer USB unplugged at 18:37:37 (+1.9 s)|device-lost/failed or quiet; no hang or crash|observed|Sound moved to the monitor (22E1W, the new Windows default) and kept playing; app stayed responsive (Process.Responding true throughout); no message in the UI; nothing in the app log
+A11b|DirectSound: Razer reconnected (OK at 18:38:55, Windows default = Speakers/Razer), Play the current line (Line 2)|the device opens again; whoop from that device|yes|Razer, clean
+A11-wasapi|WASAPI: Play to the end (Line 2 onward) on the Razer (default), Razer unplugged at 18:40:00 (+2.7 s)|device-lost/failed; quiet; no hang or crash|observed|App showed "Log window: Audio player failed."; app stayed responsive; Windows default moved to 22E1W (owner screenshot of the Log window)
+A11-wasapi (sound)|-|-|observed|Silence at the unplug (sound stopped), then the message
+A11b-wasapi|WASAPI: Razer reconnected (OK 18:41:56, default Speakers/Razer), Play the current line (Line 2)|reopens; whoop from that device|yes|Razer, clean; no message
+B3|Stop, then Play (Video panel transport) from frame 0|beeps, hum 2-3 s, whoop 3-5 s, ticks 5-6 s, in step with the counter|yes|All in sync, but on the MONITOR (22E1W) although the Windows default was the Razer at play time (18:42:21): Qt Multimedia output did not follow the default
+B4|Play 3 s, Pause 2 s, Play 2 s, Stop|Pause silences at once; Play resumes; Stop silences and goes to frame 0|yes|All as expected; Stop -> 00:00:00,000 frame 0 (b4-stopped.png)
+B5|Video panel "Play the current line" on Line 2; then click seek bar (landed 00:00:14,056) and Play|whoop at once for Line 2; hum then whoop at 15 s after the seek|yes|Both as expected (b5-after-seek.png)
+B6|Video playing from 0 (18:45:26); owner switched the Windows default Speakers -> 22E1W -> Speakers several times (18:45:33-18:45:47)|observation: where the sound goes; any gap|observed|Stayed on the monitor (22E1W) throughout; no gap or glitch; never moved to the Razer
+B7|Video playing from 0 (18:47:09); owner pressed Win+P "PC screen only", 22E1W HDMI audio endpoint gone at 18:47:17 (+7.7 s)|sound stops or moves; app keeps running and responding|observed|Sound stopped (did not move to the Razer); app responsive throughout; no message. The video kept running to the end silently (counter at 19 s when captured)
+B7b|22E1W restored (Extend; HDMI endpoint OK 18:48:31, Windows default 22E1W), Stop then Play from 0|sound again (which device)|yes|Plays on the monitor (22E1W)
+B8|Close the app (window close button), no edits|closes cleanly; copy any Log window text|yes|Closed with no prompt; process gone within 3 s. Log window during the session showed only "Audio player failed." (WASAPI unplug)

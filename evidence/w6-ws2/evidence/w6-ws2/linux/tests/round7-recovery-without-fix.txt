@@ -1,0 +1,24 @@
+=== aRecoveredCopyKeepsItsArrangement, without the fix (718e1282f's autosave and recovery)
+FAIL!  : FileLayoutsTest::aRecoveredCopyKeepsItsArrangement() Compared values are not the same
+   Actual   (layout)                                                      : ""
+   Expected (application->workspaceLayout().fileArrangement(target.value)): "eyJlbmdpbmUiOiJLRERvY2tXaWRnZXRzIDIuNC4xIiwicGFuZWxSZWdpc3RyeSI6MywicGFuZWxzIjpbIlZ
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(931)]
+--
+Totals: 2 passed, 1 failed, 0 skipped, 0 blacklisted, 1445ms
+********* Finished testing of FileLayoutsTest *********
+
+(/usr/lib/xdg-desktop-portal:3996583): xdg-desktop-portal-WARNING **: 13:05:55.661: Failed to create secret proxy: Error calling StartServiceByName for org.free
+=== aRecoveredCopyKeepsItsArrangement, autosave fixed, the recovered copy not taking the arrangement
+FAIL!  : FileLayoutsTest::aRecoveredCopyKeepsItsArrangement() '!isOpen("videoDock")' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(955)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 1 failed, 0 skipped, 0 blacklisted, 18229ms
+********* Finished testing of FileLayoutsTest *********
+
+=== aLegacyAutosaveOpensWithItsArrangement, without the fix
+FAIL!  : FileLayoutsTest::aLegacyAutosaveOpensWithItsArrangement() '!isOpen("videoDock")' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(969)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 1 failed, 0 skipped, 0 blacklisted, 18050ms
+********* Finished testing of FileLayoutsTest *********
+

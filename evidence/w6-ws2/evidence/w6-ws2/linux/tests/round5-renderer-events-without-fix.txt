@@ -1,0 +1,8 @@
+[  FAILED  ] AssSave.RendererScriptPutsEveryLineUnderEvents (0 ms)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] AssSave.RendererScriptPutsEveryLineUnderEvents
+[  FAILED  ] HikariSection.TheRendererScriptPutsItsLinesUnderEvents (0 ms)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] HikariSection.TheRendererScriptPutsItsLinesUnderEvents

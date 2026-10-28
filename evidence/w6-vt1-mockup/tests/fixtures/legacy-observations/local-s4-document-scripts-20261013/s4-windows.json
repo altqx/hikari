@@ -1,0 +1,619 @@
+{
+ "schema": 1,
+ "legacy_commit": "20d647c4c769ab7f5d383cf3c1c33f03876a94e9",
+ "package": "HikariSub-0.0.1-rc.1-windows-x64.zip",
+ "release": "v0.0.1-rc.1",
+ "package_sha256": "20a1b0fa164026522feab399cef521242203c6a1adaced0e6dddd3cb315e9a1e",
+ "probe_sha256": "def37ba63daf63195d61d1237d0e0efa5b796b7c51d308b0ba88c0e2b88395d8",
+ "host": "windows (Winix VM dev, Windows build 26200)",
+ "captured_utc": "2026-10-14T21:28:18Z",
+ "cases": [
+  {
+   "id": "S4-document-scripts",
+   "route": "document-scripts",
+   "observations": [
+    {
+     "id": "runs-last",
+     "document_scripts": "|{abs}/first.lua|missing.lua|s4/last.lua",
+     "status": "captured",
+     "steps": [
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [
+        {
+         "script": "first",
+         "event": "load"
+        },
+        {
+         "script": "last",
+         "event": "load"
+        },
+        {
+         "script": "first",
+         "event": "validate",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "validate",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "validate",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "run",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        }
+       ],
+       "main_title": "1*s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      },
+      {
+       "do": "touch",
+       "script": "last",
+       "status": "done"
+      },
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [
+        {
+         "script": "first",
+         "event": "validate",
+         "first": "last:Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "load"
+        },
+        {
+         "script": "last",
+         "event": "validate",
+         "first": "last:Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "validate",
+         "first": "last:Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "run",
+         "first": "last:Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        }
+       ],
+       "main_title": "2*s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      },
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [
+        {
+         "script": "first",
+         "event": "validate",
+         "first": "last:last:Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY",
+          "Active Line"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "validate",
+         "first": "last:last:Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY",
+          "Active Line"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "validate",
+         "first": "last:last:Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY",
+          "Active Line"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "run",
+         "first": "last:last:Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY",
+          "Active Line"
+         ]
+        }
+       ],
+       "main_title": "3*s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      }
+     ],
+     "startup_popups": [],
+     "startup_records": []
+    },
+    {
+     "id": "separators",
+     "document_scripts": "  s4/first.lua~~s4/last.lua$missing.lua",
+     "status": "captured",
+     "steps": [
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [
+        {
+         "script": "first",
+         "event": "load"
+        },
+        {
+         "script": "last",
+         "event": "load"
+        },
+        {
+         "script": "first",
+         "event": "validate",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "validate",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "validate",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "last",
+         "event": "run",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        }
+       ],
+       "main_title": "1*s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      }
+     ],
+     "startup_popups": [],
+     "startup_records": []
+    },
+    {
+     "id": "no-scripts",
+     "document_scripts": null,
+     "status": "captured",
+     "steps": [
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [
+        {
+         "title": "Info",
+         "screenshot": "screens/s4-no-scripts-0-0.png",
+         "answered": "RETURN",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [],
+       "main_title": "s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      }
+     ],
+     "startup_popups": [],
+     "startup_records": []
+    },
+    {
+     "id": "only-missing",
+     "document_scripts": "|nothing.lua",
+     "status": "captured",
+     "steps": [
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [
+        {
+         "title": "Info",
+         "screenshot": "screens/s4-only-missing-0-0.png",
+         "answered": "RETURN",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [],
+       "main_title": "s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      }
+     ],
+     "startup_popups": [],
+     "startup_records": []
+    },
+    {
+     "id": "validation-false",
+     "document_scripts": "|{abs}/invalid.lua",
+     "status": "captured",
+     "steps": [
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [
+        {
+         "title": "Error",
+         "screenshot": "screens/s4-validation-false-0-0.png",
+         "answered": "RETURN",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [
+        {
+         "script": "invalid",
+         "event": "load"
+        },
+        {
+         "script": "invalid",
+         "event": "validate",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "invalid",
+         "event": "validate",
+         "first": "edited while validating",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Validated",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        }
+       ],
+       "main_title": "s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      },
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [
+        {
+         "title": "Error",
+         "screenshot": "screens/s4-validation-false-1-0.png",
+         "answered": "RETURN",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [
+        {
+         "script": "invalid",
+         "event": "validate",
+         "first": "edited while validating",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Validated",
+          "Validated",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "invalid",
+         "event": "validate",
+         "first": "edited while validating",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Validated",
+          "Validated",
+          "Validated",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        }
+       ],
+       "main_title": "s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      }
+     ],
+     "startup_popups": [],
+     "startup_records": []
+    },
+    {
+     "id": "validation-error",
+     "document_scripts": "|{abs}/raising.lua",
+     "status": "captured",
+     "steps": [
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [
+        {
+         "title": "Error",
+         "screenshot": "screens/s4-validation-error-0-0.png",
+         "answered": "RETURN",
+         "reply": {
+          "ok": true
+         }
+        },
+        {
+         "title": "Log window",
+         "screenshot": "screens/s4-validation-error-0-1.png",
+         "answered": "Close",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [
+        {
+         "script": "raising",
+         "event": "load"
+        },
+        {
+         "script": "raising",
+         "event": "validate",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        },
+        {
+         "script": "raising",
+         "event": "validate",
+         "first": "Gate",
+         "lines": 2,
+         "info": [
+          "Title",
+          "ScriptType",
+          "Automation Scripts",
+          "YCbCr Matrix",
+          "PlayResX",
+          "PlayResY"
+         ]
+        }
+       ],
+       "main_title": "s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      }
+     ],
+     "startup_popups": [],
+     "startup_records": []
+    },
+    {
+     "id": "load-error",
+     "document_scripts": "|{abs}/broken.lua",
+     "status": "captured",
+     "steps": [
+      {
+       "do": "run_last",
+       "hotkey": "CTRL+SHIFT+F12",
+       "windows": [
+        {
+         "title": "Error",
+         "screenshot": "screens/s4-load-error-0-0.png",
+         "answered": "RETURN",
+         "reply": {
+          "ok": true
+         }
+        },
+        {
+         "title": "Select a script editor",
+         "screenshot": "screens/s4-load-error-0-1.png",
+         "answered": "ESCAPE",
+         "reply": {
+          "ok": true
+         }
+        }
+       ],
+       "hotkey_reply": {
+        "ok": true
+       },
+       "records": [],
+       "main_title": "s4.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c ",
+       "status": "done"
+      }
+     ],
+     "startup_popups": [],
+     "startup_records": []
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+22:03:30 --- mutter: dialogframe
+22:03:45 == dialog-frame-window: observed - mutter: About 460x286 with its own buttons {'Close': True, 'Maximise': False, 'Minimise': False}; window system frame None (mutter publishes no frame geometry (see the screenshot))
+22:03:48 == dialog-frame-centred: not-observable - mutter: a Wayland client cannot place its windows; the compositor put About at None (main window (160, 100, 1280, 800))
+22:03:49 == dialog-frame-move: not-observable - mutter: no window position published or no Close
+22:03:57 == dialog-frame-modeless: observed - About and Credits open at once: True
+22:04:12 == dialog-frame-system: observed - About with the system's title bar: HikariSub's drawn buttons []; window system frame None (mutter publishes no frame geometry (see the screenshot))
+22:05:25 == dialog-frame-themes: observed - About on HikariSub's frame in the four themes (screenshots)

@@ -1,0 +1,1107 @@
+// O1: legacy OptionsDialog "Options" (GLOBAL_SETTINGS, File > Settings) over
+// the settings registry: the page tree Editor (Conversion, Advanced), Video,
+// Audio (Advanced) and Subtitle properties, with OK, Apply, Cancel and Set
+// default. `values` is what each control holds (application::OptionsState);
+// OK/Apply write the bound controls whose value differs (legacy SetOptions)
+// and Set default refreshes the controls as legacy ResetDefault does. Theme
+// files are excluded by the accepted settings decision; the Appearance page
+// (K2, AppearancePage.qml) takes the Themes page's place and previews its
+// choices live until OK, Apply or Cancel; the Hotkeys page is the
+// shortcut editor's (O2, `hotkeys`); Associations are Windows only and wait
+// for their platform card.
+pragma Translator: "HikariSub.Options"
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import Hikari.Ui
+
+Dialog {
+    id: dialog
+    objectName: "settingsDialog"
+    required property var app
+    property var hotkeys: null // O2: the Hotkeys page's HotkeysController
+    property TagButtonsController tagButtons: null // LE5: the Editor page's tag button list
+    title: qsTr("Options")
+    // K1: the title with the set's settings icon (legacy OptionsDialog SetIcon(SETTINGS)).
+    header: IconDialogHeader { objectName: "settingsDialogTitle"; iconRole: "settings"; text: dialog.title }
+    modal: true
+    width: 640
+    height: 600
+    property var values: ({})
+    property var languages: []
+    property var dictionaries: []
+    property var catalogs: []
+    property var styles: []
+    property var renderers: [] // W2: the CSRI renderers' names and "libass", VSFilterMod last
+    property var rendererLabels: [] // W2: as shown, VSFilterMod's with its note
+    property var outputDevices: [] // H2: System default, the connected devices, a missing choice
+    property var warnings: []
+    // LE5: the tag buttons as the Editor page holds them, {name, tag, type,
+    // icon} each, written on OK or Apply where they differ.
+    property var tagButtonList: []
+    signal reloaded()
+
+    function openDialog() {
+        const r = app.openSettingsDialog()
+        languages = r.languages
+        dictionaries = r.dictionaries
+        catalogs = r.catalogs
+        styles = r.styles
+        renderers = r.renderers
+        rendererLabels = r.rendererLabels
+        outputDevices = r.outputDevices
+        values = r.values
+        copyTagButtons()
+        reloaded()
+        hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
+        pageList.currentIndex = 0 // legacy ChangeSelection(0)
+        open()
+        warnings = r.warnings
+        showWarning()
+    }
+    // O5: Apply switched the interface language: the dictionary choice's
+    // entry for an empty Dictionary folder in the new language.
+    Connections {
+        target: dialog.app
+        function onSettingsListsChanged(dictionaries) { dialog.dictionaries = dictionaries }
+    }
+    // The legacy constructor's "does not exist" message boxes, one at a time.
+    function showWarning() {
+        if (warnings.length === 0)
+            return
+        warningText.text = warnings[0]
+        warnings = warnings.slice(1)
+        warningDialog.open()
+    }
+    function put(setting, value) {
+        const v = Object.assign({}, values)
+        v[setting] = value
+        values = v
+        // K2: the appearance shows at once; OK or Apply saves it, Cancel takes it back.
+        if (setting.startsWith("appearance."))
+            Theme.preview(values)
+    }
+    // The Appearance page's colour picker for a high-contrast colour.
+    function pickThemeColour(setting, colour) {
+        themeColourDialog.setting = setting
+        themeColourDialog.selectedColor = colour
+        themeColourDialog.open()
+    }
+    // Apply keeps the controls as they are (legacy does not refresh them).
+    function apply() {
+        app.applySettings(values)
+        commitTagButtons()
+    }
+    function copyTagButtons() {
+        tagButtonList = tagButtons ? tagButtons.buttons.map(b => Object.assign({}, b)) : []
+    }
+    function commitTagButtons() {
+        if (!tagButtons)
+            return
+        const shown = tagButtons.buttons
+        const same = shown.length === tagButtonList.length && shown.every((b, i) => {
+            const t = tagButtonList[i]
+            return b.name === t.name && b.tag === t.tag && b.type === t.type && b.icon === t.icon
+        })
+        if (!same)
+            tagButtons.replace(tagButtonList)
+    }
+    function stageTagButton(index, b) {
+        const list = tagButtonList.slice()
+        if (index < 0)
+            list.push(b)
+        else
+            list[index] = b
+        tagButtonList = list
+        tagButtonRows.currentIndex = index < 0 ? list.length - 1 : index
+    }
+    function removeTagButton(index) {
+        const list = tagButtonList.slice()
+        list.splice(index, 1)
+        tagButtonList = list
+        tagButtonRows.currentIndex = Math.min(index, list.length - 1)
+    }
+    function moveTagButton(index, step) {
+        const list = tagButtonList.slice()
+        const b = list[index]
+        list[index] = list[index + step]
+        list[index + step] = b
+        tagButtonList = list
+        tagButtonRows.currentIndex = index + step
+    }
+    // O2: OnMapHkey for the selected row: the mapping window, then the
+    // question when the keys are taken (ItemHotkey::OnMapHotkey).
+    readonly property color warningColour: Theme.warning // WINDOW_WARNING_ELEMENTS
+    function mapHotkey() {
+        const target = hotkeys.mapTarget()
+        if (target.name === undefined)
+            return
+        settingsHotkeyMapping.capture(target.name, target.type, target.windows, (accel, window) => {
+            const conflict = hotkeys.optionsConflict(accel, window)
+            if (conflict.message === undefined)
+                hotkeys.optionsMap(accel, window, "cancel")
+            else
+                settingsHotkeyMapping.ask(conflict, answer => hotkeys.optionsMap(accel, window, answer))
+        })
+    }
+    function chooseCatalog(index) {
+        const r = app.chooseSettingsCatalog(values, index)
+        styles = r.styles
+        values = r.values
+        reloaded()
+    }
+
+    // Set default on the left edge, apart from OK, Apply and Cancel on the right.
+    footer: RowLayout {
+        spacing: 0
+        Button {
+            objectName: "settingsDefault"
+            text: qsTr("Set default")
+            Layout.leftMargin: 12
+            onClicked: {
+                dialog.values = dialog.app.resetSettings(dialog.values)
+                // The shown tag buttons stay (EditBox keeps what SetTagButtons built).
+                dialog.copyTagButtons()
+                dialog.reloaded()
+            }
+        }
+        DialogButtonBox {
+            Layout.fillWidth: true
+            Button { objectName: "settingsOk"; text: qsTr("OK"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
+            Button { objectName: "settingsApply"; text: qsTr("Apply"); DialogButtonBox.buttonRole: DialogButtonBox.ApplyRole }
+            Button { objectName: "settingsCancel"; text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+            onAccepted: dialog.accept()
+            onRejected: dialog.reject()
+            onApplied: dialog.apply()
+        }
+    }
+    onAccepted: {
+        app.applySettings(values)
+        commitTagButtons()
+    }
+    // K2: the preview ends with the dialog: after OK or Apply the saved
+    // appearance shows, after Cancel the one before.
+    onClosed: Theme.endPreview()
+
+    // A check box bound to a boolean setting.
+    // Its label wraps in the page's width (the legacy strings' hard line
+    // breaks are spaces here).
+    component SettingCheck: CheckBox {
+        id: check
+        required property string setting
+        objectName: "setting_" + setting
+        Layout.fillWidth: text.length > 0
+        Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
+        Accessible.name: text
+        function refresh() { checked = dialog.values[setting] === true }
+        Component.onCompleted: {
+            if (contentItem && contentItem.wrapMode !== undefined)
+                contentItem.wrapMode = Text.Wrap
+            refresh()
+        }
+        Connections { target: dialog; function onReloaded() { check.refresh() } }
+        onToggled: dialog.put(setting, checked)
+    }
+    // A NumCtrl: a label and a number within the legacy range.
+    component SettingNumber: RowLayout {
+        id: numberRow
+        required property string setting
+        property alias text: numberLabel.text
+        property string tip
+        property int from: 0
+        property int to: 100000
+        Layout.fillWidth: true
+        Label { id: numberLabel; Layout.fillWidth: true; wrapMode: Text.Wrap }
+        SpinBox {
+            id: spin
+            objectName: "setting_" + numberRow.setting
+            from: numberRow.from
+            to: numberRow.to
+            editable: true
+            Accessible.name: numberLabel.text
+            Layout.preferredWidth: 150
+            ToolTip.text: numberRow.tip
+            ToolTip.visible: hovered && numberRow.tip !== ""
+            function refresh() { value = dialog.values[numberRow.setting] ?? 0 }
+            Component.onCompleted: refresh()
+            Connections { target: dialog; function onReloaded() { spin.refresh() } }
+            onValueModified: dialog.put(numberRow.setting, value)
+        }
+    }
+    // A text field bound to a string setting.
+    component SettingText: TextField {
+        id: field
+        required property string setting
+        objectName: "setting_" + setting
+        Layout.fillWidth: true
+        function refresh() { text = dialog.values[setting] ?? "" }
+        Component.onCompleted: refresh()
+        Connections { target: dialog; function onReloaded() { field.refresh() } }
+        onTextEdited: dialog.put(setting, text)
+    }
+    // A HikariChoice: `values` holds its selection, which may be -1 (nothing
+    // shown) or past the list; it changes only when an entry is chosen.
+    component SettingChoice: ComboBox {
+        id: choice
+        required property string setting
+        objectName: "setting_" + setting
+        Layout.fillWidth: true
+        signal chosen(int index)
+        function refresh() {
+            const v = dialog.values[setting] ?? -1
+            currentIndex = v >= 0 && v < count ? v : -1
+        }
+        Component.onCompleted: refresh()
+        onModelChanged: refresh()
+        onCountChanged: refresh()
+        Connections { target: dialog; function onReloaded() { choice.refresh() } }
+        onActivated: index => {
+            dialog.put(setting, index)
+            chosen(index)
+        }
+    }
+    // FontPickerButton: the family and point size of a font setting.
+    component SettingFont: RowLayout {
+        id: fontRow
+        required property string setting
+        required property string sizeSetting
+        property alias text: fontLabel.text
+        Layout.fillWidth: true
+        Label { id: fontLabel; Layout.fillWidth: true }
+        ComboBox {
+            id: family
+            objectName: "setting_" + fontRow.setting
+            editable: true
+            model: Qt.fontFamilies()
+            Accessible.name: fontLabel.text
+            Layout.preferredWidth: 200
+            function refresh() { editText = dialog.values[fontRow.setting] ?? "" }
+            Component.onCompleted: refresh()
+            Connections { target: dialog; function onReloaded() { family.refresh() } }
+            onActivated: dialog.put(fontRow.setting, currentText)
+            onAccepted: dialog.put(fontRow.setting, editText)
+        }
+        SpinBox {
+            id: size
+            objectName: "setting_" + fontRow.sizeSetting
+            from: 1
+            to: 200
+            editable: true
+            Accessible.name: qsTr("Font size")
+            function refresh() { value = dialog.values[fontRow.sizeSetting] ?? 10 }
+            Component.onCompleted: refresh()
+            Connections { target: dialog; function onReloaded() { size.refresh() } }
+            onValueModified: dialog.put(fontRow.sizeSetting, value)
+        }
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        ListView {
+            id: pageList
+            objectName: "settingsPages"
+            Layout.preferredWidth: 150
+            Layout.fillHeight: true
+            clip: true
+            // Legacy AddPage / AddSubPage order.
+            // The top-level pages show their icon of the set (MuseScore's
+            // Preferences); a sub-page's name lines up with its page's.
+            model: [
+                {name: qsTr("Editor"), depth: 0, iconRole: "editor"},
+                {name: qsTr("Conversion"), depth: 1},
+                {name: qsTr("Advanced"), depth: 1},
+                {name: qsTr("Video"), depth: 0, iconRole: "settings-video"},
+                {name: qsTr("Audio"), depth: 0, iconRole: "settings-audio"},
+                {name: qsTr("Advanced"), depth: 1},
+                {name: qsTr("Appearance"), depth: 0, iconRole: "appearance"},
+                {name: qsTr("Hotkeys"), depth: 0, iconRole: "hotkeys"},
+                {name: qsTr("Subtitle properties"), depth: 0, iconRole: "script-properties"}
+            ]
+            delegate: ItemDelegate {
+                id: pageItem
+                required property var modelData
+                required property int index
+                readonly property string role: modelData.iconRole ?? ""
+                readonly property bool iconOnHighlight: highlighted || down
+                width: ListView.view.width
+                text: modelData.name
+                icon.source: role.length === 0 ? ""
+                    : IconTheme.image(role, iconOnHighlight ? palette.highlightedText : IconTheme.normal,
+                                      iconOnHighlight ? palette.highlightedText : IconTheme.accent,
+                                      mirrored && IconTheme.mirrors(role))
+                icon.color: "transparent"
+                icon.width: 16
+                icon.height: 16
+                leftPadding: 8 + modelData.depth * (16 + spacing)
+                highlighted: ListView.isCurrentItem
+                onClicked: pageList.currentIndex = index
+            }
+            Accessible.name: qsTr("Options")
+        }
+        StackLayout {
+            id: pages
+            currentIndex: pageList.currentIndex
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            // Editor (legacy GLOBAL_EDITOR page).
+            ScrollView {
+                objectName: "settingsPageEditor"
+                contentWidth: availableWidth
+                ColumnLayout {
+                    width: parent.width
+                    // Legacy "Language (program restart required)": the
+                    // switch is live (O5-language-label).
+                    GroupBox {
+                        objectName: "settingsLanguageGroup"
+                        title: qsTr("Language")
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "program.language"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.languages
+                            Accessible.name: qsTr("Language")
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("Spell checker language (\"Dictionary\" folder)")
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "editor.dictionaryLanguage"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.dictionaries
+                            // With no dictionary installed, a disabled box
+                            // that says so; with none chosen, it says that
+                            // (not a blank box).
+                            enabled: count > 0
+                            displayText: currentIndex >= 0 ? currentText
+                                       : count > 0 ? qsTr("None chosen") : qsTr("No dictionaries found")
+                            Accessible.name: qsTr("Spell checker language (\"Dictionary\" folder)")
+                        }
+                    }
+                    SettingCheck { setting: "grid.loadSortedSubs"; text: qsTr("Open sorted subtitles") }
+                    SettingCheck { setting: "editor.spellchecker"; text: qsTr("Turn spell checking") }
+                    SettingCheck { setting: "grid.autoSelectLinesFromLastTab"; text: qsTr("Select the line with the time line\nof the previous active tab").replace("\n", " ") }
+                    SettingCheck { setting: "editor.suggestionsOnDoubleClick"; text: qsTr("Show suggestions by double-clicking on misspell") }
+                    SettingCheck { setting: "subtitles.openInNewTab"; text: qsTr("Always open subtitles in a new tab") }
+                    SettingCheck { setting: "editor.dontGoToNextLineOnTimesEdit"; text: qsTr("Stay on selected line when editing times") }
+                    SettingCheck { setting: "video.disableLiveEditing"; text: qsTr("Turn off edits preview on video\n(re-opening tab is required)").replace("\n", " ") }
+                    SettingCheck { setting: "grid.setVisibleLineAfterFullScreen"; text: qsTr("Turn searching of visible line\nafter switching from full screen").replace("\n", " ") }
+                    SettingCheck { setting: "shiftTimes.changeValuesWithTab"; text: qsTr("Synchronize time shifting window in all tabs") }
+                    SettingCheck { setting: "grid.changeActiveOnSelection"; text: qsTr("Change active line after add to selection") }
+                    SettingCheck { setting: "translation.showOriginal"; text: qsTr("Show original in translator mode") }
+                    SettingCheck { setting: "translation.hideOriginalOnVideo"; text: qsTr("Hide original on video in translator mode") }
+                    SettingCheck { setting: "grid.duplicationDontChangeSelection"; text: qsTr("Do not change selections when duplicating dialogue lines") }
+                    SettingCheck { setting: "grid.dontCenterActiveLine"; text: qsTr("Do not vertically center the active line in the subtitle grid") }
+                    SettingCheck { setting: "editor.allowNumpadHotkeys"; text: qsTr("Use numpad shortcuts in text fields") }
+                    SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off visual tools warning") }
+                    SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Do not warn about resolution mismatch") }
+                    SettingCheck { setting: "automation.oldScriptsCompatibility"; text: qsTr("Compatibility with older HikariSub scripts") }
+                    // Y4-playres-ask: the script resolution question's "Always" choice.
+                    SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
+                    // LE2: legacy's Time / Frames radios under the Line editor
+                    // (EDITBOX_TIMES_TO_FRAMES_SWITCH); the Video panel's "⋯" menu has it too.
+                    SettingCheck { setting: "editor.timesToFramesSwitch"; text: qsTr("Show video frames instead of times in the line editor and the subtitle grid") }
+                    // LE3-tags-shown: the Line editor shows ASS override tags unless this is on
+                    // (Subtitles > "Hide tags in the line editor" switches it too).
+                    SettingCheck { setting: "editor.hideTags"; text: qsTr("Hide tags in the line editor") }
+                    // LE5: the Line editor's custom tag buttons, in strip order.
+                    GroupBox {
+                        objectName: "settingsTagButtons"
+                        title: qsTr("Tag buttons")
+                        Layout.fillWidth: true
+                        visible: dialog.tagButtons !== null
+                        ColumnLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            spacing: 4
+                            ListView {
+                                id: tagButtonRows
+                                objectName: "settingsTagButtonList"
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Math.min(Math.max(count, 2), 6) * 28
+                                clip: true
+                                model: dialog.tagButtonList
+                                currentIndex: -1
+                                keyNavigationEnabled: true
+                                activeFocusOnTab: true
+                                Accessible.name: qsTr("Tag buttons")
+                                ScrollBar.vertical: ScrollBar {}
+                                delegate: ItemDelegate {
+                                    id: row
+                                    required property var modelData
+                                    required property int index
+                                    objectName: "settingsTagButton" + index
+                                    width: ListView.view.width
+                                    height: 28
+                                    highlighted: ListView.isCurrentItem
+                                    Accessible.name: modelData.name.length > 0 ? modelData.name : modelData.tag
+                                    onClicked: tagButtonRows.currentIndex = index
+                                    onDoubleClicked: tagButtonEditor.openFor(editTagButton, index, modelData)
+                                    // On the selection's colour, one colour reads.
+                                    contentItem: RowLayout {
+                                        spacing: 8
+                                        Icon {
+                                            iconRole: row.modelData.icon
+                                            opacity: row.modelData.icon.length > 0 ? 1 : 0
+                                            color: row.highlighted ? row.palette.highlightedText : IconTheme.normal
+                                            accentColor: row.highlighted ? row.palette.highlightedText : IconTheme.accent
+                                        }
+                                        Label {
+                                            text: row.modelData.name
+                                            color: row.highlighted ? row.palette.highlightedText : row.palette.windowText
+                                            Layout.preferredWidth: 120
+                                            elide: Text.ElideRight
+                                        }
+                                        Label {
+                                            text: row.modelData.tag
+                                            color: row.highlighted ? row.palette.highlightedText : Theme.muted
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+                                }
+                                Label {
+                                    parent: tagButtonRows // over the view, not in its content
+                                    anchors.centerIn: parent
+                                    visible: tagButtonRows.count === 0
+                                    text: qsTr("No tag buttons")
+                                    color: Theme.muted
+                                }
+                            }
+                            RowLayout {
+                                spacing: 2
+                                readonly property int current: tagButtonRows.currentIndex
+                                readonly property bool chosen: current >= 0 && current < tagButtonRows.count
+                                IconToolButton {
+                                    id: addTagButton
+                                    objectName: "settingsAddTagButton"
+                                    iconRole: "add"
+                                    text: qsTr("Add a tag button")
+                                    enabled: tagButtonRows.count < (dialog.tagButtons ? dialog.tagButtons.maximum : 0)
+                                    onClicked: tagButtonEditor.openFor(addTagButton, -1, null)
+                                }
+                                IconToolButton {
+                                    id: editTagButton
+                                    objectName: "settingsEditTagButton"
+                                    iconRole: "edit"
+                                    text: qsTr("Edit the tag button")
+                                    enabled: parent.chosen
+                                    onClicked: tagButtonEditor.openFor(editTagButton, parent.current, dialog.tagButtonList[parent.current])
+                                }
+                                IconToolButton {
+                                    objectName: "settingsMoveTagButtonUp"
+                                    iconRole: "move-up"
+                                    text: qsTr("Move up")
+                                    enabled: parent.chosen && parent.current > 0
+                                    onClicked: dialog.moveTagButton(parent.current, -1)
+                                }
+                                IconToolButton {
+                                    objectName: "settingsMoveTagButtonDown"
+                                    iconRole: "move-down"
+                                    text: qsTr("Move down")
+                                    enabled: parent.chosen && parent.current < tagButtonRows.count - 1
+                                    onClicked: dialog.moveTagButton(parent.current, 1)
+                                }
+                                IconToolButton {
+                                    objectName: "settingsRemoveTagButton"
+                                    iconRole: "remove"
+                                    text: qsTr("Remove the tag button")
+                                    enabled: parent.chosen
+                                    onClicked: dialog.removeTagButton(parent.current)
+                                }
+                            }
+                            TagButtonEditor {
+                                id: tagButtonEditor
+                                objectName: "settingsTagButtonEditor"
+                                tagButtons: dialog.tagButtons
+                                onSaved: (index, b) => dialog.stageTagButton(index, b)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Conversion (legacy ConvOpt page).
+            ScrollView {
+                objectName: "settingsPageConversion"
+                contentWidth: availableWidth
+                ColumnLayout {
+                    width: parent.width
+                    GroupBox {
+                        title: qsTr("Choose catalog")
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "convert.styleCatalog"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.catalogs
+                            Accessible.name: qsTr("Choose catalog")
+                            onChosen: index => dialog.chooseCatalog(index) // OnChangeCatalog
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("Choose style")
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "convert.style"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.styles
+                            Accessible.name: qsTr("Choose style")
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("Choose FPS")
+                        Layout.fillWidth: true
+                        ComboBox {
+                            id: fpsBox
+                            objectName: "setting_convert.fps"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            editable: true
+                            model: ["23.976", "24", "25", "29.97", "30", "60"]
+                            Accessible.name: qsTr("Choose FPS")
+                            function refresh() { editText = dialog.values["convert.fps"] ?? "" }
+                            Component.onCompleted: refresh()
+                            Connections { target: dialog; function onReloaded() { fpsBox.refresh() } }
+                            onActivated: dialog.put("convert.fps", currentText)
+                            onEditTextChanged: if (activeFocus) dialog.put("convert.fps", editText)
+                        }
+                    }
+                    SettingCheck { setting: "convert.fpsFromVideo"; text: qsTr("FPS from video") }
+                    SettingCheck { setting: "convert.newEndTimes"; text: qsTr("New end times") }
+                    SettingCheck { setting: "convert.showSettings"; text: qsTr("Show window before conversion") }
+                    GroupBox {
+                        title: qsTr("Time for one letter in milliseconds")
+                        Layout.fillWidth: true
+                        SettingNumber { setting: "convert.timePerCharacter"; from: 30; to: 1000; anchors.left: parent.left; anchors.right: parent.right }
+                    }
+                    GroupBox {
+                        title: qsTr("Resolution when converting to ASS")
+                        Layout.fillWidth: true
+                        RowLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            SettingNumber { setting: "convert.resolutionWidth"; from: 1; to: 3000 }
+                            Label { text: "×" }
+                            SettingNumber { setting: "convert.resolutionHeight"; from: 1; to: 3000 }
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("Tags to paste at the beginning of every ASS line")
+                        Layout.fillWidth: true
+                        SettingText { setting: "convert.assTagsToInsertInLine"; anchors.left: parent.left; anchors.right: parent.right }
+                    }
+                }
+            }
+
+            // Advanced (legacy EditorAdvanced page).
+            ScrollView {
+                objectName: "settingsPageEditorAdvanced"
+                contentWidth: availableWidth
+                ColumnLayout {
+                    width: parent.width
+                    SettingCheck { setting: "grid.calcSpacesAndPunctuationForWraps"; text: qsTr("Calculate spaces and punctation characters for wraps") }
+                    SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps"; text: qsTr("Calculate spaces and punctation characters for CPS") }
+                    SettingNumber {
+                        setting: "editor.saveAfterCharacterCount"; from: 0; to: 10000; text: qsTr("Number of edits to save")
+                        tip: qsTr("0 turns off saving while editing")
+                    }
+                    SettingNumber {
+                        setting: "autosave.maxFiles"; from: 2; to: 1000000; text: qsTr("Maximum number of autosave files")
+                        tip: qsTr("Number of autosaves can be set from 2 to 1000000")
+                    }
+                    SettingNumber { setting: "grid.insertStartOffset"; from: -100000; to: 100000; text: qsTr("Start frame offset in ms:") }
+                    SettingNumber { setting: "grid.insertEndOffset"; from: -100000; to: 100000; text: qsTr("End frame offset in ms:") }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Label { text: qsTr("ASS tag replacement:"); Layout.fillWidth: true }
+                        SettingText { setting: "grid.tagsSwapCharacter"; Layout.fillWidth: false; Layout.preferredWidth: 150 }
+                    }
+                    SettingNumber {
+                        setting: "program.tabTextMaxChars"; from: 20; to: 150; text: qsTr("Number of tab name characters")
+                        tip: qsTr("Number of tab name characters. Range from 20 to 150")
+                    }
+                    SettingNumber { setting: "automation.traceLevel"; from: 0; to: 5; text: qsTr("LUA scripts tracking level") }
+                    SettingFont { setting: "grid.font"; sizeSetting: "grid.fontSize"; text: qsTr("Subtitle grid font:") }
+                    SettingFont { setting: "program.font"; sizeSetting: "program.fontSize"; text: qsTr("Program font:") }
+                    GroupBox {
+                        title: qsTr("Autoload loading method")
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "automation.loadingMethod"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: [qsTr("After program start asynchronously"), qsTr("After program start"),
+                                    qsTr("After open menu asynchronously"), qsTr("After open menu")]
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("Folder with external fonts")
+                        Layout.fillWidth: true
+                        RowLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            SettingText { id: fontsFolder; setting: "fonts.externalDirectory" }
+                            Button {
+                                text: qsTr("Choose")
+                                onClicked: fontsFolderDialog.open()
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Video (legacy video page).
+            ScrollView {
+                objectName: "settingsPageVideo"
+                contentWidth: availableWidth
+                ColumnLayout {
+                    width: parent.width
+                    SettingCheck { setting: "video.fullScreenOnStart"; text: qsTr("Open video from context menu on full screen") }
+                    SettingCheck { setting: "video.pauseOnClick"; text: qsTr("Left mouse button pauses video") }
+                    SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video with time of active line") }
+                    SettingCheck { setting: "video.gpuConversion"; text: qsTr("Convert video colours on the GPU (requires reloading)") }
+                    GroupBox {
+                        title: qsTr("Preferred audio (separated by semicolons)")
+                        Layout.fillWidth: true
+                        SettingText { setting: "video.acceptedAudioStream"; anchors.left: parent.left; anchors.right: parent.right }
+                    }
+                    GroupBox {
+                        title: qsTr("FFMS2 video seeking method (requires reloading)")
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "video.ffms2Seeking"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: [qsTr("Linear"), qsTr("Normal"), qsTr("Unsafe (always fast)"), qsTr("Aggressive (fast in rewind)")]
+                        }
+                    }
+                    // W2: legacy's "Subtitle display filter" (ID_VSFILTER_PROVIDER),
+                    // only when there is a CSRI renderer to choose besides libass
+                    // (W2-filter-row-hidden).
+                    GroupBox {
+                        objectName: "settingsRendererGroup"
+                        title: qsTr("Subtitle display filter")
+                        Layout.fillWidth: true
+                        visible: dialog.renderers.length > 1
+                        SettingChoice {
+                            setting: "video.subtitleProvider"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.rendererLabels
+                            Accessible.name: qsTr("Subtitle display filter")
+                        }
+                    }
+                    // W1 (Windows): the player that plays video, the
+                    // built-in one or the optional DirectShow adapter
+                    // (legacy's player with indexing off). It applies at
+                    // once; a playing video pauses.
+                    Loader {
+                        active: Qt.platform.os === "windows"
+                        Layout.fillWidth: true
+                        sourceComponent: GroupBox {
+                            objectName: "videoPlaybackPlayerBox"
+                            title: qsTr("Playback")
+                            SettingChoice {
+                                setting: "video.playbackPlayer"
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                model: [qsTr("Built-in"), "DirectShow"]
+                                Accessible.name: qsTr("Playback")
+                            }
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("Start video zoom in percent.")
+                        Layout.fillWidth: true
+                        // A NumCtrl with its own id: OK stores its digits as typed.
+                        SettingText {
+                            setting: "video.zoomPercent"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            maximumLength: 20
+                            validator: RegularExpressionValidator { regularExpression: /[0-9]*/ }
+                            Accessible.name: qsTr("Start video zoom in percent.")
+                        }
+                    }
+                }
+            }
+
+            // Audio (legacy AudioMain page).
+            ScrollView {
+                objectName: "settingsPageAudio"
+                contentWidth: availableWidth
+                ColumnLayout {
+                    width: parent.width
+                    SettingCheck { setting: "audio.drawTimeCursor"; text: qsTr("Show time next to cursor") }
+                    SettingCheck { setting: "audio.drawSecondaryLines"; text: qsTr("Show seconds markers") }
+                    SettingCheck { setting: "audio.drawSelectionBackground"; text: qsTr("Show background selection") }
+                    SettingCheck { setting: "audio.drawVideoPosition"; text: qsTr("Show video position") }
+                    SettingCheck { setting: "audio.drawKeyframes"; text: qsTr("Show keyframes") }
+                    SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
+                    SettingCheck { setting: "audio.autoFocus"; text: qsTr("Activate the audio when hover") }
+                    SettingCheck { setting: "audio.snapToKeyframes"; text: qsTr("Snap to keyframe") }
+                    SettingCheck { setting: "audio.snapToOtherLines"; text: qsTr("Snap to other lines") }
+                    SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Do not play audio after changing the line") }
+                    SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge all the \"n\" with the previous syllable") }
+                    SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move syllable line after click") }
+                    SettingCheck { setting: "audio.ramCache"; text: qsTr("Load audio into RAM") }
+                    // H2-output-device: the device both the audio box and
+                    // video playback play through (System default follows
+                    // the system's default); A4-wasapi-default (Windows): the
+                    // audio box's output API, which applies when the output
+                    // next opens.
+                    GroupBox {
+                        objectName: "audioOutputBox"
+                        title: qsTr("Audio output")
+                        Layout.fillWidth: true
+                        GridLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            columns: 2
+                            columnSpacing: 12
+                            Label {
+                                text: qsTr("Device")
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                            SettingChoice {
+                                setting: "audio.outputDevice"
+                                model: dialog.outputDevices
+                                Layout.fillWidth: true
+                                Accessible.name: qsTr("Device")
+                            }
+                            Label {
+                                visible: Qt.platform.os === "windows"
+                                text: qsTr("API")
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                            Loader {
+                                objectName: "audioOutputHostApiBox"
+                                active: Qt.platform.os === "windows"
+                                visible: active
+                                Layout.fillWidth: true
+                                sourceComponent: SettingChoice {
+                                    setting: "audio.outputHostApi"
+                                    model: ["WASAPI", "DirectSound"]
+                                    Accessible.name: qsTr("API")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Audio > Advanced (legacy AudioSecond page).
+            ScrollView {
+                objectName: "settingsPageAudioAdvanced"
+                contentWidth: availableWidth
+                ColumnLayout {
+                    width: parent.width
+                    GroupBox {
+                        title: qsTr("Audio delay in milliseconds")
+                        Layout.fillWidth: true
+                        SettingNumber { setting: "audio.delay"; from: -50000000; to: 50000000; anchors.left: parent.left; anchors.right: parent.right }
+                    }
+                    GroupBox {
+                        title: qsTr("Audio to play before and after the marker in milliseconds")
+                        Layout.fillWidth: true
+                        SettingNumber { setting: "audio.markPlayTime"; from: 400; to: 5000; anchors.left: parent.left; anchors.right: parent.right }
+                    }
+                    GroupBox {
+                        title: qsTr("Lead-in") + " / " + qsTr("Lead-out")
+                        Layout.fillWidth: true
+                        RowLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            SettingNumber { setting: "audio.leadInValue"; from: 0; to: 10000; text: qsTr("Lead-in") }
+                            SettingNumber { setting: "audio.leadOutValue"; from: 0; to: 10000; text: qsTr("Lead-out") }
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("Line boundaries thickness")
+                        Layout.fillWidth: true
+                        SettingNumber { setting: "audio.lineBoundariesThickness"; from: 1; to: 5; anchors.left: parent.left; anchors.right: parent.right }
+                    }
+                    GroupBox {
+                        title: qsTr("Audio cache files limit")
+                        Layout.fillWidth: true
+                        SettingNumber {
+                            setting: "audio.cacheFilesLimit"; from: 0; to: 10000; anchors.left: parent.left; anchors.right: parent.right
+                            tip: qsTr("Range from 0 to 10000, where 0 turns off\nremoving audio cache files.")
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("The way to display inactive lines")
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "audio.inactiveLinesDisplayMode"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: [qsTr("None"), qsTr("Before and after the active"), qsTr("All visible")]
+                        }
+                    }
+                }
+            }
+
+            // K2: Appearance, in the Themes page's place.
+            AppearancePage { dialog: dialog }
+
+            // O2: Hotkeys (legacy Hotkeyss page): "Choose filtering", the
+            // Function / Hotkey list (a double click maps; Ctrl+Z / Ctrl+Y
+            // undo and redo in it), Map hotkey, Restore default hotkey and
+            // Delete hotkey. Changed rows show in the warning colour until
+            // OK/Apply.
+            ColumnLayout {
+                objectName: "settingsPageHotkeys"
+                GroupBox {
+                    title: qsTr("Choose filtering")
+                    Layout.fillWidth: true
+                    ComboBox {
+                        id: hotkeyFilter
+                        objectName: "hotkeyFilter"
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        model: [qsTr("All"), qsTr("Set shortcuts"), qsTr("Global shortcuts"), qsTr("Subtitle shortcuts"),
+                                qsTr("Editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio Shortcuts")]
+                        ToolTip.text: qsTr("Filtering mode:")
+                        ToolTip.visible: hovered
+                        Accessible.name: qsTr("Choose filtering")
+                        onActivated: index => dialog.hotkeys.filter(index)
+                    }
+                }
+                ListView {
+                    id: hotkeyList
+                    objectName: "hotkeyList"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    focus: true
+                    model: dialog.hotkeys ? dialog.hotkeys.rows : []
+                    // The list's selection (a shown position, -1 for none).
+                    readonly property int selectedRow: dialog.hotkeys ? dialog.hotkeys.selected : -1
+                    ScrollBar.vertical: ScrollBar {}
+                    Accessible.name: qsTr("Hotkeys")
+                    // HikariListCtrl's gutter while the list is filtered: a
+                    // box where rows are hidden ("+") or shown again ("-");
+                    // a click shows or hides them (ShowOrHideBlock).
+                    readonly property bool gutter: dialog.hotkeys ? dialog.hotkeys.listFiltered : false
+                    component BlockBox: Label {
+                        property int block: 0
+                        property int position: -1
+                        visible: block !== 0
+                        text: block === 1 ? "+" : "−"
+                        horizontalAlignment: Text.AlignHCenter
+                        width: 13
+                        Accessible.role: Accessible.Button
+                        Accessible.name: block === 1 ? qsTr("Show hidden rows") : qsTr("Hide the rows shown")
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: dialog.hotkeys.toggleBlock(parent.position)
+                        }
+                    }
+                    header: RowLayout {
+                        width: hotkeyList.width
+                        BlockBox {
+                            objectName: "hotkeyTopBlock"
+                            block: dialog.hotkeys ? dialog.hotkeys.topBlock : 0
+                            Layout.preferredWidth: hotkeyList.gutter ? 13 : 0
+                        }
+                        Label { text: qsTr("Function"); Layout.preferredWidth: hotkeyList.width * 0.7 }
+                        Label { text: qsTr("Hotkey"); Layout.fillWidth: true }
+                    }
+                    delegate: ItemDelegate {
+                        id: hotkeyRow
+                        required property var modelData
+                        required property int index
+                        width: hotkeyList.width
+                        highlighted: index === hotkeyList.selectedRow
+                        onClicked: {
+                            hotkeyList.forceActiveFocus()
+                            dialog.hotkeys.select(index)
+                        }
+                        onDoubleClicked: {
+                            dialog.hotkeys.select(index)
+                            dialog.mapHotkey()
+                        }
+                        Accessible.name: modelData.text + " " + modelData.accel
+                        contentItem: RowLayout {
+                            Item {
+                                // the block's line beside rows shown from it
+                                visible: hotkeyList.gutter
+                                Layout.preferredWidth: 13
+                                Layout.fillHeight: true
+                                Rectangle {
+                                    visible: hotkeyRow.modelData.inBlock
+                                    x: 6; width: 1; height: parent.height
+                                    color: palette.windowText
+                                }
+                            }
+                            // ItemText / ItemHotkey (HikariListCtrl.cpp:44-55,
+                            // OptionsDialog.cpp:48-71): a cell whose text does
+                            // not fit shows it whole as its tooltip (the
+                            // Function column's first 1000 characters).
+                            Label {
+                                id: hotkeyText
+                                objectName: "hotkeyText"
+                                text: modelData.text
+                                // On the selection, the selection's text colour (the
+                                // window text was unreadable on the highlight).
+                                color: hotkeyRow.highlighted ? palette.highlightedText
+                                     : modelData.textModified ? dialog.warningColour : palette.windowText
+                                elide: Text.ElideRight
+                                Layout.preferredWidth: hotkeyList.width * 0.7
+                                HoverHandler { id: textHover }
+                                ToolTip.visible: textHover.hovered && truncated
+                                ToolTip.text: modelData.text.substring(0, 1000)
+                            }
+                            Label {
+                                id: hotkeyKeys
+                                objectName: "hotkeyKeys"
+                                text: modelData.accel
+                                color: hotkeyRow.highlighted ? palette.highlightedText
+                                     : modelData.keyModified ? dialog.warningColour : palette.windowText
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                                HoverHandler { id: keysHover }
+                                ToolTip.visible: keysHover.hovered && truncated
+                                ToolTip.text: modelData.accel
+                            }
+                        }
+                        // the box for the gap after this row
+                        BlockBox {
+                            objectName: "hotkeyBlock" + hotkeyRow.index
+                            block: hotkeyRow.modelData.block
+                            position: hotkeyRow.index
+                            y: hotkeyRow.height - height / 2
+                            z: 1
+                        }
+                    }
+                    // HikariListCtrl's accelerators: undo, redo, and the selection.
+                    function ownKey(event) {
+                        const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
+                        return (mods === Qt.ControlModifier && (event.key === Qt.Key_Z || event.key === Qt.Key_Y))
+                            || (mods === 0 && (event.key === Qt.Key_Up || event.key === Qt.Key_Down))
+                    }
+                    Keys.onShortcutOverride: event => event.accepted = ownKey(event)
+                    Keys.onPressed: event => {
+                        const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
+                        if (mods === Qt.ControlModifier && event.key === Qt.Key_Z)
+                            dialog.hotkeys.optionsUndo()
+                        else if (mods === Qt.ControlModifier && event.key === Qt.Key_Y)
+                            dialog.hotkeys.optionsRedo()
+                        else if (mods === 0 && event.key === Qt.Key_Up)
+                            dialog.hotkeys.select(dialog.hotkeys.selected - 1)
+                        else if (mods === 0 && event.key === Qt.Key_Down)
+                            dialog.hotkeys.select(dialog.hotkeys.selected + 1)
+                        else
+                            return
+                        event.accepted = true
+                    }
+                }
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    Button { objectName: "hotkeyMap"; text: qsTr("Map hotkey"); onClicked: dialog.mapHotkey() }
+                    Button {
+                        objectName: "hotkeyRestore"
+                        text: qsTr("Restore default hotkey")
+                        onClicked: dialog.hotkeys.optionsReset()
+                    }
+                    Button { objectName: "hotkeyRemove"; text: qsTr("Delete hotkey"); onClicked: dialog.hotkeys.optionsDelete() }
+                }
+            }
+
+            // Subtitle properties (legacy SubtitlesProperties page): the
+            // labels pair with the ASS_PROPERTIES_* options as legacy pairs them.
+            ScrollView {
+                objectName: "settingsPageSubtitleProperties"
+                contentWidth: availableWidth
+                ColumnLayout {
+                    width: parent.width
+                    GroupBox {
+                        title: qsTr("Subtitle information")
+                        Layout.fillWidth: true
+                        GridLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            columns: 3
+                            // The check column's header: a checked field is
+                            // written into the subtitles' information
+                            // (SubsGrid::SwapAssProperties).
+                            Item { implicitWidth: 1; implicitHeight: 1 }
+                            Item { implicitWidth: 1; implicitHeight: 1 }
+                            Label {
+                                text: qsTr("Use")
+                                color: Theme.muted
+                                HoverHandler { id: useHover }
+                                ToolTip.visible: useHover.hovered
+                                ToolTip.text: qsTr("Write the value into the subtitles' information")
+                            }
+                            Label { text: qsTr("Title") }
+                            SettingText { setting: "scriptProperties.title"; Accessible.name: qsTr("Title") }
+                            SettingCheck { setting: "scriptProperties.titleOn"; Accessible.name: qsTr("Title") }
+                            Label { text: qsTr("Author") }
+                            SettingText { setting: "scriptProperties.script"; Accessible.name: qsTr("Author") }
+                            SettingCheck { setting: "scriptProperties.scriptOn"; Accessible.name: qsTr("Author") }
+                            Label { text: qsTr("Translator") }
+                            SettingText { setting: "scriptProperties.translation"; Accessible.name: qsTr("Translator") }
+                            SettingCheck { setting: "scriptProperties.translationOn"; Accessible.name: qsTr("Translator") }
+                            Label { text: qsTr("Proofreading") }
+                            SettingText { setting: "scriptProperties.editing"; Accessible.name: qsTr("Proofreading") }
+                            SettingCheck { setting: "scriptProperties.editingOn"; Accessible.name: qsTr("Proofreading") }
+                            Label { text: qsTr("Timer") }
+                            SettingText { setting: "scriptProperties.timing"; Accessible.name: qsTr("Timer") }
+                            SettingCheck { setting: "scriptProperties.timingOn"; Accessible.name: qsTr("Timer") }
+                            Label { text: qsTr("Editing") }
+                            SettingText { setting: "scriptProperties.update"; Accessible.name: qsTr("Editing") }
+                            SettingCheck { setting: "scriptProperties.updateOn"; Accessible.name: qsTr("Editing") }
+                        }
+                    }
+                    SettingCheck { setting: "scriptProperties.askForChange"; text: qsTr("Always ask before changing subtitle information") }
+                    // WS2: the tab's panel layout in the ASS file's [Hikari] section.
+                    SettingCheck { setting: "subtitles.layoutInFile"; text: qsTr("Save panel layout in subtitle files") }
+                }
+            }
+        }
+    }
+
+    FolderDialog {
+        id: fontsFolderDialog
+        title: qsTr("Choose choose external font folder")
+        onAccepted: {
+            const path = dialog.app.settingsFolderPath(selectedFolder)
+            fontsFolder.text = path
+            dialog.put("fonts.externalDirectory", path)
+        }
+    }
+
+    ColorDialog {
+        id: themeColourDialog
+        objectName: "themeColourDialog"
+        property string setting: ""
+        // the picked colour as "#RRGGBB"
+        onAccepted: dialog.put(setting, selectedColor.toString().toUpperCase())
+    }
+
+    HotkeyMapping {
+        id: settingsHotkeyMapping
+        objectName: "settingsHotkeyMapping"
+        hotkeys: dialog.hotkeys
+    }
+
+    Dialog {
+        id: warningDialog
+        objectName: "settingsWarning"
+        title: qsTr("Warning")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok
+        width: 420
+        Label { id: warningText; width: parent.width; wrapMode: Text.Wrap }
+        onClosed: dialog.showWarning()
+    }
+}

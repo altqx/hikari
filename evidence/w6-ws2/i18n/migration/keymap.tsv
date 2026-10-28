@@ -1,0 +1,2586 @@
+# O4 key map: legacy gettext keys (Locale/template.pot at b31505da24dcc0c4053ad5e0cc73e15266a85bac) to the rewrite's Qt keys.
+# Reviewed input of hikari_i18n_migrate convert; regenerate with hikari_i18n_keymap.
+# input-commit	b31505da24dcc0c4053ad5e0cc73e15266a85bac
+status	msgctxt	msgid	msgid_plural	context	source	comment	numerus	placeholders
+exact	\N	Search bar	\N	HikariSub.Audio	Search bar		no	\N
+exact	\N	Horizontal stretching	\N	HikariSub.Audio	Horizontal stretching		no	\N
+exact	\N	Vertical stretching	\N	HikariSub.Audio	Vertical stretching		no	\N
+exact	\N	Volume	\N	HikariSub.Audio	Volume		no	\N
+exact	\N	Volume	\N	HikariSub.Video	Volume		no	\N
+exact	\N	Link the volume and stretch sliders	\N	HikariSub.Audio	Link the volume and stretch sliders		no	\N
+exact	\N	Play the previous line	\N	HikariSub.Audio	Play the previous line		no	\N
+exact	\N	Play the next line	\N	HikariSub.Audio	Play the next line		no	\N
+exact	\N	Play the current syllable / line	\N	HikariSub.Audio	Play the current syllable / line		no	\N
+exact	\N	Play the current line	\N	HikariSub.Audio	Play the current line		no	\N
+exact	\N	Play the current line	\N	HikariSub.Video	Play the current line		no	\N
+exact	\N	Stop playback	\N	HikariSub.Audio	Stop playback		no	\N
+exact	\N	Play before the tag	\N	HikariSub.Audio	Play before the tag		no	\N
+exact	\N	Play after the tag	\N	HikariSub.Audio	Play after the tag		no	\N
+exact	\N	Play 500ms before the start time	\N	HikariSub.Audio	Play 500ms before the start time		no	\N
+exact	\N	Play 500 ms after the start time	\N	HikariSub.Audio	Play 500 ms after the start time		no	\N
+exact	\N	Play 500ms before the end time	\N	HikariSub.Audio	Play 500ms before the end time		no	\N
+exact	\N	Play 500ms after the end time	\N	HikariSub.Audio	Play 500ms after the end time		no	\N
+exact	\N	Play to the end	\N	HikariSub.Audio	Play to the end		no	\N
+exact	\N	Add lead-in to the active line	\N	HikariSub.Audio	Add lead-in to the active line		no	\N
+exact	\N	Add lead-out to the active line	\N	HikariSub.Audio	Add lead-out to the active line		no	\N
+exact	\N	Apply changes	\N	HikariSub.Audio	Apply changes		no	\N
+exact	\N	Go to selection	\N	HikariSub.Audio	Go to selection		no	\N
+exact	\N	Enable / disable karaoke creation	\N	HikariSub.Audio	Enable / disable karaoke creation		no	\N
+exact	\N	Enable / Disable automatic splitting of syllables	\N	HikariSub.Audio	Enable / Disable automatic splitting of syllables		no	\N
+exact	\N	Automatically apply changes	\N	HikariSub.Audio	Automatically apply changes		no	\N
+exact	\N	Go to the next line after applying changes	\N	HikariSub.Audio	Go to the next line after applying changes		no	\N
+exact	\N	Auto-scroll to the active line	\N	HikariSub.Audio	Auto-scroll to the active line		no	\N
+exact	\N	Spectrum mode	\N	HikariSub.Audio	Spectrum mode		no	\N
+exact	\N	Enhance speech frequencies in the spectrum	\N	HikariSub.Audio	Enhance speech frequencies in the spectrum		no	\N
+obsolete	\N	Cannot create D3D9 device	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create swap chain	\N	\N	\N	\N	\N	\N
+obsolete	\N	One of the DirectX settings failed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot set world matrix	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot set view matrix	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create surface	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create D3DX line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create D3DX font	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create plain surface	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot reset Direct3D	\N	\N	\N	\N	\N	\N
+exact	\N	Modified	\N	HikariSub.Tabs	Modified		no	\N
+obsolete	\N	Negative time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot blit spectrum surfaces	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio could not be loaded	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open auto save file	\N	\N	\N	\N	\N	\N
+exact	\N	Find files	\N	HikariSub.Session	Find files		no	\N
+exact	\N	Filter list	\N	HikariSub.Session	Filter list		no	\N
+exact	\N	All words	\N	HikariSub.Session	All words		no	\N
+exact	\N	Files	\N	HikariSub.Session	Files		no	\N
+exact	\N	Versions	\N	HikariSub.Session	Versions		no	\N
+exact	\N	Open	\N	HikariSub.MainWindow	Open		no	\N
+exact	\N	Open	\N	HikariSub.Session	Open		no	\N
+exact	\N	Cancel	\N	HikariSub.Automation	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Colours	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Conversion	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Documents	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Editor	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Fonts	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Grid	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Hotkeys	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.MainWindow	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Matroska	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Options	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.ScriptProperties	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Search	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Styles	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.Video	Cancel		no	\N
+exact	\N	Cancel	\N	HikariSub.VisualTools	Cancel		no	\N
+exact	\N	Cannot open auto save folder	\N	HikariSub.Session	Cannot open auto save folder		no	\N
+exact	\N	Untitled	\N	HikariSub.Documents	Untitled		no	\N
+exact	\N	Auto save folder is empty	\N	HikariSub.Session	Auto save folder is empty		no	\N
+exact	\N	Failed to load autosave	\N	HikariSub.Session	Failed to load autosave		no	\N
+exact	\N	Remove temporary files	\N	HikariSub.MainWindow	Remove temporary files		no	\N
+exact	\N	Remove temporary files	\N	HikariSub.Session	Remove temporary files		no	\N
+exact	\N	Remove files older than	\N	HikariSub.Session	Remove files older than		no	\N
+exact	\N	April	\N	HikariSub.Session	April		no	\N
+exact	\N	February	\N	HikariSub.Session	February		no	\N
+exact	\N	January	\N	HikariSub.Session	January		no	\N
+exact	\N	March	\N	HikariSub.Session	March		no	\N
+exact	\N	August	\N	HikariSub.Session	August		no	\N
+exact	\N	July	\N	HikariSub.Session	July		no	\N
+exact	\N	June	\N	HikariSub.Session	June		no	\N
+exact	\N	May	\N	HikariSub.Session	May		no	\N
+exact	\N	September	\N	HikariSub.Session	September		no	\N
+exact	\N	December	\N	HikariSub.Session	December		no	\N
+exact	\N	November	\N	HikariSub.Session	November		no	\N
+exact	\N	October	\N	HikariSub.Session	October		no	\N
+obsolete	\N	Remove from all folders	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove all files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove all older files	\N	\N	\N	\N	\N	\N
+exact	\N	Auto save	\N	HikariSub.Session	Auto save		no	\N
+exact	\N	Remove selected autosave files	\N	HikariSub.Session	Remove selected autosave files		no	\N
+exact	\N	Remove all auto save files	\N	HikariSub.Session	Remove all auto save files		no	\N
+exact	\N	Remove older auto save files	\N	HikariSub.Session	Remove older auto save files		no	\N
+obsolete	\N	FFMS2 index	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove selected index files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove all index files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove older index files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio cache	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove selected audio cache files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove all audio cache files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove older audio cache files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Index files (*.ffindex)|*.ffindex	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio cache files (*.w64)|*.w64	\N	\N	\N	\N	\N	\N
+obsolete	\N	Choose file to remove	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open temporary files folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Error initializing Lua script "%s":\n\n%s.	\N	\N	\N	\N	\N	\N
+obsolete	\N	You are trying to load an Automation 3 script as an Automation 4 script. Automation 3 is no longer supported.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Macro named '%s' is already defined in the script '%s'	\N	\N	\N	\N	\N	\N
+obsolete	\N	An error occurred while executing the Lua script:\n	\N	\N	\N	\N	\N	\N
+placeholder	\N	Error loading Lua script: %s\n%s	\N	HikariSub.Automation	Error loading Lua script: %1\n%2		no	%s %s -> %1 %2
+obsolete	\N	Unknown error loading Lua script: %s.	\N	\N	\N	\N	\N	\N
+obsolete	\N	One or more autoload scripts contain errors.\nSee the script descriptions for more information.	\N	\N	\N	\N	\N	\N
+obsolete	\N	At least one script in the subtitle file contains errors.\nSee the script descriptions for more information.	\N	\N	\N	\N	\N	\N
+exact	\N	Select a script editor	\N	HikariSub.Automation	Select a script editor		no	\N
+obsolete	\N	Programs (*.exe)|*.exe|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+exact	\N	Automation error	\N	HikariSub.Automation	Automation error		no	\N
+exact	\N	Cannot start editor.	\N	HikariSub.Automation	Cannot start editor.		no	\N
+exact	\N	Error	\N	HikariSub.Automation	Error		no	\N
+obsolete	\N	Full Lua error description	\N	\N	\N	\N	\N	\N
+exact	\N	Edit	\N	HikariSub.Fonts	Edit		no	\N
+exact	\N	Edit	\N	HikariSub.Styles	Edit		no	\N
+obsolete	\N	Refresh	\N	\N	\N	\N	\N	\N
+exact	\N	List of automation shortcuts	\N	HikariSub.Automation	List of automation shortcuts		no	\N
+exact	\N	Path and script name	\N	HikariSub.Automation	Path and script name		no	\N
+exact	\N	Macro	\N	HikariSub.Automation	Macro		no	\N
+exact	\N	Hotkey	\N	HikariSub.Automation	Hotkey		no	\N
+exact	\N	Hotkey	\N	HikariSub.Options	Hotkey		no	\N
+obsolete	\N	Autoload folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	From subs	\N	\N	\N	\N	\N	\N
+exact	\N	Map hotkey	\N	HikariSub.Automation	Map hotkey		no	\N
+exact	\N	Map hotkey	\N	HikariSub.Options	Map hotkey		no	\N
+exact	\N	Delete hotkey	\N	HikariSub.Automation	Delete hotkey		no	\N
+exact	\N	Delete hotkey	\N	HikariSub.Hotkeys	Delete hotkey		no	\N
+exact	\N	Delete hotkey	\N	HikariSub.Options	Delete hotkey		no	\N
+exact	\N	Audio	\N	HikariSub.Audio	Audio		no	\N
+exact	\N	Audio	\N	HikariSub.Options	Audio		no	\N
+exact	\N	Audio	\N	HikariSub.Session	Audio		no	\N
+exact	\N	Editor	\N	HikariSub.Options	Editor		no	\N
+obsolete	\N	Global	\N	\N	\N	\N	\N	\N
+exact	\N	Subtitles	\N	HikariSub.ScriptProperties	Subtitles		no	\N
+exact	\N	Subtitles	\N	HikariSub.Session	Subtitles		no	\N
+exact	\N	Video	\N	HikariSub.Options	Video		no	\N
+exact	\N	Video	\N	HikariSub.Session	Video		no	\N
+exact	\N	Video	\N	HikariSub.Video	Video		no	\N
+obsolete	\N	This hotkey already exists for "%s".\nWhat to do?	\N	\N	\N	\N	\N	\N
+exact	\N	Warning	\N	HikariSub.Documents	Warning		no	\N
+exact	\N	Warning	\N	HikariSub.Hotkeys	Warning		no	\N
+exact	\N	Warning	\N	HikariSub.Options	Warning		no	\N
+exact	\N	Warning	\N	HikariSub.Session	Warning		no	\N
+exact	\N	Warning	\N	HikariSub.Spelling	Warning		no	\N
+exact	\N	Warning	\N	HikariSub.Video	Warning		no	\N
+exact	\N	Warning	\N	HikariSub.VisualTools	Warning		no	\N
+exact	\N	Switch hotkeys	\N	HikariSub.Hotkeys	Switch hotkeys		no	\N
+obsolete	\N	This shortcut already exists in %s as a shortcut for "%s".\nWhat would you like to do?	\N	\N	\N	\N	\N	\N
+obsolete	\N	another window	\N	\N	\N	\N	\N	\N
+obsolete	\N	other windows	\N	\N	\N	\N	\N	\N
+exact	\N	Set anyway	\N	HikariSub.Hotkeys	Set anyway		no	\N
+exact	\N	Close	\N	HikariSub.Automation	Close		no	\N
+exact	\N	Close	\N	HikariSub.Fonts	Close		no	\N
+exact	\N	Close	\N	HikariSub.MainWindow	Close		no	\N
+exact	\N	Close	\N	HikariSub.SelectLines	Close		no	\N
+exact	\N	Close	\N	HikariSub.Session	Close		no	\N
+exact	\N	Close	\N	HikariSub.SettingsImport	Close		no	\N
+exact	\N	Close	\N	HikariSub.Spelling	Close		no	\N
+exact	\N	Close	\N	HikariSub.Styles	Close		no	\N
+exact	\N	Close	\N	HikariSub.Workspace	Close		no	\N
+obsolete	\N	dialogs	\N	\N	\N	\N	\N	\N
+obsolete	\N	styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot add a line of class %s to a field of class %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Missing subtitles pointer	\N	\N	\N	\N	\N	\N
+exact	\N	Shortcut can be set using Shift + Click	\N	HikariSub.Audio	Shortcut can be set using Shift + Click		no	\N
+exact	\N	Shortcut can be set using Shift + Click	\N	HikariSub.Hotkeys	Shortcut can be set using Shift + Click		no	\N
+obsolete	\N	Picking a color from the screen is not supported on Wayland	\N	\N	\N	\N	\N	\N
+exact	\N	Choose color	\N	HikariSub.Colours	Choose color		no	\N
+exact	\N	Spectrum color	\N	HikariSub.Colours	Spectrum color		no	\N
+exact	\N	RGB color	\N	HikariSub.Colours	RGB color		no	\N
+exact	\N	HSL color	\N	HikariSub.Colours	HSL color		no	\N
+exact	\N	HSV color	\N	HikariSub.Colours	HSV color		no	\N
+exact	\N	Border color	\N	HikariSub.Colours	Border color		no	\N
+exact	\N	Border color	\N	HikariSub.Editor	Border color		no	\N
+exact	\N	Border color	\N	HikariSub.Options	Border color		no	\N
+exact	\N	Border color	\N	HikariSub.TagList	Border color		no	\N
+exact	\N	Primary color	\N	HikariSub.Colours	Primary color		no	\N
+exact	\N	Primary color	\N	HikariSub.Editor	Primary color		no	\N
+exact	\N	Primary color	\N	HikariSub.TagList	Primary color		no	\N
+exact	\N	Secondary color	\N	HikariSub.Colours	Secondary color		no	\N
+exact	\N	Secondary color	\N	HikariSub.TagList	Secondary color		no	\N
+exact	\N	Shadow color	\N	HikariSub.Colours	Shadow color		no	\N
+exact	\N	Shadow color	\N	HikariSub.Editor	Shadow color		no	\N
+exact	\N	Shadow color	\N	HikariSub.TagList	Shadow color		no	\N
+exact	\N	Swap shortcuts between the color picker\nand the color selection window	\N	HikariSub.Colours	Swap shortcuts between the color picker\nand the color selection window		no	\N
+exact	\N	Checking this option opens the color picker on left-click,\nand the color selection window on right-click.	\N	HikariSub.Colours	Checking this option opens the color picker on left-click,\nand the color selection window on right-click.		no	\N
+exact	\N	Selected color:	\N	HikariSub.Colours	Selected color:		no	\N
+exact	\N	Red:	\N	HikariSub.Colours	Red:		no	\N
+exact	\N	Green:	\N	HikariSub.Colours	Green:		no	\N
+exact	\N	Blue:	\N	HikariSub.Colours	Blue:		no	\N
+exact	\N	Hue:	\N	HikariSub.Colours	Hue:		no	\N
+exact	\N	Saturation:	\N	HikariSub.Colours	Saturation:		no	\N
+exact	\N	Lightness:	\N	HikariSub.Colours	Lightness:		no	\N
+exact	\N	Value:	\N	HikariSub.Colours	Value:		no	\N
+exact	\N	Value:	\N	HikariSub.VisualTools	Value:		no	\N
+exact	\N	Color picker	\N	HikariSub.Colours	Color picker		no	\N
+exact	\N	Move the window\nto the color selection location	\N	HikariSub.Colours	Move the window\nto the color selection location		no	\N
+placeholder	\N	Indexing error occurred: %s	\N	HikariSub.Matroska	Indexing error occurred: %1		no	%s -> %1
+placeholder	\N	Indexing error occurred: %s	\N	HikariSub.Video	Indexing error occurred: %1		no	%s -> %1
+exact	\N	The file does not contain any subtitle tracks.	\N	HikariSub.Matroska	The file does not contain any subtitle tracks.		no	\N
+exact	\N	Choose subtitle track	\N	HikariSub.Matroska	Choose subtitle track		no	\N
+exact	\N	Loading subtitles from Matroska.	\N	HikariSub.Matroska	Loading subtitles from Matroska.		no	\N
+exact	\N	Fix suggestions	\N	HikariSub.Spelling	Fix suggestions		no	\N
+exact	\N	&Copy	\N	HikariSub.Editor	&Copy		no	\N
+exact	\N	Cu&t	\N	HikariSub.Editor	Cu&t		no	\N
+exact	\N	&Paste	\N	HikariSub.Editor	&Paste		no	\N
+obsolete	\N	Search word translation on ling.pl	\N	\N	\N	\N	\N	\N
+obsolete	\N	Search word translation on pl.ba.bla	\N	\N	\N	\N	\N	\N
+obsolete	\N	Search for the selected phrase on Google	\N	\N	\N	\N	\N	\N
+obsolete	\N	Search for synonyms on synonimy.net	\N	\N	\N	\N	\N	\N
+exact	\N	Spellchecker	\N	HikariSub.Editor	Spellchecker		no	\N
+exact	\N	Spellchecker	\N	HikariSub.Spelling	Spellchecker		no	\N
+exact	\N	Installed languages	\N	HikariSub.Editor	Installed languages		no	\N
+placeholder	\N	&Add word "%s" to dictionary	\N	HikariSub.Editor	&Add word "%1" to dictionary		no	%s -> %1
+exact	\N	&Delete	\N	HikariSub.Editor	&Delete		no	\N
+obsolete	\N	Show status bar	\N	\N	\N	\N	\N	\N
+obsolete	\N	Automatically change quotes	\N	\N	\N	\N	\N	\N
+placeholder	\N	Error. Word "%s" was not added.	\N	HikariSub.Editor	Error. Word "%1" was not added.		no	%s -> %1
+exact	\N	Dummy video options	\N	HikariSub.Video	Dummy video options		no	\N
+exact	\N	Video resolution:	\N	HikariSub.Video	Video resolution:		no	\N
+exact	\N	Checkerboard pattern	\N	HikariSub.Video	Checkerboard pattern		no	\N
+exact	\N	Color:	\N	HikariSub.Video	Color:		no	\N
+exact	\N	Frames per second:	\N	HikariSub.Video	Frames per second:		no	\N
+placeholder	\N	This gives %i frames	\N	HikariSub.Video	This gives %1 frames		no	%i -> %1
+exact	\N	Duration:	\N	HikariSub.Video	Duration:		no	\N
+exact	\N	Invalid FPS value.	\N	HikariSub.Video	Invalid FPS value.		no	\N
+exact	\N	Enter ASS tag	\N	HikariSub.Editor	Enter ASS tag		no	\N
+exact	\N	Insert Tag at text beginning	\N	HikariSub.Editor	Insert Tag at text beginning		no	\N
+exact	\N	Plain text	\N	HikariSub.Editor	Plain text		no	\N
+exact	\N	Tag inserted in place of cursor	\N	HikariSub.Editor	Tag inserted in place of cursor		no	\N
+exact	\N	Button name	\N	HikariSub.Editor	Button name		no	\N
+exact	\N	Button tag	\N	HikariSub.Editor	Button tag		no	\N
+exact	\N	Save tag	\N	HikariSub.Editor	Save tag		no	\N
+exact	\N	Bottom-center	\N	HikariSub.Editor	Bottom-center		no	\N
+exact	\N	Bottom-left	\N	HikariSub.Editor	Bottom-left		no	\N
+exact	\N	Bottom-right	\N	HikariSub.Editor	Bottom-right		no	\N
+exact	\N	Center	\N	HikariSub.Editor	Center		no	\N
+exact	\N	Middle-left	\N	HikariSub.Editor	Middle-left		no	\N
+exact	\N	Middle-right	\N	HikariSub.Editor	Middle-right		no	\N
+exact	\N	Top-center	\N	HikariSub.Editor	Top-center		no	\N
+exact	\N	Top-left	\N	HikariSub.Editor	Top-left		no	\N
+exact	\N	Top-right	\N	HikariSub.Editor	Top-right		no	\N
+exact	\N	Font selection	\N	HikariSub.Editor	Font selection		no	\N
+exact	\N	Bold	\N	HikariSub.Editor	Bold		no	\N
+exact	\N	Bold	\N	HikariSub.Fonts	Bold		no	\N
+exact	\N	Bold	\N	HikariSub.Styles	Bold		no	\N
+exact	\N	Italic	\N	HikariSub.Editor	Italic		no	\N
+exact	\N	Italic	\N	HikariSub.Fonts	Italic		no	\N
+exact	\N	Italic	\N	HikariSub.Styles	Italic		no	\N
+exact	\N	Underline	\N	HikariSub.Editor	Underline		no	\N
+exact	\N	Underline	\N	HikariSub.Fonts	Underline		no	\N
+exact	\N	Underline	\N	HikariSub.Styles	Underline		no	\N
+exact	\N	Strikethrough	\N	HikariSub.Fonts	Strikethrough		no	\N
+exact	\N	Strikethrough	\N	HikariSub.Styles	Strikethrough		no	\N
+exact	\N	Secondary color for karaoke	\N	HikariSub.Editor	Secondary color for karaoke		no	\N
+exact	\N	Translator mode	\N	HikariSub.Translation	Translator mode		no	\N
+obsolete	\N	Line: 0	\N	\N	\N	\N	\N	\N
+exact	\N	Wraps: 0/86	\N	HikariSub.Editor	Wraps: 0/86		no	\N
+obsolete	\N	Characters per second: 0<=15	\N	\N	\N	\N	\N	\N
+exact	\N	Time	\N	HikariSub.Editor	Time		no	\N
+exact	\N	Time	\N	HikariSub.TimeShift	Time		no	\N
+exact	\N	Frames	\N	HikariSub.Editor	Frames		no	\N
+exact	\N	Frames	\N	HikariSub.TimeShift	Frames		no	\N
+exact	\N	Paste all	\N	HikariSub.Editor	Paste all		no	\N
+exact	\N	Paste the selected	\N	HikariSub.Editor	Paste the selected		no	\N
+obsolete	\N	Hide original	\N	\N	\N	\N	\N	\N
+exact	\N	Not confirmed	\N	HikariSub.Translation	Not confirmed		no	\N
+exact	\N	Moving tags	\N	HikariSub.Translation	Moving tags		no	\N
+exact	\N	Comment	\N	HikariSub.Editor	Comment		no	\N
+exact	\N	Actor	\N	HikariSub.Editor	Actor		no	\N
+exact	\N	Actor	\N	HikariSub.Grid	Actor		no	\N
+exact	\N	Actor	\N	HikariSub.MainWindow	Actor		no	\N
+exact	\N	Actor	\N	HikariSub.Search	Actor		no	\N
+exact	\N	Actor	\N	HikariSub.SelectLines	Actor		no	\N
+exact	\N	Effect	\N	HikariSub.Editor	Effect		no	\N
+exact	\N	Effect	\N	HikariSub.Grid	Effect		no	\N
+exact	\N	Effect	\N	HikariSub.MainWindow	Effect		no	\N
+exact	\N	Effect	\N	HikariSub.Search	Effect		no	\N
+exact	\N	Effect	\N	HikariSub.SelectLines	Effect		no	\N
+obsolete	\N	Line: %i	\N	\N	\N	\N	\N	\N
+exact	\N	Wraps: 	\N	HikariSub.Editor	Wraps: 		no	\N
+placeholder	\N	Characters per second: %i<=15	\N	HikariSub.Editor	Characters per second: %1<=15		no	%i -> %1
+exact	\N	Text position	\N	HikariSub.Editor	Text position		no	\N
+exact	\N	Text position	\N	HikariSub.TagList	Text position		no	\N
+exact	\N	Translator mode displays and saves both foreign text and translation text	\N	HikariSub.Translation	Translator mode displays and saves both foreign text and translation text		no	\N
+obsolete	\N	Copies all foreign-language text to the translation field	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copies the selected foreign-language text to the translation field	\N	\N	\N	\N	\N	\N
+exact	\N	Sets the line as a comment. Comments are not shown	\N	HikariSub.Editor	Sets the line as a comment. Comments are not shown		no	\N
+exact	\N	Line layer. Higher layers are on top	\N	HikariSub.Editor	Line layer. Higher layers are on top		no	\N
+exact	\N	Line start time	\N	HikariSub.Editor	Line start time		no	\N
+exact	\N	Line end time	\N	HikariSub.Editor	Line end time		no	\N
+exact	\N	Line duration	\N	HikariSub.Editor	Line duration		no	\N
+exact	\N	Line style	\N	HikariSub.Editor	Line style		no	\N
+exact	\N	Allows quick editing of the current line's style	\N	HikariSub.Editor	Allows quick editing of the current line's style		no	\N
+exact	\N	Line actor label. Does not affect the appearance of the subtitles	\N	HikariSub.Editor	Line actor label. Does not affect the appearance of the subtitles		no	\N
+exact	\N	Line left margin	\N	HikariSub.Editor	Line left margin		no	\N
+exact	\N	Line right margin	\N	HikariSub.Editor	Line right margin		no	\N
+exact	\N	Line top and bottom margins	\N	HikariSub.Editor	Line top and bottom margins		no	\N
+exact	\N	Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied	\N	HikariSub.Editor	Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied		no	\N
+exact	\N	Number of characters in each line.\nNo more than 43 characters per line (maximum 2 lines).	\N	HikariSub.Editor	Number of characters in each line.\nNo more than 43 characters per line (maximum 2 lines).		no	\N
+exact	\N	Characters per second.\nShould not exceed 15 characters per second	\N	HikariSub.Editor	Characters per second.\nShould not exceed 15 characters per second		no	\N
+exact	\N	Change number of buttons	\N	HikariSub.Editor	Change number of buttons		no	\N
+exact	\N	No unconfirmed lines found	\N	HikariSub.Editor	No unconfirmed lines found		no	\N
+exact	\N	No untranslated lines found	\N	HikariSub.Editor	No untranslated lines found		no	\N
+exact	\N	Manage tag buttons	\N	HikariSub.Editor	Manage tag buttons		no	\N
+obsolete	\N	ASS subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	SSA subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	SRT subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	SUB subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	TXT subtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Search text:	\N	HikariSub.Search	Search text:		no	\N
+exact	\N	Search text:	\N	HikariSub.SelectLines	Search text:		no	\N
+exact	\N	Replace with:	\N	HikariSub.Fonts	Replace with:		no	\N
+exact	\N	Replace with:	\N	HikariSub.Search	Replace with:		no	\N
+obsolete	\N	Windows search filters separated by semicolons, e.g. "*.ass; *.srt".\nBecause of the large video file,\nthe search for everything "*. *" Is changed to *.ass	\N	\N	\N	\N	\N	\N
+exact	\N	Filters:	\N	HikariSub.Search	Filters:		no	\N
+exact	\N	Subtitle search folder:	\N	HikariSub.Search	Subtitle search folder:		no	\N
+exact	\N	Choose save folder	\N	HikariSub.Fonts	Choose save folder		no	\N
+exact	\N	Choose save folder	\N	HikariSub.Search	Choose save folder		no	\N
+exact	\N	Catalog:	\N	HikariSub.Search	Catalog:		no	\N
+exact	\N	Catalog:	\N	HikariSub.Styles	Catalog:		no	\N
+exact	\N	Match case	\N	HikariSub.MisspellReplacer	Match case		no	\N
+exact	\N	Match case	\N	HikariSub.Search	Match case		no	\N
+exact	\N	Match case	\N	HikariSub.SelectLines	Match case		no	\N
+exact	\N	Regular expressions	\N	HikariSub.Search	Regular expressions		no	\N
+exact	\N	Regular expressions	\N	HikariSub.SelectLines	Regular expressions		no	\N
+exact	\N	Beginning of text	\N	HikariSub.Search	Beginning of text		no	\N
+exact	\N	End of text	\N	HikariSub.Search	End of text		no	\N
+exact	\N	Include comments	\N	HikariSub.Search	Include comments		no	\N
+exact	\N	Skip tags	\N	HikariSub.Search	Skip tags		no	\N
+exact	\N	Skip text	\N	HikariSub.Search	Skip text		no	\N
+exact	\N	In field	\N	HikariSub.Search	In field		no	\N
+exact	\N	In field	\N	HikariSub.SelectLines	In field		no	\N
+exact	\N	Text	\N	HikariSub.Grid	Text		no	\N
+exact	\N	Text	\N	HikariSub.Search	Text		no	\N
+exact	\N	Text	\N	HikariSub.SelectLines	Text		no	\N
+exact	\N	Styles	\N	HikariSub.Grid	Styles		no	\N
+exact	\N	Styles	\N	HikariSub.MainWindow	Styles		no	\N
+exact	\N	Styles	\N	HikariSub.MisspellReplacer	Styles		no	\N
+exact	\N	Styles	\N	HikariSub.Search	Styles		no	\N
+exact	\N	Styles	\N	HikariSub.SelectLines	Styles		no	\N
+exact	\N	Styles	\N	HikariSub.TimeShift	Styles		no	\N
+exact	\N	Find	\N	HikariSub.Search	Find		no	\N
+exact	\N	Find	\N	HikariSub.SelectLines	Find		no	\N
+obsolete	\N	Find in all open\nsubtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Find all\nin current subtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Replace next	\N	HikariSub.Search	Replace next		no	\N
+exact	\N	Replace all	\N	HikariSub.Search	Replace all		no	\N
+exact	\N	Replace all	\N	HikariSub.Spelling	Replace all		no	\N
+obsolete	\N	Replace in all open\nsubtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Find in subtitles	\N	HikariSub.Search	Find in subtitles		no	\N
+exact	\N	Replace in subtitles	\N	HikariSub.Search	Replace in subtitles		no	\N
+exact	\N	Search in subfolders	\N	HikariSub.Search	Search in subfolders		no	\N
+obsolete	\N	Search in hidden\nfolders	\N	\N	\N	\N	\N	\N
+exact	\N	Lines	\N	HikariSub.Search	Lines		no	\N
+exact	\N	All lines	\N	HikariSub.MisspellReplacer	All lines		no	\N
+exact	\N	All lines	\N	HikariSub.Search	All lines		no	\N
+exact	\N	All lines	\N	HikariSub.TimeShift	All lines		no	\N
+exact	\N	Selected lines	\N	HikariSub.MisspellReplacer	Selected lines		no	\N
+exact	\N	Selected lines	\N	HikariSub.Search	Selected lines		no	\N
+exact	\N	Selected lines	\N	HikariSub.TimeShift	Selected lines		no	\N
+exact	\N	From selected	\N	HikariSub.Search	From selected		no	\N
+exact	\N	Find and replace	\N	HikariSub.Search	Find and replace		no	\N
+exact	\N	Search results	\N	HikariSub.MisspellReplacer	Search results		no	\N
+exact	\N	Search results	\N	HikariSub.Search	Search results		no	\N
+exact	\N	Check all	\N	HikariSub.MisspellReplacer	Check all		no	\N
+exact	\N	Check all	\N	HikariSub.Search	Check all		no	\N
+exact	\N	Uncheck all	\N	HikariSub.MisspellReplacer	Uncheck all		no	\N
+exact	\N	Uncheck all	\N	HikariSub.Search	Uncheck all		no	\N
+exact	\N	Replace	\N	HikariSub.MisspellReplacer	Replace		no	\N
+exact	\N	Replace	\N	HikariSub.Search	Replace		no	\N
+exact	\N	Replace	\N	HikariSub.Spelling	Replace		no	\N
+exact	\N	Replace	\N	HikariSub.VisualTools	Replace		no	\N
+placeholder	\N	Line %i: 	\N	HikariSub.MisspellReplacer	Line %1: 		no	%i -> %1
+placeholder	\N	Line %i: 	\N	HikariSub.Search	Line %1: 		no	%i -> %1
+exact	\N	Select the name of the profile	\N	HikariSub.Fonts	Select the name of the profile		no	\N
+exact	\N	Choose new catalog name	\N	HikariSub.Fonts	Choose new catalog name		no	\N
+exact	\N	Enter a name for the new catalog	\N	HikariSub.Fonts	Enter a name for the new catalog		no	\N
+exact	\N	Info	\N	HikariSub.Automation	Info		no	\N
+exact	\N	Info	\N	HikariSub.Fonts	Info		no	\N
+exact	\N	Info	\N	HikariSub.Search	Info		no	\N
+exact	\N	Manage font catalogs	\N	HikariSub.Fonts	Manage font catalogs		no	\N
+exact	\N	Font name	\N	HikariSub.Fonts	Font name		no	\N
+exact	\N	Font name	\N	HikariSub.TagList	Font name		no	\N
+exact	\N	Catalog	\N	HikariSub.Fonts	Catalog		no	\N
+exact	\N	Sample	\N	HikariSub.Fonts	Sample		no	\N
+exact	\N	Add	\N	HikariSub.Fonts	Add		no	\N
+exact	\N	Delete	\N	HikariSub.Fonts	Delete		no	\N
+exact	\N	Delete	\N	HikariSub.Grid	Delete		no	\N
+exact	\N	Delete	\N	HikariSub.SelectLines	Delete		no	\N
+exact	\N	Delete	\N	HikariSub.Styles	Delete		no	\N
+exact	\N	Load	\N	HikariSub.Fonts	Load		no	\N
+exact	\N	Load	\N	HikariSub.Styles	Load		no	\N
+exact	\N	Save filter	\N	HikariSub.Fonts	Save filter		no	\N
+exact	\N	Are you sure you want to delete this catalog?	\N	HikariSub.Fonts	Are you sure you want to delete this catalog?		no	\N
+exact	\N	Prompt	\N	HikariSub.Fonts	Prompt		no	\N
+exact	\N	Prompt	\N	HikariSub.Session	Prompt		no	\N
+exact	\N	Prompt	\N	HikariSub.Styles	Prompt		no	\N
+exact	\N	Prompt	\N	HikariSub.Tabs	Prompt		no	\N
+exact	\N	The catalog list has autosave; files are stored in the "Config" folder.	\N	HikariSub.Fonts	The catalog list has autosave; files are stored in the "Config" folder.		no	\N
+exact	\N	Catalogs:	\N	HikariSub.Fonts	Catalogs:		no	\N
+exact	\N	Find:	\N	HikariSub.Fonts	Find:		no	\N
+exact	\N	Autosave	\N	HikariSub.Fonts	Autosave		no	\N
+exact	\N	Autosave	\N	HikariSub.Session	Autosave		no	\N
+obsolete	\N	Choose font catalogs file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text files (*.txt)|*.txt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot find elements of line %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot add font "%s".	\N	\N	\N	\N	\N	\N
+exact	\N	For adding fonts to catalog,\nclick "Manage" button first,\nto create new catalog.	\N	HikariSub.Fonts	For adding fonts to catalog,\nclick "Manage" button first,\nto create new catalog.		no	\N
+exact	\N	Add fonts from subtitles	\N	HikariSub.Fonts	Add fonts from subtitles		no	\N
+placeholder	\N	Catalog named "%s" already exists. What to do?	\N	HikariSub.Fonts	Catalog named "%1" already exists. What to do?		no	%s -> %1
+exact	\N	Merge	\N	HikariSub.Fonts	Merge		no	\N
+exact	\N	Remove all contents of catalog	\N	HikariSub.Fonts	Remove all contents of catalog		no	\N
+exact	\N	Add fonts from all open subtitles	\N	HikariSub.Fonts	Add fonts from all open subtitles		no	\N
+exact	\N	In styles:\n	\N	HikariSub.Fonts	In styles:\n		no	\N
+exact	\N	 tabs: 	\N	HikariSub.Fonts	 tabs: 		no	\N
+exact	\N	In lines: 	\N	HikariSub.Fonts	In lines: 		no	\N
+exact	\N	Font collector	\N	HikariSub.Fonts	Font collector		no	\N
+exact	\N	Font collector	\N	HikariSub.Grid	Font collector		no	\N
+exact	\N	Font collector	\N	HikariSub.MainWindow	Font collector		no	\N
+exact	\N	Select a folder	\N	HikariSub.Fonts	Select a folder		no	\N
+exact	\N	Check availability of fonts	\N	HikariSub.Fonts	Check availability of fonts		no	\N
+exact	\N	Copy to selected folder	\N	HikariSub.Fonts	Copy to selected folder		no	\N
+exact	\N	Zip	\N	HikariSub.Fonts	Zip		no	\N
+exact	\N	Options	\N	HikariSub.Fonts	Options		no	\N
+exact	\N	Options	\N	HikariSub.Options	Options		no	\N
+exact	\N	Options	\N	HikariSub.ScriptProperties	Options		no	\N
+exact	\N	Save to video / subtitles folder.	\N	HikariSub.Fonts	Save to video / subtitles folder.		no	\N
+exact	\N	Saves to the video folder\nwhen demuxing fonts from an MKV file.	\N	HikariSub.Fonts	Saves to the video folder\nwhen demuxing fonts from an MKV file.		no	\N
+exact	\N	Demux fonts from loaded MKV file	\N	HikariSub.Fonts	Demux fonts from loaded MKV file		no	\N
+exact	\N	Start	\N	HikariSub.Editor	Start		no	\N
+exact	\N	Start	\N	HikariSub.Fonts	Start		no	\N
+exact	\N	Start	\N	HikariSub.Grid	Start		no	\N
+exact	\N	Start on tabs	\N	HikariSub.Fonts	Start on tabs		no	\N
+exact	\N	Save folder	\N	HikariSub.Fonts	Save folder		no	\N
+exact	\N	Select the name of the archive	\N	HikariSub.Fonts	Select the name of the archive		no	\N
+obsolete	\N	Archive files (*.zip)|*.zip	\N	\N	\N	\N	\N	\N
+obsolete	\N	No video or subtitles loaded	\N	\N	\N	\N	\N	\N
+exact	\N	Select the folder where you want to copy fonts	\N	HikariSub.Fonts	Select the folder where you want to copy fonts		no	\N
+exact	\N	No subtitles loaded. Load subtitles or deselect this option.	\N	HikariSub.Fonts	No subtitles loaded. Load subtitles or deselect this option.		no	\N
+exact	\N	Choose a name for the archive	\N	HikariSub.Fonts	Choose a name for the archive		no	\N
+exact	\N	The save path is not valid.	\N	HikariSub.Fonts	The save path is not valid.		no	\N
+exact	\N	Confirmation	\N	HikariSub.Fonts	Confirmation		no	\N
+exact	\N	Confirmation	\N	HikariSub.Matroska	Confirmation		no	\N
+exact	\N	Confirmation	\N	HikariSub.Search	Confirmation		no	\N
+exact	\N	Confirmation	\N	HikariSub.Styles	Confirmation		no	\N
+exact	\N	Confirmation	\N	HikariSub.Tabs	Confirmation		no	\N
+exact	\N	Confirmation	\N	HikariSub.TimeShift	Confirmation		no	\N
+exact	\N	Confirmation	\N	HikariSub.Translation	Confirmation		no	\N
+exact	\N	Confirmation	\N	HikariSub.Video	Confirmation		no	\N
+exact	\N	Confirmation	\N	HikariSub.VisualTools	Confirmation		no	\N
+exact	\N	The zip file already exists, delete it?	\N	HikariSub.Fonts	The zip file already exists, delete it?		no	\N
+exact	\N	Font not found "	\N	HikariSub.Fonts	Font not found "		no	\N
+placeholder	\N	Found font "%s"\n	\N	HikariSub.Fonts	Found font "%1"\n		no	%s -> %1
+exact	\N	Cannot retrieve the font file sizes and names;\ncopying will be canceled.\n	\N	HikariSub.Fonts	Cannot retrieve the font file sizes and names;\ncopying will be canceled.\n		no	\N
+placeholder	\N	Retrieved sizes and names of %i fonts, elapsed time %sms.\n\n	\N	HikariSub.Fonts	Retrieved sizes and names of %1 fonts, elapsed time %2ms.\n\n		no	%i %s -> %1 %2
+exact	\N	Path is not available	\N	HikariSub.Fonts	Path is not available		no	\N
+placeholder	\N	Font "%s" belongs to a style\nthat is not used.	\N	HikariSub.Fonts	Font "%1" belongs to a style\nthat is not used.		no	%s -> %1
+exact	\N	Some fonts do not contain all glyphs used in the text.\n	\N	HikariSub.Fonts	Some fonts do not contain all glyphs used in the text.\n		no	\N
+placeholder	\N	Finished, %s %s.\n	\N	HikariSub.Fonts	Finished, %1 %2.\n		no	%s %s -> %1 %2
+exact	\N	copied	\N	HikariSub.Fonts	copied		no	\N
+exact	\N	found	\N	HikariSub.Fonts	found		no	\N
+obsolete	found or copied	%d font	%d fonts	\N	\N	\N	\N	\N
+placeholder	\N	Not found %s.\n	\N	HikariSub.Fonts	Not found %1.\n		no	%s -> %1
+obsolete	not found or not copied	%d font	%d fonts	\N	\N	\N	\N	\N
+placeholder	\N	Cannot copy %s.\n	\N	HikariSub.Fonts	Cannot copy %1.\n		no	%s -> %1
+placeholder	\N	Completed Successfully, %s %s.\n	\N	HikariSub.Fonts	Completed Successfully, %1 %2.\n		no	%s %s -> %1 %2
+placeholder	\N	Added font "%s" to the archive.	\N	HikariSub.Fonts	Added font "%1" to the archive.		no	%s -> %1
+placeholder	\N	Cannot zip font "%s".	\N	HikariSub.Fonts	Cannot zip font "%1".		no	%s -> %1
+placeholder	\N	Copied font "%s".	\N	HikariSub.Fonts	Copied font "%1".		no	%s -> %1
+placeholder	\N	Cannot copy font "%s".	\N	HikariSub.Fonts	Cannot copy font "%1".		no	%s -> %1
+placeholder	\N	Video: %s\n\n	\N	HikariSub.Fonts	Video: %1\n\n		no	%s -> %1
+exact	\N	This video is not an MKV file.	\N	HikariSub.Fonts	This video is not an MKV file.		no	\N
+exact	\N	Cannot open MKV file	\N	HikariSub.Fonts	Cannot open MKV file		no	\N
+exact	\N	Loaded MKV file does not have any fonts.	\N	HikariSub.Fonts	Loaded MKV file does not have any fonts.		no	\N
+exact	\N	Saved a font named "	\N	HikariSub.Fonts	Saved a font named "		no	\N
+exact	\N	Cannot save font named "	\N	HikariSub.Fonts	Cannot save font named "		no	\N
+placeholder	\N	Completed, copied %i fonts.\nFailed to copy %i fonts.	\N	HikariSub.Fonts	Completed, copied %1 fonts.\nFailed to copy %2 fonts.		no	%i %i -> %1 %2
+placeholder	\N	Completed successfully and copied %i fonts.	\N	HikariSub.Fonts	Completed successfully and copied %1 fonts.		no	%i -> %1
+exact	\N	Cannot create folder.	\N	HikariSub.Fonts	Cannot create folder.		no	\N
+placeholder	\N	Found font "%s".	\N	HikariSub.Fonts	Found font "%1".		no	%s -> %1
+exact	\N	\nWill not be copied.	\N	HikariSub.Fonts	\nWill not be copied.		no	\N
+obsolete	\N	Font "%s" belongs to a style\nthat is not used.%s	\N	\N	\N	\N	\N	\N
+placeholder	\N	Font "%s" is missing normal style.	\N	HikariSub.Fonts	Font "%1" is missing normal style.		no	%s -> %1
+placeholder	\N	Font "%s" is missing bold italics.	\N	HikariSub.Fonts	Font "%1" is missing bold italics.		no	%s -> %1
+placeholder	\N	Font "%s" is missing bold.	\N	HikariSub.Fonts	Font "%1" is missing bold.		no	%s -> %1
+placeholder	\N	Font "%s" is missing italics.	\N	HikariSub.Fonts	Font "%1" is missing italics.		no	%s -> %1
+placeholder	\N	Cannot check the characters in font "%s".	\N	HikariSub.Fonts	Cannot check the characters in font "%1".		no	%s -> %1
+placeholder	\N	Font "%s" does not contain characters: "%s".	\N	HikariSub.Fonts	Font "%1" does not contain characters: "%2".		no	%s %s -> %1 %2
+placeholder	\N	Cannot get the contents of font "%s".	\N	HikariSub.Fonts	Cannot get the contents of font "%1".		no	%s -> %1
+placeholder	\N	Cannot open file "%s".	\N	HikariSub.Fonts	Cannot open file "%1".		no	%s -> %1
+obsolete	\N	Size of font "%s" is different.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Could not read "%s" font from the Fonts folder.	\N	\N	\N	\N	\N	\N
+placeholder	\N	Found "%s" font file.	\N	HikariSub.Fonts	Found "%1" font file.		no	%s -> %1
+placeholder	\N	Cannot find "%s" font in Fonts folder.	\N	HikariSub.Fonts	Cannot find "%1" font in Fonts folder.		no	%s -> %1
+obsolete	\N	Could not create process. Muxing canceled	\N	\N	\N	\N	\N	\N
+obsolete	\N	\nFinished in %sms	\N	\N	\N	\N	\N	\N
+exact	\N	Select a font	\N	HikariSub.Fonts	Select a font		no	\N
+exact	\N	Font	\N	HikariSub.Fonts	Font		no	\N
+exact	\N	Font	\N	HikariSub.Styles	Font		no	\N
+exact	\N	Preview	\N	HikariSub.Fonts	Preview		no	\N
+exact	\N	All fonts	\N	HikariSub.Fonts	All fonts		no	\N
+exact	\N	Without catalog	\N	HikariSub.Fonts	Without catalog		no	\N
+exact	\N	Adds fonts to a previously created catalog	\N	HikariSub.Fonts	Adds fonts to a previously created catalog		no	\N
+exact	\N	Manage	\N	HikariSub.Fonts	Manage		no	\N
+exact	\N	Manages font catalogs	\N	HikariSub.Fonts	Manages font catalogs		no	\N
+exact	\N	Filter	\N	HikariSub.Fonts	Filter		no	\N
+exact	\N	Filter	\N	HikariSub.Grid	Filter		no	\N
+exact	\N	Filters fonts to those containing the entered characters	\N	HikariSub.Fonts	Filters fonts to those containing the entered characters		no	\N
+exact	\N	Filtering and font catalogs	\N	HikariSub.Fonts	Filtering and font catalogs		no	\N
+obsolete	\N	Cannot create notification handler for fonts folder.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Loading external fonts	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create next notification handler for fonts folder.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Removing fonts from external folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Loading fonts from external folder	\N	\N	\N	\N	\N	\N
+exact	\N	Cannot load external font folder	\N	HikariSub.Fonts	Cannot load external font folder		no	\N
+exact	\N	Apply to All	\N	HikariSub.Documents	Apply to All		no	\N
+exact	\N	Yes to all	\N	HikariSub.Styles	Yes to all		no	\N
+exact	\N	Yes	\N	HikariSub.Documents	Yes		no	\N
+exact	\N	Yes	\N	HikariSub.Matroska	Yes		no	\N
+exact	\N	Yes	\N	HikariSub.Search	Yes		no	\N
+exact	\N	Yes	\N	HikariSub.Styles	Yes		no	\N
+exact	\N	No	\N	HikariSub.Documents	No		no	\N
+exact	\N	No	\N	HikariSub.Matroska	No		no	\N
+exact	\N	No	\N	HikariSub.Search	No		no	\N
+exact	\N	No	\N	HikariSub.Styles	No		no	\N
+obsolete	\N	Help	\N	\N	\N	\N	\N	\N
+obsolete	\N	Untitled - 	\N	\N	\N	\N	\N	\N
+exact	\N	Video duration	\N	HikariSub.StatusBar	Video duration		no	\N
+exact	\N	Video scale	\N	HikariSub.StatusBar	Video scale		no	\N
+exact	\N	Video zoom	\N	HikariSub.StatusBar	Video zoom		no	\N
+exact	\N	Frames per second	\N	HikariSub.StatusBar	Frames per second		no	\N
+exact	\N	Subtitles resolution	\N	HikariSub.Conversion	Subtitles resolution		no	\N
+exact	\N	Subtitles resolution	\N	HikariSub.StatusBar	Subtitles resolution		no	\N
+exact	\N	Video aspect ratio	\N	HikariSub.StatusBar	Video aspect ratio		no	\N
+exact	\N	Video file name	\N	HikariSub.StatusBar	Video file name		no	\N
+exact	\N	Video resolution	\N	HikariSub.StatusBar	Video resolution		no	\N
+exact	\N	Load last session	\N	HikariSub.MainWindow	Load last session		no	\N
+exact	\N	Loads previously loaded files	\N	HikariSub.MainWindow	Loads previously loaded files		no	\N
+exact	\N	Load session from file	\N	HikariSub.MainWindow	Load session from file		no	\N
+exact	\N	Loads session from saved session file	\N	HikariSub.MainWindow	Loads session from saved session file		no	\N
+exact	\N	Save session to file	\N	HikariSub.MainWindow	Save session to file		no	\N
+exact	\N	Saves session to file	\N	HikariSub.MainWindow	Saves session to file		no	\N
+exact	\N	Ask whether to load the last session at program startup	\N	HikariSub.MainWindow	Ask whether to load the last session at program startup		no	\N
+exact	\N	Asks whether to load previously loaded files at program startup	\N	HikariSub.MainWindow	Asks whether to load previously loaded files at program startup		no	\N
+exact	\N	Load last session after program start	\N	HikariSub.MainWindow	Load last session after program start		no	\N
+exact	\N	Loads previously loaded files at program startup	\N	HikariSub.MainWindow	Loads previously loaded files at program startup		no	\N
+obsolete	\N	&Open subtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Open subtitle file	\N	HikariSub.MainWindow	Open subtitle file		no	\N
+exact	\N	&Save	\N	HikariSub.MainWindow	&Save		no	\N
+exact	\N	Save current file	\N	HikariSub.MainWindow	Save current file		no	\N
+exact	\N	Save &all	\N	HikariSub.MainWindow	Save &all		no	\N
+exact	\N	Save all subtitles	\N	HikariSub.MainWindow	Save all subtitles		no	\N
+obsolete	\N	Save &as...	\N	\N	\N	\N	\N	\N
+exact	\N	Save as	\N	HikariSub.MainWindow	Save as		no	\N
+exact	\N	Save &translation	\N	HikariSub.MainWindow	Save &translation		no	\N
+exact	\N	Save translation	\N	HikariSub.MainWindow	Save translation		no	\N
+exact	\N	Recently opened &subtitles	\N	HikariSub.MainWindow	Recently opened &subtitles		no	\N
+exact	\N	Recently opened subtitles	\N	HikariSub.MainWindow	Recently opened subtitles		no	\N
+exact	\N	Recently opened subtitles	\N	HikariSub.Video	Recently opened subtitles		no	\N
+exact	\N	Remove subtitles from the &editor	\N	HikariSub.MainWindow	Remove subtitles from the &editor		no	\N
+exact	\N	Remove subtitles from the editor	\N	HikariSub.MainWindow	Remove subtitles from the editor		no	\N
+exact	\N	Save subtitles using the video name	\N	HikariSub.MainWindow	Save subtitles using the video name		no	\N
+exact	\N	Open auto save	\N	HikariSub.MainWindow	Open auto save		no	\N
+exact	\N	Open auto save	\N	HikariSub.Session	Open auto save		no	\N
+exact	\N	Opens the selected autosave from the list	\N	HikariSub.MainWindow	Opens the selected autosave from the list		no	\N
+exact	\N	Opens the temporary file removal window	\N	HikariSub.MainWindow	Opens the temporary file removal window		no	\N
+exact	\N	Show / Hide log window	\N	HikariSub.MainWindow	Show / Hide log window		no	\N
+exact	\N	Last session	\N	HikariSub.MainWindow	Last session		no	\N
+exact	\N	Last session options	\N	HikariSub.MainWindow	Last session options		no	\N
+exact	\N	&Settings	\N	HikariSub.MainWindow	&Settings		no	\N
+exact	\N	Program settings	\N	HikariSub.MainWindow	Program settings		no	\N
+obsolete	\N	&Exit\tAlt-F4	\N	\N	\N	\N	\N	\N
+exact	\N	Exit the program	\N	HikariSub.MainWindow	Exit the program		no	\N
+exact	\N	&File	\N	HikariSub.MainWindow	&File		no	\N
+exact	\N	&Undo	\N	HikariSub.MainWindow	&Undo		no	\N
+exact	\N	Undo	\N	HikariSub.MainWindow	Undo		no	\N
+exact	\N	Undo to last save	\N	HikariSub.MainWindow	Undo to last save		no	\N
+exact	\N	&Redo	\N	HikariSub.MainWindow	&Redo		no	\N
+exact	\N	Redo	\N	HikariSub.MainWindow	Redo		no	\N
+exact	\N	&History	\N	HikariSub.MainWindow	&History		no	\N
+exact	\N	History	\N	HikariSub.MainWindow	History		no	\N
+exact	\N	Find and re&place	\N	HikariSub.MainWindow	Find and re&place		no	\N
+exact	\N	Searches for the specified text phrases and replaces them	\N	HikariSub.MainWindow	Searches for the specified text phrases and replaces them		no	\N
+exact	\N	&Find	\N	HikariSub.MainWindow	&Find		no	\N
+exact	\N	Searches for the specified text phrase	\N	HikariSub.MainWindow	Searches for the specified text phrase		no	\N
+exact	\N	Find next	\N	HikariSub.MainWindow	Find next		no	\N
+exact	\N	Finds the next occurrence of the phrase in the text	\N	HikariSub.MainWindow	Finds the next occurrence of the phrase in the text		no	\N
+exact	\N	The starting time	\N	HikariSub.Grid	The starting time		no	\N
+exact	\N	The starting time	\N	HikariSub.MainWindow	The starting time		no	\N
+exact	\N	The starting time	\N	HikariSub.TimeShift	The starting time		no	\N
+exact	\N	Sort by start time	\N	HikariSub.MainWindow	Sort by start time		no	\N
+exact	\N	End time	\N	HikariSub.Grid	End time		no	\N
+exact	\N	End time	\N	HikariSub.MainWindow	End time		no	\N
+exact	\N	End time	\N	HikariSub.SelectLines	End time		no	\N
+exact	\N	End time	\N	HikariSub.TimeShift	End time		no	\N
+exact	\N	Sort by end time	\N	HikariSub.MainWindow	Sort by end time		no	\N
+exact	\N	Sort by styles	\N	HikariSub.MainWindow	Sort by styles		no	\N
+exact	\N	Sort by actor	\N	HikariSub.MainWindow	Sort by actor		no	\N
+exact	\N	Sort by effect	\N	HikariSub.MainWindow	Sort by effect		no	\N
+exact	\N	Layer	\N	HikariSub.Editor	Layer		no	\N
+exact	\N	Layer	\N	HikariSub.Grid	Layer		no	\N
+exact	\N	Layer	\N	HikariSub.MainWindow	Layer		no	\N
+exact	\N	Sort by layer	\N	HikariSub.MainWindow	Sort by layer		no	\N
+exact	\N	So&rt all lines	\N	HikariSub.MainWindow	So&rt all lines		no	\N
+exact	\N	Sorts all lines in ASS file	\N	HikariSub.MainWindow	Sorts all lines in ASS file		no	\N
+exact	\N	So&rt selected lines	\N	HikariSub.MainWindow	So&rt selected lines		no	\N
+exact	\N	Sorts selected lines in ASS file	\N	HikariSub.MainWindow	Sorts selected lines in ASS file		no	\N
+exact	\N	Fix minor errors (experimental)	\N	HikariSub.MainWindow	Fix minor errors (experimental)		no	\N
+exact	\N	Turns on multireplacer	\N	HikariSub.MainWindow	Turns on multireplacer		no	\N
+exact	\N	Select &lines	\N	HikariSub.MainWindow	Select &lines		no	\N
+exact	\N	Selects lines by expressions	\N	HikariSub.MainWindow	Selects lines by expressions		no	\N
+exact	\N	&Edit	\N	HikariSub.MainWindow	&Edit		no	\N
+exact	\N	Open video	\N	HikariSub.Video	Open video		no	\N
+exact	\N	Opens video file	\N	HikariSub.MainWindow	Opens video file		no	\N
+exact	\N	Recently opened videos	\N	HikariSub.MainWindow	Recently opened videos		no	\N
+exact	\N	Recently opened videos	\N	HikariSub.Video	Recently opened videos		no	\N
+exact	\N	Open keyframes	\N	HikariSub.MainWindow	Open keyframes		no	\N
+exact	\N	Recently opened keyframes	\N	HikariSub.MainWindow	Recently opened keyframes		no	\N
+exact	\N	Open dummy video	\N	HikariSub.MainWindow	Open dummy video		no	\N
+exact	\N	Insert start time from video	\N	HikariSub.MainWindow	Insert start time from video		no	\N
+obsolete	\N	Inserts the start time from video	\N	\N	\N	\N	\N	\N
+exact	\N	Insert end time from video	\N	HikariSub.MainWindow	Insert end time from video		no	\N
+obsolete	\N	Inserts the end time from video	\N	\N	\N	\N	\N	\N
+exact	\N	Previous frame	\N	HikariSub.MainWindow	Previous frame		no	\N
+exact	\N	Previous frame	\N	HikariSub.Video	Previous frame		no	\N
+exact	\N	Go to previous frame	\N	HikariSub.MainWindow	Go to previous frame		no	\N
+exact	\N	Next frame	\N	HikariSub.MainWindow	Next frame		no	\N
+exact	\N	Next frame	\N	HikariSub.Video	Next frame		no	\N
+exact	\N	Go to next frame	\N	HikariSub.MainWindow	Go to next frame		no	\N
+exact	\N	Go to start time	\N	HikariSub.MainWindow	Go to start time		no	\N
+exact	\N	Moves video to start time	\N	HikariSub.MainWindow	Moves video to start time		no	\N
+exact	\N	Go to end time of line	\N	HikariSub.MainWindow	Go to end time of line		no	\N
+exact	\N	Moves video to end time	\N	HikariSub.MainWindow	Moves video to end time		no	\N
+exact	\N	Play / Pause	\N	HikariSub.MainWindow	Play / Pause		no	\N
+exact	\N	Play / Pause	\N	HikariSub.Video	Play / Pause		no	\N
+exact	\N	Plays / Pauses video	\N	HikariSub.MainWindow	Plays / Pauses video		no	\N
+exact	\N	Go to previous keyframe	\N	HikariSub.MainWindow	Go to previous keyframe		no	\N
+exact	\N	Go to next keyframe	\N	HikariSub.MainWindow	Go to next keyframe		no	\N
+exact	\N	Set audio position to video time	\N	HikariSub.MainWindow	Set audio position to video time		no	\N
+exact	\N	Set audio marker to video time	\N	HikariSub.MainWindow	Set audio marker to video time		no	\N
+exact	\N	Zoom video	\N	HikariSub.MainWindow	Zoom video		no	\N
+exact	\N	Turn off video zoom	\N	HikariSub.MainWindow	Turn off video zoom		no	\N
+obsolete	\N	Open video with FFMS2	\N	\N	\N	\N	\N	\N
+obsolete	\N	Opens video with FFMS2 for frame precision	\N	\N	\N	\N	\N	\N
+exact	\N	&Video	\N	HikariSub.MainWindow	&Video		no	\N
+exact	\N	Open audio	\N	HikariSub.MainWindow	Open audio		no	\N
+exact	\N	Opens audio file	\N	HikariSub.MainWindow	Opens audio file		no	\N
+exact	\N	Recently opened audio	\N	HikariSub.MainWindow	Recently opened audio		no	\N
+exact	\N	Open audio from video	\N	HikariSub.MainWindow	Open audio from video		no	\N
+exact	\N	Opens audio from video	\N	HikariSub.MainWindow	Opens audio from video		no	\N
+exact	\N	Open blank 2h30m audio	\N	HikariSub.MainWindow	Open blank 2h30m audio		no	\N
+exact	\N	Opens blank audio 2 hour and 30 minutes long	\N	HikariSub.MainWindow	Opens blank audio 2 hour and 30 minutes long		no	\N
+exact	\N	Close audio	\N	HikariSub.MainWindow	Close audio		no	\N
+exact	\N	Closes audio	\N	HikariSub.MainWindow	Closes audio		no	\N
+exact	\N	A&udio	\N	HikariSub.MainWindow	A&udio		no	\N
+exact	\N	All	\N	HikariSub.MainWindow	All		no	\N
+exact	\N	All	\N	HikariSub.Options	All		no	\N
+exact	\N	All	\N	HikariSub.SettingsImport	All		no	\N
+obsolete	\N	Shows all windows	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shows only video window and subs window	\N	\N	\N	\N	\N	\N
+exact	\N	Video and subs	\N	HikariSub.MainWindow	Video and subs		no	\N
+exact	\N	Audio and subs	\N	HikariSub.MainWindow	Audio and subs		no	\N
+obsolete	\N	Shows only audio window and subs window	\N	\N	\N	\N	\N	\N
+exact	\N	Only video	\N	HikariSub.MainWindow	Only video		no	\N
+obsolete	\N	Shows only video window	\N	\N	\N	\N	\N	\N
+exact	\N	Only subtitles	\N	HikariSub.MainWindow	Only subtitles		no	\N
+obsolete	\N	Shows only the subtitle window	\N	\N	\N	\N	\N	\N
+obsolete	\N	View	\N	\N	\N	\N	\N	\N
+exact	\N	Enable / Disable editor	\N	HikariSub.MainWindow	Enable / Disable editor		no	\N
+obsolete	\N	Enables / disables editor	\N	\N	\N	\N	\N	\N
+exact	\N	ASS file properties	\N	HikariSub.MainWindow	ASS file properties		no	\N
+exact	\N	ASS file properties	\N	HikariSub.ScriptProperties	ASS file properties		no	\N
+exact	\N	ASS subtitle properties	\N	HikariSub.MainWindow	ASS subtitle properties		no	\N
+exact	\N	Style &manager	\N	HikariSub.MainWindow	Style &manager		no	\N
+exact	\N	Is used to manage ASS styles	\N	HikariSub.MainWindow	Is used to manage ASS styles		no	\N
+exact	\N	Convert to ASS	\N	HikariSub.MainWindow	Convert to ASS		no	\N
+exact	\N	Converts to ASS format	\N	HikariSub.MainWindow	Converts to ASS format		no	\N
+exact	\N	Convert to SRT	\N	HikariSub.MainWindow	Convert to SRT		no	\N
+exact	\N	Converts to SRT format	\N	HikariSub.MainWindow	Converts to SRT format		no	\N
+exact	\N	Convert to MDVD	\N	HikariSub.MainWindow	Convert to MDVD		no	\N
+exact	\N	Converts to microDVD format	\N	HikariSub.MainWindow	Converts to microDVD format		no	\N
+exact	\N	Convert to MPL2	\N	HikariSub.MainWindow	Convert to MPL2		no	\N
+exact	\N	Converts to MPL2 format	\N	HikariSub.MainWindow	Converts to MPL2 format		no	\N
+exact	\N	Convert to TMP	\N	HikariSub.MainWindow	Convert to TMP		no	\N
+exact	\N	Converts to TMPlayer format (not recommended)	\N	HikariSub.MainWindow	Converts to TMPlayer format (not recommended)		no	\N
+exact	\N	Conversion	\N	HikariSub.MainWindow	Conversion		no	\N
+exact	\N	Conversion	\N	HikariSub.Options	Conversion		no	\N
+exact	\N	Converts from one format to another	\N	HikariSub.MainWindow	Converts from one format to another		no	\N
+obsolete	\N	Shift &times...\tCtrl-I	\N	\N	\N	\N	\N	\N
+exact	\N	Shifting subtitle times	\N	HikariSub.MainWindow	Shifting subtitle times		no	\N
+exact	\N	Resample subtitles	\N	HikariSub.Conversion	Resample subtitles		no	\N
+exact	\N	Resample subtitles	\N	HikariSub.MainWindow	Resample subtitles		no	\N
+exact	\N	Check spelling	\N	HikariSub.MainWindow	Check spelling		no	\N
+exact	\N	Hide tags	\N	HikariSub.Editor	Hide tags		no	\N
+exact	\N	Hide tags	\N	HikariSub.MainWindow	Hide tags		no	\N
+obsolete	\N	Hides tags in ASS and MDVD	\N	\N	\N	\N	\N	\N
+obsolete	\N	Su&btitles	\N	\N	\N	\N	\N	\N
+exact	\N	Load script	\N	HikariSub.MainWindow	Load script		no	\N
+exact	\N	Refresh autoload scripts	\N	HikariSub.MainWindow	Refresh autoload scripts		no	\N
+exact	\N	Run the last loaded script	\N	HikariSub.MainWindow	Run the last loaded script		no	\N
+exact	\N	Open shortcut mapping window	\N	HikariSub.MainWindow	Open shortcut mapping window		no	\N
+obsolete	\N	Au&tomation	\N	\N	\N	\N	\N	\N
+exact	\N	HikariSub &website	\N	HikariSub.MainWindow	HikariSub &website		no	\N
+exact	\N	Opens the HikariSub website in the default browser	\N	HikariSub.MainWindow	Opens the HikariSub website in the default browser		no	\N
+exact	\N	&Report an issue	\N	HikariSub.MainWindow	&Report an issue		no	\N
+exact	\N	Opens the HikariSub issue tracker	\N	HikariSub.MainWindow	Opens the HikariSub issue tracker		no	\N
+exact	\N	Check for &updates	\N	HikariSub.MainWindow	Check for &updates		no	\N
+exact	\N	Checks whether a newer version is available	\N	HikariSub.MainWindow	Checks whether a newer version is available		no	\N
+exact	\N	&About	\N	HikariSub.MainWindow	&About		no	\N
+exact	\N	Shows program info	\N	HikariSub.MainWindow	Shows program info		no	\N
+exact	\N	&Credits	\N	HikariSub.MainWindow	&Credits		no	\N
+exact	\N	Shows credits	\N	HikariSub.MainWindow	Shows credits		no	\N
+exact	\N	&Help	\N	HikariSub.MainWindow	&Help		no	\N
+placeholder	\N	Time elapsed: %s	\N	HikariSub.Matroska	Time elapsed: %1		no	%s -> %1
+placeholder	\N	Time elapsed: %s	\N	HikariSub.StatusBar	Time elapsed: %1		no	%s -> %1
+obsolete	\N	Choose script	\N	\N	\N	\N	\N	\N
+obsolete	\N	Script files (*.lua),(*.moon)|*.lua;*.moon;	\N	\N	\N	\N	\N	\N
+exact	\N	This subtitle file does not have any scripts added	\N	HikariSub.Automation	This subtitle file does not have any scripts added		no	\N
+placeholder	\N	Validation Lua script '%s' failed	\N	HikariSub.Automation	Validation Lua script '%1' failed		no	%s -> %1
+exact	\N	Choose subtitle file	\N	HikariSub.Translation	Choose subtitle file		no	\N
+obsolete	\N	Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm	\N	\N	\N	\N	\N	\N
+exact	\N	Choose video file	\N	HikariSub.Video	Choose video file		no	\N
+obsolete	\N	Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+obsolete	\N	Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+obsolete	\N	HikariSub subtitle editor by altqx,\nversion %s from %s	\N	\N	\N	\N	\N	\N
+exact	\N	Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n	\N	HikariSub.MainWindow	Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n		no	\N
+exact	\N	If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n	\N	HikariSub.MainWindow	If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n		no	\N
+exact	\N	HikariSub includes parts of the following projects:\n	\N	HikariSub.MainWindow	HikariSub includes parts of the following projects:\n		no	\N
+obsolete	\N	Color picker, demuxing subtitles from MKV, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n	\N	\N	\N	\N	\N	\N
+exact	\N	About HikariSub	\N	HikariSub.MainWindow	About HikariSub		no	\N
+exact	\N	Graphical help: (buttons, help pictures etc.)\n	\N	HikariSub.MainWindow	Graphical help: (buttons, help pictures etc.)\n		no	\N
+exact	\N	- Xandros (new video buttons).\n	\N	HikariSub.MainWindow	- Xandros (new video buttons).\n		no	\N
+exact	\N	- Devilkan (menu and toolbar buttons)\n	\N	HikariSub.MainWindow	- Devilkan (menu and toolbar buttons)\n		no	\N
+exact	\N	- Zły Los (icons for file associations and menu).\n	\N	HikariSub.MainWindow	- Zły Los (icons for file associations and menu).\n		no	\N
+exact	\N	Testers:\n	\N	HikariSub.MainWindow	Testers:\n		no	\N
+exact	\N	- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n	\N	HikariSub.MainWindow	- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n		no	\N
+exact	\N	- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n	\N	HikariSub.MainWindow	- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n		no	\N
+exact	\N	helped with typesetting tools and came up with many more improvements).\n	\N	HikariSub.MainWindow	helped with typesetting tools and came up with many more improvements).\n		no	\N
+exact	\N	- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n	\N	HikariSub.MainWindow	- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n		no	\N
+exact	\N	- mas1904 (found some errors and helping with crash debuging).\n	\N	HikariSub.MainWindow	- mas1904 (found some errors and helping with crash debuging).\n		no	\N
+exact	\N	- Senami (made new themes and found some bugs).\n	\N	HikariSub.MainWindow	- Senami (made new themes and found some bugs).\n		no	\N
+exact	\N	- altinat (Thai translation).\n	\N	HikariSub.MainWindow	- altinat (Thai translation).\n		no	\N
+exact	\N	- labrie75 (Korean translation).\n	\N	HikariSub.MainWindow	- labrie75 (Korean translation).\n		no	\N
+exact	\N	- Niskala5570 (Malay translation).\n	\N	HikariSub.MainWindow	- Niskala5570 (Malay translation).\n		no	\N
+exact	\N	Thanks to other HikariSub users who reported bugs:\n	\N	HikariSub.MainWindow	Thanks to other HikariSub users who reported bugs:\n		no	\N
+exact	\N	Credits	\N	HikariSub.MainWindow	Credits		no	\N
+exact	\N	Subtitle file 	\N	HikariSub.Documents	Subtitle file 		no	\N
+exact	\N	Save subtitle file	\N	HikariSub.Documents	Save subtitle file		no	\N
+exact	\N	Chosen file is read only,\nplease save with different name or change file attribute.	\N	HikariSub.Documents	Chosen file is read only,\nplease save with different name or change file attribute.		no	\N
+exact	\N	Chosen file is read only,\nplease save with different name or change file attribute.	\N	HikariSub.Session	Chosen file is read only,\nplease save with different name or change file attribute.		no	\N
+placeholder	\N	Load subtitles named "%s"?	\N	HikariSub.Tabs	Load subtitles named "%1"?		no	%s -> %1
+obsolete	\N	Cannot open subtitle file	\N	\N	\N	\N	\N	\N
+exact	\N	None	\N	HikariSub.MainWindow	None		no	\N
+exact	\N	None	\N	HikariSub.Options	None		no	\N
+exact	\N	None	\N	HikariSub.Styles	None		no	\N
+obsolete	\N	Save subtitles named "%s" before %s?	\N	\N	\N	\N	\N	\N
+obsolete	\N	exiting program	\N	\N	\N	\N	\N	\N
+obsolete	\N	closing tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	loading new subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	removing subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot load audio hotkeys	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot load audio configuration	\N	\N	\N	\N	\N	\N
+exact	\N	Choose audio file	\N	HikariSub.Audio	Choose audio file		no	\N
+exact	\N	Audio and video files	\N	HikariSub.Audio	Audio and video files		no	\N
+exact	\N	All files	\N	HikariSub.Audio	All files		no	\N
+obsolete	\N	Undo to 	\N	\N	\N	\N	\N	\N
+obsolete	\N	Redo to 	\N	\N	\N	\N	\N	\N
+exact	\N	Choose session file	\N	HikariSub.Session	Choose session file		no	\N
+obsolete	\N	Session file (*.kls),|*.kls	\N	\N	\N	\N	\N	\N
+exact	\N	Save session file	\N	HikariSub.Session	Save session file		no	\N
+obsolete	\N	Hotkey "%s" it's not script hotkey.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Exit	\N	\N	\N	\N	\N	\N
+exact	\N	Open new tab	\N	HikariSub.Tabs	Open new tab		no	\N
+obsolete	\N	Close current tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Time shift window	\N	\N	\N	\N	\N	\N
+exact	\N	Style manager	\N	HikariSub.Styles	Style manager		no	\N
+exact	\N	Open subtitles	\N	HikariSub.Video	Open subtitles		no	\N
+exact	\N	Save	\N	HikariSub.Documents	Save		no	\N
+exact	\N	Save	\N	HikariSub.ScriptProperties	Save		no	\N
+exact	\N	Save	\N	HikariSub.Tabs	Save		no	\N
+obsolete	\N	Save as...	\N	\N	\N	\N	\N	\N
+exact	\N	Delete text	\N	HikariSub.Grid	Delete text		no	\N
+exact	\N	Delete line	\N	HikariSub.Translation	Delete line		no	\N
+exact	\N	Previous line	\N	HikariSub.Audio	Previous line		no	\N
+exact	\N	Next line	\N	HikariSub.Audio	Next line		no	\N
+obsolete	\N	Merge with previous line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Merge with next line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change start time to nearest keyframe	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change end time to nearest keyframe	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Previous tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select line at current video position	\N	\N	\N	\N	\N	\N
+obsolete	\N	HikariSub website	\N	\N	\N	\N	\N	\N
+obsolete	\N	Duplicate lines	\N	\N	\N	\N	\N	\N
+exact	\N	Copy columns	\N	HikariSub.Grid	Copy columns		no	\N
+exact	\N	Paste columns	\N	HikariSub.Grid	Paste columns		no	\N
+exact	\N	Show subtitles preview	\N	HikariSub.Grid	Show subtitles preview		no	\N
+obsolete	\N	5 seconds forward	\N	\N	\N	\N	\N	\N
+obsolete	\N	5 seconds backward	\N	\N	\N	\N	\N	\N
+obsolete	\N	1 minute forward	\N	\N	\N	\N	\N	\N
+obsolete	\N	1 minute backward	\N	\N	\N	\N	\N	\N
+exact	\N	Next file	\N	HikariSub.Video	Next file		no	\N
+exact	\N	Previous file	\N	HikariSub.Video	Previous file		no	\N
+obsolete	\N	Volume up	\N	\N	\N	\N	\N	\N
+obsolete	\N	Volume down	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next chapter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Previous chapter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add bold	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add italic	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add line wrap	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert difference from the start	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert difference to the end	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next unconfirmed line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next untranslated line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Mark as unconfirmed and go to the next line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Apply the changes and go to the next line	\N	\N	\N	\N	\N	\N
+exact	\N	Commit	\N	HikariSub.Audio	Commit		no	\N
+obsolete	\N	Commit alt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Previous line alt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next line alt	\N	\N	\N	\N	\N	\N
+exact	\N	Play	\N	HikariSub.Audio	Play		no	\N
+exact	\N	Play	\N	HikariSub.Video	Play		no	\N
+obsolete	\N	Play alt	\N	\N	\N	\N	\N	\N
+exact	\N	Play line	\N	HikariSub.Audio	Play line		no	\N
+exact	\N	Play line	\N	HikariSub.Video	Play line		no	\N
+obsolete	\N	Play line alt	\N	\N	\N	\N	\N	\N
+exact	\N	Stop	\N	HikariSub.Audio	Stop		no	\N
+exact	\N	Stop	\N	HikariSub.Video	Stop		no	\N
+obsolete	\N	Scroll left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play before the marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play after the marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play first 500ms	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play last 500ms	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play 500ms before	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play 500ms after	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add lead-in	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add lead-out	\N	\N	\N	\N	\N	\N
+obsolete	\N	The shortcuts file is outdated and will be replaced with the default one	\N	\N	\N	\N	\N	\N
+placeholder	\N	Shortcut "%s" is invalid	\N	HikariSub.Hotkeys	Shortcut "%1" is invalid		no	%s -> %1
+obsolete	\N	This setting does not have a default hotkey with id %i to revert to	\N	\N	\N	\N	\N	\N
+exact	\N	Hotkey mapping	\N	HikariSub.Hotkeys	Hotkey mapping		no	\N
+exact	\N	Global hotkey	\N	HikariSub.Hotkeys	Global hotkey		no	\N
+exact	\N	Subtitle grid hotkey	\N	HikariSub.Hotkeys	Subtitle grid hotkey		no	\N
+exact	\N	Audio hotkey	\N	HikariSub.Hotkeys	Audio hotkey		no	\N
+exact	\N	Edit box hotkey	\N	HikariSub.Hotkeys	Edit box hotkey		no	\N
+exact	\N	Video hotkey	\N	HikariSub.Hotkeys	Video hotkey		no	\N
+placeholder	\N	Please enter a hotkey for "%s".	\N	HikariSub.Hotkeys	Please enter a hotkey for "%1".		no	%s -> %1
+obsolete	\N	Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).	\N	\N	\N	\N	\N	\N
+obsolete	\N	You cannot use shortcuts for copying, cutting, and pasting.	\N	\N	\N	\N	\N	\N
+obsolete	\N	You cannot use the program exit shortcut.	\N	\N	\N	\N	\N	\N
+obsolete	\N	First tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	Second tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	Third tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	4th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	5th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	6th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	7th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	8th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	9th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	10th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	11th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	12th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	13th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	14th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	15th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	16th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	17th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	18th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	19th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	20th tag button	\N	\N	\N	\N	\N	\N
+exact	\N	Set times as a continuous (next line)	\N	HikariSub.Grid	Set times as a continuous (next line)		no	\N
+exact	\N	Set times as a continuous (previous line)	\N	HikariSub.Grid	Set times as a continuous (previous line)		no	\N
+exact	\N	Hide comments	\N	HikariSub.Grid	Hide comments		no	\N
+exact	\N	Show unconfirmed	\N	HikariSub.Grid	Show unconfirmed		no	\N
+exact	\N	Turn off filtering	\N	HikariSub.Grid	Turn off filtering		no	\N
+exact	\N	Hide selected lines	\N	HikariSub.Grid	Hide selected lines		no	\N
+exact	\N	Hide lines with styles	\N	HikariSub.Grid	Hide lines with styles		no	\N
+exact	\N	Show untranslated	\N	HikariSub.Grid	Show untranslated		no	\N
+exact	\N	Set FPS from video	\N	HikariSub.Grid	Set FPS from video		no	\N
+exact	\N	Filter after loading subtitles	\N	HikariSub.Grid	Filter after loading subtitles		no	\N
+exact	\N	Do not reset previous filtering	\N	HikariSub.Grid	Do not reset previous filtering		no	\N
+exact	\N	Ignore filtering in some actions	\N	HikariSub.Grid	Ignore filtering in some actions		no	\N
+exact	\N	Reverse filtering	\N	HikariSub.Grid	Reverse filtering		no	\N
+exact	\N	Hide actor	\N	HikariSub.Grid	Hide actor		no	\N
+exact	\N	Hide characters per second	\N	HikariSub.Grid	Hide characters per second		no	\N
+exact	\N	Hide end time	\N	HikariSub.Grid	Hide end time		no	\N
+exact	\N	Hide effect	\N	HikariSub.Grid	Hide effect		no	\N
+exact	\N	Hide layer	\N	HikariSub.Grid	Hide layer		no	\N
+exact	\N	Hide left margin	\N	HikariSub.Grid	Hide left margin		no	\N
+exact	\N	Hide right margin	\N	HikariSub.Grid	Hide right margin		no	\N
+exact	\N	Hide vertical margin	\N	HikariSub.Grid	Hide vertical margin		no	\N
+exact	\N	Hide start time	\N	HikariSub.Grid	Hide start time		no	\N
+exact	\N	Hide style	\N	HikariSub.Grid	Hide style		no	\N
+exact	\N	Make tree	\N	HikariSub.Grid	Make tree		no	\N
+exact	\N	Select all lines visible on video	\N	HikariSub.Grid	Select all lines visible on video		no	\N
+obsolete	\N	Insert after	\N	\N	\N	\N	\N	\N
+exact	\N	Insert after with video time	\N	HikariSub.Grid	Insert after with video time		no	\N
+exact	\N	Insert after with video frame time	\N	HikariSub.Grid	Insert after with video frame time		no	\N
+obsolete	\N	Insert before	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert before with video time	\N	\N	\N	\N	\N	\N
+exact	\N	Insert before with video frame time	\N	HikariSub.Grid	Insert before with video frame time		no	\N
+exact	\N	Join lines	\N	HikariSub.Translation	Join lines		no	\N
+exact	\N	Join lines and keep first	\N	HikariSub.Grid	Join lines and keep first		no	\N
+exact	\N	Join lines and keep last	\N	HikariSub.Grid	Join lines and keep last		no	\N
+exact	\N	Paste translation text	\N	HikariSub.Grid	Paste translation text		no	\N
+obsolete	\N	Load subtitles from an MKV file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Swap lines	\N	\N	\N	\N	\N	\N
+exact	\N	Dialogue shifting window	\N	HikariSub.Grid	Dialogue shifting window		no	\N
+exact	\N	Set new FPS	\N	HikariSub.Grid	Set new FPS		no	\N
+exact	\N	Split line at video time	\N	HikariSub.Grid	Split line at video time		no	\N
+exact	\N	Split lines into frames	\N	HikariSub.Grid	Split lines into frames		no	\N
+exact	\N	Split lines into characters	\N	HikariSub.Grid	Split lines into characters		no	\N
+exact	\N	Split lines into words	\N	HikariSub.Grid	Split lines into words		no	\N
+exact	\N	Split lines by wraps	\N	HikariSub.Grid	Split lines by wraps		no	\N
+obsolete	\N	Check for updates	\N	\N	\N	\N	\N	\N
+obsolete	\N	About	\N	\N	\N	\N	\N	\N
+obsolete	\N	Report an issue	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by actor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by effect	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by layer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by actor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by effect	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by layer	\N	\N	\N	\N	\N	\N
+exact	\N	Shift times / run time post processor	\N	HikariSub.MainWindow	Shift times / run time post processor		no	\N
+obsolete	\N	View all	\N	\N	\N	\N	\N	\N
+obsolete	\N	View audio and subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	View only subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	View video and subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	View only video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Clean styles of ASS file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play active line	\N	\N	\N	\N	\N	\N
+exact	\N	Select lines	\N	HikariSub.SelectLines	Select lines		no	\N
+obsolete	\N	Settings	\N	\N	\N	\N	\N	\N
+exact	\N	Copy frame to clipboard	\N	HikariSub.Video	Copy frame to clipboard		no	\N
+obsolete	\N	Remove video	\N	\N	\N	\N	\N	\N
+exact	\N	Save frame as PNG	\N	HikariSub.Video	Save frame as PNG		no	\N
+exact	\N	Show / hide progress bar	\N	HikariSub.Video	Show / hide progress bar		no	\N
+exact	\N	Change aspect ratio	\N	HikariSub.Video	Change aspect ratio		no	\N
+exact	\N	Copy frame with subtitles to clipboard	\N	HikariSub.Video	Copy frame with subtitles to clipboard		no	\N
+exact	\N	Full screen	\N	HikariSub.Video	Full screen		no	\N
+exact	\N	Save frame with subtitles as PNG	\N	HikariSub.Video	Save frame with subtitles as PNG		no	\N
+exact	\N	Log window	\N	HikariSub.MainWindow	Log window		no	\N
+exact	\N	Apply	\N	HikariSub.Options	Apply		no	\N
+exact	\N	Apply	\N	HikariSub.Styles	Apply		no	\N
+exact	\N	Apply	\N	HikariSub.VisualTools	Apply		no	\N
+exact	\N	 or 	\N	HikariSub.Audio	 or 		no	\N
+exact	\N	Second shortcut can be set using Control + Click	\N	HikariSub.Audio	Second shortcut can be set using Control + Click		no	\N
+obsolete	\N	Multireplacer	\N	\N	\N	\N	\N	\N
+exact	\N	Rule editing	\N	HikariSub.MisspellReplacer	Rule editing		no	\N
+exact	\N	Change to lower case	\N	HikariSub.MisspellReplacer	Change to lower case		no	\N
+exact	\N	Change to upper case	\N	HikariSub.MisspellReplacer	Change to upper case		no	\N
+exact	\N	Dont change case	\N	HikariSub.MisspellReplacer	Dont change case		no	\N
+exact	\N	Replace only in tags	\N	HikariSub.MisspellReplacer	Replace only in tags		no	\N
+exact	\N	Replace only in text	\N	HikariSub.MisspellReplacer	Replace only in text		no	\N
+exact	\N	Search phrase (regular expresions)	\N	HikariSub.MisspellReplacer	Search phrase (regular expresions)		no	\N
+exact	\N	Replace phrase	\N	HikariSub.MisspellReplacer	Replace phrase		no	\N
+exact	\N	Rule description	\N	HikariSub.MisspellReplacer	Rule description		no	\N
+exact	\N	Description	\N	HikariSub.MisspellReplacer	Description		no	\N
+exact	\N	Description	\N	HikariSub.Translation	Description		no	\N
+exact	\N	Rule find	\N	HikariSub.MisspellReplacer	Rule find		no	\N
+exact	\N	Rule replace	\N	HikariSub.MisspellReplacer	Rule replace		no	\N
+exact	\N	Which lines	\N	HikariSub.MisspellReplacer	Which lines		no	\N
+exact	\N	Which lines	\N	HikariSub.TimeShift	Which lines		no	\N
+exact	\N	According to the selected styles	\N	HikariSub.MisspellReplacer	According to the selected styles		no	\N
+exact	\N	According to the selected styles	\N	HikariSub.TimeShift	According to the selected styles		no	\N
+exact	\N	From the selected line	\N	HikariSub.MisspellReplacer	From the selected line		no	\N
+exact	\N	From the selected line	\N	HikariSub.TimeShift	From the selected line		no	\N
+exact	\N	Add rule	\N	HikariSub.MisspellReplacer	Add rule		no	\N
+exact	\N	Edit rule	\N	HikariSub.MisspellReplacer	Edit rule		no	\N
+exact	\N	Delete rule	\N	HikariSub.MisspellReplacer	Delete rule		no	\N
+exact	\N	Find error	\N	HikariSub.MisspellReplacer	Find error		no	\N
+exact	\N	Find errors\nin current tab	\N	HikariSub.MisspellReplacer	Find errors\nin current tab		no	\N
+exact	\N	Find errors\nin all tabs	\N	HikariSub.MisspellReplacer	Find errors\nin all tabs		no	\N
+exact	\N	Replace error	\N	HikariSub.MisspellReplacer	Replace error		no	\N
+exact	\N	Replace all errors\nin current tab	\N	HikariSub.MisspellReplacer	Replace all errors\nin current tab		no	\N
+exact	\N	Replace all errors\nin all tabs	\N	HikariSub.MisspellReplacer	Replace all errors\nin all tabs		no	\N
+exact	\N	Cannot change rules\nwhen find results window is open	\N	HikariSub.MisspellReplacer	Cannot change rules\nwhen find results window is open		no	\N
+placeholder	\N	Line %i cannot be replaced,\ncause it was edited.	\N	HikariSub.MisspellReplacer	Line %1 cannot be replaced,\ncause it was edited.		no	%i -> %1
+placeholder	\N	Line %i cannot be replaced,\ncause it was edited.	\N	HikariSub.Search	Line %1 cannot be replaced,\ncause it was edited.		no	%i -> %1
+placeholder	\N	Cannot replace "%s" to "%s", with rule "%s" in line %i.	\N	HikariSub.MisspellReplacer	Cannot replace "%1" to "%2", with rule "%3" in line %4.		no	%s %s %s %i -> %1 %2 %3 %4
+obsolete	\N	Remove space before comma or dot	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove doubled spaces	\N	\N	\N	\N	\N	\N
+obsolete	\N	Replace more then three dots to suspension point	\N	\N	\N	\N	\N	\N
+obsolete	\N	Replace two dots to suspension point	\N	\N	\N	\N	\N	\N
+obsolete	\N	Replace missing spaces after dot or comma	\N	\N	\N	\N	\N	\N
+obsolete	\N	Removing japanese suffixes	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "sie"	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "nie mozliwe"	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "nie wazne"	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "w ogole"	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "bede"	\N	\N	\N	\N	\N	\N
+placeholder	\N	Rule "%s" is invalid.	\N	HikariSub.MisspellReplacer	Rule "%1" is invalid.		no	%s -> %1
+obsolete	\N	Choose folder name	\N	\N	\N	\N	\N	\N
+obsolete	\N	Enter a name for the new folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Create	\N	\N	\N	\N	\N	\N
+exact	\N	Save all	\N	HikariSub.Documents	Save all		no	\N
+exact	\N	Save all	\N	HikariSub.Tabs	Save all		no	\N
+exact	\N	Close all tabs	\N	HikariSub.Tabs	Close all tabs		no	\N
+exact	\N	Open the folder containing the subtitles	\N	HikariSub.Tabs	Open the folder containing the subtitles		no	\N
+exact	\N	Open video containing folder	\N	HikariSub.Tabs	Open video containing folder		no	\N
+exact	\N	Open audio containing folder	\N	HikariSub.Tabs	Open audio containing folder		no	\N
+exact	\N	Open keyframes containing folder	\N	HikariSub.Tabs	Open keyframes containing folder		no	\N
+obsolete	\N	Show one tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Show two tabs	\N	\N	\N	\N	\N	\N
+exact	\N	Compare by times	\N	HikariSub.Tabs	Compare by times		no	\N
+exact	\N	Compare by visible lines	\N	HikariSub.Tabs	Compare by visible lines		no	\N
+exact	\N	Compare by selections	\N	HikariSub.Tabs	Compare by selections		no	\N
+exact	\N	Compare by styles	\N	HikariSub.Tabs	Compare by styles		no	\N
+exact	\N	Compare by selected styles	\N	HikariSub.Tabs	Compare by selected styles		no	\N
+exact	\N	Compare	\N	HikariSub.Tabs	Compare		no	\N
+exact	\N	Turn off comparison	\N	HikariSub.Tabs	Turn off comparison		no	\N
+exact	\N	Subtitle comparison	\N	HikariSub.Tabs	Subtitle comparison		no	\N
+exact	\N	All tabs will be closed, continue?	\N	HikariSub.Tabs	All tabs will be closed, continue?		no	\N
+obsolete	\N	Cannot read the subtitle file:\n%s	\N	\N	\N	\N	\N	\N
+exact	\N	Video: 	\N	HikariSub.Documents	Video: 		no	\N
+exact	\N	Audio: 	\N	HikariSub.Documents	Audio: 		no	\N
+exact	\N	Keyframes: 	\N	HikariSub.Documents	Keyframes: 		no	\N
+exact	\N	Associated files:\n	\N	HikariSub.Documents	Associated files:\n		no	\N
+exact	\N	Video from directory:\n	\N	HikariSub.Documents	Video from directory:\n		no	\N
+exact	\N	Load associated	\N	HikariSub.Documents	Load associated		no	\N
+exact	\N	Load from directory	\N	HikariSub.Documents	Load from directory		no	\N
+exact	\N	Session file is corrupt	\N	HikariSub.Session	Session file is corrupt		no	\N
+obsolete	\N	Cannot read the subtitle files:\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot save to file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	The old contents of the file are kept in %s.	\N	\N	\N	\N	\N	\N
+obsolete	\N	A temporary file in its folder would let in users the file keeps out.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot read the file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	The file was not opened.	\N	\N	\N	\N	\N	\N
+exact	\N	Open sorted subtitles	\N	HikariSub.Options	Open sorted subtitles		no	\N
+exact	\N	Turn spell checking	\N	HikariSub.Options	Turn spell checking		no	\N
+exact	\N	Select the line with the time line\nof the previous active tab	\N	HikariSub.Options	Select the line with the time line\nof the previous active tab		no	\N
+exact	\N	Always open subtitles in a new tab	\N	HikariSub.Options	Always open subtitles in a new tab		no	\N
+exact	\N	Show suggestions by double-clicking on misspell	\N	HikariSub.Options	Show suggestions by double-clicking on misspell		no	\N
+exact	\N	Stay on selected line when editing times	\N	HikariSub.Options	Stay on selected line when editing times		no	\N
+exact	\N	Turn off edits preview on video\n(re-opening tab is required)	\N	HikariSub.Options	Turn off edits preview on video\n(re-opening tab is required)		no	\N
+exact	\N	Turn searching of visible line\nafter switching from full screen	\N	HikariSub.Options	Turn searching of visible line\nafter switching from full screen		no	\N
+exact	\N	Change active line after add to selection	\N	HikariSub.Options	Change active line after add to selection		no	\N
+exact	\N	Synchronize time shifting window in all tabs	\N	HikariSub.Options	Synchronize time shifting window in all tabs		no	\N
+exact	\N	Hide original on video in translator mode	\N	HikariSub.Options	Hide original on video in translator mode		no	\N
+exact	\N	Show original in translator mode	\N	HikariSub.Options	Show original in translator mode		no	\N
+exact	\N	Do not change selections when duplicating dialogue lines	\N	HikariSub.Options	Do not change selections when duplicating dialogue lines		no	\N
+exact	\N	Do not vertically center the active line in the subtitle grid	\N	HikariSub.Options	Do not vertically center the active line in the subtitle grid		no	\N
+exact	\N	Use numpad shortcuts in text fields	\N	HikariSub.Options	Use numpad shortcuts in text fields		no	\N
+exact	\N	Do not warn about resolution mismatch	\N	HikariSub.Options	Do not warn about resolution mismatch		no	\N
+exact	\N	Turn off visual tools warning	\N	HikariSub.Options	Turn off visual tools warning		no	\N
+exact	\N	Compatibility with older HikariSub scripts	\N	HikariSub.Options	Compatibility with older HikariSub scripts		no	\N
+obsolete	\N	Language (program restart required)	\N	\N	\N	\N	\N	\N
+exact	\N	Put files .dic and .aff to "Dictionary" folder	\N	HikariSub.Options	Put files .dic and .aff to "Dictionary" folder		no	\N
+exact	\N	Spell checker language ("Dictionary" folder)	\N	HikariSub.Options	Spell checker language ("Dictionary" folder)		no	\N
+obsolete	\N	Updates	\N	\N	\N	\N	\N	\N
+exact	\N	Check for updates automatically	\N	HikariSub.MainWindow	Check for updates automatically		no	\N
+obsolete	\N	When the program starts: once a day, or an hour after a check that failed	\N	\N	\N	\N	\N	\N
+exact	\N	Stable versions only	\N	HikariSub.MainWindow	Stable versions only		no	\N
+obsolete	\N	A release candidate is still told about newer release candidates	\N	\N	\N	\N	\N	\N
+exact	\N	0 turns off saving while editing	\N	HikariSub.Options	0 turns off saving while editing		no	\N
+exact	\N	Number of autosaves can be set from 2 to 1000000	\N	HikariSub.Options	Number of autosaves can be set from 2 to 1000000		no	\N
+exact	\N	Number of tab name characters. Range from 20 to 150	\N	HikariSub.Options	Number of tab name characters. Range from 20 to 150		no	\N
+exact	\N	Number of edits to save	\N	HikariSub.Options	Number of edits to save		no	\N
+exact	\N	Maximum number of autosave files	\N	HikariSub.Options	Maximum number of autosave files		no	\N
+exact	\N	Start frame offset in ms:	\N	HikariSub.Options	Start frame offset in ms:		no	\N
+exact	\N	End frame offset in ms:	\N	HikariSub.Options	End frame offset in ms:		no	\N
+exact	\N	ASS tag replacement:	\N	HikariSub.Options	ASS tag replacement:		no	\N
+exact	\N	Number of tab name characters	\N	HikariSub.Options	Number of tab name characters		no	\N
+exact	\N	LUA scripts tracking level	\N	HikariSub.Options	LUA scripts tracking level		no	\N
+exact	\N	Subtitle grid font:	\N	HikariSub.Options	Subtitle grid font:		no	\N
+exact	\N	Program font:	\N	HikariSub.Options	Program font:		no	\N
+exact	\N	Calculate spaces and punctation characters for wraps	\N	HikariSub.Options	Calculate spaces and punctation characters for wraps		no	\N
+exact	\N	Calculate spaces and punctation characters for CPS	\N	HikariSub.Options	Calculate spaces and punctation characters for CPS		no	\N
+exact	\N	Autoload loading method	\N	HikariSub.Options	Autoload loading method		no	\N
+exact	\N	After open menu	\N	HikariSub.Options	After open menu		no	\N
+exact	\N	After open menu asynchronously	\N	HikariSub.Options	After open menu asynchronously		no	\N
+exact	\N	After program start	\N	HikariSub.Options	After program start		no	\N
+exact	\N	After program start asynchronously	\N	HikariSub.Options	After program start asynchronously		no	\N
+exact	\N	Folder with external fonts	\N	HikariSub.Options	Folder with external fonts		no	\N
+exact	\N	Choose	\N	HikariSub.Options	Choose		no	\N
+exact	\N	Choose choose external font folder	\N	HikariSub.Options	Choose choose external font folder		no	\N
+exact	\N	Choose catalog	\N	HikariSub.Options	Choose catalog		no	\N
+exact	\N	Choose style	\N	HikariSub.Options	Choose style		no	\N
+exact	\N	Choose FPS	\N	HikariSub.Options	Choose FPS		no	\N
+exact	\N	Time for one letter in milliseconds	\N	HikariSub.Conversion	Time for one letter in milliseconds		no	\N
+exact	\N	Time for one letter in milliseconds	\N	HikariSub.Options	Time for one letter in milliseconds		no	\N
+exact	\N	Tags to paste at the beginning of every ASS line	\N	HikariSub.Conversion	Tags to paste at the beginning of every ASS line		no	\N
+exact	\N	Tags to paste at the beginning of every ASS line	\N	HikariSub.Options	Tags to paste at the beginning of every ASS line		no	\N
+exact	\N	Resolution when converting to ASS	\N	HikariSub.Conversion	Resolution when converting to ASS		no	\N
+exact	\N	Resolution when converting to ASS	\N	HikariSub.Options	Resolution when converting to ASS		no	\N
+exact	\N	catalog for style	\N	HikariSub.Options	catalog for style		no	\N
+exact	\N	style	\N	HikariSub.Options	style		no	\N
+placeholder	\N	The selected %s for conversion does not exist\nand will be changed to the default	\N	HikariSub.Options	The selected %1 for conversion does not exist\nand will be changed to the default		no	%s -> %1
+exact	\N	FPS from video	\N	HikariSub.Conversion	FPS from video		no	\N
+exact	\N	FPS from video	\N	HikariSub.Options	FPS from video		no	\N
+exact	\N	New end times	\N	HikariSub.Conversion	New end times		no	\N
+exact	\N	New end times	\N	HikariSub.Options	New end times		no	\N
+exact	\N	Show window before conversion	\N	HikariSub.Options	Show window before conversion		no	\N
+exact	\N	Left mouse button pauses video	\N	HikariSub.Options	Left mouse button pauses video		no	\N
+exact	\N	Open video from context menu on full screen	\N	HikariSub.Options	Open video from context menu on full screen		no	\N
+exact	\N	Convert video colours on the GPU (requires reloading)	\N	HikariSub.Options	Convert video colours on the GPU (requires reloading)		no	\N
+exact	\N	Open video with time of active line	\N	HikariSub.Options	Open video with time of active line		no	\N
+exact	\N	Preferred audio (separated by semicolons)	\N	HikariSub.Options	Preferred audio (separated by semicolons)		no	\N
+exact	\N	FFMS2 video seeking method (requires reloading)	\N	HikariSub.Options	FFMS2 video seeking method (requires reloading)		no	\N
+exact	\N	Subtitle display filter	\N	HikariSub.Options	Subtitle display filter		no	\N
+exact	\N	Start video zoom in percent.	\N	HikariSub.Options	Start video zoom in percent.		no	\N
+exact	\N	Linear	\N	HikariSub.Options	Linear		no	\N
+exact	\N	Normal	\N	HikariSub.Options	Normal		no	\N
+exact	\N	Normal	\N	HikariSub.ScriptProperties	Normal		no	\N
+exact	\N	Aggressive (fast in rewind)	\N	HikariSub.Options	Aggressive (fast in rewind)		no	\N
+exact	\N	Unsafe (always fast)	\N	HikariSub.Options	Unsafe (always fast)		no	\N
+exact	\N	Choose filtering	\N	HikariSub.Options	Choose filtering		no	\N
+exact	\N	Global shortcuts	\N	HikariSub.Options	Global shortcuts		no	\N
+exact	\N	Set shortcuts	\N	HikariSub.Options	Set shortcuts		no	\N
+exact	\N	Audio Shortcuts	\N	HikariSub.Options	Audio Shortcuts		no	\N
+exact	\N	Editor shortcuts	\N	HikariSub.Options	Editor shortcuts		no	\N
+exact	\N	Subtitle shortcuts	\N	HikariSub.Options	Subtitle shortcuts		no	\N
+exact	\N	Video shortcuts	\N	HikariSub.Options	Video shortcuts		no	\N
+exact	\N	Filtering mode:	\N	HikariSub.Options	Filtering mode:		no	\N
+exact	\N	Function	\N	HikariSub.Options	Function		no	\N
+exact	\N	Restore default hotkey	\N	HikariSub.Options	Restore default hotkey		no	\N
+exact	\N	Show background selection	\N	HikariSub.Options	Show background selection		no	\N
+exact	\N	Show seconds markers	\N	HikariSub.Options	Show seconds markers		no	\N
+exact	\N	Show time next to cursor	\N	HikariSub.Options	Show time next to cursor		no	\N
+exact	\N	Follow audio during playback	\N	HikariSub.Options	Follow audio during playback		no	\N
+exact	\N	Show keyframes	\N	HikariSub.Options	Show keyframes		no	\N
+exact	\N	Show video position	\N	HikariSub.Options	Show video position		no	\N
+exact	\N	Activate the audio when hover	\N	HikariSub.Options	Activate the audio when hover		no	\N
+exact	\N	Snap to keyframe	\N	HikariSub.Options	Snap to keyframe		no	\N
+exact	\N	Snap to other lines	\N	HikariSub.Options	Snap to other lines		no	\N
+exact	\N	Do not play audio after changing the line	\N	HikariSub.Options	Do not play audio after changing the line		no	\N
+exact	\N	Merge all the "n" with the previous syllable	\N	HikariSub.Options	Merge all the "n" with the previous syllable		no	\N
+exact	\N	Load audio into RAM	\N	HikariSub.Options	Load audio into RAM		no	\N
+exact	\N	Move syllable line after click	\N	HikariSub.Options	Move syllable line after click		no	\N
+exact	\N	Range from 0 to 10000, where 0 turns off\nremoving audio cache files.	\N	HikariSub.Options	Range from 0 to 10000, where 0 turns off\nremoving audio cache files.		no	\N
+exact	\N	All visible	\N	HikariSub.Options	All visible		no	\N
+exact	\N	Before and after the active	\N	HikariSub.Options	Before and after the active		no	\N
+exact	\N	Audio delay in milliseconds	\N	HikariSub.Options	Audio delay in milliseconds		no	\N
+exact	\N	Audio to play before and after the marker in milliseconds	\N	HikariSub.Options	Audio to play before and after the marker in milliseconds		no	\N
+exact	\N	Lead-in	\N	HikariSub.Options	Lead-in		no	\N
+exact	\N	Lead-in	\N	HikariSub.TimeShift	Lead-in		no	\N
+exact	\N	Lead-out	\N	HikariSub.Options	Lead-out		no	\N
+exact	\N	Lead-out	\N	HikariSub.TimeShift	Lead-out		no	\N
+exact	\N	Line boundaries thickness	\N	HikariSub.Options	Line boundaries thickness		no	\N
+exact	\N	Audio cache files limit	\N	HikariSub.Options	Audio cache files limit		no	\N
+exact	\N	The way to display inactive lines	\N	HikariSub.Options	The way to display inactive lines		no	\N
+obsolete	\N	Inactive window background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inactive window text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inactive window border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window border background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inactive window border background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inactive window header text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window header text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window invaded element header	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window pressed element header	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window closing upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window elements warning	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window pressed closing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comment background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle dialogue background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle lines visible on video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle selection (transparency)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle active line border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle colliding lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle line border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle header background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle header text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle line label	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle modified-line label	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle saved-line label	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle spelling-error background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle unconfirmed-line label	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison match background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison mismatch background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison comment match background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison comment mismatch background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor tag names	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor tag values	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor curly braces	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor line splitting and ASS drawings	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor tags operators	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template variables	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template code marks	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template functions	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template keywords	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor brackets background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor found words selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template strings	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor inactive window selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor border on focus	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor spelling error background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio end marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio start marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio time shift marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio cursor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio inactive line marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio keyframes	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio seconds boundaries	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio syllable marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio syllable text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio inactive line background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio the selection after modification	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio waveform	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio Inactive waveform	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio modified waveform	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio selected waveform	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio spectrum	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio spectrum background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio spectrum echo	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text field background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text field border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text field border on focus	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text field selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text field inactive window selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list background upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list background on focus	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list pushed background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list border upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list border of pushed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list border on focus	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list inactive border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Togglebutton toggled background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll bar background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll bar slider	\N	\N	\N	\N	\N	\N
+obsolete	\N	Togglebutton toggled border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll bar pushed slider	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll bar slider upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Staticbox border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list header background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list header text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Status bar border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar background 1	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar background 2	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar selection border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar selection clicked bacground	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar selection hover bacground	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu selection background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu selection border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab active border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar background 1	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar background 2	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab active background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab inactive background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab inactive border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab background of second visible tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab inactive background upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab active text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab close upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab inactive text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar arrow	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar arrow background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar arrow background upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider path background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider path border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider border of pushed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider border upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider background of pushed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider background upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finding result file name background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finding result file name foreground	\N	\N	\N	\N	\N	\N
+obsolete	\N	Resize line dots	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finding result found phrase background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finding result found phrase foreground	\N	\N	\N	\N	\N	\N
+obsolete	\N	First color of style preview background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Second color of style preview background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Theme name:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Name of the copied theme.\nDefault themes, DarkSentro and LightSentro,\ncannot be edited and must be copied.	\N	\N	\N	\N	\N	\N
+exact	\N	Copy	\N	HikariSub.SelectLines	Copy		no	\N
+exact	\N	Copy	\N	HikariSub.Styles	Copy		no	\N
+obsolete	\N	Warning! Transparency works only on the audio spectrum,\ntext field, and subtitle grid.	\N	\N	\N	\N	\N	\N
+exact	\N	Name	\N	HikariSub.VisualTools	Name		no	\N
+obsolete	\N	Color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Deselect all	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select all	\N	\N	\N	\N	\N	\N
+exact	\N	Advanced	\N	HikariSub.Options	Advanced		no	\N
+obsolete	\N	Themes	\N	\N	\N	\N	\N	\N
+exact	\N	Hotkeys	\N	HikariSub.Options	Hotkeys		no	\N
+obsolete	\N	Associations	\N	\N	\N	\N	\N	\N
+exact	\N	Subtitle properties	\N	HikariSub.Options	Subtitle properties		no	\N
+exact	\N	Set default	\N	HikariSub.Options	Set default		no	\N
+exact	\N	Subtitle information	\N	HikariSub.Options	Subtitle information		no	\N
+exact	\N	Subtitle information	\N	HikariSub.ScriptProperties	Subtitle information		no	\N
+exact	\N	Author	\N	HikariSub.Options	Author		no	\N
+exact	\N	Author	\N	HikariSub.ScriptProperties	Author		no	\N
+exact	\N	Editing	\N	HikariSub.MainWindow	Editing		no	\N
+exact	\N	Editing	\N	HikariSub.Options	Editing		no	\N
+exact	\N	Editing	\N	HikariSub.ScriptProperties	Editing		no	\N
+exact	\N	Editing	\N	HikariSub.Video	Editing		no	\N
+exact	\N	Editing	\N	HikariSub.VisualTools	Editing		no	\N
+exact	\N	Proofreading	\N	HikariSub.Options	Proofreading		no	\N
+exact	\N	Proofreading	\N	HikariSub.ScriptProperties	Proofreading		no	\N
+exact	\N	Timer	\N	HikariSub.Options	Timer		no	\N
+exact	\N	Timer	\N	HikariSub.ScriptProperties	Timer		no	\N
+exact	\N	Title	\N	HikariSub.Options	Title		no	\N
+exact	\N	Title	\N	HikariSub.ScriptProperties	Title		no	\N
+exact	\N	Translator	\N	HikariSub.Options	Translator		no	\N
+exact	\N	Translator	\N	HikariSub.ScriptProperties	Translator		no	\N
+exact	\N	Always ask before changing subtitle information	\N	HikariSub.Options	Always ask before changing subtitle information		no	\N
+obsolete	\N	Time elapsed: 00:00:00.00	\N	\N	\N	\N	\N	\N
+exact	\N	Indexing video	\N	HikariSub.Video	Indexing video		no	\N
+obsolete	\N	Cannot get frame %i: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video frame size is too large	\N	\N	\N	\N	\N	\N
+exact	\N	Choose the track	\N	HikariSub.Audio	Choose the track		no	\N
+obsolete	\N	Cannot save index, error %s occurred	\N	\N	\N	\N	\N	\N
+exact	\N	Cannot create VideoSource.	\N	HikariSub.Video	Cannot create VideoSource.		no	\N
+exact	\N	Cannot convert video to RGBA	\N	HikariSub.Video	Cannot convert video to RGBA		no	\N
+exact	\N	Cannot change YCbCr matrix	\N	HikariSub.Video	Cannot change YCbCr matrix		no	\N
+obsolete	\N	You cannot load the video track	\N	\N	\N	\N	\N	\N
+obsolete	\N	You cannot get information about the video	\N	\N	\N	\N	\N	\N
+obsolete	\N	An error occurred when creating audio source: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	An error occurred when converting audio: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Delay failed, it's longer than audio duration time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create the audio cache %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Not enough memory for the audio cache	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create DXVA processor service	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get DXVA GUIDs	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot enumerate DXVA formats	\N	\N	\N	\N	\N	\N
+obsolete	\N	This format is not supported by DXVA	\N	\N	\N	\N	\N	\N
+obsolete	\N	GetVideoProcessorCaps failed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create DXVA surface %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create DXVA processor	\N	\N	\N	\N	\N	\N
+obsolete	\N	One of the DirectX vertices settings failed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create subtitle texture	\N	\N	\N	\N	\N	\N
+obsolete	\N	No frame buffer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot lock texture buffer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot unlock subtitle texture buffer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot unlock texture buffer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot overlay surfaces	\N	\N	\N	\N	\N	\N
+obsolete	\N	Chapter %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video file does not contain a video stream	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create GStreamer pipeline (playbin)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create GStreamer video display module	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open video file: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Track %i	\N	\N	\N	\N	\N	\N
+exact	\N	Resolution	\N	HikariSub.ScriptProperties	Resolution		no	\N
+exact	\N	From video	\N	HikariSub.Conversion	From video		no	\N
+exact	\N	From video	\N	HikariSub.ScriptProperties	From video		no	\N
+exact	\N	Layout	\N	HikariSub.ScriptProperties	Layout		no	\N
+exact	\N	YCbCr matrix	\N	HikariSub.ScriptProperties	YCbCr matrix		no	\N
+exact	\N	0: Auto, top line wider	\N	HikariSub.ScriptProperties	0: Auto, top line wider		no	\N
+obsolete	\N	1: End-of-line wrapping, only \\N breaks	\N	\N	\N	\N	\N	\N
+obsolete	\N	2: No wrapping, both \\n and \\N break	\N	\N	\N	\N	\N	\N
+exact	\N	3: Auto, bottom line wider	\N	HikariSub.ScriptProperties	3: Auto, bottom line wider		no	\N
+exact	\N	Reversed	\N	HikariSub.ScriptProperties	Reversed		no	\N
+exact	\N	Wrap style	\N	HikariSub.ScriptProperties	Wrap style		no	\N
+exact	\N	Colliding lines	\N	HikariSub.ScriptProperties	Colliding lines		no	\N
+exact	\N	Scale border and shadow	\N	HikariSub.ScriptProperties	Scale border and shadow		no	\N
+exact	\N	Video height	\N	HikariSub.ScriptProperties	Video height		no	\N
+exact	\N	Video width	\N	HikariSub.ScriptProperties	Video width		no	\N
+obsolete	\N	How to wrap lines	\N	\N	\N	\N	\N	\N
+exact	\N	Select	\N	HikariSub.SelectLines	Select		no	\N
+exact	\N	With	\N	HikariSub.SelectLines	With		no	\N
+exact	\N	Without	\N	HikariSub.SelectLines	Without		no	\N
+exact	\N	Start time	\N	HikariSub.SelectLines	Start time		no	\N
+exact	\N	Dialogue / comments	\N	HikariSub.SelectLines	Dialogue / comments		no	\N
+exact	\N	Dialogue	\N	HikariSub.SelectLines	Dialogue		no	\N
+exact	\N	Comments	\N	HikariSub.SelectLines	Comments		no	\N
+exact	\N	Add to selection	\N	HikariSub.SelectLines	Add to selection		no	\N
+exact	\N	Deselect	\N	HikariSub.SelectLines	Deselect		no	\N
+exact	\N	Selection	\N	HikariSub.SelectLines	Selection		no	\N
+exact	\N	Do nothing	\N	HikariSub.SelectLines	Do nothing		no	\N
+exact	\N	Cut	\N	HikariSub.SelectLines	Cut		no	\N
+exact	\N	Move to beginning	\N	HikariSub.SelectLines	Move to beginning		no	\N
+exact	\N	Move to end	\N	HikariSub.SelectLines	Move to end		no	\N
+exact	\N	Set as comment	\N	HikariSub.SelectLines	Set as comment		no	\N
+exact	\N	Action	\N	HikariSub.SelectLines	Action		no	\N
+exact	\N	Select in all tabs	\N	HikariSub.SelectLines	Select in all tabs		no	\N
+placeholder	\N	%i lines selected.	\N	HikariSub.SelectLines	%1 lines selected.		no	%i -> %1
+placeholder	\N	%i lines added to selection.	\N	HikariSub.SelectLines	%1 lines added to selection.		no	%i -> %1
+placeholder	\N	%i lines deselected.	\N	HikariSub.SelectLines	%1 lines deselected.		no	%i -> %1
+obsolete	\N	Write the name of the profile\nor select existing profile to overwrite	\N	\N	\N	\N	\N	\N
+obsolete	\N	Do you want to overwrite profile of name %s	\N	\N	\N	\N	\N	\N
+exact	\N	Post processor	\N	HikariSub.TimeShift	Post processor		no	\N
+exact	\N	Shift times	\N	HikariSub.TimeShift	Shift times		no	\N
+exact	\N	All times higher and equal	\N	HikariSub.TimeShift	All times higher and equal		no	\N
+exact	\N	All times lower and equal	\N	HikariSub.TimeShift	All times lower and equal		no	\N
+obsolete	\N	Profile editing	\N	\N	\N	\N	\N	\N
+exact	\N	Adding and editing profiles	\N	HikariSub.TimeShift	Adding and editing profiles		no	\N
+exact	\N	Removing profiles	\N	HikariSub.TimeShift	Removing profiles		no	\N
+exact	\N	Shift	\N	HikariSub.TimeShift	Shift		no	\N
+exact	\N	Shift subtitle times	\N	HikariSub.TimeShift	Shift subtitle times		no	\N
+exact	\N	Forward	\N	HikariSub.TimeShift	Forward		no	\N
+exact	\N	Backward	\N	HikariSub.TimeShift	Backward		no	\N
+exact	\N	Tag times	\N	HikariSub.TimeShift	Tag times		no	\N
+exact	\N	Shift by video / audio	\N	HikariSub.TimeShift	Shift by video / audio		no	\N
+exact	\N	Beginning	\N	HikariSub.TimeShift	Beginning		no	\N
+exact	\N	End	\N	HikariSub.Editor	End		no	\N
+exact	\N	End	\N	HikariSub.Grid	End		no	\N
+exact	\N	End	\N	HikariSub.TimeShift	End		no	\N
+obsolete	\N	Move the marker\nto video time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move the marker\nto audio time	\N	\N	\N	\N	\N	\N
+exact	\N	A method of time shift	\N	HikariSub.TimeShift	A method of time shift		no	\N
+exact	\N	Both times	\N	HikariSub.TimeShift	Both times		no	\N
+exact	\N	Correction end times	\N	HikariSub.TimeShift	Correction end times		no	\N
+exact	\N	Leave unchanged	\N	HikariSub.TimeShift	Leave unchanged		no	\N
+exact	\N	Adjust overlapping times	\N	HikariSub.TimeShift	Adjust overlapping times		no	\N
+exact	\N	New times	\N	HikariSub.TimeShift	New times		no	\N
+obsolete	\N	Lead-in/lead-out	\N	\N	\N	\N	\N	\N
+exact	\N	Run post processor	\N	HikariSub.TimeShift	Run post processor		no	\N
+exact	\N	Set times as continuous	\N	HikariSub.TimeShift	Set times as continuous		no	\N
+obsolete	\N	Enable	\N	\N	\N	\N	\N	\N
+exact	\N	Start time threshold	\N	HikariSub.TimeShift	Start time threshold		no	\N
+exact	\N	End time threshold	\N	HikariSub.TimeShift	End time threshold		no	\N
+exact	\N	Snap to keyframes	\N	HikariSub.TimeShift	Snap to keyframes		no	\N
+exact	\N	Before the start of time	\N	HikariSub.TimeShift	Before the start of time		no	\N
+exact	\N	After the start time	\N	HikariSub.TimeShift	After the start time		no	\N
+exact	\N	Before the end time	\N	HikariSub.TimeShift	Before the end time		no	\N
+exact	\N	After the end time	\N	HikariSub.TimeShift	After the end time		no	\N
+obsolete	\N	The choice of lines to move	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select a style from the list	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move according to the following styles (separated by a coma)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Time shifts	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move the selected line \nto the time video ± time shift	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move the selected lines to\nmark time audio ± time shift	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move the start time to the time video / audio	\N	\N	\N	\N	\N	\N
+obsolete	\N	Moves the end time to the video/audio time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Delays subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Speeds up subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shift times by time / frames	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shifts \\move, \\t, and \\fad tag times\nso their positions on video do not change\n(slows down time shifting)	\N	\N	\N	\N	\N	\N
+obsolete	\N	The choice of times to move	\N	\N	\N	\N	\N	\N
+obsolete	\N	Correction end times, when they are improper or overlap each other	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserts introduction to the start time (good when using fad)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Introduction time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserts introduction to the end time (good when using fad)	\N	\N	\N	\N	\N	\N
+obsolete	\N	End time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	Start time extension threshold	\N	\N	\N	\N	\N	\N
+obsolete	\N	End time extension threshold	\N	\N	\N	\N	\N	\N
+obsolete	\N	The maximum shift to a keyframe \nbefore the start time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	The maximum shift to a keyframe \nafter the start time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	The maximum shift to a keyframe \nbefore the end time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	The maximum shift to a keyframe \nafter the end time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	There is no selected profile to remove	\N	\N	\N	\N	\N	\N
+obsolete	\N	Do you want to remove profile of name "%s"	\N	\N	\N	\N	\N	\N
+obsolete	\N	No dictionary files were found in the "%s\\Dictionary" folder.\nSpell checking will be disabled	\N	\N	\N	\N	\N	\N
+obsolete	\N	Unable to read the dictionary conversion format.	\N	\N	\N	\N	\N	\N
+exact	\N	Failed to initialize spell checker.	\N	HikariSub.Spelling	Failed to initialize spell checker.		no	\N
+exact	\N	Ignore comments	\N	HikariSub.Spelling	Ignore comments		no	\N
+exact	\N	Ignore words written entirely\nin uppercase	\N	HikariSub.Spelling	Ignore words written entirely\nin uppercase		no	\N
+exact	\N	Misspell word:	\N	HikariSub.Spelling	Misspell word:		no	\N
+exact	\N	Replace to:	\N	HikariSub.Spelling	Replace to:		no	\N
+exact	\N	Ignore	\N	HikariSub.Search	Ignore		no	\N
+exact	\N	Ignore	\N	HikariSub.Spelling	Ignore		no	\N
+exact	\N	Ignore All	\N	HikariSub.Spelling	Ignore All		no	\N
+exact	\N	Add to dictionary	\N	HikariSub.Spelling	Add to dictionary		no	\N
+exact	\N	Remove from dictionary	\N	HikariSub.Spelling	Remove from dictionary		no	\N
+exact	\N	Remove from dictionary words added by user.	\N	HikariSub.Spelling	Remove from dictionary words added by user.		no	\N
+exact	\N	No spelling errors were found	\N	HikariSub.Spelling	No spelling errors were found		no	\N
+exact	\N	Words added to dictionary	\N	HikariSub.Spelling	Words added to dictionary		no	\N
+obsolete	\N	Style editing	\N	\N	\N	\N	\N	\N
+exact	\N	Style name:	\N	HikariSub.Styles	Style name:		no	\N
+exact	\N	Font and size:	\N	HikariSub.Styles	Font and size:		no	\N
+exact	\N	Allows managing font catalogs	\N	HikariSub.Fonts	Allows managing font catalogs		no	\N
+exact	\N	Colors and transparency:	\N	HikariSub.Styles	Colors and transparency:		no	\N
+exact	\N	First	\N	HikariSub.Styles	First		no	\N
+exact	\N	Second	\N	HikariSub.Styles	Second		no	\N
+exact	\N	Border	\N	HikariSub.Styles	Border		no	\N
+exact	\N	Shadow	\N	HikariSub.Styles	Shadow		no	\N
+exact	\N	Border:	\N	HikariSub.Styles	Border:		no	\N
+exact	\N	Scale X:	\N	HikariSub.Styles	Scale X:		no	\N
+exact	\N	Scale Y:	\N	HikariSub.Styles	Scale Y:		no	\N
+exact	\N	Shadow:	\N	HikariSub.Styles	Shadow:		no	\N
+exact	\N	Angle:	\N	HikariSub.Styles	Angle:		no	\N
+exact	\N	Border type:	\N	HikariSub.Styles	Border type:		no	\N
+exact	\N	Spacing:	\N	HikariSub.Styles	Spacing:		no	\N
+exact	\N	Opaque box	\N	HikariSub.Styles	Opaque box		no	\N
+exact	\N	Left margin:	\N	HikariSub.Styles	Left margin:		no	\N
+exact	\N	Right:	\N	HikariSub.Styles	Right:		no	\N
+exact	\N	Vertical:	\N	HikariSub.Styles	Vertical:		no	\N
+exact	\N	Alignment:	\N	HikariSub.Styles	Alignment:		no	\N
+exact	\N	0 - ANSI	\N	HikariSub.Styles	0 - ANSI		no	\N
+exact	\N	1 - Default	\N	HikariSub.Styles	1 - Default		no	\N
+exact	\N	2 - Symbol	\N	HikariSub.Styles	2 - Symbol		no	\N
+exact	\N	77 - Mac	\N	HikariSub.Styles	77 - Mac		no	\N
+exact	\N	128 - Japanese	\N	HikariSub.Styles	128 - Japanese		no	\N
+exact	\N	129 - Hangul	\N	HikariSub.Styles	129 - Hangul		no	\N
+exact	\N	130 - Johab	\N	HikariSub.Styles	130 - Johab		no	\N
+exact	\N	134 - Chinese GB2312	\N	HikariSub.Styles	134 - Chinese GB2312		no	\N
+exact	\N	135 - Chinese BIG5	\N	HikariSub.Styles	135 - Chinese BIG5		no	\N
+exact	\N	161 - Greek	\N	HikariSub.Styles	161 - Greek		no	\N
+exact	\N	162 - Turkish	\N	HikariSub.Styles	162 - Turkish		no	\N
+exact	\N	163 - Vietnamese	\N	HikariSub.Styles	163 - Vietnamese		no	\N
+exact	\N	177 - Hebrew	\N	HikariSub.Styles	177 - Hebrew		no	\N
+exact	\N	178 - Arabic	\N	HikariSub.Styles	178 - Arabic		no	\N
+exact	\N	186 - Baltic	\N	HikariSub.Styles	186 - Baltic		no	\N
+exact	\N	204 - Russian	\N	HikariSub.Styles	204 - Russian		no	\N
+exact	\N	222 - Thai	\N	HikariSub.Styles	222 - Thai		no	\N
+exact	\N	238 - Central European (Polish)	\N	HikariSub.Styles	238 - Central European (Polish)		no	\N
+exact	\N	255 - OEM	\N	HikariSub.Styles	255 - OEM		no	\N
+exact	\N	Text encoding:	\N	HikariSub.Styles	Text encoding:		no	\N
+exact	\N	Style preview:	\N	HikariSub.Styles	Style preview:		no	\N
+exact	\N	Change all selected styles?	\N	HikariSub.Styles	Change all selected styles?		no	\N
+obsolete	\N	Style name	\N	\N	\N	\N	\N	\N
+exact	\N	Font size	\N	HikariSub.Fonts	Font size		no	\N
+exact	\N	Font size	\N	HikariSub.Options	Font size		no	\N
+exact	\N	Font size	\N	HikariSub.TagList	Font size		no	\N
+obsolete	\N	First color transparency, 0 - none, 255 - transparent	\N	\N	\N	\N	\N	\N
+obsolete	\N	Second color transparency, 0 - none, 255 - transparent	\N	\N	\N	\N	\N	\N
+obsolete	\N	Border transparency, 0 - none, 255 - transparent	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shadow transparency, 0 - none, 255 - transparent	\N	\N	\N	\N	\N	\N
+obsolete	\N	Border size in pixels	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shadow size in pixels	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale X in %	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale Y in %	\N	\N	\N	\N	\N	\N
+obsolete	\N	Rotation in degrees	\N	\N	\N	\N	\N	\N
+obsolete	\N	Spacing in pixels (negative values permitted)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Rectangular border	\N	\N	\N	\N	\N	\N
+exact	\N	Right margin	\N	HikariSub.Editor	Right margin		no	\N
+exact	\N	Right margin	\N	HikariSub.Grid	Right margin		no	\N
+exact	\N	Left margin	\N	HikariSub.Editor	Left margin		no	\N
+exact	\N	Left margin	\N	HikariSub.Grid	Left margin		no	\N
+exact	\N	Vertical margin	\N	HikariSub.Editor	Vertical margin		no	\N
+exact	\N	Vertical margin	\N	HikariSub.Grid	Vertical margin		no	\N
+obsolete	\N	Bottom left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Bottom center	\N	\N	\N	\N	\N	\N
+obsolete	\N	Bottom right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Center left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Center right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Top left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Top center	\N	\N	\N	\N	\N	\N
+obsolete	\N	Top right	\N	\N	\N	\N	\N	\N
+exact	\N	Text encoding	\N	HikariSub.TagList	Text encoding		no	\N
+obsolete	\N	Choose columns	\N	\N	\N	\N	\N	\N
+exact	\N	Choose styles	\N	HikariSub.MisspellReplacer	Choose styles		no	\N
+exact	\N	Choose styles	\N	HikariSub.Search	Choose styles		no	\N
+exact	\N	Choose styles	\N	HikariSub.SelectLines	Choose styles		no	\N
+exact	\N	Choose styles	\N	HikariSub.Styles	Choose styles		no	\N
+obsolete	\N	Select columns	\N	\N	\N	\N	\N	\N
+exact	\N	Set	\N	HikariSub.MainWindow	Set		no	\N
+obsolete	\N	%d element	%d elements	\N	\N	\N	\N	\N
+obsolete	\N	Opening subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	New subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line editing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editing multiple lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Correcting spelling errors in the text field	\N	\N	\N	\N	\N	\N
+obsolete	\N	Duplicating lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining line with the previous line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining line with the next line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining lines and keeping the first	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining lines and keeping the last	\N	\N	\N	\N	\N	\N
+obsolete	\N	Pasting lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Pasting columns	\N	\N	\N	\N	\N	\N
+obsolete	\N	Pasting translation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Moving translation text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting line times as continuous	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting FPS from video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting custom FPS	\N	\N	\N	\N	\N	\N
+obsolete	\N	Swapping lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitles conversion	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sorting subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Deleting lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Deleting text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Turning on translator mode	\N	\N	\N	\N	\N	\N
+obsolete	\N	Turning off translator mode	\N	\N	\N	\N	\N	\N
+obsolete	\N	Adding a new line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserting line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing time on audio spectrum	\N	\N	\N	\N	\N	\N
+obsolete	\N	Snapping to keyframe	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing the subtitle header	\N	\N	\N	\N	\N	\N
+obsolete	\N	Selecting lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shifting times	\N	\N	\N	\N	\N	\N
+obsolete	\N	Correcting spelling errors	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing subtitles resolution	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual positioning tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual movement tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual scaling tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual Z-axis rotation tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual X/Y-axis rotation tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual rectangular clipping tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual vector clipping tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual vector drawing tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual position adjustment tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual scale and rotation adjustment tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual Hydra tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing minor errors	\N	\N	\N	\N	\N	\N
+obsolete	\N	Adding tree	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting tree description	\N	\N	\N	\N	\N	\N
+obsolete	\N	Adding line to tree	\N	\N	\N	\N	\N	\N
+obsolete	\N	Removing tree	\N	\N	\N	\N	\N	\N
+obsolete	\N	Automation script	\N	\N	\N	\N	\N	\N
+exact	\N	Filtering	\N	HikariSub.Grid	Filtering		no	\N
+obsolete	\N	Removing filtering	\N	\N	\N	\N	\N	\N
+obsolete	\N	Splitting lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixed the tree markers of %d line: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.	Fixed the tree markers of %d lines: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.	\N	\N	\N	\N	\N
+obsolete	\N	, active line %i	\N	\N	\N	\N	\N	\N
+exact	\N	Hide line wraps	\N	HikariSub.Grid	Hide line wraps		no	\N
+obsolete	\N	Do not include selected lines	\N	\N	\N	\N	\N	\N
+exact	\N	Insert &before	\N	HikariSub.Grid	Insert &before		no	\N
+exact	\N	Insert &after	\N	HikariSub.Grid	Insert &after		no	\N
+exact	\N	Insert before with &video time	\N	HikariSub.Grid	Insert before with &video time		no	\N
+obsolete	\N	Insert &after with video time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert lines	\N	\N	\N	\N	\N	\N
+exact	\N	&Duplicate lines	\N	HikariSub.Grid	&Duplicate lines		no	\N
+exact	\N	&Swap	\N	HikariSub.Grid	&Swap		no	\N
+exact	\N	Join &lines	\N	HikariSub.Grid	Join &lines		no	\N
+exact	\N	Split lines	\N	HikariSub.Grid	Split lines		no	\N
+obsolete	\N	Copy\tCtrl-C	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cut\tCtrl-X	\N	\N	\N	\N	\N	\N
+obsolete	\N	Paste\tCtrl-V	\N	\N	\N	\N	\N	\N
+exact	\N	Hide columns	\N	HikariSub.Grid	Hide columns		no	\N
+exact	\N	Load subtitles from an MKV/OGM file	\N	HikariSub.Grid	Load subtitles from an MKV/OGM file		no	\N
+exact	\N	Add lines	\N	HikariSub.Grid	Add lines		no	\N
+exact	\N	Copy tree	\N	HikariSub.Grid	Copy tree		no	\N
+exact	\N	Change description	\N	HikariSub.Grid	Change description		no	\N
+exact	\N	Select tree lines	\N	HikariSub.Grid	Select tree lines		no	\N
+exact	\N	Text into original	\N	HikariSub.Grid	Text into original		no	\N
+exact	\N	Text into translation	\N	HikariSub.Grid	Text into translation		no	\N
+exact	\N	Text without tags	\N	HikariSub.Grid	Text without tags		no	\N
+obsolete	\N	Subtitle files (*.ass),(*.srt),(*.sub),(*.txt)|*.ass;*.srt;*.sub;*.txt	\N	\N	\N	\N	\N	\N
+exact	\N	Save the file before loading subtitles from the MKV?	\N	HikariSub.Matroska	Save the file before loading subtitles from the MKV?		no	\N
+obsolete	\N	Failed to open subtitles	\N	\N	\N	\N	\N	\N
+placeholder	\N	In line %i, value '%s' cannot be scaled\nin tag '%s'	\N	HikariSub.Conversion	In line %1, value '%2' cannot be scaled\nin tag '%3'		no	%i %s %s -> %1 %2 %3
+exact	\N	Invalid FPS. Correct it in options and try again.	\N	HikariSub.Conversion	Invalid FPS. Correct it in options and try again.		no	\N
+exact	\N	Video was not loaded using FFMS2	\N	HikariSub.TimeShift	Video was not loaded using FFMS2		no	\N
+exact	\N	No styles selected for time shifting	\N	HikariSub.TimeShift	No styles selected for time shifting		no	\N
+placeholder	\N	Do you really want to shift only %s times?	\N	HikariSub.TimeShift	Do you really want to shift only %1 times?		no	%s -> %1
+exact	\N	end	\N	HikariSub.TimeShift	end		no	\N
+exact	\N	start	\N	HikariSub.TimeShift	start		no	\N
+exact	\N	No lines selected for shifting	\N	HikariSub.TimeShift	No lines selected for shifting		no	\N
+obsolete	\N	This edit would leave lines of a tree outside it, so it was not made.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Trees	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line %d: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	This edit would split a tree, leave some of its lines outside it or move them into another tree, so it was not made:\n%s\n\nRemoving the tree deletes its description line and shows its lines as ordinary lines.	This edit would split trees, leave some of their lines outside them or move them into another tree, so it was not made:\n%s\n\nRemoving the trees deletes their description lines and shows their lines as ordinary lines.	\N	\N	\N	\N	\N
+obsolete	\N	Make the edit again after removing.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove the tree	Remove the trees	\N	\N	\N	\N	\N
+obsolete	\N	Invalid format (file may be corrupted or contain errors)	\N	\N	\N	\N	\N	\N
+obsolete	\N	This subtitle file is plain text and will be opened as ASS subtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Are you sure you want to turn off translation mode?\nForeign language text will be deleted.	\N	HikariSub.Translation	Are you sure you want to turn off translation mode?\nForeign language text will be deleted.		no	\N
+exact	\N	Choose new FPS	\N	HikariSub.Conversion	Choose new FPS		no	\N
+exact	\N	Subtitles FPS	\N	HikariSub.Conversion	Subtitles FPS		no	\N
+exact	\N	New FPS	\N	HikariSub.Conversion	New FPS		no	\N
+obsolete	\N	Change FPS	\N	\N	\N	\N	\N	\N
+obsolete	\N	Incorrect FPS	\N	\N	\N	\N	\N	\N
+exact	\N	Tree description	\N	HikariSub.Grid	Tree description		no	\N
+exact	\N	Change tree name	\N	HikariSub.Grid	Change tree name		no	\N
+exact	\N	Set tree name	\N	HikariSub.Grid	Set tree name		no	\N
+obsolete	\N	Disable confirmation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Hidden lines lie between the selected lines, so they cannot make one tree.\nShow the hidden lines or select only lines that are next to each other.	\N	\N	\N	\N	\N	\N
+exact	\N	L.	\N	HikariSub.Grid	L.		no	\N
+exact	\N	Left	\N	HikariSub.Grid	Left		no	\N
+exact	\N	Right	\N	HikariSub.Grid	Right		no	\N
+exact	\N	Vert.	\N	HikariSub.Grid	Vert.		no	\N
+exact	\N	CPS	\N	HikariSub.Grid	CPS		no	\N
+exact	\N	Wraps	\N	HikariSub.Grid	Wraps		no	\N
+exact	\N	Original text	\N	HikariSub.Editor	Original text		no	\N
+exact	\N	Original text	\N	HikariSub.Grid	Original text		no	\N
+exact	\N	Translation	\N	HikariSub.Grid	Translation		no	\N
+exact	\N	Translation	\N	HikariSub.MainWindow	Translation		no	\N
+exact	\N	Translation	\N	HikariSub.Translation	Translation		no	\N
+obsolete	\N	Cannot show preview cause grid height is too low	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change resolution	\N	\N	\N	\N	\N	\N
+exact	\N	Target resolution	\N	HikariSub.Conversion	Target resolution		no	\N
+exact	\N	From subtitles	\N	HikariSub.Conversion	From subtitles		no	\N
+obsolete	\N	Get from video	\N	\N	\N	\N	\N	\N
+exact	\N	No stretch	\N	HikariSub.Conversion	No stretch		no	\N
+exact	\N	Stretch	\N	HikariSub.Conversion	Stretch		no	\N
+exact	\N	Resample options	\N	HikariSub.Conversion	Resample options		no	\N
+exact	\N	Incompatible resolution	\N	HikariSub.Conversion	Incompatible resolution		no	\N
+placeholder	\N	The video and subtitle resolutions are different.\nYou can change them now or use 'Change subtitle resolution'.\n\nVideo resolution: %i x %i\nSubtitle resolution: %i x %i\n\nMatch the resolution to the video?\n	\N	HikariSub.Conversion	The video and subtitle resolutions are different.\nYou can change them now or use 'Change subtitle resolution'.\n\nVideo resolution: %1 x %2\nSubtitle resolution: %3 x %4\n\nMatch the resolution to the video?\n		no	%i %i %i %i -> %1 %2 %3 %4
+exact	\N	Change only the subtitle resolution	\N	HikariSub.Conversion	Change only the subtitle resolution		no	\N
+exact	\N	Resample subtitles (no stretch)	\N	HikariSub.Conversion	Resample subtitles (no stretch)		no	\N
+exact	\N	Resample subtitles (stretch)	\N	HikariSub.Conversion	Resample subtitles (stretch)		no	\N
+exact	\N	Change	\N	HikariSub.Conversion	Change		no	\N
+exact	\N	Do not change	\N	HikariSub.Conversion	Do not change		no	\N
+exact	\N	Disable warning	\N	HikariSub.Conversion	Disable warning		no	\N
+obsolete	\N	Libass works only with FFMS2	\N	\N	\N	\N	\N	\N
+obsolete	\N	Libass only opens ASS and SSA subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open subtitles in Libass	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot initialize CSRI.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create CSRI instance.	\N	\N	\N	\N	\N	\N
+obsolete	\N	CSRI does not support this format.	\N	\N	\N	\N	\N	\N
+exact	\N	Translation matching options	\N	HikariSub.Translation	Translation matching options		no	\N
+exact	\N	Deletes the selected line.\nMoves the translation one line up.	\N	HikariSub.Translation	Deletes the selected line.\nMoves the translation one line up.		no	\N
+exact	\N	Add line	\N	HikariSub.Translation	Add line		no	\N
+exact	\N	Adds a blank line before the selected line.\nMoves the translation one line down.	\N	HikariSub.Translation	Adds a blank line before the selected line.\nMoves the translation one line down.		no	\N
+exact	\N	Joins the selected line with the next line.\nMoves the translation one line up.	\N	HikariSub.Translation	Joins the selected line with the next line.\nMoves the translation one line up.		no	\N
+exact	\N	Joins the selected line with the next line.\nMoves the original one line up.	\N	HikariSub.Translation	Joins the selected line with the next line.\nMoves the original one line up.		no	\N
+exact	\N	Deletes the selected line.\nMoves the original one line up.	\N	HikariSub.Translation	Deletes the selected line.\nMoves the original one line up.		no	\N
+exact	\N	Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.	\N	HikariSub.Translation	Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.		no	\N
+exact	\N	Original	\N	HikariSub.Translation	Original		no	\N
+obsolete	\N	Description:\nOriginal - subtitle text with correct timing, used\nto compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitles were modified by another program.\nReload and discard the unsaved changes in this tab?	\N	\N	\N	\N	\N	\N
+exact	\N	Reloading	\N	HikariSub.Documents	Reloading		no	\N
+exact	\N	Subtitles were modified by another program. Reload?	\N	HikariSub.Documents	Subtitles were modified by another program. Reload?		no	\N
+exact	\N	Show description	\N	HikariSub.TagList	Show description		no	\N
+exact	\N	Show all tags	\N	HikariSub.TagList	Show all tags		no	\N
+exact	\N	Show VSFiltermod tags	\N	HikariSub.TagList	Show VSFiltermod tags		no	\N
+exact	\N	Transparency of primary color	\N	HikariSub.TagList	Transparency of primary color		no	\N
+exact	\N	Transparency of secondary color	\N	HikariSub.TagList	Transparency of secondary color		no	\N
+exact	\N	Transparency of border color	\N	HikariSub.TagList	Transparency of border color		no	\N
+exact	\N	Transparency of shadow color	\N	HikariSub.TagList	Transparency of shadow color		no	\N
+exact	\N	PNG mask of primary color	\N	HikariSub.TagList	PNG mask of primary color		no	\N
+exact	\N	PNG mask of secondary color	\N	HikariSub.TagList	PNG mask of secondary color		no	\N
+exact	\N	PNG mask of border color	\N	HikariSub.TagList	PNG mask of border color		no	\N
+exact	\N	PNG mask of shadow color	\N	HikariSub.TagList	PNG mask of shadow color		no	\N
+exact	\N	Transparency gradient of primary color	\N	HikariSub.TagList	Transparency gradient of primary color		no	\N
+exact	\N	Transparency gradient of secondary color	\N	HikariSub.TagList	Transparency gradient of secondary color		no	\N
+exact	\N	Transparency gradient of border color	\N	HikariSub.TagList	Transparency gradient of border color		no	\N
+exact	\N	Transparency gradient of shadow color	\N	HikariSub.TagList	Transparency gradient of shadow color		no	\N
+exact	\N	Gradient of primary color	\N	HikariSub.TagList	Gradient of primary color		no	\N
+exact	\N	Gradient of secondary color	\N	HikariSub.TagList	Gradient of secondary color		no	\N
+exact	\N	Gradient of border color	\N	HikariSub.TagList	Gradient of border color		no	\N
+exact	\N	Gradient of shadow color	\N	HikariSub.TagList	Gradient of shadow color		no	\N
+exact	\N	Text alignment (SSA)	\N	HikariSub.TagList	Text alignment (SSA)		no	\N
+exact	\N	Transparency	\N	HikariSub.TagList	Transparency		no	\N
+exact	\N	Bold text	\N	HikariSub.TagList	Bold text		no	\N
+exact	\N	Edge blur	\N	HikariSub.TagList	Edge blur		no	\N
+exact	\N	Blur of border, shadow or font	\N	HikariSub.TagList	Blur of border, shadow or font		no	\N
+exact	\N	Thickness of border	\N	HikariSub.TagList	Thickness of border		no	\N
+exact	\N	Vector clip / rectangle clip	\N	HikariSub.TagList	Vector clip / rectangle clip		no	\N
+exact	\N	Font distortion	\N	HikariSub.TagList	Font distortion		no	\N
+exact	\N	Fading in / fading out of text	\N	HikariSub.TagList	Fading in / fading out of text		no	\N
+exact	\N	Fading in / fading out of text (advanced version)	\N	HikariSub.TagList	Fading in / fading out of text (advanced version)		no	\N
+exact	\N	Skew on X axis	\N	HikariSub.TagList	Skew on X axis		no	\N
+exact	\N	Skew on Y axis	\N	HikariSub.TagList	Skew on Y axis		no	\N
+exact	\N	Text rounding	\N	HikariSub.TagList	Text rounding		no	\N
+exact	\N	Rotation on X axis	\N	HikariSub.TagList	Rotation on X axis		no	\N
+exact	\N	Rotation on Y axis	\N	HikariSub.TagList	Rotation on Y axis		no	\N
+exact	\N	Rotation on Z axis	\N	HikariSub.TagList	Rotation on Z axis		no	\N
+exact	\N	Scale on X and Y axes	\N	HikariSub.TagList	Scale on X and Y axes		no	\N
+exact	\N	Scale on X axis	\N	HikariSub.TagList	Scale on X axis		no	\N
+exact	\N	Scale on Y axis	\N	HikariSub.TagList	Scale on Y axis		no	\N
+exact	\N	Font spacing	\N	HikariSub.TagList	Font spacing		no	\N
+exact	\N	Vertical font spacing	\N	HikariSub.TagList	Vertical font spacing		no	\N
+exact	\N	Italic text	\N	HikariSub.TagList	Italic text		no	\N
+exact	\N	Reverse vector clip or rectangle clip	\N	HikariSub.TagList	Reverse vector clip or rectangle clip		no	\N
+exact	\N	Text jitter	\N	HikariSub.TagList	Text jitter		no	\N
+exact	\N	Karaoke timing	\N	HikariSub.TagList	Karaoke timing		no	\N
+exact	\N	Karaoke timing smooth transition	\N	HikariSub.TagList	Karaoke timing smooth transition		no	\N
+exact	\N	Karaoke timing border	\N	HikariSub.TagList	Karaoke timing border		no	\N
+exact	\N	Karaoke timing (not supported)	\N	HikariSub.TagList	Karaoke timing (not supported)		no	\N
+exact	\N	Text movement	\N	HikariSub.TagList	Text movement		no	\N
+exact	\N	Text movement along a circle	\N	HikariSub.TagList	Text movement along a circle		no	\N
+exact	\N	Text movement along a curve (3 points)	\N	HikariSub.TagList	Text movement along a curve (3 points)		no	\N
+exact	\N	Text movement along a curve (4 points)	\N	HikariSub.TagList	Text movement along a curve (4 points)		no	\N
+exact	\N	Vector drawing movement	\N	HikariSub.TagList	Vector drawing movement		no	\N
+exact	\N	Anchor for rotation	\N	HikariSub.TagList	Anchor for rotation		no	\N
+exact	\N	Drawing and its scale	\N	HikariSub.TagList	Drawing and its scale		no	\N
+exact	\N	Offset of Y vector points	\N	HikariSub.TagList	Offset of Y vector points		no	\N
+exact	\N	Text wrap method	\N	HikariSub.TagList	Text wrap method		no	\N
+exact	\N	Reset tags	\N	HikariSub.TagList	Reset tags		no	\N
+exact	\N	Font point randomness	\N	HikariSub.TagList	Font point randomness		no	\N
+exact	\N	Font point randomness seed	\N	HikariSub.TagList	Font point randomness seed		no	\N
+exact	\N	Font point randomness on X axis	\N	HikariSub.TagList	Font point randomness on X axis		no	\N
+exact	\N	Font point randomness on Y axis	\N	HikariSub.TagList	Font point randomness on Y axis		no	\N
+exact	\N	Font point randomness on Z axis	\N	HikariSub.TagList	Font point randomness on Z axis		no	\N
+exact	\N	Text strikethrough	\N	HikariSub.TagList	Text strikethrough		no	\N
+exact	\N	Text shadow	\N	HikariSub.TagList	Text shadow		no	\N
+exact	\N	Text animation	\N	HikariSub.TagList	Text animation		no	\N
+exact	\N	Text underline	\N	HikariSub.TagList	Text underline		no	\N
+exact	\N	Border on X axis	\N	HikariSub.TagList	Border on X axis		no	\N
+exact	\N	Border on Y axis	\N	HikariSub.TagList	Border on Y axis		no	\N
+exact	\N	Shadow on X axis	\N	HikariSub.TagList	Shadow on X axis		no	\N
+exact	\N	Shadow on Y axis	\N	HikariSub.TagList	Shadow on Y axis		no	\N
+exact	\N	Z coordinate for tags \\frx and \\fry	\N	HikariSub.TagList	Z coordinate for tags \\frx and \\fry		no	\N
+obsolete	\N	Cannot find element with id %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Choose toolbar icons	\N	\N	\N	\N	\N	\N
+obsolete	\N	At bottom	\N	\N	\N	\N	\N	\N
+obsolete	\N	On right	\N	\N	\N	\N	\N	\N
+obsolete	\N	On the left	\N	\N	\N	\N	\N	\N
+obsolete	\N	On top	\N	\N	\N	\N	\N	\N
+obsolete	\N	Toolbar alignment	\N	\N	\N	\N	\N	\N
+obsolete	\N	You have the latest stable version. A newer prerelease, %s, is available.	\N	\N	\N	\N	\N	\N
+exact	\N	Update	\N	HikariSub.MainWindow	Update		no	\N
+exact	\N	Open the download page	\N	HikariSub.MainWindow	Open the download page		no	\N
+exact	\N	A new version is available	\N	HikariSub.MainWindow	A new version is available		no	\N
+placeholder	\N	You have version %s; version %s is available	\N	HikariSub.MainWindow	You have version %1; version %2 is available		no	%s %s -> %1 %2
+exact	\N	Remind me in a week	\N	HikariSub.MainWindow	Remind me in a week		no	\N
+exact	\N	Cannot check for updates	\N	HikariSub.MainWindow	Cannot check for updates		no	\N
+exact	\N	You already have the latest version	\N	HikariSub.MainWindow	You already have the latest version		no	\N
+obsolete	\N	Unable to retrieve information about the monitor	\N	\N	\N	\N	\N	\N
+placeholder	\N	Aspect ratio: %5.3f	\N	HikariSub.Video	Aspect ratio: %1		no	%5.3f -> %1
+exact	\N	The file is not a valid video file or is corrupted,\nor codecs or a splitter may be missing	\N	HikariSub.Video	The file is not a valid video file or is corrupted,\nor codecs or a splitter may be missing		no	\N
+exact	\N	Are you sure you want to index the previous video?	\N	HikariSub.Video	Are you sure you want to index the previous video?		no	\N
+exact	\N	Are you sure you want to index the next video?	\N	HikariSub.Video	Are you sure you want to index the next video?		no	\N
+exact	\N	Pause	\N	HikariSub.Video	Pause		no	\N
+exact	\N	Copy video position	\N	HikariSub.Video	Copy video position		no	\N
+obsolete	\N	Full screen\tF	\N	\N	\N	\N	\N	\N
+obsolete	\N	Exit full screen\tEscape	\N	\N	\N	\N	\N	\N
+placeholder	\N	Switch full screen to monitor %i	\N	HikariSub.Video	Switch full screen to monitor %1		no	%i -> %1
+placeholder	\N	Open in full screen on monitor %i	\N	HikariSub.Video	Open in full screen on monitor %1		no	%i -> %1
+exact	\N	Open editor	\N	HikariSub.Video	Open editor		no	\N
+exact	\N	Filters	\N	HikariSub.Video	Filters		no	\N
+obsolete	\N	Shows used filters	\N	\N	\N	\N	\N	\N
+obsolete	\N	Are you sure you want to move loaded video to recycle bin?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Deleting	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video files(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt	\N	\N	\N	\N	\N	\N
+exact	\N	Invalid keyframes format	\N	HikariSub.Video	Invalid keyframes format		no	\N
+exact	\N	Previous video file	\N	HikariSub.Video	Previous video file		no	\N
+exact	\N	Show toolbar	\N	HikariSub.Video	Show toolbar		no	\N
+obsolete	\N	Position pointer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text positioning	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text moving	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text scaling	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text Z rotation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text X / Y rotation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Rectangle clipping	\N	\N	\N	\N	\N	\N
+obsolete	\N	Vector clipping	\N	\N	\N	\N	\N	\N
+obsolete	\N	Vector drawing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Position shifter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Hydra	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale and rotation shifter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add Bézier curve	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add B-spline	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add separate point	\N	\N	\N	\N	\N	\N
+obsolete	\N	Delete point	\N	\N	\N	\N	\N	\N
+obsolete	\N	Invert clip	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move position points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change \\move starting points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change \\move ending points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move clips	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move drawings;\nuse only when you want\nto move drawing points.\nDo not combine with the first three options	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move \\org points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set angle from 2 points.\nAfter setting 2 points below text on video\nit calculates angle from it.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing all Z-rotation tags	\N	\N	\N	\N	\N	\N
+obsolete	\N	Preserve proportions so that vector drawings and text\nkeep their original positions after rotation.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set scale by rectangle.\nAfter drawing rectangle text is scaled\nin two or one axis.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale width	\N	\N	\N	\N	\N	\N
+exact	\N	Preserve aspect ratio	\N	HikariSub.VisualTools	Preserve aspect ratio		no	\N
+obsolete	\N	Scale height	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set a custom rectangle for the current scale.\nIf automatic size calculation does not work correctly,\nyou can set a rectangle for the original scale.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change all scale tags	\N	\N	\N	\N	\N	\N
+obsolete	\N	Preserve proportions so that vector drawings and text\nkeep their original positions after scaling.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set position by rectangle.\nAfter drawing a rectangle, the line will be\npositioned on one or both axes\nfor the selected alignment.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Positioning in X axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Positioning in Y axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set movement using 2 points and the video position.\nAfter placing the first point before the moving text,\nadvance the video by enough frames\nso that the same video element\nfor which the start point was set remains visible.\nMovement is generated by placing the second point.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing all X/Y-rotation tags	\N	\N	\N	\N	\N	\N
+exact	\N	Double-clicking a line (always on)	\N	HikariSub.Video	Double-clicking a line (always on)		no	\N
+exact	\N	Every line change	\N	HikariSub.Video	Every line change		no	\N
+exact	\N	Clicking a line or editing	\N	HikariSub.Video	Clicking a line or editing		no	\N
+exact	\N	Clicking a line or editing when paused	\N	HikariSub.Video	Clicking a line or editing when paused		no	\N
+exact	\N	Editing line when paused	\N	HikariSub.Video	Editing line when paused		no	\N
+exact	\N	Audio to the line end time	\N	HikariSub.Video	Audio to the line end time		no	\N
+exact	\N	Nothing	\N	HikariSub.Video	Nothing		no	\N
+exact	\N	Video and audio to the line end time	\N	HikariSub.Video	Video and audio to the line end time		no	\N
+exact	\N	Video and audio to the next line start time	\N	HikariSub.Video	Video and audio to the next line start time		no	\N
+exact	\N	Move video to selected line on:	\N	HikariSub.Video	Move video to selected line on:		no	\N
+exact	\N	On moving to another line play:	\N	HikariSub.Video	On moving to another line play:		no	\N
+obsolete	\N	List of ASS drawings with edit option.\nAfter choose drawing from list just set cursor i n place\nof start of drawing and click left mouse button and drag.	\N	\N	\N	\N	\N	\N
+obsolete	\N	List of tags that can edit visual tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient text increasing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert	\N	\N	\N	\N	\N	\N
+obsolete	\N	Multiply	\N	\N	\N	\N	\N	\N
+obsolete	\N	Multiply+	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient line decreasing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient line increasing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient text decreasing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tag change options:\nAdd - changes all tags by adding the slider value.\nInsert - inserts the tag at the cursor position for one line,\nor at the start for multiple lines.\nMultiply - multiplies the slider value by the selected line number;\nthe first line is not changed.\nGradient text increasing - inserts a tag at each character, increasing the value.\nGradient text decreasing - inserts a tag at each character, decreasing the value.\nGradient line increasing - inserts a tag in selected lines, increasing the value.\nGradient line decreasing - inserts a tag in selected lines, decreasing the value.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Edit listed tags and create new ones	\N	\N	\N	\N	\N	\N
+obsolete	\N	Center-below	\N	\N	\N	\N	\N	\N
+obsolete	\N	Left-below	\N	\N	\N	\N	\N	\N
+obsolete	\N	Right-below	\N	\N	\N	\N	\N	\N
+obsolete	\N	Center-above	\N	\N	\N	\N	\N	\N
+obsolete	\N	Left-above	\N	\N	\N	\N	\N	\N
+obsolete	\N	Right-above	\N	\N	\N	\N	\N	\N
+obsolete	\N	Before-bottom	\N	\N	\N	\N	\N	\N
+obsolete	\N	Before-center	\N	\N	\N	\N	\N	\N
+obsolete	\N	Before-top	\N	\N	\N	\N	\N	\N
+obsolete	\N	After-bottom	\N	\N	\N	\N	\N	\N
+obsolete	\N	After-center	\N	\N	\N	\N	\N	\N
+obsolete	\N	After-top	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text placing works similar like in styles	\N	\N	\N	\N	\N	\N
+exact	\N	Tag editing	\N	HikariSub.VisualTools	Tag editing		no	\N
+exact	\N	Edited tag	\N	HikariSub.VisualTools	Edited tag		no	\N
+exact	\N	Add tag	\N	HikariSub.VisualTools	Add tag		no	\N
+exact	\N	Delete tag	\N	HikariSub.VisualTools	Delete tag		no	\N
+exact	\N	Name:	\N	HikariSub.VisualTools	Name:		no	\N
+exact	\N	Tag:	\N	HikariSub.VisualTools	Tag:		no	\N
+exact	\N	Minimal value:	\N	HikariSub.VisualTools	Minimal value:		no	\N
+exact	\N	Maximal value:	\N	HikariSub.VisualTools	Maximal value:		no	\N
+exact	\N	Step:	\N	HikariSub.VisualTools	Step:		no	\N
+obsolete	\N	Insert Tag at text beginning of text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserted at the cursor position	\N	\N	\N	\N	\N	\N
+obsolete	\N	Clip rectangle with \\t animation	\N	\N	\N	\N	\N	\N
+exact	\N	Decimal places:	\N	HikariSub.VisualTools	Decimal places:		no	\N
+obsolete	\N	No additional values	\N	\N	\N	\N	\N	\N
+obsolete	\N	One additional value	\N	\N	\N	\N	\N	\N
+obsolete	\N	Two additional values	\N	\N	\N	\N	\N	\N
+obsolete	\N	Three additional values	\N	\N	\N	\N	\N	\N
+exact	\N	Used only when tag have 2 values or more	\N	HikariSub.VisualTools	Used only when tag have 2 values or more		no	\N
+exact	\N	Tag change options	\N	HikariSub.VisualTools	Tag change options		no	\N
+placeholder	\N	Value %i	\N	HikariSub.VisualTools	Value %1		no	%i -> %1
+exact	\N	Additional values:	\N	HikariSub.VisualTools	Additional values:		no	\N
+exact	\N	Restore default	\N	HikariSub.VisualTools	Restore default		no	\N
+obsolete	\N	Are you sure you want to reset to default?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Enter a name for the new tag.	\N	\N	\N	\N	\N	\N
+obsolete	\N	New tag already exists, enter another name.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot remove all tags from list	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save changes to tag "%s"?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "Tag" cannot be empty.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "Maximum value" must contain a value\ngreater than field "Minimum value".	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "Step" must contain a value greater than zero.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "Step" contains a number too large for the current min-max range.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Double "m" was blocked because of Vsfilter bug	\N	\N	\N	\N	\N	\N
+exact	\N	Vector shape editing	\N	HikariSub.VisualTools	Vector shape editing		no	\N
+exact	\N	Edited shape	\N	HikariSub.VisualTools	Edited shape		no	\N
+exact	\N	Add shape	\N	HikariSub.VisualTools	Add shape		no	\N
+exact	\N	Delete shape	\N	HikariSub.VisualTools	Delete shape		no	\N
+exact	\N	Changed is only width	\N	HikariSub.VisualTools	Changed is only width		no	\N
+exact	\N	Changed width and height	\N	HikariSub.VisualTools	Changed width and height		no	\N
+exact	\N	Changing only drawing coordinates	\N	HikariSub.VisualTools	Changing only drawing coordinates		no	\N
+exact	\N	Changing scale	\N	HikariSub.VisualTools	Changing scale		no	\N
+exact	\N	Scaling relative to cursor:	\N	HikariSub.VisualTools	Scaling relative to cursor:		no	\N
+exact	\N	Scaling mode:	\N	HikariSub.VisualTools	Scaling mode:		no	\N
+exact	\N	Get shape from active line	\N	HikariSub.VisualTools	Get shape from active line		no	\N
+exact	\N	Shape:	\N	HikariSub.VisualTools	Shape:		no	\N
+obsolete	\N	Enter a name for the new shape.	\N	\N	\N	\N	\N	\N
+obsolete	\N	New shape name already exists, enter another name.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot remove all shapes from the list	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save changes to shape "%s"?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "shape" cannot be empty.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video must be set at least one frame after the line's start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot set matrix projection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot read clip rectangle values.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual editing tools\ndo not work on comments	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line is not visible on video\nor has zero duration	\N	\N	\N	\N	\N	\N
+obsolete	\N	Some colors were absent from theme "%s" and were loaded from the default theme.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot load theme, reset to default	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot initialize COM	\N	\N	\N	\N	\N	\N
+exact	\N	Failed to initialize DirectShow	\N	HikariSub.Video	Failed to initialize DirectShow		no	\N
+exact	\N	Source filter not added	\N	HikariSub.Video	Source filter not added		no	\N
+exact	\N	Cannot add video renderer	\N	HikariSub.Video	Cannot add video renderer		no	\N
+exact	\N	Cannot create audio renderer instance	\N	HikariSub.Video	Cannot create audio renderer instance		no	\N
+exact	\N	Cannot add Direct Sound renderer	\N	HikariSub.Video	Cannot add Direct Sound renderer		no	\N
+exact	\N	Cannot enumerate source pins	\N	HikariSub.Video	Cannot enumerate source pins		no	\N
+exact	\N	Cannot enumerate renderer pins	\N	HikariSub.Video	Cannot enumerate renderer pins		no	\N
+exact	\N	Cannot enumerate Direct Sound pins	\N	HikariSub.Video	Cannot enumerate Direct Sound pins		no	\N
+exact	\N	Cannot get renderer pin	\N	HikariSub.Video	Cannot get renderer pin		no	\N
+exact	\N	Cannot get dsound pin	\N	HikariSub.Video	Cannot get dsound pin		no	\N
+exact	\N	No IMediaTypes	\N	HikariSub.Video	No IMediaTypes		no	\N
+exact	\N	No track type info	\N	HikariSub.Video	No track type info		no	\N
+exact	\N	Cannot connect source pin to video renderer	\N	HikariSub.Video	Cannot connect source pin to video renderer		no	\N
+exact	\N	Cannot connect source pin to audio renderer	\N	HikariSub.Video	Cannot connect source pin to audio renderer		no	\N
+exact	\N	Cannot connect source pin to audio1 renderer	\N	HikariSub.Video	Cannot connect source pin to audio1 renderer		no	\N
+exact	\N	Cannot find connected source pin	\N	HikariSub.Video	Cannot find connected source pin		no	\N
+exact	\N	Cannot get splitter pin info	\N	HikariSub.Video	Cannot get splitter pin info		no	\N
+exact	\N	Cannot enumerate splitter pins	\N	HikariSub.Video	Cannot enumerate splitter pins		no	\N
+exact	\N	Cannot connect source pin to video2 renderer	\N	HikariSub.Video	Cannot connect source pin to video2 renderer		no	\N
+obsolete	\N	Cannot get source pin	\N	\N	\N	\N	\N	\N
+exact	\N	Cannot create filters interface	\N	HikariSub.Video	Cannot create filters interface		no	\N
+exact	\N	Cannot create controller	\N	HikariSub.Video	Cannot create controller		no	\N
+exact	\N	Cannot create search interface	\N	HikariSub.Video	Cannot create search interface		no	\N
+exact	\N	Cannot create audio interface	\N	HikariSub.Video	Cannot create audio interface		no	\N
+obsolete	\N	Cannot enumerate filters	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get filter name	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get filter configuration	\N	\N	\N	\N	\N	\N
+exact	\N	Reached end. Search from the beginning?	\N	HikariSub.Search	Reached end. Search from the beginning?		no	\N
+obsolete	\N	Could not find the specified phrase "	\N	\N	\N	\N	\N	\N
+exact	\N	Find and Replace	\N	HikariSub.Search	Find and Replace		no	\N
+placeholder	\N	Replaced %i times.	\N	HikariSub.Search	Replaced %1 times.		no	%i -> %1
+exact	\N	Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the 'ReplaceBackup' folder.	\N	HikariSub.Search	Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the 'ReplaceBackup' folder.		no	\N
+exact	\N	Search path is invalid	\N	HikariSub.Search	Search path is invalid		no	\N
+exact	\N	None of the selected styles exist in the subtitles being searched,\nso nothing will be found.\nWhat would you like to do?	\N	HikariSub.Search	None of the selected styles exist in the subtitles being searched,\nso nothing will be found.\nWhat would you like to do?		no	\N
+exact	\N	Remove styles	\N	HikariSub.Search	Remove styles		no	\N
+placeholder	\N	Styles named "%s" do not exist in the subtitles being searched,\nwhich may significantly reduce the number of search results.\nWhat would you like to do?	\N	HikariSub.Search	Styles named "%1" do not exist in the subtitles being searched,\nwhich may significantly reduce the number of search results.\nWhat would you like to do?		no	%s -> %1
+exact	\N	Remove nonexistent styles	\N	HikariSub.Search	Remove nonexistent styles		no	\N
+obsolete	\N	Not enough RAM. History partially deleted	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot read settings.\nThe program will be terminated.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot find language, language change failed	\N	\N	\N	\N	\N	\N
+obsolete	\N	wxLocale cannot initialize, language change failed	\N	\N	\N	\N	\N	\N
+exact	\N	Cannot find translation, language change failed	\N	HikariSub.Options	Cannot find translation, language change failed		no	\N
+obsolete	\N	Cannot read hotkeys.\nThe program will be terminated.	\N	\N	\N	\N	\N	\N
+exact	\N	Load last session?	\N	HikariSub.Session	Load last session?		no	\N
+exact	\N	The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?	\N	HikariSub.Session	The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?		no	\N
+exact	\N	New	\N	HikariSub.Styles	New		no	\N
+exact	\N	Delete selected style catalog	\N	HikariSub.Styles	Delete selected style catalog		no	\N
+exact	\N	Styles stored:	\N	HikariSub.Styles	Styles stored:		no	\N
+exact	\N	Sort	\N	HikariSub.Styles	Sort		no	\N
+exact	\N	Move selected styles to beginning	\N	HikariSub.Styles	Move selected styles to beginning		no	\N
+exact	\N	Move selected styles up	\N	HikariSub.Styles	Move selected styles up		no	\N
+exact	\N	Move selected styles down	\N	HikariSub.Styles	Move selected styles down		no	\N
+exact	\N	Move selected styles to end	\N	HikariSub.Styles	Move selected styles to end		no	\N
+exact	\N	Add to storage	\N	HikariSub.Styles	Add to storage		no	\N
+exact	\N	Add to ASS	\N	HikariSub.Styles	Add to ASS		no	\N
+exact	\N	Add to all open ASS files	\N	HikariSub.Styles	Add to all open ASS files		no	\N
+exact	\N	Styles in ASS file:	\N	HikariSub.Styles	Styles in ASS file:		no	\N
+exact	\N	Clear	\N	HikariSub.Styles	Clear		no	\N
+obsolete	\N	Detach editing window	\N	\N	\N	\N	\N	\N
+placeholder	\N	Style named "%s" already exists. Replace?	\N	HikariSub.Styles	Style named "%1" already exists. Replace?		no	%s -> %1
+placeholder	\N	Style named "%s" already exists.	\N	HikariSub.Styles	Style named "%1" already exists.		no	%s -> %1
+exact	\N	Style name modified. Do you want to change all instances to the new name?	\N	HikariSub.Styles	Style name modified. Do you want to change all instances to the new name?		no	\N
+exact	\N	Choose ASS file	\N	HikariSub.Styles	Choose ASS file		no	\N
+obsolete	\N	ASS subtitle files(*.ass)|*.ass	\N	\N	\N	\N	\N	\N
+exact	\N	Copy of 	\N	HikariSub.Styles	Copy of 		no	\N
+obsolete	\N	New Style	\N	\N	\N	\N	\N	\N
+placeholder	\N	Styles used:\n%s\nStyles deleted:\n%s	\N	HikariSub.Styles	Styles used:\n%1\nStyles deleted:\n%2		no	%s %s -> %1 %2
+exact	\N	Status of deleted styles	\N	HikariSub.Styles	Status of deleted styles		no	\N
+exact	\N	Style catalog	\N	HikariSub.Styles	Style catalog		no	\N
+exact	\N	New style catalog	\N	HikariSub.Styles	New style catalog		no	\N
+exact	\N	Create new style in storage	\N	HikariSub.Styles	Create new style in storage		no	\N
+obsolete	\N	Edit selected storage style	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copy the style in storage	\N	\N	\N	\N	\N	\N
+exact	\N	Load style from external ASS file to storage	\N	HikariSub.Styles	Load style from external ASS file to storage		no	\N
+obsolete	\N	Delete style from storage	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort styles in storage	\N	\N	\N	\N	\N	\N
+exact	\N	Create new ASS style	\N	HikariSub.Styles	Create new ASS style		no	\N
+obsolete	\N	Edit selected ASS style	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copy ASS style	\N	\N	\N	\N	\N	\N
+exact	\N	Load style from external ASS file	\N	HikariSub.Styles	Load style from external ASS file		no	\N
+obsolete	\N	Delete style from ASS	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort styles in ASS	\N	\N	\N	\N	\N	\N
+exact	\N	Copy style from ASS to storage	\N	HikariSub.Styles	Copy style from ASS to storage		no	\N
+exact	\N	Copy style from storage to ASS	\N	HikariSub.Styles	Copy style from storage to ASS		no	\N
+exact	\N	Delete unused ASS styles	\N	HikariSub.Styles	Delete unused ASS styles		no	\N
+new	\N	\N	\N	HikariSub.Audio	Audio display		no	\N
+new	\N	\N	\N	HikariSub.Audio	Link		no	\N
+new	\N	\N	\N	HikariSub.Audio	Before mark		no	\N
+new	\N	\N	\N	HikariSub.Audio	After mark		no	\N
+new	\N	\N	\N	HikariSub.Audio	500 before		no	\N
+new	\N	\N	\N	HikariSub.Audio	500 first		no	\N
+new	\N	\N	\N	HikariSub.Audio	500 last		no	\N
+new	\N	\N	\N	HikariSub.Audio	500 after		no	\N
+new	\N	\N	\N	HikariSub.Audio	To end		no	\N
+new	\N	\N	\N	HikariSub.Audio	In		no	\N
+new	\N	\N	\N	HikariSub.Audio	Out		no	\N
+new	\N	\N	\N	HikariSub.Audio	Go		no	\N
+new	\N	\N	\N	HikariSub.Audio	Karaoke		no	\N
+new	\N	\N	\N	HikariSub.Audio	Auto split		no	\N
+new	\N	\N	\N	HikariSub.Audio	Auto		no	\N
+new	\N	\N	\N	HikariSub.Audio	Next		no	\N
+new	\N	\N	\N	HikariSub.Audio	Auto-scroll		no	\N
+new	\N	\N	\N	HikariSub.Audio	Spectrum		no	\N
+new	\N	\N	\N	HikariSub.Audio	Speech		no	\N
+new	\N	\N	\N	HikariSub.Audio	No audio open		no	\N
+new	\N	\N	\N	HikariSub.Audio	Indexing video %1%		no	\N
+new	\N	\N	\N	HikariSub.Automation	The document changed while the macro ran; nothing was changed.		no	\N
+new	\N	\N	\N	HikariSub.Automation	The protected reference can't be changed.		no	\N
+new	\N	\N	\N	HikariSub.Automation	The macro's changes could not be applied; nothing was changed.		no	\N
+new	\N	\N	\N	HikariSub.Automation	The script's helper ended; reload the script to use it again.		no	\N
+new	\N	\N	\N	HikariSub.Automation	Open a document to run a macro on.		no	\N
+new	\N	\N	\N	HikariSub.Automation	The line being edited can't be committed, so the macro can't start.		no	\N
+new	\N	\N	\N	HikariSub.Automation	The macro was cancelled; nothing was changed.		no	\N
+new	\N	\N	\N	HikariSub.Automation	The macro was force stopped; reload the script to use it again.		no	\N
+new	\N	\N	\N	HikariSub.Automation	Unresolved: the script or its macros changed		no	\N
+new	\N	\N	\N	HikariSub.Automation	Unresolved: no loaded script has this macro		no	\N
+new	\N	\N	\N	HikariSub.Automation	Automation manager		no	\N
+new	\N	\N	\N	HikariSub.Automation	Force stop		no	\N
+new	\N	\N	\N	HikariSub.Automation	Automation scripts (*.lua *.moon)		no	\N
+new	\N	\N	\N	HikariSub.Automation	All files (*)		no	\N
+new	\N	\N	\N	HikariSub.Automation	OK		no	\N
+new	\N	\N	\N	HikariSub.Automation	Import legacy hotkeys…		no	\N
+new	\N	\N	\N	HikariSub.Automation	Hotkeys (Hotkeys.txt)		no	\N
+new	\N	\N	\N	HikariSub.Automation	A script is running		no	\N
+new	\N	\N	\N	HikariSub.Automation	No scripts loaded		no	\N
+new	\N	\N	\N	HikariSub.Automation	Load script…		no	\N
+new	\N	\N	\N	HikariSub.Automation	Load an Automation script		no	\N
+new	\N	\N	\N	HikariSub.Automation	Loading		no	\N
+new	\N	\N	\N	HikariSub.Automation	Ready		no	\N
+new	\N	\N	\N	HikariSub.Automation	Running		no	\N
+new	\N	\N	\N	HikariSub.Automation	Failed to load		no	\N
+new	\N	\N	\N	HikariSub.Automation	Unavailable		no	\N
+new	\N	\N	\N	HikariSub.Automation	Reload		no	\N
+new	\N	\N	\N	HikariSub.Automation	Unload		no	\N
+new	\N	\N	\N	HikariSub.Automation	Programs (*.exe)		no	\N
+new	\N	\N	\N	HikariSub.Automation	All files (*.*)		no	\N
+new	\N	\N	\N	HikariSub.Colours	Colour		no	\N
+new	\N	\N	\N	HikariSub.Colours	Saturation and value		no	\N
+new	\N	\N	\N	HikariSub.Colours	Hue		no	\N
+new	\N	\N	\N	HikariSub.Colours	Red		no	\N
+new	\N	\N	\N	HikariSub.Colours	Green		no	\N
+new	\N	\N	\N	HikariSub.Colours	Blue		no	\N
+new	\N	\N	\N	HikariSub.Colours	Alpha:		no	\N
+new	\N	\N	\N	HikariSub.Colours	Alpha		no	\N
+new	\N	\N	\N	HikariSub.Colours	ASS:		no	\N
+new	\N	\N	\N	HikariSub.Colours	ASS colour		no	\N
+new	\N	\N	\N	HikariSub.Colours	HTML:		no	\N
+new	\N	\N	\N	HikariSub.Colours	HTML colour		no	\N
+new	\N	\N	\N	HikariSub.Colours	HSL hue		no	\N
+new	\N	\N	\N	HikariSub.Colours	HSL saturation		no	\N
+new	\N	\N	\N	HikariSub.Colours	Lightness		no	\N
+new	\N	\N	\N	HikariSub.Colours	HSV hue		no	\N
+new	\N	\N	\N	HikariSub.Colours	HSV saturation		no	\N
+new	\N	\N	\N	HikariSub.Colours	Value		no	\N
+new	\N	\N	\N	HikariSub.Colours	Pick a colour from the screen		no	\N
+new	\N	\N	\N	HikariSub.Colours	Recent colors		no	\N
+new	\N	\N	\N	HikariSub.Colours	Screen pixels around the pointer		no	\N
+new	\N	\N	\N	HikariSub.Colours	OK		no	\N
+new	\N	\N	\N	HikariSub.Colours	Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).		no	\N
+new	\N	\N	\N	HikariSub.Colours	The desktop's screenshot portal is not in use here.		no	\N
+new	\N	\N	\N	HikariSub.Colours	The desktop could not pick a colour from the screen.		no	\N
+new	\N	\N	\N	HikariSub.Conversion	This document can't be converted to that format.		no	\N
+new	\N	\N	\N	HikariSub.Conversion	The script properties and styles are removed.		no	\N
+new	\N	\N	\N	HikariSub.Conversion	%n comment line(s) removed.		yes	\N
+new	\N	\N	\N	HikariSub.Conversion	%n drawing(s) removed.		yes	\N
+new	\N	\N	\N	HikariSub.Conversion	%n line(s) left without text removed.		yes	\N
+new	\N	\N	\N	HikariSub.Conversion	%n duplicate line(s) removed.		yes	\N
+new	\N	\N	\N	HikariSub.Conversion	Lines are sorted by time.		no	\N
+new	\N	\N	\N	HikariSub.Conversion	Formatting tags converted or removed in %n line(s).		yes	\N
+new	\N	\N	\N	HikariSub.Conversion	%n line(s) get the conversion style "%1".		yes	\N
+new	\N	\N	\N	HikariSub.Conversion	Layer, style, actor, margins or effect removed from %n line(s).		yes	\N
+new	\N	\N	\N	HikariSub.Conversion	Bookmarks, hidden lines and groups removed from %n line(s).		yes	\N
+new	\N	\N	\N	HikariSub.Conversion	Times changed (rounding, frames or new end times) in %n line(s).		yes	\N
+new	\N	\N	\N	HikariSub.Conversion	OK		no	\N
+new	\N	\N	\N	HikariSub.Conversion	FPS		no	\N
+new	\N	\N	\N	HikariSub.Conversion	Catalog for style		no	\N
+new	\N	\N	\N	HikariSub.Conversion	Style		no	\N
+new	\N	\N	\N	HikariSub.Conversion	Width		no	\N
+new	\N	\N	\N	HikariSub.Conversion	Height		no	\N
+new	\N	\N	\N	HikariSub.Conversion	The conversion will:		no	\N
+new	\N	\N	\N	HikariSub.Conversion	What the conversion changes		no	\N
+new	\N	\N	\N	HikariSub.Conversion	Convert		no	\N
+new	\N	\N	\N	HikariSub.Documents	Choose where to save the untitled document.		no	\N
+new	\N	\N	\N	HikariSub.Documents	A document could not be saved; nothing was closed.		no	\N
+new	\N	\N	\N	HikariSub.Documents	Not closed, because saving failed or there is newer work: %1		no	\N
+new	\N	\N	\N	HikariSub.Documents	%1 could not be saved.		no	\N
+new	\N	\N	\N	HikariSub.Documents	Could not open %1; nothing was changed.		no	\N
+new	\N	\N	\N	HikariSub.Documents	Could not reload the subtitles; nothing was changed.		no	\N
+new	\N	\N	\N	HikariSub.Documents	The subtitles changed while reloading; nothing was replaced.		no	\N
+new	\N	\N	\N	HikariSub.Documents	The reference is protected (read-only).		no	\N
+new	\N	\N	\N	HikariSub.Documents	A macro is running on this document.		no	\N
+new	\N	\N	\N	HikariSub.Documents	The edited line cannot be committed.		no	\N
+new	\N	\N	\N	HikariSub.Documents	The change was refused.		no	\N
+new	\N	\N	\N	HikariSub.Documents	Unsaved changes		no	\N
+new	\N	\N	\N	HikariSub.Documents	Choose where to save %1.		no	\N
+new	\N	\N	\N	HikariSub.Documents	These documents have unsaved changes:		no	\N
+new	\N	\N	\N	HikariSub.Documents	Discard		no	\N
+new	\N	\N	\N	HikariSub.Documents	Save as…		no	\N
+new	\N	\N	\N	HikariSub.Documents	Discard all		no	\N
+new	\N	\N	\N	HikariSub.Documents	Continue		no	\N
+new	\N	\N	\N	HikariSub.Documents	ASS subtitles (*.ass)		no	\N
+new	\N	\N	\N	HikariSub.Documents	All files (*)		no	\N
+new	\N	\N	\N	HikariSub.Documents	Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)		no	\N
+new	\N	\N	\N	HikariSub.Editor	Line editor		no	\N
+new	\N	\N	\N	HikariSub.Editor	Line editor: %1		no	\N
+new	\N	\N	\N	HikariSub.Editor	Strikeout		no	\N
+new	\N	\N	\N	HikariSub.Editor	Line text		no	\N
+new	\N	\N	\N	HikariSub.Editor	Translated text		no	\N
+new	\N	\N	\N	HikariSub.Editor	Comment out original		no	\N
+new	\N	\N	\N	HikariSub.Editor	Not applied: %1		no	\N
+new	\N	\N	\N	HikariSub.Editor	Insertion		no	\N
+new	\N	\N	\N	HikariSub.Editor	Number of buttons		no	\N
+new	\N	\N	\N	HikariSub.Editor	Duration		no	\N
+new	\N	\N	\N	HikariSub.Editor	Style		no	\N
+new	\N	\N	\N	HikariSub.Editor	Edit style		no	\N
+new	\N	\N	\N	HikariSub.Editor	Edit style: allows quick editing of the current line's style		no	\N
+new	\N	\N	\N	HikariSub.Editor	Show times		no	\N
+new	\N	\N	\N	HikariSub.Editor	Show frames		no	\N
+new	\N	\N	\N	HikariSub.Editor	Select whole characters.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Braces and backslashes are ASS syntax: edit them with tags shown.		no	\N
+new	\N	\N	\N	HikariSub.Editor	This touches a drawing or malformed tag: edit it with tags shown.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Select the whole line break or hard space.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Here the text would become drawing or tag content: edit it with tags shown.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Unconfirmed applies in translation mode only.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Saving…		no	\N
+new	\N	\N	\N	HikariSub.Editor	Saved		no	\N
+new	\N	\N	\N	HikariSub.Editor	Saved; the disk could not confirm it is stored		no	\N
+new	\N	\N	\N	HikariSub.Editor	Save cancelled; nothing was written		no	\N
+new	\N	\N	\N	HikariSub.Editor	Save failed; the file on disk is unchanged		no	\N
+new	\N	\N	\N	HikariSub.Editor	End is before Start.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Margins must be between 0 and 9999.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Start is not a frame number.		no	\N
+new	\N	\N	\N	HikariSub.Editor	End is not a frame number.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Start is not a time such as 0:00:01.00.		no	\N
+new	\N	\N	\N	HikariSub.Editor	End is not a time such as 0:00:01.00.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Start is not a time such as %1.		no	\N
+new	\N	\N	\N	HikariSub.Editor	End is not a time such as %1.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Margins must be whole numbers.		no	\N
+new	\N	\N	\N	HikariSub.Editor	This document can't be saved here.		no	\N
+new	\N	\N	\N	HikariSub.Editor	The file changed on disk since it was opened. Reload it, or save elsewhere.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Another open document uses that file.		no	\N
+new	\N	\N	\N	HikariSub.Editor	The document can't be saved right now.		no	\N
+new	\N	\N	\N	HikariSub.Editor	This search applies in translation mode only.		no	\N
+new	\N	\N	\N	HikariSub.Editor	%1, active line %2		no	\N
+new	\N	\N	\N	HikariSub.Editor	Duration is not a frame number.		no	\N
+new	\N	\N	\N	HikariSub.Editor	Duration is not a time.		no	\N
+new	\N	\N	\N	HikariSub.Fonts	%1 font		no	\N
+new	\N	\N	\N	HikariSub.Fonts	%1 fonts		no	\N
+new	\N	\N	\N	HikariSub.Fonts	The renderer also used "%1" (%2); it is not collected.		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Characters "%1" were drawn by the fallback font "%2".		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Fonts	the folder the font collector writes beside the subtitles	no	\N
+new	\N	\N	\N	HikariSub.Fonts	Checked by the subtitle renderer (%1).\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Tab %1: the renderer could not read this document; it was not checked.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Families the renderer did not find: %1.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Families answered by a font of another name: %1.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Characters no font has: %1.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Characters drawn by a fallback font of this computer: %1.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Tab %1: with the collected fonts alone, %2 of %3 frames differ.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Different fonts with the same file name: %1. Only one of them is kept in a folder.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	The video shows the subtitles through %1, whose output this check does not verify.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	The collected fonts alone reproduce every frame.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	The output does not hold every collected font under its own name: the collection is incomplete.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Writing was cancelled.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	The output is labelled incomplete ("%1").\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Finished in %1ms		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Cancelled; nothing was written.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	The subtitle renderer is not available; the fonts cannot be checked.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Ready to add %1 to the archive "%2".\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Ready to copy %1 to "%2".\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Font named "%1".\n		no	\N
+new	\N	\N	\N	HikariSub.Fonts	(no folder)		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Cannot add external font file %1.		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Fonts		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Size		no	\N
+new	\N	\N	\N	HikariSub.Fonts	AaBbCcDdEeFfGg 0123456789		no	\N
+new	\N	\N	\N	HikariSub.Fonts	The subtitle renderer uses %1 (%2).		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Not installed under this name: the subtitle renderer substitutes %1 (%2).		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Not installed: the subtitle renderer falls back to %1 (%2).		no	\N
+new	\N	\N	\N	HikariSub.Fonts	No font answers this name.		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Destination folder		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Font collector log		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Write this incomplete collection, labelled incomplete		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Write archive		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Copy fonts		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Archive files (*.zip)		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Font catalogs		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Choose or type a catalog name		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Add a catalog with this name		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Edit the catalog		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Delete the catalog		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Load a catalog from a file		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Refresh fonts		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Refresh fonts: reads the installed and external fonts again		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Drawn by Qt, not by the subtitle renderer		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Mark %1		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Catalog of %1		no	\N
+new	\N	\N	\N	HikariSub.Fonts	OK		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Choose font catalog file		no	\N
+new	\N	\N	\N	HikariSub.Fonts	Text files (*.txt)		no	\N
+new	\N	\N	\N	HikariSub.Grid	Grid		no	\N
+new	\N	\N	\N	HikariSub.Grid	Editing: %1		no	\N
+new	\N	\N	\N	HikariSub.Grid	No document open		no	\N
+new	\N	\N	\N	HikariSub.Grid	&Insert		no	\N
+new	\N	\N	\N	HikariSub.Grid	Copy\tCtrl+C		no	\N
+new	\N	\N	\N	HikariSub.Grid	Cut\tCtrl+X		no	\N
+new	\N	\N	\N	HikariSub.Grid	Paste\tCtrl+V		no	\N
+new	\N	\N	\N	HikariSub.Grid	Delete lines\tShift+Del		no	\N
+new	\N	\N	\N	HikariSub.Grid	OK		no	\N
+new	\N	\N	\N	HikariSub.Grid	Line group		no	\N
+new	\N	\N	\N	HikariSub.Grid	This would break the line group “%1”. Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.		no	\N
+new	\N	\N	\N	HikariSub.Grid	This would leave group members outside a line group. Nothing was changed.		no	\N
+new	\N	\N	\N	HikariSub.Grid	Remove group		no	\N
+new	\N	\N	\N	HikariSub.Grid	Characters per second		no	\N
+new	\N	\N	\N	HikariSub.Grid	Line wraps		no	\N
+new	\N	\N	\N	HikariSub.Grid	changed		no	\N
+new	\N	\N	\N	HikariSub.Grid	changed, saved		no	\N
+new	\N	\N	\N	HikariSub.Grid	unconfirmed		no	\N
+new	\N	\N	\N	HikariSub.Grid	bookmarked		no	\N
+new	\N	\N	\N	HikariSub.Grid	%n selected, %1 hidden		yes	\N
+new	\N	\N	\N	HikariSub.Grid	%n selected		yes	\N
+new	\N	\N	\N	HikariSub.Grid	Subtitle lines		no	\N
+new	\N	\N	\N	HikariSub.Grid	Line %1		no	\N
+new	\N	\N	\N	HikariSub.Hotkeys	The shortcut %1 of "Open video with FFMS2" was removed: the command is retired and videos are always indexed.		no	\N
+new	\N	\N	\N	HikariSub.Hotkeys	"%1" is already assigned to %2. Press it again to replace it.		no	\N
+new	\N	\N	\N	HikariSub.Hotkeys	Window		no	\N
+new	\N	\N	\N	HikariSub.Hotkeys	OK		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	%1 - HikariSub		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	&Open…		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	&Close		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Open &video…		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Save &as…		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Import legacy settings...		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	E&xit		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	&Automation		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	&Load script…		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Rerun last macro		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Automation &manager		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Unload video		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Vie&w		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	&Panels		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Show		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Hide		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Float		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Dock		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	&Move panel…		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Layout &preset		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Timing		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Typesetting		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	&Reset layout		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Restore the previous layout		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	&Subtitles		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Shift &times...		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	History (1 element)		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	History (%1 elements)		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	OK		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Log		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	HikariSub subtitle editor by altqx,\nversion %1		no	\N
+new	\N	\N	\N	HikariSub.MainWindow	Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n		no	\N
+new	\N	\N	\N	HikariSub.MisspellReplacer	Fix minor errors		no	\N
+new	\N	\N	\N	HikariSub.MisspellReplacer	Rules		no	\N
+new	\N	\N	\N	HikariSub.Options	OK		no	\N
+new	\N	\N	\N	HikariSub.Options	Appearance		no	\N
+new	\N	\N	\N	HikariSub.Options	Language		no	\N
+new	\N	\N	\N	HikariSub.Options	None chosen		no	\N
+new	\N	\N	\N	HikariSub.Options	No dictionaries found		no	\N
+new	\N	\N	\N	HikariSub.Options	Playback		no	\N
+new	\N	\N	\N	HikariSub.Options	Built-in		no	\N
+new	\N	\N	\N	HikariSub.Options	Audio output		no	\N
+new	\N	\N	\N	HikariSub.Options	Show hidden rows		no	\N
+new	\N	\N	\N	HikariSub.Options	Hide the rows shown		no	\N
+new	\N	\N	\N	HikariSub.Options	Use		no	\N
+new	\N	\N	\N	HikariSub.Options	Write the value into the subtitles' information		no	\N
+new	\N	\N	\N	HikariSub.Options	Theme		no	\N
+new	\N	\N	\N	HikariSub.Options	Follow system theme		no	\N
+new	\N	\N	\N	HikariSub.Options	Light or Dark as the system's colour scheme sets it; high contrast stays as chosen		no	\N
+new	\N	\N	\N	HikariSub.Options	Accent color		no	\N
+new	\N	\N	\N	HikariSub.Options	%1 (contrast %2:1)		no	\N
+new	\N	\N	\N	HikariSub.Options	UI colors		no	\N
+new	\N	\N	\N	HikariSub.Options	Choose…		no	\N
+new	\N	\N	\N	HikariSub.Options	Choose %1		no	\N
+new	\N	\N	\N	HikariSub.Options	Reset to default		no	\N
+new	\N	\N	\N	HikariSub.Options	Red		no	\N
+new	\N	\N	\N	HikariSub.Options	Orange		no	\N
+new	\N	\N	\N	HikariSub.Options	Gold		no	\N
+new	\N	\N	\N	HikariSub.Options	Green		no	\N
+new	\N	\N	\N	HikariSub.Options	Blue		no	\N
+new	\N	\N	\N	HikariSub.Options	Purple		no	\N
+new	\N	\N	\N	HikariSub.Options	Pink		no	\N
+new	\N	\N	\N	HikariSub.Options	Light		no	\N
+new	\N	\N	\N	HikariSub.Options	Dark		no	\N
+new	\N	\N	\N	HikariSub.Options	High contrast white		no	\N
+new	\N	\N	\N	HikariSub.Options	High contrast black		no	\N
+new	\N	\N	\N	HikariSub.Options	Text and icons		no	\N
+new	\N	\N	\N	HikariSub.Reference	The reference is protected (read-only).		no	\N
+new	\N	\N	\N	HikariSub.Reference	Compare with reference		no	\N
+new	\N	\N	\N	HikariSub.Reference	Reference: %1		no	\N
+new	\N	\N	\N	HikariSub.Reference	Reference		no	\N
+new	\N	\N	\N	HikariSub.Reference	Reference (protected, read-only): %1		no	\N
+new	\N	\N	\N	HikariSub.Reference	Follow the editing line		no	\N
+new	\N	\N	\N	HikariSub.Reference	Independent navigation		no	\N
+new	\N	\N	\N	HikariSub.Reference	No matching line		no	\N
+new	\N	\N	\N	HikariSub.Reference	Match %1 of %2		no	\N
+new	\N	\N	\N	HikariSub.Reference	Show nearest line		no	\N
+new	\N	\N	\N	HikariSub.Reference	Previous match		no	\N
+new	\N	\N	\N	HikariSub.Reference	Next match		no	\N
+new	\N	\N	\N	HikariSub.Reference	Reference lines (protected, read-only)		no	\N
+new	\N	\N	\N	HikariSub.ScriptProperties	Layout width		no	\N
+new	\N	\N	\N	HikariSub.ScriptProperties	Layout height		no	\N
+new	\N	\N	\N	HikariSub.ScriptProperties	Link the layout resolution to the subtitle resolution		no	\N
+new	\N	\N	\N	HikariSub.ScriptProperties	1: End-of-line wrapping, only N breaks		no	\N
+new	\N	\N	\N	HikariSub.ScriptProperties	2: No wrapping, both \n and N break		no	\N
+new	\N	\N	\N	HikariSub.Search	Could not find the specified phrase "%1".		no	\N
+new	\N	\N	\N	HikariSub.Search	Invalid regular expression '%1': %2		no	\N
+new	\N	\N	\N	HikariSub.Search	Failed to find match for regular expression: %1		no	\N
+new	\N	\N	\N	HikariSub.Search	Cannot back up %1.		no	\N
+new	\N	\N	\N	HikariSub.Search	Cannot open file %1.		no	\N
+new	\N	\N	\N	HikariSub.Search	Cannot write file %1; it was left as it was.		no	\N
+new	\N	\N	\N	HikariSub.Search	%1 could not be restored; its backup is in %2.		no	\N
+new	\N	\N	\N	HikariSub.Search	Search		no	\N
+new	\N	\N	\N	HikariSub.Search	In files		no	\N
+new	\N	\N	\N	HikariSub.Search	Windows search filters separated by semicolons, e.g. "*.ass; *.srt".		no	\N
+new	\N	\N	\N	HikariSub.Search	Search in hidden folders		no	\N
+new	\N	\N	\N	HikariSub.Search	Find in all open subtitles		no	\N
+new	\N	\N	\N	HikariSub.Search	Find all in current subtitles		no	\N
+new	\N	\N	\N	HikariSub.Search	Replace in all open subtitles		no	\N
+new	\N	\N	\N	HikariSub.Search	No results yet		no	\N
+new	\N	\N	\N	HikariSub.Search	Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.		no	\N
+new	\N	\N	\N	HikariSub.Search	OK		no	\N
+new	\N	\N	\N	HikariSub.SelectLines	Invalid regular expression '%1': %2		no	\N
+new	\N	\N	\N	HikariSub.SelectLines	Failed to find match for regular expression: %1		no	\N
+new	\N	\N	\N	HikariSub.SelectLines	OK		no	\N
+new	\N	\N	\N	HikariSub.Session	%1 (recovered)		no	\N
+new	\N	\N	\N	HikariSub.Session	Could not find %1		no	\N
+new	\N	\N	\N	HikariSub.Session	The tab of %1 has other work now; open the file in a new tab.		no	\N
+new	\N	\N	\N	HikariSub.Session	Could not open %1; nothing was changed.		no	\N
+new	\N	\N	\N	HikariSub.Session	Unsaved work from a session that did not close. Each opens as a new unsaved copy; the original file is not changed.		no	\N
+new	\N	\N	\N	HikariSub.Session	There is no unsaved work to recover.		no	\N
+new	\N	\N	\N	HikariSub.Session	%1 — %2		no	\N
+new	\N	\N	\N	HikariSub.Session	Open copy		no	\N
+new	\N	\N	\N	HikariSub.Session	Dismiss		no	\N
+new	\N	\N	\N	HikariSub.Session	No auto save files		no	\N
+new	\N	\N	\N	HikariSub.Session	Day		no	\N
+new	\N	\N	\N	HikariSub.Session	Month		no	\N
+new	\N	\N	\N	HikariSub.Session	Year		no	\N
+new	\N	\N	\N	HikariSub.Session	Session file (*.kls)		no	\N
+new	\N	\N	\N	HikariSub.Session	Session entries not restored		no	\N
+new	\N	\N	\N	HikariSub.Session	Keyframes		no	\N
+new	\N	\N	\N	HikariSub.Session	These files of the session could not be found. The tabs stay open; retry, choose the file, or remove the entry.		no	\N
+new	\N	\N	\N	HikariSub.Session	Tab %1 (%2) – %3: %4		no	\N
+new	\N	\N	\N	HikariSub.Session	Retry		no	\N
+new	\N	\N	\N	HikariSub.Session	Relink…		no	\N
+new	\N	\N	\N	HikariSub.Session	Remove		no	\N
+new	\N	\N	\N	HikariSub.Session	Choose the file		no	\N
+new	\N	\N	\N	HikariSub.Session	Autosaves of the previous version (read only). Each opens as a new unsaved copy.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Cannot read %1		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Cannot write the snapshot		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	%1 to import of %2 changes, %3 unchanged, %4 unresolved, %5 excluded, %6 retired		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	No legacy settings were found beside the program. Choose the folder of a legacy installation.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	%1 holds no legacy settings (Config, Dictionary).		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Nothing to import: the chosen settings are already in effect.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	The legacy files changed since they were read. Read them again to review the changes.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	The current settings changed since this review. Review the import again.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	The import could not be prepared; the current settings stay in effect.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	There is no earlier generation of the settings to go back to.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	The settings before the import take effect when HikariSub starts again.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Import legacy settings		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Choose the folder of a legacy installation		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Roll back		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Go back to the settings before the last import?		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Go back to the settings before the last import? These changes made since will be replaced:\n%1		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Installation:		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Choose folder…		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Read		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Files that are not UTF-8 are read as:		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Choose...		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Latin-1 (ISO 8859-1)		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Windows-1252		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Show:		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Changes		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Missing		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Unchanged		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Superseded		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Unresolved		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Excluded		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Retired		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Files read		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Proposed choice		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	All changes		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Legacy: %1    Now: %2		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Unresolved paths, kept as they are: %1		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	An import waits for the next start.		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	An import waits for the next start. These settings changed since it was made keep your change:\n%1		no	\N
+new	\N	\N	\N	HikariSub.SettingsImport	Import		no	\N
+new	\N	\N	\N	HikariSub.Spelling	No dictionary files were found in the "%1" folder.\nSpell checking will be disabled		no	\N
+new	\N	\N	\N	HikariSub.Spelling	The edited line cannot be committed.		no	\N
+new	\N	\N	\N	HikariSub.Spelling	No suggestions		no	\N
+new	\N	\N	\N	HikariSub.Spelling	Suggestions		no	\N
+new	\N	\N	\N	HikariSub.StatusBar	Status bar		no	\N
+new	\N	\N	\N	HikariSub.StatusBar	1 line selected		no	\N
+new	\N	\N	\N	HikariSub.StatusBar	%1 lines selected		no	\N
+new	\N	\N	\N	HikariSub.StatusBar	 (%1 hidden)		no	\N
+new	\N	\N	\N	HikariSub.Styles	The document has no styles to edit.		no	\N
+new	\N	\N	\N	HikariSub.Styles	Copy the selected style		no	\N
+new	\N	\N	\N	HikariSub.Styles	Edit the selected style		no	\N
+new	\N	\N	\N	HikariSub.Styles	Delete the selected styles		no	\N
+new	\N	\N	\N	HikariSub.Styles	Sort the styles by name		no	\N
+new	\N	\N	\N	HikariSub.Styles	Copy style from storage to every open ASS file		no	\N
+new	\N	\N	\N	HikariSub.Styles	Size		no	\N
+new	\N	\N	\N	HikariSub.Styles	transparency		no	\N
+new	\N	\N	\N	HikariSub.Styles	Preview text		no	\N
+new	\N	\N	\N	HikariSub.Styles	OK		no	\N
+new	\N	\N	\N	HikariSub.Styles	New catalog		no	\N
+new	\N	\N	\N	HikariSub.Styles	Catalog name		no	\N
+new	\N	\N	\N	HikariSub.Styles	Do you really want to delete the catalog named "%1"?		no	\N
+new	\N	\N	\N	HikariSub.Styles	ASS subtitle files(*.ass)		no	\N
+new	\N	\N	\N	HikariSub.Tabs	Open documents		no	\N
+new	\N	\N	\N	HikariSub.Tabs	Protected reference		no	\N
+new	\N	\N	\N	HikariSub.Tabs	Modified (history step %1)		no	\N
+new	\N	\N	\N	HikariSub.Tabs	Close %1		no	\N
+new	\N	\N	\N	HikariSub.TagList	Tag list		no	\N
+new	\N	\N	\N	HikariSub.TagList	%1, %2, %3 of %4		no	\N
+new	\N	\N	\N	HikariSub.TimeShift	No document open		no	\N
+new	\N	\N	\N	HikariSub.TimeShift	The times could not be shifted.		no	\N
+new	\N	\N	\N	HikariSub.TimeShift	Move the marker to video time		no	\N
+new	\N	\N	\N	HikariSub.TimeShift	Move the marker to audio time		no	\N
+new	\N	\N	\N	HikariSub.TimeShift	Styles, separated by commas		no	\N
+new	\N	\N	\N	HikariSub.TimeShift	Profiles		no	\N
+new	\N	\N	\N	HikariSub.Translation	Could not open %1; nothing was changed.		no	\N
+new	\N	\N	\N	HikariSub.Translation	Translation needs an ASS file: plain text cannot store it.		no	\N
+new	\N	\N	\N	HikariSub.Translation	Subtitle files (*.ass *.srt *.sub *.txt)		no	\N
+new	\N	\N	\N	HikariSub.Translation	Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.		no	\N
+new	\N	\N	\N	HikariSub.Video	Video position		no	\N
+new	\N	\N	\N	HikariSub.Video	Video times		no	\N
+new	\N	\N	\N	HikariSub.Video	Frame time; frame number; frames from the line's start frame; milliseconds from the line's start and end		no	\N
+new	\N	\N	\N	HikariSub.Video	Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)		no	\N
+new	\N	\N	\N	HikariSub.Video	All files (*)		no	\N
+new	\N	\N	\N	HikariSub.Video	Keyframes file (*.txt *.pass *.stats *.log)		no	\N
+new	\N	\N	\N	HikariSub.Video	Streams		no	\N
+new	\N	\N	\N	HikariSub.Video	Chapters		no	\N
+new	\N	\N	\N	HikariSub.Video	Width		no	\N
+new	\N	\N	\N	HikariSub.Video	Height		no	\N
+new	\N	\N	\N	HikariSub.Video	Full screen video		no	\N
+new	\N	\N	\N	HikariSub.Video	Exit full screen		no	\N
+new	\N	\N	\N	HikariSub.Video	Escape		no	\N
+new	\N	\N	\N	HikariSub.Video	Unload video		no	\N
+new	\N	\N	\N	HikariSub.Video	Aspect ratio		no	\N
+new	\N	\N	\N	HikariSub.Video	Seek on		no	\N
+new	\N	\N	\N	HikariSub.Video	Then play		no	\N
+new	\N	\N	\N	HikariSub.Video	the file could not be read		no	\N
+new	\N	\N	\N	HikariSub.Video	the file has no usable video track		no	\N
+new	\N	\N	\N	HikariSub.Video	the media helper ended		no	\N
+new	\N	\N	\N	HikariSub.Video	a media component is missing		no	\N
+new	\N	\N	\N	HikariSub.Video	the video could not be opened		no	\N
+new	\N	\N	\N	HikariSub.Video	No video open		no	\N
+new	\N	\N	\N	HikariSub.Video	Opening dummy video…		no	\N
+new	\N	\N	\N	HikariSub.Video	Indexing %1…		no	\N
+new	\N	\N	\N	HikariSub.Video	Video unavailable: %1		no	\N
+new	\N	\N	\N	HikariSub.Video	Frame %1 of %2  %3		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	%1 (not available yet)		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Pick selected lines		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Pick selected lines (%n line(s) picked: the tools edit them, not the active line)		yes	\N
+new	\N	\N	\N	HikariSub.VisualTools	Pick selected lines (the tools edit them, not the active line)		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	%n line(s) picked		yes	\N
+new	\N	\N	\N	HikariSub.VisualTools	Clear picked lines		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Shape: %1		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	A shape named "%1" already exists.		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Shapes		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	New shape name		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Scaling relative to cursor		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Scaling mode		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Shape		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	OK		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Rename		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Tags		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	New tag name		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Tag		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Minimal value		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Maximal value		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Value		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Step		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Where Insert puts the tag		no	\N
+new	\N	\N	\N	HikariSub.VisualTools	Decimal places		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Move panel…		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Dock		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Undock		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Close reference		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Restore the previous layout		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Dismiss		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Move panel		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Panel:		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Panel		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Place:		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Tab with		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Left of		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Above		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Right of		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Below		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Float		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Placement		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Next to:		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Next to panel		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Move		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Width:		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Width		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Height:		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Height		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Resize		no	\N
+new	\N	\N	\N	HikariSub.Workspace	Panels		no	\N
+new	\N	\N	\N	HikariSub.Workspace	%1 options		no	\N
+new	\N	\N	\N	HikariSub.Workspace	the file is larger than %1 bytes		no	\N
+new	\N	\N	\N	HikariSub.Workspace	it is not a layout file		no	\N
+new	\N	\N	\N	HikariSub.Workspace	it was written by a newer version		no	\N
+new	\N	\N	\N	HikariSub.Workspace	its format is not known		no	\N
+new	\N	\N	\N	HikariSub.Workspace	it names panels from a newer version		no	\N
+new	\N	\N	\N	HikariSub.Workspace	it was made with %1		no	\N
+new	\N	\N	\N	HikariSub.Workspace	it names an unknown panel (%1)		no	\N
+new	\N	\N	\N	HikariSub.Workspace	it holds no layout		no	\N
+new	\N	\N	\N	HikariSub.Workspace	it holds no Classic arrangement		no	\N
+new	\N	\N	\N	HikariSub.Workspace	the docking engine could not restore it		no	\N
+new	\N	\N	\N	HikariSub.Workspace	The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.		no	\N
+new	\N	\N	\N	QGuiApplication	QT_LAYOUT_DIRECTION		no	\N

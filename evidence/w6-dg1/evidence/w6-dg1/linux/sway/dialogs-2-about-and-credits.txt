@@ -1,0 +1,95 @@
+# compositor windows
+floating_con id=10 hikarisub 'About HikariSub' 570,357 460x286 client=570,357 460x286 output=HEADLESS-1 fullscreen=0  visible=True border=csd
+floating_con id=8 hikarisub 'HikariSub' 160,100 1280x800 client=160,100 1280x800 output=HEADLESS-1 fullscreen=0  visible=True border=csd
+floating_con id=11 hikarisub 'Credits' 530,243 540x513 client=530,243 540x513 output=HEADLESS-1 fullscreen=0 FOCUSED visible=True border=csd
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "HikariSub",
+   "id": "HikariSub",
+   "active": false,
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800
+  },
+  {
+   "name": "About HikariSub",
+   "id": "About HikariSub",
+   "active": false,
+   "x": 0,
+   "y": 0,
+   "w": 460,
+   "h": 286
+  },
+  {
+   "name": "Credits",
+   "id": "Credits",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 540,
+   "h": 513
+  }
+ ],
+ "panels": [
+  {
+   "name": "Home",
+   "id": "Home",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 64,
+   "w": 1280,
+   "h": 707
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 550,
+   "w": 1280,
+   "h": 221
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 99,
+   "w": 639,
+   "h": 407
+  },
+  {
+   "name": "Line editor",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 640,
+   "y": 312,
+   "w": 640,
+   "h": 194
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "HikariSub",
+   "x": 640,
+   "y": 99,
+   "w": 640,
+   "h": 177
+  }
+ ],
+ "focus": "[dialog] 'Credits' <focused,showing,visible,enabled> @0,0 540x513 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'Credits' > dialog:'Credits'",
+ "texts": {
+  "Line text": "",
+  "Start": "",
+  "End": ""
+ },
+ "labels": [
+  "Editing",
+  "Video times"
+ ]
+}

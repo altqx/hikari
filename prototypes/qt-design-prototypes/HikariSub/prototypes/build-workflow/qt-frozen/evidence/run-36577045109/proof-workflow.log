@@ -1,0 +1,96 @@
+Executing workflow step 1 of 3: configure preset "qt-frozen-linux-proof"
+
+-- The CXX compiler identification is GNU 15.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Performing Test HAVE_STDATOMIC
+-- Performing Test HAVE_STDATOMIC - Success
+-- Found WrapAtomic: TRUE
+-- Found OpenGL: /usr/lib/x86_64-linux-gnu/libOpenGL.so
+-- Found WrapOpenGL: TRUE
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Could NOT find Qt6TaskTree (missing: Qt6TaskTree_DIR)
+CMake Warning at /usr/local/share/cmake-4.4/Modules/CMakeFindDependencyMacro.cmake:93 (find_package):
+  Found package configuration file:
+
+    /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64/lib/cmake/Qt6QmlAssetDownloaderPrivate/Qt6QmlAssetDownloaderPrivateConfig.cmake
+
+  but it set Qt6QmlAssetDownloaderPrivate_FOUND to FALSE so package
+  "Qt6QmlAssetDownloaderPrivate" is considered to be NOT FOUND.  Reason given
+  by package:
+
+  Qt6QmlAssetDownloaderPrivate could not be found because dependency
+  Qt6TaskTree could not be found.
+
+  Configuring with --debug-find-pkg=Qt6TaskTree might reveal details why the
+  package was not found.
+
+  Configuring with -DQT_DEBUG_FIND_PACKAGE=ON will print the values of some
+  of the path variables that find_package uses to try and find the package.
+
+Call Stack (most recent call first):
+  /usr/local/share/cmake-4.4/Modules/CMakeFindDependencyMacro.cmake:125 (__find_dependency_common)
+  _work/qt/6.11.2/gcc_64/lib/cmake/Qt6/QtPublicDependencyHelpers.cmake:142 (find_dependency)
+  _work/qt/6.11.2/gcc_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6QmlAssetDownloaderPrivatepluginDependencies.cmake:22 (_qt_internal_find_qt_dependencies)
+  _work/qt/6.11.2/gcc_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6QmlAssetDownloaderPrivatepluginConfig.cmake:40 (include)
+  _work/qt/6.11.2/gcc_64/lib/cmake/Qt6/QtPublicPluginHelpers.cmake:638 (include)
+  _work/qt/6.11.2/gcc_64/lib/cmake/Qt6Qml/Qt6QmlPlugins.cmake:6 (__qt_internal_include_qml_plugin_packages)
+  _work/qt/6.11.2/gcc_64/lib/cmake/Qt6Qml/Qt6QmlConfig.cmake:199 (include)
+  _work/qt/6.11.2/gcc_64/lib/cmake/Qt6/Qt6Config.cmake:257 (find_package)
+  proof/CMakeLists.txt:2 (find_package)
+
+
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/proof/tint.frag -> tint.frag.qsb exposed as ://tint.frag.qsb
+-- Configuring done (1.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/proof
+
+Executing workflow step 2 of 3: build preset "qt-frozen-linux-proof"
+
+[1/26] Generating proof/qtproof_de.qm
+Updating '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/proof/proof/qtproof_de.qm'...
+    Generated 1 translation(s) (1 finished and 0 unfinished)
+[2/26] Populating .qmlls.ini file at /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/proof/.qt/.qmlls.build.ini
+[3/26] Running rcc for resource qtproof_translations
+[4/26] Copying qtproof qml sources into build dir
+[5/26] Copying qtproof qml resources into build dir
+[6/26] Running qmlimportscanner for qtproof
+[7/26] Automatic MOC and UIC for target qtproof
+[8/26] Running AUTOMOC file extraction for target qtproof
+[9/26] Running moc --collect-json for target qtproof
+[10/26] Automatic QML type registration for target qtproof
+[11/26] Running rcc for resource qmake_HikariProof
+[12/26] Generating .qsb/tint.frag.qsb
+[13/26] Generating .rcc/qmlcache/qtproof_qmlcache_loader.cpp
+[14/26] Running rcc for resource qtproof_raw_qml_0
+[15/26] Running rcc for resource proof-shaders
+[16/26] Generating .rcc/qmlcache/qtproof_Main_qml.cpp, .rcc/qmlcache/qtproof_Main_qml.cpp.aotstats
+[17/26] Building CXX object proof/CMakeFiles/qtproof.dir/qtproof_autogen/mocs_compilation.cpp.o
+[18/26] Building CXX object proof/CMakeFiles/qtproof.dir/qtproof_qmltyperegistrations.cpp.o
+[19/26] Building CXX object proof/CMakeFiles/qtproof.dir/.qt/rcc/qrc_qmake_HikariProof.cpp.o
+[20/26] Building CXX object proof/CMakeFiles/qtproof.dir/main.cpp.o
+[21/26] Building CXX object proof/CMakeFiles/qtproof.dir/.rcc/qmlcache/qtproof_qmlcache_loader.cpp.o
+[22/26] Building CXX object proof/CMakeFiles/qtproof.dir/.qt/rcc/qrc_qtproof_raw_qml_0.cpp.o
+[23/26] Building CXX object proof/CMakeFiles/qtproof.dir/.qt/rcc/qrc_proof-shaders.cpp.o
+[24/26] Building CXX object proof/CMakeFiles/qtproof.dir/__/.qt/rcc/qrc_qtproof_translations.cpp.o
+[25/26] Building CXX object proof/CMakeFiles/qtproof.dir/.rcc/qmlcache/qtproof_Main_qml.cpp.o
+[26/26] Linking CXX executable proof/qtproof
+
+Executing workflow step 3 of 3: test preset "qt-frozen-linux-proof"
+
+Test project /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/proof
+    Start 1: qtproof-selftest
+1/2 Test #1: qtproof-selftest .................   Passed    0.08 sec
+    Start 2: qtproof-render-xvfb
+2/2 Test #2: qtproof-render-xvfb ..............   Passed    2.94 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   3.10 sec

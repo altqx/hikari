@@ -1,0 +1,17 @@
+{
+  "comment": "Reviewed licences for the media helper's static closure (I6, M50-helper). The manifest test fails when the installed closure gains or loses a package, so a change here is a reviewed edit.",
+  "packages": {
+    "hikari-ffms2": {
+      "license": "MIT",
+      "note": "FFMS2 5.1, owned overlay ports/hikari-ffms2"
+    },
+    "ffmpeg": {
+      "license": "LGPL-2.1-or-later",
+      "note": "Features avcodec, avformat, swresample, swscale; no GPL or nonfree components. Statically linked: shipping it carries LGPL relinking obligations that the packaging card must settle."
+    },
+    "zlib": {
+      "license": "Zlib",
+      "note": "Through FFMS2"
+    }
+  }
+}

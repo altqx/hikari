@@ -1,0 +1,36 @@
+{
+ "tab-new-copies-arrangement": {
+  "status": "observed",
+  "detail": "Ctrl+T: the new tab shows the first tab's arrangement, Audio floating",
+  "evidence": [
+   "tabs-0-first-tab.png",
+   "tabs-0-first-tab.txt",
+   "tabs-1-new-tab.png",
+   "tabs-1-new-tab.txt"
+  ],
+  "at": "2026-10-19T09:05:13"
+ },
+ "tab-switch-floating": {
+  "status": "observed",
+  "detail": "tabs differ (True); Ctrl+PgUp back to the first tab: same windows and rectangles True; Ctrl+PgDn to the second: True; floating windows' positions compared (X11)",
+  "evidence": [
+   "tabs-0-first-tab.png",
+   "tabs-0-first-tab.txt",
+   "tabs-2-second-tab-own.png",
+   "tabs-2-second-tab-own.txt",
+   "tabs-3-first-tab-again.png",
+   "tabs-3-first-tab-again.txt",
+   "tabs-4-second-tab-again.png",
+   "tabs-4-second-tab-again.txt"
+  ],
+  "at": "2026-10-19T09:05:13"
+ },
+ "test-executables": {
+  "status": "observed",
+  "detail": "Totals: 16 passed, 0 failed, 0 skipped; Totals: 26 passed, 0 failed, 6 skipped; Totals: 13 passed, 0 failed, 0 skipped; Totals: 16 passed, 0 failed, 0 skipped; skips: [\"SKIP   : DockingQualification::floatingPanelKeepsItsSizeAcrossAScaleChange() the screen's scale changes through the offscreen platform's configuration\", \"SKIP   : DockingQualification::floatingPanelComesBackWholeWhenItsScreenGoesAway() screens come and go through the offscreen platform's configuration\", 'SKIP   : DockingQualification::dragShowsTheDropHighlight() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)', 'SKIP   : DockingQualification::wholeFloatingHeaderDocksWhereItDoesNotSplit() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)', 'SKIP   : DockingQualification::floatingHeaderDocksByItsTitleAndMovesByTheRest() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)', 'SKIP   : DockingQualification::floatingTabBarMovesRightOfItsTabs() the window follows a declined system move only where the platform declines it (offscreen)']",
+  "evidence": [
+   "test-executables.txt"
+  ],
+  "at": "2026-10-19T09:06:41"
+ }
+}

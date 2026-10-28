@@ -1,0 +1,82 @@
+# winix job job-d1d78f17d5294e5c8252b297c52150d3 (task cmd: tools/winix/msvc.ps1 tests/fixtures/hikari-section/probe/run.ps1), Windows 11 Winix VM, source w6-ws2@a7db6fba5
+== C:\Winix\work\hikari-qt\out\legacy-win\bundled\HikariSub_x64\Csri\VSFiltermod.dll sha256 87a9c3c1ab7614eda22b8fb367840a87fd34c0c7fb92d7c4d3aa6bb0b2a6ee6b
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGR_ t=0.00 hash=eadf00d5841f5f4e changed=32156
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGR_ t=0.75 hash=eba7e295866ab7e9 changed=42045
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGR_ t=1.50 hash=a61e27ffae5bc3a3 changed=53514
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGR_ t=2.25 hash=3b6c04df84a09f56 changed=61586
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGR_ t=3.00 hash=59982bb95ae9c174 changed=61583
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGR_ t=3.75 hash=d062a281471d6f7f changed=51693
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGR_ t=0.00 hash=eadf00d5841f5f4e changed=32156
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGR_ t=0.75 hash=eba7e295866ab7e9 changed=42045
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGR_ t=1.50 hash=a61e27ffae5bc3a3 changed=53514
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGR_ t=2.25 hash=3b6c04df84a09f56 changed=61586
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGR_ t=3.00 hash=59982bb95ae9c174 changed=61583
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGR_ t=3.75 hash=d062a281471d6f7f changed=51693
+  SAME plain.ass plain-hikari.ass (6 of 6 frames drawn)
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGR_ t=0.00 hash=868e80c2de13768e changed=42386
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGR_ t=0.75 hash=147d8426934c5c2d changed=52275
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGR_ t=1.50 hash=1bac1914ac74329b changed=63744
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGR_ t=2.25 hash=0ec5abca98ec9b8e changed=71816
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGR_ t=3.00 hash=176ef41e14ed398c changed=71813
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGR_ t=3.75 hash=cf9a57c5d44d77ab changed=61923
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGR_ t=0.00 hash=868e80c2de13768e changed=42386
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGR_ t=0.75 hash=147d8426934c5c2d changed=52275
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGR_ t=1.50 hash=1bac1914ac74329b changed=63744
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGR_ t=2.25 hash=0ec5abca98ec9b8e changed=71816
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGR_ t=3.00 hash=176ef41e14ed398c changed=71813
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGR_ t=3.75 hash=cf9a57c5d44d77ab changed=61923
+  SAME fonts.ass fonts-hikari.ass (6 of 6 frames drawn)
+== C:\Winix\work\hikari-qt\out\legacy-win\bundled\HikariSub_x64\Csri\xy-VSFilter_hikarisub.dll sha256 f4b26034de6cb71ae7ba6b624cb57694d3e44419e9587da8eb98baee68547915
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=0.00 hash=7c24406dbba00220 changed=42851
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=0.75 hash=9c2cde64557534df changed=56052
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=1.50 hash=f0a4680818619ab8 changed=71344
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=2.25 hash=42e956f2ec4d56b8 changed=82109
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=3.00 hash=31a1fa263d3cd26e changed=82105
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=3.75 hash=aa844998c06e841b changed=68903
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=0.00 hash=7c24406dbba00220 changed=42851
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=0.75 hash=9c2cde64557534df changed=56052
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=1.50 hash=f0a4680818619ab8 changed=71344
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=2.25 hash=42e956f2ec4d56b8 changed=82109
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=3.00 hash=31a1fa263d3cd26e changed=82105
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=3.75 hash=aa844998c06e841b changed=68903
+  SAME plain.ass plain-hikari.ass (6 of 6 frames drawn)
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=0.00 hash=d7f3c5d1cc205146 changed=56491
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=0.75 hash=3dc13bc3eaca2d8d changed=69692
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=1.50 hash=f76c85d86d2a19ae changed=84984
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=2.25 hash=f331f52187131c3e changed=95749
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=3.00 hash=37725f41cd72755c changed=95745
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=3.75 hash=08c2bf71dabfc67d changed=82543
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=0.00 hash=d7f3c5d1cc205146 changed=56491
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=0.75 hash=3dc13bc3eaca2d8d changed=69692
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=1.50 hash=f76c85d86d2a19ae changed=84984
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=2.25 hash=f331f52187131c3e changed=95749
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=3.00 hash=37725f41cd72755c changed=95745
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=3.75 hash=08c2bf71dabfc67d changed=82543
+  SAME fonts.ass fonts-hikari.ass (6 of 6 frames drawn)
+== C:\Winix\work\hikari-qt\out\build\windows-x64-vsfiltermod\tests\backends\vsfiltermod-csri\VSFiltermod.dll sha256 e4386c63280bac1cdbb0ef6434643a4af797d45ad3e49b194c2db002574e2bfe
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=0.00 hash=cfe8635d4220b216 changed=42787
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=0.75 hash=8b428de006dbbb2e changed=55965
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=1.50 hash=29fdc5c426c9f169 changed=71257
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=2.25 hash=78a6beb2eacb37fa changed=81997
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=3.00 hash=34a10b582cc7cd6e changed=81994
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain.ass BGRA t=3.75 hash=8de6d044747e6218 changed=68815
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=0.00 hash=cfe8635d4220b216 changed=42787
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=0.75 hash=8b428de006dbbb2e changed=55965
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=1.50 hash=29fdc5c426c9f169 changed=71257
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=2.25 hash=78a6beb2eacb37fa changed=81997
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=3.00 hash=34a10b582cc7cd6e changed=81994
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\plain-hikari.ass BGRA t=3.75 hash=8de6d044747e6218 changed=68815
+  SAME plain.ass plain-hikari.ass (6 of 6 frames drawn)
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=0.00 hash=69c4bd05bee33326 changed=56427
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=0.75 hash=03398cb3deb4ffde changed=69605
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=1.50 hash=c671e8b1182c8f25 changed=84897
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=2.25 hash=66002fd3ff15c50e changed=95637
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=3.00 hash=e847515f5e1ce9e2 changed=95634
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts.ass BGRA t=3.75 hash=e0c81c2a5cbc16c0 changed=82455
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=0.00 hash=69c4bd05bee33326 changed=56427
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=0.75 hash=03398cb3deb4ffde changed=69605
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=1.50 hash=c671e8b1182c8f25 changed=84897
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=2.25 hash=66002fd3ff15c50e changed=95637
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=3.00 hash=e847515f5e1ce9e2 changed=95634
+  C:\Winix\work\hikari-qt\tests\fixtures\hikari-section\fonts-hikari.ass BGRA t=3.75 hash=e0c81c2a5cbc16c0 changed=82455
+  SAME fonts.ass fonts-hikari.ass (6 of 6 frames drawn)

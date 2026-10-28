@@ -1,0 +1,602 @@
+{
+ "schema": 1,
+ "projects": [
+  {
+   "id": "unanimated-Aegisub-Scripts",
+   "repository": "https://github.com/TypesettingTools/unanimated-Aegisub-Scripts",
+   "commit": "ade40a212b0aef2689f0504654e47c310173ad89",
+   "licence": "Unlicense",
+   "included": "committed",
+   "directory": "unanimated-Aegisub-Scripts@ade40a212b0a",
+   "raw_url": "https://raw.githubusercontent.com/TypesettingTools/unanimated-Aegisub-Scripts/ade40a212b0aef2689f0504654e47c310173ad89/",
+   "files": [
+    {
+     "path": "ua.Cycles.lua",
+     "role": "script",
+     "install": "Autoload/ua.Cycles.lua",
+     "sha256": "043800d78b3b8025239e002dac4c7e1fe967c31cc91c24873419aa9a719f5fd1"
+    },
+    {
+     "path": "ua.ChangeCase.lua",
+     "role": "script",
+     "install": "Autoload/ua.ChangeCase.lua",
+     "sha256": "114ea54474d6eab225fb3ea0da3f2940244d98611eb2c7c8fc85b625508d06c8"
+    },
+    {
+     "path": "ua.JumpToNext.lua",
+     "role": "script",
+     "install": "Autoload/ua.JumpToNext.lua",
+     "sha256": "d3815713f7fafcd0000e98b067a52747a4e5dec8f45deb549a671116bdb96cdd"
+    },
+    {
+     "path": "ua.HYDRA.lua",
+     "role": "script",
+     "install": "Autoload/ua.HYDRA.lua",
+     "sha256": "34684dab5eda4563dd3f5200a822fc4fed1bf7080d49044ccbeed78eb869e179"
+    },
+    {
+     "path": "ua.MultiLineEditor.lua",
+     "role": "script",
+     "install": "Autoload/ua.MultiLineEditor.lua",
+     "sha256": "49269909707b0fbca6c3b3cc5149ec7598a614d1d8f1d1f3c76fbd9275ddda3d"
+    },
+    {
+     "path": "ua.BlurAndGlow.lua",
+     "role": "script",
+     "install": "Autoload/ua.BlurAndGlow.lua",
+     "sha256": "588b02c838e99723d1aabfe12b4b7cfff4d2ea0701a7faa04a5c5d6651e724a4"
+    },
+    {
+     "path": "ua.iBus.lua",
+     "role": "script",
+     "install": "Autoload/ua.iBus.lua",
+     "sha256": "5dafe0c7beda9f1782b988eaa8e5c850d7a5e3c0a2b1d441fb10fc0a11e2276a"
+    },
+    {
+     "path": "licence",
+     "role": "licence",
+     "sha256": "156c074f004f56e8c7e0b4f415bcf6099952a38afcba402b42e1bdc2ecd3c362"
+    }
+   ]
+  },
+  {
+   "id": "lyger-Aegisub-Scripts",
+   "repository": "https://github.com/TypesettingTools/lyger-Aegisub-Scripts",
+   "commit": "f07033106376f3f931712813b7efc8f7d703c16f",
+   "licence": "MIT",
+   "included": "committed",
+   "directory": "lyger-Aegisub-Scripts@f07033106376",
+   "raw_url": "https://raw.githubusercontent.com/TypesettingTools/lyger-Aegisub-Scripts/f07033106376f3f931712813b7efc8f7d703c16f/",
+   "files": [
+    {
+     "path": "macros/lyger.GradientByChar.lua",
+     "role": "script",
+     "install": "Autoload/lyger.GradientByChar.lua",
+     "sha256": "11b367fb562cef83868c6f852df39014465a10a8d00b1dbd51c2d3defab8e119"
+    },
+    {
+     "path": "macros/lyger.LayerIncrement.lua",
+     "role": "script",
+     "install": "Autoload/lyger.LayerIncrement.lua",
+     "sha256": "13c042779d18ab960b3afa82fffa6fea43f59b7d5ed7e6c078a4fd7a34193d87"
+    },
+    {
+     "path": "macros/lyger.FbfTransform.moon",
+     "role": "script",
+     "install": "Autoload/lyger.FbfTransform.moon",
+     "sha256": "d161142091fdf841afca6876129242940312f19d9aa10dcc77ebc6fa5bbee01b"
+    },
+    {
+     "path": "macros/split-tags.lua",
+     "role": "script",
+     "install": "Autoload/split-tags.lua",
+     "sha256": "42f537bbb71cd0da842586e559ca8a1c89884e27eea77fe4e1d242269dbd022a"
+    },
+    {
+     "path": "macros/lyger.LuaInterpret.lua",
+     "role": "script",
+     "install": "Autoload/lyger.LuaInterpret.lua",
+     "sha256": "c02521b13ffda6ff1e9189eaa7fe6bf1d14f9b077786335377d12789e9d3de6b"
+    },
+    {
+     "path": "macros/lyger.GradientEverything.moon",
+     "role": "script",
+     "install": "Autoload/lyger.GradientEverything.moon",
+     "sha256": "5a0210415099da139dd50e539b2d2681350727c66dbff4c71b92eee8ea0044b4"
+    },
+    {
+     "path": "LICENSE",
+     "role": "licence",
+     "sha256": "be67e04ad15435b4d2b8748621629c1a95eb53df42492d294f884d14380adbab"
+    }
+   ]
+  },
+  {
+   "id": "arch1t3cht-Aegisub-Scripts",
+   "repository": "https://github.com/TypesettingTools/arch1t3cht-Aegisub-Scripts",
+   "commit": "5c3c782196998fc231a5e3195d69797f5d745800",
+   "licence": "MIT",
+   "included": "committed",
+   "directory": "arch1t3cht-Aegisub-Scripts@5c3c78219699",
+   "raw_url": "https://raw.githubusercontent.com/TypesettingTools/arch1t3cht-Aegisub-Scripts/5c3c782196998fc231a5e3195d69797f5d745800/",
+   "files": [
+    {
+     "path": "macros/arch.CenterTimes.lua",
+     "role": "script",
+     "install": "Autoload/arch.CenterTimes.lua",
+     "sha256": "c6a016fb47ce853bc642bca42671fd7d7bc573721f678f8f131edf01105a9e1a"
+    },
+    {
+     "path": "macros/arch.FocusLines.moon",
+     "role": "script",
+     "install": "Autoload/arch.FocusLines.moon",
+     "sha256": "8ce0b17698e5cb3eba3aea8aebf8e0bfbc22f175fdf4745e47a56bbcfb547573"
+    },
+    {
+     "path": "macros/arch.RWTools.lua",
+     "role": "script",
+     "install": "Autoload/arch.RWTools.lua",
+     "sha256": "5ef79814ef9071a3af6c616f410cb368af7a0b5755403983a87bb268512ae0bb"
+    },
+    {
+     "path": "macros/arch.SplitSections.moon",
+     "role": "script",
+     "install": "Autoload/arch.SplitSections.moon",
+     "sha256": "a2ee73b0372bebf7084ec67cec9824af225a856ebb3265402489f58961efd014"
+    },
+    {
+     "path": "macros/arch.ConvertFolds.moon",
+     "role": "script",
+     "install": "Autoload/arch.ConvertFolds.moon",
+     "sha256": "36ad4464cbadb446317284d0c881b126d76fa27a950996103d99b92f91180f43"
+    },
+    {
+     "path": "macros/arch.Line2Fbf.moon",
+     "role": "script",
+     "install": "Autoload/arch.Line2Fbf.moon",
+     "sha256": "3a1122fb1a3e696d5d6de51f4c3df53ee0ded8c5b3f1ae3b034bee8b2197f7c7"
+    },
+    {
+     "path": "macros/arch.NoteBrowser.moon",
+     "role": "script",
+     "install": "Autoload/arch.NoteBrowser.moon",
+     "sha256": "7a688a5b58c76519007e58011d8cdbf65200808a4abe63b96fb7bc241108518f"
+    },
+    {
+     "path": "modules/arch/Math.moon",
+     "role": "module",
+     "install": "Include/arch/Math.moon",
+     "sha256": "b96d29547d2a121d6393a7f04dcfade246585ad550fad02eebca71ae3e1e4ace"
+    },
+    {
+     "path": "modules/arch/Util.moon",
+     "role": "module",
+     "install": "Include/arch/Util.moon",
+     "sha256": "3b01f2f12acb4e99f32ae0b8f8a5a4ab1c47014dbedeece3e7bc9890817873e8"
+    },
+    {
+     "path": "modules/arch/Perspective.moon",
+     "role": "module",
+     "install": "Include/arch/Perspective.moon",
+     "sha256": "0332c92c4c2ed6d3a15b518025c3f6a528f82e6b1bc4f2ab4ee124eb26c9b178"
+    },
+    {
+     "path": "LICENSE",
+     "role": "licence",
+     "sha256": "9cf74fb6a4c1ccb27a9e3ef1593733c25c5f86d4427fa7e2a464c5c9ca9854cd"
+    }
+   ]
+  },
+  {
+   "id": "PhosCity-Aegisub-Scripts",
+   "repository": "https://github.com/PhosCity/Aegisub-Scripts",
+   "commit": "0c1acd0d1465da2eb453c401f6e5de34c76dad3a",
+   "licence": "GPL-3.0",
+   "included": "committed",
+   "directory": "PhosCity-Aegisub-Scripts@0c1acd0d1465",
+   "raw_url": "https://raw.githubusercontent.com/PhosCity/Aegisub-Scripts/0c1acd0d1465da2eb453c401f6e5de34c76dad3a/",
+   "files": [
+    {
+     "path": "macros/phos.snap.lua",
+     "role": "script",
+     "install": "Autoload/phos.snap.lua",
+     "sha256": "c97a13b8ae8bec311a0af77451efde38970ffbe560bf307782d8cf96649cfc73"
+    },
+    {
+     "path": "macros/phos.wave.lua",
+     "role": "script",
+     "install": "Autoload/phos.wave.lua",
+     "sha256": "3ae4bd615d3a8f391871565bf0460006ccb4324a003d60860d72e5336d948e7c"
+    },
+    {
+     "path": "macros/phos.RemoveTags.moon",
+     "role": "script",
+     "install": "Autoload/phos.RemoveTags.moon",
+     "sha256": "04c6f904d5955527ecb6f2ea6512f851e7aedafc32312f5dfb10cb7b0dba45cf"
+    },
+    {
+     "path": "macros/phos.EditTags.moon",
+     "role": "script",
+     "install": "Autoload/phos.EditTags.moon",
+     "sha256": "915b6ddf592c985af5a75db75470d719d6e5b2607648191f4f21b97f469f50bc"
+    },
+    {
+     "path": "macros/phos.FoldOperations.moon",
+     "role": "script",
+     "install": "Autoload/phos.FoldOperations.moon",
+     "sha256": "e1007e0b4d6c20ea7411a52ae48caeef36c34027b5fb176239e10a535f53aeea"
+    },
+    {
+     "path": "modules/phos/AegiGui.moon",
+     "role": "module",
+     "install": "Include/phos/AegiGui.moon",
+     "sha256": "43d196c45c2d683ce8ac882441fe9599d4ec26d63530d0198666146afa02bf6c"
+    },
+    {
+     "path": "modules/phos/AssfPlus.moon",
+     "role": "module",
+     "install": "Include/phos/AssfPlus.moon",
+     "sha256": "699992bd2bf3a636633c9c0113c1798db56720610ffc613ca7a39b80a1918ef7"
+    },
+    {
+     "path": "LICENSE",
+     "role": "licence",
+     "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    }
+   ]
+  },
+  {
+   "id": "petzku-Aegisub-Scripts",
+   "repository": "https://github.com/petzku/Aegisub-Scripts",
+   "commit": "4d22880da5761b3f9df6e7932bcb3e362192b4f8",
+   "licence": "none (no licence file; all rights reserved)",
+   "included": "fetched",
+   "directory": "petzku-Aegisub-Scripts@4d22880da576",
+   "raw_url": "https://raw.githubusercontent.com/petzku/Aegisub-Scripts/4d22880da5761b3f9df6e7932bcb3e362192b4f8/",
+   "files": [
+    {
+     "path": "macros/petzku.SmartQuotify.moon",
+     "role": "script",
+     "install": "Autoload/petzku.SmartQuotify.moon",
+     "sha256": "26093f93ff5287f3982eb76e1b6765aaefc9f9a206aa9e917e266e6e2b1967da"
+    },
+    {
+     "path": "macros/petzku.Accenter.lua",
+     "role": "script",
+     "install": "Autoload/petzku.Accenter.lua",
+     "sha256": "dd4a2deb17f56a7d8e2d1fb875e3f5cf91614e957a431bb36f3074e14f71bf7f"
+    },
+    {
+     "path": "macros/petzku.CellsBox.lua",
+     "role": "script",
+     "install": "Autoload/petzku.CellsBox.lua",
+     "sha256": "b2a2b07a17defc30ccf344673c59dfd92aacefcc497b0a85f2e6c6c755692e57"
+    },
+    {
+     "path": "macros/petzku.JumpToNextPlus.lua",
+     "role": "script",
+     "install": "Autoload/petzku.JumpToNextPlus.lua",
+     "sha256": "ac99150b10f43e79926bf763e95d78b1736f9a70091049155fa213f4c6fcbe74"
+    },
+    {
+     "path": "macros/petzku.Typewriter.lua",
+     "role": "script",
+     "install": "Autoload/petzku.Typewriter.lua",
+     "sha256": "816b3a326a6132cbb449525e9a41fed2a7ca140858054ebeafb92d0e1ffeb55e"
+    },
+    {
+     "path": "macros/petzku.NewClipShape.moon",
+     "role": "script",
+     "install": "Autoload/petzku.NewClipShape.moon",
+     "sha256": "94e43c859bad2eb168eb25798dc27ceae7eb10eb7d13ec9245f81bda2b01ff01"
+    },
+    {
+     "path": "macros/petzku.Snapper.moon",
+     "role": "script",
+     "install": "Autoload/petzku.Snapper.moon",
+     "sha256": "84391b43e194bb274919facc1676b78d757249ed7e29c985e3788f5fe230fb6c"
+    },
+    {
+     "path": "modules/petzku/util.moon",
+     "role": "module",
+     "install": "Include/petzku/util.moon",
+     "sha256": "6d1daa12a98305033390f40a1a8ee27966d841ed2b858a7693c6d5f96666d035"
+    },
+    {
+     "path": "modules/petzku/easings.moon",
+     "role": "module",
+     "install": "Include/petzku/easings.moon",
+     "sha256": "1fb9ba63a6adb153e92981e42d6520bc8fe09960072679536ecd2f3919fb63fe"
+    },
+    {
+     "path": "modules/petzku/tags.moon",
+     "role": "module",
+     "install": "Include/petzku/tags.moon",
+     "sha256": "cd9d1071ca292fe41be556c0c9043ff4af02235e78ef35d0980b119767989e10"
+    }
+   ]
+  },
+  {
+   "id": "ILL-Aegisub-Scripts",
+   "repository": "https://github.com/TypesettingTools/ILL-Aegisub-Scripts",
+   "commit": "f3e581c04d74669bcf724f9fd2e49cf6c5c7607b",
+   "licence": "MIT",
+   "included": "committed",
+   "directory": "ILL-Aegisub-Scripts@f3e581c04d74",
+   "raw_url": "https://raw.githubusercontent.com/TypesettingTools/ILL-Aegisub-Scripts/f3e581c04d74669bcf724f9fd2e49cf6c5c7607b/",
+   "files": [
+    {
+     "path": "macros/ILL.SplitText.moon",
+     "role": "script",
+     "install": "Autoload/ILL.SplitText.moon",
+     "sha256": "b3b1b19944d8551ef169439b2323b1cbda8e2510938825debaeeb26b4781f587"
+    },
+    {
+     "path": "macros/ILL.ChangeAlign.moon",
+     "role": "script",
+     "install": "Autoload/ILL.ChangeAlign.moon",
+     "sha256": "931bccaa66eefd4fbc11ba3271bf4872321a992df7a30c543cd1ab25d6d1e0f5"
+    },
+    {
+     "path": "modules/ILL/ILL.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL.moon",
+     "sha256": "33f4f8cff66bd61770fce4c49dd9682c2a12cd836761346575a106d784355fc0"
+    },
+    {
+     "path": "modules/ILL/ILL/Aegi.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Aegi.moon",
+     "sha256": "a549a22b3221b6264ce7d700608a3055caaf5c164e84f3c05173b49e5c75638b"
+    },
+    {
+     "path": "modules/ILL/ILL/Ass/Ass.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Ass/Ass.moon",
+     "sha256": "e41fb02333f8c9cd4bab3716946f1c86b8b286ece5b5265438dd4a573771159a"
+    },
+    {
+     "path": "modules/ILL/ILL/Ass/Line.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Ass/Line.moon",
+     "sha256": "b72ada39b3e2ab11a3466e5b6343048eb66026cac7a6ba607021143d73ab488c"
+    },
+    {
+     "path": "modules/ILL/ILL/Ass/Shape/Curve.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Ass/Shape/Curve.moon",
+     "sha256": "9e710421f283040176da4581c5bc8e3834a449700a2f84afb5e6fea9ef720bf1"
+    },
+    {
+     "path": "modules/ILL/ILL/Ass/Shape/Path.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Ass/Shape/Path.moon",
+     "sha256": "721634ee87ce8bb4432502cf98cb3d6c9dc545228ef6b8489fc65168bc4a7dfd"
+    },
+    {
+     "path": "modules/ILL/ILL/Ass/Shape/Point.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Ass/Shape/Point.moon",
+     "sha256": "ca5a48917705ebe799464fc3fbaeecc915b46edca3febc47878a33fc714ec787"
+    },
+    {
+     "path": "modules/ILL/ILL/Ass/Shape/Segment.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Ass/Shape/Segment.moon",
+     "sha256": "75ba9e1042c5d7eae370d4c84fc606675fe28d69aa16dd8718fa4b2f0bdc8560"
+    },
+    {
+     "path": "modules/ILL/ILL/Ass/Text/Tag.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Ass/Text/Tag.moon",
+     "sha256": "d001abb16eccb4f253c3e7887b17968b1489b36d71827381c66cb5aef9bf8f0f"
+    },
+    {
+     "path": "modules/ILL/ILL/Ass/Text/Tags.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Ass/Text/Tags.moon",
+     "sha256": "53448465554624737ee403c734e5a5c4b43b69612e7a4f2fbef9e744e61d110a"
+    },
+    {
+     "path": "modules/ILL/ILL/Ass/Text/Text.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Ass/Text/Text.moon",
+     "sha256": "954d1247948f2d5b4db450131c1b53e69c8c5a0545c709708a2b69c02e6b4332"
+    },
+    {
+     "path": "modules/ILL/ILL/Config.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Config.moon",
+     "sha256": "437e287564cc8dbb38fac1418db544afa1e9785cb0ee237e5e34239af707323e"
+    },
+    {
+     "path": "modules/ILL/ILL/Font/Font.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Font/Font.moon",
+     "sha256": "d6fa3971ab719341950e1e3869b31b00307a96e183b6e7c163c7181e34030017"
+    },
+    {
+     "path": "modules/ILL/ILL/Font/Init.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Font/Init.moon",
+     "sha256": "39612956118b32b0ce2fe3acf7386988f7e25f7fb0446ce7b0be515001fbf792"
+    },
+    {
+     "path": "modules/ILL/ILL/Font/Unx.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Font/Unx.moon",
+     "sha256": "959bba438a808332c6003a7e5dabe660114156887aa5878d3e15d3a4ad69109d"
+    },
+    {
+     "path": "modules/ILL/ILL/Font/Win.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Font/Win.moon",
+     "sha256": "a7cf299af6f7b7301998400bc2367ea03d9d8f0f6a48e4d285845ef4801be6db"
+    },
+    {
+     "path": "modules/ILL/ILL/Math.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Math.moon",
+     "sha256": "dfcb1402a6731f72b9beb4d61a9a8fd0832303857206a5584eed63b4d4130a3b"
+    },
+    {
+     "path": "modules/ILL/ILL/Table.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Table.moon",
+     "sha256": "6942a136a84da5bd05c874dfb7e70adfbc9241ab586b8d44866904c297ff5be5"
+    },
+    {
+     "path": "modules/ILL/ILL/UTF8.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/UTF8.moon",
+     "sha256": "fbd6e1a1db557e7514a52d1f0d16c51baf5423d17dadde922df3ff9412935c32"
+    },
+    {
+     "path": "modules/ILL/ILL/Util.moon",
+     "role": "module",
+     "install": "Include/ILL/ILL/Util.moon",
+     "sha256": "04b1f1d24addb4100678b3b24280f51a00af246a2488ad6d95b8f21bb21f55cc"
+    },
+    {
+     "path": "modules/ILL/IMG.moon",
+     "role": "module",
+     "install": "Include/ILL/IMG.moon",
+     "sha256": "6f1b6f889726d9caca13b501736d5a4d238f92f210e5f701c87a6b181ef0e28f"
+    },
+    {
+     "path": "modules/ILL/IMG/Potrace.moon",
+     "role": "module",
+     "install": "Include/ILL/IMG/Potrace.moon",
+     "sha256": "99dfb0112c8ea169eb0961d2e85084ce1e5127d18d3a39e32e5d2c17d3d1842a"
+    },
+    {
+     "path": "modules/ILL/IMG/Tracer.moon",
+     "role": "module",
+     "install": "Include/ILL/IMG/Tracer.moon",
+     "sha256": "090d940dc0453bb03d577ce8003e36d0f7ed324e2575f89ee9cf4a50d5f21280"
+    },
+    {
+     "path": "modules/ILL/IMG/bitmap/bitmap.moon",
+     "role": "module",
+     "install": "Include/ILL/IMG/bitmap/bitmap.moon",
+     "sha256": "52ea62bfb819807a023708c2ef5d534d804fb2d82f2d9e6283ae58ff9738ac3f"
+    },
+    {
+     "path": "modules/ILL/IMG/buffer/buffer.moon",
+     "role": "module",
+     "install": "Include/ILL/IMG/buffer/buffer.moon",
+     "sha256": "4e368e0887d15757e967a8431b10bad3972b6fcca396236b4454c48e6eba4cc9"
+    },
+    {
+     "path": "modules/ILL/IMG/giflib/giflib.moon",
+     "role": "module",
+     "install": "Include/ILL/IMG/giflib/giflib.moon",
+     "sha256": "0c0507972e66968b68016b98803cd26c1598df7fa54532c2f2b99d077d72aa2e"
+    },
+    {
+     "path": "modules/ILL/IMG/lodepng/lodepng.moon",
+     "role": "module",
+     "install": "Include/ILL/IMG/lodepng/lodepng.moon",
+     "sha256": "2c426d081a82791a9ed3d515ce6c5cebf3d0c83fcaa74d4b9665144cf1918c98"
+    },
+    {
+     "path": "modules/ILL/IMG/turbojpeg/turbojpeg.moon",
+     "role": "module",
+     "install": "Include/ILL/IMG/turbojpeg/turbojpeg.moon",
+     "sha256": "c9139b45097013d1622d2e1a4b9317a4ea2cd2831ad5806c51c0fa0b9467242b"
+    },
+    {
+     "path": "modules/clipper2/clipper2.moon",
+     "role": "module",
+     "install": "Include/clipper2/clipper2.moon",
+     "sha256": "efe753fdc7f69fa2382a07046d25643529ec8d96a64789146aa876cd1f18c1b7"
+    },
+    {
+     "path": "LICENSE",
+     "role": "licence",
+     "sha256": "12acab17b3c6fc4ab3810dd81f371e9b1815b95798beca331154f9a918556a7a"
+    }
+   ]
+  },
+  {
+   "id": "Myaamori-Aegisub-Scripts",
+   "repository": "https://github.com/TypesettingTools/Myaamori-Aegisub-Scripts",
+   "commit": "f2a52ee38eeb60934175722fa9d7f2c2aae015c6",
+   "licence": "MIT",
+   "included": "committed",
+   "directory": "Myaamori-Aegisub-Scripts@f2a52ee38eeb",
+   "raw_url": "https://raw.githubusercontent.com/TypesettingTools/Myaamori-Aegisub-Scripts/f2a52ee38eeb60934175722fa9d7f2c2aae015c6/",
+   "files": [
+    {
+     "path": "macros/myaa.Bounce.moon",
+     "role": "script",
+     "install": "Autoload/myaa.Bounce.moon",
+     "sha256": "40c97e3b5d57f7744d08a8887f9fc75b1685ecb2147f8000549209e34a60f228"
+    },
+    {
+     "path": "macros/myaa.PasteFromPad.moon",
+     "role": "script",
+     "install": "Autoload/myaa.PasteFromPad.moon",
+     "sha256": "7b7600740c8456afb573c6ded761b0937225a489f7745081230fa72e77f71ab7"
+    },
+    {
+     "path": "macros/myaa.MergeScripts.moon",
+     "role": "script",
+     "install": "Autoload/myaa.MergeScripts.moon",
+     "sha256": "d9cdd07b411b446135de162a12c7ef36834c576c4150e4eab6a088e124b3a01c"
+    },
+    {
+     "path": "modules/myaa/ASSParser.moon",
+     "role": "module",
+     "install": "Include/myaa/ASSParser.moon",
+     "sha256": "7b935e7c9dfbbbc2f2d22d3f52c643fc22f23123086ee6e50a6d7bfe976612af"
+    },
+    {
+     "path": "LICENSE",
+     "role": "licence",
+     "sha256": "c759e772fadde34b21ca55546ec6a3f882ac18371d23329b25c71768995f2454"
+    }
+   ]
+  },
+  {
+   "id": "line0-Aegisub-Scripts",
+   "repository": "https://github.com/TypesettingTools/line0-Aegisub-Scripts",
+   "commit": "b6deb78511a0a96fd6fd074d2337cc8a687c9655",
+   "licence": "MIT",
+   "included": "committed",
+   "directory": "line0-Aegisub-Scripts@b6deb78511a0",
+   "raw_url": "https://raw.githubusercontent.com/TypesettingTools/line0-Aegisub-Scripts/b6deb78511a0a96fd6fd074d2337cc8a687c9655/",
+   "files": [
+    {
+     "path": "l0.CascadeTransforms.moon",
+     "role": "script",
+     "install": "Autoload/l0.CascadeTransforms.moon",
+     "sha256": "8fef2f0ada55abd4217cfb824eb28ade9555358a05d07ad3d20a0d02cabbf93a"
+    },
+    {
+     "path": "l0.Nudge.moon",
+     "role": "script",
+     "install": "Autoload/l0.Nudge.moon",
+     "sha256": "5be021d5c81e701a91c5aee266fe777bdeab1096cf82d3579a34e0416b0acf6b"
+    },
+    {
+     "path": "l0.SplitLines.moon",
+     "role": "script",
+     "install": "Autoload/l0.SplitLines.moon",
+     "sha256": "2b8694d24d77579d521143eaa7bf58baa9625a37c79434e7ac077bca16d0b7ac"
+    },
+    {
+     "path": "l0.VerticalText.moon",
+     "role": "script",
+     "install": "Autoload/l0.VerticalText.moon",
+     "sha256": "02f31673eda1c50b27bf7daa7bbe83c309c0af856914dac0aa5b5ecf1684f9ce"
+    },
+    {
+     "path": "LICENSE",
+     "role": "licence",
+     "sha256": "ee5e22f313feb2c82c5327ac85a9a794b52f1581eef4c0c5d771f18876840a0a"
+    }
+   ]
+  }
+ ]
+}

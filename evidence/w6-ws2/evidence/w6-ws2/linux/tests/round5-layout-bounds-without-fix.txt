@@ -1,0 +1,18 @@
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::aLayoutLargerThanThePanelsIsRefused(floating window clones) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(684)]
+FAIL!  : FileLayoutsTest::aLayoutLargerThanThePanelsIsRefused(second main window) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(684)]
+FAIL!  : FileLayoutsTest::aLayoutLargerThanThePanelsIsRefused(a panel in two groups) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(684)]
+FAIL!  : FileLayoutsTest::aLayoutLargerThanThePanelsIsRefused(layout items) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(684)]
+FAIL!  : FileLayoutsTest::aLayoutLargerThanThePanelsIsRefused(a panel listed twice) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(684)]
+FAIL!  : FileLayoutsTest::aLayoutLargerThanThePanelsIsRefused(placeholders) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(684)]
+FAIL!  : FileLayoutsTest::aLayoutLargerThanThePanelsIsRefused(a closed panel twice) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(684)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 7 failed, 0 skipped, 0 blacklisted, 5957ms
+rc=7

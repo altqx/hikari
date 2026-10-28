@@ -1,0 +1,82 @@
+[
+ {
+  "fixture": "positions",
+  "ms": 0,
+  "activeLine": 6
+ },
+ {
+  "fixture": "positions",
+  "ms": 1000,
+  "activeLine": 7
+ },
+ {
+  "fixture": "positions",
+  "ms": 2500,
+  "activeLine": 8
+ },
+ {
+  "fixture": "positions",
+  "ms": 4000,
+  "activeLine": 9
+ },
+ {
+  "fixture": "styles",
+  "ms": 1000,
+  "activeLine": 3
+ },
+ {
+  "fixture": "clip",
+  "ms": 1000,
+  "activeLine": 3
+ },
+ {
+  "fixture": "karaoke",
+  "ms": 0,
+  "activeLine": 3
+ },
+ {
+  "fixture": "karaoke",
+  "ms": 250,
+  "activeLine": 4
+ },
+ {
+  "fixture": "karaoke",
+  "ms": 750,
+  "activeLine": 5
+ },
+ {
+  "fixture": "karaoke",
+  "ms": 1500,
+  "activeLine": 6
+ },
+ {
+  "fixture": "karaoke",
+  "ms": 2600,
+  "activeLine": 7
+ },
+ {
+  "fixture": "matrix-none",
+  "ms": 1000,
+  "activeLine": 1
+ },
+ {
+  "fixture": "matrix-tv601",
+  "ms": 1000,
+  "activeLine": 1
+ },
+ {
+  "fixture": "matrix-tv709",
+  "ms": 1000,
+  "activeLine": 1
+ },
+ {
+  "fixture": "img-attached",
+  "ms": 0,
+  "activeLine": 4
+ },
+ {
+  "fixture": "img-attached",
+  "ms": 1000,
+  "activeLine": 5
+ }
+]

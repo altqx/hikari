@@ -1,0 +1,246 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E5E9EC;color:#202832;font:13px 'Liberation Sans',Arial,sans-serif;padding:24px;width:1860px}
+.acc{color:#145C4C}
+.ic{display:block;flex:none}
+h1{font-size:18px;font-weight:600;margin:0 0 6px}
+h2{font-size:13px;font-weight:650;margin:26px 0 10px}
+p.note{color:#526170;font-size:12px;margin:0 0 6px;max-width:1780px;line-height:1.45}
+.cap{font-size:12px;color:#526170;margin:8px 0 0;max-width:880px;line-height:1.45}
+.row2{display:flex;gap:40px;align-items:flex-start}
+.col{display:flex;flex-direction:column}
+
+/* DG1 window */
+.dlg{position:relative;background:#F9FAFB;color:#202832;display:flex;flex-direction:column;outline:1px solid #AAB5BE;
+     box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.dtb{display:flex;align-items:center;height:32px;flex:none;background:#F9FAFB;}
+.dtitle{flex:1;min-width:0;padding-left:12px;white-space:nowrap}
+.wbs{display:flex;margin-left:auto;flex:none}
+.wb{display:flex;align-items:center;justify-content:center;width:46px;height:32px;color:#202832}
+.dbody{padding:12px 24px 0;display:flex;flex-direction:column}
+.dfoot{position:relative;display:flex;gap:8px;justify-content:flex-end;padding:16px 24px;flex:none}
+.settings .dfoot{box-shadow:inset 0 1px #AAB5BE}
+.dfoot .lead{margin-right:auto}
+
+/* the split: page list on the background, the page on the panel */
+.split{flex:1;display:flex;min-height:0;box-shadow:inset 0 1px #AAB5BE}
+.pages{width:220px;flex:none;background:#E5E9EC;padding:8px 0;box-shadow:inset -1px 0 #AAB5BE}
+.pg{display:flex;align-items:center;gap:12px;height:36px;padding:0 16px;color:#202832}
+.pg.cur{background:#D6EBE4;box-shadow:inset 3px 0 #145C4C;font-weight:650}
+.pbody{position:relative;flex:1;min-width:0;overflow:hidden}
+.form{padding:20px 28px 24px 24px}
+.sbar{position:absolute;right:3px;width:4px;border-radius:2px;background:#76828D;opacity:.8}
+
+/* sections and rows */
+.sec{padding-top:16px;margin-top:16px;box-shadow:inset 0 1px #AAB5BE}
+.sec.first{padding-top:0;margin-top:0;box-shadow:none}
+.stitle{font-weight:650;margin-bottom:10px}
+.srows{display:flex;flex-direction:column;gap:8px}
+.r{display:flex;align-items:center;gap:8px;min-height:28px}
+.r.chk{min-height:22px}
+.slot{width:16px;flex:none;display:flex;align-items:center;justify-content:center}
+.rl{width:220px;flex:none;line-height:1.35}
+.rl.wrap{width:auto;flex:1}
+.rc{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.rnote{margin:-5px 0 0 24px;color:#526170;font-size:12px;line-height:1.4}
+.rblock{margin-left:24px}
+.ring{outline:1px solid #202832;outline-offset:2px}
+
+/* controls */
+.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:80px;height:30px;padding:0 10px;border-radius:1px;
+   background:#EDF0F3;border:1px solid #76828D;color:#202832;white-space:nowrap;flex:none}
+.b.sm{min-width:0;height:28px}
+.b.on{background:#D6EBE4;border-color:#145C4C}
+.b.pri{background:#145C4C;border-color:#145C4C;color:#FFFFFF;font-weight:650}
+.b.dng{color:#A51F31;border-color:#A51F31;background:#F9FAFB}
+.b.ring{outline:1px solid #202832;outline-offset:1px}
+.bsep{width:1px;align-self:stretch;margin:5px 0 5px 4px;background:#AAB5BE}
+.qb{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:1px;color:#202832}
+.qbs{display:flex;gap:2px;margin-top:4px}
+.box{width:16px;height:16px;border:1px solid #76828D;background:#FFFFFF;border-radius:1px;display:flex;
+     align-items:center;justify-content:center;flex:none}
+.box.on{background:#145C4C;border-color:#145C4C;color:#FFFFFF}
+.fld{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:#FFFFFF;border:1px solid #AAB5BE;
+     border-radius:1px;color:#202832;min-width:0}
+.fld.focus{border-color:#202832;box-shadow:inset 0 0 0 1px #202832}
+.fld.ph .ftext{color:#526170}
+.ftext{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ftext.num{text-align:right;font-variant-numeric:tabular-nums}
+.fic,.ftail{color:#526170}
+.ftail{display:flex;margin-left:auto}
+.spin{padding-right:2px}
+.unit{color:#526170}
+.arrows{display:flex;flex-direction:column;color:#526170;margin-left:2px}
+.x{color:#526170}
+.seg{display:inline-flex;border:1px solid #AAB5BE;border-radius:1px;overflow:hidden;flex:none}
+.seg span{padding:0 10px;height:26px;display:flex;align-items:center;background:#EDF0F3;border-left:1px solid #AAB5BE}
+.seg span:first-child{border-left:none}
+.seg span.on{background:#D6EBE4;box-shadow:inset 0 -2px #145C4C;font-weight:650}
+.big{color:#202832}
+.warn,.warn .acc{color:#8A5A00}
+
+/* appearance */
+.tcards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:560px}
+.tcard{height:64px;border:1px solid;border-radius:1px;padding:6px;display:flex}
+.tcard.on{border-width:2px;padding:5px}
+.tpan{position:relative;flex:1;border:1px solid;border-radius:1px;padding:4px 6px;display:flex;flex-direction:column;gap:3px}
+.tpan b{font-size:11px;white-space:nowrap;overflow:hidden}
+.tpan i{display:block;width:48px;height:3px;border-radius:1px}
+.tacc{position:absolute;right:5px;bottom:5px;width:24px;height:12px;border-radius:1px}
+.sws{display:flex;gap:8px}
+.sw{width:22px;height:22px;border-radius:50%;outline:1px solid #AAB5BE;flex:none}
+.sw.on{outline:2px solid #202832;outline-offset:2px}
+.sw.big{border-radius:1px;width:28px}
+
+/* lists */
+.llist{outline:1px solid #AAB5BE;background:#FFFFFF;padding:2px 0;max-width:520px}
+.lrow{display:flex;gap:8px;align-items:center;height:28px;padding:0 8px}
+.lrow.cur{background:#D6EBE4;box-shadow:inset 3px 0 #145C4C}
+.lic{width:16px}
+.ln{width:120px}
+.lt{color:#526170;font-family:'Liberation Mono',monospace;font-size:12px}
+
+/* subtitle properties */
+.ptable{display:grid;grid-template-columns:120px 300px 40px;gap:8px 10px;align-items:center}
+.pth{color:#526170;font-size:12px;text-align:center}
+.pl{color:#202832}
+.pc{display:flex;justify-content:center}
+
+/* hotkeys */
+.htools{display:flex;gap:8px;margin-bottom:10px}
+.htable{outline:1px solid #AAB5BE;background:#FFFFFF}
+.hhead,.hrow{display:grid;grid-template-columns:1fr 180px;padding:0 10px;height:26px;align-items:center}
+.hhead{color:#526170;font-size:12px;background:#EDF0F3;box-shadow:inset 0 -1px #AAB5BE}
+.hgrp{height:26px;display:flex;align-items:center;padding:0 10px;font-weight:650;color:#526170;font-size:12px}
+.hrow{padding-left:22px}
+.hrow.sel{background:#D6EBE4;box-shadow:inset 3px 0 #145C4C}
+.hrow.mod span{color:#8A5A00}
+.keys{color:#526170}
+.hacts{display:flex;gap:8px;margin-top:10px}
+
+/* menu (PK1: radius 5, the shadow) */
+.menu{position:absolute;z-index:3;min-width:220px;background:#F9FAFB;outline:1px solid #AAB5BE;border-radius:5px;padding:4px 0;
+      box-shadow:0 10px 30px rgba(0,0,0,.33)}
+.mi{display:flex;align-items:center;gap:10px;height:28px;padding:0 14px 0 10px}
+.mi.hi{background:#D6EBE4}
+.noic{width:16px}
+
+/* message box */
+.mb{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+.mbtext{display:flex;flex-direction:column;gap:6px;padding-top:4px;min-width:0}
+.mbmain{font-size:14px;font-weight:650;line-height:1.4}
+.mbdetail{color:#526170;line-height:1.45}
+.mbox .dfoot{padding:24px}
+
+/* icons */
+.igrp{margin-bottom:14px}
+.ih{color:#526170;font-size:12px;margin-bottom:6px}
+.icells{display:flex;flex-wrap:wrap;gap:8px}
+.icell{display:grid;grid-template-columns:16px 32px 1fr;grid-template-rows:32px auto auto;column-gap:10px;align-items:center;
+       width:168px;padding:10px;background:#F9FAFB;outline:1px solid #AAB5BE}
+.icell.new{outline:2px solid #145C4C}
+.iname{grid-column:1 / -1;font-family:'Liberation Mono',monospace;font-size:12px;margin-top:6px}
+.ilabel{grid-column:1 / -1;color:#526170;font-size:12px}
+
+.dock{position:relative;background:#F9FAFB;outline:1px solid #AAB5BE}
+.dhead,.phead{display:flex;align-items:center;height:34px;padding:0 10px 0 12px;box-shadow:inset 0 -1px #AAB5BE}
+.dmore{margin-left:auto;color:#526170;font-weight:700}
+.dbodyx{position:relative;padding:6px 8px 10px}
+.cnt{color:#202832;margin:6px 0 6px;font-size:13px}
+.lefield{position:relative;background:#FFFFFF;border:1px solid #AAB5BE;padding:5px 9px;font-size:13px;line-height:1.6;min-height:28px}
+.lefield.focus{border-color:#145C4C}
+.lefield.mut{opacity:.8}
+.lefield+.lefield{margin-top:6px}
+.flab{position:absolute;right:6px;top:4px;font-size:11px;color:#526170}
+.caret{display:inline-block;width:1px;height:15px;background:#202832;vertical-align:-3px}
+.br{color:#7E3B00}.tg{color:#787600}
+.dr{color:#526170}
+.gm{text-decoration:underline wavy #1A56DB;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-skip-ink:none}
+.spm{background:#FF6968}
+.gcol{color:#1A56DB}
+.mhead{display:flex;gap:10px;padding:6px 14px 8px 10px;align-items:flex-start}
+.mmsg{line-height:1.4}
+.mgrp{color:#526170;font-size:12px;margin-top:2px}
+.mi.sug{font-weight:650}
+.mt{flex:1}
+.mhint{color:#526170;font-size:12px;margin-left:12px}
+.mi.hi .mhint{color:#202832}
+.mi.dis{color:#74808B}
+.mchk .box{width:14px;height:14px}
+.msub{color:#526170}
+.msep{height:1px;background:#AAB5BE;margin:4px 0}
+.spanel{background:#F9FAFB;outline:1px solid #AAB5BE;width:1240px}
+.pbody2{padding:12px}
+.pbody2.cols{display:grid;grid-template-columns:540px 220px 1fr;gap:16px;align-items:start}
+.pleft{display:flex;flex-direction:column;gap:8px}
+.pword{display:flex;align-items:baseline;gap:8px;margin-top:4px}
+.pw{font-size:20px;font-weight:650}
+.pmsg{font-size:16px;font-weight:650;line-height:1.3}
+.pl,.pl2{color:#526170;font-size:12px}
+.pctx{line-height:1.6}
+.prep{display:flex;align-items:center;gap:8px}
+.plist{background:#FFFFFF;outline:1px solid #AAB5BE;height:112px;margin-top:4px}
+.pli{height:26px;display:flex;align-items:center;padding:0 6px}
+.pli.cur{background:#D6EBE4;box-shadow:inset 3px 0 #145C4C}
+.pacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.pacts .b{width:100%}
+.pacts .wide{grid-column:1 / -1}
+.b.dis2{color:#74808B;border-color:#AAB5BE;width:100%}
+.pprog{display:flex;align-items:center;gap:10px;height:28px}
+.pprog.done .pptext{color:#526170}
+.pbar{width:180px;height:4px;background:#EDF0F3;outline:1px solid #AAB5BE;position:relative}
+.pbar i{position:absolute;left:0;top:0;bottom:0;background:#145C4C}
+.pptext{font-size:12px}
+.pempty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0 14px}
+.pempty .seg{margin-bottom:6px}
+.pemsg{font-weight:650}
+.pemsub{color:#526170}
+.glist{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;max-width:600px}
+.glist .r{align-items:flex-start}
+.glist .r .slot{margin-top:2px}
+.gcount{color:#526170;font-size:12px;margin-left:6px}
+.gdesc{display:block;color:#526170;font-size:12px;line-height:1.35}
+.r.dis{color:#74808B}.r.dis .box,.r.dis .box.on{border-color:#74808B;background:#EDF0F3;color:#74808B}
+.gdis{font-weight:400;color:#526170;font-size:12px}
+.lic{margin-top:14px;color:#526170;font-size:12px;width:600px}
+.lnk{color:#145C4C;text-decoration:underline}
+.map{display:flex;flex-direction:column;gap:8px}
+.mrow{display:grid;grid-template-columns:80px 420px 20px 160px 1fr;gap:10px;align-items:center}
+.mk{color:#526170;font-size:12px}
+.marrow{color:#526170;text-align:center}
+.mharp{font-family:'Liberation Mono',monospace;font-size:12px}
+.mnote{color:#526170;font-size:12px;line-height:1.4}
+.swatch{display:inline-block;width:40px;height:14px;vertical-align:-2px;margin-right:6px}
+.legend{display:flex;gap:28px;align-items:center;margin-top:10px}
+.legend span{display:flex;align-items:center}
+.abs{position:relative}
+.pleft .seg,.pempty .seg{align-self:flex-start}
+.pempty .seg{align-self:center}
+.toast{display:flex;gap:10px;align-items:flex-start;padding:10px 8px 10px 12px;background:#F9FAFB;outline:1px solid #AAB5BE;
+       border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.28);color:#202832}
+.toast>.ic{margin-top:1px}
+.tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ttitle{font-weight:650;line-height:1.35}
+.ttext{color:#526170;line-height:1.4}
+.tacts{display:flex;gap:4px;margin:4px 0 0 -6px}
+.tx{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#526170;flex:none}
+.capt{font-size:12px;color:#526170;margin:0 0 8px;max-width:600px;line-height:1.45;min-height:52px}
+</style></head><body><svg width="0" height="0" style="position:absolute"><defs><symbol id="i-chevron-down" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5l3.5 3.5 3.5-3.5"/></g></symbol><symbol id="i-chevron-up" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 9.5l3.5-3.5 3.5 3.5"/></g></symbol><symbol id="i-settings" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></g></symbol><symbol id="i-appearance" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-editor" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></g></symbol><symbol id="i-settings-video" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></g></symbol><symbol id="i-settings-audio" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></g></symbol><symbol id="i-convert" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></g></symbol><symbol id="i-script-properties" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></g></symbol><symbol id="i-automation" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></g></symbol><symbol id="i-hotkeys" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></g></symbol><symbol id="i-language" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5c-2 1.75-3 4-3 6.5s1 4.75 3 6.5c2-1.75 3-4 3-6.5s-1-4.75-3-6.5z"/><g class="acc"><path d="M1.5 8h13"/></g></g></symbol><symbol id="i-ui-font" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 13.5L5 2.5h1l3.5 11M3 9.5h5"/><g class="acc"><circle cx="11.5" cy="11.5" r="2"/><path d="M13.5 9.5v4"/></g></g></symbol><symbol id="i-renderer" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M6.5 4.5v3.5l3-1.75z" fill="currentColor"/><g class="acc"><path d="M4 9.5h8M5.5 11.5h5"/></g></g></symbol><symbol id="i-video-seek" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12.5h13"/><path d="M2.5 7.5h5M5.5 5.5l2 2-2 2"/><g class="acc"><path d="M10.5 4.5v8"/><path d="M9 2.5h3l-1.5 2z" fill="currentColor"/></g></g></symbol><symbol id="i-audio-device" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="1.5" width="9" height="13" rx="1"/><circle cx="8" cy="10" r="2.5"/><g class="acc"><circle cx="8" cy="5" r="1.25" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-audio-delay" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7v2M3.5 5v6M5.5 6v4M7.5 4.5v7"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-theme" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 10A6 6 0 1 1 6 2.5a5 5 0 0 0 7.5 7.5z"/><g class="acc"><path d="M11.5 1.5v2M10.5 2.5h2"/></g></g></symbol><symbol id="i-accent-colour" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5c2.5 3.5 5 6 5 8.5a5 5 0 0 1-10 0C3 7.5 5.5 5 8 1.5z"/><g class="acc"><path d="M4.5 10a3.5 3.5 0 0 0 7 0z" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-ui-colours" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="4" height="4" rx="0.5"/><rect x="1.5" y="9.5" width="4" height="4" rx="0.5"/><path d="M8 4.5h6.5M8 11.5h6.5"/><g class="acc"><rect x="2" y="3" width="3" height="3" fill="currentColor" stroke="none"/><rect x="2" y="10" width="3" height="3" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-restore-default" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-dictionary" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13V3a1.5 1.5 0 0 1 1.5-1.5h7.5v10H5a1.5 1.5 0 0 0 0 3h7.5"/><g class="acc"><path d="M6.5 4.5h3.5M6.5 6.5h2"/></g></g></symbol><symbol id="i-autosave" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5h-6v-11h9l2 2v4"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h4"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-fps" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="1.5" width="13" height="6" rx="1"/><path d="M4.5 1.5v6 M11.5 1.5v6"/><path d="M1.5 3.5h3 M1.5 5.5h3 M14.5 3.5h-3 M14.5 5.5h-3"/><g class="acc"><path d="M2 9h3v1h-3zM2 10h1v1h-1zM2 11h2v1h-2zM2 12h1v1h-1zM2 13h1v1h-1zM6 9h2v1h-2zM6 10h1v1h-1zM8 10h1v1h-1zM6 11h2v1h-2zM6 12h1v1h-1zM6 13h1v1h-1zM10 9h3v1h-3zM10 10h1v1h-1zM10 11h3v1h-3zM12 12h1v1h-1zM10 13h3v1h-3z" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-styles" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z"/><g class="acc"><circle cx="4.75" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="6.75" cy="4.5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="4.5" r="1" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-resample" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="8.5" width="6" height="6" rx="1"/><path d="M1.5 5.5v-3a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-3"/><g class="acc"><path d="M6 10l6-6M8.5 4H12v3.5"/></g></g></symbol><symbol id="i-zoom" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M6.5 4.5v4M4.5 6.5h4"/></g></g></symbol><symbol id="i-lead-in" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 2.5h-2v11h2"/><g class="acc"><path d="M9.5 8h-8M4 5.5L1.5 8 4 10.5"/></g></g></symbol><symbol id="i-folder-open" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 13.5v-10a1 1 0 0 1 1-1h3l1.5 1.5h5a1 1 0 0 1 1 1v1.5"/><path d="M1.5 13.5l2.25-7h10.75l-2.25 7z"/></g></symbol><symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></g></symbol><symbol id="i-filter" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2.5h13L9.5 8.5V13l-3 1.5v-6z"/></g></symbol><symbol id="i-karaoke" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="4.5" width="13" height="7" rx="1"/><path d="M5.5 4.5v7M10.5 4.5v7"/><g class="acc"><rect x="2" y="5" width="3" height="6" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-audio-waveform" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7v2M3.5 5v6M5.5 2.5v11M7.5 5.5v5M9.5 3.5v9M11.5 6v4M13.5 4.5v7"/></g></symbol><symbol id="i-window-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></g></symbol><symbol id="i-window-maximize" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="9" height="9" rx="0.5"/></g></symbol><symbol id="i-notice-warning" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-add" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></g></symbol><symbol id="i-edit" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g class="acc"><path d="M9.5 3.5l3 3"/></g></g></symbol><symbol id="i-move-up" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 13.5v-11M3 7l4.5-4.5L12 7"/></g></symbol><symbol id="i-move-down" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v11M3 9l4.5 4.5L12 9"/></g></symbol><symbol id="i-remove" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5h10"/></g></symbol><symbol id="i-tag-bold" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h6a2 2 0 0 1 2 2v1.5c0 .75-.25 1.5-1 2 1.25.25 2 1.25 2 2.5v1.5a2.5 2.5 0 0 1-2.5 2.5H4zM6 4h3.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H6zM6 9h4.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H6z" fill="currentColor" stroke="none" fill-rule="evenodd"/></g></symbol><symbol id="i-tag-italic" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2.5h5M4 13.5h5M9.5 2.5l-3 11"/></g></symbol><symbol id="i-tag-font" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h6v2H7v3h3v2H7v5H5z" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-media-play" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5v11l9-5.5z" fill="currentColor"/></g></symbol><symbol id="i-about" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4"/><circle cx="8" cy="5" r="0.75" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-spellchecker" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></g></symbol><symbol id="i-dictionary-add" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13V3a1.5 1.5 0 0 1 1.5-1.5h7.5v6"/><path d="M8 11.5H5a1.5 1.5 0 0 0 0 3h3"/><path d="M6.5 4.5h3.5M6.5 6.5h2"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></g></symbol><symbol id="i-edit-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2"/><rect x="2.5" y="4.5" width="8" height="10" rx="1"/></g></symbol><symbol id="i-edit-cut" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="12" r="2"/><circle cx="11.5" cy="12" r="2"/><path d="M5.75 10.5L11.5 1.5M10.25 10.5L4.5 1.5"/></g></symbol><symbol id="i-edit-paste" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 2.5h-2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-10a1 1 0 0 0-1-1h-2"/><rect x="5.5" y="1.5" width="5" height="2" rx="0.5"/><g class="acc"><path d="M5.5 7.5h5M5.5 10h5M5.5 12.5h3"/></g></g></symbol><symbol id="i-delete" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4"/><path d="M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9"/><path d="M6.75 7v5M9.25 7v5"/></g></symbol><symbol id="i-tab-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></g></symbol><symbol id="i-check-updates" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></g></symbol><symbol id="i-settings-grid" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></g></symbol><symbol id="i-notices" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="5.5" width="13" height="8" rx="1"/><path d="M4 8.5h6M4 10.75h4"/><g class="acc"><path d="M3.5 3.5h9"/></g></g></symbol></defs></svg>
+<h1>GR1 Grammar check with Harper: Light</h1><h2>3 · The Spellchecker panel: the Grammar filter</h2>
+<div class="col" style="gap:14px">
+ <div class="spanel"><div class="phead"><b>Spellchecker</b><span class="dmore">⋯</span></div><div class="pbody2 cols"><div class="pleft"><span class="seg"><span class="">Spelling</span><span class="on">Grammar</span></span><div class="pprog"><span class="pbar"><i style="width:37%"></i></span><span class="pptext">Checking line 312 of 842…</span><span class="b sm"><span>Cancel</span></span></div><div class="pword"><span class="pmsg">Use “an” before a word that starts with a vowel sound.</span></div><div class="pl2">Line 4 · Miscellaneous</div><div class="pctx">Their going to the store tomorow, I has <span class="gm">a</span> apple.</div><div class="prep"><span>Replace with</span><span class="fld focus" style="width:260px;"><span class="ftext">an</span></span></div></div><div class="plist"><div class="pli cur">an</div></div><div class="pacts"><span class="b pri"><span>Replace</span></span><span class="b"><span>Ignore</span></span><span class="b"><span>Ignore this rule</span></span><span class="b dis2"><svg class="ic " width="16" height="16"><use href="#i-dictionary-add"/></svg><span>Add to dictionary</span></span></div></div></div>
+ <p class="cap" style="max-width:1240px">Grammar walks the whole file in the background from the active Line, a Line
+ at a time, and shows the first finding as soon as there is one; the progress line has Cancel. The panel and the
+ editor stay usable meanwhile. Replace puts the chosen suggestion in (tags around it stay where they are); Ignore skips
+ this finding; Ignore this rule turns its group off (Settings) and drops the group’s other findings; Add to dictionary
+ is for word findings only.</p>
+ <div class="spanel"><div class="phead"><b>Spellchecker</b><span class="dmore">⋯</span></div><div class="pbody2 cols"><div class="pleft"><span class="seg"><span class="">Spelling</span><span class="on">Grammar</span></span><div class="pprog done"><span class="pptext">Finding 1 of 7 · 842 lines checked</span></div><div class="pword"><span class="pmsg">Use “an” before a word that starts with a vowel sound.</span></div><div class="pl2">Line 4 · Miscellaneous</div><div class="pctx">Their going to the store tomorow, I has <span class="gm">a</span> apple.</div><div class="prep"><span>Replace with</span><span class="fld focus" style="width:260px;"><span class="ftext">an</span></span></div></div><div class="plist"><div class="pli cur">an</div></div><div class="pacts"><span class="b pri"><span>Replace</span></span><span class="b"><span>Ignore</span></span><span class="b"><span>Ignore this rule</span></span><span class="b dis2"><svg class="ic " width="16" height="16"><use href="#i-dictionary-add"/></svg><span>Add to dictionary</span></span></div></div></div>
+ <p class="cap">The walk finished: the count and the finding shown.</p>
+ <div class="row2"><div class="col" style="width:610px"><div class="spanel" style="width:610px"><div class="phead"><b>Spellchecker</b><span class="dmore">⋯</span></div><div class="pbody2"><div class="pempty"><span class="seg"><span class="">Spelling</span><span class="on">Grammar</span></span><div class="pemsg">No grammar findings in Episode 03.ass</div><div class="pemsub">842 lines checked.</div><span class="b"><span>Check again</span></span></div></div></div></div>
+ <div class="col" style="width:610px"><div class="spanel" style="width:610px"><div class="phead"><b>Spellchecker</b><span class="dmore">⋯</span></div><div class="pbody2"><div class="pempty"><span class="seg"><span class="">Spelling</span><span class="on">Grammar</span></span><div class="pemsg">Grammar check is off</div><div class="pemsub">Choose an English in Settings to check grammar with Harper.</div><span class="b"><span>Grammar settings…</span></span></div></div></div></div></div>
+ <p class="cap">Nothing found, and Grammar chosen while grammar check is off.</p>
+ <div class="spanel"><div class="phead"><b>Spellchecker</b><span class="dmore">⋯</span></div><div class="pbody2 cols"><div class="pleft"><span class="seg"><span class="on">Spelling</span><span class="">Grammar</span></span><div class="pword"><span class="pw">tehm</span><span class="pl">Line 4</span></div><div class="pctx">Hello <u>tehm</u> good text</div><div class="prep"><span>Replace with</span><span class="fld focus" style="width:260px;"><span class="ftext">text</span></span></div></div><div class="plist"><div class="pli cur">text</div><div class="pli">them</div><div class="pli">term</div></div><div class="pacts"><span class="b pri"><span>Replace</span></span><span class="b"><span>Replace all</span></span><span class="b"><span>Ignore</span></span><span class="b"><span>Ignore All</span></span><span class="wide"><span class="b"><svg class="ic " width="16" height="16"><use href="#i-dictionary-add"/></svg><span>Add to dictionary</span></span></span></div></div></div>
+ <p class="cap">Spelling: today’s panel unchanged, with the filter above the word.</p>
+</div>
+
+</body></html>

@@ -1,0 +1,10 @@
+HikariSub 0.1.0-ci.56, 7 frames
+#0  HikariSub.exe            +0x13fd6  hikari::app::`anonymous namespace'::crashForTest  D:\a\hikari\hikari\src\app\composition.cpp:99
+#1  HikariSub.exe            +0x178f1  hikari::app::`anonymous namespace'::runWindow  D:\a\hikari\hikari\src\app\composition.cpp:347
+#2  HikariSub.exe            +0x15d3e  hikari::app::run(int, char **, enum hikari::app::StartupMode)  D:\a\hikari\hikari\src\app\composition.cpp:528
+#3  HikariSub.exe            +0xc7c4c0  qtEntryPoint  C:\Users\qt\work\qt\qtbase\src\entrypoint\qtentrypoint_win.cpp:45
+#4  HikariSub.exe            +0xc6c709  invoke_main  D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:102
+                                        __scrt_common_main_seh  D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288  (inlined)
+#5  KERNEL32.DLL             +0x2dd37  ?
+#6  ntdll.dll                +0x3f2bc  ?
+5 of 7 frames resolved

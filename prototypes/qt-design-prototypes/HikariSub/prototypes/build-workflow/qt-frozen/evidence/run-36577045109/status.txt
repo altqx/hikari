@@ -1,0 +1,1 @@
+PROOF: frozen Qt configured, built and passed its tests

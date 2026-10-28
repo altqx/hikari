@@ -1,0 +1,2389 @@
+<Updates>
+ <ApplicationName>{AnyApplication}</ApplicationName>
+ <ApplicationVersion>1.0.0</ApplicationVersion>
+ <Checksum>true</Checksum>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qt3d</Name>
+  <DisplayName>Qt 3D</DisplayName>
+  <Description>Qt 3D Prebuilt Components for Qt 6.11.2. Qt 3D provides functionality for near-realtime simulation systems with support for 2D and 3D rendering in both Qt C++ and Qt Quick applications.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qt3d, qt.qt6.6112.examples.qt3d</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>ae0c4ddc3db2b0b36b798664daaedd61121f3c56</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qt3d.debug_information</Name>
+  <DisplayName>Qt 3D debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qt3d</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qt3d, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>c2b346f4983aa0c07bbbd7db7fe4ed1a66992814</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qt3d.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt 3D module debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qt3d</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qt3d, qt.qt6.6112.addons.qt3d.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qt3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="119510940" OS="Any" UncompressedSize="522172208"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qt3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>e98d64fd6b95650d7459640a7478fa186ba10e55</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qt3d.linux_gcc_64</Name>
+  <DisplayName>Qt 3D module for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qt3d, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qt3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="3513502" OS="Any" UncompressedSize="21880685"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qt3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>d7d5076043fab38f2fd7cc74e7c579f2a6aff478</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qt5compat</Name>
+  <DisplayName>Qt 5 Compatibility module</DisplayName>
+  <Description>Qt 5 Compatibility module Prebuilt Components for Qt 6.11.2. Qt 5 Compatibility module allows to continue using some dedicated functionality which has been removed in Qt 6.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Dependencies>qt.qt6.6112.doc.qt5compat, qt.qt6.6112.examples.qt5compat, qt.qt6.6112.addons.qtshadertools</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>2f3b5cd0dacbc494d19279fe06821c43efafbea4</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qt5compat.debug_information</Name>
+  <DisplayName>Qt 5 Compatibility module debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qt5compat</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qt5compat, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>8b3cd4a5d136eff92f0ad03ad5364f6f36f8a4ed</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qt5compat.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt 5 Compatibility module debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qt5compat</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qt5compat, qt.qt6.6112.addons.qt5compat.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qt5compat-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="6494359" OS="Any" UncompressedSize="33785184"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qt5compat-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>90a512ef1613dffe0682586c7c79d0050157325b</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qt5compat.linux_gcc_64</Name>
+  <DisplayName>Qt 5 Compatibility module for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qt5compat, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qt5compat-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="565075" OS="Any" UncompressedSize="3187056"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qt5compat-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>7e1602a10f3ee931a50568f7f1d59d4c0a1e871d</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtcanvaspainter</Name>
+  <DisplayName>Qt Canvas Painter</DisplayName>
+  <Description>Accelerated 2D painting solution for Qt Quick and QRhi-based render targets.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtcanvaspainter, qt.qt6.6112.examples.qtcanvaspainter</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>74e34290876024a12a36d681f6f8d67b992bc316</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtcanvaspainter.debug_information</Name>
+  <DisplayName>Qt Canvas Painter debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtcanvaspainter</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtcanvaspainter, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>7a90eb5d628830844a764d77c81757c274788367</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtcanvaspainter.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Canvas Painter debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtcanvaspainter</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtcanvaspainter, qt.qt6.6112.addons.qtcanvaspainter.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtcanvaspainter-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="6776104" OS="Any" UncompressedSize="27689208"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtcanvaspainter-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>333531439b1267bb54b1cd0940ec19a07ccdcd57</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtcanvaspainter.linux_gcc_64</Name>
+  <DisplayName>Qt Canvas Painter for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtcanvaspainter, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtcanvaspainter-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="355200" OS="Any" UncompressedSize="1193784"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtcanvaspainter-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>af1910d03429172c36569312a9fa5c1e8b55dea3</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtcharts</Name>
+  <DisplayName>Qt Charts</DisplayName>
+  <Description>The Qt Charts API lets you easily create interactive and dynamic 2D charts using C++ and/or Qt Quick.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.&lt;br>&lt;br></Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtcharts, qt.qt6.6112.examples.qtcharts</Dependencies>
+  <AutoDependOn/>
+  <Script>installscript.qs</Script>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>7eb3664431e4bb506ed99280f423acbf1b201cf2</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtcharts.debug_information</Name>
+  <DisplayName>Qt Charts debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtcharts</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtcharts, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>37a1e0d780ec11d9e3e512e711ee9b1ca579ac12</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtcharts.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Charts debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtcharts</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtcharts, qt.qt6.6112.addons.qtcharts.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtcharts-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="21461647" OS="Any" UncompressedSize="97884752"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtcharts-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>c8370ab2e62899c9008ff24f0b94cb861591684e</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtcharts.linux_gcc_64</Name>
+  <DisplayName>Qt Charts for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtcharts, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtcharts-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="788194" OS="Any" UncompressedSize="5522512"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtcharts-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>6a777969d0aed1900c5cc33cde31086edee8480e</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtconnectivity</Name>
+  <DisplayName>Qt Connectivity</DisplayName>
+  <Description>This component includes two Qt modules. The two modules provide access to Bluetooth and NFC hardware.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtbluetooth, qt.qt6.6112.doc.qtnfc, qt.qt6.6112.examples.qtconnectivity</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>ffc084e4cfc463037bc380c9f31087fa0c867410</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtconnectivity.debug_information</Name>
+  <DisplayName>Qt Connectivity debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtconnectivity</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtconnectivity, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>caf688e55a91acc14ba354aedcd9b6b6469feec4</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtconnectivity.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Connectivity debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtconnectivity</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtconnectivity, qt.qt6.6112.addons.qtconnectivity.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtconnectivity-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="15302893" OS="Any" UncompressedSize="63020816"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtconnectivity-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>3536a39b7bde88c4e06a6721933982f450ac3782</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtconnectivity.linux_gcc_64</Name>
+  <DisplayName>Qt Connectivity for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtconnectivity, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtconnectivity-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="540937" OS="Any" UncompressedSize="2754983"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtconnectivity-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>b5b52e69f61a6e52ef2ae91865ea5948a342984f</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtdatavis3d</Name>
+  <DisplayName>Qt Data Visualization</DisplayName>
+  <Description>Qt Data Visualization is a module which provides a way to visualize data in 3D. There are C++ classes and QML types for displaying bar graphs, scatter graphs, surface graphs and ways of manipulating the 3D scene. In addition, the graphs are fully customizable with different themes.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.&lt;br>&lt;br></Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtdatavis3d, qt.qt6.6112.examples.qtdatavis3d</Dependencies>
+  <AutoDependOn/>
+  <Script>installscript.qs</Script>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>7054707360113e9b8c0a3ad0cd701df5463b538f</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtdatavis3d.debug_information</Name>
+  <DisplayName>Qt Data Visualization debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtdatavis3d</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtdatavis3d, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>88343c9f0cca74684212a04e4f2463f6ef36d2b6</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtdatavis3d.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Data Visualization debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtdatavis3d</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtdatavis3d, qt.qt6.6112.addons.qtdatavis3d.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtdatavis3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="13824315" OS="Any" UncompressedSize="59759600"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtdatavis3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>8d6ed2daa6a93a2222bb00b7e1ffbcff957f0d55</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtdatavis3d.linux_gcc_64</Name>
+  <DisplayName>Qt Data Visualization for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtdatavis3d, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtdatavis3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="615418" OS="Any" UncompressedSize="3923239"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtdatavis3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>412f7ab02c58684484fdd7ff5d193859b37185e9</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtgraphs</Name>
+  <DisplayName>Qt Graphs</DisplayName>
+  <Description>Qt Graphs is a module which provides a way to visualize data in 3D. There are C++ classes and QML types for displaying bar graphs, scatter graphs, surface graphs and ways of manipulating the 3D scene. In addition, the graphs are fully customizable with different themes.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtgraphs, qt.qt6.6112.examples.qtgraphs</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>b9fcd6f24f156cb3671bcff828fcd513f255e608</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtgraphs.debug_information</Name>
+  <DisplayName>Qt Graphs debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtgraphs</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtgraphs, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>2f4e8d858a6f893f601d47d1bb4b1796119b9465</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtgraphs.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Graphs debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtgraphs</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtgraphs, qt.qt6.6112.addons.qtgraphs.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtgraphs-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="23618052" OS="Any" UncompressedSize="94477520"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtgraphs-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>d0da381c197c947b0d34bb040f4bb4fd3536fd41</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtgraphs.linux_gcc_64</Name>
+  <DisplayName>Qt Graphs for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtgraphs, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtgraphs-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="1003403" OS="Any" UncompressedSize="6103112"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtgraphs-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>376b5ba57029ccd223810657c8ac5fd3e819ab24</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtgrpc</Name>
+  <DisplayName>Qt Protobuf and Qt GRPC</DisplayName>
+  <Description>QtGrpc contains the two modules QtProtobuf and QtGrpc:&lt;br>QtProtobuf provides a generator which can be used to generate Qt-based classes from messages defined in .proto files.&lt;br>QtGrpc provides support for generating Qt-based clients and servers based on service description in .proto files, as well as communicating with gRPC services using QtProtobuf messages.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtgrpc, qt.qt6.6112.examples.qtgrpc</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>0bcc4b167b6cab5c8e49dbcf1c504c71f0f348c8</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtgrpc.debug_information</Name>
+  <DisplayName>Qt Protobuf and Qt GRPC debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtgrpc</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtgrpc, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>e623f417a407095743e0329ee92c381a784d2f44</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtgrpc.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Protobuf and Qt GRPC debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtgrpc</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtgrpc, qt.qt6.6112.addons.qtgrpc.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtgrpc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="21329630" OS="Any" UncompressedSize="104172208"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtgrpc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>626398b1da8219e3d1dab1ba9700ddeb9724947e</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtgrpc.linux_gcc_64</Name>
+  <DisplayName>Qt Protobuf and Qt GRPC for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtgrpc, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtgrpc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="1683377" OS="Any" UncompressedSize="10111019"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtgrpc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>fed29ef0266148c470b15a3f56ac0203236b7655</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qthttpserver</Name>
+  <DisplayName>Qt HTTP Server</DisplayName>
+  <Description>Qt HTTP Server supports building an HTTP server into an application.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Script>installscript.qs</Script>
+  <Dependencies>qt.qt6.6112.doc.qthttpserver, qt.qt6.6112.examples.qthttpserver, qt.qt6.6112.addons.qtwebsockets</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>6a7ba9ebcf46f188e34b2129110dfa148d4a2db2</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qthttpserver.debug_information</Name>
+  <DisplayName>Qt HTTP Server debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qthttpserver</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qthttpserver, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>c7225aa501d9cd6d2e082c74abc042640bae61ac</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qthttpserver.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt HTTP Server debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qthttpserver</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qthttpserver, qt.qt6.6112.addons.qthttpserver.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qthttpserver-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="2792075" OS="Any" UncompressedSize="10924824"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qthttpserver-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>c1c10566bffcccfd6a0c9650f0375617b90713b4</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qthttpserver.linux_gcc_64</Name>
+  <DisplayName>Qt HTTP Server for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qthttpserver, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qthttpserver-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="114280" OS="Any" UncompressedSize="533628"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qthttpserver-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>19d5c75afe6e9d3b2f5644e3a1206e4cc0c43059</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtimageformats</Name>
+  <DisplayName>Qt Image Formats</DisplayName>
+  <Description>The Qt Image Formats  provides optional support for other image file formats. The core Qt Gui library by default supports reading and writing image files of the most common file formats: PNG, JPEG, BMP, GIF and a few more.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtimageformats</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>9715ff5777ae46fc0920b17302cea36bcb864051</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtimageformats.debug_information</Name>
+  <DisplayName>Qt Image Formats debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtimageformats</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtimageformats, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>fd83d588d9a4a2dfe2f906d2c5b61cf0b9c07835</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtimageformats.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Image Formats debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtimageformats</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtimageformats, qt.qt6.6112.addons.qtimageformats.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtimageformats-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="2489689" OS="Any" UncompressedSize="9930712"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtimageformats-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>d85eb6d9601dd487e64c78e9a79f9238a68e8b0d</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtimageformats.linux_gcc_64</Name>
+  <DisplayName>Qt Image Formats for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtimageformats, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtimageformats-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="427207" OS="Any" UncompressedSize="1613634"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtimageformats-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>1a7d7c4426f519f2ba6a833c01f82dc301c051ae</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlanguageserver</Name>
+  <DisplayName>Qt Language Server</DisplayName>
+  <Description>An implementation of the language server protocol, including JsonRPC.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtlanguageserver</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>886d5a0dcf88ecc43984d7df27b2f3fb50c975e3</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlanguageserver.linux_gcc_64</Name>
+  <DisplayName>Qt Language Server for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtlanguageserver, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtlanguageserver-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="9743157" OS="Any" UncompressedSize="91195205"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtlanguageserver-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>debf8e448255cba1a7b97d7b9112f7c703f79f9f</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlocation</Name>
+  <DisplayName>Qt Location (TP)</DisplayName>
+  <Description>Qt Location (TP).&lt;br>&lt;br>The release of Qt Location with Qt 6.11.2 is a Technology Preview.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtlocation, qt.qt6.6112.examples.qtlocation</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>1866a59345a6d61d3797adc63234f48726cae442</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlocation.debug_information</Name>
+  <DisplayName>Qt Location debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtlocation</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtlocation, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>5e40100f6252950c8ac56499d4e1624bded87c78</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlocation.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Location debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtlocation</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtlocation, qt.qt6.6112.addons.qtlocation.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtlocation-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="22930950" OS="Any" UncompressedSize="93131888"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtlocation-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>7937cd6660b3a21ae47055ba45c509fda403803c</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlocation.linux_gcc_64</Name>
+  <DisplayName>Qt Location for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtlocation, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtlocation-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="681090" OS="Any" UncompressedSize="4235310"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtlocation-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>a3e026ccf616a87f6415ee85a71504c3423f754b</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlottie</Name>
+  <DisplayName>Qt Lottie Animation</DisplayName>
+  <Description>Qt Lottie Animation provides a QML API for rendering graphics and animations that are exported in JSON format by the Bodymovin plugin for Adobe After Effects.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtlottie</Dependencies>
+  <AutoDependOn/>
+  <Script>installscript.qs</Script>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>082681aedcf4aac6ff3b48b045d9f46185fadcb3</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlottie.debug_information</Name>
+  <DisplayName>Qt Lottie Animation debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtlottie</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtlottie, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>5ce4427cb75661b881db42aac60d9f9ef34c1cba</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlottie.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Lottie Animation debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtlottie</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtlottie, qt.qt6.6112.addons.qtlottie.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtlottie-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="7687734" OS="Any" UncompressedSize="34230904"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtlottie-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>dab2b8945746cbb9a6b9286e828c8f30b2205d0f</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtlottie.linux_gcc_64</Name>
+  <DisplayName>Qt Lottie Animation for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtlottie, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtlottie-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="240405" OS="Any" UncompressedSize="1397807"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtlottie-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>b51631aa3487fa225ea8c3de3205b04043d05222</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtmultimedia</Name>
+  <DisplayName>Qt Multimedia</DisplayName>
+  <Description>Qt Multimedia provides a rich set of QML types and C++ classes to handle multimedia content.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtmultimedia, qt.qt6.6112.examples.qtmultimedia</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>6b6eff253475f8f3f6da154d4301ba853a317a81</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtmultimedia.debug_information</Name>
+  <DisplayName>Qt Multimedia debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtmultimedia</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtmultimedia, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>07b38209978219d97fd3c3b9f4bdbc927234dd24</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtmultimedia.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Multimedia debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtmultimedia</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtmultimedia, qt.qt6.6112.addons.qtmultimedia.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtmultimedia-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="38860292" OS="Any" UncompressedSize="159789808"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtmultimedia-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>abfcbbbf4bf3d8709e458b943b6e90c9a5b02977</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtmultimedia.linux_gcc_64</Name>
+  <DisplayName>Qt Multimedia for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtmultimedia, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtmultimedia-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="37380303" OS="Any" UncompressedSize="243519571"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtmultimedia-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>8d2331c14729ab50c26f8f44ba23e91d943b549a</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtnetworkauth</Name>
+  <DisplayName>Qt Network Authorization</DisplayName>
+  <Description>Qt Network Authorization provides a set of APIs that enable Qt applications to obtain limited access to online accounts and HTTP services without exposing users' passwords.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtnetworkauth, qt.qt6.6112.examples.qtnetworkauth</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>3c1f4dc25e649b1c69556362f9ade9ae4366d2b1</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtnetworkauth.debug_information</Name>
+  <DisplayName>Qt Network Authorization debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtnetworkauth</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtnetworkauth, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>71cc8826d5878c7be23bb595214c9e2038a09cda</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtnetworkauth.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Network Authorization debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtnetworkauth</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtnetworkauth, qt.qt6.6112.addons.qtnetworkauth.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtnetworkauth-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="2620351" OS="Any" UncompressedSize="10322408"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtnetworkauth-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>6913474a97c6e1a47b061a674a33e85c735b980c</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtnetworkauth.linux_gcc_64</Name>
+  <DisplayName>Qt Network Authorization for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtnetworkauth, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtnetworkauth-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="124261" OS="Any" UncompressedSize="625065"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtnetworkauth-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>7e0f271be2b99f6af47eded3949721ea02f8a704</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtopenapi</Name>
+  <DisplayName>Qt Open API (TP)</DisplayName>
+  <Description>An extension of the upstream Open API generator that generates Qt6 Http Clients.&lt;br>&lt;br>The release of Qt Open API with Qt 6.11.2 is a Technology Preview.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtopenapi, qt.qt6.6112.examples.qtopenapi</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>f80d098dce54bf622fb635e5ea198e5bda211137</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtopenapi.debug_information</Name>
+  <DisplayName>Qt Open API debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtopenapi</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtopenapi, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>5420f9b63043ebcb8007a637de4fbc32e69fd40d</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtopenapi.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Open API debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtopenapi</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtopenapi, qt.qt6.6112.addons.qtopenapi.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtopenapi-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="1671067" OS="Any" UncompressedSize="6743144"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtopenapi-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>630a578111669e4d980cc872a0dd5ed72229f059</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtopenapi.linux_gcc_64</Name>
+  <DisplayName>Qt Open API for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtopenapi, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtopenapi-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="208665" OS="Any" UncompressedSize="640206"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtopenapi-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>c370cb492362aa2051b03a0178c24b9face385c5</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtpositioning</Name>
+  <DisplayName>Qt Positioning</DisplayName>
+  <Description>The Qt Positioning API provides positioning information via QML and C++ interfaces.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtpositioning, qt.qt6.6112.examples.qtpositioning</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>07b9e23bc02d1057c4197a43851ec39013531c3d</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtpositioning.debug_information</Name>
+  <DisplayName>Qt Positioning debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtpositioning</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtpositioning, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>56ee5eefe8608a24e92a2c9ff72b6b876055969f</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtpositioning.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Positioning debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtpositioning</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtpositioning, qt.qt6.6112.addons.qtpositioning.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtpositioning-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="9703713" OS="Any" UncompressedSize="41107600"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtpositioning-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>61111654a5909ca8a30f5a8b17d434292c74ccc2</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtpositioning.linux_gcc_64</Name>
+  <DisplayName>Qt Positioning for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtpositioning, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtpositioning-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="399278" OS="Any" UncompressedSize="2359177"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtpositioning-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>46a6a45e61f05eb706b97bf45436155dc817607e</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquick3d</Name>
+  <DisplayName>Qt Quick 3D</DisplayName>
+  <Description>Qt Quick 3D provides high-level 3D API for Qt Quick.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Dependencies>qt.qt6.6112.doc.qtquick3d, qt.qt6.6112.examples.qtquick3d, qt.qt6.6112.addons.qtshadertools, qt.qt6.6112.addons.qtquicktimeline</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>35a72b3de4a599ee88cc5a34e8f64bf690c368e8</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquick3d.debug_information</Name>
+  <DisplayName>Qt Quick 3D debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtquick3d</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtquick3d, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>0758114e0b7bfc28609c535bc14c58cc3c390581</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquick3d.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Quick 3D debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtquick3d</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtquick3d, qt.qt6.6112.addons.qtquick3d.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtquick3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="118201856" OS="Any" UncompressedSize="500223856"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtquick3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>71b61118c1b0ec597439d4eb83e50086129c7aa4</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquick3d.linux_gcc_64</Name>
+  <DisplayName>Qt Quick 3D for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtquick3d, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtquick3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="20720969" OS="Any" UncompressedSize="141030366"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtquick3d-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>3594aff2f36f6f5c759dacc58b36ce2bcfe05220</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquick3dphysics</Name>
+  <DisplayName>Qt Quick 3D Physics</DisplayName>
+  <Description>Qt Quick 3D Physics provides a high-level QML module adding physical simulation capabilities to Qt Quick 3D.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Dependencies>qt.qt6.6112.doc.qtquick3dphysics, qt.qt6.6112.examples.qtquick3dphysics</Dependencies>
+  <Script>installscript.qs</Script>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>dd3e65e4f916e9d6a36784e9e35c8c6894b0299d</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquick3dphysics.debug_information</Name>
+  <DisplayName>Quick 3D Physics debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtquick3dphysics</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtquick3dphysics, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>60247edd5c0c0dbc8ac71b6b65d5a2f6048fbeae</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquick3dphysics.debug_information.linux_gcc_64</Name>
+  <DisplayName>Quick 3D Physics debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtquick3dphysics</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtquick3dphysics, qt.qt6.6112.addons.qtquick3dphysics.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtquick3dphysics-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="28558924" OS="Any" UncompressedSize="112614168"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtquick3dphysics-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>45df6a3771b4df6f0918535e105e404ebb491470</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquick3dphysics.linux_gcc_64</Name>
+  <DisplayName>Qt Quick 3D Physics for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtquick3dphysics, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtquick3dphysics-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="38600579" OS="Any" UncompressedSize="286385389"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtquick3dphysics-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>ce4c3b9f7f73b2ce6ac9ad930daf3d20010e0e8f</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquickeffectmaker</Name>
+  <DisplayName>Qt Quick Effect Maker</DisplayName>
+  <Description>Qt Quick Effect Maker (QQEM) for creating and editing custom shader effects.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtquickeffectmaker, qt.qt6.6112.examples.qtquickeffectmaker</Dependencies>
+  <AutoDependOn/>
+  <Script>installscript.qs</Script>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>5fa7a5d1439fef3c8835911db728ba2775d5c925</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquickeffectmaker.debug_information</Name>
+  <DisplayName>Qt Effect Makers debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtquickeffectmaker</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtquickeffectmaker, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>e3d1672ff3bc2dde5b7fb009da5f86e9873457cb</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquickeffectmaker.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Effect Makers debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtquickeffectmaker</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtquickeffectmaker, qt.qt6.6112.addons.qtquickeffectmaker.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtquickeffectmaker-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="5246408" OS="Any" UncompressedSize="20884120"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtquickeffectmaker-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>9ff703153a3707585fd5b6e33b9bf39a34c35fc1</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquickeffectmaker.linux_gcc_64</Name>
+  <DisplayName>Qt Quick Effect Maker for 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtquickeffectmaker, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtquickeffectmaker-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="3914226" OS="Any" UncompressedSize="5174842"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtquickeffectmaker-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>13a2734debf52849b8512e735ecfff0e1130b59d</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquicktimeline</Name>
+  <DisplayName>Qt Quick Timeline</DisplayName>
+  <Description>The Qt Quick Timeline module enables keyframe-based animations and parameterization. It takes a tooling-friendly approach, and is therefore directly supported by Qt Design Studio and Qt Quick Designer that contain a timeline editor for creating keyframe based animations.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Dependencies>qt.qt6.6112.doc.qtquicktimeline</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>fdb8e76593c7db7ad2f4e0e12dbe44137e45a31a</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquicktimeline.debug_information</Name>
+  <DisplayName>Qt Quick Timeline debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtquicktimeline</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtquicktimeline, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>915cebe6fbc0585ec8929c75264d8910806c8fab</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquicktimeline.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Quick Timeline debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtquicktimeline</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtquicktimeline, qt.qt6.6112.addons.qtquicktimeline.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtquicktimeline-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="3556944" OS="Any" UncompressedSize="15763792"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtquicktimeline-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>22bb36e42c2e075381100fd9db9539eaca1847ee</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtquicktimeline.linux_gcc_64</Name>
+  <DisplayName>Qt Quick Timeline for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtquicktimeline, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtquicktimeline-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="76788" OS="Any" UncompressedSize="551987"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtquicktimeline-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>68a37c131e522c009817eec1e51a4b129666120b</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtremoteobjects</Name>
+  <DisplayName>Qt Remote Objects</DisplayName>
+  <Description>Qt Remote Objects is an add-on library that provides an easy way to share Qt APIs between processes/devices.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtremoteobjects, qt.qt6.6112.examples.qtremoteobjects</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>481695ac69e7b050fab3d1c2d582cdcd2198878b</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtremoteobjects.debug_information</Name>
+  <DisplayName>Qt Remote Objects debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtremoteobjects</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtremoteobjects, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>2ad69b68c0d685c3e74718e02d6444a17d2670af</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtremoteobjects.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Remote Objects debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtremoteobjects</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtremoteobjects, qt.qt6.6112.addons.qtremoteobjects.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtremoteobjects-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="9769040" OS="Any" UncompressedSize="41036736"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtremoteobjects-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>f206e6057a2deb44ae50905501c563129af5beaa</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtremoteobjects.linux_gcc_64</Name>
+  <DisplayName>Qt Remote Objects for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtremoteobjects, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtremoteobjects-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="498674" OS="Any" UncompressedSize="2473302"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtremoteobjects-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>15d5ba52cf0ccb04d54a290175837de46f3e2a4b</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtscxml</Name>
+  <DisplayName>Qt State Machines</DisplayName>
+  <Description>The Qt State Machines package provides API's and execution models that can be used to effectively embed the elements and semantics of statecharts in Qt applications. For advanced use cases the state machines can even be created from State Chart XML (SCXML) files.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtscxml, qt.qt6.6112.examples.qtscxml</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>274d158cd4c6f834edd92ece050236e5019423b0</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtscxml.debug_information</Name>
+  <DisplayName>Qt State Machine debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtscxml</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtscxml, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>348c666845318aab7f085f1c758faf2a54c39f7e</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtscxml.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt State Machine debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtscxml</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtscxml, qt.qt6.6112.addons.qtscxml.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtscxml-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="12365646" OS="Any" UncompressedSize="51709064"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtscxml-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>73c55a263ecf49847b945c5b9fada4c5b4f6b129</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtscxml.linux_gcc_64</Name>
+  <DisplayName>Qt State Machine for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtscxml, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtscxml-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="514287" OS="Any" UncompressedSize="3150232"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtscxml-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>b7f8c845f9fee2a0c677af4858b659022789dff1</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtsensors</Name>
+  <DisplayName>Qt Sensors</DisplayName>
+  <Description>Qt Sensors provides classes for reading sensor data.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtsensors, qt.qt6.6112.examples.qtsensors</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>7b2ab7df1a90136e1f7f92a02c193fcb3e907944</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtsensors.debug_information</Name>
+  <DisplayName>Qt Sensors debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtsensors</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtsensors, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>175420551c26359e841b854f4c8c85420e14896e</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtsensors.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Sensors debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtsensors</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtsensors, qt.qt6.6112.addons.qtsensors.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtsensors-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="5690854" OS="Any" UncompressedSize="30208576"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtsensors-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>f9a97d8a69499b06bb0644b2478a9b33cc3e26cc</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtsensors.linux_gcc_64</Name>
+  <DisplayName>Qt Sensors for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtsensors, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtsensors-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="200276" OS="Any" UncompressedSize="1575534"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtsensors-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>e7386621d141654280bee4f2b9df5062f579f87b</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtserialbus</Name>
+  <DisplayName>Qt Serial Bus</DisplayName>
+  <Description>The Qt Serial Bus API provides classes and functions to access the various industrial serial buses and protocols, such as CAN, ModBus, and others.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtserialbus, qt.qt6.6112.examples.qtserialbus</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>55fb6d55381d96636e6efe0d9d551daa6b9fd199</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtserialbus.debug_information</Name>
+  <DisplayName>Qt Serial Bus debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtserialbus</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtserialbus, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>77bf96a6794c3ad3c065b64b34f3d5490220b735</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtserialbus.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Serial Bus debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtserialbus</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtserialbus, qt.qt6.6112.addons.qtserialbus.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtserialbus-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="6580118" OS="Any" UncompressedSize="27314152"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtserialbus-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>c3301da2cfa84adc4e56efcc5b3cfb2a59b534ad</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtserialbus.linux_gcc_64</Name>
+  <DisplayName>Qt SerialBus for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtserialbus, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtserialbus-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="280828" OS="Any" UncompressedSize="1474040"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtserialbus-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>5ca0ef948611a7cab8b845de582a411a843af0f3</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtserialport</Name>
+  <DisplayName>Qt Serial Port</DisplayName>
+  <Description>Qt Serial Port provides the basic functionality, which includes configuring, I/O operations, getting and setting the control signals of the RS-232 pinouts.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtserialport, qt.qt6.6112.examples.qtserialport</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>46fe256d45ed6818753150e93d1d1b96cf575ee7</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtserialport.debug_information</Name>
+  <DisplayName>Qt Serial Port debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtserialport</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtserialport, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>f605b994a9d32b956f5c2211126d1bcd34dc8ed4</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtserialport.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Serial Port debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtserialport</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtserialport, qt.qt6.6112.addons.qtserialport.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtserialport-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="1044798" OS="Any" UncompressedSize="4122200"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtserialport-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>05c3baa9a93f9f76e2d49f450a598af01a4abd98</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtserialport.linux_gcc_64</Name>
+  <DisplayName>Qt SerialPort for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtserialport, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtserialport-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="63640" OS="Any" UncompressedSize="337450"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtserialport-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>522fb1bf12744cc6cbc8e538095b57df0e868a8f</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtshadertools</Name>
+  <DisplayName>Qt Shader Tools</DisplayName>
+  <Description>Qt Shader conditioning tool Prebuilt Components for Qt 6.11.2.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Dependencies>qt.qt6.6112.doc.qtshadertools</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>01da5c75da90b5aa2fc480af6d5a61475a8fdf09</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtshadertools.debug_information</Name>
+  <DisplayName>Qt Shader Tools debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtshadertools</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtshadertools, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>3fec13b0caf3d762964f5c6e46ac68ea48fdd865</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtshadertools.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Shader Tools debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtshadertools</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtshadertools, qt.qt6.6112.addons.qtshadertools.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="18740954" OS="Any" UncompressedSize="83556128"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>1cc6278756f0e616d661105ec5b751aa35574e83</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtshadertools.linux_gcc_64</Name>
+  <DisplayName>Qt Shader Tools for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtshadertools, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="1692415" OS="Any" UncompressedSize="6113384"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>93e818846b14465be3313ebf879becb5ad21269c</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtspeech</Name>
+  <DisplayName>Qt Speech</DisplayName>
+  <Description>The Qt Speech module allows using text to speech engines</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Dependencies>qt.qt6.6112.doc.qtspeech, qt.qt6.6112.examples.qtspeech</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>1badafe2df811e36b013a730b277134c1683f070</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtspeech.debug_information</Name>
+  <DisplayName>Qt Speech debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtspeech</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtspeech, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>863d3a34e56e3025d6bfc68263dd3a2d3ed33252</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtspeech.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Speech debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtspeech</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtspeech, qt.qt6.6112.addons.qtspeech.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtspeech-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="2559834" OS="Any" UncompressedSize="11142200"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtspeech-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>016d89efe064ce5384fd76ed6032a1dc3ce9b961</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtspeech.linux_gcc_64</Name>
+  <DisplayName>Qt Speech for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtspeech, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtspeech-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="105827" OS="Any" UncompressedSize="640946"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtspeech-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>1ea0afbe43b57731cee26de8e76ca9e921cddca3</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qttasktree</Name>
+  <DisplayName>Qt Task Tree (TP)</DisplayName>
+  <Description>The Qt Task Tree provides a declarative way to compose and execute asynchronous task workflows.&lt;br>&lt;br>The release of Qt Task Tree with Qt 6.11.2 is a Technology Preview.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qttasktree, qt.qt6.6112.examples.qttasktree</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>f330466205c6b01c27daae89669f2f4250d6f276</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qttasktree.debug_information</Name>
+  <DisplayName>Qt Task Tree debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qttasktree</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qttasktree, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>562f706b80e86bed0849fbf0243738552afcb892</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qttasktree.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Task Tree debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qttasktree</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qttasktree, qt.qt6.6112.addons.qttasktree.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qttasktree-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="2114729" OS="Any" UncompressedSize="8546064"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qttasktree-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>c0b26117d9d51154d5bc37506f77de5a7e2cc311</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qttasktree.linux_gcc_64</Name>
+  <DisplayName>Qt Task Tree for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qttasktree, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qttasktree-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="106756" OS="Any" UncompressedSize="466328"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qttasktree-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>22716d881ec8785df8a66fb8f3e4fdfa544c6249</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtvirtualkeyboard</Name>
+  <DisplayName>Qt Virtual Keyboard</DisplayName>
+  <Description>The Qt Virtual Keyboard is a Qt Quick virtual keyboard that you can plug in to your platform or application. You can extend it with your ownlayouts and styles.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtvirtualkeyboard, qt.qt6.6112.examples.qtvirtualkeyboard</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>634ba4af7d01230a494c4a0ab3ceb4a2a7a64c68</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtvirtualkeyboard.debug_information</Name>
+  <DisplayName>Qt Virtual Keyboard debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtvirtualkeyboard</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtvirtualkeyboard, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>b3e332f9fc3007114b445574fbc23c1dd20a6f9e</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtvirtualkeyboard.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt Virtual Keyboard debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtvirtualkeyboard</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtvirtualkeyboard, qt.qt6.6112.addons.qtvirtualkeyboard.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtvirtualkeyboard-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="13392124" OS="Any" UncompressedSize="67029088"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtvirtualkeyboard-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>e7ca80ff34d1cf3274304bf7649654be2fda7952</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtvirtualkeyboard.linux_gcc_64</Name>
+  <DisplayName>Qt Virtual Keyboard for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtvirtualkeyboard, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtvirtualkeyboard-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="2299414" OS="Any" UncompressedSize="7092752"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtvirtualkeyboard-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>4719e5daab91bac67d12c34d51bb8787642c21b4</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwaylandcompositor</Name>
+  <DisplayName>Qt Wayland Compositor</DisplayName>
+  <Description>The Qt Wayland Compositor is a module for building a display server using the Wayland protocol in C++ or QML.&lt;br>&lt;br>This component is available under commercial licenses from The Qt Company, or under GPL v3. For open source use, please note the additional requirements compared to LGPL v3.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <Dependencies>qt.qt6.6112.doc.qtwaylandcompositor, qt.qt6.6112.examples.qtwaylandcompositor</Dependencies>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Replaces>qt.qt6.6112.qtwaylandcompositor</Replaces>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>6709865d08c4f0f6dff32dfb59405e3888ed5162</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwaylandcompositor.linux_gcc_64</Name>
+  <DisplayName>Qt Wayland Compositor for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtwaylandcompositor, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <Replaces>qt.qt6.6112.qtwaylandcompositor.linux_gcc_64</Replaces>
+  <DownloadableArchives>qtwayland-compositor-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="645610" OS="Any" UncompressedSize="4876005"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtwayland-compositor-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>645607ea63063a5a3da885e329b4f7869c1fd5e4</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebchannel</Name>
+  <DisplayName>Qt WebChannel</DisplayName>
+  <Description>Qt WebChannel enables peer-to-peer communication between a server (QML/C++ application) and a client (HTML/JavaScript or QML application). It is supported out of the box by Qt WebEngine. In addition it can work on all browsers that support WebSockets, enabling Qt WebChannel clients to run in any JavaScript environment (including QML). This requires the implementation of a custom transport based on Qt WebSockets.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtwebchannel, qt.qt6.6112.examples.qtwebchannel</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>bd33ca4b61376a0a1d3d527d9c5fc1af682617fd</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebchannel.debug_information</Name>
+  <DisplayName>Qt WebChannel debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtwebchannel</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtwebchannel, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>8a18f7e324d04a3262e921b6a54b7403c8c5a74e</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebchannel.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt WebChannel debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtwebchannel</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtwebchannel, qt.qt6.6112.addons.qtwebchannel.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtwebchannel-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="1883187" OS="Any" UncompressedSize="7630776"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtwebchannel-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>42d0fe00eda3b1c145093c49d217413d88bfa153</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebchannel.linux_gcc_64</Name>
+  <DisplayName>Qt WebChannel for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtwebchannel, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtwebchannel-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="124813" OS="Any" UncompressedSize="651087"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtwebchannel-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>5626b1766dc0d4e85811f0a16ea33d7df498c1a3</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebsockets</Name>
+  <DisplayName>Qt WebSockets</DisplayName>
+  <Description>WebSocket is a web-based protocol designed to enable two-way communication between a client application and a remote host. It enables the two entities to send data back and forth if the initial handshake succeeds. WebSocket is the solution for applications that struggle to get real-time data feeds with less network latency and minimum data exchange.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtwebsockets, qt.qt6.6112.examples.qtwebsockets</Dependencies>
+  <AutoDependOn/>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>478d870bd43190b5c0069dc05151c0a7125f69cd</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebsockets.debug_information</Name>
+  <DisplayName>Qt WebSockets debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtwebsockets</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtwebsockets, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>59f39044eacc8f3bedcc7a05014e7579a2819fb7</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebsockets.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt WebSockets debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtwebsockets</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtwebsockets, qt.qt6.6112.addons.qtwebsockets.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtwebsockets-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="2743281" OS="Any" UncompressedSize="10965768"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtwebsockets-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>14884897583a6d431a2be37334845888a9988ad6</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebsockets.linux_gcc_64</Name>
+  <DisplayName>Qt WebSockets for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtwebsockets, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtwebsockets-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="110189" OS="Any" UncompressedSize="603545"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtwebsockets-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>cbc6cc939ee87df6a61b8be0524afa971d2719f1</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebview</Name>
+  <DisplayName>Qt WebView</DisplayName>
+  <Description>Qt WebView provides a way to display web content in a QML application without necessarily including a full web browser stack by using native APIs where it makes sense. This is useful on mobile platforms such as Android, iOS, and UWP (Universal Windows Platform); especially on iOS, where policy dictates that all web content is displayed using the operating system's web view. On Windows, Linux, and macOS, Qt WebView depends on the Qt WebEngine module to render content.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.doc.qtwebview, qt.qt6.6112.examples.qtwebview</Dependencies>
+  <AutoDependOn/>
+  <Script>installscript.qs</Script>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>6698a688fde46123265d25292a6a81517f2c5b0e</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebview.debug_information</Name>
+  <DisplayName>Qt WebView debug information</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtwebview</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtwebview, qt.qt6.6112.debug_info</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>3b351a4a6783801432e3544d5a01d68c0fde0183</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebview.debug_information.linux_gcc_64</Name>
+  <DisplayName>Qt WebView debug information for GCC 64-bit</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <SortingPriority/>
+  <Dependencies>qt.qt6.6112.addons.qtwebview</Dependencies>
+  <AutoDependOn>qt.qt6.6112.addons.qtwebview, qt.qt6.6112.addons.qtwebview.debug_information, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Virtual>true</Virtual>
+  <DownloadableArchives>qtwebview-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="2481426" OS="Any" UncompressedSize="10446480"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtwebview-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>981019aabb9f543921445a8d643b7a4437adce96</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.addons.qtwebview.linux_gcc_64</Name>
+  <DisplayName>Qt WebView for Linux 64</DisplayName>
+  <Description/>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.addons.qtwebview, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <Script>installscript.qs</Script>
+  <SortingPriority/>
+  <DownloadableArchives>qtwebview-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="73251" OS="Any" UncompressedSize="568580"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtwebview-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>012b5e4edb7a0fc1e5a26c70ea50f38489816a23</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.debug_info</Name>
+  <DisplayName>Qt Debug Information Files</DisplayName>
+  <Description>Qt 6.11.2 debug information files. Requires selection of target binary like gcc or MSVC.</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Default>false</Default>
+  <Script>installscript.qs</Script>
+  <AutoDependOn/>
+  <SortingPriority>2</SortingPriority>
+  <DownloadableArchives/>
+  <UpdateFile CompressedSize="0" OS="Any" UncompressedSize="0"/>
+  <SHA1>9b861b9a8358eb537d74e15bdb6f3452057ac2e5</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.debug_info.linux_gcc_64</Name>
+  <DisplayName>Desktop 64 Debug Information Files</DisplayName>
+  <Description>Qt 6.11.2 Desktop 64 Debug Information Files</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <AutoDependOn>qt.qt6.6112.debug_info, qt.qt6.6112.linux_gcc_64</AutoDependOn>
+  <Dependencies>qt.qt6.6112.linux_gcc_64</Dependencies>
+  <Virtual>true</Virtual>
+  <SortingPriority>2</SortingPriority>
+  <DownloadableArchives>qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z, qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z, qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z, qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z, qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="949985764" OS="Any" UncompressedSize="4086234064"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64-debug-symbols.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>7c98d49ae100c800beb6c3fc9bfd2ef74a4b4489</SHA1>
+ </PackageUpdate>
+ <PackageUpdate>
+  <Name>qt.qt6.6112.linux_gcc_64</Name>
+  <DisplayName>Desktop</DisplayName>
+  <Description>Qt 6.11.2 Prebuilt Components for Desktop 64 &lt;br>&lt;br>sha1: 713a36536903d172f9e6737584d428753c119496</Description>
+  <Version>6.11.2-0-202608131018</Version>
+  <ReleaseDate>2026-08-13</ReleaseDate>
+  <Dependencies>qt.tools.qtcreator, qt.qt6.6112.doc, qt.qt6.6112.examples</Dependencies>
+  <AutoDependOn/>
+  <Default>false</Default>
+  <Script>installscript.qs</Script>
+  <SortingPriority>700</SortingPriority>
+  <DownloadableArchives>qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z, qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z, qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z, qtdoc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z, qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z, qttranslations-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z, qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z, icu-linux-Rhel8.6-x86_64.7z</DownloadableArchives>
+  <UpdateFile CompressedSize="195151785" OS="Any" UncompressedSize="1565732389"/>
+  <Operations>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtdoc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qttranslations-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64</Argument>
+    <Argument>qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z</Argument>
+   </Operation>
+   <Operation name="Extract">
+    <Argument>@TargetDir@/6.11.2/gcc_64/lib</Argument>
+    <Argument>icu-linux-Rhel8.6-x86_64.7z</Argument>
+   </Operation>
+  </Operations>
+  <SHA1>a86f27ad4370da775f4d0ca73a2019b0593a4ef4</SHA1>
+ </PackageUpdate>
+ <SHA1>a3886c77240546cd878ac7a426a6b5be183a7d98</SHA1>
+ <MetadataName>2026-08-13-1101_meta.7z</MetadataName>
+</Updates>

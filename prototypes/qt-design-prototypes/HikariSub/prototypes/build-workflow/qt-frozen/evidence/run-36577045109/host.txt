@@ -1,0 +1,9 @@
+Linux 7.0.0-1012-azure x86_64
+PRETTY_NAME="Ubuntu 26.04.1 LTS"
+VERSION_ID="26.04"
+ImageVersion=20260920.143.1
+cmake version 4.4.3
+1.13.2
+g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+ldd (Ubuntu GLIBC 2.43-2ubuntu2.4) 2.43
+97974505472 154993672192

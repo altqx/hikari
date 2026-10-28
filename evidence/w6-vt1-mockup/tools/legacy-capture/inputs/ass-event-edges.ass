@@ -1,0 +1,20 @@
+[Script Info]
+ScriptType: v4.00+
+Dialogue: 0,0:00:09.00,0:00:10.00,Default,,0,0,0,,in script info
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,24,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialog: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,dialog prefix
+Commentary: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,commentary prefix
+Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0
+Dialogue: 0,0:00:03.00,0:00:04.00,Default,[bookmark]Ann,0,0,0,,bookmark
+Dialogue: 0,0:00:03.00,0:00:04.00,Default,[hidden][bookmark]Bob,0,0,0,,hidden then bookmark
+Dialogue: 0,0:00:03.00,0:00:04.00,Default,[bookmark]A[bookmark]B,0,0,0,,repeated bookmark
+Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_description]Group,0,0,0,,group description
+Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_opened],0,0,0,,opened group
+Dialogue: 0,0:00:03.00,0:00:04.00,Default,[visible] Cat ,0,0,0,,visible block
+Dialogue: 0,0:00:03.00,0:00:04.00,Default,X[hidden],0,0,0,,marker not first
+; events comment
+Dialogue: 0,0:00:05.00,0:00:06.00,Default,[hidden],0,0,0,,hidden line

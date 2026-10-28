@@ -1,0 +1,308 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>AM1 Automation panel mockup</title>
+<style>
+:root[data-theme=light]{--bg:#E5E9EC;--panel:#F9FAFB;--raised:#EDF0F3;--field:#FFFFFF;--text:#202832;--muted:#526170;--line:#AAB5BE;--control:#76828D;--accent:#145C4C;--onaccent:#FFFFFF;--select:#D6EBE4;--danger:#A51F31;--warning:#8A5A00;--success:#008000;--disabled:#74808B;--hover:#E3EEEA}
+:root[data-theme=dark]{--bg:#171B20;--panel:#20262D;--raised:#29313A;--field:#171D24;--text:#E8EDF2;--muted:#A5B1BD;--line:#414B57;--control:#7A8691;--accent:#9CDBC9;--onaccent:#102C24;--select:#304C47;--danger:#FFADAD;--warning:#E0A030;--success:#4DBA4D;--disabled:#75818D;--hover:#232D33}
+:root[data-theme=hcw]{--bg:#FFFFFF;--panel:#FFFFFF;--raised:#EBEBEB;--field:#FFFFFF;--text:#000000;--muted:#1A1A1A;--line:#000000;--control:#000000;--accent:#0037B3;--onaccent:#FFFFFF;--select:#C9DAF8;--danger:#A00000;--warning:#6B4500;--success:#005A00;--disabled:#6E6E6E;--hover:#EBEBEB}
+:root[data-theme=hcb]{--bg:#000000;--panel:#080808;--raised:#151515;--field:#000000;--text:#FFFFFF;--muted:#EEEEEE;--line:#FFFFFF;--control:#FFFFFF;--accent:#FFFF00;--onaccent:#000000;--select:#253F60;--danger:#FFADAD;--warning:#FFD54A;--success:#7CFC7C;--disabled:#8C8C8C;--hover:#151515}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI","Noto Sans","Liberation Sans",sans-serif;font-size:13px;line-height:1.35}
+.sheet{display:flex;gap:18px;padding:16px 18px 18px;align-items:flex-start}
+.caption{font-size:11px;color:var(--muted);margin:0 0 6px 2px;font-weight:600;letter-spacing:.02em}
+.themeName{font-size:14px;font-weight:650;padding:12px 18px 0;color:var(--text)}
+/* dock frame */
+.dock{width:340px;background:var(--field);border:1px solid var(--line);display:flex;flex-direction:column;position:relative}
+.dock.h640{height:640px}
+.dhead{height:35px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--line);background:var(--field);position:relative}
+.dhead .t{font-weight:700;flex:1}
+.focusmark{position:absolute;right:0;top:0;width:0;height:0;border-top:8px solid var(--accent);border-left:8px solid transparent}
+.ib{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:1px;color:var(--text);flex:none}
+.ib.b26{width:26px;height:26px}
+.ib.hov{background:var(--raised);outline:1px solid var(--control)}
+.ib svg{width:16px;height:16px}
+.ib.dis{color:var(--disabled)}
+svg .acc,svg #accent{color:var(--accent)}
+.ib.dis svg #accent{color:var(--disabled)}
+/* content */
+.body{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.tools{display:flex;gap:4px;align-items:center;padding:8px 12px 8px 12px}
+.search{flex:1;height:26px;border:1px solid var(--control);background:var(--field);display:flex;align-items:center;gap:6px;padding:0 7px;color:var(--muted);border-radius:1px}
+.search svg{width:14px;height:14px;flex:none}
+.sep{width:1px;height:18px;background:var(--line);margin:0 2px}
+.scroll{flex:1;overflow:hidden;padding:0 0 8px}
+.sec{display:flex;align-items:center;gap:4px;padding:8px 12px 4px;font-weight:700}
+.sec .chev{width:12px;height:12px;color:var(--text)}
+.sec .n{font-weight:400;color:var(--muted);font-size:11px;margin-left:2px}
+.sec .grow{flex:1}
+.script{display:flex;align-items:center;gap:6px;padding:4px 12px 2px 28px;min-height:28px}
+.script .nm{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.script .st{font-size:11px;color:var(--muted)}
+.script .st.bad{color:var(--danger)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;margin-left:-13px;margin-right:0}
+.macro{display:flex;align-items:center;gap:6px;padding:0 12px 0 40px;height:28px;position:relative}
+.macro .mn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.macro.sel{background:var(--select)}
+.macro.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.macro.focus{outline:1px solid var(--text);outline-offset:-1px}
+.macro.dim .mn{color:var(--disabled)}
+.keys{font-size:11px;color:var(--muted);white-space:nowrap;padding:1px 6px;border:1px solid transparent;border-radius:1px;min-width:0}
+.keys.cap{border-color:var(--control);background:var(--field);color:var(--muted)}
+.keys.warn{color:var(--warning)}
+.keys.warn::before{content:"";display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:7px solid var(--warning);margin-right:4px;vertical-align:0}
+.rec{display:flex;align-items:center;gap:4px;height:24px;border:1px solid var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--field);padding:0 3px 0 7px;font-size:12px;min-width:118px}
+.rec .k{flex:1;color:var(--text);font-weight:600}
+.note{padding:0 12px 6px 40px;font-size:11px}
+.note.warn{color:var(--warning)}
+.note.bad{color:var(--danger)}
+.note a,.link{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.err{margin:0 12px 6px 28px;font-size:11px;color:var(--danger);line-height:1.4}
+.err .more{display:block;margin-top:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--control);background:var(--raised);color:var(--text);border-radius:1px;font-size:13px;white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--onaccent);border-color:var(--accent);font-weight:600}
+.btn.small{height:24px;padding:0 8px;font-size:12px}
+.btn svg{width:16px;height:16px}
+/* run status */
+.run{margin:0 12px 6px;border:1px solid var(--line);background:var(--panel);padding:8px 10px 8px}
+.run .row{display:flex;align-items:center;gap:8px}
+.run .ttl{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.run .task{font-size:11px;color:var(--muted);margin:2px 0 6px}
+.bar{height:4px;background:var(--raised);border:1px solid var(--line);position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.run .foot{display:flex;align-items:center;gap:8px;margin-top:8px}
+.run .foot .grow{flex:1}
+.run .tgt{font-size:11px;color:var(--muted)}
+.log{margin-top:6px;background:var(--field);border:1px solid var(--line);font-family:Consolas,"DejaVu Sans Mono",monospace;font-size:11px;padding:5px 7px;color:var(--text);line-height:1.45;height:74px;overflow:hidden;white-space:pre}
+.run.fail{border-color:var(--danger)}
+.run.fail .ttl{color:var(--danger)}
+.icon-run{color:var(--accent)}
+/* popover */
+.pop{position:absolute;background:var(--panel);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.33);border-radius:4px;padding:12px;z-index:5}
+.pop h4{margin:0 0 6px;font-size:13px}
+.pop p{margin:0 0 10px;font-size:12px;color:var(--text)}
+.pop .bb{display:flex;justify-content:flex-end;gap:8px}
+/* menu */
+.menu{position:absolute;background:var(--panel);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.33);border-radius:5px;padding:4px 0;z-index:6;min-width:248px;font-size:13px}
+.mi{display:flex;align-items:center;height:26px;padding:0 12px 0 8px;gap:8px}
+.mi .ic{width:16px;height:16px;flex:none}
+.mi .ic svg{width:16px;height:16px}
+.mi .lbl{flex:1}
+.mi .sc{color:var(--muted);font-size:12px}
+.mi.hi{background:var(--accent);color:var(--onaccent)}
+.mi.hi svg #accent{color:var(--onaccent)}
+.ms{height:1px;background:var(--line);margin:4px 0}
+/* empty */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted)}
+/* settings crop */
+.dlg{width:640px;background:var(--panel);border:1px solid var(--line);display:flex;height:456px}
+.pages{width:150px;background:var(--bg);border-right:1px solid var(--line);padding:6px 0;font-size:13px}
+.pg{height:28px;display:flex;align-items:center;gap:8px;padding:0 10px}
+.pg svg{width:16px;height:16px}
+.pg.on{background:var(--select);box-shadow:inset 3px 0 0 var(--accent);font-weight:650}
+.pgbody{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px}
+.combo{height:28px;border:1px solid var(--control);background:var(--raised);display:flex;align-items:center;padding:0 8px;justify-content:space-between;width:230px}
+.combo svg{width:12px;height:12px}
+.tbl{border:1px solid var(--line);background:var(--field);flex:1;font-size:12px;overflow:hidden}
+.th{display:flex;background:var(--raised);border-bottom:1px solid var(--line);font-size:11px;font-weight:500;color:var(--muted);height:24px;align-items:center}
+.tr{display:flex;height:26px;align-items:center;border-bottom:1px solid color-mix(in srgb,var(--line) 48%,transparent)}
+.tr.sel{background:var(--select);box-shadow:inset 3px 0 0 var(--accent)}
+.c1{flex:1;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c2{width:150px;padding:0 8px;white-space:nowrap}
+.grp{color:var(--muted)}
+.c1 .grp{margin-right:4px}
+.tr .w{color:var(--warning)}
+.rowbtns{display:flex;gap:8px}
+.hint{font-size:11px;color:var(--muted)}
+.callout{font-size:11px;color:var(--muted);max-width:340px;margin-top:8px;line-height:1.4}
+.callout b{color:var(--text)}
+</style>
+</head>
+<body>
+<!-- Icons (K1 set, copied from src/ui/icons) -->
+<svg width="0" height="0" style="position:absolute">
+ <defs>
+  <symbol id="i-automation" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g id="accent" class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></g></symbol>
+  <symbol id="i-refresh" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 0 1 9.75-3.5"/><path d="M12.5 1.5v3h-3"/><path d="M13.5 8a5.5 5.5 0 0 1-9.75 3.5"/><path d="M3.5 14.5v-3h3"/></g></symbol>
+  <symbol id="i-run" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><path d="M6.5 6.5L5 8.25 6.5 10"/><g id="accent" class="acc"><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></g></g></symbol>
+  <symbol id="i-play" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5v11l9-5.5z" fill="currentColor"/></g></symbol>
+  <symbol id="i-stop" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor"/></symbol>
+  <symbol id="i-unload" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><path d="M6.5 6.5L5 8.25 6.5 10"/><g id="accent" class="acc"><path d="M10 10l4 4M14 10l-4 4"/></g></g></symbol>
+  <symbol id="i-menu" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.25" fill="currentColor"/><circle cx="8" cy="8" r="1.25" fill="currentColor"/><circle cx="12.5" cy="8" r="1.25" fill="currentColor"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></g></symbol>
+  <symbol id="i-edit" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g id="accent" class="acc"><path d="M9.5 3.5l3 3"/></g></g></symbol>
+  <symbol id="i-hotkeys" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g id="accent" class="acc"><path d="M6.5 9.5h3"/></g></g></symbol>
+  <symbol id="i-import" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3"/><g id="accent" class="acc"><path d="M7.5 4.5v10M4.5 11.5l3 3 3-3"/></g></g></symbol>
+  <symbol id="i-chev" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chevr" viewBox="0 0 16 16"><path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 13.5v-10a1 1 0 0 1 1-1h3l1.5 1.5h5a1 1 0 0 1 1 1v1.5"/><path d="M1.5 13.5l2.25-7h10.75l-2.25 7z"/></g></symbol>
+  <symbol id="i-settings" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></g></symbol>
+ </defs>
+</svg>
+
+<div class="themeName" id="themeName"></div>
+<div class="sheet">
+
+<!-- A: idle -->
+<div>
+ <div class="caption">1 · DOCKED, IDLE</div>
+ <div class="dock h640">
+  <div class="dhead"><span class="t">Automation</span><span class="ib"><svg><use href="#i-menu"/></svg></span><span class="focusmark"></span></div>
+  <div class="body">
+   <div class="tools">
+    <div class="search"><svg><use href="#i-search"/></svg><span>Filter macros</span></div>
+    <span class="ib b26" title="Load script…"><svg><use href="#i-automation"/></svg></span>
+    <span class="ib b26 hov" title="Refresh autoload scripts"><svg><use href="#i-refresh"/></svg></span>
+    <span class="ib b26" title="Rerun last macro"><svg><use href="#i-run"/></svg></span>
+   </div>
+   <div class="scroll">
+    <div class="sec"><svg class="chev"><use href="#i-chev"/></svg>In this file<span class="n">2</span></div>
+    <div class="script"><span class="nm">Karaoke Templater</span><span class="ib"><svg><use href="#i-refresh"/></svg></span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="macro"><span class="mn">Apply karaoke template</span><span class="keys">Ctrl+Alt+K</span></div>
+    <div class="macro sel focus"><span class="mn">Apply to selected Lines</span><span class="ib icon-run" title="Run (Enter)"><svg><use href="#i-play"/></svg></span><span class="keys cap">Add shortcut</span></div>
+    <div class="script"><span class="nm">episode-fixes.lua</span><span class="ib"><svg><use href="#i-refresh"/></svg></span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="macro"><span class="mn">Fix signs</span><span class="keys warn">Ctrl+S</span></div>
+    <div class="note warn">Save also uses Ctrl+S and takes it. <a>Change…</a></div>
+
+    <div class="sec"><svg class="chev"><use href="#i-chev"/></svg>Autoload<span class="n">5</span></div>
+    <div class="script"><span class="nm">Clean Tags</span><span class="ib"><svg><use href="#i-refresh"/></svg></span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="macro"><span class="mn">Clean tags</span><span class="keys">Alt+C</span></div>
+    <div class="script"><span class="nm">Duplicate and shift</span><span class="ib"><svg><use href="#i-refresh"/></svg></span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="macro"><span class="mn">Duplicate and shift lines</span><span class="keys"></span></div>
+    <div class="macro"><span class="mn">Shift by one frame</span><span class="keys">Ctrl+Shift+F</span></div>
+    <div class="script"><span class="nm">select-overlaps.moon</span><span class="st bad">Failed to load</span><span class="ib"><svg><use href="#i-refresh"/></svg></span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="err">select-overlaps.moon:41: attempt to index a nil value (global 'aegisub')<span class="more link">Show full error</span></div>
+    <div class="script"><span class="nm">Strip comments</span><span class="st bad">Stopped</span><span class="ib"><svg><use href="#i-refresh"/></svg></span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="err">The script's process ended. Reload to start it again; its macro is not rerun.</div>
+
+    <div class="sec"><svg class="chev"><use href="#i-chevr"/></svg>Shortcuts for missing macros<span class="n">1</span></div>
+   </div>
+  </div>
+ </div>
+ <div class="callout"><b>Rows.</b> Script name bold, its state only when not ready. Macro rows: Enter or double-click runs; the selected row shows Run. The shortcut sits at the row's end, recorded in place. A conflict is a warning line under the row.</div>
+</div>
+
+<!-- B: running + recording -->
+<div>
+ <div class="caption">2 · RUNNING · RECORDING A SHORTCUT</div>
+ <div class="dock h640">
+  <div class="dhead"><span class="t">Automation</span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+  <div class="body">
+   <div class="tools">
+    <div class="search"><svg><use href="#i-search"/></svg><span>Filter macros</span></div>
+    <span class="ib b26 dis"><svg><use href="#i-automation"/></svg></span>
+    <span class="ib b26 dis"><svg><use href="#i-refresh"/></svg></span>
+    <span class="ib b26 dis"><svg><use href="#i-run"/></svg></span>
+   </div>
+   <div class="run">
+    <div class="row"><span class="ttl">Apply karaoke template</span><span class="tgt">62%</span></div>
+    <div class="task">Applying templates · Line 418 of 674</div>
+    <div class="bar"><i style="width:62%"></i></div>
+    <div class="foot"><span class="tgt">episode01.ass is read-only until the macro ends</span><span class="grow"></span></div>
+    <div class="foot"><span class="link" style="font-size:11px">Hide log</span><span class="grow"></span><span class="btn small">Force stop</span><span class="btn small">Cancel</span></div>
+    <div class="log">Loaded 12 templates
+Line 401: syl 7 has no duration
+Line 412: skipped (comment)
+Applying templates…</div>
+   </div>
+   <div class="scroll">
+    <div class="sec"><svg class="chev"><use href="#i-chev"/></svg>In this file<span class="n">2</span></div>
+    <div class="script"><span class="nm">Karaoke Templater</span><span class="st">Running</span><span class="ib dis"><svg><use href="#i-refresh"/></svg></span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="macro"><span class="mn">Apply karaoke template</span><span class="keys">Ctrl+Alt+K</span></div>
+    <div class="macro sel"><span class="mn">Apply to selected Lines</span><span class="rec"><span class="k">Ctrl+S</span><span class="ib" title="Clear"><svg><use href="#i-x"/></svg></span></span></div>
+    <div class="note warn">Already assigned to: Save</div>
+    <div class="script"><span class="nm">episode-fixes.lua</span><span class="ib"><svg><use href="#i-refresh"/></svg></span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="macro dim"><span class="mn">Fix signs</span><span class="keys">Ctrl+Shift+S</span></div>
+    <div class="sec"><svg class="chev"><use href="#i-chev"/></svg>Autoload<span class="n">5</span></div>
+    <div class="script"><span class="nm">Clean Tags</span><span class="ib"><svg><use href="#i-refresh"/></svg></span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="macro dim"><span class="mn">Clean tags</span><span class="keys">Alt+C</span></div>
+   </div>
+  </div>
+  <div class="pop" style="left:44px;top:452px;width:282px">
+   <h4>Reassign shortcut</h4>
+   <p>Ctrl+S is assigned to <b>Save</b>. Assign it to <b>Apply to selected Lines</b> instead?</p>
+   <div class="bb"><span class="btn small primary">Reassign</span><span class="btn small">Cancel</span></div>
+  </div>
+ </div>
+ <div class="callout"><b>Run status</b> sits at the top while a macro runs: progress, task, the read-only target, Cancel (Force stop after 3 s), the log on demand. Other macros cannot start. A failed run keeps the box, in the error colour, until dismissed. <b>Recording:</b> keys show as pressed; Esc cancels, Enter saves; a taken shortcut asks to reassign.</div>
+</div>
+
+<!-- C/D column -->
+<div>
+ <div class="caption">3 · SETTINGS → HOTKEYS, AUTOMATION GROUP</div>
+ <div class="dlg">
+  <div class="pages">
+   <div class="pg">General</div>
+   <div class="pg">Editor</div>
+   <div class="pg">Grid</div>
+   <div class="pg">Video</div>
+   <div class="pg">Audio</div>
+   <div class="pg">Appearance</div>
+   <div class="pg on">Hotkeys</div>
+  </div>
+  <div class="pgbody">
+   <div style="display:flex;gap:8px;align-items:center"><div class="combo"><span>Automation shortcuts</span><svg><use href="#i-chev"/></svg></div><div class="search" style="flex:1;height:28px"><svg><use href="#i-search"/></svg><span>Filter</span></div></div>
+   <div class="tbl">
+    <div class="th"><span class="c1">Function</span><span class="c2">Hotkey</span></div>
+    <div class="tr"><span class="c1"><span class="grp">Karaoke Templater ›</span>Apply karaoke template</span><span class="c2">Ctrl+Alt+K</span></div>
+    <div class="tr sel"><span class="c1"><span class="grp">Karaoke Templater ›</span>Apply to selected Lines</span><span class="c2"></span></div>
+    <div class="tr"><span class="c1"><span class="grp">episode-fixes.lua ›</span>Fix signs</span><span class="c2 w">Ctrl+S · Save takes it</span></div>
+    <div class="tr"><span class="c1"><span class="grp">Clean Tags ›</span>Clean tags</span><span class="c2">Alt+C</span></div>
+    <div class="tr"><span class="c1"><span class="grp">Duplicate and shift ›</span>Duplicate and shift lines</span><span class="c2"></span></div>
+    <div class="tr"><span class="c1"><span class="grp">Duplicate and shift ›</span>Shift by one frame</span><span class="c2">Ctrl+Shift+F</span></div>
+    <div class="tr"><span class="c1"><span class="grp">old-tools.lua-3 ›</span><span class="w">Missing macro</span></span><span class="c2">Ctrl+Alt+T</span></div>
+   </div>
+   <div class="rowbtns"><span class="btn">Map hotkey</span><span class="btn">Restore default hotkey</span><span class="btn">Delete hotkey</span></div>
+  </div>
+ </div>
+ <div class="callout" style="max-width:640px"><b>Same bindings, one store.</b> Macros are a new "Automation shortcuts" filter on the Hotkeys page; mapping here and in the panel edits the same binding, so a change shows in both at once. The panel's "Shortcuts in Settings…" opens this page with the filter set. Conflicts read the same in both places.</div>
+
+ <div style="display:flex;gap:18px;margin-top:16px;align-items:flex-start">
+  <div>
+   <div class="caption">4 · EMPTY, PANEL MENU OPEN</div>
+   <div class="dock" style="height:250px;width:300px">
+    <div class="dhead"><span class="t">Automation</span><span class="ib hov"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="body"><div class="empty"><span>No scripts loaded</span><span class="btn"><svg><use href="#i-automation"/></svg>Load script…</span></div></div>
+    <div class="menu" style="left:60px;top:32px">
+     <div class="mi"><span class="ic"><svg><use href="#i-automation"/></svg></span><span class="lbl">Load script…</span></div>
+     <div class="mi"><span class="ic"><svg><use href="#i-refresh"/></svg></span><span class="lbl">Refresh autoload scripts</span></div>
+     <div class="mi hi"><span class="ic"><svg><use href="#i-hotkeys"/></svg></span><span class="lbl">Shortcuts in Settings…</span></div>
+     <div class="mi"><span class="ic"><svg><use href="#i-import"/></svg></span><span class="lbl">Import legacy hotkeys…</span></div>
+     <div class="ms"></div>
+     <div class="mi"><span class="ic"></span><span class="lbl">Float</span></div>
+     <div class="mi"><span class="ic"></span><span class="lbl">Move…</span></div>
+     <div class="mi"><span class="ic"></span><span class="lbl">Close</span></div>
+    </div>
+   </div>
+  </div>
+  <div>
+   <div class="caption">5 · A SCRIPT'S MENU</div>
+   <div class="dock" style="height:250px;width:300px">
+    <div class="dhead"><span class="t">Automation</span><span class="ib"><svg><use href="#i-menu"/></svg></span></div>
+    <div class="body">
+     <div class="scroll" style="padding-top:6px">
+      <div class="sec"><svg class="chev"><use href="#i-chev"/></svg>In this file<span class="n">2</span></div>
+      <div class="script"><span class="nm">Karaoke Templater</span><span class="ib"><svg><use href="#i-refresh"/></svg></span><span class="ib hov"><svg><use href="#i-menu"/></svg></span></div>
+     </div>
+    </div>
+    <div class="menu" style="left:70px;top:100px;min-width:220px">
+     <div class="mi"><span class="ic"><svg><use href="#i-refresh"/></svg></span><span class="lbl">Reload</span></div>
+     <div class="mi hi"><span class="ic"><svg><use href="#i-edit"/></svg></span><span class="lbl">Edit script</span></div>
+     <div class="ms"></div>
+     <div class="mi"><span class="ic"><svg><use href="#i-unload"/></svg></span><span class="lbl">Remove from this file</span></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+</div>
+<script>
+const t=(new URLSearchParams(location.search).get('theme'))||'dark';
+document.documentElement.dataset.theme=t;
+document.getElementById('themeName').textContent={light:'Light',dark:'Dark',hcw:'High contrast white',hcb:'High contrast black'}[t];
+</script>
+</body>
+</html>

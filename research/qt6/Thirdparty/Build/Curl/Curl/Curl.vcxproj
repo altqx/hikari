@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Rel_AVX512|Win32">
+      <Configuration>Rel_AVX512</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Rel_AVX512|x64">
+      <Configuration>Rel_AVX512</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\curl\lib\altsvc.c" />
+    <ClCompile Include="..\..\..\curl\lib\amigaos.c" />
+    <ClCompile Include="..\..\..\curl\lib\asyn-ares.c" />
+    <ClCompile Include="..\..\..\curl\lib\asyn-base.c" />
+    <ClCompile Include="..\..\..\curl\lib\asyn-thrdd.c" />
+    <ClCompile Include="..\..\..\curl\lib\bufq.c" />
+    <ClCompile Include="..\..\..\curl\lib\bufref.c" />
+    <ClCompile Include="..\..\..\curl\lib\cf-dns.c" />
+    <ClCompile Include="..\..\..\curl\lib\cf-h1-proxy.c" />
+    <ClCompile Include="..\..\..\curl\lib\cf-h2-proxy.c" />
+    <ClCompile Include="..\..\..\curl\lib\cf-haproxy.c" />
+    <ClCompile Include="..\..\..\curl\lib\cf-https-connect.c" />
+    <ClCompile Include="..\..\..\curl\lib\cf-ip-happy.c" />
+    <ClCompile Include="..\..\..\curl\lib\cf-socket.c" />
+    <ClCompile Include="..\..\..\curl\lib\cfilters.c" />
+    <ClCompile Include="..\..\..\curl\lib\conncache.c" />
+    <ClCompile Include="..\..\..\curl\lib\connect.c" />
+    <ClCompile Include="..\..\..\curl\lib\content_encoding.c" />
+    <ClCompile Include="..\..\..\curl\lib\cookie.c" />
+    <ClCompile Include="..\..\..\curl\lib\cshutdn.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_addrinfo.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_endian.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_fnmatch.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_fopen.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_get_line.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_gethostname.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_gssapi.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_memrchr.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_ntlm_core.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_range.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_sasl.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_sha512_256.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_share.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_sspi.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_threads.c" />
+    <ClCompile Include="..\..\..\curl\lib\curl_trc.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\base64.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\basename.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\dynbuf.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\fopen.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\inet_ntop.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\inet_pton.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\multibyte.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\nonblock.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\snprintf.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\strcopy.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\strdup.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\strerr.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\strparse.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\timediff.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\timeval.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\version_win32.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\wait.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\warnless.c" />
+    <ClCompile Include="..\..\..\curl\lib\curlx\winapi.c" />
+    <ClCompile Include="..\..\..\curl\lib\cw-out.c" />
+    <ClCompile Include="..\..\..\curl\lib\cw-pause.c" />
+    <ClCompile Include="..\..\..\curl\lib\dict.c" />
+    <ClCompile Include="..\..\..\curl\lib\dnscache.c" />
+    <ClCompile Include="..\..\..\curl\lib\doh.c" />
+    <ClCompile Include="..\..\..\curl\lib\dynhds.c" />
+    <ClCompile Include="..\..\..\curl\lib\easy.c" />
+    <ClCompile Include="..\..\..\curl\lib\easygetopt.c" />
+    <ClCompile Include="..\..\..\curl\lib\easyoptions.c" />
+    <ClCompile Include="..\..\..\curl\lib\escape.c" />
+    <ClCompile Include="..\..\..\curl\lib\fake_addrinfo.c" />
+    <ClCompile Include="..\..\..\curl\lib\file.c" />
+    <ClCompile Include="..\..\..\curl\lib\fileinfo.c" />
+    <ClCompile Include="..\..\..\curl\lib\formdata.c" />
+    <ClCompile Include="..\..\..\curl\lib\ftp.c" />
+    <ClCompile Include="..\..\..\curl\lib\ftplistparser.c" />
+    <ClCompile Include="..\..\..\curl\lib\getenv.c" />
+    <ClCompile Include="..\..\..\curl\lib\getinfo.c" />
+    <ClCompile Include="..\..\..\curl\lib\gopher.c" />
+    <ClCompile Include="..\..\..\curl\lib\hash.c" />
+    <ClCompile Include="..\..\..\curl\lib\headers.c" />
+    <ClCompile Include="..\..\..\curl\lib\hmac.c" />
+    <ClCompile Include="..\..\..\curl\lib\hostip.c" />
+    <ClCompile Include="..\..\..\curl\lib\hostip4.c" />
+    <ClCompile Include="..\..\..\curl\lib\hostip6.c" />
+    <ClCompile Include="..\..\..\curl\lib\hsts.c" />
+    <ClCompile Include="..\..\..\curl\lib\http.c" />
+    <ClCompile Include="..\..\..\curl\lib\http1.c" />
+    <ClCompile Include="..\..\..\curl\lib\http2.c" />
+    <ClCompile Include="..\..\..\curl\lib\http_aws_sigv4.c" />
+    <ClCompile Include="..\..\..\curl\lib\http_chunks.c" />
+    <ClCompile Include="..\..\..\curl\lib\http_digest.c" />
+    <ClCompile Include="..\..\..\curl\lib\http_negotiate.c" />
+    <ClCompile Include="..\..\..\curl\lib\http_ntlm.c" />
+    <ClCompile Include="..\..\..\curl\lib\http_proxy.c" />
+    <ClCompile Include="..\..\..\curl\lib\httpsrr.c" />
+    <ClCompile Include="..\..\..\curl\lib\idn.c" />
+    <ClCompile Include="..\..\..\curl\lib\if2ip.c" />
+    <ClCompile Include="..\..\..\curl\lib\imap.c" />
+    <ClCompile Include="..\..\..\curl\lib\ldap.c" />
+    <ClCompile Include="..\..\..\curl\lib\llist.c" />
+    <ClCompile Include="..\..\..\curl\lib\macos.c" />
+    <ClCompile Include="..\..\..\curl\lib\md4.c" />
+    <ClCompile Include="..\..\..\curl\lib\md5.c" />
+    <ClCompile Include="..\..\..\curl\lib\memdebug.c" />
+    <ClCompile Include="..\..\..\curl\lib\mime.c" />
+    <ClCompile Include="..\..\..\curl\lib\mprintf.c" />
+    <ClCompile Include="..\..\..\curl\lib\mqtt.c" />
+    <ClCompile Include="..\..\..\curl\lib\multi.c" />
+    <ClCompile Include="..\..\..\curl\lib\multi_ev.c" />
+    <ClCompile Include="..\..\..\curl\lib\multi_ntfy.c" />
+    <ClCompile Include="..\..\..\curl\lib\netrc.c" />
+    <ClCompile Include="..\..\..\curl\lib\noproxy.c" />
+    <ClCompile Include="..\..\..\curl\lib\openldap.c" />
+    <ClCompile Include="..\..\..\curl\lib\parsedate.c" />
+    <ClCompile Include="..\..\..\curl\lib\pingpong.c" />
+    <ClCompile Include="..\..\..\curl\lib\pop3.c" />
+    <ClCompile Include="..\..\..\curl\lib\progress.c" />
+    <ClCompile Include="..\..\..\curl\lib\protocol.c" />
+    <ClCompile Include="..\..\..\curl\lib\psl.c" />
+    <ClCompile Include="..\..\..\curl\lib\rand.c" />
+    <ClCompile Include="..\..\..\curl\lib\ratelimit.c" />
+    <ClCompile Include="..\..\..\curl\lib\request.c" />
+    <ClCompile Include="..\..\..\curl\lib\rtsp.c" />
+    <ClCompile Include="..\..\..\curl\lib\select.c" />
+    <ClCompile Include="..\..\..\curl\lib\sendf.c" />
+    <ClCompile Include="..\..\..\curl\lib\setopt.c" />
+    <ClCompile Include="..\..\..\curl\lib\sha256.c" />
+    <ClCompile Include="..\..\..\curl\lib\slist.c" />
+    <ClCompile Include="..\..\..\curl\lib\smb.c" />
+    <ClCompile Include="..\..\..\curl\lib\smtp.c" />
+    <ClCompile Include="..\..\..\curl\lib\socketpair.c" />
+    <ClCompile Include="..\..\..\curl\lib\socks.c" />
+    <ClCompile Include="..\..\..\curl\lib\socks_gssapi.c" />
+    <ClCompile Include="..\..\..\curl\lib\socks_sspi.c" />
+    <ClCompile Include="..\..\..\curl\lib\splay.c" />
+    <ClCompile Include="..\..\..\curl\lib\strcase.c" />
+    <ClCompile Include="..\..\..\curl\lib\strequal.c" />
+    <ClCompile Include="..\..\..\curl\lib\strerror.c" />
+    <ClCompile Include="..\..\..\curl\lib\system_win32.c" />
+    <ClCompile Include="..\..\..\curl\lib\telnet.c" />
+    <ClCompile Include="..\..\..\curl\lib\tftp.c" />
+    <ClCompile Include="..\..\..\curl\lib\thrdpool.c" />
+    <ClCompile Include="..\..\..\curl\lib\thrdqueue.c" />
+    <ClCompile Include="..\..\..\curl\lib\transfer.c" />
+    <ClCompile Include="..\..\..\curl\lib\uint-bset.c" />
+    <ClCompile Include="..\..\..\curl\lib\uint-hash.c" />
+    <ClCompile Include="..\..\..\curl\lib\uint-spbset.c" />
+    <ClCompile Include="..\..\..\curl\lib\uint-table.c" />
+    <ClCompile Include="..\..\..\curl\lib\url.c" />
+    <ClCompile Include="..\..\..\curl\lib\urlapi.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\cleartext.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\cram.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\digest.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\digest_sspi.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\gsasl.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\krb5_gssapi.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\krb5_sspi.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\ntlm.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\ntlm_sspi.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\oauth2.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\spnego_gssapi.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\spnego_sspi.c" />
+    <ClCompile Include="..\..\..\curl\lib\vauth\vauth.c" />
+    <ClCompile Include="..\..\..\curl\lib\version.c" />
+    <ClCompile Include="..\..\..\curl\lib\vquic\curl_ngtcp2.c" />
+    <ClCompile Include="..\..\..\curl\lib\vquic\curl_quiche.c" />
+    <ClCompile Include="..\..\..\curl\lib\vquic\vquic-tls.c" />
+    <ClCompile Include="..\..\..\curl\lib\vquic\vquic.c" />
+    <ClCompile Include="..\..\..\curl\lib\vssh\libssh.c" />
+    <ClCompile Include="..\..\..\curl\lib\vssh\libssh2.c" />
+    <ClCompile Include="..\..\..\curl\lib\vssh\vssh.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\apple.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\cipher_suite.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\gtls.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\hostcheck.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\keylog.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\mbedtls.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\openssl.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\rustls.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\schannel.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\schannel_verify.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\vtls.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\vtls_scache.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\vtls_spack.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\wolfssl.c" />
+    <ClCompile Include="..\..\..\curl\lib\vtls\x509asn1.c" />
+    <ClCompile Include="..\..\..\curl\lib\ws.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\curl\src\tool_version.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{7ee5840d-0b07-49c4-808d-526bad3b3e86}</ProjectGuid>
+    <RootNamespace>Curl</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Rel_AVX512|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Rel_AVX512|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Rel_AVX512|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Rel_AVX512|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Rel_AVX512|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Rel_AVX512|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)Thirdparty\curl\include;$(SolutionDir)Thirdparty\curl\lib</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Rel_AVX512|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)Thirdparty\curl\include;$(SolutionDir)Thirdparty\curl\lib</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;HAVE_LIBZ;USE_SCHANNEL;USE_WINDOWS_SSPI;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)Thirdparty\curl\include;$(SolutionDir)Thirdparty\curl\lib;$(SolutionDir)Thirdparty\zlib</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>Ws2_32.Lib;Wldap32.Lib;Crypt32.Lib;Secur32.lib;zlib.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)bin\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)Thirdparty\curl\include;$(SolutionDir)Thirdparty\curl\lib</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>Ws2_32.Lib;Wldap32.Lib;Crypt32.Lib;</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Rel_AVX512|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)Thirdparty\curl\include;$(SolutionDir)Thirdparty\curl\lib</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>Ws2_32.Lib;Wldap32.Lib;Crypt32.Lib;</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Zlib\Zlib.vcxproj">
+      <Project>{56E35122-0B51-43D4-A721-472F2F956E0F}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,28 @@
+[Script Info]
+ScriptType: v4.00+
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize
+Style: Default,Arial,20
+Style: Sign,Arial,20
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold, 42 times
+Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,wo{\i1}rd ok
+Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\p1}m 0 0 l 10 10{\p0}gud
+Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,good\Nbda\hgood\nxx
+Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,go\iod
+Dialogue: 0,0:00:06.00,0:00:07.00,Default,,0,0,0,,don't dont 3.14 abc123 4ever
+Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,Zażółć 世界 gęślą
+Dialogue: 0,0:00:08.00,0:00:09.00,Default,,0,0,0,,a 𐌰𐌱 b
+Dialogue: 0,0:00:09.00,0:00:10.00,Default,,0,0,0,,wo{\i1}rd} good\Ngud {
+Dialogue: 0,0:00:10.00,0:00:11.00,Default,,0,0,0,,Hello world worlds text texts The the
+Dialogue: 0,0:00:11.00,0:00:12.00,Default,,0,0,0,,HELLO WORLD Teh hello
+Comment: 0,0:00:12.00,0:00:13.00,Default,,0,0,0,,wrold comment
+Dialogue: 0,0:00:13.00,0:00:14.00,Default,,0,0,0,,it's l'amour 'quoted' text's don't.
+Dialogue: 0,0:00:14.00,0:00:15.00,Default,,0,0,0,,{\b1}Hello{\b0} {\fnArial}wrold{\fs20} 12px 2nd
+Dialogue: 0,0:00:15.00,0:00:16.00,Default,,0,0,0,,Hello, world! Hello? world... (text) [good] "good"
+Dialogue: 0,0:00:16.00,0:00:17.00,Default,,0,0,0,,good—good good-good good_good e-mail
+Dialogue: 0,0:00:17.00,0:00:18.00,Default,,0,0,0,,{comment text}gud{\i1\p0} good
+Dialogue: 0,0:00:18.00,0:00:19.00,Default,,0,0,0,,Teh{\i1}

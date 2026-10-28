@@ -1,0 +1,25 @@
+Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36260 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+Compiler Passes:
+ C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\cl.exe:        Version 19.51.36260.0
+ C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\c1.dll:        Version 19.51.36260.0
+ C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\c1xx.dll:      Version 19.51.36260.0
+ C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\c2.dll:        Version 19.51.36260.0
+ C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\c1xx.dll:      Version 19.51.36260.0
+ C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\link.exe:      Version 14.51.36260.0
+ C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\mspdb140.dll:  Version 14.51.36260.0
+ C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\HostX64\x64\1033\clui.dll: Version 19.51.36260.0
+
+cl : Command line error D8003 : missing source filename
+cmake version 4.3.1-msvc1
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+1.13.2
+error: "C:\Program Files\Git\cmd\git.exe" --git-dir "C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\_work\vcpkg\.git" -c core.autocrlf=false --work-tree C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/buildtrees/versioning_/versions/ffmpeg/bf414f1e4f2a63ff7410444dc4eabb5b392f6d16_15484.tmp checkout-index -af --prefix=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/buildtrees/versioning_/versions/ffmpeg/bf414f1e4f2a63ff7410444dc4eabb5b392f6d16_15484.tmp/ failed with exit code 128
+fatal: unable to access 'https://github.com/microsoft/vcpkg.git/': Could not resolve host: github.com
+fatal: could not fetch ced7ba86be2bd8ac3ffe2f91fed6a817e8c05da9 from promisor remote
+note: while checking out port ffmpeg with git tree bf414f1e4f2a63ff7410444dc4eabb5b392f6d16
+note: See https://learn.microsoft.com/vcpkg/users/versioning-troubleshooting?WT.mc_id=vcpkg_inproduct_cli for more information.
+note: while loading ffmpeg@7.1.2#5
+

@@ -1,0 +1,74 @@
+{
+  "read_time_utc": "2026-09-27T06:19:57.063485+00:00",
+  "hash_note": "Qt DLL hashes read after the native runs from their recorded loaded paths; not claimed as in-process hashing.",
+  "kits": {
+    "mingw": {
+      "all_22_observations_matched": true,
+      "source_hashes_match_published_source": true,
+      "loaded_libraries": {
+        "Qt6Core.dll": {
+          "path": "C:\\Qt\\6.11.2\\mingw_64\\bin\\Qt6Core.dll",
+          "post_run_sha256": "a0bf79817c19768c4b2bd01258d7d8d15818c0d3a56f86dd65d80354e749cc16"
+        },
+        "Qt6Gui.dll": {
+          "path": "C:\\Qt\\6.11.2\\mingw_64\\bin\\Qt6Gui.dll",
+          "post_run_sha256": "67d3fd988e45f4aa31b9fe0144434465fa87a23c27cc3d573257eb1c6c5df2e7"
+        },
+        "Qt6Qml.dll": {
+          "path": "C:\\Qt\\6.11.2\\mingw_64\\bin\\Qt6Qml.dll",
+          "post_run_sha256": "d8480e1bc2d1e8b055935f11f76790509d8282902da3850474a249329f3e8f66"
+        },
+        "Qt6Quick.dll": {
+          "path": "C:\\Qt\\6.11.2\\mingw_64\\bin\\Qt6Quick.dll",
+          "post_run_sha256": "8d8cf6d7f4c7b0f99dd7d04da84cb9257fa5472966e0459d215eee57512f848e"
+        }
+      },
+      "artifact_sha256": {
+        "capture.json": "5c12e3e1041c144187b742542c6d02619d5de023d3dd834e62965a871e8def91",
+        "grid.png": "9a51003213862bce58c11a02e65d7c5faeee63304e4276d121170bd9256c5b6e",
+        "observations.json": "2c2f4a3cf3424dd25cc0ffad851c11ee7d767d17421791b3803c9d126bdc7b3f",
+        "provenance.json": "1ebc670a2abe20e8bbd66a25871d06525b46bd6e60b90ec268fb5346adeac469"
+      }
+    },
+    "msvc": {
+      "all_22_observations_matched": true,
+      "source_hashes_match_published_source": true,
+      "loaded_libraries": {
+        "Qt6Core.dll": {
+          "path": "C:\\Qt\\6.11.2\\msvc2022_64\\bin\\Qt6Core.dll",
+          "post_run_sha256": "22c113a5644b875b2c85482723cd5d2e6a3a4029169778fcc78adde08ef3b6aa"
+        },
+        "Qt6Gui.dll": {
+          "path": "C:\\Qt\\6.11.2\\msvc2022_64\\bin\\Qt6Gui.dll",
+          "post_run_sha256": "19265a4e76efc12ef5f5bcf59be6c6a5b9b59ec4c89660797738bd2da7f719cc"
+        },
+        "Qt6Qml.dll": {
+          "path": "C:\\Qt\\6.11.2\\msvc2022_64\\bin\\Qt6Qml.dll",
+          "post_run_sha256": "257670ffa28fc84d4ec9f818de27e2e4611d9a0cffcb657179a210931e36671b"
+        },
+        "Qt6Quick.dll": {
+          "path": "C:\\Qt\\6.11.2\\msvc2022_64\\bin\\Qt6Quick.dll",
+          "post_run_sha256": "ed2917b9905a5b867ecc192fa4429170494af0dcdaacc68053fe88948319cd08"
+        }
+      },
+      "artifact_sha256": {
+        "capture.json": "5c12e3e1041c144187b742542c6d02619d5de023d3dd834e62965a871e8def91",
+        "grid.png": "9a51003213862bce58c11a02e65d7c5faeee63304e4276d121170bd9256c5b6e",
+        "observations.json": "5d6d405c1c83c4423be8d023e12ff74121783b94f490a6c0cfd3256f860fd674",
+        "provenance.json": "cde572ab44f93db66123e5ace01a0604ffe78fb84b72f0fee7dcfe9d680f8b56"
+      }
+    }
+  },
+  "prior_uia_restriction": {
+    "error_id": "UnauthorizedAccess",
+    "reason": "Windows PowerShell refused uia-observe.ps1 because running scripts is disabled.",
+    "retry_or_bypass": false
+  },
+  "limits": [
+    "Offscreen Qt C++ interface observations only",
+    "No OS UIA/AT-SPI or NVDA/Orca",
+    "No hardware keyboard/IME qualification",
+    "No calibrated performance or resource gate",
+    "No stateless Qt provisioning or full dependency closure proof"
+  ]
+}

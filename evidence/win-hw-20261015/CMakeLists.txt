@@ -1,0 +1,64 @@
+cmake_minimum_required(VERSION 3.28)
+# Provisioning runs before project(): it verifies the locked Qt mirror and
+# installation and the pinned vcpkg checkout/tool, then sets the toolchain.
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/provision/Provision.cmake")
+if(HIKARI_PROVISION_ONLY OR HIKARI_QT_VERIFY_ONLY)
+    project(HikariSubProvision LANGUAGES NONE)
+    return()
+endif()
+
+project(HikariSub VERSION 0.1.0 LANGUAGES C CXX)
+# ADR 0019: the version the program reports and compares, and the release tag
+# without its "v": project(VERSION) and, for a prerelease, "-" and the suffix.
+set(HIKARI_VERSION_SUFFIX "" CACHE STRING "SemVer prerelease of the version, for example beta.2; empty for a release")
+if(HIKARI_VERSION_SUFFIX STREQUAL "")
+    set(HIKARI_VERSION "${PROJECT_VERSION}")
+elseif(HIKARI_VERSION_SUFFIX MATCHES "^[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*$")
+    set(HIKARI_VERSION "${PROJECT_VERSION}-${HIKARI_VERSION_SUFFIX}")
+else()
+    message(FATAL_ERROR "HIKARI_VERSION_SUFFIX \"${HIKARI_VERSION_SUFFIX}\" is not a SemVer prerelease")
+endif()
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+include(CTest)
+# Sources are UTF-8; MSVC otherwise reads them in the system code page.
+add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/utf-8>" "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/utf-8>")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDependencies.cmake")
+find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
+qt_standard_project_setup(REQUIRES 6.11)
+add_subdirectory(tools/i18n) # O4: the PO-to-TS migration tool
+add_subdirectory(i18n) # O4: TS catalogs, QM in the build
+# installers: the app's QML is compiled into a static module under src/ui, so
+# the deploy scan for its Qt Quick imports must read that folder too.
+set(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/src/ui")
+add_subdirectory(src)
+unset(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS)
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariInstall.cmake") # installers: the app tree and the packages
+include(i18n/Extraction.cmake) # O4: lupdate and the migration, on request
+add_subdirectory(tests/dependency-load)
+if(BUILD_TESTING)
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariTesting.cmake")
+    add_subdirectory(tests/runners/gtest)
+    add_subdirectory(tests/runners/qt)
+    add_subdirectory(tests/runners/ui)
+    add_subdirectory(tests/support/a11y)
+    add_subdirectory(tests/runners/a11y)
+    add_subdirectory(tests/support/image)
+    add_subdirectory(tests/support/media)
+    add_subdirectory(tests/support/fonts)
+    add_subdirectory(tests/runners/image)
+    add_subdirectory(tests/support/perf)
+    add_subdirectory(tests/support/desktop) # 38e: no test reaches the desktop's programs
+    add_subdirectory(tests/perf)
+    add_subdirectory(tests/modules)
+    add_subdirectory(tests/core)
+    add_subdirectory(tests/application)
+    add_subdirectory(tests/backends)
+    add_subdirectory(tests/ui)
+    add_subdirectory(tests/i18n)
+    add_subdirectory(tests/tools) # evidence harness scripts
+    add_subdirectory(tools/human/h2-listening) # H2 listening driver, built on request
+    add_subdirectory(tools/native-gate) # D1/D3 native gate: gatelib's tests
+endif()

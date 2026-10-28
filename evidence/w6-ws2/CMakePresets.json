@@ -1,0 +1,332 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "ubuntu-x64-release",
+      "inherits": "base",
+      "displayName": "Ubuntu x64 release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "fedora-x64-release",
+      "inherits": "base",
+      "displayName": "Fedora x64 release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-floor-x64-release",
+      "inherits": "base",
+      "displayName": "Linux x64 release on the package floor (AlmaLinux 9, gcc-toolset-14)",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF",
+        "HIKARI_PACKAGE_LINUX": "ON"
+      }
+    },
+    {
+      "name": "windows-x64-release",
+      "inherits": "base",
+      "displayName": "Windows x64 release (latest MSVC)",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "windows-x64-vsfiltermod",
+      "inherits": "windows-x64-release",
+      "displayName": "Windows x64 release with the package's VSFilterMod beside the CSRI tests (W2)",
+      "cacheVariables": {
+        "HIKARI_TEST_VSFILTERMOD": "ON"
+      }
+    },
+    {
+      "name": "windows-x64-package",
+      "inherits": "windows-x64-release",
+      "displayName": "Windows x64 release payload for the installer and the portable zip (no tests)",
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF"
+      }
+    },
+    {
+      "name": "provision",
+      "inherits": "base",
+      "displayName": "Provision locked dependencies only",
+      "cacheVariables": {
+        "HIKARI_PROVISION_ONLY": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "ubuntu-x64-release",
+      "configurePreset": "ubuntu-x64-release"
+    },
+    {
+      "name": "fedora-x64-release",
+      "configurePreset": "fedora-x64-release"
+    },
+    {
+      "name": "linux-floor-x64-release",
+      "configurePreset": "linux-floor-x64-release"
+    },
+    {
+      "name": "windows-x64-release",
+      "configurePreset": "windows-x64-release"
+    },
+    {
+      "name": "windows-x64-vsfiltermod",
+      "configurePreset": "windows-x64-vsfiltermod"
+    },
+    {
+      "name": "windows-x64-package",
+      "configurePreset": "windows-x64-package",
+      "targets": [
+        "hikari_package_windows"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "ubuntu-x64-release",
+      "configurePreset": "ubuntu-x64-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "label": "perf"
+        }
+      }
+    },
+    {
+      "name": "fedora-x64-release",
+      "configurePreset": "fedora-x64-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "label": "perf"
+        }
+      }
+    },
+    {
+      "name": "windows-x64-release",
+      "configurePreset": "windows-x64-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "label": "perf"
+        }
+      },
+      "environment": {
+        "PATH": "${sourceDir}/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$penv{PATH}"
+      }
+    },
+    {
+      "name": "windows-x64-vsfiltermod",
+      "configurePreset": "windows-x64-vsfiltermod",
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "label": "perf"
+        }
+      },
+      "environment": {
+        "PATH": "${sourceDir}/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$penv{PATH}"
+      }
+    },
+    {
+      "name": "ubuntu-x64-perf",
+      "configurePreset": "ubuntu-x64-release",
+      "filter": {
+        "include": {
+          "label": "perf"
+        }
+      },
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      }
+    },
+    {
+      "name": "fedora-x64-perf",
+      "configurePreset": "fedora-x64-release",
+      "filter": {
+        "include": {
+          "label": "perf"
+        }
+      },
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      }
+    },
+    {
+      "name": "windows-x64-perf",
+      "configurePreset": "windows-x64-release",
+      "filter": {
+        "include": {
+          "label": "perf"
+        }
+      },
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      },
+      "environment": {
+        "PATH": "${sourceDir}/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$penv{PATH}"
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "ubuntu-x64-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "ubuntu-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "ubuntu-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "ubuntu-x64-verify",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "ubuntu-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "ubuntu-x64-release"
+        },
+        {
+          "type": "test",
+          "name": "ubuntu-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "fedora-x64-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "fedora-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "fedora-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "fedora-x64-verify",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "fedora-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "fedora-x64-release"
+        },
+        {
+          "type": "test",
+          "name": "fedora-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "windows-x64-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "windows-x64-verify",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-release"
+        },
+        {
+          "type": "test",
+          "name": "windows-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "windows-x64-package",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-package"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-package"
+        }
+      ]
+    },
+    {
+      "name": "provision",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "provision"
+        }
+      ]
+    }
+  ]
+}

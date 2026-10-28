@@ -1,0 +1,8 @@
+=== aRecoveredCopyKeepsItsArrangement and anAutosaveLeavesNoSectionForASaveWithTheSettingOff, without the fix (995d7b931's autosave amends the open Document)
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::aRecoveredCopyKeepsItsArrangement() '!session->document().hikariProperty(application::kLayoutKey)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(1004)]
+FAIL!  : FileLayoutsTest::anAutosaveLeavesNoSectionForASaveWithTheSettingOff() '!bytes.contains("[Hikari]")' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(1050)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 2 failed, 0 skipped, 0 blacklisted, 1929ms

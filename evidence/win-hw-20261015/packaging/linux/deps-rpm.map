@@ -1,0 +1,17 @@
+# rpm dependencies of the Qt rewrite's host libraries (installers spec 5.4).
+# "<soname> <dependency>"; read by resolve-deps.sh. A soname without a line
+# becomes its own capability, "<soname>()(64bit)", which Fedora and openSUSE
+# both provide, so only the glibc family needs a line here.
+ld-linux-x86-64.so.2 @glibc
+libc.so.6 @glibc
+libm.so.6 @glibc
+libdl.so.2 @glibc
+libpthread.so.0 @glibc
+librt.so.1 @glibc
+libresolv.so.2 @glibc
+# runtime
+depends hicolor-icon-theme
+depends fontconfig
+depends curl
+depends ca-certificates
+recommends polkit

@@ -1,0 +1,1 @@
+SLICE_PASSED: parent configure/build/three-frame CTest completed; not full Task48 qualification

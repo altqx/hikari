@@ -1,0 +1,1602 @@
+### hikari_ui_shell_tests f6AndShortcutsReachAFloatingPanel panelsFloatDockHideAndKeepTheirState placementWindowMovesTabsAndResizes floatF6AndShowActivateTheFloatingPanelsWindow placementWindowShowsItsDefaultsAndKeyboardChanges fileDropAreaLeavesPanelDragsToTheDockingEngine dockingControlsAndTheGridAreAccessible floatingPanelsOffEveryScreenComeBack panelMenuMovesTabsWithinTheirGroup panelMenuHoldsMoveUndockAndClose keyboardReachesThePanelHeaderAndItsMenu doubleClickOnAHeaderFloatsAndDocks bottomPanelsKeepATabAndTheTrayToolbar panelsKeepTheirMinimumSizes (exit 0)
+********* Start testing of ShellTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 11.5.0 20240719 (Red Hat 11.5.0-5)), arch 20260927.0.600689
+QDEBUG : ShellTest::initTestCase() hikari.theme: portal colour scheme Qt::ColorScheme::Unknown from "ReadOne"
+PASS   : ShellTest::initTestCase()
+QINFO  : ShellTest::f6AndShortcutsReachAFloatingPanel() qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+QWARN  : ShellTest::f6AndShortcutsReachAFloatingPanel() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::f6AndShortcutsReachAFloatingPanel() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : ShellTest::f6AndShortcutsReachAFloatingPanel() hikari.decorations: KDDockWidgets::QuickView(0x55aa7eebb3c0, name="Floating QWindow with parent") no decoration object: toplevel 0x55aa7eb33bd0 manager false
+QDEBUG : ShellTest::f6AndShortcutsReachAFloatingPanel() hikari.docking: main window minimum QSize(1002, 481) -> QSize(561, 464)
+PASS   : ShellTest::f6AndShortcutsReachAFloatingPanel()
+QWARN  : ShellTest::panelsFloatDockHideAndKeepTheirState() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::panelsFloatDockHideAndKeepTheirState() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : ShellTest::panelsFloatDockHideAndKeepTheirState() hikari.decorations: KDDockWidgets::QuickView(0x55aa7e7bf540, name="Floating QWindow with parent") no decoration object: toplevel 0x55aa79e50ed0 manager false
+PASS   : ShellTest::panelsFloatDockHideAndKeepTheirState()
+QWARN  : ShellTest::placementWindowMovesTabsAndResizes() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::placementWindowMovesTabsAndResizes() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+PASS   : ShellTest::placementWindowMovesTabsAndResizes()
+QWARN  : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() hikari.decorations: KDDockWidgets::QuickView(0x55aa79f53760, name="Floating QWindow with parent") no decoration object: toplevel 0x55aa79d47bd0 manager false
+QDEBUG : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() hikari.docking: main window minimum QSize(1002, 481) -> QSize(561, 464)
+SKIP   : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() The window manager refused the shell's activation request (its focus-stealing policy)
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/shell_tests.cpp(3910)]
+QWARN  : ShellTest::placementWindowShowsItsDefaultsAndKeyboardChanges() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::placementWindowShowsItsDefaultsAndKeyboardChanges() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+PASS   : ShellTest::placementWindowShowsItsDefaultsAndKeyboardChanges()
+QWARN  : ShellTest::fileDropAreaLeavesPanelDragsToTheDockingEngine() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::fileDropAreaLeavesPanelDragsToTheDockingEngine() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+PASS   : ShellTest::fileDropAreaLeavesPanelDragsToTheDockingEngine()
+QWARN  : ShellTest::dockingControlsAndTheGridAreAccessible() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::dockingControlsAndTheGridAreAccessible() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : ShellTest::dockingControlsAndTheGridAreAccessible() hikari.decorations: KDDockWidgets::QuickView(0x55aa801ae190, name="Floating QWindow with parent") no decoration object: toplevel 0x55aa858c7eb0 manager false
+PASS   : ShellTest::dockingControlsAndTheGridAreAccessible()
+QWARN  : ShellTest::floatingPanelsOffEveryScreenComeBack() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::floatingPanelsOffEveryScreenComeBack() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+SKIP   : ShellTest::floatingPanelsOffEveryScreenComeBack() On Wayland the compositor places windows (docs/qt/docking.md)
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/shell_tests.cpp(4741)]
+QWARN  : ShellTest::panelMenuMovesTabsWithinTheirGroup() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::panelMenuMovesTabsWithinTheirGroup() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : ShellTest::panelMenuMovesTabsWithinTheirGroup() hikari.docking: main window minimum QSize(1002, 481) -> QSize(520, 444)
+PASS   : ShellTest::panelMenuMovesTabsWithinTheirGroup()
+QWARN  : ShellTest::panelMenuHoldsMoveUndockAndClose() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::panelMenuHoldsMoveUndockAndClose() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : ShellTest::panelMenuHoldsMoveUndockAndClose() hikari.decorations: KDDockWidgets::QuickView(0x55aa82e13ab0, name="Floating QWindow with parent") no decoration object: toplevel 0x55aa7ae780c0 manager false
+PASS   : ShellTest::panelMenuHoldsMoveUndockAndClose()
+QWARN  : ShellTest::keyboardReachesThePanelHeaderAndItsMenu() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::keyboardReachesThePanelHeaderAndItsMenu() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+PASS   : ShellTest::keyboardReachesThePanelHeaderAndItsMenu()
+QWARN  : ShellTest::doubleClickOnAHeaderFloatsAndDocks() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::doubleClickOnAHeaderFloatsAndDocks() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : ShellTest::doubleClickOnAHeaderFloatsAndDocks() hikari.decorations: KDDockWidgets::QuickView(0x55aa8b1ad1e0, name="Floating QWindow with parent") no decoration object: toplevel 0x55aa7fb7ed40 manager false
+PASS   : ShellTest::doubleClickOnAHeaderFloatsAndDocks()
+QWARN  : ShellTest::bottomPanelsKeepATabAndTheTrayToolbar() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::bottomPanelsKeepATabAndTheTrayToolbar() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : ShellTest::bottomPanelsKeepATabAndTheTrayToolbar() hikari.docking: main window minimum QSize(1002, 481) -> QSize(1002, 615)
+QDEBUG : ShellTest::bottomPanelsKeepATabAndTheTrayToolbar() hikari.decorations: KDDockWidgets::QuickView(0x55aa7f243020, name="Floating QWindow with parent") no decoration object: toplevel 0x55aa80867870 manager false
+QDEBUG : ShellTest::bottomPanelsKeepATabAndTheTrayToolbar() hikari.docking: main window minimum QSize(1002, 615) -> QSize(1002, 481)
+PASS   : ShellTest::bottomPanelsKeepATabAndTheTrayToolbar()
+QWARN  : ShellTest::panelsKeepTheirMinimumSizes() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::panelsKeepTheirMinimumSizes() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : ShellTest::panelsKeepTheirMinimumSizes() hikari.docking: main window minimum QSize(1002, 481) -> QSize(621, 481)
+QDEBUG : ShellTest::panelsKeepTheirMinimumSizes() hikari.docking: main window minimum QSize(621, 481) -> QSize(1002, 481)
+PASS   : ShellTest::panelsKeepTheirMinimumSizes()
+PASS   : ShellTest::cleanupTestCase()
+Totals: 14 passed, 0 failed, 2 skipped, 0 blacklisted, 22448ms
+********* Finished testing of ShellTest *********
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa7e4a9140]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa7fc06050]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa81741220]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa7ff14230]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa82b5ae60]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa8518a630]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa85918290]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa8b30c0c0]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa8b9f8190]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [0x55aa88611380]: Warning: no style named 'Sign' found, using 'Default'
+
+### hikari_ui_docking_qualification_tests  (exit 0)
+********* Start testing of DockingQualification *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 11.5.0 20240719 (Red Hat 11.5.0-5)), arch 20260927.0.600689
+QDEBUG : DockingQualification::initTestCase() hikari.theme: portal colour scheme Qt::ColorScheme::Unknown from "ReadOne"
+PASS   : DockingQualification::initTestCase()
+PASS   : DockingQualification::defaultArrangementHasEveryPanelOpenAndDocked()
+QDEBUG : DockingQualification::floatsAndRedocks() hikari.decorations: KDDockWidgets::QuickView(0x556db03de810, name="Floating QWindow with parent") no decoration object: toplevel 0x556db060f2e0 manager false
+PASS   : DockingQualification::floatsAndRedocks()
+PASS   : DockingQualification::closesAndReopensWithoutLosingTheGuest()
+PASS   : DockingQualification::tabsTwoPanels()
+PASS   : DockingQualification::movesADockedPanel()
+QDEBUG : DockingQualification::savedLayoutRestores() hikari.decorations: KDDockWidgets::QuickView(0x556db0408910, name="Floating QWindow with parent") no decoration object: toplevel 0x556db0418aa0 manager false
+PASS   : DockingQualification::savedLayoutRestores()
+QWARN  : DockingQualification::corruptLayoutIsRefusedAndTheLiveOneStays() Failed to parse json data
+QWARN  : DockingQualification::corruptLayoutIsRefusedAndTheLiveOneStays() Serialization format is too old {}, current={} 9999 3
+PASS   : DockingQualification::corruptLayoutIsRefusedAndTheLiveOneStays()
+PASS   : DockingQualification::oneHeaderRowPerGroup()
+PASS   : DockingQualification::headerFollowsThePanelsDescription()
+PASS   : DockingQualification::headersAreAccessible()
+PASS   : DockingQualification::theMenuIsReachedByPointerAndKeyboard()
+QDEBUG : DockingQualification::doubleClickFloatsAndDocks() hikari.decorations: KDDockWidgets::QuickView(0x556db2165de0, name="Floating QWindow with parent") no decoration object: toplevel 0x556db2148400 manager false
+QDEBUG : DockingQualification::doubleClickFloatsAndDocks() hikari.decorations: KDDockWidgets::QuickView(0x556db20f4ef0, name="Floating QWindow with parent") no decoration object: toplevel 0x556db3aa91e0 manager false
+PASS   : DockingQualification::doubleClickFloatsAndDocks()
+QDEBUG : DockingQualification::floatingPanelsAreBorderlessToolWindows() hikari.decorations: KDDockWidgets::QuickView(0x556db2176690, name="Floating QWindow with parent") no decoration object: toplevel 0x556db1bbed30 manager false
+PASS   : DockingQualification::floatingPanelsAreBorderlessToolWindows()
+QDEBUG : DockingQualification::floatingPanelsWithoutCompositingHaveNoShadow() hikari.decorations: KDDockWidgets::QuickView(0x556db04585a0, name="Floating QWindow with parent") no decoration object: toplevel 0x556db3eb14d0 manager false
+PASS   : DockingQualification::floatingPanelsWithoutCompositingHaveNoShadow()
+QDEBUG : DockingQualification::aWindowSystemTitleBarTakesTheWindowsName() hikari.decorations: KDDockWidgets::QuickView(0x556db03a1140, name="Floating QWindow with parent") no decoration object: toplevel 0x556db1bbaa60 manager false
+QDEBUG : DockingQualification::aWindowSystemTitleBarTakesTheWindowsName() hikari.decorations: KDDockWidgets::QuickView(0x556db22b5510, name="Floating QWindow with parent") no decoration object: toplevel 0x556db3254860 manager false
+PASS   : DockingQualification::aWindowSystemTitleBarTakesTheWindowsName()
+PASS   : DockingQualification::serverSideFramesOfABorderOnlyCompositorHaveNoTitleBar()
+QDEBUG : DockingQualification::aWindowSystemBorderKeepsTheNameAndDropsTheShadow() hikari.decorations: KDDockWidgets::QuickView(0x556db030d5f0, name="Floating QWindow with parent") no decoration object: toplevel 0x556db1fcdd00 manager false
+PASS   : DockingQualification::aWindowSystemBorderKeepsTheNameAndDropsTheShadow()
+PASS   : DockingQualification::separatorsAreOnePixel()
+PASS   : DockingQualification::minimumSizesHoldTheLayout()
+SKIP   : DockingQualification::floatingPanelKeepsItsSizeAcrossAScaleChange() the screen's scale changes through the offscreen platform's configuration
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/docking_qualification_tests.cpp(976)]
+SKIP   : DockingQualification::floatingPanelComesBackWholeWhenItsScreenGoesAway() screens come and go through the offscreen platform's configuration
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/docking_qualification_tests.cpp(1052)]
+SKIP   : DockingQualification::dragShowsTheDropHighlight() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/docking_qualification_tests.cpp(1166)]
+PASS   : DockingQualification::headerSplitsOnWaylandAndX11()
+SKIP   : DockingQualification::wholeFloatingHeaderDocksWhereItDoesNotSplit() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/docking_qualification_tests.cpp(1247)]
+SKIP   : DockingQualification::floatingHeaderDocksByItsTitleAndMovesByTheRest() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/docking_qualification_tests.cpp(1377)]
+SKIP   : DockingQualification::floatingTabBarMovesRightOfItsTabs() the window follows a declined system move only where the platform declines it (offscreen)
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/docking_qualification_tests.cpp(1457)]
+QDEBUG : DockingQualification::floatingTitleKeepsItsRoom() hikari.decorations: KDDockWidgets::QuickView(0x556db18ac360, name="Floating QWindow with parent") no decoration object: toplevel 0x556db016b150 manager false
+QDEBUG : DockingQualification::floatingTitleKeepsItsRoom() hikari.decorations: KDDockWidgets::QuickView(0x556db2249030, name="Floating QWindow with parent") no decoration object: toplevel 0x556db03bd540 manager false
+PASS   : DockingQualification::floatingTitleKeepsItsRoom()
+SKIP   : DockingQualification::x11HeaderMovesThroughTheWindowSystem() X11 only (the .xvfb run)
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/docking_qualification_tests.cpp(1598)]
+QDEBUG : DockingQualification::floatingWindowOfGroupsHasItsOwnMenu() hikari.decorations: KDDockWidgets::QuickView(0x556db329d370, name="Floating QWindow with parent") no decoration object: toplevel 0x556db40bb5b0 manager false
+QDEBUG : DockingQualification::floatingWindowOfGroupsHasItsOwnMenu() hikari.decorations: KDDockWidgets::QuickView(0x556daff6b600, name="Floating QWindow with parent") no decoration object: toplevel 0x556db015f570 manager false
+QDEBUG : DockingQualification::floatingWindowOfGroupsHasItsOwnMenu() hikari.decorations: KDDockWidgets::QuickView(0x556db3eadc00, name="Floating QWindow with parent") no decoration object: toplevel 0x556db07139e0 manager false
+QWARN  : DockingQualification::floatingWindowOfGroupsHasItsOwnMenu() New size doesn't respect size constraints new={}, min={}, this={} QSize(223, 81) QSize(161, 125) 0x556db042e880
+QWARN  : DockingQualification::floatingWindowOfGroupsHasItsOwnMenu() New size doesn't respect size constraints new={}, min={}, this={} QSize(223, 90) QSize(161, 125) 0x556db042e880
+PASS   : DockingQualification::floatingWindowOfGroupsHasItsOwnMenu()
+QWARN  : DockingQualification::crowdedTabsKeepTheSelectedOneWhole() qrc:/qt/qml/Hikari/Ui/DockTabBar.qml:236:21: QML QQuickText: Binding loop detected for property "width"
+QWARN  : DockingQualification::crowdedTabsKeepTheSelectedOneWhole() qrc:/qt/qml/Hikari/Ui/DockTabBar.qml:236:21: QML QQuickText: Binding loop detected for property "width"
+PASS   : DockingQualification::crowdedTabsKeepTheSelectedOneWhole()
+PASS   : DockingQualification::cleanupTestCase()
+Totals: 25 passed, 0 failed, 7 skipped, 0 blacklisted, 999ms
+********* Finished testing of DockingQualification *********
+Screen: Rect(0,0 1600x1000); Rect(0,0 1600x1000); drp=1
+Screen: Rect(1600,0 1600x1000); Rect(1600,0 1600x1000); drp=1
+- Root H: Rect(0,0 223x125); min=Size(161, 125); this=0x556db042e880; %={ 0.5, 0.5,  }
+      - Widget: Rect(0,0 111x125); min=Size(80, 125); item=0x556db220c2b0; m_guest=[ Video;  ]
+
+      - Separator: local.geo=Rect(111,0 1x125) ; global.geo=Rect(111,0 1x125); separator=0x556db03e1880
+      - Widget: Rect(112,0 111x125); min=Size(80, 125); item=0x556db1b2a4b0; m_guest=[ Audio;  ]
+
+Screen: Rect(0,0 1600x1000); Rect(0,0 1600x1000); drp=1
+Screen: Rect(1600,0 1600x1000); Rect(1600,0 1600x1000); drp=1
+- Root H: Rect(0,0 223x125); min=Size(161, 125); this=0x556db042e880; %={ 0.5, 0.5,  }
+      - Widget: Rect(0,0 111x125); min=Size(80, 125); item=0x556db220c2b0; m_guest=[ Video;  ]
+
+      - Separator: local.geo=Rect(111,0 1x125) ; global.geo=Rect(111,0 1x125); separator=0x556db03e1880
+      - Widget: Rect(112,0 111x125); min=Size(80, 125); item=0x556db1b2a4b0; m_guest=[ Audio;  ]
+
+qrc:/qt/qml/Hikari/Ui/DockTabBar.qml:364: TypeError: Type error
+
+### hikari_ui_workspace_layout_tests  (exit 0)
+********* Start testing of WorkspaceLayoutTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 11.5.0 20240719 (Red Hat 11.5.0-5)), arch 20260927.0.600689
+PASS   : WorkspaceLayoutTest::initTestCase()
+PASS   : WorkspaceLayoutTest::envelopeValidation()
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.theme: portal colour scheme Qt::ColorScheme::Unknown from "ReadOne"
+QINFO  : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+QWARN  : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.decorations: KDDockWidgets::QuickView(0x564aa7497f80, name="Floating QWindow with parent") no decoration object: toplevel 0x564aa771f0f0 manager false
+QWARN  : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.decorations: KDDockWidgets::QuickView(0x564aa5cca360, name="Floating QWindow with parent") no decoration object: toplevel 0x564aaa49f7e0 manager false
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.docking: restored floating window "Audio" layout QSize(621, 125) area QSize(621, 160)
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 464)
+PASS   : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved()
+QWARN  : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.decorations: KDDockWidgets::QuickView(0x564aa8928d80, name="Floating QWindow with parent") no decoration object: toplevel 0x564aaa9d8c00 manager false
+QWARN  : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.decorations: KDDockWidgets::QuickView(0x564aa7453010, name="Floating QWindow with parent") no decoration object: toplevel 0x564aa79f4570 manager false
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: restored floating window "Line editor" layout QSize(621, 153) area QSize(621, 188)
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: main window minimum QSize(0, 0) -> QSize(461, 464)
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.decorations: KDDockWidgets::QuickView(0x564aac2a12d0, name="Floating QWindow with parent") no decoration object: toplevel 0x564aaea6c1c0 manager false
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: restored floating window "Line editor" layout QSize(621, 153) area QSize(621, 188)
+PASS   : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession()
+QWARN  : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.decorations: KDDockWidgets::QuickView(0x564aaee6f4f0, name="Floating QWindow with parent") no decoration object: toplevel 0x564aaeef1d20 manager false
+QWARN  : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.decorations: KDDockWidgets::QuickView(0x564aab3758d0, name="Floating QWindow with parent") no decoration object: toplevel 0x564aa6cc8e70 manager false
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: restored floating window "Audio" layout QSize(622, 207) area QSize(622, 242)
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 464)
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.decorations: KDDockWidgets::QuickView(0x564aab616080, name="Floating QWindow with parent") no decoration object: toplevel 0x564aa79f00f0 manager false
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: restored floating window "Audio" layout QSize(622, 207) area QSize(622, 242)
+PASS   : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow()
+SKIP   : WorkspaceLayoutTest::aFloatingPanelSavedOffScreenComesBackOnScreen() On Wayland the compositor places windows (docs/qt/docking.md)
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws3/tests/ui/workspace_layout_tests.cpp(246)]
+QWARN  : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QWARN  : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist() hikari.docking: main window minimum QSize(0, 0) -> QSize(540, 481)
+PASS   : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist()
+QWARN  : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QWARN  : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt() hikari.docking: main window minimum QSize(0, 0) -> QSize(540, 481)
+PASS   : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt()
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(corrupt) qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(corrupt) hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+PASS   : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(corrupt)
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(newer) qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(newer) hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+PASS   : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(newer)
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(other engine) qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(other engine) hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+PASS   : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(other engine)
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(engine refuses) qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(engine refuses) Serialization format is too old {}, current={} 1 3
+QDEBUG : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(engine refuses) hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+PASS   : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(engine refuses)
+PASS   : WorkspaceLayoutTest::cleanupTestCase()
+Totals: 12 passed, 0 failed, 1 skipped, 0 blacklisted, 15106ms
+********* Finished testing of WorkspaceLayoutTest *********
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+
+### hikari_ui_tab_layouts_tests  (exit 0)
+********* Start testing of TabLayoutsTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 11.5.0 20240719 (Red Hat 11.5.0-5)), arch 20260927.0.600689
+PASS   : TabLayoutsTest::initTestCase()
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.theme: portal colour scheme Qt::ColorScheme::Unknown from "ReadOne"
+QINFO  : TabLayoutsTest::switchingTabsSwapsTheirArrangements() qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+QWARN  : TabLayoutsTest::switchingTabsSwapsTheirArrangements() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.decorations: KDDockWidgets::QuickView(0x5587e3c49a00, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e57ae860 manager false
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.decorations: KDDockWidgets::QuickView(0x5587e3bd63c0, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e59cabd0 manager false
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.decorations: KDDockWidgets::QuickView(0x5587e2469470, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e594a0b0 manager false
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.docking: restored floating window "Audio" layout QSize(621, 125) area QSize(621, 160)
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.decorations: KDDockWidgets::QuickView(0x5587e579f590, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e5857a30 manager false
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.docking: restored floating window "Line editor" layout QSize(791, 153) area QSize(791, 188)
+PASS   : TabLayoutsTest::switchingTabsSwapsTheirArrangements()
+QWARN  : TabLayoutsTest::tabsThatLookTheSameLeaveThePanelsAlone() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::tabsThatLookTheSameLeaveThePanelsAlone() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::tabsThatLookTheSameLeaveThePanelsAlone() hikari.decorations: KDDockWidgets::QuickView(0x5587e61dab40, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e0861ef0 manager false
+PASS   : TabLayoutsTest::tabsThatLookTheSameLeaveThePanelsAlone()
+QWARN  : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset() hikari.decorations: KDDockWidgets::QuickView(0x5587e4a5dd60, name="Floating QWindow with parent") no decoration object: toplevel 0x5587df8557f0 manager false
+QDEBUG : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset() hikari.decorations: KDDockWidgets::QuickView(0x5587dfffd8a0, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e936a1f0 manager false
+QDEBUG : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset() hikari.docking: restored floating window "Audio" layout QSize(621, 125) area QSize(621, 160)
+PASS   : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset()
+QWARN  : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith() hikari.decorations: KDDockWidgets::QuickView(0x5587e7b5ad50, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e1011c90 manager false
+QDEBUG : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith() hikari.decorations: KDDockWidgets::QuickView(0x5587e60906c0, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e490f620 manager false
+QDEBUG : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith() hikari.docking: restored floating window "Audio" layout QSize(621, 125) area QSize(621, 160)
+PASS   : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith()
+QWARN  : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement() hikari.decorations: KDDockWidgets::QuickView(0x5587e64400b0, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e098c9c0 manager false
+QDEBUG : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement() hikari.decorations: KDDockWidgets::QuickView(0x5587e37fddf0, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e4237900 manager false
+QDEBUG : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement() hikari.docking: restored floating window "Audio" layout QSize(621, 125) area QSize(621, 160)
+PASS   : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement()
+QWARN  : TabLayoutsTest::presetsChangeTheCurrentTabOnly() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::presetsChangeTheCurrentTabOnly() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+PASS   : TabLayoutsTest::presetsChangeTheCurrentTabOnly()
+QWARN  : TabLayoutsTest::theSessionKeepsEachTabsArrangement() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::theSessionKeepsEachTabsArrangement() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::theSessionKeepsEachTabsArrangement() hikari.decorations: KDDockWidgets::QuickView(0x5587e7c5fed0, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e27167f0 manager false
+QWARN  : TabLayoutsTest::theSessionKeepsEachTabsArrangement() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::theSessionKeepsEachTabsArrangement() hikari.docking: main window minimum QSize(0, 0) -> QSize(540, 481)
+QDEBUG : TabLayoutsTest::theSessionKeepsEachTabsArrangement() hikari.decorations: KDDockWidgets::QuickView(0x5587e3a27610, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e70c1f60 manager false
+QDEBUG : TabLayoutsTest::theSessionKeepsEachTabsArrangement() hikari.docking: restored floating window "Audio" layout QSize(621, 125) area QSize(621, 160)
+PASS   : TabLayoutsTest::theSessionKeepsEachTabsArrangement()
+QWARN  : TabLayoutsTest::theClosingSessionNamesTheArrangementShown() qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::theClosingSessionNamesTheArrangementShown() hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::theClosingSessionNamesTheArrangementShown() hikari.decorations: KDDockWidgets::QuickView(0x5587e8e71e50, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e0f70a60 manager false
+PASS   : TabLayoutsTest::theClosingSessionNamesTheArrangementShown()
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt) qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt) hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt) hikari.decorations: KDDockWidgets::QuickView(0x5587ecbdbd00, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e693e420 manager false
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt) hikari.decorations: KDDockWidgets::QuickView(0x5587e30512f0, name="Floating QWindow with parent") no decoration object: toplevel 0x5587efa8e220 manager false
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt) hikari.docking: restored floating window "Audio" layout QSize(1262, 125) area QSize(1262, 160)
+PASS   : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt)
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer) qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer) hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer) hikari.decorations: KDDockWidgets::QuickView(0x5587ee2cff40, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e4e20b90 manager false
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer) hikari.decorations: KDDockWidgets::QuickView(0x5587f0c2e490, name="Floating QWindow with parent") no decoration object: toplevel 0x5587f03ea090 manager false
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer) hikari.docking: restored floating window "Audio" layout QSize(1262, 125) area QSize(1262, 160)
+PASS   : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer)
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel) qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel) hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel) hikari.decorations: KDDockWidgets::QuickView(0x5587f006a2f0, name="Floating QWindow with parent") no decoration object: toplevel 0x5587df583e80 manager false
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel) hikari.decorations: KDDockWidgets::QuickView(0x5587e69d0e10, name="Floating QWindow with parent") no decoration object: toplevel 0x5587f1ef7750 manager false
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel) hikari.docking: restored floating window "Audio" layout QSize(1262, 125) area QSize(1262, 160)
+PASS   : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel)
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) qrc:/qt/qml/Hikari/Ui/Main.qml:4308:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) hikari.docking: main window minimum QSize(0, 0) -> QSize(1002, 481)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) hikari.decorations: KDDockWidgets::QuickView(0x5587f143b770, name="Floating QWindow with parent") no decoration object: toplevel 0x5587e6136640 manager false
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) Serialization format is too old {}, current={} 1 3
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) hikari.decorations: KDDockWidgets::QuickView(0x5587e864ea60, name="Floating QWindow with parent") no decoration object: toplevel 0x5587f2b713c0 manager false
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) hikari.docking: restored floating window "Audio" layout QSize(1262, 125) area QSize(1262, 160)
+PASS   : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses)
+PASS   : TabLayoutsTest::cleanupTestCase()
+Totals: 14 passed, 0 failed, 0 skipped, 0 blacklisted, 16335ms
+********* Finished testing of TabLayoutsTest *********
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 19: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 20: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 23: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 42: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 43: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 46: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 68: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 69: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 72: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 88: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 89: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 92: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 108: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 109: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 112: invalid constant used : math
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 120: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 121: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 124: invalid constant used : system-ui
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 132: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 133: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 136: invalid constant used : cursive
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 144: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 145: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 148: invalid constant used : fantasy
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 156: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 157: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 160: invalid constant used : ui-sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 168: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 169: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 172: invalid constant used : ui-serif
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 180: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 181: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 184: invalid constant used : ui-monospace
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 192: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 193: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 196: invalid constant used : ui-rounded
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 204: invalid attribute 'xsi:nil'
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 205: invalid constant used : 
+Fontconfig warning: "/etc/fonts/conf.d/48-guessfamily.conf", line 208: invalid constant used : fangsong
+Fontconfig warning: "/etc/fonts/conf.d/48-spacing.conf", line 14: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 10: invalid constant used : serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 18: invalid constant used : sans-serif
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 26: invalid constant used : monospace
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 34: invalid constant used : emoji
+Fontconfig warning: "/etc/fonts/conf.d/49-sansserif.conf", line 42: invalid constant used : math
+[ass] Using font provider fontconfig
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)

@@ -1,0 +1,455 @@
+Test project /home/altq/.t3/worktrees/hikari/w6-ws2/out/build/ws2
+        Start 1483: hikari_ui_shell_tests.documents.offscreen
+        Start 1485: hikari_ui_shell_tests.panels.offscreen
+        Start 1491: hikari_ui_shell_tests.visual.offscreen
+  1/166 Test #1491: hikari_ui_shell_tests.visual.offscreen .....................   Passed   84.09 sec
+        Start 1493: hikari_ui_shell_tests.video.offscreen
+  2/166 Test #1485: hikari_ui_shell_tests.panels.offscreen .....................   Passed   86.69 sec
+        Start 1488: hikari_ui_shell_tests.translation.xvfb
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.portal.Desktop' requested by ':1.4' (uid=1000 pid=3918887 comm="/home/altq/.t3/worktrees/hikari/w6-ws2/out/build/w")
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.PermissionStore' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.portal.Documents' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Successfully activated service 'org.freedesktop.portal.Documents'
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918914): Gtk-WARNING **: 12:26:49.995: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918918): Gtk-WARNING **: 12:26:50.009: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918924): Gtk-WARNING **: 12:26:50.034: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.036: Failed to create settings proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.036: Not providing Settings portal: No working backend
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918927): Gtk-WARNING **: 12:26:50.048: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.049: Failed to create file chooser proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918931): Gtk-WARNING **: 12:26:50.062: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.063: Failed to create app chooser proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918934): Gtk-WARNING **: 12:26:50.074: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.076: Failed to create print proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918939): Gtk-WARNING **: 12:26:50.087: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.089: Failed to create notification proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918942): Gtk-WARNING **: 12:26:50.102: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.103: Failed to create inhibit proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.103: The location portal requires an access impl
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.103: The camera portal requires an access impl
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.103: The screenshot portal requires an access impl
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918945): Gtk-WARNING **: 12:26:50.115: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.117: Failed to create account proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+
+(xdg-desktop-portal-gtk:3918948): Gtk-WARNING **: 12:26:50.129: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.131: Failed to create email proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.secrets' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.hyprland' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.desktop.hyprland'
+[LOG] Initializing xdph...
+[CRITICAL] Couldn't connect to a wayland compositor
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+discover_other_daemon: 1GNOME_KEYRING_CONTROL=/run/user/1000/keyring
+
+(xdg-desktop-portal-gtk:3918955): Gtk-WARNING **: 12:26:50.156: cannot open display: :100
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activated service 'org.freedesktop.impl.portal.desktop.gtk' failed: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:26:50.157: Failed to create dynamic_launcher proxy: Error calling StartServiceByName for org.freedesktop.impl.portal.desktop.gtk: Process org.freedesktop.impl.portal.desktop.gtk exited with status 1
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.hyprland' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.desktop.hyprland'
+[LOG] Initializing xdph...
+[CRITICAL] Couldn't connect to a wayland compositor
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Activating service name='org.freedesktop.impl.portal.desktop.hyprland' requested by ':1.5' (uid=1000 pid=3918890 comm="/usr/lib/xdg-desktop-portal")
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Successfully activated service 'org.freedesktop.impl.portal.desktop.hyprland'
+[LOG] Initializing xdph...
+[CRITICAL] Couldn't connect to a wayland compositor
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Successfully activated service 'org.freedesktop.portal.Desktop'
+  3/166 Test #1483: hikari_ui_shell_tests.documents.offscreen ..................   Passed   92.62 sec
+        Start 1490: hikari_ui_shell_tests.hotkeys.xvfb
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:27:15.149: Failed to create secret proxy: Error calling StartServiceByName for org.freedesktop.secrets: Timeout was reached
+  4/166 Test #1493: hikari_ui_shell_tests.video.offscreen ......................   Passed   65.45 sec
+        Start 1487: hikari_ui_shell_tests.translation.offscreen
+  5/166 Test #1488: hikari_ui_shell_tests.translation.xvfb .....................   Passed   67.67 sec
+        Start 1492: hikari_ui_shell_tests.visual.xvfb
+  6/166 Test #1490: hikari_ui_shell_tests.hotkeys.xvfb .........................   Passed   64.01 sec
+        Start 1489: hikari_ui_shell_tests.hotkeys.offscreen
+  7/166 Test #1487: hikari_ui_shell_tests.translation.offscreen ................   Passed   57.97 sec
+        Start 1608: hikari_ui_single_instance_tests.xvfb
+  8/166 Test #1489: hikari_ui_shell_tests.hotkeys.offscreen ....................   Passed   52.53 sec
+        Start 1639: hikari_ui_language_tests.xvfb
+dbus-daemon[3916185]: [session uid=1000 pid=3916185 pidfd=5] Failed to activate service 'org.freedesktop.secrets': timed out (service_start_timeout=120000ms)
+  9/166 Test #1639: hikari_ui_language_tests.xvfb ..............................   Passed   29.22 sec
+        Start 1616: hikari_ui_reference_tests.xvfb
+ 10/166 Test #1608: hikari_ui_single_instance_tests.xvfb .......................   Passed   32.35 sec
+        Start 1607: hikari_ui_single_instance_tests.offscreen
+ 11/166 Test #1492: hikari_ui_shell_tests.visual.xvfb ..........................   Passed  106.67 sec
+        Start 1572: hikari_ui_file_layouts_tests.refusals.xvfb
+ 12/166 Test #1616: hikari_ui_reference_tests.xvfb .............................   Passed   28.37 sec
+        Start 1610: hikari_ui_forwarded_launches_tests.xvfb
+ 13/166 Test #1607: hikari_ui_single_instance_tests.offscreen ..................   Passed   29.39 sec
+        Start 1570: hikari_ui_file_layouts_tests.arrangements.xvfb
+ 14/166 Test #1572: hikari_ui_file_layouts_tests.refusals.xvfb .................   Passed   28.27 sec
+        Start 1615: hikari_ui_reference_tests.offscreen
+ 15/166 Test #1570: hikari_ui_file_layouts_tests.arrangements.xvfb .............   Passed   24.93 sec
+        Start 1606: hikari_ui_tab_menu_tests.xvfb
+ 16/166 Test #1610: hikari_ui_forwarded_launches_tests.xvfb ....................   Passed   27.49 sec
+        Start 1576: hikari_ui_file_layouts_tests.tree.xvfb
+ 17/166 Test #1615: hikari_ui_reference_tests.offscreen ........................   Passed   22.91 sec
+        Start 1584: hikari_ui_line_editor_options_tests.xvfb
+ 18/166 Test #1606: hikari_ui_tab_menu_tests.xvfb ..............................   Passed   23.64 sec
+        Start 1566: hikari_ui_workspace_layout_tests.xvfb
+ 19/166 Test #1576: hikari_ui_file_layouts_tests.tree.xvfb .....................   Passed   23.64 sec
+        Start 1609: hikari_ui_forwarded_launches_tests.offscreen
+ 20/166 Test #1584: hikari_ui_line_editor_options_tests.xvfb ...................   Passed   22.75 sec
+        Start 1605: hikari_ui_tab_menu_tests.offscreen
+ 21/166 Test #1566: hikari_ui_workspace_layout_tests.xvfb ......................   Passed   23.23 sec
+        Start 1614: hikari_ui_comparison_tests.xvfb
+ 22/166 Test #1609: hikari_ui_forwarded_launches_tests.offscreen ...............   Passed   23.29 sec
+        Start 1567: hikari_ui_tab_layouts_tests.offscreen
+ 23/166 Test #1605: hikari_ui_tab_menu_tests.offscreen .........................   Passed   18.35 sec
+        Start 1571: hikari_ui_file_layouts_tests.refusals.offscreen
+ 24/166 Test #1567: hikari_ui_tab_layouts_tests.offscreen ......................   Passed   19.09 sec
+        Start 1613: hikari_ui_comparison_tests.offscreen
+ 25/166 Test #1614: hikari_ui_comparison_tests.xvfb ............................   Passed   21.80 sec
+        Start 1574: hikari_ui_file_layouts_tests.bounds.xvfb
+ 26/166 Test #1571: hikari_ui_file_layouts_tests.refusals.offscreen ............   Passed   19.92 sec
+        Start 1569: hikari_ui_file_layouts_tests.arrangements.offscreen
+ 27/166 Test #1613: hikari_ui_comparison_tests.offscreen .......................   Passed   17.35 sec
+        Start 1638: hikari_ui_language_tests.offscreen
+ 28/166 Test #1574: hikari_ui_file_layouts_tests.bounds.xvfb ...................   Passed   20.49 sec
+        Start 1565: hikari_ui_workspace_layout_tests.offscreen
+ 29/166 Test #1569: hikari_ui_file_layouts_tests.arrangements.offscreen ........   Passed   17.57 sec
+        Start 1575: hikari_ui_file_layouts_tests.tree.offscreen
+ 30/166 Test #1565: hikari_ui_workspace_layout_tests.offscreen .................   Passed   15.63 sec
+        Start 1583: hikari_ui_line_editor_options_tests.offscreen
+ 31/166 Test #1638: hikari_ui_language_tests.offscreen .........................   Passed   24.24 sec
+        Start 1573: hikari_ui_file_layouts_tests.bounds.offscreen
+ 32/166 Test #1575: hikari_ui_file_layouts_tests.tree.offscreen ................   Passed   16.48 sec
+        Start 1568: hikari_ui_tab_layouts_tests.xvfb
+ 33/166 Test #1573: hikari_ui_file_layouts_tests.bounds.offscreen ..............   Passed   13.43 sec
+        Start 1633: hikari_ui_video_timing_workflow.xvfb
+ 34/166 Test #1583: hikari_ui_line_editor_options_tests.offscreen ..............   Passed   16.63 sec
+        Start 1579: hikari_ui_view_arrangements_tests.arrangements.xvfb
+ 35/166 Test #1633: hikari_ui_video_timing_workflow.xvfb .......................   Passed   12.89 sec
+        Start 1581: hikari_ui_view_arrangements_tests.player.xvfb
+ 36/166 Test #1579: hikari_ui_view_arrangements_tests.arrangements.xvfb ........   Passed   12.58 sec
+        Start 1549: hikari_ui_automation_document_scripts_tests.xvfb
+ 37/166 Test #1568: hikari_ui_tab_layouts_tests.xvfb ...........................   Passed   26.32 sec
+        Start 1588: hikari_ui_update_installer_tests.xvfb
+ 38/166 Test #1549: hikari_ui_automation_document_scripts_tests.xvfb ...........   Passed   11.66 sec
+        Start 1513: hikari_ui_automation_dialog_tests.xvfb
+ 39/166 Test #1581: hikari_ui_view_arrangements_tests.player.xvfb ..............***Failed   12.12 sec
+        Start 1580: hikari_ui_view_arrangements_tests.player.offscreen
+ 40/166 Test #1588: hikari_ui_update_installer_tests.xvfb ......................   Passed   10.96 sec
+        Start 1632: hikari_ui_video_timing_workflow.offscreen
+ 41/166 Test #1580: hikari_ui_view_arrangements_tests.player.offscreen .........   Passed    8.33 sec
+        Start 1601: hikari_ui_playing_frame_tests.offscreen
+ 42/166 Test #1513: hikari_ui_automation_dialog_tests.xvfb .....................   Passed   11.26 sec
+        Start 1523: hikari_ui_status_workflow.xvfb
+ 43/166 Test #1632: hikari_ui_video_timing_workflow.offscreen ..................   Passed    9.48 sec
+        Start 1558: hikari_ui_docking_qualification_tests.offscreen
+ 44/166 Test #1601: hikari_ui_playing_frame_tests.offscreen ....................   Passed    8.29 sec
+        Start 1604: hikari_ui_tabs_workflow.xvfb
+ 45/166 Test #1523: hikari_ui_status_workflow.xvfb .............................   Passed    9.13 sec
+        Start 1545: hikari_ui_recovery_tests.xvfb
+ 46/166 Test #1558: hikari_ui_docking_qualification_tests.offscreen ............   Passed    9.01 sec
+        Start 1578: hikari_ui_view_arrangements_tests.arrangements.offscreen
+ 47/166 Test #1604: hikari_ui_tabs_workflow.xvfb ...............................   Passed    8.96 sec
+        Start 1548: hikari_ui_automation_document_scripts_tests.offscreen
+ 48/166 Test #1545: hikari_ui_recovery_tests.xvfb ..............................   Passed    8.69 sec
+        Start 1598: hikari_ui_shortcuts_workflow.xvfb
+ 49/166 Test #1578: hikari_ui_view_arrangements_tests.arrangements.offscreen ...   Passed    7.84 sec
+        Start 1511: hikari_ui_line_fields_workflow.xvfb
+ 50/166 Test #1548: hikari_ui_automation_document_scripts_tests.offscreen ......   Passed    8.61 sec
+        Start 1553: hikari_ui_close_workflow.xvfb
+ 51/166 Test #1598: hikari_ui_shortcuts_workflow.xvfb ..........................   Passed    6.82 sec
+        Start 1587: hikari_ui_update_installer_tests.offscreen
+ 52/166 Test #1511: hikari_ui_line_fields_workflow.xvfb ........................   Passed    8.30 sec
+        Start 1525: hikari_ui_video_fullscreen_workflow.xvfb
+ 53/166 Test #1553: hikari_ui_close_workflow.xvfb ..............................   Passed    8.06 sec
+        Start 1535: hikari_ui_history_workflow.xvfb
+ 54/166 Test #1587: hikari_ui_update_installer_tests.offscreen .................   Passed    7.94 sec
+        Start 1512: hikari_ui_automation_dialog_tests.offscreen
+ 55/166 Test #1525: hikari_ui_video_fullscreen_workflow.xvfb ...................   Passed    7.83 sec
+        Start 1555: hikari_ui_open_workflow.xvfb
+ 56/166 Test #1535: hikari_ui_history_workflow.xvfb ............................   Passed    6.74 sec
+        Start 1529: hikari_ui_playback_workflow.xvfb
+ 57/166 Test #1512: hikari_ui_automation_dialog_tests.offscreen ................   Passed    7.81 sec
+        Start 1537: hikari_ui_audio_timing_workflow.xvfb
+ 58/166 Test #1555: hikari_ui_open_workflow.xvfb ...............................   Passed    7.02 sec
+        Start 1515: hikari_ui_presenter_tests.xvfb
+ 59/166 Test #1529: hikari_ui_playback_workflow.xvfb ...........................   Passed    6.74 sec
+        Start 1527: hikari_ui_video_fullscreen_workflow.secondprimary
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:33:37.841: Realtime error: Could not map tid 3933377 of pid 3933181: Process ids could not be found: 3933377
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:33:37.841: Realtime error: Could not map tid 3933372 of pid 3933181: Process ids could not be found: 3933372
+ 60/166 Test #1537: hikari_ui_audio_timing_workflow.xvfb .......................   Passed    6.99 sec
+        Start 1526: hikari_ui_video_fullscreen_workflow.twoscreens
+ 61/166 Test #1515: hikari_ui_presenter_tests.xvfb .............................   Passed    6.73 sec
+        Start 1624: hikari_ui_visual_clips_workflow.xvfb
+ 62/166 Test #1527: hikari_ui_video_fullscreen_workflow.secondprimary ..........   Passed    6.91 sec
+        Start 1507: hikari_ui_editor_workflow.xvfb
+ 63/166 Test #1526: hikari_ui_video_fullscreen_workflow.twoscreens .............   Passed    6.91 sec
+        Start 1597: hikari_ui_shortcuts_workflow.offscreen
+ 64/166 Test #1624: hikari_ui_visual_clips_workflow.xvfb .......................   Passed    6.79 sec
+        Start 1533: hikari_ui_clipboard_workflow.xvfb
+ 65/166 Test #1597: hikari_ui_shortcuts_workflow.offscreen .....................   Passed    3.52 sec
+        Start 1620: hikari_ui_visual_tools_workflow.xvfb
+ 66/166 Test #1507: hikari_ui_editor_workflow.xvfb .............................   Passed    6.38 sec
+        Start 1559: hikari_ui_docking_qualification_tests.xvfb
+ 67/166 Test #1533: hikari_ui_clipboard_workflow.xvfb ..........................   Passed    5.95 sec
+        Start 1544: hikari_ui_recovery_tests.offscreen
+ 68/166 Test #1620: hikari_ui_visual_tools_workflow.xvfb .......................   Passed    5.67 sec
+        Start 1603: hikari_ui_tabs_workflow.offscreen
+ 69/166 Test #1559: hikari_ui_docking_qualification_tests.xvfb .................   Passed    5.77 sec
+        Start 1551: hikari_ui_automation_resolution_tests.xvfb
+ 70/166 Test #1544: hikari_ui_recovery_tests.offscreen .........................   Passed    5.61 sec
+        Start 1531: hikari_ui_grid_workflow.xvfb
+ 71/166 Test #1603: hikari_ui_tabs_workflow.offscreen ..........................   Passed    5.82 sec
+        Start 1522: hikari_ui_status_workflow.offscreen
+ 72/166 Test #1551: hikari_ui_automation_resolution_tests.xvfb .................   Passed    5.64 sec
+        Start 1622: hikari_ui_visual_position_workflow.xvfb
+ 73/166 Test #1531: hikari_ui_grid_workflow.xvfb ...............................   Passed    5.66 sec
+        Start 1539: hikari_ui_close_review_tests.xvfb
+ 74/166 Test #1522: hikari_ui_status_workflow.offscreen ........................   Passed    5.70 sec
+        Start 1557: hikari_ui_automation_workflow.xvfb
+ 75/166 Test #1622: hikari_ui_visual_position_workflow.xvfb ....................   Passed    5.63 sec
+        Start 1635: hikari_ui_colour_picker_tests.xvfb
+ 76/166 Test #1539: hikari_ui_close_review_tests.xvfb ..........................   Passed    5.46 sec
+        Start 1521: hikari_ui_video_workflow.xvfb
+ 77/166 Test #1635: hikari_ui_colour_picker_tests.xvfb .........................   Passed    5.37 sec
+        Start 1510: hikari_ui_line_fields_workflow.offscreen
+ 78/166 Test #1557: hikari_ui_automation_workflow.xvfb .........................   Passed    6.44 sec
+        Start 1552: hikari_ui_close_workflow.offscreen
+ 79/166 Test #1521: hikari_ui_video_workflow.xvfb ..............................   Passed    5.26 sec
+        Start 1617: hikari_ui_reference_workflow.offscreen
+ 80/166 Test #1510: hikari_ui_line_fields_workflow.offscreen ...................   Passed    5.05 sec
+        Start 1524: hikari_ui_video_fullscreen_workflow.offscreen
+ 81/166 Test #1552: hikari_ui_close_workflow.offscreen .........................   Passed    4.86 sec
+        Start 1541: hikari_ui_theme_startup_tests.xvfb
+ 82/166 Test #1617: hikari_ui_reference_workflow.offscreen .....................   Passed    4.60 sec
+        Start 1612: hikari_ui_desktop_handoff_tests.xvfb
+ 83/166 Test #1524: hikari_ui_video_fullscreen_workflow.offscreen ..............   Passed    4.31 sec
+        Start 1509: hikari_ui_line_editor_a11y_tests.xvfb
+ 84/166 Test #1541: hikari_ui_theme_startup_tests.xvfb .........................   Passed    4.48 sec
+        Start 1623: hikari_ui_visual_clips_workflow.offscreen
+ 85/166 Test #1612: hikari_ui_desktop_handoff_tests.xvfb .......................   Passed    4.36 sec
+        Start 1618: hikari_ui_reference_workflow.xvfb
+ 86/166 Test #1623: hikari_ui_visual_clips_workflow.offscreen ..................   Passed    3.45 sec
+        Start 1528: hikari_ui_playback_workflow.offscreen
+ 87/166 Test #1509: hikari_ui_line_editor_a11y_tests.xvfb ......................   Passed    4.31 sec
+        Start 1536: hikari_ui_audio_timing_workflow.offscreen
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:34:28.548: Realtime error: Could not map tid 3935807 of pid 3935706: Process ids could not be found: 3935807
+
+(/usr/lib/xdg-desktop-portal:3918890): xdg-desktop-portal-WARNING **: 12:34:28.549: Realtime error: Could not map tid 3935812 of pid 3935706: Process ids could not be found: 3935812
+ 88/166 Test #1528: hikari_ui_playback_workflow.offscreen ......................   Passed    3.53 sec
+        Start 1554: hikari_ui_open_workflow.offscreen
+ 89/166 Test #1536: hikari_ui_audio_timing_workflow.offscreen ..................   Passed    3.69 sec
+        Start 1480: hikari_ui_line_grid_tests.xvfb
+ 90/166 Test #1618: hikari_ui_reference_workflow.xvfb ..........................   Passed    7.90 sec
+        Start 1517: hikari_ui_automation_manager_tests.xvfb
+ 91/166 Test #1554: hikari_ui_open_workflow.offscreen ..........................   Passed    3.87 sec
+        Start 1482: hikari_ui_line_grid_a11y_tests.xvfb
+ 92/166 Test #1480: hikari_ui_line_grid_tests.xvfb .............................   Passed    3.85 sec
+        Start 1534: hikari_ui_history_workflow.offscreen
+ 93/166 Test #1517: hikari_ui_automation_manager_tests.xvfb ....................   Passed    3.71 sec
+        Start   21: hikari_ui_failing_control.xvfb
+ 94/166 Test #1482: hikari_ui_line_grid_a11y_tests.xvfb ........................   Passed    3.64 sec
+        Start   19: hikari_ui_controls.xvfb
+ 95/166 Test #1534: hikari_ui_history_workflow.offscreen .......................   Passed    3.55 sec
+        Start 1506: hikari_ui_editor_workflow.offscreen
+ 96/166 Test   #21: hikari_ui_failing_control.xvfb .............................   Passed    3.53 sec
+        Start 1556: hikari_ui_automation_workflow.offscreen
+ 97/166 Test #1506: hikari_ui_editor_workflow.offscreen ........................   Passed    3.13 sec
+        Start 1547: hikari_ui_automation_hotkeys_tests.xvfb
+ 98/166 Test   #19: hikari_ui_controls.xvfb ....................................   Passed    3.53 sec
+        Start 1626: hikari_ui_theme_tests.offscreen
+ 99/166 Test #1556: hikari_ui_automation_workflow.offscreen ....................   Passed    3.16 sec
+        Start 1596: hikari_ui_settings_import_tests.xvfb
+100/166 Test #1547: hikari_ui_automation_hotkeys_tests.xvfb ....................   Passed    3.33 sec
+        Start 1628: hikari_ui_title_bar_tests.xvfb
+101/166 Test #1626: hikari_ui_theme_tests.offscreen ............................   Passed    3.18 sec
+        Start 1532: hikari_ui_clipboard_workflow.offscreen
+102/166 Test #1596: hikari_ui_settings_import_tests.xvfb .......................   Passed    3.16 sec
+        Start 1637: hikari_ui_font_faces_tests.xvfb
+103/166 Test #1532: hikari_ui_clipboard_workflow.offscreen .....................   Passed    2.88 sec
+        Start 1592: hikari_ui_spelling_tests.xvfb
+104/166 Test #1628: hikari_ui_title_bar_tests.xvfb .............................   Passed    3.19 sec
+        Start 1586: hikari_ui_update_checker_tests.xvfb
+105/166 Test #1637: hikari_ui_font_faces_tests.xvfb ............................   Passed    3.09 sec
+        Start 1503: hikari_ui_status_bar_tests.xvfb
+106/166 Test #1592: hikari_ui_spelling_tests.xvfb ..............................   Passed    3.08 sec
+        Start 1590: hikari_ui_update_apply_tests.xvfb
+107/166 Test #1586: hikari_ui_update_checker_tests.xvfb ........................   Passed    3.07 sec
+        Start 1499: hikari_ui_tag_buttons_tests.xvfb
+108/166 Test #1503: hikari_ui_status_bar_tests.xvfb ............................   Passed    3.08 sec
+        Start 1501: hikari_ui_line_measures_tests.xvfb
+109/166 Test #1590: hikari_ui_update_apply_tests.xvfb ..........................   Passed    3.06 sec
+        Start 1550: hikari_ui_automation_resolution_tests.offscreen
+110/166 Test #1499: hikari_ui_tag_buttons_tests.xvfb ...........................   Passed    3.07 sec
+        Start 1543: hikari_ui_open_reload_tests.xvfb
+111/166 Test #1550: hikari_ui_automation_resolution_tests.offscreen ............   Passed    2.69 sec
+        Start 1619: hikari_ui_visual_tools_workflow.offscreen
+112/166 Test #1501: hikari_ui_line_measures_tests.xvfb .........................   Passed    3.06 sec
+        Start 1530: hikari_ui_grid_workflow.offscreen
+113/166 Test #1543: hikari_ui_open_reload_tests.xvfb ...........................   Passed    3.24 sec
+        Start 1538: hikari_ui_close_review_tests.offscreen
+114/166 Test #1619: hikari_ui_visual_tools_workflow.offscreen ..................   Passed    2.33 sec
+        Start 1621: hikari_ui_visual_position_workflow.offscreen
+115/166 Test #1538: hikari_ui_close_review_tests.offscreen .....................   Passed    1.95 sec
+        Start 1634: hikari_ui_colour_picker_tests.offscreen
+116/166 Test #1530: hikari_ui_grid_workflow.offscreen ..........................   Passed    2.39 sec
+        Start 1514: hikari_ui_presenter_tests.offscreen
+117/166 Test #1621: hikari_ui_visual_position_workflow.offscreen ...............   Passed    2.06 sec
+        Start 1520: hikari_ui_video_workflow.offscreen
+118/166 Test #1634: hikari_ui_colour_picker_tests.offscreen ....................   Passed    2.22 sec
+        Start 1600: hikari_ui_session_tabs_tests.xvfb
+119/166 Test #1514: hikari_ui_presenter_tests.offscreen ........................   Passed    2.20 sec
+        Start 1540: hikari_ui_theme_startup_tests.offscreen
+120/166 Test #1540: hikari_ui_theme_startup_tests.offscreen ....................   Passed    1.21 sec
+        Start 1594: hikari_ui_settings_store_tests.xvfb
+121/166 Test #1520: hikari_ui_video_workflow.offscreen .........................   Passed    1.99 sec
+        Start 1497: hikari_ui_log_controller_tests.xvfb
+122/166 Test #1600: hikari_ui_session_tabs_tests.xvfb ..........................   Passed    4.08 sec
+        Start 1611: hikari_ui_desktop_handoff_tests.offscreen
+123/166 Test #1594: hikari_ui_settings_store_tests.xvfb ........................   Passed    3.07 sec
+        Start 1508: hikari_ui_line_editor_a11y_tests.offscreen
+124/166 Test #1497: hikari_ui_log_controller_tests.xvfb ........................   Passed    3.07 sec
+        Start 1505: hikari_ui_shell_tests.screen1280scale150
+125/166 Test #1611: hikari_ui_desktop_handoff_tests.offscreen ..................   Passed    1.21 sec
+        Start 1504: hikari_ui_shell_tests.screen1280scale100
+126/166 Test #1508: hikari_ui_line_editor_a11y_tests.offscreen .................   Passed    1.13 sec
+        Start 1561: hikari_ui_docking_qualification_tests.scale150
+127/166 Test #1505: hikari_ui_shell_tests.screen1280scale150 ...................   Passed    1.38 sec
+        Start 1563: hikari_ui_docking_qualification_tests.scale200
+128/166 Test #1561: hikari_ui_docking_qualification_tests.scale150 .............   Passed    1.20 sec
+        Start 1562: hikari_ui_docking_qualification_tests.scale175
+129/166 Test #1504: hikari_ui_shell_tests.screen1280scale100 ...................   Passed    1.42 sec
+        Start 1560: hikari_ui_docking_qualification_tests.scale125
+130/166 Test #1563: hikari_ui_docking_qualification_tests.scale200 .............   Passed    1.18 sec
+        Start 1625: hikari_ui_icon_tests.offscreen
+131/166 Test #1562: hikari_ui_docking_qualification_tests.scale175 .............   Passed    1.21 sec
+        Start 1519: hikari_ui_automation_services_tests.xvfb
+132/166 Test #1560: hikari_ui_docking_qualification_tests.scale125 .............   Passed    1.19 sec
+        Start 1478: hikari_ui_line_model_tests.xvfb
+133/166 Test #1625: hikari_ui_icon_tests.offscreen .............................   Passed    1.05 sec
+        Start 1599: hikari_ui_session_tabs_tests.offscreen
+134/166 Test #1599: hikari_ui_session_tabs_tests.offscreen .....................   Passed    0.98 sec
+        Start 1631: hikari_ui_icon_tests.pages
+135/166 Test #1631: hikari_ui_icon_tests.pages .................................   Passed    0.83 sec
+        Start 1630: hikari_ui_icon_tests.scale200
+136/166 Test #1630: hikari_ui_icon_tests.scale200 ..............................   Passed    0.79 sec
+        Start 1629: hikari_ui_icon_tests.scale150
+137/166 Test #1478: hikari_ui_line_model_tests.xvfb ............................   Passed    3.08 sec
+        Start 1479: hikari_ui_line_grid_tests.offscreen
+138/166 Test #1519: hikari_ui_automation_services_tests.xvfb ...................   Passed    3.22 sec
+        Start 1516: hikari_ui_automation_manager_tests.offscreen
+139/166 Test #1516: hikari_ui_automation_manager_tests.offscreen ...............   Passed    0.45 sec
+        Start 1495: hikari_ui_shell_tests.parts
+140/166 Test #1629: hikari_ui_icon_tests.scale150 ..............................   Passed    0.77 sec
+        Start   20: hikari_ui_failing_control.offscreen
+141/166 Test #1479: hikari_ui_line_grid_tests.offscreen ........................   Passed    0.77 sec
+        Start   18: hikari_ui_controls.offscreen
+142/166 Test #1495: hikari_ui_shell_tests.parts ................................   Passed    0.44 sec
+        Start 1546: hikari_ui_automation_hotkeys_tests.offscreen
+143/166 Test   #20: hikari_ui_failing_control.offscreen ........................   Passed    0.43 sec
+        Start 1542: hikari_ui_open_reload_tests.offscreen
+144/166 Test   #18: hikari_ui_controls.offscreen ...............................   Passed    0.42 sec
+        Start 1577: hikari_ui_file_layouts_tests.parts
+145/166 Test #1542: hikari_ui_open_reload_tests.offscreen ......................   Passed    0.25 sec
+        Start 1518: hikari_ui_automation_services_tests.offscreen
+146/166 Test #1546: hikari_ui_automation_hotkeys_tests.offscreen ...............   Passed    0.34 sec
+        Start 1582: hikari_ui_view_arrangements_tests.parts
+147/166 Test #1518: hikari_ui_automation_services_tests.offscreen ..............   Passed    0.25 sec
+        Start 1481: hikari_ui_line_grid_a11y_tests.offscreen
+148/166 Test #1577: hikari_ui_file_layouts_tests.parts .........................   Passed    0.32 sec
+        Start 1595: hikari_ui_settings_import_tests.offscreen
+149/166 Test #1582: hikari_ui_view_arrangements_tests.parts ....................   Passed    0.21 sec
+        Start 1627: hikari_ui_title_bar_tests.offscreen
+150/166 Test #1627: hikari_ui_title_bar_tests.offscreen ........................   Passed    0.10 sec
+        Start 1585: hikari_ui_update_checker_tests.offscreen
+151/166 Test #1481: hikari_ui_line_grid_a11y_tests.offscreen ...................   Passed    0.19 sec
+        Start 1589: hikari_ui_update_apply_tests.offscreen
+152/166 Test #1595: hikari_ui_settings_import_tests.offscreen ..................   Passed    0.15 sec
+        Start 1477: hikari_ui_line_model_tests.offscreen
+153/166 Test #1585: hikari_ui_update_checker_tests.offscreen ...................   Passed    0.05 sec
+        Start 1591: hikari_ui_spelling_tests.offscreen
+154/166 Test #1589: hikari_ui_update_apply_tests.offscreen .....................   Passed    0.05 sec
+        Start 1502: hikari_ui_status_bar_tests.offscreen
+155/166 Test #1591: hikari_ui_spelling_tests.offscreen .........................   Passed    0.04 sec
+        Start 1593: hikari_ui_settings_store_tests.offscreen
+156/166 Test #1477: hikari_ui_line_model_tests.offscreen .......................   Passed    0.05 sec
+        Start 1636: hikari_ui_font_faces_tests.offscreen
+157/166 Test #1502: hikari_ui_status_bar_tests.offscreen .......................   Passed    0.05 sec
+        Start 1500: hikari_ui_line_measures_tests.offscreen
+158/166 Test #1593: hikari_ui_settings_store_tests.offscreen ...................   Passed    0.04 sec
+        Start 1496: hikari_ui_log_controller_tests.offscreen
+159/166 Test #1636: hikari_ui_font_faces_tests.offscreen .......................   Passed    0.05 sec
+        Start 1498: hikari_ui_tag_buttons_tests.offscreen
+160/166 Test #1500: hikari_ui_line_measures_tests.offscreen ....................   Passed    0.04 sec
+        Start 1484: hikari_ui_shell_tests.documents.xvfb
+161/166 Test #1496: hikari_ui_log_controller_tests.offscreen ...................   Passed    0.04 sec
+        Start 1486: hikari_ui_shell_tests.panels.xvfb
+162/166 Test #1498: hikari_ui_tag_buttons_tests.offscreen ......................   Passed    0.04 sec
+        Start 1494: hikari_ui_shell_tests.video.xvfb
+163/166 Test #1494: hikari_ui_shell_tests.video.xvfb ...........................***Failed   95.69 sec
+        Start 1602: hikari_ui_playing_frame_tests.xvfb
+164/166 Test #1486: hikari_ui_shell_tests.panels.xvfb ..........................***Failed  102.45 sec
+165/166 Test #1602: hikari_ui_playing_frame_tests.xvfb .........................***Failed   14.44 sec
+166/166 Test #1484: hikari_ui_shell_tests.documents.xvfb .......................***Failed  188.27 sec
+
+97% tests passed, 5 tests failed out of 166
+
+Label Time Summary:
+control      =   7.91 sec*proc (4 tests)
+offscreen    = 882.79 sec*proc (91 tests)
+qttest       = 1932.02 sec*proc (120 tests)
+ui           = 246.27 sec*proc (46 tests)
+xvfb         = 1295.50 sec*proc (75 tests)
+
+Total Test time (real) = 782.49 sec
+
+The following tests FAILED:
+	1484 - hikari_ui_shell_tests.documents.xvfb (Failed)     qttest xvfb
+	1486 - hikari_ui_shell_tests.panels.xvfb (Failed)        qttest xvfb
+	1494 - hikari_ui_shell_tests.video.xvfb (Failed)         qttest xvfb
+	1581 - hikari_ui_view_arrangements_tests.player.xvfb (Failed) qttest xvfb
+	1602 - hikari_ui_playing_frame_tests.xvfb (Failed)       qttest xvfb
+Errors while running CTest
+Output from these tests are in: /home/altq/.t3/worktrees/hikari/w6-ws2/out/build/ws2/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.

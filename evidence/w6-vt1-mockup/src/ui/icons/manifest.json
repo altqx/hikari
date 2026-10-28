@@ -1,0 +1,3330 @@
+{
+ "grid": 16,
+ "strokeWidth": 1,
+ "icons": [
+  {
+   "role": "open-subtitles",
+   "file": "open-subtitles.svg",
+   "label": "Open subtitles",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "opensubs.png"
+   ],
+   "surfaces": [
+    "menu:file",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "save",
+   "file": "save.svg",
+   "label": "Save",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "Save.png"
+   ],
+   "surfaces": [
+    "menu:file",
+    "tab-menu",
+    "shift-times-panel"
+   ]
+  },
+  {
+   "role": "save-all",
+   "file": "save-all.svg",
+   "label": "Save all subtitles",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "SaveAll.png"
+   ],
+   "surfaces": [
+    "menu:file",
+    "tab-menu"
+   ]
+  },
+  {
+   "role": "save-as",
+   "file": "save-as.svg",
+   "label": "Save as",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "SaveAs.png"
+   ],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "save-translation",
+   "file": "save-translation.svg",
+   "label": "Save translation",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "SaveTl.png"
+   ],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "recent-subtitles",
+   "file": "recent-subtitles.svg",
+   "label": "Recently opened subtitles",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "RecentSubs.png"
+   ],
+   "surfaces": [
+    "menu:file",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "close-subtitles",
+   "file": "close-subtitles.svg",
+   "label": "Remove subtitles from the editor",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Close.png"
+   ],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "save-with-video-name",
+   "file": "save-with-video-name.svg",
+   "label": "Save subtitles with video name",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "SaveWithVideoName.png"
+   ],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "last-session",
+   "file": "last-session.svg",
+   "label": "Load last session",
+   "accent": true,
+   "mirror": true,
+   "legacy": [
+    "Last Session.png"
+   ],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "settings",
+   "file": "settings.svg",
+   "label": "Settings",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "Settings.png"
+   ],
+   "surfaces": [
+    "menu:file",
+    "settings-dialog",
+    "font-catalog"
+   ]
+  },
+  {
+   "role": "exit",
+   "file": "exit.svg",
+   "label": "Exit",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "Exit.png"
+   ],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "undo",
+   "file": "undo.svg",
+   "label": "Undo",
+   "accent": false,
+   "mirror": true,
+   "legacy": [
+    "Undo.png"
+   ],
+   "surfaces": [
+    "menu:edit"
+   ]
+  },
+  {
+   "role": "redo",
+   "file": "redo.svg",
+   "label": "Redo",
+   "accent": false,
+   "mirror": true,
+   "legacy": [
+    "Redo.png"
+   ],
+   "surfaces": [
+    "menu:edit"
+   ]
+  },
+  {
+   "role": "undo-to-last-save",
+   "file": "undo-to-last-save.svg",
+   "label": "Undo to last save",
+   "accent": true,
+   "mirror": true,
+   "legacy": [
+    "UndoToLastSave.png"
+   ],
+   "surfaces": [
+    "menu:edit"
+   ]
+  },
+  {
+   "role": "history",
+   "file": "history.svg",
+   "label": "History",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "History.png"
+   ],
+   "surfaces": [
+    "menu:edit",
+    "history-panel"
+   ]
+  },
+  {
+   "role": "find-replace",
+   "file": "find-replace.svg",
+   "label": "Find and replace",
+   "accent": true,
+   "mirror": true,
+   "legacy": [
+    "FindReplace.png"
+   ],
+   "surfaces": [
+    "menu:edit",
+    "search-tool"
+   ]
+  },
+  {
+   "role": "search",
+   "file": "search.svg",
+   "label": "Find",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "Search.png"
+   ],
+   "surfaces": [
+    "menu:edit",
+    "search-tool"
+   ]
+  },
+  {
+   "role": "sort",
+   "file": "sort.svg",
+   "label": "Sort lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [
+    "Sort.png"
+   ],
+   "surfaces": [
+    "menu:edit",
+    "style-manager"
+   ]
+  },
+  {
+   "role": "sort-selected",
+   "file": "sort-selected.svg",
+   "label": "Sort selected lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [
+    "SortSel.png"
+   ],
+   "surfaces": [
+    "menu:edit"
+   ]
+  },
+  {
+   "role": "select-lines",
+   "file": "select-lines.svg",
+   "label": "Select lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [
+    "Sellines.png"
+   ],
+   "surfaces": [
+    "menu:edit",
+    "select-lines"
+   ]
+  },
+  {
+   "role": "open-video",
+   "file": "open-video.svg",
+   "label": "Open video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "openvideo.png"
+   ],
+   "surfaces": [
+    "menu:video",
+    "video-context-menu",
+    "dummy-video"
+   ]
+  },
+  {
+   "role": "recent-video",
+   "file": "recent-video.svg",
+   "label": "Recently opened videos",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "RecentVideo.png"
+   ],
+   "surfaces": [
+    "menu:video",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "open-keyframes",
+   "file": "open-keyframes.svg",
+   "label": "Open keyframes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "OpenKeyframes.png"
+   ],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "recent-keyframes",
+   "file": "recent-keyframes.svg",
+   "label": "Recently opened keyframes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "RecentKeyframes.png"
+   ],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "set-start-time",
+   "file": "set-start-time.svg",
+   "label": "Insert start time from video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "SetStartTime.png"
+   ],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "set-end-time",
+   "file": "set-end-time.svg",
+   "label": "Insert end time from video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "SetEndTime.png"
+   ],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "frame-previous",
+   "file": "frame-previous.svg",
+   "label": "Previous frame",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "PrevFrame.png"
+   ],
+   "surfaces": [
+    "menu:video",
+    "video-transport"
+   ]
+  },
+  {
+   "role": "frame-next",
+   "file": "frame-next.svg",
+   "label": "Next frame",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "NextFrame.png"
+   ],
+   "surfaces": [
+    "menu:video",
+    "video-transport"
+   ]
+  },
+  {
+   "role": "keyframe-previous",
+   "file": "keyframe-previous.svg",
+   "label": "Go to previous keyframe",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "PrevKeyframe.png"
+   ],
+   "surfaces": [
+    "menu:video",
+    "video-transport"
+   ]
+  },
+  {
+   "role": "keyframe-next",
+   "file": "keyframe-next.svg",
+   "label": "Go to next keyframe",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "NextKeyframe.png"
+   ],
+   "surfaces": [
+    "menu:video",
+    "video-transport"
+   ]
+  },
+  {
+   "role": "video-to-start-time",
+   "file": "video-to-start-time.svg",
+   "label": "Go to start time",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "videoonstime.png"
+   ],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "video-to-end-time",
+   "file": "video-to-end-time.svg",
+   "label": "Go to end time of line",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "videoonetime.png"
+   ],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "audio-to-video-time",
+   "file": "audio-to-video-time.svg",
+   "label": "Set audio position to video time",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "SetVideoTimeOnAudio.png"
+   ],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "audio-marker-to-video-time",
+   "file": "audio-marker-to-video-time.svg",
+   "label": "Set audio marker to video time",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "SetVideoTimeOnAudioMark.png"
+   ],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "zoom",
+   "file": "zoom.svg",
+   "label": "Zoom video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Zoom.png"
+   ],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "media-play",
+   "file": "media-play.svg",
+   "label": "Play",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "play.png",
+    "play1.png",
+    "PlayMenu.png"
+   ],
+   "surfaces": [
+    "video-transport",
+    "video-fullscreen",
+    "menu:video",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "media-pause",
+   "file": "media-pause.svg",
+   "label": "Pause",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "pause.png",
+    "pause1.png",
+    "PauseMenu.png"
+   ],
+   "surfaces": [
+    "video-transport",
+    "video-fullscreen",
+    "menu:video",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "media-stop",
+   "file": "media-stop.svg",
+   "label": "Stop",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "stop.png",
+    "stop1.png",
+    "button_stop.png"
+   ],
+   "surfaces": [
+    "video-transport",
+    "video-fullscreen",
+    "audio-box",
+    "video-context-menu",
+    "automation-manager"
+   ]
+  },
+  {
+   "role": "play-line",
+   "file": "play-line.svg",
+   "label": "Play the current line",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "playline.png",
+    "playline1.png",
+    "button_playsel.png"
+   ],
+   "surfaces": [
+    "video-transport",
+    "video-fullscreen",
+    "audio-box"
+   ]
+  },
+  {
+   "role": "media-previous-file",
+   "file": "media-previous-file.svg",
+   "label": "Previous file",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "backward.png",
+    "backward1.png"
+   ],
+   "surfaces": [
+    "video-transport",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "media-next-file",
+   "file": "media-next-file.svg",
+   "label": "Next file",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "forward.png",
+    "forward1.png"
+   ],
+   "surfaces": [
+    "video-transport",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "show-toolbar",
+   "file": "show-toolbar.svg",
+   "label": "Show toolbar",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "open-audio",
+   "file": "open-audio.svg",
+   "label": "Open audio",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "OpenAudio.png"
+   ],
+   "surfaces": [
+    "menu:audio"
+   ]
+  },
+  {
+   "role": "recent-audio",
+   "file": "recent-audio.svg",
+   "label": "Recently opened audio",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "RecentAudio.png"
+   ],
+   "surfaces": [
+    "menu:audio"
+   ]
+  },
+  {
+   "role": "audio-from-video",
+   "file": "audio-from-video.svg",
+   "label": "Open audio from video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "OpenAudioFromVideo.png"
+   ],
+   "surfaces": [
+    "menu:audio"
+   ]
+  },
+  {
+   "role": "close-audio",
+   "file": "close-audio.svg",
+   "label": "Close audio",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "CloseAudio.png"
+   ],
+   "surfaces": [
+    "menu:audio"
+   ]
+  },
+  {
+   "role": "audio-previous-line",
+   "file": "audio-previous-line.svg",
+   "label": "Previous line",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_prev.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "audio-next-line",
+   "file": "audio-next-line.svg",
+   "label": "Next line",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_next.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "audio-play",
+   "file": "audio-play.svg",
+   "label": "Play",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_PlayLine.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "play-before-mark",
+   "file": "play-before-mark.svg",
+   "label": "Play before the tag",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_playbefore.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "play-after-mark",
+   "file": "play-after-mark.svg",
+   "label": "Play after the tag",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_playafter.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "play-before-start",
+   "file": "play-before-start.svg",
+   "label": "Play 500ms before the start time",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_playfivehbefore.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "play-after-start",
+   "file": "play-after-start.svg",
+   "label": "Play 500 ms after the start time",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_playfirstfiveh.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "play-before-end",
+   "file": "play-before-end.svg",
+   "label": "Play 500ms before the end time",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_playlastfiveh.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "play-after-end",
+   "file": "play-after-end.svg",
+   "label": "Play 500ms after the end time",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_playfivehafter.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "play-to-end",
+   "file": "play-to-end.svg",
+   "label": "Play to the end",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_playtoend.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "lead-in",
+   "file": "lead-in.svg",
+   "label": "Add lead-in to the active line",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_leadin.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "lead-out",
+   "file": "lead-out.svg",
+   "label": "Add lead-out to the active line",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_leadout.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "commit",
+   "file": "commit.svg",
+   "label": "Commit",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_audio_commit.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "go-to-selection",
+   "file": "go-to-selection.svg",
+   "label": "Go to selection",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_audio_go.png"
+   ],
+   "surfaces": [
+    "audio-box",
+    "reference-tray"
+   ]
+  },
+  {
+   "role": "karaoke",
+   "file": "karaoke.svg",
+   "label": "Karaoke mode",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_karaoke.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "karaoke-split",
+   "file": "karaoke-split.svg",
+   "label": "Karaoke split mode",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_auto_split.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "auto-commit",
+   "file": "auto-commit.svg",
+   "label": "Auto commit",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_auto_commit.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "next-after-commit",
+   "file": "next-after-commit.svg",
+   "label": "Go to the next line after commit",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_go_next_after_commit.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "auto-scroll",
+   "file": "auto-scroll.svg",
+   "label": "Scroll to the active line",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "button_auto_go.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "spectrum",
+   "file": "spectrum.svg",
+   "label": "Spectrum mode",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_spectrum.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "spectrum-nonlinear",
+   "file": "spectrum-nonlinear.svg",
+   "label": "Non-linear spectrum",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "SpectrumNonLinear.png"
+   ],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "link",
+   "file": "link.svg",
+   "label": "Link",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "button_link.png",
+    "ScaleLink.png"
+   ],
+   "surfaces": [
+    "audio-box",
+    "visual-tools",
+    "script-properties"
+   ]
+  },
+  {
+   "role": "tag-font",
+   "file": "tag-font.svg",
+   "label": "Font selection",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "Font.png"
+   ],
+   "surfaces": [
+    "line-editor",
+    "font-dialog"
+   ]
+  },
+  {
+   "role": "tag-bold",
+   "file": "tag-bold.svg",
+   "label": "Bold",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "Bold.png"
+   ],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "tag-italic",
+   "file": "tag-italic.svg",
+   "label": "Italic",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "Italic.png"
+   ],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "tag-underline",
+   "file": "tag-underline.svg",
+   "label": "Underline",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Under.png"
+   ],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "tag-strikeout",
+   "file": "tag-strikeout.svg",
+   "label": "Strikethrough",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Strike.png"
+   ],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "colour-primary",
+   "file": "colour-primary.svg",
+   "label": "Primary color",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "kolor1.png"
+   ],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "colour-secondary",
+   "file": "colour-secondary.svg",
+   "label": "Secondary color for karaoke",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "kolor2.png"
+   ],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "colour-outline",
+   "file": "colour-outline.svg",
+   "label": "Border color",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "kolor3.png"
+   ],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "colour-shadow",
+   "file": "colour-shadow.svg",
+   "label": "Shadow color",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "kolor4.png"
+   ],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-1",
+   "file": "alignment-1.svg",
+   "label": "Bottom-left (an1)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-2",
+   "file": "alignment-2.svg",
+   "label": "Bottom-center (an2)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-3",
+   "file": "alignment-3.svg",
+   "label": "Bottom-right (an3)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-4",
+   "file": "alignment-4.svg",
+   "label": "Middle-left (an4)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-5",
+   "file": "alignment-5.svg",
+   "label": "Center (an5)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-6",
+   "file": "alignment-6.svg",
+   "label": "Middle-right (an6)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-7",
+   "file": "alignment-7.svg",
+   "label": "Top-left (an7)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-8",
+   "file": "alignment-8.svg",
+   "label": "Top-center (an8)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-9",
+   "file": "alignment-9.svg",
+   "label": "Top-right (an9)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-mixed",
+   "file": "alignment-mixed.svg",
+   "label": "Text position (mixed)",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "editor",
+   "file": "editor.svg",
+   "label": "Enable / Disable editor",
+   "accent": true,
+   "mirror": true,
+   "legacy": [
+    "editor.png"
+   ],
+   "surfaces": [
+    "menu:subtitles",
+    "settings-dialog",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "script-properties",
+   "file": "script-properties.svg",
+   "label": "ASS file properties",
+   "accent": false,
+   "mirror": true,
+   "legacy": [
+    "Assprops.png"
+   ],
+   "surfaces": [
+    "menu:subtitles",
+    "script-properties",
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "styles",
+   "file": "styles.svg",
+   "label": "Style manager",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Style.png"
+   ],
+   "surfaces": [
+    "menu:subtitles",
+    "style-manager",
+    "search-tool",
+    "select-lines",
+    "misspell-replacer",
+    "grid-menu",
+    "tab-menu"
+   ]
+  },
+  {
+   "role": "convert",
+   "file": "convert.svg",
+   "label": "Convert",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "Convert.png"
+   ],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "convert-ass",
+   "file": "convert-ass.svg",
+   "label": "Convert to ASS",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Convass.png"
+   ],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "convert-srt",
+   "file": "convert-srt.svg",
+   "label": "Convert to SRT",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "ConvSRT.png"
+   ],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "convert-mdvd",
+   "file": "convert-mdvd.svg",
+   "label": "Convert to MDVD",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "ConvMDVD.png"
+   ],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "convert-mpl2",
+   "file": "convert-mpl2.svg",
+   "label": "Convert to MPL2",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "ConvMPL2.png"
+   ],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "convert-tmp",
+   "file": "convert-tmp.svg",
+   "label": "Convert to TMP",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Convtmp.png"
+   ],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "shift-times",
+   "file": "shift-times.svg",
+   "label": "Shift times",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Time.png"
+   ],
+   "surfaces": [
+    "menu:timing",
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "resample",
+   "file": "resample.svg",
+   "label": "Resample subtitles",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "subsResample.png"
+   ],
+   "surfaces": [
+    "menu:subtitles",
+    "visual-tools",
+    "resample"
+   ]
+  },
+  {
+   "role": "font-collector",
+   "file": "font-collector.svg",
+   "label": "Font collector",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "FontCollector.png"
+   ],
+   "surfaces": [
+    "menu:subtitles",
+    "font-collector",
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "spellchecker",
+   "file": "spellchecker.svg",
+   "label": "Check spelling",
+   "accent": true,
+   "mirror": true,
+   "legacy": [
+    "Spellchecker.png"
+   ],
+   "surfaces": [
+    "menu:subtitles",
+    "spell-checker",
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "hide-tags",
+   "file": "hide-tags.svg",
+   "label": "Hide tags",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "HideTags.png"
+   ],
+   "surfaces": [
+    "menu:subtitles",
+    "line-editor"
+   ]
+  },
+  {
+   "role": "automation",
+   "file": "automation.svg",
+   "label": "Load script",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Automation.png"
+   ],
+   "surfaces": [
+    "menu:automation",
+    "automation-manager"
+   ]
+  },
+  {
+   "role": "help",
+   "file": "help.svg",
+   "label": "HikariSub website",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "Help.png"
+   ],
+   "surfaces": [
+    "menu:help"
+   ]
+  },
+  {
+   "role": "report-issue",
+   "file": "report-issue.svg",
+   "label": "Report an issue",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Nazi.png"
+   ],
+   "surfaces": [
+    "menu:help"
+   ]
+  },
+  {
+   "role": "check-updates",
+   "file": "check-updates.svg",
+   "label": "Check for updates",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "About.png"
+   ],
+   "surfaces": [
+    "menu:help"
+   ]
+  },
+  {
+   "role": "about",
+   "file": "about.svg",
+   "label": "About",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "About.png"
+   ],
+   "surfaces": [
+    "menu:help",
+    "about",
+    "translation-matching"
+   ]
+  },
+  {
+   "role": "credits",
+   "file": "credits.svg",
+   "label": "Credits",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Helpers.png"
+   ],
+   "surfaces": [
+    "menu:help",
+    "credits"
+   ]
+  },
+  {
+   "role": "view-all",
+   "file": "view-all.svg",
+   "label": "All",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "view-video-subs",
+   "file": "view-video-subs.svg",
+   "label": "Video and subs",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "view-audio-subs",
+   "file": "view-audio-subs.svg",
+   "label": "Audio and subs",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "view-only-video",
+   "file": "view-only-video.svg",
+   "label": "Only video",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "view-only-subs",
+   "file": "view-only-subs.svg",
+   "label": "Only subtitles",
+   "accent": false,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "tool-crosshair",
+   "file": "tool-crosshair.svg",
+   "label": "Position pointer",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Cross.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-position",
+   "file": "tool-position.svg",
+   "label": "Text positioning",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Position.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-move",
+   "file": "tool-move.svg",
+   "label": "Text moving",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Move.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-scale",
+   "file": "tool-scale.svg",
+   "label": "Text scaling",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Scale.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-rotate-z",
+   "file": "tool-rotate-z.svg",
+   "label": "Text Z rotation",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "FRZ.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-rotate-xy",
+   "file": "tool-rotate-xy.svg",
+   "label": "Text X / Y rotation",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "FRXY.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-clip-rect",
+   "file": "tool-clip-rect.svg",
+   "label": "Rectangle clipping",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "cliprect.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-clip-vector",
+   "file": "tool-clip-vector.svg",
+   "label": "Vector clipping",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "clip.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-drawing",
+   "file": "tool-drawing.svg",
+   "label": "Vector drawing",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "drawing.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-move-all",
+   "file": "tool-move-all.svg",
+   "label": "Position shifter",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "MoveAll.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-all-tags",
+   "file": "tool-all-tags.svg",
+   "label": "Hydra (all tags)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "AllTags.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tool-scale-rotation",
+   "file": "tool-scale-rotation.svg",
+   "label": "Scale and rotation shifter",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "ScaleRotation.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "vector-drag",
+   "file": "vector-drag.svg",
+   "label": "Move points",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "VectorDrag.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "vector-line",
+   "file": "vector-line.svg",
+   "label": "Add line",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "VectorLine.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "vector-bezier",
+   "file": "vector-bezier.svg",
+   "label": "Add Bézier curve",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "VectorBezier.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "vector-bspline",
+   "file": "vector-bspline.svg",
+   "label": "Add B-spline",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "VectorBspline.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "vector-point",
+   "file": "vector-point.svg",
+   "label": "Add separate point",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "VectorMove.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "vector-delete",
+   "file": "vector-delete.svg",
+   "label": "Delete point",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "VectorDelete.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "shape-presets",
+   "file": "shape-presets.svg",
+   "label": "Shape presets",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "clip-invert",
+   "file": "clip-invert.svg",
+   "label": "Invert clip",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "InvertClipIcon1.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "shift-position",
+   "file": "shift-position.svg",
+   "label": "Move position points",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "MovePos.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "shift-move-start",
+   "file": "shift-move-start.svg",
+   "label": "Change \\move starting points",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "MoveMoveStart.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "shift-move-end",
+   "file": "shift-move-end.svg",
+   "label": "Change \\move ending points",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "Move.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "shift-clips",
+   "file": "shift-clips.svg",
+   "label": "Move clips",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "MoveClips.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "shift-drawings",
+   "file": "shift-drawings.svg",
+   "label": "Move drawings",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "MoveDrawings.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "shift-origins",
+   "file": "shift-origins.svg",
+   "label": "Move \\org points",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "MoveOrgs.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tag-list",
+   "file": "tag-list.svg",
+   "label": "Tag list",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tag-change-option",
+   "file": "tag-change-option.svg",
+   "label": "Tag change options",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tag-edit",
+   "file": "tag-edit.svg",
+   "label": "Edit the tag list",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "two-points",
+   "file": "two-points.svg",
+   "label": "Set angle from 2 points",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "TwoPoints.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "frame-to-scale",
+   "file": "frame-to-scale.svg",
+   "label": "Set scale by rectangle",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "FrameToScale.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "scale-x",
+   "file": "scale-x.svg",
+   "label": "Scale width",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "ScaleX.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "scale-y",
+   "file": "scale-y.svg",
+   "label": "Scale height",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "ScaleY.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "original-frame",
+   "file": "original-frame.svg",
+   "label": "Set a custom rectangle for the current scale",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "OriginalFrame.png"
+   ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "eyedropper",
+   "file": "eyedropper.svg",
+   "label": "Pick a colour from the screen",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "eyedropper.png"
+   ],
+   "surfaces": [
+    "colour-picker"
+   ]
+  },
+  {
+   "role": "tab-close",
+   "file": "tab-close.svg",
+   "label": "Close tab",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "document-tabs",
+    "menu:file",
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "tab-new",
+   "file": "tab-new.svg",
+   "label": "Open new tab",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "document-tabs"
+   ]
+  },
+  {
+   "role": "document-modified",
+   "file": "document-modified.svg",
+   "label": "Modified",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "document-tabs"
+   ]
+  },
+  {
+   "role": "move-to-top",
+   "file": "move-to-top.svg",
+   "label": "Move to beginning",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "arrowListDouble.png"
+   ],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "move-up",
+   "file": "move-up.svg",
+   "label": "Move up",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "arrow_list.png"
+   ],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "move-down",
+   "file": "move-down.svg",
+   "label": "Move down",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "move-to-bottom",
+   "file": "move-to-bottom.svg",
+   "label": "Move to end",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "move-left",
+   "file": "move-left.svg",
+   "label": "Move left",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "move-right",
+   "file": "move-right.svg",
+   "label": "Move right",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "copy-to-storage",
+   "file": "copy-to-storage.svg",
+   "label": "Copy style from ASS to storage",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "copy-to-ass",
+   "file": "copy-to-ass.svg",
+   "label": "Copy style from storage to ASS",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "copy-to-all-ass",
+   "file": "copy-to-all-ass.svg",
+   "label": "Copy style from storage to every open ASS file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "panel-menu",
+   "file": "panel-menu.svg",
+   "label": "Panel options",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "add",
+   "file": "add.svg",
+   "label": "Add",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "shift-times-panel",
+    "style-manager",
+    "font-catalog",
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "remove",
+   "file": "remove.svg",
+   "label": "Remove",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "shift-times-panel",
+    "line-editor"
+   ]
+  },
+  {
+   "role": "edit",
+   "file": "edit.svg",
+   "label": "Edit",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "style-manager",
+    "grid-menu",
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "duplicate",
+   "file": "duplicate.svg",
+   "label": "Copy",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "delete",
+   "file": "delete.svg",
+   "label": "Delete",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager",
+    "grid-menu",
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "import",
+   "file": "import.svg",
+   "label": "Load",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager",
+    "menu:file"
+   ]
+  },
+  {
+   "role": "clear",
+   "file": "clear.svg",
+   "label": "Clear",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager",
+    "visual-tools",
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "refresh",
+   "file": "refresh.svg",
+   "label": "Refresh",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "font-catalog",
+    "automation-manager"
+   ]
+  },
+  {
+   "role": "filter",
+   "file": "filter.svg",
+   "label": "Filter",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "font-catalog"
+   ]
+  },
+  {
+   "role": "edit-copy",
+   "file": "edit-copy.svg",
+   "label": "Copy",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "edit-cut",
+   "file": "edit-cut.svg",
+   "label": "Cut",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "edit-paste",
+   "file": "edit-paste.svg",
+   "label": "Paste",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "folder-open",
+   "file": "folder-open.svg",
+   "label": "Choose a folder",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "search-tool",
+    "font-collector",
+    "settings-import"
+   ]
+  },
+  {
+   "role": "find-in-files",
+   "file": "find-in-files.svg",
+   "label": "Find in subtitles",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "search-tool"
+   ]
+  },
+  {
+   "role": "show-in-folder",
+   "file": "show-in-folder.svg",
+   "label": "Open the containing folder",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ]
+  },
+  {
+   "role": "compare",
+   "file": "compare.svg",
+   "label": "Subtitle comparison",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu",
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "reference",
+   "file": "reference.svg",
+   "label": "Show subtitles preview",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "extract-subtitles",
+   "file": "extract-subtitles.svg",
+   "label": "Load subtitles from an MKV file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "multireplace",
+   "file": "multireplace.svg",
+   "label": "Fix minor errors",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:subtitles",
+    "misspell-replacer"
+   ]
+  },
+  {
+   "role": "close-video",
+   "file": "close-video.svg",
+   "label": "Unload video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "fullscreen",
+   "file": "fullscreen.svg",
+   "label": "Full screen",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "fullscreen-exit",
+   "file": "fullscreen-exit.svg",
+   "label": "Exit full screen",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "frame-snapshot",
+   "file": "frame-snapshot.svg",
+   "label": "Save frame as PNG",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "zoom-reset",
+   "file": "zoom-reset.svg",
+   "label": "Turn off video zoom",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "volume",
+   "file": "volume.svg",
+   "label": "Volume",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-transport"
+   ]
+  },
+  {
+   "role": "pick-lines",
+   "file": "pick-lines.svg",
+   "label": "Pick selected lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "match-previous",
+   "file": "match-previous.svg",
+   "label": "Previous match",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "reference-tray"
+   ]
+  },
+  {
+   "role": "match-next",
+   "file": "match-next.svg",
+   "label": "Next match",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "reference-tray"
+   ]
+  },
+  {
+   "role": "unload",
+   "file": "unload.svg",
+   "label": "Unload",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation-manager"
+   ]
+  },
+  {
+   "role": "run-script",
+   "file": "run-script.svg",
+   "label": "Run the last loaded script",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation"
+   ]
+  },
+  {
+   "role": "settings-video",
+   "file": "settings-video.svg",
+   "label": "Video",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "settings-audio",
+   "file": "settings-audio.svg",
+   "label": "Audio",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "appearance",
+   "file": "appearance.svg",
+   "label": "Appearance",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "hotkeys",
+   "file": "hotkeys.svg",
+   "label": "Hotkeys",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "audio-output",
+   "file": "audio-output.svg",
+   "label": "Output device",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "audio-video-sync",
+   "file": "audio-video-sync.svg",
+   "label": "Sync the video and audio cursors",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "autosave",
+   "file": "autosave.svg",
+   "label": "Open auto save",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "remove-temporary",
+   "file": "remove-temporary.svg",
+   "label": "Remove temporary files",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "log",
+   "file": "log.svg",
+   "label": "Show / Hide log window",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "session-open",
+   "file": "session-open.svg",
+   "label": "Load session from file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "session-save",
+   "file": "session-save.svg",
+   "label": "Save session to file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "rerun-macro",
+   "file": "rerun-macro.svg",
+   "label": "Rerun last macro",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation"
+   ]
+  },
+  {
+   "role": "automation-manager",
+   "file": "automation-manager.svg",
+   "label": "Automation manager",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation"
+   ]
+  },
+  {
+   "role": "dummy-video",
+   "file": "dummy-video.svg",
+   "label": "Open dummy video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "video-streams",
+   "file": "video-streams.svg",
+   "label": "Streams",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "chapters",
+   "file": "chapters.svg",
+   "label": "Chapters",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "copy-position",
+   "file": "copy-position.svg",
+   "label": "Copy video position",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "monitor",
+   "file": "monitor.svg",
+   "label": "Open in full screen on another monitor",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "progress-bar",
+   "file": "progress-bar.svg",
+   "label": "Show / hide progress bar",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "aspect-ratio",
+   "file": "aspect-ratio.svg",
+   "label": "Change aspect ratio",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "video-filters",
+   "file": "video-filters.svg",
+   "label": "Filters",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "panels",
+   "file": "panels.svg",
+   "label": "Panels",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "show",
+   "file": "show.svg",
+   "label": "Show",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "hide",
+   "file": "hide.svg",
+   "label": "Hide",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "panel-float",
+   "file": "panel-float.svg",
+   "label": "Float",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "panel-dock",
+   "file": "panel-dock.svg",
+   "label": "Dock",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "panel-move",
+   "file": "panel-move.svg",
+   "label": "Move panel",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "tab-move-left",
+   "file": "tab-move-left.svg",
+   "label": "Move tab left",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "tab-move-right",
+   "file": "tab-move-right.svg",
+   "label": "Move tab right",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "layout-preset",
+   "file": "layout-preset.svg",
+   "label": "Layout preset",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "layout-reset",
+   "file": "layout-reset.svg",
+   "label": "Reset layout",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "layout-restore",
+   "file": "layout-restore.svg",
+   "label": "Restore the previous layout",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "tab-close-all",
+   "file": "tab-close-all.svg",
+   "label": "Close all tabs",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ]
+  },
+  {
+   "role": "fonts-from-subtitles",
+   "file": "fonts-from-subtitles.svg",
+   "label": "Add fonts from subtitles",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "font-catalog"
+   ]
+  },
+  {
+   "role": "dictionary",
+   "file": "dictionary.svg",
+   "label": "Installed languages",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "text-field-menu",
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "dictionary-add",
+   "file": "dictionary-add.svg",
+   "label": "Add word to dictionary",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "make-tree",
+   "file": "make-tree.svg",
+   "label": "Make tree",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "tree-add-lines",
+   "file": "tree-add-lines.svg",
+   "label": "Add lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "tree-select",
+   "file": "tree-select.svg",
+   "label": "Select tree lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "insert-before",
+   "file": "insert-before.svg",
+   "label": "Insert before",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "insert-after",
+   "file": "insert-after.svg",
+   "label": "Insert after",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "swap-lines",
+   "file": "swap-lines.svg",
+   "label": "Swap",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "join-lines",
+   "file": "join-lines.svg",
+   "label": "Join lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "join-keep-first",
+   "file": "join-keep-first.svg",
+   "label": "Join lines and keep first",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "join-keep-last",
+   "file": "join-keep-last.svg",
+   "label": "Join lines and keep last",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "continuous-previous",
+   "file": "continuous-previous.svg",
+   "label": "Set times as a continuous (previous line)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "continuous-next",
+   "file": "continuous-next.svg",
+   "label": "Set times as a continuous (next line)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-lines",
+   "file": "split-lines.svg",
+   "label": "Split lines",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-at-video",
+   "file": "split-at-video.svg",
+   "label": "Split line at video time",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-frames",
+   "file": "split-frames.svg",
+   "label": "Split lines into frames",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-characters",
+   "file": "split-characters.svg",
+   "label": "Split lines into characters",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-words",
+   "file": "split-words.svg",
+   "label": "Split lines into words",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-wraps",
+   "file": "split-wraps.svg",
+   "label": "Split lines by wraps",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "select-visible",
+   "file": "select-visible.svg",
+   "label": "Select all lines visible on video",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "paste-translation",
+   "file": "paste-translation.svg",
+   "label": "Paste translation text",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "translation-shift",
+   "file": "translation-shift.svg",
+   "label": "Dialogue shifting window",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "filter-off",
+   "file": "filter-off.svg",
+   "label": "Turn off filtering",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "columns",
+   "file": "columns.svg",
+   "label": "Hide columns",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "columns-copy",
+   "file": "columns-copy.svg",
+   "label": "Copy columns",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "columns-paste",
+   "file": "columns-paste.svg",
+   "label": "Paste columns",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "fps",
+   "file": "fps.svg",
+   "label": "Set new FPS",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "fps-from-video",
+   "file": "fps-from-video.svg",
+   "label": "Set FPS from video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "compare-off",
+   "file": "compare-off.svg",
+   "label": "Turn off comparison",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ]
+  },
+  {
+   "role": "shift-times-run",
+   "file": "shift-times-run.svg",
+   "label": "Shift times / run time post processor",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "language",
+   "file": "language.svg",
+   "label": "Language",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "ui-font",
+   "file": "ui-font.svg",
+   "label": "Program font",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "renderer",
+   "file": "renderer.svg",
+   "label": "Subtitle display filter",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "video-seek",
+   "file": "video-seek.svg",
+   "label": "Video seeking method",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "audio-device",
+   "file": "audio-device.svg",
+   "label": "Audio output",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "audio-delay",
+   "file": "audio-delay.svg",
+   "label": "Audio delay",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "theme",
+   "file": "theme.svg",
+   "label": "Theme",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "accent-colour",
+   "file": "accent-colour.svg",
+   "label": "Accent color",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "ui-colours",
+   "file": "ui-colours.svg",
+   "label": "UI colors",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "restore-default",
+   "file": "restore-default.svg",
+   "label": "Restore default",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  }
+ ],
+ "notReplaced": {
+  "application and file-type icons (kept as they are)": [
+   "HikariLargeIcon.ico",
+   "HikariSmallIcon.ico",
+   "HikariSmallIcon321.ico",
+   "HikariSub_256x256_ass.png",
+   "HikariSub_256x256_exe.ico",
+   "HikariSub_256x256_exe.png",
+   "HikariSub_256x256_srt.png",
+   "HikariSub_256x256_sub.png",
+   "HikariSub_256x256_txt.png",
+   "HikariSub_ass.ico",
+   "HikariSub_srt.ico",
+   "HikariSub_ssa.ico",
+   "HikariSub_sub.ico",
+   "HikariSub_txt.ico"
+  ],
+  "controls Qt draws (check boxes, radio buttons, menu marks, list arrows, sliders, grippers)": [
+   "Check.png",
+   "CheckBox.png",
+   "CheckBoxInactive.png",
+   "CheckBoxSelected.png",
+   "CheckBoxSelectedInactive.png",
+   "Radio.png",
+   "RadioInactive.png",
+   "RadioSelected.png",
+   "RadioSelectedInactive.png",
+   "arrow.png",
+   "arrow_list_pushed.png",
+   "dot.png",
+   "separator.png",
+   "Gripper.png",
+   "progressbar.png",
+   "progresshandle.png"
+  ],
+  "cursors (not UI icons)": [
+   "blank.cur",
+   "eyedropper.cur"
+  ],
+  "not referenced by legacy (resource.rc has no entry)": [
+   "ChangeAllTags.png"
+  ],
+  "retired commands (GLOBAL_VIDEO_INDEXING, wave 5 decision 2026-10-05)": [
+   "FFMS2 Indexing.png"
+  ]
+ }
+}

@@ -1,0 +1,8 @@
+{
+ "host": {"cpu": "AMD Ryzen 5 5600 6-Core Processor", "logicalCores": 12, "os": "Linux 7.2.5-4-omarchy", "compiler": "gcc 16.2.1 20260810", "fingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"},
+ "calibrated": false,
+ "note": "uncalibrated host: observations only, not budget passes",
+ "benchmarks": [
+  {"name": "ui.grid_paint.50k_lines.1280x720", "warmupMs": 10000, "p95SpreadPercent": 30.2615, "runs": [{"operations": 200, "p50Us": 1973.75, "p95Us": 2632.86, "p99Us": 2701.8, "maxUs": 2943.09, "meanUs": 2057.72}, {"operations": 200, "p50Us": 1985.98, "p95Us": 2668.31, "p99Us": 2722.01, "maxUs": 2751.38, "meanUs": 2082.66}, {"operations": 200, "p50Us": 1982.42, "p95Us": 2683.42, "p99Us": 2776.22, "maxUs": 2889.84, "meanUs": 2090.3}, {"operations": 200, "p50Us": 2001.24, "p95Us": 2767.85, "p99Us": 2948.1, "maxUs": 3790.52, "meanUs": 2140.21}, {"operations": 200, "p50Us": 1973.11, "p95Us": 2124.84, "p99Us": 2262.07, "maxUs": 2886.39, "meanUs": 1993.01}]}
+ ]
+}

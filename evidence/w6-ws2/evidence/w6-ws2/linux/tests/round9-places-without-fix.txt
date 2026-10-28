@@ -1,0 +1,16 @@
+=== aWindowPlaceNoWindowCanHaveIsRefused without the fix (995d7b931's validator)
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::aWindowPlaceNoWindowCanHaveIsRefused(main window far right) '!ui::WorkspaceArrangement::parseFromFile(text, QPoint(1000, 1000), &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(962)]
+FAIL!  : FileLayoutsTest::aWindowPlaceNoWindowCanHaveIsRefused(main window normal place far down) '!ui::WorkspaceArrangement::parseFromFile(text, QPoint(1000, 1000), &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(962)]
+FAIL!  : FileLayoutsTest::aWindowPlaceNoWindowCanHaveIsRefused(floating window far down) '!ui::WorkspaceArrangement::parseFromFile(text, QPoint(1000, 1000), &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(962)]
+FAIL!  : FileLayoutsTest::aWindowPlaceNoWindowCanHaveIsRefused(floating window far left) '!ui::WorkspaceArrangement::parseFromFile(text, QPoint(1000, 1000), &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(962)]
+FAIL!  : FileLayoutsTest::aWindowPlaceNoWindowCanHaveIsRefused(floats again past an int) '!ui::WorkspaceArrangement::parseFromFile(text, QPoint(1000, 1000), &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(962)]
+FAIL!  : FileLayoutsTest::aWindowPlaceNoWindowCanHaveIsRefused(width as text) '!ui::WorkspaceArrangement::parseFromFile(text, QPoint(1000, 1000), &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(962)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 6 failed, 0 skipped, 0 blacklisted, 4952ms

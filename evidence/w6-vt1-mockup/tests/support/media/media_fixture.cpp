@@ -1,0 +1,539 @@
+// Writes synthetic video fixtures whose frames identify themselves (M50-seek,
+// N1). Each frame shows its index as a 4x4 barcode of 16 large blocks (white
+// = 1), which survives MPEG-4 quantization; decoders read it back by
+// sampling block centres.
+//
+//   hikari_media_fixture <out> <kind>
+//   kinds: cfr       24000/1001, 48 frames, I/P only, GOP 12
+//          vfr       48 frames with irregular timestamps (1 ms timebase)
+//          bframes   24000/1001, 48 frames, 2 B-frames per anchor, GOP 12
+//          longgop   24000/1001, 300 frames, one keyframe
+//          long      24000/1001, 24000 frames (about 17 minutes) at 64x48
+//                    and a low bit rate: a small file whose index takes
+//                    as many packets as a long episode's (AV4)
+//          audio     the cfr video plus 2 s of 48 kHz stereo PCM whose left
+//                    channel is the sample index modulo 32768
+//          tracks    the audio fixture with a second audio track (languages
+//                    eng and jpn, titled), a SubRip track with one cue
+//                    "Hello" from 0.5 s to 1.5 s, and two chapters (N5)
+//          audiodelay the audio fixture with its audio starting 0.5 s after
+//                    the video (A1: legacy's FFMS_DELAY_FIRST_VIDEO_TRACK)
+//          audioonly 2 s of 48 kHz stereo PCM and no video: left is
+//                    audioOnlySample(i), right half of it (A1)
+//          unknown   the cfr video written as a live stream: no duration
+//          mkvextract the cfr video with an ASS track ("Signs", eng, with
+//                    kMkvExtractHeader as its codec-private data), a SubRip
+//                    track ("Full", pol) and the font attachments of
+//                    mkvExtractFonts() (Y9)
+//          color601, color709, color709full
+//                    12 frames of four flat Y'CbCr quadrants (kColorPatches),
+//                    tagged BT.601 limited, BT.709 limited and BT.709 full
+//                    range (I2: the decoder must convert with the tags)
+//          dshow-cfr the cfr video in AVI (W1: what stock DirectShow plays,
+//                    the AVI splitter and the MPEG-4 decoder DMO)
+//          dshow-vfr the vfr video as WMV2 in ASF (W1: the WM ASF reader and
+//                    the WMV decoder DMO)
+//          dshow-mpg the cfr video as MPEG-1 in a program stream (W1: the
+//                    MPEG-I splitter and the MPEG video decoder, a stock
+//                    filter with property pages)
+//          probe-<container>-<codec>  W1 experiments (not built by default)
+//          colorhd   the same patches at 1280x720 with no matrix or range
+//                    tags (V4: legacy's guess for an untagged frame)
+//          yuv10     the cfr video as lossless FFV1 in 10-bit 4:2:0
+//                    (yuv420p10le; V1: a high bit depth player frame)
+//          subs-mp4, subs-mov, subs-ts
+//                    one subtitle stream and nothing else: mov_text in MP4 at
+//                    1/600 and in MOV at 1/90000, DVB teletext in MPEG-TS at
+//                    1/90000, the packets of mkv_fixture.h's kMp4Packets,
+//                    kMovPackets and kTsPackets (decision 38d: subtitle times
+//                    in time bases other than 1/1000)
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/log.h>
+#include <libavutil/dict.h>
+#include <libavutil/mem.h>
+#include <libavutil/opt.h>
+}
+
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <string>
+
+#include "mkv_fixture.h"
+
+namespace {
+
+// The frame size: 320x240, but V4's untagged HD colour fixture is 1280x720
+// (legacy took an untagged frame wider than 1024 or at least 600 high as BT.709).
+int kWidth = 320, kHeight = 240;
+constexpr int kBlocks = 4;
+
+void drawIndex(AVFrame *f, int index)
+{
+    if (f->format == AV_PIX_FMT_YUV420P10LE) { // the same levels in 10 bits
+        for (int y = 0; y < kHeight; ++y)
+            for (int x = 0; x < kWidth; ++x) {
+                const int bit = (y * kBlocks / kHeight) * kBlocks + (x * kBlocks / kWidth);
+                reinterpret_cast<std::uint16_t *>(f->data[0] + y * f->linesize[0])[x] =
+                    static_cast<std::uint16_t>((index >> bit) & 1 ? 940 : 64);
+            }
+        for (int p = 1; p < 3; ++p)
+            for (int y = 0; y < kHeight / 2; ++y)
+                for (int x = 0; x < kWidth / 2; ++x)
+                    reinterpret_cast<std::uint16_t *>(f->data[p] + y * f->linesize[p])[x] = 512;
+        return;
+    }
+    for (int y = 0; y < kHeight; ++y)
+        for (int x = 0; x < kWidth; ++x) {
+            const int bit = (y * kBlocks / kHeight) * kBlocks + (x * kBlocks / kWidth);
+            f->data[0][y * f->linesize[0] + x] = static_cast<std::uint8_t>((index >> bit) & 1 ? 235 : 16);
+        }
+    for (int p = 1; p < 3; ++p)
+        for (int y = 0; y < kHeight / 2; ++y)
+            std::memset(f->data[p] + y * f->linesize[p], 128, kWidth / 2);
+}
+
+// Y', Cb, Cr per quadrant (top-left, top-right, bottom-left, bottom-right),
+// in the 8-bit code values of the tagged range.
+constexpr int kColorPatches[4][3] = {{180, 60, 200}, {81, 90, 240}, {145, 54, 34}, {41, 240, 110}};
+
+void drawColor(AVFrame *f)
+{
+    for (int y = 0; y < kHeight; ++y)
+        for (int x = 0; x < kWidth; ++x)
+            f->data[0][y * f->linesize[0] + x] = std::uint8_t(kColorPatches[(y >= kHeight / 2) * 2 + (x >= kWidth / 2)][0]);
+    for (int p = 1; p < 3; ++p)
+        for (int y = 0; y < kHeight / 2; ++y)
+            for (int x = 0; x < kWidth / 2; ++x)
+                f->data[p][y * f->linesize[p] + x] =
+                    std::uint8_t(kColorPatches[(y >= kHeight / 4) * 2 + (x >= kWidth / 4)][p]);
+}
+
+// A sawtooth over the whole 16-bit range (A1's audio-only fixture).
+std::int16_t audioOnlySample(std::int64_t i)
+{
+    return static_cast<std::int16_t>(((i * 37) % 65536) - 32768);
+}
+
+int fail(const char *what)
+{
+    std::fprintf(stderr, "media_fixture: %s\n", what);
+    return 1;
+}
+
+// A1: audio without video.
+int writeAudioOnly(const std::string &out)
+{
+    AVFormatContext *fmt = nullptr;
+    if (avformat_alloc_output_context2(&fmt, nullptr, "matroska", out.c_str()) < 0)
+        return fail("output context");
+    const AVCodec *acodec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
+    AVCodecContext *aenc = avcodec_alloc_context3(acodec);
+    aenc->sample_rate = 48000;
+    aenc->sample_fmt = AV_SAMPLE_FMT_S16;
+    av_channel_layout_default(&aenc->ch_layout, 2);
+    aenc->time_base = AVRational{1, 48000};
+    if (avcodec_open2(aenc, acodec, nullptr) < 0)
+        return fail("audio encoder");
+    AVStream *as = avformat_new_stream(fmt, nullptr);
+    avcodec_parameters_from_context(as->codecpar, aenc);
+    as->time_base = aenc->time_base;
+    if (avio_open(&fmt->pb, out.c_str(), AVIO_FLAG_WRITE) < 0 || avformat_write_header(fmt, nullptr) < 0)
+        return fail("open output");
+    AVPacket *pkt = av_packet_alloc();
+    AVFrame *a = av_frame_alloc();
+    a->format = aenc->sample_fmt;
+    av_channel_layout_copy(&a->ch_layout, &aenc->ch_layout);
+    a->sample_rate = 48000;
+    a->nb_samples = 1024;
+    av_frame_get_buffer(a, 0);
+    auto drain = [&](AVFrame *f) {
+        if (avcodec_send_frame(aenc, f) < 0)
+            return false;
+        while (avcodec_receive_packet(aenc, pkt) == 0) {
+            av_packet_rescale_ts(pkt, aenc->time_base, as->time_base);
+            pkt->stream_index = as->index;
+            av_interleaved_write_frame(fmt, pkt);
+        }
+        return true;
+    };
+    for (std::int64_t s = 0; s < 96000; s += 1024) {
+        av_frame_make_writable(a);
+        auto *samples = reinterpret_cast<std::int16_t *>(a->data[0]);
+        for (int k = 0; k < 1024; ++k) {
+            const std::int16_t v = audioOnlySample(s + k);
+            samples[2 * k] = v;
+            samples[2 * k + 1] = static_cast<std::int16_t>(v / 2);
+        }
+        a->pts = s;
+        if (!drain(a))
+            return fail("encode audio");
+    }
+    drain(nullptr);
+    av_write_trailer(fmt);
+    avio_closep(&fmt->pb);
+    av_frame_free(&a);
+    av_packet_free(&pkt);
+    avcodec_free_context(&aenc);
+    avformat_free_context(fmt);
+    return 0;
+}
+
+// Decision 38d: one subtitle stream at a given time base, the packets as
+// given. Fails when the muxer does not keep the time base, so a fixture
+// cannot quietly lose the shape it is named for.
+int writeTimedSubtitles(const std::string &out, const std::string &kind)
+{
+    const char *container = nullptr;
+    AVCodecID codec = AV_CODEC_ID_MOV_TEXT;
+    AVRational timeBase{1, 90000};
+    const std::vector<mkvfixture::TimedPacket> *packets = nullptr;
+    AVDictionary *options = nullptr;
+    if (kind == "subs-mp4") {
+        container = "mp4";
+        timeBase = AVRational{1, 600};
+        packets = &mkvfixture::kMp4Packets;
+    } else if (kind == "subs-mov") {
+        container = "mov";
+        packets = &mkvfixture::kMovPackets;
+    } else {
+        container = "mpegts";
+        codec = AV_CODEC_ID_DVB_TELETEXT;
+        packets = &mkvfixture::kTsPackets;
+        av_dict_set(&options, "mpegts_copyts", "1", 0); // the times as written
+    }
+    AVFormatContext *fmt = nullptr;
+    if (avformat_alloc_output_context2(&fmt, nullptr, container, out.c_str()) < 0)
+        return fail("output context");
+    AVStream *st = avformat_new_stream(fmt, nullptr);
+    st->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+    st->codecpar->codec_id = codec;
+    st->time_base = timeBase;
+    if (avio_open(&fmt->pb, out.c_str(), AVIO_FLAG_WRITE) < 0 || avformat_write_header(fmt, &options) < 0)
+        return fail("open output");
+    av_dict_free(&options);
+    if (av_cmp_q(st->time_base, timeBase) != 0)
+        return fail("the muxer changed the subtitle time base");
+    for (const auto &p : *packets) {
+        AVPacket *pkt = av_packet_alloc();
+        if (av_new_packet(pkt, static_cast<int>(p.data.size())) < 0)
+            return fail("packet");
+        std::memcpy(pkt->data, p.data.data(), p.data.size());
+        pkt->pts = pkt->dts = p.start;
+        pkt->duration = p.duration;
+        pkt->flags = AV_PKT_FLAG_KEY;
+        pkt->stream_index = st->index;
+        if (av_interleaved_write_frame(fmt, pkt) < 0)
+            return fail("write subtitle");
+        av_packet_free(&pkt);
+    }
+    if (av_write_trailer(fmt) < 0)
+        return fail("trailer");
+    avio_closep(&fmt->pb);
+    avformat_free_context(fmt);
+    return 0;
+}
+
+} // namespace
+
+int main(int argc, char **argv)
+{
+    if (argc != 3)
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|long|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|yuv10|subs-mp4|subs-mov|subs-ts>");
+    const std::string out = argv[1], kind = argv[2];
+    av_log_set_level(AV_LOG_ERROR); // the encoders' clipping notes are noise in the build log
+    if (kind == "audioonly")
+        return writeAudioOnly(out);
+    if (kind == "subs-mp4" || kind == "subs-mov" || kind == "subs-ts")
+        return writeTimedSubtitles(out, kind);
+    const bool delayed = kind == "audiodelay";
+    const bool vfr = kind == "vfr" || kind == "dshow-vfr" || kind.ends_with("-vfr");
+    // W1: containers and codecs stock DirectShow plays.
+    const char *container = "matroska";
+    AVCodecID codecId = AV_CODEC_ID_MPEG4;
+    const char *codecTag = nullptr;
+    AVPixelFormat pixelFormat = AV_PIX_FMT_YUV420P;
+    if (kind == "yuv10") {
+        codecId = AV_CODEC_ID_FFV1;
+        pixelFormat = AV_PIX_FMT_YUV420P10LE;
+    } else if (kind == "dshow-cfr") {
+        container = "avi";
+        codecTag = "XVID";
+    } else if (kind == "dshow-vfr") {
+        container = "asf";
+        codecId = AV_CODEC_ID_WMV2;
+    } else if (kind == "dshow-mpg") {
+        container = "mpeg";
+        codecId = AV_CODEC_ID_MPEG1VIDEO;
+    } else if (kind.starts_with("probe-")) {
+        // probe-<avi|asf|mpeg>-<fmp4|m4s2|xvid|mp4s|div3|wmv2|mjpeg|mpeg1>[-vfr]
+        const std::string rest = kind.substr(6);
+        container = rest.starts_with("avi") ? "avi" : rest.starts_with("asf") ? "asf" : "mpeg";
+        const std::string codec = rest.substr(rest.find('-') + 1);
+        if (codec.starts_with("div3") || codec.starts_with("mp43"))
+            codecId = AV_CODEC_ID_MSMPEG4V3;
+        else if (codec.starts_with("wmv2"))
+            codecId = AV_CODEC_ID_WMV2;
+        else if (codec.starts_with("mjpeg")) {
+            codecId = AV_CODEC_ID_MJPEG;
+            pixelFormat = AV_PIX_FMT_YUVJ420P;
+        } else if (codec.starts_with("mpeg1"))
+            codecId = AV_CODEC_ID_MPEG1VIDEO;
+        static std::string tag;
+        if (codec.starts_with("m4s2"))
+            tag = "M4S2";
+        else if (codec.starts_with("xvid"))
+            tag = "XVID";
+        else if (codec.starts_with("mp4s"))
+            tag = "MP4S";
+        else if (codec.starts_with("mp43"))
+            tag = "MP43";
+        if (!tag.empty())
+            codecTag = tag.c_str();
+    }
+    const bool tracks = kind == "tracks";
+    const bool extract = kind == "mkvextract";
+    const bool color = kind.starts_with("color");
+    const bool untagged = kind == "colorhd";
+    if (untagged) {
+        kWidth = 1280;
+        kHeight = 720;
+    }
+    const bool longVideo = kind == "long";
+    if (longVideo) {
+        kWidth = 64;
+        kHeight = 48;
+    }
+    const int frames = longVideo ? 24000 : kind == "longgop" ? 300 : color ? 12 : 48;
+
+    AVFormatContext *fmt = nullptr;
+    if (avformat_alloc_output_context2(&fmt, nullptr, container, out.c_str()) < 0)
+        return fail("output context");
+    const AVCodec *codec = avcodec_find_encoder(codecId);
+    if (!codec)
+        return fail("no video encoder");
+    AVCodecContext *enc = avcodec_alloc_context3(codec);
+    enc->width = kWidth;
+    enc->height = kHeight;
+    enc->pix_fmt = pixelFormat;
+    if (codecTag)
+        enc->codec_tag = MKTAG(codecTag[0], codecTag[1], codecTag[2], codecTag[3]);
+    enc->time_base = vfr ? AVRational{1, 1000} : AVRational{1001, 24000};
+    enc->framerate = AVRational{24000, 1001};
+    enc->gop_size = kind == "longgop" ? 600 : 12; // 600 is MPEG-4's largest interval
+    if (codecId == AV_CODEC_ID_MPEG1VIDEO) // MPEG-1 has no 24000/1001 timebase in a stream
+        enc->time_base = AVRational{1001, 24000};
+    enc->max_b_frames = kind == "bframes" ? 2 : 0;
+    enc->bit_rate = longVideo ? 32'000 : 2'000'000;
+    if (kind == "sar") // T1: an anamorphic frame
+        enc->sample_aspect_ratio = AVRational{32, 27};
+    if (untagged) {
+        enc->bit_rate = 8'000'000; // flat patches survive quantization; no tags
+    } else if (color) {
+        enc->colorspace = kind == "color601" ? AVCOL_SPC_SMPTE170M : AVCOL_SPC_BT709;
+        enc->color_primaries = kind == "color601" ? AVCOL_PRI_SMPTE170M : AVCOL_PRI_BT709;
+        enc->color_trc = kind == "color601" ? AVCOL_TRC_SMPTE170M : AVCOL_TRC_BT709;
+        enc->color_range = kind == "color709full" ? AVCOL_RANGE_JPEG : AVCOL_RANGE_MPEG;
+        enc->bit_rate = 8'000'000; // flat patches survive quantization
+    }
+    if (fmt->oformat->flags & AVFMT_GLOBALHEADER)
+        enc->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    if (avcodec_open2(enc, codec, nullptr) < 0)
+        return fail("video encoder");
+    AVStream *vs = avformat_new_stream(fmt, nullptr);
+    avcodec_parameters_from_context(vs->codecpar, enc);
+    vs->time_base = enc->time_base;
+    if (codecTag)
+        vs->codecpar->codec_tag = enc->codec_tag;
+    vs->sample_aspect_ratio = enc->sample_aspect_ratio;
+
+    AVCodecContext *aenc = nullptr;
+    AVStream *as = nullptr, *as2 = nullptr, *ss = nullptr;
+    if (kind == "audio" || tracks || delayed) {
+        const AVCodec *acodec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
+        aenc = avcodec_alloc_context3(acodec);
+        aenc->sample_rate = 48000;
+        aenc->sample_fmt = AV_SAMPLE_FMT_S16;
+        av_channel_layout_default(&aenc->ch_layout, 2);
+        aenc->time_base = AVRational{1, 48000};
+        if (avcodec_open2(aenc, acodec, nullptr) < 0)
+            return fail("audio encoder");
+        as = avformat_new_stream(fmt, nullptr);
+        avcodec_parameters_from_context(as->codecpar, aenc);
+        as->time_base = aenc->time_base;
+    }
+    if (tracks) {
+        av_dict_set(&as->metadata, "language", "eng", 0);
+        av_dict_set(&as->metadata, "title", "Main", 0);
+        as2 = avformat_new_stream(fmt, nullptr);
+        avcodec_parameters_from_context(as2->codecpar, aenc);
+        as2->time_base = aenc->time_base;
+        av_dict_set(&as2->metadata, "language", "jpn", 0);
+        av_dict_set(&as2->metadata, "title", "Commentary", 0);
+        ss = avformat_new_stream(fmt, nullptr);
+        ss->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+        ss->codecpar->codec_id = AV_CODEC_ID_SUBRIP;
+        ss->time_base = AVRational{1, 1000};
+        av_dict_set(&ss->metadata, "language", "eng", 0);
+        fmt->chapters = static_cast<AVChapter **>(av_calloc(2, sizeof(AVChapter *)));
+        fmt->nb_chapters = 2;
+        for (int c = 0; c < 2; ++c) {
+            auto *chapter = static_cast<AVChapter *>(av_mallocz(sizeof(AVChapter)));
+            chapter->id = c + 1;
+            chapter->time_base = AVRational{1, 1000};
+            chapter->start = c * 1000;
+            chapter->end = (c + 1) * 1000;
+            av_dict_set(&chapter->metadata, "title", c == 0 ? "Opening" : "Second", 0);
+            fmt->chapters[c] = chapter;
+        }
+    }
+    AVStream *assTrack = nullptr, *srtTrack = nullptr;
+    if (extract) {
+        // Y9: two text tracks and font attachments beside the video.
+        assTrack = avformat_new_stream(fmt, nullptr);
+        assTrack->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+        assTrack->codecpar->codec_id = AV_CODEC_ID_ASS;
+        const std::string &header = mkvfixture::kMkvExtractHeader;
+        assTrack->codecpar->extradata = static_cast<std::uint8_t *>(av_mallocz(header.size() + AV_INPUT_BUFFER_PADDING_SIZE));
+        std::memcpy(assTrack->codecpar->extradata, header.data(), header.size());
+        assTrack->codecpar->extradata_size = int(header.size());
+        assTrack->time_base = AVRational{1, 1000};
+        av_dict_set(&assTrack->metadata, "language", "eng", 0);
+        av_dict_set(&assTrack->metadata, "title", "Signs", 0);
+        srtTrack = avformat_new_stream(fmt, nullptr);
+        srtTrack->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+        srtTrack->codecpar->codec_id = AV_CODEC_ID_SUBRIP;
+        srtTrack->time_base = AVRational{1, 1000};
+        av_dict_set(&srtTrack->metadata, "language", "pol", 0);
+        av_dict_set(&srtTrack->metadata, "title", "Full", 0);
+        for (const auto &font : mkvfixture::mkvExtractFonts()) {
+            AVStream *a = avformat_new_stream(fmt, nullptr);
+            a->codecpar->codec_type = AVMEDIA_TYPE_ATTACHMENT;
+            a->codecpar->codec_id = AV_CODEC_ID_TTF;
+            a->codecpar->extradata = static_cast<std::uint8_t *>(av_mallocz(font.data.size() + AV_INPUT_BUFFER_PADDING_SIZE));
+            std::memcpy(a->codecpar->extradata, font.data.data(), font.data.size());
+            a->codecpar->extradata_size = int(font.data.size());
+            av_dict_set(&a->metadata, "filename", font.filename.c_str(), 0);
+            av_dict_set(&a->metadata, "mimetype", font.mimetype.c_str(), 0);
+        }
+    }
+    AVDictionary *muxerOptions = nullptr;
+    if (kind == "unknown")
+        av_dict_set(&muxerOptions, "live", "1", 0); // no Duration element, no cues
+    if (avio_open(&fmt->pb, out.c_str(), AVIO_FLAG_WRITE) < 0 || avformat_write_header(fmt, &muxerOptions) < 0)
+        return fail("open output");
+    av_dict_free(&muxerOptions);
+
+    AVPacket *pkt = av_packet_alloc();
+    auto drain = [&](AVCodecContext *c, AVStream *s, AVFrame *f) {
+        if (avcodec_send_frame(c, f) < 0)
+            return false;
+        while (avcodec_receive_packet(c, pkt) == 0) {
+            av_packet_rescale_ts(pkt, c->time_base, s->time_base);
+            pkt->stream_index = s->index;
+            av_interleaved_write_frame(fmt, pkt);
+        }
+        return true;
+    };
+
+    AVFrame *frame = av_frame_alloc();
+    frame->format = enc->pix_fmt;
+    frame->width = kWidth;
+    frame->height = kHeight;
+    av_frame_get_buffer(frame, 0);
+    std::int64_t pts = 0;
+    for (int i = 0; i < frames; ++i) {
+        av_frame_make_writable(frame);
+        if (color)
+            drawColor(frame);
+        else
+            drawIndex(frame, i);
+        // VFR: durations cycle 30, 50, 70 ms, so frame boundaries are irregular.
+        frame->pts = vfr ? pts : i;
+        pts += 30 + 20 * (i % 3);
+        if (!drain(enc, vs, frame))
+            return fail("encode video");
+    }
+    drain(enc, vs, nullptr);
+
+    if (aenc) {
+        AVFrame *a = av_frame_alloc();
+        a->format = aenc->sample_fmt;
+        av_channel_layout_copy(&a->ch_layout, &aenc->ch_layout);
+        a->sample_rate = 48000;
+        a->nb_samples = 1024;
+        av_frame_get_buffer(a, 0);
+        for (std::int64_t s = 0; s < 96000; s += 1024) {
+            av_frame_make_writable(a);
+            auto *samples = reinterpret_cast<std::int16_t *>(a->data[0]);
+            for (int k = 0; k < 1024; ++k) {
+                const auto v = static_cast<std::int16_t>((s + k) % 32768);
+                samples[2 * k] = v;
+                samples[2 * k + 1] = static_cast<std::int16_t>(-v);
+            }
+            a->pts = delayed ? s + 24000 : s;
+            if (!drain(aenc, as, a))
+                return fail("encode audio");
+        }
+        drain(aenc, as, nullptr);
+        if (as2) {
+            // The same PCM, packet for packet, on the second track.
+            avcodec_free_context(&aenc);
+            const AVCodec *acodec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
+            aenc = avcodec_alloc_context3(acodec);
+            aenc->sample_rate = 48000;
+            aenc->sample_fmt = AV_SAMPLE_FMT_S16;
+            av_channel_layout_default(&aenc->ch_layout, 2);
+            aenc->time_base = AVRational{1, 48000};
+            avcodec_open2(aenc, acodec, nullptr);
+            for (std::int64_t s = 0; s < 96000; s += 1024) {
+                av_frame_make_writable(a);
+                std::memset(a->data[0], 0, 1024 * 4);
+                a->pts = s;
+                if (!drain(aenc, as2, a))
+                    return fail("encode second audio");
+            }
+            drain(aenc, as2, nullptr);
+        }
+        av_frame_free(&a);
+        avcodec_free_context(&aenc);
+    }
+    if (ss) {
+        const char cue[] = "Hello";
+        AVPacket *sp = av_packet_alloc();
+        av_new_packet(sp, sizeof cue - 1);
+        std::memcpy(sp->data, cue, sizeof cue - 1);
+        sp->pts = sp->dts = 500;
+        sp->duration = 1000;
+        sp->stream_index = ss->index;
+        av_packet_rescale_ts(sp, AVRational{1, 1000}, ss->time_base);
+        av_interleaved_write_frame(fmt, sp);
+        av_packet_free(&sp);
+    }
+    if (extract) {
+        // Interleaved with nothing else: the video is already written.
+        const auto writeText = [&](AVStream *st, const mkvfixture::Packet &p) {
+            AVPacket *sp = av_packet_alloc();
+            av_new_packet(sp, int(p.data.size()));
+            std::memcpy(sp->data, p.data.data(), p.data.size());
+            sp->pts = sp->dts = p.start;
+            sp->duration = p.duration;
+            sp->stream_index = st->index;
+            av_packet_rescale_ts(sp, AVRational{1, 1000}, st->time_base);
+            av_interleaved_write_frame(fmt, sp);
+            av_packet_free(&sp);
+        };
+        for (const auto &[track, p] : mkvfixture::mkvExtractPackets())
+            writeText(track == 0 ? assTrack : srtTrack, p);
+    }
+    av_write_trailer(fmt);
+    avio_closep(&fmt->pb);
+    av_frame_free(&frame);
+    av_packet_free(&pkt);
+    avcodec_free_context(&enc);
+    avformat_free_context(fmt);
+    return 0;
+}

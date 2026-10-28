@@ -1,0 +1,906 @@
+# T5: the legacy drawing tool and its shape presets (clip_capture.cpp built
+# as legacy_drawing_capture). The rewrite's replay
+# (hikari_application_visual_drawing_tests) sets the same view up from
+# "client", "frame" and "zoomat" and checks it gives the "video" and "zoom"
+# lines the legacy probe runs with.
+#
+# Script 1920x1080 on a 640x360 video: 3 script units a pixel. The Lines
+# show from 1000 to 2000 ms; the video is at 1500 ms unless "time" says.
+
+# --- Free drawing (the shape list on "Choose") ------------------------------
+
+case draw-new-lines
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\pos(300,300)}
+tool draw
+setvisual
+dump
+down 100 100
+up 100 100
+dump
+down 200 100
+up 200 100
+down 200 200
+move 210 210 left
+up 210 210
+dump
+end
+
+case draw-existing-an7
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\p1}m 0 0 l 300 0 300 300 0 300{\p0}
+tool draw
+mode 0
+setvisual
+dump
+# the point at 300,0 (view 150,50)
+down 150 50
+move 170 60 left
+move 180 70 left
+dump
+up 180 70
+dump
+end
+
+case draw-default-alignment-centre
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\pos(960,540)\p1}m 0 0 l 300 0 300 300 0 300
+tool draw
+mode 0
+setvisual
+dump
+# an2: the drawing's bottom centre at the position; the point 300,0 is at view 370,80
+down 370 80
+move 380 90 left
+up 380 90
+dump
+end
+
+case draw-an5-fractional
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an5\pos(960.5,540.25)\p1}m -10.5 -20.25 l 100.75 0 50 80.125
+tool draw
+mode 0
+setvisual
+dump
+# the point 100.75,0 (view 335.2,163.4)
+down 335 163
+move 345 170 left
+up 345 170
+dump
+end
+
+case draw-scale-p2
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)\p2}m 0 0 l 600 0 600 600 0 600{\p0}
+tool draw
+mode 0
+setvisual
+dump
+# the point 600,0 in 1/2 units (view 200,100)
+down 200 100
+move 210 120 left
+up 210 120
+dump
+end
+
+case draw-fscx-fscy
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\fscx200\fscy50\an7\pos(300,300)\p1}m 0 0 l 100 0 100 100 0 100
+tool draw
+mode 0
+setvisual
+dump
+# the point 100,0 is at view (300 + 100*2)/3, 300/3
+down 166 100
+move 180 110 left
+up 180 110
+dump
+end
+
+case draw-style-scale-and-angle
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+style ScaleX 150
+style ScaleY 75
+style Angle 30
+line {\an7\pos(300,300)\p1}m 0 0 l 100 0 100 100 0 100
+tool draw
+mode 0
+setvisual
+dump
+# the point 100,0 rotated by the Style's 30 degrees (view 143.3,75)
+down 143 75
+move 150 85 left
+up 150 85
+dump
+end
+
+case draw-frz
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\frz30\pos(600,300)\p1}m 0 0 l 300 0 300 300 0 300
+tool draw
+mode 0
+setvisual
+dump
+# the point 300,0 rotated (view 286.6,50)
+down 286 50
+move 296 60 left
+up 296 60
+dump
+end
+
+case draw-frz-org-an5
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an5\frz-45\org(100,200)\pos(960,540)\p1}m 0 0 l 200 0 200 100 0 100
+tool draw
+mode 0
+setvisual
+dump
+# the point 200,0 (view 355.4,191.8)
+down 355 192
+move 365 200 left
+up 365 200
+dump
+end
+
+case draw-move-tag
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\move(300,300,900,600)\p1}m 0 0 l 100 0 100 100
+tool draw
+mode 0
+time 1500
+setvisual
+dump
+down 233 150
+move 240 160 left
+up 240 160
+dump
+end
+
+case draw-move-times
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\move(300,300,900,600,100,400)\p1}m 0 0 l 100 0 100 100
+tool draw
+mode 0
+time 1250
+setvisual
+dump
+time 1600
+# at 1600 ms the drawing sits at the \move's end: the first point at view 300,200
+down 300 200
+move 310 210 left
+up 310 210
+dump
+end
+
+case draw-no-position
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+style MarginL 30
+style MarginR 60
+style MarginV 45
+line {\p1}m 0 0 l 300 0 300 300
+margins 0 0 90
+tool draw
+setvisual
+dump
+down 50 50
+up 50 50
+dump
+end
+
+case draw-an9-no-position
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an9\p1}m 0 0 l 300 0 300 300
+tool draw
+setvisual
+dump
+down 50 50
+up 50 50
+dump
+end
+
+case draw-bare-text
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line m 0 0 l 100 0 100 100
+tool draw
+setvisual
+dump
+down 100 100
+up 100 100
+dump
+down 120 100
+up 120 100
+dump
+end
+
+case draw-empty-line
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line
+tool draw
+setvisual
+down 100 100
+up 100 100
+dump
+down 150 100
+up 150 100
+dump
+end
+
+case draw-text-around
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\bord2}Before{\p1}m 0 0 l 300 0 300 300{\p0}After
+tool draw
+mode 0
+setvisual
+dump
+down 150 50
+move 160 60 left
+up 160 60
+dump
+end
+
+case draw-second-p-tag
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\p1}m 0 0 l 300 0{\p2}m 0 0 l 600 0 600 600
+tool draw
+mode 0
+setvisual
+dump
+down 150 50
+move 160 60 left
+up 160 60
+dump
+end
+
+case draw-p0-only
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\p0}m 0 0 l 300 0
+tool draw
+setvisual
+dump
+down 200 200
+up 200 200
+dump
+end
+
+case draw-bezier-and-spline
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(0,0)\p1}m 300 300 l 600 300
+tool draw
+mode 2
+setvisual
+down 300 200
+up 300 200
+dump
+mode 3
+setvisual
+down 350 250
+up 350 250
+down 360 280
+up 360 280
+dump
+end
+
+case draw-keys-shift-tenth
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\p1}m 0 0 l 300 0 300 300
+tool draw
+mode 0
+setvisual
+# select the second point, then nudge
+down 150 50
+up 150 50
+key D
+key S shift
+key A alt
+dump
+end
+
+case draw-selection-move
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\p1}m 0 0 l 300 0 300 300 0 300
+tool draw
+mode 0
+setvisual
+down 10 10
+move 200 200 left
+up 200 200
+dump
+down 50 50
+move 60 70 left
+up 60 70
+dump
+end
+
+case draw-remove-points
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\p1}m 0 0 l 300 0 300 300 0 300
+tool draw
+mode 1
+setvisual
+mdown 150 50
+mup 150 50
+dump
+mode 5
+setvisual
+down 150 150
+up 150 150
+dump
+end
+
+case draw-wheel-six
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\p1}m 0 0 l 300 0
+tool draw
+mode 0
+setvisual
+wheel 100 100 1
+dump
+wheel 100 100 -1
+wheel 100 100 -1
+wheel 100 100 -1
+wheel 100 100 -1
+wheel 100 100 -1
+wheel 100 100 -1
+dump
+end
+
+case draw-separate-point
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\p1}m 0 0 l 300 0 300 300
+tool draw
+mode 4
+setvisual
+down 300 300
+up 300 300
+dump
+down 310 300
+up 310 300
+dump
+end
+
+case draw-three-lines
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(150,150)\p1}m 0 0 l 300 0 300 300
+line {\an7\pos(300,300)\p1}m 0 0 l 60 0 60 60
+line {\pos(10,10)}Text
+select 0 1 2
+tool draw
+mode 0
+setvisual
+down 150 50
+move 160 60 left
+dump
+up 160 60
+dump
+end
+
+case draw-tlmode
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(0,0)\p1}m 0 0 l 30 0
+tl {\an7\pos(150,150)\p1}m 0 0 l 300 0 300 300
+tool draw
+mode 0
+setvisual
+down 150 50
+move 160 60 left
+up 160 60
+dump
+end
+
+case draw-zoom
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+zoomat 2 320 180
+zoom 160 90 2 2
+line {\an7\pos(600,450)\p1}m 0 0 l 300 0 300 300
+tool draw
+mode 0
+setvisual
+dump
+# the point 300,0 (zoomed view 280,120)
+down 280 120
+move 290 130 left
+up 290 130
+dump
+end
+
+case draw-pillarbox
+script 1920 1080
+client 800 360 0
+frame 1280 720
+video 80 0 720 360
+zoom -80 0 1 1
+line {\an7\pos(150,150)\p1}m 0 0 l 300 0 300 300
+tool draw
+mode 0
+setvisual
+down 230 50
+move 240 60 left
+up 240 60
+dump
+end
+
+# --- Shape presets ------------------------------------------------------------
+
+case shapes-defaults-rectangle
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 1
+dump
+down 100 100
+move 150 120 left
+move 200 150 left
+dump
+up 200 150
+dump
+end
+
+case shapes-circle-keeps-aspect
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 2
+down 100 100
+move 200 130 left
+dump
+move 210 140 left shift
+dump
+up 210 140
+dump
+end
+
+case shapes-edges-corner-inside
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 1
+down 100 100
+move 200 150 left
+up 200 150
+dump
+# the right edge
+down 201 120
+move 240 125 left
+up 240 125
+dump
+# the bottom-left corner
+down 100 150
+move 90 170 left
+up 90 170
+dump
+# inside
+down 150 130
+move 160 140 left
+up 160 140
+dump
+# outside: a new rectangle
+down 400 300
+move 450 330 left
+up 450 330
+dump
+end
+
+case shapes-drag-up-left
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 3
+down 300 300
+move 200 200 left
+up 200 200
+dump
+end
+
+case shapes-too-narrow
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 1
+down 100 100
+move 102 150 left
+dump
+up 102 150
+dump
+down 300 300
+up 300 300
+dump
+end
+
+case shapes-alignments
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an5\pos(960,540)}
+tool draw
+setvisual
+shape 1
+down 100 100
+move 200 150 left
+up 200 150
+dump
+end
+
+case shapes-an3-no-pos
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an3}Text
+tool draw
+setvisual
+shape 2
+down 100 100
+move 200 150 left
+up 200 150
+dump
+end
+
+case shapes-replace-drawing
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)\bord0\p1}m 0 0 l 10 0 10 10{\p0}After
+tool draw
+setvisual
+shape 1
+down 100 100
+move 200 150 left
+up 200 150
+dump
+end
+
+case shapes-p2-and-fscx
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\fscx200\pos(300,300)\p2}m 0 0 l 10 0 10 10
+tool draw
+setvisual
+shape 1
+down 100 100
+move 200 150 left
+up 200 150
+dump
+end
+
+case shapes-file-modes-and-scaling
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+shapesfile Shape: wide; m 0 0 l 200 0 200 100 0 100; 2; 0
+shapesfile Shape: scaled; m 0 0 l 100 0 100 100 0 100; 0; 1
+shapesfile Shape: scaled x; m 0 0 l 100 0 100 50 0 50; 2; 1
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 1
+down 100 100
+move 200 120 left
+up 200 120
+dump
+shape 2
+down 300 200
+move 400 250 left
+up 400 250
+dump
+shape 3
+down 450 100
+move 550 150 left
+up 550 150
+dump
+end
+
+case shapes-change-scale-existing-tags
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+shapesfile Shape: scaled; m 0 0 l 100 0 100 100 0 100; 1; 1
+line {\fscx100\fscy100\an7\pos(300,300)\p1}m 0 0 l 1 1
+tool draw
+setvisual
+shape 1
+down 100 100
+move 150 140 left
+move 200 160 left
+up 200 160
+dump
+end
+
+case shapes-file-parse
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+shapesfile Shape: one; m 0 0 l 10 0 10 10; 1; 0
+shapesfile Not a shape: x; m 0 0; 0; 0
+shapesfile Shape: missing modes; m 0 0 l 1 1
+shapesfile Shape: bad mode; m 0 0 l 1 1; x; 0
+shapesfile Shape: spaced ;  m 0 0 l 5 5 ;  2 ;  1
+shapesfile Shape: two;;m 0 0 l 20 0;;1;;0
+shapesfile
+shapesfile Shape: last; m 0 0 l 3 3; 7; 300
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 1
+dump
+savepresets
+dump
+end
+
+case shapes-switch-and-back
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)\p1}m 0 0 l 300 0 300 300
+tool draw
+mode 0
+setvisual
+shape 1
+down 100 100
+move 200 150 left
+up 200 150
+dump
+shape 2
+# the right edge, now with the circle
+down 200 120
+move 220 125 left
+up 220 125
+dump
+shape 0
+dump
+shape 9
+dump
+end
+
+case shapes-click-without-drag
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 1
+down 100 100
+up 100 100
+dump
+dclick 100 100
+up 100 100
+dump
+end
+
+case shapes-right-release
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 1
+down 100 100
+move 200 150 left
+up 200 150
+rdown 50 50
+rup 50 50
+dump
+end
+
+case shapes-three-lines
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)}
+line {\an5\pos(600,600)\p1}m 0 0 l 1 1
+line Text
+select 0 1 2
+tool draw
+setvisual
+shape 2
+down 100 100
+move 200 150 left
+dump
+up 200 150
+dump
+end
+
+case shapes-zoom
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+zoomat 2 320 180
+zoom 160 90 2 2
+line {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 1
+down 100 100
+move 200 150 left
+up 200 150
+dump
+end
+
+case shapes-tlmode
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(0,0)}
+tl {\an7\pos(300,300)}
+tool draw
+setvisual
+shape 1
+down 100 100
+move 200 150 left
+up 200 150
+dump
+end
+
+case shapes-another-line
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an7\pos(300,300)}
+line {\an7\pos(900,600)}
+tool draw
+setvisual
+shape 1
+down 100 100
+move 200 150 left
+up 200 150
+activate 1
+dump
+down 201 120
+move 240 125 left
+up 240 125
+dump
+end
+
+case shapes-change-scale-new-tags
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+shapesfile Shape: scaled; m 0 0 l 100 0 100 100 0 100; 0; 1
+line {\an7\pos(300,300)}Text
+tool draw
+setvisual
+shape 1
+down 100 100
+move 150 140 left
+dump
+move 200 160 left
+dump
+up 200 160
+dump
+end
+
+case shapes-change-scale-longer-tags
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+shapesfile Shape: scaled; m 0 0 l 100 0 100 100 0 100; 1; 1
+line {\fscx1\fscy1\an7\pos(300,300)\p1}m 0 0 l 1 1{\p0}After
+tool draw
+setvisual
+shape 1
+down 100 100
+move 131 140 left
+dump
+move 200 160 left
+up 200 160
+dump
+end

@@ -1,0 +1,4 @@
+qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+qrc:/qt/qml/Hikari/Ui/Main.qml:4423:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+hikari.docking: floating window "Audio" QRect(1744,368 816x199) reachable true screens QList("LM30-E330C 0,0 2560x1032")

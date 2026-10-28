@@ -1,0 +1,58 @@
+# compositor windows
+4194318 'episode.ass - HikariSub' Window 4194318   Position: 960,108 (screen: 0)   Geometry: 1280x800 
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "episode.ass - HikariSub",
+   "id": "HikariSub",
+   "active": true,
+   "x": 960,
+   "y": 108,
+   "w": 1280,
+   "h": 800
+  }
+ ],
+ "panels": [
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 97,
+   "w": 640,
+   "h": 420
+  },
+  {
+   "name": "Line editor: episode.ass",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 97,
+   "w": 639,
+   "h": 420
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 561,
+   "w": 1280,
+   "h": 205
+  }
+ ],
+ "focus": "[panel] 'Grid' desc='Editing: episode.ass' <focused,showing,visible,enabled> @960,669 1280x205 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'episode.ass - HikariSub' > filler:'' > panel:'Grid'",
+ "texts": {
+  "Line text": "first",
+  "Start": "0:00:01.00",
+  "End": "0:00:02.00"
+ },
+ "labels": [
+  "Video times"
+ ]
+}
+# layouts files
+/tmp/gate-home-x11/.config/HikariSub/HikariSub/layouts.json 25919
+

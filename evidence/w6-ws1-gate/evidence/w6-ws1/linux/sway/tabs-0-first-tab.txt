@@ -1,0 +1,126 @@
+# compositor windows
+con          id=8 hikarisub 'episode.ass - HikariSub' 0,27 1600x973 client=2,27 1596x971 output=HEADLESS-1 fullscreen=0  visible=True border=normal
+floating_con id=9 hikarisub 'Audio' 401,385 797x229 client=401,385 797x229 output=HEADLESS-1 fullscreen=0 FOCUSED visible=True border=csd
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "episode.ass - HikariSub",
+   "id": "HikariSub",
+   "active": false,
+   "x": 0,
+   "y": 0,
+   "w": 1596,
+   "h": 971
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "active": true,
+   "x": 799,
+   "y": 30,
+   "w": 797,
+   "h": 229
+  }
+ ],
+ "panels": [
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 638,
+   "w": 1596,
+   "h": 276
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 65,
+   "w": 798,
+   "h": 529
+  },
+  {
+   "name": "Line editor: episode.ass",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 799,
+   "y": 65,
+   "w": 797,
+   "h": 529
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "Audio",
+   "x": 9,
+   "y": 44,
+   "w": 779,
+   "h": 176
+  }
+ ],
+ "focus": "[panel] 'Audio' <focused,showing,visible,enabled> @808,74 779x176 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'Audio' > panel:'Audio'",
+ "texts": {
+  "Line text": "first",
+  "Start": "0:00:01.00",
+  "End": "0:00:02.00"
+ },
+ "labels": [
+  "Video times"
+ ]
+}
+# arrangement
+{
+ "Grid": {
+  "window": "main",
+  "rect": [
+   0,
+   638,
+   1596,
+   276
+  ]
+ },
+ "Video": {
+  "window": "main",
+  "rect": [
+   0,
+   65,
+   798,
+   529
+  ]
+ },
+ "Line editor": {
+  "window": "main",
+  "rect": [
+   799,
+   65,
+   797,
+   529
+  ]
+ },
+ "Audio": {
+  "window": "floating",
+  "rect": [
+   9,
+   44,
+   779,
+   176
+  ],
+  "size": [
+   797,
+   229
+  ],
+  "position": null
+ },
+ "(main window)": {
+  "window": "main",
+  "size": [
+   1596,
+   971
+  ]
+ }
+}

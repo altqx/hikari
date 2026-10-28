@@ -1,0 +1,14 @@
+{
+  "name": "hikari-ffms2",
+  "version-string": "5.1.0-hikari-45d5f721",
+  "description": "Throwaway source-matched FFMS2 core plus Hikari private API feasibility port",
+  "homepage": "https://github.com/altqx/ffms2",
+  "license": "MIT",
+  "supports": "x64 & (windows | linux) & !uwp & !mingw",
+  "dependencies": [
+    {"name": "ffmpeg", "default-features": false, "features": ["avcodec", "avformat", "swresample", "swscale"]},
+    "zlib",
+    {"name": "vcpkg-cmake", "host": true},
+    {"name": "vcpkg-cmake-config", "host": true}
+  ]
+}

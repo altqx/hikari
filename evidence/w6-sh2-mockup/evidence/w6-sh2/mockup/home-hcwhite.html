@@ -1,0 +1,134 @@
+<!doctype html><html><head><meta charset="utf-8"><style>:root{--w:1280px;--h:800px}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #6b7480; }
+body { font-family: "Noto Sans", "Segoe UI", sans-serif; font-size: 13px; color: #000000; }
+.win { width: var(--w); height: var(--h); display: flex; flex-direction: column; background: #FFFFFF;
+        overflow: hidden; position: relative; }
+.menubar { height: 26px; display: flex; align-items: center; padding: 0 4px; background: #FFFFFF;
+            border-bottom: 1px solid #000000; }
+.menubar span { padding: 3px 8px; }
+.main { flex: 1; overflow: hidden; display: flex; justify-content: center; }
+.page { width: 100%; max-width: 1120px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.actions { display: flex; gap: 8px; align-items: center; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px;
+        border: 1px solid #000000; border-radius: 1px; background: #EBEBEB; color: #000000; }
+.btn.primary { background: #0037B3; color: #FFFFFF; border-color: #0037B3; }
+.btn.small { height: 24px; padding: 0 8px; font-size: 12px; }
+.btn .kbd { color: #1A1A1A; font-size: 11px; margin-left: 4px; }
+.btn.primary .kbd { color: #FFFFFF; opacity: .8; }
+.cols { flex: 1; display: flex; gap: 16px; min-height: 0; }
+.cols.stack { flex-direction: column; }
+.left { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; min-height: 0; }
+.box { background: #FFFFFF; border: 1px solid #000000; border-radius: 1px; }
+.session { display: flex; align-items: center; gap: 12px; padding: 10px 12px; }
+.session .what { flex: 1; min-width: 0; }
+.session .t { font-weight: 600; }
+.session .d { color: #1A1A1A; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.rhead { min-height: 42px; display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #000000; }
+.rhead .h { font-weight: 600; flex: 1; }
+.search { width: 220px; height: 26px; display: flex; align-items: center; gap: 6px; padding: 0 8px;
+           background: #FFFFFF; border: 1px solid #000000; border-radius: 1px; color: #1A1A1A; }
+.colhead { display: flex; padding: 4px 12px 4px 15px; font-size: 11px; color: #1A1A1A;
+            border-bottom: 1px solid #000000; }
+.colhead .n { flex: 1; }
+.colhead .o { width: 150px; text-align: right; }
+.rows { flex: 1; overflow: hidden; position: relative; }
+.row { display: flex; align-items: center; gap: 12px; padding: 5px 12px 5px 15px; position: relative;
+        border-bottom: 1px solid #000000; }
+.row .ft { flex: 1; min-width: 0; }
+.row .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .pt { color: #1A1A1A; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .when { width: 150px; text-align: right; color: #1A1A1A; font-size: 12px;
+              font-variant-numeric: tabular-nums; white-space: nowrap; }
+.row.hover { background: #EBEBEB; }
+.row.sel { background: #C9DAF8; }
+.row.sel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #0037B3; }
+.row.focus { outline: 1px solid #000000; outline-offset: -1px; }
+.row.missing .nm { color: #1A1A1A; font-weight: 400; }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #6B4500;
+          border: 1px solid #6B4500; border-radius: 3px; padding: 0 5px; margin-left: 8px; font-weight: 400;
+          vertical-align: 1px; }
+.hoverbtns { display: flex; gap: 2px; }
+.ibtn { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+         border-radius: 1px; }
+.ibtn.h { background: #FFFFFF; }
+.news { width: 320px; display: flex; flex-direction: column; min-height: 0; }
+.cols.stack .news { width: auto; flex: 0 0 auto; max-height: 190px; }
+.news .rhead .h { flex: 1; }
+.news .body { padding: 4px 16px 12px; overflow: hidden; flex: 1; line-height: 1.45; }
+.news h4 { margin: 10px 0 4px; font-size: 13px; }
+.news ul { margin: 0; padding-left: 18px; }
+.news li { margin: 2px 0; }
+.news .foot { padding: 8px 16px; border-top: 1px solid #000000; }
+.link { color: #0037B3; text-decoration: underline; }
+.slot { border-style: dashed; }
+.empty { color: #1A1A1A; padding: 16px 12px; }
+.status { height: 24px; background: #FFFFFF; border-top: 1px solid #000000; display: flex;
+           align-items: center; padding: 0 12px; font-size: 11px; color: #1A1A1A; }
+.ic { display: inline-flex; }
+.menu { position: absolute; background: #FFFFFF; border: 1px solid #000000; border-radius: 5px;
+         box-shadow: 0 10px 30px rgba(0,0,0,.33); padding: 4px 0; min-width: 210px; z-index: 5; }
+.menu .mi { display: flex; align-items: center; gap: 8px; padding: 5px 12px; }
+.menu .mi .k { margin-left: auto; color: #1A1A1A; font-size: 11px; padding-left: 24px; }
+.menu .mi.on { background: #C9DAF8; }
+.menu .mi.off { color: #6E6E6E; }
+.menu hr { border: 0; border-top: 1px solid #000000; margin: 4px 0; }
+.tip { position: absolute; background: #EBEBEB; border: 1px solid #000000; padding: 3px 8px;
+        font-size: 12px; z-index: 6; }
+.note { position: absolute; right: 8px; bottom: 30px; font-size: 11px; color: #1A1A1A; opacity: .7; }
+</style></head>
+<body><div class="win">
+<div class="menubar"><span>File</span><span>Edit</span><span>Automation</span><span>Video</span><span>Audio</span><span>View</span><span>Subtitles</span><span>Help</span></div>
+<div class="main"><div class="page">
+  <div class="actions">
+    <span class="btn primary"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v10M3 8h10"/></svg>
+</span> New</span>
+    <span class="btn"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g id="accent" stroke="#0037B3"><path d="M12 9.5v5M9.5 12h5"/></g></svg>
+</span> Open…</span>
+    <span class="btn"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 8V3.5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1V9a1 1 0 0 0 1 1H8.5"/><path d="M4.5 2.5V10M8.5 2.5V10"/><path d="M1.5 5h3M1.5 7.5h3M11.5 5h-3M11.5 7.5h-3"/><g id="accent" stroke="#0037B3"><path d="M12.5 10.5v4M10.5 12.5h4"/></g></svg>
+</span> Open video…</span>
+  </div>
+  <div class="cols">
+    <div class="left">
+      
+<div class="box session">
+  <span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2h9v7h-2"/><rect x="1.5" y="6.5" width="11" height="7" rx="1"/><path d="M1.5 8.5h11"/><g id="accent" stroke="#0037B3"><path d="M5 11.5h4M7.5 10l1.5 1.5L7.5 13"/></g></svg>
+</span>
+  <div class="what"><div class="t">Last session</div>
+  <div class="d">3 documents &middot; Frieren - 27 [1080p].ass, Frieren - 26 [1080p].ass, Frieren - 26 signs.ass</div></div>
+  <span class="btn">Restore</span>
+</div>
+      <div class="box recent">
+        <div class="rhead"><span class="h">Recent files</span>
+          <span class="search"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#1A1A1A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></svg>
+</span> Filter</span></div>
+        <div class="colhead"><span class="n">Name</span><span class="o">Last opened</span></div>
+        <div class="rows"><div class="row"><div class="ft"><div class="nm">Frieren - 27 [1080p].ass</div><div class="pt">~/Subs/Frieren S2/work/Frieren - 27 [1080p].ass</div></div><div class="when">Today 23:41</div></div><div class="row sel focus"><div class="ft"><div class="nm">Frieren - 26 [1080p].ass</div><div class="pt">~/Subs/Frieren S2/work/Frieren - 26 [1080p].ass</div></div><div class="when">Today 21:07</div></div><div class="row"><div class="ft"><div class="nm">Frieren - 26 signs.ass</div><div class="pt">~/Subs/Frieren S2/typesetting/Frieren - 26 signs.ass</div></div><div class="when">Yesterday 18:52</div></div><div class="row hover"><div class="ft"><div class="nm">Dandadan OP karaoke.ass</div><div class="pt">~/Subs/Dandadan/karaoke/Dandadan OP karaoke.ass</div></div><div class="hoverbtns"><span class="ibtn h"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5h-6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3.5l1.5 1.5h6a1 1 0 0 1 1 1v4"/><path d="M1.5 6h13"/><g id="accent" stroke="#0037B3"><path d="M10 14.5l4.5-4.5M11.5 10h3v3"/></g></svg>
+</span></span></div><div class="when">Yesterday 10:15</div></div><div class="row missing"><div class="ft"><div class="nm">Dandadan - 05.srt<span class="badge">Missing</span></div><div class="pt">/mnt/nas/fansub/Dandadan/raw-tl/Dandadan - 05.srt</div></div><div class="hoverbtns"><span class="btn small">Remove</span></div><div class="when">16 Oct 2026</div></div><div class="row"><div class="ft"><div class="nm">Blue Box - 12 TL check.ass</div><div class="pt">~/Subs/Blue Box/Blue Box - 12 TL check.ass</div></div><div class="when">14 Oct 2026</div></div><div class="row"><div class="ft"><div class="nm">Blue Box - 11 TL check.ass</div><div class="pt">~/Subs/Blue Box/Blue Box - 11 TL check.ass</div></div><div class="when">11 Oct 2026</div></div><div class="row"><div class="ft"><div class="nm">Kusuriya - 30 [JP-EN].ass</div><div class="pt">D:\Fansub\Kusuriya no Hitorigoto\Season 2\Episode 30\final\Kusuriya - 30 [JP-EN].ass</div></div><div class="when">8 Oct 2026</div></div><div class="row missing"><div class="ft"><div class="nm">old project.ssa<span class="badge">Missing</span></div><div class="pt">~/Downloads/old project.ssa</div></div><div class="hoverbtns"><span class="btn small">Remove</span></div><div class="when">2 Oct 2026</div></div></div>
+      </div>
+    </div>
+    
+<div class="box news">
+  <div class="rhead"><span class="h">What's new</span></div>
+  <div class="body">
+<h4>HikariSub 0.1.0 &middot; 18 Oct 2026</h4>
+<ul>
+<li>Document tabs sit at the top of the window.</li>
+<li>Files opened from the desktop join the running window as tabs.</li>
+<li>The Line editor follows the selected Line's Style preview.</li>
+<li>Fixed: audio kept playing on the old device after unplugging headphones.</li>
+</ul>
+<h4>HikariSub 0.0.9 &middot; 4 Oct 2026</h4>
+<ul>
+<li>High contrast themes with pickable text and accent colours.</li>
+<li>Shift times keeps its last offset per Document.</li>
+</ul>
+</div>
+  <div class="foot"><span class="link">All release notes</span></div>
+</div>
+  </div>
+</div></div>
+<div class="status"></div>
+
+</div></body></html>

@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "run_url": "https://github.com/altqx/hikari/actions/runs/36299849291",
+  "job_url": "https://github.com/altqx/hikari/actions/runs/36299849291/job/108565367036",
+  "head_sha": "4959243fefdf0737e655985e300ff9f20e12d9ac",
+  "run_attempt": 1,
+  "conclusion": "success",
+  "interpretation": "Host/public-metadata preflight succeeded; dependency build blocked and not attempted.",
+  "job_started_utc": "2026-09-27T06:21:27Z",
+  "job_completed_utc": "2026-09-27T06:21:39Z",
+  "artifact": {
+    "id": 10925113567,
+    "name": "qt-linux-preflight-36299849291-1",
+    "github_declared_archive_sha256": "6e3de0aafbac0b826989ad3fdf5d77aa5d118de65542e76cf8e643180b757794",
+    "github_declared_archive_bytes": 26733,
+    "download_method": "gh run download; extracted file hashes verified locally; archive digest is GitHub-declared, not independently checked"
+  },
+  "retained_files": {
+    "public-metadata/archive-0.sha256": {
+      "bytes": 138,
+      "sha256": "c52ba9dc2f3609e10f6fb94c0e1e8e21ebc9ca25f180208a58c6b4b07153b888"
+    },
+    "public-metadata/archive-1.sha256": {
+      "bytes": 137,
+      "sha256": "8e7a0a8163525e5bee7b7f34e73537f0144fe601478b2c5b693a54f4ed90cf5a"
+    },
+    "public-metadata/archive-2.sha256": {
+      "bytes": 145,
+      "sha256": "bade06947da553e054a5010f39abad3bf7c70a46c714391c5e47c21856f4cd43"
+    },
+    "public-metadata/archive-3.sha256": {
+      "bytes": 137,
+      "sha256": "b79803a6f7180f084e316a59dbeb98b6d09e7b8f34cdb975d08c13975eab72da"
+    },
+    "public-metadata/archive-4.sha256": {
+      "bytes": 139,
+      "sha256": "66d200e3727ed5b4a8d6b82de576db94609b377d4e91c82962d295dd9d8a29ce"
+    },
+    "public-metadata/archive-5.sha256": {
+      "bytes": 146,
+      "sha256": "cce7d3fb35d5aad458ed4e1b467a77bdda31c1a15d83a7cffa2ab9230b493583"
+    },
+    "public-metadata/archive-6.sha256": {
+      "bytes": 141,
+      "sha256": "5c13c63b947a80870c04fb906a6d6e9c3d3d62b0b9b328555b7da87ae9fb00a2"
+    },
+    "public-metadata/archive-7.sha256": {
+      "bytes": 115,
+      "sha256": "264d4dc8aaff79c208d4dcdb17799c567d1e75ed1458599709e02f2d8eeb12cd"
+    },
+    "public-metadata/installer.sha256": {
+      "bytes": 107,
+      "sha256": "c51e1990f31446777c57ba8e06929982e506acba6081db23e27bd35036156ea8"
+    },
+    "public-metadata/Updates.xml": {
+      "bytes": 115171,
+      "sha256": "5cc522ccfe18d76a6e703bfb33704cdfff3ed24695ca3d449c4d710bc6385e32"
+    },
+    "public-metadata-lock.json": {
+      "bytes": 6140,
+      "sha256": "3a03191e8be9b8e2989f1f2739b39f8a3961989aadcede676020b1773f7235b7"
+    },
+    "report.json": {
+      "bytes": 17958,
+      "sha256": "3fabf6b59177403612152b53f9fe9307389b561e6b8c2dd096d50a7153daf170"
+    },
+    "report.md": {
+      "bytes": 14853,
+      "sha256": "e45a94197c0dde69ed464af9d6950a9621a08b170843e850fe2783542a8b7c96"
+    }
+  },
+  "retention_review": "Original preflight report and public metadata only. No secret values, account files, SDK binaries, caches or full environment dump. No redactions required for this artifact.",
+  "checked": "Retained Qt Updates.xml hash, byte equality with Git-committed candidate lock and all nine published checksum declarations agree. Local Windows source checkout has CRLF, so compare Git blob rather than worktree bytes. Checks concern metadata, not binary content."
+}

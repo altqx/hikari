@@ -1,0 +1,9 @@
+View: ['Layout', 'Panels', 'Move panel…', 'Restore the previous layout']
+Subtitles: ['Shift times...', 'Shift times / run time post processor', 'Style manager', 'ASS file properties', 'Conversion', 'Font collector', 'Resample subtitles', 'Check spelling', 'Hide tags']
+first: {'Editing': True, 'Timing': True, 'Translation': True, 'Typesetting': True, 'Save layout as…': True, 'Reset this layout': True, 'Manage layouts…': False}
+saved ['Grid', 'Line editor', 'Video'] as 'no audio' (switcher 'Layout: no audio')
+Timing: ['Audio', 'Grid', 'Line editor'] ('Layout: Timing')
+no audio again: ['Grid', 'Line editor', 'Video'] ('Layout: no audio')
+restarted: {'Editing': True, 'Timing': True, 'Translation': True, 'Typesetting': True, 'no audio': True, 'Save layout as…': True, 'Reset this layout': True, 'Manage layouts…': True}
+renamed: {'Editing': True, 'Timing': True, 'Translation': True, 'Typesetting': True, 'quiet': True, 'Save layout as…': True, 'Reset this layout': True, 'Manage layouts…': True} ('Layout: quiet')
+deleted: {'Editing': True, 'Timing': True, 'Translation': True, 'Typesetting': True, 'Save layout as…': True, 'Reset this layout': True, 'Manage layouts…': False} ('Layout: Editing')

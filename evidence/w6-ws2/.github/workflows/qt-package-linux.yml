@@ -1,0 +1,317 @@
+name: Qt rewrite — Linux packages
+
+# Installers spec 5 and 8: build the Qt rewrite on the Linux floor
+# (AlmaLinux 9 + gcc-toolset-14, glibc 2.34), make the tar.gz, AppImage, deb
+# and rpm, then test them in the distro containers of spec 8.1 and render,
+# build and install the AUR package (8.2). qt-release.yml calls this
+# workflow and publishes the artifact hikarisub-linux-packages.
+#
+# Only the provisioning step receives the Qt installer secret. The vcpkg
+# binary cache of this workflow is its own (keyed by the floor image), never
+# shared with the developer or the other workflows' builds (spec 5.1).
+on:
+  push:
+    branches: [qt]
+    paths:
+      - CMakeLists.txt
+      - CMakePresets.json
+      - vcpkg.json
+      - vcpkg-configuration.json
+      - cmake/**
+      - ports/**
+      - triplets/**
+      - src/**
+      - Automation/**
+      - packaging/linux/**
+      - tools/release/host-sonames.sh
+      - tests/packaging/linux/**
+      - .github/workflows/qt-package-linux.yml
+  workflow_dispatch:
+    inputs:
+      version_suffix:
+        description: Prerelease suffix (HIKARI_VERSION_SUFFIX), for example beta.2; empty for a stable version
+        type: string
+        default: ''
+      release:
+        description: Release mode (no placeholder update helper, no test-feed build)
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      version_suffix:
+        type: string
+        default: ''
+      release:
+        type: boolean
+        default: true
+    outputs:
+      version:
+        description: The packaged version
+        value: ${{ jobs.build.outputs.version }}
+    secrets:
+      QT_INSTALLER_JWT_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qt-package-linux-${{ github.ref }}-${{ inputs.release && 'release' || 'test' }}
+  cancel-in-progress: true
+
+env:
+  FLOOR_IMAGE: almalinux:9@sha256:9819dc675b67b595c2b59e42be7763fca1a8bb217fa5944e04daa22e9a64db16
+
+jobs:
+  build:
+    name: Floor build and packages (AlmaLinux 9)
+    runs-on: ubuntu-26.04
+    container:
+      image: almalinux:9@sha256:9819dc675b67b595c2b59e42be7763fca1a8bb217fa5944e04daa22e9a64db16
+    timeout-minutes: 180
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_switch: ${{ steps.version.outputs.version_switch }}
+    steps:
+      - name: Git for the checkout
+        run: dnf -y -q install git-core > /dev/null
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Floor prerequisites
+        run: |
+          set -eu
+          sh packaging/linux/floor/almalinux9.sh
+          mkdir -p out/evidence
+          rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > out/evidence/floor-packages.tsv
+
+      - name: Version
+        id: version
+        env:
+          SUFFIX: ${{ inputs.version_suffix }}
+        run: |
+          set -eu
+          core=$(sed -n 's/^project(HikariSub VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          version=$core${SUFFIX:+-$SUFFIX}
+          case "$version" in 0.0.*) echo "Qt versions start at 0.1.0 (spec 1.2)" >&2; exit 1 ;; esac
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # The --version switch and the package kinds come with the update
+          # track (src/app/package_kind.cpp); until then the tests skip them.
+          if [ -f src/app/package_kind.cpp ]; then echo "version_switch=1"; else echo "version_switch=0"; fi >> "$GITHUB_OUTPUT"
+
+      - name: vcpkg binary cache (this workflow's own, keyed by the floor image)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: out/sdk/vcpkg-archives
+          key: qt-floor-vcpkg-${{ env.FLOOR_IMAGE }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', 'cmake/locks/vcpkg.lock.json', 'ports/**', 'triplets/**', 'packaging/linux/floor/almalinux9.sh') }}
+          restore-keys: |
+            qt-floor-vcpkg-${{ env.FLOOR_IMAGE }}-
+
+      - name: Provision Qt and vcpkg (only step with the secret)
+        env:
+          QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
+        run: |
+          . /etc/profile.d/hikari-floor.sh
+          cmake --workflow --preset provision
+
+      - name: Configure and build on the floor
+        env:
+          SUFFIX: ${{ inputs.version_suffix }}
+        run: |
+          set -eu
+          . /etc/profile.d/hikari-floor.sh
+          test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
+          test ! -e out/sdk/qt-install-private
+          set -- --preset linux-floor-x64-release -DHIKARI_INSTALL_DICTIONARY_DIR=/usr/share/myspell
+          [ -z "$SUFFIX" ] || set -- "$@" "-DHIKARI_VERSION_SUFFIX=$SUFFIX"
+          cmake "$@"
+          cmake --build --preset linux-floor-x64-release
+
+      - name: Packages
+        env:
+          RELEASE: ${{ inputs.release && '1' || '0' }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          . /etc/profile.d/hikari-floor.sh
+          B=out/build/linux-floor-x64-release
+          allow=OFF
+          if [ "$RELEASE" != 1 ] && [ ! -f packaging/linux/update-helper/hikarisub-update-helper ]; then
+            echo "::warning::packaging/linux/update-helper is not on this branch yet; the test packages carry a placeholder helper"
+            allow=ON
+          fi
+          cmake "$B" -DHIKARI_PACKAGE_ALLOW_MISSING_UPDATE_HELPER=$allow
+          cmake --build "$B" --target hikari_linux_packages
+          if [ "$RELEASE" = 1 ] && grep -rlq HIKARISUB_UPDATE_FEED "$B/package-stage/tree"; then
+            echo "A release payload contains HIKARISUB_UPDATE_FEED (a test-feed build, spec 8.4)" >&2; exit 1
+          fi
+          mkdir -p out/dist out/dist-old
+          cp "$B"/dist/* out/dist/
+          # An older Qt test version of the same payload, and the stand-in
+          # legacy and wrong-name packages, for the upgrade and helper tests.
+          core=${VERSION%%-*}
+          set -- --build-dir "$B" --version "$core-0" --out out/dist-old --tools "$B/packaging-tools" --formats native
+          [ $allow = OFF ] || set -- "$@" --allow-missing-update-helper
+          packaging/linux/make-packages.sh "$@"
+          tests/packaging/linux/make-test-packages.sh --tools "$B/packaging-tools" --out out/dist-old --version "$VERSION"
+          (cd out/dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
+          ls -la out/dist out/dist-old
+
+      - name: Asset names (spec 2.1)
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          cd out/dist
+          for f in *; do
+            echo "$f" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$' || { echo "bad asset name: $f" >&2; exit 1; }
+          done
+          for f in "HikariSub-$VERSION-linux-x86_64.AppImage" "HikariSub-$VERSION-linux-x86_64.AppImage.zsync" \
+                   "hikarisub-$VERSION-linux-amd64.deb" "hikarisub-$VERSION-linux-x86_64.rpm" \
+                   "hikarisub-$VERSION-linux-x86_64.tar.gz"; do
+            test -f "$f" || { echo "missing $f" >&2; exit 1; }
+          done
+
+      - name: Collect evidence
+        if: always()
+        run: |
+          mkdir -p out/evidence
+          B=out/build/linux-floor-x64-release
+          { grep -E '^PRETTY_NAME=' /etc/os-release; ldd --version | head -1; . /etc/profile.d/hikari-floor.sh; g++ --version | head -1
+            cmake --version | head -1; } > out/evidence/floor.txt 2>&1 || true
+          [ -d "$B/package-stage/tree" ] && tools/release/host-sonames.sh "$B/package-stage/tree" > out/evidence/host-sonames.txt || true
+          cp "$B"/package-stage/deps/* out/evidence/ 2>/dev/null || true
+          cp "$B"/package-stage/nfpm.yaml out/evidence/ 2>/dev/null || true
+          [ -d "$B/package-stage/AppDir" ] && ls "$B/package-stage/AppDir/usr/lib/hikarisub-runtime/lib" > out/evidence/appimage-runtime-libs.txt || true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hikarisub-linux-packages
+          path: out/dist/
+          if-no-files-found: error
+          retention-days: 14
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hikarisub-linux-test-packages
+          path: out/dist-old/
+          if-no-files-found: error
+          retention-days: 7
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qt-package-linux-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/evidence/
+          if-no-files-found: warn
+          retention-days: 14
+
+  test:
+    name: ${{ matrix.image }} (${{ matrix.tests }})
+    needs: build
+    runs-on: ubuntu-26.04
+    container:
+      image: ${{ matrix.digest }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {image: 'ubuntu:22.04', digest: 'ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401', tests: 'appimage,tar'}
+          - {image: 'ubuntu:22.04', digest: 'ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401', tests: 'native,helper,upgrade,remove'}
+          - {image: 'ubuntu:24.04', digest: 'ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55', tests: 'appimage,tar'}
+          - {image: 'ubuntu:24.04', digest: 'ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55', tests: 'native,helper,upgrade,remove'}
+          - {image: 'debian:12', digest: 'debian:12@sha256:2c037a04925515fdd6ea85ea14a682d0e79931f5e9f5d07b6dbfc6ba12f9e858', tests: 'appimage'}
+          - {image: 'debian:12', digest: 'debian:12@sha256:2c037a04925515fdd6ea85ea14a682d0e79931f5e9f5d07b6dbfc6ba12f9e858', tests: 'native,helper,upgrade,remove'}
+          - {image: 'fedora:latest', digest: 'fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a9f4f1ff2f9c2798e5045d80', tests: 'appimage'}
+          - {image: 'fedora:latest', digest: 'fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a9f4f1ff2f9c2798e5045d80', tests: 'native,helper,upgrade,remove'}
+          - {image: 'opensuse/tumbleweed', digest: 'opensuse/tumbleweed@sha256:d06f305be0449924d909d839d9a0b75c76466c615a5de34062b666aaf9ffcdbf', tests: 'appimage'}
+          - {image: 'opensuse/tumbleweed', digest: 'opensuse/tumbleweed@sha256:d06f305be0449924d909d839d9a0b75c76466c615a5de34062b666aaf9ffcdbf', tests: 'native,helper,upgrade,remove'}
+          - {image: 'archlinux:latest', digest: 'archlinux:latest@sha256:3c64b538588416593f69a1aebd2f2ec0f2541b29159f32556fa7def2167147a0', tests: 'appimage'}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hikarisub-linux-packages
+          path: /tmp/dist
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hikarisub-linux-test-packages
+          path: /tmp/dist-old
+      - name: Package tests
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          SWITCH: ${{ needs.build.outputs.version_switch }}
+          TESTS: ${{ matrix.tests }}
+        run: |
+          extra=""
+          [ "$SWITCH" = 1 ] && extra=--expect-version-switch
+          bash tests/packaging/linux/container-test.sh --dist /tmp/dist --old /tmp/dist-old --version "$VERSION" \
+            --tests "$TESTS" $extra
+
+  aur:
+    name: AUR hikarisub-beta-bin (archlinux)
+    needs: build
+    runs-on: ubuntu-26.04
+    container:
+      image: archlinux:latest@sha256:3c64b538588416593f69a1aebd2f2ec0f2541b29159f32556fa7def2167147a0
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hikarisub-linux-packages
+          path: /tmp/dist
+      # hikarisub-beta-bin takes every version, prereleases included (spec 5.5).
+      - name: Render, build, lint, install and remove (spec 8.2)
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          SWITCH: ${{ needs.build.outputs.version_switch }}
+        run: |
+          set -eu
+          extra=""
+          [ "$SWITCH" = 1 ] && extra=--expect-version-switch
+          bash tests/packaging/linux/aur-test.sh --dist /tmp/dist --version "$VERSION" $extra
+          mkdir -p /tmp/aur && cp /home/builder/aur/pkg/PKGBUILD /home/builder/aur/pkg/.SRCINFO /tmp/aur/
+          # The version ordering of spec 1.3, with pacman's own tool.
+          [ "$(vercmp 0.0.9 0.1.0)" = -1 ]
+      # Rendered from the CI tar.gz. The release workflow renders the
+      # published one and uploads that as hikarisub-aur, so this name must
+      # differ: one run cannot hold two artifacts of the same name.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hikarisub-aur-ci
+          path: /tmp/aur/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
+  # The AUR scripts (packaging/linux/aur) without the AUR: the channel rules,
+  # pkgver and its vercmp ordering, the downgrade and newest-release
+  # refusals, and publishing to local repositories (spec 8.2).
+  aur-scripts:
+    name: AUR scripts (archlinux)
+    runs-on: ubuntu-26.04
+    container:
+      image: archlinux:latest@sha256:3c64b538588416593f69a1aebd2f2ec0f2541b29159f32556fa7def2167147a0
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Test
+        run: |
+          set -eu
+          pacman -Syu --noconfirm --needed base-devel git python > /dev/null
+          useradd -m builder
+          runuser -u builder -- sh tests/packaging/linux/aur-scripts-test.sh
