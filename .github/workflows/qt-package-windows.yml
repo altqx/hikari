@@ -28,9 +28,15 @@ on:
         description: Release version without the leading v
         type: string
         required: true
+      release:
+        description: A release build, which carries the usage data key (AN1 #404)
+        type: boolean
+        default: false
     secrets:
       QT_INSTALLER_JWT_TOKEN:
         required: true
+      HIKARI_POSTHOG_KEY:
+        required: false
     outputs:
       version:
         description: The version the packages carry
@@ -119,11 +125,13 @@ jobs:
       - name: Build and stage the payload without credentials
         env:
           SUFFIX: ${{ needs.version.outputs.suffix }}
+          # AN1: release builds only (test packages send nothing).
+          POSTHOG_KEY: ${{ inputs.release && secrets.HIKARI_POSTHOG_KEY || '' }}
         run: |
           $ErrorActionPreference = 'Stop'
           if (Test-Path "$env:APPDATA\Qt\qtaccount.ini") { throw 'Qt account file left in the profile' }
           if (Test-Path out/sdk/qt-install-private) { throw 'Private install directory left behind' }
-          cmake --preset windows-x64-package "-DHIKARI_VERSION_SUFFIX=$env:SUFFIX"
+          cmake --preset windows-x64-package "-DHIKARI_VERSION_SUFFIX=$env:SUFFIX" "-DHIKARI_POSTHOG_KEY=$env:POSTHOG_KEY"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake --build --preset windows-x64-package
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

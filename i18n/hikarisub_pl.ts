@@ -6731,6 +6731,25 @@ gdy okno wyników szukania jest otwarte</translation>
     </message>
 </context>
 <context>
+    <name>HikariSub.GettingStarted</name>
+    <message>
+        <source>Later: Settings › Updates and privacy</source>
+        <translation>Później: Ustawienia › Aktualizacje i prywatność</translation>
+    </message>
+    <message>
+        <source>Send anonymous usage data</source>
+        <translation>Wysyłaj anonimowe dane o użytkowaniu</translation>
+    </message>
+    <message>
+        <source>Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.</source>
+        <translation>Które funkcje są używane, błędy i awarie oraz jak szybko wszystko się otwiera. Nigdy Twoje pliki, ich nazwy ani ich zawartość.</translation>
+    </message>
+    <message>
+        <source>What is sent</source>
+        <translation>Co jest wysyłane</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
@@ -7355,6 +7374,26 @@ całkowicie usuwanie plików audio cache.</translation>
     <message>
         <source>Updates</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates and privacy</source>
+        <translation>Aktualizacje i prywatność</translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation>Prywatność</translation>
+    </message>
+    <message>
+        <source>Send anonymous usage data</source>
+        <translation>Wysyłaj anonimowe dane o użytkowaniu</translation>
+    </message>
+    <message>
+        <source>Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.</source>
+        <translation>Które funkcje są używane, błędy i awarie oraz jak szybko wszystko się otwiera. Nigdy Twoje pliki, ich nazwy ani ich zawartość.</translation>
+    </message>
+    <message>
+        <source>What is sent</source>
+        <translation>Co jest wysyłane</translation>
     </message>
     <message>
         <source>Reset all settings</source>

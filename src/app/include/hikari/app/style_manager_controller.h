@@ -203,9 +203,11 @@ private:
 // StylePreview: `style` at alignment 5 over the checkered background, the
 // size of the preview, rendered by libass with `fonts` in memory. SV1: a
 // `scale` above 1 draws it with that many pixels per unit of the preview's
-// size (the image's device pixel ratio), laid out as at scale 1.
+// size (the image's device pixel ratio), laid out as at scale 1. Without
+// `wrap`, WrapStyle 2: the text on one line (#403, the Style editor's).
 QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues style, int width, int height,
-                          const QString &text, std::vector<application::FontLease> fonts = {}, qreal scale = 1);
+                          const QString &text, std::vector<application::FontLease> fonts = {}, qreal scale = 1,
+                          bool wrap = true);
 
 // "image://stylepreview/<key>": the controller's latest preview.
 void attachStylePreview(QQmlEngine &engine, StyleManagerController &controller);

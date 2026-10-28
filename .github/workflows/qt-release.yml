@@ -84,6 +84,7 @@ jobs:
       release: true
     secrets:
       QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
+      HIKARI_POSTHOG_KEY: ${{ secrets.HIKARI_POSTHOG_KEY }} # AN1 (#404)
 
   windows:
     name: Windows packages
@@ -91,8 +92,10 @@ jobs:
     uses: ./.github/workflows/qt-package-windows.yml
     with:
       version: ${{ needs.release-version.outputs.version }}
+      release: true
     secrets:
       QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
+      HIKARI_POSTHOG_KEY: ${{ secrets.HIKARI_POSTHOG_KEY }} # AN1 (#404)
 
   release:
     name: Release

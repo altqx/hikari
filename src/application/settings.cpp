@@ -318,6 +318,12 @@ const std::vector<SettingDefinition> &definitions()
         // KA3 (#278): the Kanji timer's Suggest groupings (Aegisub's "Attempt
         // to interpolate kanji", Tool/Kanji Timer/Interpolation), on by default.
         {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
+        // AN1 (#404): "Send anonymous usage data" (on by default; legacy sent
+        // nothing and has no such option, so an import leaves it), and the
+        // random install id the data goes under, made when something is
+        // first sent and cleared when the option is turned off.
+        {"privacy.usageData", "", Bool, Profile, Mapped, false, true},
+        {"privacy.usageDataId", "", String, Profile, Mapped, false, std::string()},
         // KA8 (#354): the Kanji timer writes # syllables (KA8-multi-highlight),
         // off by default.
         {"audio.kanjiTimerMulti", "", Bool, Profile, Mapped, false, false},
