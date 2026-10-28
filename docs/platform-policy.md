@@ -1,6 +1,6 @@
 # Qt baseline and platform support
 
-**Accepted 2026-09-27.** In the live planning session, altqx chose **“Advance Qt; explicitly retire Windows 10 later.”** This resolves [the platform-policy decision](https://github.com/altqx/hikari/issues/37); [ADR 0004](../adr/0004-qt-baseline-and-platform-support.md) records the choice. This specification sets future release requirements and does not assert that any platform qualification has passed.
+**Accepted 2026-09-27.** In the live planning session, altqx chose **“Advance Qt; explicitly retire Windows 10 later.”** This resolves [the platform-policy decision](https://github.com/altqx/hikari/issues/37); [ADR 0004](adr/0004-qt-baseline-and-platform-support.md) records the choice. This specification sets future release requirements and does not assert that any platform qualification has passed.
 
 ## Qt adoption
 

@@ -1,6 +1,6 @@
 # Isolated Lua automation host
 
-**Partially accepted, 2026-09-27.** The user chose **“Separate process; prioritize isolation”**, later refined to **one persistent process per loaded script and one active macro application-wide**, with explicit restart and no automatic rerun after interruption. [ADR 0006](../adr/0006-isolated-lua-automation-host.md) records those decisions. They supersede the in-process recommendation in the [preparation proposal](proposals/automation-host.md); they do not approve every transaction or UI detail below. [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33) remains partially accepted pending cancellation/compatibility decisions and native feasibility evidence; persistent manager placement is also accepted.
+**Partially accepted, 2026-09-27.** The user chose **“Separate process; prioritize isolation”**, later refined to **one persistent process per loaded script and one active macro application-wide**, with explicit restart and no automatic rerun after interruption. [ADR 0006](adr/0006-isolated-lua-automation-host.md) records those decisions. They supersede the in-process recommendation in the [preparation proposal](proposals/automation-host.md); they do not approve every transaction or UI detail below. [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33) remains partially accepted pending cancellation/compatibility decisions and native feasibility evidence; persistent manager placement is also accepted.
 
 ## Accepted boundary and compatibility
 

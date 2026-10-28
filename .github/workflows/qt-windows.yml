@@ -29,7 +29,7 @@ on:
       - tests/backends/**
       - tests/ui/**
       - tests/fixtures/**
-      - docs/qt/fixtures/**
+      - docs/fixtures/**
       - .github/workflows/qt-windows.yml
   workflow_dispatch:
 

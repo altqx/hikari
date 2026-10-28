@@ -1,6 +1,6 @@
 #pragma once
 
-// AD2 (#311): what script dialogs keep between runs (docs/qt/automation.md).
+// AD2 (#311): what script dialogs keep between runs (docs/automation.md).
 // Repeat last run sends a dialog's recorded answer again, without showing
 // it, when the script shows the same dialog at the same point of the run
 // (AD2-repeat-last-run). Last used, presets, Reset and "Fill in my last

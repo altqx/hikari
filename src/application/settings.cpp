@@ -17,7 +17,7 @@ std::string utf8(std::u8string_view s)
     return {reinterpret_cast<const char *>(s.data()), s.size()};
 }
 
-// Generated from docs/qt/proposals/settings-migration-map/options.csv (ids
+// Generated from docs/proposals/settings-migration-map/options.csv (ids
 // chosen here; types, scopes, dispositions and defaults from the worksheet,
 // which agrees with legacy config.cpp at 20d647c4).
 const std::vector<SettingDefinition> &definitions()
@@ -237,7 +237,7 @@ const std::vector<SettingDefinition> &definitions()
         // unset, LoadDefault's.
         {kHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {kAudioHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // K2: the appearance (docs/qt/ux/visual-language.md, the user's
+        // K2: the appearance (docs/ux/visual-language.md, the user's
         // 2026-10-05 decision superseding A2-theme-colours): the theme
         // ("light", "dark", "highContrastWhite", "highContrastBlack"; legacy's
         // default theme was dark), following the system's light or dark scheme

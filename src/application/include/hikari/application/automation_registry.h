@@ -1,7 +1,7 @@
 #pragma once
 
 // Macro identity for the automation manager (L1, S44-macro-alias;
-// docs/qt/proposals/settings-import.md). A macro is identified by the host's
+// docs/proposals/settings-import.md). A macro is identified by the host's
 // registration: its script's path and content hash, its registration ordinal
 // and its displayed name. The legacy `filename:ordinal` alias (what old
 // bindings stored) resolves only when it is unambiguous and the registration

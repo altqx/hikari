@@ -1,6 +1,6 @@
 #pragma once
 
-// The open Documents and their targets (docs/qt/ux/workspaces.md). The
+// The open Documents and their targets (docs/ux/workspaces.md). The
 // editing target receives content-changing commands. An optional protected
 // comparison reference can be read, selected and copied, never changed.
 // Keyboard focus is a UI concern and never moves either target; only the

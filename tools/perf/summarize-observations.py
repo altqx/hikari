@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarizes performance observations (H3 #126) against docs/qt/performance.md.
+"""Summarizes performance observations (H3 #126) against docs/performance.md.
 
     tools/perf/summarize-observations.py <date dir> [--host-inventory FILE]
 
@@ -44,7 +44,7 @@ WORKLOADS = {
     },
 }
 
-# Every budget row of docs/qt/performance.md and what covers it today.
+# Every budget row of docs/performance.md and what covers it today.
 ROWS = [
     ("Empty startup → input-ready workspace, C / W", "4 s / 1.5 s", "missing",
      "no harness workload (needs a cold-state method and 20 process launches)"),
@@ -179,7 +179,7 @@ def main():
 
     inventory = json.load(open(args.host_inventory)) if args.host_inventory else None
     summary = {
-        "card": "H3 #126", "contract": "docs/qt/performance.md",
+        "card": "H3 #126", "contract": "docs/performance.md",
         "label": "uncalibrated observation",
         "host": runs[0]["host"], "hostInventory": args.host_inventory,
         "contaminationRule": {
@@ -217,7 +217,7 @@ def main():
       "The host is bound but not calibrated, and the harness reports `calibrated: false`. No result here is a budget pass. "
       "Gates that need calibrated A/V loopback capture stay inconclusive, and #126 stays open for them.")
     w("")
-    w(f"Harness fingerprint: `{h['fingerprint']}`. Repetition rule (docs/qt/performance.md): five runs, at least 1,000 "
+    w(f"Harness fingerprint: `{h['fingerprint']}`. Repetition rule (docs/performance.md): five runs, at least 1,000 "
       "timed operations, 10 s warmup (W), nearest-rank p95/p99/max per run, never pooled.")
     w("")
     w("Contamination rule: a run is contaminated when the load average exceeds "

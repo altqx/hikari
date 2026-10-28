@@ -1,6 +1,6 @@
 #pragma once
 
-// KE3 (#285): the built-in karaoke effect presets (docs/qt/karaoke-presets.md).
+// KE3 (#285): the built-in karaoke effect presets (docs/karaoke-presets.md).
 // Each preset is a small ASS file in src/application/karaoke-presets: Script
 // Info carries its Title and Description, and its Lines are template and code
 // Comments in the stock templater's syntax, so they stay portable to Aegisub.

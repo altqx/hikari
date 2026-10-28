@@ -1,7 +1,7 @@
 // A script's dialog (N8, AD1 #310): fixed controls placed on the script's
 // grid cells, on DG1's frame. Values go back through the controller, which
 // types them per control; a script gets Aegisub's values and button results
-// (docs/qt/automation.md). Closing the window answers with no button.
+// (docs/automation.md). Closing the window answers with no button.
 //
 // AD1 (owner, 2026-10-22, the mockup on #310):
 // - a resizable DG1 window titled with the macro, its size and place kept per

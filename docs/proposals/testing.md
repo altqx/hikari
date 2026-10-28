@@ -1,6 +1,6 @@
 # Rewrite test strategy proposal
 
-**Accepted on 2026-09-27.** The current contract is [Rewrite test strategy](../testing.md), with [ADR-0015](../../adr/0015-behavioral-and-native-test-evidence.md) recording the accepted test stack and evidence-gated completion rule. The proposal below is retained as the review record for [issue #34](https://github.com/altqx/hikari/issues/34). It applies the accepted [compatibility](../compatibility.md), [build](../build.md) and [performance](../performance.md) contracts. The [completed testing research](https://github.com/altqx/hikari/blob/ee59a12872f3d9e0ddeb203e5fa3c09566b158ce/docs/research/qml-testing.md) supports these choices; no new runner, suite or reference machine has been qualified.
+**Accepted on 2026-09-27.** The current contract is [Rewrite test strategy](../testing.md), with [ADR-0015](../adr/0015-behavioral-and-native-test-evidence.md) recording the accepted test stack and evidence-gated completion rule. The proposal below is retained as the review record for [issue #34](https://github.com/altqx/hikari/issues/34). It applies the accepted [compatibility](../compatibility.md), [build](../build.md) and [performance](../performance.md) contracts. The [completed testing research](https://github.com/altqx/hikari/blob/ee59a12872f3d9e0ddeb203e5fa3c09566b158ce/docs/research/qml-testing.md) supports these choices; no new runner, suite or reference machine has been qualified.
 
 ## Frameworks and boundaries
 

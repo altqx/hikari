@@ -51,7 +51,7 @@ Calibration: **uncalibrated**. No measurement tooling calibration, presentation 
 
 ## Against the reference class
 
-The accepted class is four physical cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display (docs/qt/performance.md).
+The accepted class is four physical cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display (docs/performance.md).
 
 | Item | Class | This host | Matches |
 | --- | --- | --- | --- |

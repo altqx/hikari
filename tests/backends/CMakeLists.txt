@@ -6,7 +6,7 @@ if(WIN32)
     hikari_add_gtest(hikari_backends_win_file_tests SOURCES win_file_port_tests.cpp
         LIBRARIES hikari_backends LABELS backends)
     target_compile_definitions(hikari_backends_win_file_tests PRIVATE
-        HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
+        HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/fixtures/approved-departures")
 endif()
 # F1: legacy FileOpen's charset detection and per-platform line ends (R4, R5).
 hikari_add_gtest(hikari_backends_legacy_text_tests SOURCES legacy_text_file_tests.cpp
@@ -14,7 +14,7 @@ hikari_add_gtest(hikari_backends_legacy_text_tests SOURCES legacy_text_file_test
 hikari_add_gtest(hikari_backends_open_save_tests SOURCES open_save_reopen_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
 target_compile_definitions(hikari_backends_open_save_tests PRIVATE
-    HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
+    HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/fixtures/approved-departures")
 
 # The subtitle adapters' blend paths.
 hikari_add_gtest(hikari_backends_overlay_blend_tests SOURCES overlay_blend_tests.cpp

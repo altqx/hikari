@@ -9,7 +9,7 @@
 // VideoBox.cpp:912-919; RendererGStreamer::SetVolumeInternal converts that
 // to a linear factor, RendererGStreamer.cpp:635-645). The rewrite's general
 // player owns playback audio as legacy's DirectShow/GStreamer renderer did
-// (docs/qt/media.md), so it takes this volume.
+// (docs/media.md), so it takes this volume.
 
 #include <optional>
 #include <string>

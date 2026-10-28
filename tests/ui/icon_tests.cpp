@@ -1,4 +1,4 @@
-// K1: the in-house vector icon set (docs/qt/ux/icons.md). The icon manifest
+// K1: the in-house vector icon set (docs/ux/icons.md). The icon manifest
 // test (every role the QML names resolves to an SVG of the set; each SVG is
 // valid, single-colour with at most one accent layer, on the 16-unit grid and
 // without raster), the tint, the theme colours' contrast, the Icon item

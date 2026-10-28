@@ -16,7 +16,7 @@ if(NOT _hikari_arch MATCHES "^(x86_64|AMD64)$")
     message(FATAL_ERROR "Provisioning is locked for x64 hosts only (found ${_hikari_arch})")
 endif()
 
-# Declared development-tool prerequisites (docs/qt/build.md). Checked up
+# Declared development-tool prerequisites (docs/build.md). Checked up
 # front so a missing tool is named here, not deep inside a dependency build.
 if(HIKARI_PLATFORM STREQUAL "linux")
     set(_hikari_missing "")

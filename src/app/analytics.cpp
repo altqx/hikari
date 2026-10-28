@@ -29,7 +29,7 @@ namespace {
 constexpr char kEnabled[] = "privacy.usageData";
 constexpr char kId[] = "privacy.usageDataId";
 
-// The table docs/qt/analytics.md lists: each event's properties and what
+// The table docs/analytics.md lists: each event's properties and what
 // each may hold. A string property is one of a closed list or matches a
 // pattern that leaves no room for text; nothing else is sent.
 struct Rule {

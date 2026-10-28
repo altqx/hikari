@@ -51,7 +51,7 @@ Bound as the Windows reference host on 2026-10-16 by the owner's decision on [#1
 
 ## Against the reference class
 
-The accepted class is four physical cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display (docs/qt/performance.md).
+The accepted class is four physical cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display (docs/performance.md).
 
 | Item | Class | This host | Matches |
 | --- | --- | --- | --- |

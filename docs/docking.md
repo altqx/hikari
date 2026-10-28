@@ -1,6 +1,6 @@
 # Native docking and workspace persistence
 
-Accepted on 2026-09-27 by [altqx’s approval](https://github.com/altqx/hikari/issues/46#issuecomment-5853318062) of [Choose native docking and workspace persistence architecture](https://github.com/altqx/hikari/issues/46). This contract implements the already accepted [movable/floating workspace](ux/workspaces.md), one per Document tab since [ADR 0020](../adr/0020-per-document-tab-layouts.md) (2026-10-18; the arrangement was shared by every tab before). [ADR 0017](../adr/0017-owned-native-docking.md) records the engine and ownership choice. Native qualification remains required.
+Accepted on 2026-09-27 by [altqx’s approval](https://github.com/altqx/hikari/issues/46#issuecomment-5853318062) of [Choose native docking and workspace persistence architecture](https://github.com/altqx/hikari/issues/46). This contract implements the already accepted [movable/floating workspace](ux/workspaces.md), one per Document tab since [ADR 0020](adr/0020-per-document-tab-layouts.md) (2026-10-18; the arrangement was shared by every tab before). [ADR 0017](adr/0017-owned-native-docking.md) records the engine and ownership choice. Native qualification remains required.
 
 ## Engine and dependency
 
@@ -52,7 +52,7 @@ On every platform the main window is never smaller than its docked layout's mini
 
 ## Chrome
 
-[D3](https://github.com/altqx/hikari/issues/207) gives the dock chrome MuseScore 4's form (user decision 2026-10-05; [research at v4.7.5](../research/musescore-docking.md)). MuseScore's code is for its KDDockWidgets 1.x fork, so the design carries over and the code does not: the adapter (`src/ui/docking.cpp`) configures the 2.4.1 engine and supplies its views (`DockTabBar.qml`, `DockTitleBar.qml`, `DockGroup.qml`, `DockSeparator.qml`, `DockFloatingWindow.qml`, `DockDropHighlight.qml`, `DockMenuButton.qml`). Colours come from the theme layer's roles and menus are `ShellMenu`s; the look is specified in [visual-language.md](ux/visual-language.md) (Composition, sizes, Keyboard focus).
+[D3](https://github.com/altqx/hikari/issues/207) gives the dock chrome MuseScore 4's form (user decision 2026-10-05; [research at v4.7.5](research/musescore-docking.md)). MuseScore's code is for its KDDockWidgets 1.x fork, so the design carries over and the code does not: the adapter (`src/ui/docking.cpp`) configures the 2.4.1 engine and supplies its views (`DockTabBar.qml`, `DockTitleBar.qml`, `DockGroup.qml`, `DockSeparator.qml`, `DockFloatingWindow.qml`, `DockDropHighlight.qml`, `DockMenuButton.qml`). Colours come from the theme layer's roles and menus are `ShellMenu`s; the look is specified in [visual-language.md](ux/visual-language.md) (Composition, sizes, Keyboard focus).
 
 **One header row per group.** The engine always shows a group's tabs and hides its title bar (`Flag_AlwaysShowTabs`, `Flag_HideTitleBarWhenTabsVisible`), so `DockTabBar.qml` is every group's header, docked or floating, and draws it in one of two modes:
 

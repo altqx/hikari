@@ -6,7 +6,7 @@ import QtQuick.Templates as T
 import Hikari.Ui
 
 // DG1 (#222): the frame of every dialog, a real top-level window
-// (docs/qt/ux/visual-language.md "Dialogs"; MS1, docs/research/musescore-shell.md
+// (docs/ux/visual-language.md "Dialogs"; MS1, docs/research/musescore-shell.md
 // §4 and §7 DG1):
 // * the title bar in SH1's style (DialogTitleBar: the title, Close, and
 //   Maximise only while `resizable`) on HikariSub's frame (DialogFrame), or

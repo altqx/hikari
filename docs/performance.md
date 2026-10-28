@@ -1,6 +1,6 @@
 # Performance and resource reference contract
 
-**Accepted starting gates, 2026-09-27.** In the live review, altqx chose **“Accept gates with lower hardware baseline”** for [Set measurable performance and resource budgets for the rewrite](https://github.com/altqx/hikari/issues/36). [ADR 0011](../adr/0011-performance-reference-contract.md) records the decision. The release thresholds, percentiles, workloads, cache conditions and memory metrics from the [reviewed proposal](proposals/performance-budgets.md) are unchanged. They are initial hard acceptance gates; stretch targets are aspirational. Changing a gate, workload, condition or reference baseline requires an explicit decision, not a silent adjustment after a failure.
+**Accepted starting gates, 2026-09-27.** In the live review, altqx chose **“Accept gates with lower hardware baseline”** for [Set measurable performance and resource budgets for the rewrite](https://github.com/altqx/hikari/issues/36). [ADR 0011](adr/0011-performance-reference-contract.md) records the decision. The release thresholds, percentiles, workloads, cache conditions and memory metrics from the [reviewed proposal](proposals/performance-budgets.md) are unchanged. They are initial hard acceptance gates; stretch targets are aspirational. Changing a gate, workload, condition or reference baseline requires an explicit decision, not a silent adjustment after a failure.
 
 ## Reference class and binding
 

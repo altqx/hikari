@@ -1,6 +1,6 @@
 # Distribution and update policy
 
-**Decided by altqx on 2026-10-13; [ADR-0019](../adr/0019-installers-and-seamless-updates.md) records it.** It replaces the policy of 2026-09-27 ([ADR-0012](../adr/0012-distribution-and-updates.md): Inno Setup, notification-only updates, a signing gate for stable releases). The legacy app (0.0.x, branch `main`) and the rewrite (0.1.0 and later, branch `qt`) follow the same rules, so the rewrite can replace legacy in place.
+**Decided by altqx on 2026-10-13; [ADR-0019](adr/0019-installers-and-seamless-updates.md) records it.** It replaces the policy of 2026-09-27 ([ADR-0012](adr/0012-distribution-and-updates.md): Inno Setup, notification-only updates, a signing gate for stable releases). The legacy app (0.0.x, branch `main`) and the rewrite (0.1.0 and later, branch `qt`) follow the same rules, so the rewrite can replace legacy in place.
 
 ## Packages
 
@@ -87,7 +87,7 @@ Everything a user may edit or keep is in one user folder, Aegisub's `?user` ([UD
 
 Legacy stays at 0.0.x and the rewrite starts at 0.1.0; `HIKARI_VERSION_SUFFIX` adds a prerelease (`0.1.0-beta.2`). deb and rpm versions put `~` before the prerelease inside the package (`0.1.0~beta.2-1`), never in the file name. Moving from legacy to the rewrite is an ordinary upgrade of one package (`hikarisub`, or `hikarisub-stable-bin` and `hikarisub-beta-bin` on the AUR, whose `pkgver` is the version without its `-`: `0.1.0-beta.2` is `0.1.0beta.2`, which vercmp sorts above every legacy 0.0.x and below `0.1.0`) or one installation.
 
-A rewrite release always names `"offer_to": ["qt"]`. Legacy users are offered it only through its manifest's optional `offer` member, which legacy 0.0.2 and later read and which never downloads anything before the user accepts ([ADR-0021](../adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md)). On the AUR, `hikarisub-beta-bin` follows the rewrite from 0.1.0-beta.1, and `hikarisub-stable-bin` follows it from the first stable rewrite release. Legacy 0.0.1 reads no manifest and reports the highest stable release, so the first stable rewrite release's notes open by saying that moving is optional.
+A rewrite release always names `"offer_to": ["qt"]`. Legacy users are offered it only through its manifest's optional `offer` member, which legacy 0.0.2 and later read and which never downloads anything before the user accepts ([ADR-0021](adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md)). On the AUR, `hikarisub-beta-bin` follows the rewrite from 0.1.0-beta.1, and `hikarisub-stable-bin` follows it from the first stable rewrite release. Legacy 0.0.1 reads no manifest and reports the highest stable release, so the first stable rewrite release's notes open by saying that moving is optional.
 
 ## Payload and licences
 

@@ -1,8 +1,8 @@
 # Proposed domain vocabulary
 
-For [Settle the domain glossary for the rewrite](https://github.com/altqx/hikari/issues/30). **Accepted in the live review on 2026-09-27, including Unconfirmed.** The canonical concise definitions now live in [CONTEXT.md](../../../CONTEXT.md). This retained review artifact explains the evidence and distinctions; it does not authorize new capabilities or behavioral changes. Underlined terms identify the reviewed label changes or disambiguations.
+For [Settle the domain glossary for the rewrite](https://github.com/altqx/hikari/issues/30). **Accepted in the live review on 2026-09-27, including Unconfirmed.** The canonical concise definitions now live in [CONTEXT.md](../../CONTEXT.md). This retained review artifact explains the evidence and distinctions; it does not authorize new capabilities or behavioral changes. Underlined terms identify the reviewed label changes or disambiguations.
 
-The four accepted terms in [CONTEXT.md](../../../CONTEXT.md)—**Workspace**, **Editing target**, **Protected reference**, **Tool target**—remain unchanged. Accepted layout, movable panels, optional Home, follow/pin targeting and technical choices are not reopened.
+The four accepted terms in [CONTEXT.md](../../CONTEXT.md)—**Workspace**, **Editing target**, **Protected reference**, **Tool target**—remain unchanged. Accepted layout, movable panels, optional Home, follow/pin targeting and technical choices are not reopened.
 
 Evidence: [core inventory][core], [UI inventory][ui], [data inventory][data]. Section references below identify the supporting observations.
 

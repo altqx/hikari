@@ -1719,7 +1719,7 @@ TEST(HydraStrip, TheTimeKeySetsTheValue)
 
 namespace {
 
-// Approved departures (docs/qt/compatibility-decisions.md): the states where
+// Approved departures (docs/compatibility-decisions.md): the states where
 // the rewrite expects other Lines than the capture, which stays legacy's
 // record (each changed value is checked to differ from it).
 struct Departure {

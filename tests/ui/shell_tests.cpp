@@ -6434,7 +6434,7 @@ private slots:
     // recent file, a macro, a sort key, a panel, a suggestion), whose
     // submenu has the icon, nor an item a later card removes; those are
     // exempted here by the text that identifies them, and an exemption that
-    // matches no item fails too. docs/qt/ux/menu-icon-gaps.md lists them.
+    // matches no item fails too. docs/ux/menu-icon-gaps.md lists them.
     void everyMenuItemHasAnIcon()
     {
         using menu_icon_scan::Exemption;
@@ -6770,7 +6770,7 @@ private slots:
         // D3: each header names its panel (a lone panel's title bar) or
         // its tabs (page tabs with their selection); its "⋯" button, named
         // "<panel> options", opens the panel's menu, whose named items float,
-        // dock and close it (docs/qt/docking.md: tabs expose their names,
+        // dock and close it (docs/docking.md: tabs expose their names,
         // selection and close/float actions to assistive technology).
         QAccessibleInterface *audioBar = find(top, QAccessible::TitleBar, QStringLiteral("Audio"));
         QVERIFY(audioBar);
@@ -6976,7 +6976,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
     }
 
-    // D1 Move before/after (docs/qt/docking.md, keyboard contract): in a
+    // D1 Move before/after (docs/docking.md, keyboard contract): in a
     // group of tabs the "⋯" menu moves the panel's tab one place left or
     // right, off at the bar's end; the moved panel stays the shown tab with
     // the focus, and the order is part of the saved layout. A lone panel's
@@ -7436,7 +7436,7 @@ private slots:
     void floatingPanelsOffEveryScreenComeBack()
     {
         if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
-            QSKIP("On Wayland the compositor places windows (docs/qt/docking.md)");
+            QSKIP("On Wayland the compositor places windows (docs/docking.md)");
         auto *editorDock = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("editorDock"));
         QVERIFY(editorDock->setProperty("isFloating", true));
         QTRY_VERIFY(item("editorPanel")->window() != window);

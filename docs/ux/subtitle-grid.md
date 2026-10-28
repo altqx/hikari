@@ -1,6 +1,6 @@
 # Subtitle grid
 
-**Accepted direction: a custom painted grid.** altqx chose [“Use painted grid”](https://github.com/altqx/hikari/issues/27#issuecomment-5849499565); [ADR-0003](../../adr/0003-painted-subtitle-grid.md) records the decision. This supersedes the TableView-first recommendation in [Rendering a 50k-line subtitle grid in QML](https://github.com/altqx/hikari/blob/c9f7088a9c4a0c26cb858c9129a8d5d6caa21628/docs/research/qml-grid.md). It is a renderer direction, not approval of every prototype interaction or evidence that a performance threshold has passed.
+**Accepted direction: a custom painted grid.** altqx chose [“Use painted grid”](https://github.com/altqx/hikari/issues/27#issuecomment-5849499565); [ADR-0003](../adr/0003-painted-subtitle-grid.md) records the decision. This supersedes the TableView-first recommendation in [Rendering a 50k-line subtitle grid in QML](https://github.com/altqx/hikari/blob/c9f7088a9c4a0c26cb858c9129a8d5d6caa21628/docs/research/qml-grid.md). It is a renderer direction, not approval of every prototype interaction or evidence that a performance threshold has passed.
 
 ## Evidence and implementation boundary
 

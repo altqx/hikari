@@ -1,11 +1,11 @@
 # Notices: the inventory (NT1, [#302](https://github.com/altqx/hikari/issues/302))
 
 Every popup whose only button was OK, and every message that popped legacy's Log window up, as qt stood at
-ce0c6740e, with the kind each takes since NT1 (docs/qt/ux/visual-language.md, "Notices and the Log"). The
+ce0c6740e, with the kind each takes since NT1 (docs/ux/visual-language.md, "Notices and the Log"). The
 owner approved the kinds and titles with the [mockup](https://github.com/altqx/hikari/issues/302#issuecomment-6329132646)
 on 2026-10-22 ([approval](https://github.com/altqx/hikari/issues/302#issuecomment-6329169301)); the departures are
 NT1-log-panel, NT1-log-notices, NT1-ok-notices, NT1-read-only-save and NT1-select-lines-result in
-docs/qt/compatibility-decisions.md. "List" says whether the popup was on PK1's allow-list
+docs/compatibility-decisions.md. "List" says whether the popup was on PK1's allow-list
 (`tests/ui/in_window_popups.txt`); all 16 that were are off it. Paths under `src/`; line numbers are qt's at
 ce0c6740e. The PU cards follow the same rule for the popups they move.
 

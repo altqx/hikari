@@ -1,6 +1,6 @@
 # Native docking and workspace persistence proposal
 
-**Historical proposal; accepted on 2026-09-27.** See the current [docking contract](../docking.md) and [ADR 0017](../../adr/0017-owned-native-docking.md). Native qualification remains required.
+**Historical proposal; accepted on 2026-09-27.** See the current [docking contract](../docking.md) and [ADR 0017](../adr/0017-owned-native-docking.md). Native qualification remains required.
 
 For [Choose native docking and workspace persistence architecture](https://github.com/altqx/hikari/issues/46). Movable/floating panels, shared layout, tool targets and the familiar Editing preset are already [accepted](../ux/workspaces.md). This proposal chooses their implementation boundary; it does not reopen constrained-versus-floating UX or claim a native docking pass.
 

@@ -1,5 +1,5 @@
 // hikari_i18n_migrate: the reproducible O4 conversion of the legacy PO
-// catalogs into TS (docs/qt/localisation.md). Developer-invoked through the
+// catalogs into TS (docs/localisation.md). Developer-invoked through the
 // hikari_i18n_keymap and hikari_i18n_convert targets; ordinary builds only run
 // its probe subcommand for the plural tests.
 //

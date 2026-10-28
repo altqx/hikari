@@ -5,7 +5,7 @@
 // class. An event is queued only while sending is on: a project key compiled
 // in (HIKARI_POSTHOG_KEY, release builds), the setting privacy.usageData on
 // (the default) and no DO_NOT_TRACK in the environment. Each event's
-// properties are checked against the closed table in docs/qt/analytics.md
+// properties are checked against the closed table in docs/analytics.md
 // (conforms()); an event that does not conform is dropped. The queue lives in
 // memory and in a bounded file in the cache folder; it is sent every few
 // minutes and at quit, never waited on by the window, and a send that fails
@@ -52,7 +52,7 @@ public:
         int firstFlushMs = 60 * 1000;
     };
     static QUrl defaultEndpoint() { return QUrl(QStringLiteral("https://eu.i.posthog.com/batch/")); }
-    // "What is sent": the site's page on it (docs/qt/analytics.md for developers).
+    // "What is sent": the site's page on it (docs/analytics.md for developers).
     static QUrl whatIsSentUrl()
     {
         return QUrl(QStringLiteral("https://hikarisub.altqx.com/en/docs/help/what-is-sent"));

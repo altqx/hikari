@@ -1,5 +1,5 @@
 #pragma once
-// O4: the one-shot PO-to-TS migration (docs/qt/localisation.md, "Keys and
+// O4: the one-shot PO-to-TS migration (docs/localisation.md, "Keys and
 // migration"). The key map pairs each legacy gettext key with the rewrite's
 // Qt keys: an exact match (same source text, same disambiguation as the
 // msgctxt, neither plural) keeps the reviewed translation; a c-format id that

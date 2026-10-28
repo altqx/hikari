@@ -1,6 +1,6 @@
 #pragma once
 
-// S4-run-validation (docs/qt/compatibility-decisions.md): which validation
+// S4-run-validation (docs/compatibility-decisions.md): which validation
 // functions a macro run calls. Legacy "Run the last loaded script" (and a
 // script hotkey, through the menu item) rebuilt the Automation menu first,
 // which validated every Document-script macro (Automation.cpp:1375, 1434),

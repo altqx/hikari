@@ -1,6 +1,6 @@
 # Time and frame semantics proposal
 
-**Accepted on 2026-09-27:** the full typed-time/frame contract, including the earlier named timing fixes. The authoritative [time-semantics specification](../time-semantics.md) and [ADR 0014](../../adr/0014-typed-time-and-frame-semantics.md) capture the result of [Set time and frame semantics for editing and playback](https://github.com/altqx/hikari/issues/42). This retained proposal is review history; pre-acceptance status wording below is superseded by that specification. No implementation or timing-accuracy pass is implied.
+**Accepted on 2026-09-27:** the full typed-time/frame contract, including the earlier named timing fixes. The authoritative [time-semantics specification](../time-semantics.md) and [ADR 0014](../adr/0014-typed-time-and-frame-semantics.md) capture the result of [Set time and frame semantics for editing and playback](https://github.com/altqx/hikari/issues/42). This retained proposal is review history; pre-acceptance status wording below is superseded by that specification. No implementation or timing-accuracy pass is implied.
 
 ## Typed values and precision
 

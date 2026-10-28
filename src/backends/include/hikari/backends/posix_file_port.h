@@ -1,6 +1,6 @@
 #pragma once
 
-// Native write owner for Linux (F2-L; docs/qt/proposals/application-lifecycle.md).
+// Native write owner for Linux (F2-L; docs/proposals/application-lifecycle.md).
 // Implements the application's FilePort with an atomic replace: write a
 // temporary file beside the destination, fsync it, rename it over the
 // destination, then fsync the directory. The original file is never truncated

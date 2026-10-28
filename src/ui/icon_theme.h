@@ -1,6 +1,6 @@
 #pragma once
 
-// K1: the in-house vector icon set (docs/qt/ux/icons.md). Each UI icon is a
+// K1: the in-house vector icon set (docs/ux/icons.md). Each UI icon is a
 // monochrome SVG on a 16-unit grid painted with currentColor, with at most
 // one accent layer (<g id="accent">). The set is tinted at run time from the
 // theme layer (K2, theme.h), live: the theme's text colour, its accent (the

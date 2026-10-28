@@ -1,6 +1,6 @@
 # Rewrite test strategy
 
-**Accepted on 2026-09-27 in the live review with altqx for [test strategy #34](https://github.com/altqx/hikari/issues/34).** The user accepted the complete test stack and evidence-gated completion rule from the [reviewed proposal](https://github.com/altqx/hikari/blob/cb3246ec5e058455a7978c2a8f8369338ca21e97/docs/qt/proposals/testing.md); [ADR-0015](../adr/0015-behavioral-and-native-test-evidence.md) records the decision. It applies the accepted [compatibility](compatibility.md), [build](build.md) and [performance](performance.md) contracts. The [completed testing research](https://github.com/altqx/hikari/blob/ee59a12872f3d9e0ddeb203e5fa3c09566b158ce/docs/research/qml-testing.md) supports these choices; no new runner, suite or reference machine has been qualified.
+**Accepted on 2026-09-27 in the live review with altqx for [test strategy #34](https://github.com/altqx/hikari/issues/34).** The user accepted the complete test stack and evidence-gated completion rule from the [reviewed proposal](https://github.com/altqx/hikari/blob/cb3246ec5e058455a7978c2a8f8369338ca21e97/docs/qt/proposals/testing.md); [ADR-0015](adr/0015-behavioral-and-native-test-evidence.md) records the decision. It applies the accepted [compatibility](compatibility.md), [build](build.md) and [performance](performance.md) contracts. The [completed testing research](https://github.com/altqx/hikari/blob/ee59a12872f3d9e0ddeb203e5fa3c09566b158ce/docs/research/qml-testing.md) supports these choices; no new runner, suite or reference machine has been qualified.
 
 ## Frameworks and boundaries
 
@@ -54,7 +54,7 @@ First infrastructure work must qualify the tool integrations, native sessions, f
 
 ## Runner integration (E2, 2026-09-29)
 
-[`cmake/HikariTesting.cmake`](../../cmake/HikariTesting.cmake) registers every runner with CTest labels and a bounded run time. Select a family with `ctest --preset <preset> -L <label>`.
+[`cmake/HikariTesting.cmake`](../cmake/HikariTesting.cmake) registers every runner with CTest labels and a bounded run time. Select a family with `ctest --preset <preset> -L <label>`.
 
 | Runner | Helper | Labels | Modes |
 | --- | --- | --- | --- |
@@ -62,7 +62,7 @@ First infrastructure work must qualify the tool integrations, native sessions, f
 | QtTest (C++ Qt) | `hikari_add_qttest(target SOURCES … [LIBRARIES …] [PARTS …])` | `qttest` plus the mode | `offscreen` always; `xvfb` when `xvfb-run` exists |
 | Qt Quick Test (QML) | `hikari_add_quicktest(target QML_DIR dir)` over `tst_*.qml` | `quicktest` plus the mode | same |
 
-A long QtTest suite runs in parts (decision 38f, 2026-10-14): `PARTS <name> <name>=<first function>… PART_TIMEOUT <s>` registers `<target>.<name>.<mode>` per part, each running the executable with `-part FROM..BEFORE`: its functions from its first function up to the next part's first, in declaration order ([`tests/support/qtest_parts.h`](../../tests/support/qtest_parts.h); the source ends with `HIKARI_QTEST_MAIN_IN_PARTS` instead of `QTEST_MAIN`). A function added anywhere joins the part around it, and `<target>.parts` checks that the parts list every function exactly once. `hikari_ui_shell_tests` is split this way: in one process it took about 800-850 s under Xvfb against a 900 s timeout. Run one function as before (`hikari_ui_shell_tests <function>`); `hikari_ui_shell_tests -part FROM..BEFORE -functions` lists a part.
+A long QtTest suite runs in parts (decision 38f, 2026-10-14): `PARTS <name> <name>=<first function>… PART_TIMEOUT <s>` registers `<target>.<name>.<mode>` per part, each running the executable with `-part FROM..BEFORE`: its functions from its first function up to the next part's first, in declaration order ([`tests/support/qtest_parts.h`](../tests/support/qtest_parts.h); the source ends with `HIKARI_QTEST_MAIN_IN_PARTS` instead of `QTEST_MAIN`). A function added anywhere joins the part around it, and `<target>.parts` checks that the parts list every function exactly once. `hikari_ui_shell_tests` is split this way: in one process it took about 800-850 s under Xvfb against a 900 s timeout. Run one function as before (`hikari_ui_shell_tests <function>`); `hikari_ui_shell_tests -part FROM..BEFORE -functions` lists a part.
 
 `hikari_ui_saved_layouts_tests` runs in two parts too, each under the default timeout (60 s until 2026-10-22, 120 s since: green Windows MSVC runs took up to 51 s per part, and slow shared runners took them past 60 s). Every function starts the application and its QML, as in D2's `hikari_ui_view_arrangements_tests` (decision 38g, 2026-10-14), which it replaced. That suite took 14-20 s in one process here and about three times as long beside the shell suite in a `-j3` run, where it timed out twice. Limited to a fifth of a CPU, the one process timed out in 8 runs of 8, its main thread each time busy in the QML rather than waiting, while each part passed in about 31 s.
 
@@ -111,9 +111,9 @@ First workloads, each 5×200 operations: loading a generated 50,000-Line ASS scr
 
 ## The desktop in tests (38e, 2026-10-14)
 
-No test may open a real browser, file manager or editor. Every hand-off from the application to a program on the desktop goes through `backends::desktop` ([`desktop_handoff.h`](../../src/backends/include/hikari/backends/desktop_handoff.h)): `openUrl` (Help > User guide and a DG1 window's "?", About's HikariSub website, Report an issue, an update's release page, Font Collector's folder on Linux), `selectInFolder` (the tab menu's and recent files' folder items, a downloaded update's Show in folder) and `startDetached` (the Lua script editor, Explorer for Font Collector's folder on Windows). The application's own relaunches and installer runs after an update are not hand-offs.
+No test may open a real browser, file manager or editor. Every hand-off from the application to a program on the desktop goes through `backends::desktop` ([`desktop_handoff.h`](../src/backends/include/hikari/backends/desktop_handoff.h)): `openUrl` (Help > User guide and a DG1 window's "?", About's HikariSub website, Report an issue, an update's release page, Font Collector's folder on Linux), `selectInFolder` (the tab menu's and recent files' folder items, a downloaded update's Show in folder) and `startDetached` (the Lua script editor, Explorer for Font Collector's folder on Windows). The application's own relaunches and installer runs after an update are not hand-offs.
 
-[`tests/support/desktop`](../../tests/support/desktop/desktop_guard.h) stands in for the desktop in every UI suite (`tests/ui`) and in every test executable that builds the application (`hikari_app_startup`):
+[`tests/support/desktop`](../tests/support/desktop/desktop_guard.h) stands in for the desktop in every UI suite (`tests/ui`) and in every test executable that builds the application (`hikari_app_startup`):
 
 - recording URL handlers (`QDesktopServices::setUrlHandler`) take `file`, `http` and `https` URLs, from C++ and from QML's `Qt.openUrlExternally`;
 - where the application is linked, `backends::desktop`'s routes are replaced: URLs go to those handlers, a file to show and a program to start are recorded, and a test sets what a start answers;

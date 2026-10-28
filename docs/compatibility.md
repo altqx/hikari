@@ -1,6 +1,6 @@
 # Observable compatibility and defect approval
 
-**Accepted policy, 2026-09-27.** In the live Wayfinder review, the user chose **“Approved fixes become default.”** [ADR 0005](../adr/0005-observable-compatibility-and-defect-approval.md) records this decision for [Define observable compatibility and the legacy-defect policy](https://github.com/altqx/hikari/issues/38). This settles how an approved departure takes effect. It does not approve any candidate defect fix or claim a passing compatibility suite.
+**Accepted policy, 2026-09-27.** In the live Wayfinder review, the user chose **“Approved fixes become default.”** [ADR 0005](adr/0005-observable-compatibility-and-defect-approval.md) records this decision for [Define observable compatibility and the legacy-defect policy](https://github.com/altqx/hikari/issues/38). This settles how an approved departure takes effect. It does not approve any candidate defect fix or claim a passing compatibility suite.
 
 ## Carry-over commitments
 

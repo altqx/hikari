@@ -1,6 +1,6 @@
 # Distribution and update policy proposal
 
-**Accepted on 2026-09-27.** The current policy is [Distribution and updates](../distribution.md), with the decision recorded in [ADR-0012](../../adr/0012-distribution-and-updates.md). The proposal below is retained as the review record for [issue #40](https://github.com/altqx/hikari/issues/40). The [packaging research](https://github.com/altqx/hikari/blob/07f7005f742a7d44c6b169d11b90e0d2c62b7fea/docs/research/packaging.md) is source evidence, not a built installer or release test. Follow the accepted [CMake build](../build.md) and [platform policy](../platform-policy.md), including initial Windows 10 qualification and explicit later retirement.
+**Accepted on 2026-09-27.** The current policy is [Distribution and updates](../distribution.md), with the decision recorded in [ADR-0012](../adr/0012-distribution-and-updates.md). The proposal below is retained as the review record for [issue #40](https://github.com/altqx/hikari/issues/40). The [packaging research](https://github.com/altqx/hikari/blob/07f7005f742a7d44c6b169d11b90e0d2c62b7fea/docs/research/packaging.md) is source evidence, not a built installer or release test. Follow the accepted [CMake build](../build.md) and [platform policy](../platform-policy.md), including initial Windows 10 qualification and explicit later retirement.
 
 ## Package routes
 

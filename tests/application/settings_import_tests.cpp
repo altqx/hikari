@@ -1,7 +1,7 @@
 // O3: the one-shot settings importer's readers and review plan against the
 // legacy loaders at 20d647c4 (config.cpp SetRawOptions / LoadOptions /
 // LoadAudioOpts, Hotkeys.cpp LoadHkeys, ConfigConverter.cpp) and the
-// migration worksheet (docs/qt/proposals/settings-migration-map): every
+// migration worksheet (docs/proposals/settings-migration-map): every
 // option and action row reaches a destination or an explicit disposition,
 // C04-short-file, S44-import's no-op repeat and kept user edits,
 // S44-macro-alias, foreign-platform paths, the theme exclusion and the

@@ -30,7 +30,7 @@ on:
       - tests/backends/**
       - tests/ui/**
       - tests/fixtures/**
-      - docs/qt/fixtures/**
+      - docs/fixtures/**
       - .github/workflows/qt-linux.yml
   workflow_dispatch:
 

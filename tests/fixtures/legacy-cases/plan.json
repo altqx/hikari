@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "fixtures": "docs/qt/fixtures/approved-departures",
+  "fixtures": "docs/fixtures/approved-departures",
   "routes": {
     "C03-preservation": {
       "route": "save-as",

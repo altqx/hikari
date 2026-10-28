@@ -1,6 +1,6 @@
 #pragma once
 
-// Accessibility for the painted Grid (V1-A; docs/qt/ux/subtitle-grid.md).
+// Accessibility for the painted Grid (V1-A; docs/ux/subtitle-grid.md).
 // The Grid is a Table whose cells are virtual: created on demand, keyed by
 // LineId and column (never by row), and kept in a bounded cache. They are not
 // paint objects or QML delegates.

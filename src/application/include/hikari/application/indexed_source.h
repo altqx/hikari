@@ -1,6 +1,6 @@
 #pragma once
 
-// IndexedSource port (N1; docs/qt/backends.md). Opening indexes a source and
+// IndexedSource port (N1; docs/backends.md). Opening indexes a source and
 // returns its video track's timeline; a frame request returns the exact
 // indexed frame as an owned BGRA buffer, or EOF/error. Every result names the
 // source generation it belongs to; a result from an older generation (the

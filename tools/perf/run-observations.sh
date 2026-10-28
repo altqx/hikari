@@ -15,7 +15,7 @@
 # A sampler records the load average, CPU pressure and the busiest other
 # processes every two seconds. tools/perf/summarize-observations.py marks a
 # run contaminated when other work competed for the CPU, and compares each
-# workload with docs/qt/performance.md. Every result is an uncalibrated
+# workload with docs/performance.md. Every result is an uncalibrated
 # observation unless the host is calibrated (tests/perf/reference-hosts.json).
 set -uo pipefail
 
@@ -40,7 +40,7 @@ while [[ $# -gt 0 ]]; do
 done
 CORE_BIN="${CORE_BIN:-$BUILD_DIR/tests/perf/hikari_core_perf}"
 UI_BIN="${UI_BIN:-$BUILD_DIR/tests/perf/hikari_ui_perf}"
-OUT="${OUT:-$ROOT/docs/qt/perf/observations/$(date +%F)/$LABEL}"
+OUT="${OUT:-$ROOT/docs/perf/observations/$(date +%F)/$LABEL}"
 REFERENCE_HOSTS="$ROOT/tests/perf/reference-hosts.json"
 for b in "$CORE_BIN" "$UI_BIN"; do [[ -x "$b" ]] || { echo "missing $b" >&2; exit 1; }; done
 command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }

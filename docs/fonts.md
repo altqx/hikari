@@ -1,6 +1,6 @@
 # Subtitle font identity and collection
 
-**Accepted contract, 2026-09-27:** the user chose **“Verify renderer/font-file agreement”** in [Choose font enumeration and matching strategy](https://github.com/altqx/hikari/issues/35). [ADR 0007](../adr/0007-renderer-verified-subtitle-fonts.md) records the tradeoff. A later Windows experiment establishes a bounded diagnostic seam; full collection completeness and cross-platform qualification remain unproved.
+**Accepted contract, 2026-09-27:** the user chose **“Verify renderer/font-file agreement”** in [Choose font enumeration and matching strategy](https://github.com/altqx/hikari/issues/35). [ADR 0007](adr/0007-renderer-verified-subtitle-fonts.md) records the tradeoff. A later Windows experiment establishes a bounded diagnostic seam; full collection completeness and cross-platform qualification remain unproved.
 
 ## Authority and ownership
 

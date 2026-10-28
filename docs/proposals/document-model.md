@@ -1,6 +1,6 @@
 # Proposed subtitle document model
 
-**Accepted on 2026-09-27:** the full document model and format-boundary contract, including the earlier named product outcomes. The authoritative [document-model specification](../document-model.md) and [ADR 0013](../../adr/0013-source-preserving-document-model.md) capture the accepted result of [Design the subtitle document model and format boundaries](https://github.com/altqx/hikari/issues/41). This retained proposal is review history; pre-acceptance status wording below is superseded by that specification. Acceptance does not claim implementation or fixture success.
+**Accepted on 2026-09-27:** the full document model and format-boundary contract, including the earlier named product outcomes. The authoritative [document-model specification](../document-model.md) and [ADR 0013](../adr/0013-source-preserving-document-model.md) capture the accepted result of [Design the subtitle document model and format boundaries](https://github.com/altqx/hikari/issues/41). This retained proposal is review history; pre-acceptance status wording below is superseded by that specification. Acceptance does not claim implementation or fixture success.
 
 ## Authoritative records
 

@@ -644,7 +644,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {2011, VideoHotkey, "Next chapter", "M"}, // VIDEO_NEXT_CHAPTER
         {2021, VideoHotkey, "Full screen bar: Auto / Always / Never", "Tab"}, // VIDEO_FULLSCREEN_BAR (FS1-bar-mode)
         {2010, VideoHotkey, "Previous chapter", "N"}, // VIDEO_PREVIOUS_CHAPTER
-        // VT2's audit (docs/qt/visual-tools.md): keys no Video or Global binding has.
+        // VT2's audit (docs/visual-tools.md): keys no Video or Global binding has.
         {2022, VideoHotkey, "Position pointer", "X"}, // VIDEO_TOOL_CROSSHAIR
         {2023, VideoHotkey, "Text positioning", "P"}, // VIDEO_TOOL_POSITION
         {2024, VideoHotkey, "Text moving", "G"}, // VIDEO_TOOL_MOVE

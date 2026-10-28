@@ -35,9 +35,9 @@ The binaries were copied from the shared build tree, with their hashes in `raw/*
 ## Running
 
 ```sh
-tools/perf/host-inventory.sh                       # writes docs/qt/perf/hosts/<hostname>.{md,json}
+tools/perf/host-inventory.sh                       # writes docs/perf/hosts/<hostname>.{md,json}
 tools/perf/run-observations.sh --label run1 --diagnostics
-tools/perf/summarize-observations.py docs/qt/perf/observations/<date> --host-inventory docs/qt/perf/hosts/<hostname>.json
+tools/perf/summarize-observations.py docs/perf/observations/<date> --host-inventory docs/perf/hosts/<hostname>.json
 ```
 
 Both scripts default to `out/build/ubuntu-x64-release`; pass `--build-dir` for another tree. Stop builds and other heavy work first, and keep the machine on AC power with the recorded power profile.

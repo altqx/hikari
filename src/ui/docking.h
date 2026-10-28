@@ -1,7 +1,7 @@
 #pragma once
 
 // D1: Hikari's adapter around the docking engine (KDDockWidgets, QtQuick
-// frontend; docs/qt/docking.md). The engine is process-wide and serves one
+// frontend; docs/docking.md). The engine is process-wide and serves one
 // QML engine; nothing outside this adapter talks to it directly.
 //
 // D3: the chrome follows MuseScore 4 (docs/research/musescore-docking.md):
@@ -37,7 +37,7 @@ namespace hikari::ui {
 bool attachDocking(QQmlEngine &engine);
 
 // Keeps every floating panel window's header on an available screen
-// (docs/qt/docking.md: removed monitors return floating groups to the main
+// (docs/docking.md: removed monitors return floating groups to the main
 // screen). On Wayland the compositor places windows and nothing is moved.
 // Returns how many windows were moved.
 int keepFloatingPanelsOnScreen();

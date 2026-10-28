@@ -3,7 +3,7 @@
 // bold, the content 8 below, sections 12 apart with a 1-pixel `line` rule
 // between them. The header is a button: a click, Space or Enter collapses
 // or expands the content. The arrow is drawn here, as Qt draws a list's
-// arrows (outside the icon set, docs/qt/ux/icons.md), and points to the
+// arrows (outside the icon set, docs/ux/icons.md), and points to the
 // trailing side while collapsed.
 import QtQuick
 import QtQuick.Controls

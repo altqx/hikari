@@ -1,4 +1,4 @@
-# O4: translations (ADR-0002, docs/qt/localisation.md). TS is the authoring
+# O4: translations (ADR-0002, docs/localisation.md). TS is the authoring
 # source; ordinary builds compile it to QM (unfinished entries left out) and
 # never write it. Extraction and the migration run only on request:
 #

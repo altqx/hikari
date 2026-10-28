@@ -1,6 +1,6 @@
 #pragma once
 
-// V1 playback frames off the owner's (GUI) thread (docs/qt/media.md, video
+// V1 playback frames off the owner's (GUI) thread (docs/media.md, video
 // pipeline). A player hands each delivered frame over from any thread; only
 // the newest one waits, and a newer one replaces it (latest wins), so a slow
 // moment never leaves a backlog that the video then falls behind on. A worker

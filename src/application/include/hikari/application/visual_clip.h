@@ -2,14 +2,14 @@
 
 // T4: the rectangle clip (legacy ClipRect, HikariSub/VisualClipRect.cpp) and
 // the vector clip (legacy DrawingAndClip as VECTORCLIP, VisualClips.cpp) at
-// 20d647c4 (docs/qt/visual-tools.md, "Clips"). The vector clip edits its
+// 20d647c4 (docs/visual-tools.md, "Clips"). The vector clip edits its
 // points with the shared VectorEditor (visual_vector.h), which T5's drawing
 // tool reuses.
 //
 // A Line's text is read and written as legacy did, through the ported
 // TagFindReplace::FindTag (core::legacy::TagEditor) and Replace, from the
 // start of the text: the Line editor's caret plays no part (approved
-// T4-clip-read-start, docs/qt/compatibility-decisions.md).
+// T4-clip-read-start, docs/compatibility-decisions.md).
 
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_vector.h"

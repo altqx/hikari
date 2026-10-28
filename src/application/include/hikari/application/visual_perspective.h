@@ -1,6 +1,6 @@
 #pragma once
 
-// VT3: the Perspective tool (docs/qt/visual-tools.md, card #273), after
+// VT3: the Perspective tool (docs/visual-tools.md, card #273), after
 // arch1t3cht's Aegisub perspective tool (visual_tool_perspective.cpp,
 // feature_09/10). Legacy had none.
 //

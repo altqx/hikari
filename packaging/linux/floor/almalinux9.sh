@@ -15,7 +15,7 @@ dnf -y -q install dnf-plugins-core epel-release >/dev/null
 dnf config-manager --set-enabled crb
 dnf -y -q makecache >/dev/null
 
-# Build tools (docs/qt/build.md), the compiler, and what vcpkg's ports need:
+# Build tools (docs/build.md), the compiler, and what vcpkg's ports need:
 # OpenSSL's Configure wants the perl modules, autotools ports want
 # autoconf-archive, FFmpeg wants nasm. (curl-minimal, already present,
 # provides curl.)
