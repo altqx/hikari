@@ -13,6 +13,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QSaveFile>
 
@@ -117,6 +118,15 @@ void Application::setUpGrammar(const Options &options)
     m_grammarDir = options.grammarDir;
     if (m_grammarDir.isEmpty() && !m_settingsFile.isEmpty())
         m_grammarDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Harper");
+    // Without a spell checker the words added are harper-ls's user dictionary
+    // alone: read back from it, so a restart keeps them (#409).
+    if (!m_spellChecker && !m_grammarDir.isEmpty()) {
+        QFile words(QDir(m_grammarDir).filePath(QStringLiteral("dictionary.txt")));
+        if (words.open(QIODevice::ReadOnly))
+            for (const QString &line : QString::fromUtf8(words.readAll()).split(QLatin1Char('\n')))
+                if (const QString word = line.trimmed(); !word.isEmpty() && !m_grammarOwnWords.contains(word))
+                    m_grammarOwnWords << word;
+    }
     m_grammarDelay = new QTimer(this);
     m_grammarDelay->setSingleShot(true);
     m_grammarDelay->setInterval(300);
