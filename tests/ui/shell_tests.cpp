@@ -8875,6 +8875,9 @@ private slots:
         QVERIFY(!names.contains(QStringLiteral("Aegisub")));
         QVERIFY(names.contains(QStringLiteral("SoundTouch"))); // KA2-slowed-playback
         QVERIFY(names.contains(QStringLiteral("Harper")));     // GR1: harper-ls
+        // DK1: the bundled Korean and Tamil dictionaries.
+        QVERIFY(names.contains(QStringLiteral("hunspell-dict-ko")));
+        QVERIFY(names.contains(QStringLiteral("ThamiZha! Solthiruthi")));
         // W2: CSRI where the CSRI adapter is built (Windows); VSFilter only
         // where VSFilterMod, a VSFilter derivative, is in the Csri folder (the
         // package; xy-VSFilter is not shipped).
