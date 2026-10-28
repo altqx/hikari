@@ -36,7 +36,7 @@ TEST(GettingStarted, SetsTheCrucialSettingsInPageOrder)
 {
     const auto all = gettingStartedSettings();
     EXPECT_EQ(all.front(), "program.language");
-    EXPECT_EQ(all.back(), "updater.autoCheck");
+    EXPECT_EQ(all.back(), "privacy.usageData"); // AN1
     // Every one is a registry setting, and none is listed twice.
     for (const auto id : all) {
         EXPECT_NE(findSetting(id), nullptr) << id;
@@ -57,6 +57,7 @@ TEST(GettingStarted, PagesShowTheLiveValuesAsTheSettingsWindowDoes)
     EXPECT_EQ(std::get<std::string>(state.at("appearance.theme")), "light");
     EXPECT_EQ(std::get<std::string>(state.at("appearance.titleBar")), "auto");
     EXPECT_EQ(std::get<bool>(state.at("updater.autoCheck")), false);
+    EXPECT_EQ(std::get<bool>(state.at("privacy.usageData")), true); // AN1: on by default
     EXPECT_EQ(state.size(), gettingStartedSettings().size());
 }
 
@@ -122,4 +123,18 @@ TEST(GettingStarted, AChoiceThePagesCannotShowStaysTheImports)
     auto chosen = state;
     chosen["editor.dictionaryLanguage"] = std::int64_t{2};
     EXPECT_TRUE(gettingStartedPageSettings(chosen).contains("editor.dictionaryLanguage"));
+}
+
+// AN1 (#404): getting_started_finished names the pages Finish changed by
+// the settings they hold.
+TEST(GettingStarted, EachSettingHasItsPage)
+{
+    for (const auto id : gettingStartedSettings())
+        EXPECT_FALSE(gettingStartedPageOf(id).empty()) << id;
+    EXPECT_EQ(gettingStartedPageOf("program.language"), "language");
+    EXPECT_EQ(gettingStartedPageOf("appearance.darkAccent"), "look");
+    EXPECT_EQ(gettingStartedPageOf("audio.outputDevice"), "media");
+    EXPECT_EQ(gettingStartedPageOf("editor.spellchecker"), "editing");
+    EXPECT_EQ(gettingStartedPageOf("autosave.maxFiles"), "editing");
+    EXPECT_EQ(gettingStartedPageOf("privacy.usageData"), "updates");
 }

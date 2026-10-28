@@ -9,13 +9,13 @@ namespace hikari::application {
 
 namespace {
 
-constexpr std::array<std::string_view, 13> kSettings{
+constexpr std::array<std::string_view, 14> kSettings{
     "program.language",                                             // Language
     "appearance.theme", "appearance.followSystem", "appearance.lightAccent", "appearance.darkAccent",
     "appearance.titleBar",                                          // Look
     "video.subtitleProvider", "audio.outputDevice",                 // Video and audio
     "autosave.maxFiles", "editor.spellchecker", "editor.dictionaryLanguage",    // Editing
-    "updater.checkForStable", "updater.autoCheck",                  // Updates
+    "updater.checkForStable", "updater.autoCheck", "privacy.usageData", // Updates (AN1: and usage data)
 };
 
 } // namespace
@@ -49,6 +49,19 @@ OptionsState gettingStartedState(const Settings &live, const OptionsLists &lists
             state.emplace(id, copy.value(id));
     }
     return state;
+}
+
+std::string_view gettingStartedPageOf(std::string_view setting)
+{
+    if (setting == "program.language")
+        return "language";
+    if (setting.starts_with("appearance."))
+        return "look";
+    if (setting.starts_with("video.") || setting.starts_with("audio."))
+        return "media";
+    if (setting.starts_with("updater.") || setting.starts_with("privacy."))
+        return "updates";
+    return "editing";
 }
 
 std::set<std::string, std::less<>> gettingStartedPageSettings(const OptionsState &pages)

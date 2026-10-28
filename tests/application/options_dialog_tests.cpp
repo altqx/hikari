@@ -250,9 +250,16 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(previewText.setting, "styles.previewText");
     EXPECT_EQ(previewText.control, OptionsControl::Text);
     EXPECT_EQ(previewText.page, OptionsPage::Appearance);
+    // AN1 (#404): "Send anonymous usage data", on by default, on the Updates page.
+    const auto &usageData = all[std::size(kLegacy) + 18];
+    EXPECT_EQ(usageData.setting, "privacy.usageData");
+    EXPECT_EQ(usageData.control, OptionsControl::Check);
+    EXPECT_EQ(usageData.page, OptionsPage::Updates);
+    ASSERT_NE(findSetting("privacy.usageData"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("privacy.usageData")->defaultValue), true);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 20);
-    const auto &hostApi = all[std::size(kLegacy) + 18];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 21);
+    const auto &hostApi = all[std::size(kLegacy) + 19];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -263,7 +270,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 18);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 19);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));

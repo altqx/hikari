@@ -155,6 +155,9 @@ constexpr OptionsBinding kBindings[] = {
     // before only the Style editor's preview), the Appearance page's Font
     // section.
     {"styles.previewText", Text, Appearance},
+    // AN1 (#404): "Send anonymous usage data", the Updates and privacy
+    // page's Privacy section.
+    {"privacy.usageData", Check, Updates},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
