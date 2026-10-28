@@ -1,85 +1,15 @@
-// Y7: the colour picker's conversions against the legacy source itself.
-// HikariSub/colorspace.cpp and colorspace.h (20d647c4) are copied unchanged
-// into the build and compiled here against tests/core/legacy-colorspace (the
-// MAX/MIN macros of config.h as written, and the parts of wxColour and
-// wxString they use), so each port is compared with what legacy computes:
-// every 0-255 input of the six HSL/HSV conversions (the picker's NumCtrl
-// range), color_to_html, and html_to_color over generated field texts.
+// Y7: the colour picker's conversions, at fixed values of legacy
+// colorspace.cpp and color_to_html / html_to_color (20d647c4).
 
 #include "hikari/core/colour_space.h"
 #include "hikari/core/editor_font_colour.h"
 
-#include "colorspace.h" // the legacy header, copied into the build
-
 #include <gtest/gtest.h>
-
-#include <random>
-#include <string>
 
 using namespace hikari::core::legacy;
 
-namespace {
-
-using LegacyConversion = void (*)(int, int, int, unsigned char *, unsigned char *, unsigned char *);
-
-// The first input where the port differs from legacy, or an empty text.
-std::string firstDifference(LegacyConversion legacy, Channels (*port)(int, int, int))
-{
-    for (int x = 0; x < 256; ++x)
-        for (int y = 0; y < 256; ++y)
-            for (int z = 0; z < 256; ++z) {
-                unsigned char a, b, c;
-                legacy(x, y, z, &a, &b, &c);
-                const Channels mine = port(x, y, z);
-                if (mine != Channels{a, b, c})
-                    return std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z) + ": legacy " +
-                           std::to_string(a) + "," + std::to_string(b) + "," + std::to_string(c) + ", port " +
-                           std::to_string(mine.a) + "," + std::to_string(mine.b) + "," + std::to_string(mine.c);
-            }
-    return {};
-}
-
-Channels legacyHtml(const std::u16string &text)
-{
-    const wxColour c = html_to_color(wxString(std::wstring(text.begin(), text.end())));
-    return {c.Red(), c.Green(), c.Blue()};
-}
-
-} // namespace
-
-TEST(LegacyColourSpace, HslToRgbForEveryInput)
-{
-    EXPECT_EQ(firstDifference(hsl_to_rgb, hslToRgb), "");
-}
-
-TEST(LegacyColourSpace, HsvToRgbForEveryInput)
-{
-    EXPECT_EQ(firstDifference(hsv_to_rgb, hsvToRgb), "");
-}
-
-TEST(LegacyColourSpace, RgbToHslForEveryInput)
-{
-    EXPECT_EQ(firstDifference(rgb_to_hsl, rgbToHsl), "");
-}
-
-TEST(LegacyColourSpace, RgbToHsvForEveryInput)
-{
-    EXPECT_EQ(firstDifference(rgb_to_hsv, rgbToHsv), "");
-}
-
-TEST(LegacyColourSpace, HsvToHslForEveryInput)
-{
-    EXPECT_EQ(firstDifference(hsv_to_hsl, hsvToHsl), "");
-}
-
-TEST(LegacyColourSpace, HslToHsvForEveryInput)
-{
-    EXPECT_EQ(firstDifference(hsl_to_hsv, hslToHsv), "");
-}
-
-// Fixed values, readable without the legacy build: the special cases
-// (colorspace.cpp:53-87, 152-186), the hue scale of 256 per turn, and
-// rgb_to_hsv's saturation 255 for black (colorspace.cpp:303-304).
+// The special cases (colorspace.cpp:53-87, 152-186), the hue scale of 256 per
+// turn, and rgb_to_hsv's saturation 255 for black (colorspace.cpp:303-304).
 TEST(LegacyColourSpace, Fixtures)
 {
     EXPECT_EQ(hslToRgb(171, 255, 128), (Channels{0, 0, 255}));

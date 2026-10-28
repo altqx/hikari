@@ -4,8 +4,7 @@
 Writes one self-contained page (default out/k1/index.html) showing every
 icon of src/ui/icons/manifest.json in the four themes (Light, Dark, High
 contrast white and High contrast black) at 16 and 32 px, with its disabled colour,
-beside the legacy bitmap it replaces (HikariSub/Bitmaps, embedded), its
-label, the surfaces using it and whether it mirrors in right-to-left
+its label, the surfaces using it and whether it mirrors in right-to-left
 layouts. The page links the PNG sheets hikari_ui_icon_tests writes into the
 same folder (k1-<theme>-<percent>.png, rendered by the app's Icon item).
 
@@ -19,7 +18,6 @@ them through CSS `color`, as currentColor does in the app.
 Run:  python3 tools/icons/contact_sheet.py [output.html]
 """
 
-import base64
 import html
 import json
 import os
@@ -28,7 +26,6 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ICONS = os.path.join(ROOT, "src", "ui", "icons")
-BITMAPS = os.path.join(ROOT, "HikariSub", "Bitmaps")
 THEME = os.path.join(ROOT, "src", "ui", "theme.cpp")
 THEME_H = os.path.join(ROOT, "src", "ui", "theme.h")
 
@@ -101,18 +98,11 @@ def main():
             cells.append(
                 '<td class="sw %s"><span>%s</span><span>%s</span><span class="off">%s</span></td>'
                 % (aid, inline(svg, 16), inline(svg, 32), inline(svg, 16)))
-        legacy = []
-        for name in icon["legacy"]:
-            path = os.path.join(BITMAPS, name)
-            data = base64.b64encode(open(path, "rb").read()).decode("ascii")
-            legacy.append('<img alt="%s" title="%s" src="data:image/png;base64,%s">' % (
-                html.escape(name), html.escape(name), data))
         rows.append(
-            "<tr><td><code>%s</code><div class=meta>%s%s</div></td>%s<td class=legacy>%s<div class=meta>%s</div></td>"
+            "<tr><td><code>%s</code><div class=meta>%s%s</div></td>%s"
             "<td class=meta>%s</td></tr>" % (
                 html.escape(icon["role"]), html.escape(icon["label"]),
                 " &middot; mirrors in RTL" if icon["mirror"] else "", "".join(cells),
-                "".join(legacy) or "&mdash;", html.escape(", ".join(icon["legacy"])),
                 html.escape(", ".join(icon["surfaces"]))))
     sheets = []
     for aid, name, _ in APPEARANCES:
@@ -138,7 +128,6 @@ th{position:sticky;top:0;background:var(--bg);font-weight:600}
 td.sw span{display:inline-flex;align-items:center;margin-right:10px}
 td.sw svg{display:block}
 .meta{color:var(--muted);font-size:12px}
-.legacy img{image-rendering:pixelated;width:32px;height:32px;margin-right:4px;vertical-align:middle;background:#fff}
 .chip{display:inline-flex;align-items:center;margin-right:12px;font-family:ui-monospace,monospace;font-size:12px}
 .chip i{display:inline-block;width:12px;height:12px;margin-right:4px;border:1px solid var(--line)}
 .sheets a{margin-right:12px}
@@ -148,11 +137,11 @@ td.sw svg{display:block}
 <h1>HikariSub icon set (K1)</h1>
 <p>%d icons drawn in house on a 16-unit grid (docs/qt/ux/icons.md). Each appearance column shows the icon
 at 16 and 32 px, then disabled at 16 px, in the theme layer's colours (Light and Dark
-with the default accent); the accent layer is the second colour. The legacy bitmap each one replaces is shown on white at 2x. PNG sheets rendered by the
+with the default accent); the accent layer is the second colour. PNG sheets rendered by the
 application's Icon item: <span class=sheets>%s</span></p>
 %s
 <div class=wrap><table>
-<thead><tr><th>Role</th><th>Light</th><th>Dark</th><th>High contrast white</th><th>High contrast black</th><th>Legacy bitmap</th><th>Surfaces</th></tr></thead>
+<thead><tr><th>Role</th><th>Light</th><th>Dark</th><th>High contrast white</th><th>High contrast black</th><th>Surfaces</th></tr></thead>
 <tbody>
 %s
 </tbody></table></div>
