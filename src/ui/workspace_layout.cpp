@@ -395,6 +395,12 @@ void WorkspaceLayoutController::choseMode()
         emit presetModeChosen(chosen);
 }
 
+void WorkspaceLayoutController::resumeMode(const QString &mode)
+{
+    if (m_chosenMode.isEmpty())
+        m_chosenMode = mode;
+}
+
 void WorkspaceLayoutController::setPreset(const QString &preset)
 {
     if (!presets().contains(preset) || (preset == m_preset && m_layout.isEmpty()))
