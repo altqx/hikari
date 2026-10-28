@@ -57,7 +57,7 @@ TEST(BundledDictionaries, TheFolderListsEveryLanguage)
 TEST(BundledDictionaries, EachKnowsItsWordsAndRejectsMisspellings)
 {
     const auto words = fixtureWords();
-    ASSERT_EQ(words.size(), 16u);
+    ASSERT_EQ(words.size(), 18u);
     std::map<std::string, std::unique_ptr<application::SpellingBackend>> loaded;
     for (const Word &word : words) {
         auto &backend = loaded[word.dictionary];

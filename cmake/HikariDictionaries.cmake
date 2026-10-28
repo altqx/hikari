@@ -2,7 +2,9 @@
 # SHA-256: en_US from Aegisub's dictionary repository; pl, th_TH, ko_KR and
 # ta_IN from LibreOffice's (DK1 #473: ko_KR built from spellcheck-ko's
 # hunspell-dict-ko, ta_IN from ThamiZha! Solthiruthi). Each dictionary's
-# notice goes in licenses/dictionaries/<name>/.
+# notice goes in licenses/dictionaries/<name>/. An entry may name a file in
+# the source tree instead of a URL (a fixed copy of upstream's), checked by
+# its hash as well.
 #
 #   hikari_fetch_dictionaries(<downloads> <out-var>)
 #
@@ -36,9 +38,15 @@ set(HIKARI_DICTIONARY_FILES
     "licenses/dictionaries/ko_KR/LICENSE.md|${_ko}/LICENSE.md|3e81dd90f6d8877ccb2ed2b262ce72ee8a6ccf3a21179a8949abf0d85ac7fda0"
     # MPL 1.1, as LibreOffice ships it (owner, 2026-10-29: no maintained Tamil
     # dictionary exists; Solthiruthi's upstream stopped in 2014).
-    "Dictionary/ta_IN.aff|${_libreoffice}/ta_IN/ta_IN.aff|e05c53e643a141efc1e9c00c5f6532a6fd8ac547b998e1347aa8aea5817f2e15"
+    # packaging/dictionaries/ta_IN.aff is LibreOffice's (SHA-256 e05c53e6...)
+    # with two header counts fixed: its SFX D table has 14 entries and SFX v
+    # 5, one more than declared, and Hunspell took the extra line for a second
+    # header of the flag and stopped parsing there, losing every suffix table
+    # after D (owner, 2026-10-29: fix the two counts).
+    "Dictionary/ta_IN.aff|packaging/dictionaries/ta_IN.aff|40e52cffa070c82d952bf93a6aba6fad6e92a658c4343cf0b66c3020a7c47573"
     "Dictionary/ta_IN.dic|${_libreoffice}/ta_IN/ta_IN.dic|4c079bde24d3232d4195e78bd33bbe5fcb887ceb6363065574cec048d04bc756"
     "licenses/dictionaries/ta_IN/COPYING|${_libreoffice}/ta_IN/COPYING|9fec7edfc79e99b210d43413ac1f309654c8c4c622ee8f51a24a3eb693f92a4e")
+get_filename_component(HIKARI_DICTIONARY_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 unset(_aegisub)
 unset(_libreoffice)
 unset(_ko)
@@ -71,7 +79,14 @@ function(hikari_fetch_dictionaries downloads out)
                 file(REMOVE "${cached}")
             endif()
         endif()
-        if(NOT EXISTS "${cached}")
+        if(NOT EXISTS "${cached}" AND NOT url MATCHES "^https://")
+            file(COPY_FILE "${HIKARI_DICTIONARY_SOURCE_DIR}/${url}" "${cached}")
+            file(SHA256 "${cached}" have)
+            if(NOT have STREQUAL sha)
+                file(REMOVE "${cached}")
+                message(FATAL_ERROR "Dictionaries: ${url} has SHA-256 ${have}, not ${sha}")
+            endif()
+        elseif(NOT EXISTS "${cached}")
             file(DOWNLOAD "${url}" "${cached}" EXPECTED_HASH SHA256=${sha} TLS_VERIFY ON STATUS status)
             list(GET status 0 code)
             if(NOT code EQUAL 0)
