@@ -82,6 +82,7 @@ public:
         QStringList from;     // the old folders something was moved from
         QStringList leftOver; // entries not moved (the new folder had one of that name)
         QStringList keptBack; // DependencyControl's own files, left in the old folder
+        QString earlierSettings; // a portable copy's: the old folder with an earlier version's hikari.ini
     };
     // The Qt folders before UD1, `config` (hikari.ini's) and `data`
     // (Recovery, Automation): on Linux ~/.config/HikariSub/HikariSub and
@@ -92,13 +93,17 @@ public:
         QString data;
         static OldFolders of(const Environment &env);
     };
-    // Moves the old folders' contents in once: only while the user folder has
-    // no hikari.ini. Caches go to the cache folder, the rest into the user
-    // folder's layout; an entry whose name the user folder already has stays,
-    // and so do DependencyControl's own files (the old package's or its
-    // self-update), which would shadow the bundled release.
-    // Empty folders left behind are removed. Legacy's folders are never read.
-    MoveReport moveIn(const OldFolders &old) const;
+    // Moves the old folders' contents in once: the first time the user folder
+    // has no hikari.ini, recorded in `.old-folders` in it. Caches go to the
+    // cache folder, the rest into the user folder's layout; an entry whose
+    // name the user folder already has stays, and so do DependencyControl's
+    // own files (the old package's or its self-update), which would shadow
+    // the bundled release. An old folder inside the user folder (Windows'
+    // data folder) is renamed `old-HikariSub` first, so what stays is not
+    // taken for the user's. Empty folders left behind are removed. Legacy's
+    // folders are never read. A portable copy moves nothing; its report names
+    // the old folder that holds an earlier version's hikari.ini.
+    MoveReport moveIn(const OldFolders &old, bool portable = false) const;
 
 private:
     QString m_root;

@@ -4955,6 +4955,10 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.MainWindow</name>
     <message>
+        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub and copy hikari.ini from there.</source>
+        <translation>สำเนาแบบพกพานี้เก็บการตั้งค่าไว้ใน %1 การตั้งค่าของเวอร์ชันก่อนหน้ายังอยู่ใน %2 หากต้องการใช้ ให้ปิด HikariSub แล้วคัดลอก hikari.ini จากที่นั่น</translation>
+    </message>
+    <message>
         <source>%1 - HikariSub</source>
         <translation type="unfinished"></translation>
     </message>

@@ -1410,6 +1410,14 @@ void Application::reportUserFolder(const UserFolder::MoveReport &moved, const Us
                                                .arg(moved.keptBack.join(QStringLiteral(", ")));
         m_log->notice(ui::LogController::Info, title, text, details);
     }
+    // #397: a portable copy before UD1 kept its settings in the system folders.
+    if (!moved.earlierSettings.isEmpty())
+        m_log->notice(ui::LogController::Info, title,
+                      QCoreApplication::translate("HikariSub.MainWindow",
+                                                  "This portable copy keeps its settings in %1. An earlier version's "
+                                                  "settings are still in %2: to use them, quit HikariSub and copy "
+                                                  "hikari.ini from there.")
+                          .arg(folder, moved.earlierSettings));
     for (const QString &path : seeded.kept)
         m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
                                                "Kept your changed %1; the new bundled version was not copied over it.")

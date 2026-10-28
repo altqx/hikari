@@ -59,6 +59,10 @@ bool copyOver(const QString &source, const QString &target)
 }
 
 const QString kSeedRecord = QStringLiteral(".bundled-files");
+// The old folders were dealt with (moved in, or named to a portable copy).
+const QString kMoveRecord = QStringLiteral(".old-folders");
+// What stays of an old data folder inside the user folder (Windows).
+const QString kLeftBehind = QStringLiteral("old-HikariSub");
 
 struct SeedRecord {
     QByteArray manifest;                // the manifest's digest at the last seeding
@@ -300,11 +304,40 @@ UserFolder::OldFolders UserFolder::OldFolders::of(const Environment &env)
     return old;
 }
 
-UserFolder::MoveReport UserFolder::moveIn(const OldFolders &old) const
+UserFolder::MoveReport UserFolder::moveIn(const OldFolders &oldFolders, bool portable) const
 {
     MoveReport report;
-    if (QFileInfo::exists(settingsFile()))
+    // Once per user folder, recorded in it: deleting hikari.ini to reset the
+    // settings brings nothing back (#397). A user folder with hikari.ini and
+    // no record was moved into by a start before the record.
+    const QString record = m_root + QLatin1Char('/') + kMoveRecord;
+    if (QFileInfo::exists(record))
         return report;
+    const auto recordDone = [&] {
+        if (!report.from.isEmpty() || !report.earlierSettings.isEmpty())
+            QDir().mkpath(m_root);
+        if (QFile file(record); QFileInfo(m_root).isDir() && file.open(QIODevice::WriteOnly))
+            file.close();
+        return report;
+    };
+    if (QFileInfo::exists(settingsFile()))
+        return recordDone();
+    // A portable copy takes nothing from the system folders, which other
+    // copies may still use; the notice says where the old settings are.
+    if (portable) {
+        if (!oldFolders.config.isEmpty() && QFileInfo::exists(oldFolders.config + QStringLiteral("/hikari.ini")))
+            report.earlierSettings = QDir::toNativeSeparators(oldFolders.config);
+        return recordDone();
+    }
+    // On Windows the old data folder (%APPDATA%\HikariSub\HikariSub) is in
+    // the user folder: it takes a name of its own first, so what stays
+    // behind is not taken for the user's (#397).
+    OldFolders old = oldFolders;
+    if (old.data.startsWith(m_root + QLatin1Char('/')) && QFileInfo(old.data).isDir()) {
+        const QString renamed = m_root + QLatin1Char('/') + kLeftBehind;
+        if (!QFileInfo::exists(renamed) && QDir().rename(old.data, renamed))
+            old.data = renamed;
+    }
     const auto into = [this](const QString &path) { return m_root + QLatin1Char('/') + path; };
     const auto cached = [this](const QString &path) { return m_cache + QLatin1Char('/') + path; };
     // hikari.ini's folder: the settings and what was kept beside them.
@@ -390,13 +423,14 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &old) const
             moves = dataTargets(folder);
         }
         if (!moves.isEmpty())
-            report.from << QDir::toNativeSeparators(folder);
+            report.from << QDir::toNativeSeparators(folder == old.data ? oldFolders.data : folder);
         for (const auto &[source, target] : moves)
             moveEntry(source, target, report.leftOver, stay, report.keptBack);
         removeEmpty(folder);
-        QDir().rmdir(QFileInfo(folder).absolutePath());
+        if (const QString parent = QFileInfo(folder).absolutePath(); parent != m_root)
+            QDir().rmdir(parent);
     }
-    return report;
+    return recordDone();
 }
 
 } // namespace hikari::app
