@@ -550,7 +550,10 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
                 // A translator finished it since (TR1 #475).
                 if (m.state == TsState::Unfinished && now->state == TsState::Finished)
                     continue;
-                EXPECT_EQ(now->translations, m.translations) << m.source.toStdString();
+                // A translator may revise a finished one (TR1 #475): the key
+                // and its state stay, its text is theirs.
+                if (now->state != TsState::Finished)
+                    EXPECT_EQ(now->translations, m.translations) << m.source.toStdString();
                 // A key the sources dropped: lupdate marks it vanished if it
                 // was finished, obsolete if not (DG1 dropped the update
                 // notice's placeholder, unfinished; PK1 the mapping window's
