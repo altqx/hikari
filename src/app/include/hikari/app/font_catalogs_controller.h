@@ -52,7 +52,10 @@ class FontCatalogsController : public QObject {
     // STYLE_EDIT_FILTER_TEXT and STYLE_EDIT_FILTER_TEXT_ON.
     Q_PROPERTY(QString filterText READ filterText NOTIFY filterChanged)
     Q_PROPERTY(bool filterOn READ filterOn NOTIFY filterChanged)
-    // STYLE_PREVIEW_TEXT (the management window's Sample column).
+    // STYLE_PREVIEW_TEXT, the text of every style and font sample (PV1
+    // #398: the Font catalog's Sample column and preview, the font picker
+    // without a selection, the Style editor's preview, the Styles panel);
+    // empty, its default "光 Hikari 日本".
     Q_PROPERTY(QString previewText READ previewText NOTIFY filterChanged)
     // The management window's status bar field 0: "Autosave" for 10 s after
     // each safety copy.
@@ -222,7 +225,7 @@ public:
     // `documentFonts`, the editing target's attached fonts come first, as
     // its renderer has them.
     // `text`: the characters that need glyphs (the preview's); empty for
-    // the sample "AaBbCcDdEeFfGg 0123456789".
+    // the preview text's default.
     Q_INVOKABLE int resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts = false,
                                   const QString &text = QString());
 

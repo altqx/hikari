@@ -1015,6 +1015,22 @@ TEST(SettingsImport, CurrentChoicesAreKeptUnlessChosen)
     EXPECT_EQ(applyPlan(plan, proposedRows(plan), d).values.at("grid.font"), SettingValue(std::string("Mine")));
 }
 
+// PV1 (#398): a Config.txt holding legacy's default sample text imports
+// as the new one (nothing to change); a text the user chose comes over.
+TEST(SettingsImport, TheOldPreviewTextDefaultImportsAsTheNewOne)
+{
+    const SettingValue fresh(std::string(reinterpret_cast<const char *>(u8"光 Hikari 日本")));
+    const Plan plan = buildPlan({config(padding() + reinterpret_cast<const char *>(u8"STYLE_PREVIEW_TEXT=Podgląd\r\n"))},
+                                linuxHost(), readBy(ReadBy::Windows));
+    const PlanRow &old = rowOf(plan, "setting:styles.previewText");
+    EXPECT_EQ(old.value, fresh);
+    EXPECT_EQ(old.disposition, Disposition::Unchanged);
+    const Plan mine = buildPlan({config(padding() + "STYLE_PREVIEW_TEXT=Mine\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    const PlanRow &chosen = rowOf(mine, "setting:styles.previewText");
+    EXPECT_EQ(chosen.value, SettingValue(std::string("Mine")));
+    EXPECT_TRUE(chosen.proposedImport);
+}
+
 // AU2 (#268): the audio panel's Customise choice is the rewrite's own
 // (no legacy key): an import, even of an AudioConfig.txt that resets the
 // audio options, has no row for it and leaves it as it is.

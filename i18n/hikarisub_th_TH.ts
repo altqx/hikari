@@ -6676,6 +6676,14 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Preview text</source>
+        <translation>ข้อความตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>The sample text of the style and font previews.</source>
+        <translation>ข้อความที่ใช้แสดงตัวอย่างสไตล์และแบบอักษร</translation>
+    </message>
+    <message>
         <source>Window</source>
         <translation type="unfinished"></translation>
     </message>

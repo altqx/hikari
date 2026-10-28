@@ -185,10 +185,29 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
         // Approved departures from legacy's default.
         if (s.legacyKey == "AUTO_MOVE_TAGS_FROM_ORIGINAL")
             expected = true; // TM1-original-keeps-tags: Tags from original starts on
+        if (s.legacyKey == "STYLE_PREVIEW_TEXT") // PV1-preview-text
+            expected = std::string(reinterpret_cast<const char *>(u8"光 Hikari 日本"));
         EXPECT_EQ(s.defaultValue, expected) << s.legacyKey;
     }
     EXPECT_EQ(findSetting("autosave.maxFiles")->legacyKey, "AUTOSAVE_MAX_FILES");
     EXPECT_EQ(findSetting("subtitles.saveWithVideoName")->legacyKey, "SUBS_AUTONAMING");
+}
+
+// PV1 (#398): a stored "Podgląd", legacy's default, was never chosen and
+// reads as the new sample text; a text the user chose is kept.
+TEST(Settings, TheOldPreviewTextDefaultReadsAsTheNewOne)
+{
+    const std::string fresh(reinterpret_cast<const char *>(u8"光 Hikari 日本"));
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    EXPECT_EQ(settings.text("styles.previewText"), fresh);
+    settings.set("styles.previewText", std::string(reinterpret_cast<const char *>(u8"Podgląd")));
+    EXPECT_EQ(settings.text("styles.previewText"), fresh);
+    settings.set("styles.previewText", std::string("Mine"));
+    EXPECT_EQ(settings.text("styles.previewText"), "Mine");
+    // Only the preview text's old default.
+    settings.set("styles.editFilterText", std::string(reinterpret_cast<const char *>(u8"Podgląd")));
+    EXPECT_EQ(settings.text("styles.editFilterText"), std::string(reinterpret_cast<const char *>(u8"Podgląd")));
 }
 
 // K2 (the user's 2026-10-05 decision, superseding A2-theme-colours): no

@@ -101,6 +101,11 @@ private:
 // from one string as one entry.
 SettingValue convertSetting(const SettingValue &value, SettingType type);
 
+// A stored value as it reads: one equal to a default the rewrite replaced
+// was never chosen (a profile or legacy Config.txt holding it), and reads as
+// the new default (PV1 #398: styles.previewText's "Podgląd").
+SettingValue storedValue(const SettingDefinition &setting, SettingValue value);
+
 // The INI keys the rewrite used before the registry (hikari.ini), migrated
 // once onto their settings.
 struct InterimKey {

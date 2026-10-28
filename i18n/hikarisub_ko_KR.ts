@@ -6672,6 +6672,14 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Preview text</source>
+        <translation>미리보기 텍스트</translation>
+    </message>
+    <message>
+        <source>The sample text of the style and font previews.</source>
+        <translation>스타일 및 글꼴 미리보기에 표시되는 예시 텍스트입니다.</translation>
+    </message>
+    <message>
         <source>Window</source>
         <translation type="unfinished"></translation>
     </message>

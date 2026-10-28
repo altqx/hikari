@@ -6757,6 +6757,14 @@ gdy okno wyników szukania jest otwarte</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Preview text</source>
+        <translation>Tekst podglądu</translation>
+    </message>
+    <message>
+        <source>The sample text of the style and font previews.</source>
+        <translation>Tekst przykładowy podglądów stylów i czcionek.</translation>
+    </message>
+    <message>
         <source>Window</source>
         <translation type="unfinished"></translation>
     </message>

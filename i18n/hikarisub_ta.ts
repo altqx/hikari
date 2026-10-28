@@ -6717,6 +6717,14 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Preview text</source>
+        <translation>முன்னோட்ட உரை</translation>
+    </message>
+    <message>
+        <source>The sample text of the style and font previews.</source>
+        <translation>நடை மற்றும் எழுத்துரு முன்னோட்டங்களில் காட்டப்படும் மாதிரி உரை.</translation>
+    </message>
+    <message>
         <source>Window</source>
         <translation type="unfinished"></translation>
     </message>
