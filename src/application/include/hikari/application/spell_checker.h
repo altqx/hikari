@@ -82,6 +82,11 @@ public:
     // AddWord: refused for empty and number words or without a dictionary;
     // appends the word to UserDic.udic.
     bool addWord(std::u16string_view word);
+    // GR1 (#364): Harper's "Add to dictionary", which also needs no Hunspell
+    // dictionary (Harper checks spelling while Hunspell is off): the word is
+    // appended to UserDic.udic, and to the dictionary when one is loaded.
+    // Refused for empty and number words.
+    bool addUserWord(std::u16string_view word);
     // RemoveWords: the lines equal to a listed word leave UserDic.udic and the
     // dictionary; false when none matched.
     bool removeWords(const std::vector<std::u16string> &words);
@@ -126,6 +131,19 @@ std::optional<std::size_t> misspellAt(const core::legacy::SpellMarks &marks, int
 std::expected<int, CommandRefusal> replaceInEditor(EditSession &session, core::LineId line, bool translation,
                                                    const core::legacy::Misspell &misspell,
                                                    std::u16string_view replacement);
+
+// GR1 (#364): a grammar finding's suggestion. `checked` is the field's text
+// the finding was found in and [start, end) its range there, in
+// core::grammar::checkedText's offsets for the Document's format: the
+// replacement goes in by core::grammar::replace, so tags inside the range
+// stay in order, and the draft and the replacement are committed as one
+// "Correcting grammar errors in the text field" step. Refused (StaleRevision)
+// when the field's text is no longer `checked`, and (Invalid) when the
+// replacement would touch a drawing or a malformed span. Returns the caret
+// after the replacement, in raw offsets.
+std::expected<std::size_t, CommandRefusal> replaceGrammar(EditSession &session, core::LineId line, bool translation,
+                                                          std::u16string_view checked, std::size_t start,
+                                                          std::size_t end, std::u16string_view replacement);
 
 // The Spellchecker window (SpellCheckerDialog): walks every Line from the
 // active one for the next misspelled word that is not ignored, and corrects

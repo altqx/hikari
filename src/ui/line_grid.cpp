@@ -302,6 +302,17 @@ void LineGrid::makeLineVisible(qulonglong id)
         setContentY(std::max(0, row - rows / 2 + 1) * m_geometry.rowHeight);
 }
 
+void LineGrid::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
+{
+    const int row = currentRow();
+    const double top = row * m_geometry.rowHeight;
+    const bool shown = row >= 0 && top >= m_contentY &&
+                       top + m_geometry.rowHeight <= m_contentY + oldGeometry.height() - m_geometry.headerHeight;
+    QQuickPaintedItem::geometryChange(newGeometry, oldGeometry);
+    if (shown && newGeometry.height() < oldGeometry.height())
+        scrollToRow(row);
+}
+
 void LineGrid::keyPressEvent(QKeyEvent *event)
 {
     const int rows = m_model ? m_model->rowCount() : 0;

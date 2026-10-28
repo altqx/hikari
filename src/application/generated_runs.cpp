@@ -4,7 +4,7 @@ namespace hikari::application {
 
 bool isFoldableGeneratedLine(const core::LineRecord &line)
 {
-    return line.effect == u8"fx" || line.effect == u8"Effector [fx]";
+    return !line.comment && (line.effect == u8"fx" || line.effect == u8"Effector [fx]");
 }
 
 std::vector<GeneratedRun> generatedRuns(const std::vector<const core::LineRecord *> &lines)

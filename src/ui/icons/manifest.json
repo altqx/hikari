@@ -1375,7 +1375,8 @@
    "surfaces": [
     "menu:subtitles",
     "spell-checker",
-    "text-field-menu"
+    "text-field-menu",
+    "settings-dialog"
    ]
   },
   {
@@ -3111,7 +3112,8 @@
    "legacy": [],
    "surfaces": [
     "menu:view",
-    "grid-menu"
+    "grid-menu",
+    "text-field-menu"
    ]
   },
   {

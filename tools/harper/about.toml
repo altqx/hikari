@@ -1,0 +1,4 @@
+accepted = ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Unicode-3.0", "Unicode-DFS-2016", "Zlib", "MPL-2.0", "0BSD", "CC0-1.0", "BSL-1.0", "Unlicense", "Apache-2.0 WITH LLVM-exception", "CDLA-Permissive-2.0", "OpenSSL", "MIT-0", "BSD-1-Clause", "WTFPL"]
+targets = ["x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
+ignore-build-dependencies = true
+ignore-dev-dependencies = true

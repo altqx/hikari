@@ -1,6 +1,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/legacy_dir.h"
 
+#include "hikari/core/grammar.h"
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
@@ -237,9 +238,15 @@ std::vector<std::u16string> SpellChecker::suggestions(std::u16string_view word)
 
 bool SpellChecker::addWord(std::u16string_view word)
 {
-    if (word.empty() || core::legacy::legacyIsNumber(word) || !m_backend)
+    return m_backend && addUserWord(word);
+}
+
+bool SpellChecker::addUserWord(std::u16string_view word)
+{
+    if (word.empty() || core::legacy::legacyIsNumber(word))
         return false;
-    m_backend->add(word);
+    if (m_backend)
+        m_backend->add(word);
     m_results.clear();
     const auto content = readUserDictionary(userDictionary());
     const std::u16string text = content ? core::legacy::appendUserWord(std::u16string_view(*content), word)
@@ -250,7 +257,8 @@ bool SpellChecker::addWord(std::u16string_view word)
 
 bool SpellChecker::removeWords(const std::vector<std::u16string> &words)
 {
-    if (words.empty() || !m_backend || !fileExists(userDictionary()))
+    // GR1: as addUserWord, with or without a dictionary loaded.
+    if (words.empty() || !fileExists(userDictionary()))
         return false;
     const auto content = readUserDictionary(userDictionary());
     if (!content)
@@ -258,8 +266,9 @@ bool SpellChecker::removeWords(const std::vector<std::u16string> &words)
     const auto removed = core::legacy::removeUserWords(*content, words);
     if (removed.removed.empty())
         return false;
-    for (const auto &word : removed.removed)
-        m_backend->remove(word);
+    if (m_backend)
+        for (const auto &word : removed.removed)
+            m_backend->remove(word);
     m_results.clear();
     writeUserDictionary(userDictionary(), removed.content);
     return true;
@@ -318,6 +327,37 @@ std::expected<int, CommandRefusal> replaceInEditor(EditSession &session, core::L
     if (!session.commitDraftAs("Correcting spelling errors in the text field") && session.draftLine())
         return std::unexpected(CommandRefusal::InvalidDraft);
     return caret;
+}
+
+std::expected<std::size_t, CommandRefusal> replaceGrammar(EditSession &session, core::LineId line, bool translation,
+                                                          std::u16string_view checked, std::size_t start,
+                                                          std::size_t end, std::u16string_view replacement)
+{
+    if (session.isReadOnly())
+        return std::unexpected(CommandRefusal::ReadOnly);
+    const bool drafted = session.draftLine() == line;
+    if (drafted && session.draftProblem() && session.invalidCommitPolicy() == InvalidCommitPolicy::Block)
+        return std::unexpected(CommandRefusal::InvalidDraft);
+    const std::optional<core::LineRecord> record =
+        drafted ? session.draftRecord() : [&]() -> std::optional<core::LineRecord> {
+            const auto *found = findLine(session.document(), line);
+            return found ? std::optional(*found) : std::nullopt;
+        }();
+    if (!record)
+        return std::unexpected(CommandRefusal::UnknownLine);
+    const std::u16string text = core::toUtf16(translation ? record->translation : record->text);
+    if (text != checked)
+        return std::unexpected(CommandRefusal::StaleRevision);
+    auto replaced = core::grammar::replace(text, session.document().format(), start, end, replacement);
+    if (!replaced)
+        return std::unexpected(CommandRefusal::Invalid);
+    DraftChange change;
+    (translation ? change.translation : change.text) = core::toUtf8(replaced->raw);
+    if (!session.editDraft(line, change))
+        return std::unexpected(CommandRefusal::Protected);
+    if (!session.commitDraftAs("Correcting grammar errors in the text field") && session.draftLine())
+        return std::unexpected(CommandRefusal::InvalidDraft);
+    return replaced->caret;
 }
 
 SpellCheckWalk::SpellCheckWalk(SpellChecker &checker, SpellingText spelling)

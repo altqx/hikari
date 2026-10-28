@@ -332,6 +332,13 @@
 <context>
     <name>HikariSub.Options</name>
     <message numerus="yes">
+        <source>%n rules</source>
+        <translation>
+            <numerusform>%n rule</numerusform>
+            <numerusform>%n rules</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Added %n script hotkey(s).</source>
         <translation>
             <numerusform>Added %n script hotkey.</numerusform>
@@ -415,6 +422,27 @@
         <translation>
             <numerusform>Remove %n word</numerusform>
             <numerusform>Remove %n words</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <translation>
+            <numerusform>Grammar check no longer uses its %n rule. Turn it back on in Settings › Spelling &amp; grammar.</numerusform>
+            <numerusform>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines checked</source>
+        <translation>
+            <numerusform>%n line checked</numerusform>
+            <numerusform>%n lines checked</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines checked.</source>
+        <translation>
+            <numerusform>%n line checked.</numerusform>
+            <numerusform>%n lines checked.</numerusform>
         </translation>
     </message>
 </context>

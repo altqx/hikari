@@ -361,6 +361,10 @@ const std::vector<SettingDefinition> &definitions()
         // or "Effector [fx]") into one row; the Grid's Fold generated lines,
         // turned on by choosing the Karaoke layout.
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
+        // #400: what choosing the Karaoke layout turned on and nobody changed
+        // since ("audio.karaoke", "grid.foldGenerated"), so leaving it after a
+        // restart puts back the same as without one.
+        {"workspace.karaokeTurnedOn", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // LE3-tags-shown (owner, 2026-10-18): the Line editor shows ASS
         // override tags unless this is on (Settings > Editor, and the
         // EDITBOX_HIDE_TAGS command); legacy hid them on every start.
@@ -389,6 +393,26 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.fillLastAnswers", "", Bool, Profile, Mapped, false, false},
         {"automation.dialogAnswers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // GR1 (#364): grammar check with Harper, Off (0, the default) or
+        // English (US) 1, (UK) 2, (Canada) 3, (Australia) 4; and Harper's 15
+        // rule groups (core::grammar::groupIds), each on unless switched off
+        // on the Spelling & grammar page or by "Ignore this rule".
+        {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.closedCompounds", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.phraseCorrections", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.capitalizationAndCase", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.punctuationAndSpacing", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.numbersAndUnits", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.pronounsAndPossession", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.compoundsAndHyphenation", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.spellingAndOrthography", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.styleAndRedundancy", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.grammarAndAgreement", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.wordChoiceAndUsage", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.regionalismsAndDialect", "", Bool, Profile, Mapped, false, true},
+        {"grammar.group.miscellaneous", "", Bool, Profile, Mapped, false, true},
         // SH3 (#223): What's new. The version that ran last, recorded at each
         // start, and the one that ran before the installed version: the notes
         // of the releases after it show, until the next update.

@@ -338,6 +338,11 @@ target_compile_definitions(hikari_backends_legacy_spelling_tests PRIVATE
     HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling"
     HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs")
 
+# GR1 (#364): the pinned harper-ls over LSP: diagnostics, replacements, settings.
+hikari_add_gtest(hikari_backends_harper_client_tests SOURCES harper_client_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+target_compile_definitions(hikari_backends_harper_client_tests PRIVATE HIKARI_HARPER_LS="${HIKARI_HARPER_LS}")
+
 # KA4 (#279): MeCab over the shipped UniDic 2.1.2, and the suggestions it gives.
 hikari_add_gtest(hikari_backends_mecab_readings_tests SOURCES mecab_readings_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
