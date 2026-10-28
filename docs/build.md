@@ -376,6 +376,7 @@ publish later:
 It takes the release's tar.gz from GitHub, checks it against the release's
 `SHA256SUMS`, builds and installs each package in an Arch container, and pushes
 it. It refuses an older tag when a newer release of the same channel exists, and
-a version lower than the one on the AUR. The packages follow legacy until the
-repository variable `HIKARISUB_OFFER_QT_TO_LEGACY` is `true`, then the Qt
-rewrite.
+a version lower than the one on the AUR. Each package moves to 0.1.0 and up on
+its own (ADR-0021): `hikarisub-beta-bin` once 0.1.0-beta.1 is published, and
+`hikarisub-stable-bin` once the first stable 0.1.0 or higher is. A legacy
+release is then skipped for that package.
