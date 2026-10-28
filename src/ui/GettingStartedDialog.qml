@@ -849,7 +849,7 @@ DialogWindow {
                 objectName: "gettingStartedEditing"
                 title: qsTr("Editing")
                 explanation: qsTr("Backups while you work, and the checks on the Line editor’s text.")
-                later: qsTr("Later: Settings › General › Saving and Settings › Line editor › Spelling")
+                later: qsTr("Later: Settings › General › Saving and Settings › Spelling & grammar")
                 GridLayout {
                     columns: 2
                     columnSpacing: 12
@@ -874,6 +874,15 @@ DialogWindow {
                             Layout.preferredWidth: 240
                             Accessible.name: qsTr("Dictionary")
                         }
+                    }
+                    // GR1 (#364): grammar check with Harper, Off or its four Englishes.
+                    Label { text: qsTr("Grammar") }
+                    PageChoice {
+                        setting: "grammar.language"
+                        model: [qsTr("Off"), qsTr("English (US)"), qsTr("English (UK)"), qsTr("English (Canada)"),
+                                qsTr("English (Australia)")]
+                        Layout.preferredWidth: 240
+                        Accessible.name: qsTr("Grammar check")
                     }
                     Label { text: qsTr("Example"); color: Theme.muted; font: setup.fontAt(12) }
                     TextArea {

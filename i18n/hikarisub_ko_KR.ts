@@ -7399,6 +7399,10 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Spelling &amp; grammar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation type="unfinished">태그 숨김</translation>
     </message>
@@ -7424,6 +7428,64 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Hide the original on the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grammar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grammar check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Harper checks the Text field (the Translated field in translation mode) after you stop typing. It runs as a separate program only while grammar check is on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>English (US)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>English (UK)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>English (Canada)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>English (Australia)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While spelling is checked, Harper leaves spelling to the dictionary above, so a word is never marked twice.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rule groups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose an English above to switch them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n rules</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Harper %1 by Automattic, Apache License 2.0. %2 in Help › Credits.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Licence notice</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9411,6 +9473,40 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 turned off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">실행 취소</translation>
+    </message>
+    <message>
+        <source>Grammar settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grammar · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ignore this rule</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turns off %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add “%1” to dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix suggestions</source>
         <translation>제안 수정</translation>
     </message>
@@ -9476,8 +9572,84 @@ in uppercase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Spelling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grammar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking line %1 of %2…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finding %1 of %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines checked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Grammar check is off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checks the grammar of the whole file from the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grammar check cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No more grammar findings in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No more grammar findings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No grammar findings in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No grammar findings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose an English in Settings to check grammar with Harper.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines checked.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Check grammar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Check spelling</source>
         <translation type="unfinished">철자 확인창</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Misspelled word: %1</source>
@@ -9557,6 +9729,154 @@ Spell checking will be disabled</source>
     <message>
         <source>The edited line cannot be committed.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proper nouns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Names of places, organizations and products keep their standard capitalization.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Initialisms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Abbreviations and initialisms use the expected letter case and punctuation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Closed compounds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compound words written as one word instead of split apart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Phrase corrections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Common phrase-level mistakes where a standard expression is preferred.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Capitalization and case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sentence starts, titles, brands and other case-sensitive text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Punctuation and spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Punctuation marks, apostrophes, quotation marks, commas and spacing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Numbers and units</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Numbers, dates, times, decades and units of measurement.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pronouns and possession</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pronouns, contractions, possessives and their agreement.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compounds and hyphenation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multi-word compounds that should be open, closed or hyphenated.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spelling and orthography</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Misspellings and word forms spelled the wrong way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style and redundancy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wordy, repeated or weak phrasing that can be tightened.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grammar and agreement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agreement, articles, prepositions, verb forms and sentence structure.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word choice and usage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More standard or idiomatic wording for understandable phrases.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Regionalisms and dialect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wording that may not fit the chosen English.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Miscellaneous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rules that fit none of the groups above.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The grammar checker stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grammar check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The grammar checker (harper-ls) stopped: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another file is open in the editor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line changed since it was checked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text there cannot be replaced.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error. Word &quot;%1&quot; was not added.</source>
+        <translation type="unfinished">&quot;%1&quot; 단어가 추가되지 않아 오류 발생.</translation>
     </message>
 </context>
 <context>

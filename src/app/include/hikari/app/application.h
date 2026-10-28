@@ -20,6 +20,7 @@
 #include "hikari/app/automation_shell.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
+#include "hikari/core/grammar.h"
 #include "hikari/application/associated_files.h"
 #include "hikari/application/audio_devices.h"
 #include "hikari/application/document_files.h"
@@ -40,6 +41,7 @@
 #include "hikari/backends/audio_box_player.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/ffms_indexed_source.h"
+#include "hikari/backends/harper_client.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
@@ -79,10 +81,12 @@
 #include <QVariantMap>
 
 #include <functional>
+#include <deque>
 #include <map>
 #include <memory>
 #include <set>
 #include <tuple>
+#include <unordered_map>
 
 namespace hikari::app {
 
@@ -113,6 +117,11 @@ signals:
     // PU6: the spell checker was made again (another dictionary): a check
     // going on starts again with it.
     void spellCheckerRestarted();
+    // GR1 (#364): grammar check was switched, its settings changed, or the
+    // Line editor's text has new findings (its marks are stale).
+    void grammarChanged();
+    // The Spellchecker panel's Grammar walk moved on (grammarWalkState).
+    void grammarWalkChanged();
     // W1: the chosen player changed (video.playbackPlayer).
     void playbackPlayerChanged();
     // AV1: the route both audio paths follow changed.
@@ -201,6 +210,14 @@ public:
         // Bundled dictionaries, searched after the user's folder (legacy
         // <executable dir>/Dictionary; the composition sets it).
         QString bundledDictionaryDir;
+        // GR1 (#364): the harper-ls program; empty: next to the application,
+        // else the build tree's.
+        QString harperLs;
+        // GR1: harper-ls's own files (its copy of the user dictionary, and the
+        // dictionaries, ignored lints and statistics it would otherwise keep in
+        // the user's config folders); empty: "Harper" beside the settings
+        // file, or a temporary directory without one (tests).
+        QString grammarDir;
         // KA4: the furigana reading dictionary (MeCab's UniDic); empty:
         // Dictionary/unidic-lite beside the executable, else the build tree's.
         QString readingDictionaryDir;
@@ -659,6 +676,53 @@ public:
     // "Remove from dictionary": the user dictionary's lines, and removing the chosen ones.
     Q_INVOKABLE QStringList addedDictionaryWords() const;
     Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
+    // GR1 (#364): grammar check with Harper (harper-ls, a helper process
+    // started at the first check while grammar.language is not Off, and ended
+    // when it is set Off). The Line editor's spell-checked field is checked
+    // 300 ms after its text stops changing; its findings as flat [start, end)
+    // pairs of the field's text while that text is the one checked (none for a
+    // comment, or while grammar check is off), and the finding at a field
+    // position: {rule, group (its index), groupName, message, suggestions,
+    // word: a spelling finding (Harper checks spelling while Hunspell is off),
+    // text: the text it covers, start, end}.
+    Q_PROPERTY(bool grammarOn READ grammarOn NOTIFY grammarChanged)
+    // The pinned harper-ls release (cmake/HikariHarper.cmake), for the
+    // Settings page's licence line.
+    Q_PROPERTY(QString grammarVersion READ grammarVersion CONSTANT)
+    bool grammarOn() const;
+    QString grammarVersion() const;
+    Q_INVOKABLE QVariantList editorGrammarMarks(int role);
+    Q_INVOKABLE QVariantMap editorGrammarAt(int role, int position);
+    // A suggestion replaces the finding's text, the tags inside it kept in
+    // order, as one "Correcting grammar errors in the text field" step.
+    Q_INVOKABLE bool replaceEditorGrammar(int role, int position, const QString &replacement);
+    // "Ignore this rule": the rule's group is switched off (the index, for the
+    // toast's Undo, which is setGrammarGroup(index, true)); -1 for a rule
+    // Harper doesn't list.
+    Q_INVOKABLE int ignoreGrammarRule(const QString &rule);
+    Q_INVOKABLE void setGrammarGroup(int group, bool on);
+    // Harper's rule groups for the Settings page: {id, name, description, rules}.
+    Q_INVOKABLE QVariantList grammarGroups() const;
+    // "Add to dictionary" on a Harper spelling finding: the user dictionary
+    // (UserDic.udic, and Hunspell's when loaded), which harper-ls reads too.
+    Q_INVOKABLE bool addGrammarWord(const QString &word);
+    // The Spellchecker panel's Grammar filter: the whole file from the active
+    // Line, in the background (grammarWalkChanged as it goes), cancellable.
+    // Each call returns the panel's state {on, walking, done, checked, total,
+    // count, index, found, line, groupName, message, before, text, after,
+    // suggestions, replacement, word, problem}: index is the shown finding's
+    // (1-based) among count; found false with done is "No grammar findings".
+    // As in the Line editor, only dialogue Lines are checked (no comments,
+    // templates or code). grammarWalkIgnoreRule's state also has the group
+    // switched off (ignoredGroup), for the toast's Undo.
+    Q_INVOKABLE QVariantMap startGrammarWalk();
+    Q_INVOKABLE QVariantMap grammarWalkState();
+    Q_INVOKABLE QVariantMap cancelGrammarWalk();
+    Q_INVOKABLE QVariantMap grammarWalkReplace(const QString &replacement);
+    Q_INVOKABLE QVariantMap grammarWalkIgnore();
+    Q_INVOKABLE QVariantMap grammarWalkIgnoreRule();
+    Q_INVOKABLE QVariantMap grammarWalkAddWord();
+    Q_INVOKABLE void closeGrammarWalk();
     // KA7: the Karaoke check window (Subtitles > Check karaoke,
     // GLOBAL_CHECK_KARAOKE). The editing target's karaoke problems
     // (core::checkKaraoke, with the editor's pending draft applied):
@@ -1502,6 +1566,73 @@ private:
     QString m_bundledDictionaryDir;
     std::unique_ptr<application::SpellCheckWalk> m_spellWalk;
     std::optional<application::DocumentId> m_spellWalkDocument;
+    // GR1 (#364): grammar check (application_grammar.cpp).
+    struct GrammarCheck {
+        std::u16string raw;              // the field's text that was checked
+        core::grammar::CheckedText text; // what harper-ls was given
+        QList<backends::GrammarFinding> findings;
+        core::SubtitleFormat format = core::SubtitleFormat::Ass; // how `text` was read
+    };
+    struct GrammarWalk {
+        struct Finding {
+            std::size_t line; // the index in lines
+            backends::GrammarFinding finding;
+            bool handled = false; // replaced or ignored
+        };
+        application::DocumentId document;
+        bool translation = false;
+        std::vector<core::LineId> lines; // from the active Line to the end, then from the start
+        std::map<std::size_t, GrammarCheck> checks;
+        // The Document's Lines by id, read again when its revision moves.
+        std::unordered_map<std::uint64_t, const core::LineRecord *> rows;
+        const core::Document *rowsOf = nullptr;
+        std::uint64_t rowsRevision = 0;
+        bool pumpQueued = false;
+        std::deque<std::size_t> queue;           // the Lines still to send
+        std::map<quint64, std::size_t> pending;  // a ticket's Line
+        std::map<std::size_t, QList<backends::GrammarFinding>> arrived; // after a Line still pending
+        std::size_t checked = 0;                 // Lines whose findings are in `findings`
+        std::vector<Finding> findings;           // in walk order
+        std::optional<std::size_t> current;      // the finding shown
+        bool cancelled = false;
+        QString problem;
+    };
+    void setUpGrammar(const Options &options);
+    backends::HarperClient *grammarClient();
+    QJsonObject grammarSettings() const;
+    void applyGrammarSettings();
+    void grammarWalkSettingsChanged(const QJsonObject &before, const QJsonObject &after);
+    void scheduleGrammar();
+    void checkEditorGrammar();
+    void grammarChecked(quint64 ticket, const QList<backends::GrammarFinding> &findings);
+    void grammarFailed(const QString &message);
+    void syncGrammarWords();
+    const GrammarCheck *editorGrammarCheck(int role) const;
+    core::SubtitleFormat editorFormat() const;
+    std::optional<std::pair<int, int>> fieldSpan(int role, const core::grammar::CheckedText &text, int start,
+                                                  int end) const;
+    const backends::GrammarFinding *editorGrammarFinding(int role, int position) const;
+    void pumpGrammarWalk();
+    const core::LineRecord *grammarWalkLine(const application::EditSession &session, std::size_t index);
+    void nextGrammarFinding();
+    void showGrammarFinding();
+    bool grammarWalkStale();
+    QVariantMap grammarWalkProblem(const QString &problem);
+    QString m_harperProgram;
+    QString m_grammarDir;
+    std::unique_ptr<QTemporaryDir> m_grammarTemp;
+    std::unique_ptr<backends::HarperClient> m_harper;
+    QTimer *m_grammarDelay = nullptr;
+    quint64 m_grammarTicket = 0; // the Line editor's check in flight
+    int m_grammarRole = 0;
+    GrammarCheck m_grammarPending;
+    std::optional<GrammarCheck> m_grammarEditor; // the field's last findings
+    int m_grammarEditorRole = 0;
+    bool m_grammarFailed = false; // a failure was reported; the next success clears it
+    bool m_grammarApplyPending = false;
+    QString m_grammarWords;       // what harper-ls's user dictionary holds
+    QStringList m_grammarOwnWords; // added without a spell checker (no Dictionary folder)
+    std::unique_ptr<GrammarWalk> m_grammarWalk;
     // A1: the audio box, with its own media helper; the Lines and marks it
     // shows follow the editing target and the video.
     std::unique_ptr<backends::FfmsIndexedSource> m_audioSource;

@@ -4,6 +4,7 @@
 #   <prefix>/hikarisub                    the app (HikariSub.exe on Windows)
 #   <prefix>/hikari-media-helper          the helpers, beside the app, where
 #   <prefix>/hikari-lua-helper            application.cpp looks for them
+#   <prefix>/harper-ls                    GR1: the grammar checker (HikariHarper.cmake)
 #   <prefix>/Automation/automation/...    the bundled scripts and native modules
 #   <prefix>/Automation/{log,autosave,temp}
 #   <prefix>/Dictionary/                  the bundled spell-check dictionaries
@@ -67,6 +68,13 @@ install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyri
     RENAME LICENSE COMPONENT hikari_app)
 install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/copyright"
     DESTINATION licenses/unidic RENAME LICENSE COMPONENT hikari_app)
+
+# GR1 (#364): harper-ls, upstream's build, with Harper's Apache-2.0 licence and
+# the notices of the crates linked into it.
+install(PROGRAMS "${HIKARI_HARPER_LS}" DESTINATION . COMPONENT hikari_app)
+install(FILES "${HIKARI_HARPER_LS_LICENSE}" DESTINATION licenses/harper RENAME LICENSE COMPONENT hikari_app)
+install(FILES "${PROJECT_SOURCE_DIR}/packaging/licenses/harper/THIRD-PARTY.txt" DESTINATION licenses/harper
+    COMPONENT hikari_app)
 
 install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION . COMPONENT hikari_app)
 

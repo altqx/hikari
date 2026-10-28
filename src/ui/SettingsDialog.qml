@@ -54,16 +54,19 @@ DialogWindow {
     // the store first (PF1-staged-reset).
     property bool resetAllStaged: false
     signal reloaded()
+    // GR1: the Spelling & grammar page's licence line asks for Help > Credits.
+    signal creditsRequested()
     // VF1: the follow lists' texts, shared with the Video panel's menu.
     readonly property VideoFollowChoices follow: VideoFollowChoices { settings: dialog.app.settings }
 
     // The pages in the list's order, by id (the C++ OptionsPage ids, and
     // "hotkeys"). PU7 (#309): Updates after Hotkeys (MuseScore 4's Update
-    // after Shortcuts).
+    // after Shortcuts). GR1 (#364): Spelling & grammar after Line editor.
     readonly property var pages: [
         {id: "general", name: qsTr("General"), iconRole: "settings"},
         {id: "appearance", name: qsTr("Appearance"), iconRole: "appearance"},
         {id: "lineEditor", name: qsTr("Line editor"), iconRole: "editor"},
+        {id: "spelling", name: qsTr("Spelling & grammar"), iconRole: "spellchecker"},
         {id: "grid", name: qsTr("Subtitle grid"), iconRole: "settings-grid"},
         {id: "video", name: qsTr("Video"), iconRole: "settings-video"},
         {id: "audio", name: qsTr("Audio"), iconRole: "settings-audio"},
@@ -656,32 +659,12 @@ DialogWindow {
                 // K2: Appearance, in the Themes page's place.
                 AppearancePage { dialog: dialog }
 
-                // Line editor: spelling, display, editing, Translation mode, LE5's tag buttons.
+                // Line editor: display, editing, Translation mode, LE5's tag buttons.
                 SettingsPage {
                     objectName: "settingsPageLineEditor"
                     SettingsSection {
-                        title: qsTr("Spelling")
-                        ruled: false
-                        SettingCheck { setting: "editor.spellchecker"; text: qsTr("Check spelling") }
-                        SettingsRow {
-                            iconRole: "dictionary"
-                            text: qsTr("Dictionary")
-                            SettingChoice {
-                                setting: "editor.dictionaryLanguage"
-                                model: dialog.dictionaries
-                                // With no dictionary installed, a disabled box
-                                // that says so; with none chosen, it says that
-                                // (not a blank box).
-                                enabled: count > 0
-                                displayText: currentIndex >= 0 ? currentText
-                                           : count > 0 ? qsTr("None chosen") : qsTr("No dictionaries found")
-                                Accessible.name: qsTr("Dictionary")
-                            }
-                        }
-                        SettingCheck { setting: "editor.suggestionsOnDoubleClick"; text: qsTr("Show suggestions on double-click") }
-                    }
-                    SettingsSection {
                         title: qsTr("Display")
+                        ruled: false
                         // LE3-tags-shown: the Line editor shows ASS override tags unless this is on
                         // (Subtitles > "Hide tags in the line editor" switches it too).
                         SettingCheck { setting: "editor.hideTags"; text: qsTr("Hide tags") }
@@ -819,6 +802,132 @@ DialogWindow {
                                 tagButtons: dialog.tagButtons
                                 onSaved: (index, b) => dialog.stageTagButton(index, b)
                             }
+                        }
+                    }
+                }
+
+                // GR1 (#364): Spelling & grammar: the Line editor's Spelling
+                // section, grammar check with Harper and its rule groups.
+                SettingsPage {
+                    id: spellingPage
+                    objectName: "settingsPageSpelling"
+                    readonly property bool grammarOn: (dialog.values["grammar.language"] ?? 0) > 0
+                    SettingsSection {
+                        title: qsTr("Spelling")
+                        ruled: false
+                        SettingCheck { setting: "editor.spellchecker"; text: qsTr("Check spelling") }
+                        SettingsRow {
+                            iconRole: "dictionary"
+                            text: qsTr("Dictionary")
+                            SettingChoice {
+                                setting: "editor.dictionaryLanguage"
+                                model: dialog.dictionaries
+                                // With no dictionary installed, a disabled box
+                                // that says so; with none chosen, it says that
+                                // (not a blank box).
+                                enabled: count > 0
+                                displayText: currentIndex >= 0 ? currentText
+                                           : count > 0 ? qsTr("None chosen") : qsTr("No dictionaries found")
+                                Accessible.name: qsTr("Dictionary")
+                            }
+                        }
+                        SettingCheck { setting: "editor.suggestionsOnDoubleClick"; text: qsTr("Show suggestions on double-click") }
+                    }
+                    SettingsSection {
+                        title: qsTr("Grammar")
+                        SettingsRow {
+                            iconRole: "spellchecker"
+                            text: qsTr("Grammar check")
+                            note: qsTr("Harper checks the Text field (the Translated field in translation mode) after you stop typing. It runs as a separate program only while grammar check is on.")
+                            SettingChoice {
+                                setting: "grammar.language"
+                                model: [qsTr("Off"), qsTr("English (US)"), qsTr("English (UK)"), qsTr("English (Canada)"),
+                                        qsTr("English (Australia)")]
+                                Accessible.name: qsTr("Grammar check")
+                            }
+                        }
+                        SettingNote {
+                            visible: spellingPage.grammarOn && dialog.values["editor.spellchecker"] === true
+                            text: qsTr("While spelling is checked, Harper leaves spelling to the dictionary above, so a word is never marked twice.")
+                        }
+                    }
+                    SettingsSection {
+                        objectName: "settingsGrammarGroups"
+                        title: qsTr("Rule groups")
+                        SettingNote {
+                            visible: !spellingPage.grammarOn
+                            text: qsTr("Choose an English above to switch them.")
+                            Layout.topMargin: -4
+                        }
+                        GridLayout {
+                            columns: 2
+                            columnSpacing: 24
+                            rowSpacing: 8
+                            Layout.leftMargin: 24
+                            Layout.fillWidth: true
+                            Repeater {
+                                model: dialog.app.grammarGroups()
+                                // A group's switch: its name, rule count and
+                                // description; greyed out (its state kept)
+                                // while grammar check is off.
+                                CheckBox {
+                                    id: group
+                                    required property var modelData
+                                    readonly property string setting: "grammar.group." + modelData.id
+                                    objectName: "setting_" + setting
+                                    text: modelData.name
+                                    enabled: spellingPage.grammarOn
+                                    leftPadding: 1
+                                    spacing: 9
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 1 // the two columns share the width
+                                    Layout.alignment: Qt.AlignTop
+                                    Accessible.name: text
+                                    Accessible.description: groupDescription.text
+                                    function refresh() { checked = dialog.values[setting] === true }
+                                    Component.onCompleted: refresh()
+                                    Connections { target: dialog; function onReloaded() { group.refresh() } }
+                                    onToggled: dialog.put(setting, checked)
+                                    contentItem: ColumnLayout {
+                                        spacing: 1
+                                        RowLayout {
+                                            spacing: 6
+                                            Layout.leftMargin: group.indicator.width + group.spacing
+                                            Label {
+                                                text: group.text
+                                                color: group.enabled ? Theme.text : Theme.muted
+                                            }
+                                            Label {
+                                                text: qsTr("%n rules", "", group.modelData.rules)
+                                                color: Theme.muted
+                                                font.pixelSize: Math.round(group.font.pixelSize * 0.92)
+                                            }
+                                        }
+                                        Label {
+                                            id: groupDescription
+                                            text: group.modelData.description
+                                            color: Theme.muted
+                                            wrapMode: Text.Wrap
+                                            Layout.leftMargin: group.indicator.width + group.spacing
+                                            Layout.fillWidth: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Label {
+                            objectName: "settingsGrammarLicence"
+                            Layout.leftMargin: 24
+                            Layout.topMargin: 6
+                            Layout.fillWidth: true
+                            textFormat: Text.StyledText
+                            wrapMode: Text.Wrap
+                            color: Theme.muted
+                            linkColor: Theme.accent
+                            text: qsTr("Harper %1 by Automattic, Apache License 2.0. %2 in Help › Credits.")
+                                  .arg(dialog.app.grammarVersion).arg("<a href=\"credits\">" + qsTr("Licence notice") + "</a>")
+                            onLinkActivated: dialog.creditsRequested()
+                            HoverHandler { cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor }
                         }
                     }
                 }

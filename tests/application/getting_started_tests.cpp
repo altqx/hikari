@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <iterator>
 #include <string>
 
 using namespace hikari::application;
@@ -123,6 +124,23 @@ TEST(GettingStarted, AChoiceThePagesCannotShowStaysTheImports)
     auto chosen = state;
     chosen["editor.dictionaryLanguage"] = std::int64_t{2};
     EXPECT_TRUE(gettingStartedPageSettings(chosen).contains("editor.dictionaryLanguage"));
+}
+
+TEST(GettingStarted, EditingOffersGrammarCheck)
+{
+    // GR1 (#364): the Editing page's grammar choice, after the dictionary,
+    // by index as the Settings window holds it (Off first).
+    const auto all = gettingStartedSettings();
+    const auto at = std::ranges::find(all, "grammar.language");
+    ASSERT_NE(at, all.end());
+    EXPECT_EQ(*std::prev(at), "editor.dictionaryLanguage");
+    MemorySettingsStorage storage;
+    Settings live(storage);
+    EXPECT_EQ(std::get<std::int64_t>(gettingStartedState(live, lists(), {}).at("grammar.language")), 0);
+    live.set("grammar.language", std::int64_t{2});
+    const auto state = gettingStartedState(live, lists(), {});
+    EXPECT_EQ(std::get<std::int64_t>(state.at("grammar.language")), 2);
+    EXPECT_TRUE(gettingStartedPageSettings(state).contains("grammar.language"));
 }
 
 // AN1 (#404): getting_started_finished names the pages Finish changed by

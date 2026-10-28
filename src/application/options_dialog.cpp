@@ -34,11 +34,11 @@ constexpr OptionsBinding kBindings[] = {
     {"scriptProperties.askForChange", Check, SubtitleProperties},
     // Main (GLOBAL_EDITOR).
     {"program.language", Language, General},
-    {"editor.dictionaryLanguage", Dictionary, LineEditor},
+    {"editor.dictionaryLanguage", Dictionary, Spelling},
     {"grid.loadSortedSubs", Check, General},
-    {"editor.spellchecker", Check, LineEditor},
+    {"editor.spellchecker", Check, Spelling},
     {"grid.autoSelectLinesFromLastTab", Check, Grid},
-    {"editor.suggestionsOnDoubleClick", Check, LineEditor},
+    {"editor.suggestionsOnDoubleClick", Check, Spelling},
     {"subtitles.openInNewTab", Check, General},
     {"editor.dontGoToNextLineOnTimesEdit", Check, LineEditor},
     {"video.disableLiveEditing", Check, Video},
@@ -155,6 +155,24 @@ constexpr OptionsBinding kBindings[] = {
     // before only the Style editor's preview), the Appearance page's Font
     // section.
     {"styles.previewText", Text, Appearance},
+    // GR1 (#364): grammar check (Off, then Harper's four Englishes) and
+    // Harper's rule groups, on the Spelling & grammar page.
+    {"grammar.language", IndexChoice, Spelling, 0, 0, 5},
+    {"grammar.group.properNouns", Check, Spelling},
+    {"grammar.group.initialisms", Check, Spelling},
+    {"grammar.group.closedCompounds", Check, Spelling},
+    {"grammar.group.phraseCorrections", Check, Spelling},
+    {"grammar.group.capitalizationAndCase", Check, Spelling},
+    {"grammar.group.punctuationAndSpacing", Check, Spelling},
+    {"grammar.group.numbersAndUnits", Check, Spelling},
+    {"grammar.group.pronounsAndPossession", Check, Spelling},
+    {"grammar.group.compoundsAndHyphenation", Check, Spelling},
+    {"grammar.group.spellingAndOrthography", Check, Spelling},
+    {"grammar.group.styleAndRedundancy", Check, Spelling},
+    {"grammar.group.grammarAndAgreement", Check, Spelling},
+    {"grammar.group.wordChoiceAndUsage", Check, Spelling},
+    {"grammar.group.regionalismsAndDialect", Check, Spelling},
+    {"grammar.group.miscellaneous", Check, Spelling},
     // AN1 (#404): "Send anonymous usage data", the Updates and privacy
     // page's Privacy section.
     {"privacy.usageData", Check, Updates},
@@ -168,7 +186,7 @@ constexpr OptionsBinding kBindings[] = {
 };
 
 constexpr std::pair<OptionsPage, std::string_view> kPageIds[] = {
-    {General, "general"},   {Appearance, "appearance"}, {LineEditor, "lineEditor"},
+    {General, "general"},   {Appearance, "appearance"}, {LineEditor, "lineEditor"}, {Spelling, "spelling"},
     {Grid, "grid"},         {Video, "video"},           {Audio, "audio"},
     {Conversion, "conversion"}, {SubtitleProperties, "subtitleProperties"}, {Automation, "automation"},
     {Updates, "updates"},

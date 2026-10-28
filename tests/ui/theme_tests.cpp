@@ -680,6 +680,18 @@ private slots:
         const auto light = ui::theme::content(Code::Light, roles(Code::Light));
         QCOMPARE(light.comparison, (std::array{hex(0xFFFFFF), hex(0xFF000C), hex(0xB7AC00), hex(0x9C0000), hex(0x817900)}));
         QCOMPARE(light.spellcheck, hex(0xFF6968));
+        // GR1: Harper's wavy underline, blue (yellow on high contrast black),
+        // reading on each theme's field at 3:1 as a non-text mark.
+        QCOMPARE(dark.grammar, hex(0x6EA8FE));
+        QCOMPARE(light.grammar, hex(0x1A56DB));
+        for (const auto code : {Code::Dark, Code::Light, Code::HighContrastWhite, Code::HighContrastBlack}) {
+            const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
+            const auto c = ui::theme::content(code, r);
+            QVERIFY2(contrastRatio(c.grammar, r.field) >= 3.0, qPrintable(ui::theme::codeName(code)));
+            QVERIFY(c.grammar != c.spellcheck);
+        }
+        QCOMPARE(ui::theme::content(Code::HighContrastWhite, roles(Code::HighContrastWhite)).grammar, hex(0x0000C8));
+        QCOMPARE(ui::theme::content(Code::HighContrastBlack, roles(Code::HighContrastBlack)).grammar, hex(0xFFFF00));
         // E4: the Line editor's text colours, legacy's EDITOR_* defaults
         // (config.cpp:432-442) in Dark and Light; EDITOR_TEXT is the text role.
         QCOMPARE(dark.syntax, (std::array{roles(Code::Dark).text, hex(0x8791FD), hex(0x00C3FF), hex(0x00C3FF),
