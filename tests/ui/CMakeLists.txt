@@ -208,6 +208,7 @@ hikari_add_qttest(hikari_ui_automation_document_scripts_tests SOURCES automation
 target_compile_definitions(hikari_ui_automation_document_scripts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
+    HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
     # The legacy capture (document_scripts_capture.py) and its scripts.
     HIKARI_S4_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-s4-document-scripts-20261013/s4.json"
     HIKARI_S4_WINDOWS_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-s4-document-scripts-20261013/s4-windows.json"

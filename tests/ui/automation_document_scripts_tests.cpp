@@ -134,6 +134,73 @@ private slots:
     void init() { app = std::make_unique<app::Application>(options()); }
     void cleanup() { app.reset(); }
 
+    // #397: an autoload script turned off in the panel loads neither at
+    // start nor on Refresh, by file name, so the user folder's copy of a
+    // shipped script is off too; it lists unticked, and ticking it loads it
+    // now; unticking a loaded one unloads it.
+    void autoloadScriptsCanBeTurnedOff()
+    {
+        QTemporaryDir shipped;
+        QTemporaryDir user;
+        QVERIFY(shipped.isValid() && user.isValid());
+        writeFile(shipped.filePath(QStringLiteral("automation/Autoload/a.lua")), prefixScript("A"));
+        writeFile(shipped.filePath(QStringLiteral("automation/Autoload/b.lua")), prefixScript("B"));
+        writeFile(user.filePath(QStringLiteral("automation/autoload/b.lua")), prefixScript("UB"));
+        // The shipped Include's MoonScript, which every helper loads.
+        QVERIFY(QDir().mkpath(shipped.filePath(QStringLiteral("automation/Include"))));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_LUA_INCLUDE "/moonscript.lua"),
+                            shipped.filePath(QStringLiteral("automation/Include/moonscript.lua"))));
+        const QString a = QDir::toNativeSeparators(shipped.filePath(QStringLiteral("automation/Autoload/a.lua")));
+        const QString b = QDir::toNativeSeparators(user.filePath(QStringLiteral("automation/autoload/b.lua")));
+        app.reset();
+        auto o = options();
+        o.automationDir = shipped.path();
+        o.userAutomationDir = user.path();
+        o.autoload = true;
+        {
+            ui::SettingsStore settings(o.settingsFile);
+            settings.set("automation.disabledAutoload", QStringList{QStringLiteral("b.lua")});
+            settings.sync();
+        }
+        app = std::make_unique<app::Application>(o);
+        auto restore = qScopeGuard([&] { app->settingsStore()->set("automation.disabledAutoload", QStringList()); });
+        const auto loaded = [&] {
+            QStringList paths;
+            for (const auto &s : app->automation().scripts())
+                paths << QString::fromStdString(s.path);
+            return paths;
+        };
+        const auto row = [&](const QString &path) {
+            for (const QVariant &script : app->automation().managerController()->scripts())
+                if (script.toMap().value(QStringLiteral("path")).toString() == path)
+                    return script.toMap();
+            return QVariantMap();
+        };
+        QVERIFY(settled());
+        QCOMPARE(loaded(), QStringList{a});
+        QVERIFY2(row(a).value(QStringLiteral("state")).toString() == u"ready",
+                 qPrintable(row(a).value(QStringLiteral("error")).toString()));
+        QCOMPARE(row(b).value(QStringLiteral("state")).toString(), QStringLiteral("disabled"));
+        QCOMPARE(row(b).value(QStringLiteral("enabled")).toBool(), false);
+        QCOMPARE(row(a).value(QStringLiteral("enabled")).toBool(), true);
+        app->automation().reloadAutoload();
+        QVERIFY(settled());
+        QCOMPARE(loaded(), QStringList{a});
+
+        app->automation().managerController()->setEnabled(b, true);
+        QVERIFY(settled());
+        QCOMPARE(loaded(), (QStringList{a, b}));
+        QCOMPARE(app->settingsStore()->list("automation.disabledAutoload"), QStringList());
+        QVERIFY2(row(b).value(QStringLiteral("state")).toString() == u"ready",
+                 qPrintable(row(b).value(QStringLiteral("error")).toString()));
+
+        app->automation().managerController()->setEnabled(a, false);
+        QVERIFY(settled());
+        QCOMPARE(loaded(), QStringList{b});
+        QCOMPARE(app->settingsStore()->list("automation.disabledAutoload"), QStringList{QStringLiteral("a.lua")});
+        QCOMPARE(row(a).value(QStringLiteral("state")).toString(), QStringLiteral("disabled"));
+    }
+
     // Relative, absolute and missing paths; the menu opening loads them
     // (BuildMenu's AddFromSubs); the last one's first macro runs, validated,
     // as one step; a changed file reloads first (CheckLastModified).

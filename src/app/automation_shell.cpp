@@ -375,6 +375,16 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_managerController->setDocumentScript([this](const std::string &path) {
         return std::ranges::find(m_documentScripts.scripts(), path) != m_documentScripts.scripts().end();
     });
+    // #397: the autoload scripts turned off show unticked; ticking one loads it.
+    m_managerController->setAutoload(
+        [this] {
+            QStringList off;
+            for (const QString &script : autoloadScripts())
+                if (!autoloadEnabled(script) && !m_manager.host(script.toStdString()))
+                    off << script;
+            return off;
+        },
+        [this](const QString &script, bool enabled) { setAutoloadEnabled(script, enabled); });
 }
 
 std::string AutomationShell::hostState() const
@@ -476,16 +486,47 @@ QStringList AutomationShell::autoloadScripts() const
     return scripts;
 }
 
+bool AutomationShell::autoloadEnabled(const QString &script) const
+{
+    return !m_settings || !m_settings->list("automation.disabledAutoload")
+                               .contains(QFileInfo(script).fileName(),
+                                         windowsPaths() ? Qt::CaseInsensitive : Qt::CaseSensitive);
+}
+
+void AutomationShell::setAutoloadEnabled(const QString &script, bool enabled)
+{
+    if (!m_settings || autoloadEnabled(script) == enabled)
+        return;
+    const QString name = QFileInfo(script).fileName();
+    QStringList disabled = m_settings->list("automation.disabledAutoload");
+    if (enabled)
+        disabled.removeIf([&](const QString &off) {
+            return off.compare(name, windowsPaths() ? Qt::CaseInsensitive : Qt::CaseSensitive) == 0;
+        });
+    else
+        disabled << name;
+    m_settings->set("automation.disabledAutoload", disabled);
+    const std::string path = script.toStdString();
+    if (enabled && !m_manager.host(path))
+        m_manager.load(path);
+    else if (!enabled && m_manager.host(path))
+        unload(path);
+}
+
 void AutomationShell::autoload()
 {
     for (const QString &script : autoloadScripts())
-        m_manager.load(script.toStdString());
+        if (autoloadEnabled(script))
+            m_manager.load(script.toStdString());
+    m_managerController->refresh(); // the ones turned off, which no load lists
 }
 
 void AutomationShell::reloadAutoload()
 {
     // Legacy "Refresh autoload scripts": loaded ones run their top level again; new ones load.
     for (const QString &script : autoloadScripts()) {
+        if (!autoloadEnabled(script))
+            continue;
         const std::string path = script.toStdString();
         if (m_manager.host(path))
             m_manager.reload(path);

@@ -21444,7 +21444,8 @@ private slots:
 
     // AM1: the Automation panel in the four themes, written to
     // HIKARI_AUTOMATION_SHOT_DIR when it is set (tools/review: the user's
-    // visual review): a Document script and two autoload ones, one failed;
+    // visual review): a Document script and two autoload ones, one failed,
+    // and a bundled one turned off (#397);
     // a shortcut, one a Global command takes, one recording on a taken
     // shortcut, one whose macro is missing (automation-panel-<theme>.png);
     // a macro running, its row marked (automation-run-<theme>.png); Settings → Hotkeys
@@ -21458,6 +21459,9 @@ private slots:
         restartWithoutSound();
         auto &settings = *application->settingsStore();
         auto &automation = application->automation();
+        // #397: a bundled autoload script turned off lists unticked.
+        settings.set("automation.disabledAutoload", QStringList{QStringLiteral("macro-1-edgeblur.lua")});
+        const auto turnedOn = qScopeGuard([&] { settings.set("automation.disabledAutoload", QStringList()); });
         QVERIFY(application->openFile(episode));
         const QString fixture = QStringLiteral(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
         automation.loadScript(QUrl::fromLocalFile(fixture));

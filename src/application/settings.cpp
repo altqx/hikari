@@ -353,6 +353,9 @@ const std::vector<SettingDefinition> &definitions()
         // AD3 (#312): the Automation panel's run log shows each line's time
         // since the run started (its clock button), for every run.
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
+        // #397: the autoload scripts turned off in the Automation panel, by
+        // file name, so a reseeded or updated copy stays off.
+        {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // GR3 (wave 6, Aegisub's convention): Grid columns that carry nothing
         // in the whole Document hide themselves, on top of grid.hideColumns;
         // the Grid's Hide columns menu and Settings > Editor.
