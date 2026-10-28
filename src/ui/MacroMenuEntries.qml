@@ -69,7 +69,7 @@ QtObject {
                 target.insertMenu(at++, submenu)
                 made.push({ menu: submenu })
             } else {
-                const item = itemComponent.createObject(target, { macro: entry.macro, text: entry.label })
+                const item = itemComponent.createObject(target.contentItem, { macro: entry.macro, text: entry.label })
                 target.insertItem(at++, item)
                 made.push({ item: item })
             }
