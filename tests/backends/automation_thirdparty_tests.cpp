@@ -14,8 +14,7 @@
 // fixture.ass through the host: snapshot, run (dialogs answered here),
 // apply as one undo step. What they did is written to artifacts and compared
 // with the reviewed results in expected.json. The capture probe then runs the
-// same corpus and macros in the helper the way it runs in the legacy app
-// (tools/legacy-capture), for compare_automation.py.
+// same corpus and macros in the helper the way it ran in the legacy app.
 #include "hikari/application/automation_services.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/backends/lua_script_host.h"
@@ -551,10 +550,10 @@ TEST_F(ThirdPartyCorpus, MacrosApplyToTheFixtureDocument)
     writeArtifact(QStringLiteral("automation-thirdparty-runs.json"), QJsonDocument(artifact));
 }
 
-// The capture probe (tools/legacy-capture/automation) over the same corpus
-// and runs, as the legacy capture takes it: once while the host loads the
-// probe, then from its corpus macro on fixture.ass. Its records are the
-// rewrite side of compare_automation.py.
+// The capture probe (tests/fixtures/legacy-cases/automation) over the same
+// corpus and runs, as it ran in the legacy app: once while the host loads
+// the probe, then from its corpus macro on fixture.ass. Its records are kept
+// as artifacts.
 TEST_F(ThirdPartyCorpus, CaptureProbeRunsTheCorpus)
 {
     const QString list = work.filePath(QStringLiteral("corpus.txt"));

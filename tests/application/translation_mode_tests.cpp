@@ -331,7 +331,7 @@ TEST(NotConfirmed, OnlyInTranslationMode)
 
 // Legacy SetTextWithTags (EditBox.cpp:1811-1858), worked through by hand on
 // wxString: Replace("}{", ""), Find('}'), find("{"), Mid and SubString. The
-// legacy capture agrees (MovingTagsCapture below).
+// legacy probe agrees (MovingTagsCapture below).
 TEST(MovingTags, SplitsTheOverrideBlocksFromTheText)
 {
     struct Case {
@@ -370,7 +370,7 @@ TEST(MovingTags, SplitsTheOverrideBlocksFromTheText)
 
 namespace {
 
-// A call of tools/legacy-capture/inputs/tag-move-cases.txt: the state it ran
+// A call of tests/fixtures/legacy-cases/inputs/tag-move-cases.txt: the state it ran
 // under (the case file's last "state" line before it).
 struct TagMoveCall {
     bool tl = true, move = true;
@@ -419,7 +419,7 @@ std::vector<TagMoveCase> readTagMoveCases(const char *path)
 } // namespace
 
 // Every call of the legacy probe (EditBox::SetTextWithTags compiled from the
-// legacy source unchanged, tools/legacy-capture/tag_move_capture.cpp)
+// legacy source unchanged; tests/fixtures/legacy-observations/local-e5-tag-move-20261012)
 // replayed through moveTagsFromOriginal under the call's conditions
 // (EditBox.cpp:1811; LineEditorController::evaluateSplit checks them): the
 // split, both fields and the caret. Both legacy builds put the caret on the

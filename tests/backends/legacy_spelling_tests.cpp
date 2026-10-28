@@ -237,7 +237,7 @@ TEST(LegacyCaseMapping, FollowsTheInterfaceLanguage)
 }
 
 // F3: the legacy Spellchecker window's walk captured on the Linux build
-// (tools/legacy-capture plan "ui" cases F3-window-walk and
+// (tests/fixtures/legacy-cases/plan.json "ui" cases F3-window-walk and
 // F3-window-walk-srt, tests/fixtures/legacy-observations/run-37216509697):
 // from the active row 0, Ignore after Ignore, every misspelled word as the
 // window selected it in the editor (SetNextMisspell: posStart to posEnd).

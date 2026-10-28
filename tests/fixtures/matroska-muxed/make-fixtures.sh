@@ -1,7 +1,6 @@
 #!/bin/sh
 # Y9: Matroska files written by real muxers from the sources in sources/,
-# for the legacy Demux probe (tools/legacy-capture, target
-# legacy_demux_capture) and the rewrite's replay of its observations
+# for the legacy Demux probe (legacy_demux_capture) and the rewrite's replay of its observations
 # (MatroskaCapture.ReplaysTheLegacyDemuxProbe). mkvmerge (MKVToolNix) muxes
 # every file (FFmpeg makes the tiny video track). Neither writes S_TEXT/ASCII,
 # the track FFmpeg reads as "text" (both write plain text as S_TEXT/UTF8), so
