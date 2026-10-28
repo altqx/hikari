@@ -131,7 +131,8 @@ jobs:
           . /etc/profile.d/hikari-floor.sh
           test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
           test ! -e out/sdk/qt-install-private
-          set -- --preset linux-floor-x64-release -DHIKARI_INSTALL_DICTIONARY_DIR=/usr/share/myspell
+          # CR1 (#452): debug info, split from the payload into the symbols.
+          set -- --preset linux-floor-x64-release -DHIKARI_INSTALL_DICTIONARY_DIR=/usr/share/myspell -DHIKARI_DEBUG_SYMBOLS=ON
           [ -z "$SUFFIX" ] || set -- "$@" "-DHIKARI_VERSION_SUFFIX=$SUFFIX"
           [ -z "$POSTHOG_KEY" ] || set -- "$@" "-DHIKARI_POSTHOG_KEY=$POSTHOG_KEY"
           cmake "$@"
@@ -172,6 +173,42 @@ jobs:
           (cd out/dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
           ls -la out/dist out/dist-old
 
+      # CR1 (#452): the debug info make-packages.sh split from the payload is
+      # the version's symbols, a release asset of its own. A forced crash of
+      # the stripped payload must symbolize with them (tools/crash/symbolize.py).
+      - name: Symbols and a symbolized crash
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          . /etc/profile.d/hikari-floor.sh
+          B=out/build/linux-floor-x64-release
+          S=$B/package-stage/symbols
+          test -f "$S/hikarisub.debug" || { echo "no symbols for hikarisub" >&2; exit 1; }
+          left=0
+          while IFS= read -r -d '' f; do
+            if readelf -S --wide "$f" 2>/dev/null | grep -q ' \.debug_info '; then echo "debug info left in $f" >&2; left=1; fi
+          done < <(find "$B/package-stage/tree" -type f -print0)
+          [ $left = 0 ]
+          mkdir -p out/symbols out/evidence/crash
+          (cd "$S" && tar -cJf "$OLDPWD/out/symbols/hikarisub-symbols-$VERSION-linux-x86_64.tar.xz" \
+            --sort=name --owner=0 --group=0 --numeric-owner .)
+          ls -la out/symbols
+          home=$PWD/out/crash-home
+          mkdir -p "$home"
+          rc=0
+          env HOME="$home" XDG_CONFIG_HOME="$home/config" XDG_CACHE_HOME="$home/cache" XDG_DATA_HOME="$home/data" \
+            HIKARISUB_CRASH_TEST=segv QT_QPA_PLATFORM=offscreen \
+            "$B/package-stage/tree/hikarisub" 2> out/evidence/crash/stderr.txt || rc=$?
+          echo "exit $rc"
+          record=$(sed -n 's/^HIKARISUB_CRASH_TEST=segv: record at //p' out/evidence/crash/stderr.txt)
+          test -n "$record" && test -f "$record" || { cat out/evidence/crash/stderr.txt; echo "no crash record" >&2; exit 1; }
+          cp "$record" out/evidence/crash/crash-record.txt
+          cat out/evidence/crash/crash-record.txt
+          python3 tools/crash/symbolize.py "$record" --symbols "$S" | tee out/evidence/crash/symbolized.txt
+          grep -q crashForTest out/evidence/crash/symbolized.txt
+
       - name: Asset names (spec 2.1)
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -203,6 +240,13 @@ jobs:
         with:
           name: hikarisub-linux-packages
           path: out/dist/
+          if-no-files-found: error
+          retention-days: 14
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hikarisub-linux-symbols
+          path: out/symbols/
           if-no-files-found: error
           retention-days: 14
 

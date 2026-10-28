@@ -32,6 +32,19 @@ option(HIKARI_GLIBCXX_ASSERTIONS "Build with -D_GLIBCXX_ASSERTIONS (CI)" OFF)
 if(HIKARI_GLIBCXX_ASSERTIONS)
     add_compile_definitions("$<$<COMPILE_LANGUAGE:CXX>:_GLIBCXX_ASSERTIONS>")
 endif()
+# CR1 (#452): the package workflows build with debug info, which they split
+# off (Linux .debug files, Windows PDBs) and keep as the release's symbol
+# archives; the packages carry none (docs/qt/crash-reports.md).
+option(HIKARI_DEBUG_SYMBOLS "Build with debug info kept apart from the packages (package CI)" OFF)
+if(HIKARI_DEBUG_SYMBOLS)
+    if(MSVC)
+        add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/Z7>" "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/Z7>")
+        add_link_options("$<$<LINK_LANG_AND_ID:CXX,MSVC>:/DEBUG:FULL>" "$<$<LINK_LANG_AND_ID:CXX,MSVC>:/OPT:REF>"
+            "$<$<LINK_LANG_AND_ID:CXX,MSVC>:/OPT:ICF>")
+    else()
+        add_compile_options(-g)
+    endif()
+endif()
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDependencies.cmake")
 # GR1 (#364): the pinned harper-ls (HikariHarper.cmake), which every package
 # ships beside the app; the build tree runs the downloaded copy.
