@@ -1,0 +1,11 @@
+hikari-crash 1
+version 0.1.0-ci.56
+type EXCEPTION_ACCESS_VIOLATION
+mechanism seh
+frame HikariSub.exe 0x13fd6
+frame HikariSub.exe 0x178f1
+frame HikariSub.exe 0x15d3e
+frame HikariSub.exe 0xc7c4c0
+frame HikariSub.exe 0xc6c709
+frame KERNEL32.DLL 0x2dd37
+frame ntdll.dll 0x3f2bc
