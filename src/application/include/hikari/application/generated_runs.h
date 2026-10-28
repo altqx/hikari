@@ -12,8 +12,10 @@
 
 namespace hikari::application {
 
-// A Line a karaoke effect generated: its Effect is exactly "fx" or
-// "Effector [fx]", Comment or not.
+// A Line a karaoke effect generated: a Dialogue Line whose Effect is
+// exactly "fx" or "Effector [fx]". A Comment is never one (#400): the
+// templater neither removes nor regenerates it (kara-templater.lua
+// is_generated_line).
 bool isFoldableGeneratedLine(const core::LineRecord &line);
 
 // A run of consecutive generated Lines, by Document row.

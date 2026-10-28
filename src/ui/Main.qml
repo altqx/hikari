@@ -585,13 +585,20 @@ ApplicationWindow {
         }
     }
     // KP1: what choosing Karaoke turned on; a change by anyone else since
-    // keeps it as it is when Karaoke is left.
+    // keeps it as it is when Karaoke is left. #400: kept across a restart
+    // (workspace.karaokeTurnedOn), Karaoke still the mode to leave.
     property bool karaokeTurnedOn: false
     property bool foldTurnedOn: false
     readonly property bool audioKaraoke: root.audio.karaoke
     readonly property bool gridFolds: root.shell.foldGenerated
     onAudioKaraokeChanged: root.karaokeTurnedOn = false
     onGridFoldsChanged: root.foldTurnedOn = false
+    function keepKaraokeTurnedOn() {
+        root.app.settings.setValue("workspace.karaokeTurnedOn",
+                                   (root.karaokeTurnedOn ? ["audio.karaoke"] : []).concat(root.foldTurnedOn ? ["grid.foldGenerated"] : []))
+    }
+    onKaraokeTurnedOnChanged: root.keepKaraokeTurnedOn()
+    onFoldTurnedOnChanged: root.keepKaraokeTurnedOn()
 
     // F1: GLOBAL_SEARCH (0) and GLOBAL_FIND_REPLACE (1) open the Search tool
     // on that tab; the same shortcut again while the tool has the focus on
@@ -7831,6 +7838,12 @@ ApplicationWindow {
 
     Component.onCompleted: {
         root.applyMenuShortcuts()
+        // #400: what Karaoke turned on before the restart.
+        const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
+        root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
+        root.foldTurnedOn = turnedOn.indexOf("grid.foldGenerated") >= 0
+        if (root.karaokeTurnedOn || root.foldTurnedOn)
+            root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
             Qt.callLater(() => gettingStartedDialog.openSetup())
     }

@@ -3599,7 +3599,8 @@ private slots:
         QCOMPARE(picker->property("sampleSource").toString(), QStringLiteral("sample"));
         QCOMPARE(picker->property("resolvedFor").toString(), fresh);
         int key = catalogs.property("sampleKey").toInt();
-        settings->set("styles.previewText", QStringLiteral("Zz"));
+        // #403: its characters, the override tags left out, everywhere.
+        settings->set("styles.previewText", QStringLiteral("{\\b1}Zz"));
         QTRY_COMPARE(picker->property("resolvedFor").toString(), QStringLiteral("Zz"));
         QTRY_VERIFY(catalogs.property("sampleKey").toInt() > key);
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));

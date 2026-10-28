@@ -74,7 +74,7 @@
     -- a module present only under ?data: found there, isUserPath = false
     module_dataOnly: (ut) ->
       stubDistinctRoots ut
-      dataDir = aegisub.decode_path "?data/automation/include"
+      dataDir = aegisub.decode_path "?data/automation/Include"
       expected = entryPath dataDir, "l0/Foo.moon"
       stubFilesPresent ut, {expected}
       path, isUserPath = moduleRecord\getEntryPointPath!
@@ -84,7 +84,7 @@
     -- modules may also be deployed as <namespace>/init.ext
     module_initLayout: (ut) ->
       stubDistinctRoots ut
-      dataDir = aegisub.decode_path "?data/automation/include"
+      dataDir = aegisub.decode_path "?data/automation/Include"
       expected = entryPath dataDir, "l0/Foo/init.lua"
       stubFilesPresent ut, {expected}
       path, isUserPath = moduleRecord\getEntryPointPath!
@@ -95,7 +95,7 @@
     module_alsoUnderUser: (ut) ->
       stubDistinctRoots ut
       userDir = aegisub.decode_path "?user/automation/include"
-      dataDir = aegisub.decode_path "?data/automation/include"
+      dataDir = aegisub.decode_path "?data/automation/Include"
       expected = entryPath userDir, "l0/Foo.moon"
       stubFilesPresent ut, {expected, entryPath(dataDir, "l0/Foo.moon")}
       path, isUserPath = moduleRecord\getEntryPointPath!
@@ -134,7 +134,7 @@
     -- automation scripts live as a single file in the autoload directory
     macro_dataOnly: (ut) ->
       stubDistinctRoots ut
-      dataDir = aegisub.decode_path "?data/automation/autoload"
+      dataDir = aegisub.decode_path "?data/automation/Autoload"
       expected = entryPath dataDir, "l0.Foo.Bar.lua"
       stubFilesPresent ut, {expected}
       path, isUserPath = macroRecord\getEntryPointPath!

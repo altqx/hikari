@@ -367,6 +367,10 @@ const std::vector<SettingDefinition> &definitions()
         // or "Effector [fx]") into one row; the Grid's Fold generated lines,
         // turned on by choosing the Karaoke layout.
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
+        // #400: what choosing the Karaoke layout turned on and nobody changed
+        // since ("audio.karaoke", "grid.foldGenerated"), so leaving it after a
+        // restart puts back the same as without one.
+        {"workspace.karaokeTurnedOn", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // LE3-tags-shown (owner, 2026-10-18): the Line editor shows ASS
         // override tags unless this is on (Settings > Editor, and the
         // EDITBOX_HIDE_TAGS command); legacy hid them on every start.

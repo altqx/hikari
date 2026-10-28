@@ -5032,6 +5032,10 @@ Nie udało się skopiować %2 czcionek.</translation>
 <context>
     <name>HikariSub.MainWindow</name>
     <message>
+        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub and copy hikari.ini from there.</source>
+        <translation>Ta kopia przenośna przechowuje ustawienia w %1. Ustawienia wcześniejszej wersji nadal są w %2: aby ich użyć, zamknij HikariSub i skopiuj stamtąd hikari.ini.</translation>
+    </message>
+    <message>
         <source>%1 - HikariSub</source>
         <translation type="unfinished"></translation>
     </message>
