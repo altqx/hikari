@@ -7466,6 +7466,7 @@ ApplicationWindow {
         onAutosavesRequested: autosaves.show()
         onLinkTooLong: root.notices.post("info", qsTranslate("HikariSub.Reports", "Open GitHub issue"),
                                          qsTranslate("HikariSub.Reports", "The report is too long for a link, so it is on the clipboard. Paste it into the form."))
+        onBrowserFailed: root.issueBrowserFailed()
     }
     ReportIssueWindow {
         id: reportIssueWindow
@@ -7473,6 +7474,11 @@ ApplicationWindow {
         app: root.app
         mainWindow: root
         settings: root.app.settings
+        onBrowserFailed: root.issueBrowserFailed()
+    }
+    function issueBrowserFailed() {
+        root.notices.post("warning", qsTranslate("HikariSub.Reports", "The browser did not open"),
+                          qsTranslate("HikariSub.Reports", "The issue is on the clipboard. Paste it into a new issue on GitHub."))
     }
     Connections {
         target: root.crashReports
@@ -7489,7 +7495,7 @@ ApplicationWindow {
             const note = crashReportWindow.lastNote
             root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"), qsTranslate("HikariSub.Reports", "It is kept for the next start."),
                               { actions: [{ text: qsTranslate("HikariSub.Reports", "Try again"), run: () => root.crashReports.send("start", note) },
-                                          { text: qsTranslate("HikariSub.Reports", "Open GitHub issue"), run: () => root.crashReports.openOnGitHub("start", note) }] })
+                                          { text: qsTranslate("HikariSub.Reports", "Open GitHub issue"), run: () => crashReportWindow.openOnGitHub("start", note) }] })
         }
         function onAutoSent(kind, ok) {
             if (!ok) {

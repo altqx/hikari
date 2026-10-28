@@ -8501,6 +8501,14 @@ zostanie zmieniony na domyślny</translation>
         <translation>Raport jest za długi na link, więc jest w schowku. Wklej go do formularza.</translation>
     </message>
     <message>
+        <source>The browser did not open</source>
+        <translation>Przeglądarka się nie otworzyła</translation>
+    </message>
+    <message>
+        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>Zgłoszenie jest w schowku. Wklej je do nowego zgłoszenia na GitHubie.</translation>
+    </message>
+    <message>
         <source>The whole report</source>
         <translation>Cały raport</translation>
     </message>

@@ -29,7 +29,8 @@ DialogWindow {
     property bool expanded: false
     readonly property bool sent: source === "sent"
     readonly property bool recovery: source === "start" && offer !== null && offer.kind === "crash"
-    readonly property string reportText: sent ? reports.sentText() : reports.text(source, note.text)
+    // The report as it goes; started() completes it after the first frame.
+    property string reportText: ""
     // A Send report or Open GitHub issue answered it (closing drops it).
     property bool answered: false
     // The note of the last Send report (the failure notice's Try again).
@@ -38,6 +39,9 @@ DialogWindow {
     // Open GitHub issue: too long for a link, the report went to the
     // clipboard and the blank form opened.
     signal linkTooLong()
+    // Open GitHub issue: no browser opened; the issue is on the clipboard
+    // and the report kept.
+    signal browserFailed()
 
     dialogId: "crashReport"
     title: sent ? qsTr("Crash report")
@@ -52,7 +56,22 @@ DialogWindow {
         note.text = ""
         expanded = from === "sent"
         answered = false
+        refreshText()
         open()
+    }
+    function refreshText() {
+        reportText = sent ? reports.sentText() : reports.text(source, note.text)
+    }
+    // The window's Open GitHub issue, and the failed send notice's.
+    function openOnGitHub(from, text) {
+        const result = reports.openOnGitHub(from, text)
+        if (result.opened === false) {
+            browserFailed()
+            return false
+        }
+        if (result.complete === false)
+            linkTooLong()
+        return true
     }
     // "today at 14:32", "yesterday at 14:32", or the date and time.
     function whenText(when) {
@@ -74,6 +93,11 @@ DialogWindow {
         accept()
     }
     onRejected: if (!sent && !answered) reports.dismiss(source)
+
+    Connections {
+        target: report.reports
+        function onChanged() { report.refreshText() }
+    }
 
     RowLayout {
         spacing: 14
@@ -159,6 +183,11 @@ DialogWindow {
         Accessible.name: qsTr("Note")
         Layout.fillWidth: true
         Layout.preferredHeight: 56
+        onTextChanged: {
+            if (length > report.reports.noteLimit)
+                remove(report.reports.noteLimit, length)
+            report.refreshText()
+        }
     }
     FormSection {
         objectName: "crashReportContents"
@@ -238,12 +267,7 @@ DialogWindow {
             visible: !report.sent
             text: qsTr("Open GitHub issue")
             DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-            onClicked: {
-                const result = report.reports.openOnGitHub(report.source, note.text)
-                report.answer()
-                if (result.complete === false)
-                    report.linkTooLong()
-            }
+            onClicked: if (report.openOnGitHub(report.source, note.text)) report.answer()
         },
         FooterButton {
             objectName: "crashReportDontSend"

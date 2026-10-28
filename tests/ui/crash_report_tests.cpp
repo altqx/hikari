@@ -14,6 +14,7 @@
 #include "log_controller.h"
 #include "settings_store.h"
 
+#include <QDir>
 #include <QFile>
 #include <QJsonDocument>
 #include <QProcess>
@@ -22,6 +23,10 @@
 #include <QTemporaryDir>
 #include <QUrlQuery>
 #include <QtTest>
+
+#ifdef Q_OS_UNIX
+#include <sys/stat.h>
+#endif
 
 using hikari::app::Analytics;
 using hikari::app::CrashReports;
@@ -370,6 +375,122 @@ private slots:
         QVERIFY(QFile::exists(path("crash-report.json")));
     }
 
+    // A note or a Log longer than the event's fields take still sends: the
+    // note cut at 4,000 characters, the Log at its last lines within 64 KB,
+    // a long line cut. The window shows what goes.
+    void longNoteAndLogStillSend()
+    {
+        writeRecord("crash-record.txt", crashRecordText());
+        writeRecord("log-tail.txt", (QByteArray("14:00:00 Info    ") + QByteArray(2000, 'x') + '\n').repeated(200));
+        AnalyticsEndpoint endpoint;
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.usageData", false);
+        Analytics analytics(settings, analyticsConfig(endpoint.url()));
+        hikari::ui::LogController log;
+        CrashReports reports(settings, analytics, log, config());
+        reports.started(QStringLiteral("appimage"), 1, 1, QStringLiteral("editing"));
+        const QString note = QString(5000, u'n');
+        QSignalSpy sent(&reports, &CrashReports::sent);
+        QVERIFY(reports.send(kStart, note));
+        QVERIFY(sent.wait(5000));
+        QCOMPARE(sent.first().at(1).toBool(), true);
+        const QJsonObject crashReport = propertiesOf(endpoint.events(), QStringLiteral("crash_report"));
+        QCOMPARE(crashReport.value(QStringLiteral("note")).toString().size(), report::kNoteChars);
+        const QString logField = crashReport.value(QStringLiteral("log")).toString();
+        QVERIFY(logField.size() <= report::kLogChars);
+        QVERIFY(logField.size() > report::kLogChars - report::kLogLineChars - 1);
+        for (const QString &line : logField.split(u'\n'))
+            QVERIFY(line.size() <= report::kLogLineChars);
+        QVERIFY(reports.sentText().contains(QString(report::kNoteChars, u'n')));
+        QVERIFY(!reports.sentText().contains(QString(report::kNoteChars + 1, u'n')));
+    }
+
+    // A freeze recovered while an earlier one's report is on its way is
+    // kept: the answer is the earlier one's.
+    void newerFreezeOutlivesASend()
+    {
+        AnalyticsEndpoint endpoint;
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.usageData", false);
+        Analytics analytics(settings, analyticsConfig(endpoint.url()));
+        hikari::ui::LogController log;
+        CrashReports reports(settings, analytics, log, config());
+        reports.started(QStringLiteral("appimage"), 1, 1, QStringLiteral("editing"));
+        const auto freeze = [](int seconds) {
+            return crash::Record{QStringLiteral("APP_HANG"), QStringLiteral("watchdog"), QStringLiteral("0.1.0-beta.1"),
+                                 {{QStringLiteral("hikarisub"), 0x31c0a8}}, seconds};
+        };
+        reports.freezeRecovered(freeze(12));
+        QSignalSpy sent(&reports, &CrashReports::sent);
+        QVERIFY(reports.send(QStringLiteral("freeze"), {}));
+        reports.freezeRecovered(freeze(30));
+        QVERIFY(sent.wait(5000));
+        QCOMPARE(sent.first().at(1).toBool(), true);
+        QVERIFY(reports.freezeOffered());
+        QCOMPARE(reports.seconds(QStringLiteral("freeze")), 30);
+        QCOMPARE(endpoint.events().size(), 2);
+        QCOMPARE(propertiesOf(endpoint.events(), QStringLiteral("$exception")).value(QStringLiteral("freeze_seconds")).toInt(), 12);
+    }
+
+    // Usage data turned off drops the $exception it had queued: Send report
+    // then sends the record again.
+    void usageDataOffResendsTheRecord()
+    {
+        writeRecord("crash-record.txt", crashRecordText());
+        AnalyticsEndpoint endpoint;
+        hikari::ui::SettingsStore settings;
+        Analytics analytics(settings, analyticsConfig(endpoint.url()));
+        hikari::ui::LogController log;
+        CrashReports reports(settings, analytics, log, config());
+        reports.started(QStringLiteral("appimage"), 1, 1, QStringLiteral("editing"));
+        QVERIFY(!propertiesOf(analytics.queued(), QStringLiteral("$exception")).isEmpty());
+        settings.set("privacy.usageData", false);
+        QVERIFY(analytics.queued().isEmpty());
+        QSignalSpy sent(&reports, &CrashReports::sent);
+        QVERIFY(reports.send(kStart, {}));
+        QVERIFY(sent.wait(5000));
+        QCOMPARE(endpoint.requests.size(), 1);
+        QCOMPARE(endpoint.events().size(), 2);
+        QVERIFY(!propertiesOf(endpoint.events(), QStringLiteral("$exception")).isEmpty());
+    }
+
+    // The report's files go in a folder of the user's alone, whatever the
+    // umask, and never through a link.
+    void reportFilesAreTheUsersAlone()
+    {
+#ifndef Q_OS_UNIX
+        QSKIP("Unix permissions");
+#else
+        writeRecord("crash-record.txt", crashRecordText());
+        CrashReports::Config c = config();
+        c.pendingFile = path("reports/crash-report.json");
+        c.logTail = path("reports/log-tail.txt");
+        c.attachments = path("linked");
+        QTemporaryDir elsewhere;
+        QVERIFY(QFile::link(elsewhere.path(), path("linked")));
+        writeRecord("Episode 03.ass", "[Script Info]\n");
+        const mode_t was = ::umask(0);
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.usageData", false);
+        Analytics analytics(settings, analyticsConfig(QUrl(QStringLiteral("http://127.0.0.1:9/batch/"))));
+        hikari::ui::LogController log;
+        CrashReports reports(settings, analytics, log, c);
+        reports.setCurrentFile([this] { return path("Episode 03.ass"); });
+        log.log(QStringLiteral("a line of the Log"));
+        QTRY_VERIFY(QFile::exists(path("reports/log-tail.txt")));
+        const QString zip = reports.zipSubtitleFile();
+        ::umask(was);
+        QVERIFY(QFile::exists(path("reports/crash-report.json")));
+        QCOMPARE(QFileInfo(path("reports")).permissions() & ~(QFileDevice::ReadUser | QFileDevice::WriteUser | QFileDevice::ExeUser),
+                 QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+        QVERIFY(zip.isEmpty());
+        QVERIFY(QDir(elsewhere.path()).isEmpty());
+        QFile::remove(path("linked"));
+        QFile::remove(path("Episode 03.ass"));
+        QDir(path("reports")).removeRecursively();
+#endif
+    }
+
     // A build without a key can't send; Send report does nothing.
     void noKeyNoSend()
     {
@@ -531,6 +652,30 @@ private slots:
         QCOMPARE(reports.pending(), QString()); // taken to GitHub: done
         QTest::qWait(200);
         QVERIFY(endpoint.requests.isEmpty());
+    }
+
+    // No browser opened: the issue is on the clipboard and the report kept.
+    void githubWithoutBrowserKeepsTheReport()
+    {
+        writeRecord("crash-record.txt", crashRecordText());
+        hikari::ui::SettingsStore settings;
+        Analytics analytics(settings, analyticsConfig(QUrl(QStringLiteral("http://127.0.0.1:9/batch/"))));
+        hikari::ui::LogController log;
+        CrashReports::Config c = config();
+        c.openUrl = [this](const QUrl &url) {
+            opened << url;
+            return false;
+        };
+        CrashReports reports(settings, analytics, log, c);
+        reports.started(QStringLiteral("appimage"), 1, 1, QStringLiteral("editing"));
+        const QVariantMap result = reports.openOnGitHub(kStart, QStringLiteral("It closed."));
+        QCOMPARE(result.value(QStringLiteral("opened")).toBool(), false);
+        QCOMPARE(result.value(QStringLiteral("complete")).toBool(), true);
+        QCOMPARE(opened.size(), 1);
+        QCOMPARE(copied.size(), 1);
+        QVERIFY(copied.first().contains(QStringLiteral("### What happened\nIt closed.")));
+        QCOMPARE(reports.pending(), QStringLiteral("crash"));
+        QVERIFY(QFile::exists(path("crash-report.json")));
     }
 
     // Help › Report an issue: each kind's link fills the matching issue

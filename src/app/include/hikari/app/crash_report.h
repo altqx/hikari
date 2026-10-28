@@ -75,8 +75,15 @@ struct Setting {
 // that is not one becomes "custom"), never a folder, a font or a name.
 QList<Setting> settingsSummary(const ui::SettingsStore &settings);
 
-// The Log's last lines a report holds.
+// The Log's last lines a report holds, within kLogChars in all (the
+// crash_report event's log field), each cut at kLogLineChars.
 constexpr int kLogLines = 200;
+constexpr int kLogChars = 64 * 1024;
+constexpr int kLogLineChars = 1000;
+// The note's length (the crash_report event's note field).
+constexpr int kNoteChars = 4000;
+// The last of `lines` within those bounds.
+QStringList boundLog(QStringList lines);
 
 struct Report {
     QString id;                         // a UUID, shared by its events

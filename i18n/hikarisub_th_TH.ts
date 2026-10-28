@@ -8408,6 +8408,14 @@ and will be changed to the default</source>
         <translation>รายงานยาวเกินกว่าจะใส่ในลิงก์ จึงอยู่ในคลิปบอร์ด วางลงในแบบฟอร์ม</translation>
     </message>
     <message>
+        <source>The browser did not open</source>
+        <translation>เบราว์เซอร์ไม่เปิด</translation>
+    </message>
+    <message>
+        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>รายงานปัญหาอยู่ในคลิปบอร์ดแล้ว วางลงในปัญหาใหม่บน GitHub</translation>
+    </message>
+    <message>
         <source>The whole report</source>
         <translation>รายงานทั้งหมด</translation>
     </message>

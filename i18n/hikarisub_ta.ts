@@ -8455,6 +8455,14 @@ and will be changed to the default</source>
         <translation>இணைப்புக்கு அறிக்கை மிக நீளமானது, எனவே அது கிளிப்போர்டில் உள்ளது. அதைப் படிவத்தில் ஒட்டவும்.</translation>
     </message>
     <message>
+        <source>The browser did not open</source>
+        <translation>உலாவி திறக்கவில்லை</translation>
+    </message>
+    <message>
+        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>சிக்கல் கிளிப்போர்டில் உள்ளது. அதை GitHub இல் ஒரு புதிய சிக்கலில் ஒட்டவும்.</translation>
+    </message>
+    <message>
         <source>The whole report</source>
         <translation>முழு அறிக்கை</translation>
     </message>

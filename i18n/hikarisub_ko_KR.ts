@@ -8404,6 +8404,14 @@ and will be changed to the default</source>
         <translation>보고서가 링크에 담기에는 너무 길어 클립보드에 복사했습니다. 양식에 붙여 넣으세요.</translation>
     </message>
     <message>
+        <source>The browser did not open</source>
+        <translation>브라우저가 열리지 않았습니다</translation>
+    </message>
+    <message>
+        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>이슈 내용이 클립보드에 있습니다. GitHub의 새 이슈에 붙여 넣으세요.</translation>
+    </message>
+    <message>
         <source>The whole report</source>
         <translation>전체 보고서</translation>
     </message>

@@ -251,11 +251,29 @@ QString Report::logText() const
     return lines.join(u'\n');
 }
 
+QStringList boundLog(QStringList lines)
+{
+    if (lines.size() > kLogLines)
+        lines = lines.mid(lines.size() - kLogLines);
+    qsizetype total = 0;
+    qsizetype first = lines.size();
+    while (first > 0) {
+        QString &line = lines[first - 1];
+        if (line.size() > kLogLineChars)
+            line = line.left(kLogLineChars - 1) + u'…';
+        if (total + line.size() + 1 > kLogChars)
+            break;
+        total += line.size() + 1;
+        --first;
+    }
+    return lines.mid(first);
+}
+
 QString Report::text(const QString &note) const
 {
     QStringList parts;
-    if (!note.trimmed().isEmpty())
-        parts << QStringLiteral("Note\n  ") + note.trimmed().replace(u'\n', QStringLiteral("\n  "));
+    if (const QString n = note.trimmed().left(kNoteChars); !n.isEmpty())
+        parts << QStringLiteral("Note\n  ") + QString(n).replace(u'\n', QStringLiteral("\n  "));
     if (record)
         parts << recordText();
     parts << systemText() << settingsText() << logText();
@@ -303,8 +321,8 @@ QJsonObject Report::reportProperties(const QString &note) const
                     {QStringLiteral("qt_version"), system.qtVersion},
                     {QStringLiteral("settings"), settingsJson},
                     {QStringLiteral("log"), log.join(u'\n')}};
-    if (!note.trimmed().isEmpty())
-        out.insert(QStringLiteral("note"), note.trimmed());
+    if (const QString n = note.trimmed().left(kNoteChars); !n.isEmpty())
+        out.insert(QStringLiteral("note"), n);
     return out;
 }
 
@@ -339,8 +357,7 @@ std::optional<Report> Report::fromJson(const QJsonObject &json)
     r.recovered = json.value(QStringLiteral("recovered")).toBool();
     for (const QJsonValue &l : json.value(QStringLiteral("log")).toArray())
         r.log << l.toString();
-    if (r.log.size() > kLogLines)
-        r.log = r.log.mid(r.log.size() - kLogLines);
+    r.log = boundLog(r.log);
     const QJsonObject rec = json.value(QStringLiteral("record")).toObject();
     if (!rec.isEmpty()) {
         crash::Record record{rec.value(QStringLiteral("type")).toString(), rec.value(QStringLiteral("mechanism")).toString(),

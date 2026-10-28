@@ -881,13 +881,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             QStringList texts;
             for (const auto id : m_workspace.documents())
                 if (const auto *session = m_files->session(id))
-                    for (const auto *line : session->document().lines()) {
-                        const QString text = QString::fromUtf8(reinterpret_cast<const char *>(line->text.data()),
-                                                               qsizetype(line->text.size()));
-                        texts << text;
-                        if (const QString plain = QString(text).remove(tags); plain != text)
-                            texts << plain;
-                    }
+                    for (const auto *line : session->document().lines())
+                        for (const std::u8string *body : {&line->text, &line->translation}) {
+                            const QString text = QString::fromUtf8(reinterpret_cast<const char *>(body->data()),
+                                                                   qsizetype(body->size()));
+                            texts << text;
+                            if (const QString plain = QString(text).remove(tags); plain != text)
+                                texts << plain;
+                        }
             return texts;
         });
     m_crashReports->setCurrentFile([this] {

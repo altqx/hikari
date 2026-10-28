@@ -300,13 +300,14 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QDir().mkpath(userFolder.cache());
     options.analytics.key = Analytics::compiledKey();
     options.analytics.queueFile = userFolder.cache() + QStringLiteral("/analytics-queue.json");
-    // CR1 (#452): the records a crash or a freeze leaves, the report kept
-    // until it is answered and the Log's last lines, in the cache folder.
+    // CR1 (#452): the records a crash or a freeze leaves, in the cache
+    // folder; the report kept until it is answered, the Log's last lines and
+    // an issue's attachments in its reports/, the user's alone.
     options.crashReports.crashRecord = userFolder.cache() + QStringLiteral("/crash-record.txt");
     options.crashReports.freezeRecord = userFolder.cache() + QStringLiteral("/hang-record.txt");
-    options.crashReports.pendingFile = userFolder.cache() + QStringLiteral("/crash-report.json");
-    options.crashReports.logTail = userFolder.cache() + QStringLiteral("/log-tail.txt");
-    options.crashReports.attachments = userFolder.cache() + QStringLiteral("/issue-report");
+    options.crashReports.pendingFile = userFolder.cache() + QStringLiteral("/reports/crash-report.json");
+    options.crashReports.logTail = userFolder.cache() + QStringLiteral("/reports/log-tail.txt");
+    options.crashReports.attachments = userFolder.cache() + QStringLiteral("/reports/issue");
     options.crashReports.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.doNotTrack = Analytics::doNotTrack(qgetenv("DO_NOT_TRACK"));

@@ -36,6 +36,8 @@ DialogWindow {
     readonly property var kindNames: [qsTr("Bug"), qsTr("Feature request"), qsTr("Question")]
     readonly property bool bug: kind === "bug"
     readonly property bool ready: titleField.text.trim().length > 0 && first.text.trim().length > 0
+    // Open on GitHub: no browser opened; the issue is on the clipboard.
+    signal browserFailed()
 
     dialogId: "reportIssue"
     resizable: true
@@ -72,6 +74,10 @@ DialogWindow {
         if (bug && withSubtitle.checked && subtitleZip.length === 0)
             subtitleZip = reports.zipSubtitleFile()
         const result = reports.openIssue(kind, titleField.text, fields(), bug && withLog.checked)
+        if (result.opened === false) {
+            browserFailed()
+            return
+        }
         complete = result.complete !== false
         page = "finish"
         doneButton.forceActiveFocus(Qt.TabFocusReason)
@@ -309,7 +315,8 @@ DialogWindow {
             objectName: "reportIssueAgain"
             visible: issue.page === "finish"
             text: qsTr("Open the form again")
-            onClicked: issue.reports.openIssue(issue.kind, titleField.text, issue.fields(), issue.bug && withLog.checked)
+            onClicked: if (issue.reports.openIssue(issue.kind, titleField.text, issue.fields(), issue.bug && withLog.checked).opened === false)
+                           issue.browserFailed()
         }
     ]
     buttons: [

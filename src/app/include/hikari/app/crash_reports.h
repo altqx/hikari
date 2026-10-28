@@ -45,6 +45,8 @@ class CrashReports : public QObject {
     // A build with a PostHog key can send; any build can go to GitHub.
     Q_PROPERTY(bool canSend READ canSend CONSTANT)
     Q_PROPERTY(bool sending READ sending NOTIFY sendingChanged)
+    // The note's length a report takes.
+    Q_PROPERTY(int noteLimit READ noteLimit CONSTANT)
 public:
     struct Config {
         QString crashRecord;  // AN1's crash-record.txt
@@ -78,6 +80,7 @@ public:
     bool freezeOffered() const { return m_freeze.has_value(); }
     bool canSend() const;
     bool sending() const { return m_sending; }
+    static int noteLimit() { return report::kNoteChars; }
 
     // When it crashed or froze, and for a freeze how long (s).
     Q_INVOKABLE QDateTime when(const QString &source) const;
@@ -87,8 +90,10 @@ public:
     // Send report: false when it could not start (no key, already sending).
     Q_INVOKABLE bool send(const QString &source, const QString &note);
     // Open GitHub issue: a Bug issue with the same content. Returns
-    // {complete}: false when it was too long for a link and went to the
-    // clipboard, the blank form opening instead. The report is then done.
+    // {complete, opened}: complete false when it was too long for a link and
+    // went to the clipboard, the blank form opening instead; opened false
+    // when no browser opened, the issue on the clipboard. Once opened, the
+    // report is done.
     Q_INVOKABLE QVariantMap openOnGitHub(const QString &source, const QString &note);
     // Don't send: the report goes, nothing is sent.
     Q_INVOKABLE void dismiss(const QString &source);
@@ -143,6 +148,7 @@ private:
     void writeTail();
     report::Issue issue(const QString &kind, const QString &title, const QVariantMap &fields, bool withLog) const;
     void sendAuto(const QString &source);
+    QVariantMap open(const report::Issue &issue);
 
     ui::SettingsStore &m_settings;
     Analytics &m_analytics;
@@ -158,6 +164,7 @@ private:
     bool m_started = false;
     bool m_sending = false;
     QString m_sendingSource;
+    std::optional<report::Report> m_inFlight; // the report Send report sent
     bool m_sendingAuto = false;
 };
 

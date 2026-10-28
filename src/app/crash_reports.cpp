@@ -17,6 +17,12 @@
 #include <QUuid>
 #include <QtCore/private/qzipwriter_p.h>
 
+#include <utility>
+
+#ifdef Q_OS_UNIX
+#include <unistd.h>
+#endif
+
 namespace hikari::app {
 
 namespace {
@@ -37,10 +43,31 @@ QStringList readLines(const QString &path)
     QFile file(path);
     if (file.size() > 1024 * 1024 || !file.open(QIODevice::ReadOnly))
         return {};
-    QStringList lines = QString::fromUtf8(file.readAll()).split(u'\n', Qt::SkipEmptyParts);
-    if (lines.size() > report::kLogLines)
-        lines = lines.mid(lines.size() - report::kLogLines);
-    return lines;
+    return report::boundLog(QString::fromUtf8(file.readAll()).split(u'\n', Qt::SkipEmptyParts));
+}
+
+// The folder a report's files go in (scrubbed Logs, a screenshot, a
+// subtitle file): made when missing, never through a link, and on Unix the
+// user's alone (0700), whatever the umask. False when it cannot be so.
+bool privateFolder(const QString &folder)
+{
+    if (folder.isEmpty() || QFileInfo(folder).isSymLink() || !QDir().mkpath(folder))
+        return false;
+    const QFileInfo info(folder);
+    if (info.isSymLink() || !info.isDir())
+        return false;
+#ifdef Q_OS_UNIX
+    if (info.ownerId() != ::getuid())
+        return false;
+    return QFile::setPermissions(folder, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+#else
+    return true;
+#endif
+}
+
+bool inPrivateFolder(const QString &path)
+{
+    return privateFolder(QFileInfo(path).absolutePath());
 }
 
 } // namespace
@@ -63,22 +90,28 @@ CrashReports::CrashReports(ui::SettingsStore &settings, Analytics &analytics, ui
     connect(&m_tailTimer, &QTimer::timeout, this, &CrashReports::writeTail);
     connect(&log, &ui::LogController::added, this, &CrashReports::entryAdded);
     connect(&m_analytics, &Analytics::reportSent, this, [this](bool ok) {
-        if (!m_sending)
+        if (!m_sending || !m_inFlight)
             return;
         const QString source = m_sendingSource;
-        const QString kind = source == kStart ? pending() : QStringLiteral("freeze");
+        const report::Report sentReport = *std::exchange(m_inFlight, std::nullopt);
+        const QString kind = sentReport.kind();
         const bool automatic = m_sendingAuto;
         m_sending = false;
         m_sendingAuto = false;
+        // A newer freeze may have taken the slot while it went.
+        const auto *r = slot(source);
+        const bool current = *r && (*r)->id == sentReport.id;
         if (ok) {
-            done(source);
-        } else if (source != kStart && m_freeze) {
+            if (current)
+                done(source);
+        } else if (source != kStart) {
             // Kept for the next start; nothing tries again before.
             if (!m_pending) {
-                m_pending = m_freeze;
+                m_pending = sentReport;
                 savePending();
             }
-            m_freeze.reset();
+            if (current)
+                m_freeze.reset();
             emit changed();
         }
         emit sendingChanged();
@@ -86,6 +119,16 @@ CrashReports::CrashReports(ui::SettingsStore &settings, Analytics &analytics, ui
             emit autoSent(kind, ok);
         else
             emit sent(source, ok);
+    });
+    // Usage data off drops what it had queued, perhaps a report's
+    // $exception: Send report sends the record again.
+    connect(&m_analytics, &Analytics::activeChanged, this, [this] {
+        if (m_analytics.active())
+            return;
+        for (auto *r : {&m_pending, &m_freeze})
+            if (*r)
+                (*r)->exceptionSent = false;
+        savePending();
     });
 }
 
@@ -149,7 +192,7 @@ void CrashReports::savePending()
         return;
     }
     QSaveFile file(m_config.pendingFile);
-    if (file.open(QIODevice::WriteOnly)) {
+    if (inPrivateFolder(m_config.pendingFile) && file.open(QIODevice::WriteOnly)) {
         file.write(QJsonDocument(m_pending->toJson()).toJson(QJsonDocument::Compact));
         file.commit();
     }
@@ -247,6 +290,7 @@ bool CrashReports::send(const QString &source, const QString &note)
     if (!m_analytics.sendReport(events))
         return false;
     m_sentText = (*r)->text(note);
+    m_inFlight = **r;
     m_sending = true;
     m_sendingSource = source;
     emit sendingChanged();
@@ -259,12 +303,10 @@ QVariantMap CrashReports::openOnGitHub(const QString &source, const QString &not
     if (!*r)
         return {};
     const report::Issue issue = report::Issue::fromReport(**r, note);
-    const report::Issue::Link link = issue.link();
-    if (!link.complete)
-        m_config.copy(issue.markdown());
-    m_config.openUrl(link.url);
-    done(source);
-    return {{QStringLiteral("complete"), link.complete}};
+    const QVariantMap result = open(issue);
+    if (result.value(QStringLiteral("opened")).toBool())
+        done(source);
+    return result;
 }
 
 void CrashReports::dismiss(const QString &source)
@@ -294,8 +336,7 @@ void CrashReports::entryAdded(const QString &time, int severity, const QString &
                       m_scrubber.scrub(textLines[i]);
     for (const QString &d : details.split(u'\n', Qt::SkipEmptyParts))
         m_tail << QStringLiteral("    ") + m_scrubber.scrub(d);
-    if (m_tail.size() > report::kLogLines)
-        m_tail = m_tail.mid(m_tail.size() - report::kLogLines);
+    m_tail = report::boundLog(std::move(m_tail));
     if (!m_config.logTail.isEmpty())
         m_tailTimer.start();
 }
@@ -303,7 +344,7 @@ void CrashReports::entryAdded(const QString &time, int severity, const QString &
 void CrashReports::writeTail()
 {
     QSaveFile file(m_config.logTail);
-    if (file.open(QIODevice::WriteOnly)) {
+    if (inPrivateFolder(m_config.logTail) && file.open(QIODevice::WriteOnly)) {
         file.write(m_tail.join(u'\n').toUtf8());
         file.commit();
     }
@@ -351,12 +392,19 @@ QString CrashReports::issueMarkdown(const QString &kind, const QString &title, c
 
 QVariantMap CrashReports::openIssue(const QString &kind, const QString &title, const QVariantMap &fields, bool withLog)
 {
-    const report::Issue i = issue(kind, title, fields, withLog);
-    const report::Issue::Link link = i.link();
+    return open(issue(kind, title, fields, withLog));
+}
+
+QVariantMap CrashReports::open(const report::Issue &issue)
+{
+    const report::Issue::Link link = issue.link();
     if (!link.complete)
-        m_config.copy(i.markdown());
-    m_config.openUrl(link.url);
-    return {{QStringLiteral("complete"), link.complete}};
+        m_config.copy(issue.markdown());
+    const bool opened = m_config.openUrl(link.url);
+    // No browser: the issue goes to the clipboard all the same.
+    if (!opened && link.complete)
+        m_config.copy(issue.markdown());
+    return {{QStringLiteral("complete"), link.complete}, {QStringLiteral("opened"), opened}};
 }
 
 void CrashReports::copyIssue(const QString &kind, const QString &title, const QVariantMap &fields, bool withLog)
@@ -378,9 +426,10 @@ QString CrashReports::subtitleFileName() const
 QString CrashReports::takeScreenshot(QObject *window)
 {
     auto *quick = qobject_cast<QQuickWindow *>(window);
-    if (!quick || m_config.attachments.isEmpty() || !QDir().mkpath(m_config.attachments))
+    if (!quick || !privateFolder(m_config.attachments))
         return {};
     const QString path = m_config.attachments + QStringLiteral("/hikarisub-window.png");
+    QFile::remove(path);
     const QImage image = quick->grabWindow();
     return !image.isNull() && image.save(path, "PNG") ? path : QString();
 }
@@ -389,8 +438,8 @@ QString CrashReports::zipSubtitleFile()
 {
     const QString file = m_currentFile ? m_currentFile() : QString();
     QFile in(file);
-    if (m_config.attachments.isEmpty() || !QFileInfo(file).isFile() || in.size() > 64 * 1024 * 1024 ||
-        !in.open(QIODevice::ReadOnly) || !QDir().mkpath(m_config.attachments))
+    if (!QFileInfo(file).isFile() || in.size() > 64 * 1024 * 1024 || !in.open(QIODevice::ReadOnly) ||
+        !privateFolder(m_config.attachments))
         return {};
     const QString name = QFileInfo(file).fileName();
     const QString path = m_config.attachments + u'/' + QFileInfo(file).completeBaseName() + QStringLiteral(".zip");

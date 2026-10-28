@@ -29,6 +29,7 @@ import struct
 import subprocess
 import sys
 import tarfile
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -71,25 +72,32 @@ def windows(frames):
 
 def download(version, platform, repo):
     cache = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "hikari-symbols" / version / platform
-    if cache.is_dir() and any(cache.iterdir()):
+    if cache.is_dir():
         return cache
     name = (f"HikariSub-{version}-windows-x64-symbols.zip" if platform == "windows"
             else f"hikarisub-symbols-{version}-linux-x86_64.tar.xz")
-    cache.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["gh", "release", "download", f"v{version}", "--repo", repo, "--pattern", name,
-                    "--dir", str(cache), "--clobber"], check=True)
-    archive = cache / name
-    # Unpacked into the cache only, members kept inside it.
-    if name.endswith(".zip"):
-        with zipfile.ZipFile(archive) as z:
-            for member in z.namelist():
-                if os.path.isabs(member) or ".." in Path(member).parts:
-                    sys.exit(f"unsafe path in {name}: {member}")
-            z.extractall(cache)
-    else:
-        with tarfile.open(archive) as t:
-            t.extractall(cache, filter="data")
-    archive.unlink()
+    # Downloaded and unpacked beside it, then renamed into place: a cache
+    # folder is only ever a whole one.
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    partial = Path(tempfile.mkdtemp(prefix=f".{platform}-", dir=cache.parent))
+    try:
+        subprocess.run(["gh", "release", "download", f"v{version}", "--repo", repo, "--pattern", name,
+                        "--dir", str(partial), "--clobber"], check=True)
+        archive = partial / name
+        # Unpacked into the cache only, members kept inside it.
+        if name.endswith(".zip"):
+            with zipfile.ZipFile(archive) as z:
+                for member in z.namelist():
+                    if os.path.isabs(member) or ".." in Path(member).parts:
+                        sys.exit(f"unsafe path in {name}: {member}")
+                z.extractall(partial)
+        else:
+            with tarfile.open(archive) as t:
+                t.extractall(partial, filter="data")
+        archive.unlink()
+        partial.rename(cache)
+    finally:
+        shutil.rmtree(partial, ignore_errors=True)
     return cache
 
 
