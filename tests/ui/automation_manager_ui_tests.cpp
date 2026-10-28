@@ -5,6 +5,7 @@
 #include "automation_manager_controller.h"
 #include "hikari/backends/automation_manager.h"
 
+#include <QDir>
 #include <QQmlExtensionPlugin>
 #include <QQuickItem>
 #include <QQuickView>
@@ -85,6 +86,47 @@ private slots:
         QVERIFY2(error.startsWith(QStringLiteral("syntax-error.lua:")), qPrintable(error));
         QVERIFY(error.contains(QStringLiteral("expected")));
         QVERIFY(item(QStringLiteral("error_0"))->property("visible").toBool());
+    }
+
+    // #397: an autoload script turned off lists unticked, muted, without
+    // Reload; its box turns it on, and a loaded one's box turns it off.
+    void autoloadScriptsHaveAnEnabledBox()
+    {
+        const QString on = QStringLiteral(HIKARI_LUA_FIXTURES "/host-fixture.lua");
+        const QString off = QStringLiteral("/scripts/off.lua");
+        QStringList disabled{off};
+        QList<std::pair<QString, bool>> toggled;
+        controller->setAutoload([&] { return disabled; },
+                                [&](const QString &path, bool enabled) { toggled.append({path, enabled}); });
+        controller->load(on);
+        QTRY_COMPARE(scriptState(0), QStringLiteral("ready"));
+        QCOMPARE(scriptState(1), QStringLiteral("disabled"));
+        QVERIFY(QTest::qWaitForWindowExposed(view.get()));
+        QTRY_VERIFY(item(QStringLiteral("enabled_1")));
+        auto *offBox = qobject_cast<QQuickItem *>(item(QStringLiteral("enabled_1")));
+        QVERIFY(offBox->isVisible());
+        QVERIFY(!offBox->property("checked").toBool());
+        QVERIFY(!item(QStringLiteral("reload_1"))->property("visible").toBool());
+        QVERIFY(!item(QStringLiteral("state_1"))->property("visible").toBool());
+        QVERIFY(item(QStringLiteral("enabled_0"))->property("checked").toBool());
+        // For the PR's review: the panel with one script on and one off.
+        if (const QString out = qEnvironmentVariable("HIKARI_AUTOMATION_SHOT_DIR"); !out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            QTest::qWait(300);
+            QVERIFY(view->grabWindow().save(out + QStringLiteral("/automation-autoload-enabled.png")));
+        }
+        QVERIFY(QMetaObject::invokeMethod(offBox, "click"));
+        QCOMPARE(toggled, (QList<std::pair<QString, bool>>{{off, true}}));
+        auto *onBox = qobject_cast<QQuickItem *>(item(QStringLiteral("enabled_0")));
+        QTest::mouseClick(view.get(), Qt::LeftButton, {},
+                          onBox->mapToScene(QPointF(onBox->width() / 2, onBox->height() / 2)).toPoint());
+        QCOMPARE(toggled.last(), std::pair(on, false));
+        // Off while it loads or runs a macro, as Reload.
+        QVERIFY(controller->reload(on));
+        QCOMPARE(scriptState(0), QStringLiteral("loading"));
+        QTRY_VERIFY(!item(QStringLiteral("enabled_0"))->property("enabled").toBool());
+        QTRY_COMPARE(scriptState(0), QStringLiteral("ready"));
+        QTRY_VERIFY(item(QStringLiteral("enabled_0"))->property("enabled").toBool());
     }
 
     void reloadIsVisible()

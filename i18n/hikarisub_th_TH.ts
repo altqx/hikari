@@ -414,6 +414,14 @@ Output device: %2</source>
 <context>
     <name>HikariSub.Automation</name>
     <message>
+        <source>Load at start</source>
+        <translation>โหลดเมื่อเริ่มโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Load %1 at start</source>
+        <translation>โหลด %1 เมื่อเริ่มโปรแกรม</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
     </message>

@@ -51,15 +51,44 @@ void AutomationManagerController::refresh()
                                  {QStringLiteral("generation"), qulonglong(s.generation)},
                                  {QStringLiteral("forceStopOffered"), s.forceStopOffered},
                                  {QStringLiteral("inDocument"), m_isDocumentScript && m_isDocumentScript(s.path)},
+                                 {QStringLiteral("enabled"), true},
                                  {QStringLiteral("macros"), macros}};
         m_busy = m_busy || s.state == ScriptStatus::State::Running;
     }
+    if (m_disabled)
+        for (const QString &path : m_disabled())
+            m_scripts << QVariantMap{{QStringLiteral("path"), path},
+                                     {QStringLiteral("fileName"), QFileInfo(path).fileName()},
+                                     {QStringLiteral("name"), QString()},
+                                     {QStringLiteral("description"), QString()},
+                                     {QStringLiteral("state"), QStringLiteral("disabled")},
+                                     {QStringLiteral("error"), QString()},
+                                     {QStringLiteral("generation"), qulonglong(0)},
+                                     {QStringLiteral("forceStopOffered"), false},
+                                     {QStringLiteral("inDocument"), false},
+                                     {QStringLiteral("enabled"), false},
+                                     {QStringLiteral("macros"), QVariantList()}};
     emit changed();
 }
 
 void AutomationManagerController::setDocumentScript(std::function<bool(const std::string &)> isDocumentScript)
 {
     m_isDocumentScript = std::move(isDocumentScript);
+    refresh();
+}
+
+void AutomationManagerController::setAutoload(std::function<QStringList()> disabled,
+                                              std::function<void(const QString &, bool)> setEnabled)
+{
+    m_disabled = std::move(disabled);
+    m_setEnabled = std::move(setEnabled);
+    refresh();
+}
+
+void AutomationManagerController::setEnabled(const QString &path, bool enabled)
+{
+    if (m_setEnabled)
+        m_setEnabled(path, enabled);
     refresh();
 }
 

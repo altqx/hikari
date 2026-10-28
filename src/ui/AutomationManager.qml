@@ -853,7 +853,9 @@ Pane {
     }
 
     // A script: its name in bold, its state in words when it is not ready,
-    // Reload and its menu; an error under it in the danger colour.
+    // Reload and its menu; an error under it in the danger colour. An
+    // autoload script has a box before its name: unticked, it is off (#397:
+    // not loaded, at start or by Refresh, until it is ticked again).
     Component {
         id: scriptRow
         ColumnLayout {
@@ -868,14 +870,28 @@ Pane {
             Accessible.name: root.scriptTitle(script)
             RowLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 28
+                Layout.leftMargin: scriptItem.script.inDocument ? 28 : 20
                 Layout.rightMargin: 8
                 Layout.topMargin: 4
                 spacing: 4
+                CheckBox {
+                    objectName: "enabled_" + scriptItem.row.index
+                    visible: !scriptItem.script.inDocument
+                    checked: scriptItem.script.enabled ?? true
+                    // Not while it loads or runs a macro (#397), as Reload.
+                    enabled: scriptItem.state !== "running" && scriptItem.state !== "loading"
+                    padding: 0
+                    Accessible.name: qsTr("Load %1 at start").arg(root.scriptTitle(scriptItem.script))
+                    ToolTip.visible: hovered
+                    ToolTip.delay: 500
+                    ToolTip.text: qsTr("Load at start")
+                    onToggled: root.controller.setEnabled(scriptItem.script.path, checked)
+                }
                 Label {
                     Layout.fillWidth: true
                     text: root.scriptTitle(scriptItem.script)
                     font.bold: true
+                    color: scriptItem.state === "disabled" ? Theme.muted : Theme.text
                     elide: Text.ElideRight
                     HoverHandler { id: nameHover }
                     ToolTip.visible: nameHover.hovered && (truncated || (scriptItem.script.description ?? "") !== "")
@@ -885,7 +901,7 @@ Pane {
                 Label {
                     objectName: "state_" + scriptItem.row.index
                     readonly property string scriptState: scriptItem.state
-                    visible: scriptState !== "ready"
+                    visible: scriptState !== "ready" && scriptState !== "disabled"
                     text: scriptState === "loading" ? qsTr("Loading")
                         : scriptState === "running" ? qsTr("Running")
                         : scriptState === "failed" ? qsTr("Failed to load")
@@ -895,6 +911,7 @@ Pane {
                 }
                 IconToolButton {
                     objectName: "reload_" + scriptItem.row.index
+                    visible: scriptItem.state !== "disabled"
                     iconRole: "refresh"
                     text: qsTr("Reload")
                     enabled: scriptItem.state !== "running" && scriptItem.state !== "loading"
@@ -1240,6 +1257,7 @@ Pane {
             iconRole: "refresh"
             text: qsTr("Reload")
             enabled: scriptMenu.script !== null && scriptMenu.script.state !== "running" && scriptMenu.script.state !== "loading"
+                     && scriptMenu.script.state !== "disabled"
             onTriggered: root.controller.reload(scriptMenu.script.path)
         }
         ShellMenuItem {
@@ -1255,6 +1273,7 @@ Pane {
             iconRole: "unload"
             text: qsTr("Unload")
             enabled: scriptMenu.script !== null && scriptMenu.script.state !== "running"
+                     && scriptMenu.script.state !== "disabled"
             onTriggered: root.controller.unload(scriptMenu.script.path)
         }
     }

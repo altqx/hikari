@@ -146,9 +146,14 @@ public:
     bool forceStop(const std::string &path) override { return m_manager.forceStop(path); }
     void setObserver(std::function<void()> changed) override { m_manager.setObserver(std::move(changed)); }
 
-    // Legacy autoload: every .lua and .moon in Automation/automation/Autoload.
+    // Legacy autoload: every .lua and .moon in Automation/automation/Autoload,
+    // but the ones turned off in the panel (#397, automation.disabledAutoload,
+    // by file name, so a seeded or updated copy stays off).
     Q_INVOKABLE void autoload();
     Q_INVOKABLE void reloadAutoload();
+    bool autoloadEnabled(const QString &script) const;
+    // Turns an autoload script on (it loads now) or off (it unloads now).
+    void setAutoloadEnabled(const QString &script, bool enabled);
     // Legacy Automation::Add for Load script and an opened .lua/.moon: the
     // script joins the Document scripts and the editing target's Script Info
     // names it ("Changing the subtitle header"); nothing happens for one

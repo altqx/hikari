@@ -414,6 +414,14 @@ Output device: %2</source>
 <context>
     <name>HikariSub.Automation</name>
     <message>
+        <source>Load at start</source>
+        <translation>தொடக்கத்தில் ஏற்று</translation>
+    </message>
+    <message>
+        <source>Load %1 at start</source>
+        <translation>தொடக்கத்தில் %1 ஐ ஏற்று</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
     </message>

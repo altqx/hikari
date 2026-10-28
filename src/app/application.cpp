@@ -716,6 +716,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     // #383: scripts load with the profile's trace level, so they load after it.
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
+    // The script editor setting, and (#397) the autoload scripts turned off.
+    m_automation->setSettings(m_settings.get());
     if (options.autoload)
         m_automation->autoload();
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString()); // W2
@@ -841,7 +843,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
     // S4: validation errors go to the Log (NT1: a menu run's as an error
-    // toast); the script editor setting.
+    // toast).
     m_automation->setLog([this](const QString &line, AutomationShell::LogLine kind) {
         const QString title = QCoreApplication::translate("HikariSub.Automation", "Automation");
         switch (kind) {
@@ -850,7 +852,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         case AutomationShell::LogLine::QuietError: m_log->log(line, ui::LogController::Error, title); break;
         }
     });
-    m_automation->setSettings(m_settings.get());
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);
     // O2: legacy LoadHkeys at startup, then SetAccels.
     m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings,
