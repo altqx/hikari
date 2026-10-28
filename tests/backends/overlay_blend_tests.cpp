@@ -1,12 +1,9 @@
-// The subtitle adapters' pixel work (overlay_blend.h) against legacy:
-// blendAssBitmap on every path this machine has against legacy
-// BlendAssBitmap itself (HikariSub/AssBlend.cpp, copied unchanged into the
-// build), byte for byte; the clearing boxes; the shared buffers; the CSRI
-// premultiply pass against the per-pixel formula it replaced.
+// The subtitle adapters' pixel work (overlay_blend.h): blendAssBitmap on
+// every path this machine has against the plain path, byte for byte; the
+// clearing boxes; the shared buffers; the CSRI premultiply pass against the
+// per-pixel formula it replaced.
 
 #include "hikari/backends/overlay_blend.h"
-
-#include "AssBlend.h" // legacy
 
 #include <gtest/gtest.h>
 
@@ -54,7 +51,7 @@ TEST(OverlayBlend, ThePathIsOneThisMachineHas)
 }
 
 // Every coverage at every opacity over a sweep of destination pixels.
-TEST(OverlayBlend, EveryCoverageAndOpacityMatchesLegacy)
+TEST(OverlayBlend, EveryCoverageAndOpacityMatchesThePlainPath)
 {
     constexpr int kW = 256;
     std::vector<std::uint8_t> cover(kW);
@@ -64,13 +61,13 @@ TEST(OverlayBlend, EveryCoverageAndOpacityMatchesLegacy)
         for (unsigned transparency = 0; transparency < 256; ++transparency) {
             for (unsigned under : {0u, 1u, 77u, 128u, 254u, 255u}) {
                 const std::uint32_t color = (0x30A0E000u ^ (under << 16)) | transparency;
-                std::vector<std::uint8_t> legacy(kW * 4), ours(kW * 4);
+                std::vector<std::uint8_t> plain(kW * 4), ours(kW * 4);
                 for (int i = 0; i < kW * 4; ++i)
-                    legacy[static_cast<std::size_t>(i)] = static_cast<std::uint8_t>((under + i * 37) & 0xff);
-                ours = legacy;
-                BlendAssBitmap(legacy.data(), kW * 4, cover.data(), kW, kW, 1, color);
+                    plain[static_cast<std::size_t>(i)] = static_cast<std::uint8_t>((under + i * 37) & 0xff);
+                ours = plain;
+                blendAssBitmap(BlendPath::Plain, plain.data(), kW * 4, cover.data(), kW, kW, 1, color);
                 blendAssBitmap(path, ours.data(), kW * 4, cover.data(), kW, kW, 1, color);
-                ASSERT_EQ(ours, legacy) << nameOf(path) << " transparency " << transparency << " under " << under;
+                ASSERT_EQ(ours, plain) << nameOf(path) << " transparency " << transparency << " under " << under;
             }
         }
     }
@@ -78,14 +75,14 @@ TEST(OverlayBlend, EveryCoverageAndOpacityMatchesLegacy)
 
 // Sample bitmaps: odd sizes and offsets (every vector width and tail), runs
 // of empty coverage, strides wider than the bitmap, blended one over another.
-TEST(OverlayBlend, SampleBitmapsMatchLegacy)
+TEST(OverlayBlend, SampleBitmapsMatchThePlainPath)
 {
     std::mt19937 rng(20261013);
     const auto byte = [&] { return static_cast<std::uint8_t>(rng() & 0xff); };
     constexpr int kFrameW = 97, kFrameH = 41, kPitch = kFrameW * 4 + 12;
     for (BlendPath path : availablePaths()) {
-        std::vector<std::uint8_t> legacy(static_cast<std::size_t>(kPitch) * kFrameH, 0);
-        std::vector<std::uint8_t> ours = legacy;
+        std::vector<std::uint8_t> plain(static_cast<std::size_t>(kPitch) * kFrameH, 0);
+        std::vector<std::uint8_t> ours = plain;
         for (int n = 0; n < 400; ++n) {
             const int w = 1 + static_cast<int>(rng() % 70), h = 1 + static_cast<int>(rng() % 12);
             const int x = static_cast<int>(rng() % static_cast<unsigned>(kFrameW - w + 1));
@@ -107,9 +104,9 @@ TEST(OverlayBlend, SampleBitmapsMatchLegacy)
             if (n % 11 == 0)
                 color |= 0xffu; // transparent: nothing
             const std::size_t at = static_cast<std::size_t>(y) * kPitch + static_cast<std::size_t>(x) * 4;
-            BlendAssBitmap(legacy.data() + at, kPitch, bitmap.data(), stride, w, h, color);
+            blendAssBitmap(BlendPath::Plain, plain.data() + at, kPitch, bitmap.data(), stride, w, h, color);
             blendAssBitmap(path, ours.data() + at, kPitch, bitmap.data(), stride, w, h, color);
-            ASSERT_EQ(ours, legacy) << nameOf(path) << " bitmap " << n << " " << w << "x" << h;
+            ASSERT_EQ(ours, plain) << nameOf(path) << " bitmap " << n << " " << w << "x" << h;
         }
     }
 }

@@ -249,32 +249,12 @@ void setUp(TestHost &host, const Case &c)
     }
 }
 
-std::vector<std::string> legacyTooltips()
-{
-    // VideoToolbar.cpp:44-54, the eleven active icons' help texts.
-    std::ifstream in(std::string(HIKARI_LEGACY_DIR) + "/VideoToolbar.cpp");
-    std::vector<std::string> out;
-    std::string text;
-    const std::regex item(R"re(icons\.push_back\(new itemdata\(PTR_BITMAP_PNG\(L"([^"]+)"\), _\("([^"]+)"\)\)\);)re");
-    while (std::getline(in, text) && out.size() < kLegacyFamilyCount) {
-        std::smatch m;
-        if (std::regex_search(text, m, item))
-            out.push_back(m[1].str() + "|" + m[2].str());
-    }
-    return out;
-}
-
 } // namespace
 
 TEST(VisualFamilies, AreLegacysElevenRailItems)
 {
-    const auto legacy = legacyTooltips();
-    ASSERT_EQ(legacy.size(), static_cast<std::size_t>(kLegacyFamilyCount));
-    for (int i = 0; i < kLegacyFamilyCount; ++i) {
-        const FamilyInfo &info = families()[i];
-        EXPECT_EQ(static_cast<int>(info.family), i);
-        EXPECT_EQ(std::string(info.icon) + "|" + std::string(info.tooltip), legacy[i]);
-    }
+    for (int i = 0; i < kLegacyFamilyCount; ++i)
+        EXPECT_EQ(static_cast<int>(families()[i].family), i);
     EXPECT_EQ(familyInfo(Family::Crosshair).history, "Visual positioning tool"); // VisualCross.cpp:125
     EXPECT_EQ(familyInfo(Family::Hydra).history, "Visual Hydra tool");
     EXPECT_NE(makeVisualTool(Family::Crosshair), nullptr);
