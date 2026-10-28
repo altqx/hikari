@@ -323,6 +323,7 @@ private slots:
         QCOMPARE(settingsSwitch->property("text").toString(), QStringLiteral("Send anonymous usage data"));
         QVERIFY(!settingsSwitch->property("checked").toBool()); // the same setting
         QVERIFY(in(settings, "settingsWhatIsSent"));
+        QVERIFY(in(settings, "setting_privacy.alwaysSendCrashReports")->isVisible()); // CR1: a build with the key
         QVERIFY(QMetaObject::invokeMethod(settingsSwitch, "click"));
         QTRY_VERIFY(settingsSwitch->property("checked").toBool());
         shoot(settings, QStringLiteral("an1-settings"));
@@ -333,6 +334,29 @@ private slots:
         QVERIFY(analytics.capture(QStringLiteral("getting_started_skipped")));
         QVERIFY(!analytics.distinctId().isEmpty());
         QVERIFY(analytics.distinctId() != firstId);
+    }
+    // CR1 (#468): a build without the PostHog key sends no crash report,
+    // so Settings has no "Always send crash reports"; the usage data switch
+    // still shows.
+    void alwaysSendCrashReportsNeedsTheKey()
+    {
+        app::Analytics::Config keyless;
+        keyless.queueFile = folder + QStringLiteral("/analytics-queue.json");
+        start(keyless);
+        QVERIFY(trigger("settingsMenuItem"));
+        QObject *settings = settingsWindow();
+        QVERIFY(settings);
+        QTRY_VERIFY(settings->property("visible").toBool());
+        const auto list = settings->property("pages").toList();
+        for (qsizetype i = 0; i < list.size(); ++i)
+            if (list[i].toMap().value(QStringLiteral("id")).toString() == QLatin1String("updates"))
+                in(settings, "settingsPages")->setProperty("currentIndex", int(i));
+        QTRY_VERIFY(in(settings, "setting_privacy.usageData")->isVisible());
+        auto *always = in(settings, "setting_privacy.alwaysSendCrashReports");
+        QVERIFY(always);
+        QVERIFY(!always->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(in(settings, "settingsCancel"), "click"));
+        QTRY_VERIFY(!settings->property("visible").toBool());
     }
 };
 
