@@ -385,6 +385,38 @@ private slots:
         QTRY_VERIFY(!application->editorSpellingMarks(0).contains(word));
     }
 
+    // #409: with no spell checker, a word added is harper-ls's alone; it is
+    // read back from its file, so it stays added after a restart.
+    void wordsAddedWithoutASpellCheckerStay()
+    {
+        start();
+        grammarOn();
+        const QString text = QStringLiteral("Their going to the store tomorow.");
+        const QString file = writeAss(home() + QStringLiteral("/kept.ass"), dialogue(text.toUtf8()));
+        QVERIFY(application->openFile(file));
+        QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("tomorow")), kHarperWait);
+        QVERIFY(application->addGrammarWord(QStringLiteral("tomorow")));
+        // The field is checked again (its marks gone meanwhile).
+        QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("Their")) && !marked(text, QStringLiteral("tomorow")),
+                                 kHarperWait);
+
+        engine.reset();
+        application.reset();
+        QTRY_COMPARE(std::max(0, harperChildren()), 0);
+        start();
+        grammarOn();
+        QVERIFY(application->openFile(file));
+        QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("Their")), kHarperWait);
+        QVERIFY(!marked(text, QStringLiteral("tomorow")));
+        // Another word joins it in the file; neither is lost.
+        QVERIFY(application->addGrammarWord(QStringLiteral("Hikarisub")));
+        QFile harperWords(grammarDir() + QStringLiteral("/dictionary.txt"));
+        QVERIFY(harperWords.open(QIODevice::ReadOnly));
+        const QList<QByteArray> words = harperWords.readAll().split('\n');
+        QVERIFY(words.contains("tomorow"));
+        QVERIFY(words.contains("Hikarisub"));
+    }
+
     // Translation mode: the Translated field is checked, not the Original.
     void translationModeChecksTheTranslation()
     {
