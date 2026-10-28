@@ -456,6 +456,7 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
         switch (application::openKindOf(file.toStdString(), true)) {
         case application::OpenKind::Subtitles: return openResult(QStringLiteral("subtitles"), file);
         case application::OpenKind::Video: return openResult(QStringLiteral("video"), file);
+        case application::OpenKind::Session: return openResult(QStringLiteral("session"), file); // CF3
         case application::OpenKind::Script: m_automation->loadScript(QUrl::fromLocalFile(file)); break;
         case application::OpenKind::Keyframes:
             // KeyframesPath = filename; OpenKeyframes; SetRecent(3).
@@ -495,6 +496,7 @@ Application::PendingFiles Application::stageFiles(const QStringList &files)
         case application::OpenKind::Script: m_automation->loadScript(QUrl::fromLocalFile(file)); break;
         case application::OpenKind::Video:
         case application::OpenKind::Keyframes: pending.videos << QDir::toNativeSeparators(file); break;
+        case application::OpenKind::Session: // only alone (openKindOf)
         case application::OpenKind::Refused: break;
         }
     }
@@ -564,6 +566,10 @@ QVariantMap Application::openForwarded(const QStringList &paths)
                               openProblem(file, staged.error()));
             }
             return openResult(QString());
+        case application::OpenKind::Session:
+            // CF3: loaded by the shell as Load session loads it, after its review.
+            accepted = true;
+            return openResult(QStringLiteral("session"), file);
         case application::OpenKind::Video:
             // Opened by the shell as OpenFile opens one video (openSingleVideo).
             accepted = true;

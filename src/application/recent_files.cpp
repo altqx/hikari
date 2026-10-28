@@ -111,6 +111,8 @@ OpenKind openKindOf(std::string_view path, bool single)
         return OpenKind::Refused;
     if (ext == "lua" || ext == "moon")
         return OpenKind::Script;
+    if (ext == "hksession" || ext == "kls")
+        return single ? OpenKind::Session : OpenKind::Refused;
     if (single) {
         // Case-sensitive in legacy (EndsWith), the extension test is not.
         if (ext == "pass" || (ext == "txt" && path.ends_with("_keyframes.txt")) || ext == "stats" || ext == "log")

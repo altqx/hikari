@@ -123,8 +123,11 @@ void ForwardedLaunches::open()
         return;
     }
     const QVariantMap result = m_application.openForwarded(std::exchange(m_files, QStringList()));
-    if (result.value(QStringLiteral("kind")).toString() == QLatin1String("video"))
+    const QString kind = result.value(QStringLiteral("kind")).toString();
+    if (kind == QLatin1String("video"))
         openStartVideo(m_window, result.value(QStringLiteral("path")).toString());
+    else if (kind == QLatin1String("session")) // CF3: as Load session, with its review
+        QMetaObject::invokeMethod(m_window, "openSessionFile", Q_ARG(QVariant, result.value(QStringLiteral("path"))));
 }
 
 void ForwardedLaunches::activate(QWindow *window, const QString &activationToken)

@@ -6,6 +6,7 @@
 // comes forward.
 
 #include "hikari/app/application.h"
+#include "hikari/app/session_json.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
@@ -50,7 +51,7 @@ QString media(const char *name)
 class ForwardedLaunchesTests : public QObject {
     Q_OBJECT
 
-    QTemporaryDir home; // the settings folder (LastSession.txt)
+    QTemporaryDir home; // the settings folder (last-session.json)
     QTemporaryDir dir;  // subtitles and media
     app::Application *application = nullptr;
     app::ForwardedLaunches *forwarded = nullptr;
@@ -124,7 +125,7 @@ private slots:
         delete application;
         application = nullptr;
         QFile::remove(home.filePath(QStringLiteral("hikari.ini")));
-        QFile::remove(home.filePath(QStringLiteral("LastSession.txt")));
+        QFile::remove(home.filePath(QStringLiteral("last-session.json")));
     }
 
     // With no tab the file opens as the only one; an untouched empty tab
@@ -140,6 +141,28 @@ private slots:
         take({writeAss(dir.filePath(QStringLiteral("b.ass")), "b")});
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass")}));
         QCOMPARE(application->currentTab(), 1);
+    }
+
+    // CF3: a session file handed over alone (a file manager's open of a
+    // .hksession or .kls) loads as Load session from file does, its marked
+    // tab active; among other files it is refused.
+    void aSessionFileLoadsAsASession()
+    {
+        start();
+        application::SessionTab first, second;
+        first.subtitles = writeAss(dir.filePath(QStringLiteral("s1.ass")), "s1").toStdString();
+        second.subtitles = writeAss(dir.filePath(QStringLiteral("s2.ass")), "s2").toStdString();
+        const QString file = dir.filePath(QStringLiteral("two.hksession"));
+        {
+            QFile f(file);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(app::writeSessionJson(application::Session{"HikariSub", true, {first, second}, 0}));
+        }
+        take({file});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("s1.ass"), QStringLiteral("s2.ass")}));
+        QCOMPARE(application->currentTab(), 0);
+        take({writeAss(dir.filePath(QStringLiteral("s3.ass")), "s3"), file});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("s1.ass"), QStringLiteral("s2.ass"), QStringLiteral("s3.ass")}));
     }
 
     // A tab with work keeps it: the subtitles open in a new tab after the
