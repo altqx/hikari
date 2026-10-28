@@ -28,7 +28,7 @@ constexpr std::string_view kSong =
     "Comment: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,karaoke,{\\k50}ha{\\k50}ru\n"  // 1
     "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,ha\n"                      // 2
     "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,ru\n"                      // 3
-    "Comment: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,a commented one\n"          // 4
+    "Comment: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,a commented one\n"          // 4, #400: not generated
     "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,,{\\k50}ka{\\k50}ze\n"        // 5
     "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,Effector [fx],ka\n"           // 6
     "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,FX,not the templater's\n"     // 7
@@ -45,12 +45,12 @@ TEST(GeneratedRuns, OnlyTheTwoEffectsMarkAGeneratedLine)
     std::vector<bool> generated;
     for (const auto *line : lines)
         generated.push_back(isFoldableGeneratedLine(*line));
-    EXPECT_EQ(generated, (std::vector<bool>{false, false, true, true, true, false, true, false, false, true}));
+    EXPECT_EQ(generated, (std::vector<bool>{false, false, true, true, false, false, true, false, false, true}));
 }
 
 TEST(GeneratedRuns, ConsecutiveGeneratedLinesMakeOneRun)
 {
     const core::Document doc = load(kSong);
-    EXPECT_EQ(generatedRuns(doc.lines()), (std::vector<GeneratedRun>{{2, 3}, {6, 1}, {9, 1}}));
+    EXPECT_EQ(generatedRuns(doc.lines()), (std::vector<GeneratedRun>{{2, 2}, {6, 1}, {9, 1}}));
     EXPECT_TRUE(generatedRuns(core::Document{}.lines()).empty());
 }

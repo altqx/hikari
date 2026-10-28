@@ -107,6 +107,33 @@ private slots:
         QCOMPARE(last, 99);
     }
 
+    // #400: a layout that shrinks the Grid keeps the active Line in view
+    // (line 34 of 40 under a seven-row Grid); one scrolled out of view
+    // before stays where it is.
+    void shrinkingKeepsTheActiveLineInView()
+    {
+        LineTableModel model;
+        model.setDocument(generate(40));
+        model.setSelection({core::LineId{34}, {core::LineId{34}}}, core::LineId{34});
+        LineGrid grid;
+        grid.setModel(&model);
+        const qreal rowHeight = grid.rowHeight();
+        const qreal header = grid.geometry().headerHeight;
+        grid.setSize(QSizeF(400, header + 41 * rowHeight));
+        QCOMPARE(grid.currentRow(), 33);
+        QCOMPARE(grid.contentY(), 0.0);
+        grid.setHeight(header + 7 * rowHeight);
+        QVERIFY(grid.rowAt(header + 1) <= 33);
+        QCOMPARE(grid.rowAt(header + 7 * rowHeight - 1), 33);
+        // Out of view before: the view keeps its place.
+        grid.setHeight(header + 41 * rowHeight);
+        grid.setContentY(0);
+        grid.setHeight(header + 20 * rowHeight);
+        grid.setContentY(0);
+        grid.setHeight(header + 7 * rowHeight);
+        QCOMPARE(grid.contentY(), 0.0);
+    }
+
     void savesAReviewFrame()
     {
         // A small frame with selection, the active Line, a Comment and mixed

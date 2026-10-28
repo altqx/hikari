@@ -160,6 +160,9 @@ public:
     // Showing a tab, opening a file, a Session's arrangement, the backup and
     // Reset this layout start and leave nothing.
     Q_INVOKABLE static QString presetMode(const QString &preset);
+    // #400: the mode a choice before the restart left started, as if chosen
+    // now but without starting it again: choosing another arrangement leaves it.
+    Q_INVOKABLE void resumeMode(const QString &mode);
     // A language switch: layoutLabel reads the new language's preset names.
     void retranslate() { emit changed(); }
     // WS3: the presets' names in every shipped language, refused as saved
