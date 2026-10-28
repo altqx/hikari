@@ -6,9 +6,14 @@
 // backend port. Legacy loads Hunspell with the "Dictionary" folder's
 // <language>.aff/.dic pair; the composition supplies the Hunspell backend
 // (R2-hunspell, src/backends), and tests may use an in-memory fake.
+//
+// SP1 (#474): the chosen language is the primary one; every other installed
+// dictionary checks too, each word going to the dictionaries of its script
+// (core/spelling_scripts.h).
 
 #include "hikari/application/edit_session.h"
 #include "hikari/core/spelling.h"
+#include "hikari/core/spelling_scripts.h"
 
 #include <cstddef>
 #include <expected>
@@ -67,18 +72,26 @@ public:
     SpellChecker(std::vector<std::filesystem::path> folders, SpellingBackendLoader loader);
     SpellChecker(std::filesystem::path folder, SpellingBackendLoader loader);
 
-    // SpellChecker::Initialize: DICTIONARY_LANGUAGE (en_US when empty) from
-    // the first folder holding its .dic and .aff, then the user dictionary's
-    // words.
+    // SpellChecker::Initialize: DICTIONARY_LANGUAGE (en_US when empty), the
+    // primary language, from the first folder holding its .dic and .aff, then
+    // the user dictionary's words. The other installed dictionaries load the
+    // first time a word of their script is checked, the user's words with
+    // them; one that fails to load is left out.
     Status initialize(std::u16string_view language);
     void clear(); // Cleaning
-    bool ready() const { return m_backend != nullptr; }
+    bool ready() const { return !m_dictionaries.empty() && m_dictionaries.front().backend; }
 
-    // CheckWord: true without a dictionary (spell checking off).
+    // CheckWord: true without a dictionary (spell checking off). SP1: true
+    // when any installed dictionary of one of the word's scripts accepts it,
+    // or when one of its scripts (or all its letters) has no dictionary.
     bool checkWord(std::u16string_view word);
     // The word check the text walks use; empty without a dictionary.
     core::legacy::WordCheck wordCheck();
-    std::vector<std::u16string> suggestions(std::u16string_view word);
+    // SP1: the primary's suggestions when it checks the word's script, then
+    // those of the script's other dictionaries, the ones accepting more of
+    // `neighbours` (the Line's other words) first; each suggestion once.
+    std::vector<std::u16string> suggestions(std::u16string_view word,
+                                            const std::vector<std::u16string> &neighbours = {});
     // AddWord: refused for empty and number words or without a dictionary;
     // appends the word to UserDic.udic.
     bool addWord(std::u16string_view word);
@@ -98,9 +111,23 @@ public:
     std::filesystem::path userDictionary() const { return m_folders.front() / "UserDic.udic"; }
 
 private:
+    struct Dictionary {
+        std::u16string symbol;
+        std::filesystem::path aff;
+        std::filesystem::path dic;
+        core::spelling::Scripts scripts;
+        std::unique_ptr<SpellingBackend> backend;
+        bool loaded = false; // tried
+    };
+    std::optional<std::pair<std::filesystem::path, std::filesystem::path>> findPair(std::u16string_view symbol) const;
+    std::unique_ptr<SpellingBackend> load(const std::filesystem::path &aff, const std::filesystem::path &dic) const;
+    SpellingBackend *backendOf(Dictionary &dictionary);
+    // The dictionaries checking `scripts`, the primary first.
+    std::vector<Dictionary *> dictionariesFor(core::spelling::Scripts scripts);
+
     std::vector<std::filesystem::path> m_folders;
     SpellingBackendLoader m_loader;
-    std::unique_ptr<SpellingBackend> m_backend;
+    std::vector<Dictionary> m_dictionaries; // the primary first
     // Results by word, dropped whenever the dictionary changes (legacy wordResults).
     std::unordered_map<std::u16string, bool> m_results;
 };
@@ -111,6 +138,11 @@ private:
 // returns false for both, so AddWord then writes the word alone).
 std::optional<std::u16string> readUserDictionary(const std::filesystem::path &file);
 bool writeUserDictionary(const std::filesystem::path &file, std::u16string_view text);
+
+// SP1: the letter words of a Line's text outside override blocks and
+// drawings (the neighbours suggestions are ordered by).
+std::vector<std::u16string> lineWords(std::u16string_view text, core::SubtitleFormat format,
+                                      const SpellingText &spelling);
 
 // The Line text the spell checker works on (legacy TextEdit): the
 // translation in translation mode, else the text.

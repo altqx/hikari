@@ -301,6 +301,99 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
     EXPECT_EQ(both.initialize(u"de"), SpellChecker::Status::NoDictionary);
 }
 
+// SP1 (#474): the primary language loads at Initialize; every other
+// installed dictionary loads the first time a word of its script is
+// checked. A word is correct when any dictionary of its scripts accepts it,
+// and when one of its scripts has no dictionary; the user's words reach the
+// dictionaries that load later.
+TEST_F(Spelling, MultilingualRoutesWordsByScript)
+{
+    writeFile(folder / "pl.aff", "SET UTF-8\n");
+    writeFile(folder / "pl.dic", "3\nAla\nma\nkota\n");
+    writeFile(folder / "ko_KR.aff", "SET UTF-8\n");
+    writeFile(folder / "ko_KR.dic", "2\n\xEC\x95\x88\xEB\x85\x95\xED\x95\x98\xEC\x84\xB8\xEC\x9A\x94\n\xEC\x84\xB8\xEA\xB3\x84\n");
+    writeFile(folder / "ta.aff", "SET UTF-8\n");
+    writeFile(folder / "ta.dic", "1\n\xE0\xAE\xB5\xE0\xAE\xA3\xE0\xAE\x95\xE0\xAF\x8D\xE0\xAE\x95\xE0\xAE\xAE\xE0\xAF\x8D\n");
+    // A dictionary whose language is in no table: its TRY letters say Greek.
+    writeFile(folder / "custom.aff", "SET UTF-8\nTRY \xCE\xB1\xCE\xB5\xCE\xB9\n");
+    writeFile(folder / "custom.dic", "1\n\xCE\xB3\xCE\xB5\xCE\xB9\xCE\xAC\n");
+    writeFile(checker->userDictionary(), "\xEF\xBB\xBFHikari\n\xEC\x84\x9C\xEC\x9A\xB8");
+    std::vector<std::string> loaded;
+    SpellChecker multi(folder, [&, inner = fakes::FakeSpelling::loader()](const fs::path &aff, const fs::path &dic) {
+        loaded.push_back(utf8(dic.stem().u8string()));
+        return inner(aff, dic);
+    });
+    ASSERT_EQ(multi.initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_EQ(loaded, (std::vector<std::string>{"en_US"}));
+    // Latin: English or Polish.
+    EXPECT_TRUE(multi.checkWord(u"Hello"));
+    EXPECT_TRUE(multi.checkWord(u"kota"));
+    EXPECT_TRUE(multi.checkWord(u"Hikari"));
+    EXPECT_FALSE(multi.checkWord(u"wrold"));
+    EXPECT_FALSE(multi.checkWord(u"kotta"));
+    std::ranges::sort(loaded);
+    EXPECT_EQ(loaded, (std::vector<std::string>{"en_US", "pl"}));
+    // Hangul and Tamil: their own dictionaries, the user's words too.
+    EXPECT_TRUE(multi.checkWord(u"안녕하세요"));
+    EXPECT_TRUE(multi.checkWord(u"서울"));
+    EXPECT_FALSE(multi.checkWord(u"세게계"));
+    EXPECT_TRUE(multi.checkWord(u"வணக்கம்"));
+    EXPECT_FALSE(multi.checkWord(u"வணக்கமம்"));
+    EXPECT_TRUE(multi.checkWord(u"γειά"));
+    EXPECT_FALSE(multi.checkWord(u"γεια"));
+    EXPECT_EQ(loaded.size(), 5u);
+    // No Cyrillic or Japanese dictionary: not marked.
+    EXPECT_TRUE(multi.checkWord(u"привет"));
+    EXPECT_TRUE(multi.checkWord(u"こんにちは"));
+    EXPECT_TRUE(multi.checkWord(u"Привет세계")); // one of its scripts has none
+    EXPECT_FALSE(multi.checkWord(u"Seoul세게계")); // both have one, and neither knows it
+    EXPECT_TRUE(multi.checkWord(u"123"));
+    EXPECT_FALSE(multi.checkWord(u""));
+    // A word added now reaches every loaded dictionary.
+    EXPECT_TRUE(multi.addWord(u"세게계"));
+    EXPECT_TRUE(multi.checkWord(u"세게계"));
+    EXPECT_TRUE(multi.removeWords({u"세게계"}));
+    EXPECT_FALSE(multi.checkWord(u"세게계"));
+    // The primary decides only the order: Polish first checks the same way.
+    ASSERT_EQ(multi.initialize(u"pl"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(multi.checkWord(u"Hello"));
+    EXPECT_TRUE(multi.checkWord(u"안녕하세요"));
+    EXPECT_FALSE(multi.checkWord(u"wrold"));
+}
+
+// SP1: suggestions from the primary first when it checks the word's script,
+// then from the script's other dictionaries, the one knowing more of the
+// Line's other words first; each suggestion once. The window and the editor
+// pass the Line's words.
+TEST_F(Spelling, MultilingualSuggestionsFollowThePrimaryThenTheNeighbours)
+{
+    writeFile(folder / "en_US.dic", "3\nHello\nthe\ncot\n");
+    writeFile(folder / "pl.aff", "");
+    writeFile(folder / "pl.dic", "5\nAla\nma\nkot\nkota\ncot\n"); // "cot" in both
+    writeFile(folder / "ko_KR.aff", "");
+    writeFile(folder / "ko_KR.dic", "1\n\xEC\x84\xB8\xEA\xB3\x84\n");
+    const std::vector<std::u16string> polish{u"Ala", u"ma", u"kott"};
+    const std::vector<std::u16string> english{u"Hello", u"the", u"kott"};
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_EQ(names(checker->suggestions(u"kott", polish)), (std::vector<std::string>{"cot", "kot", "kota"}));
+    EXPECT_EQ(names(checker->suggestions(u"kott")), (std::vector<std::string>{"cot", "kot", "kota"}));
+    ASSERT_EQ(checker->initialize(u"pl"), SpellChecker::Status::Ready);
+    EXPECT_EQ(names(checker->suggestions(u"kott", english)), (std::vector<std::string>{"kot", "kota", "cot"}));
+    // A Korean primary checks no Latin word: the neighbours decide.
+    ASSERT_EQ(checker->initialize(u"ko_KR"), SpellChecker::Status::Ready);
+    EXPECT_EQ(names(checker->suggestions(u"kott", polish)), (std::vector<std::string>{"kot", "kota", "cot"}));
+    EXPECT_EQ(names(checker->suggestions(u"kott", english)), (std::vector<std::string>{"cot", "kot", "kota"}));
+    EXPECT_EQ(names(checker->suggestions(u"세게")), (std::vector<std::string>{"\xEC\x84\xB8\xEA\xB3\x84"}));
+    EXPECT_EQ(names(lineWords(u"{\\i1}Ala ma kott, 42", core::SubtitleFormat::Ass, text)),
+              (std::vector<std::string>{"Ala", "ma", "kott"}));
+
+    core::Document document = load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Ala ma kott\n");
+    EditSession session(std::move(document));
+    SpellCheckWalk walk(*checker, text);
+    ASSERT_TRUE(walk.next(session, {}));
+    EXPECT_EQ(names(walk.current()->suggestions), (std::vector<std::string>{"kot", "kota", "cot"}));
+}
+
 // The Spellchecker window walks from the active Line; the found word's Line
 // becomes active and selected; Ignore skips one word, Ignore all every
 // occurrence in any case; comments and upper-case words can be skipped.

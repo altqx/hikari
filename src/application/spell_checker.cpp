@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <set>
 #include <system_error>
@@ -63,6 +64,35 @@ const core::LineRecord *findLine(const core::Document &document, core::LineId id
         if (line->id == id)
             return line;
     return nullptr;
+}
+
+// SP1: a dictionary's scripts by its symbol (core::spelling::dictionaryScripts);
+// for a language outside the table, the script of most of its .aff's TRY
+// letters when the file is UTF-8, else Latin.
+core::spelling::Scripts scriptsOf(std::u16string_view symbol, const fs::path &aff)
+{
+    using core::spelling::Script;
+    if (const auto scripts = core::spelling::dictionaryScripts(symbol); !scripts.empty())
+        return scripts;
+    std::ifstream in(aff, std::ios::binary);
+    bool utf8 = false;
+    std::string tryLetters;
+    for (std::string line; std::getline(in, line);) {
+        if (!line.empty() && line.back() == '\r')
+            line.pop_back();
+        if (line.starts_with("SET ")) {
+            std::string set = line.substr(4);
+            std::ranges::transform(set, set.begin(), [](char c) { return c >= 'a' && c <= 'z' ? char(c - 32) : c; });
+            utf8 = set.starts_with("UTF-8");
+        } else if (line.starts_with("TRY ")) {
+            tryLetters = line.substr(4);
+            break;
+        }
+    }
+    Script script = Script::Latin;
+    if (utf8 && !tryLetters.empty())
+        core::spelling::dominantScript(core::toUtf16(std::u8string(tryLetters.begin(), tryLetters.end())), script);
+    return script;
 }
 
 std::ptrdiff_t activeRow(const EditSession &session)
@@ -175,47 +205,97 @@ SpellChecker::SpellChecker(fs::path folder, SpellingBackendLoader loader)
 {
 }
 
+std::optional<std::pair<fs::path, fs::path>> SpellChecker::findPair(std::u16string_view symbol) const
+{
+    for (const auto &folder : m_folders) {
+        const fs::path base = folder / fs::path(core::toUtf8(symbol));
+        const fs::path dic = fs::path(base).concat(u8".dic");
+        const fs::path aff = fs::path(base).concat(u8".aff");
+        if (fileExists(dic) && fileExists(aff))
+            return std::pair{aff, dic};
+    }
+    return std::nullopt;
+}
+
+std::unique_ptr<SpellingBackend> SpellChecker::load(const fs::path &aff, const fs::path &dic) const
+{
+    auto backend = m_loader ? m_loader(aff, dic) : nullptr;
+    if (backend && fileExists(userDictionary()))
+        if (const auto content = readUserDictionary(userDictionary()))
+            for (const auto &word : core::legacy::userDictionaryWords(*content))
+                backend->add(word);
+    return backend;
+}
+
 SpellChecker::Status SpellChecker::initialize(std::u16string_view language)
 {
     clear();
     std::u16string name(language.empty() ? std::u16string_view(u"en_US") : language);
-    std::optional<std::pair<fs::path, fs::path>> pair;
-    for (const auto &folder : m_folders) {
-        const fs::path base = folder / fs::path(core::toUtf8(name));
-        const fs::path dic = fs::path(base).concat(u8".dic");
-        const fs::path aff = fs::path(base).concat(u8".aff");
-        if (fileExists(dic) && fileExists(aff)) {
-            pair.emplace(aff, dic);
-            break;
-        }
-    }
+    const auto pair = findPair(name);
     if (!pair)
         return Status::NoDictionary;
     const auto &[aff, dic] = *pair;
-    m_backend = m_loader ? m_loader(aff, dic) : nullptr;
-    if (!m_backend)
+    auto backend = load(aff, dic);
+    if (!backend)
         return Status::LoadFailed;
-    if (fileExists(userDictionary()))
-        if (const auto content = readUserDictionary(userDictionary()))
-            for (const auto &word : core::legacy::userDictionaryWords(*content))
-                m_backend->add(word);
+    m_dictionaries.push_back({name, aff, dic, scriptsOf(name, aff), std::move(backend), true});
+    // SP1: every other installed dictionary, loaded on first use.
+    for (auto &symbol : availableDictionaries(m_folders)) {
+        if (symbol == name)
+            continue;
+        if (const auto other = findPair(symbol)) {
+            auto scripts = scriptsOf(symbol, other->first);
+            m_dictionaries.push_back({std::move(symbol), other->first, other->second, scripts, nullptr, false});
+        }
+    }
     return Status::Ready;
 }
 
 void SpellChecker::clear()
 {
     m_results.clear();
-    m_backend.reset();
+    m_dictionaries.clear();
+}
+
+SpellingBackend *SpellChecker::backendOf(Dictionary &dictionary)
+{
+    if (!dictionary.loaded) {
+        dictionary.loaded = true;
+        dictionary.backend = load(dictionary.aff, dictionary.dic);
+    }
+    return dictionary.backend.get();
+}
+
+std::vector<SpellChecker::Dictionary *> SpellChecker::dictionariesFor(core::spelling::Scripts scripts)
+{
+    std::vector<Dictionary *> out;
+    for (auto &dictionary : m_dictionaries)
+        if (dictionary.scripts.intersects(scripts) && backendOf(dictionary))
+            out.push_back(&dictionary);
+    return out;
 }
 
 bool SpellChecker::checkWord(std::u16string_view word)
 {
-    if (!m_backend)
+    if (!ready())
         return true;
     std::u16string key(word);
     if (const auto found = m_results.find(key); found != m_results.end())
         return found->second;
-    const bool correct = !word.empty() && m_backend->spell(word);
+    bool correct = false;
+    if (!word.empty()) {
+        using core::spelling::Script;
+        const auto scripts = core::spelling::wordScripts(word);
+        // No dictionary for a script of the word: nothing to check it with.
+        correct = scripts.empty();
+        for (int i = 0; !correct && i <= static_cast<int>(Script::Han); ++i) {
+            const auto script = static_cast<Script>(i);
+            correct = scripts.has(script) && dictionariesFor(script).empty();
+        }
+        if (!correct)
+            correct = std::ranges::any_of(dictionariesFor(scripts),
+                                          [&](Dictionary *dictionary) { return dictionary->backend->spell(word); });
+    }
     if (m_results.size() > 100000)
         m_results.clear();
     m_results.emplace(std::move(key), correct);
@@ -224,29 +304,52 @@ bool SpellChecker::checkWord(std::u16string_view word)
 
 core::legacy::WordCheck SpellChecker::wordCheck()
 {
-    if (!m_backend)
+    if (!ready())
         return {};
     return [this](std::u16string_view word) { return checkWord(word); };
 }
 
-std::vector<std::u16string> SpellChecker::suggestions(std::u16string_view word)
+std::vector<std::u16string> SpellChecker::suggestions(std::u16string_view word,
+                                                      const std::vector<std::u16string> &neighbours)
 {
-    if (!m_backend)
+    if (!ready())
         return {};
-    return m_backend->suggest(word);
+    const auto scripts = core::spelling::wordScripts(word);
+    auto dictionaries = scripts.empty() ? std::vector<Dictionary *>{&m_dictionaries.front()} : dictionariesFor(scripts);
+    // The primary stays first; the others by how many neighbours each knows.
+    const bool primaryFirst = !dictionaries.empty() && dictionaries.front() == &m_dictionaries.front();
+    const auto others = dictionaries.begin() + (primaryFirst ? 1 : 0);
+    if (dictionaries.end() - others > 1) {
+        std::vector<std::pair<std::size_t, Dictionary *>> known;
+        for (auto it = others; it != dictionaries.end(); ++it)
+            known.emplace_back(std::ranges::count_if(neighbours,
+                                                     [&](const std::u16string &n) {
+                                                         return n != word && (*it)->backend->spell(n);
+                                                     }),
+                               *it);
+        std::ranges::stable_sort(known, std::greater{}, &std::pair<std::size_t, Dictionary *>::first);
+        std::ranges::transform(known, others, &std::pair<std::size_t, Dictionary *>::second);
+    }
+    std::vector<std::u16string> out;
+    for (auto *dictionary : dictionaries)
+        for (auto &suggestion : dictionary->backend->suggest(word))
+            if (std::ranges::find(out, suggestion) == out.end())
+                out.push_back(std::move(suggestion));
+    return out;
 }
 
 bool SpellChecker::addWord(std::u16string_view word)
 {
-    return m_backend && addUserWord(word);
+    return ready() && addUserWord(word);
 }
 
 bool SpellChecker::addUserWord(std::u16string_view word)
 {
     if (word.empty() || core::legacy::legacyIsNumber(word))
         return false;
-    if (m_backend)
-        m_backend->add(word);
+    for (auto &dictionary : m_dictionaries)
+        if (dictionary.backend)
+            dictionary.backend->add(word);
     m_results.clear();
     const auto content = readUserDictionary(userDictionary());
     const std::u16string text = content ? core::legacy::appendUserWord(std::u16string_view(*content), word)
@@ -266,9 +369,10 @@ bool SpellChecker::removeWords(const std::vector<std::u16string> &words)
     const auto removed = core::legacy::removeUserWords(*content, words);
     if (removed.removed.empty())
         return false;
-    if (m_backend)
-        for (const auto &word : removed.removed)
-            m_backend->remove(word);
+    for (auto &dictionary : m_dictionaries)
+        if (dictionary.backend)
+            for (const auto &word : removed.removed)
+                dictionary.backend->remove(word);
     m_results.clear();
     writeUserDictionary(userDictionary(), removed.content);
     return true;
@@ -280,6 +384,15 @@ std::vector<std::u16string> SpellChecker::addedWords() const
         return {};
     const auto content = readUserDictionary(userDictionary());
     return content ? core::legacy::userDictionaryEntries(*content) : std::vector<std::u16string>{};
+}
+
+std::vector<std::u16string> lineWords(std::u16string_view text, core::SubtitleFormat format,
+                                      const SpellingText &spelling)
+{
+    std::vector<std::u16string> out;
+    for (auto &word : core::legacy::checkText(text, format, spelling.segment, [](std::u16string_view) { return false; }))
+        out.push_back(std::move(word.word));
+    return out;
 }
 
 bool spellsTranslation(const core::Document &document)
@@ -428,7 +541,8 @@ bool SpellCheckWalk::next(EditSession &session, const Options &options)
     }
     Found found;
     found.word = word;
-    found.suggestions = m_checker.suggestions(word);
+    found.suggestions =
+        m_checker.suggestions(word, lineWords(lineText(session.document(), m_lastLine), session.document().format(), m_spelling));
     found.line = session.document().lines()[m_lastLine]->id;
     found.start = m_errors[m_lastMisspell].start;
     found.end = m_errors[m_lastMisspell].end;
