@@ -780,18 +780,20 @@ QVariantMap Application::grammarWalkState()
                 row = int(i) + 1;
     }
     // The text around the finding, as harper-ls read it (no tags, breaks as
-    // spaces), at most kContext characters a side.
+    // spaces), at most kContext characters a side, cut at a word (#409).
     constexpr std::size_t kContext = 40;
     const std::size_t start = std::size_t(f.start), end = std::size_t(f.end);
-    const std::size_t from = start > kContext ? start - kContext : 0;
+    const std::u16string_view shown(text);
     out.insert(QStringLiteral("index"), int(*walk.current) + 1);
     out.insert(QStringLiteral("line"), row);
     out.insert(QStringLiteral("rule"), f.rule);
     out.insert(QStringLiteral("groupName"), group ? groupName(*group) : QString());
     out.insert(QStringLiteral("message"), f.message);
-    out.insert(QStringLiteral("before"), QString::fromStdU16String(text.substr(from, start - from)));
+    out.insert(QStringLiteral("before"),
+               QString::fromStdU16String(core::grammar::contextBefore(shown.substr(0, start), kContext)));
     out.insert(QStringLiteral("text"), QString::fromStdU16String(text.substr(start, end - start)));
-    out.insert(QStringLiteral("after"), QString::fromStdU16String(text.substr(end, kContext)));
+    out.insert(QStringLiteral("after"),
+               QString::fromStdU16String(core::grammar::contextAfter(shown.substr(end), kContext)));
     out.insert(QStringLiteral("suggestions"), f.suggestions);
     out.insert(QStringLiteral("replacement"), f.suggestions.isEmpty() ? QString() : f.suggestions.front());
     out.insert(QStringLiteral("word"), f.word);

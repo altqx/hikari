@@ -52,6 +52,16 @@ std::optional<Replaced> replace(std::u16string_view raw, SubtitleFormat format, 
 std::optional<std::pair<std::size_t, std::size_t>> rawRange(const CheckedText &text, std::size_t start,
                                                              std::size_t end);
 
+// A harper-ls message as plain text: its Markdown `code` spans in quotation
+// marks, a backtick without its pair left out.
+std::u16string plainMessage(std::u16string_view markdown);
+
+// The Spellchecker panel's text before and after a finding (both modes): the
+// last (first) `most` units of it, cut back to a whole word where text is
+// left out, with an ellipsis there. A word longer than that is cut.
+std::u16string contextBefore(std::u16string_view before, std::size_t most);
+std::u16string contextAfter(std::u16string_view after, std::size_t most);
+
 // Harper's rules (harper-core/default_config.json at the pinned release):
 // each in one of the curated groups, with Harper's default.
 struct Rule {
