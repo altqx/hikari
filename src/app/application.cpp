@@ -1411,6 +1411,14 @@ void Application::reportUserFolder(const UserFolder::MoveReport &moved, const Us
                                                .arg(moved.keptBack.join(QStringLiteral(", ")));
         m_log->notice(ui::LogController::Info, title, text, details);
     }
+    // #397: a portable copy before UD1 kept its settings in the system folders.
+    if (!moved.earlierSettings.isEmpty())
+        m_log->notice(ui::LogController::Info, title,
+                      QCoreApplication::translate("HikariSub.MainWindow",
+                                                  "This portable copy keeps its settings in %1. An earlier version's "
+                                                  "settings are still in %2: to use them, quit HikariSub and copy "
+                                                  "hikari.ini from there.")
+                          .arg(folder, moved.earlierSettings));
     for (const QString &path : seeded.kept)
         m_log->log(QCoreApplication::translate("HikariSub.MainWindow",
                                                "Kept your changed %1; the new bundled version was not copied over it.")
@@ -3594,14 +3602,23 @@ QVariantList Application::legacyAutosaves()
     QVariantList rows;
     // Legacy wrote them to Options.dataPath/Subs (AutoSaveOpen.cpp:127):
     // its program folder, or HikariSub/Legacy once installed (ADR 0019),
-    // the roots the settings importer finds; never 0.1's own folder (#387).
+    // the roots the settings importer finds, and the root the active import
+    // came from, which the user may have picked by hand (#401); never 0.1's
+    // own folder (#387).
     QString folder = m_legacyAutosaveDir;
-    if (folder.isEmpty() && !m_settingsFile.isEmpty())
+    if (folder.isEmpty() && !m_settingsFile.isEmpty()) {
+        QStringList roots;
+        if (const auto receipt = m_importStore ? m_importStore->activeReceipt() : std::nullopt;
+            receipt && !receipt->root.empty())
+            roots << QString::fromStdString(receipt->root);
         for (const auto &root : SettingsImportStore::discoverRoots(SettingsImportStore::defaultCandidates()))
-            if (QFileInfo(root.path + QStringLiteral("/Subs")).isDir()) {
-                folder = root.path + QStringLiteral("/Subs");
+            roots << root.path;
+        for (const QString &root : std::as_const(roots))
+            if (QFileInfo(root + QStringLiteral("/Subs")).isDir()) {
+                folder = root + QStringLiteral("/Subs");
                 break;
             }
+    }
     if (folder.isEmpty() || !QFileInfo(folder).isDir())
         return rows; // no legacy folder: nothing to list (and nothing logged)
     const auto files = application::listLegacyAutosaves(std::filesystem::path(folder.toStdU16String()),

@@ -4994,6 +4994,10 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.MainWindow</name>
     <message>
+        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub and copy hikari.ini from there.</source>
+        <translation>இந்தக் கையடக்கப் பிரதி தன் அமைப்புகளை %1 இல் வைத்திருக்கிறது. முந்தைய பதிப்பின் அமைப்புகள் இன்னும் %2 இல் உள்ளன: அவற்றைப் பயன்படுத்த, HikariSub ஐ மூடிவிட்டு அங்கிருந்து hikari.ini ஐ நகலெடுக்கவும்.</translation>
+    </message>
+    <message>
         <source>%1 - HikariSub</source>
         <translation type="unfinished"></translation>
     </message>

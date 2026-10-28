@@ -1597,6 +1597,55 @@ TEST_F(LuaHelper, DependencyControlConfigSuitsOldScriptsAndOtherWriters)
     EXPECT_EQ(run.log, QStringList{"true,1,test-2"});
 }
 
+// #402: DependencyControl leaves a module alone (a protected install) when
+// only the program's Include has it, on case-sensitive file systems too,
+// where ?data's lower-case include does not exist; the user folder's copy
+// is the one it may update.
+TEST_F(LuaHelper, DependencyControlFindsTheShippedModules)
+{
+    QTemporaryDir work;
+    ASSERT_TRUE(work.isValid());
+    const QString shipped = QDir(QStringLiteral(HIKARI_LUA_INCLUDE "/../..")).absolutePath();
+    const QString user = work.filePath(QStringLiteral("Automation"));
+    hikari::application::AutomationPathContext paths;
+    paths.automationDir = shipped.toStdString();
+    paths.userAutomationDir = user.toStdString();
+#ifdef _WIN32
+    paths.windows = true;
+#endif
+    const auto folders = hikari::application::automationFolders(paths.automationDir, paths.userAutomationDir,
+                                                                 paths.windows);
+    for (const auto &dir : folders.made)
+        QDir().mkpath(QDir::fromNativeSeparators(QString::fromStdString(dir)));
+    QStringList include;
+    for (const auto &dir : folders.include)
+        include << QString::fromStdString(dir);
+    disableDependencyControlUpdater(user);
+    const auto services = [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+        if (r.service != hikari::application::HostService::DecodePath)
+            return reply(hikari::application::HostServiceReply::unavailable());
+        hikari::application::HostServiceReply out;
+        out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+        reply(out);
+    };
+    auto host = load(fixture("depctrl-entry.lua"), services, include.join(QLatin1Char('\n')));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto found = [&] {
+        EXPECT_TRUE(runToEnd(*host, "Find"));
+        EXPECT_EQ(run.log.size(), 1);
+        const QString line = run.log.value(0);
+        const qsizetype comma = line.indexOf(QLatin1Char(','));
+        return std::pair{line.left(comma).toStdString(),
+                         QDir::cleanPath(QDir::fromNativeSeparators(line.mid(comma + 1))).toStdString()};
+    };
+    EXPECT_EQ(found(), std::pair(std::string("false"),
+                                 (shipped + QStringLiteral("/automation/Include/l0/Functional.moon")).toStdString()));
+    const QString copy = user + QStringLiteral("/automation/include/l0/Functional.moon");
+    ASSERT_TRUE(QDir().mkpath(QFileInfo(copy).absolutePath()));
+    ASSERT_TRUE(QFile::copy(shipped + QStringLiteral("/automation/Include/l0/Functional.moon"), copy));
+    EXPECT_EQ(found(), std::pair(std::string("true"), copy.toStdString()));
+}
+
 // DC1: an update feed on the loopback, so DependencyControl's downloads need
 // no network. A GET answers the body published at its path, or 404.
 class FeedServer : public QObject {

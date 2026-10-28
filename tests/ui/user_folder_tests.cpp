@@ -307,7 +307,7 @@ private slots:
         QCOMPARE(r.from, (QStringList{QDir::toNativeSeparators(config), QDir::toNativeSeparators(data)}));
         QVERIFY2(r.leftOver.isEmpty(), qPrintable(r.leftOver.join(QLatin1Char(','))));
         QCOMPARE(entries(folder.root()),
-                 (QStringList{"Import", "Import/manifest.json", "Rules.txt", "automation", "automation/autoload",
+                 (QStringList{".old-folders", "Import", "Import/manifest.json", "Rules.txt", "automation", "automation/autoload",
                               "automation/autoload/dep.moon", "automation/autoload/mine.lua", "automation/include",
                               "automation/include/mod.lua", "autosave", "autosave/a.ass", "catalogs", "catalogs/Default.sty",
                               "catalogs/FontCatalogs.txt", "catalogs/FontCatalogsAutosave1.txt", "config",
@@ -325,10 +325,89 @@ private slots:
         QVERIFY(!QFileInfo::exists(data));
         QCOMPARE(read(legacy), legacy.toUtf8());
 
-        // Once: with hikari.ini in the user folder, a later old folder stays.
+        // Once: with hikari.ini in the user folder, a later old folder stays,
+        // and so it does after hikari.ini is deleted to reset the settings
+        // (#397).
         QVERIFY(write(config + QStringLiteral("/hikari.ini"), "older"));
         QVERIFY(folder.moveIn({config, data}).from.isEmpty());
         QCOMPARE(read(config + QStringLiteral("/hikari.ini")), QByteArray("older"));
+        QVERIFY(QFile::remove(folder.settingsFile()));
+        QVERIFY(folder.moveIn({config, data}).from.isEmpty());
+        QCOMPARE(read(config + QStringLiteral("/hikari.ini")), QByteArray("older"));
+        QVERIFY(!QFileInfo::exists(folder.settingsFile()));
+    }
+
+    // #397: a user folder a start before the record moved into (it has
+    // hikari.ini) is recorded too, so deleting hikari.ini moves nothing in.
+    void aUserFolderWithSettingsIsRecordedAsMovedInto()
+    {
+        QTemporaryDir home;
+        const QString config = home.filePath(QStringLiteral("old-config"));
+        const UserFolder folder(home.filePath(QStringLiteral("user")), home.filePath(QStringLiteral("cache")));
+        QVERIFY(write(folder.settingsFile(), "mine"));
+        QVERIFY(write(config + QStringLiteral("/hikari.ini"), "older"));
+        QVERIFY(folder.moveIn({config, {}}).from.isEmpty());
+        QVERIFY(QFile::remove(folder.settingsFile()));
+        QVERIFY(folder.moveIn({config, {}}).from.isEmpty());
+        QCOMPARE(read(config + QStringLiteral("/hikari.ini")), QByteArray("older"));
+    }
+
+    // #397: on Windows the old data folder, %APPDATA%\HikariSub\HikariSub,
+    // is inside the user folder; what stays of it (here the old
+    // DependencyControl) is in old-HikariSub, not in a HikariSub folder that
+    // looks like the user's.
+    void windowsLeftOversAreNamedOld()
+    {
+        QTemporaryDir home;
+        UserFolder::Environment env;
+        env.windows = true;
+        env.appData = QDir::toNativeSeparators(home.filePath(QStringLiteral("Roaming")));
+        env.localAppData = QDir::toNativeSeparators(home.filePath(QStringLiteral("Local")));
+        const UserFolder folder = UserFolder::locate(env);
+        const UserFolder::OldFolders old = UserFolder::OldFolders::of(env);
+        QCOMPARE(old.data, folder.root() + QStringLiteral("/HikariSub"));
+        const QString scripts = old.data + QStringLiteral("/Automation/automation/");
+        QVERIFY(write(old.config + QStringLiteral("/hikari.ini"), "settings"));
+        QVERIFY(write(old.data + QStringLiteral("/Recovery/sessions/s.json"), "session"));
+        QVERIFY(write(scripts + QStringLiteral("include/l0/DependencyControl.moon"), "0.8.1"));
+        const UserFolder::MoveReport r = folder.moveIn(old);
+        QCOMPARE(r.from, (QStringList{QDir::toNativeSeparators(old.config), QDir::toNativeSeparators(old.data)}));
+        const QString renamed = folder.root() + QStringLiteral("/old-HikariSub");
+        QCOMPARE(r.keptBack, QStringList{renamed + QStringLiteral("/Automation/automation/include/l0/DependencyControl.moon")});
+        QCOMPARE(read(r.keptBack.first()), QByteArray("0.8.1"));
+        QVERIFY(!QFileInfo::exists(old.data));
+        QCOMPARE(read(folder.recovery() + QStringLiteral("/sessions/s.json")), QByteArray("session"));
+        QCOMPARE(read(folder.settingsFile()), QByteArray("settings"));
+        // Moved entirely, nothing of it stays.
+        QTemporaryDir other;
+        env.appData = QDir::toNativeSeparators(other.filePath(QStringLiteral("Roaming")));
+        const UserFolder clean = UserFolder::locate(env);
+        QVERIFY(write(clean.root() + QStringLiteral("/HikariSub/Recovery/s.json"), "session"));
+        QVERIFY(clean.moveIn(UserFolder::OldFolders::of(env)).keptBack.isEmpty());
+        QCOMPARE(entries(clean.root()), (QStringList{".old-folders", "recovery", "recovery/s.json"}));
+    }
+
+    // #397: a portable copy moves nothing out of the system folders; it
+    // names the old folder with an earlier version's settings, once.
+    void aPortableCopyNamesTheEarlierSettings()
+    {
+        QTemporaryDir home;
+        const QString config = home.filePath(QStringLiteral("old-config"));
+        const QString data = home.filePath(QStringLiteral("old-data"));
+        QVERIFY(write(config + QStringLiteral("/hikari.ini"), "settings"));
+        QVERIFY(write(data + QStringLiteral("/Recovery/s.json"), "session"));
+        const UserFolder folder(home.filePath(QStringLiteral("program/user")), home.filePath(QStringLiteral("cache")));
+        UserFolder::MoveReport r = folder.moveIn({config, data}, true);
+        QVERIFY(r.from.isEmpty() && r.leftOver.isEmpty());
+        QCOMPARE(r.earlierSettings, QDir::toNativeSeparators(config));
+        QCOMPARE(read(config + QStringLiteral("/hikari.ini")), QByteArray("settings"));
+        QCOMPARE(read(data + QStringLiteral("/Recovery/s.json")), QByteArray("session"));
+        QVERIFY(!QFileInfo::exists(folder.settingsFile()));
+        r = folder.moveIn({config, data}, true);
+        QVERIFY(r.earlierSettings.isEmpty());
+        // Without an earlier hikari.ini there is nothing to name.
+        const UserFolder fresh(home.filePath(QStringLiteral("fresh/user")), home.filePath(QStringLiteral("cache")));
+        QVERIFY(fresh.moveIn({home.filePath(QStringLiteral("none")), data}, true).earlierSettings.isEmpty());
     }
 
     void emptyOrMissingOldFoldersMoveNothing()
