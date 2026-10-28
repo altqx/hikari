@@ -5755,6 +5755,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดหน้าติดตามปัญหาของ HikariSub</translation>
     </message>
     <message>
+        <source>Opens a form for a bug, feature request or question on GitHub</source>
+        <translation>เปิดแบบฟอร์มข้อบกพร่อง ขอฟีเจอร์ หรือคำถามบน GitHub</translation>
+    </message>
+    <message>
         <source>Checks whether a newer version is available</source>
         <translation>ตรวจสอบว่ามีเวอร์ชันที่ใหม่กว่าหรือไม่</translation>
     </message>

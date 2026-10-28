@@ -22,5 +22,4 @@ so a glyph taken from the wrong code is visible.
 
 libass 0.17.5 draws nothing for the last three. The fork draws them, through
 upstream libass's changes after 0.17.5 (`057a533`, the symbol base offset from
-the first cmap code; `b085eeb`, legacy Arabic charsets on Unicode cmaps). See
-the LF-libass-cmap row in `docs/qt/compatibility-decisions.md`.
+the first cmap code; `b085eeb`, legacy Arabic charsets on Unicode cmaps).
