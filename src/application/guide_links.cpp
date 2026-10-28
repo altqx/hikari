@@ -23,6 +23,7 @@ constexpr std::array kLinks{
     GuideLink{Panel, "Styles", "/en/docs/basics/styles"},
     GuideLink{Panel, "FixMinorErrors", "/en/docs/checking/fix-minor-errors"},
     GuideLink{Panel, "Spellchecker", "/en/docs/checking/spelling"},
+    GuideLink{Panel, "Spellchecker.grammar", "/en/docs/checking/grammar"}, // its Grammar mode (#409)
     GuideLink{Panel, "Template", "/en/docs/karaoke/template-editor"},
     GuideLink{Window, "allTagsEdition", "/en/docs/typesetting/shapes-and-tags-editors"},
     GuideLink{Window, "automation", "/en/docs/automation/running-scripts"},

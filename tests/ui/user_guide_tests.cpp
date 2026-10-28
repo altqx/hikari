@@ -140,8 +140,8 @@ private slots:
             QVERIFY2(!seen.contains(key), qPrintable(surface));
             seen.insert(key);
             QVERIFY2(link.path.starts_with("/en/docs/"), qPrintable(surface));
-            if (link.kind == GuideSurface::Panel)
-                QVERIFY2(panels.contains(surface), qPrintable(surface));
+            if (link.kind == GuideSurface::Panel) // a panel, or a panel's mode
+                QVERIFY2(panels.contains(surface.section(QLatin1Char('.'), 0, 0)), qPrintable(surface));
             else
                 QVERIFY2(windows.contains(surface), qPrintable(surface));
         }
@@ -196,6 +196,28 @@ private slots:
             QTest::keyClick(shown, Qt::Key_F1);
             QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Panel, name));
         }
+    }
+
+    // #409: F1 in the Spellchecker's Grammar mode opens the grammar page.
+    void f1InTheGrammarModeOpensItsPage()
+    {
+        run(QStringLiteral("showPanel(spellDock); focusPanel(spellPanel, Qt.OtherFocusReason)"));
+        auto *tool = qvariant_cast<QObject *>(run(QStringLiteral("spellTool")));
+        QVERIFY(tool);
+        QVERIFY(QMetaObject::invokeMethod(tool, "setMode", Q_ARG(QVariant, QStringLiteral("grammar"))));
+        auto *panel = qvariant_cast<QQuickItem *>(run(QStringLiteral("spellPanel")));
+        QVERIFY(panel && panel->window());
+        QQuickWindow *shown = panel->window();
+        shown->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(shown));
+        qsizetype before = recorded::opened().size();
+        QTest::keyClick(shown, Qt::Key_F1);
+        QTRY_COMPARE(openedAfter(before),
+                     QUrl(QStringLiteral("https://hikarisub.altqx.com/en/docs/checking/grammar")));
+        QVERIFY(QMetaObject::invokeMethod(tool, "setMode", Q_ARG(QVariant, QStringLiteral("spelling"))));
+        before = recorded::opened().size();
+        QTest::keyClick(shown, Qt::Key_F1);
+        QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Panel, QStringLiteral("Spellchecker")));
     }
 
     // Help > User guide opens the page of the panel with the focus too.

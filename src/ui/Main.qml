@@ -748,7 +748,8 @@ ApplicationWindow {
     // DX1 (#367): User guide (GLOBAL_HELP): the page of the DG1 window with
     // the keyboard (its guideId), else of the panel the hotkeys act on (the
     // one under the pointer while they follow it, KeyRouter, else the one
-    // with the focus); the guide's home for anything else.
+    // with the focus; its guideId when its mode has a page, #409); the
+    // guide's home for anything else.
     function openUserGuide() {
         const w = root.workspaceLayout.focusWindow
         if (w && w.guideId !== undefined) {
@@ -758,7 +759,7 @@ ApplicationWindow {
         const hovered = keyRouter.followsPointer() ? keyRouter.hoveredPanel : null
         const panel = hovered || root.panelOf(w ? w.activeFocusItem : root.activeFocusItem)
         const i = panel ? root.panels.indexOf(panel) : -1
-        UserGuide.open(i >= 0 ? "panel" : "", i >= 0 ? root.dockList[i].uniqueName : "")
+        UserGuide.open(i >= 0 ? "panel" : "", i >= 0 ? (panel.guideId || root.dockList[i].uniqueName) : "")
     }
     Connections {
         target: UserGuide
@@ -6267,6 +6268,8 @@ ApplicationWindow {
                 minimumBodySize: spellTool.minimumSize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Spelling", "Spellchecker")
+                // #409: User guide in the Grammar mode opens its own page.
+                readonly property string guideId: spellTool.grammarMode ? "Spellchecker.grammar" : ""
                 SpellCheckerPanel {
                     id: spellTool
                     objectName: "spellCheckerPanel"
