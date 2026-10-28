@@ -5853,6 +5853,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwiera listę zgłoszeń HikariSub</translation>
     </message>
     <message>
+        <source>Opens a form for a bug, feature request or question on GitHub</source>
+        <translation>Otwiera formularz błędu, prośby o funkcję lub pytania na GitHubie</translation>
+    </message>
+    <message>
         <source>Checks whether a newer version is available</source>
         <translation>Sprawdza, czy dostępna jest nowsza wersja</translation>
     </message>

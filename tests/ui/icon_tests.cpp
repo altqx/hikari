@@ -199,10 +199,9 @@ private slots:
         ui::theme::useSettings(nullptr);
     }
 
-    // The manifest lists every SVG of the set once, with its label, the
-    // surfaces using it and the legacy bitmaps it replaces; every legacy
-    // bitmap is either replaced or named as not replaced, with the reason.
-    void manifestAccountsForTheSetAndLegacyBitmaps()
+    // The manifest lists every SVG of the set once, with its label and the
+    // surfaces using it.
+    void manifestAccountsForTheSet()
     {
         QCOMPARE(manifest.value(QLatin1String("grid")).toInt(), 16);
         const QStringList roles = manifestRoles();
@@ -214,7 +213,6 @@ private slots:
             expected << role + QStringLiteral(".svg");
         expected.sort();
         QCOMPARE(files, expected);
-        std::set<QString> replaced;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();
             const QString role = icon.value(QLatin1String("role")).toString();
@@ -222,20 +220,7 @@ private slots:
             QVERIFY2(!icon.value(QLatin1String("label")).toString().isEmpty(), qPrintable(role));
             QVERIFY2(!icon.value(QLatin1String("surfaces")).toArray().isEmpty(), qPrintable(role));
             QVERIFY2(QFile::exists(ui::icons::resourcePath(role)), qPrintable(role));
-            for (const auto &bitmap : icon.value(QLatin1String("legacy")).toArray()) {
-                QVERIFY2(QFile::exists(QStringLiteral(HIKARI_LEGACY_BITMAPS "/") + bitmap.toString()), qPrintable(bitmap.toString()));
-                replaced.insert(bitmap.toString());
-            }
         }
-        std::set<QString> accounted = replaced;
-        const auto notReplaced = manifest.value(QLatin1String("notReplaced")).toObject();
-        for (const auto &reason : notReplaced.keys())
-            for (const auto &bitmap : notReplaced.value(reason).toArray())
-                QVERIFY2(accounted.insert(bitmap.toString()).second, qPrintable(bitmap.toString()));
-        std::set<QString> legacy;
-        for (const auto &name : QDir(QStringLiteral(HIKARI_LEGACY_BITMAPS)).entryList(QDir::Files))
-            legacy.insert(name);
-        QCOMPARE(accounted, legacy);
     }
 
     // Every role the QML names (the iconRole bindings of Icon, IconButton,

@@ -313,6 +313,9 @@ private slots:
         QQuickWindow *form = dialog("reportIssue");
         QVERIFY(form);
         QTRY_VERIFY(form->isVisible());
+        // The thumbnail loads on its own thread; Windows removes no file
+        // that thread still has open, so Done waits for it as a user would.
+        QTRY_COMPARE(in(form, "reportIssueThumbnail")->property("status").toInt(), 1); // Image.Ready
         QVERIFY(!in(form, "reportIssueOpen")->isEnabled()); // no title yet
         in(form, "reportIssueTitle")->setProperty("text", QStringLiteral("The handles jump when zoomed"));
         in(form, "reportIssueFirst")->setProperty("text", QStringLiteral("Dragging a corner moves it twice as far."));
@@ -333,7 +336,8 @@ private slots:
         shoot(form, QStringLiteral("report-issue-finish"));
         QVERIFY(click(form, "reportIssueDone"));
         QTRY_VERIFY(!form->isVisible());
-        QVERIFY(!QDir(path("issue-report")).exists()); // the screenshot went with Done
+        QVERIFY2(!QDir(path("issue-report")).exists(), // the screenshot went with Done
+                 qPrintable(QDir(path("issue-report")).entryList(QDir::AllEntries | QDir::NoDotAndDotDot).join(u' ')));
 
         // A feature request: its two fields and its form.
         QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
