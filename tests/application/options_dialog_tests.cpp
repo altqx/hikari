@@ -279,9 +279,16 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(usageData.page, OptionsPage::Updates);
     ASSERT_NE(findSetting("privacy.usageData"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("privacy.usageData")->defaultValue), true);
+    // CR1 (#452): "Always send crash reports", off by default, beside it.
+    const auto &alwaysSend = all[std::size(kLegacy) + 35];
+    EXPECT_EQ(alwaysSend.setting, "privacy.alwaysSendCrashReports");
+    EXPECT_EQ(alwaysSend.control, OptionsControl::Check);
+    EXPECT_EQ(alwaysSend.page, OptionsPage::Updates);
+    ASSERT_NE(findSetting("privacy.alwaysSendCrashReports"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("privacy.alwaysSendCrashReports")->defaultValue), false);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 37);
-    const auto &hostApi = all[std::size(kLegacy) + 35];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 38);
+    const auto &hostApi = all[std::size(kLegacy) + 36];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -292,7 +299,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 35);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 36);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));

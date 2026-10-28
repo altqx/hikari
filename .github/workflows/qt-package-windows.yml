@@ -131,7 +131,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
           if (Test-Path "$env:APPDATA\Qt\qtaccount.ini") { throw 'Qt account file left in the profile' }
           if (Test-Path out/sdk/qt-install-private) { throw 'Private install directory left behind' }
-          cmake --preset windows-x64-package "-DHIKARI_VERSION_SUFFIX=$env:SUFFIX" "-DHIKARI_POSTHOG_KEY=$env:POSTHOG_KEY"
+          # CR1 (#452): PDBs beside the build, kept as the version's symbols.
+          cmake --preset windows-x64-package "-DHIKARI_VERSION_SUFFIX=$env:SUFFIX" "-DHIKARI_POSTHOG_KEY=$env:POSTHOG_KEY" -DHIKARI_DEBUG_SYMBOLS=ON
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake --build --preset windows-x64-package
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -150,9 +151,60 @@ jobs:
           foreach ($f in 'package-kind.txt', 'install-manifest.txt') {
             if (Test-Path "$p/$f") { throw "payload carries $f" }
           }
+          $pdbs = Get-ChildItem -Recurse -File $p -Filter *.pdb
+          if ($pdbs) { throw "payload carries $($pdbs.Name -join ', ')" }
           $hits = Get-ChildItem -Recurse -File $p -Include *.exe, *.dll | Select-String -SimpleMatch -List -Pattern 'HIKARISUB_UPDATE_FEED'
           if ($hits) { throw "test feed switch in $($hits.Path -join ', ')" }
           Get-Content out/build/windows-x64-package/payload/payload-manifest.txt | Measure-Object -Line | ForEach-Object { "payload: $($_.Lines) files" }
+
+      # CR1 (#452): the symbols, a release asset of their own: each payload
+      # module the build has a PDB for, beside it. A forced crash of the
+      # payload must symbolize with them (tools/crash/symbolize.py).
+      - name: Symbols and a symbolized crash
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $b = 'out/build/windows-x64-package'
+          $p = "$b/payload/HikariSub"
+          $s = 'out/symbols/HikariSub'
+          New-Item -ItemType Directory -Force $s, out/evidence/crash | Out-Null
+          $pdbs = Get-ChildItem -Recurse -File $b -Filter *.pdb | Where-Object { $_.FullName -notmatch '[\\/](payload|vcpkg_installed)[\\/]' }
+          foreach ($m in Get-ChildItem -Recurse -File $p -Include *.exe, *.dll) {
+            $pdb = $pdbs | Where-Object { $_.BaseName -eq $m.BaseName } | Select-Object -First 1
+            if (-not $pdb) { continue }
+            $rel = [IO.Path]::GetRelativePath((Resolve-Path $p), $m.DirectoryName)
+            $dir = Join-Path $s $rel
+            New-Item -ItemType Directory -Force $dir | Out-Null
+            Copy-Item $m.FullName, $pdb.FullName $dir
+            "symbols: $rel/$($m.Name) + $($pdb.Name)"
+          }
+          if (-not (Test-Path "$s/HikariSub.pdb")) { throw 'no PDB for HikariSub.exe' }
+          Compress-Archive -Path "$s/*" -DestinationPath "out/symbols/HikariSub-$env:VERSION-windows-x64-symbols.zip"
+          Remove-Item -Recurse -Force $s
+          Get-ChildItem out/symbols | Format-Table Name, Length
+          Expand-Archive "out/symbols/HikariSub-$env:VERSION-windows-x64-symbols.zip" out/symbols-check
+          $env:HIKARISUB_CRASH_TEST = 'segv'
+          $proc = Start-Process -FilePath "$p/HikariSub.exe" -PassThru -RedirectStandardError out/evidence/crash/stderr.txt -RedirectStandardOutput out/evidence/crash/stdout.txt
+          if (-not $proc.WaitForExit(180000)) { $proc.Kill(); throw 'the forced crash did not end the app' }
+          Remove-Item Env:HIKARISUB_CRASH_TEST
+          "exit $($proc.ExitCode)"
+          $line = Select-String -Path out/evidence/crash/stderr.txt -Pattern '^HIKARISUB_CRASH_TEST=segv: record at (.+)$' | Select-Object -First 1
+          if (-not $line) { Get-Content out/evidence/crash/stderr.txt; throw 'no record path on stderr' }
+          $record = $line.Matches[0].Groups[1].Value.Trim()
+          if (-not (Test-Path $record)) { throw "no crash record at $record" }
+          Copy-Item $record out/evidence/crash/crash-record.txt
+          Get-Content $record
+          if (-not (Get-Command llvm-symbolizer -ErrorAction SilentlyContinue)) { $env:PATH = "$env:ProgramFiles\LLVM\bin;$env:PATH" }
+          python tools/crash/symbolize.py $record --symbols out/symbols-check | Tee-Object out/evidence/crash/symbolized.txt
+          if (-not (Select-String -Path out/evidence/crash/symbolized.txt -SimpleMatch -Quiet 'crashForTest')) { throw 'crashForTest was not symbolized' }
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hikarisub-windows-symbols
+          path: out/symbols/HikariSub-${{ needs.version.outputs.version }}-windows-x64-symbols.zip
+          if-no-files-found: error
+          retention-days: 14
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -169,6 +221,7 @@ jobs:
           path: |
             out/build/windows-x64-package/payload/payload-manifest.txt
             out/build/windows-x64-package/payload/windeployqt.log
+            out/evidence/
           if-no-files-found: warn
           retention-days: 14
 

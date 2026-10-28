@@ -44,8 +44,6 @@ public:
         QUrl endpoint = defaultEndpoint();
         // The queue's file; empty: memory only.
         QString queueFile;
-        // The crash record the last run may have left (crash_record.h); empty: none.
-        QString crashRecord;
         // This version ($lib_version).
         QString version;
         // DO_NOT_TRACK was set for this run.
@@ -82,6 +80,14 @@ public:
     // Whether `event` with `properties` holds only what the table allows.
     static bool conforms(const QString &event, const QJsonObject &properties);
 
+    // CR1 (#452): a report the user chose to send (Send report): `events`
+    // ($exception and crash_report) go at once in a batch of their own, with
+    // usage data on or off, since pressing Send is consent for that report.
+    // Off, they carry a one-off id and nothing is kept. Needs a key; false
+    // when there is none or an event does not conform. reportSent() follows.
+    bool sendReport(const QList<std::pair<QString, QJsonObject>> &events);
+    bool canSendReports() const { return !m_config.key.isEmpty(); }
+
     // The call sites. Each takes ids from a closed list and drops anything else.
     // command_used, once per command and way per session: `via` is "key" or "pointer".
     Q_INVOKABLE void commandUsed(const QString &symbol, const QString &via);
@@ -117,8 +123,8 @@ public:
         qint64 startupMs = 0;
         QString layout;      // a preset's name, "saved" or ""
     };
-    // app_started, once: the settings, this system and `facts`. Then the
-    // last run's crash record, if any, goes as $exception.
+    // app_started, once: the settings, this system and `facts`. (CR1's
+    // CrashReports sends the last run's crash record as $exception.)
     void appStarted(const StartFacts &facts);
     // app_closed, then a last send that waits at most `timeoutMs` (the
     // window is gone by then), and the queue is written.
@@ -138,6 +144,9 @@ public:
     static QString scaleBucket(qreal scale);
     static QString screensBucket(int screens);
     static int frameBucket(double milliseconds);
+    // app_started's $os and arch.
+    static QString osId();
+    static QString archId();
     // A panel's id from its dock's uniqueName ("FixMinorErrors" =>
     // "fix_minor_errors"); "" for none of them.
     static QString panelId(const QString &dock);
@@ -146,6 +155,8 @@ signals:
     void activeChanged();
     // A send finished: `count` events left the queue (tests).
     void sent(int count);
+    // A sendReport() finished: whether the endpoint took it.
+    void reportSent(bool ok);
 
 private:
     void settingChanged(const QString &id);
@@ -154,7 +165,6 @@ private:
     void trim();
     void load();
     void save();
-    void sendCrashRecord();
     void sendFinished();
     QJsonObject common() const;
 
@@ -165,6 +175,7 @@ private:
     QJsonArray m_queue;
     QNetworkAccessManager m_network;
     QPointer<QNetworkReply> m_reply;
+    QPointer<QNetworkReply> m_reportReply;
     int m_inFlight = 0;
     QTimer m_flushTimer;
     QTimer m_saveTimer;

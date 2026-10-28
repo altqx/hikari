@@ -42,6 +42,7 @@
 #include "theme.h"
 #include "window_frame.h"
 
+#include <QRegularExpression>
 #include <QClipboard>
 #include <QFile>
 #include <QMetaMethod>
@@ -862,6 +863,40 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // here; one from a menu or button by the shell (Main.hotkeyGesture), a
     // dialog's open by its frame (DialogPlacement).
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
+    // CR1 (#452): crash, freeze and issue reports. Their Log lines leave out
+    // the open files' names and their Lines' texts.
+    m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
+    m_crashReports->setKnown(
+        [this] {
+            QStringList names;
+            for (const auto id : m_workspace.documents())
+                if (const std::string *title = m_workspace.title(id))
+                    names << QString::fromStdString(*title);
+            for (const auto &[id, media] : m_tabMedia)
+                names << media.video << media.audio << media.keyframes;
+            names.removeAll(QString());
+            return names;
+        },
+        [this] {
+            static const QRegularExpression tags(QStringLiteral("\\{[^}]*\\}"));
+            QStringList texts;
+            for (const auto id : m_workspace.documents())
+                if (const auto *session = m_files->session(id))
+                    for (const auto *line : session->document().lines())
+                        for (const std::u8string *body : {&line->text, &line->translation}) {
+                            const QString text = QString::fromUtf8(reinterpret_cast<const char *>(body->data()),
+                                                                   qsizetype(body->size()));
+                            texts << text;
+                            if (const QString plain = QString(text).remove(tags); plain != text)
+                                texts << plain;
+                        }
+            return texts;
+        });
+    m_crashReports->setCurrentFile([this] {
+        const auto target = m_workspace.editingTarget();
+        const auto destination = target ? m_files->destination(*target) : std::nullopt;
+        return destination ? QString::fromStdString(destination->value) : QString();
+    });
     connect(m_hotkeys.get(), &HotkeysController::ran, m_analytics.get(), [this](const QString &symbol, bool handled) {
         if (handled && !m_hotkeys->rehearsing())
             m_analytics->commandUsed(symbol, QStringLiteral("key"));
@@ -2732,11 +2767,6 @@ bool Application::turnOffTranslationMode()
 void Application::setSaveWithVideoName(bool on)
 {
     m_settings->set("subtitles.saveWithVideoName", on); // settingChanged announces it
-}
-
-void Application::reportIssue()
-{
-    backends::desktop::openUrl(QUrl(QStringLiteral("https://github.com/altqx/hikari/issues")));
 }
 
 void Application::openWebsite()
@@ -5828,6 +5858,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
+            {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},

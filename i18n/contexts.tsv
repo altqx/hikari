@@ -21,6 +21,7 @@ HikariSub.MainWindow	The main window: title, its title bar (menus, window button
 HikariSub.Matroska	Subtitles from Matroska files
 HikariSub.MisspellReplacer	Fix minor errors (the misspell replacer) and its rules
 HikariSub.Options	The Options dialog, its Appearance page (themes, accent colours) and the interface language
+HikariSub.Reports	Crash and freeze reports, their notices, and Report an issue (CR1)
 HikariSub.Reference	The protected reference panel and its tray
 HikariSub.ScriptProperties	The script properties dialog
 HikariSub.Search	Find and replace: its panel, questions and results

@@ -136,9 +136,11 @@ QString LogController::history() const
 int LogController::add(Severity severity, const QString &title, const QString &text, const QString &details)
 {
     const int id = int(m_model->entries.size()) + 1;
-    m_model->append({id, m_clock(), severity, title, text, details});
+    const QString time = m_clock();
+    m_model->append({id, time, severity, title, text, details});
     ++m_counts[severity];
     emit changed();
+    emit added(time, severity, title, text, details);
     return id;
 }
 

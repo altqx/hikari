@@ -324,6 +324,9 @@ const std::vector<SettingDefinition> &definitions()
         // first sent and cleared when the option is turned off.
         {"privacy.usageData", "", Bool, Profile, Mapped, false, true},
         {"privacy.usageDataId", "", String, Profile, Mapped, false, std::string()},
+        // CR1 (#452): "Always send crash reports": the report of a crash or
+        // a freeze goes at the next start without its window (off by default).
+        {"privacy.alwaysSendCrashReports", "", Bool, Profile, Mapped, false, false},
         // KA8 (#354): the Kanji timer writes # syllables (KA8-multi-highlight),
         // off by default.
         {"audio.kanjiTimerMulti", "", Bool, Profile, Mapped, false, false},

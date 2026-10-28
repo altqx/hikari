@@ -136,6 +136,17 @@ jobs:
           name: hikarisub-windows-installer
           path: artifacts/windows
 
+      # CR1 (#452): the debug symbols, for tools/crash/symbolize.py.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hikarisub-linux-symbols
+          path: artifacts/linux-symbols
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hikarisub-windows-symbols
+          path: artifacts/windows-symbols
+
       - name: Assemble the release files
         run: |
           set -euo pipefail
@@ -149,6 +160,8 @@ jobs:
             "hikarisub-$VERSION-linux-x86_64.rpm"
             "hikarisub-$VERSION-linux-x86_64.tar.gz"
             "hikarisub-docs-$VERSION.zip"
+            "hikarisub-symbols-$VERSION-linux-x86_64.tar.xz"
+            "HikariSub-$VERSION-windows-x64-symbols.zip"
           )
           for name in "${names[@]}"; do
             if ! [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then

@@ -16,6 +16,8 @@ DialogWindow {
     objectName: "aboutDialog"
     required property var app      // Application: the links and the clipboard
     required property var updates  // UpdateChecker: the version
+    // CR1 (#452): Report an issue opens the report window.
+    signal reportIssueRequested()
     dialogId: "about"
     title: qsTr("About HikariSub")
     defaultButton: ok
@@ -87,7 +89,7 @@ DialogWindow {
             objectName: "aboutReportIssue"
             iconRole: "report-issue"
             text: qsTr("Report an issue")
-            onClicked: about.app.reportIssue()
+            onClicked: about.reportIssueRequested()
         }
     }
 

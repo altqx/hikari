@@ -98,7 +98,10 @@ string(JOIN " " _hikari_excluded_plugins ${_hikari_excluded_plugins})
 string(JOIN " " _hikari_excluded_plugin_types ${_hikari_excluded_plugin_types})
 # Qt's Linux deploy tool finds the Qt libraries through the installed
 # executable's run path, which is only $ORIGIN/lib by then: the script lends
-# it the Qt library folder for the deploy and takes it back afterwards.
+# a copy of it the Qt library folder for the deploy and puts the installed
+# file back afterwards. CR1 (#452): patchelf's longer run path relays the
+# file out, which objcopy then breaks when make-packages.sh splits the debug
+# info out of it.
 set(_hikari_lend_qt_runpath "")
 set(_hikari_restore_runpath "")
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -106,12 +109,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     if(NOT HIKARI_PATCHELF)
         set(HIKARI_PATCHELF patchelf) # the install fails with a clear message without it
     endif()
-    set(_hikari_lend_qt_runpath "execute_process(COMMAND \"${HIKARI_PATCHELF}\" --set-rpath
-    \"$ORIGIN/${HIKARI_INSTALL_LIBDIR}:$<TARGET_FILE_DIR:Qt6::Core>\" \"\${QT_DEPLOY_PREFIX}/$<TARGET_FILE_NAME:hikarisub>\"
+    set(_hikari_installed "\${QT_DEPLOY_PREFIX}/$<TARGET_FILE_NAME:hikarisub>")
+    set(_hikari_lend_qt_runpath "file(RENAME \"${_hikari_installed}\" \"${_hikari_installed}.installed\")
+file(COPY_FILE \"${_hikari_installed}.installed\" \"${_hikari_installed}\")
+execute_process(COMMAND \"${HIKARI_PATCHELF}\" --set-rpath
+    \"$ORIGIN/${HIKARI_INSTALL_LIBDIR}:$<TARGET_FILE_DIR:Qt6::Core>\" \"${_hikari_installed}\"
     COMMAND_ERROR_IS_FATAL ANY)")
-    set(_hikari_restore_runpath "execute_process(COMMAND \"${HIKARI_PATCHELF}\" --set-rpath
-    \"$ORIGIN/${HIKARI_INSTALL_LIBDIR}\" \"\${QT_DEPLOY_PREFIX}/$<TARGET_FILE_NAME:hikarisub>\"
-    COMMAND_ERROR_IS_FATAL ANY)")
+    set(_hikari_restore_runpath "file(RENAME \"${_hikari_installed}.installed\" \"${_hikari_installed}\")")
 endif()
 # The qt6_ function, not the qt_ macro: the macro would expand the script's
 # own variable references before writing it.

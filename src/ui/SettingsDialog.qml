@@ -1668,6 +1668,10 @@ DialogWindow {
                             Layout.leftMargin: 22
                             onClicked: dialog.app.openWhatIsSent()
                         }
+                        // CR1 (#452): a crash or freeze report goes without
+                        // its window, usage data on or off.
+                        SettingCheck { setting: "privacy.alwaysSendCrashReports"; text: qsTr("Always send crash reports") }
+                        SettingNote { text: qsTr("After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.") }
                     }
                 }
             }

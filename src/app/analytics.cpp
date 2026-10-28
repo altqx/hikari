@@ -33,9 +33,10 @@ constexpr char kId[] = "privacy.usageDataId";
 // each may hold. A string property is one of a closed list or matches a
 // pattern that leaves no room for text; nothing else is sent.
 struct Rule {
-    enum Kind { OneOf, Pattern, Bool, Count, ListOf, Exceptions } kind;
+    enum Kind { OneOf, Pattern, Bool, Count, ListOf, Exceptions, Text, Settings } kind;
     QStringList values;     // OneOf, ListOf
     QString pattern;        // Pattern
+    int max = 0;            // Text: its length; Settings: each value's
 };
 
 Rule oneOf(QStringList values)
@@ -76,12 +77,13 @@ const std::map<QString, QString> kPanels{
 const QStringList kDialogs{
     QStringLiteral("about"),          QStringLiteral("allTagsEdition"), QStringLiteral("aspectRatio"),
     QStringLiteral("autosaves"),      QStringLiteral("columns"),        QStringLiteral("conversion"),
-    QStringLiteral("credits"),        QStringLiteral("dummyVideo"),     QStringLiteral("fontCatalogClashes"),
+    QStringLiteral("crashReport"),    QStringLiteral("credits"),        QStringLiteral("dummyVideo"),
+    QStringLiteral("fontCatalogClashes"),
     QStringLiteral("fontCatalogs"),   QStringLiteral("fontCollector"),  QStringLiteral("fontPicker"),
     QStringLiteral("fontsFromSubtitles"), QStringLiteral("gettingStarted"), QStringLiteral("history"),
     QStringLiteral("hotkeyCapture"),  QStringLiteral("kanjiTimer"),     QStringLiteral("karaokeCheck"),
     QStringLiteral("listChooser"),    QStringLiteral("manageLayouts"),  QStringLiteral("movePanel"),
-    QStringLiteral("resample"),       QStringLiteral("saveLayout"),     QStringLiteral("scriptProperties"),
+    QStringLiteral("reportIssue"),    QStringLiteral("resample"),       QStringLiteral("saveLayout"),     QStringLiteral("scriptProperties"),
     QStringLiteral("selectLines"),    QStringLiteral("setNewFps"),      QStringLiteral("settings"),
     QStringLiteral("settingsImport"), QStringLiteral("shapesEdition"),  QStringLiteral("spellAddedWords"),
     QStringLiteral("styleClashes"),   QStringLiteral("styleManager"),   QStringLiteral("translationShift"),
@@ -92,6 +94,7 @@ const QStringList kLanguages{QStringLiteral("en"), QStringLiteral("ko_KR"), QStr
 const QStringList kPages{QStringLiteral("language"), QStringLiteral("import"), QStringLiteral("look"),
                          QStringLiteral("layout"),   QStringLiteral("media"),  QStringLiteral("editing"),
                          QStringLiteral("updates"),  QStringLiteral("files")};
+const QString kUuid = QStringLiteral("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
 const QString kVersion = QStringLiteral("^[0-9]{1,4}\\.[0-9]{1,4}\\.[0-9]{1,4}([-+][0-9A-Za-z.]{1,24})?$");
 
 using Table = std::map<QString, std::map<QString, Rule>>;
@@ -122,7 +125,7 @@ const Table &table()
                     QStringLiteral("3x+")})},
             {QStringLiteral("startup_time"), oneOf(kTimeBuckets)},
         };
-        t.emplace(QStringLiteral("app_started"), std::move(started));
+        t.emplace(QStringLiteral("app_started"), started);
         std::map<QString, Rule> closed{{QStringLiteral("session_length"), oneOf(kSessionBuckets)}};
         for (const char *bucket : Analytics::kFrameBuckets)
             closed.emplace(QStringLiteral("render_frames_") + QLatin1String(bucket), Rule{Rule::Count, {}, {}});
@@ -154,10 +157,28 @@ const Table &table()
         // Only audio comes from a video.
         media[QStringLiteral("kind")] = oneOf({QStringLiteral("file"), QStringLiteral("from_video"), QStringLiteral("dummy")});
         t.emplace(QStringLiteral("audio_opened"), media);
+        // CR1 (#452): a freeze is error when the window came back, else
+        // fatal; report_id ties it to the crash_report sent with it.
         t.emplace(QStringLiteral("$exception"),
                   std::map<QString, Rule>{{QStringLiteral("$exception_list"), {Rule::Exceptions, {}, {}}},
-                                          {QStringLiteral("$exception_level"), oneOf({QStringLiteral("fatal")})},
-                                          {QStringLiteral("crashed_version"), pattern(kVersion)}});
+                                          {QStringLiteral("$exception_level"),
+                                           oneOf({QStringLiteral("fatal"), QStringLiteral("error")})},
+                                          {QStringLiteral("crashed_version"), pattern(kVersion)},
+                                          {QStringLiteral("report_id"), pattern(kUuid)},
+                                          {QStringLiteral("freeze_seconds"), {Rule::Count, {}, {}}}});
+        // CR1: only ever sent by the user's Send report, after the window
+        // showed all of it: the note as typed, the Log's scrubbed lines and
+        // the settings summary (crash_report.h).
+        std::map<QString, Rule> report{
+            {QStringLiteral("report_id"), pattern(kUuid)},
+            {QStringLiteral("kind"), oneOf({QStringLiteral("crash"), QStringLiteral("freeze")})},
+            {QStringLiteral("note"), {Rule::Text, {}, {}, 4000}},
+            {QStringLiteral("log"), {Rule::Text, {}, {}, 64 * 1024}},
+            {QStringLiteral("settings"), {Rule::Settings, {}, {}, 64}},
+        };
+        for (const char *key : {"version", "channel", "$os", "$os_version", "arch", "package", "qt_version"})
+            report.emplace(QString::fromLatin1(key), started.at(QString::fromLatin1(key)));
+        t.emplace(QStringLiteral("crash_report"), std::move(report));
         return t;
     }();
     return events;
@@ -186,7 +207,8 @@ bool exceptionsConform(const QJsonValue &value)
     if (mechanism.keys() != QStringList{QStringLiteral("handled"), QStringLiteral("type")} ||
         mechanism.value(QStringLiteral("handled")) != QJsonValue(false) ||
         !(mechanism.value(QStringLiteral("type")) == QJsonValue(QStringLiteral("signal")) ||
-          mechanism.value(QStringLiteral("type")) == QJsonValue(QStringLiteral("seh"))))
+          mechanism.value(QStringLiteral("type")) == QJsonValue(QStringLiteral("seh")) ||
+          mechanism.value(QStringLiteral("type")) == QJsonValue(QStringLiteral("watchdog"))))
         return false;
     const QJsonObject stack = e.value(QStringLiteral("stacktrace")).toObject();
     if (stack.keys() != QStringList{QStringLiteral("frames"), QStringLiteral("type")} ||
@@ -228,6 +250,20 @@ bool conformsTo(const Rule &rule, const QJsonValue &value)
     }
     case Rule::Exceptions:
         return exceptionsConform(value);
+    case Rule::Text:
+        return value.isString() && value.toString().size() <= rule.max;
+    case Rule::Settings: {
+        // crash_report.h's summary: short ids, each a short plain value.
+        static const QRegularExpression id(QStringLiteral("^[a-z ]{1,32}$"));
+        static const QRegularExpression plain(QStringLiteral("^[A-Za-z0-9_.+, -]{1,64}$"));
+        const QJsonObject o = value.toObject();
+        if (!value.isObject() || o.size() > rule.max)
+            return false;
+        for (auto it = o.begin(); it != o.end(); ++it)
+            if (!id.match(it.key()).hasMatch() || !it.value().isString() || !plain.match(it.value().toString()).hasMatch())
+                return false;
+        return true;
+    }
     }
     return false;
 }
@@ -286,12 +322,16 @@ Analytics::Analytics(ui::SettingsStore &settings, Config config, QObject *parent
         QTimer::singleShot(m_config.firstFlushMs, this, &Analytics::flush);
         m_flushTimer.start();
     } else {
-        clear(); // a queue or crash record a run with sending on left
+        clear(); // a queue a run with sending on left
     }
 }
 
 Analytics::~Analytics()
 {
+    if (m_reportReply) {
+        m_reportReply->disconnect(this);
+        m_reportReply->abort();
+    }
     if (m_reply) {
         m_reply->disconnect(this);
         m_reply->abort();
@@ -340,8 +380,6 @@ void Analytics::clear()
     }
     if (!m_config.queueFile.isEmpty())
         QFile::remove(m_config.queueFile);
-    if (!m_config.crashRecord.isEmpty())
-        QFile::remove(m_config.crashRecord);
     for (auto &count : m_frames)
         count = 0;
 }
@@ -638,30 +676,52 @@ void Analytics::appStarted(const StartFacts &facts)
              {QStringLiteral("screens"), screensBucket(facts.screens)},
              {QStringLiteral("scale"), scaleBucket(facts.scale)},
              {QStringLiteral("startup_time"), timeBucket(facts.startupMs)}});
-    sendCrashRecord();
 }
 
-void Analytics::sendCrashRecord()
+bool Analytics::sendReport(const QList<std::pair<QString, QJsonObject>> &events)
 {
-    if (m_config.crashRecord.isEmpty() || !QFile::exists(m_config.crashRecord))
-        return;
-    const auto record = crash::read(m_config.crashRecord);
-    QFile::remove(m_config.crashRecord);
-    if (!record)
-        return;
-    QJsonArray frames;
-    for (const crash::Frame &frame : record->frames)
-        frames.append(QJsonObject{{QStringLiteral("platform"), QStringLiteral("native")},
-                                  {QStringLiteral("module"), frame.module},
-                                  {QStringLiteral("offset"), QStringLiteral("0x") + QString::number(frame.offset, 16)}});
-    const QJsonObject exception{
-        {QStringLiteral("type"), record->type},
-        {QStringLiteral("value"), record->type},
-        {QStringLiteral("mechanism"), QJsonObject{{QStringLiteral("type"), record->mechanism}, {QStringLiteral("handled"), false}}},
-        {QStringLiteral("stacktrace"), QJsonObject{{QStringLiteral("type"), QStringLiteral("raw")}, {QStringLiteral("frames"), frames}}}};
-    capture(QStringLiteral("$exception"), {{QStringLiteral("$exception_list"), QJsonArray{exception}},
-                                           {QStringLiteral("$exception_level"), QStringLiteral("fatal")},
-                                           {QStringLiteral("crashed_version"), record->version}});
+    if (m_config.key.isEmpty() || m_reportReply || events.isEmpty())
+        return false;
+    for (const auto &[event, properties] : events)
+        if (!conforms(event, properties)) {
+            qWarning("Analytics: %s does not conform; not sent", qPrintable(event));
+            return false;
+        }
+    // With usage data off, an id for this report only, kept nowhere.
+    QJsonObject base = active() ? common()
+                                : QJsonObject{{QStringLiteral("distinct_id"), QUuid::createUuid().toString(QUuid::WithoutBraces)},
+                                              {QStringLiteral("$process_person_profile"), false},
+                                              {QStringLiteral("$geoip_disable"), true},
+                                              {QStringLiteral("$lib"), QStringLiteral("hikarisub")},
+                                              {QStringLiteral("$lib_version"), m_config.version}};
+    QJsonArray batch;
+    const QString now = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+    for (const auto &[event, properties] : events) {
+        QJsonObject all = base;
+        for (auto p = properties.begin(); p != properties.end(); ++p)
+            all.insert(p.key(), p.value());
+        batch.append(QJsonObject{{QStringLiteral("event"), event},
+                                 {QStringLiteral("distinct_id"), all.value(QStringLiteral("distinct_id"))},
+                                 {QStringLiteral("properties"), all},
+                                 {QStringLiteral("timestamp"), now}});
+    }
+    const QJsonObject body{{QStringLiteral("api_key"), m_config.key}, {QStringLiteral("batch"), batch}};
+    QNetworkRequest request(m_config.endpoint);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("HikariSub/%1").arg(m_config.version));
+    request.setTransferTimeout(30 * 1000);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
+    m_reportReply = m_network.post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
+    connect(m_reportReply, &QNetworkReply::finished, this, [this] {
+        QNetworkReply *reply = m_reportReply;
+        m_reportReply = nullptr;
+        if (!reply)
+            return;
+        reply->deleteLater();
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        emit reportSent(status >= 200 && status < 300);
+    });
+    return true;
 }
 
 void Analytics::quit(int timeoutMs)
@@ -693,6 +753,16 @@ void Analytics::quit(int timeoutMs)
         }
     }
     save();
+}
+
+QString Analytics::osId()
+{
+    return os();
+}
+
+QString Analytics::archId()
+{
+    return arch();
 }
 
 QString Analytics::timeBucket(qint64 ms)

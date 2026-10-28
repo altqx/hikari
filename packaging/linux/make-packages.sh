@@ -75,6 +75,29 @@ for f in Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin Dictio
 done
 "$here/check-payload.sh" --min-glibc "$min_glibc" "$tree"
 
+# CR1 (#452): debug info a build carries (HIKARI_DEBUG_SYMBOLS) leaves the
+# packages: each ELF file's goes to package-stage/symbols/<path>.debug, and
+# under .build-id/ for debuggers, linked back by .gnu_debuglink. Release CI
+# keeps that folder as the version's symbols (tools/crash/symbolize.py).
+symbols=$stage/symbols
+while IFS= read -r -d '' f; do
+    [ "$(od -An -tx1 -N4 "$f" | tr -d ' \n')" = 7f454c46 ] || continue
+    # Not `readelf | grep -q`: grep leaving early can kill readelf by
+    # SIGPIPE, and pipefail then skips a file that has debug info.
+    [[ $(readelf -S --wide "$f" 2>/dev/null) == *' .debug_info '* ]] || continue
+    rel=${f#"$tree"/}
+    mkdir -p "$symbols/$(dirname "$rel")"
+    objcopy --only-keep-debug --compress-debug-sections=zlib "$f" "$symbols/$rel.debug"
+    objcopy --strip-debug --add-gnu-debuglink="$symbols/$rel.debug" "$f"
+    id=$(readelf -n "$f" 2>/dev/null | sed -n 's/^ *Build ID: \([0-9a-f]*\)$/\1/p')
+    id=${id%%$'\n'*}
+    if [ -n "$id" ]; then
+        mkdir -p "$symbols/.build-id/${id:0:2}"
+        ln -sf "../../$rel.debug" "$symbols/.build-id/${id:0:2}/${id:2}.debug"
+    fi
+    echo "symbols: $rel${id:+ (build-id $id)}"
+done < <(find "$tree" -type f -print0)
+
 normalize_modes() # <dir>: directories and executables 0755, other files 0644
 {
     find "$1" -type d -exec chmod 0755 {} +

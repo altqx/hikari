@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QFile>
+#include <QSaveFile>
 #include <QRegularExpression>
 
 #include <atomic>
@@ -264,6 +265,29 @@ bool startsWith(const char *path, const char *folder)
     return n > 0 && std::strncmp(path, folder, n) == 0 && path[n] == '/';
 }
 
+// The module holding `address` by file name (own or system), else "other";
+// the offset into it in `offset`.
+const char *moduleOf(const void *address, quint64 &offset)
+{
+    Dl_info info{};
+    offset = 0;
+    if (!dladdr(address, &info) || !info.dli_fbase)
+        return "other";
+    offset = reinterpret_cast<quint64>(address) - reinterpret_cast<quint64>(info.dli_fbase);
+    const char *path = info.dli_fname ? info.dli_fname : "";
+    // The executable comes back as argv[0], which may be relative.
+    if (info.dli_fbase == g_executableBase)
+        return g_executable;
+    if (!(startsWith(path, g_program) || startsWith(path, "/usr") || startsWith(path, "/lib") ||
+          startsWith(path, "/lib64")))
+        return "other";
+    const char *module = path;
+    for (const char *p = path; *p; ++p)
+        if (*p == '/')
+            module = p + 1;
+    return module;
+}
+
 void onSignal(int signal, siginfo_t *, void *)
 {
     if (!g_writing.exchange(true)) {
@@ -273,28 +297,13 @@ void onSignal(int signal, siginfo_t *, void *)
         const int n = backtrace(stack, kMaxFrames + 2);
         // The first two are this handler and the signal trampoline.
         for (int i = 2; i < n; ++i) {
-            Dl_info info{};
-            const char *module = "other";
             quint64 offset = 0;
-            if (dladdr(stack[i], &info) && info.dli_fbase) {
-                offset = reinterpret_cast<quint64>(stack[i]) - reinterpret_cast<quint64>(info.dli_fbase);
-                const char *path = info.dli_fname ? info.dli_fname : "";
-                // The executable comes back as argv[0], which may be relative.
-                if (info.dli_fbase == g_executableBase)
-                    module = g_executable;
-                else if (startsWith(path, g_program) || startsWith(path, "/usr") || startsWith(path, "/lib") ||
-                         startsWith(path, "/lib64")) {
-                    module = path;
-                    for (const char *p = path; *p; ++p)
-                        if (*p == '/')
-                            module = p + 1;
-                }
-            }
+            const char *module = moduleOf(stack[i], offset);
             w.frame(module, offset);
         }
         const int fd = open(g_path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
         if (fd >= 0) {
-            [[maybe_unused]] const ssize_t written = write(fd, g_record, w.at);
+            [[maybe_unused]] const ssize_t written = ::write(fd, g_record, w.at);
             close(fd);
         }
     }
@@ -383,6 +392,7 @@ std::optional<Record> read(const QString &path)
     static const QRegularExpression type(QStringLiteral("^(SIG[A-Z]{2,6}|[A-Z_]{4,40}|0x[0-9a-f]{1,8})$"));
     static const QRegularExpression module(QStringLiteral("^[A-Za-z0-9_.+-]{1,80}$"));
     static const QRegularExpression offset(QStringLiteral("^0x[0-9a-f]{1,16}$"));
+    static const QRegularExpression seconds(QStringLiteral("^[0-9]{1,6}$"));
     Record record;
     for (const QString &line : lines.mid(1)) {
         const int space = line.indexOf(QLatin1Char(' '));
@@ -392,8 +402,11 @@ std::optional<Record> read(const QString &path)
             record.version = value;
         else if (key == QLatin1String("type") && type.match(value).hasMatch())
             record.type = value;
-        else if (key == QLatin1String("mechanism") && (value == QLatin1String("signal") || value == QLatin1String("seh")))
+        else if (key == QLatin1String("mechanism") &&
+                 (value == QLatin1String("signal") || value == QLatin1String("seh") || value == QLatin1String("watchdog")))
             record.mechanism = value;
+        else if (key == QLatin1String("seconds") && seconds.match(value).hasMatch())
+            record.seconds = value.toInt();
         else if (key == QLatin1String("frame") && record.frames.size() < kMaxFrames) {
             const QStringList parts = value.split(QLatin1Char(' '));
             if (parts.size() != 2 || !module.match(parts[0]).hasMatch() || !offset.match(parts[1]).hasMatch())
@@ -404,7 +417,48 @@ std::optional<Record> read(const QString &path)
     }
     if (record.type.isEmpty() || record.mechanism.isEmpty() || record.version.isEmpty())
         return std::nullopt;
+    // A freeze is APP_HANG and only a freeze is; only a freeze has seconds.
+    if (record.freeze() != (record.type == QLatin1String(kFreezeType)) || (!record.freeze() && record.seconds))
+        return std::nullopt;
     return record;
+}
+
+bool write(const QString &path, const Record &record)
+{
+    QByteArray text = "hikari-crash 1\nversion " + record.version.toLatin1() + "\ntype " + record.type.toLatin1() +
+                      "\nmechanism " + record.mechanism.toLatin1() + '\n';
+    if (record.freeze())
+        text += "seconds " + QByteArray::number(record.seconds) + '\n';
+    for (const Frame &frame : record.frames.mid(0, kMaxFrames))
+        text += "frame " + frame.module.toLatin1() + " 0x" + QByteArray::number(frame.offset, 16) + '\n';
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly))
+        return false;
+    file.write(text);
+    return file.commit();
+}
+
+QList<Frame> framesOf(const quintptr *addresses, int count)
+{
+    QList<Frame> frames;
+    for (int i = 0; i < count && frames.size() < kMaxFrames; ++i) {
+#ifdef _WIN32
+        char name[128];
+        quint64 base = 0;
+        moduleOf(reinterpret_cast<const void *>(addresses[i]), name, sizeof name, base);
+        Frame frame{QString::fromLatin1(name), base ? quint64(addresses[i]) - base : 0};
+#else
+        quint64 offset = 0;
+        const char *module = moduleOf(reinterpret_cast<const void *>(addresses[i]), offset);
+        Frame frame{QString::fromLatin1(module), offset};
+#endif
+        // As Writer::frame keeps it, so read() takes what write() wrote.
+        for (QChar &c : frame.module)
+            if (!(c.isLetterOrNumber() && c.unicode() < 128) && c != u'_' && c != u'.' && c != u'+' && c != u'-')
+                c = u'_';
+        frames.append(frame);
+    }
+    return frames;
 }
 
 } // namespace hikari::app::crash

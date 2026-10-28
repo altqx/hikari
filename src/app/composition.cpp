@@ -4,6 +4,7 @@
 
 #include "hikari/app/application.h"
 #include "hikari/app/crash_record.h"
+#include "hikari/app/hang_watchdog.h"
 #include "hikari/app/docs_export.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/single_instance.h"
@@ -26,6 +27,7 @@
 #include <QQmlComponent>
 #include <QQuickWindow>
 #include <QScreen>
+#include <QThread>
 #include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 
@@ -70,6 +72,31 @@ void preferPulseAudioBackend()
 }
 
 namespace {
+
+int crashTestSink = 0;
+
+// CR1 (#452): a forced crash or freeze, to check the reports end to end
+// (docs/qt/crash-reports.md; release CI symbolizes the record it leaves).
+// HIKARISUB_CRASH_TEST=segv or abort crashes once the handler is in; hang
+// freezes the window 15 s, 3 s after it is up.
+#if defined(_MSC_VER)
+__declspec(noinline)
+#else
+__attribute__((noinline))
+#endif
+void crashForTest(const QByteArray &how, const QString &record)
+{
+    std::fprintf(stderr, "HIKARISUB_CRASH_TEST=%s: record at %s\n", how.constData(), qPrintable(record));
+    std::fflush(stderr);
+    if (how == "abort")
+        std::abort();
+    if (how == "hang") {
+        QTimer::singleShot(3000, [] { QThread::msleep(15000); });
+        return;
+    }
+    // A null pointer the compiler cannot see is one.
+    *static_cast<volatile int *>(qEnvironmentVariableIsSet("HIKARISUB_CRASH_TEST_NEVER_SET") ? &crashTestSink : nullptr) = 1;
+}
 
 #ifdef HIKARI_UPDATE_TEST_FEED
 QString originOf(const QUrl &url)
@@ -273,7 +300,15 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QDir().mkpath(userFolder.cache());
     options.analytics.key = Analytics::compiledKey();
     options.analytics.queueFile = userFolder.cache() + QStringLiteral("/analytics-queue.json");
-    options.analytics.crashRecord = userFolder.cache() + QStringLiteral("/crash-record.txt");
+    // CR1 (#452): the records a crash or a freeze leaves, in the cache
+    // folder; the report kept until it is answered, the Log's last lines and
+    // an issue's attachments in its reports/, the user's alone.
+    options.crashReports.crashRecord = userFolder.cache() + QStringLiteral("/crash-record.txt");
+    options.crashReports.freezeRecord = userFolder.cache() + QStringLiteral("/hang-record.txt");
+    options.crashReports.pendingFile = userFolder.cache() + QStringLiteral("/reports/crash-report.json");
+    options.crashReports.logTail = userFolder.cache() + QStringLiteral("/reports/log-tail.txt");
+    options.crashReports.attachments = userFolder.cache() + QStringLiteral("/reports/issue");
+    options.crashReports.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.doNotTrack = Analytics::doNotTrack(qgetenv("DO_NOT_TRACK"));
 #ifdef HIKARI_UPDATE_TEST_FEED
@@ -286,15 +321,30 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 #endif
     Application application(options);
     application.setStartedWithPaths(!files.isEmpty()); // P6: no session at start then
-    // AN1: the crash handler is there while usage data is sent.
-    const auto followCrashHandler = [&application, crashRecord = options.analytics.crashRecord] {
-        if (application.analytics().active())
-            crash::install(crashRecord, QCoreApplication::applicationDirPath(), QStringLiteral(HIKARI_VERSION));
-        else
-            crash::uninstall();
-    };
-    followCrashHandler();
-    QObject::connect(&application.analytics(), &Analytics::activeChanged, &application, followCrashHandler);
+    // CR1 (#452): the crash handler is always there; its record stays on
+    // this machine until the user sends it (with usage data on, AN1's
+    // $exception goes at the next start). The hang watchdog watches this
+    // thread (HIKARISUB_HANG_WATCHDOG_MS: another threshold, 0 none).
+    crash::install(options.crashReports.crashRecord, QCoreApplication::applicationDirPath(), QStringLiteral(HIKARI_VERSION));
+    std::unique_ptr<HangWatchdog> watchdog;
+    {
+        bool set = false;
+        const int threshold = qEnvironmentVariableIntValue("HIKARISUB_HANG_WATCHDOG_MS", &set);
+        if (!set || threshold > 0) {
+            HangWatchdog::Config c{options.crashReports.freezeRecord, QStringLiteral(HIKARI_VERSION)};
+            if (set) {
+                c.thresholdMs = threshold;
+                c.tickMs = std::clamp(threshold / 10, 50, 1000);
+            }
+            watchdog = std::make_unique<HangWatchdog>(c);
+            QObject::connect(watchdog.get(), &HangWatchdog::recovered, &application,
+                             [&application](const crash::Record &record) {
+                                 application.crashReports().freezeRecovered(record);
+                             });
+        }
+    }
+    if (const QByteArray test = qgetenv("HIKARISUB_CRASH_TEST"); !test.isEmpty())
+        crashForTest(test, options.crashReports.crashRecord);
     ForwardedLaunches forwarded(application);
     QObject::connect(&instance, &SingleInstance::requested, &forwarded, &ForwardedLaunches::take);
     // A path on the command line opens as the editing target. V5: a video
@@ -359,6 +409,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                                        ? application.workspaceLayout().preset()
                                        : QStringLiteral("saved");
                     application.analytics().appStarted(facts);
+                    application.crashReports().started(facts.package, facts.screens, facts.scale, facts.layout);
                 });
             },
             Qt::SingleShotConnection);

@@ -65,7 +65,7 @@ Time buckets: `<250ms`, `250-500ms`, `0.5-1s`, `1-2s`, `2-5s`, `5-15s`, `15-60s`
 |---|---|---|
 | `command_used` | A command runs (see the note below the table) | `command`: the command's hotkey symbol, e.g. `GLOBAL_SAVE_SUBS` or `AUDIO_PLAY`. Only symbols in the hotkey table are sent; an automation macro's hotkey never is.<br>`via`: `key`, or `pointer` (a menu, toolbar or panel button) |
 | `panel_opened` | You show a panel (View menu, the panels' menus, Fix minor errors…) | `panel`: `video`, `audio`, `editor`, `grid`, `reference`, `timing`, `search`, `automation`, `original`, `log`, `styles`, `fix_minor_errors`, `template` or `spellchecker` |
-| `dialog_opened` | A window on the dialog frame opens | `dialog`: one of `about`, `allTagsEdition`, `aspectRatio`, `autosaves`, `columns`, `conversion`, `credits`, `dummyVideo`, `fontCatalogClashes`, `fontCatalogs`, `fontCollector`, `fontPicker`, `fontsFromSubtitles`, `gettingStarted`, `history`, `hotkeyCapture`, `kanjiTimer`, `karaokeCheck`, `listChooser`, `manageLayouts`, `movePanel`, `resample`, `saveLayout`, `scriptProperties`, `selectLines`, `setNewFps`, `settings`, `settingsImport`, `shapesEdition`, `spellAddedWords`, `styleClashes`, `styleManager`, `translationShift`, `unsavedChanges`, `updateAvailable`, `whatsNew`, or `automation_script` (any script's dialog) |
+| `dialog_opened` | A window on the dialog frame opens | `dialog`: one of `about`, `allTagsEdition`, `aspectRatio`, `autosaves`, `columns`, `conversion`, `crashReport`, `credits`, `dummyVideo`, `fontCatalogClashes`, `fontCatalogs`, `fontCollector`, `fontPicker`, `fontsFromSubtitles`, `gettingStarted`, `history`, `hotkeyCapture`, `kanjiTimer`, `karaokeCheck`, `listChooser`, `manageLayouts`, `movePanel`, `reportIssue`, `resample`, `saveLayout`, `scriptProperties`, `selectLines`, `setNewFps`, `settings`, `settingsImport`, `shapesEdition`, `spellAddedWords`, `styleClashes`, `styleManager`, `translationShift`, `unsavedChanges`, `updateAvailable`, `whatsNew`, or `automation_script` (any script's dialog) |
 | `layout_changed` | You choose a layout | `layout`: `editing`, `timing`, `translation`, `typesetting`, `karaoke`, or `saved` (one of your saved layouts; its name is not sent) |
 | `getting_started_finished` | Getting started's Finish | `pages_changed`: the pages whose settings Finish changed, from `language`, `import`, `look`, `layout`, `media`, `editing`, `updates`, `files`. Which values you chose is not sent. Getting started has no setting on its layout and files pages yet, so those two are not sent today. |
 | `getting_started_skipped` | Getting started's Skip | (none) |
@@ -83,12 +83,13 @@ Where `command_used` is reported:
 
 | Event | When | Properties |
 |---|---|---|
-| `$exception` | The start after a native crash | `$exception_list`: one entry: `type` and `value` (the signal, `SIGSEGV`, `SIGABRT`, `SIGBUS`, `SIGFPE` or `SIGILL`; or on Windows the exception's name, e.g. `EXCEPTION_ACCESS_VIOLATION`, else its code `0x…`), `mechanism` (`{type: signal or seh, handled: false}`), `stacktrace` (`{type: raw, frames}`), up to 32 frames of `{platform: native, module, offset}`<br>`$exception_level`: `fatal`<br>`crashed_version`: the version that crashed |
+| `$exception` | The start after a native crash or a freeze the program was closed in, and a freeze it came back from (CR1) | `$exception_list`: one entry: `type` and `value` (the signal, `SIGSEGV`, `SIGABRT`, `SIGBUS`, `SIGFPE` or `SIGILL`; on Windows the exception's name, e.g. `EXCEPTION_ACCESS_VIOLATION`, else its code `0x…`; `APP_HANG` for a freeze), `mechanism` (`{type: signal, seh or watchdog, handled: false}`), `stacktrace` (`{type: raw, frames}`), up to 32 frames of `{platform: native, module, offset}`<br>`$exception_level`: `fatal`, `error` for a freeze<br>`crashed_version`: the version that crashed<br>`report_id`: a random UUID, the same as its `crash_report`'s<br>`freeze_seconds`: how long it froze (a freeze only) |
+| `crash_report` | You press Send report on a crash or freeze report, or "Always send crash reports" sends it (CR1, [crash-reports.md](crash-reports.md)) | `report_id`: its `$exception`'s<br>`kind`: `crash` or `freeze`<br>`note`: what you typed, up to 4000 characters<br>`log`: the Log's last 200 lines, file names, fonts, Line text and folders replaced<br>`settings`: the settings summary (ids and values from a closed list, up to 64)<br>`version`, `channel`, `$os`, `$os_version`, `arch`, `package`, `qt_version`: as `app_started`'s |
 | `automation_error` | A macro fails, its helper is lost or force-stopped, or a script does not load | `kind`: `failed`, `lost`, `stopped` or `load_failed`<br>`script`: a bundled script's file name, while its bytes are the bundled manifest's (in the program's Automation folder or copied to your folder; spaces become `_`), else `user script`. A script you add to the program folder is `user script`.<br>A macro whose validation declines to run is not an error and sends nothing. |
 
 How a crash is recorded:
-- A signal handler (Linux) or an unhandled-exception filter (Windows) writes a small record to `crash-record.txt` in the cache folder.
-- The handler is installed only while sending is on. A record found while sending is off is deleted without being sent.
+- A signal handler (Linux) or an unhandled-exception filter (Windows) writes a small record to `crash-record.txt` in the cache folder; the hang watchdog writes `hang-record.txt` (CR1, [crash-reports.md](crash-reports.md)).
+- The handler is always installed (CR1). The record stays on this machine: with sending on, only the record goes as `$exception` at the next start. The rest of a report goes only when you press Send report, which works with sending off too: pressing it is consent for that one report, sent under a one-off random id.
 - A frame's `module` is a file name only, and only for the program's own files (in its folder) or the system's (`/usr`, `/lib`, the Windows folder). Any other module is `other`.
 - `offset` is the hex offset into that module.
 
@@ -105,11 +106,12 @@ Startup time is `app_started`'s `startup_time`. The frame-time buckets are in `a
 
 **Code:**
 - `src/app/analytics.cpp` holds the client and the table (`Analytics::conforms`).
-- `src/app/crash_record.cpp` holds the crash record.
+- `src/app/crash_record.cpp` holds the crash record; `src/app/crash_reports.cpp` and `crash_report.cpp` the reports (CR1).
 
 **Tests**, against a fake endpoint on the loopback:
 - `analytics_tests`
 - `analytics_session_tests`
+- `crash_report_tests` (CR1)
 
 **Adding an event:**
 1. Add it to the table in `analytics.cpp` and to this page.

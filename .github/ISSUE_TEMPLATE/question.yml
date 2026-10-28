@@ -1,0 +1,19 @@
+# CR1 (#452): filled by HikariSub's Help › Report an issue (Question); keep
+# the ids in step with src/app/crash_reports.cpp.
+name: Question
+description: Ask how something in HikariSub works.
+labels: ["question", "needs-triage"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: Name the panel or command it is about.
+    validations:
+      required: true
+  - type: textarea
+    id: system
+    attributes:
+      label: System and settings
+      description: Filled in by HikariSub (version, package, system, settings as ids).
+      render: text

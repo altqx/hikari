@@ -173,6 +173,8 @@ Nothing is code-signed; each release lists SHA-256 sums in `SHA256SUMS`. HikariS
 
 HikariSub sends **anonymous usage data** to PostHog Cloud EU: which features and panels are used, errors and crashes, and how fast things open. It never sends your files, their names or paths, subtitle or script text, Style or font names, or anything you typed. Events go under a random install id, with no person profile and no location lookup, and the PostHog project discards IP addresses. Only release packages send. Turn it off in **Settings > Updates and privacy > Send anonymous usage data** or in Getting started; `DO_NOT_TRACK=1` turns it off for one run. [docs/qt/analytics.md](docs/qt/analytics.md) lists every event and property.
 
+After a crash or a freeze, HikariSub shows the whole report it built: what crashed, your system, a settings summary and the last Log lines, with file names replaced. It is sent only when you press **Send report** (with usage data off too), or taken to a GitHub issue with **Open GitHub issue**; **Settings > Updates and privacy > Always send crash reports** sends it without asking. **Help > Report an issue** fills in a GitHub issue form for a bug, a feature request or a question. [docs/qt/crash-reports.md](docs/qt/crash-reports.md) has the details.
+
 HikariSub looks for updates only when you choose **Help > Check for updates**, or once a day at most after you turn on **Settings > Updates and privacy > Check for updates automatically** (settings imported from legacy keep legacy's choice). The installer, AppImage, deb and rpm download the update, check its SHA-256 and install it when you choose Restart now or quit.
 
 <details>

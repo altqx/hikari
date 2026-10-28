@@ -209,8 +209,10 @@ private slots:
     }
 
     // The shell: Help > User guide (GLOBAL_HELP, DX1: a page of the user
-    // guide, user_guide_tests) and Help > Report an issue (GLOBAL_ANSI) open
-    // their pages in the browser (HikariSubFrame.cpp:360-362); the tab menu's
+    // guide, user_guide_tests) opens its page in the browser, and Help >
+    // Report an issue (GLOBAL_ANSI; legacy HikariSubFrame.cpp:360-362 opened
+    // the tracker) the report window, whose Open on GitHub opens the Bug
+    // form, filled in (CR1 #452); the tab menu's
     // folder item shows the subtitles in their folder (SelectInFolder). All
     // recorded.
     void theShellsHandOffsAreRecorded()
@@ -223,8 +225,19 @@ private slots:
         QVERIFY2(recorded::opened().first().toString().startsWith(QStringLiteral("https://hikarisub.altqx.com/en/docs")),
                  qPrintable(recorded::opened().first().toString()));
         triggerAction("reportIssueMenuItem");
+        QCOMPARE(recorded::opened().size(), 1);
+        auto *report = qobject_cast<QQuickWindow *>(named("reportIssue"));
+        QVERIFY(report);
+        QTRY_VERIFY(report->isVisible());
+        named("reportIssueTitle")->setProperty("text", QStringLiteral("Handles jump"));
+        named("reportIssueFirst")->setProperty("text", QStringLiteral("They jump."));
+        QVERIFY(QMetaObject::invokeMethod(named("reportIssueOpen"), "click"));
         QCOMPARE(recorded::opened().size(), 2);
-        QCOMPARE(recorded::opened().last(), QUrl(QStringLiteral("https://github.com/altqx/hikari/issues")));
+        const QString issue = recorded::opened().last().toString(QUrl::FullyEncoded);
+        QVERIFY2(issue.startsWith(QStringLiteral("https://github.com/altqx/hikari/issues/new?template=bug.yml&title=Handles%20jump")),
+                 qPrintable(issue));
+        QVERIFY(QMetaObject::invokeMethod(named("reportIssueDone"), "click"));
+        QTRY_VERIFY(!report->isVisible());
         QVERIFY(application->openFile(file));
         auto *bar = named("documentTabBar");
         QVERIFY(bar);

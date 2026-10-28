@@ -1,12 +1,11 @@
 // AN1 (#404): anonymous usage data against a fake PostHog endpoint on the
 // loopback; nothing leaves the machine. What is sent, when nothing is (no
 // key, the switch off, DO_NOT_TRACK), the queue's bounds offline, the switch
-// dropping the queue and the id, and a crash's record sent at the next start.
+// dropping the queue and the id. (A crash's record: crash_report_tests.)
 
 #include "analytics_endpoint.h"
 
 #include "hikari/app/analytics.h"
-#include "hikari/app/crash_record.h"
 #include "settings_store.h"
 
 #include <QCryptographicHash>
@@ -35,7 +34,6 @@ class AnalyticsTest : public QObject {
         c.key = key;
         c.endpoint = endpoint.url();
         c.queueFile = dir.filePath(QStringLiteral("analytics-queue.json"));
-        c.crashRecord = dir.filePath(QStringLiteral("crash-record.txt"));
         c.version = QStringLiteral("0.1.0-beta.1");
         c.firstFlushMs = 60 * 60 * 1000; // the tests send
         return c;
@@ -55,7 +53,6 @@ private slots:
     void init()
     {
         QFile::remove(dir.filePath(QStringLiteral("analytics-queue.json")));
-        QFile::remove(dir.filePath(QStringLiteral("crash-record.txt")));
     }
 
     // A fresh profile with a key and the switch on sends app_started: the
@@ -329,86 +326,6 @@ private slots:
         QCOMPARE(p.value(QStringLiteral("render_frames_33_66ms")).toInt(), 1);
         QCOMPARE(p.value(QStringLiteral("render_frames_200ms_plus")).toInt(), 0);
         QVERIFY(!QFile::exists(config(endpoint).queueFile)); // all sent
-    }
-
-    // A forced crash leaves a record; the next start sends it as $exception,
-    // frames as module and offset only, and removes it.
-    void crashRecordIsSentAtNextStart_data()
-    {
-        QTest::addColumn<QString>("how");
-        QTest::newRow("access violation") << QStringLiteral("segv");
-        QTest::newRow("abort") << QStringLiteral("abort");
-    }
-    void crashRecordIsSentAtNextStart()
-    {
-        QFETCH(QString, how);
-        AnalyticsEndpoint endpoint;
-        const Analytics::Config c = config(endpoint);
-        // Started by a relative path, as from a shell: its frames still name it.
-        const QFileInfo program(QStringLiteral(HIKARI_CRASH_PROBE));
-        QProcess probe;
-        probe.setWorkingDirectory(program.absolutePath());
-        // Windows resolves a relative program against this process's folder,
-        // not the child's working directory (#454).
-        const QString here = QDir::currentPath();
-        QDir::setCurrent(program.absolutePath());
-        probe.start(QStringLiteral("./") + program.fileName(), {c.crashRecord, how});
-        QDir::setCurrent(here);
-        QVERIFY(probe.waitForFinished(30000));
-        QVERIFY(probe.exitStatus() == QProcess::CrashExit || probe.exitCode() != 0);
-        const auto record = hikari::app::crash::read(c.crashRecord);
-        QVERIFY2(record, qPrintable(QString::fromLatin1(QFile(c.crashRecord).exists() ? "unreadable" : "no record")));
-        QCOMPARE(record->version, QStringLiteral("0.1.0-test.1"));
-#ifdef _WIN32
-        QCOMPARE(record->type, how == QLatin1String("segv") ? QStringLiteral("EXCEPTION_ACCESS_VIOLATION") : QStringLiteral("SIGABRT"));
-        QCOMPARE(record->mechanism, how == QLatin1String("segv") ? QStringLiteral("seh") : QStringLiteral("signal"));
-        const QString own = QStringLiteral("hikari_crash_probe.exe");
-#else
-        QCOMPARE(record->type, how == QLatin1String("segv") ? QStringLiteral("SIGSEGV") : QStringLiteral("SIGABRT"));
-        QCOMPARE(record->mechanism, QStringLiteral("signal"));
-        const QString own = QStringLiteral("hikari_crash_probe");
-#endif
-        QVERIFY(!record->frames.isEmpty());
-        QStringList modules;
-        for (const auto &frame : record->frames)
-            modules << frame.module;
-        QVERIFY2(modules.contains(own), qPrintable(modules.join(u',')));
-
-        hikari::ui::SettingsStore settings;
-        Analytics analytics(settings, c);
-        analytics.appStarted(facts());
-        QVERIFY(!QFile::exists(c.crashRecord));
-        QJsonObject exception;
-        for (const QJsonValue &e : analytics.queued())
-            if (e.toObject().value(QStringLiteral("event")) == QJsonValue(QStringLiteral("$exception")))
-                exception = e.toObject().value(QStringLiteral("properties")).toObject();
-        QVERIFY(!exception.isEmpty());
-        QCOMPARE(exception.value(QStringLiteral("crashed_version")).toString(), QStringLiteral("0.1.0-test.1"));
-        QCOMPARE(exception.value(QStringLiteral("$exception_level")).toString(), QStringLiteral("fatal"));
-        QString why;
-        QVERIFY2(AnalyticsEndpoint::closedOnly(analytics.queued(), &why), qPrintable(why));
-        // Not a path anywhere: the folder the probe ran from is not in it.
-        const QByteArray payload = QJsonDocument(analytics.queued()).toJson();
-        QVERIFY(!payload.contains(QFileInfo(QStringLiteral(HIKARI_CRASH_PROBE)).absolutePath().toUtf8()));
-    }
-
-    // A record that could carry a path or text is no record.
-    void crashRecordReadsOnlyItsForm()
-    {
-        const QString path = dir.filePath(QStringLiteral("bad-record.txt"));
-        auto write = [&](const QByteArray &text) {
-            QFile f(path);
-            QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
-            f.write(text);
-        };
-        write("hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism signal\nframe HikariSub 0x1a2b\n");
-        QVERIFY(hikari::app::crash::read(path));
-        write("hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism signal\nframe /home/me/lib.so 0x1a2b\n");
-        QVERIFY(!hikari::app::crash::read(path));
-        write("hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism signal\nnote hello\n");
-        QVERIFY(!hikari::app::crash::read(path));
-        write("hikari-crash 1\nversion 0.1.0\ntype my words\nmechanism signal\n");
-        QVERIFY(!hikari::app::crash::read(path));
     }
 
     // A script's name goes only while its bytes are the bundled manifest's,

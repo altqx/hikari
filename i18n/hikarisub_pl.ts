@@ -8182,6 +8182,14 @@ zostanie zmieniony na domyślny</translation>
         <source>Border color</source>
         <translation>Kolor obwódki</translation>
     </message>
+    <message>
+        <source>Always send crash reports</source>
+        <translation>Zawsze wysyłaj raporty o awariach</translation>
+    </message>
+    <message>
+        <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
+        <translation>Po awarii lub zawieszeniu raport jest wysyłany bez pytania: co uległo awarii, Twój system, ustawienia i ostatnie wiersze dziennika. Nigdy Twoje napisy, pliki ani ich nazwy.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Reference</name>
@@ -8236,6 +8244,369 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>The reference is protected (read-only).</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Reports</name>
+    <message>
+        <source>%1, as a .zip to drag into the issue</source>
+        <translation>%1 jako .zip do przeciągnięcia do zgłoszenia</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>Raport o awarii został wysłany.</translation>
+    </message>
+    <message>
+        <source>A report helps find the cause. You can read all of it before it goes.</source>
+        <translation>Raport pomaga znaleźć przyczynę. Możesz przeczytać całość, zanim zostanie wysłany.</translation>
+    </message>
+    <message>
+        <source>A short summary</source>
+        <translation>Krótkie podsumowanie</translation>
+    </message>
+    <message>
+        <source>Add the screenshot</source>
+        <translation>Dodaj zrzut ekranu</translation>
+    </message>
+    <message>
+        <source>Add the subtitle file</source>
+        <translation>Dodaj plik napisów</translation>
+    </message>
+    <message>
+        <source>Always included</source>
+        <translation>Zawsze dołączane</translation>
+    </message>
+    <message>
+        <source>Always send crash reports</source>
+        <translation>Zawsze wysyłaj raporty o awariach</translation>
+    </message>
+    <message>
+        <source>Ask away. Name the panel or command it is about.</source>
+        <translation>Pytaj śmiało. Podaj panel lub polecenie, którego dotyczy.</translation>
+    </message>
+    <message>
+        <source>Attached</source>
+        <translation>Załączone</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>Błąd</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Check it there and press Create. You need a GitHub account.</source>
+        <translation>Sprawdź go tam i naciśnij Create. Potrzebujesz konta GitHub.</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Copy again</source>
+        <translation>Kopiuj ponownie</translation>
+    </message>
+    <message>
+        <source>Copy image</source>
+        <translation>Kopiuj obraz</translation>
+    </message>
+    <message>
+        <source>Copy the report</source>
+        <translation>Kopiuj raport</translation>
+    </message>
+    <message>
+        <source>Crash report</source>
+        <translation>Raport o awarii</translation>
+    </message>
+    <message>
+        <source>Crash report sent. Thank you.</source>
+        <translation>Raport o awarii wysłany. Dziękujemy.</translation>
+    </message>
+    <message>
+        <source>Describe the feature.</source>
+        <translation>Opisz funkcję.</translation>
+    </message>
+    <message>
+        <source>Don&apos;t send</source>
+        <translation>Nie wysyłaj</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Gotowe</translation>
+    </message>
+    <message>
+        <source>Drag it into the description, or copy it and paste it there.</source>
+        <translation>Przeciągnij go do opisu albo skopiuj i wklej tam.</translation>
+    </message>
+    <message>
+        <source>Drag the .zip into the description. Only you choose to share it.</source>
+        <translation>Przeciągnij .zip do opisu. Tylko Ty decydujesz, czy go udostępnić.</translation>
+    </message>
+    <message>
+        <source>Feature request</source>
+        <translation>Prośba o funkcję</translation>
+    </message>
+    <message>
+        <source>File names become file1, file2… Your subtitle file, its text and your folders are never in a report.</source>
+        <translation>Nazwy plików zmieniają się w file1, file2… Twój plik napisów, jego tekst i Twoje foldery nigdy nie trafiają do raportu.</translation>
+    </message>
+    <message>
+        <source>Finish on GitHub</source>
+        <translation>Dokończ na GitHubie</translation>
+    </message>
+    <message>
+        <source>GitHub opened an empty %1 form. Paste into its first field (Ctrl+V).</source>
+        <translation>GitHub otworzył pusty formularz „%1”. Wklej do jego pierwszego pola (Ctrl+V).</translation>
+    </message>
+    <message>
+        <source>HikariSub closed unexpectedly</source>
+        <translation>HikariSub nieoczekiwanie się zamknął</translation>
+    </message>
+    <message>
+        <source>HikariSub closed unexpectedly. A crash report was sent.</source>
+        <translation>HikariSub nieoczekiwanie się zamknął. Raport o awarii został wysłany.</translation>
+    </message>
+    <message>
+        <source>HikariSub crashed %1.</source>
+        <translation>HikariSub uległ awarii %1.</translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding</source>
+        <translation>HikariSub przestał odpowiadać</translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding %1 and was closed.</source>
+        <translation>HikariSub przestał odpowiadać %1 i został zamknięty.</translation>
+    </message>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds</source>
+        <translation>
+            <numerusform>HikariSub przestał odpowiadać na %n sekundę</numerusform>
+            <numerusform>HikariSub przestał odpowiadać na %n sekundy</numerusform>
+            <numerusform>HikariSub przestał odpowiadać na %n sekund</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds %1.</source>
+        <translation>
+            <numerusform>HikariSub przestał odpowiadać na %n sekundę %1.</numerusform>
+            <numerusform>HikariSub przestał odpowiadać na %n sekundy %1.</numerusform>
+            <numerusform>HikariSub przestał odpowiadać na %n sekund %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding. A freeze report was sent.</source>
+        <translation>HikariSub przestał odpowiadać. Raport o zawieszeniu został wysłany.</translation>
+    </message>
+    <message>
+        <source>It froze for 10 seconds or more. A report shows where it was stuck.</source>
+        <translation>Zawiesił się na 10 sekund lub dłużej. Raport pokazuje, gdzie się zawiesił.</translation>
+    </message>
+    <message>
+        <source>It is kept for the next start.</source>
+        <translation>Zostanie zachowany do następnego uruchomienia.</translation>
+    </message>
+    <message>
+        <source>It works again. A report shows where it was stuck.</source>
+        <translation>Znowu działa. Raport pokazuje, gdzie się zawiesił.</translation>
+    </message>
+    <message>
+        <source>It works again. Send a report of where it was stuck?</source>
+        <translation>Znowu działa. Wysłać raport o tym, gdzie się zawiesił?</translation>
+    </message>
+    <message>
+        <source>Kind</source>
+        <translation>Rodzaj</translation>
+    </message>
+    <message>
+        <source>Log excerpt</source>
+        <translation>Fragment dziennika</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>Notatka</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you press Send report</source>
+        <translation>Nic nie zostanie wysłane, dopóki nie naciśniesz Wyślij raport</translation>
+    </message>
+    <message>
+        <source>Open GitHub issue</source>
+        <translation>Otwórz zgłoszenie na GitHubie</translation>
+    </message>
+    <message>
+        <source>Open on GitHub</source>
+        <translation>Otwórz na GitHubie</translation>
+    </message>
+    <message>
+        <source>Open the form again</source>
+        <translation>Otwórz formularz ponownie</translation>
+    </message>
+    <message>
+        <source>Question</source>
+        <translation>Pytanie</translation>
+    </message>
+    <message>
+        <source>Report</source>
+        <translation>Raport</translation>
+    </message>
+    <message>
+        <source>Report a freeze</source>
+        <translation>Zgłoś zawieszenie</translation>
+    </message>
+    <message>
+        <source>Report an issue</source>
+        <translation>Zgłoś problem</translation>
+    </message>
+    <message>
+        <source>Report…</source>
+        <translation>Zgłoś…</translation>
+    </message>
+    <message>
+        <source>Screenshot of the window</source>
+        <translation>Zrzut ekranu okna</translation>
+    </message>
+    <message>
+        <source>Send report</source>
+        <translation>Wyślij raport</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <source>Show file</source>
+        <translation>Pokaż plik</translation>
+    </message>
+    <message>
+        <source>Show report</source>
+        <translation>Pokaż raport</translation>
+    </message>
+    <message>
+        <source>Steps to reproduce</source>
+        <translation>Kroki do odtworzenia</translation>
+    </message>
+    <message>
+        <source>Subtitle file</source>
+        <translation>Plik napisów</translation>
+    </message>
+    <message>
+        <source>System and settings</source>
+        <translation>System i ustawienia</translation>
+    </message>
+    <message>
+        <source>The %1 form opened in your browser, filled in.</source>
+        <translation>Formularz „%1” otworzył się w przeglądarce, wypełniony.</translation>
+    </message>
+    <message>
+        <source>The crash report could not be sent</source>
+        <translation>Nie udało się wysłać raportu o awarii</translation>
+    </message>
+    <message>
+        <source>The report is too long for a link, so it is on the clipboard.</source>
+        <translation>Raport jest za długi na link, więc jest w schowku.</translation>
+    </message>
+    <message>
+        <source>The report is too long for a link, so it is on the clipboard. Paste it into the form.</source>
+        <translation>Raport jest za długi na link, więc jest w schowku. Wklej go do formularza.</translation>
+    </message>
+    <message>
+        <source>The browser did not open</source>
+        <translation>Przeglądarka się nie otworzyła</translation>
+    </message>
+    <message>
+        <source>The issue is on the clipboard. Paste it into a new issue on GitHub.</source>
+        <translation>Zgłoszenie jest w schowku. Wklej je do nowego zgłoszenia na GitHubie.</translation>
+    </message>
+    <message>
+        <source>The whole report</source>
+        <translation>Cały raport</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>Tytuł</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>What are you trying to do?</source>
+        <translation>Co próbujesz zrobić?</translation>
+    </message>
+    <message>
+        <source>What happened</source>
+        <translation>Co się stało</translation>
+    </message>
+    <message>
+        <source>What it would help with</source>
+        <translation>W czym by to pomogło</translation>
+    </message>
+    <message>
+        <source>What the report contains</source>
+        <translation>Co zawiera raport</translation>
+    </message>
+    <message>
+        <source>What were you doing when it closed? (optional)</source>
+        <translation>Co robiłeś, gdy się zamknął? (opcjonalnie)</translation>
+    </message>
+    <message>
+        <source>What were you doing when it froze? (optional)</source>
+        <translation>Co robiłeś, gdy się zawiesił? (opcjonalnie)</translation>
+    </message>
+    <message>
+        <source>What you expected</source>
+        <translation>Czego oczekiwałeś</translation>
+    </message>
+    <message>
+        <source>What you&apos;d like</source>
+        <translation>Czego potrzebujesz</translation>
+    </message>
+    <message>
+        <source>Your question</source>
+        <translation>Twoje pytanie</translation>
+    </message>
+    <message>
+        <source>Your work</source>
+        <translation>Twoja praca</translation>
+    </message>
+    <message>
+        <source>crash record, system, settings, last 200 log lines</source>
+        <translation>zapis awarii, system, ustawienia, ostatnie 200 wierszy dziennika</translation>
+    </message>
+    <message>
+        <source>freeze record, system, settings, last 200 log lines</source>
+        <translation>zapis zawieszenia, system, ustawienia, ostatnie 200 wierszy dziennika</translation>
+    </message>
+    <message>
+        <source>last 200 lines, file names replaced</source>
+        <translation>ostatnie 200 wierszy, nazwy plików zastąpione</translation>
+    </message>
+    <message>
+        <source>on %1 at %2</source>
+        <translation>%1 o %2</translation>
+    </message>
+    <message>
+        <source>today at %1</source>
+        <translation>dziś o %1</translation>
+    </message>
+    <message>
+        <source>yesterday at %1</source>
+        <translation>wczoraj o %1</translation>
+    </message>
+    <message>
+        <source>“Always send crash reports” is on.</source>
+        <translation>„Zawsze wysyłaj raporty o awariach” jest włączone.</translation>
+    </message>
+    <message>
+        <source>“Always send crash reports” is on. This is what was sent.</source>
+        <translation>„Zawsze wysyłaj raporty o awariach” jest włączone. Oto, co zostało wysłane.</translation>
     </message>
 </context>
 <context>
