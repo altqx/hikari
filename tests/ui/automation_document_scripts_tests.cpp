@@ -194,6 +194,14 @@ private slots:
         QVERIFY2(row(b).value(QStringLiteral("state")).toString() == u"ready",
                  qPrintable(row(b).value(QStringLiteral("error")).toString()));
 
+        // Not while it loads (nor runs a macro): it stays on.
+        QVERIFY(app->automation().managerController()->reload(a));
+        QCOMPARE(row(a).value(QStringLiteral("state")).toString(), QStringLiteral("loading"));
+        app->automation().managerController()->setEnabled(a, false);
+        QCOMPARE(app->settingsStore()->list("automation.disabledAutoload"), QStringList());
+        QVERIFY(settled());
+        QCOMPARE(loaded(), (QStringList{a, b}));
+
         app->automation().managerController()->setEnabled(a, false);
         QVERIFY(settled());
         QCOMPARE(loaded(), QStringList{b});

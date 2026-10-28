@@ -878,6 +878,8 @@ Pane {
                     objectName: "enabled_" + scriptItem.row.index
                     visible: !scriptItem.script.inDocument
                     checked: scriptItem.script.enabled ?? true
+                    // Not while it loads or runs a macro (#397), as Reload.
+                    enabled: scriptItem.state !== "running" && scriptItem.state !== "loading"
                     padding: 0
                     Accessible.name: qsTr("Load %1 at start").arg(root.scriptTitle(scriptItem.script))
                     ToolTip.visible: hovered

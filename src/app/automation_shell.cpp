@@ -497,6 +497,14 @@ void AutomationShell::setAutoloadEnabled(const QString &script, bool enabled)
 {
     if (!m_settings || autoloadEnabled(script) == enabled)
         return;
+    const std::string path = script.toStdString();
+    // Not while it loads or runs a macro: unloading then would leave the run
+    // (and its Document's lock) unfinished. The panel's box is off then too.
+    using State = backends::LuaScriptHost::State;
+    const auto *host = m_manager.host(path);
+    if (!enabled && host && (host->state() == State::Loading || host->state() == State::Running
+                             || (m_run && m_run->active == path)))
+        return;
     const QString name = QFileInfo(script).fileName();
     QStringList disabled = m_settings->list("automation.disabledAutoload");
     if (enabled)
@@ -506,7 +514,6 @@ void AutomationShell::setAutoloadEnabled(const QString &script, bool enabled)
     else
         disabled << name;
     m_settings->set("automation.disabledAutoload", disabled);
-    const std::string path = script.toStdString();
     if (enabled && !m_manager.host(path))
         m_manager.load(path);
     else if (!enabled && m_manager.host(path))

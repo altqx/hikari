@@ -121,6 +121,12 @@ private slots:
         QTest::mouseClick(view.get(), Qt::LeftButton, {},
                           onBox->mapToScene(QPointF(onBox->width() / 2, onBox->height() / 2)).toPoint());
         QCOMPARE(toggled.last(), std::pair(on, false));
+        // Off while it loads or runs a macro, as Reload.
+        QVERIFY(controller->reload(on));
+        QCOMPARE(scriptState(0), QStringLiteral("loading"));
+        QTRY_VERIFY(!item(QStringLiteral("enabled_0"))->property("enabled").toBool());
+        QTRY_COMPARE(scriptState(0), QStringLiteral("ready"));
+        QTRY_VERIFY(item(QStringLiteral("enabled_0"))->property("enabled").toBool());
     }
 
     void reloadIsVisible()
