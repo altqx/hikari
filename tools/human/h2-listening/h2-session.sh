@@ -801,7 +801,7 @@ jq -s --arg started "$SESSION_STARTED" --arg ended "$(now_iso)" --arg host "$(ho
     echo "# H2 listening results ($(hostname), $DATE)"
     echo
     if ((DRY_RUN)); then echo "**Dry run: nothing was played to a listener; every answer is not observed.**"; echo; fi
-    echo "- Card: [H2 #125](https://github.com/altqx/hikari/issues/125); automated records: I3 #115, N6 #110 (coverage ledger rows)."
+    echo "- Card: [H2 #125](https://github.com/altqx/hikari/issues/125); automated records: I3 #115, N6 #110."
     echo "- Build: \`$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)\` ($BUILD_DIR)"
     echo "- System: $(uname -sr), ${XDG_CURRENT_DESKTOP:-?} on ${XDG_SESSION_TYPE:-?}; $(grep -m1 '^Server Name' "$OUT/env/system.txt" 2>/dev/null | cut -d: -f2- | sed 's/^ //')"
     echo "- Default output at start: \`${ORIGINAL_SINK:-?}\`"
