@@ -8,7 +8,7 @@ Nothing leaves the machine until you press **Send report** or **Open GitHub issu
 
 - **A crash.** A signal handler (Linux) or an unhandled-exception filter (Windows) writes `crash-record.txt` to the cache folder. The handler is always installed.
 - **A freeze.** A watchdog thread checks every second that the window still answers. After 10 seconds without an answer it records the main thread's stack in `hang-record.txt` (Linux: a signal to the main thread; Windows: the thread suspended for a moment and its stack walked). The record is rewritten every 5 seconds while the window stays stuck. If the window answers again, the record is removed and the freeze is offered as a notice.
-- **The Log's last lines.** Every Log entry is scrubbed as it comes, and the last 200 lines (64 KB at most, each line cut at 1,000 characters) are kept in `reports/log-tail.txt`, so the next start has the Log of a run that crashed. The `reports` folder in the cache folder is readable by your account only.
+- **The Log's last lines.** Every Log entry is scrubbed as it comes, and the last 200 lines (64 KB at most, each line cut at 1,000 characters) are kept in `reports/log-tail.txt`, so the next start has the Log of a run that crashed. The `reports` folder in the cache folder is readable by your account only. A freeze report on its way when the program closes is kept there (`crash-report-sending.json`) until an answer comes, and offered again at the next start.
 
 A record holds the error (the signal, the Windows exception, or `APP_HANG` and how long), the version and up to 32 frames, each a module name and an offset. A module is named only when it is one of the program's files or the system's; any other module is `other`.
 

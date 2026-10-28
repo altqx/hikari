@@ -86,7 +86,8 @@ DialogWindow {
         page = "finish"
         doneButton.forceActiveFocus(Qt.TabFocusReason)
     }
-    onVisibleChanged: if (!visible) reports.discardAttachments()
+    // Not when the title bar setting remakes the window (hide, then show).
+    onVisibleChanged: if (!visible && !WindowFrame.remaking(issue)) reports.discardAttachments()
 
     // The form.
     GridLayout {

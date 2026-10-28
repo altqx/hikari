@@ -672,6 +672,42 @@ private slots:
 #endif
     }
 
+    // A freeze report on its way when the run ends is offered at the next
+    // start; once answered, nothing of it is left on disk.
+    void freezeSendingAtQuitIsKept()
+    {
+        AnalyticsEndpoint endpoint;
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.usageData", false);
+        Analytics analytics(settings, analyticsConfig(endpoint.url()));
+        hikari::ui::LogController log;
+        const crash::Record freeze{QStringLiteral("APP_HANG"), QStringLiteral("watchdog"), QStringLiteral("0.1.0-beta.1"),
+                                   {{QStringLiteral("hikarisub"), 0x31c0a8}}, 12};
+        {
+            CrashReports reports(settings, analytics, log, config());
+            reports.started(QStringLiteral("appimage"), 1, 1, QStringLiteral("editing"));
+            reports.freezeRecovered(freeze);
+            QVERIFY(reports.send(QStringLiteral("freeze"), {}));
+            QVERIFY(QFile::exists(path("crash-report-sending.json")));
+        } // the run ends before the answer
+        {
+            CrashReports next(settings, analytics, log, config());
+            QCOMPARE(next.pending(), QStringLiteral("freeze"));
+            QCOMPARE(next.seconds(kStart), 12);
+            QVERIFY(!QFile::exists(path("crash-report-sending.json")));
+            next.dismiss(kStart);
+        }
+        CrashReports reports(settings, analytics, log, config());
+        reports.started(QStringLiteral("appimage"), 1, 1, QStringLiteral("editing"));
+        reports.freezeRecovered(freeze);
+        QSignalSpy sent(&reports, &CrashReports::sent);
+        QVERIFY(QTest::qWaitFor([&] { return reports.send(QStringLiteral("freeze"), {}); }, 5000));
+        QVERIFY(sent.wait(5000));
+        QCOMPARE(sent.first().at(1).toBool(), true);
+        QVERIFY(!QFile::exists(path("crash-report-sending.json")));
+        QCOMPARE(reports.pending(), QString());
+    }
+
     // A build without a key can't send; Send report does nothing.
     void noKeyNoSend()
     {
@@ -790,6 +826,10 @@ private slots:
         QTest::newRow("unc path") << QStringLiteral("Read \\\\nas\\share\\a.wav") << QStringLiteral("Read file1.wav");
         QTest::newRow("file url") << QStringLiteral("Open file:///home/me/x.ass") << QStringLiteral("Open file1.ass");
         QTest::newRow("folder") << QStringLiteral("Folder /home/me/stuff is empty") << QStringLiteral("Folder \u2039folder\u203A is empty");
+        QTest::newRow("folder with spaces") << QStringLiteral("Moved to /home/Alice Smith/.local/share/HikariSub now")
+                                            << QStringLiteral("Moved to \u2039folder\u203A now");
+        QTest::newRow("windows folder with spaces") << QStringLiteral("Moved to C:\\Users\\Alice Smith\\AppData\\Local\\HikariSub")
+                                                    << QStringLiteral("Moved to \u2039folder\u203A");
         QTest::newRow("home folder") << QStringLiteral("In ~/Subs") << QStringLiteral("In \u2039folder\u203A");
         QTest::newRow("bare name") << QStringLiteral("Loaded karaoke.lua") << QStringLiteral("Loaded file1.lua");
         QTest::newRow("same name twice") << QStringLiteral("a.ass then A.ASS") << QStringLiteral("file1.ass then file1.ass");

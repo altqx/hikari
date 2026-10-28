@@ -133,6 +133,7 @@ CrashReports::CrashReports(ui::SettingsStore &settings, Analytics &analytics, ui
         const bool automatic = m_sendingAuto;
         m_sending = false;
         m_sendingAuto = false;
+        writeReport(sendingFile(), std::nullopt);
         // A newer freeze may have taken the slot while it went.
         const auto *r = slot(source);
         const bool current = *r && (*r)->id == sentReport.id;
@@ -212,6 +213,8 @@ void CrashReports::collect()
         m_pending->when = when;
         m_pending->log = lastLog;
         savePending();
+        if (!sendingFile().isEmpty())
+            QFile::remove(sendingFile());
         return;
     }
     if (const QByteArray json = readPrivate(m_config.pendingFile); !json.isEmpty()) {
@@ -221,21 +224,44 @@ void CrashReports::collect()
             QFile::remove(m_config.pendingFile);
         }
     }
+    // A freeze report still on its way when the last run ended: no answer
+    // came, so it is offered again (when no other report waits).
+    if (const QByteArray json = readPrivate(sendingFile()); !json.isEmpty() && !m_pending) {
+        m_pending = report::Report::fromJson(QJsonDocument::fromJson(json).object());
+        if (m_pending && m_pending->record)
+            savePending();
+        else
+            m_pending.reset();
+    }
+    if (!sendingFile().isEmpty())
+        QFile::remove(sendingFile());
+}
+
+QString CrashReports::sendingFile() const
+{
+    return m_config.pendingFile.isEmpty()
+               ? QString()
+               : QFileInfo(m_config.pendingFile).path() + QStringLiteral("/crash-report-sending.json");
+}
+
+void CrashReports::writeReport(const QString &path, const std::optional<report::Report> &r)
+{
+    if (path.isEmpty())
+        return;
+    if (!r) {
+        QFile::remove(path);
+        return;
+    }
+    QSaveFile file(path);
+    if (inPrivateFolder(path) && file.open(QIODevice::WriteOnly)) {
+        file.write(QJsonDocument(r->toJson()).toJson(QJsonDocument::Compact));
+        file.commit();
+    }
 }
 
 void CrashReports::savePending()
 {
-    if (m_config.pendingFile.isEmpty())
-        return;
-    if (!m_pending) {
-        QFile::remove(m_config.pendingFile);
-        return;
-    }
-    QSaveFile file(m_config.pendingFile);
-    if (inPrivateFolder(m_config.pendingFile) && file.open(QIODevice::WriteOnly)) {
-        file.write(QJsonDocument(m_pending->toJson()).toJson(QJsonDocument::Compact));
-        file.commit();
-    }
+    writeReport(m_config.pendingFile, m_pending);
 }
 
 void CrashReports::started(const QString &package, int screens, qreal scale, const QString &layout)
@@ -332,6 +358,10 @@ bool CrashReports::send(const QString &source, const QString &note)
         return false;
     m_sentText = (*r)->text(note);
     m_inFlight = **r;
+    // A freeze lives only in memory: kept on disk until the answer comes,
+    // should the app close first.
+    if (source != kStart)
+        writeReport(sendingFile(), m_inFlight);
     m_sending = true;
     m_sendingSource = source;
     emit sendingChanged();

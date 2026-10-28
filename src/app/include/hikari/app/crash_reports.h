@@ -11,7 +11,9 @@
 //   taken to GitHub or dismissed. "Always send crash reports" sends it at
 //   once instead (autoSent).
 // * A freeze the window came back from (HangWatchdog::recovered): a report
-//   in memory, offered by a notice (freezeRecovered).
+//   in memory, offered by a notice (freezeRecovered). While Send report
+//   sends it, it is kept in crash-report-sending.json, so a run that ends
+//   before the answer offers it again at the next start.
 // * The Log tail: every Log entry, scrubbed as it comes, the last
 //   report::kLogLines lines kept in log-tail.txt, so the next start has
 //   the Log of a run that crashed.
@@ -147,6 +149,8 @@ private:
     report::Report fresh() const;
     void collect();
     void savePending();
+    QString sendingFile() const;
+    static void writeReport(const QString &path, const std::optional<report::Report> &r);
     void done(const QString &source);
     void entryAdded(const QString &time, int severity, const QString &title, const QString &text,
                     const QString &details);

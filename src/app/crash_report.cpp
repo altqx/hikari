@@ -100,7 +100,9 @@ QString Scrubber::scrub(const QString &input)
         const QString name = placeholder(fileNameOf(m.captured()));
         text.replace(m.capturedStart(), m.capturedLength(), name);
     }
-    static const QRegularExpression folder(kPathStart + QStringLiteral(R"([^\s"“”«»<>|]+)"));
+    // A folder name may hold spaces: the path goes on past one while the
+    // next word holds a separator too (/home/Alice Smith/.local).
+    static const QRegularExpression folder(kPathStart + QStringLiteral(R"([^\s"“”«»<>|]+(?:[ \t]+[^\s"“”«»<>|/\\]*[/\\][^\s"“”«»<>|]*)*)"));
     text.replace(folder, QStringLiteral("\u2039folder\u203A"));
     // The names of the files open now, then any other word that is a file name.
     if (m_names) {
