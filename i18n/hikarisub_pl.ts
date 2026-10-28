@@ -6760,6 +6760,10 @@ gdy okno wyników szukania jest otwarte</translation>
         <source>What is sent</source>
         <translation>Co jest wysyłane</translation>
     </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Options</name>
@@ -8193,6 +8197,14 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
         <translation>Po awarii lub zawieszeniu raport jest wysyłany bez pytania: co uległo awarii, Twój system, ustawienia i ostatnie wiersze dziennika. Nigdy Twoje napisy, pliki ani ich nazwy.</translation>
+    </message>
+    <message>
+        <source>Primary language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
