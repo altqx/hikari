@@ -77,6 +77,8 @@ The persistent tool is the **Automation** dock panel ([AM1](https://github.com/a
 
 Shortcuts go through the shortcut editor's gesture path, so they are the same bindings Settings → Hotkeys edits under its "Automation shortcuts" filter, and the shortcut audit sees them with the rest. Shift+click on a macro in the Automation menu opens the panel recording that macro's shortcut. The separate hotkeys window and its command are retired (AM1-hotkeys-window-retired). The panel's "⋯" menu adds Load script…, Refresh autoload scripts, Shortcuts in Settings… and Clear runs; a legacy Hotkeys.txt's script bindings are imported from Settings → Hotkeys (PU7-import-hotkeys).
 
+The Automation menu lists the macros after its commands, in load and registration order. A "/" in a macro's name opens submenus as in Aegisub ([AS1](https://github.com/altqx/hikari/issues/471)): `Group/Sub/Macro` shows Macro under Group ▸ Sub, names sharing a prefix share its submenus, and empty pieces stay (an untitled submenu, an item with no text). A macro and a submenu of the same name both show. Shortcuts, the panel and Settings → Hotkeys keep the full name (AS1-macro-submenus).
+
 ## Accepted cancellation and transaction policy (2026-09-29)
 
 altqx settled the remaining host choices in a live review, closing [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33).
