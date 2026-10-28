@@ -8077,6 +8077,14 @@ and will be changed to the default</source>
         <source>Border color</source>
         <translation>สีเส้นขอบ</translation>
     </message>
+    <message>
+        <source>Always send crash reports</source>
+        <translation>ส่งรายงานการขัดข้องเสมอ</translation>
+    </message>
+    <message>
+        <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
+        <translation>หลังจากขัดข้องหรือค้าง รายงานจะถูกส่งโดยไม่ถาม: สิ่งที่ขัดข้อง ระบบ การตั้งค่า และบรรทัดล่าสุดของบันทึก ไม่รวมคำบรรยาย ไฟล์ หรือชื่อไฟล์ของคุณ</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Reference</name>
@@ -8131,6 +8139,357 @@ and will be changed to the default</source>
     <message>
         <source>The reference is protected (read-only).</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Reports</name>
+    <message>
+        <source>%1, as a .zip to drag into the issue</source>
+        <translation>%1 เป็นไฟล์ .zip สำหรับลากไปใส่ใน issue</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>ส่งรายงานการขัดข้องแล้ว</translation>
+    </message>
+    <message>
+        <source>A report helps find the cause. You can read all of it before it goes.</source>
+        <translation>รายงานช่วยหาสาเหตุ คุณอ่านได้ทั้งหมดก่อนส่ง</translation>
+    </message>
+    <message>
+        <source>A short summary</source>
+        <translation>สรุปสั้น ๆ</translation>
+    </message>
+    <message>
+        <source>Add the screenshot</source>
+        <translation>เพิ่มภาพหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Add the subtitle file</source>
+        <translation>เพิ่มไฟล์คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Always included</source>
+        <translation>แนบเสมอ</translation>
+    </message>
+    <message>
+        <source>Always send crash reports</source>
+        <translation>ส่งรายงานการขัดข้องเสมอ</translation>
+    </message>
+    <message>
+        <source>Ask away. Name the panel or command it is about.</source>
+        <translation>ถามได้เลย ระบุแผงหรือคำสั่งที่เกี่ยวข้อง</translation>
+    </message>
+    <message>
+        <source>Attached</source>
+        <translation>แนบมา</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>ข้อบกพร่อง</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Check it there and press Create. You need a GitHub account.</source>
+        <translation>ตรวจสอบที่นั่นแล้วกด Create คุณต้องมีบัญชี GitHub</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Copy again</source>
+        <translation>คัดลอกอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Copy image</source>
+        <translation>คัดลอกรูปภาพ</translation>
+    </message>
+    <message>
+        <source>Copy the report</source>
+        <translation>คัดลอกรายงาน</translation>
+    </message>
+    <message>
+        <source>Crash report</source>
+        <translation>รายงานการขัดข้อง</translation>
+    </message>
+    <message>
+        <source>Crash report sent. Thank you.</source>
+        <translation>ส่งรายงานการขัดข้องแล้ว ขอบคุณ</translation>
+    </message>
+    <message>
+        <source>Describe the feature.</source>
+        <translation>อธิบายฟีเจอร์</translation>
+    </message>
+    <message>
+        <source>Don&apos;t send</source>
+        <translation>ไม่ส่ง</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>เสร็จสิ้น</translation>
+    </message>
+    <message>
+        <source>Drag it into the description, or copy it and paste it there.</source>
+        <translation>ลากไปใส่ในคำอธิบาย หรือคัดลอกแล้ววางที่นั่น</translation>
+    </message>
+    <message>
+        <source>Drag the .zip into the description. Only you choose to share it.</source>
+        <translation>ลากไฟล์ .zip ไปใส่ในคำอธิบาย คุณเป็นผู้เลือกว่าจะแชร์หรือไม่</translation>
+    </message>
+    <message>
+        <source>Feature request</source>
+        <translation>ขอฟีเจอร์</translation>
+    </message>
+    <message>
+        <source>File names become file1, file2… Your subtitle file, its text and your folders are never in a report.</source>
+        <translation>ชื่อไฟล์จะกลายเป็น file1, file2… ไฟล์คำบรรยาย ข้อความในไฟล์ และโฟลเดอร์ของคุณจะไม่อยู่ในรายงานเลย</translation>
+    </message>
+    <message>
+        <source>Finish on GitHub</source>
+        <translation>ทำต่อให้เสร็จบน GitHub</translation>
+    </message>
+    <message>
+        <source>GitHub opened an empty %1 form. Paste into its first field (Ctrl+V).</source>
+        <translation>GitHub เปิดแบบฟอร์ม %1 ที่ว่างเปล่า วางลงในช่องแรก (Ctrl+V)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed unexpectedly</source>
+        <translation>HikariSub ปิดโดยไม่คาดคิด</translation>
+    </message>
+    <message>
+        <source>HikariSub closed unexpectedly. A crash report was sent.</source>
+        <translation>HikariSub ปิดโดยไม่คาดคิด ส่งรายงานการขัดข้องแล้ว</translation>
+    </message>
+    <message>
+        <source>HikariSub crashed %1.</source>
+        <translation>HikariSub ขัดข้อง %1</translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding</source>
+        <translation>HikariSub หยุดตอบสนอง</translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding %1 and was closed.</source>
+        <translation>HikariSub หยุดตอบสนอง %1 และถูกปิด</translation>
+    </message>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds</source>
+        <translation>
+            <numerusform>HikariSub หยุดตอบสนองนาน %n วินาที</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds %1.</source>
+        <translation>
+            <numerusform>HikariSub หยุดตอบสนองนาน %n วินาที %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding. A freeze report was sent.</source>
+        <translation>HikariSub หยุดตอบสนอง ส่งรายงานการค้างแล้ว</translation>
+    </message>
+    <message>
+        <source>It froze for 10 seconds or more. A report shows where it was stuck.</source>
+        <translation>ค้างนาน 10 วินาทีขึ้นไป รายงานจะแสดงว่าค้างอยู่ที่ใด</translation>
+    </message>
+    <message>
+        <source>It is kept for the next start.</source>
+        <translation>จะเก็บไว้จนถึงการเริ่มครั้งถัดไป</translation>
+    </message>
+    <message>
+        <source>It works again. A report shows where it was stuck.</source>
+        <translation>กลับมาทำงานแล้ว รายงานจะแสดงว่าค้างอยู่ที่ใด</translation>
+    </message>
+    <message>
+        <source>It works again. Send a report of where it was stuck?</source>
+        <translation>กลับมาทำงานแล้ว ส่งรายงานว่าค้างอยู่ที่ใดไหม</translation>
+    </message>
+    <message>
+        <source>Kind</source>
+        <translation>ประเภท</translation>
+    </message>
+    <message>
+        <source>Log excerpt</source>
+        <translation>ส่วนของบันทึก</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>หมายเหตุ</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you press Send report</source>
+        <translation>จะไม่มีการส่งสิ่งใดจนกว่าคุณจะกดส่งรายงาน</translation>
+    </message>
+    <message>
+        <source>Open GitHub issue</source>
+        <translation>เปิด issue บน GitHub</translation>
+    </message>
+    <message>
+        <source>Open on GitHub</source>
+        <translation>เปิดบน GitHub</translation>
+    </message>
+    <message>
+        <source>Open the form again</source>
+        <translation>เปิดแบบฟอร์มอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Question</source>
+        <translation>คำถาม</translation>
+    </message>
+    <message>
+        <source>Report</source>
+        <translation>รายงาน</translation>
+    </message>
+    <message>
+        <source>Report a freeze</source>
+        <translation>รายงานการค้าง</translation>
+    </message>
+    <message>
+        <source>Report an issue</source>
+        <translation>รายงานปัญหา</translation>
+    </message>
+    <message>
+        <source>Report…</source>
+        <translation>รายงาน…</translation>
+    </message>
+    <message>
+        <source>Screenshot of the window</source>
+        <translation>ภาพหน้าจอของหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Send report</source>
+        <translation>ส่งรายงาน</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>การตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Show file</source>
+        <translation>แสดงไฟล์</translation>
+    </message>
+    <message>
+        <source>Show report</source>
+        <translation>แสดงรายงาน</translation>
+    </message>
+    <message>
+        <source>Steps to reproduce</source>
+        <translation>ขั้นตอนการทำซ้ำ</translation>
+    </message>
+    <message>
+        <source>Subtitle file</source>
+        <translation>ไฟล์คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>System and settings</source>
+        <translation>ระบบและการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>The %1 form opened in your browser, filled in.</source>
+        <translation>แบบฟอร์ม %1 เปิดในเบราว์เซอร์ของคุณพร้อมกรอกข้อมูลแล้ว</translation>
+    </message>
+    <message>
+        <source>The crash report could not be sent</source>
+        <translation>ส่งรายงานการขัดข้องไม่ได้</translation>
+    </message>
+    <message>
+        <source>The report is too long for a link, so it is on the clipboard.</source>
+        <translation>รายงานยาวเกินกว่าจะใส่ในลิงก์ จึงอยู่ในคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>The report is too long for a link, so it is on the clipboard. Paste it into the form.</source>
+        <translation>รายงานยาวเกินกว่าจะใส่ในลิงก์ จึงอยู่ในคลิปบอร์ด วางลงในแบบฟอร์ม</translation>
+    </message>
+    <message>
+        <source>The whole report</source>
+        <translation>รายงานทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>หัวข้อ</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>What are you trying to do?</source>
+        <translation>คุณกำลังพยายามทำอะไร</translation>
+    </message>
+    <message>
+        <source>What happened</source>
+        <translation>เกิดอะไรขึ้น</translation>
+    </message>
+    <message>
+        <source>What it would help with</source>
+        <translation>จะช่วยในเรื่องใด</translation>
+    </message>
+    <message>
+        <source>What the report contains</source>
+        <translation>สิ่งที่อยู่ในรายงาน</translation>
+    </message>
+    <message>
+        <source>What were you doing when it closed? (optional)</source>
+        <translation>คุณกำลังทำอะไรอยู่ตอนที่โปรแกรมปิด (ไม่บังคับ)</translation>
+    </message>
+    <message>
+        <source>What were you doing when it froze? (optional)</source>
+        <translation>คุณกำลังทำอะไรอยู่ตอนที่โปรแกรมค้าง (ไม่บังคับ)</translation>
+    </message>
+    <message>
+        <source>What you expected</source>
+        <translation>สิ่งที่คุณคาดหวัง</translation>
+    </message>
+    <message>
+        <source>What you&apos;d like</source>
+        <translation>สิ่งที่คุณต้องการ</translation>
+    </message>
+    <message>
+        <source>Your question</source>
+        <translation>คำถามของคุณ</translation>
+    </message>
+    <message>
+        <source>Your work</source>
+        <translation>งานของคุณ</translation>
+    </message>
+    <message>
+        <source>crash record, system, settings, last 200 log lines</source>
+        <translation>บันทึกการขัดข้อง ระบบ การตั้งค่า บันทึก 200 บรรทัดล่าสุด</translation>
+    </message>
+    <message>
+        <source>freeze record, system, settings, last 200 log lines</source>
+        <translation>บันทึกการค้าง ระบบ การตั้งค่า บันทึก 200 บรรทัดล่าสุด</translation>
+    </message>
+    <message>
+        <source>last 200 lines, file names replaced</source>
+        <translation>200 บรรทัดล่าสุด แทนที่ชื่อไฟล์แล้ว</translation>
+    </message>
+    <message>
+        <source>on %1 at %2</source>
+        <translation>วันที่ %1 เวลา %2</translation>
+    </message>
+    <message>
+        <source>today at %1</source>
+        <translation>วันนี้เวลา %1</translation>
+    </message>
+    <message>
+        <source>yesterday at %1</source>
+        <translation>เมื่อวานเวลา %1</translation>
+    </message>
+    <message>
+        <source>“Always send crash reports” is on.</source>
+        <translation>“ส่งรายงานการขัดข้องเสมอ” เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>“Always send crash reports” is on. This is what was sent.</source>
+        <translation>“ส่งรายงานการขัดข้องเสมอ” เปิดอยู่ นี่คือสิ่งที่ส่งไป</translation>
     </message>
 </context>
 <context>

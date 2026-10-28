@@ -8122,6 +8122,14 @@ and will be changed to the default</source>
         <source>Border color</source>
         <translation>எல்லை நிறம்</translation>
     </message>
+    <message>
+        <source>Always send crash reports</source>
+        <translation>செயலிழப்பு அறிக்கைகளை எப்போதும் அனுப்பு</translation>
+    </message>
+    <message>
+        <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
+        <translation>செயலிழப்பு அல்லது உறைவுக்குப் பிறகு கேட்காமல் அறிக்கை அனுப்பப்படும்: என்ன செயலிழந்தது, உங்கள் கணினி, அமைப்புகள், கடைசி பதிவு வரிகள். உங்கள் வசனங்கள், கோப்புகள் அல்லது அவற்றின் பெயர்கள் ஒருபோதும் இல்லை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Reference</name>
@@ -8176,6 +8184,359 @@ and will be changed to the default</source>
     <message>
         <source>The reference is protected (read-only).</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Reports</name>
+    <message>
+        <source>%1, as a .zip to drag into the issue</source>
+        <translation>%1, சிக்கலில் இழுத்துவிட .zip ஆக</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>செயலிழப்பு அறிக்கை அனுப்பப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>A report helps find the cause. You can read all of it before it goes.</source>
+        <translation>காரணத்தைக் கண்டறிய அறிக்கை உதவும். அனுப்பும் முன் முழுவதையும் படிக்கலாம்.</translation>
+    </message>
+    <message>
+        <source>A short summary</source>
+        <translation>சுருக்கமான விவரம்</translation>
+    </message>
+    <message>
+        <source>Add the screenshot</source>
+        <translation>திரைப்பிடிப்பைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Add the subtitle file</source>
+        <translation>வசனக் கோப்பைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Always included</source>
+        <translation>எப்போதும் சேர்க்கப்படும்</translation>
+    </message>
+    <message>
+        <source>Always send crash reports</source>
+        <translation>செயலிழப்பு அறிக்கைகளை எப்போதும் அனுப்பு</translation>
+    </message>
+    <message>
+        <source>Ask away. Name the panel or command it is about.</source>
+        <translation>தயங்காமல் கேளுங்கள். அது எந்தப் பலகை அல்லது கட்டளை பற்றியது எனக் குறிப்பிடுங்கள்.</translation>
+    </message>
+    <message>
+        <source>Attached</source>
+        <translation>இணைக்கப்பட்டவை</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>பிழை</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Check it there and press Create. You need a GitHub account.</source>
+        <translation>அங்கே சரிபார்த்து Create ஐ அழுத்தவும். உங்களுக்கு GitHub கணக்கு தேவை.</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy again</source>
+        <translation>மீண்டும் நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy image</source>
+        <translation>படத்தை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy the report</source>
+        <translation>அறிக்கையை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Crash report</source>
+        <translation>செயலிழப்பு அறிக்கை</translation>
+    </message>
+    <message>
+        <source>Crash report sent. Thank you.</source>
+        <translation>செயலிழப்பு அறிக்கை அனுப்பப்பட்டது. நன்றி.</translation>
+    </message>
+    <message>
+        <source>Describe the feature.</source>
+        <translation>அம்சத்தை விவரிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Don&apos;t send</source>
+        <translation>அனுப்ப வேண்டாம்</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>முடிந்தது</translation>
+    </message>
+    <message>
+        <source>Drag it into the description, or copy it and paste it there.</source>
+        <translation>அதை விளக்கத்தில் இழுத்துவிடவும், அல்லது நகலெடுத்து அங்கே ஒட்டவும்.</translation>
+    </message>
+    <message>
+        <source>Drag the .zip into the description. Only you choose to share it.</source>
+        <translation>.zip ஐ விளக்கத்தில் இழுத்துவிடவும். பகிர்வதா என்பதை நீங்களே தேர்வு செய்கிறீர்கள்.</translation>
+    </message>
+    <message>
+        <source>Feature request</source>
+        <translation>அம்சக் கோரிக்கை</translation>
+    </message>
+    <message>
+        <source>File names become file1, file2… Your subtitle file, its text and your folders are never in a report.</source>
+        <translation>கோப்புப் பெயர்கள் file1, file2… என மாறும். உங்கள் வசனக் கோப்பு, அதன் உரை, உங்கள் கோப்புறைகள் அறிக்கையில் ஒருபோதும் இருக்காது.</translation>
+    </message>
+    <message>
+        <source>Finish on GitHub</source>
+        <translation>GitHub இல் முடிக்கவும்</translation>
+    </message>
+    <message>
+        <source>GitHub opened an empty %1 form. Paste into its first field (Ctrl+V).</source>
+        <translation>GitHub ஒரு வெற்று %1 படிவத்தைத் திறந்தது. அதன் முதல் புலத்தில் ஒட்டவும் (Ctrl+V).</translation>
+    </message>
+    <message>
+        <source>HikariSub closed unexpectedly</source>
+        <translation>HikariSub எதிர்பாராமல் மூடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>HikariSub closed unexpectedly. A crash report was sent.</source>
+        <translation>HikariSub எதிர்பாராமல் மூடப்பட்டது. செயலிழப்பு அறிக்கை அனுப்பப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>HikariSub crashed %1.</source>
+        <translation>HikariSub %1 செயலிழந்தது.</translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding</source>
+        <translation>HikariSub பதிலளிப்பதை நிறுத்தியது</translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding %1 and was closed.</source>
+        <translation>HikariSub %1 பதிலளிப்பதை நிறுத்தி மூடப்பட்டது.</translation>
+    </message>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds</source>
+        <translation>
+            <numerusform>HikariSub %n வினாடி பதிலளிக்கவில்லை</numerusform>
+            <numerusform>HikariSub %n வினாடிகள் பதிலளிக்கவில்லை</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds %1.</source>
+        <translation>
+            <numerusform>HikariSub %1 %n வினாடி பதிலளிக்கவில்லை.</numerusform>
+            <numerusform>HikariSub %1 %n வினாடிகள் பதிலளிக்கவில்லை.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding. A freeze report was sent.</source>
+        <translation>HikariSub பதிலளிப்பதை நிறுத்தியது. உறைவு அறிக்கை அனுப்பப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>It froze for 10 seconds or more. A report shows where it was stuck.</source>
+        <translation>10 வினாடிகள் அல்லது அதற்கு மேல் உறைந்தது. எங்கே சிக்கியது என்பதை அறிக்கை காட்டும்.</translation>
+    </message>
+    <message>
+        <source>It is kept for the next start.</source>
+        <translation>அடுத்த தொடக்கத்திற்காக வைக்கப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>It works again. A report shows where it was stuck.</source>
+        <translation>மீண்டும் இயங்குகிறது. எங்கே சிக்கியது என்பதை அறிக்கை காட்டும்.</translation>
+    </message>
+    <message>
+        <source>It works again. Send a report of where it was stuck?</source>
+        <translation>மீண்டும் இயங்குகிறது. எங்கே சிக்கியது என்ற அறிக்கையை அனுப்பவா?</translation>
+    </message>
+    <message>
+        <source>Kind</source>
+        <translation>வகை</translation>
+    </message>
+    <message>
+        <source>Log excerpt</source>
+        <translation>பதிவுப் பகுதி</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>குறிப்பு</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you press Send report</source>
+        <translation>அறிக்கையை அனுப்பு என்பதை அழுத்தும் வரை எதுவும் அனுப்பப்படாது</translation>
+    </message>
+    <message>
+        <source>Open GitHub issue</source>
+        <translation>GitHub சிக்கலைத் திற</translation>
+    </message>
+    <message>
+        <source>Open on GitHub</source>
+        <translation>GitHub இல் திற</translation>
+    </message>
+    <message>
+        <source>Open the form again</source>
+        <translation>படிவத்தை மீண்டும் திற</translation>
+    </message>
+    <message>
+        <source>Question</source>
+        <translation>கேள்வி</translation>
+    </message>
+    <message>
+        <source>Report</source>
+        <translation>அறிக்கை</translation>
+    </message>
+    <message>
+        <source>Report a freeze</source>
+        <translation>உறைவைப் புகாரளி</translation>
+    </message>
+    <message>
+        <source>Report an issue</source>
+        <translation>சிக்கலைப் புகாரளி</translation>
+    </message>
+    <message>
+        <source>Report…</source>
+        <translation>புகாரளி…</translation>
+    </message>
+    <message>
+        <source>Screenshot of the window</source>
+        <translation>சாளரத்தின் திரைப்பிடிப்பு</translation>
+    </message>
+    <message>
+        <source>Send report</source>
+        <translation>அறிக்கையை அனுப்பு</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>அமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>Show file</source>
+        <translation>கோப்பைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>Show report</source>
+        <translation>அறிக்கையைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>Steps to reproduce</source>
+        <translation>மீண்டும் உருவாக்கும் படிகள்</translation>
+    </message>
+    <message>
+        <source>Subtitle file</source>
+        <translation>வசனக் கோப்பு</translation>
+    </message>
+    <message>
+        <source>System and settings</source>
+        <translation>கணினி மற்றும் அமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>The %1 form opened in your browser, filled in.</source>
+        <translation>%1 படிவம் நிரப்பப்பட்டு உங்கள் உலாவியில் திறந்தது.</translation>
+    </message>
+    <message>
+        <source>The crash report could not be sent</source>
+        <translation>செயலிழப்பு அறிக்கையை அனுப்ப முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>The report is too long for a link, so it is on the clipboard.</source>
+        <translation>இணைப்புக்கு அறிக்கை மிக நீளமானது, எனவே அது கிளிப்போர்டில் உள்ளது.</translation>
+    </message>
+    <message>
+        <source>The report is too long for a link, so it is on the clipboard. Paste it into the form.</source>
+        <translation>இணைப்புக்கு அறிக்கை மிக நீளமானது, எனவே அது கிளிப்போர்டில் உள்ளது. அதைப் படிவத்தில் ஒட்டவும்.</translation>
+    </message>
+    <message>
+        <source>The whole report</source>
+        <translation>முழு அறிக்கை</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>தலைப்பு</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>மீண்டும் முயல்க</translation>
+    </message>
+    <message>
+        <source>What are you trying to do?</source>
+        <translation>நீங்கள் என்ன செய்ய முயல்கிறீர்கள்?</translation>
+    </message>
+    <message>
+        <source>What happened</source>
+        <translation>என்ன நடந்தது</translation>
+    </message>
+    <message>
+        <source>What it would help with</source>
+        <translation>இது எதற்கு உதவும்</translation>
+    </message>
+    <message>
+        <source>What the report contains</source>
+        <translation>அறிக்கையில் உள்ளவை</translation>
+    </message>
+    <message>
+        <source>What were you doing when it closed? (optional)</source>
+        <translation>மூடப்பட்டபோது நீங்கள் என்ன செய்துகொண்டிருந்தீர்கள்? (விருப்பத்தேர்வு)</translation>
+    </message>
+    <message>
+        <source>What were you doing when it froze? (optional)</source>
+        <translation>உறைந்தபோது நீங்கள் என்ன செய்துகொண்டிருந்தீர்கள்? (விருப்பத்தேர்வு)</translation>
+    </message>
+    <message>
+        <source>What you expected</source>
+        <translation>நீங்கள் எதிர்பார்த்தது</translation>
+    </message>
+    <message>
+        <source>What you&apos;d like</source>
+        <translation>உங்களுக்கு என்ன வேண்டும்</translation>
+    </message>
+    <message>
+        <source>Your question</source>
+        <translation>உங்கள் கேள்வி</translation>
+    </message>
+    <message>
+        <source>Your work</source>
+        <translation>உங்கள் பணி</translation>
+    </message>
+    <message>
+        <source>crash record, system, settings, last 200 log lines</source>
+        <translation>செயலிழப்புப் பதிவு, கணினி, அமைப்புகள், கடைசி 200 பதிவு வரிகள்</translation>
+    </message>
+    <message>
+        <source>freeze record, system, settings, last 200 log lines</source>
+        <translation>உறைவுப் பதிவு, கணினி, அமைப்புகள், கடைசி 200 பதிவு வரிகள்</translation>
+    </message>
+    <message>
+        <source>last 200 lines, file names replaced</source>
+        <translation>கடைசி 200 வரிகள், கோப்புப் பெயர்கள் மாற்றப்பட்டன</translation>
+    </message>
+    <message>
+        <source>on %1 at %2</source>
+        <translation>%1 அன்று %2 மணிக்கு</translation>
+    </message>
+    <message>
+        <source>today at %1</source>
+        <translation>இன்று %1 மணிக்கு</translation>
+    </message>
+    <message>
+        <source>yesterday at %1</source>
+        <translation>நேற்று %1 மணிக்கு</translation>
+    </message>
+    <message>
+        <source>“Always send crash reports” is on.</source>
+        <translation>“செயலிழப்பு அறிக்கைகளை எப்போதும் அனுப்பு” இயக்கத்தில் உள்ளது.</translation>
+    </message>
+    <message>
+        <source>“Always send crash reports” is on. This is what was sent.</source>
+        <translation>“செயலிழப்பு அறிக்கைகளை எப்போதும் அனுப்பு” இயக்கத்தில் உள்ளது. அனுப்பப்பட்டது இதுதான்.</translation>
     </message>
 </context>
 <context>

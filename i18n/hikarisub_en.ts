@@ -361,6 +361,23 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Reports</name>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds</source>
+        <translation>
+            <numerusform>HikariSub stopped responding for %n second</numerusform>
+            <numerusform>HikariSub stopped responding for %n seconds</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds %1.</source>
+        <translation>
+            <numerusform>HikariSub stopped responding for %n second %1.</numerusform>
+            <numerusform>HikariSub stopped responding for %n seconds %1.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Session</name>
     <message numerus="yes">
         <source>Delete %n autosaves</source>

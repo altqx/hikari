@@ -8073,6 +8073,14 @@ and will be changed to the default</source>
         <source>Border color</source>
         <translation>테두리 색상</translation>
     </message>
+    <message>
+        <source>Always send crash reports</source>
+        <translation>충돌 보고서 항상 보내기</translation>
+    </message>
+    <message>
+        <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
+        <translation>충돌이나 멈춤 후에는 묻지 않고 보고서를 보냅니다: 충돌한 내용, 시스템, 설정, 마지막 로그 줄. 자막, 파일과 그 이름은 절대 보내지 않습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Reference</name>
@@ -8127,6 +8135,357 @@ and will be changed to the default</source>
     <message>
         <source>The reference is protected (read-only).</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Reports</name>
+    <message>
+        <source>%1, as a .zip to drag into the issue</source>
+        <translation>%1, 이슈에 끌어다 놓을 .zip 파일</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>충돌 보고서를 보냈습니다.</translation>
+    </message>
+    <message>
+        <source>A report helps find the cause. You can read all of it before it goes.</source>
+        <translation>보고서는 원인을 찾는 데 도움이 됩니다. 보내기 전에 전체 내용을 읽을 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>A short summary</source>
+        <translation>짧은 요약</translation>
+    </message>
+    <message>
+        <source>Add the screenshot</source>
+        <translation>스크린샷 추가</translation>
+    </message>
+    <message>
+        <source>Add the subtitle file</source>
+        <translation>자막 파일 추가</translation>
+    </message>
+    <message>
+        <source>Always included</source>
+        <translation>항상 포함</translation>
+    </message>
+    <message>
+        <source>Always send crash reports</source>
+        <translation>충돌 보고서 항상 보내기</translation>
+    </message>
+    <message>
+        <source>Ask away. Name the panel or command it is about.</source>
+        <translation>무엇이든 물어보세요. 관련된 패널이나 명령을 적어 주세요.</translation>
+    </message>
+    <message>
+        <source>Attached</source>
+        <translation>첨부</translation>
+    </message>
+    <message>
+        <source>Bug</source>
+        <translation>버그</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Check it there and press Create. You need a GitHub account.</source>
+        <translation>확인한 뒤 Create를 누르세요. GitHub 계정이 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Copy again</source>
+        <translation>다시 복사</translation>
+    </message>
+    <message>
+        <source>Copy image</source>
+        <translation>이미지 복사</translation>
+    </message>
+    <message>
+        <source>Copy the report</source>
+        <translation>보고서 복사</translation>
+    </message>
+    <message>
+        <source>Crash report</source>
+        <translation>충돌 보고서</translation>
+    </message>
+    <message>
+        <source>Crash report sent. Thank you.</source>
+        <translation>충돌 보고서를 보냈습니다. 감사합니다.</translation>
+    </message>
+    <message>
+        <source>Describe the feature.</source>
+        <translation>기능을 설명해 주세요.</translation>
+    </message>
+    <message>
+        <source>Don&apos;t send</source>
+        <translation>보내지 않기</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>Drag it into the description, or copy it and paste it there.</source>
+        <translation>설명란에 끌어다 놓거나 복사해서 붙여 넣으세요.</translation>
+    </message>
+    <message>
+        <source>Drag the .zip into the description. Only you choose to share it.</source>
+        <translation>.zip 파일을 설명란에 끌어다 놓으세요. 공유 여부는 직접 정합니다.</translation>
+    </message>
+    <message>
+        <source>Feature request</source>
+        <translation>기능 요청</translation>
+    </message>
+    <message>
+        <source>File names become file1, file2… Your subtitle file, its text and your folders are never in a report.</source>
+        <translation>파일 이름은 file1, file2…로 바뀝니다. 자막 파일, 그 텍스트와 폴더는 보고서에 절대 들어가지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Finish on GitHub</source>
+        <translation>GitHub에서 마치기</translation>
+    </message>
+    <message>
+        <source>GitHub opened an empty %1 form. Paste into its first field (Ctrl+V).</source>
+        <translation>GitHub에서 빈 %1 양식이 열렸습니다. 첫 번째 칸에 붙여 넣으세요 (Ctrl+V).</translation>
+    </message>
+    <message>
+        <source>HikariSub closed unexpectedly</source>
+        <translation>HikariSub가 예기치 않게 종료됨</translation>
+    </message>
+    <message>
+        <source>HikariSub closed unexpectedly. A crash report was sent.</source>
+        <translation>HikariSub가 예기치 않게 종료되었습니다. 충돌 보고서를 보냈습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub crashed %1.</source>
+        <translation>HikariSub가 %1 충돌했습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding</source>
+        <translation>HikariSub가 응답하지 않음</translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding %1 and was closed.</source>
+        <translation>HikariSub가 %1 응답하지 않아 종료되었습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds</source>
+        <translation>
+            <numerusform>HikariSub가 %n초 동안 응답하지 않았습니다</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>HikariSub stopped responding for %n seconds %1.</source>
+        <translation>
+            <numerusform>HikariSub가 %1 %n초 동안 응답하지 않았습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>HikariSub stopped responding. A freeze report was sent.</source>
+        <translation>HikariSub가 응답하지 않았습니다. 멈춤 보고서를 보냈습니다.</translation>
+    </message>
+    <message>
+        <source>It froze for 10 seconds or more. A report shows where it was stuck.</source>
+        <translation>10초 이상 멈췄습니다. 보고서에 멈춘 위치가 나옵니다.</translation>
+    </message>
+    <message>
+        <source>It is kept for the next start.</source>
+        <translation>다음 시작 때까지 보관합니다.</translation>
+    </message>
+    <message>
+        <source>It works again. A report shows where it was stuck.</source>
+        <translation>다시 작동합니다. 보고서에 멈춘 위치가 나옵니다.</translation>
+    </message>
+    <message>
+        <source>It works again. Send a report of where it was stuck?</source>
+        <translation>다시 작동합니다. 멈춘 위치에 대한 보고서를 보낼까요?</translation>
+    </message>
+    <message>
+        <source>Kind</source>
+        <translation>종류</translation>
+    </message>
+    <message>
+        <source>Log excerpt</source>
+        <translation>로그 발췌</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>메모</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you press Send report</source>
+        <translation>보고서 보내기를 누르기 전에는 아무것도 보내지 않습니다</translation>
+    </message>
+    <message>
+        <source>Open GitHub issue</source>
+        <translation>GitHub 이슈 열기</translation>
+    </message>
+    <message>
+        <source>Open on GitHub</source>
+        <translation>GitHub에서 열기</translation>
+    </message>
+    <message>
+        <source>Open the form again</source>
+        <translation>양식 다시 열기</translation>
+    </message>
+    <message>
+        <source>Question</source>
+        <translation>질문</translation>
+    </message>
+    <message>
+        <source>Report</source>
+        <translation>보고서</translation>
+    </message>
+    <message>
+        <source>Report a freeze</source>
+        <translation>멈춤 보고</translation>
+    </message>
+    <message>
+        <source>Report an issue</source>
+        <translation>문제 보고</translation>
+    </message>
+    <message>
+        <source>Report…</source>
+        <translation>보고…</translation>
+    </message>
+    <message>
+        <source>Screenshot of the window</source>
+        <translation>창 스크린샷</translation>
+    </message>
+    <message>
+        <source>Send report</source>
+        <translation>보고서 보내기</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>설정</translation>
+    </message>
+    <message>
+        <source>Show file</source>
+        <translation>파일 보기</translation>
+    </message>
+    <message>
+        <source>Show report</source>
+        <translation>보고서 보기</translation>
+    </message>
+    <message>
+        <source>Steps to reproduce</source>
+        <translation>재현 단계</translation>
+    </message>
+    <message>
+        <source>Subtitle file</source>
+        <translation>자막 파일</translation>
+    </message>
+    <message>
+        <source>System and settings</source>
+        <translation>시스템 및 설정</translation>
+    </message>
+    <message>
+        <source>The %1 form opened in your browser, filled in.</source>
+        <translation>%1 양식이 채워진 상태로 브라우저에서 열렸습니다.</translation>
+    </message>
+    <message>
+        <source>The crash report could not be sent</source>
+        <translation>충돌 보고서를 보내지 못했습니다</translation>
+    </message>
+    <message>
+        <source>The report is too long for a link, so it is on the clipboard.</source>
+        <translation>보고서가 링크에 담기에는 너무 길어 클립보드에 복사했습니다.</translation>
+    </message>
+    <message>
+        <source>The report is too long for a link, so it is on the clipboard. Paste it into the form.</source>
+        <translation>보고서가 링크에 담기에는 너무 길어 클립보드에 복사했습니다. 양식에 붙여 넣으세요.</translation>
+    </message>
+    <message>
+        <source>The whole report</source>
+        <translation>전체 보고서</translation>
+    </message>
+    <message>
+        <source>Title</source>
+        <translation>제목</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>What are you trying to do?</source>
+        <translation>무엇을 하려고 하나요?</translation>
+    </message>
+    <message>
+        <source>What happened</source>
+        <translation>무슨 일이 있었나요</translation>
+    </message>
+    <message>
+        <source>What it would help with</source>
+        <translation>도움이 되는 점</translation>
+    </message>
+    <message>
+        <source>What the report contains</source>
+        <translation>보고서 내용</translation>
+    </message>
+    <message>
+        <source>What were you doing when it closed? (optional)</source>
+        <translation>종료될 때 무엇을 하고 있었나요? (선택 사항)</translation>
+    </message>
+    <message>
+        <source>What were you doing when it froze? (optional)</source>
+        <translation>멈췄을 때 무엇을 하고 있었나요? (선택 사항)</translation>
+    </message>
+    <message>
+        <source>What you expected</source>
+        <translation>예상한 결과</translation>
+    </message>
+    <message>
+        <source>What you&apos;d like</source>
+        <translation>원하는 기능</translation>
+    </message>
+    <message>
+        <source>Your question</source>
+        <translation>질문 내용</translation>
+    </message>
+    <message>
+        <source>Your work</source>
+        <translation>작업</translation>
+    </message>
+    <message>
+        <source>crash record, system, settings, last 200 log lines</source>
+        <translation>충돌 기록, 시스템, 설정, 마지막 로그 200줄</translation>
+    </message>
+    <message>
+        <source>freeze record, system, settings, last 200 log lines</source>
+        <translation>멈춤 기록, 시스템, 설정, 마지막 로그 200줄</translation>
+    </message>
+    <message>
+        <source>last 200 lines, file names replaced</source>
+        <translation>마지막 200줄, 파일 이름 대체됨</translation>
+    </message>
+    <message>
+        <source>on %1 at %2</source>
+        <translation>%1 %2에</translation>
+    </message>
+    <message>
+        <source>today at %1</source>
+        <translation>오늘 %1에</translation>
+    </message>
+    <message>
+        <source>yesterday at %1</source>
+        <translation>어제 %1에</translation>
+    </message>
+    <message>
+        <source>“Always send crash reports” is on.</source>
+        <translation>“충돌 보고서 항상 보내기”가 켜져 있습니다.</translation>
+    </message>
+    <message>
+        <source>“Always send crash reports” is on. This is what was sent.</source>
+        <translation>“충돌 보고서 항상 보내기”가 켜져 있습니다. 보낸 내용은 다음과 같습니다.</translation>
     </message>
 </context>
 <context>
