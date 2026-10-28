@@ -25,6 +25,7 @@
 #include <QStringList>
 #include <QtQml/qqmlregistration.h>
 
+#include <functional>
 #include <optional>
 
 #include "settings_store.h"
@@ -121,6 +122,8 @@ public:
 
     // Tests: as on Wayland (only sizes are kept) or not; nullopt: the platform.
     static void overrideWayland(std::optional<bool> wayland);
+    // AN1 (#404): told each dialog's id as it opens (place()); unset: no one.
+    static void setOpenedHook(std::function<void(const QString &dialogId)> hook);
 
 signals:
     void windowChanged();

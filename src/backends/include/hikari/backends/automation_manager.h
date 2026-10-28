@@ -61,6 +61,8 @@ public:
 signals:
     void changed();
     void runFinished(const QString &path, hikari::backends::LuaScriptHost::RunOutcome outcome, const QString &message);
+    // AN1 (#404): a script did not load.
+    void loadFailed(const QString &path);
     // The running macro's progress sink (legacy LuaProgressSink).
     void logged(const QString &path, const QString &text, int level);
     void progressChanged(const QString &path, double percent);

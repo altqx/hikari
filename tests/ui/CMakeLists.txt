@@ -332,6 +332,22 @@ hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cp
 hikari_add_qttest(hikari_ui_whats_new_tests SOURCES whats_new_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_whats_new_tests PRIVATE
     HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json")
+# AN1 (#404): anonymous usage data against a fake endpoint on the loopback, and
+# a program that crashes with the crash handler installed.
+add_executable(hikari_crash_probe crash_probe.cpp)
+target_link_libraries(hikari_crash_probe PRIVATE hikari_composition)
+hikari_add_qttest(hikari_ui_analytics_tests SOURCES analytics_tests.cpp LIBRARIES hikari_composition)
+target_include_directories(hikari_ui_analytics_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_ui_analytics_tests PRIVATE HIKARI_CRASH_PROBE="$<TARGET_FILE:hikari_crash_probe>")
+add_dependencies(hikari_ui_analytics_tests hikari_crash_probe)
+# AN1: a scripted session through the window sends only the table's events.
+hikari_add_qttest(hikari_ui_analytics_session_tests SOURCES analytics_session_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+target_include_directories(hikari_ui_analytics_session_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_ui_analytics_session_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_media_fixtures hikari_lua_helper
+    hikari_automation_stage)
 # ADR 0019: the download, its checks and the hand-off per package kind.
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
 # ADR 0019: the Windows installing side checks the installer against the release before it runs.

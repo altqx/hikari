@@ -16917,7 +16917,8 @@ private slots:
             {"settingsPageUpdates",
              {{"updater.autoCheck", "Check for updates automatically"},
               {"updater.checkForStable", "Stable versions only"},
-              {"updater.autoInstall", "Install updates automatically"}}},
+              {"updater.autoInstall", "Install updates automatically"},
+              {"privacy.usageData", "Send anonymous usage data"}}}, // AN1 (#404)
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
@@ -20029,7 +20030,8 @@ private slots:
         // (legacy's Themes page is K2's Appearance page, #206; PF1-pages:
         // one flat list, legacy's sub-pages are sections)
         QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Subtitle grid", "Video", "Audio",
-                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys", "Updates"}));
+                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys",
+                                     "Updates and privacy"})); // AN1 (#404)
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and

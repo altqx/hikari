@@ -56,6 +56,15 @@ if(NOT HIKARI_COMMIT AND DEFINED ENV{GITHUB_SHA})
 endif()
 target_sources(hikari_composition PRIVATE docs_export.cpp include/hikari/app/docs_export.h)
 set_source_files_properties(docs_export.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_COMMIT=\"${HIKARI_COMMIT}\"")
+# AN1 (#404): anonymous usage data (PostHog Cloud EU) and the crash record.
+# Only release workflows pass the key; without one nothing is queued or sent.
+set(HIKARI_POSTHOG_KEY "" CACHE STRING "PostHog project key for anonymous usage data (release builds only)")
+target_sources(hikari_composition PRIVATE analytics.cpp analytics_key.cpp include/hikari/app/analytics.h
+    crash_record.cpp include/hikari/app/crash_record.h)
+set_source_files_properties(analytics_key.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_POSTHOG_KEY=\"${HIKARI_POSTHOG_KEY}\"")
+if(NOT WIN32)
+    target_link_libraries(hikari_composition PRIVATE ${CMAKE_DL_LIBS}) # dladdr
+endif()
 # Y8: the font collector's window state.
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
 # O3: the legacy settings importer's generations and window state.

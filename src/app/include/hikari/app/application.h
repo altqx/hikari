@@ -8,6 +8,7 @@
 #include "hikari/app/settings_import_controller.h"
 #include "hikari/app/settings_import_store.h"
 #include "hikari/app/hotkeys_controller.h"
+#include "hikari/app/analytics.h"
 #include "hikari/app/update_checker.h"
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
@@ -71,6 +72,7 @@
 #include <QLockFile>
 #include <QTemporaryDir>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QObject>
 #include <QUrl>
 #include <QFileInfo>
@@ -228,6 +230,9 @@ public:
         // UD1: where saved presets live (workspace layouts' layouts.json);
         // empty: beside the settings file.
         QString presetsDir;
+        // AN1 (#404): anonymous usage data; the default has no key, so
+        // nothing is queued or sent (tests give a fake endpoint).
+        Analytics::Config analytics;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -423,6 +428,9 @@ public:
     QString userFolder() const;
     // Help > Open user folder: the desktop's file manager on it.
     Q_INVOKABLE void openUserFolder();
+    // AN1 (#404): "What is sent" (Settings, Getting started): the browser on
+    // the usage data's documentation.
+    Q_INVOKABLE void openWhatIsSent();
     // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
     // F1: a find and replace question waits for its answer.
@@ -899,6 +907,7 @@ public:
     // O2: the shortcut editor and the bindings in effect.
     HotkeysController &hotkeys() { return *m_hotkeys; }
     UpdateChecker &updates() { return *m_updates; }
+    Analytics &analytics() { return *m_analytics; }
     WhatsNew &whatsNew() { return *m_whatsNew; } // SH3
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() { return *m_kanjiTimer; } // KA3
@@ -1251,6 +1260,15 @@ private:
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<HotkeysController> m_hotkeys; // O2: after the automation hotkeys it shares
     std::unique_ptr<UpdateChecker> m_updates;
+    std::unique_ptr<Analytics> m_analytics; // AN1
+    // AN1: how long the video and audio opens take (video_opened, audio_opened).
+    application::VideoSession::State m_videoUsageState = application::VideoSession::State::Closed;
+    application::AudioBox::State m_audioUsageState = application::AudioBox::State::Closed;
+    QElapsedTimer m_videoOpenClock;
+    QElapsedTimer m_audioOpenClock;
+    // AN1: automation_error's script: a bundled script's file name, "" for the user's.
+    QString bundledScriptName(const QString &path) const;
+    QString m_bundledAutomationDir;
     std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector; // Y8

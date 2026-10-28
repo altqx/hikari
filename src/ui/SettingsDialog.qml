@@ -71,7 +71,7 @@ DialogWindow {
         {id: "subtitleProperties", name: qsTr("Subtitle properties"), iconRole: "script-properties"},
         {id: "automation", name: qsTr("Automation"), iconRole: "automation"},
         {id: "hotkeys", name: qsTr("Hotkeys"), iconRole: "hotkeys"},
-        {id: "updates", name: qsTr("Updates"), iconRole: "check-updates"}
+        {id: "updates", name: qsTr("Updates and privacy"), iconRole: "check-updates"} // AN1
     ]
     readonly property string currentPage: pages[Math.max(0, pageList.currentIndex)].id
     function pageIndex(id) { return pages.findIndex(p => p.id === id) }
@@ -1544,6 +1544,20 @@ DialogWindow {
                                     : qsTr("This copy does not install updates itself: the update window opens the download page.")
                             Layout.leftMargin: !dialog.updates || dialog.updates.installsUpdates ? 24 : 0
                             Layout.topMargin: !dialog.updates || dialog.updates.installsUpdates ? -5 : 0
+                        }
+                    }
+                    // AN1 (#404): anonymous usage data, on by default; the
+                    // same setting as Getting started's Updates page.
+                    SettingsSection {
+                        title: qsTr("Privacy")
+                        SettingCheck { setting: "privacy.usageData"; text: qsTr("Send anonymous usage data") }
+                        SettingNote { text: qsTr("Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.") }
+                        LinkButton {
+                            objectName: "settingsWhatIsSent"
+                            iconRole: "help"
+                            text: qsTr("What is sent")
+                            Layout.leftMargin: 22
+                            onClicked: dialog.app.openWhatIsSent()
                         }
                     }
                 }

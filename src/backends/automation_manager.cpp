@@ -121,9 +121,10 @@ void AutomationManager::attach(const std::string &path, Entry &entry)
         rebuildRegistry();
         notify();
     });
-    connect(host, &LuaScriptHost::loadFailed, this, [this] {
+    connect(host, &LuaScriptHost::loadFailed, this, [this, qpath] {
         rebuildRegistry();
         notify();
+        emit loadFailed(qpath);
     });
     connect(host, &LuaScriptHost::unavailable, this, [this] { notify(); });
     connect(host, &LuaScriptHost::forceStopOffered, this, [this] { notify(); });

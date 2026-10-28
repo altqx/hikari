@@ -900,7 +900,7 @@ DialogWindow {
                 objectName: "gettingStartedUpdates"
                 title: qsTr("Updates")
                 explanation: qsTr("Which versions HikariSub offers you, and whether it looks for them by itself.")
-                later: qsTr("Later: Settings › Updates")
+                later: qsTr("Later: Settings › Updates and privacy")
                 RowLayout {
                     visible: !setup.updates || setup.updates.stableOnlyOption
                     spacing: 16
@@ -934,6 +934,31 @@ DialogWindow {
                     text: qsTr("At most once a day, when HikariSub starts. What’s new on Home needs it too.")
                     color: Theme.muted
                     font: setup.fontAt(12)
+                    Layout.alignment: Qt.AlignHCenter
+                }
+                // AN1 (#404): the Settings window's "Send anonymous usage data".
+                CheckBox {
+                    objectName: "gettingStartedUsageData"
+                    text: qsTr("Send anonymous usage data")
+                    checked: setup.values["privacy.usageData"] === true
+                    onToggled: setup.put("privacy.usageData", checked)
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: 8
+                }
+                Label {
+                    text: qsTr("Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.")
+                    color: Theme.muted
+                    font: setup.fontAt(12)
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    Layout.maximumWidth: 460
+                    Layout.alignment: Qt.AlignHCenter
+                }
+                LinkButton {
+                    objectName: "gettingStartedWhatIsSent"
+                    iconRole: "help"
+                    text: qsTr("What is sent")
+                    onClicked: setup.app.openWhatIsSent()
                     Layout.alignment: Qt.AlignHCenter
                 }
             }

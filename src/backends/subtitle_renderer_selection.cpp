@@ -133,7 +133,15 @@ SubtitleRendererSelection::renderScaled(core::DocumentTime time, int width, int 
         frame->cost.milliseconds =
             std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count() -
             frame->cost.countMilliseconds;
+    if (frame && m_costObserver)
+        m_costObserver(frame->cost.milliseconds);
     return frame;
+}
+
+void SubtitleRendererSelection::observeCost(std::function<void(double milliseconds)> observer)
+{
+    std::unique_lock lock(m_switch);
+    m_costObserver = std::move(observer);
 }
 
 } // namespace hikari::backends
