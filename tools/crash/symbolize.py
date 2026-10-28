@@ -150,7 +150,8 @@ def symbolize(frames, symbols, out):
     tool = shutil.which("llvm-symbolizer") or shutil.which("addr2line")
     if not tool:
         sys.exit("neither llvm-symbolizer nor addr2line is on PATH")
-    tool = os.path.basename(tool).removesuffix(".exe")
+    # The name alone: Windows gives it with PATHEXT's case (llvm-symbolizer.EXE).
+    tool = Path(tool).stem.lower() if tool.lower().endswith(".exe") else os.path.basename(tool)
     if windows(frames) and tool != "llvm-symbolizer":
         sys.exit("Windows symbols need llvm-symbolizer")
     resolved = 0
