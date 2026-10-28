@@ -84,7 +84,7 @@ endforeach()
 string(REPLACE "|" ";" HELPERS "${HELPERS}")
 string(REPLACE "|" ";" CRT "${CRT}")
 
-# Legacy's dictionaries (.github/scripts/runtime-assets.json, the same commits),
+# Legacy's dictionaries (the same commits),
 # with their hashes: the name in Dictionary/, the URL, the SHA-256.
 set(_aegisub "https://raw.githubusercontent.com/TypesettingTools/Aegisub-dictionaries/6d792f04521b3ac8823c8e8972fcfd757342da4d/dicts")
 set(_libreoffice "https://raw.githubusercontent.com/LibreOffice/dictionaries/32b006a2c22a4ac7e8ed3f03346f7b3d85a970a4")

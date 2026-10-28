@@ -1,24 +1,24 @@
 // Windows resources of HikariSub.exe (installers SPEC 1.4 and 1.5), configured
 // by src/app/CMakeLists.txt. The icons and their ids are legacy's
-// (HikariSub/resource.rc, HikariSub/FileTypeIcons.h): the installer writes
-// "<exe>",-<id> into each file type's DefaultIcon, so an upgrade from legacy
-// keeps working only while the ids stay the same. Append, never renumber.
+// (FileTypeIcons.h): the installer writes "<exe>",-<id> into each file type's
+// DefaultIcon, so an upgrade from legacy keeps working only while the ids stay
+// the same. Append, never renumber.
 #include <winver.h>
-#include "@HIKARI_LEGACY_DIR@/FileTypeIcons.h"
+#include "@CMAKE_CURRENT_SOURCE_DIR@/windows/FileTypeIcons.h"
 
 // The app icon keeps the lowest id: Explorer shows an executable's first icon group.
-IDI_HIKARISUB_APP   ICON "@HIKARI_LEGACY_DIR@/Bitmaps/HikariLargeIcon.ico"
-IDI_HIKARISUB_SMALL ICON "@HIKARI_LEGACY_DIR@/Bitmaps/HikariSmallIcon.ico"
+IDI_HIKARISUB_APP   ICON "@CMAKE_CURRENT_SOURCE_DIR@/windows/HikariLargeIcon.ico"
+IDI_HIKARISUB_SMALL ICON "@CMAKE_CURRENT_SOURCE_DIR@/windows/HikariSmallIcon.ico"
 
 // Qt's Windows platform plugin gives windows the icon named IDI_ICON1, so the
 // title bar shows the app icon. A named group sorts after the numbered ones.
-IDI_ICON1 ICON "@HIKARI_LEGACY_DIR@/Bitmaps/HikariLargeIcon.ico"
+IDI_ICON1 ICON "@CMAKE_CURRENT_SOURCE_DIR@/windows/HikariLargeIcon.ico"
 
-IDI_FILETYPE_ASS ICON "@HIKARI_LEGACY_DIR@/Bitmaps/HikariSub_ass.ico"
-IDI_FILETYPE_SSA ICON "@HIKARI_LEGACY_DIR@/Bitmaps/HikariSub_ssa.ico"
-IDI_FILETYPE_SRT ICON "@HIKARI_LEGACY_DIR@/Bitmaps/HikariSub_srt.ico"
-IDI_FILETYPE_SUB ICON "@HIKARI_LEGACY_DIR@/Bitmaps/HikariSub_sub.ico"
-IDI_FILETYPE_TXT ICON "@HIKARI_LEGACY_DIR@/Bitmaps/HikariSub_txt.ico"
+IDI_FILETYPE_ASS ICON "@CMAKE_CURRENT_SOURCE_DIR@/windows/HikariSub_ass.ico"
+IDI_FILETYPE_SSA ICON "@CMAKE_CURRENT_SOURCE_DIR@/windows/HikariSub_ssa.ico"
+IDI_FILETYPE_SRT ICON "@CMAKE_CURRENT_SOURCE_DIR@/windows/HikariSub_srt.ico"
+IDI_FILETYPE_SUB ICON "@CMAKE_CURRENT_SOURCE_DIR@/windows/HikariSub_sub.ico"
+IDI_FILETYPE_TXT ICON "@CMAKE_CURRENT_SOURCE_DIR@/windows/HikariSub_txt.ico"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     @PROJECT_VERSION_MAJOR@,@PROJECT_VERSION_MINOR@,@PROJECT_VERSION_PATCH@,0

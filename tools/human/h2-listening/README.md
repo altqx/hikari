@@ -1,6 +1,6 @@
 # H2 listening session
 
-Card: [H2 #125](https://github.com/altqx/hikari/issues/125). A person listens on real devices and records what they hear, alongside the automated I3 (#115) and N6 (#110) records in [the coverage ledger](../../../docs/qt/coverage.md). A "no" reopens I3 or N6. A step that is skipped or not observed stays open and is never recorded as a pass.
+Card: [H2 #125](https://github.com/altqx/hikari/issues/125). A person listens on real devices and records what they hear, alongside the automated I3 (#115) and N6 (#110) records. A "no" reopens I3 or N6. A step that is skipped or not observed stays open and is never recorded as a pass.
 
 ## What the session covers
 

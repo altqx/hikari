@@ -5815,6 +5815,10 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub சிக்கல் கண்காணிப்பைத் திறக்கிறது</translation>
     </message>
     <message>
+        <source>Opens a form for a bug, feature request or question on GitHub</source>
+        <translation>GitHub-க்கான பிழை, அம்சக் கோரிக்கை அல்லது கேள்விப் படிவத்தைத் திறக்கிறது</translation>
+    </message>
+    <message>
         <source>Checks whether a newer version is available</source>
         <translation>புதிய பதிப்பு கிடைக்கிறதா எனச் சரிபார்க்கிறது</translation>
     </message>
