@@ -306,6 +306,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.crashReports.freezeRecord = userFolder.cache() + QStringLiteral("/hang-record.txt");
     options.crashReports.pendingFile = userFolder.cache() + QStringLiteral("/crash-report.json");
     options.crashReports.logTail = userFolder.cache() + QStringLiteral("/log-tail.txt");
+    options.crashReports.attachments = userFolder.cache() + QStringLiteral("/issue-report");
     options.crashReports.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.doNotTrack = Analytics::doNotTrack(qgetenv("DO_NOT_TRACK"));

@@ -51,6 +51,7 @@ public:
         QString freezeRecord; // HangWatchdog's hang-record.txt
         QString pendingFile;  // crash-report.json
         QString logTail;      // log-tail.txt
+        QString attachments;  // the issue's screenshot and zip, until Done
         QString version;
         // Opens a link in the browser and puts text on the clipboard
         // (tests: fakes).
@@ -64,6 +65,8 @@ public:
 
     // The names of the files open now and their Lines' texts (the scrubber's).
     void setKnown(std::function<QStringList()> names, std::function<QStringList()> texts);
+    // The editing target's subtitle file, "" without one (Report an issue).
+    void setCurrentFile(std::function<QString()> file) { m_currentFile = std::move(file); }
     // Once the window shows: this system. A pending report is completed,
     // its $exception queued while usage data is on, and with "Always send"
     // it is sent.
@@ -89,6 +92,8 @@ public:
     Q_INVOKABLE QVariantMap openOnGitHub(const QString &source, const QString &note);
     // Don't send: the report goes, nothing is sent.
     Q_INVOKABLE void dismiss(const QString &source);
+    // The last report sent, as it went ("Always send"'s Show report).
+    Q_INVOKABLE QString sentText() const { return m_sentText; }
 
     // Help › Report an issue. `kind`: bug, feature or question; `fields`
     // the form's by id. System and settings always go; the Log's lines
@@ -100,6 +105,18 @@ public:
     Q_INVOKABLE QVariantMap openIssue(const QString &kind, const QString &title, const QVariantMap &fields,
                                       bool withLog);
     Q_INVOKABLE void copyIssue(const QString &kind, const QString &title, const QVariantMap &fields, bool withLog);
+    // The one-line summary of the system ("HikariSub V · package · os V").
+    Q_INVOKABLE QString systemSummary() const;
+    // The attachments a link cannot carry, made only when the user ticks
+    // them and kept in the cache folder until discardAttachments (Done or
+    // Cancel): the window as a PNG (before the form opens over it), the
+    // editing target's file in a .zip. Each returns its path, "" when it
+    // could not be made.
+    Q_INVOKABLE QString subtitleFileName() const;
+    Q_INVOKABLE QString takeScreenshot(QObject *window);
+    Q_INVOKABLE QString zipSubtitleFile();
+    Q_INVOKABLE void copyImage(const QString &path);
+    Q_INVOKABLE void discardAttachments();
 
     // The current run's Log lines, scrubbed (tests).
     QStringList logTail() const { return m_tail; }
@@ -135,6 +152,8 @@ private:
     std::optional<report::Report> m_pending;
     std::optional<report::Report> m_freeze;
     QStringList m_tail;
+    QString m_sentText;
+    std::function<QString()> m_currentFile;
     QTimer m_tailTimer;
     bool m_started = false;
     bool m_sending = false;

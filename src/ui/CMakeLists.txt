@@ -227,6 +227,8 @@ qt_target_qml_sources(hikari_ui QML_FILES DialogWindow.qml DialogTitleBar.qml Ab
     UpdateAvailable.qml)
 # SH3: What's new from the release notes, on the Home page and in Help > What's new.
 qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml WhatsNewCard.qml WhatsNewDialog.qml)
+# CR1 (#452): the crash and freeze report, and Report an issue.
+qt_target_qml_sources(hikari_ui QML_FILES CrashReportWindow.qml ReportIssueWindow.qml)
 # PK1: the popup kit on DG1's frame (docs/qt/ux/visual-language.md "Popups"): the message box, the popover,
 # toasts and the inline bar, and the clash review, Choose styles, hotkey capture, list chooser and date picker;
 # NT1: the application's message box (MessageHost) and the Log panel.

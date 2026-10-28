@@ -2505,7 +2505,7 @@ ApplicationWindow {
                 action: Action {
                     id: reportIssueAction
                     text: qsTr("&Report an issue")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ANSI")) root.app.reportIssue()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ANSI")) reportIssueWindow.openForm()
                 }
             }
             ShellMenuItem {
@@ -7453,6 +7453,56 @@ ApplicationWindow {
         app: root.app
         updates: root.updates
         settings: root.app.settings
+        onReportIssueRequested: reportIssueWindow.openForm()
+    }
+    // CR1 (#452): the crash and freeze report, Report an issue, and the
+    // notices of a freeze and of a report sent.
+    CrashReportWindow {
+        id: crashReportWindow
+        reports: root.crashReports
+        app: root.app
+        offer: sessionWindows.offer
+        settings: root.app.settings
+        onAutosavesRequested: autosaves.show()
+        onLinkTooLong: root.notices.post("info", qsTranslate("HikariSub.Reports", "Open GitHub issue"),
+                                         qsTranslate("HikariSub.Reports", "The report is too long for a link, so it is on the clipboard. Paste it into the form."))
+    }
+    ReportIssueWindow {
+        id: reportIssueWindow
+        reports: root.crashReports
+        app: root.app
+        mainWindow: root
+        settings: root.app.settings
+    }
+    Connections {
+        target: root.crashReports
+        function onFreezeNoticed(seconds) {
+            root.notices.post("warning", qsTranslate("HikariSub.Reports", "HikariSub stopped responding for %n seconds", "", seconds),
+                              qsTranslate("HikariSub.Reports", "It works again. Send a report of where it was stuck?"),
+                              { actions: [{ text: qsTranslate("HikariSub.Reports", "Report…"), run: () => crashReportWindow.showReport("freeze") }] })
+        }
+        function onSent(source, ok) {
+            if (ok) {
+                root.notices.post("info", qsTranslate("HikariSub.Reports", "Crash report sent. Thank you."), "")
+                return
+            }
+            const note = crashReportWindow.lastNote
+            root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"), qsTranslate("HikariSub.Reports", "It is kept for the next start."),
+                              { actions: [{ text: qsTranslate("HikariSub.Reports", "Try again"), run: () => root.crashReports.send("start", note) },
+                                          { text: qsTranslate("HikariSub.Reports", "Open GitHub issue"), run: () => root.crashReports.openOnGitHub("start", note) }] })
+        }
+        function onAutoSent(kind, ok) {
+            if (!ok) {
+                root.notices.post("warning", qsTranslate("HikariSub.Reports", "The crash report could not be sent"), qsTranslate("HikariSub.Reports", "It is kept for the next start."),
+                                  { actions: [{ text: qsTranslate("HikariSub.Reports", "Show report"), run: () => crashReportWindow.showReport("start") }] })
+                return
+            }
+            root.notices.post("info", kind === "freeze" ? qsTranslate("HikariSub.Reports", "HikariSub stopped responding. A freeze report was sent.")
+                                                        : qsTranslate("HikariSub.Reports", "HikariSub closed unexpectedly. A crash report was sent."),
+                              qsTranslate("HikariSub.Reports", "“Always send crash reports” is on."),
+                              { actions: [{ text: qsTranslate("HikariSub.Reports", "Show report"), run: () => crashReportWindow.showReport("sent", kind) },
+                                          { text: qsTranslate("HikariSub.Reports", "Settings"), run: () => root.openSettings("updates") }] })
+        }
     }
     CreditsDialog {
         id: creditsDialog
@@ -7847,6 +7897,11 @@ ApplicationWindow {
             root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
             Qt.callLater(() => gettingStartedDialog.openSetup())
+        // CR1 (#452): the report the last run left, before anything else
+        // asks; with "Always send crash reports" it goes by itself instead.
+        if (root.crashReports.pending.length > 0
+                && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
+            Qt.callLater(() => crashReportWindow.showReport("start"))
     }
     // P3, P4 and P9 in one window (PU1-autosaves-window): the work left by a
     // session that did not close cleanly, the previous version's autosaves,

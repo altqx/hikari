@@ -890,6 +890,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                     }
             return texts;
         });
+    m_crashReports->setCurrentFile([this] {
+        const auto target = m_workspace.editingTarget();
+        const auto destination = target ? m_files->destination(*target) : std::nullopt;
+        return destination ? QString::fromStdString(destination->value) : QString();
+    });
     connect(m_hotkeys.get(), &HotkeysController::ran, m_analytics.get(), [this](const QString &symbol, bool handled) {
         if (handled && !m_hotkeys->rehearsing())
             m_analytics->commandUsed(symbol, QStringLiteral("key"));
@@ -2760,11 +2765,6 @@ bool Application::turnOffTranslationMode()
 void Application::setSaveWithVideoName(bool on)
 {
     m_settings->set("subtitles.saveWithVideoName", on); // settingChanged announces it
-}
-
-void Application::reportIssue()
-{
-    backends::desktop::openUrl(QUrl(QStringLiteral("https://github.com/altqx/hikari/issues")));
 }
 
 void Application::openWebsite()

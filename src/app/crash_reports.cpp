@@ -6,12 +6,16 @@
 #include "settings_store.h"
 
 #include <QClipboard>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QImage>
 #include <QJsonDocument>
+#include <QQuickWindow>
 #include <QSaveFile>
 #include <QUuid>
+#include <QtCore/private/qzipwriter_p.h>
 
 namespace hikari::app {
 
@@ -242,6 +246,7 @@ bool CrashReports::send(const QString &source, const QString &note)
     events.append({QStringLiteral("crash_report"), (*r)->reportProperties(note)});
     if (!m_analytics.sendReport(events))
         return false;
+    m_sentText = (*r)->text(note);
     m_sending = true;
     m_sendingSource = source;
     emit sendingChanged();
@@ -357,6 +362,56 @@ QVariantMap CrashReports::openIssue(const QString &kind, const QString &title, c
 void CrashReports::copyIssue(const QString &kind, const QString &title, const QVariantMap &fields, bool withLog)
 {
     m_config.copy(issueMarkdown(kind, title, fields, withLog));
+}
+
+QString CrashReports::systemSummary() const
+{
+    return QStringLiteral("HikariSub %1 · %2 · %3 %4").arg(m_system.version, m_system.package, m_system.os, m_system.osVersion);
+}
+
+QString CrashReports::subtitleFileName() const
+{
+    const QString file = m_currentFile ? m_currentFile() : QString();
+    return QFileInfo(file).isFile() ? QFileInfo(file).fileName() : QString();
+}
+
+QString CrashReports::takeScreenshot(QObject *window)
+{
+    auto *quick = qobject_cast<QQuickWindow *>(window);
+    if (!quick || m_config.attachments.isEmpty() || !QDir().mkpath(m_config.attachments))
+        return {};
+    const QString path = m_config.attachments + QStringLiteral("/hikarisub-window.png");
+    const QImage image = quick->grabWindow();
+    return !image.isNull() && image.save(path, "PNG") ? path : QString();
+}
+
+QString CrashReports::zipSubtitleFile()
+{
+    const QString file = m_currentFile ? m_currentFile() : QString();
+    QFile in(file);
+    if (m_config.attachments.isEmpty() || !QFileInfo(file).isFile() || in.size() > 64 * 1024 * 1024 ||
+        !in.open(QIODevice::ReadOnly) || !QDir().mkpath(m_config.attachments))
+        return {};
+    const QString name = QFileInfo(file).fileName();
+    const QString path = m_config.attachments + u'/' + QFileInfo(file).completeBaseName() + QStringLiteral(".zip");
+    QFile::remove(path);
+    QZipWriter zip(path);
+    zip.setCompressionPolicy(QZipWriter::AutoCompress);
+    zip.addFile(name, in.readAll());
+    zip.close();
+    return zip.status() == QZipWriter::NoError ? path : QString();
+}
+
+void CrashReports::copyImage(const QString &path)
+{
+    if (auto *clipboard = QGuiApplication::clipboard(); clipboard && !path.isEmpty())
+        clipboard->setImage(QImage(path));
+}
+
+void CrashReports::discardAttachments()
+{
+    if (!m_config.attachments.isEmpty())
+        QDir(m_config.attachments).removeRecursively();
 }
 
 } // namespace hikari::app

@@ -355,6 +355,10 @@ target_include_directories(hikari_ui_crash_report_tests PRIVATE "${PROJECT_SOURC
 target_compile_definitions(hikari_ui_crash_report_tests PRIVATE HIKARI_CRASH_PROBE="$<TARGET_FILE:hikari_crash_probe>"
     HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_dependencies(hikari_ui_crash_report_tests hikari_crash_probe)
+# CR1: the report windows through the whole window, against a fake endpoint.
+hikari_add_qttest(hikari_ui_crash_report_session_tests SOURCES crash_report_session_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+target_include_directories(hikari_ui_crash_report_session_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # AN1: a scripted session through the window sends only the table's events.
 hikari_add_qttest(hikari_ui_analytics_session_tests SOURCES analytics_session_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)

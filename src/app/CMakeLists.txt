@@ -23,6 +23,9 @@ set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_application hikari_core
     Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
+# CR1 (#452): QZipWriter, for the subtitle file an issue report attaches.
+find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS CorePrivate)
+target_link_libraries(hikari_composition PRIVATE Qt6::CorePrivate)
 # Running from the build tree, the media helper is not next to the executable.
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"

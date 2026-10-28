@@ -436,8 +436,6 @@ public:
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
     bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
     void setSaveWithVideoName(bool on);
-    // GLOBAL_ANSI ("Report an issue"): the issue tracker in the browser.
-    Q_INVOKABLE void reportIssue();
     // About's "HikariSub website": the site's home page in the browser.
     Q_INVOKABLE void openWebsite();
     // DX1 (#367): GLOBAL_HELP ("User guide", F1) and a DG1 window's "?": the

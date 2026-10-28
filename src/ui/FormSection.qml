@@ -14,6 +14,8 @@ import Hikari.Ui
 ColumnLayout {
     id: section
     property string title
+    // CR1 (#452): a muted line after the title, what the section holds.
+    property string summary
     property bool expanded: true
     // The rule above the section (off for the form's first section).
     property bool ruled: true
@@ -37,7 +39,7 @@ ColumnLayout {
         focusPolicy: Qt.StrongFocus
         Layout.fillWidth: true
         implicitHeight: Math.max(20, title.implicitHeight + 2)
-        implicitWidth: arrow.width + 4 + title.implicitWidth
+        implicitWidth: arrow.width + 4 + title.implicitWidth + (summaryLabel.visible ? 8 + summaryLabel.implicitWidth : 0)
         Accessible.role: Accessible.Button
         Accessible.name: text
         // Qt Quick's Accessible has no expanded state: a toggle, on while open.
@@ -78,6 +80,15 @@ ColumnLayout {
                 font.bold: true
                 color: Theme.text
                 elide: Text.ElideRight
+                Layout.fillWidth: !summaryLabel.visible
+            }
+            Label {
+                id: summaryLabel
+                visible: section.summary.length > 0
+                text: section.summary
+                color: Theme.muted
+                elide: Text.ElideRight
+                Layout.leftMargin: 4
                 Layout.fillWidth: true
             }
         }
