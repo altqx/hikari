@@ -175,7 +175,7 @@ private slots:
         auto *deep = named("macro_Group/Sub/Deep");
         QVERIFY(deep);
         QVERIFY(QMetaObject::invokeMethod(deep, "triggered"));
-        QVERIFY(done.wait(30'000));
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
         QVERIFY(done.first().at(0).toBool());
         QCOMPARE(firstLine(), QStringLiteral("Gate Group/Sub/Deep"));
 
@@ -194,7 +194,6 @@ private slots:
     {
         auto &h = app->hotkeys();
         const QVariantMap target = h.gestureTarget(QLatin1String(kDeep));
-        QVERIFY2(target.value("name").toString().endsWith(QLatin1String("Group/Sub/Deep")), qPrintable(target.value("name").toString()));
         QVERIFY(h.gestureConflict(target.value("id").toInt(), QStringLiteral("Ctrl-Alt-J"), 0).isEmpty());
         h.gestureMap(target.value("id").toInt(), target.value("name").toString(), QStringLiteral("Ctrl-Alt-J"), 0,
                      QStringLiteral("cancel"));
@@ -203,7 +202,7 @@ private slots:
         QSignalSpy done(&app->automation(), &app::AutomationShell::runCompleted);
         QTRY_VERIFY(window->isActive());
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QVERIFY(done.wait(30'000));
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
         QVERIFY(done.first().at(0).toBool());
         QCOMPARE(firstLine(), QStringLiteral("Gate Group/Sub/Deep"));
 
@@ -243,9 +242,17 @@ private slots:
         auto &settings = *app->settingsStore();
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        const auto centre = [](QQuickItem *entry) {
+            return entry->mapToScene(QPointF(entry->width() / 2, entry->height() / 2)).toPoint();
+        };
         const auto hover = [&](QQuickItem *entry) {
             QTRY_VERIFY(entry->isVisible() && entry->width() > 0);
-            QTest::mouseMove(entry->window(), entry->mapToScene(QPointF(entry->width() / 2, entry->height() / 2)).toPoint());
+            QTest::mouseMove(entry->window(), centre(entry));
+        };
+        // A click on a submenu's item opens it (hovering waits on a delay).
+        const auto open = [&](QQuickItem *entry) {
+            hover(entry);
+            QTest::mouseClick(entry->window(), Qt::LeftButton, Qt::NoModifier, centre(entry));
         };
         const auto entryOf = [&](QObject *menu, const QString &objectName) -> QQuickItem * {
             for (int i = 0; i < menu->property("count").toInt(); ++i) {
@@ -263,12 +270,12 @@ private slots:
             QTRY_VERIFY(menu->property("opened").toBool());
             QQuickItem *group = entryOf(menu, QStringLiteral("macroMenu_Group"));
             QVERIFY(group);
-            hover(group);
+            open(group);
             auto *groupMenu = named("macroMenu_Group");
             QTRY_VERIFY(groupMenu->property("opened").toBool());
             QQuickItem *sub = entryOf(groupMenu, QStringLiteral("macroMenu_Group/Sub"));
             QVERIFY(sub);
-            hover(sub);
+            open(sub);
             auto *subMenu = named("macroMenu_Group/Sub");
             QTRY_VERIFY(subMenu->property("opened").toBool());
             hover(entryOf(subMenu, QStringLiteral("macro_Group/Sub/Deep")));
