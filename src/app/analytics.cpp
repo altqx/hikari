@@ -5,9 +5,11 @@
 #include "hikari/application/hotkeys.h"
 #include "theme.h"
 
+#include <QCryptographicHash>
 #include <QDateTime>
 #include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -561,6 +563,27 @@ void Analytics::automationError(const QString &kind, const QString &bundledScrip
             {{QStringLiteral("kind"), kind},
              {QStringLiteral("script"), bundledScript.isEmpty() ? QStringLiteral("user script")
                                                                 : QString(bundledScript).replace(u' ', u'_')}});
+}
+
+QString Analytics::bundledScript(const QString &path, const QString &manifestPath)
+{
+    const QFileInfo script(path);
+    const QString name = script.fileName();
+    QFile manifest(manifestPath);
+    QFile file(path);
+    if (!manifest.open(QIODevice::ReadOnly) || !file.open(QIODevice::ReadOnly))
+        return {};
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    hash.addData(&file);
+    const QByteArray digest = hash.result().toHex();
+    for (const QByteArray &raw : manifest.readAll().split('\n')) {
+        const QByteArray line = raw.trimmed();
+        const qsizetype space = line.indexOf(' ');
+        if (space > 0 && line.left(space).toLower() == digest && line.endsWith('/' + name.toUtf8()) &&
+            line.mid(space + 1).startsWith("Automation/"))
+            return name;
+    }
+    return {};
 }
 
 void Analytics::mediaOpened(bool video, qint64 milliseconds, bool ready, const QString &kind)

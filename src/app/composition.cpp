@@ -354,7 +354,10 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                     facts.screens = int(QGuiApplication::screens().size());
                     facts.scale = window->devicePixelRatio();
                     facts.startupMs = elapsed;
-                    facts.layout = application.workspaceLayout().preset();
+                    // A saved layout goes as "saved", never by its name.
+                    facts.layout = application.workspaceLayout().layout().isEmpty()
+                                       ? application.workspaceLayout().preset()
+                                       : QStringLiteral("saved");
                     application.analytics().appStarted(facts);
                 });
             },

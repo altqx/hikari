@@ -98,6 +98,11 @@ public:
     // automation_error: `kind` load_failed, failed, lost or stopped;
     // `script` a bundled script's file name, or "" for a user script.
     void automationError(const QString &kind, const QString &bundledScript);
+    // `path`'s file name when its bytes are a bundled script of that name in
+    // the manifest at `manifestPath` (UserFolder::manifestName: sha256 and
+    // Automation/... path per line), wherever it lies; "" otherwise. A script
+    // the user dropped into a writable program folder is theirs.
+    static QString bundledScript(const QString &path, const QString &manifestPath);
     // video_opened / audio_opened: `kind` file, dummy (and from_video for audio).
     void mediaOpened(bool video, qint64 milliseconds, bool ready, const QString &kind);
     // One frame's subtitles took this long to draw (app_closed's buckets);

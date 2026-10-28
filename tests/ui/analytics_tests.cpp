@@ -9,6 +9,8 @@
 #include "hikari/app/crash_record.h"
 #include "settings_store.h"
 
+#include <QCryptographicHash>
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QJsonArray>
@@ -385,6 +387,36 @@ private slots:
         QVERIFY(!hikari::app::crash::read(path));
         write("hikari-crash 1\nversion 0.1.0\ntype my words\nmechanism signal\n");
         QVERIFY(!hikari::app::crash::read(path));
+    }
+
+    // A script's name goes only while its bytes are the bundled manifest's,
+    // wherever it lies: one dropped into a writable program folder is the
+    // user's.
+    void bundledScriptsByTheManifest()
+    {
+        const QByteArray shipped = "-- bundled\n";
+        const QString program = dir.filePath(QStringLiteral("program/Automation/automation/autoload"));
+        QVERIFY(QDir().mkpath(program));
+        auto write = [](const QString &file, const QByteArray &text) {
+            QFile f(file);
+            QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            f.write(text);
+        };
+        const QString manifest = dir.filePath(QStringLiteral("program/bundled-files.txt"));
+        write(manifest, QCryptographicHash::hash(shipped, QCryptographicHash::Sha256).toHex() +
+                            " Automation/automation/autoload/skew gradient.lua\n");
+        const QString bundled = program + QStringLiteral("/skew gradient.lua");
+        write(bundled, shipped);
+        QCOMPARE(Analytics::bundledScript(bundled, manifest), QStringLiteral("skew gradient.lua"));
+        const QString added = program + QStringLiteral("/PrivateCustomer.lua");
+        write(added, "-- mine\n");
+        QCOMPARE(Analytics::bundledScript(added, manifest), QString());
+        // Same bytes, another name; a bundled name, other bytes.
+        write(added, shipped);
+        QCOMPARE(Analytics::bundledScript(added, manifest), QString());
+        write(bundled, "-- edited\n");
+        QCOMPARE(Analytics::bundledScript(bundled, manifest), QString());
+        QCOMPARE(Analytics::bundledScript(bundled, dir.filePath(QStringLiteral("no-manifest.txt"))), QString());
     }
 };
 

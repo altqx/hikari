@@ -1332,7 +1332,6 @@ private:
     QElapsedTimer m_audioOpenClock;
     // AN1: automation_error's script: a bundled script's file name, "" for the user's.
     QString bundledScriptName(const QString &path) const;
-    QString m_bundledAutomationDir;
     std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector; // Y8

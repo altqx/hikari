@@ -78,7 +78,7 @@ Where `command_used` is reported:
 | Event | When | Properties |
 |---|---|---|
 | `$exception` | The start after a native crash | `$exception_list`: one entry: `type` and `value` (the signal, `SIGSEGV`, `SIGABRT`, `SIGBUS`, `SIGFPE` or `SIGILL`; or on Windows the exception's name, e.g. `EXCEPTION_ACCESS_VIOLATION`, else its code `0x…`), `mechanism` (`{type: signal or seh, handled: false}`), `stacktrace` (`{type: raw, frames}`), up to 32 frames of `{platform: native, module, offset}`<br>`$exception_level`: `fatal`<br>`crashed_version`: the version that crashed |
-| `automation_error` | A macro fails, its helper is lost or force-stopped, or a script does not load | `kind`: `failed`, `lost`, `stopped` or `load_failed`<br>`script`: a bundled script's file name (in the program's Automation folder, or its unchanged copy in your folder, checked against the bundled manifest; spaces become `_`), else `user script`<br>A macro whose validation declines to run is not an error and sends nothing. |
+| `automation_error` | A macro fails, its helper is lost or force-stopped, or a script does not load | `kind`: `failed`, `lost`, `stopped` or `load_failed`<br>`script`: a bundled script's file name, while its bytes are the bundled manifest's (in the program's Automation folder or copied to your folder; spaces become `_`), else `user script`. A script you add to the program folder is `user script`.<br>A macro whose validation declines to run is not an error and sends nothing. |
 
 How a crash is recorded:
 - A signal handler (Linux) or an unhandled-exception filter (Windows) writes a small record to `crash-record.txt` in the cache folder.
@@ -91,7 +91,7 @@ How a crash is recorded:
 | Event | When | Properties |
 |---|---|---|
 | `video_opened` | A video open ends | `open_time`: a time bucket<br>`outcome`: `ready` or `failed`<br>`kind`: `file` or `dummy` |
-| `audio_opened` | An audio open ends (the waveform can be used) | `open_time`: a time bucket<br>`outcome`: `ready` or `failed`<br>`kind`: `file`, `from_video` or `dummy` |
+| `audio_opened` | An audio open ends: all of it is loaded, or it fails | `open_time`: a time bucket<br>`outcome`: `ready` or `failed`<br>`kind`: `file`, `from_video` or `dummy` |
 
 Startup time is `app_started`'s `startup_time`. The frame-time buckets are in `app_closed`.
 

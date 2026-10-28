@@ -55,7 +55,6 @@
 #include <QCollator>
 #include <QGuiApplication>
 #include <QLocale>
-#include <QCryptographicHash>
 #include <QDir>
 #include <QUuid>
 #include <QCoreApplication>
@@ -868,7 +867,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     ui::DialogPlacement::setOpenedHook([analytics = m_analytics.get()](const QString &id) { analytics->dialogOpened(id); });
     m_renderer.observeCost([analytics = m_analytics.get()](double ms) { analytics->frameRendered(ms); });
-    m_bundledAutomationDir = QDir::cleanPath(automationPath(options.automationDir));
     {
         using Outcome = backends::LuaScriptHost::RunOutcome;
         connect(&m_automation->manager(), &backends::AutomationManager::runFinished, m_analytics.get(),
@@ -1321,8 +1319,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         routeAudio(m_audioRouting->route(), false);
     }
     m_recentAudio.set(m_settings->settings().list("recent.audio")); // AUDIO_RECENT_FILES
-    // AN1: an audio open's time, until it can be used (Loading: the
-    // waveform fills in while it caches), or back to Closed when it failed.
+    // AN1: an audio open's time, until all of it is loaded (Ready), or back
+    // to Closed when it failed on the way.
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
         using State = application::AudioBox::State;
         const application::AudioBox &box = m_audio->box();
@@ -1330,13 +1328,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         const State before = std::exchange(m_audioUsageState, state);
         if (state == before)
             return;
-        if (state == State::Opening) {
-            m_audioOpenClock.start();
+        if (state == State::Opening || state == State::Loading) {
+            if (state == State::Opening || !m_audioOpenClock.isValid())
+                m_audioOpenClock.start();
             return;
         }
-        if (before != State::Opening && !(before == State::Closed && state != State::Closed))
-            return; // Loading to Ready, or a close
-        m_analytics->mediaOpened(false, before == State::Opening ? m_audioOpenClock.elapsed() : 0, state != State::Closed,
+        const qint64 elapsed = m_audioOpenClock.isValid() ? m_audioOpenClock.elapsed() : 0;
+        const bool opening = m_audioOpenClock.isValid() || state == State::Ready; // a dummy is Ready at once
+        m_audioOpenClock.invalidate();
+        if (!opening)
+            return; // a close
+        m_analytics->mediaOpened(false, elapsed, state == State::Ready,
                                  box.fromVideo()                                    ? QStringLiteral("from_video")
                                  : application::AudioBox::isDummyName(box.path()) ? QStringLiteral("dummy")
                                                                                    : QStringLiteral("file"));
@@ -2748,27 +2750,8 @@ QString Application::userFolder() const
 
 QString Application::bundledScriptName(const QString &path) const
 {
-    const QFileInfo script(path);
-    const QString name = script.fileName();
-    if (QDir::cleanPath(script.absoluteFilePath()).startsWith(m_bundledAutomationDir + QLatin1Char('/')))
-        return name; // the program's own Automation folder
-    // A copy seeded into the user folder counts while it is as bundled: the
-    // same bytes as a script of that name in the program folder's manifest.
-    QFile manifest(QCoreApplication::applicationDirPath() + QLatin1Char('/') + UserFolder::manifestName());
-    QFile file(path);
-    if (!manifest.open(QIODevice::ReadOnly) || !file.open(QIODevice::ReadOnly))
-        return {};
-    QCryptographicHash hash(QCryptographicHash::Sha256);
-    hash.addData(&file);
-    const QByteArray digest = hash.result().toHex();
-    for (const QByteArray &raw : manifest.readAll().split('\n')) {
-        const QByteArray line = raw.trimmed();
-        const qsizetype space = line.indexOf(' ');
-        if (space > 0 && line.left(space).toLower() == digest && line.endsWith('/' + name.toUtf8()) &&
-            line.mid(space + 1).startsWith("Automation/"))
-            return name;
-    }
-    return {};
+    return Analytics::bundledScript(path, QCoreApplication::applicationDirPath() + QLatin1Char('/') +
+                                              UserFolder::manifestName());
 }
 
 void Application::openWhatIsSent()
