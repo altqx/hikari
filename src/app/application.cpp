@@ -4650,6 +4650,13 @@ void Application::setSpellingOn(bool on)
     spellingRefresh();
 }
 
+void Application::setDictionaryLanguage(const QString &symbol)
+{
+    m_settings->set("editor.dictionaryLanguage", symbol);
+    restartSpellChecker();
+    spellingRefresh();
+}
+
 void Application::setSuggestionsOnDoubleClick(bool on)
 {
     if (on == suggestionsOnDoubleClick())

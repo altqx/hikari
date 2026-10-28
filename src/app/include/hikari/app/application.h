@@ -639,6 +639,9 @@ public:
     bool spellingOn() const;
     void setSpellingOn(bool on);
     QString dictionaryLanguage() const;
+    // The primary language as Settings' OK applies it: DICTIONARY_LANGUAGE,
+    // SpellChecker::Destroy and ClearErrs, also for the language already chosen.
+    void setDictionaryLanguage(const QString &symbol);
     bool suggestionsOnDoubleClick() const;
     void setSuggestionsOnDoubleClick(bool on);
     // The Line editor's spell-checked field: 1 (Translated) in translation

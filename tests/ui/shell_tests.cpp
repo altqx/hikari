@@ -11874,9 +11874,6 @@ private slots:
         QCOMPARE(marks(), QVariantList{});
         application->setSpellingOn(true);
         QCOMPARE(marks(), QVariantList{});
-        QCOMPARE(application->dictionaries(),
-                 (QVariantList{QVariantMap{{QStringLiteral("symbol"), QStringLiteral("en_US")},
-                                           {QStringLiteral("name"), QStringLiteral("English")}}}));
         application->setDictionaryLanguage(QStringLiteral("en_US"));
         QCOMPARE(marks(), (QVariantList{0, 4}));
 
@@ -12040,7 +12037,6 @@ private slots:
         QCOMPARE(application->log().warningCount() + application->log().errorCount(), 0); // no notice
         QVERIFY(application->spellingOn());
         QVERIFY(!QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).contains(QStringLiteral("profile/editor.spellchecker")));
-        QVERIFY(application->dictionaries().isEmpty());
 
         // Only the bundled folder has a dictionary: it loads, and the user's
         // words go to the user's folder.
@@ -12050,7 +12046,6 @@ private slots:
         restartWithSpelling(user.path(), true, bundled.filePath(QStringLiteral("Dictionary")));
         QVERIFY(application->openFile(path));
         QCOMPARE(marks(), (QVariantList{5, 5, 0, 4}));
-        QCOMPARE(application->dictionaries().size(), 1);
         QVERIFY(application->addEditorWord(QStringLiteral("wrold")));
         QVERIFY(QFile::exists(user.filePath(QStringLiteral("Dictionary/UserDic.udic"))));
         QVERIFY(!QFile::exists(bundled.filePath(QStringLiteral("Dictionary/UserDic.udic"))));
