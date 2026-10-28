@@ -266,6 +266,10 @@ private slots:
         for (int i = 0; i < Analytics::kMaxLayoutChanges + 5; ++i)
             analytics.layoutChanged(QStringLiteral("saved"));
         QCOMPARE(analytics.queued().size(), 4 + Analytics::kMaxLayoutChanges);
+        // A bundled script's name with a space still goes.
+        analytics.automationError(QStringLiteral("failed"), QStringLiteral("skew gradient.lua"));
+        QCOMPARE(analytics.queued().last().toObject().value(QStringLiteral("properties")).toObject().value(QStringLiteral("script")).toString(),
+                 QStringLiteral("skew_gradient.lua"));
     }
 
     void buckets()

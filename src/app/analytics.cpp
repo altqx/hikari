@@ -556,9 +556,11 @@ void Analytics::gettingStartedSkipped()
 
 void Analytics::automationError(const QString &kind, const QString &bundledScript)
 {
+    // A bundled name's spaces become _ ("skew gradient.lua").
     capture(QStringLiteral("automation_error"),
             {{QStringLiteral("kind"), kind},
-             {QStringLiteral("script"), bundledScript.isEmpty() ? QStringLiteral("user script") : bundledScript}});
+             {QStringLiteral("script"), bundledScript.isEmpty() ? QStringLiteral("user script")
+                                                                : QString(bundledScript).replace(u' ', u'_')}});
 }
 
 void Analytics::mediaOpened(bool video, qint64 milliseconds, bool ready, const QString &kind)

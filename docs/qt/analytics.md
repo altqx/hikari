@@ -61,7 +61,7 @@ Time buckets: `<250ms`, `250-500ms`, `0.5-1s`, `1-2s`, `2-5s`, `5-15s`, `15-60s`
 | `panel_opened` | You show a panel (View menu, the panels' menus, Fix minor errors…) | `panel`: `video`, `audio`, `editor`, `grid`, `reference`, `timing`, `search`, `automation`, `original`, `log`, `styles`, `fix_minor_errors`, `template` or `spellchecker` |
 | `dialog_opened` | A window on the dialog frame opens | `dialog`: one of `about`, `allTagsEdition`, `aspectRatio`, `autosaves`, `columns`, `conversion`, `credits`, `dummyVideo`, `fontCatalogClashes`, `fontCatalogs`, `fontCollector`, `fontPicker`, `fontsFromSubtitles`, `gettingStarted`, `history`, `hotkeyCapture`, `kanjiTimer`, `karaokeCheck`, `listChooser`, `manageLayouts`, `movePanel`, `resample`, `saveLayout`, `scriptProperties`, `selectLines`, `setNewFps`, `settings`, `settingsImport`, `shapesEdition`, `spellAddedWords`, `styleClashes`, `styleManager`, `translationShift`, `unsavedChanges`, `updateAvailable`, `whatsNew`, or `automation_script` (any script's dialog) |
 | `layout_changed` | You choose a layout | `layout`: `editing`, `timing`, `translation`, `typesetting`, `karaoke`, or `saved` (one of your saved layouts; its name is not sent) |
-| `getting_started_finished` | Getting started's Finish | `pages_changed`: the pages whose settings Finish changed, from `language`, `import`, `look`, `layout`, `media`, `editing`, `updates`, `files`. Which values you chose is not sent. |
+| `getting_started_finished` | Getting started's Finish | `pages_changed`: the pages whose settings Finish changed, from `language`, `import`, `look`, `layout`, `media`, `editing`, `updates`, `files`. Which values you chose is not sent. Getting started has no setting on its layout and files pages yet, so those two are not sent today. |
 | `getting_started_skipped` | Getting started's Skip | (none) |
 
 Where `command_used` is reported:
@@ -78,7 +78,7 @@ Where `command_used` is reported:
 | Event | When | Properties |
 |---|---|---|
 | `$exception` | The start after a native crash | `$exception_list`: one entry: `type` and `value` (the signal, `SIGSEGV`, `SIGABRT`, `SIGBUS`, `SIGFPE` or `SIGILL`; or on Windows the exception's name, e.g. `EXCEPTION_ACCESS_VIOLATION`, else its code `0x…`), `mechanism` (`{type: signal or seh, handled: false}`), `stacktrace` (`{type: raw, frames}`), up to 32 frames of `{platform: native, module, offset}`<br>`$exception_level`: `fatal`<br>`crashed_version`: the version that crashed |
-| `automation_error` | A macro fails, its helper is lost or force-stopped, or a script does not load | `kind`: `failed`, `lost`, `stopped` or `load_failed`<br>`script`: a bundled script's file name (in the program's Automation folder, or its unchanged copy in your folder, checked against the bundled manifest), else `user script` |
+| `automation_error` | A macro fails, its helper is lost or force-stopped, or a script does not load | `kind`: `failed`, `lost`, `stopped` or `load_failed`<br>`script`: a bundled script's file name (in the program's Automation folder, or its unchanged copy in your folder, checked against the bundled manifest; spaces become `_`), else `user script`<br>A macro whose validation declines to run is not an error and sends nothing. |
 
 How a crash is recorded:
 - A signal handler (Linux) or an unhandled-exception filter (Windows) writes a small record to `crash-record.txt` in the cache folder.
