@@ -12608,7 +12608,9 @@ private slots:
             grid << at << at + int(word.size()) - 1; // inclusive
             editor << at << at + int(word.size());
         }
-        QCOMPARE(application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(), grid);
+        // The other dictionaries load in the background; their marks come
+        // in when they are in.
+        QTRY_COMPARE(application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(), grid);
         QTRY_COMPARE(appliedMarks("lineTextHighlighter"), editor);
         // Suggestions for a Korean word come from the Korean dictionary.
         const QVariantMap found = application->editorMisspellAt(0, int(line.indexOf(QStringLiteral("세게"))) + 1);

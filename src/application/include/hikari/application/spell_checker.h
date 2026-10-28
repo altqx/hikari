@@ -16,13 +16,16 @@
 #include "hikari/core/spelling_scripts.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <expected>
 #include <filesystem>
 #include <functional>
+#include <future>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -74,22 +77,29 @@ public:
 
     // SpellChecker::Initialize: DICTIONARY_LANGUAGE (en_US when empty), the
     // primary language, from the first folder holding its .dic and .aff, then
-    // the user dictionary's words. The other installed dictionaries load the
-    // first time a word of their script is checked, the user's words with
-    // them; one that fails to load is left out.
+    // the user dictionary's words. The other installed dictionaries load on a
+    // worker thread, each started the first time a word of its script is
+    // checked, the user's words with them; one that fails to load is left
+    // out. `loaded` runs on that thread after each load (the application
+    // refreshes the marks).
     Status initialize(std::u16string_view language);
+    void setLoadedHandler(std::function<void()> loaded) { m_loaded = std::move(loaded); }
     void clear(); // Cleaning
     bool ready() const { return !m_dictionaries.empty() && m_dictionaries.front().backend; }
 
     // CheckWord: true without a dictionary (spell checking off). SP1: true
     // when any installed dictionary of one of the word's scripts accepts it,
     // or when one of its scripts (or all its letters) has no dictionary.
-    bool checkWord(std::u16string_view word);
+    // While a dictionary of its scripts is still loading, a word no loaded
+    // one accepts is true and not cached, unless `wait` waits for the load
+    // (the Spellchecker window; the Grid and the editor do not wait).
+    bool checkWord(std::u16string_view word, bool wait = false);
     // The word check the text walks use; empty without a dictionary.
-    core::legacy::WordCheck wordCheck();
+    core::legacy::WordCheck wordCheck(bool wait = false);
     // SP1: the primary's suggestions when it checks the word's script, then
     // those of the script's other dictionaries, the ones accepting more of
     // `neighbours` (the Line's other words) first; each suggestion once.
+    // Waits for the script's dictionaries to load.
     std::vector<std::u16string> suggestions(std::u16string_view word,
                                             const std::vector<std::u16string> &neighbours = {});
     // AddWord: refused for empty and number words or without a dictionary;
@@ -117,17 +127,28 @@ private:
         std::filesystem::path dic;
         core::spelling::Scripts scripts;
         std::unique_ptr<SpellingBackend> backend;
-        bool loaded = false; // tried
+        bool loaded = false; // the load finished (backend is null when it failed)
+        std::future<std::unique_ptr<SpellingBackend>> pending;
+        std::uint64_t generation = 0; // m_userGeneration when the load started
+        std::jthread worker;
     };
+    enum class Load { Ready, Loading, Missing };
     std::optional<std::pair<std::filesystem::path, std::filesystem::path>> findPair(std::u16string_view symbol) const;
-    std::unique_ptr<SpellingBackend> load(const std::filesystem::path &aff, const std::filesystem::path &dic) const;
-    SpellingBackend *backendOf(Dictionary &dictionary);
-    // The dictionaries checking `scripts`, the primary first.
-    std::vector<Dictionary *> dictionariesFor(core::spelling::Scripts scripts);
+    // Starts the dictionary's load when it has not started; takes its result
+    // when it is done (or, with `wait`, once it is).
+    Load poll(Dictionary &dictionary, bool wait);
+    void startLoad(Dictionary &dictionary);
+    // The loaded dictionaries checking `scripts`, the primary first; `loading`
+    // tells whether one of them is still loading.
+    std::vector<Dictionary *> dictionariesFor(core::spelling::Scripts scripts, bool wait, bool *loading = nullptr);
 
     std::vector<std::filesystem::path> m_folders;
     SpellingBackendLoader m_loader;
     std::vector<Dictionary> m_dictionaries; // the primary first
+    std::function<void()> m_loaded;
+    // Counts the user dictionary's changes: a load that read it before one
+    // starts again.
+    std::uint64_t m_userGeneration = 0;
     // Results by word, dropped whenever the dictionary changes (legacy wordResults).
     std::unordered_map<std::u16string, bool> m_results;
 };
@@ -149,9 +170,10 @@ std::vector<std::u16string> lineWords(std::u16string_view text, core::SubtitleFo
 bool spellsTranslation(const core::Document &document);
 
 // The editor's marks (TextEditor::CheckText through TextData::Init2): bracket
-// errors and misspelled words of the spell-checked field.
+// errors and misspelled words of the spell-checked field; `wait` as
+// SpellChecker::checkWord's.
 core::legacy::SpellMarks editorMarks(std::u16string_view text, core::SubtitleFormat format, SpellChecker &checker,
-                                     const SpellingText &spelling);
+                                     const SpellingText &spelling, bool wait = false);
 // TextEditor::FindError: the first misspelling whose span holds `at`.
 std::optional<std::size_t> misspellAt(const core::legacy::SpellMarks &marks, int at);
 

@@ -14,9 +14,13 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cstring>
 #include <fstream>
+#include <future>
 #include <iterator>
+#include <mutex>
 #include <random>
 
 #ifdef _WIN32
@@ -293,7 +297,7 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
     EXPECT_TRUE(both.checkWord(u"kot"));
     ASSERT_EQ(both.initialize(u"en_US"), SpellChecker::Status::Ready);
     EXPECT_TRUE(both.checkWord(u"Hello")); // the user's folder first
-    EXPECT_FALSE(both.checkWord(u"bundled"));
+    EXPECT_FALSE(both.checkWord(u"bundled", true)); // waiting for pl, which lacks it too
     EXPECT_EQ(both.userDictionary(), folder / "UserDic.udic");
     EXPECT_TRUE(both.addWord(u"Hikari"));
     EXPECT_TRUE(fs::exists(folder / "UserDic.udic"));
@@ -318,47 +322,81 @@ TEST_F(Spelling, MultilingualRoutesWordsByScript)
     writeFile(folder / "custom.aff", "SET UTF-8\nTRY \xCE\xB1\xCE\xB5\xCE\xB9\n");
     writeFile(folder / "custom.dic", "1\n\xCE\xB3\xCE\xB5\xCE\xB9\xCE\xAC\n");
     writeFile(checker->userDictionary(), "\xEF\xBB\xBFHikari\n\xEC\x84\x9C\xEC\x9A\xB8");
+    std::mutex mutex; // the other dictionaries load on their own threads
     std::vector<std::string> loaded;
     SpellChecker multi(folder, [&, inner = fakes::FakeSpelling::loader()](const fs::path &aff, const fs::path &dic) {
+        const std::lock_guard lock(mutex);
         loaded.push_back(utf8(dic.stem().u8string()));
         return inner(aff, dic);
     });
     ASSERT_EQ(multi.initialize(u"en_US"), SpellChecker::Status::Ready);
     EXPECT_EQ(loaded, (std::vector<std::string>{"en_US"}));
-    // Latin: English or Polish.
-    EXPECT_TRUE(multi.checkWord(u"Hello"));
-    EXPECT_TRUE(multi.checkWord(u"kota"));
-    EXPECT_TRUE(multi.checkWord(u"Hikari"));
-    EXPECT_FALSE(multi.checkWord(u"wrold"));
-    EXPECT_FALSE(multi.checkWord(u"kotta"));
+    // Latin: English or Polish (waiting for Polish, as the window does).
+    EXPECT_TRUE(multi.checkWord(u"Hello", true));
+    EXPECT_TRUE(multi.checkWord(u"kota", true));
+    EXPECT_TRUE(multi.checkWord(u"Hikari", true));
+    EXPECT_FALSE(multi.checkWord(u"wrold", true));
+    EXPECT_FALSE(multi.checkWord(u"kotta", true));
     std::ranges::sort(loaded);
     EXPECT_EQ(loaded, (std::vector<std::string>{"en_US", "pl"}));
     // Hangul and Tamil: their own dictionaries, the user's words too.
-    EXPECT_TRUE(multi.checkWord(u"안녕하세요"));
-    EXPECT_TRUE(multi.checkWord(u"서울"));
-    EXPECT_FALSE(multi.checkWord(u"세게계"));
-    EXPECT_TRUE(multi.checkWord(u"வணக்கம்"));
-    EXPECT_FALSE(multi.checkWord(u"வணக்கமம்"));
-    EXPECT_TRUE(multi.checkWord(u"γειά"));
-    EXPECT_FALSE(multi.checkWord(u"γεια"));
+    EXPECT_TRUE(multi.checkWord(u"안녕하세요", true));
+    EXPECT_TRUE(multi.checkWord(u"서울", true));
+    EXPECT_FALSE(multi.checkWord(u"세게계", true));
+    EXPECT_TRUE(multi.checkWord(u"வணக்கம்", true));
+    EXPECT_FALSE(multi.checkWord(u"வணக்கமம்", true));
+    EXPECT_TRUE(multi.checkWord(u"γειά", true));
+    EXPECT_FALSE(multi.checkWord(u"γεια", true));
     EXPECT_EQ(loaded.size(), 5u);
     // No Cyrillic or Japanese dictionary: not marked.
-    EXPECT_TRUE(multi.checkWord(u"привет"));
-    EXPECT_TRUE(multi.checkWord(u"こんにちは"));
-    EXPECT_TRUE(multi.checkWord(u"Привет세계")); // one of its scripts has none
-    EXPECT_FALSE(multi.checkWord(u"Seoul세게계")); // both have one, and neither knows it
-    EXPECT_TRUE(multi.checkWord(u"123"));
-    EXPECT_FALSE(multi.checkWord(u""));
+    EXPECT_TRUE(multi.checkWord(u"привет", true));
+    EXPECT_TRUE(multi.checkWord(u"こんにちは", true));
+    EXPECT_TRUE(multi.checkWord(u"Привет세계", true)); // one of its scripts has none
+    EXPECT_FALSE(multi.checkWord(u"Seoul세게계", true)); // both have one, and neither knows it
+    EXPECT_TRUE(multi.checkWord(u"123", true));
+    EXPECT_FALSE(multi.checkWord(u"", true));
     // A word added now reaches every loaded dictionary.
     EXPECT_TRUE(multi.addWord(u"세게계"));
-    EXPECT_TRUE(multi.checkWord(u"세게계"));
+    EXPECT_TRUE(multi.checkWord(u"세게계", true));
     EXPECT_TRUE(multi.removeWords({u"세게계"}));
-    EXPECT_FALSE(multi.checkWord(u"세게계"));
+    EXPECT_FALSE(multi.checkWord(u"세게계", true));
     // The primary decides only the order: Polish first checks the same way.
     ASSERT_EQ(multi.initialize(u"pl"), SpellChecker::Status::Ready);
-    EXPECT_TRUE(multi.checkWord(u"Hello"));
-    EXPECT_TRUE(multi.checkWord(u"안녕하세요"));
-    EXPECT_FALSE(multi.checkWord(u"wrold"));
+    EXPECT_TRUE(multi.checkWord(u"Hello", true));
+    EXPECT_TRUE(multi.checkWord(u"안녕하세요", true));
+    EXPECT_FALSE(multi.checkWord(u"wrold", true));
+}
+
+// SP1: the Grid and the editor don't wait for a dictionary still loading:
+// its script's words are not marked, and not kept, until it is in; then the
+// loaded handler asks for the marks again.
+TEST_F(Spelling, MultilingualMarksWaitForNoLoad)
+{
+    writeFile(folder / "ko_KR.aff", "SET UTF-8\n");
+    writeFile(folder / "ko_KR.dic", "1\n\xEC\x84\xB8\xEA\xB3\x84\n");
+    std::promise<void> release;
+    std::shared_future<void> released = release.get_future().share();
+    std::promise<void> loadedOnce;
+    std::atomic<int> handled = 0;
+    SpellChecker multi(folder, [&, inner = fakes::FakeSpelling::loader()](const fs::path &aff, const fs::path &dic) {
+        if (dic.stem() == "ko_KR")
+            released.wait();
+        return inner(aff, dic);
+    });
+    multi.setLoadedHandler([&] {
+        if (++handled == 1)
+            loadedOnce.set_value();
+    });
+    ASSERT_EQ(multi.initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(multi.checkWord(u"세게계")); // ko_KR is loading
+    EXPECT_TRUE(multi.checkWord(u"세게계"));
+    EXPECT_FALSE(multi.checkWord(u"wrold")); // en_US checks Latin alone
+    EXPECT_EQ(handled, 0);
+    release.set_value();
+    ASSERT_EQ(loadedOnce.get_future().wait_for(std::chrono::seconds(10)), std::future_status::ready);
+    EXPECT_FALSE(multi.checkWord(u"세게계"));
+    EXPECT_TRUE(multi.checkWord(u"세계"));
+    EXPECT_EQ(handled, 1);
 }
 
 // SP1: suggestions from the primary first when it checks the word's script,

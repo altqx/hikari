@@ -1135,6 +1135,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (!m_bundledDictionaryDir.isEmpty() && m_bundledDictionaryDir != m_dictionaryDir)
             folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
         m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
+        // SP1: a dictionary loaded in the background checks the marks again.
+        m_spellChecker->setLoadedHandler(
+            [this] { QMetaObject::invokeMethod(this, [this] { spellingRefresh(); }, Qt::QueuedConnection); });
     }
     setUpGrammar(options); // GR1 (#364)
     m_spellingLoader = options.spellingBackend;
@@ -6357,7 +6360,7 @@ QVariantList Application::sampleSpellingMarks(const QString &text, bool on, int 
     if (!m_sampleCheckerReady)
         return out;
     const auto marks = application::editorMarks(text.toStdU16String(), core::SubtitleFormat::Ass, *m_sampleChecker,
-                                                m_spellingText);
+                                                m_spellingText, true);
     for (std::size_t i = 0; i + 1 < marks.errors.size(); i += 2)
         out << marks.errors[i] << marks.errors[i + 1] + 1;
     return out;

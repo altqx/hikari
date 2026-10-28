@@ -4,9 +4,11 @@
 // a made-up name in each (a word no dictionary knows, checked anew). The
 // dictionary folder is the third argument (the fixtures folder without it);
 // every dictionary in it is installed, en_US (else en_TEST) the primary.
-// Reported: the spell checker's start, the first pass over every Line (the
-// other dictionaries load during it), the cached pass, and one cached Line
-// as the Grid repaints it. Observations on an uncalibrated host.
+// Reported: each dictionary's load, the spell checker's start, the first
+// pass over every Line as the Grid makes it (the other dictionaries load in
+// the background), the same pass waiting for them as the Spellchecker window
+// does, the cached pass, and one cached Line as the Grid repaints it.
+// Observations on an uncalibrated host.
 
 #include "perf_harness.h"
 
@@ -93,28 +95,45 @@ int main(int argc, char **argv)
     const auto file = lines(5000);
     std::vector<perf::BenchmarkResult> results;
 
-    application::SpellChecker checker(folder, backends::hunspellSpellingLoader());
+    // Each installed dictionary's load on its own.
+    for (const auto &symbol : application::availableDictionaries(folder)) {
+        const fs::path base = folder / fs::path(symbol);
+        const auto start = Clock::now();
+        const auto backend =
+            backends::hunspellSpellingLoader()(fs::path(base).concat(".aff"), fs::path(base).concat(".dic"));
+        results.push_back(once("spelling.load." + fs::path(symbol).string(), ms(Clock::now() - start)));
+    }
+
+    application::SpellChecker grid(folder, backends::hunspellSpellingLoader());
     auto start = Clock::now();
-    if (checker.initialize(primary) != application::SpellChecker::Status::Ready)
+    if (grid.initialize(primary) != application::SpellChecker::Status::Ready)
         return 1;
     results.push_back(once("spelling.start", ms(Clock::now() - start)));
 
     std::size_t marks = 0;
-    auto pass = [&] {
+    auto pass = [&](application::SpellChecker &checker, bool wait) {
         marks = 0;
         for (const auto &line : file)
             marks += core::legacy::checkTextAndBrackets(line, core::SubtitleFormat::Ass, text.segment,
-                                                        checker.wordCheck())
+                                                        checker.wordCheck(wait))
                          .misspells.size();
     };
     start = Clock::now();
-    pass();
+    pass(grid, false);
     results.push_back(once("spelling.first_pass_5000", ms(Clock::now() - start)));
+    const std::size_t gridMarks = marks;
+
+    application::SpellChecker checker(folder, backends::hunspellSpellingLoader());
+    if (checker.initialize(primary) != application::SpellChecker::Status::Ready)
+        return 1;
+    start = Clock::now();
+    pass(checker, true);
+    results.push_back(once("spelling.first_pass_waiting_5000", ms(Clock::now() - start)));
     const std::size_t firstMarks = marks;
     double cached = 1e300;
     for (int i = 0; i < 5; ++i) {
         start = Clock::now();
-        pass();
+        pass(checker, false);
         cached = std::min(cached, ms(Clock::now() - start));
     }
     results.push_back(once("spelling.cached_pass_5000", cached));
@@ -137,7 +156,8 @@ int main(int argc, char **argv)
             std::cout << ' ' << s.p50Us / 1000 << '/' << s.p95Us / 1000 << '/' << s.maxUs / 1000;
         std::cout << "\n";
     }
-    std::cout << "marked words, first pass: " << firstMarks << ", cached pass: " << marks << "\n";
+    std::cout << "marked words, first pass: " << gridMarks << ", waiting: " << firstMarks << ", cached pass: " << marks
+              << "\n";
     std::cout << (calibrated ? "calibrated host\n" : "uncalibrated host: observations only\n");
     return 0;
 }

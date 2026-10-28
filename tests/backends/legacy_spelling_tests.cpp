@@ -142,7 +142,7 @@ TEST(HunspellSpelling, SpellCheckerInitializesFromTheFolder)
     EXPECT_EQ(checker.initialize(u"en_TEST"), application::SpellChecker::Status::Ready);
     EXPECT_TRUE(checker.checkWord(u"Hikari"));
     EXPECT_TRUE(checker.checkWord(u"wrold"));
-    EXPECT_FALSE(checker.checkWord(u"Teh"));
+    EXPECT_FALSE(checker.checkWord(u"Teh", true)); // waiting for pl_TEST
     EXPECT_EQ(checker.userDictionary(), user / "UserDic.udic");
     std::error_code ec;
     fs::remove_all(user, ec);
@@ -163,7 +163,7 @@ TEST(HunspellSpelling, MixedLinesMarkOnlyRealMisspellings)
     const auto spelling = backends::legacySpellingText();
     auto marked = [&](std::u16string_view text) {
         std::vector<std::u16string> out;
-        for (const auto &m : application::editorMarks(text, core::SubtitleFormat::Ass, checker, spelling).misspells)
+        for (const auto &m : application::editorMarks(text, core::SubtitleFormat::Ass, checker, spelling, true).misspells)
             out.push_back(m.word);
         return out;
     };
