@@ -7,9 +7,11 @@
 // invalid or restores only in part shows the Editing layout with a notice.
 
 #include "hikari/app/application.h"
+#include "hikari/app/session_json.h"
 #include "hikari/application/session_file.h"
 
 #include "docking.h"
+#include "legacy_session.h"
 #include "workspace_layout.h"
 
 #include <kddockwidgets/core/DockRegistry.h>
@@ -56,8 +58,7 @@ QByteArray readAll(const QString &path)
 application::Session readSession(const QString &path)
 {
     const QByteArray bytes = readAll(path);
-    auto text = application::decodeSessionBytes(std::string_view(bytes.constData(), bytes.size()));
-    return application::parseSession(text.value_or(std::string())).value_or(application::Session{});
+    return app::readSession(std::string_view(bytes.constData(), bytes.size())).value_or(application::Session{});
 }
 
 // A Session tab's arrangement as written ("Layout: ").
@@ -158,7 +159,7 @@ private slots:
         engine.reset();
         application.reset();
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
-                                 "LastSession.txt", "hikari.ini"})
+                                 "last-session.json", "hikari.ini"})
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 
@@ -348,7 +349,7 @@ private slots:
         applyPreset("Timing");
         QTRY_VERIFY(!isOpen("videoDock"));
         float_("audioDock", false);
-        const QString kls = dir.filePath(QStringLiteral("saved.kls"));
+        const QString kls = dir.filePath(QStringLiteral("saved.hksession"));
         QCOMPARE(application->saveSessionTo(QUrl::fromLocalFile(kls)), QString());
         const auto saved = readSession(kls);
         QCOMPARE(saved.tabs.size(), std::size_t(2));
@@ -446,7 +447,7 @@ private slots:
         {
             QFile f(kls);
             QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
-            f.write(QByteArray::fromStdString(application::writeSession("HikariSub v1", false, {first, second})));
+            f.write(QByteArray::fromStdString(testing::writeLegacySession("HikariSub v1", false, {first, second})));
         }
         close("editorDock");
         loadSession(kls);

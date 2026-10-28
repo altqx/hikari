@@ -7,6 +7,7 @@
 //   automation/autoload, automation/include   (?user; DependencyControl's too)
 //   dictionaries/   Hunspell .dic/.aff, UserDic.udic
 //   catalogs/       style and font catalogs
+//   last-session.json   the last session (CF3; LastSession.txt.old once converted)
 //   presets/        saved workspace layouts and other presets
 //   autosave/  recovery/  log/
 //

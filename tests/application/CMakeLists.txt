@@ -145,6 +145,7 @@ hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_test
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_session_file_tests PRIVATE
     HIKARI_SESSION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/sessions")
+target_include_directories(hikari_application_session_file_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # R1: subtitle comparison criteria, text differences and the menu's state,
 # with the legacy probe's observations.
 hikari_add_gtest(hikari_application_subtitle_comparison_tests SOURCES subtitle_comparison_tests.cpp

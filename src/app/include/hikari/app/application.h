@@ -293,8 +293,9 @@ public:
     Q_INVOKABLE QVariantMap reviewOpenUrl(const QUrl &url) { return reviewOpen(url.toLocalFile()); }
     // Dropped files by the legacy rules (OpenFile for one, OpenFiles for
     // several, sorted). One file: {kind: "subtitles" (open with reviewOpen),
-    // "video" (open with openVideoFile), or "" when it was handled (a script
-    // or keyframes)}. Several (P9, legacy OpenFiles): scripts load and the
+    // "video" (open with openVideoFile), "session" (CF3: a .hksession or
+    // .kls, loaded as Load session loads it), or "" when it was handled (a
+    // script or keyframes)}. Several (P9, legacy OpenFiles): scripts load and the
     // subtitles and videos open as tabs, pairing the i-th subtitles with the
     // i-th video; {kind: "files", rows} with the close review's rows when the
     // first subtitles go into the editing target and it has unsaved work
@@ -304,9 +305,10 @@ public:
     // in new tabs: subtitles as File > Open opens them into a new tab, a
     // video in a new tab, several as dropped ones but each in a new tab; an
     // untouched empty tab (P6) takes the first. Nothing is reviewed, so a
-    // tab's work is never replaced. Returns {kind: "video", path} when a
-    // video waits for the shell's openSingleVideo in its tab, else as
-    // openDropped. Call it only while forwardedOpenWaits() is false.
+    // tab's work is never replaced, but a session file (CF3) waits for the
+    // shell's openSessionFile, whose review the replaced tabs go through.
+    // Returns {kind: "video", path} when a video waits for the shell's
+    // openSingleVideo in its tab, else as openDropped. Call it only while forwardedOpenWaits() is false.
     QVariantMap openForwarded(const QStringList &files);
     // True while a review or a startup session question has the next word:
     // forwarded files wait (legacy hikarisubApp::OnOpen waited while IsBusy).
@@ -1067,17 +1069,18 @@ public:
     // rows as reviewClose's; with none, finishClose() closes it.
     Q_INVOKABLE QVariantList reviewCloseTab(int index);
     // GLOBAL_LOAD_LAST_SESSION (empty file) and GLOBAL_LOAD_EXTERNAL_SESSION
-    // (a .kls file): the session is read and its subtitles staged
+    // (a .hksession or a legacy .kls file): the session is read and its subtitles staged
     // (L58-staged-replacement), then every open Document's unsaved work is
     // reviewed as for Quit (P6-session-review). Returns {ok, problem, rows}; with ok and no rows,
     // finishClose() replaces the open tabs with the session's.
     Q_INVOKABLE QVariantMap reviewSession(const QUrl &file = {});
     // GLOBAL_SAVE_EXTERNAL_SESSION: "readonly" (legacy asks again), "failed" or "".
+    // CF3: written as a .hksession (a name ending in .kls takes that suffix).
     Q_INVOKABLE QString saveSessionTo(const QUrl &file);
     // Where the session dialogs start (legacy Options.configPath).
     Q_INVOKABLE QUrl sessionFolder() const;
     // At startup (legacy hikarisubApp::OnInit): "load", "ask" or "crash" (the
-    // last session did not end with "[Close session]"), or "".
+    // last session was not written as the program closed), or "".
     Q_INVOKABLE QString startupSession() const;
     // The shell has carried out what startupSession() asked (loaded the
     // session, or the prompts were answered).
@@ -1200,7 +1203,7 @@ public:
     // ShowSecondComparedLine with setViaScroll), or -1.
     Q_INVOKABLE int comparedReferenceRow(int row) const;
     QString lastSessionPath() const;
-    // Writes LastSession.txt (legacy SaveLastSession), or `path`.
+    // Writes last-session.json (legacy SaveLastSession), or the .hksession `path`.
     bool saveLastSession(bool closing = false, const QString &path = {});
 signals:
     void tabsChanged();
@@ -1734,6 +1737,7 @@ private:
     };
     struct PendingSession {
         std::vector<application::SessionTab> tabs;
+        std::optional<std::size_t> activeTab; // CF3: the tab to show
         std::vector<std::optional<application::StagedOpen>> staged;
         // Each staged file as it was read (L58-staged-replacement: a file
         // changed or gone by the time the review allows the load is read again).
@@ -1750,11 +1754,15 @@ private:
     bool m_tabSeekQueued = false;
     bool m_scrollRestoring = false;
     bool m_startedWithPaths = false;
-    // PU1-startup-cards: LastSession.txt's text when this program started.
-    std::optional<std::string> m_startSession;
+    // PU1-startup-cards: the last session as it was when this program started.
+    std::optional<application::Session> m_startSession;
     void rememberStartSession();
-    static QStringList sessionNames(const std::optional<std::string> &text);
-    QVariantMap reviewSessionText(const std::optional<std::string> &text);
+    // CF3: LastSession.txt into last-session.json, once.
+    void convertLastSession();
+    // last-session.json; a broken one is kept as .broken and gives nothing.
+    std::optional<application::Session> loadLastSession();
+    static QStringList sessionNames(const std::optional<application::Session> &session);
+    QVariantMap reviewSessionRead(std::optional<application::Session> session, const QString &problem = {});
     mutable bool m_startupSessionPending = false; // WS5: startupSession() asked, not yet carried out
     int m_tabTextMax = 40; // legacy maxCharPerTab, read once at start
     void leaveTabMedia(std::optional<application::DocumentId> document);

@@ -11,6 +11,7 @@
 #include "hikari/application/session_file.h"
 
 #include "docking.h"
+#include "legacy_session.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "log_controller.h"
 #include "qtest_parts.h"
@@ -189,7 +190,7 @@ private slots:
         engine.reset();
         application.reset();
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
-                                 "layouts.json", "layouts.json.unrestored", "LastSession.txt", "hikari.ini"}) {
+                                 "layouts.json", "layouts.json.unrestored", "last-session.json", "hikari.ini"}) {
             QFile::remove(dir.filePath(QLatin1String(name)));
             QDir().rmdir(dir.filePath(QLatin1String(name))); // a test's folder in a file's place
         }
@@ -934,16 +935,17 @@ private slots:
     }
 
     // A legacy Session tab saved in the player layout ("Editor: 0") opens
-    // with the editor (there is no player layout); the Session is written
-    // with "Editor: 1" for legacy.
+    // with the editor (there is no player layout); CF3: the Session written
+    // has no such field.
     void aPlayerLayoutSessionTabOpensWithTheEditor()
     {
         start();
         application::SessionTab tab;
         tab.subtitles = QDir::toNativeSeparators(writeSubtitles(dir.filePath(QStringLiteral("p.ass")))).toStdString();
-        tab.editor = false;
         const QString kls = dir.filePath(QStringLiteral("player.kls"));
-        QVERIFY(writeAll(kls, QByteArray::fromStdString(application::writeSession("HikariSub v1", false, {tab}))));
+        QByteArray legacy = QByteArray::fromStdString(testing::writeLegacySession("HikariSub v1", false, {tab}));
+        legacy.replace("Editor: 1", "Editor: 0");
+        QVERIFY(writeAll(kls, legacy));
         const QVariantMap review = application->reviewSession(QUrl::fromLocalFile(kls));
         QVERIFY(review.value(QStringLiteral("ok")).toBool());
         application->finishClose();
@@ -952,8 +954,8 @@ private slots:
             QVERIFY2(isOpen(shown), shown);
         QVERIFY(application->saveLastSession());
         const QByteArray written = readAll(application->lastSessionPath());
-        QVERIFY2(written.contains("Editor: 1"), written.constData());
-        QVERIFY(!written.contains("Editor: 0"));
+        QVERIFY2(written.startsWith("{"), written.constData());
+        QVERIFY(!written.contains("ditor"));
         stop();
     }
 

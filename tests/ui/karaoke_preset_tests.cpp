@@ -208,7 +208,7 @@ private slots:
             application->endSession();
         engine.reset();
         application.reset();
-        for (const char *name : {"layout.json", "layout.json.bak", "layouts.json", "LastSession.txt", "hikari.ini"})
+        for (const char *name : {"layout.json", "layout.json.bak", "layouts.json", "last-session.json", "hikari.ini"})
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 

@@ -8,7 +8,9 @@
 // reached, an audio file of its own, keyframes) and gets it back when it is
 // shown again. A tab never shows another tab's audio (C05-audio-association).
 //
-// Sessions use the legacy files unchanged (application/session_file.h).
+// CF3 (#490): sessions are JSON (app/session_json.h): last-session.json,
+// converted once from legacy's LastSession.txt, and the .hksession files of
+// Save session; a legacy .kls still loads (application/session_file.h).
 // Loading replaces every open tab, as legacy did, but only after the staged
 // subtitles are read and the open Documents' unsaved work is reviewed as for
 // Quit (approved P6-session-review; legacy destroyed the tabs without asking).
@@ -18,11 +20,13 @@
 // tab itself is kept as legacy kept it (Untitled when its subtitles are gone).
 //
 // WS1 (ADR 0020): each tab also has its own panel arrangement, swapped with
-// its content and written to the Session on the tab's "Layout: " line.
+// its content and written to the Session as the tab's "layout".
 
 #include "hikari/app/application.h"
 
+#include "hikari/app/session_json.h"
 #include "hikari/application/grid_clipboard.h"
+#include "hikari/application/owned_file.h"
 #include "hikari/application/session_file.h"
 
 #include <QCoreApplication>
@@ -49,6 +53,26 @@ std::string utf8(const QString &s)
 bool isFile(const QString &path)
 {
     return !path.isEmpty() && QFileInfo(path).isFile();
+}
+
+std::filesystem::path fsPath(const QString &path)
+{
+    return std::filesystem::path(path.toStdU16String());
+}
+
+QString fileName(const std::filesystem::path &path)
+{
+    return QString::fromStdU16String(path.filename().u16string());
+}
+
+// The Log's text for a session file that cannot be read: its name, the line
+// when known, and why.
+QString sessionProblem(const QString &file, const application::ParseFailure &failure)
+{
+    const QString why = QString::fromStdString(failure.message);
+    return failure.line > 0
+               ? QCoreApplication::translate("HikariSub.Session", "%1, line %2: %3").arg(file).arg(failure.line).arg(why)
+               : QCoreApplication::translate("HikariSub.Session", "%1: %2").arg(file, why);
 }
 
 } // namespace
@@ -465,8 +489,67 @@ bool Application::keepTabAudio(const QString &videoPath)
 
 QString Application::lastSessionPath() const
 {
-    // Legacy Options.configPath/LastSession.txt; none without a settings file.
-    return m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/LastSession.txt");
+    // CF3: beside the settings file, where legacy's LastSession.txt was; none
+    // without a settings file.
+    return m_settingsFile.isEmpty() ? QString()
+                                    : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/last-session.json");
+}
+
+void Application::convertLastSession()
+{
+    // CF3: LastSession.txt becomes last-session.json once, at the first start
+    // without one, and stays as LastSession.txt.old.
+    const QString target = lastSessionPath();
+    if (target.isEmpty())
+        return;
+    const QString legacy = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/LastSession.txt");
+    application::convertOnce(fsPath(target), fsPath(legacy), [&] {
+        QFile file(legacy);
+        if (!file.open(QIODevice::ReadOnly))
+            return false;
+        const QByteArray bytes = file.readAll();
+        application::ParseFailure failure;
+        const auto session = readSession(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), &failure);
+        if (!session) {
+            // Empty or corrupt: legacy restored nothing from it either.
+            if (!failure.message.empty())
+                m_log->notice(ui::LogController::Warning,
+                              QCoreApplication::translate("HikariSub.MainWindow", "Load last session"),
+                              QCoreApplication::translate("HikariSub.Session", "%1 It was kept as %2.")
+                                  .arg(sessionProblem(QStringLiteral("LastSession.txt"), failure),
+                                       QStringLiteral("LastSession.txt.old")));
+            return true;
+        }
+        return application::writeFileAtomically(fsPath(target), writeSessionJson(*session, session->closed).toStdString());
+    });
+}
+
+std::optional<application::Session> Application::loadLastSession()
+{
+    // A broken last-session.json is never overwritten: it is kept as
+    // last-session.json.broken, the Log says why, and nothing is restored.
+    const QString path = lastSessionPath();
+    if (path.isEmpty())
+        return std::nullopt;
+    std::optional<application::Session> session;
+    const auto load = application::loadOwnedFile(
+        fsPath(path), [&](std::string_view bytes) -> std::optional<application::ParseFailure> {
+            application::ParseFailure failure;
+            session = readSession(bytes, &failure);
+            if (!session && !failure.message.empty())
+                return failure;
+            return std::nullopt;
+        });
+    if (load.problem) {
+        const QString problem = sessionProblem(fileName(load.problem->file), load.problem->failure);
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Load last session"),
+                      load.problem->keptAs.empty()
+                          ? QCoreApplication::translate("HikariSub.Session", "%1 No tabs were restored.").arg(problem)
+                          : QCoreApplication::translate("HikariSub.Session", "%1 It was kept as %2; no tabs were restored.")
+                                .arg(problem, fileName(load.problem->keptAs)));
+        session.reset();
+    }
+    return session;
 }
 
 QUrl Application::sessionFolder() const
@@ -496,8 +579,12 @@ bool Application::saveLastSession(bool closing, const QString &path)
         return false;
     const auto target = m_workspace.editingTarget();
     registerTabArrangements(); // WS1: a tab opened since the last refresh has its own
-    std::vector<application::SessionTab> tabs;
+    application::Session session;
+    session.header = "HikariSub " HIKARI_VERSION;
+    auto &tabs = session.tabs;
     for (const auto id : m_workspace.tabs()) {
+        if (id == target)
+            session.activeTab = tabs.size();
         application::SessionTab tab;
         TabMedia media;
         if (const auto it = m_tabMedia.find(id.value); it != m_tabMedia.end())
@@ -534,7 +621,6 @@ bool Application::saveLastSession(bool closing, const QString &path)
         tab.audio = utf8(media.audio);
         if (const auto *u = unresolved("audio"); u && media.audio.isEmpty())
             tab.audio = utf8(u->path);
-        tab.editor = true; // "Editor: 1" for legacy: WS3 retired the player layout
         tab.keyframes = utf8(media.keyframes);
         if (const auto *u = unresolved("keyframes"); u && media.keyframes.isEmpty())
             tab.keyframes = utf8(u->path);
@@ -542,13 +628,13 @@ bool Application::saveLastSession(bool closing, const QString &path)
             tab.layout = arrangement->serialise().toStdString(); // WS1
         tabs.push_back(std::move(tab));
     }
-    const std::string bytes =
-        application::writeSession("HikariSub v" HIKARI_VERSION, closing, tabs);
+    // Only last-session.json says whether the program closed.
+    const QByteArray bytes = writeSessionJson(session, path.isEmpty() ? std::optional<bool>(closing) : std::nullopt);
     QDir().mkpath(QFileInfo(file).absolutePath()); // FileWrite makes the folder
     QSaveFile out(file);
     if (!out.open(QIODevice::WriteOnly))
         return false;
-    out.write(bytes.data(), static_cast<qint64>(bytes.size()));
+    out.write(bytes);
     return out.commit();
 }
 
@@ -559,9 +645,12 @@ void Application::endSession()
 
 QString Application::saveSessionTo(const QUrl &file)
 {
-    const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
+    QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
     if (path.isEmpty())
         return QStringLiteral("failed");
+    // CF3: a session is never written as a legacy .kls.
+    if (path.endsWith(QLatin1String(".kls"), Qt::CaseInsensitive))
+        path = path.chopped(4) + QStringLiteral(".hksession");
     // OnExternalSession: a read-only file asks for another name.
     if (const QFileInfo info(path); info.exists() && !info.isWritable())
         return QStringLiteral("readonly");
@@ -570,7 +659,9 @@ QString Application::saveSessionTo(const QUrl &file)
 
 namespace {
 
-std::optional<std::string> readSessionText(const QString &path)
+// The session at `path`: nothing for no file or an empty one, and nothing
+// with `failure` set for a broken one.
+std::optional<application::Session> readSessionAt(const QString &path, application::ParseFailure *failure = nullptr)
 {
     if (path.isEmpty())
         return std::nullopt;
@@ -578,44 +669,43 @@ std::optional<std::string> readSessionText(const QString &path)
     if (!file.open(QIODevice::ReadOnly))
         return std::nullopt;
     const QByteArray bytes = file.readAll();
-    return application::decodeSessionBytes(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())));
+    return readSession(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), failure);
 }
 
 } // namespace
 
 bool Application::lastSessionCrashed() const
 {
-    // Notebook::CheckLastSession == 2: a file without "[Close session]".
-    const auto text = readSessionText(lastSessionPath());
-    return text && !application::sessionClosed(*text);
+    // Notebook::CheckLastSession == 2: a session not written as the program closed.
+    const auto session = readSessionAt(lastSessionPath());
+    return session && !session->closed;
 }
 
 QVariantMap Application::lastSessionSummary() const
 {
-    return {{QStringLiteral("names"), sessionNames(readSessionText(lastSessionPath()))}};
+    return {{QStringLiteral("names"), sessionNames(readSessionAt(lastSessionPath()))}};
 }
 
-QStringList Application::sessionNames(const std::optional<std::string> &text)
+QStringList Application::sessionNames(const std::optional<application::Session> &session)
 {
     QStringList names;
-    if (text)
-        if (const auto session = application::parseSession(*text))
-            for (const auto &tab : session->tabs) {
-                // A tab with neither subtitles nor a video file is an
-                // Untitled one, which restores as nothing worth offering; a
-                // dummy video ("?dummy:...") is not a file applySession
-                // reopens.
-                const bool dummy = tab.subtitles.empty() && tab.video.starts_with("?dummy");
-                const QString file = !tab.subtitles.empty() ? qs(tab.subtitles) : dummy ? QString() : qs(tab.video);
-                if (!file.isEmpty())
-                    names << QFileInfo(file).fileName();
-            }
+    if (session)
+        for (const auto &tab : session->tabs) {
+            // A tab with neither subtitles nor a video file is an Untitled
+            // one, which restores as nothing worth offering; a dummy video
+            // ("?dummy:...") is not a file applySession reopens.
+            const bool dummy = tab.subtitles.empty() && tab.video.starts_with("?dummy");
+            const QString file = !tab.subtitles.empty() ? qs(tab.subtitles) : dummy ? QString() : qs(tab.video);
+            if (!file.isEmpty())
+                names << QFileInfo(file).fileName();
+        }
     return names;
 }
 
 void Application::rememberStartSession()
 {
-    m_startSession = readSessionText(lastSessionPath());
+    convertLastSession();
+    m_startSession = loadLastSession();
 }
 
 QString Application::startupSession() const
@@ -640,7 +730,7 @@ QString Application::startupSession() const
 
 QString Application::startupOffer() const
 {
-    if ((m_startSession && !application::sessionClosed(*m_startSession)) || !recoveryBundles().isEmpty())
+    if ((m_startSession && !m_startSession->closed) || !recoveryBundles().isEmpty())
         return QStringLiteral("crash");
     // On start: Ask; Load has loaded it already, unless files were given.
     if (m_startSession && sessionRestore() == 1)
@@ -655,7 +745,7 @@ QStringList Application::startupOfferNames() const
 
 QVariantMap Application::reviewStartupSession()
 {
-    return reviewSessionText(m_startSession);
+    return reviewSessionRead(m_startSession);
 }
 
 bool Application::forwardedOpenWaits() const
@@ -667,24 +757,28 @@ bool Application::forwardedOpenWaits() const
 
 QVariantMap Application::reviewSession(const QUrl &file)
 {
-    const QString path = file.isEmpty() ? lastSessionPath() : (file.isLocalFile() ? file.toLocalFile() : file.toString());
-    return reviewSessionText(readSessionText(path));
+    if (file.isEmpty())
+        return reviewSessionRead(loadLastSession());
+    // A session file the user chose is never renamed or changed.
+    const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
+    application::ParseFailure failure;
+    auto session = readSessionAt(path, &failure);
+    if (!session && !failure.message.empty()) {
+        const QString problem = sessionProblem(QFileInfo(path).fileName(), failure);
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Load session from file"),
+                      problem);
+        return reviewSessionRead(std::nullopt, problem);
+    }
+    return reviewSessionRead(std::move(session));
 }
 
-QVariantMap Application::reviewSessionText(const std::optional<std::string> &text)
+QVariantMap Application::reviewSessionRead(std::optional<application::Session> session, const QString &problem)
 {
     auto result = [](bool ok, const QString &problem, const QVariantList &rows = {}) {
         return QVariantMap{{QStringLiteral("ok"), ok}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), rows}};
     };
-    if (!text)
-        return result(false, QString()); // no file or an empty one: legacy did nothing
-    auto session = application::parseSession(*text);
-    if (!session) {
-        const QString problem = QCoreApplication::translate("HikariSub.Session", "Session file is corrupt");
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Load session from file"),
-                      problem);
-        return result(false, problem);
-    }
+    if (!session)
+        return result(false, problem); // no file or an empty one: legacy did nothing
     PendingSession pending;
     for (const auto &tab : session->tabs) {
         std::optional<application::StagedOpen> staged;
@@ -697,6 +791,7 @@ QVariantMap Application::reviewSessionText(const std::optional<std::string> &tex
         pending.staged.push_back(std::move(staged));
     }
     pending.tabs = std::move(session->tabs);
+    pending.activeTab = session->activeTab;
     const QVariantList rows = reviewClose(QStringLiteral("session"));
     m_pendingSession = std::move(pending);
     return result(true, QString(), rows);
@@ -736,7 +831,7 @@ void Application::applySession()
     m_layoutDocument.reset();
     m_originalColumns.clear(); // E5: every tab's Grid is destroyed
     m_unresolved.clear();
-    std::optional<application::DocumentId> last;
+    std::optional<application::DocumentId> last, active;
     for (std::size_t i = 0; i < pending.tabs.size(); ++i) {
         const auto &tab = pending.tabs[i];
         const QString subtitles = qs(tab.subtitles);
@@ -803,10 +898,13 @@ void Application::applySession()
                                                  title ? qs(*title) : QString());
         }
         last = id;
+        if (pending.activeTab == i)
+            active = id;
     }
-    // AddPage(false) made each loaded tab the active one: the last stays active.
-    if (last)
-        m_workspace.setEditingTarget(*last);
+    // CF3: the tab the session marks; else, as AddPage(false) made each
+    // loaded tab the active one, the last.
+    if (active || last)
+        m_workspace.setEditingTarget(active ? *active : *last);
     else
         newDocument();
     refreshViews();

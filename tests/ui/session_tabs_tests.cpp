@@ -1,18 +1,24 @@
 // P6: tabs over the shared Workspace (GLOBAL_ADD_PAGE, GLOBAL_CLOSE_PAGE,
 // GLOBAL_NEXT_TAB / GLOBAL_PREVIOUS_TAB) and session restore
-// (GLOBAL_LOAD_LAST_SESSION, the .kls files) through the composition, against
-// legacy Notebook, HikariSubFrame and hikarisubApp at 20d647c4: partial
-// restore from fixtures with missing files, C05-audio-association, each tab's
-// own media, and the startup choices.
+// (GLOBAL_LOAD_LAST_SESSION, the .hksession and legacy .kls files) through
+// the composition, against legacy Notebook, HikariSubFrame and hikarisubApp
+// at 20d647c4: partial restore from fixtures with missing files,
+// C05-audio-association, each tab's own media, and the startup choices.
+// CF3: last-session.json, converted once from LastSession.txt.
 
 #include "hikari/app/application.h"
+#include "hikari/app/session_json.h"
 #include "hikari/application/session_file.h"
+
+#include "legacy_session.h"
 
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDeadlineTimer>
 #include <QDir>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -52,8 +58,8 @@ QByteArray hash(const QString &path)
     return QCryptographicHash::hash(readAll(path), QCryptographicHash::Sha256);
 }
 
-// A session file in the legacy format (CRLF, read the same on every
-// platform under P6-session-crlf).
+// A session file's bytes: a legacy one (CRLF, read the same on every
+// platform under P6-session-crlf) or JSON.
 void writeSession(const QString &path, const QByteArray &text)
 {
     QFile f(path);
@@ -64,9 +70,7 @@ void writeSession(const QString &path, const QByteArray &text)
 application::Session readSession(const QString &path)
 {
     const QByteArray bytes = readAll(path);
-    auto text = application::decodeSessionBytes(std::string_view(bytes.constData(), bytes.size()));
-    auto session = application::parseSession(text.value_or(std::string()));
-    return session.value_or(application::Session{});
+    return app::readSession(std::string_view(bytes.constData(), bytes.size())).value_or(application::Session{});
 }
 
 QString media(const char *name)
@@ -381,8 +385,8 @@ private slots:
             "Audio: %1/three.mka\r\n"
             "Tab: 3\r\nVideo: \r\nPosition: 0\r\nFFMS2: 1\r\nSubtitles: %1/four.ass\r\nActive: 0\r\nScroll: 0\r\nEditor: 1\r\n"
             "Audio: %1/gone.mka\r\n").arg(d).toUtf8();
+        writeSession(home.filePath(QStringLiteral("LastSession.txt")), text); // CF3: converted at the start
         app::Application a(options(home));
-        writeSession(a.lastSessionPath(), text);
         QVERIFY(loadSession(a));
         QCOMPARE(titles(a), (QStringList{"one.ass", "two.ass", "three.ass", "four.ass"}));
         QCOMPARE(a.currentTab(), 3);
@@ -434,12 +438,10 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(a->video().session().shownFrame().value_or(-1), 12, 10000);
         a.reset();
 
-        // The next program run loads it: the last tab is active, the first
-        // shows its video at the position again.
+        // The next program run loads it: the tab active at the end is again
+        // (CF3's marker), the first shows its video at the position again.
         app::Application b(options(home));
         QCOMPARE(b.startupSession(), QString()); // closed cleanly, not asked for
-        // The session this program wrote (CRLF) restores on every platform,
-        // Linux included (P6-session-crlf; legacy Linux kept each '\r').
         QVERIFY(loadSession(b));
         QCOMPARE(b.tabs().size(), qsizetype(2));
         QCOMPARE(b.currentTab(), 1);
@@ -491,14 +493,14 @@ private slots:
         QTemporaryDir older;
         const QString d = QDir::fromNativeSeparators(older.path());
         writeSubtitles(older.filePath(QStringLiteral("old.ass")), "old");
-        app::Application c(options(older));
-        writeSession(c.lastSessionPath(),
+        writeSession(older.filePath(QStringLiteral("LastSession.txt")),
                      "\xEF\xBB\xBF" + QStringLiteral("[HikariSub v0.0.1]\r\n"
                                                     "Tab: 0\r\nVideo: \r\nPosition: 0\r\nFFMS2: 1\r\nSubtitles: %1/old.ass\r\n"
                                                     "Active: 0\r\nScroll: 0\r\nEditor: 1\r\n"
                                                     "Audio: dummy-audio:silence?sr=44100&bd=16&ch=1&ln=396900000\r\n")
                                              .arg(d)
                                              .toUtf8());
+        app::Application c(options(older));
         QVERIFY(loadSession(c));
         QVERIFY(c.unresolvedRestores().isEmpty());
         QTRY_VERIFY(c.audio().ready());
@@ -507,13 +509,13 @@ private slots:
         // A dummy entry that does not open is unresolved, as a missing file is.
         QTemporaryDir broken;
         writeSubtitles(broken.filePath(QStringLiteral("broken.ass")), "broken");
-        app::Application e(options(broken));
-        writeSession(e.lastSessionPath(),
+        writeSession(broken.filePath(QStringLiteral("LastSession.txt")),
                      "\xEF\xBB\xBF" + QStringLiteral("[HikariSub v0.0.1]\r\n"
                                                     "Tab: 0\r\nVideo: ?garbage\r\nPosition: 0\r\nFFMS2: 1\r\n"
                                                     "Subtitles: %1/broken.ass\r\nActive: 0\r\nScroll: 0\r\nEditor: 1\r\n")
                                              .arg(QDir::fromNativeSeparators(broken.path()))
                                              .toUtf8());
+        app::Application e(options(broken));
         QVERIFY(loadSession(e));
         const auto unresolved = e.unresolvedRestores();
         QCOMPARE(unresolved.size(), 1);
@@ -646,17 +648,19 @@ private slots:
     {
         QTemporaryDir home;
         app::Application a(options(home));
-        QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool()); // no LastSession.txt yet
+        QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool()); // no last-session.json yet
         QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("keep.ass")), "k")));
         const QVariantMap corrupt =
             a.reviewSession(QUrl::fromLocalFile(QStringLiteral(HIKARI_SESSION_FIXTURES "/corrupt.txt")));
         QVERIFY(!corrupt.value(QStringLiteral("ok")).toBool());
-        QCOMPARE(corrupt.value(QStringLiteral("problem")).toString(), QStringLiteral("Session file is corrupt"));
+        QCOMPARE(corrupt.value(QStringLiteral("problem")).toString(), QStringLiteral("corrupt.txt: Session file is corrupt"));
         QCOMPARE(titles(a), (QStringList{"keep.ass"}));
     }
 
-    // GLOBAL_SAVE_EXTERNAL_SESSION and GLOBAL_LOAD_EXTERNAL_SESSION: the
-    // same format; loading a .kls writes LastSession.txt, not the .kls.
+    // GLOBAL_SAVE_EXTERNAL_SESSION and GLOBAL_LOAD_EXTERNAL_SESSION (CF3):
+    // a .hksession, JSON; loading it writes last-session.json, not the file.
+    // A name ending in .kls is saved as a .hksession: a legacy file is never
+    // written.
     void externalSessionsRoundTrip()
     {
         QTemporaryDir home;
@@ -664,30 +668,153 @@ private slots:
         QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("k1.ass")), "k1")));
         QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("k2.ass")), "k2")));
         a.selectLine(target(a)->document().lines()[2]->id.value);
-        const QString kls = home.filePath(QStringLiteral("saved.kls"));
-        QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(kls)), QString());
-        const auto saved = readSession(kls);
-        QVERIFY(!saved.closed);
+        const int current = a.currentTab();
+        const QString file = home.filePath(QStringLiteral("saved.hksession"));
+        QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(file)), QString());
+        QVERIFY(readAll(file).startsWith("{"));
+        const QJsonObject json = QJsonDocument::fromJson(readAll(file)).object();
+        QCOMPARE(json.value(QStringLiteral("version")).toInt(), 1);
+        QVERIFY(!json.contains(QStringLiteral("closed"))); // only last-session.json says it
+        const auto saved = readSession(file);
         QCOMPARE(saved.tabs.size(), std::size_t(2));
-        QCOMPARE(saved.tabs[0].active, 2);
+        QCOMPARE(saved.activeTab, std::optional<std::size_t>(current));
+        QCOMPARE(saved.tabs[current].active, 2);
         QCOMPARE(QString::fromStdString(saved.tabs[1].subtitles),
                  QDir::toNativeSeparators(dir.filePath(QStringLiteral("k2.ass"))));
-        const QByteArray before = hash(kls);
+        const QByteArray before = hash(file);
         a.addPage();
-        QVERIFY(loadSession(a, QUrl::fromLocalFile(kls)));
-        QCOMPARE(hash(kls), before);
+        QVERIFY(loadSession(a, QUrl::fromLocalFile(file)));
+        QCOMPARE(hash(file), before);
         QCOMPARE(QFile::exists(a.lastSessionPath()), true);
-        // Written with CRLF, read back on every platform (P6-session-crlf).
         QCOMPARE(titles(a), (QStringList{"k1.ass", "k2.ass"}));
         QVERIFY(a.unresolvedRestores().isEmpty());
-        a.selectTab(0);
+        QCOMPARE(a.currentTab(), current);
         QCOMPARE(activeRow(a), 2);
+
+        const QString kls = home.filePath(QStringLiteral("typed.kls"));
+        QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(kls)), QString());
+        QVERIFY(!QFile::exists(kls));
+        QCOMPARE(readSession(home.filePath(QStringLiteral("typed.hksession"))).tabs.size(), std::size_t(2));
+    }
+
+    // CF3: a legacy .kls still loads, as legacy wrote it (CRLF, a BOM): the
+    // last tab is the active one, and the file is never written.
+    void aLegacyKlsStillLoads()
+    {
+        QTemporaryDir home;
+        app::Application a(options(home));
+        application::SessionTab first, second;
+        first.subtitles = writeSubtitles(dir.filePath(QStringLiteral("l1.ass")), "l1").toStdString();
+        first.active = 1;
+        second.subtitles = writeSubtitles(dir.filePath(QStringLiteral("l2.ass")), "l2").toStdString();
+        const QString kls = home.filePath(QStringLiteral("legacy.kls"));
+        writeSession(kls, QByteArray::fromStdString(testing::writeLegacySession("HikariSub v0.0.2", false, {first, second})));
+        const QByteArray before = hash(kls);
+        QVERIFY(loadSession(a, QUrl::fromLocalFile(kls)));
+        QCOMPARE(titles(a), (QStringList{"l1.ass", "l2.ass"}));
+        QCOMPARE(a.currentTab(), 1);
+        a.selectTab(0);
+        QCOMPARE(activeRow(a), 1);
+        QCOMPARE(hash(kls), before);
+        QVERIFY(readAll(a.lastSessionPath()).startsWith("{"));
+    }
+
+    // CF3: the first start without last-session.json converts LastSession.txt
+    // into it once and keeps it as LastSession.txt.old; whether the program
+    // closed comes along, so a crash is still offered. A corrupt one is kept
+    // as .old too, with a notice, and restores nothing.
+    void lastSessionTxtConvertsOnce()
+    {
+        QTemporaryDir home;
+        application::SessionTab tab;
+        tab.subtitles = writeSubtitles(dir.filePath(QStringLiteral("c1.ass")), "c1").toStdString();
+        tab.scroll = 2;
+        const QByteArray legacy = QByteArray::fromStdString(testing::writeLegacySession("HikariSub v0.0.2", false, {tab}));
+        writeSession(home.filePath(QStringLiteral("LastSession.txt")), legacy);
+        {
+            app::Application a(options(home));
+            QVERIFY(!QFile::exists(home.filePath(QStringLiteral("LastSession.txt"))));
+            QCOMPARE(readAll(home.filePath(QStringLiteral("LastSession.txt.old"))), legacy);
+            QCOMPARE(a.lastSessionPath(), home.filePath(QStringLiteral("last-session.json")));
+            const auto converted = readSession(a.lastSessionPath());
+            QVERIFY(!converted.closed);
+            QCOMPARE(converted.tabs, std::vector<application::SessionTab>{tab});
+            QCOMPARE(converted.activeTab, std::optional<std::size_t>(0));
+            QCOMPARE(a.startupSession(), QStringLiteral("crash"));
+            QCOMPARE(a.startupOfferNames(), QStringList{QStringLiteral("c1.ass")});
+        }
+        // Once: a LastSession.txt that turns up again is left alone.
+        writeSession(home.filePath(QStringLiteral("LastSession.txt")), legacy);
+        {
+            app::Application b(options(home));
+            QVERIFY(QFile::exists(home.filePath(QStringLiteral("LastSession.txt"))));
+            QVERIFY(readSession(b.lastSessionPath()).closed); // the last run's orderly end
+        }
+
+        QTemporaryDir corrupt;
+        writeSession(corrupt.filePath(QStringLiteral("LastSession.txt")), readAll(QStringLiteral(HIKARI_SESSION_FIXTURES "/corrupt.txt")));
+        app::Application c(options(corrupt));
+        QVERIFY(QFile::exists(corrupt.filePath(QStringLiteral("LastSession.txt.old"))));
+        QVERIFY(!QFile::exists(c.lastSessionPath()));
+        QVERIFY(c.log().history().contains(QStringLiteral("LastSession.txt: Session file is corrupt")));
+        QCOMPARE(c.startupSession(), QString());
+    }
+
+    // CF3: a last-session.json that cannot be read is never overwritten: it
+    // is kept as last-session.json.broken, the Log names the file and line,
+    // and nothing is restored or offered. The next session written is a new
+    // file.
+    void aBrokenLastSessionIsKept()
+    {
+        QTemporaryDir home;
+        const QByteArray broken = "{\n  \"version\": 1,\n  \"tabs\": [ oops ]\n}\n";
+        writeSession(home.filePath(QStringLiteral("last-session.json")), broken);
+        app::Application a(options(home));
+        QVERIFY(!QFile::exists(a.lastSessionPath()));
+        QCOMPARE(readAll(a.lastSessionPath() + QStringLiteral(".broken")), broken);
+        QVERIFY(a.log().history().contains(QStringLiteral("last-session.json, line 3: ")));
+        QVERIFY(a.log().history().contains(QStringLiteral("It was kept as last-session.json.broken; no tabs were restored.")));
+        QCOMPARE(a.startupSession(), QString());
+        QCOMPARE(a.startupOffer(), QString());
+        QVERIFY(a.startupOfferNames().isEmpty());
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("after.ass")), "after")));
+        QCOMPARE(readSession(a.lastSessionPath()).tabs.size(), std::size_t(1));
+        QCOMPARE(readAll(a.lastSessionPath() + QStringLiteral(".broken")), broken);
+
+        // A newer version's file, or a field of the wrong type, is broken too;
+        // an older .broken stays.
+        writeSession(a.lastSessionPath(), R"({"version": 2, "tabs": []})");
+        QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
+        // The numbering is the shared helper's (owned_file.h): .broken-N.
+        QCOMPARE(QDir(home.path()).entryList({QStringLiteral("last-session.json.broken-*")}).size(), qsizetype(1));
+        QVERIFY(a.log().history().contains(QStringLiteral("version 2")));
+        writeSession(a.lastSessionPath(), R"({"version": 1, "tabs": [{"position": "soon"}]})");
+        QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
+        QVERIFY(a.log().history().contains(QStringLiteral("tab 1: \"position\" has the wrong type")));
+    }
+
+    // CF3: a broken .hksession the user opens is named in the Log with its
+    // line, and stays as it is.
+    void aBrokenSessionFileIsLeftAlone()
+    {
+        QTemporaryDir home;
+        app::Application a(options(home));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("stay.ass")), "stay")));
+        const QString file = home.filePath(QStringLiteral("broken.hksession"));
+        writeSession(file, "{\"version\": 1,\n\"tabs\": [}");
+        const QByteArray before = hash(file);
+        const QVariantMap review = a.reviewSession(QUrl::fromLocalFile(file));
+        QVERIFY(!review.value(QStringLiteral("ok")).toBool());
+        QVERIFY(review.value(QStringLiteral("problem")).toString().startsWith(QStringLiteral("broken.hksession, line 2: ")));
+        QCOMPARE(hash(file), before);
+        QVERIFY(!QFile::exists(file + QStringLiteral(".broken")));
+        QCOMPARE(titles(a), (QStringList{"stay.ass"}));
     }
 
     // WS1 without the shell: each tab's arrangement is a value the Session
     // carries. A TLMode file's tab is the Translation preset, a tab with no
-    // arrangement yet writes no "Layout: " line, and a loaded tab's line is
-    // written back as it came (a valid one) or as the Editing preset.
+    // arrangement yet writes no "layout", and a loaded .kls tab's "Layout: "
+    // line is written back as it came (a valid one) or as the Editing preset.
     void eachTabsArrangementGoesWithTheSession()
     {
         QTemporaryDir home;
@@ -714,7 +841,7 @@ private slots:
         saved.tabs[0].layout = typesetting.toStdString();
         saved.tabs[1].layout = "{not a layout";
         const QString kls = home.filePath(QStringLiteral("layouts.kls"));
-        writeSession(kls, QByteArray::fromStdString(application::writeSession("HikariSub v1", false, saved.tabs)));
+        writeSession(kls, QByteArray::fromStdString(testing::writeLegacySession("HikariSub v1", false, saved.tabs)));
         QVERIFY(loadSession(a, QUrl::fromLocalFile(kls)));
         QVERIFY(a.workspaceLayout().notice().contains(QStringLiteral("tl.ass")));
         const auto again = readSession(a.lastSessionPath());
@@ -726,7 +853,7 @@ private slots:
     }
 
     // hikarisubApp::OnInit: LAST_SESSION_CONFIG 2 loads, 1 asks, otherwise a
-    // session left without "[Close session]" asks about the crash; never
+    // session not written as the program closed asks about the crash; never
     // when paths were given.
     void startupChoicesFollowLegacy()
     {
@@ -744,7 +871,7 @@ private slots:
             a.setStartedWithPaths(true);
             QCOMPARE(a.startupSession(), QString());
             a.setSessionRestore(0);
-        } // an orderly end writes "[Close session]"
+        } // an orderly end writes "closed"
         app::Application b(options(home));
         QVERIFY(!b.lastSessionCrashed());
         QCOMPARE(b.startupSession(), QString());
@@ -782,7 +909,7 @@ private slots:
         dummy.video = "?dummy:23.976000:40000:1280:720:47:163:254:";
         QFile file(b.lastSessionPath());
         QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
-        file.write(QByteArray::fromStdString(application::writeSession("HikariSub", true, {dummy})));
+        file.write(app::writeSessionJson(application::Session{"HikariSub", true, {dummy}, {}}, true));
         file.close();
         QVERIFY(b.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty());
     }
