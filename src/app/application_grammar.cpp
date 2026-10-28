@@ -13,6 +13,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QSaveFile>
 
@@ -47,7 +48,7 @@ constexpr std::array<std::pair<const char *, const char *>, 15> kGroupTexts{{
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Phrase corrections"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Common phrase-level mistakes where a standard expression is preferred.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Capitalization and case"),
-     QT_TRANSLATE_NOOP("HikariSub.Spelling", "Sentence starts, titles, brands and other case-sensitive text.")},
+     QT_TRANSLATE_NOOP("HikariSub.Spelling", "Personal pronouns, titles, brands and other case-sensitive text.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Punctuation and spacing"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Punctuation marks, apostrophes, quotation marks, commas and spacing.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Numbers and units"),
@@ -117,6 +118,15 @@ void Application::setUpGrammar(const Options &options)
     m_grammarDir = options.grammarDir;
     if (m_grammarDir.isEmpty() && !m_settingsFile.isEmpty())
         m_grammarDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Harper");
+    // Without a spell checker the words added are harper-ls's user dictionary
+    // alone: read back from it, so a restart keeps them (#409).
+    if (!m_spellChecker && !m_grammarDir.isEmpty()) {
+        QFile words(QDir(m_grammarDir).filePath(QStringLiteral("dictionary.txt")));
+        if (words.open(QIODevice::ReadOnly))
+            for (const QString &line : QString::fromUtf8(words.readAll()).split(QLatin1Char('\n')))
+                if (const QString word = line.trimmed(); !word.isEmpty() && !m_grammarOwnWords.contains(word))
+                    m_grammarOwnWords << word;
+    }
     m_grammarDelay = new QTimer(this);
     m_grammarDelay->setSingleShot(true);
     m_grammarDelay->setInterval(300);
@@ -780,18 +790,20 @@ QVariantMap Application::grammarWalkState()
                 row = int(i) + 1;
     }
     // The text around the finding, as harper-ls read it (no tags, breaks as
-    // spaces), at most kContext characters a side.
+    // spaces), at most kContext characters a side, cut at a word (#409).
     constexpr std::size_t kContext = 40;
     const std::size_t start = std::size_t(f.start), end = std::size_t(f.end);
-    const std::size_t from = start > kContext ? start - kContext : 0;
+    const std::u16string_view shown(text);
     out.insert(QStringLiteral("index"), int(*walk.current) + 1);
     out.insert(QStringLiteral("line"), row);
     out.insert(QStringLiteral("rule"), f.rule);
     out.insert(QStringLiteral("groupName"), group ? groupName(*group) : QString());
     out.insert(QStringLiteral("message"), f.message);
-    out.insert(QStringLiteral("before"), QString::fromStdU16String(text.substr(from, start - from)));
+    out.insert(QStringLiteral("before"),
+               QString::fromStdU16String(core::grammar::contextBefore(shown.substr(0, start), kContext)));
     out.insert(QStringLiteral("text"), QString::fromStdU16String(text.substr(start, end - start)));
-    out.insert(QStringLiteral("after"), QString::fromStdU16String(text.substr(end, kContext)));
+    out.insert(QStringLiteral("after"),
+               QString::fromStdU16String(core::grammar::contextAfter(shown.substr(end), kContext)));
     out.insert(QStringLiteral("suggestions"), f.suggestions);
     out.insert(QStringLiteral("replacement"), f.suggestions.isEmpty() ? QString() : f.suggestions.front());
     out.insert(QStringLiteral("word"), f.word);

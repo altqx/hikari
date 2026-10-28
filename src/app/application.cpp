@@ -4770,7 +4770,7 @@ QVariantMap Application::spellCheckState(bool changed, const QString &problem)
             suggestions << qstr(s);
     // PU6: the panel names the word's Line (the Grid's number) and shows the
     // text around it as the Line editor does (tags hidden or not, \N as a
-    // space), at most kContext characters a side.
+    // space), at most kContext characters a side, cut at a word (#409).
     int row = 0;
     QString before, after;
     if (const auto *session = current ? targetSession() : nullptr) {
@@ -4791,12 +4791,12 @@ QVariantMap Application::spellCheckState(bool changed, const QString &problem)
                 }
             }
             if (from >= 0 && to <= text.size() && from <= to) {
-                constexpr int kContext = 40;
+                constexpr std::size_t kContext = 40;
                 const auto plain = [](QString s) {
                     return s.replace(QLatin1String("\\N"), QLatin1String(" ")).replace(QLatin1String("\\n"), QLatin1String(" "));
                 };
-                before = plain(text.left(from).right(kContext));
-                after = plain(text.mid(to).left(kContext));
+                before = qstr(core::grammar::contextBefore(plain(text.left(from)).toStdU16String(), kContext));
+                after = qstr(core::grammar::contextAfter(plain(text.mid(to)).toStdU16String(), kContext));
             }
         }
     }

@@ -198,7 +198,8 @@ TEST(Grammar, SwitchesFollowTheGroupsAndHarpersDefaults)
     EXPECT_TRUE(switchOf(switches, "SpellCheck"));
     EXPECT_FALSE(switchOf(switches, "NoOxfordComma")); // Harper's default: off
     EXPECT_TRUE(switchOf(switches, "OxfordComma"));
-    // Off by the owner's choice: a Line is often the middle of a sentence.
+    // Off by the owner's choice, whatever its group: a Line is often the
+    // middle of a sentence.
     EXPECT_FALSE(switchOf(switches, "SentenceCapitalization"));
     EXPECT_TRUE(switchOf(switches, "Spaces"));
 
@@ -214,4 +215,30 @@ TEST(Grammar, SwitchesFollowTheGroupsAndHarpersDefaults)
 
     switches = linterSwitches(allGroups(false), false);
     EXPECT_TRUE(std::ranges::none_of(switches, [](const auto &s) { return s.second; }));
+}
+
+// #409: Harper's Markdown `code` spans read as quotations in the panel and
+// the field's menu; a lone backtick is left out.
+TEST(Grammar, MessagesAreShownWithoutMarkdown)
+{
+    EXPECT_EQ(plainMessage(u"Use `an` instead of `a`."), u"Use \u201Can\u201D instead of \u201Ca\u201D.");
+    EXPECT_EQ(plainMessage(u"Did you mean `tomorrow`?"), u"Did you mean \u201Ctomorrow\u201D?");
+    EXPECT_EQ(plainMessage(u"No code here."), u"No code here.");
+    EXPECT_EQ(plainMessage(u"A lone ` mark"), u"A lone  mark");
+}
+
+// #409: the panel's context is cut at a word, with an ellipsis where text is
+// left out; text that fits is whole.
+TEST(Grammar, ContextIsCutAtAWord)
+{
+    EXPECT_EQ(contextBefore(u"I have ", 40), u"I have ");
+    EXPECT_EQ(contextAfter(u" apple.", 40), u" apple.");
+    EXPECT_EQ(contextBefore(u"We went to the store and then I have ", 20), u"\u2026and then I have ");
+    EXPECT_EQ(contextAfter(u" apple and a pear for the trip home.", 20), u" apple and a pear\u2026");
+    // Cut where a word ends: nothing more goes.
+    EXPECT_EQ(contextBefore(u"one two three ", 10), u"\u2026two three ");
+    EXPECT_EQ(contextAfter(u" one two three", 8), u" one two\u2026");
+    // A word longer than the context is cut inside.
+    EXPECT_EQ(contextBefore(u"Supercalifragilistic ", 8), u"\u2026ilistic ");
+    EXPECT_EQ(contextAfter(u" Supercalifragilistic", 8), u" Superca\u2026");
 }

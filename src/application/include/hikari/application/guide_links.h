@@ -3,10 +3,11 @@
 // DX1 (#367): the user guide on HikariSub's site and the page User guide
 // (GLOBAL_HELP, F1) opens for the surface it is pressed on: a panel by its
 // id (WorkspaceLayoutController::panelIds) or a DG1 window by its guide id
-// (DialogWindow.guideId, its dialogId unless it names another). A surface
-// without a page opens the guide's home. Qt-free. The docs export writes
-// the table as guide-links.json, which the site's link check reads, so a
-// renamed page fails there.
+// (DialogWindow.guideId, its dialogId unless it names another); a panel's
+// mode with its own page is "<panel id>.<mode>" (the panel's guideId). A
+// surface without a page opens the guide's home. Qt-free. The docs export
+// writes the table as guide-links.json, which the site's link check reads,
+// so a renamed page fails there.
 
 #include <span>
 #include <string>
