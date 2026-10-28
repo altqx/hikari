@@ -28,6 +28,7 @@ DialogWindow {
     property string kind: "crash"
     property bool expanded: false
     readonly property bool sent: source === "sent"
+    readonly property bool crashed: kind === "crash"
     readonly property bool recovery: source === "start" && offer !== null && offer.kind === "crash"
     // The report as it goes; started() completes it after the first frame.
     property string reportText: ""
@@ -103,8 +104,8 @@ DialogWindow {
         spacing: 14
         Layout.preferredWidth: 572
         Icon {
-            iconRole: report.kind === "crash" ? "notice-error" : "notice-warning"
-            color: report.kind === "crash" ? Theme.danger : Theme.warning
+            iconRole: report.crashed ? "notice-error" : "notice-warning"
+            color: report.crashed ? Theme.danger : Theme.warning
             accentColor: color
             size: 32
             Layout.alignment: Qt.AlignTop
