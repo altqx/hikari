@@ -469,8 +469,7 @@ hikari_add_qttest(hikari_ui_icon_tests SOURCES icon_tests.cpp LIBRARIES hikari_u
     OFFSCREEN_ONLY)
 target_compile_definitions(hikari_ui_icon_tests PRIVATE
     HIKARI_ICON_DIR="${PROJECT_SOURCE_DIR}/src/ui/icons"
-    HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"
-    HIKARI_LEGACY_BITMAPS="${PROJECT_SOURCE_DIR}/HikariSub/Bitmaps")
+    HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
 # K2: the theme layer: role tables, accent presets and their contrast,
 # following the system, the high-contrast pickers, content colours, the live
 # preview and the Theme singleton; the swatch sheet with HIKARI_THEME_SHEET_DIR.

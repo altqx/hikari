@@ -1,6 +1,5 @@
-// Generated from HikariSub/ConfigConverter.cpp (ConfigConverter::CreateTable)
-// and HikariSub/config.h (COLOR) at 20d647c4; settings_import_tests compares
-// them with those sources and the migration worksheet.
+// Generated from legacy ConfigConverter::CreateTable and config.h (COLOR) at
+// 20d647c4.
 #include "hikari/application/settings_import.h"
 
 namespace hikari::application::settings_import {
