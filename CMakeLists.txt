@@ -33,6 +33,12 @@ if(HIKARI_GLIBCXX_ASSERTIONS)
     add_compile_definitions("$<$<COMPILE_LANGUAGE:CXX>:_GLIBCXX_ASSERTIONS>")
 endif()
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDependencies.cmake")
+# GR1 (#364): the pinned harper-ls (HikariHarper.cmake), which every package
+# ships beside the app; the build tree runs the downloaded copy.
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariHarper.cmake")
+set(HIKARI_HARPER_DOWNLOADS "${CMAKE_BINARY_DIR}/harper-downloads" CACHE PATH
+    "Folder the pinned harper-ls is fetched into (seed it to configure offline)")
+hikari_fetch_harper("${HIKARI_HARPER_DOWNLOADS}" HIKARI_HARPER_LS)
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
 qt_standard_project_setup(REQUIRES 6.11)
 add_subdirectory(tools/i18n) # O4: the PO-to-TS migration tool

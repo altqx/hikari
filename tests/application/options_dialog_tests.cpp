@@ -3,6 +3,7 @@
 // ListControls.cpp (HikariChoice) and config.cpp at 20d647c4.
 
 #include "hikari/application/options_dialog.h"
+#include "hikari/core/grammar.h"
 
 #include <gtest/gtest.h>
 
@@ -18,8 +19,9 @@ using namespace hikari::application;
 namespace {
 
 // The ConOpt calls of OptionsDialog's constructor, in order, with the legacy
-// control and the PF1 page that shows the option now (PF1-pages):
-// SubtitlesProperties first (it is built before the Main page).
+// control and the PF1 page that shows the option now (PF1-pages; GR1 moved
+// the Spelling section to Spelling & grammar): SubtitlesProperties first (it
+// is built before the Main page).
 struct LegacyBinding {
     const char *option;
     OptionsControl control;
@@ -42,11 +44,11 @@ constexpr LegacyBinding kLegacy[] = {
     {"ASS_PROPERTIES_ASK_FOR_CHANGE", OptionsControl::Check, OptionsPage::SubtitleProperties},
     // OptionsDialog.cpp:340-367: the two choices, then opts[18].
     {"PROGRAM_LANGUAGE", OptionsControl::Language, OptionsPage::General},
-    {"DICTIONARY_LANGUAGE", OptionsControl::Dictionary, OptionsPage::LineEditor},
+    {"DICTIONARY_LANGUAGE", OptionsControl::Dictionary, OptionsPage::Spelling},
     {"GRID_LOAD_SORTED_SUBS", OptionsControl::Check, OptionsPage::General},
-    {"SPELLCHECKER_ON", OptionsControl::Check, OptionsPage::LineEditor},
+    {"SPELLCHECKER_ON", OptionsControl::Check, OptionsPage::Spelling},
     {"AUTO_SELECT_LINES_FROM_LAST_TAB", OptionsControl::Check, OptionsPage::Grid},
-    {"EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK", OptionsControl::Check, OptionsPage::LineEditor},
+    {"EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK", OptionsControl::Check, OptionsPage::Spelling},
     {"OPEN_SUBS_IN_NEW_TAB", OptionsControl::Check, OptionsPage::General},
     {"EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT", OptionsControl::Check, OptionsPage::LineEditor},
     {"DISABLE_LIVE_VIDEO_EDITING", OptionsControl::Check, OptionsPage::Video},
@@ -162,9 +164,10 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     // notices as toasts on the General page, PU7's update options on the
     // Updates page, AD2's "Fill in my last answers" on the Automation page,
     // SV1's "Preview subtitles at" on the Video page, PV1's preview text on
-    // the Appearance page, then (Windows) A4-wasapi-default's output host
+    // the Appearance page, GR1's grammar check and rule groups on the
+    // Spelling & grammar page, then (Windows) A4-wasapi-default's output host
     // API and W1's video player.
-    ASSERT_GT(all.size(), std::size(kLegacy) + 17);
+    ASSERT_GT(all.size(), std::size(kLegacy) + 33);
     const auto &fromVideo = all[std::size(kLegacy)];
     EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
     EXPECT_EQ(fromVideo.control, OptionsControl::Check);
@@ -250,9 +253,28 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(previewText.setting, "styles.previewText");
     EXPECT_EQ(previewText.control, OptionsControl::Text);
     EXPECT_EQ(previewText.page, OptionsPage::Appearance);
+    // GR1 (#364): grammar check, Off by default, then Harper's 15 rule
+    // groups, each on by default.
+    const auto &grammar = all[std::size(kLegacy) + 18];
+    EXPECT_EQ(grammar.setting, "grammar.language");
+    EXPECT_EQ(grammar.control, OptionsControl::IndexChoice);
+    EXPECT_EQ(grammar.page, OptionsPage::Spelling);
+    EXPECT_EQ(grammar.entries, 5);
+    ASSERT_NE(findSetting("grammar.language"), nullptr);
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("grammar.language")->defaultValue), 0);
+    const auto groups = hikari::core::grammar::groupIds();
+    ASSERT_EQ(groups.size(), 15u);
+    for (std::size_t i = 0; i < groups.size(); ++i) {
+        const auto &binding = all[std::size(kLegacy) + 19 + i];
+        EXPECT_EQ(binding.setting, "grammar.group." + std::string(groups[i]));
+        EXPECT_EQ(binding.control, OptionsControl::Check);
+        EXPECT_EQ(binding.page, OptionsPage::Spelling);
+        ASSERT_NE(findSetting(binding.setting), nullptr);
+        EXPECT_EQ(std::get<bool>(findSetting(binding.setting)->defaultValue), true);
+    }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 20);
-    const auto &hostApi = all[std::size(kLegacy) + 18];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 36);
+    const auto &hostApi = all[std::size(kLegacy) + 34];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -263,7 +285,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 18);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 34);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));
@@ -717,12 +739,14 @@ TEST(OptionsDialog, NumbersReadAsLegacyReadsThem)
 // "Reset page", which refreshes the page's controls alone.
 TEST(OptionsDialog, PagesHaveIdsAndAPageResetsAlone)
 {
-    for (const auto page : {OptionsPage::General, OptionsPage::Appearance, OptionsPage::LineEditor, OptionsPage::Grid,
+    for (const auto page : {OptionsPage::General, OptionsPage::Appearance, OptionsPage::LineEditor,
+                            OptionsPage::Spelling, OptionsPage::Grid,
                             OptionsPage::Video, OptionsPage::Audio, OptionsPage::Conversion,
                             OptionsPage::SubtitleProperties, OptionsPage::Automation, OptionsPage::Updates})
         EXPECT_EQ(optionsPageOfId(optionsPageId(page)), page);
     EXPECT_EQ(optionsPageId(OptionsPage::LineEditor), "lineEditor");
     EXPECT_EQ(optionsPageId(OptionsPage::Updates), "updates"); // PU7
+    EXPECT_EQ(optionsPageId(OptionsPage::Spelling), "spelling"); // GR1
     EXPECT_EQ(optionsPageOfId("hotkeys"), std::nullopt); // the hotkeys' own page
     EXPECT_EQ(optionsPageOfId(""), std::nullopt);
 

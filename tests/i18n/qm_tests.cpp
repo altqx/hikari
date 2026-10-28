@@ -139,8 +139,9 @@ TEST(Qm, EnglishCatalogGivesTheNumerusForms)
                     << m.source.toStdString() << " n=" << n;
             ++numerus;
         }
-    // 75 with KP1's "%n generated lines" and UD1's three user folder notices.
-    EXPECT_EQ(numerus, 75);
+    // 79 with KP1's "%n generated lines", UD1's three user folder notices and
+    // GR1's rule count, ignored group's toast and the walk's two line counts.
+    EXPECT_EQ(numerus, 79);
     EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 1), QStringLiteral("Remove %n word"));
     EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 3), QStringLiteral("Remove %n words"));
 }
@@ -319,9 +320,10 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // 62 with the added words window's "Remove %n word(s)" (PU6). 65 with
         // Edit shapes' and Edit tags' restore questions and the tags' count,
         // "The tag takes %n value(s)" (PU5). 66 with the Kanji timer's "Apply the
-        // kanji timing of %n lines?" (KA3). 67 with the Grid's folded run,
-        // "%n generated lines" (KP1).
-        ASSERT_EQ(numerus, 67) << language.toStdString();
+        // kanji timing of %n lines?" (KA3). 71 with the Grid's folded run,
+        // "%n generated lines" (KP1), the grammar check's rule groups, its
+        // ignored group's toast and the walk's two line counts (GR1).
+        ASSERT_EQ(numerus, 71) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

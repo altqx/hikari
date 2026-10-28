@@ -2792,10 +2792,57 @@ ApplicationWindow {
         readonly property bool spelled: role === (root.editor.translationMode ? 1 : 0)
         property var misspell: ({})
         property int misspellPosition: -1
+        // GR1 (#364): Harper's findings in the same field (grammar check on),
+        // flat [start, end) pairs, and the one the menu was opened on.
+        property var grammarRanges: []
+        property var grammar: ({})
         function refreshMarks() {
             spellMarks.ranges = spelled ? root.app.editorSpellingMarks(role) : []
+            grammarRanges = spelled ? root.app.editorGrammarMarks(role) : []
         }
         onSpelledChanged: refreshMarks()
+        // A wavy underline in the theme's grammar colour under each finding,
+        // on every row a wrapped one takes (Qt Quick's text draws straight
+        // underlines only), in one Shape. `rows` (tests): each wave's row as
+        // [x, y, width].
+        Shape {
+            id: grammarMarks
+            objectName: field.objectName + "Grammar"
+            anchors.fill: parent
+            z: 1
+            visible: rows.length > 0
+            readonly property var rows: {
+                field.text
+                field.width
+                field.font
+                const out = []
+                for (let i = 0; i + 1 < field.grammarRanges.length; i += 2) {
+                    const from = field.grammarRanges[i], to = field.grammarRanges[i + 1]
+                    if (from < 0 || to <= from || to > field.length)
+                        continue
+                    for (const r of field.underlineRows(field.positionToRectangle(from), field.positionToRectangle(to)))
+                        if (r.width > 0)
+                            out.push([r.x, r.y, r.width])
+                }
+                return out
+            }
+            ShapePath {
+                strokeColor: Theme.grammar
+                strokeWidth: 1.2
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathMultiline {
+                    // 2 px up and down every 2 px, just above the row's foot.
+                    paths: grammarMarks.rows.map(r => {
+                        const points = []
+                        for (let x = 0; x <= r[2]; x += 2)
+                            points.push(Qt.point(r[0] + x, r[1] - ((x / 2) % 2 === 0 ? 0.5 : 2.5)))
+                        return points
+                    })
+                }
+            }
+        }
         // E4: the text in legacy TextEditor's colours (tags, line breaks and
         // drawings; a template or code comment's code), and F3's marks.
         EditorHighlighter {
@@ -2814,26 +2861,109 @@ ApplicationWindow {
         Connections {
             target: root.app
             function onSpellingChanged() { field.refreshMarks() }
+            function onGrammarChanged() { field.refreshMarks() }
         }
         ContextMenu.onRequested: position => {
             field.misspellPosition = field.positionAt(position.x, position.y)
-            field.misspell = field.spelled ? root.app.editorMisspellAt(field.role, field.misspellPosition) : ({})
+            // GR1: a grammar finding there takes the menu's top (a Hunspell
+            // mark under it keeps today's items otherwise).
+            field.grammar = field.spelled ? root.app.editorGrammarAt(field.role, field.misspellPosition) : ({})
+            field.misspell = field.spelled && !field.grammar.rule
+                ? root.app.editorMisspellAt(field.role, field.misspellPosition) : ({})
+        }
+        // GR1: "Ignore this rule" turns its group off; a toast says so, with Undo.
+        function ignoreGrammarRule() {
+            const group = root.app.ignoreGrammarRule(field.grammar.rule)
+            if (group < 0)
+                return
+            const name = field.grammar.groupName
+            const groups = root.app.grammarGroups()
+            const rules = group < groups.length ? groups[group].rules : 0
+            root.notices.post("info", qsTranslate("HikariSub.Spelling", "%1 turned off").arg(name),
+                              qsTranslate("HikariSub.Spelling", "Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling & grammar.", "", rules),
+                              {actions: [{text: qsTranslate("HikariSub.Spelling", "Undo"), run: () => root.app.setGrammarGroup(group, true)},
+                                         {text: qsTranslate("HikariSub.Spelling", "Grammar settings…"), run: () => root.openSettings("spelling")}]})
         }
         ContextMenu.menu: ShellMenu {
             id: editMenu
             objectName: field.objectName + "Menu"
-            readonly property var suggestions: field.misspell.suggestions || []
+            readonly property bool grammar: !!field.grammar.rule
+            readonly property var suggestions: (grammar ? field.grammar.suggestions : field.misspell.suggestions) || []
+            // GR1: Harper's message and the rule's group, not an action, first
+            // (only with a finding, so the menu is today's without one).
+            property bool headerShown: false
+            Instantiator {
+                model: editMenu.grammar ? 1 : 0
+                delegate: ShellMenuItem {
+                    objectName: field.objectName + "GrammarMessage"
+                    iconRole: "spellchecker"
+                    enabled: false
+                    background: null
+                    contentItem: RowLayout {
+                        spacing: 8
+                        Icon { iconRole: "spellchecker"; Layout.alignment: Qt.AlignTop; Layout.topMargin: 1 }
+                        ColumnLayout {
+                            spacing: 2
+                            Label {
+                                text: field.grammar.message || ""
+                                textFormat: Text.PlainText
+                                wrapMode: Text.Wrap
+                                color: Theme.text
+                                Layout.maximumWidth: 340
+                            }
+                            Label {
+                                text: qsTranslate("HikariSub.Spelling", "Grammar · %1").arg(field.grammar.groupName || "")
+                                textFormat: Text.PlainText
+                                color: Theme.muted
+                            }
+                        }
+                    }
+                }
+                onObjectAdded: (index, object) => {
+                    editMenu.insertItem(0, object)
+                    editMenu.headerShown = true
+                }
+                onObjectRemoved: (index, object) => {
+                    editMenu.removeItem(object)
+                    editMenu.headerShown = false
+                }
+            }
             Instantiator {
                 model: editMenu.suggestions
                 delegate: ShellMenuItem {
                     required property string modelData
                     text: modelData
-                    onTriggered: root.app.replaceEditorMisspell(field.role, field.misspellPosition, modelData)
+                    font.bold: true
+                    onTriggered: editMenu.grammar ? root.app.replaceEditorGrammar(field.role, field.misspellPosition, modelData)
+                                                  : root.app.replaceEditorMisspell(field.role, field.misspellPosition, modelData)
                 }
-                onObjectAdded: (index, object) => editMenu.insertItem(index, object)
+                // After the grammar message.
+                onObjectAdded: (index, object) => editMenu.insertItem(index + (editMenu.headerShown ? 1 : 0), object)
                 onObjectRemoved: (index, object) => editMenu.removeItem(object)
             }
-            MenuSeparator { visible: editMenu.suggestions.length > 0; height: visible ? implicitHeight : 0 }
+            MenuSeparator { visible: editMenu.suggestions.length > 0 || editMenu.grammar; height: visible ? implicitHeight : 0 }
+            ShellMenuItem {
+                iconRole: "hide"
+                objectName: field.objectName + "IgnoreRule"
+                text: qsTranslate("HikariSub.Spelling", "Ignore this rule")
+                shortcutText: qsTranslate("HikariSub.Spelling", "Turns off %1").arg(field.grammar.groupName || "")
+                visible: editMenu.grammar
+                height: visible ? implicitHeight : 0
+                onTriggered: field.ignoreGrammarRule()
+            }
+            ShellMenuItem {
+                iconRole: "dictionary-add"
+                objectName: field.objectName + "GrammarAddWord"
+                text: qsTranslate("HikariSub.Spelling", "Add “%1” to dictionary").arg(field.grammar.text || "")
+                visible: editMenu.grammar && !!field.grammar.word
+                height: visible ? implicitHeight : 0
+                onTriggered: {
+                    if (!root.app.addGrammarWord(field.grammar.text))
+                        root.notices.post("error", qsTranslate("HikariSub.Editor", "Add word to dictionary"),
+                                          qsTranslate("HikariSub.Editor", "Error. Word \"%1\" was not added.").arg(field.grammar.text))
+                }
+            }
+            MenuSeparator { visible: editMenu.grammar; height: visible ? implicitHeight : 0 }
             ShellMenuItem { iconRole: "edit-copy"; text: qsTranslate("HikariSub.Editor", "&Copy"); enabled: field.selectedText.length > 0; onTriggered: field.copy() }
             ShellMenuItem { iconRole: "edit-cut"; text: qsTranslate("HikariSub.Editor", "Cu&t"); enabled: field.selectedText.length > 0 && !field.readOnly; onTriggered: field.cut() }
             ShellMenuItem { iconRole: "edit-paste"; text: qsTranslate("HikariSub.Editor", "&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
@@ -6145,7 +6275,7 @@ ApplicationWindow {
                     app: root.app
                     notices: root.notices
                     documentName: root.shell.editingTitle
-                    onSettingsRequested: root.openSettings("lineEditor") // the dictionary
+                    onSettingsRequested: root.openSettings("spelling") // the dictionary (GR1: and grammar check)
                 }
             }
         }
@@ -7445,6 +7575,7 @@ ApplicationWindow {
                 updates: root.updates
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
+                onCreditsRequested: creditsDialog.open() // GR1: Harper's licence notice
             }
         }
     }

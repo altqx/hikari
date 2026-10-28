@@ -40,6 +40,8 @@ DialogWindow {
             ["curl", "Daniel Stenberg and contributors", "curl License"],
             ["PCRE2", "University of Cambridge and others", "BSD 3-Clause"],
             ["uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"],
+            // GR1: harper-ls, the grammar checker (its crates' licences ship beside it)
+            ["Harper", "Automattic and Harper contributors", "Apache 2.0"],
         ]
         if (app.includesCsri)
             all.push(["CSRI", "David Lamparter", "BSD"])
