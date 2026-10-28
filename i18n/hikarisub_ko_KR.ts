@@ -6648,6 +6648,14 @@ when find results window is open</source>
 <context>
     <name>HikariSub.GettingStarted</name>
     <message>
+        <source>Updates and privacy</source>
+        <translation>업데이트 및 개인정보</translation>
+    </message>
+    <message>
+        <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
+        <translation>HikariSub가 제공할 버전, 스스로 업데이트를 확인할지, 익명 사용 데이터를 보낼지 정합니다.</translation>
+    </message>
+    <message>
         <source>Later: Settings › Updates and privacy</source>
         <translation>나중에: 설정 › 업데이트 및 개인정보</translation>
     </message>

@@ -2,9 +2,9 @@
 // (FirstLaunchSetupDialog.qml; owner-approved mockup, version 2): a compact
 // window on DG1's frame with page dots, a centred title and explanation and
 // one page per choice (Language, Import while a legacy installation is
-// found, Look, What you do, Video and audio, Editing, Updates, Your files),
-// Back, Skip setup and Next, Finish on the last page. Each page says where
-// its choice lives later.
+// found, Look, What you do, Video and audio, Editing, Updates and privacy,
+// Your files), Back, Skip setup and Next, Finish on the last page. Each page
+// says where its choice lives later.
 // The pages are a few of the Settings window's controls: the opening is
 // app.openGettingStarted() (openSettingsDialog's), and Finish writes them as
 // OK does, then the import's chosen rows but the settings the pages set.
@@ -904,11 +904,11 @@ DialogWindow {
                 }
             }
 
-            // 7. Updates.
+            // 7. Updates and privacy (Settings' page of that name).
             SetupPage {
                 objectName: "gettingStartedUpdates"
-                title: qsTr("Updates")
-                explanation: qsTr("Which versions HikariSub offers you, and whether it looks for them by itself.")
+                title: qsTr("Updates and privacy")
+                explanation: qsTr("Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.")
                 later: qsTr("Later: Settings › Updates and privacy")
                 RowLayout {
                     visible: !setup.updates || setup.updates.stableOnlyOption
