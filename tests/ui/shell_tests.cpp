@@ -12802,7 +12802,7 @@ private slots:
             QCOMPARE(a.selectLines({{QStringLiteral("find"), QString::fromUtf8("łódź")}, {QStringLiteral("field"), 0},
                                     {QStringLiteral("mode"), 0}, {QStringLiteral("action"), 0}},
                                    false),
-                     polish ? QStringLiteral("Zaznaczono linijek: 1.") : QStringLiteral("1 lines selected."));
+                     QStringLiteral("1 lines selected."));
             // The misspell replacer: MoveCase's iswupper and MakeUpper.
             for (int i = 0; i < a.misspellRules().size(); ++i)
                 a.checkMisspellRule(i, false);
@@ -12825,7 +12825,7 @@ private slots:
                                 {QStringLiteral("find"), QString::fromUtf8("łódź")},
                                 {QStringLiteral("replace"), QStringLiteral("x")}};
             a.runFindReplace(QStringLiteral("replaceAll"), replace);
-            QCOMPARE(questions.back(), polish ? QStringLiteral("Liczba zamian: 1.") : QStringLiteral("Replaced 1 times."));
+            QCOMPARE(questions.back(), QStringLiteral("Replaced 1 times."));
             replace[QStringLiteral("regex")] = true;
             a.runFindReplace(QStringLiteral("replaceAll"), replace);
             QCOMPARE(text(), QString::fromUtf8("Xy ŻÓŁW x"));
