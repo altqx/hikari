@@ -16939,7 +16939,8 @@ private slots:
              {{"updater.autoCheck", "Check for updates automatically"},
               {"updater.checkForStable", "Stable versions only"},
               {"updater.autoInstall", "Install updates automatically"},
-              {"privacy.usageData", "Send anonymous usage data"}}}, // AN1 (#404)
+              {"privacy.usageData", "Send anonymous usage data"}, // AN1 (#404)
+              {"privacy.alwaysSendCrashReports", "Always send crash reports"}}}, // CR1 (#452)
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
