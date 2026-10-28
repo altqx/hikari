@@ -29,7 +29,7 @@
     </message>
     <message>
         <source>Search bar</source>
-        <translation>தேடல் பட்டி</translation>
+        <translation type="vanished">தேடல் பட்டி</translation>
     </message>
     <message>
         <source>Horizontal stretching</source>
@@ -6842,7 +6842,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Open sorted subtitles</source>
-        <translation>வரிசைப்படுத்தப்பட்ட வசன வரிகளைத் திற</translation>
+        <translation type="vanished">வரிசைப்படுத்தப்பட்ட வசன வரிகளைத் திற</translation>
     </message>
     <message>
         <source>Turn spell checking</source>
@@ -6916,7 +6916,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Compatibility with older HikariSub scripts</source>
-        <translation>பழைய HikariSub ச்கிரிப்டுகளுடன் இணக்கம்</translation>
+        <translation type="vanished">பழைய HikariSub ச்கிரிப்டுகளுடன் இணக்கம்</translation>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
@@ -7048,19 +7048,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>After program start asynchronously</source>
-        <translation>நிரல் ஒத்திசைவற்ற முறையில் தொடங்கிய பிறகு</translation>
+        <translation type="vanished">நிரல் ஒத்திசைவற்ற முறையில் தொடங்கிய பிறகு</translation>
     </message>
     <message>
         <source>After program start</source>
-        <translation>நிரல் தொடக்கத்திற்குப் பிறகு</translation>
+        <translation type="vanished">நிரல் தொடக்கத்திற்குப் பிறகு</translation>
     </message>
     <message>
         <source>After open menu asynchronously</source>
-        <translation>திறந்த பட்டியல் ஒத்திசைவற்ற பிறகு</translation>
+        <translation type="vanished">திறந்த பட்டியல் ஒத்திசைவற்ற பிறகு</translation>
     </message>
     <message>
         <source>After open menu</source>
-        <translation>திறந்த மெனுவுக்குப் பிறகு</translation>
+        <translation type="vanished">திறந்த மெனுவுக்குப் பிறகு</translation>
     </message>
     <message>
         <source>Folder with external fonts</source>
@@ -7361,18 +7361,6 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save while editing every</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>0 turns saving while editing off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>edits</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Autosave files kept</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7512,15 +7500,7 @@ removing audio cache files.</source>
         <translation type="unfinished">எழுத்துரு</translation>
     </message>
     <message>
-        <source>Grid font</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Active line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select the line at the previous tab&apos;s time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7529,10 +7509,6 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Keep the selection when duplicating lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Don&apos;t center the active line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7768,23 +7744,11 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show the conversion window first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Files</source>
         <translation type="unfinished">கோப்புகள்</translation>
     </message>
     <message>
         <source>Save the panel layout in subtitle files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Loading</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Load scripts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7990,35 +7954,27 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Subtitle information</source>
-        <translation>வசன வரிகள் செய்தி</translation>
-    </message>
-    <message>
-        <source>Use</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Write the value into the subtitles&apos; information</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">வசன வரிகள் செய்தி</translation>
     </message>
     <message>
         <source>Title</source>
-        <translation>தலைப்பு</translation>
+        <translation type="vanished">தலைப்பு</translation>
     </message>
     <message>
         <source>Author</source>
-        <translation>நூலாசிரியர்</translation>
+        <translation type="vanished">நூலாசிரியர்</translation>
     </message>
     <message>
         <source>Translator</source>
-        <translation>மொழிபெயர்ப்பாளர்</translation>
+        <translation type="vanished">மொழிபெயர்ப்பாளர்</translation>
     </message>
     <message>
         <source>Proofreading</source>
-        <translation>மெய்ப்புப் பார்த்தல்</translation>
+        <translation type="vanished">மெய்ப்புப் பார்த்தல்</translation>
     </message>
     <message>
         <source>Timer</source>
-        <translation>நேரங்குறிகருவி</translation>
+        <translation type="vanished">நேரங்குறிகருவி</translation>
     </message>
     <message>
         <source>Editing</source>
@@ -8026,7 +7982,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Always ask before changing subtitle information</source>
-        <translation>மாற்ற வசன வரிகளை எப்போதும் கேளுங்கள்</translation>
+        <translation type="vanished">மாற்ற வசன வரிகளை எப்போதும் கேளுங்கள்</translation>
     </message>
     <message>
         <source>Choose choose external font folder</source>

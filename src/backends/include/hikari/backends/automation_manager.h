@@ -46,6 +46,9 @@ public:
     // still running after `deadlineMs` are terminated. Returns those paths.
     std::vector<std::string> shutdown(int deadlineMs = 5000);
     void setGracePeriod(int ms);
+    // #383: automation.traceLevel. Scripts load with it; on a change the
+    // loaded scripts not running a macro reload to take it.
+    void setTraceLevel(int level);
     // Handlers every script's helper gets, now and when loaded later (S1).
     void setDialogHandler(LuaScriptHost::DialogHandler handler);
     void setServiceHandler(LuaScriptHost::ServiceHandler handler);
@@ -86,6 +89,7 @@ private:
     LuaScriptHost::DialogHandler m_dialogHandler;
     LuaScriptHost::ServiceHandler m_serviceHandler;
     int m_graceMs = 3000;
+    int m_traceLevel = 3;
     bool m_shuttingDown = false;
 };
 

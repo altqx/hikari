@@ -29,7 +29,7 @@
     </message>
     <message>
         <source>Search bar</source>
-        <translation>Pasek szukania</translation>
+        <translation type="vanished">Pasek szukania</translation>
     </message>
     <message>
         <source>Horizontal stretching</source>
@@ -6882,7 +6882,7 @@ gdy okno wyników szukania jest otwarte</translation>
     </message>
     <message>
         <source>Open sorted subtitles</source>
-        <translation>Wczytywanie posortowanych napisów</translation>
+        <translation type="vanished">Wczytywanie posortowanych napisów</translation>
     </message>
     <message>
         <source>Turn spell checking</source>
@@ -6956,7 +6956,7 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Compatibility with older HikariSub scripts</source>
-        <translation>Kompatybilność ze starymi skryptami HikariSub</translation>
+        <translation type="vanished">Kompatybilność ze starymi skryptami HikariSub</translation>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
@@ -7088,19 +7088,19 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>After program start asynchronously</source>
-        <translation>Przy starcie programu asynchronicznie</translation>
+        <translation type="vanished">Przy starcie programu asynchronicznie</translation>
     </message>
     <message>
         <source>After program start</source>
-        <translation>Przy starcie programu</translation>
+        <translation type="vanished">Przy starcie programu</translation>
     </message>
     <message>
         <source>After open menu asynchronously</source>
-        <translation>Przy otwarciu menu asynchronicznie</translation>
+        <translation type="vanished">Przy otwarciu menu asynchronicznie</translation>
     </message>
     <message>
         <source>After open menu</source>
-        <translation>Przy otwarciu menu</translation>
+        <translation type="vanished">Przy otwarciu menu</translation>
     </message>
     <message>
         <source>Folder with external fonts</source>
@@ -7401,18 +7401,6 @@ całkowicie usuwanie plików audio cache.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save while editing every</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>0 turns saving while editing off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>edits</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Autosave files kept</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7553,15 +7541,7 @@ całkowicie usuwanie plików audio cache.</translation>
         <translation type="unfinished">Czcionka</translation>
     </message>
     <message>
-        <source>Grid font</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Active line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select the line at the previous tab&apos;s time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7570,10 +7550,6 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Keep the selection when duplicating lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Don&apos;t center the active line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7809,23 +7785,11 @@ całkowicie usuwanie plików audio cache.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show the conversion window first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Files</source>
         <translation type="unfinished">Pliki</translation>
     </message>
     <message>
         <source>Save the panel layout in subtitle files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Loading</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Load scripts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8034,35 +7998,27 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Subtitle information</source>
-        <translation>Informacje o napisach</translation>
-    </message>
-    <message>
-        <source>Use</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Write the value into the subtitles&apos; information</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Informacje o napisach</translation>
     </message>
     <message>
         <source>Title</source>
-        <translation>Tytuł</translation>
+        <translation type="vanished">Tytuł</translation>
     </message>
     <message>
         <source>Author</source>
-        <translation>Autor</translation>
+        <translation type="vanished">Autor</translation>
     </message>
     <message>
         <source>Translator</source>
-        <translation>Tłumaczenie</translation>
+        <translation type="vanished">Tłumaczenie</translation>
     </message>
     <message>
         <source>Proofreading</source>
-        <translation>Korekta</translation>
+        <translation type="vanished">Korekta</translation>
     </message>
     <message>
         <source>Timer</source>
-        <translation>Timing</translation>
+        <translation type="vanished">Timing</translation>
     </message>
     <message>
         <source>Editing</source>
@@ -8070,7 +8026,7 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Always ask before changing subtitle information</source>
-        <translation>Zawsze pytaj o zmianę informacji o napisach</translation>
+        <translation type="vanished">Zawsze pytaj o zmianę informacji o napisach</translation>
     </message>
     <message>
         <source>Choose choose external font folder</source>

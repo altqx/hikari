@@ -582,7 +582,6 @@ DialogWindow {
                     SettingsSection {
                         title: qsTr("Tabs")
                         SettingCheck { setting: "subtitles.openInNewTab"; text: qsTr("Always open subtitles in a new tab") }
-                        SettingCheck { setting: "grid.loadSortedSubs"; text: qsTr("Open sorted subtitles") }
                         SettingsRow {
                             text: qsTr("Tab name length")
                             SettingNumber {
@@ -595,11 +594,6 @@ DialogWindow {
                         title: qsTr("Saving")
                         SettingsRow {
                             iconRole: "autosave"
-                            text: qsTr("Save while editing every")
-                            note: qsTr("0 turns saving while editing off.")
-                            SettingNumber { setting: "editor.saveAfterCharacterCount"; from: 0; to: 10000; unit: qsTr("edits"); name: qsTr("Save while editing every") }
-                        }
-                        SettingsRow {
                             text: qsTr("Autosave files kept")
                             SettingNumber {
                                 setting: "autosave.maxFiles"; from: 2; to: 1000000; name: qsTr("Autosave files kept")
@@ -942,20 +936,10 @@ DialogWindow {
                 SettingsPage {
                     objectName: "settingsPageGrid"
                     SettingsSection {
-                        title: qsTr("Font")
-                        ruled: false
-                        SettingsRow {
-                            iconRole: "tag-font"
-                            text: qsTr("Grid font")
-                            SettingFont { setting: "grid.font"; sizeSetting: "grid.fontSize"; name: qsTr("Grid font") }
-                        }
-                    }
-                    SettingsSection {
                         title: qsTr("Active line")
-                        SettingCheck { setting: "grid.autoSelectLinesFromLastTab"; text: qsTr("Select the line at the previous tab's time") }
+                        ruled: false
                         SettingCheck { setting: "grid.changeActiveOnSelection"; text: qsTr("Change the active line when adding to the selection") }
                         SettingCheck { setting: "grid.duplicationDontChangeSelection"; text: qsTr("Keep the selection when duplicating lines") }
-                        SettingCheck { setting: "grid.dontCenterActiveLine"; text: qsTr("Don't center the active line") }
                         SettingCheck { setting: "grid.setVisibleLineAfterFullScreen"; text: qsTr("Find the visible line after leaving full screen") }
                     }
                     SettingsSection {
@@ -1300,58 +1284,16 @@ DialogWindow {
                             text: qsTr("Tags at the start of each line")
                             SettingText { setting: "convert.assTagsToInsertInLine"; Accessible.name: qsTr("Tags at the start of each line") }
                         }
-                        SettingCheck { setting: "convert.showSettings"; text: qsTr("Show the conversion window first") }
                     }
                 }
 
-                // Subtitle properties (legacy SubtitlesProperties page): the
-                // labels pair with the ASS_PROPERTIES_* options as legacy pairs them.
+                // Subtitle properties (legacy SubtitlesProperties page). Its
+                // credit fields wait until a save writes them (#383).
                 SettingsPage {
                     objectName: "settingsPageSubtitleProperties"
                     SettingsSection {
-                        title: qsTr("Subtitle information")
-                        ruled: false
-                        GridLayout {
-                            columns: 3
-                            columnSpacing: 10
-                            rowSpacing: 8
-                            Layout.leftMargin: 24
-                            // The check column's header: a checked field is
-                            // written into the subtitles' information
-                            // (SubsGrid::SwapAssProperties). (docsLabel: the
-                            // docs export's, in English as it runs.)
-                            Item { implicitWidth: 1; implicitHeight: 1 }
-                            Item { implicitWidth: 1; implicitHeight: 1 }
-                            Label {
-                                text: qsTr("Use")
-                                color: Theme.muted
-                                HoverHandler { id: useHover }
-                                ToolTip.visible: useHover.hovered
-                                ToolTip.text: qsTr("Write the value into the subtitles' information")
-                            }
-                            Label { text: qsTr("Title"); Layout.preferredWidth: 120 }
-                            SettingText { setting: "scriptProperties.title"; Layout.preferredWidth: 300; Accessible.name: qsTr("Title") }
-                            SettingCheck { setting: "scriptProperties.titleOn"; Accessible.name: qsTr("Title"); readonly property string docsLabel: "Write Title into the subtitles" }
-                            Label { text: qsTr("Author") }
-                            SettingText { setting: "scriptProperties.script"; Layout.preferredWidth: 300; Accessible.name: qsTr("Author") }
-                            SettingCheck { setting: "scriptProperties.scriptOn"; Accessible.name: qsTr("Author"); readonly property string docsLabel: "Write Author into the subtitles" }
-                            Label { text: qsTr("Translator") }
-                            SettingText { setting: "scriptProperties.translation"; Layout.preferredWidth: 300; Accessible.name: qsTr("Translator") }
-                            SettingCheck { setting: "scriptProperties.translationOn"; Accessible.name: qsTr("Translator"); readonly property string docsLabel: "Write Translator into the subtitles" }
-                            Label { text: qsTr("Proofreading") }
-                            SettingText { setting: "scriptProperties.editing"; Layout.preferredWidth: 300; Accessible.name: qsTr("Proofreading") }
-                            SettingCheck { setting: "scriptProperties.editingOn"; Accessible.name: qsTr("Proofreading"); readonly property string docsLabel: "Write Proofreading into the subtitles" }
-                            Label { text: qsTr("Timer") }
-                            SettingText { setting: "scriptProperties.timing"; Layout.preferredWidth: 300; Accessible.name: qsTr("Timer") }
-                            SettingCheck { setting: "scriptProperties.timingOn"; Accessible.name: qsTr("Timer"); readonly property string docsLabel: "Write Timer into the subtitles" }
-                            Label { text: qsTr("Editing") }
-                            SettingText { setting: "scriptProperties.update"; Layout.preferredWidth: 300; Accessible.name: qsTr("Editing") }
-                            SettingCheck { setting: "scriptProperties.updateOn"; Accessible.name: qsTr("Editing"); readonly property string docsLabel: "Write Editing into the subtitles" }
-                        }
-                    }
-                    SettingsSection {
                         title: qsTr("Files")
-                        SettingCheck { setting: "scriptProperties.askForChange"; text: qsTr("Always ask before changing subtitle information") }
+                        ruled: false
                         // WS2: the tab's panel layout in the ASS file's [Hikari] section.
                         SettingCheck { setting: "subtitles.layoutInFile"; text: qsTr("Save the panel layout in subtitle files") }
                     }
@@ -1361,23 +1303,10 @@ DialogWindow {
                 SettingsPage {
                     objectName: "settingsPageAutomation"
                     SettingsSection {
-                        title: qsTr("Loading")
+                        title: qsTr("Debugging")
                         ruled: false
                         SettingsRow {
                             iconRole: "automation"
-                            text: qsTr("Load scripts")
-                            SettingChoice {
-                                setting: "automation.loadingMethod"
-                                model: [qsTr("After program start asynchronously"), qsTr("After program start"),
-                                        qsTr("After open menu asynchronously"), qsTr("After open menu")]
-                                Accessible.name: qsTr("Load scripts")
-                            }
-                        }
-                        SettingCheck { setting: "automation.oldScriptsCompatibility"; text: qsTr("Compatibility with older HikariSub scripts") }
-                    }
-                    SettingsSection {
-                        title: qsTr("Debugging")
-                        SettingsRow {
                             text: qsTr("Lua trace level")
                             SettingNumber { setting: "automation.traceLevel"; from: 0; to: 5; name: qsTr("Lua trace level") }
                         }

@@ -29,7 +29,7 @@
     </message>
     <message>
         <source>Search bar</source>
-        <translation>แถบค้นหา</translation>
+        <translation type="vanished">แถบค้นหา</translation>
     </message>
     <message>
         <source>Horizontal stretching</source>
@@ -6801,7 +6801,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Open sorted subtitles</source>
-        <translation>เปิดคำบรรยายที่จัดเรียงแล้ว</translation>
+        <translation type="vanished">เปิดคำบรรยายที่จัดเรียงแล้ว</translation>
     </message>
     <message>
         <source>Turn spell checking</source>
@@ -6875,7 +6875,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Compatibility with older HikariSub scripts</source>
-        <translation>เข้ากันได้กับสคริปต์ HikariSub เก่า</translation>
+        <translation type="vanished">เข้ากันได้กับสคริปต์ HikariSub เก่า</translation>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
@@ -7007,19 +7007,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>After program start asynchronously</source>
-        <translation>หลังจากโปรแกรมเริ่มต้นอะซิงโครนัส</translation>
+        <translation type="vanished">หลังจากโปรแกรมเริ่มต้นอะซิงโครนัส</translation>
     </message>
     <message>
         <source>After program start</source>
-        <translation>หลังจากโปรแกรมเริ่มต้น</translation>
+        <translation type="vanished">หลังจากโปรแกรมเริ่มต้น</translation>
     </message>
     <message>
         <source>After open menu asynchronously</source>
-        <translation>หลังจากเปิดเมนูอะซิงโครนัส</translation>
+        <translation type="vanished">หลังจากเปิดเมนูอะซิงโครนัส</translation>
     </message>
     <message>
         <source>After open menu</source>
-        <translation>หลังจากเปิดเมนู</translation>
+        <translation type="vanished">หลังจากเปิดเมนู</translation>
     </message>
     <message>
         <source>Folder with external fonts</source>
@@ -7320,18 +7320,6 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save while editing every</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>0 turns saving while editing off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>edits</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Autosave files kept</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7470,15 +7458,7 @@ removing audio cache files.</source>
         <translation type="unfinished">แบบอักษร</translation>
     </message>
     <message>
-        <source>Grid font</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Active line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select the line at the previous tab&apos;s time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7487,10 +7467,6 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Keep the selection when duplicating lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Don&apos;t center the active line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7726,23 +7702,11 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show the conversion window first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Files</source>
         <translation type="unfinished">แฟ้ม</translation>
     </message>
     <message>
         <source>Save the panel layout in subtitle files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Loading</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Load scripts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7945,35 +7909,27 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Subtitle information</source>
-        <translation>ข้อมูลคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Use</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Write the value into the subtitles&apos; information</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ข้อมูลคำบรรยาย</translation>
     </message>
     <message>
         <source>Title</source>
-        <translation>ชื่อเรื่อง</translation>
+        <translation type="vanished">ชื่อเรื่อง</translation>
     </message>
     <message>
         <source>Author</source>
-        <translation>ผู้แต่ง</translation>
+        <translation type="vanished">ผู้แต่ง</translation>
     </message>
     <message>
         <source>Translator</source>
-        <translation>ผู้แปล</translation>
+        <translation type="vanished">ผู้แปล</translation>
     </message>
     <message>
         <source>Proofreading</source>
-        <translation>ผู้ตรวจทาน</translation>
+        <translation type="vanished">ผู้ตรวจทาน</translation>
     </message>
     <message>
         <source>Timer</source>
-        <translation>ผู้กำหนดเวลา</translation>
+        <translation type="vanished">ผู้กำหนดเวลา</translation>
     </message>
     <message>
         <source>Editing</source>
@@ -7981,7 +7937,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Always ask before changing subtitle information</source>
-        <translation>แจ้งให้เปลี่ยนข้อมูลคำบรรยายเสมอ</translation>
+        <translation type="vanished">แจ้งให้เปลี่ยนข้อมูลคำบรรยายเสมอ</translation>
     </message>
     <message>
         <source>Choose choose external font folder</source>

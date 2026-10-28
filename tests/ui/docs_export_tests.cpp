@@ -207,10 +207,12 @@ private slots:
             if (key != QLatin1String("program.tabTextMaxChars"))
                 QCOMPARE(s.value(QStringLiteral("default")), QJsonValue::fromVariant(fresh.settingsStore()->value(key)));
         }
+        // #383: those nothing reads are not in the window, so not exported.
         for (const application::OptionsBinding &binding : application::optionsBindings()) {
-            QVERIFY2(byKey.contains(qs(binding.setting)), binding.setting.data());
+            const bool shown = application::optionsBindingShown(binding.setting);
+            QVERIFY2(byKey.contains(qs(binding.setting)) == shown, binding.setting.data());
             if (!binding.sizeSetting.empty())
-                QVERIFY2(byKey.contains(qs(binding.sizeSetting)), binding.sizeSetting.data());
+                QVERIFY2(byKey.contains(qs(binding.sizeSetting)) == shown, binding.sizeSetting.data());
         }
         for (const char *key : {"appearance.theme", "appearance.followSystem", "appearance.titleBar", "program.font",
                                 "program.fontSize"})

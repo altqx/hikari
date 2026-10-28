@@ -21,7 +21,12 @@ ScrollView {
     id: page
     objectName: "settingsPageAppearance"
     required property var dialog // the Settings window: values, put(), pickThemeColour(), reloaded
-    contentWidth: availableWidth
+    // #386: as wide as the view, or the rows' narrowest, so a narrow window
+    // scrolls the page sideways (as the Style manager's editor). The column
+    // reports it once measured (read in this binding, it loops).
+    property real narrowest: 0
+    contentWidth: Math.max(narrowest, availableWidth)
+    ScrollBar.horizontal.policy: contentWidth > availableWidth + 0.5 ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
 
     function staged(setting) { return page.dialog.values[setting] }
     // The theme shown while previewing the staged values.
@@ -29,8 +34,9 @@ ScrollView {
     readonly property string accentSetting: Theme.dark ? "appearance.darkAccent" : "appearance.lightAccent"
 
     ColumnLayout {
-        width: page.availableWidth
+        width: page.contentWidth
         spacing: 16
+        onImplicitWidthChanged: Qt.callLater(() => page.narrowest = Layout.minimumWidth)
 
         SettingsSection {
             objectName: "appearanceTheme"

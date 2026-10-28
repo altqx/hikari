@@ -15,8 +15,9 @@
 //
 // Precedence, from the first searched: a pseudolocale (tests and
 // developers), the HikariSub catalog, Qt's own catalog (qt_<language> from
-// the Qt installation; O5-qt-catalog). English, the source language, has no
-// catalog.
+// the Qt installation; O5-qt-catalog), then English. English, the source
+// language, has a catalog of numerus forms only (hikarisub_en.qm, #385), so
+// a count reads "1 word", "2 words" where no other catalog answers.
 
 #include <QObject>
 #include <QString>
@@ -112,7 +113,7 @@ private:
     QString m_language;
     Pseudo m_pseudo = Pseudo::None;
     bool m_rightToLeft = false;
-    std::unique_ptr<QTranslator> m_qt, m_app, m_pseudoTranslator, m_gettext;
+    std::unique_ptr<QTranslator> m_qt, m_app, m_pseudoTranslator, m_gettext, m_english;
 };
 
 } // namespace hikari::app

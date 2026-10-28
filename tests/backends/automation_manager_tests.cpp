@@ -193,6 +193,35 @@ TEST_F(Manager, ACrashIsolatesItsScript)
     EXPECT_EQ(log, (QStringList{"n=1", "n=2"})) << "the other script kept its state";
 }
 
+// #383: automation.traceLevel reaches the helper; a change reloads the
+// loaded scripts with it.
+TEST_F(Manager, TheTraceLevelFiltersDebugOutput)
+{
+    QTemporaryDir dir;
+    const QString script = dir.filePath(QStringLiteral("levels.lua"));
+    writeScript(script, "aegisub.register_macro('Levels', '', function() aegisub.debug.out(3, 'three') "
+                        "aegisub.debug.out(4, 'four') end)\n");
+    const auto path = script.toStdString();
+    QStringList log;
+    QObject::connect(&manager, &AutomationManager::logged,
+                     [&](const QString &, const QString &t, int level) { log << QStringLiteral("%1 %2").arg(level).arg(t); });
+    manager.load(path);
+    ASSERT_TRUE(settled(path));
+    ASSERT_TRUE(manager.run(path, 0));
+    ASSERT_TRUE(waitFor([&] { return !manager.busy(); }));
+    EXPECT_EQ(log, (QStringList{"3 three"})) << "the default level is 3";
+    const auto generation = status(path).generation;
+    manager.setTraceLevel(4);
+    EXPECT_EQ(status(path).generation, generation + 1) << "reloaded with the new level";
+    ASSERT_TRUE(settled(path));
+    log.clear();
+    ASSERT_TRUE(manager.run(path, 0));
+    ASSERT_TRUE(waitFor([&] { return !manager.busy(); }));
+    EXPECT_EQ(log, (QStringList{"3 three", "4 four"}));
+    manager.setTraceLevel(4);
+    EXPECT_EQ(status(path).generation, generation + 1) << "the same level reloads nothing";
+}
+
 TEST_F(Manager, PerScriptProcessCostIsMeasured)
 {
     QTemporaryDir dir;

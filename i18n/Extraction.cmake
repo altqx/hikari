@@ -8,6 +8,10 @@ set(HIKARI_I18N_SOURCE_TARGETS hikarisub hikari_composition hikari_ui)
 set(hikari_i18n_dir "${CMAKE_CURRENT_LIST_DIR}")
 qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES ${HIKARI_I18N_UI_TS}
     LUPDATE_TARGET hikari_lupdate NO_GLOBAL_TARGET OPTIONS -locations none)
+# #385: the English numerus catalog, with the others.
+qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES ${HIKARI_I18N_EN_TS}
+    LUPDATE_TARGET hikari_lupdate_en NO_GLOBAL_TARGET OPTIONS -locations none -pluralonly -no-obsolete)
+add_dependencies(hikari_lupdate hikari_lupdate_en)
 
 set(hikari_keys_ts "${CMAKE_BINARY_DIR}/i18n/keys/hikarisub_keys.ts")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/i18n/keys")

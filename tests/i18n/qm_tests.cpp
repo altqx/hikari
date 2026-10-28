@@ -110,9 +110,39 @@ TEST(Qm, RewriteCatalogsAnswerFinishedEntriesOnly)
     }
     QTranslator pl;
     ASSERT_TRUE(pl.load(QStringLiteral(":/i18n/hikarisub_pl.qm")));
-    EXPECT_EQ(pl.translate("HikariSub.Audio", "Search bar"), QStringLiteral("Pasek szukania"));
+    EXPECT_EQ(pl.translate("HikariSub.Audio", "Horizontal stretching"), QStringLiteral("Rozciągnięcie w poziomie"));
+    EXPECT_EQ(pl.translate("HikariSub.Audio", "Search bar"), QString()); // #385: the tooltip went, vanished
     EXPECT_EQ(pl.translate("HikariSub.Styles", "Copy of "), QStringLiteral("Kopia "));
     EXPECT_EQ(pl.translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid."), QString()); // carried, unfinished
+}
+
+// #385: the English catalog holds only numerus entries, all finished, with
+// the singular for 1 and the plural otherwise; no form keeps the source's
+// "(s)" for its own count.
+TEST(Qm, EnglishCatalogGivesTheNumerusForms)
+{
+    QTranslator en;
+    ASSERT_TRUE(en.load(QStringLiteral(":/i18n/hikarisub_en.qm")));
+    EXPECT_EQ(en.language(), QStringLiteral("en"));
+    const TsCatalog catalog = readCatalog(source(QStringLiteral("i18n/hikarisub_en.ts")));
+    int numerus = 0;
+    for (const TsContext &context : catalog.contexts)
+        for (const TsMessage &m : context.messages) {
+            ASSERT_TRUE(m.numerus) << m.source.toStdString();
+            ASSERT_EQ(m.state, TsState::Finished) << m.source.toStdString();
+            ASSERT_EQ(m.translations.size(), 2) << m.source.toStdString();
+            for (const QString &form : m.translations)
+                EXPECT_FALSE(QString(form).remove(QStringLiteral("%1 karaoke line(s)")).contains(QStringLiteral("(s)")))
+                    << form.toStdString();
+            for (int n : counts)
+                EXPECT_EQ(lookup(en, context.name, m, n), m.translations.value(n == 1 ? 0 : 1))
+                    << m.source.toStdString() << " n=" << n;
+            ++numerus;
+        }
+    // 75 with KP1's "%n generated lines" and UD1's three user folder notices.
+    EXPECT_EQ(numerus, 75);
+    EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 1), QStringLiteral("Remove %n word"));
+    EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 3), QStringLiteral("Remove %n words"));
 }
 
 TEST(Qm, GettextCatalogsAnswerTheirFinishedEntries)

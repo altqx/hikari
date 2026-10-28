@@ -3862,7 +3862,7 @@ ApplicationWindow {
                         if (pressed) // legacy AudioBox::OnScrollbar
                             root.audio.setScrollPosition(Math.round(position * root.audio.scrollRange))
                     }
-                    ToolTip.text: qsTranslate("HikariSub.Audio", "Search bar")
+                    // #385: no tooltip; legacy's "Search bar" named it wrongly.
                 }
                 // AU2 (#268): legacy's slider column beside the display and
                 // its search bar (TopSizer, AudioBox.cpp:105-143), shown from
@@ -7557,8 +7557,9 @@ ApplicationWindow {
             if (layout.length > 0)
                 root.applyPreset(layout)
         }
-        onSkipped: root.notices.post("info", qsTranslate("HikariSub.GettingStarted", "Default settings in use"),
-                                     qsTranslate("HikariSub.GettingStarted", "Help › Getting started opens the setup again."))
+        // #393: from Help, Skip changes nothing and says nothing.
+        onSkipped: if (gettingStartedDialog.due) root.notices.post("info", qsTranslate("HikariSub.GettingStarted", "Default settings in use"),
+                                                                  qsTranslate("HikariSub.GettingStarted", "Help › Getting started opens the setup again."))
     }
     // PF1 (#225): the Settings window, made at its first opening (a window
     // made at the start slows every start, PK1).
