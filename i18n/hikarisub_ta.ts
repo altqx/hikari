@@ -6814,7 +6814,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Apply</source>
-        <translation>இடு</translation>
+        <translation>பயன்படுத்து</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -11131,7 +11131,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Apply</source>
-        <translation>இடு</translation>
+        <translation>பயன்படுத்து</translation>
     </message>
     <message>
         <source>Choose color</source>
