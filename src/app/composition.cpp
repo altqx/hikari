@@ -3,6 +3,7 @@
 #include "theme.h"
 
 #include "hikari/app/application.h"
+#include "hikari/app/crash_record.h"
 #include "hikari/app/docs_export.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/single_instance.h"
@@ -15,6 +16,7 @@
 
 #include <QCryptographicHash>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -23,6 +25,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 
@@ -152,9 +155,33 @@ void startForHandedOn(const UpdateInstaller::ExitAction &exitAction, bool update
     QProcess::startDetached(program, files);
 }
 
+// AN1: app_started's package: the install's kind; a "portable" start
+// without the bundled Automation folder is the build tree.
+QString usagePackage(application::PackageKind kind, bool portableCopy)
+{
+    switch (kind) {
+    case application::PackageKind::NsisUser:
+    case application::PackageKind::NsisMachine:
+        return QStringLiteral("installer");
+    case application::PackageKind::AppImage:
+        return QStringLiteral("appimage");
+    case application::PackageKind::Deb:
+        return QStringLiteral("deb");
+    case application::PackageKind::Rpm:
+        return QStringLiteral("rpm");
+    case application::PackageKind::Arch:
+        return QStringLiteral("aur");
+    case application::PackageKind::Portable:
+        break;
+    }
+    return portableCopy ? QStringLiteral("portable") : QStringLiteral("build_tree");
+}
+
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
               UpdateInstaller::ExitAction &exitAction)
 {
+    QElapsedTimer started; // AN1: startup time to the first frame
+    started.start();
     preferPulseAudioBackend(); // before Qt Multimedia picks its audio backend
     // WS5: the launcher's Wayland activation token, before Qt takes it.
     const QString activationToken = qEnvironmentVariable("XDG_ACTIVATION_TOKEN");
@@ -240,6 +267,15 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     // are in the user folder (`?user`), the shipped ones in the program's
     // Automation folder.
     options.userAutomationDir = userFolder.root();
+    // AN1 (#404): anonymous usage data, sent only by a build with a key
+    // (release packages) while the setting is on and DO_NOT_TRACK is unset;
+    // its queue and a crash's record are in the cache folder.
+    QDir().mkpath(userFolder.cache());
+    options.analytics.key = Analytics::compiledKey();
+    options.analytics.queueFile = userFolder.cache() + QStringLiteral("/analytics-queue.json");
+    options.analytics.crashRecord = userFolder.cache() + QStringLiteral("/crash-record.txt");
+    options.analytics.version = QStringLiteral(HIKARI_VERSION);
+    options.analytics.doNotTrack = Analytics::doNotTrack(qgetenv("DO_NOT_TRACK"));
 #ifdef HIKARI_UPDATE_TEST_FEED
     // Test builds only: a local release feed (tools/update-feed).
     if (const QString feed = qEnvironmentVariable("HIKARISUB_UPDATE_FEED"); !feed.isEmpty()) {
@@ -250,6 +286,15 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 #endif
     Application application(options);
     application.setStartedWithPaths(!files.isEmpty()); // P6: no session at start then
+    // AN1: the crash handler is there while usage data is sent.
+    const auto followCrashHandler = [&application, crashRecord = options.analytics.crashRecord] {
+        if (application.analytics().active())
+            crash::install(crashRecord, QCoreApplication::applicationDirPath(), QStringLiteral(HIKARI_VERSION));
+        else
+            crash::uninstall();
+    };
+    followCrashHandler();
+    QObject::connect(&application.analytics(), &Analytics::activeChanged, &application, followCrashHandler);
     ForwardedLaunches forwarded(application);
     QObject::connect(&instance, &SingleInstance::requested, &forwarded, &ForwardedLaunches::take);
     // A path on the command line opens as the editing target. V5: a video
@@ -295,6 +340,28 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         application.updates().checkOnStartup();
         application.whatsNew().start(); // SH3: after the check, whose list it shares
     });
+    // AN1: app_started once the window shows (its arrangement settled
+    // first), with the time it took.
+    if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first()))
+        QObject::connect(
+            window, &QQuickWindow::frameSwapped, &application,
+            [&application, &started, window, portableCopy = folderEnvironment.portable,
+             kind = updateEnvironment.package.kind] {
+                const qint64 elapsed = started.elapsed();
+                QTimer::singleShot(0, &application, [&application, window, portableCopy, kind, elapsed] {
+                    Analytics::StartFacts facts;
+                    facts.package = usagePackage(kind, portableCopy);
+                    facts.screens = int(QGuiApplication::screens().size());
+                    facts.scale = window->devicePixelRatio();
+                    facts.startupMs = elapsed;
+                    // A saved layout goes as "saved", never by its name.
+                    facts.layout = application.workspaceLayout().layout().isEmpty()
+                                       ? application.workspaceLayout().preset()
+                                       : QStringLiteral("saved");
+                    application.analytics().appStarted(facts);
+                });
+            },
+            Qt::SingleShotConnection);
     // An AppImage's new version reports its window to the old one's watchdog.
     if (!startup.healthFile.empty())
         application.updates().installer().expectHealthReport();
@@ -307,6 +374,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                 },
                 Qt::SingleShotConnection);
     const int code = app.exec();
+    // AN1: app_closed and a last, short send; the window is gone.
+    application.analytics().quit();
     // WS5: the next start is the instance, an update's new version included.
     reclaim.stop();
     instance.release();

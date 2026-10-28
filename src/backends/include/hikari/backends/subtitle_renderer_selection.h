@@ -76,6 +76,9 @@ public:
     std::string activeName() const;
     // KE1-render-cost-overlay: libass counts what it draws (CSRI cannot).
     void countCost(bool on) { m_libass.countCost(on); }
+    // AN1 (#404): told each frame's drawing time in milliseconds, on the
+    // rendering thread, maybe on several at once; null: no one.
+    void observeCost(std::function<void(double milliseconds)> observer);
 
     std::expected<std::uint64_t, application::RenderError> prepare(application::RenderSnapshot snapshot) override;
     std::expected<application::OverlayFrame, application::RenderError> render(core::DocumentTime time, int width,
@@ -92,6 +95,7 @@ private:
     std::string m_provider = "libass";
     Log m_log;
     std::filesystem::path m_csriFolder;
+    std::function<void(double)> m_costObserver; // under m_switch
 #ifdef _WIN32
     std::shared_ptr<CsriRenderers> m_csriRenderers;
     std::unique_ptr<CsriRenderer> m_csri;

@@ -217,6 +217,13 @@ private slots:
         for (const char *key : {"appearance.theme", "appearance.followSystem", "appearance.titleBar", "program.font",
                                 "program.fontSize"})
             QVERIFY2(byKey.contains(QLatin1String(key)), key);
+        // AN1 (#404): the usage data switch, on, with its hint.
+        const QJsonObject usage = byKey.value(QStringLiteral("privacy.usageData"));
+        QCOMPARE(usage.value(QStringLiteral("label")).toString(), QStringLiteral("Send anonymous usage data"));
+        QCOMPARE(usage.value(QStringLiteral("page")).toString(), QStringLiteral("updates"));
+        QCOMPARE(usage.value(QStringLiteral("section")).toString(), QStringLiteral("Privacy"));
+        QCOMPARE(usage.value(QStringLiteral("default")), QJsonValue(true));
+        QVERIFY(usage.value(QStringLiteral("hint")).toString().startsWith(QStringLiteral("Which features are used")));
         // Every theme's settings, not only those of the theme shown.
         for (const application::SettingDefinition &definition : application::settingDefinitions())
             if (definition.id.starts_with("appearance."))

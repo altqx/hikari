@@ -198,10 +198,25 @@ void DialogPlacement::fitRoom(QScreen *on, const QMargins &margins)
     settle(root);
 }
 
+namespace {
+std::function<void(const QString &)> &openedHook()
+{
+    static std::function<void(const QString &)> hook;
+    return hook;
+}
+} // namespace
+
+void DialogPlacement::setOpenedHook(std::function<void(const QString &dialogId)> hook)
+{
+    openedHook() = std::move(hook);
+}
+
 void DialogPlacement::place(QWindow *opener, QQuickItem *content)
 {
     if (!m_window || !content)
         return;
+    if (openedHook() && !m_dialogId.isEmpty())
+        openedHook()(m_dialogId);
     namespace dp = dialogplacement;
     m_content = content;
     // Opened as it was before any maximising: the place kept is the normal one.

@@ -41,6 +41,7 @@ ApplicationWindow {
     required property var automationHotkeys
     required property var updates
     required property var whatsNew // SH3: WhatsNew
+    required property var analytics // AN1 (#404): Analytics, anonymous usage data
     required property var styleManager
     required property var kanjiTimer // KA3: KanjiTimerController
     required property var fontCollector // Y8: FontCollectorController
@@ -511,12 +512,14 @@ ApplicationWindow {
         // layout are not in place yet: settle them first.
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.applyPreset(name))
+        root.analytics.layoutChanged(name) // AN1 (#404)
     }
     // WS3: a saved layout for the current tab, and Reset this layout (the
     // saved layout the tab's arrangement started from, else its preset).
     function applySavedLayout(name) {
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.applySavedLayout(name))
+        root.analytics.layoutChanged("saved") // AN1 (#404): never the layout's name
     }
     function resetLayout() {
         root.settleArrangement()
@@ -712,6 +715,7 @@ ApplicationWindow {
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
+        root.analytics.panelOpened(dock.uniqueName) // AN1 (#404): once per panel and session
         if (dock === originalDock)
             root.openOriginal()
         else if (dock === logDock && !Docking.hasPlace("Log"))
@@ -7887,8 +7891,13 @@ ApplicationWindow {
         const held = mapped || kind === "bitmap"
         const shift = root.hotkeys.shiftClicked(!held)
         const second = !shift && mapped && two && root.hotkeys.ctrlClicked()
-        if (!shift && !second)
+        if (!shift && !second) {
+            // AN1 (#404): the command runs from a menu or a button (a key's
+            // run reaches here too, and counts as the key's).
+            if (root.keyRuns === 0)
+                root.analytics.commandUsed(symbol, "pointer")
             return false
+        }
         const target = root.hotkeys.gestureTarget(symbol, second)
         hotkeyMapping.capture(target.name, window ?? 0, !(mapped || kind === "macro"), (accel, type) => {
             const conflict = root.hotkeys.gestureConflict(target.id, accel, type)
@@ -8033,19 +8042,30 @@ ApplicationWindow {
     // KB3: each command a key reaches is reported (HotkeysController::ran,
     // the hotkey audit's record); rehearsing, it is only reported.
     function runGlobalHotkey(symbol) {
-        return root.hotkeys.report(symbol, root.hotkeys.rehearsing() || root.globalHotkey(symbol))
+        return root.hotkeys.report(symbol, root.hotkeys.rehearsing() || root.byKey(() => root.globalHotkey(symbol)))
     }
     function runEditorHotkey(action, field) {
-        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.editorHotkey(action, field))
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.byKey(() => root.editorHotkey(action, field)))
     }
     function runVideoHotkey(action) {
-        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.videoHotkey(action))
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.byKey(() => root.videoHotkey(action)))
     }
     function runGridHotkey(action) {
-        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.gridHotkey(action))
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.byKey(() => root.gridHotkey(action)))
     }
     function runAudioHotkey(action) {
-        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.audioHotkey(action))
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.byKey(() => root.audioHotkey(action)))
+    }
+    // AN1 (#404): while a key's command runs, the menu actions it triggers
+    // are the key's (Analytics hears it from HotkeysController::ran).
+    property int keyRuns: 0
+    function byKey(run) {
+        ++root.keyRuns
+        try {
+            return run()
+        } finally {
+            --root.keyRuns
+        }
     }
     // The frame's handlers of the Global window's bindings (HikariSubFrame:
     // OnMenuSelected, OnMenuSelected1, OnChangeLine, OnDelete, OnPageChange,

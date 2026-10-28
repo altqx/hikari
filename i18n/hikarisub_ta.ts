@@ -6683,6 +6683,25 @@ when find results window is open</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.GettingStarted</name>
+    <message>
+        <source>Later: Settings › Updates and privacy</source>
+        <translation>பின்னர்: அமைப்புகள் › புதுப்பிப்புகளும் தனியுரிமையும்</translation>
+    </message>
+    <message>
+        <source>Send anonymous usage data</source>
+        <translation>அநாமதேய பயன்பாட்டுத் தரவை அனுப்பு</translation>
+    </message>
+    <message>
+        <source>Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.</source>
+        <translation>எந்த அம்சங்கள் பயன்படுத்தப்படுகின்றன, பிழைகள் மற்றும் செயலிழப்புகள், எவ்வளவு விரைவாகத் திறக்கின்றன. உங்கள் கோப்புகள், அவற்றின் பெயர்கள் அல்லது உள்ளடக்கம் ஒருபோதும் அனுப்பப்படாது.</translation>
+    </message>
+    <message>
+        <source>What is sent</source>
+        <translation>என்ன அனுப்பப்படுகிறது</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
@@ -7307,6 +7326,26 @@ removing audio cache files.</source>
     <message>
         <source>Updates</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates and privacy</source>
+        <translation>புதுப்பிப்புகளும் தனியுரிமையும்</translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation>தனியுரிமை</translation>
+    </message>
+    <message>
+        <source>Send anonymous usage data</source>
+        <translation>அநாமதேய பயன்பாட்டுத் தரவை அனுப்பு</translation>
+    </message>
+    <message>
+        <source>Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.</source>
+        <translation>எந்த அம்சங்கள் பயன்படுத்தப்படுகின்றன, பிழைகள் மற்றும் செயலிழப்புகள், எவ்வளவு விரைவாகத் திறக்கின்றன. உங்கள் கோப்புகள், அவற்றின் பெயர்கள் அல்லது உள்ளடக்கம் ஒருபோதும் அனுப்பப்படாது.</translation>
+    </message>
+    <message>
+        <source>What is sent</source>
+        <translation>என்ன அனுப்பப்படுகிறது</translation>
     </message>
     <message>
         <source>Reset all settings</source>

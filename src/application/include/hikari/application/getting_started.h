@@ -27,6 +27,10 @@ std::span<const std::string_view> gettingStartedSettings();
 OptionsState gettingStartedState(const Settings &live, const OptionsLists &lists,
                                  const std::map<std::string, SettingValue, std::less<>> &imported);
 
+// AN1 (#404): the page (its id: language, look, media, editing, updates)
+// that sets `setting`, one of gettingStartedSettings().
+std::string_view gettingStartedPageOf(std::string_view setting);
+
 // The settings Finish leaves out of an import because the pages set them
 // (the device's name goes with its id). A choice the pages cannot show
 // (index -1: an imported dictionary that is not installed until the import

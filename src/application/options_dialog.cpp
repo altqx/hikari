@@ -173,6 +173,9 @@ constexpr OptionsBinding kBindings[] = {
     {"grammar.group.wordChoiceAndUsage", Check, Spelling},
     {"grammar.group.regionalismsAndDialect", Check, Spelling},
     {"grammar.group.miscellaneous", Check, Spelling},
+    // AN1 (#404): "Send anonymous usage data", the Updates and privacy
+    // page's Privacy section.
+    {"privacy.usageData", Check, Updates},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.

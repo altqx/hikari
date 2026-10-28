@@ -6642,6 +6642,25 @@ when find results window is open</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.GettingStarted</name>
+    <message>
+        <source>Later: Settings › Updates and privacy</source>
+        <translation>ภายหลัง: การตั้งค่า › การอัปเดตและความเป็นส่วนตัว</translation>
+    </message>
+    <message>
+        <source>Send anonymous usage data</source>
+        <translation>ส่งข้อมูลการใช้งานแบบไม่ระบุตัวตน</translation>
+    </message>
+    <message>
+        <source>Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.</source>
+        <translation>ฟีเจอร์ที่ใช้ ข้อผิดพลาดและการขัดข้อง และความเร็วในการเปิด ไม่ส่งไฟล์ของคุณ ชื่อไฟล์ หรือเนื้อหาในไฟล์เด็ดขาด</translation>
+    </message>
+    <message>
+        <source>What is sent</source>
+        <translation>สิ่งที่ส่ง</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
@@ -7266,6 +7285,26 @@ removing audio cache files.</source>
     <message>
         <source>Updates</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates and privacy</source>
+        <translation>การอัปเดตและความเป็นส่วนตัว</translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation>ความเป็นส่วนตัว</translation>
+    </message>
+    <message>
+        <source>Send anonymous usage data</source>
+        <translation>ส่งข้อมูลการใช้งานแบบไม่ระบุตัวตน</translation>
+    </message>
+    <message>
+        <source>Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.</source>
+        <translation>ฟีเจอร์ที่ใช้ ข้อผิดพลาดและการขัดข้อง และความเร็วในการเปิด ไม่ส่งไฟล์ของคุณ ชื่อไฟล์ หรือเนื้อหาในไฟล์เด็ดขาด</translation>
+    </message>
+    <message>
+        <source>What is sent</source>
+        <translation>สิ่งที่ส่ง</translation>
     </message>
     <message>
         <source>Reset all settings</source>

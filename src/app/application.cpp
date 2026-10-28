@@ -38,6 +38,7 @@
 #include "hikari/core/ass_save.h"
 #include "hikari/core/ass_attachments.h"
 #include "automation_services_qt.h"
+#include "dialog_placement.h"
 #include "theme.h"
 #include "window_frame.h"
 
@@ -856,6 +857,45 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                         m_log->notice(warning ? ui::LogController::Warning : ui::LogController::Info,
                                                                       QCoreApplication::translate("HikariSub.Options", "Hotkeys"), message);
                                                     });
+    // AN1 (#404): anonymous usage data. A command a key ran is reported
+    // here; one from a menu or button by the shell (Main.hotkeyGesture), a
+    // dialog's open by its frame (DialogPlacement).
+    m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
+    connect(m_hotkeys.get(), &HotkeysController::ran, m_analytics.get(), [this](const QString &symbol, bool handled) {
+        if (handled && !m_hotkeys->rehearsing())
+            m_analytics->commandUsed(symbol, QStringLiteral("key"));
+    });
+    ui::DialogPlacement::setOpenedHook([analytics = m_analytics.get()](const QString &id) { analytics->dialogOpened(id); });
+    m_renderer.observeCost([analytics = m_analytics.get()](double ms) { analytics->frameRendered(ms); });
+    {
+        using Outcome = backends::LuaScriptHost::RunOutcome;
+        connect(&m_automation->manager(), &backends::AutomationManager::runFinished, m_analytics.get(),
+                [this](const QString &path, Outcome outcome, const QString &) {
+                    const QString kind = outcome == Outcome::Failed         ? QStringLiteral("failed")
+                                         : outcome == Outcome::HelperLost   ? QStringLiteral("lost")
+                                         : outcome == Outcome::ForceStopped ? QStringLiteral("stopped")
+                                                                            : QString();
+                    if (!kind.isEmpty() && m_analytics->active())
+                        m_analytics->automationError(kind, bundledScriptName(path));
+                });
+        connect(&m_automation->manager(), &backends::AutomationManager::loadFailed, m_analytics.get(),
+                [this](const QString &path) {
+                    if (m_analytics->active())
+                        m_analytics->automationError(QStringLiteral("load_failed"), bundledScriptName(path));
+                });
+    }
+    connect(m_video.get(), &ui::VideoController::changed, m_analytics.get(), [this] {
+        using State = application::VideoSession::State;
+        const State state = m_video->session().state();
+        const State before = std::exchange(m_videoUsageState, state);
+        if (state == before)
+            return;
+        if (state == State::Opening)
+            m_videoOpenClock.start();
+        else if (state == State::Ready || state == State::Failed) // a dummy video is ready at once
+            m_analytics->mediaOpened(true, before == State::Opening ? m_videoOpenClock.elapsed() : 0, state == State::Ready,
+                                     m_video->dummy() ? QStringLiteral("dummy") : QStringLiteral("file"));
+    });
     m_updates = std::make_unique<UpdateChecker>(
         *m_settings, options.updateFeed,
         options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.updateEnvironment);
@@ -1279,6 +1319,32 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         routeAudio(m_audioRouting->route(), false);
     }
     m_recentAudio.set(m_settings->settings().list("recent.audio")); // AUDIO_RECENT_FILES
+    // AN1: an audio open's time, until all of it is loaded (Ready), or back
+    // to Closed when it failed on the way. A close, a replacement or a
+    // declined track choice on the way is not an open that ended: dropped.
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
+        using State = application::AudioBox::State;
+        const application::AudioBox &box = m_audio->box();
+        const State state = box.state();
+        const State before = std::exchange(m_audioUsageState, state);
+        if (state == before)
+            return;
+        if (state == State::Opening || state == State::Loading) {
+            if (state == State::Opening || !m_audioOpenClock.isValid())
+                m_audioOpenClock.start();
+            return;
+        }
+        const qint64 elapsed = m_audioOpenClock.isValid() ? m_audioOpenClock.elapsed() : 0;
+        const bool opening = m_audioOpenClock.isValid() || state == State::Ready; // a dummy is Ready at once
+        m_audioOpenClock.invalidate();
+        const bool failed = box.error() && *box.error() != application::SourceError::Cancelled;
+        if (!opening || (state == State::Closed && !failed))
+            return; // a close
+        m_analytics->mediaOpened(false, elapsed, state == State::Ready,
+                                 box.fromVideo()                                    ? QStringLiteral("from_video")
+                                 : application::AudioBox::isDummyName(box.path()) ? QStringLiteral("dummy")
+                                                                                   : QStringLiteral("file"));
+    });
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::opened, this,
                                   [this](const QString &path, bool) { rememberRecentAudio(path); });
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::logged, this, [this](const QString &message, bool debug, bool error) {
@@ -1691,6 +1757,8 @@ QUrl Application::audioDialogFolder() const
 
 Application::~Application()
 {
+    ui::DialogPlacement::setOpenedHook(nullptr); // AN1
+    m_renderer.observeCost(nullptr);
     // P6: an orderly end writes the session with "[Close session]" (legacy
     // HikariSubFrame::OnClose); only a crash leaves it without.
     endSession();
@@ -2688,6 +2756,17 @@ void Application::openUserGuide(const QString &kind, const QString &id)
 QString Application::userFolder() const
 {
     return QDir::toNativeSeparators(m_userFolder);
+}
+
+QString Application::bundledScriptName(const QString &path) const
+{
+    return Analytics::bundledScript(path, QCoreApplication::applicationDirPath() + QLatin1Char('/') +
+                                              UserFolder::manifestName());
+}
+
+void Application::openWhatIsSent()
+{
+    backends::desktop::openUrl(Analytics::whatIsSentUrl());
 }
 
 void Application::openUserFolder()
@@ -5747,6 +5826,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
+            {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
@@ -6222,8 +6302,18 @@ bool Application::finishGettingStarted(const QVariantMap &values, bool import)
     for (const auto &id : pages)
         if (const auto found = values.constFind(qs(id)); found != values.cend())
             written.insert(qs(id), *found);
+    // AN1: which pages Finish changed (never what to), as the pages opened
+    // with the live settings.
+    const QVariantMap live = toVariant(application::gettingStartedState(m_settings->settings(), m_optionsLists, {}));
+    QStringList changed;
+    if (import)
+        changed << QStringLiteral("import");
+    for (auto [id, value] : written.asKeyValueRange())
+        if (live.value(id) != value)
+            changed << qs(application::gettingStartedPageOf(id.toStdString()));
     applySettings(written);
     m_settings->set("workspace.gettingStarted", QStringLiteral("done"));
+    m_analytics->gettingStartedFinished(changed); // after the switch the pages hold
     return true;
 }
 
@@ -6231,6 +6321,7 @@ void Application::skipGettingStarted()
 {
     endLanguagePreview();
     m_settings->set("workspace.gettingStarted", QStringLiteral("done"));
+    m_analytics->gettingStartedSkipped();
 }
 
 QVariantList Application::sampleSpellingMarks(const QString &text, bool on, int dictionary)

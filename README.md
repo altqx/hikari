@@ -171,10 +171,12 @@ Nothing is code-signed; each release lists SHA-256 sums in `SHA256SUMS`. HikariS
 
 ## Updates and privacy
 
-HikariSub looks for updates only when you choose **Help > Check for updates**, or once a day at most after you turn on **Settings > Updates > Check for updates automatically** (settings imported from legacy keep legacy's choice). The installer, AppImage, deb and rpm download the update, check its SHA-256 and install it when you choose Restart now or quit.
+HikariSub sends **anonymous usage data** to PostHog Cloud EU: which features and panels are used, errors and crashes, and how fast things open. It never sends your files, their names or paths, subtitle or script text, Style or font names, or anything you typed. Events go under a random install id, with no person profile and no location lookup, and the PostHog project discards IP addresses. Only release packages send. Turn it off in **Settings > Updates and privacy > Send anonymous usage data** or in Getting started; `DO_NOT_TRACK=1` turns it off for one run. [docs/qt/analytics.md](docs/qt/analytics.md) lists every event and property.
+
+HikariSub looks for updates only when you choose **Help > Check for updates**, or once a day at most after you turn on **Settings > Updates and privacy > Check for updates automatically** (settings imported from legacy keep legacy's choice). The installer, AppImage, deb and rpm download the update, check its SHA-256 and install it when you choose Restart now or quit.
 
 <details>
-<summary>What is sent and how updates install</summary>
+<summary>What the update check sends and how updates install</summary>
 
 - The check asks `api.github.com` for the release list. GitHub sees your IP address. Downloads come only from `github.com` and its asset hosts.
 - What's new reads the same release list, only while the check is on. It never loads the images or links in the notes.

@@ -6638,6 +6638,25 @@ when find results window is open</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.GettingStarted</name>
+    <message>
+        <source>Later: Settings › Updates and privacy</source>
+        <translation>나중에: 설정 › 업데이트 및 개인정보</translation>
+    </message>
+    <message>
+        <source>Send anonymous usage data</source>
+        <translation>익명 사용 데이터 보내기</translation>
+    </message>
+    <message>
+        <source>Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.</source>
+        <translation>어떤 기능을 사용하는지, 오류와 충돌, 그리고 얼마나 빨리 열리는지를 보냅니다. 사용자의 파일, 파일 이름, 파일 내용은 절대 보내지 않습니다.</translation>
+    </message>
+    <message>
+        <source>What is sent</source>
+        <translation>보내는 정보</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
@@ -7262,6 +7281,26 @@ removing audio cache files.</source>
     <message>
         <source>Updates</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates and privacy</source>
+        <translation>업데이트 및 개인정보</translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation>개인정보</translation>
+    </message>
+    <message>
+        <source>Send anonymous usage data</source>
+        <translation>익명 사용 데이터 보내기</translation>
+    </message>
+    <message>
+        <source>Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.</source>
+        <translation>어떤 기능을 사용하는지, 오류와 충돌, 그리고 얼마나 빨리 열리는지를 보냅니다. 사용자의 파일, 파일 이름, 파일 내용은 절대 보내지 않습니다.</translation>
+    </message>
+    <message>
+        <source>What is sent</source>
+        <translation>보내는 정보</translation>
     </message>
     <message>
         <source>Reset all settings</source>
