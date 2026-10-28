@@ -70,8 +70,9 @@ std::optional<std::size_t> groupOfRule(std::string_view rule);
 
 // harper-ls's `linters`: every rule on when its group is on and Harper has it
 // on, except two. SpellCheck is off while Hunspell checks spelling (a word is
-// never marked twice), and SentenceCapitalization is off: a subtitle Line is
-// often the middle of a sentence (owner, 2026-10-27).
+// never marked twice), and SentenceCapitalization is always off, whatever its
+// group's switch: a subtitle Line is often the middle of a sentence (owner,
+// 2026-10-27).
 std::vector<std::pair<std::string_view, bool>> linterSwitches(std::span<const bool> groupsOn, bool hunspellOn);
 
 } // namespace hikari::core::grammar

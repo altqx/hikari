@@ -47,7 +47,7 @@ constexpr std::array<std::pair<const char *, const char *>, 15> kGroupTexts{{
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Phrase corrections"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Common phrase-level mistakes where a standard expression is preferred.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Capitalization and case"),
-     QT_TRANSLATE_NOOP("HikariSub.Spelling", "Sentence starts, titles, brands and other case-sensitive text.")},
+     QT_TRANSLATE_NOOP("HikariSub.Spelling", "Personal pronouns, titles, brands and other case-sensitive text.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Punctuation and spacing"),
      QT_TRANSLATE_NOOP("HikariSub.Spelling", "Punctuation marks, apostrophes, quotation marks, commas and spacing.")},
     {QT_TRANSLATE_NOOP("HikariSub.Spelling", "Numbers and units"),

@@ -198,7 +198,8 @@ TEST(Grammar, SwitchesFollowTheGroupsAndHarpersDefaults)
     EXPECT_TRUE(switchOf(switches, "SpellCheck"));
     EXPECT_FALSE(switchOf(switches, "NoOxfordComma")); // Harper's default: off
     EXPECT_TRUE(switchOf(switches, "OxfordComma"));
-    // Off by the owner's choice: a Line is often the middle of a sentence.
+    // Off by the owner's choice, whatever its group: a Line is often the
+    // middle of a sentence.
     EXPECT_FALSE(switchOf(switches, "SentenceCapitalization"));
     EXPECT_TRUE(switchOf(switches, "Spaces"));
 

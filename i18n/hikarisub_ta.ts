@@ -9789,7 +9789,7 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sentence starts, titles, brands and other case-sensitive text.</source>
+        <source>Personal pronouns, titles, brands and other case-sensitive text.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
