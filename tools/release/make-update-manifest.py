@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
 # Writes a release's update manifest, hikarisub-update.json, checks it
 # against the files and against GitHub, and uploads it (installers spec,
-# 2.3). The same file on the legacy and Qt branches.
+# 2.3). The same file on the main and legacy branches.
 #
 #   make-update-manifest.py --tag v0.0.2 --dir release [--offer-to legacy] [--upload]
+#   make-update-manifest.py --tag v0.1.0-beta.1 --dir release \
+#       --offer-channel prerelease --offer-pitch pitch.json [--upload]
+#   make-update-manifest.py --tag v0.1.0-beta.1 --check-offer --offer-channel ... --offer-pitch ...
+#   make-update-manifest.py --tag v0.1.0-beta.1 --verify hikarisub-update.json
 #
 # --dir holds the release's files under their asset names (2.1). Each
 # package's size and SHA-256 come from the file there, and the SHA-256 must
 # equal the digest GitHub gives the uploaded asset. --assets-json reads the
 # asset list from a file (the JSON of `gh release view --json assets`)
 # rather than from gh, for tests.
+#
+# A rewrite (0.1.0 and up) manifest names exactly ["qt"] in offer_to: legacy
+# 0.0.2-rc.1 and later install a release that names legacy without asking.
+# Legacy users are offered it through `offer` instead (ADR-0021), whose pitch
+# file is the `pitch` object: {"en": {"title", "highlights", "note"}, ...}.
+# --check-offer checks the offer alone; --verify checks a written manifest.
 
 import argparse
 import hashlib
@@ -31,6 +41,11 @@ SEMVER = re.compile(
     r"(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?$")
 MIN_OS = "10.0.17763"
 MIN_GLIBC = {"legacy": "2.35", "qt": "2.34"}
+# The offer's limits, in characters, as legacy reads them (ADR-0021).
+OFFER_CHANNELS = ("prerelease", "stable")
+LEGACY_SUPPORT = ("continues", "ended")
+MAX_TITLE, MAX_HIGHLIGHTS, MAX_HIGHLIGHT, MAX_NOTE = 80, 5, 120, 200
+LANGUAGE_TAG = re.compile(r"^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8})*$")
 
 
 def asset_names(version):
@@ -67,12 +82,92 @@ def gh(*arguments):
     return subprocess.run(["gh", *arguments], check=True, capture_output=True, text=True).stdout
 
 
-def build_manifest(version, offer_to, directory, assets, published):
+def check_offer_to(codebase, offer_to):
+    if codebase == "qt" and offer_to != ["qt"]:
+        fail(f"offer_to {offer_to} must be exactly ['qt']: legacy builds install a rewrite release that names legacy")
+    if any(entry not in ("legacy", "qt") for entry in offer_to) or codebase not in offer_to:
+        fail(f"offer_to {offer_to} must be drawn from legacy and qt and name {codebase}")
+
+
+def check_text(where, value, limit):
+    if not isinstance(value, str) or not 0 < len(value) <= limit:
+        fail(f"{where} must be text of 1 to {limit} characters")
+
+
+def check_pitch(pitch):
+    if not isinstance(pitch, dict) or "en" not in pitch:
+        fail("the pitch is an object keyed by language tag, with en")
+    for language, entry in pitch.items():
+        if not LANGUAGE_TAG.match(language):
+            fail(f"{language!r} is not a language tag")
+        if not isinstance(entry, dict):
+            fail(f"pitch.{language} is not an object")
+        unknown = set(entry) - {"title", "highlights", "note"}
+        if unknown:
+            fail(f"pitch.{language} has unknown members {sorted(unknown)}")
+        check_text(f"pitch.{language}.title", entry.get("title"), MAX_TITLE)
+        highlights = entry.get("highlights")
+        if not isinstance(highlights, list) or not 0 < len(highlights) <= MAX_HIGHLIGHTS:
+            fail(f"pitch.{language}.highlights must hold 1 to {MAX_HIGHLIGHTS} entries")
+        for index, highlight in enumerate(highlights):
+            check_text(f"pitch.{language}.highlights[{index}]", highlight, MAX_HIGHLIGHT)
+        if "note" in entry:
+            check_text(f"pitch.{language}.note", entry["note"], MAX_NOTE)
+
+
+def check_offer(codebase, offer):
+    if codebase != "qt":
+        fail("only a rewrite release carries an offer")
+    if not isinstance(offer, dict) or set(offer) != {"to", "channel", "legacy_support", "pitch"}:
+        fail("the offer has exactly to, channel, legacy_support and pitch")
+    if offer["to"] != "legacy":
+        fail(f"offer.to {offer['to']!r} must be legacy")
+    if offer["channel"] not in OFFER_CHANNELS:
+        fail(f"offer.channel {offer['channel']!r} must be one of {', '.join(OFFER_CHANNELS)}")
+    if offer["legacy_support"] not in LEGACY_SUPPORT:
+        fail(f"offer.legacy_support {offer['legacy_support']!r} must be one of {', '.join(LEGACY_SUPPORT)}")
+    check_pitch(offer["pitch"])
+
+
+def read_offer(codebase, channel, legacy_support, pitch_path):
+    if not channel:
+        if pitch_path:
+            fail("--offer-pitch needs --offer-channel")
+        return None
+    if not pitch_path:
+        fail("--offer-channel needs --offer-pitch")
+    try:
+        with open(pitch_path, encoding="utf-8") as file:
+            pitch = json.load(file)
+    except (OSError, ValueError) as error:
+        fail(f"cannot read the pitch {pitch_path}: {error}")
+    offer = {"to": "legacy", "channel": channel, "legacy_support": legacy_support, "pitch": pitch}
+    check_offer(codebase, offer)
+    return offer
+
+
+def verify(path, version):
+    try:
+        with open(path, encoding="utf-8") as file:
+            manifest = json.load(file)
+    except (OSError, ValueError) as error:
+        fail(f"cannot read {path}: {error}")
+    if not isinstance(manifest, dict) or manifest.get("version") != version:
+        fail(f"{path} is not the manifest of {version}")
+    codebase = codebase_of(version)
+    if manifest.get("codebase") != codebase:
+        fail(f"{path} names codebase {manifest.get('codebase')!r}, not {codebase}")
+    offer_to = manifest.get("offer_to")
+    check_offer_to(codebase, offer_to if isinstance(offer_to, list) else [])
+    if "offer" in manifest:
+        check_offer(codebase, manifest["offer"])
+
+
+def build_manifest(version, offer_to, offer, directory, assets, published):
     codebase = codebase_of(version)
     if not offer_to:
         offer_to = [codebase]
-    if any(entry not in ("legacy", "qt") for entry in offer_to) or codebase not in offer_to:
-        fail(f"offer_to {offer_to} must be drawn from legacy and qt and name {codebase}")
+    check_offer_to(codebase, offer_to)
     by_name = {asset["name"]: asset for asset in assets}
     packages = {}
     for key, name in asset_names(version).items():
@@ -101,7 +196,7 @@ def build_manifest(version, offer_to, directory, assets, published):
         packages[key] = package
     if not packages:
         fail(f"no package of {version} is in {directory}")
-    return {
+    manifest = {
         "schema": 1,
         "product": "HikariSub",
         "version": version,
@@ -110,13 +205,21 @@ def build_manifest(version, offer_to, directory, assets, published):
         "published": published,
         "packages": packages,
     }
+    if offer:
+        manifest["offer"] = offer
+    return manifest
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tag", required=True)
-    parser.add_argument("--dir", required=True, help="the release's files, under their asset names")
+    parser.add_argument("--dir", help="the release's files, under their asset names")
     parser.add_argument("--offer-to", default="", help="comma list from legacy and qt; default the codebase")
+    parser.add_argument("--offer-channel", default="", help="the offer to legacy users: prerelease or stable")
+    parser.add_argument("--offer-legacy-support", default="continues", help="continues or ended")
+    parser.add_argument("--offer-pitch", default="", help="the offer's pitch, a JSON file")
+    parser.add_argument("--check-offer", action="store_true", help="check the offer and print it; write nothing")
+    parser.add_argument("--verify", metavar="MANIFEST", help="check a written manifest of the tag; write nothing")
     parser.add_argument("--repo", default=os.environ.get("GH_REPO", REPO_DEFAULT))
     parser.add_argument("--assets-json", help="the release's assets as `gh release view --json assets` gives them")
     parser.add_argument("--output", help="where to write the manifest; default <dir>/" + MANIFEST)
@@ -129,6 +232,15 @@ def main():
     if "+" in version or not SEMVER.match(version):
         fail(f"{version} is not a release version (SemVer without build metadata)")
     offer_to = [entry for entry in args.offer_to.split(",") if entry]
+    if args.verify:
+        verify(args.verify, version)
+        return
+    offer = read_offer(codebase_of(version), args.offer_channel, args.offer_legacy_support, args.offer_pitch)
+    if args.check_offer:
+        print(json.dumps(offer, indent=2, ensure_ascii=False))
+        return
+    if not args.dir:
+        fail("--dir is needed to write a manifest")
 
     if args.assets_json:
         with open(args.assets_json, encoding="utf-8") as file:
@@ -136,9 +248,9 @@ def main():
     else:
         release = json.loads(gh("release", "view", args.tag, "--repo", args.repo, "--json", "assets,publishedAt"))
     published = release.get("publishedAt") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    manifest = build_manifest(version, offer_to, args.dir, release.get("assets", []), published)
+    manifest = build_manifest(version, offer_to, offer, args.dir, release.get("assets", []), published)
 
-    text = json.dumps(manifest, indent=2) + "\n"
+    text = json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
     if len(text.encode()) > MAX_MANIFEST:
         fail("the manifest is over 64 KiB")
     output = args.output or os.path.join(args.dir, MANIFEST)

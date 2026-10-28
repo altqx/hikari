@@ -18,3 +18,10 @@ if(UNIX)
             "${HikariSub_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/winix-hotplug")
     set_tests_properties(tools.winix-hotplug-script PROPERTIES LABELS "tools" TIMEOUT 60)
 endif()
+
+# RL1 (#460): the release's update manifest, its offer and the offer_to guard.
+if(Python3_Interpreter_FOUND)
+    add_test(NAME tools.make-update-manifest
+        COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/make_update_manifest_tests.py")
+    set_tests_properties(tools.make-update-manifest PROPERTIES LABELS "tools" TIMEOUT 60)
+endif()
