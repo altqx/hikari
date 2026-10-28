@@ -109,11 +109,10 @@ hikari_add_gtest(hikari_application_audio_playback_tests SOURCES audio_playback_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp
     LIBRARIES hikari_application LABELS application)
-# O2: hotkeys and the shortcut editor, against the legacy sources.
+# O2: hotkeys and the shortcut editor.
 hikari_add_gtest(hikari_application_hotkeys_tests SOURCES hotkeys_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
-    HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map/actions.csv")
 # A3: the audio box's timing.
 hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp
@@ -168,15 +167,13 @@ hikari_add_gtest(hikari_application_matroska_tests SOURCES matroska_tests.cpp
 hikari_add_gtest(hikari_application_visual_tools_tests SOURCES visual_tools_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
-    HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")
-# O3: the one-shot settings importer's readers and plan, against the legacy
-# loaders and the migration worksheet.
+# O3: the one-shot settings importer's readers and plan, against the
+# migration worksheet.
 hikari_add_gtest(hikari_application_settings_import_tests SOURCES settings_import_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_settings_import_tests PRIVATE
-    HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map")
 # Y6: Font catalogs (FontCatalogs.txt grammar, operations), the picker's
 # family lists and filter, and the external fonts folder.

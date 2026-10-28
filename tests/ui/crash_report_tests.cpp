@@ -940,7 +940,8 @@ private slots:
         QVERIFY2(yml.open(QIODevice::ReadOnly), qPrintable(yml.fileName()));
         const QString formText = QString::fromUtf8(yml.readAll());
         QStringList formIds;
-        static const QRegularExpression idLine(QStringLiteral("^\\s+id: ([a-z-]+)$"), QRegularExpression::MultilineOption);
+        // \r?: a Windows checkout gives the forms CRLF line ends.
+        static const QRegularExpression idLine(QStringLiteral("^\\s+id: ([a-z-]+)\\r?$"), QRegularExpression::MultilineOption);
         for (auto it = idLine.globalMatch(formText); it.hasNext();)
             formIds << it.next().captured(1);
 
