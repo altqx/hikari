@@ -153,7 +153,7 @@ Three gates keep a distribution's or upstream's libass out:
 
 The macros, not the version, prove the fork: upstream also bumps the version's low byte between releases.
 
-The legacy wx reference build (`cmake/linux-compat/LegacyWxLinux.CMakeLists.txt`, `build.yml`, `legacy-capture.yml`) is the legacy app's and still links the distribution's libass; legacy's own move to the fork is separate.
+The legacy wx reference build (`cmake/linux-compat/LegacyWxLinux.CMakeLists.txt`, `build.yml`) is the legacy app's and still links the distribution's libass; legacy's own move to the fork is separate.
 
 ### Font diagnostics (N4, 2026-10-03)
 
