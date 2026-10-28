@@ -29,7 +29,7 @@ on:
         type: string
         required: true
       release:
-        description: A release build (AN1 (#404): it carries the usage data key)
+        description: A release build, which carries the usage data key (AN1 #404)
         type: boolean
         default: false
     secrets:
