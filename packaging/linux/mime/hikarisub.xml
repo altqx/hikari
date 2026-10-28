@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  shared-mime-info already defines every type HikariSub registers for, so this
-  only attaches icons. The one glob is belt and braces: audio/aac also claims
-  *.ass, at weight 10 against text/x-ssa's 50, so it already loses.
+  shared-mime-info already defines the subtitle types HikariSub registers for,
+  so for those this only attaches icons. The one glob is belt and braces:
+  audio/aac also claims *.ass, at weight 10 against text/x-ssa's 50, so it
+  already loses. The session type (CF3) is HikariSub's own.
 -->
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
   <mime-type type="text/x-ssa">
@@ -14,5 +15,11 @@
   </mime-type>
   <mime-type type="text/x-microdvd">
     <icon name="text-x-microdvd"/>
+  </mime-type>
+  <mime-type type="application/x-hikarisub-session">
+    <comment>HikariSub session</comment>
+    <sub-class-of type="application/json"/>
+    <glob pattern="*.hksession"/>
+    <icon name="hikarisub"/>
   </mime-type>
 </mime-info>

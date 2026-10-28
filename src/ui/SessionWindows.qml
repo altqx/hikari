@@ -67,7 +67,7 @@ Item {
         id: loadDialog
         objectName: "sessionLoadDialog"
         title: qsTr("Load session")
-        nameFilters: [qsTr("Sessions (*.kls)"), qsTr("All files (*)")]
+        nameFilters: [qsTr("Sessions (*.hksession *.kls)"), qsTr("All files (*)")]
         fileMode: FileDialog.OpenFile
         onAccepted: {
             windows.rememberPickerFolder("sessions", selectedFile)
@@ -78,8 +78,8 @@ Item {
         id: saveDialog
         objectName: "sessionSaveDialog"
         title: qsTr("Save session")
-        nameFilters: [qsTr("Sessions (*.kls)")]
-        defaultSuffix: "kls"
+        nameFilters: [qsTr("Sessions (*.hksession)")]
+        defaultSuffix: "hksession"
         fileMode: FileDialog.SaveFile
         onAccepted: {
             windows.rememberPickerFolder("sessions", selectedFile)
