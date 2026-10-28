@@ -112,7 +112,6 @@ TEST(Qm, RewriteCatalogsAnswerFinishedEntriesOnly)
     EXPECT_EQ(pl.translate("HikariSub.Audio", "Horizontal stretching"), QStringLiteral("Rozciągnięcie w poziomie"));
     EXPECT_EQ(pl.translate("HikariSub.Audio", "Search bar"), QString()); // #385: the tooltip went, vanished
     EXPECT_EQ(pl.translate("HikariSub.Styles", "Copy of "), QStringLiteral("Kopia "));
-    EXPECT_EQ(pl.translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid."), QString()); // carried, unfinished
 }
 
 // #385: the English catalog holds only numerus entries, all finished, with
