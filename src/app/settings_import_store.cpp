@@ -119,6 +119,7 @@ QJsonObject receiptJson(const si::Receipt &r)
     for (const auto &id : r.kept)
         kept.append(qs(id));
     o[QStringLiteral("kept")] = kept;
+    o[QStringLiteral("root")] = qs(r.root);
     return o;
 }
 
@@ -136,6 +137,7 @@ si::Receipt receiptFrom(const QJsonObject &o)
         r.imported[ss(it.key())] = fromJson(it.value());
     for (const auto &k : o.value(QStringLiteral("kept")).toArray())
         r.kept.insert(ss(k.toString()));
+    r.root = ss(o.value(QStringLiteral("root")).toString());
     return r;
 }
 
@@ -649,6 +651,7 @@ SettingsImportStore::Result SettingsImportStore::activate(const si::Plan &plan,
     // goes in with this one, and what is edited from here on is kept.
     g.base = liveProfile();
     g.receipt = si::receiptOf(plan, chosen, ss(m_profileName));
+    g.receipt->root = ss(snapshot.root);
     if (!stage(number, g))
         return Result::StagingFailed;
     Manifest m;

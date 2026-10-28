@@ -321,6 +321,7 @@ Content content(Code code, const Roles &roles)
         // Legacy's dark theme (config.cpp:451-472, LoadDefaultColors(true)),
         // the AudioDisplayOptions defaults.
         c.spellcheck = rgb(0x940000); // GRID_SPELLCHECKER / EDITOR_SPELLCHECKER (config.cpp:432, 449)
+        c.grammar = rgb(0x6EA8FE);    // GR1: blue, apart from spelling's red (approved mockup)
         c.gridAlternate = rgb(0x242A31);
         c.gridWarning = rgb(0x7A2E2E);
         c.gridComment = rgb(0x253A57); // GR4: legacy GRID_COMMENT's #4880D0 hue, toned for the text roles
@@ -332,6 +333,7 @@ Content content(Code code, const Roles &roles)
         break;
     case Code::Light:
         c.spellcheck = rgb(0xFF6968); // legacy's light theme (config.cpp:432, 449)
+        c.grammar = rgb(0x1A56DB);
         c.gridAlternate = rgb(0xF0F2F4);
         c.gridWarning = rgb(0xF4C7C7);
         c.gridComment = rgb(0xD6E3F5);
@@ -361,6 +363,7 @@ Content content(Code code, const Roles &roles)
         break;
     case Code::HighContrastWhite:
         c.spellcheck = rgb(0xFF9C9C);
+        c.grammar = rgb(0x0000C8);
         c.gridAlternate = rgb(0xFFFFFF);
         c.gridWarning = rgb(0xFFC0C0);
         c.gridComment = rgb(0xF2E2B0); // amber: the selection is blue, a compared match grey
@@ -389,6 +392,7 @@ Content content(Code code, const Roles &roles)
         break;
     case Code::HighContrastBlack:
         c.spellcheck = rgb(0xC00000);
+        c.grammar = rgb(0xFFFF00);
         c.gridAlternate = rgb(0x000000);
         c.gridWarning = rgb(0x800000);
         c.gridComment = rgb(0x403400); // amber: the selection is blue, a compared match grey

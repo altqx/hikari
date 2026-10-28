@@ -1,0 +1,14 @@
+harper-ls 3.0.0: the licences of the Rust crates built into it
+==============================================================
+
+harper-ls is built from https://github.com/Automattic/harper/tree/v3.0.0 (Apache-2.0, in LICENSE
+beside this file). The source of every crate below is on https://crates.io at the version named.
+
+{{#each licenses}}
+-------------------------------------------------------------------------------
+{{name}} ({{id}})
+Used by:{{#each used_by}} {{crate.name}} {{crate.version}}{{#unless @last}},{{/unless}}{{/each}}
+
+{{text}}
+
+{{/each}}

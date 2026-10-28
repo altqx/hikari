@@ -63,6 +63,9 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DMECAB_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyright"
             "-DUNIDIC_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/copyright"
             "-DDOWNLOADS=${CMAKE_BINARY_DIR}/payload-downloads"
+            "-DHARPER=${HIKARI_HARPER_LS}"
+            "-DHARPER_LICENSE=${HIKARI_HARPER_LS_LICENSE}"
+            "-DHARPER_NOTICES=${PROJECT_SOURCE_DIR}/packaging/licenses/harper/THIRD-PARTY.txt"
             -P "${CMAKE_CURRENT_LIST_FILE}"
         DEPENDS hikarisub hikari_media_helper hikari_lua_helper hikari_automation_stage
         COMMENT "Staging the Windows payload in ${HIKARI_PAYLOAD_DIR}"
@@ -150,6 +153,11 @@ file(COPY "${UNIDIC}/" DESTINATION "${STAGE}/Dictionary/unidic-lite")
 file(MAKE_DIRECTORY "${STAGE}/licenses/mecab" "${STAGE}/licenses/unidic")
 file(COPY_FILE "${MECAB_LICENSE}" "${STAGE}/licenses/mecab/LICENSE")
 file(COPY_FILE "${UNIDIC_LICENSE}" "${STAGE}/licenses/unidic/LICENSE")
+# GR1 (#364): harper-ls beside the program, with its notices.
+file(COPY_FILE "${HARPER}" "${STAGE}/harper-ls.exe")
+file(MAKE_DIRECTORY "${STAGE}/licenses/harper")
+file(COPY_FILE "${HARPER_LICENSE}" "${STAGE}/licenses/harper/LICENSE")
+file(COPY_FILE "${HARPER_NOTICES}" "${STAGE}/licenses/harper/THIRD-PARTY.txt")
 # UD1 (#362): the manifest of the bundled files each start seeds into the
 # user folder.
 include("${CMAKE_CURRENT_LIST_DIR}/HikariBundledManifest.cmake")
@@ -205,11 +213,12 @@ if(problems)
 endif()
 
 # The payload's fixed members (installers SPEC 6.5; W2: the CSRI renderer;
-# KA4: the furigana dictionary and the notices).
+# KA4: the furigana dictionary and the notices; GR1: harper-ls and its notices).
 foreach(required HikariSub.exe hikari-media-helper.exe hikari-lua-helper.exe LICENSE bundled-files.txt Dictionary/en_US.dic
         Csri/VSFiltermod.dll Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin
         Dictionary/unidic-lite/char.bin Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc
-        Dictionary/unidic-lite/mecabrc Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE)
+        Dictionary/unidic-lite/mecabrc Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE
+        harper-ls.exe licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt)
     if(NOT required IN_LIST everything)
         message(FATAL_ERROR "HikariPackageWindows: the payload lacks ${required}")
     endif()

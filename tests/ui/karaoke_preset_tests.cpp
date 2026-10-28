@@ -332,6 +332,34 @@ private slots:
         stop();
     }
 
+    // #400: leaving Karaoke after a restart puts back what it turned on, as
+    // without one; a mode that was on before it stays on.
+    void leavingAfterARestart()
+    {
+        start();
+        applyPreset("Karaoke");
+        QVERIFY(audio().karaoke());
+        QVERIFY(shell().foldGenerated());
+        stop();
+        start();
+        QVERIFY(audio().karaoke());
+        QVERIFY(shell().foldGenerated());
+        applyPreset("Timing");
+        QVERIFY(!audio().karaoke());
+        QVERIFY(!shell().foldGenerated());
+        stop();
+        start();
+        QVERIFY(!audio().karaoke());
+        audio().toggleKaraoke(); // on before Karaoke
+        applyPreset("Karaoke");
+        stop();
+        start();
+        applyPreset("Editing");
+        QVERIFY(audio().karaoke());
+        QVERIFY(!shell().foldGenerated());
+        stop();
+    }
+
     // Folding is a setting: Fold generated lines in the Grid's ⋯ menu, kept
     // across a restart.
     void foldingIsTheGridsSetting()

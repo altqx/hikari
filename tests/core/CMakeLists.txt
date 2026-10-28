@@ -42,6 +42,8 @@ hikari_add_gtest(hikari_core_text_projection_tests SOURCES text_projection_tests
     LIBRARIES hikari_core Qt6::Core LABELS core)
 
 hikari_add_gtest(hikari_core_tag_transfer_tests SOURCES tag_transfer_tests.cpp LIBRARIES hikari_core LABELS core)
+# GR1 (#364): what harper-ls is given for a Line, and Harper's rule groups.
+hikari_add_gtest(hikari_core_grammar_tests SOURCES grammar_tests.cpp LIBRARIES hikari_core LABELS core)
 
 hikari_add_gtest(hikari_core_tag_commands_tests SOURCES tag_commands_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_tag_list_tests SOURCES tag_list_tests.cpp LIBRARIES hikari_core LABELS core)

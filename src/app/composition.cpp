@@ -210,11 +210,11 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     Application::Options options;
     options.autoload = true; // legacy: the Autoload scripts load at start
     // UD1: the Qt folders before the user folder move in once, in the start
-    // that holds the instance (not a portable copy's start, nor one with
-    // HIKARISUB_USER_DIR); then the bundled scripts, modules and
+    // that holds the instance (not one with HIKARISUB_USER_DIR; a portable
+    // copy only names them, #397); then the bundled scripts, modules and
     // dictionaries are seeded in.
-    if (!folderEnvironment.portable && folderEnvironment.userDirOverride.isEmpty())
-        options.userFolderMove = userFolder.moveIn(oldFolders);
+    if (folderEnvironment.userDirOverride.isEmpty())
+        options.userFolderMove = userFolder.moveIn(oldFolders, folderEnvironment.portable);
     options.userFolderSeed = userFolder.seed(bundledFolder());
     options.userFolder = userFolder.root();
     options.gettingStarted = true; // FR1: the first start opens Getting started

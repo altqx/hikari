@@ -243,6 +243,9 @@ private slots:
         QCOMPARE(readFile(folder.filePath(QStringLiteral("Dictionary/UserDic.udic"))),
                  QByteArray("\xEF\xBB\xBFs\xC5\x82owo\r\n"));
         QVERIFY(!next.store->recover()); // once
+        // The receipt names the root it came from (#401: its autosaves).
+        QCOMPARE(QString::fromStdString(next.store->activeReceipt()->root),
+                 SettingsImportStore::inspectRoot(legacy.dir.path())->path);
         // The legacy files are never written.
         QCOMPARE(legacy.bytes(), before);
     }
