@@ -245,6 +245,16 @@ private slots:
                                     {{QStringLiteral("kind"), QStringLiteral("failed")}, {QStringLiteral("script"), QStringLiteral("user script")}}));
         QVERIFY(!Analytics::conforms(QStringLiteral("getting_started_finished"),
                                      {{QStringLiteral("pages_changed"), QJsonArray{QStringLiteral("look"), QStringLiteral("Japanese")}}}));
+        // Only audio comes from a video (#453).
+        const auto opened = [](const char *kind) {
+            return QJsonObject{{QStringLiteral("open_time"), QStringLiteral("<250ms")},
+                               {QStringLiteral("outcome"), QStringLiteral("ready")},
+                               {QStringLiteral("kind"), QLatin1String(kind)}};
+        };
+        QVERIFY(Analytics::conforms(QStringLiteral("audio_opened"), opened("from_video")));
+        QVERIFY(!Analytics::conforms(QStringLiteral("video_opened"), opened("from_video")));
+        QVERIFY(Analytics::conforms(QStringLiteral("video_opened"), opened("file")));
+        QVERIFY(Analytics::conforms(QStringLiteral("video_opened"), opened("dummy")));
         AnalyticsEndpoint endpoint;
         hikari::ui::SettingsStore settings;
         Analytics analytics(settings, config(endpoint));
