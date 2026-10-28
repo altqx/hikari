@@ -414,6 +414,14 @@ Output device: %2</source>
 <context>
     <name>HikariSub.Automation</name>
     <message>
+        <source>Load at start</source>
+        <translation>Wczytuj przy uruchomieniu</translation>
+    </message>
+    <message>
+        <source>Load %1 at start</source>
+        <translation>Wczytuj %1 przy uruchomieniu</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>

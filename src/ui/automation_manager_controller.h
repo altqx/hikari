@@ -22,8 +22,9 @@ class AutomationManagerController : public QObject {
     QML_UNCREATABLE("Provided by the application composition")
     // One map per script: path, fileName, name, description, state, error,
     // generation, forceStopOffered, inDocument (AM1: one of the Document
-    // scripts, the rest being autoload's), macros (maps: ordinal, name,
-    // description, alias).
+    // scripts, the rest being autoload's), enabled (#397: false for an
+    // autoload script turned off, listed with state "disabled"), macros
+    // (maps: ordinal, name, description, alias).
     Q_PROPERTY(QVariantList scripts READ scripts NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
 public:
@@ -38,19 +39,28 @@ public:
     Q_INVOKABLE bool run(const QString &path, int ordinal);
     Q_INVOKABLE void cancel();
     Q_INVOKABLE bool forceStop(const QString &path);
+    // #397: turns an autoload script on (it loads) or off (it unloads and
+    // stays off at the next start).
+    Q_INVOKABLE void setEnabled(const QString &path, bool enabled);
 
     // AM1: which loaded scripts are the Document scripts (the Script Info's
     // "Automation Scripts" and Load script); the panel lists them apart.
     void setDocumentScript(std::function<bool(const std::string &)> isDocumentScript);
+    // #397: the autoload scripts turned off (paths, not loaded), and how one
+    // is turned on or off.
+    void setAutoload(std::function<QStringList()> disabled, std::function<void(const QString &, bool)> setEnabled);
+    // Reads the scripts again (the list changes with every load, reload and
+    // unload by itself).
+    void refresh();
 
 signals:
     void changed();
 
 private:
-    void refresh();
-
     application::AutomationServicePort &m_service;
     std::function<bool(const std::string &)> m_isDocumentScript;
+    std::function<QStringList()> m_disabled;
+    std::function<void(const QString &, bool)> m_setEnabled;
     QVariantList m_scripts;
     bool m_busy = false;
 };
