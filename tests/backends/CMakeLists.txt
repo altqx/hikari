@@ -16,18 +16,11 @@ hikari_add_gtest(hikari_backends_open_save_tests SOURCES open_save_reopen_tests.
 target_compile_definitions(hikari_backends_open_save_tests PRIVATE
     HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
 
-# The subtitle adapters' blend against legacy BlendAssBitmap itself
-# (HikariSub/AssBlend.cpp), copied unchanged into the build so that its
-# directory's other headers stay out.
-set(_legacy_assblend "${CMAKE_CURRENT_BINARY_DIR}/legacy-assblend")
-configure_file("${PROJECT_SOURCE_DIR}/HikariSub/AssBlend.cpp" "${_legacy_assblend}/AssBlend.cpp" COPYONLY)
-configure_file("${PROJECT_SOURCE_DIR}/HikariSub/AssBlend.h" "${_legacy_assblend}/AssBlend.h" COPYONLY)
-hikari_add_gtest(hikari_backends_overlay_blend_tests SOURCES overlay_blend_tests.cpp "${_legacy_assblend}/AssBlend.cpp"
+# The subtitle adapters' blend paths.
+hikari_add_gtest(hikari_backends_overlay_blend_tests SOURCES overlay_blend_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
-target_include_directories(hikari_backends_overlay_blend_tests PRIVATE "${_legacy_assblend}")
-hikari_add_gtest(hikari_backends_libass_tests SOURCES libass_renderer_tests.cpp "${_legacy_assblend}/AssBlend.cpp"
+hikari_add_gtest(hikari_backends_libass_tests SOURCES libass_renderer_tests.cpp
     LIBRARIES hikari_backends hikari_image_testing Hikari::libass Qt6::Gui LABELS backends)
-target_include_directories(hikari_backends_libass_tests PRIVATE "${_legacy_assblend}")
 target_compile_definitions(hikari_backends_libass_tests PRIVATE
     HIKARI_REFERENCE_DIR="${PROJECT_SOURCE_DIR}/tests/references"
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"

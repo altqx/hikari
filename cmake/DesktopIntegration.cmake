@@ -10,21 +10,20 @@ include_guard(GLOBAL)
 
 set(HIKARI_DESKTOP_EXEC "hikarisub" CACHE STRING "Exec= command written into the .desktop entry")
 
-# MimeType= comes from HikariSub/FileTypes.h, the table legacy registers too,
-# so the two codebases announce the same types. Rows whose type is nullptr
-# (.txt, which is text/plain) are skipped on purpose.
+# MimeType= lists the types the shared MIME definition attaches icons to
+# (packaging/linux/mime/hikarisub.xml).
 function(hikari_collect_mimetypes out_var)
-    file(READ "${PROJECT_SOURCE_DIR}/HikariSub/FileTypes.h" _tbl)
-    string(REGEX MATCHALL "\"[a-z]+/[a-zA-Z0-9.+-]+\"" _quoted "${_tbl}")
+    file(READ "${PROJECT_SOURCE_DIR}/packaging/linux/mime/hikarisub.xml" _xml)
+    string(REGEX MATCHALL "<mime-type type=\"[a-z]+/[a-zA-Z0-9.+-]+\"" _tags "${_xml}")
     set(_seen "")
-    foreach(_q IN LISTS _quoted)
-        string(REPLACE "\"" "" _type "${_q}")
+    foreach(_t IN LISTS _tags)
+        string(REGEX REPLACE "^<mime-type type=\"|\"$" "" _type "${_t}")
         if(NOT _type IN_LIST _seen)
             list(APPEND _seen "${_type}")
         endif()
     endforeach()
     if(NOT _seen)
-        message(FATAL_ERROR "No mime types found in HikariSub/FileTypes.h")
+        message(FATAL_ERROR "No mime types found in packaging/linux/mime/hikarisub.xml")
     endif()
     string(JOIN ";" _joined ${_seen})
     set(${out_var} "${_joined};" PARENT_SCOPE)

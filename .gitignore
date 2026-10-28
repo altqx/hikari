@@ -1,5 +1,3 @@
-HikariSub setup.*
-
 *.zip
 *.rar
 *.7z
@@ -8,7 +6,6 @@ HikariSub setup.*
 Thumbs.db
 Trash/
 LanguageTool/
-gitparams.h
 
 
 ## Ignore Visual Studio temporary files, build results, and
@@ -22,11 +19,6 @@ gitparams.h
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
-
-# Compiled translation catalogs (generated from Locale/*.po at build time).
-# The Windows pre-build event writes them into the source tree, in the
-# <lang>/LC_MESSAGES/ layout wxWidgets actually searches.
-/Locale/**/*.mo
 
 # Build results
 build-linux/
@@ -256,20 +248,10 @@ build/
 build-*/
 .serena/
 
-# Python bytecode cache (the packaging scripts under .github/scripts)
+# Python bytecode cache
 __pycache__/
 *.pyc
 
-# MSBuild intermediates (were previously committed under Thirdparty/Build)
-bin/**/*.lib
-obj/**/*.log
-*.tlog
-*.exp
-*.recipe
-*.lastbuildstate
-*.idb
-*.ilk
-
-# Qt rewrite: provisioned SDKs, vcpkg checkout and preset build trees
+# Provisioned SDKs, vcpkg checkout and preset build trees
 /out/
 CMakeUserPresets.json
