@@ -26,6 +26,7 @@ target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari
 # Running from the build tree, the media helper is not next to the executable.
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"
+    HIKARI_BUILD_HARPER_LS="${HIKARI_HARPER_LS}" HIKARI_HARPER_VERSION="${HIKARI_HARPER_VERSION}"
     HIKARI_BUILD_UNIDIC="${HIKARI_UNIDIC_DIR}" # KA4: the furigana reading dictionary
     HIKARI_VERSION="${HIKARI_VERSION}")
 add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_automation_stage)
@@ -75,6 +76,8 @@ target_sources(hikari_composition PRIVATE application_video_timing.cpp)
 target_sources(hikari_composition PRIVATE application_translation.cpp)
 # O5: the interface language (catalogs, live switching, aegisub.gettext's lookup).
 target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)
+# GR1 (#364): grammar check with harper-ls (the Line editor's marks and the panel's walk).
+target_sources(hikari_composition PRIVATE application_grammar.cpp)
 # AV1: the audio panel's output device menu and the unplugged-device notice.
 target_sources(hikari_composition PRIVATE application_audio.cpp)
 # W1: the optional DirectShow playback adapter (Windows), chosen in the settings.

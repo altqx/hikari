@@ -8873,6 +8873,7 @@ private slots:
             QVERIFY2(names.contains(QLatin1String(name)), name);
         QVERIFY(!names.contains(QStringLiteral("Aegisub")));
         QVERIFY(names.contains(QStringLiteral("SoundTouch"))); // KA2-slowed-playback
+        QVERIFY(names.contains(QStringLiteral("Harper")));     // GR1: harper-ls
         // W2: CSRI where the CSRI adapter is built (Windows); VSFilter only
         // where VSFilterMod, a VSFilter derivative, is in the Csri folder (the
         // package; xy-VSFilter is not shipped).
@@ -12468,12 +12469,12 @@ private slots:
         QTRY_VERIFY(dock->property("isOpen").toBool());
         QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
         QCOMPARE(spellItem("spellEmptyAction")->property("text").toString(), QStringLiteral("Spelling settings…"));
-        // It opens PF1's Settings at the Line editor page, which holds the
-        // dictionary.
+        // It opens PF1's Settings at the Spelling & grammar page (GR1), which
+        // holds the dictionary.
         QVERIFY(QMetaObject::invokeMethod(spellItem("spellEmptyAction"), "click"));
         auto *settingsWindow = qobject_cast<QWindow *>(this->settingsWindow());
         QTRY_VERIFY(settingsWindow && settingsWindow->isVisible());
-        QCOMPARE(settingsWindow->property("currentPage").toString(), QStringLiteral("lineEditor"));
+        QCOMPARE(settingsWindow->property("currentPage").toString(), QStringLiteral("spelling"));
         settingsWindow->close();
         QTRY_VERIFY(!settingsWindow->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
@@ -16830,15 +16831,34 @@ private slots:
             {"settingsPageAppearance",
              {{"program.font", nullptr}, {"program.fontSize", nullptr}, {"styles.previewText", nullptr}}}, // PV1
             {"settingsPageLineEditor",
-             {{"editor.spellchecker", "Check spelling"},
-              {"editor.dictionaryLanguage", nullptr},
-              {"editor.suggestionsOnDoubleClick", "Show suggestions on double-click"},
-              {"editor.hideTags", "Hide tags"}, // LE3-tags-shown
+             {{"editor.hideTags", "Hide tags"}, // LE3-tags-shown
               {"editor.timesToFramesSwitch", "Show video frames instead of times"}, // LE2
               {"editor.dontGoToNextLineOnTimesEdit", "Stay on the line when editing times"},
               {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
               {"translation.showOriginal", "Show the original"},
               {"translation.hideOriginalOnVideo", "Hide the original on the video"}}},
+            // GR1 (#364): the Spelling section moved here, then grammar check
+            // and Harper's rule groups.
+            {"settingsPageSpelling",
+             {{"editor.spellchecker", "Check spelling"},
+              {"editor.dictionaryLanguage", nullptr},
+              {"editor.suggestionsOnDoubleClick", "Show suggestions on double-click"},
+              {"grammar.language", nullptr},
+              {"grammar.group.properNouns", "Proper nouns"},
+              {"grammar.group.initialisms", "Initialisms"},
+              {"grammar.group.closedCompounds", "Closed compounds"},
+              {"grammar.group.phraseCorrections", "Phrase corrections"},
+              {"grammar.group.capitalizationAndCase", "Capitalization and case"},
+              {"grammar.group.punctuationAndSpacing", "Punctuation and spacing"},
+              {"grammar.group.numbersAndUnits", "Numbers and units"},
+              {"grammar.group.pronounsAndPossession", "Pronouns and possession"},
+              {"grammar.group.compoundsAndHyphenation", "Compounds and hyphenation"},
+              {"grammar.group.spellingAndOrthography", "Spelling and orthography"},
+              {"grammar.group.styleAndRedundancy", "Style and redundancy"},
+              {"grammar.group.grammarAndAgreement", "Grammar and agreement"},
+              {"grammar.group.wordChoiceAndUsage", "Word choice and usage"},
+              {"grammar.group.regionalismsAndDialect", "Regionalisms and dialect"},
+              {"grammar.group.miscellaneous", "Miscellaneous"}}},
             {"settingsPageGrid",
              {{"grid.changeActiveOnSelection", "Change the active line when adding to the selection"},
               {"grid.duplicationDontChangeSelection", "Keep the selection when duplicating lines"},
@@ -20028,8 +20048,9 @@ private slots:
             names << p.toMap().value(QStringLiteral("name")).toString();
         // (legacy's Themes page is K2's Appearance page, #206; PF1-pages:
         // one flat list, legacy's sub-pages are sections)
-        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Subtitle grid", "Video", "Audio",
-                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys", "Updates"}));
+        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Spelling & grammar", "Subtitle grid",
+                                     "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
+                                     "Updates"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and
@@ -24927,7 +24948,7 @@ private slots:
         // "Audio settings…" opens the dialog on its Audio page.
         QVERIFY(QMetaObject::invokeMethod(named("audioOutputSettings"), "triggered"));
         QTRY_VERIFY((dialog = settingsWindow()) && dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 5); // Audio
+        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 6); // Audio
         QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("audio")); // where Settings opens next
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));

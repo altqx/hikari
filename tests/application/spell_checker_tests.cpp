@@ -223,6 +223,27 @@ TEST_F(Spelling, UserWordsPersist)
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBF" "beta");
 }
 
+// GR1 (#364): Harper's "Add to dictionary" writes UserDic.udic with no
+// Hunspell dictionary loaded (Harper checks spelling while Hunspell is off),
+// and the loaded dictionary takes the word too.
+TEST_F(Spelling, UserWordsWithoutADictionary)
+{
+    EXPECT_FALSE(checker->addWord(u"wrold")); // legacy AddWord needs a dictionary
+    EXPECT_FALSE(checker->addUserWord(u""));
+    EXPECT_FALSE(checker->addUserWord(u"-12"));
+    EXPECT_TRUE(checker->addUserWord(u"wrold"));
+    EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold"}));
+    // ...and removed the same way (Words added to dictionary).
+    EXPECT_TRUE(checker->addUserWord(u"gone"));
+    EXPECT_TRUE(checker->removeWords({u"gone"}));
+    EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold"}));
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(checker->checkWord(u"wrold"));
+    EXPECT_TRUE(checker->addUserWord(u"zzyzx"));
+    EXPECT_TRUE(checker->checkWord(u"zzyzx"));
+    EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold", "zzyzx"}));
+}
+
 // UserDic.udic is read as each legacy build read it (R5-per-platform):
 // Windows text mode folds CR LF byte pairs and stops at Ctrl+Z, before
 // decoding; Linux keeps every byte, so a "\r"-only line is a blank entry in
@@ -478,6 +499,38 @@ TEST_F(Spelling, EditorReplacementCommitsTheDraft)
     EXPECT_EQ(utf8(session.document().lines()[0]->text), "good world}");
     EXPECT_EQ(session.document().lines()[0]->start.value.microseconds(), 1500000);
     EXPECT_FALSE(session.draftLine());
+}
+
+// GR1 (#364): a grammar suggestion goes in over the finding's projection
+// range, the tags inside it kept in order, as one step with the draft; a text
+// changed since the check, or a range over a drawing, is refused.
+TEST_F(Spelling, GrammarReplacementKeepsTagsAndRefusesStaleText)
+{
+    EditSession session{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,I has a apple\n")};
+    const auto line = session.document().lines()[0]->id;
+    session.setSelection(Selection{line, {line}, line, {}});
+    const auto refusal = [](const std::expected<std::size_t, CommandRefusal> &r) {
+        return r ? std::nullopt : std::optional(r.error());
+    };
+    const std::u16string checked = uR"(I {\i1}has{\i0} a apple)";
+    ASSERT_TRUE(session.editDraft(line, DraftChange{.text = core::toUtf8(checked), .start = core::DocumentTime(1500000)}));
+    EXPECT_EQ(refusal(replaceGrammar(session, line, false, u"I has a apple", 2, 5, u"have")), CommandRefusal::StaleRevision);
+    EXPECT_EQ(refusal(replaceGrammar(session, line, true, checked, 2, 5, u"have")), CommandRefusal::StaleRevision);
+    const auto caret = replaceGrammar(session, line, false, checked, 2, 5, u"have");
+    ASSERT_TRUE(caret);
+    EXPECT_EQ(*caret, 11u); // raw, before {\i0}
+    EXPECT_EQ(session.historySize(), 2u);
+    EXPECT_EQ(session.history().back().name, "Correcting grammar errors in the text field");
+    EXPECT_EQ(utf8(session.document().lines()[0]->text), R"(I {\i1}have{\i0} a apple)");
+    EXPECT_EQ(session.document().lines()[0]->start.value.microseconds(), 1500000);
+    EXPECT_FALSE(session.draftLine());
+
+    // Over a drawing's payload: refused, nothing changes.
+    const std::u16string drawing = uR"(a {\p1}m 0 0{\p0}b)";
+    ASSERT_TRUE(session.editDraft(line, DraftChange{.text = core::toUtf8(drawing)}));
+    ASSERT_TRUE(session.commitDraftAs("Typing"));
+    EXPECT_EQ(refusal(replaceGrammar(session, line, false, drawing, 1, 3, u"x")), CommandRefusal::Invalid);
+    EXPECT_EQ(utf8(session.document().lines()[0]->text), R"(a {\p1}m 0 0{\p0}b)");
 }
 
 // The walk goes over every Line of the Document, hidden ones (filtered or in
