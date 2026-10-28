@@ -2316,33 +2316,24 @@ ApplicationWindow {
                 id: macrosSeparator
                 objectName: "macrosSeparator"
             }
-            Instantiator {
-                model: root.macroItems
-                delegate: ShellMenuItem {
-                    required property var modelData
-                    objectName: "macro_" + modelData.name
-                    text: modelData.name
-                    enabled: !root.automation.running
-                    // Automation.cpp:1376-1379: Shift maps the macro's hotkey
-                    // (OnMapHkey(-1, "Script <file>-<n>")); AM1: in the
-                    // Automation panel, which records it in place
-                    // (AM1-hotkeys-window-retired).
-                    onTriggered: {
-                        if (root.hotkeys.shiftClicked(true)) {
-                            root.showPanel(automationDock)
-                            automationTool.record(root.automationHotkeys.legacyNameFor(modelData.path, modelData.ordinal))
-                        } else {
-                            root.automationManager.run(modelData.path, modelData.ordinal)
-                        }
+            // AS1: a "/" in a macro's name opens submenus.
+            MacroMenuEntries {
+                menu: automationMenu
+                after: macrosSeparator
+                macros: root.macroItems
+                enabled: !root.automation.running
+                // Automation.cpp:1376-1379: Shift maps the macro's hotkey
+                // (OnMapHkey(-1, "Script <file>-<n>")); AM1: in the
+                // Automation panel, which records it in place
+                // (AM1-hotkeys-window-retired).
+                onTriggered: macro => {
+                    if (root.hotkeys.shiftClicked(true)) {
+                        root.showPanel(automationDock)
+                        automationTool.record(root.automationHotkeys.legacyNameFor(macro.path, macro.ordinal))
+                    } else {
+                        root.automationManager.run(macro.path, macro.ordinal)
                     }
                 }
-                onObjectAdded: (index, object) => {
-                    let at = 0
-                    while (at < automationMenu.count && automationMenu.itemAt(at) !== macrosSeparator)
-                        ++at
-                    automationMenu.insertItem(at + 1 + index, object)
-                }
-                onObjectRemoved: (index, object) => automationMenu.removeItem(object)
             }
         }
         ShellMenu {
