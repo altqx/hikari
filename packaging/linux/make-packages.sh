@@ -82,12 +82,15 @@ done
 symbols=$stage/symbols
 while IFS= read -r -d '' f; do
     [ "$(od -An -tx1 -N4 "$f" | tr -d ' \n')" = 7f454c46 ] || continue
-    readelf -S --wide "$f" 2>/dev/null | grep -q ' \.debug_info ' || continue
+    # Not `readelf | grep -q`: grep leaving early can kill readelf by
+    # SIGPIPE, and pipefail then skips a file that has debug info.
+    [[ $(readelf -S --wide "$f" 2>/dev/null) == *' .debug_info '* ]] || continue
     rel=${f#"$tree"/}
     mkdir -p "$symbols/$(dirname "$rel")"
     objcopy --only-keep-debug --compress-debug-sections=zlib "$f" "$symbols/$rel.debug"
     objcopy --strip-debug --add-gnu-debuglink="$symbols/$rel.debug" "$f"
-    id=$(readelf -n "$f" 2>/dev/null | sed -n 's/^ *Build ID: \([0-9a-f]*\)$/\1/p' | head -n 1)
+    id=$(readelf -n "$f" 2>/dev/null | sed -n 's/^ *Build ID: \([0-9a-f]*\)$/\1/p')
+    id=${id%%$'\n'*}
     if [ -n "$id" ]; then
         mkdir -p "$symbols/.build-id/${id:0:2}"
         ln -sf "../../$rel.debug" "$symbols/.build-id/${id:0:2}/${id:2}.debug"
