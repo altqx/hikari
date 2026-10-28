@@ -321,6 +321,9 @@ const std::vector<SettingDefinition> &definitions()
         // KA8 (#354): the Kanji timer writes # syllables (KA8-multi-highlight),
         // off by default.
         {"audio.kanjiTimerMulti", "", Bool, Profile, Mapped, false, false},
+        // KA4 (#279): the Kanji timer writes furigana (KA4-furigana), off by
+        // default.
+        {"audio.kanjiTimerFurigana", "", Bool, Profile, Mapped, false, false},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other
@@ -354,6 +357,10 @@ const std::vector<SettingDefinition> &definitions()
         // in the whole Document hide themselves, on top of grid.hideColumns;
         // the Grid's Hide columns menu and Settings > Editor.
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
+        // KP1 (#286): the Grid folds each run of generated Lines (Effect fx
+        // or "Effector [fx]") into one row; the Grid's Fold generated lines,
+        // turned on by choosing the Karaoke layout.
+        {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
         // LE3-tags-shown (owner, 2026-10-18): the Line editor shows ASS
         // override tags unless this is on (Settings > Editor, and the
         // EDITBOX_HIDE_TAGS command); legacy hid them on every start.

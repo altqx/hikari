@@ -1,6 +1,7 @@
 #include "line_table_model.h"
 #include "theme.h"
 
+#include "hikari/application/generated_runs.h"
 #include "hikari/application/grid_filtering.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/legacy_regex.h"
@@ -12,7 +13,9 @@
 #include "line_measures.h"
 
 #include <QCoreApplication>
+#include <QSet>
 #include <QString>
+#include <QStringList>
 
 #include <algorithm>
 #include <cmath>
@@ -399,6 +402,43 @@ void LineTableModel::setDocument(const core::Document &document,
             m_rows[r].groupClosed = lines[r + 1]->group == core::GroupMarker::Closed;
     for (std::size_t r = 0; r < n; ++r)
         m_rows[r].blockMark = markAfter(static_cast<std::ptrdiff_t>(r));
+    // KP1: the runs of generated Lines and their summaries; the runs unfolded
+    // keep that only while their first Line is still a run's first.
+    m_runs.clear();
+    std::unordered_set<std::uint64_t> unfolded;
+    for (const auto &found : application::generatedRuns(lines)) {
+        Run run{static_cast<int>(found.first), static_cast<int>(found.count), static_cast<int>(found.first),
+                static_cast<int>(found.first), static_cast<int>(found.first), {}, {}};
+        // The first few distinct names, then "…": a run of many distinct
+        // Styles from a file costs one lookup per Line.
+        constexpr qsizetype kNames = 8;
+        QStringList styles, effects;
+        QSet<QString> seenStyles, seenEffects;
+        const auto note = [](QStringList &names, QSet<QString> &seen, const QString &name) {
+            if (names.size() > kNames || seen.contains(name))
+                return;
+            seen.insert(name);
+            names << (names.size() == kNames ? QStringLiteral("…") : name);
+        };
+        for (int r = run.first; r < run.first + run.count; ++r) {
+            const core::LineRecord &line = *lines[std::size_t(r)];
+            m_rows[std::size_t(r)].run = static_cast<int>(m_runs.size());
+            if (line.start.value < lines[std::size_t(run.earliest)]->start.value)
+                run.earliest = r;
+            if (line.end.value > lines[std::size_t(run.latest)]->end.value)
+                run.latest = r;
+            if (line.visibility != core::LineVisibility::Hidden)
+                run.blockRow = r;
+            note(styles, seenStyles, qs(line.style));
+            note(effects, seenEffects, qs(line.effect));
+        }
+        run.styles = styles.join(QStringLiteral(", "));
+        run.effects = effects.join(QStringLiteral(", "));
+        if (const auto first = lines[std::size_t(run.first)]->id.value; m_unfolded.contains(first))
+            unfolded.insert(first);
+        m_runs.push_back(std::move(run));
+    }
+    m_unfolded = std::move(unfolded);
     // R1: a row is painted from Comparison->at(key) (SubsGridWindow.cpp:419-
     // 420): a mismatch while lineCompare has entries, a match when the texts
     // were equal. A row past the table (legacy std::out_of_range) paints
@@ -523,19 +563,39 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return {};
     const Row &r = shownRow(index.row());
     const core::LineRecord &line = r.line;
+    if (role == FoldRole || role == FoldCountRole) {
+        if (!m_foldGenerated || r.run < 0 || m_runs[std::size_t(r.run)].first != index.row())
+            return 0;
+        return role == FoldCountRole ? m_runs[std::size_t(r.run)].count : runFolded(index.row()) ? 1 : 2;
+    }
+    // KP1: a folded run's row summarises it; it keeps its first Line's
+    // identity and selection, and the hidden-block mark after its last shown
+    // Line, which toggles from there.
+    if (r.run >= 0 && m_runs[std::size_t(r.run)].first == index.row() && runFolded(index.row())) {
+        const Run &run = m_runs[std::size_t(r.run)];
+        switch (role) {
+        case Qt::DisplayRole: return foldedData(run, index.column());
+        case HiddenBlockRole: return m_rows[std::size_t(run.blockRow)].blockMark;
+        case HiddenBlockRowRole: return run.blockRow;
+        case CommentRole:
+        case CpsTooHighRole:
+        case BadWrapsRole:
+        case DraftRole:
+        case UnplacedRunsRole: return false;
+        case SpellMarksRole:
+        case ComparisonMarksRole: return QVariantList();
+        case ComparisonRole:
+        case LineStateRole: return 0;
+        default: break;
+        }
+    }
     switch (role) {
     case Qt::DisplayRole:
         switch (index.column()) {
         case NumberColumn: return index.row() + 1;
         case LayerColumn: return QString::number(line.layer.value);
-        case StartColumn:
-            if (m_frames)
-                return QString::number(m_frames->frameAt(static_cast<int>(line.start.value.microseconds() / 1000)));
-            return legacyTime(line.start, line.startFrame, m_format);
-        case EndColumn:
-            if (m_frames)
-                return QString::number(m_frames->frameAt(static_cast<int>(line.end.value.microseconds() / 1000)) - 1);
-            return legacyTime(line.end, line.endFrame, m_format);
+        case StartColumn: return startText(line);
+        case EndColumn: return endText(line);
         case StyleColumn: return qs(line.style);
         case ActorColumn: return qs(line.actor);
         case MarginLeftColumn: return QString::number(line.marginLeft.value);
@@ -565,6 +625,7 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
     case HiddenBlockRole:
         return r.blockMark;
     case DocumentRowRole:
+    case HiddenBlockRowRole:
         return index.row();
     case GroupRole:
         switch (line.group) {
@@ -594,6 +655,105 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
     default:
         return {};
     }
+}
+
+QString LineTableModel::startText(const core::LineRecord &line) const
+{
+    if (m_frames)
+        return QString::number(m_frames->frameAt(static_cast<int>(line.start.value.microseconds() / 1000)));
+    return legacyTime(line.start, line.startFrame, m_format);
+}
+
+QString LineTableModel::endText(const core::LineRecord &line) const
+{
+    if (m_frames)
+        return QString::number(m_frames->frameAt(static_cast<int>(line.end.value.microseconds() / 1000)) - 1);
+    return legacyTime(line.end, line.endFrame, m_format);
+}
+
+QVariant LineTableModel::foldedData(const Run &run, int column) const
+{
+    switch (column) {
+    case NumberColumn:
+        return QStringLiteral("%1–%2").arg(run.first + 1).arg(run.first + run.count);
+    case StartColumn: return startText(shownRow(run.earliest).line);
+    case EndColumn: return endText(shownRow(run.latest).line);
+    case StyleColumn: return run.styles;
+    case EffectColumn: return run.effects;
+    case TextColumn: return QCoreApplication::translate("HikariSub.Grid", "%n generated lines", nullptr, run.count);
+    default: return QString();
+    }
+}
+
+void LineTableModel::setFoldGenerated(bool on)
+{
+    if (on == m_foldGenerated)
+        return;
+    m_foldGenerated = on;
+    m_unfolded.clear();
+    emitFoldsChanged();
+}
+
+void LineTableModel::setRunFolded(core::LineId first, bool folded)
+{
+    const auto row = rowOf(first);
+    if (!m_foldGenerated || !row || runFirstRow(*row) != *row || runFolded(*row) == folded)
+        return;
+    if (folded)
+        m_unfolded.erase(first.value);
+    else
+        m_unfolded.insert(first.value);
+    emitRowChanged(*row);
+}
+
+int LineTableModel::runFirstRow(int row) const
+{
+    if (row < 0 || row >= static_cast<int>(m_rows.size()) || m_rows[std::size_t(row)].run < 0)
+        return -1;
+    return m_runs[std::size_t(m_rows[std::size_t(row)].run)].first;
+}
+
+bool LineTableModel::runFolded(int firstRow) const
+{
+    return m_foldGenerated && runFirstRow(firstRow) == firstRow &&
+           !m_unfolded.contains(m_rows[std::size_t(firstRow)].line.id.value);
+}
+
+bool LineTableModel::foldedMember(int row) const
+{
+    const int first = runFirstRow(row);
+    return first >= 0 && first != row && runFolded(first);
+}
+
+std::vector<int> LineTableModel::foldedRuns() const
+{
+    std::vector<int> out;
+    for (const Run &run : m_runs)
+        if (runFolded(run.first))
+            out.push_back(run.first);
+    return out;
+}
+
+int LineTableModel::runSize(int firstRow) const
+{
+    return runFirstRow(firstRow) == firstRow ? m_runs[std::size_t(m_rows[std::size_t(firstRow)].run)].count : 0;
+}
+
+std::vector<core::LineId> LineTableModel::runLines(int firstRow) const
+{
+    std::vector<core::LineId> out;
+    if (runFirstRow(firstRow) != firstRow)
+        return out;
+    const Run &run = m_runs[std::size_t(m_rows[std::size_t(firstRow)].run)];
+    for (int r = run.first; r < run.first + run.count; ++r)
+        out.push_back(m_rows[std::size_t(r)].line.id);
+    return out;
+}
+
+void LineTableModel::emitFoldsChanged()
+{
+    for (const Run &run : m_runs)
+        emitRowChanged(run.first);
 }
 
 QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -674,7 +834,9 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {ComparisonMarksRole, "comparisonMarks"},
                   {LineStateRole, "lineState"},
                   {DraftRole, "draft"},
-                  {UnplacedRunsRole, "unplacedRuns"}});
+                  {UnplacedRunsRole, "unplacedRuns"},
+                  {FoldRole, "fold"},
+                  {FoldCountRole, "foldCount"}});
     return roles;
 }
 
@@ -695,7 +857,23 @@ void LineFilterModel::setPredicate(Predicate predicate)
 
 bool LineFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &) const
 {
-    if (!m_predicate || !m_lines)
+    if (!m_lines)
+        return true;
+    if (m_lines->foldedMember(sourceRow))
+        return false;
+    if (m_lines->runFolded(sourceRow)) {
+        const int end = sourceRow + m_lines->runSize(sourceRow);
+        for (int row = sourceRow; row < end; ++row)
+            if (passes(row))
+                return true;
+        return false;
+    }
+    return passes(sourceRow);
+}
+
+bool LineFilterModel::passes(int sourceRow) const
+{
+    if (!m_lines || !m_predicate)
         return true;
     const core::LineRecord *record = m_lines->recordAt(sourceRow);
     return record && m_predicate(*record);
@@ -708,7 +886,7 @@ int LineFilterModel::hiddenSelectedCount() const
     int hidden = 0;
     for (const auto &id : m_lines->selection().selected) {
         const auto row = m_lines->rowOf(id);
-        if (row && !filterAcceptsRow(*row, {}))
+        if (row && !passes(*row)) // KP1: a Line folded into a shown row is not hidden
             ++hidden;
     }
     return hidden;

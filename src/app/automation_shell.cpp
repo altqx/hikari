@@ -535,9 +535,12 @@ void AutomationShell::loadScript(const QUrl &file)
     // Document's scripts are read first while none are listed.
     if (m_documentScripts.empty())
         addFromDocument();
-    // Automation::Add (Automation.cpp:1153-1171).
-    if (!m_documentScripts.add(path))
+    // Automation::Add (Automation.cpp:1153-1171). A listed script is not
+    // added again; it reloads, so its edits take effect (#390, legacy did nothing).
+    if (!m_documentScripts.add(path)) {
+        loadDocumentScript(path);
         return;
+    }
     loadDocumentScript(path);
     const auto target = m_workspace.editingTarget();
     auto *s = target ? session(*target) : nullptr;
@@ -635,19 +638,23 @@ void AutomationShell::continueLastScript()
     m_pendingLast.reset();
     if (!host)
         return;
-    if (host->state() == State::LoadFailed || host->info().macros.empty()) {
-        // GetMacro(0) is null: the load error, or the description of a
-        // script that registered nothing, then the script editor.
-        const QString description = host->state() == State::LoadFailed
-                                        ? host->lastError()
-                                        : QString::fromStdString(host->info().description);
-        // NT1: the description (the load error) is the box's Details; the
-        // legacy text keeps its translations, its second line left empty.
+    if (host->state() == State::LoadFailed) {
+        // GetMacro(0) is null: the load error, then the script editor.
+        // NT1: the load error is the box's Details; the legacy text keeps
+        // its translations, its second line left empty.
         emit notice(QStringLiteral("error"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
                     QCoreApplication::translate("HikariSub.Automation", "Error loading Lua script: %1\n%2")
                         .arg(prettyName(path), QString()).trimmed(),
-                    description);
+                    host->lastError());
         editScript(QString::fromStdString(path));
+        return;
+    }
+    if (host->info().macros.empty()) {
+        // A script that loaded but registered nothing (a library, say) has
+        // nothing to run; legacy called it a load error (#390).
+        emit notice(QStringLiteral("info"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
+                    QCoreApplication::translate("HikariSub.Automation", "%1 has no macros to run").arg(prettyName(path)),
+                    {});
         return;
     }
     if (!run(path, 0, RunOrigin::LastScript) && host->state() == State::Unavailable)

@@ -6,6 +6,7 @@
 #include <QDateTime>
 
 #include <algorithm>
+#include <set>
 
 namespace hikari::ui {
 
@@ -83,18 +84,111 @@ void ShellController::selectLine(qulonglong id)
         m_lines.setSelection(application::Selection{line, {line}}, line);
 }
 
+void ShellController::setFoldGenerated(bool on)
+{
+    if (m_lines.foldGenerated() == on)
+        return;
+    // Announced before the Grid drops the folded rows: the selection is made
+    // whole first (Application::selectFoldedRunsWhole), so the Grid's current
+    // Line never falls back from a row that folds away.
+    m_shown.changeFolds([&] {
+        m_lines.setFoldGenerated(on);
+        emit foldGeneratedChanged();
+    });
+}
+
+void ShellController::setRunFolded(core::LineId first, bool folded)
+{
+    m_shown.changeFolds([&] { m_lines.setRunFolded(first, folded); });
+}
+
+std::optional<core::LineId> ShellController::runFirst(core::LineId line) const
+{
+    const auto row = m_lines.rowOf(line);
+    const int first = row ? m_lines.runFirstRow(*row) : -1;
+    return first >= 0 ? m_lines.lineAt(first) : std::nullopt;
+}
+
+bool ShellController::runFolded(core::LineId first) const
+{
+    const auto row = m_lines.rowOf(first);
+    return row && m_lines.runFolded(*row);
+}
+
+std::vector<core::LineId> ShellController::runLines(core::LineId first) const
+{
+    const auto row = m_lines.rowOf(first);
+    return row ? m_lines.runLines(*row) : std::vector<core::LineId>{};
+}
+
+application::Selection ShellController::withFoldedRuns(application::Selection selection) const
+{
+    for (const int row : m_lines.foldedRuns()) {
+        const auto lines = m_lines.runLines(row);
+        // A Line made active inside the run unfolds it (setSelection).
+        if (selection.active && std::find(lines.begin() + 1, lines.end(), *selection.active) != lines.end())
+            continue;
+        const bool whole = selection.selected.contains(lines.front());
+        for (std::size_t k = 1; k < lines.size(); ++k)
+            if (whole)
+                selection.selected.insert(lines[k]);
+            else
+                selection.selected.erase(lines[k]);
+    }
+    return selection;
+}
+
+application::Selection ShellController::foldedWhole(application::Selection selection,
+                                                    std::optional<core::LineId> first) const
+{
+    const auto fold = [&selection](const std::vector<core::LineId> &lines) {
+        if (lines.empty())
+            return;
+        if (selection.active && std::find(lines.begin(), lines.end(), *selection.active) != lines.end()) {
+            selection.active = lines.front();
+            selection.selected.insert(lines.front());
+        }
+        const bool whole = selection.selected.contains(lines.front());
+        for (const auto line : lines)
+            if (whole)
+                selection.selected.insert(line);
+            else
+                selection.selected.erase(line);
+    };
+    if (first)
+        fold(runLines(*first));
+    else
+        for (const int row : m_lines.foldedRuns())
+            fold(m_lines.runLines(row));
+    return selection;
+}
+
 void ShellController::setSelection(const application::Selection &selection)
 {
+    // KP1: a folded run's row stands for all its Lines, so a selection that
+    // makes a later Line of the run active or selects the run only in part
+    // (Find, Go to, the audio's next Line, Select Lines) unfolds it.
+    std::vector<core::LineId> unfold;
+    for (const int row : m_lines.foldedRuns()) {
+        const auto lines = m_lines.runLines(row);
+        const auto picked = std::ranges::count_if(lines, [&](core::LineId id) { return selection.selected.contains(id); });
+        const bool activeInside =
+            selection.active && std::find(lines.begin() + 1, lines.end(), *selection.active) != lines.end();
+        if (activeInside || (picked > 0 && picked < std::ssize(lines)))
+            unfold.push_back(lines.front());
+    }
+    for (const auto first : unfold)
+        setRunFolded(first, false);
     m_lines.setSelection(selection, selection.anchor);
     const auto row = selection.active ? m_lines.rowOf(*selection.active) : std::nullopt;
     const core::LineRecord *record = row ? m_lines.recordAt(*row) : nullptr;
     m_activeText = record ? qs(record->text) : QString();
     m_activeStyle = record ? qs(record->style) : QString();
     m_activeNumber = record ? *row + 1 : 0;
-    const auto shown = displayedLines();
-    const auto hidden = std::count_if(selection.selected.begin(), selection.selected.end(), [&](core::LineId id) {
-        return std::find(shown.begin(), shown.end(), id) == shown.end();
-    });
+    const auto shown = actionLines();
+    const std::set<core::LineId> shownSet(shown.begin(), shown.end());
+    const auto hidden = std::count_if(selection.selected.begin(), selection.selected.end(),
+                                      [&](core::LineId id) { return !shownSet.contains(id); });
     m_selectedCount = static_cast<qsizetype>(selection.selected.size());
     m_hiddenCount = hidden;
     m_selectionStatus = selectionText();
@@ -127,6 +221,19 @@ std::vector<core::LineId> ShellController::displayedLines() const
     for (int row = 0; row < m_shown.rowCount(); ++row)
         if (const auto id = m_lines.lineAt(m_shown.mapToSource(m_shown.index(row, 0)).row()))
             out.push_back(*id);
+    return out;
+}
+
+std::vector<core::LineId> ShellController::actionLines() const
+{
+    std::vector<core::LineId> out;
+    for (int row = 0; row < m_shown.rowCount(); ++row) {
+        const int source = m_shown.mapToSource(m_shown.index(row, 0)).row();
+        const int end = m_lines.runFolded(source) ? source + m_lines.runSize(source) : source + 1;
+        for (int r = source; r < end; ++r)
+            if (const auto id = m_lines.lineAt(r); id && m_shown.passes(r))
+                out.push_back(*id);
+    }
     return out;
 }
 

@@ -400,6 +400,16 @@ Output device: %2</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Finding vocal onsets…</source>
+        <extracomment>Status bar while Snap to vocal onsets (the audio panel&apos;s Tap menu, Karaoke mode) reads the audio</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vocal onsets found</source>
+        <extracomment>Status bar once Snap to vocal onsets has read the audio and boundaries snap</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -504,11 +514,11 @@ Output device: %2</source>
         </translation>
     </message>
     <message>
-        <source>Applied. 1 template line has problems.</source>
+        <source>Applied. The templates have 1 problem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Applied. %n template lines have problems.</source>
+        <source>Applied. The templates have %n problems.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
@@ -894,6 +904,10 @@ Output device: %2</source>
     <message>
         <source>This subtitle file does not have any scripts added</source>
         <translation>Ten plik napisów nie ma dodanych żadnych skryptów</translation>
+    </message>
+    <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1 nie ma makr do uruchomienia</translation>
     </message>
     <message>
         <source>Error</source>
@@ -4329,6 +4343,26 @@ Nie udało się skopiować %2 czcionek.</translation>
         <source>Line wraps</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Fold generated lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n generated lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>folded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unfolded</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -4804,6 +4838,38 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Write each further syllable of a group as a # syllable, for the templater&apos;s multi effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Furigana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write each kanji&apos;s reading after it (漢|かん), as the romaji sings it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No reading dictionary: readings come from the romaji only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dictionary: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not sung in kana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No furigana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use the suggestion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13302,6 +13368,10 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Delete</source>
         <translation type="unfinished">Usuń</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

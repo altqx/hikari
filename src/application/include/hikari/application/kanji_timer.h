@@ -7,9 +7,10 @@
 // is some syllables and the kanji characters they sing, its time their sum.
 // Owner-approved departures (compatibility-decisions.md): KA3-whole-song,
 // KA3-pair-by-time, KA3-suggest-whole-line, KA3-apply, KA3-keep-tags,
-// KA3-leftover-kanji, KA3-go-back, KA8-multi-highlight.
+// KA3-leftover-kanji, KA3-go-back, KA8-multi-highlight, KA4-furigana.
 
 #include "hikari/application/audio_karaoke.h"
+#include "hikari/application/furigana.h"
 #include "hikari/core/document.h"
 
 #include <cstddef>
@@ -55,14 +56,23 @@ struct KanjiGroup {
 // before it) goes with its tag. `tagged`: when the Line has one and no
 // character before its first tag, the groups its tags make, each tag's
 // characters and its syllables (itself and the # ones after it).
+// KA4-furigana: a tagged Line's furigana (漢|かん, #|ん, the full-width forms)
+// is read out of the text: `readings`, each kanji run's (its units) in
+// hiragana, a syllable's reading split over its kanji runs.
 struct KanjiText {
     struct Unit {
         std::size_t begin = 0, end = 0;
         std::u16string text; // without the blocks inside it
     };
+    struct Reading {
+        std::size_t begin = 0, end = 0;
+        std::u16string text;
+        bool operator==(const Reading &) const = default;
+    };
     std::u16string text;
     std::vector<Unit> units;
     std::vector<KanjiGroup> tagged;
+    std::vector<Reading> readings;
 };
 KanjiText kanjiText(std::u16string_view text);
 
@@ -85,6 +95,38 @@ struct KanjiSuggestion {
 KanjiSuggestion suggestGroups(const std::vector<KanjiSyllable> &syllables, std::size_t from, const KanjiText &kanji,
                               std::size_t at, const KaraokeCharClass &classes);
 
+// KA4-furigana: the readings typed for a pair, by the units of their kanji
+// run (empty: no furigana there).
+using KanjiTyped = std::map<std::pair<std::size_t, std::size_t>, std::u16string>;
+
+// A run of kanji within a group (a group's characters split at each one
+// that is no kanji) and its reading: the one typed, else the suggestion,
+// the group's sung kana (its syllables' romaji as kana) split over its kanji
+// runs, else the dictionary's.
+struct KanjiReading {
+    std::size_t group = 0;
+    std::size_t begin = 0, end = 0; // its units
+    std::u16string suggested;       // hiragana, empty: none
+    std::u16string dictionary;      // the dictionary's (its word's, read over more runs), empty: none
+    bool sung = false;              // the suggestion is the sung kana
+    bool differs = false;           // sung other than the dictionary reads it
+    std::optional<std::u16string> typed;
+    // a Line's own reading over a base of kanji and kana that split over
+    // none of its runs: the units it spells, its kana too (none: 0, 0)
+    std::size_t spellsFrom = 0, spellsTo = 0;
+    const std::u16string &reading() const { return typed ? *typed : suggested; }
+    bool operator==(const KanjiReading &) const = default;
+};
+
+// The kanji runs of `groups` with their readings. `dictionary`: the kanji
+// Line's runs as suggestReadings reads its text; a word read over more runs
+// (永 と, 遠 わ) is compared with their readings together. `suggest` off:
+// only the typed readings.
+std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
+                                        const std::vector<KanjiGroup> &groups,
+                                        const std::vector<FuriganaRun> &dictionary, const KanjiTyped &typed,
+                                        bool suggest = true);
+
 // The kanji Line's text with `groups` (every syllable in one) as \k tags:
 // each group's tag before its first character, the letters of its first
 // syllable's tag and the sum of its syllables' times; a blank group's before
@@ -93,9 +135,15 @@ KanjiSuggestion suggestGroups(const std::vector<KanjiSyllable> &syllables, std::
 // Line's own block just before it. KA8-multi-highlight (`multi`): a group of
 // more syllables and some characters takes its first syllable's time, and
 // each further syllable is a # syllable after its characters with its own
-// time and letters.
+// time and letters. KA4-furigana (`readings`, kanjiReadings of `groups`):
+// a group's reading after its characters (base|reading), its kana spelt
+// too; with `multi` each # syllable takes its syllable's kana when the
+// reading is the sung one (#|ん). A group of kanji and kana whose syllables
+// line up with its kanji runs is written as one group per run, so only the
+// kanji carry a reading (聞|き こ).
 std::u16string kanjiOutput(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
-                           const std::vector<KanjiGroup> &groups, bool multi = false);
+                           const std::vector<KanjiGroup> &groups, bool multi = false,
+                           const std::vector<KanjiReading> *readings = nullptr);
 
 // The Kanji timer window's state over a Document: the Line pairs of the two
 // styles, each pair's grouping, the current pair and the timer's own undo.
@@ -127,6 +175,13 @@ public:
     // each group folded into one tag, as Aegisub writes them).
     void setMulti(bool on) { m_multi = on; }
     bool multi() const { return m_multi; }
+    // KA4-furigana: the kanji Lines written with their readings (off: only
+    // the ones typed or the Line had), and the dictionary that suggests
+    // them where the romaji is no kana (none: from the romaji only).
+    void setFurigana(bool on) { m_furigana = on; }
+    bool furigana() const { return m_furigana; }
+    void setDictionary(ReadingAnalyzer analyze);
+    bool hasDictionary() const { return static_cast<bool>(m_analyze); }
 
     const std::vector<Pair> &pairs() const { return m_pairs; }
     // The current pair (-1: none with both Lines).
@@ -143,6 +198,9 @@ public:
         std::vector<KanjiGroup> rest;   // the suggestion after it
         bool canAccept = false;         // every syllable in a group, none of the suggested ones blank
         std::optional<std::u16string> output; // the kanji Line it would get
+        // KA4-furigana: the kanji runs of the linked groups, the selection
+        // (group linked.size()) and the rest, with Furigana on
+        std::vector<KanjiReading> readings;
     };
     std::optional<View> view() const;
 
@@ -158,6 +216,10 @@ public:
     bool unlink();
     bool enter();
     bool acceptLine();
+    // KA4-furigana: the current group's reading typed (its kanji runs' when
+    // it has more, split at spaces), or its suggestion again. Undo steps.
+    bool setReading(std::u16string_view reading);
+    bool useSuggestion();
     // A click: the current group's syllables or characters end at this one;
     // on a linked group, that group and the ones after it are unlinked.
     bool clickSyllable(std::size_t syllable);
@@ -184,6 +246,7 @@ private:
         std::vector<KanjiGroup> linked;
         std::optional<KanjiGroup> selection; // none: the suggestion's first group
         bool done = false, applied = false, changed = false;
+        KanjiTyped typed;
         std::u16string romajiText, kanjiText; // the texts it was made on
         bool operator==(const Work &) const = default;
     };
@@ -217,6 +280,11 @@ private:
     std::vector<KanjiGroup> proposal(const Work &work, const std::vector<KanjiSyllable> &syllables,
                                      const KanjiText &kanji, bool *clean = nullptr) const;
     Status statusOf(const Pair &pair);
+    const std::vector<FuriganaRun> &dictionaryOf(const KanjiText &kanji) const;
+    std::vector<KanjiReading> readingsOf(const Work &work, const std::vector<KanjiSyllable> &syllables,
+                                         const KanjiText &kanji, const std::vector<KanjiGroup> &groups) const;
+    std::u16string outputOf(const Work &work, const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
+                            const std::vector<KanjiGroup> &groups) const;
     bool editCurrent(const std::function<bool(Work &, const std::vector<KanjiSyllable> &, const KanjiText &)> &edit);
     bool acceptWork(const Pair &pair, Work &work, bool all);
     void moveOnFrom(int pair);
@@ -224,6 +292,9 @@ private:
     KaraokeCharClass m_classes;
     bool m_suggest = true;
     bool m_multi = false;
+    bool m_furigana = false;
+    ReadingAnalyzer m_analyze;
+    mutable std::map<std::u16string, std::vector<FuriganaRun>> m_dictionary; // by kanji text
     std::vector<Line> m_romaji, m_kanji;
     State m_state;
     std::vector<Pair> m_pairs;

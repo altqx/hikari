@@ -45,12 +45,9 @@ void Application::setupTabMenu(const Options &options)
 {
     m_revealInFolder = options.revealInFolder ? options.revealInFolder
                                               : [](const QString &path) { backends::desktop::selectInFolder(path); };
-    // Legacy Options.pathfull/Subs: the settings folder stands for pathfull
-    // (as for Indices and AudioCache).
-    m_legacyAutosaveDir = !options.legacyAutosaveDir.isEmpty() ? options.legacyAutosaveDir
-                          : !m_settingsFile.isEmpty()
-                              ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Subs")
-                              : QString();
+    // Legacy Options.dataPath/Subs; unset, legacyAutosaves() looks in the
+    // legacy roots the settings importer finds (#387).
+    m_legacyAutosaveDir = options.legacyAutosaveDir;
     connect(m_video.get(), &ui::VideoController::offerAnswered, this, &Application::answerAssociation);
     connect(m_video.get(), &ui::VideoController::offerWithdrawn, this, [this] {
         if (const auto target = m_workspace.editingTarget())
