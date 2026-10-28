@@ -331,6 +331,13 @@ target_compile_definitions(hikari_backends_legacy_spelling_tests PRIVATE
     HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling"
     HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs")
 
+# DK1 (#473): the bundled dictionaries, as the build fetched them, through Hunspell.
+hikari_add_gtest(hikari_backends_bundled_dictionaries_tests SOURCES bundled_dictionaries_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+target_compile_definitions(hikari_backends_bundled_dictionaries_tests PRIVATE
+    HIKARI_BUNDLED_DICTIONARIES="${HIKARI_BUNDLED_DICTIONARIES}"
+    HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling")
+
 # GR1 (#364): the pinned harper-ls over LSP: diagnostics, replacements, settings.
 hikari_add_gtest(hikari_backends_harper_client_tests SOURCES harper_client_tests.cpp
     LIBRARIES hikari_backends LABELS backends)

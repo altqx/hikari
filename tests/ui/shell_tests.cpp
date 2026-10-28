@@ -8876,6 +8876,9 @@ private slots:
         QVERIFY(!names.contains(QStringLiteral("Aegisub")));
         QVERIFY(names.contains(QStringLiteral("SoundTouch"))); // KA2-slowed-playback
         QVERIFY(names.contains(QStringLiteral("Harper")));     // GR1: harper-ls
+        // DK1: the bundled Korean and Tamil dictionaries.
+        QVERIFY(names.contains(QStringLiteral("hunspell-dict-ko")));
+        QVERIFY(names.contains(QStringLiteral("ThamiZha! Solthiruthi")));
         // W2: CSRI where the CSRI adapter is built (Windows); VSFilter only
         // where VSFilterMod, a VSFilter derivative, is in the Csri folder (the
         // package; xy-VSFilter is not shipped).
@@ -17932,7 +17935,8 @@ private slots:
     {
         QTemporaryDir own;
         QVERIFY(QDir(own.path()).mkdir(QStringLiteral("Dictionary")));
-        for (const char *name : {"pl_PL.dic", "pl_PL.aff", "en_US.dic", "en_US.aff", "de_DE.dic"}) {
+        for (const char *name : {"pl_PL.dic", "pl_PL.aff", "en_US.dic", "en_US.aff", "de_DE.dic", "ko_KR.dic",
+                                 "ko_KR.aff", "ta_IN.dic", "ta_IN.aff"}) {
             QFile file(own.filePath(QStringLiteral("Dictionary/") + QLatin1String(name)));
             QVERIFY(file.open(QIODevice::WriteOnly));
             file.write("x\n");
@@ -17944,12 +17948,18 @@ private slots:
         // The list is F3's availableDictionaries over the same folders, in
         // the order wxDir lists them on this platform (R5-per-platform: no
         // sorting; F3's own tests pin that order against readdir and
-        // FindFirstFile), each symbol shown by its language name.
+        // FindFirstFile), each symbol shown by its language name (DK1 #473:
+        // the bundled Korean and Tamil ones too).
         const std::filesystem::path folder(own.filePath(QStringLiteral("Dictionary")).toStdU16String());
+        const std::map<std::u16string, QString> language{
+            {u"en_US", QStringLiteral("English")},
+            {u"pl_PL", QStringLiteral("Polski")},
+            {u"ko_KR", QString::fromUtf8("\xED\x95\x9C\xEA\xB5\xAD\xEC\x96\xB4")},
+            {u"ta_IN", QString::fromUtf8("\xE0\xAE\xA4\xE0\xAE\xAE\xE0\xAE\xBF\xE0\xAE\xB4\xE0\xAF\x8D")}};
         const auto expected = [&] {
             QStringList names;
             for (const auto &symbol : application::availableDictionaries(folder))
-                names << (symbol == u"en_US" ? QStringLiteral("English") : QStringLiteral("Polski"));
+                names << language.at(symbol);
             if (names.isEmpty())
                 names << QStringLiteral("Put files .dic and .aff to \"Dictionary\" folder");
             return names;
@@ -17957,7 +17967,7 @@ private slots:
         const auto open = a.openSettingsDialog();
         // SP1: AvailableDics pairs each .dic with the .aff of its name:
         // de_DE.dic, without its .aff, is not listed and drops no pair.
-        QCOMPARE(expected().size(), 2);
+        QCOMPARE(expected().size(), 4);
         QCOMPARE(open.value(QStringLiteral("dictionaries")).toStringList(), expected());
         QVERIFY(QFile::remove(own.filePath(QStringLiteral("Dictionary/de_DE.dic"))));
         const auto again = a.openSettingsDialog();
