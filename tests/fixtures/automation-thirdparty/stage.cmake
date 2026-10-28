@@ -14,7 +14,7 @@
 # OUT receives the corpus as a user installs it: OUT/Autoload/<script> and
 # OUT/Include = the bundled Include (STAGE_INCLUDE, with DependencyControl's
 # native modules) plus the projects' modules. Bundled modules are never
-# replaced by a project's copy. OUT/Modules holds the projects' modules alone.
+# replaced by a project's copy.
 cmake_minimum_required(VERSION 3.25)
 
 foreach(var MANIFEST FETCH_DIR OUT)
@@ -29,7 +29,7 @@ string(JSON project_count LENGTH "${manifest}" projects)
 math(EXPR last "${project_count} - 1")
 
 file(REMOVE_RECURSE "${OUT}")
-file(MAKE_DIRECTORY "${OUT}/Autoload" "${OUT}/Include" "${OUT}/Modules")
+file(MAKE_DIRECTORY "${OUT}/Autoload" "${OUT}/Include")
 if(DEFINED STAGE_INCLUDE AND NOT STAGE_INCLUDE STREQUAL "")
     file(COPY "${STAGE_INCLUDE}/" DESTINATION "${OUT}/Include")
 endif()
@@ -97,14 +97,6 @@ foreach(i RANGE ${last})
         get_filename_component(dest_dir "${OUT}/${install}" DIRECTORY)
         file(MAKE_DIRECTORY "${dest_dir}")
         file(COPY_FILE "${root}/${path}" "${OUT}/${install}")
-        if(role STREQUAL "module")
-            # The projects' modules alone, for a legacy package's Include
-            # (tools/legacy-capture/drive.py --include-dir).
-            string(REGEX REPLACE "^Include/" "Modules/" module "${install}")
-            get_filename_component(dest_dir "${OUT}/${module}" DIRECTORY)
-            file(MAKE_DIRECTORY "${dest_dir}")
-            file(COPY_FILE "${root}/${path}" "${OUT}/${module}")
-        endif()
     endforeach()
     message(STATUS "automation-thirdparty: ${id} staged (${included})")
     string(APPEND status "{\"id\": \"${id}\", \"available\": true},\n")
