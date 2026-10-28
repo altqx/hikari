@@ -1,0 +1,48 @@
+# CR1 (#452): HikariSub's Help › Report an issue and its crash window fill
+# this form through a link (?template=bug.yml&title=…&<id>=…); keep the ids
+# in step with src/app/crash_report.cpp (tests/ui/crash_report_tests.cpp checks them).
+name: Bug
+description: Something in HikariSub does not work as it should.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Help › Report an issue** in HikariSub fills this form for you, with your version and system.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What should have happened?
+  - type: textarea
+    id: crash-report
+    attributes:
+      label: Crash or freeze report
+      description: Filled in by HikariSub's crash window. Frames are module + offset; maintainers resolve them with tools/crash/symbolize.py.
+      render: text
+  - type: textarea
+    id: system
+    attributes:
+      label: System and settings
+      description: Filled in by HikariSub (version, package, system, settings as ids).
+      render: text
+  - type: textarea
+    id: log
+    attributes:
+      label: Log excerpt
+      description: The Log's last lines, with file names replaced (optional).
+      render: text
