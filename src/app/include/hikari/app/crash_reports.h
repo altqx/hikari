@@ -26,6 +26,7 @@
 
 #include <functional>
 #include <optional>
+#include <utility>
 
 namespace hikari::ui {
 class LogController;
@@ -166,6 +167,7 @@ private:
     std::function<QString()> m_currentFile;
     QString m_issueLog;
     QString m_issueFile;
+    std::optional<std::pair<quint64, quint64>> m_issueFileId; // device, inode (Unix)
     QTimer m_tailTimer;
     bool m_started = false;
     bool m_sending = false;

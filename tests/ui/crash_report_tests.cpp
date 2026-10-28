@@ -15,6 +15,7 @@
 #include "settings_store.h"
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QJsonDocument>
 #include <QProcess>
@@ -609,6 +610,66 @@ private slots:
         reports.discardAttachments();
         QFile::remove(path("first.ass"));
         QFile::remove(path("second.ass"));
+    }
+
+    // Quoted text and a Line's text that span lines are scrubbed whole;
+    // a Log that never stops still reaches the disk.
+    void multilineEntriesAndBusyLogs()
+    {
+        hikari::ui::SettingsStore settings;
+        Analytics analytics(settings, analyticsConfig(QUrl(QStringLiteral("http://127.0.0.1:9/batch/"))));
+        hikari::ui::LogController log;
+        CrashReports reports(settings, analytics, log, config());
+        reports.setKnown([] { return QStringList{}; },
+                         [] { return QStringList{QStringLiteral("Kenta waits\\Nat the station")}; });
+        log.log(QStringLiteral("Validation failed: \"private first line\nprivate second line\""));
+        log.notice(hikari::ui::LogController::Info, {}, QStringLiteral("macro printed: Kenta waits\\Nat the station"),
+                   QStringLiteral("details \u201Csecret one\nsecret two\u201D"));
+        const QString tail = reports.logTail().join(u'\n');
+        for (const char *secret : {"private", "secret", "Kenta"})
+            QVERIFY2(!tail.contains(QLatin1String(secret)), qPrintable(tail));
+        QFile::remove(path("log-tail.txt"));
+        QElapsedTimer busy;
+        busy.start();
+        while (busy.elapsed() < 1500 && !QFile::exists(path("log-tail.txt"))) {
+            log.log(QStringLiteral("a line every 100 ms"));
+            QTest::qWait(100);
+        }
+        QVERIFY(QFile::exists(path("log-tail.txt")));
+    }
+
+    // The .zip takes the file the form named: a path swapped for a link to
+    // another file gives no .zip.
+    void zipTakesOnlyTheNamedFile()
+    {
+#ifndef Q_OS_UNIX
+        QSKIP("Unix links");
+#else
+        writeRecord("named.ass", "[Script Info]\n");
+        QTemporaryDir elsewhere;
+        QFile other(elsewhere.filePath(QStringLiteral("other.txt")));
+        QVERIFY(other.open(QIODevice::WriteOnly));
+        other.write("not the subtitle file");
+        other.close();
+        hikari::ui::SettingsStore settings;
+        Analytics analytics(settings, analyticsConfig(QUrl(QStringLiteral("http://127.0.0.1:9/batch/"))));
+        hikari::ui::LogController log;
+        CrashReports::Config c = config();
+        c.attachments = path("issue");
+        CrashReports reports(settings, analytics, log, c);
+        reports.setCurrentFile([this] { return path("named.ass"); });
+        reports.beginIssue();
+        QVERIFY(QFile::remove(path("named.ass")));
+        QVERIFY(QFile::link(other.fileName(), path("named.ass")));
+        QVERIFY(reports.zipSubtitleFile().isEmpty());
+        QFile::remove(path("named.ass"));
+        // Unchanged, it goes.
+        writeRecord("named.ass", "[Script Info]\n");
+        reports.beginIssue();
+        QCOMPARE(QFileInfo(reports.zipSubtitleFile()).fileName(), QStringLiteral("named.zip"));
+        reports.discardAttachments();
+        QFile::remove(path("named.ass"));
+#endif
     }
 
     // A build without a key can't send; Send report does nothing.

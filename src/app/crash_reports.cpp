@@ -370,15 +370,17 @@ void CrashReports::entryAdded(const QString &time, int severity, const QString &
                               const QString &details)
 {
     const QString head = time + u' ' + severityName(severity).leftJustified(8, u' ');
-    const QStringList textLines = text.split(u'\n');
+    // Scrubbed whole, then split: quoted text or a Line's text can span lines.
+    const QStringList textLines = m_scrubber.scrub(text).split(u'\n');
     for (qsizetype i = 0; i < textLines.size(); ++i)
         m_tail << (i == 0 ? head + (title.isEmpty() ? QString() : m_scrubber.scrub(title) + QStringLiteral(": "))
                           : QStringLiteral("    ")) +
-                      m_scrubber.scrub(textLines[i]);
-    for (const QString &d : details.split(u'\n', Qt::SkipEmptyParts))
-        m_tail << QStringLiteral("    ") + m_scrubber.scrub(d);
+                      textLines[i];
+    for (const QString &d : m_scrubber.scrub(details).split(u'\n', Qt::SkipEmptyParts))
+        m_tail << QStringLiteral("    ") + d;
     m_tail = report::boundLog(std::move(m_tail));
-    if (!m_config.logTail.isEmpty())
+    // Within 500 ms of the first entry not yet written, however many follow.
+    if (!m_config.logTail.isEmpty() && !m_tailTimer.isActive())
         m_tailTimer.start();
 }
 
@@ -401,6 +403,13 @@ void CrashReports::beginIssue()
 {
     m_issueLog = m_tail.join(u'\n');
     m_issueFile = m_currentFile ? m_currentFile() : QString();
+    m_issueFileId = {};
+#ifdef Q_OS_UNIX
+    // Which file that is now: the .zip takes it only if it still is.
+    if (struct stat st {}; !m_issueFile.isEmpty() && ::stat(QFile::encodeName(m_issueFile).constData(), &st) == 0 &&
+                           S_ISREG(st.st_mode))
+        m_issueFileId = {quint64(st.st_dev), quint64(st.st_ino)};
+#endif
 }
 
 QString CrashReports::issueLogText() const
@@ -482,10 +491,27 @@ QString CrashReports::takeScreenshot(QObject *window)
 
 QString CrashReports::zipSubtitleFile()
 {
+    constexpr qint64 kMaxZip = 64 * 1024 * 1024;
     const QString &file = m_issueFile;
-    QFile in(file);
-    if (!QFileInfo(file).isFile() || in.size() > 64 * 1024 * 1024 || !in.open(QIODevice::ReadOnly) ||
-        !privateFolder(m_config.attachments))
+    QFile in;
+#ifdef Q_OS_UNIX
+    // The file the form named, not whatever its path leads to now.
+    const int fd = ::open(QFile::encodeName(file).constData(), O_RDONLY | O_CLOEXEC);
+    if (fd < 0)
+        return {};
+    struct stat st {};
+    if (::fstat(fd, &st) != 0 || !S_ISREG(st.st_mode) || st.st_size > kMaxZip || !m_issueFileId ||
+        *m_issueFileId != std::pair{quint64(st.st_dev), quint64(st.st_ino)} ||
+        !in.open(fd, QIODevice::ReadOnly, QFileDevice::AutoCloseHandle)) {
+        ::close(fd);
+        return {};
+    }
+#else
+    in.setFileName(file);
+    if (!QFileInfo(file).isFile() || in.size() > kMaxZip || !in.open(QIODevice::ReadOnly))
+        return {};
+#endif
+    if (!privateFolder(m_config.attachments))
         return {};
     const QString name = QFileInfo(file).fileName();
     const QString path = m_config.attachments + u'/' + QFileInfo(file).completeBaseName() + QStringLiteral(".zip");
