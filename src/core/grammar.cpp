@@ -115,6 +115,49 @@ std::optional<Replaced> replace(std::u16string_view raw, SubtitleFormat format, 
     return Replaced{std::move(out), caret};
 }
 
+std::u16string plainMessage(std::u16string_view markdown)
+{
+    std::u16string out;
+    for (std::size_t i = 0; i < markdown.size(); ++i) {
+        if (markdown[i] != u'`') {
+            out += markdown[i];
+            continue;
+        }
+        const auto close = markdown.find(u'`', i + 1);
+        if (close == std::u16string_view::npos)
+            continue;
+        out += u'\u201C';
+        out += markdown.substr(i + 1, close - i - 1);
+        out += u'\u201D';
+        i = close;
+    }
+    return out;
+}
+
+std::u16string contextBefore(std::u16string_view before, std::size_t most)
+{
+    if (before.size() <= most)
+        return std::u16string(before);
+    auto piece = before.substr(before.size() - most);
+    // Cut inside a word: from the next one.
+    if (before[before.size() - most - 1] != u' ')
+        if (const auto space = piece.find(u' '); space != std::u16string_view::npos && space + 1 < piece.size())
+            piece.remove_prefix(space + 1);
+    return u"\u2026" + std::u16string(piece);
+}
+
+std::u16string contextAfter(std::u16string_view after, std::size_t most)
+{
+    if (after.size() <= most)
+        return std::u16string(after);
+    auto piece = after.substr(0, most);
+    // Cut inside a word: up to the one before.
+    if (after[most] != u' ')
+        if (const auto space = piece.rfind(u' '); space != std::u16string_view::npos && space > 0)
+            piece = piece.substr(0, space);
+    return std::u16string(piece) + u"\u2026";
+}
+
 std::span<const std::string_view> groupIds()
 {
     return kGroupIds;
