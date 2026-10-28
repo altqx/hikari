@@ -114,9 +114,9 @@ std::vector<std::string> readdirPairs(const fs::path &folder)
         closedir(dir);
     }
     std::vector<std::string> out;
-    for (std::size_t i = 0; i < dics.size() && i < affs.size(); ++i)
-        if (dics[i] == affs[i])
-            out.push_back(dics[i]);
+    for (const auto &dic : dics)
+        if (std::ranges::find(affs, dic) != affs.end())
+            out.push_back(dic);
     return out;
 }
 #endif
@@ -131,13 +131,12 @@ std::vector<std::string> names(const std::vector<std::u16string> &words)
 
 } // namespace
 
-// AvailableDics pairs the n-th .dic with the n-th .aff of the listing: a
-// .dic without its .aff shifts every later pair out of step. Legacy then
-// reads past the shorter .aff list (undefined); the pairing stops at its end
-// (R3-hang-crash-loss). The listing is the file system's own order on each
-// platform (R5-per-platform): NTFS's upper-cased order on Windows, readdir's
-// on Linux; directories and hidden entries are not listed.
-TEST_F(Spelling, AvailableDictionariesPairByPosition)
+// SP1: AvailableDics pairs each .dic with the .aff of its name (legacy
+// paired them by position, so a .dic without its .aff dropped the pairs
+// after it). The order is the file system's listing of the .dic files on
+// each platform (R5-per-platform): NTFS's upper-cased order on Windows,
+// readdir's on Linux; directories and hidden entries are not listed.
+TEST_F(Spelling, AvailableDictionariesPairByName)
 {
     writeFile(folder / "pl.dic", "1\nkot\n");
     writeFile(folder / "pl.aff", "");
@@ -152,15 +151,25 @@ TEST_F(Spelling, AvailableDictionariesPairByPosition)
     SetFileAttributesW((folder / "hidden.aff").c_str(), FILE_ATTRIBUTE_HIDDEN);
     EXPECT_EQ(names(availableDictionaries(folder)), (std::vector<std::string>{"en_US", "pl"}));
     writeFile(folder / "de.dic", "1\nHaus\n");
-    EXPECT_TRUE(availableDictionaries(folder).empty());
+    writeFile(folder / "ko_KR.aff", "");
+    writeFile(folder / "ta.dic", "1\nx\n");
+    writeFile(folder / "ta.aff", "");
+    EXPECT_EQ(names(availableDictionaries(folder)), (std::vector<std::string>{"en_US", "pl", "ta"}));
 #else
     writeFile(folder / ".hidden.dic", "1\nx\n");
     writeFile(folder / ".hidden.aff", "");
     const auto listed = names(availableDictionaries(folder));
     EXPECT_EQ(listed, readdirPairs(folder));
     EXPECT_TRUE(std::ranges::find(listed, ".hidden") == listed.end());
+    // Unpaired files drop no pair, wherever readdir puts them.
     writeFile(folder / "de.dic", "1\nHaus\n");
-    EXPECT_EQ(names(availableDictionaries(folder)), readdirPairs(folder));
+    writeFile(folder / "ko_KR.aff", "");
+    writeFile(folder / "ta.dic", "1\nx\n");
+    writeFile(folder / "ta.aff", "");
+    auto sorted = names(availableDictionaries(folder));
+    EXPECT_EQ(sorted, readdirPairs(folder));
+    std::ranges::sort(sorted);
+    EXPECT_EQ(sorted, (std::vector<std::string>{"en_US", "pl", "ta"}));
     // Case matters on Linux: "*.dic" does not match EN.DIC.
     writeFile(folder / "EN.DIC", "");
     writeFile(folder / "EN.AFF", "");
@@ -283,8 +292,7 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
 #ifdef _WIN32
     const std::vector<std::string> listed{"en_US", "pl"};
 #else
-    // Each folder pairs in readdir's order, which a hashed directory may give
-    // as pl.dic, en_US.dic beside en_US.aff, pl.aff (no pair from it then).
+    // Each folder lists its pairs in readdir's .dic order.
     std::vector<std::string> listed = readdirPairs(folder);
     for (auto &symbol : readdirPairs(bundled))
         if (std::ranges::find(listed, symbol) == listed.end())

@@ -126,12 +126,17 @@ std::vector<std::u16string> availableDictionaries(const fs::path &folder)
 {
     const auto dics = listFiles(folder, u"*.dic");
     const auto affs = listFiles(folder, u"*.aff");
+    std::vector<std::u16string> affNames;
+    for (const auto &aff : affs)
+        affNames.push_back(beforeLastDot(aff));
     std::vector<std::u16string> out;
-    // R3-hang-crash-loss: legacy reads aff[i] past a shorter .aff list
-    // (undefined); here the pairing stops at its end.
-    for (std::size_t i = 0; i < dics.size() && i < affs.size(); ++i)
-        if (beforeLastDot(dics[i]) == beforeLastDot(affs[i]))
-            out.push_back(pathText(dics[i].stem()));
+    // SP1: each .dic pairs with the .aff of its name, in the listing's .dic
+    // order. Legacy paired the n-th .dic with the n-th .aff (and read past a
+    // shorter .aff list, R3-hang-crash-loss): one file without its partner
+    // dropped the pairs after it, and every dictionary now checks words.
+    for (const auto &dic : dics)
+        if (std::ranges::find(affNames, beforeLastDot(dic)) != affNames.end())
+            out.push_back(pathText(dic.stem()));
     return out;
 }
 

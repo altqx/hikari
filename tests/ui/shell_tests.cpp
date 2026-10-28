@@ -17954,9 +17954,9 @@ private slots:
             return names;
         };
         const auto open = a.openSettingsDialog();
-        // AvailableDics pairs the i-th .dic with the i-th .aff: de_DE.dic
-        // shifts the pairs that follow it in the listing (the pairing stops
-        // at the shorter list, R3-hang-crash-loss).
+        // SP1: AvailableDics pairs each .dic with the .aff of its name:
+        // de_DE.dic, without its .aff, is not listed and drops no pair.
+        QCOMPARE(expected().size(), 2);
         QCOMPARE(open.value(QStringLiteral("dictionaries")).toStringList(), expected());
         QVERIFY(QFile::remove(own.filePath(QStringLiteral("Dictionary/de_DE.dic"))));
         const auto again = a.openSettingsDialog();
@@ -17966,8 +17966,8 @@ private slots:
             QCOMPARE(again.value(QStringLiteral("values")).toMap().value(QStringLiteral("editor.dictionaryLanguage")).toInt(),
                      shown.indexOf(QStringLiteral("Polski")));
 #ifndef _WIN32
-        // Linux: the pairing follows readdir order, as legacy Linux's wxDir
-        // did, not a name sort.
+        // Linux: the list follows readdir's .dic order, as legacy Linux's
+        // wxDir did, not a name sort.
         std::vector<std::u16string> readdirDic, readdirAff;
         if (DIR *d = ::opendir(folder.c_str())) {
             while (const dirent *e = ::readdir(d)) {
@@ -17980,9 +17980,9 @@ private slots:
             ::closedir(d);
         }
         std::vector<std::u16string> pairs;
-        for (std::size_t i = 0; i < readdirDic.size() && i < readdirAff.size(); ++i)
-            if (readdirDic[i] == readdirAff[i])
-                pairs.push_back(readdirDic[i]);
+        for (const auto &dic : readdirDic)
+            if (std::ranges::find(readdirAff, dic) != readdirAff.end())
+                pairs.push_back(dic);
         QVERIFY(application::availableDictionaries(folder) == pairs);
 #endif
     }
