@@ -5,15 +5,15 @@
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
-        <translation>விளையாடுங்கள்</translation>
+        <translation>இயக்கு</translation>
     </message>
     <message>
         <source>Play line</source>
-        <translation>விளையாட்டு வரி</translation>
+        <translation>வரியை இயக்கு</translation>
     </message>
     <message>
         <source>Play the current line</source>
-        <translation>தற்போதைய வரியை விளையாடுங்கள்</translation>
+        <translation>தற்போதைய வரியை இயக்கு</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -77,7 +77,7 @@
     </message>
     <message>
         <source>Play the previous line</source>
-        <translation>முந்தைய வரியை விளையாடுங்கள்</translation>
+        <translation>முந்தைய வரியை இயக்கு</translation>
     </message>
     <message>
         <source>Next line</source>
@@ -85,7 +85,7 @@
     </message>
     <message>
         <source>Play the next line</source>
-        <translation>அடுத்த வரியை விளையாடுங்கள்</translation>
+        <translation>அடுத்த வரியை இயக்கு</translation>
     </message>
     <message>
         <source>Play the current syllable / line</source>
@@ -97,11 +97,11 @@
     </message>
     <message>
         <source>Play before the tag</source>
-        <translation>குறிச்சொல்லுக்கு முன் விளையாடுங்கள்</translation>
+        <translation>குறிச்சொல்லுக்கு முன் இயக்கு</translation>
     </message>
     <message>
         <source>Play after the tag</source>
-        <translation>குறிச்சொல்லுக்குப் பிறகு விளையாடுங்கள்</translation>
+        <translation>குறிச்சொல்லுக்குப் பின் இயக்கு</translation>
     </message>
     <message>
         <source>Play 500ms before the start time</source>
@@ -121,7 +121,7 @@
     </message>
     <message>
         <source>Play to the end</source>
-        <translation>இறுதிவரை விளையாடுங்கள்</translation>
+        <translation>இறுதிவரை இயக்கு</translation>
     </message>
     <message>
         <source>In</source>
@@ -4504,23 +4504,23 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Global hotkey</source>
-        <translation>உலகளாவிய ஆட்ச்கி</translation>
+        <translation>பொது குறுக்குவிசை</translation>
     </message>
     <message>
         <source>Subtitle grid hotkey</source>
-        <translation>வசன வரிகள் கட்டம் ஆட்ச்கி</translation>
+        <translation>வசனக் கட்டக் குறுக்குவிசை</translation>
     </message>
     <message>
         <source>Edit box hotkey</source>
-        <translation>பெட்டி ஆட்ச்கி திருத்து</translation>
+        <translation>திருத்தப் பெட்டிக் குறுக்குவிசை</translation>
     </message>
     <message>
         <source>Video hotkey</source>
-        <translation>வீடியோ ஆட்ச்கி</translation>
+        <translation>வீடியோ குறுக்குவிசை</translation>
     </message>
     <message>
         <source>Audio hotkey</source>
-        <translation>ஆடியோ ஆட்ச்கி</translation>
+        <translation>ஆடியோ குறுக்குவிசை</translation>
     </message>
     <message>
         <source>Press the keys</source>
@@ -5256,7 +5256,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play / Pause</source>
-        <translation>விளையாடு / இடைநிறுத்தம்</translation>
+        <translation>இயக்கு / இடைநிறுத்து</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -6850,7 +6850,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Video</source>
-        <translation>ஒளிதோற்றம்</translation>
+        <translation>வீடியோ</translation>
     </message>
     <message>
         <source>Audio</source>
@@ -6862,7 +6862,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Hotkeys</source>
-        <translation>ஆட்கீச்</translation>
+        <translation>குறுக்குவிசைகள்</translation>
     </message>
     <message>
         <source>Subtitle properties</source>
@@ -7905,7 +7905,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Hotkey</source>
-        <translation>ஆட்ச்கி</translation>
+        <translation>குறுக்குவிசை</translation>
     </message>
     <message>
         <source>Missing macro</source>
@@ -8058,7 +8058,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation>புதுப்பித்தார்</translation>
+        <translation>திருத்துதல்</translation>
     </message>
     <message>
         <source>Always ask before changing subtitle information</source>
@@ -8640,11 +8640,11 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation>புதுப்பித்தார்</translation>
+        <translation>திருத்துதல்</translation>
     </message>
     <message>
         <source>Resolution</source>
-        <translation>பகுத்தல்</translation>
+        <translation>தெளிவுத்திறன்</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -10392,7 +10392,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Video resolution</source>
-        <translation>வீடியோ தீர்மானம்</translation>
+        <translation>வீடியோ தெளிவுத்திறன்</translation>
     </message>
     <message>
         <source>Video aspect ratio</source>
@@ -10400,7 +10400,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Subtitles resolution</source>
-        <translation>வசனத் தீர்மானம்</translation>
+        <translation>வசனத் தெளிவுத்திறன்</translation>
     </message>
     <message>
         <source>Video file name</source>
@@ -12523,11 +12523,11 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Play / Pause</source>
-        <translation>விளையாடு / இடைநிறுத்தம்</translation>
+        <translation>இயக்கு / இடைநிறுத்து</translation>
     </message>
     <message>
         <source>Video</source>
-        <translation>ஒளிதோற்றம்</translation>
+        <translation>வீடியோ</translation>
     </message>
     <message>
         <source>Video position</source>
@@ -12551,15 +12551,15 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Play</source>
-        <translation>விளையாடுங்கள்</translation>
+        <translation>இயக்கு</translation>
     </message>
     <message>
         <source>Play line</source>
-        <translation>விளையாட்டு வரி</translation>
+        <translation>வரியை இயக்கு</translation>
     </message>
     <message>
         <source>Play the current line</source>
-        <translation>தற்போதைய வரியை விளையாடுங்கள்</translation>
+        <translation>தற்போதைய வரியை இயக்கு</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -12735,7 +12735,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation>புதுப்பித்தார்</translation>
+        <translation>திருத்துதல்</translation>
     </message>
     <message>
         <source>Move video to selected line on:</source>
@@ -13818,7 +13818,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation>புதுப்பித்தார்</translation>
+        <translation>திருத்துதல்</translation>
     </message>
     <message>
         <source>Timing</source>

@@ -4,7 +4,8 @@ The terms `i18n/hikarisub_ta.ts` uses for HikariSub's domain words, so every
 surface says the same thing. Legacy's catalog (`i18n/hikarisub_gettext_ta.ts`)
 is the seed: its term is kept where it is the usual Tamil computing word.
 Where legacy used a wrong sense or a rare spelling, the column "Not" names
-it; the carried legacy translations keep their text, new ones use this term.
+it, and the interface catalog uses this term instead (the gettext catalog,
+which Automation scripts read, keeps legacy's text).
 
 ## Conventions
 
