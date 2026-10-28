@@ -1,0 +1,24 @@
+# DK1 (#473): words the bundled dictionaries (cmake/HikariDictionaries.cmake)
+# know and misspellings they reject, checked by
+# tests/backends/bundled_dictionaries_tests.cpp. One per line, tab-separated:
+# the dictionary, right or wrong, the word.
+ko_KR	right	안녕하세요
+ko_KR	right	학교
+ko_KR	right	맞춤법
+ko_KR	wrong	안녕하세여
+ko_KR	wrong	핵교
+ta_IN	right	தமிழ்
+ta_IN	right	வணக்கம்
+ta_IN	right	மொழி
+# Inflected: these need the suffix tables after SFX D, which the unfixed
+# ta_IN.aff never reached.
+ta_IN	right	மூலமாகவே
+ta_IN	right	அமைப்புகள்தான்
+ta_IN	wrong	வணக்கமம
+ta_IN	wrong	தமிழ்ழ்
+en_US	right	spelling
+en_US	wrong	speling
+pl	right	źdźbło
+pl	wrong	źdźbłoo
+th_TH	right	ภาษา
+th_TH	wrong	ภาษาา

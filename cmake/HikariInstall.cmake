@@ -53,13 +53,19 @@ if(TARGET hikari_subinspector)
         LIBRARY DESTINATION Automation/automation/Include/SubInspector/Inspector COMPONENT hikari_app)
 endif()
 
-# Bundled dictionaries: the folder's *.aff/*.dic pairs, when one is given
-# (the packaging floor passes the distribution's en_US pair).
+# Extra dictionaries: the folder's *.aff/*.dic pairs, when one is given (the
+# packaging floor passes the distribution's). Installed first, so a pinned
+# file below replaces one of the same name.
 set(HIKARI_INSTALL_DICTIONARY_DIR "" CACHE PATH "Folder whose *.aff and *.dic files are installed into Dictionary/")
 if(HIKARI_INSTALL_DICTIONARY_DIR)
     install(DIRECTORY "${HIKARI_INSTALL_DICTIONARY_DIR}/" DESTINATION Dictionary COMPONENT hikari_app
         FILES_MATCHING PATTERN "*.aff" PATTERN "*.dic")
 endif()
+# DK1 (#473): the pinned dictionaries (HikariDictionaries.cmake), the same on
+# every platform, and their notices. The app reads no system dictionaries.
+install(DIRECTORY "${HIKARI_BUNDLED_DICTIONARIES}/Dictionary/" DESTINATION Dictionary COMPONENT hikari_app)
+install(DIRECTORY "${HIKARI_BUNDLED_DICTIONARIES}/licenses/dictionaries/" DESTINATION licenses/dictionaries
+    COMPONENT hikari_app)
 
 # KA4 (#279): UniDic 2.1.2 for MeCab, with its licence texts. MeCab and
 # UniDic are BSD-licensed here, whose notice every binary copy carries.

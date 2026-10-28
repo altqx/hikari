@@ -36,6 +36,10 @@ private slots:
     {
         QCOMPARE(ui::dictionaryName(QStringLiteral("pl_PL")), QStringLiteral("Polski"));
         QCOMPARE(ui::dictionaryName(QStringLiteral("en_US")), QStringLiteral("English"));
+        // DK1 (#473): the bundled Korean and Tamil dictionaries.
+        QCOMPARE(ui::dictionaryName(QStringLiteral("ko_KR")), QString::fromUtf8("\xED\x95\x9C\xEA\xB5\xAD\xEC\x96\xB4"));
+        QCOMPARE(ui::dictionaryName(QStringLiteral("ta_IN")),
+                 QString::fromUtf8("\xE0\xAE\xA4\xE0\xAE\xAE\xE0\xAE\xBF\xE0\xAE\xB4\xE0\xAF\x8D"));
         QCOMPARE(ui::dictionaryName(QStringLiteral("de_DE")), QStringLiteral("Deutsch"));
         QCOMPARE(ui::dictionaryName(QStringLiteral("qq")), QStringLiteral("qq"));
     }

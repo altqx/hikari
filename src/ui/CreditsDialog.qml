@@ -42,6 +42,12 @@ DialogWindow {
             ["uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"],
             // GR1: harper-ls, the grammar checker (its crates' licences ship beside it)
             ["Harper", "Automattic and Harper contributors", "Apache 2.0"],
+            // DK1: the bundled spelling dictionaries (licenses/dictionaries holds their notices)
+            ["en_US Hunspell dictionary", "Kevin Atkinson, Geoff Kuenning and others", "LGPL and BSD"],
+            ["sjp.pl Polish dictionary", "sjp.pl contributors", "GPL 2, LGPL 2.1, MPL 1.1, Apache 2.0 or CC BY 4.0"],
+            ["th_TH Hunspell dictionary", "NECTEC (LEXiTRON) and libthai contributors", "LGPL"],
+            ["hunspell-dict-ko", "Changwoo Ryu, hunspell-dict-ko contributors and the National Institute of Korean Language", "GPL 3 or later"],
+            ["ThamiZha! Solthiruthi", "Ve. Elanjelian and the ThamiZha! team", "MPL 1.1"],
         ]
         if (app.includesCsri)
             all.push(["CSRI", "David Lamparter", "BSD"])
