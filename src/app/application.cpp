@@ -1320,7 +1320,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     }
     m_recentAudio.set(m_settings->settings().list("recent.audio")); // AUDIO_RECENT_FILES
     // AN1: an audio open's time, until all of it is loaded (Ready), or back
-    // to Closed when it failed on the way.
+    // to Closed when it failed on the way. A close, a replacement or a
+    // declined track choice on the way is not an open that ended: dropped.
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
         using State = application::AudioBox::State;
         const application::AudioBox &box = m_audio->box();
@@ -1336,7 +1337,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         const qint64 elapsed = m_audioOpenClock.isValid() ? m_audioOpenClock.elapsed() : 0;
         const bool opening = m_audioOpenClock.isValid() || state == State::Ready; // a dummy is Ready at once
         m_audioOpenClock.invalidate();
-        if (!opening)
+        const bool failed = box.error() && *box.error() != application::SourceError::Cancelled;
+        if (!opening || (state == State::Closed && !failed))
             return; // a close
         m_analytics->mediaOpened(false, elapsed, state == State::Ready,
                                  box.fromVideo()                                    ? QStringLiteral("from_video")

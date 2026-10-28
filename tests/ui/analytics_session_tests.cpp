@@ -197,6 +197,9 @@ private slots:
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), video));
         application->video().openVideo(video);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 30000);
+        // An audio open closed on the way is no failed open.
+        application->audio().openAudio(video);
+        application->audio().closeAudio();
         application->audio().openAudio(QStringLiteral("dummy"));
         QTRY_VERIFY_WITH_TIMEOUT(application->audio().loaded(), 30000);
 
@@ -248,6 +251,10 @@ private slots:
         QCOMPARE(propertiesOf("getting_started_finished").value(QStringLiteral("pages_changed")).toArray(),
                  QJsonArray{QStringLiteral("look")});
         QCOMPARE(propertiesOf("automation_error").value(QStringLiteral("kind")).toString(), QStringLiteral("load_failed"));
+        for (const QJsonValue &e : events)
+            if (e.toObject().value(QStringLiteral("event")) == QJsonValue(QStringLiteral("audio_opened")))
+                QCOMPARE(e.toObject().value(QStringLiteral("properties")).toObject().value(QStringLiteral("outcome")).toString(),
+                         QStringLiteral("ready"));
         QCOMPARE(propertiesOf("automation_error").value(QStringLiteral("script")).toString(), QStringLiteral("user script"));
         QStringList vias;
         for (const QJsonValue &e : events)

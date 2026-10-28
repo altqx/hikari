@@ -91,7 +91,7 @@ How a crash is recorded:
 | Event | When | Properties |
 |---|---|---|
 | `video_opened` | A video open ends | `open_time`: a time bucket<br>`outcome`: `ready` or `failed`<br>`kind`: `file` or `dummy` |
-| `audio_opened` | An audio open ends: all of it is loaded, or it fails | `open_time`: a time bucket<br>`outcome`: `ready` or `failed`<br>`kind`: `file`, `from_video` or `dummy` |
+| `audio_opened` | An audio open ends: all of it is loaded, or it fails (one closed or replaced on the way sends nothing) | `open_time`: a time bucket<br>`outcome`: `ready` or `failed`<br>`kind`: `file`, `from_video` or `dummy` |
 
 Startup time is `app_started`'s `startup_time`. The frame-time buckets are in `app_closed`.
 
