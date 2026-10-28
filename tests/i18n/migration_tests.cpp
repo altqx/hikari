@@ -547,6 +547,9 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
                     std::ranges::all_of(m.translations, [](const QString &t) { return t.isEmpty(); }))
                     continue;
                 ASSERT_NE(now, nullptr) << language.toStdString() << " " << m.source.toStdString();
+                // A translator finished it since (TR1 #475).
+                if (m.state == TsState::Unfinished && now->state == TsState::Finished)
+                    continue;
                 EXPECT_EQ(now->translations, m.translations) << m.source.toStdString();
                 // A key the sources dropped: lupdate marks it vanished if it
                 // was finished, obsolete if not (DG1 dropped the update

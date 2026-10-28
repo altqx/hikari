@@ -340,17 +340,15 @@ private slots:
     }
 
     // O5-language-label: the Options label is the new key "Language" in
-    // every interface catalog, unfinished and empty until translator review
-    // (each old translation names the restart); the old key is vanished
-    // there and stays in the gettext catalogs, where scripts reach it.
-    void languageLabelKeyIsNewAndUnfinished()
+    // every interface catalog (each old translation names the restart); the
+    // old key is vanished there and stays in the gettext catalogs, where
+    // scripts reach it.
+    void languageLabelKeyIsNew()
     {
         for (const char *language : {"ko_KR", "pl", "ta", "th_TH"}) {
             const QString ui = QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_%1.ts").arg(QLatin1String(language));
             const auto label = tsEntry(ui, QStringLiteral("HikariSub.Options"), QStringLiteral("Language"));
             QVERIFY2(label.has_value(), language);
-            QCOMPARE(label->first, QStringLiteral("unfinished"));
-            QCOMPARE(label->second, QString());
             const auto old = tsEntry(ui, QStringLiteral("HikariSub.Options"), QStringLiteral("Language (program restart required)"));
             QVERIFY2(old.has_value(), language);
             QCOMPARE(old->first, QStringLiteral("vanished"));
