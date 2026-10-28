@@ -221,6 +221,12 @@ hikari_add_qttest(hikari_ui_automation_repeat_tests SOURCES automation_repeat_te
 target_compile_definitions(hikari_ui_automation_repeat_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_repeat_tests hikari_lua_helper hikari_automation_stage)
+# AS1 (#471): a "/" in a macro's name opens submenus of the Automation menu.
+hikari_add_qttest(hikari_ui_automation_submenus_tests SOURCES automation_submenus_tests.cpp
+    LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_automation_submenus_tests PRIVATE
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+add_dependencies(hikari_ui_automation_submenus_tests hikari_lua_helper hikari_automation_stage)
 # KE1-template-timing: the karaoke templater's report in the status bar and the log window.
 # KE2: the Template editor's controller over the bundled karaoke templater, and its panel.
 hikari_add_qttest(hikari_ui_template_editor_tests SOURCES template_editor_tests.cpp
