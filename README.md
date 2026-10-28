@@ -11,7 +11,7 @@
 <img src="docs/readme/hero.webp" alt="HikariSub legacy with a karaoke music video: the video with typeset karaoke, the audio waveform, the line editor and the subtitle grid">
 <p align="center"><sub>Subtitles: Jibrill</sub></p>
 
-This is HikariSub legacy, version 0.0.x, built on wxWidgets. It is still maintained. A rewrite in Qt (0.1) is on the [`qt`](https://github.com/altqx/hikari/tree/qt) branch. Legacy will offer it as an update, and moving is your choice ([ADR-0021](https://github.com/altqx/hikari/blob/qt/docs/adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md)).
+This is HikariSub legacy, version 0.0.x, built on wxWidgets. It is still maintained. A rewrite in Qt (0.1) is on the [`main`](https://github.com/altqx/hikari/tree/main) branch. Legacy will offer it as an update, and moving is your choice ([ADR-0021](https://github.com/altqx/hikari/blob/main/docs/adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md)).
 
 ## Features
 
