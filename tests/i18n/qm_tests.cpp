@@ -139,8 +139,9 @@ TEST(Qm, EnglishCatalogGivesTheNumerusForms)
                     << m.source.toStdString() << " n=" << n;
             ++numerus;
         }
-    // 75 with KP1's "%n generated lines" and UD1's three user folder notices.
-    EXPECT_EQ(numerus, 75);
+    // 79 with KP1's "%n generated lines", UD1's three user folder notices and
+    // GR1's rule count, ignored group's toast and the walk's two line counts.
+    EXPECT_EQ(numerus, 79);
     EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 1), QStringLiteral("Remove %n word"));
     EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 3), QStringLiteral("Remove %n words"));
 }
