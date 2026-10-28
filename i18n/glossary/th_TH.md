@@ -12,7 +12,8 @@ so a user moving from HikariSub legacy sees the same words.
   numbers and placeholders (`บรรทัด %1 จาก %2`). The English full stop between sentences becomes a space; a single
   sentence ends without a full stop.
 - **Ellipsis:** keep `…` where the source has it (an item that opens a window).
-- **Accelerators:** put `&` before a Thai consonant, never before a vowel or tone mark (`&แฟ้ม`, `ตั&ด`).
+- **Accelerators:** put `&` before a Thai consonant or a leading vowel (เ แ โ ใ ไ), never before a vowel written
+  above, below or after, or a tone mark (`&ไฟล์`, `ตั&ด`).
 - **Placeholders:** keep every `%1`, `%L1`, `%n` and HTML tag. Thai has one plural form, so a numerus entry has one
   form, written with `%n`.
 - **Latin names stay Latin:** HikariSub, ASS, SRT, Lua, MoonScript, DependencyControl, FFmpeg, MeCab, Harper,
@@ -33,13 +34,13 @@ so a user moving from HikariSub legacy sees the same words.
 | Grid | ตาราง | legacy: ตารางคำบรรยาย (subtitle grid) |
 | Line editor | ตัวแก้ไขบรรทัด | legacy "Edit box": ตัวแก้ไข |
 | Subtitles, subtitle | คำบรรยาย | |
-| File | แฟ้ม | legacy (`&แฟ้ม` menu, 200+ entries) |
+| File | ไฟล์ | as Windows and macOS Thai write it; replaces legacy แฟ้ม in the whole catalog (`&ไฟล์` menu) |
 | Folder | โฟลเดอร์ | |
 | Style | สไตล์ | |
 | Style catalog | แคตตาล็อกสไตล์ | legacy: แคตตาล็อก |
 | Font | แบบอักษร | |
 | Font catalog | แคตตาล็อกแบบอักษร | |
-| Script properties | คุณสมบัติสคริปต์ | legacy: คุณสมบัติแฟ้ม ASS |
+| Script properties | คุณสมบัติสคริปต์ | legacy: คุณสมบัติไฟล์ ASS |
 | Actor | ผู้พูด | legacy |
 | Effect | เอฟเฟกต์ | legacy |
 | Layer | ชั้น | legacy |

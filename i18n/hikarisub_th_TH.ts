@@ -361,15 +361,15 @@ Output device: %2</source>
     </message>
     <message>
         <source>Choose audio file</source>
-        <translation>เลือกแฟ้มเสียง</translation>
+        <translation>เลือกไฟล์เสียง</translation>
     </message>
     <message>
         <source>Audio and video files</source>
-        <translation>แฟ้มเสียงและวิดีโอ</translation>
+        <translation>ไฟล์เสียงและวิดีโอ</translation>
     </message>
     <message>
         <source>All files</source>
-        <translation>แฟ้มทั้งหมด</translation>
+        <translation>ไฟล์ทั้งหมด</translation>
     </message>
     <message>
         <source>Choose the audio track</source>
@@ -461,12 +461,12 @@ Output device: %2</source>
     <message numerus="yes">
         <source>This file names scripts: %1 and %n more</source>
         <translation>
-            <numerusform>แฟ้มนี้ระบุสคริปต์: %1 และอีก %n รายการ</numerusform>
+            <numerusform>ไฟล์นี้ระบุสคริปต์: %1 และอีก %n รายการ</numerusform>
         </translation>
     </message>
     <message>
         <source>This file names scripts: %1</source>
-        <translation>แฟ้มนี้ระบุสคริปต์: %1</translation>
+        <translation>ไฟล์นี้ระบุสคริปต์: %1</translation>
     </message>
     <message numerus="yes">
         <source>and %n more</source>
@@ -594,7 +594,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Load the scripts this file names</source>
-        <translation>โหลดสคริปต์ที่แฟ้มนี้ระบุ</translation>
+        <translation>โหลดสคริปต์ที่ไฟล์นี้ระบุ</translation>
     </message>
     <message>
         <source>No macros match</source>
@@ -720,7 +720,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Log files (*.log *.txt)</source>
-        <translation>แฟ้มล็อก (*.log *.txt)</translation>
+        <translation>ไฟล์ล็อก (*.log *.txt)</translation>
     </message>
     <message>
         <source>Folded</source>
@@ -828,7 +828,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>All files (*.*)</source>
-        <translation>แฟ้มทั้งหมด (*.*)</translation>
+        <translation>ไฟล์ทั้งหมด (*.*)</translation>
     </message>
     <message>
         <source>OK</source>
@@ -836,7 +836,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation>แฟ้มทั้งหมด (*)</translation>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
     <message>
         <source>Close</source>
@@ -966,7 +966,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>This file has no script resolution, and “%1” needs one.</source>
-        <translation>แฟ้มนี้ไม่มีความละเอียดสคริปต์ แต่ “%1” ต้องใช้</translation>
+        <translation>ไฟล์นี้ไม่มีความละเอียดสคริปต์ แต่ “%1” ต้องใช้</translation>
     </message>
     <message>
         <source>Width</source>
@@ -994,7 +994,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Several loaded scripts have this file name</source>
-        <translation>สคริปต์ที่โหลดไว้หลายตัวมีชื่อแฟ้มนี้</translation>
+        <translation>สคริปต์ที่โหลดไว้หลายตัวมีชื่อไฟล์นี้</translation>
     </message>
     <message>
         <source>The script has no such macro</source>
@@ -1010,7 +1010,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Several loaded scripts have this file name, so a shortcut cannot tell their macros apart.</source>
-        <translation>สคริปต์ที่โหลดไว้หลายตัวมีชื่อแฟ้มนี้ ปุ่มลัดจึงแยกแมโครของสคริปต์เหล่านั้นไม่ได้</translation>
+        <translation>สคริปต์ที่โหลดไว้หลายตัวมีชื่อไฟล์นี้ ปุ่มลัดจึงแยกแมโครของสคริปต์เหล่านั้นไม่ได้</translation>
     </message>
     <message>
         <source>%1 ms</source>
@@ -1487,7 +1487,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>The new file’s script resolution.</source>
-        <translation>ความละเอียดสคริปต์ของแฟ้มใหม่</translation>
+        <translation>ความละเอียดสคริปต์ของไฟล์ใหม่</translation>
     </message>
     <message>
         <source>Frame rate</source>
@@ -1790,7 +1790,7 @@ in tag &apos;%3&apos;</source>
     </message>
     <message>
         <source>Subtitle file </source>
-        <translation>แฟ้มคำบรรยาย </translation>
+        <translation>ไฟล์คำบรรยาย </translation>
     </message>
     <message>
         <source>Warning</source>
@@ -1840,7 +1840,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation>แฟ้มทั้งหมด (*)</translation>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
     <message>
         <source>“%1” is read-only.</source>
@@ -1848,7 +1848,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Save it under another name, or make the file writable and save again.</source>
-        <translation>บันทึกด้วยชื่ออื่น หรือทำให้แฟ้มเขียนได้แล้วบันทึกอีกครั้ง</translation>
+        <translation>บันทึกด้วยชื่ออื่น หรือทำให้ไฟล์เขียนได้แล้วบันทึกอีกครั้ง</translation>
     </message>
     <message>
         <source>%1 were changed by another program.</source>
@@ -1952,7 +1952,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>it is too large for a lyrics file</source>
-        <translation>มีขนาดใหญ่เกินไปสำหรับแฟ้มเนื้อเพลง</translation>
+        <translation>มีขนาดใหญ่เกินไปสำหรับไฟล์เนื้อเพลง</translation>
     </message>
     <message>
         <source>it has no timed lyrics</source>
@@ -2013,7 +2013,7 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Associated files:
 </source>
-        <translation>แฟ้มที่เกี่ยวข้อง:
+        <translation>ไฟล์ที่เกี่ยวข้อง:
 </translation>
     </message>
     <message>
@@ -2118,7 +2118,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Open files</source>
-        <translation>เปิดแฟ้ม</translation>
+        <translation>เปิดไฟล์</translation>
     </message>
     <message>
         <source>Save the changes to “%1” before replacing them?</source>
@@ -2146,7 +2146,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Choose file…</source>
-        <translation>เลือกแฟ้ม…</translation>
+        <translation>เลือกไฟล์…</translation>
     </message>
     <message>
         <source>Save %1</source>
@@ -2585,7 +2585,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Save failed; the file on disk is unchanged</source>
-        <translation>บันทึกไม่สำเร็จ แฟ้มบนดิสก์ไม่มีการเปลี่ยนแปลง</translation>
+        <translation>บันทึกไม่สำเร็จ ไฟล์บนดิสก์ไม่มีการเปลี่ยนแปลง</translation>
     </message>
     <message>
         <source>End is before Start.</source>
@@ -2625,7 +2625,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>The file changed on disk since it was opened. Reload it, or save elsewhere.</source>
-        <translation>แฟ้มบนดิสก์มีการเปลี่ยนแปลงหลังจากเปิด โหลดใหม่ หรือบันทึกไว้ที่อื่น</translation>
+        <translation>ไฟล์บนดิสก์มีการเปลี่ยนแปลงหลังจากเปิด โหลดใหม่ หรือบันทึกไว้ที่อื่น</translation>
     </message>
     <message>
         <source>Wraps: 0/86</source>
@@ -2657,7 +2657,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Another open document uses that file.</source>
-        <translation>มีเอกสารอื่นที่เปิดอยู่ใช้แฟ้มนั้น</translation>
+        <translation>มีเอกสารอื่นที่เปิดอยู่ใช้ไฟล์นั้น</translation>
     </message>
     <message>
         <source>The document can&apos;t be saved right now.</source>
@@ -2816,7 +2816,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>The file holds no font catalog.</source>
-        <translation>แฟ้มนี้ไม่มีแคตตาล็อกแบบอักษร</translation>
+        <translation>ไฟล์นี้ไม่มีแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
@@ -2832,7 +2832,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>The file’s new catalogs are added.</source>
-        <translation>ระบบจะเพิ่มแคตตาล็อกใหม่จากแฟ้ม</translation>
+        <translation>ระบบจะเพิ่มแคตตาล็อกใหม่จากไฟล์</translation>
     </message>
     <message>
         <source>Those with the same fonts as yours are left as they are.</source>
@@ -2848,7 +2848,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>%1 here, %2 in the file</source>
-        <translation>ที่นี่ %1, ในแฟ้ม %2</translation>
+        <translation>ที่นี่ %1, ในไฟล์ %2</translation>
     </message>
     <message>
         <source>Load 1 catalog</source>
@@ -2912,7 +2912,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Load from a file</source>
-        <translation>โหลดจากแฟ้ม</translation>
+        <translation>โหลดจากไฟล์</translation>
     </message>
     <message>
         <source>Show</source>
@@ -3024,11 +3024,11 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Choose font catalog file</source>
-        <translation>เลือกแฟ้มแคตตาล็อกแบบอักษร</translation>
+        <translation>เลือกไฟล์แคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
         <source>Text files (*.txt)</source>
-        <translation>แฟ้มข้อความ (*.txt)</translation>
+        <translation>ไฟล์ข้อความ (*.txt)</translation>
     </message>
     <message>
         <source>Font collector</source>
@@ -3040,7 +3040,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Choose a name for the archive</source>
-        <translation>ตั้งชื่อแฟ้มบีบอัด</translation>
+        <translation>ตั้งชื่อไฟล์บีบอัด</translation>
     </message>
     <message>
         <source>Save folder</source>
@@ -3090,11 +3090,11 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Copies each font file the subtitles use into the folder.</source>
-        <translation>คัดลอกแฟ้มแบบอักษรทุกแฟ้มที่คำบรรยายใช้ลงในโฟลเดอร์</translation>
+        <translation>คัดลอกไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ลงในโฟลเดอร์</translation>
     </message>
     <message>
         <source>Puts each font file the subtitles use into a zip archive.</source>
-        <translation>ใส่แฟ้มแบบอักษรทุกแฟ้มที่คำบรรยายใช้ลงในแฟ้มบีบอัด zip</translation>
+        <translation>ใส่ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ลงในไฟล์บีบอัด zip</translation>
     </message>
     <message>
         <source>“%1” already exists.</source>
@@ -3102,7 +3102,7 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Writing the new archive replaces it.</source>
-        <translation>การเขียนแฟ้มบีบอัดใหม่จะแทนที่แฟ้มนี้</translation>
+        <translation>การเขียนไฟล์บีบอัดใหม่จะแทนที่ไฟล์นี้</translation>
     </message>
     <message>
         <source>Replace</source>
@@ -3122,7 +3122,7 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Zip archive</source>
-        <translation>แฟ้มบีบอัด zip</translation>
+        <translation>ไฟล์บีบอัด zip</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -3130,7 +3130,7 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Choose an archive</source>
-        <translation>เลือกแฟ้มบีบอัด</translation>
+        <translation>เลือกไฟล์บีบอัด</translation>
     </message>
     <message>
         <source>Choose a folder</source>
@@ -3142,11 +3142,11 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Beside the video when the fonts come from the MKV file.</source>
-        <translation>ไว้ข้างวิดีโอเมื่อแบบอักษรมาจากแฟ้ม MKV</translation>
+        <translation>ไว้ข้างวิดีโอเมื่อแบบอักษรมาจากไฟล์ MKV</translation>
     </message>
     <message>
         <source>Take the fonts from the loaded MKV file</source>
-        <translation>นำแบบอักษรจากแฟ้ม MKV ที่โหลดไว้</translation>
+        <translation>นำแบบอักษรจากไฟล์ MKV ที่โหลดไว้</translation>
     </message>
     <message>
         <source>Start lists the fonts the subtitles use.</source>
@@ -3174,7 +3174,7 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Write archive</source>
-        <translation>เขียนแฟ้มบีบอัด</translation>
+        <translation>เขียนไฟล์บีบอัด</translation>
     </message>
     <message>
         <source>Copy fonts</source>
@@ -3206,11 +3206,11 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Select the name of the archive</source>
-        <translation>ตั้งชื่อของแฟ้มบีบอัด</translation>
+        <translation>ตั้งชื่อของไฟล์บีบอัด</translation>
     </message>
     <message>
         <source>Archive files (*.zip)</source>
-        <translation>แฟ้มบีบอัด (*.zip)</translation>
+        <translation>ไฟล์บีบอัด (*.zip)</translation>
     </message>
     <message>
         <source>Select a font</source>
@@ -3422,7 +3422,7 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Cannot add external font file %1.</source>
-        <translation>ไม่สามารถเพิ่มแฟ้มแบบอักษรภายนอก %1 ได้</translation>
+        <translation>ไม่สามารถเพิ่มไฟล์แบบอักษรภายนอก %1 ได้</translation>
     </message>
     <message>
         <source>%1 font</source>
@@ -3434,7 +3434,7 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Found &quot;%1&quot; font file.</source>
-        <translation>พบแฟ้มแบบอักษร &quot;%1&quot;</translation>
+        <translation>พบไฟล์แบบอักษร &quot;%1&quot;</translation>
     </message>
     <message>
         <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
@@ -3446,7 +3446,7 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Added font &quot;%1&quot; to the archive.</source>
-        <translation>เพิ่มแบบอักษร &quot;%1&quot; ลงในแฟ้มบีบอัดแล้ว</translation>
+        <translation>เพิ่มแบบอักษร &quot;%1&quot; ลงในไฟล์บีบอัดแล้ว</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; belongs to a style
@@ -3494,7 +3494,7 @@ Will not be copied.</source>
     </message>
     <message>
         <source>Cannot open file &quot;%1&quot;.</source>
-        <translation>ไม่สามารถเปิดแฟ้ม &quot;%1&quot; ได้</translation>
+        <translation>ไม่สามารถเปิดไฟล์ &quot;%1&quot; ได้</translation>
     </message>
     <message>
         <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
@@ -3523,7 +3523,7 @@ Will not be copied.</source>
     </message>
     <message>
         <source>The zip file already exists, delete it?</source>
-        <translation>มีแฟ้ม ZIP อยู่แล้ว ต้องการลบหรือไม่?</translation>
+        <translation>มีไฟล์ ZIP อยู่แล้ว ต้องการลบหรือไม่?</translation>
     </message>
     <message>
         <source>Confirmation</source>
@@ -3602,7 +3602,7 @@ Will not be copied.</source>
     <message>
         <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.
 </source>
-        <translation>แบบอักษรต่างกันที่มีชื่อแฟ้มเดียวกัน: %1 ในโฟลเดอร์จะเก็บไว้ได้เพียงแฟ้มเดียว
+        <translation>แบบอักษรต่างกันที่มีชื่อไฟล์เดียวกัน: %1 ในโฟลเดอร์จะเก็บไว้ได้เพียงไฟล์เดียว
 </translation>
     </message>
     <message>
@@ -3699,7 +3699,7 @@ Will not be copied.</source>
         <source>Cannot retrieve the font file sizes and names;
 copying will be canceled.
 </source>
-        <translation>ไม่สามารถโหลดขนาดและชื่อแฟ้มของแบบอักษร
+        <translation>ไม่สามารถโหลดขนาดและชื่อไฟล์ของแบบอักษร
 การคัดลอกถูกยกเลิก
 </translation>
     </message>
@@ -3714,7 +3714,7 @@ copying will be canceled.
     <message>
         <source>Ready to add %1 to the archive &quot;%2&quot;.
 </source>
-        <translation>พร้อมเพิ่ม %1 ลงในแฟ้มบีบอัด &quot;%2&quot;
+        <translation>พร้อมเพิ่ม %1 ลงในไฟล์บีบอัด &quot;%2&quot;
 </translation>
     </message>
     <message>
@@ -3747,15 +3747,15 @@ copying will be canceled.
     </message>
     <message>
         <source>This video is not an MKV file.</source>
-        <translation>วิดีโอนี้ไม่ใช่แฟ้ม MKV</translation>
+        <translation>วิดีโอนี้ไม่ใช่ไฟล์ MKV</translation>
     </message>
     <message>
         <source>Cannot open MKV file</source>
-        <translation>ไม่สามารถเปิดแฟ้ม MKV ได้</translation>
+        <translation>ไม่สามารถเปิดไฟล์ MKV ได้</translation>
     </message>
     <message>
         <source>Loaded MKV file does not have any fonts.</source>
-        <translation>แฟ้ม MKV ที่โหลดมาไม่พบแบบอักษรใด ๆ</translation>
+        <translation>ไฟล์ MKV ที่โหลดมาไม่พบแบบอักษรใด ๆ</translation>
     </message>
     <message>
         <source>Font named &quot;%1&quot;.
@@ -3805,7 +3805,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>From the styles and %1 tags of the open files.</source>
-        <translation>จากสไตล์และแท็ก %1 ของแฟ้มที่เปิดอยู่</translation>
+        <translation>จากสไตล์และแท็ก %1 ของไฟล์ที่เปิดอยู่</translation>
     </message>
     <message>
         <source>From the styles and %1 tags of %2.</source>
@@ -3821,11 +3821,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>This file</source>
-        <translation>แฟ้มนี้</translation>
+        <translation>ไฟล์นี้</translation>
     </message>
     <message>
         <source>All open files</source>
-        <translation>แฟ้มที่เปิดอยู่ทั้งหมด</translation>
+        <translation>ไฟล์ที่เปิดอยู่ทั้งหมด</translation>
     </message>
     <message>
         <source>Replace the catalog’s fonts</source>
@@ -3834,7 +3834,7 @@ Failed to copy %2 fonts.</source>
     <message numerus="yes">
         <source>The fonts of every style and every %1 tag in all %n open files.</source>
         <translation>
-            <numerusform>แบบอักษรของทุกสไตล์และทุกแท็ก %1 ในแฟ้มที่เปิดอยู่ทั้ง %n แฟ้ม</numerusform>
+            <numerusform>แบบอักษรของทุกสไตล์และทุกแท็ก %1 ในไฟล์ที่เปิดอยู่ทั้ง %n ไฟล์</numerusform>
         </translation>
     </message>
     <message>
@@ -4126,7 +4126,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
-        <translation>โหลดคำบรรยายจากแฟ้ม MKV / OGM</translation>
+        <translation>โหลดคำบรรยายจากไฟล์ MKV / OGM</translation>
     </message>
     <message>
         <source>OK</source>
@@ -4377,7 +4377,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Autosaves…</source>
-        <translation>แฟ้มบันทึกอัตโนมัติ…</translation>
+        <translation>ไฟล์บันทึกอัตโนมัติ…</translation>
     </message>
     <message>
         <source>Restore it at every start</source>
@@ -4389,7 +4389,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Recent files</source>
-        <translation>แฟ้มล่าสุด</translation>
+        <translation>ไฟล์ล่าสุด</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -4397,7 +4397,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Filter recent files</source>
-        <translation>กรองแฟ้มล่าสุด</translation>
+        <translation>กรองไฟล์ล่าสุด</translation>
     </message>
     <message>
         <source>Name</source>
@@ -4409,11 +4409,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>No recent files</source>
-        <translation>ไม่มีแฟ้มล่าสุด</translation>
+        <translation>ไม่มีไฟล์ล่าสุด</translation>
     </message>
     <message>
         <source>No matching files</source>
-        <translation>ไม่มีแฟ้มที่ตรงกัน</translation>
+        <translation>ไม่มีไฟล์ที่ตรงกัน</translation>
     </message>
     <message>
         <source>last opened %1</source>
@@ -4449,7 +4449,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Remove missing files</source>
-        <translation>นำแฟ้มที่ไม่พบออก</translation>
+        <translation>นำไฟล์ที่ไม่พบออก</translation>
     </message>
     <message>
         <source>Since %1</source>
@@ -5038,7 +5038,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;File</source>
-        <translation>&amp;แฟ้ม</translation>
+        <translation>&amp;ไฟล์</translation>
     </message>
     <message>
         <source>&amp;Open…</source>
@@ -5082,11 +5082,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open auto save</source>
-        <translation>เปิดแฟ้มบันทึกอัตโนมัติ</translation>
+        <translation>เปิดไฟล์บันทึกอัตโนมัติ</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
-        <translation>ลบแฟ้มชั่วคราว</translation>
+        <translation>ลบไฟล์ชั่วคราว</translation>
     </message>
     <message>
         <source>Show / Hide log window</source>
@@ -5382,7 +5382,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>ASS file properties</source>
-        <translation>คุณสมบัติแฟ้ม ASS</translation>
+        <translation>คุณสมบัติไฟล์ ASS</translation>
     </message>
     <message>
         <source>Conversion</source>
@@ -5550,7 +5550,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open subtitle file</source>
-        <translation>เปิดแฟ้มคำบรรยาย</translation>
+        <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
     <message>
         <source>Recently opened subtitles</source>
@@ -5566,11 +5566,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens video file</source>
-        <translation>เปิดแฟ้มวิดีโอ</translation>
+        <translation>เปิดไฟล์วิดีโอ</translation>
     </message>
     <message>
         <source>Save current file</source>
-        <translation>บันทึกแฟ้มปัจจุบัน</translation>
+        <translation>บันทึกไฟล์ปัจจุบัน</translation>
     </message>
     <message>
         <source>Save all subtitles</source>
@@ -5586,11 +5586,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens the selected autosave from the list</source>
-        <translation>เปิดแฟ้มบันทึกอัตโนมัติที่เลือกจากรายการ</translation>
+        <translation>เปิดไฟล์บันทึกอัตโนมัติที่เลือกจากรายการ</translation>
     </message>
     <message>
         <source>Opens the temporary file removal window</source>
-        <translation>เปิดหน้าต่างลบแฟ้มชั่วคราว</translation>
+        <translation>เปิดหน้าต่างลบไฟล์ชั่วคราว</translation>
     </message>
     <message>
         <source>Last session options</source>
@@ -5598,7 +5598,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Loads previously loaded files</source>
-        <translation>เปิดแฟ้มที่โหลดก่อนหน้านี้</translation>
+        <translation>เปิดไฟล์ที่โหลดก่อนหน้านี้</translation>
     </message>
     <message>
         <source>Loads session from saved session file</source>
@@ -5610,11 +5610,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Asks whether to load previously loaded files at program startup</source>
-        <translation>ถามว่าจะโหลดแฟ้มที่เปิดล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
+        <translation>ถามว่าจะโหลดไฟล์ที่เปิดล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
     </message>
     <message>
         <source>Loads previously loaded files at program startup</source>
-        <translation>โหลดแฟ้มที่เปิดไว้ก่อนหน้าเมื่อเริ่มโปรแกรม</translation>
+        <translation>โหลดไฟล์ที่เปิดไว้ก่อนหน้าเมื่อเริ่มโปรแกรม</translation>
     </message>
     <message>
         <source>Program settings</source>
@@ -5634,7 +5634,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Sorts all lines in ASS file</source>
-        <translation>จัดเรียงบรรทัดคำบรรยายทั้งหมดในแฟ้ม ASS</translation>
+        <translation>จัดเรียงบรรทัดคำบรรยายทั้งหมดในไฟล์ ASS</translation>
     </message>
     <message>
         <source>Sorts selected lines in ASS file</source>
@@ -5702,7 +5702,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens audio file</source>
-        <translation>เปิดแฟ้มเสียง</translation>
+        <translation>เปิดไฟล์เสียง</translation>
     </message>
     <message>
         <source>Opens audio from video</source>
@@ -5734,7 +5734,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Closes audio</source>
-        <translation>ปิดแฟ้มเสียง</translation>
+        <translation>ปิดไฟล์เสียง</translation>
     </message>
     <message>
         <source>Enable / Disable editor</source>
@@ -6066,7 +6066,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>The download of HikariSub %1 changed or went missing, so it was not installed. It is downloaded again at the next check.</source>
-        <translation>แฟ้มดาวน์โหลดของ HikariSub %1 ถูกเปลี่ยนแปลงหรือหายไป จึงไม่ได้ติดตั้ง จะดาวน์โหลดอีกครั้งในการตรวจครั้งถัดไป</translation>
+        <translation>ไฟล์ดาวน์โหลดของ HikariSub %1 ถูกเปลี่ยนแปลงหรือหายไป จึงไม่ได้ติดตั้ง จะดาวน์โหลดอีกครั้งในการตรวจครั้งถัดไป</translation>
     </message>
     <message>
         <source>HikariSub is installed for all users in a folder that can be changed without administrator rights, so HikariSub %1 was not installed automatically. Run %2 to install it.</source>
@@ -6102,7 +6102,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>The package manager could not install HikariSub %1 (error %2). The file is %3.</source>
-        <translation>ตัวจัดการแพ็กเกจติดตั้ง HikariSub %1 ไม่ได้ (ข้อผิดพลาด %2) แฟ้มอยู่ที่ %3</translation>
+        <translation>ตัวจัดการแพ็กเกจติดตั้ง HikariSub %1 ไม่ได้ (ข้อผิดพลาด %2) ไฟล์อยู่ที่ %3</translation>
     </message>
     <message>
         <source>installer</source>
@@ -6441,11 +6441,11 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
-        <translation>โหลดคำบรรยายจากแฟ้ม MKV / OGM</translation>
+        <translation>โหลดคำบรรยายจากไฟล์ MKV / OGM</translation>
     </message>
     <message>
         <source>The file does not contain any subtitle tracks.</source>
-        <translation>แฟ้มนี้ไม่มีแทร็กคำบรรยาย</translation>
+        <translation>ไฟล์นี้ไม่มีแทร็กคำบรรยาย</translation>
     </message>
     <message>
         <source>Choose the subtitle track</source>
@@ -7028,7 +7028,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Number of autosaves can be set from 2 to 1000000</source>
-        <translation>จำนวนแฟ้มบันทึกอัตโนมัติสามารถกำหนดค่าได้ตั้งแต่ 2 ถึง 1000000</translation>
+        <translation>จำนวนไฟล์บันทึกอัตโนมัติสามารถกำหนดค่าได้ตั้งแต่ 2 ถึง 1000000</translation>
     </message>
     <message>
         <source>Start frame offset in ms:</source>
@@ -7258,7 +7258,7 @@ after switching from full screen</source>
         <source>Range from 0 to 10000, where 0 turns off
 removing audio cache files.</source>
         <translation>ป้อน 0 ถึง 10000 โดยที่ 0 จะปิด
-การลบแฟ้มแคชเสียง</translation>
+การลบไฟล์แคชเสียง</translation>
     </message>
     <message>
         <source>The way to display inactive lines</source>
@@ -7402,7 +7402,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Autosave files kept</source>
-        <translation>จำนวนแฟ้มบันทึกอัตโนมัติที่เก็บไว้</translation>
+        <translation>จำนวนไฟล์บันทึกอัตโนมัติที่เก็บไว้</translation>
     </message>
     <message>
         <source>Show notices as toasts</source>
@@ -7728,7 +7728,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Cache files kept</source>
-        <translation>จำนวนแฟ้มแคชที่เก็บไว้</translation>
+        <translation>จำนวนไฟล์แคชที่เก็บไว้</translation>
     </message>
     <message>
         <source>0 keeps them all.</source>
@@ -7736,7 +7736,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>files</source>
-        <translation>แฟ้ม</translation>
+        <translation>ไฟล์</translation>
     </message>
     <message>
         <source>Style</source>
@@ -7784,11 +7784,11 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Files</source>
-        <translation>แฟ้ม</translation>
+        <translation>ไฟล์</translation>
     </message>
     <message>
         <source>Save the panel layout in subtitle files</source>
-        <translation>บันทึกเค้าโครงแผงในแฟ้มคำบรรยาย</translation>
+        <translation>บันทึกเค้าโครงแผงในไฟล์คำบรรยาย</translation>
     </message>
     <message>
         <source>Debugging</source>
@@ -7944,7 +7944,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation>แฟ้มทั้งหมด (*)</translation>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
     <message>
         <source>Import legacy hotkeys</source>
@@ -7952,7 +7952,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>The file could not be read.</source>
-        <translation>ไม่สามารถอ่านแฟ้มได้</translation>
+        <translation>ไม่สามารถอ่านไฟล์ได้</translation>
     </message>
     <message numerus="yes">
         <source>Added %n script hotkey(s).</source>
@@ -8058,7 +8058,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
-        <translation>วางแฟ้ม .dic และ .aff ลงในโฟลเดอร์ &quot;Dictionary&quot;</translation>
+        <translation>วางไฟล์ .dic และ .aff ลงในโฟลเดอร์ &quot;Dictionary&quot;</translation>
     </message>
     <message>
         <source>The selected %1 for conversion does not exist
@@ -8546,7 +8546,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>ASS file properties</source>
-        <translation>คุณสมบัติแฟ้ม ASS</translation>
+        <translation>คุณสมบัติไฟล์ ASS</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -8691,7 +8691,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>In files</source>
-        <translation>ในแฟ้ม</translation>
+        <translation>ในไฟล์</translation>
     </message>
     <message>
         <source>Find in subtitles</source>
@@ -8921,7 +8921,7 @@ If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</sou
     </message>
     <message>
         <source>Find in files</source>
-        <translation>ค้นหาในแฟ้ม</translation>
+        <translation>ค้นหาในไฟล์</translation>
     </message>
     <message>
         <source>Confirmation</source>
@@ -8955,11 +8955,11 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Cannot open file %1.</source>
-        <translation>ไม่สามารถเปิดแฟ้ม %1 ได้</translation>
+        <translation>ไม่สามารถเปิดไฟล์ %1 ได้</translation>
     </message>
     <message>
         <source>Cannot write file %1; it was left as it was.</source>
-        <translation>ไม่สามารถเขียนแฟ้ม %1 ได้ แฟ้มยังคงเหมือนเดิม</translation>
+        <translation>ไม่สามารถเขียนไฟล์ %1 ได้ ไฟล์ยังคงเหมือนเดิม</translation>
     </message>
     <message>
         <source>%1 could not be restored; its backup is in %2.</source>
@@ -9149,7 +9149,7 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Open auto save</source>
-        <translation>เปิดแฟ้มบันทึกอัตโนมัติ</translation>
+        <translation>เปิดไฟล์บันทึกอัตโนมัติ</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
@@ -9165,11 +9165,11 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Autosaves</source>
-        <translation>แฟ้มบันทึกอัตโนมัติ</translation>
+        <translation>ไฟล์บันทึกอัตโนมัติ</translation>
     </message>
     <message>
         <source>Search autosaves</source>
-        <translation>ค้นหาแฟ้มบันทึกอัตโนมัติ</translation>
+        <translation>ค้นหาไฟล์บันทึกอัตโนมัติ</translation>
     </message>
     <message>
         <source>Saved</source>
@@ -9209,11 +9209,11 @@ cause it was edited.</source>
     </message>
     <message>
         <source>There are no autosaves.</source>
-        <translation>ไม่มีแฟ้มบันทึกอัตโนมัติ</translation>
+        <translation>ไม่มีไฟล์บันทึกอัตโนมัติ</translation>
     </message>
     <message>
         <source>No matching autosaves</source>
-        <translation>ไม่มีแฟ้มบันทึกอัตโนมัติที่ตรงกัน</translation>
+        <translation>ไม่มีไฟล์บันทึกอัตโนมัติที่ตรงกัน</translation>
     </message>
     <message>
         <source>Previous version</source>
@@ -9221,7 +9221,7 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Autosave of the previous version</source>
-        <translation>แฟ้มบันทึกอัตโนมัติของเวอร์ชันก่อนหน้า</translation>
+        <translation>ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้า</translation>
     </message>
     <message>
         <source>Never saved</source>
@@ -9245,7 +9245,7 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงแฟ้มต้นฉบับ แฟ้มบันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
+        <translation>แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -9257,7 +9257,7 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Delete autosaves saved before</source>
-        <translation>ลบแฟ้มบันทึกอัตโนมัติที่บันทึกก่อน</translation>
+        <translation>ลบไฟล์บันทึกอัตโนมัติที่บันทึกก่อน</translation>
     </message>
     <message>
         <source>A week ago</source>
@@ -9273,12 +9273,12 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Delete 1 autosave</source>
-        <translation>ลบแฟ้มบันทึกอัตโนมัติ 1 แฟ้ม</translation>
+        <translation>ลบไฟล์บันทึกอัตโนมัติ 1 ไฟล์</translation>
     </message>
     <message numerus="yes">
         <source>Delete %n autosaves</source>
         <translation>
-            <numerusform>ลบแฟ้มบันทึกอัตโนมัติ %n แฟ้ม</numerusform>
+            <numerusform>ลบไฟล์บันทึกอัตโนมัติ %n ไฟล์</numerusform>
         </translation>
     </message>
     <message>
@@ -9403,7 +9403,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation>แฟ้มทั้งหมด (*)</translation>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
     <message>
         <source>“%1” is read-only.</source>
@@ -9411,7 +9411,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Save the session under another name, or make the file writable and save again.</source>
-        <translation>บันทึกเซสชันด้วยชื่ออื่น หรือทำให้แฟ้มเขียนได้แล้วบันทึกอีกครั้ง</translation>
+        <translation>บันทึกเซสชันด้วยชื่ออื่น หรือทำให้ไฟล์เขียนได้แล้วบันทึกอีกครั้ง</translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -9471,11 +9471,11 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation>แฟ้มเสียงและวิดีโอ (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
+        <translation>ไฟล์เสียงและวิดีโอ (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
-        <translation>แฟ้มคีย์เฟรม (*.txt *.pass *.stats *.log)</translation>
+        <translation>ไฟล์คีย์เฟรม (*.txt *.pass *.stats *.log)</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -9495,7 +9495,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Autosaves…</source>
-        <translation>แฟ้มบันทึกอัตโนมัติ…</translation>
+        <translation>ไฟล์บันทึกอัตโนมัติ…</translation>
     </message>
     <message>
         <source>Retry</source>
@@ -9531,7 +9531,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Session file is corrupt</source>
-        <translation>แฟ้มเซสชันไม่ถูกต้อง</translation>
+        <translation>ไฟล์เซสชันไม่ถูกต้อง</translation>
     </message>
     <message>
         <source>Restore session</source>
@@ -9543,7 +9543,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>The tab of %1 has other work now; open the file in a new tab.</source>
-        <translation>แท็บของ %1 มีงานอื่นอยู่แล้ว ให้เปิดแฟ้มในแท็บใหม่</translation>
+        <translation>แท็บของ %1 มีงานอื่นอยู่แล้ว ให้เปิดไฟล์ในแท็บใหม่</translation>
     </message>
     <message>
         <source>The last session had 1 document: %1.</source>
@@ -9622,7 +9622,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>File read</source>
-        <translation>อ่านแฟ้มแล้ว</translation>
+        <translation>อ่านไฟล์แล้ว</translation>
     </message>
     <message>
         <source>Not here</source>
@@ -9722,7 +9722,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
-        <translation>อ่านแฟ้มที่ไม่ใช่ UTF-8 เป็น</translation>
+        <translation>อ่านไฟล์ที่ไม่ใช่ UTF-8 เป็น</translation>
     </message>
     <message>
         <source>An import waits for the next start. These settings changed since it was made keep your change: %1.</source>
@@ -9850,7 +9850,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
-        <translation>นำเข้าแล้ว การตั้งค่าจะมีผลเมื่อเริ่ม HikariSub อีกครั้ง การตั้งค่าที่คุณเปลี่ยนก่อนหน้านั้นจะคงค่าที่คุณเปลี่ยนไว้ แฟ้มรุ่นเดิมไม่ถูกเปลี่ยนแปลง</translation>
+        <translation>นำเข้าแล้ว การตั้งค่าจะมีผลเมื่อเริ่ม HikariSub อีกครั้ง การตั้งค่าที่คุณเปลี่ยนก่อนหน้านั้นจะคงค่าที่คุณเปลี่ยนไว้ ไฟล์รุ่นเดิมไม่ถูกเปลี่ยนแปลง</translation>
     </message>
     <message>
         <source>Nothing to import: the chosen settings are already in effect.</source>
@@ -9858,7 +9858,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>The legacy files changed since they were read. Read them again to review the changes.</source>
-        <translation>แฟ้มรุ่นเดิมเปลี่ยนไปหลังจากที่อ่าน อ่านแฟ้มอีกครั้งเพื่อตรวจทานการเปลี่ยนแปลง</translation>
+        <translation>ไฟล์รุ่นเดิมเปลี่ยนไปหลังจากที่อ่าน อ่านไฟล์อีกครั้งเพื่อตรวจทานการเปลี่ยนแปลง</translation>
     </message>
     <message>
         <source>The current settings changed since this review. Review the import again.</source>
@@ -10023,7 +10023,7 @@ in uppercase</source>
     </message>
     <message>
         <source>Checks the grammar of the whole file from the active line</source>
-        <translation>ตรวจไวยากรณ์ของทั้งแฟ้มเริ่มจากบรรทัดที่ใช้งานอยู่</translation>
+        <translation>ตรวจไวยากรณ์ของทั้งไฟล์เริ่มจากบรรทัดที่ใช้งานอยู่</translation>
     </message>
     <message>
         <source>Grammar check cancelled</source>
@@ -10136,7 +10136,7 @@ in uppercase</source>
     <message>
         <source>No dictionary files were found in the &quot;%1&quot; folder.
 Spell checking will be disabled</source>
-        <translation>ไม่พบแฟ้มพจนานุกรมในโฟลเดอร์ &quot;%1&quot;
+        <translation>ไม่พบไฟล์พจนานุกรมในโฟลเดอร์ &quot;%1&quot;
 การตรวจการสะกดจะถูกปิดใช้งาน</translation>
     </message>
     <message>
@@ -10281,7 +10281,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Another file is open in the editor.</source>
-        <translation>มีแฟ้มอื่นเปิดอยู่ในตัวแก้ไข</translation>
+        <translation>มีไฟล์อื่นเปิดอยู่ในตัวแก้ไข</translation>
     </message>
     <message>
         <source>The line changed since it was checked.</source>
@@ -10348,7 +10348,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Video file name</source>
-        <translation>ชื่อแฟ้มวิดีโอ</translation>
+        <translation>ชื่อไฟล์วิดีโอ</translation>
     </message>
 </context>
 <context>
@@ -10699,7 +10699,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>This file has no style named “%1”.</source>
-        <translation>แฟ้มนี้ไม่มีสไตล์ชื่อ “%1”</translation>
+        <translation>ไฟล์นี้ไม่มีสไตล์ชื่อ “%1”</translation>
     </message>
     <message>
         <source>Create it from Default and edit it?</source>
@@ -10759,7 +10759,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>this file</source>
-        <translation>แฟ้มนี้</translation>
+        <translation>ไฟล์นี้</translation>
     </message>
     <message>
         <source>the catalog</source>
@@ -10797,11 +10797,11 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>This file already has a style named “%1”.</source>
-        <translation>แฟ้มนี้มีสไตล์ชื่อ “%1” อยู่แล้ว</translation>
+        <translation>ไฟล์นี้มีสไตล์ชื่อ “%1” อยู่แล้ว</translation>
     </message>
     <message>
         <source>Its file was closed.</source>
-        <translation>แฟ้มของสไตล์นี้ถูกปิดแล้ว</translation>
+        <translation>ไฟล์ของสไตล์นี้ถูกปิดแล้ว</translation>
     </message>
     <message>
         <source>Style not renamed</source>
@@ -10817,11 +10817,11 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>The file shown now uses the catalog “%1”.</source>
-        <translation>แฟ้มที่แสดงอยู่ตอนนี้ใช้แคตตาล็อก “%1”</translation>
+        <translation>ไฟล์ที่แสดงอยู่ตอนนี้ใช้แคตตาล็อก “%1”</translation>
     </message>
     <message>
         <source>You edited it in the file shown before.</source>
-        <translation>คุณแก้ไขสไตล์นี้ในแฟ้มที่แสดงอยู่ก่อนหน้านี้</translation>
+        <translation>คุณแก้ไขสไตล์นี้ในไฟล์ที่แสดงอยู่ก่อนหน้านี้</translation>
     </message>
     <message>
         <source>Reset %1</source>
@@ -10853,7 +10853,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Styles in this file</source>
-        <translation>สไตล์ในแฟ้มนี้</translation>
+        <translation>สไตล์ในไฟล์นี้</translation>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
@@ -10887,7 +10887,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Load from a file…</source>
-        <translation>โหลดจากแฟ้ม…</translation>
+        <translation>โหลดจากไฟล์…</translation>
     </message>
     <message>
         <source>More</source>
@@ -10915,11 +10915,11 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>เพิ่มไปยังแฟ้ม</translation>
+        <translation>เพิ่มไปยังไฟล์</translation>
     </message>
     <message>
         <source>Copy the selected catalog styles into this file</source>
-        <translation>คัดลอกสไตล์ที่เลือกในแคตตาล็อกไปยังแฟ้มนี้</translation>
+        <translation>คัดลอกสไตล์ที่เลือกในแคตตาล็อกไปยังไฟล์นี้</translation>
     </message>
     <message>
         <source>Add to catalog</source>
@@ -10927,19 +10927,19 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Copy the selected file styles into the catalog</source>
-        <translation>คัดลอกสไตล์ที่เลือกในแฟ้มไปยังแคตตาล็อก</translation>
+        <translation>คัดลอกสไตล์ที่เลือกในไฟล์ไปยังแคตตาล็อก</translation>
     </message>
     <message>
         <source>Add to all open files</source>
-        <translation>เพิ่มไปยังแฟ้มที่เปิดอยู่ทั้งหมด</translation>
+        <translation>เพิ่มไปยังไฟล์ที่เปิดอยู่ทั้งหมด</translation>
     </message>
     <message>
         <source>Copy the selected catalog styles into every open file</source>
-        <translation>คัดลอกสไตล์ที่เลือกในแคตตาล็อกไปยังแฟ้มที่เปิดอยู่ทุกแฟ้ม</translation>
+        <translation>คัดลอกสไตล์ที่เลือกในแคตตาล็อกไปยังไฟล์ที่เปิดอยู่ทุกไฟล์</translation>
     </message>
     <message>
         <source>This file</source>
-        <translation>แฟ้มนี้</translation>
+        <translation>ไฟล์นี้</translation>
     </message>
     <message>
         <source>This tab has no ASS styles.</source>
@@ -11191,11 +11191,11 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Choose ASS file</source>
-        <translation>เลือกแฟ้ม ASS</translation>
+        <translation>เลือกไฟล์ ASS</translation>
     </message>
     <message>
         <source>ASS subtitle files(*.ass)</source>
-        <translation>แฟ้มคำบรรยาย ASS(*.ass)</translation>
+        <translation>ไฟล์คำบรรยาย ASS(*.ass)</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -11257,7 +11257,7 @@ Styles deleted:
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
-        <translation>ไม่มีสไตล์: แฟ้มไม่มีสไตล์ ASS</translation>
+        <translation>ไม่มีสไตล์: ไฟล์ไม่มีสไตล์ ASS</translation>
     </message>
     <message>
         <source>No styles</source>
@@ -11344,7 +11344,7 @@ Styles deleted:
     </message>
     <message>
         <source>Open the folder containing the subtitles</source>
-        <translation>เปิดโฟลเดอร์ของแฟ้มคำบรรยาย</translation>
+        <translation>เปิดโฟลเดอร์ของไฟล์คำบรรยาย</translation>
     </message>
     <message>
         <source>Open video containing folder</source>
@@ -11434,7 +11434,7 @@ Styles deleted:
     </message>
     <message>
         <source>It is next to %1 and has the same name.</source>
-        <translation>แฟ้มนี้อยู่ถัดจาก %1 และมีชื่อเดียวกัน</translation>
+        <translation>ไฟล์นี้อยู่ถัดจาก %1 และมีชื่อเดียวกัน</translation>
     </message>
     <message>
         <source>Open both</source>
@@ -12143,11 +12143,11 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Choose subtitle file</source>
-        <translation>เลือกแฟ้มคำบรรยาย</translation>
+        <translation>เลือกไฟล์คำบรรยาย</translation>
     </message>
     <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
-        <translation>แฟ้มคำบรรยาย (*.ass *.srt *.sub *.txt)</translation>
+        <translation>ไฟล์คำบรรยาย (*.ass *.srt *.sub *.txt)</translation>
     </message>
     <message>
         <source>Translation matching options</source>
@@ -12255,7 +12255,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Translation needs an ASS file: plain text cannot store it.</source>
-        <translation>การแปลต้องใช้แฟ้ม ASS: ข้อความธรรมดาเก็บคำแปลไม่ได้</translation>
+        <translation>การแปลต้องใช้ไฟล์ ASS: ข้อความธรรมดาเก็บคำแปลไม่ได้</translation>
     </message>
     <message>
         <source>More</source>
@@ -12478,7 +12478,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Previous file</source>
-        <translation>แฟ้มก่อนหน้า</translation>
+        <translation>ไฟล์ก่อนหน้า</translation>
     </message>
     <message>
         <source>Pause</source>
@@ -12502,11 +12502,11 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Next file</source>
-        <translation>แฟ้มถัดไป</translation>
+        <translation>ไฟล์ถัดไป</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
-        <translation>เลือกแฟ้มคีย์เฟรม</translation>
+        <translation>เลือกไฟล์คีย์เฟรม</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -12514,7 +12514,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation>แฟ้มทั้งหมด (*)</translation>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
@@ -12526,15 +12526,15 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
-        <translation>แฟ้มคีย์เฟรม (*.txt *.pass *.stats *.log)</translation>
+        <translation>ไฟล์คีย์เฟรม (*.txt *.pass *.stats *.log)</translation>
     </message>
     <message>
         <source>the file could not be read</source>
-        <translation>ไม่สามารถอ่านแฟ้มได้</translation>
+        <translation>ไม่สามารถอ่านไฟล์ได้</translation>
     </message>
     <message>
         <source>the file has no usable video track</source>
-        <translation>แฟ้มไม่มีแทร็กวิดีโอที่ใช้งานได้</translation>
+        <translation>ไฟล์ไม่มีแทร็กวิดีโอที่ใช้งานได้</translation>
     </message>
     <message>
         <source>the media helper ended</source>
@@ -12711,7 +12711,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Previous video file</source>
-        <translation>แฟ้มวิดีโอก่อนหน้า</translation>
+        <translation>ไฟล์วิดีโอก่อนหน้า</translation>
     </message>
     <message>
         <source>Line %1, %2: %3</source>
@@ -12773,7 +12773,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Indexing video</source>
-        <translation>กำลังสร้างดัชนีแฟ้มวิดีโอ</translation>
+        <translation>กำลังสร้างดัชนีไฟล์วิดีโอ</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -12814,7 +12814,7 @@ Foreign language text will be deleted.</source>
     <message>
         <source>The file is not a valid video file or is corrupted,
 or codecs or a splitter may be missing</source>
-        <translation>แฟ้มดังกล่าวไม่ใช่แฟ้มวิดีโอที่ถูกต้องหรืออาจเสียหาย
+        <translation>ไฟล์ดังกล่าวไม่ใช่ไฟล์วิดีโอที่ถูกต้องหรืออาจเสียหาย
 ตัวแปลงสัญญาณหรือตัวแยกสัญญาณอาจขาดหายไป</translation>
     </message>
     <message>
@@ -13762,51 +13762,51 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>the file is larger than %1 bytes</source>
-        <translation>แฟ้มมีขนาดใหญ่กว่า %1 ไบต์</translation>
+        <translation>ไฟล์มีขนาดใหญ่กว่า %1 ไบต์</translation>
     </message>
     <message>
         <source>it is not a layout file</source>
-        <translation>แฟ้มนี้ไม่ใช่แฟ้มเค้าโครง</translation>
+        <translation>ไฟล์นี้ไม่ใช่ไฟล์เค้าโครง</translation>
     </message>
     <message>
         <source>it was written by a newer version</source>
-        <translation>แฟ้มนี้เขียนโดยเวอร์ชันที่ใหม่กว่า</translation>
+        <translation>ไฟล์นี้เขียนโดยเวอร์ชันที่ใหม่กว่า</translation>
     </message>
     <message>
         <source>its format is not known</source>
-        <translation>ไม่รู้จักรูปแบบของแฟ้ม</translation>
+        <translation>ไม่รู้จักรูปแบบของไฟล์</translation>
     </message>
     <message>
         <source>it names panels from a newer version</source>
-        <translation>แฟ้มนี้ระบุแผงจากเวอร์ชันที่ใหม่กว่า</translation>
+        <translation>ไฟล์นี้ระบุแผงจากเวอร์ชันที่ใหม่กว่า</translation>
     </message>
     <message>
         <source>it was made with %1</source>
-        <translation>แฟ้มนี้สร้างด้วย %1</translation>
+        <translation>ไฟล์นี้สร้างด้วย %1</translation>
     </message>
     <message>
         <source>it names an unknown panel (%1)</source>
-        <translation>แฟ้มนี้ระบุแผงที่ไม่รู้จัก (%1)</translation>
+        <translation>ไฟล์นี้ระบุแผงที่ไม่รู้จัก (%1)</translation>
     </message>
     <message>
         <source>it holds no layout</source>
-        <translation>แฟ้มนี้ไม่มีเค้าโครง</translation>
+        <translation>ไฟล์นี้ไม่มีเค้าโครง</translation>
     </message>
     <message>
         <source>it holds no Classic arrangement</source>
-        <translation>แฟ้มนี้ไม่มีการจัดวางแบบ Classic</translation>
+        <translation>ไฟล์นี้ไม่มีการจัดวางแบบ Classic</translation>
     </message>
     <message>
         <source>it holds more windows or panels than HikariSub has</source>
-        <translation>แฟ้มนี้มีหน้าต่างหรือแผงมากกว่าที่ HikariSub มี</translation>
+        <translation>ไฟล์นี้มีหน้าต่างหรือแผงมากกว่าที่ HikariSub มี</translation>
     </message>
     <message>
         <source>it puts a floating panel in a window that does not exist</source>
-        <translation>แฟ้มนี้วางแผงลอยไว้ในหน้าต่างที่ไม่มีอยู่</translation>
+        <translation>ไฟล์นี้วางแผงลอยไว้ในหน้าต่างที่ไม่มีอยู่</translation>
     </message>
     <message>
         <source>it puts a panel in a window that does not exist</source>
-        <translation>แฟ้มนี้วางแผงไว้ในหน้าต่างที่ไม่มีอยู่</translation>
+        <translation>ไฟล์นี้วางแผงไว้ในหน้าต่างที่ไม่มีอยู่</translation>
     </message>
     <message>
         <source>the docking engine could not restore it</source>
@@ -13818,7 +13818,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.</source>
-        <translation>ไม่ได้คืนค่าเค้าโครงแผงที่บันทึกไว้ เนื่องจาก%1 แสดงเค้าโครงแก้ไขแทน และเก็บแฟ้มที่บันทึกไว้ที่ %2</translation>
+        <translation>ไม่ได้คืนค่าเค้าโครงแผงที่บันทึกไว้ เนื่องจาก%1 แสดงเค้าโครงแก้ไขแทน และเก็บไฟล์ที่บันทึกไว้ที่ %2</translation>
     </message>
     <message>
         <source>The panel layout could not be written to %1.</source>
@@ -13842,15 +13842,15 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>it is not a layouts file</source>
-        <translation>แฟ้มนี้ไม่ใช่แฟ้มเค้าโครงที่บันทึกไว้</translation>
+        <translation>ไฟล์นี้ไม่ใช่ไฟล์เค้าโครงที่บันทึกไว้</translation>
     </message>
     <message>
         <source>The saved layouts were not read because %1. The file is kept at %2.</source>
-        <translation>ไม่ได้อ่านเค้าโครงที่บันทึกไว้ เนื่องจาก%1 เก็บแฟ้มไว้ที่ %2</translation>
+        <translation>ไม่ได้อ่านเค้าโครงที่บันทึกไว้ เนื่องจาก%1 เก็บไฟล์ไว้ที่ %2</translation>
     </message>
     <message>
         <source>Some saved layouts were not read: their names cannot name a layout, or were listed before. The file as it was is kept at %1.</source>
-        <translation>อ่านเค้าโครงที่บันทึกไว้บางรายการไม่ได้ เนื่องจากชื่อใช้เป็นชื่อเค้าโครงไม่ได้ หรือมีอยู่ในรายการก่อนหน้าแล้ว เก็บแฟ้มเดิมไว้ที่ %1</translation>
+        <translation>อ่านเค้าโครงที่บันทึกไว้บางรายการไม่ได้ เนื่องจากชื่อใช้เป็นชื่อเค้าโครงไม่ได้ หรือมีอยู่ในรายการก่อนหน้าแล้ว เก็บไฟล์เดิมไว้ที่ %1</translation>
     </message>
     <message>
         <source>The saved layouts at %1 could not be read or copied: they are not used and not changed.</source>
