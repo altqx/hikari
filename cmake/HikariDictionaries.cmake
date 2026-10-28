@@ -16,6 +16,11 @@
 #
 #   cmake -DDOWNLOADS=<dir> -P cmake/HikariDictionaries.cmake
 include_guard(GLOBAL)
+# Run as a script, nothing has set the policies yet (IN_LIST needs CMP0057);
+# included, the project's own cmake_minimum_required has.
+if(CMAKE_SCRIPT_MODE_FILE STREQUAL CMAKE_CURRENT_LIST_FILE)
+    cmake_minimum_required(VERSION 3.28)
+endif()
 
 set(_aegisub "https://raw.githubusercontent.com/TypesettingTools/Aegisub-dictionaries/6d792f04521b3ac8823c8e8972fcfd757342da4d/dicts")
 set(_libreoffice "https://raw.githubusercontent.com/LibreOffice/dictionaries/32b006a2c22a4ac7e8ed3f03346f7b3d85a970a4")
