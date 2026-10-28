@@ -12404,8 +12404,8 @@ private slots:
         QCOMPARE(findItem(panel, QStringLiteral("spellEmptyAction"))->property("text").toString(), QStringLiteral("Check spelling"));
         application->editor().discard();
 
-        // No dictionary installed yet: one chosen afterwards (Settings, the
-        // editor's language menu) starts the waiting check.
+        // No dictionary installed yet: one chosen afterwards in Settings
+        // starts the waiting check.
         {
             QTemporaryDir bare;
             QVERIFY(bare.isValid());
@@ -12416,8 +12416,13 @@ private slots:
                                               Q_ARG(QVariant, QVariant::fromValue(dock))));
             QTRY_VERIFY(dock->property("isOpen").toBool());
             QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
+            // One dictionary installed at a time (SP1 #474: every installed
+            // one checks the words of its script).
             const auto dictionary = [&](const char *code, const QByteArray &words) {
-                QDir().mkpath(bare.path() + QStringLiteral("/Dictionary"));
+                QDir folder(bare.path() + QStringLiteral("/Dictionary"));
+                QDir().mkpath(folder.path());
+                for (const QString &old : folder.entryList({QStringLiteral("*.aff"), QStringLiteral("*.dic")}, QDir::Files))
+                    QVERIFY(folder.remove(old));
                 QFile aff(bare.path() + QStringLiteral("/Dictionary/%1.aff").arg(QLatin1String(code)));
                 QVERIFY(aff.open(QIODevice::WriteOnly));
                 QFile dic(bare.path() + QStringLiteral("/Dictionary/%1.dic").arg(QLatin1String(code)));
