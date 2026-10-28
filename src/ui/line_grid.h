@@ -160,6 +160,9 @@ signals:
     void headerToolTipChanged();
 
 protected:
+    // #400: a layout change that shrinks the Grid keeps the active Line in
+    // view when it was in view before.
+    void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
     void keyPressEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
