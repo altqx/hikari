@@ -186,6 +186,7 @@ QJsonArray entriesOf(QQuickItem *item, const application::OptionsBinding *bindin
 struct SettingsWalk {
     ui::SettingsStore *store;
     Languages languages;
+    QVariantMap shown; // the values the window opens with
     QString page;
     QJsonArray settings;
 
@@ -221,6 +222,11 @@ struct SettingsWalk {
             {QStringLiteral("type"), typeName(definition->type)},
             {QStringLiteral("default"), QJsonValue::fromVariant(store->value(key))},
         };
+        // A number the window maps on opening (Tab name length: 0 shows 40)
+        // defaults to what it shows (#391).
+        if (control == QLatin1String("number") && shown.contains(key) &&
+            shown.value(key).toString() != store->value(key).toString())
+            o.insert(QStringLiteral("default"), QJsonValue::fromVariant(shown.value(key)));
         if (control == QLatin1String("number")) {
             o.insert(QStringLiteral("min"), item->property("from").toInt());
             o.insert(QStringLiteral("max"), item->property("to").toInt());
@@ -286,6 +292,7 @@ QJsonObject settings(Application &application, QObject *dialog)
     SettingsWalk walk{application.settingsStore(),
                       {opened.value(QStringLiteral("languageTags")).toStringList(),
                        opened.value(QStringLiteral("languages")).toStringList()},
+                      opened.value(QStringLiteral("values")).toMap(),
                       {},
                       {}};
     QJsonArray pages;
@@ -335,6 +342,9 @@ bool exportDocs(const QString &dir, QString *error)
             *error = message;
         return false;
     };
+    // #391: the site names the commit its pages come from.
+    if (QStringLiteral(HIKARI_COMMIT).isEmpty())
+        return fail(QStringLiteral("This build does not know its commit"));
     if (!QDir().mkpath(dir))
         return fail(QStringLiteral("Cannot make %1").arg(dir));
     QTemporaryDir profile;

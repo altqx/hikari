@@ -10,6 +10,8 @@
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontMetricsF>
 #include <QMetaObject>
 #include <QQuickImageProvider>
 #include <QRegularExpression>
@@ -83,6 +85,12 @@ constexpr char8_t kFontPreviewStyle[] = u8"Style: FontPreview,Arial,80,&H00FFFFF
 std::filesystem::path catalogPath(const std::filesystem::path &dir, std::u16string_view name)
 {
     return dir / std::filesystem::path(std::u16string(name));
+}
+
+// PV1 (#398): the samples' text when the setting is empty, its default.
+QString defaultPreviewText()
+{
+    return QString::fromStdString(std::get<std::string>(application::findSetting("styles.previewText")->defaultValue));
 }
 
 } // namespace
@@ -183,7 +191,8 @@ bool FontCatalogsController::filterOn() const
 
 QString FontCatalogsController::previewText() const
 {
-    return m_settings.text("styles.previewText");
+    const QString text = m_settings.text("styles.previewText");
+    return text.trimmed().isEmpty() ? defaultPreviewText() : text;
 }
 
 QStringList FontCatalogsController::catalogChoices() const
@@ -520,7 +529,20 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
     core::StyleValues style = core::legacy::decodeStyle(kFontPreviewStyle, false);
     // The preview text's characters only: an override in it ({\\fn…},
     // {\\b0}) would draw another face than the one the note names.
-    const QString text = withFamily(style, font, rendererText(samplePlain(previewText(), true)));
+    const QString plain = samplePlain(previewText(), true);
+    // PV1 (#398): on one line; a text wider than the room between the
+    // Style's margins (120 each) is drawn smaller. Qt's advance of the bold
+    // face at 80 pixels is at least libass's at size 80 (libass's size is
+    // the face's height, not its em).
+    QFont face(font);
+    face.setPixelSize(80);
+    face.setBold(true);
+    const qreal wide = QFontMetricsF(face).horizontalAdvance(plain);
+    const qreal room = width - 240.0;
+    QString fit;
+    if (room > 0 && wide > room)
+        fit = QStringLiteral("{\\fscx%1\\fscy%1}").arg(std::max(1, int(100 * room / wide)));
+    const QString text = withFamily(style, font, fit + rendererText(plain));
     m_preview = renderStylePreview(m_renderer, style, width, height, text, externalFontLeases(), m_atScreenSize ? scale : 1);
     ++m_previewKey;
     emit previewChanged();
@@ -717,8 +739,7 @@ int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool
         std::lock_guard lock(m_resolveMutex);
         m_resolveJob = ResolveJob{request, m_service, std::move(environment),
                                   application::FontRequest{family.toStdString(), bold, italic,
-                                                           text.trimmed().isEmpty() ? std::string("AaBbCcDdEeFfGg 0123456789")
-                                                                                    : text.toStdString()}};
+                                                           (text.trimmed().isEmpty() ? defaultPreviewText() : text).toStdString()}};
     }
     m_resolveWake.notify_one();
     if (!m_resolver.joinable())

@@ -79,8 +79,8 @@ struct OptionsBinding {
 // video.moveToActiveLine and video.playAfterSelection (VF1),
 // notices.toasts (PK1), the Updates page's updater.* (PU7),
 // automation.fillLastAnswers (AD2), video.previewSubtitlesAt (SV1),
-// grammar.language and the grammar.group.* switches (GR1) and, on Windows,
-// audio.outputHostApi and video.playbackPlayer (W1).
+// styles.previewText (PV1), grammar.language and the grammar.group.* switches
+// (GR1) and, on Windows, audio.outputHostApi and video.playbackPlayer (W1).
 std::span<const OptionsBinding> optionsBindings();
 const OptionsBinding *findOptionsBinding(std::string_view setting);
 

@@ -6304,6 +6304,7 @@ ApplicationWindow {
                     editor: root.editor
                     app: root.app
                     manager: styleManagerWindow
+                    catalogs: root.fontCatalogs
                     live: stylesDock.isOpen
                 }
             }

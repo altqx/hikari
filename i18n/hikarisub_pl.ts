@@ -906,6 +906,10 @@ Output device: %2</source>
         <translation>Ten plik napisów nie ma dodanych żadnych skryptów</translation>
     </message>
     <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1 nie ma makr do uruchomienia</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation type="vanished">Błąd</translation>
     </message>
@@ -6751,6 +6755,14 @@ gdy okno wyników szukania jest otwarte</translation>
     <message>
         <source>Program font</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview text</source>
+        <translation>Tekst podglądu</translation>
+    </message>
+    <message>
+        <source>The sample text of the style and font previews.</source>
+        <translation>Tekst przykładowy podglądów stylów i czcionek.</translation>
     </message>
     <message>
         <source>Window</source>

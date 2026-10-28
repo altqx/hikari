@@ -900,6 +900,10 @@ Output device: %2</source>
         <translation>இந்த வசன வரிகள் எந்த ச்கிரிப்டுகளும் சேர்க்கப்படவில்லை</translation>
     </message>
     <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1 இல் இயக்க மேக்ரோக்கள் இல்லை</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation type="vanished">பிழை</translation>
     </message>
@@ -6711,6 +6715,14 @@ when find results window is open</source>
     <message>
         <source>Program font</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview text</source>
+        <translation>முன்னோட்ட உரை</translation>
+    </message>
+    <message>
+        <source>The sample text of the style and font previews.</source>
+        <translation>நடை மற்றும் எழுத்துரு முன்னோட்டங்களில் காட்டப்படும் மாதிரி உரை.</translation>
     </message>
     <message>
         <source>Window</source>

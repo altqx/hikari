@@ -894,6 +894,10 @@ Output device: %2</source>
         <translation>คำบรรยายนี้ไม่ได้เพิ่มสคริปต์ใด ๆ</translation>
     </message>
     <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1 ไม่มีแมโครให้เรียกใช้</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation type="vanished">ข้อผิดพลาด</translation>
     </message>
@@ -6670,6 +6674,14 @@ when find results window is open</source>
     <message>
         <source>Program font</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview text</source>
+        <translation>ข้อความตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>The sample text of the style and font previews.</source>
+        <translation>ข้อความที่ใช้แสดงตัวอย่างสไตล์และแบบอักษร</translation>
     </message>
     <message>
         <source>Window</source>

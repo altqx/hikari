@@ -80,7 +80,10 @@ private slots:
         controller->load(QStringLiteral(HIKARI_LUA_FIXTURES "/syntax-error.lua"));
         QTRY_COMPARE(scriptState(0), QStringLiteral("failed"));
         QTRY_VERIFY(item(QStringLiteral("error_0")));
-        QVERIFY(item(QStringLiteral("error_0"))->property("text").toString().contains(QStringLiteral("expected")));
+        // #390: the row names the file, not Lua's [string "<path>"] chunk.
+        const QString error = item(QStringLiteral("error_0"))->property("text").toString();
+        QVERIFY2(error.startsWith(QStringLiteral("syntax-error.lua:")), qPrintable(error));
+        QVERIFY(error.contains(QStringLiteral("expected")));
         QVERIFY(item(QStringLiteral("error_0"))->property("visible").toBool());
     }
 

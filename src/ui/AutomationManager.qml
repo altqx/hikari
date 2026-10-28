@@ -166,6 +166,15 @@ Pane {
     function scriptTitle(script) {
         return script.name !== "" ? script.name : script.fileName
     }
+    // A script's error with its own chunk name, [string "/path/to/a.lua"]
+    // (cut to [string "/path/t..."] when long), read as a.lua (#390; the
+    // Template editor strips it too).
+    function shownError(script) {
+        return (script.error ?? "").replace(/\[string "([^"]*)"\]/g, (chunk, name) => {
+            const head = name.endsWith("...") ? name.slice(0, -3) : name
+            return head !== "" && (script.path ?? "").startsWith(head) ? script.fileName : chunk
+        })
+    }
     function matches(text) {
         return filterText.length === 0 || text.toLowerCase().includes(filterText)
     }
@@ -907,7 +916,7 @@ Pane {
                 Layout.rightMargin: 12
                 text: scriptItem.state === "unavailable" && (scriptItem.script.error ?? "") === ""
                       ? qsTr("The script's process ended. Reload to start it again; its macro is not rerun.")
-                      : scriptItem.script.error ?? ""
+                      : root.shownError(scriptItem.script)
                 wrapMode: Text.Wrap
                 maximumLineCount: scriptItem.fullError ? 1000 : 2
                 elide: Text.ElideRight
@@ -927,7 +936,7 @@ Pane {
                     visible: false
                     width: Math.max(1, scriptItem.width - 40)
                     wrapMode: Text.Wrap
-                    text: scriptItem.script.error ?? ""
+                    text: root.shownError(scriptItem.script)
                 }
             }
         }

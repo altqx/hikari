@@ -1,6 +1,7 @@
 // TP1 (#274): the Styles panel, the editing target's Styles beside the video
-// (owner-approved mockup 2026-10-22). Each row draws the Style's name in its
-// font and colours ("Aa"), with its font, size and how many Lines use it; the
+// (owner-approved mockup 2026-10-22). Each row draws a sample in the Style's
+// font and colours (PV1 #398: the preview text, styles.previewText), with
+// its name, font, size and how many Lines use it; the
 // current Line's Style is marked. Enter or a double click applies the chosen
 // Style to the selected Lines, as the Line editor's Style choice does (one
 // undo step). Typing filters. The header's toolbar (Docking.setPanelHeader)
@@ -20,6 +21,7 @@ Item {
     required property var editor   // LineEditorController: the current line's style, chooseStyle
     required property var app      // selectLinesWithStyle
     required property var manager  // the Style manager window (StyleManager.qml)
+    required property var catalogs // FontCatalogsController: the samples' text (previewText)
     // The header's toolbar; its dock reads the rows only while it is open.
     readonly property Item toolbar: tools
     property bool live: false
@@ -254,13 +256,14 @@ Item {
                     anchors.leftMargin: 6
                     anchors.rightMargin: 10
                     spacing: 8
-                    // The Style's look: "Aa" in its font, primary and outline
-                    // colours, over a checkered ground (as the Style editor's
-                    // preview), so light and dark Styles both show.
+                    // The Style's look: the preview text in its font, primary
+                    // and outline colours, over a checkered ground (as the
+                    // Style editor's preview), so light and dark Styles both
+                    // show; a long text shrinks to the swatch.
                     Rectangle {
                         id: sample
                         objectName: "stylesSample" + row.index
-                        implicitWidth: 46
+                        implicitWidth: 92
                         implicitHeight: 30
                         border.width: 1
                         border.color: Theme.line
@@ -269,20 +272,27 @@ Item {
                         Grid {
                             anchors.fill: parent
                             anchors.margins: 1
-                            columns: 5
+                            columns: 10
                             Repeater {
-                                model: 15
+                                model: 30
                                 Rectangle {
                                     required property int index
                                     width: 9
                                     height: 10
-                                    color: (index + Math.floor(index / 5)) % 2 === 0 ? "#6b6b6b" : "#8a8a8a"
+                                    color: (index + Math.floor(index / 10)) % 2 === 0 ? "#6b6b6b" : "#8a8a8a"
                                 }
                             }
                         }
                         Text {
-                            anchors.centerIn: parent
-                            text: "Aa"
+                            objectName: "stylesSampleText" + row.index
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            textFormat: Text.PlainText
+                            text: panel.catalogs.samplePlain(panel.catalogs.previewText, true)
+                            fontSizeMode: Text.HorizontalFit
+                            minimumPixelSize: 9
                             font.family: row.modelData.font
                             font.pixelSize: 17
                             font.bold: row.modelData.bold
