@@ -1353,7 +1353,8 @@ ApplicationWindow {
     // Classic menus, in the title bar. Commands join through the shared
     // action system as their cards land. K1: the items legacy drew with a
     // bitmap (HikariSubFrame.cpp's AppendTool) show the set's icon
-    // (ShellMenuItem, ShellMenu).
+    // (ShellMenuItem, ShellMenu). MN1 (#472): the bar is File, Edit,
+    // Subtitles, Video, Audio, Automation, View, Help.
     TitleBarMenus {
         id: appMenus
         TitleBarMenuItem {
@@ -1530,20 +1531,6 @@ ApplicationWindow {
                         id: removeTemporaryAction
                         text: qsTr("Remove temporary files")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) autosaves.show(true)
-                    }
-                }
-                // NT1: the Log panel, shown or hidden (legacy's place in File).
-                ShellMenuItem {
-                    iconRole: "log"
-                    objectName: "logMenuItem"
-                    action: Action {
-                        text: qsTr("Log")
-                        onTriggered: {
-                            if (logDock.isOpen)
-                                logDock.close()
-                            else
-                                root.showPanel(logDock)
-                        }
                     }
                 }
                 // P6: legacy "Last session" submenu.
@@ -1782,116 +1769,149 @@ ApplicationWindow {
                 }
             }
         }
+        // Legacy Subtitles menu; its entries join as their cards land.
         ShellMenu {
-            id: automationMenu
-            objectName: "automationMenu"
-            title: qsTr("&Automation")
-            // S4: legacy BuildMenu on opening (the Document's scripts, changed files reloaded).
-            onAboutToShow: root.automation.menuOpened()
-            // AM1: legacy's "Open shortcut mapping window" is gone with its
-            // window (AM1-hotkeys-window-retired); each macro's shortcut is
-            // in the Automation panel and Settings → Hotkeys.
+            objectName: "subtitlesMenu"
+            title: qsTr("&Subtitles")
             ShellMenuItem {
-                command: "GLOBAL_AUTOMATION_LOAD_SCRIPT"
-                help: qsTr("Load script") // HikariSubFrame.cpp:349
-                iconRole: "automation"
-                objectName: "loadScriptMenuItem"
-                action: Action {
-                    id: loadScriptAction
-                    text: qsTr("&Load script…")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_SCRIPT")) scriptDialog.open()
-                }
+                command: "GLOBAL_SHOW_SHIFT_TIMES"
+                help: qsTr("Shifting subtitle times") // HikariSubFrame.cpp:336
+                id: showShiftTimesItem
+                iconRole: "shift-times"
+                objectName: "showShiftTimes"
+                text: qsTr("Shift &times...")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
             }
             ShellMenuItem {
-                command: "GLOBAL_AUTOMATION_RELOAD_AUTOLOAD"
-                help: qsTr("Refresh autoload scripts") // HikariSubFrame.cpp:351
-                iconRole: "automation"
-                objectName: "reloadAutoloadMenuItem"
-                action: Action {
-                    id: reloadAutoloadAction
-                    text: qsTr("Refresh autoload scripts")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")) root.automation.reloadAutoload()
-                }
+                command: "GLOBAL_SHIFT_TIMES"
+                id: runShiftTimesItem
+                iconRole: "shift-times-run"
+                objectName: "runShiftTimes"
+                text: qsTr("Shift times / run time post processor")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
             }
             ShellMenuItem {
-                command: "GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT"
-                iconRole: "run-script"
-                objectName: "loadLastScriptMenuItem"
-                action: Action {
-                    id: loadLastScriptAction
-                    text: qsTr("Run the last loaded script")
-                    // Legacy's modal progress dialog blocks it while a macro
-                    // runs; D2: OnMenuOpened disables m_AutoMenu's items. AM1:
-                    // off under a modal dialog, as the macros' shortcuts.
-                    enabled: !root.automation.running && !root.workspaceLayout.modalOpen
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
-                }
+                command: "GLOBAL_OPEN_STYLE_MANAGER"
+                help: qsTr("Is used to manage ASS styles") // HikariSubFrame.cpp:320
+                id: styleManagerItem
+                iconRole: "styles"
+                objectName: "styleManagerMenuItem"
+                text: qsTr("Style &manager")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) styleManagerWindow.showFor(root.app.activeLineStyle())
             }
             ShellMenuItem {
-                iconRole: "rerun-macro"
-                objectName: "rerunMenuItem"
-                action: Action {
-                    text: qsTr("Rerun last macro")
-                    enabled: root.automation.canRerun && !root.workspaceLayout.modalOpen
-                    onTriggered: root.automation.rerunLast()
+                command: "GLOBAL_OPEN_ASS_PROPERTIES"
+                help: qsTr("ASS subtitle properties") // HikariSubFrame.cpp:318
+                id: assPropertiesItem
+                iconRole: "script-properties"
+                objectName: "assProperties"
+                text: qsTr("ASS file properties")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
+            }
+            ShellMenu {
+                help: qsTr("Converts from one format to another") // HikariSubFrame.cpp:334
+                id: conversionMenu
+                iconRole: "convert"
+                objectName: "conversionMenu"
+                title: qsTr("Conversion")
+                property var targets: []
+                onAboutToShow: targets = root.app.conversionTargets()
+                Repeater {
+                    model: root.conversionItems
+                    ShellMenuItem {
+                        objectName: "convertTo_" + modelData[0]
+                        command: modelData[2]
+                        help: modelData[3]
+                        iconRole: ["convert-ass", "convert-srt", "convert-mdvd", "convert-mpl2", "convert-tmp"][index]
+                        text: modelData[1]
+                        enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
+                        onTriggered: if (!root.hotkeyGesture(modelData[2])) root.openConversion(modelData[0], modelData[1])
+                    }
                 }
             }
-            // AD2-repeat-last-run: the last run again with its answers,
-            // without its dialogs when they are unchanged.
+            // Legacy SubsMenu: Font collector after Conversion and Shift times
+            // (HikariSubFrame.cpp:338), enabled for subsFormat < SRT (2407).
             ShellMenuItem {
-                command: "GLOBAL_AUTOMATION_REPEAT_LAST_RUN"
-                help: qsTr("Run the last macro again with the same answers, without its dialogs when they are unchanged")
-                iconRole: "repeat-run"
-                objectName: "repeatRunMenuItem"
-                action: Action {
-                    id: repeatRunAction
-                    text: qsTr("Repeat last run")
-                    enabled: root.automation.canRepeat && !root.workspaceLayout.modalOpen
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_REPEAT_LAST_RUN")) root.automation.repeatLast()
-                }
-            }
-            // AD3: the progress card's Cancel from the menu (it has no
-            // hotkey of its own).
-            ShellMenuItem {
-                iconRole: "run-cancelled"
-                objectName: "cancelMacroMenuItem"
-                visible: root.automation.running
-                height: visible ? implicitHeight : 0
-                action: Action {
-                    text: qsTr("Cancel macro")
-                    enabled: root.automation.running && !root.automation.cancelling
-                    onTriggered: root.automation.cancelRun()
-                }
+                command: "GLOBAL_OPEN_FONT_COLLECTOR"
+                help: qsTr("Font collector") // HikariSubFrame.cpp:338
+                id: fontCollectorItem
+                objectName: "fontCollectorMenuItem"
+                iconRole: "font-collector"
+                text: qsTr("Font collector")
+                enabled: root.shell.hasEditingTarget && root.shell.assColumns
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
             }
             ShellMenuItem {
-                iconRole: "automation-manager"
-                objectName: "automationManagerMenuItem"
+                command: "GLOBAL_OPEN_SUBS_RESAMPLE"
+                help: qsTr("Resample subtitles") // HikariSubFrame.cpp:340
+                id: resampleItem
+                iconRole: "resample"
+                objectName: "resampleMenuItem"
+                text: qsTr("Resample subtitles")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) root.openResample()
+            }
+            // Legacy HikariSubFrame: after Resample subtitles.
+            ShellMenuItem {
+                command: "GLOBAL_OPEN_SPELLCHECKER"
+                help: qsTr("Check spelling") // HikariSubFrame.cpp:342
+                id: checkSpellingItem
+                iconRole: "spellchecker"
+                objectName: "checkSpellingMenuItem"
+                text: qsTr("Check spelling")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) root.openSpellChecker()
+            }
+            // KA7: the Karaoke check window, after Check spelling.
+            ShellMenuItem {
+                command: "GLOBAL_CHECK_KARAOKE"
+                help: qsTr("Checks the karaoke syllables of every line")
+                id: checkKaraokeItem
+                iconRole: "karaoke"
+                objectName: "checkKaraokeMenuItem"
+                text: qsTr("Check karaoke")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) root.openKaraokeCheck()
+            }
+            // KA3: the Kanji timer window, after Check karaoke.
+            ShellMenuItem {
+                command: "GLOBAL_KANJI_TIMER"
+                help: qsTr("Copies the karaoke timing of romaji lines to their kanji lines")
+                id: kanjiTimerItem
+                iconRole: "karaoke-split"
+                objectName: "kanjiTimerMenuItem"
+                text: qsTr("Kanji timer…")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
+            }
+            MenuSeparator {}
+            // TM1 (#232): the editing target's Translation mode, which the
+            // Line editor's "Translator mode" check box switched in legacy
+            // (TM1-translator-check-removed). On is one "Turning on translator
+            // mode" step; off asks first (TranslationModeOffConfirm).
+            ShellMenuItem {
+                command: "GLOBAL_TRANSLATION_MODE"
+                help: root.app.translationHint.length > 0 ? root.app.translationHint
+                    : qsTranslate("HikariSub.Translation", "Translator mode displays and saves both foreign text and translation text")
+                iconRole: "translation-mode"
+                objectName: "translationModeMenuItem"
                 action: Action {
-                    text: qsTr("Show &panel")
-                    onTriggered: root.showPanel(automationDock)
-                }
-            }
-            // The macros go after it, whatever static items come before.
-            MenuSeparator {
-                id: macrosSeparator
-                objectName: "macrosSeparator"
-            }
-            // AS1: a "/" in a macro's name opens submenus.
-            MacroMenuEntries {
-                menu: automationMenu
-                after: macrosSeparator
-                macros: root.macroItems
-                enabled: !root.automation.running
-                // Automation.cpp:1376-1379: Shift maps the macro's hotkey
-                // (OnMapHkey(-1, "Script <file>-<n>")); AM1: in the
-                // Automation panel, which records it in place
-                // (AM1-hotkeys-window-retired).
-                onTriggered: macro => {
-                    if (root.hotkeys.shiftClicked(true)) {
-                        root.showPanel(automationDock)
-                        automationTool.record(root.automationHotkeys.legacyNameFor(macro.path, macro.ordinal))
-                    } else {
-                        root.automationManager.run(macro.path, macro.ordinal)
+                    id: translationModeAction
+                    text: qsTranslate("HikariSub.Translation", "Translation mode")
+                    checkable: true
+                    checked: root.editor.translationMode
+                    enabled: root.shell.hasEditingTarget && (root.editor.translationMode || root.app.translatorModeAvailable)
+                    onToggled: {
+                        if (!root.hotkeyGesture("GLOBAL_TRANSLATION_MODE")) {
+                            if (checked)
+                                root.app.turnOnTranslationMode()
+                            else
+                                root.openInMainWindow(translationModeOffConfirm)
+                        }
+                        checked = Qt.binding(() => root.editor.translationMode)
                     }
                 }
             }
@@ -2050,31 +2070,6 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
                 }
             }
-            // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
-            // (legacy OnMenuOpened: ABox != nullptr && editor; the editor is
-            // the editing target's).
-            ShellMenuItem {
-                command: "GLOBAL_SET_AUDIO_FROM_VIDEO"
-                iconRole: "audio-to-video-time"
-                objectName: "setAudioFromVideoMenuItem"
-                action: Action {
-                    id: setAudioFromVideoAction
-                    text: qsTr("Set audio position to video time")
-                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_FROM_VIDEO")) root.app.setAudioFromVideo(false)
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SET_AUDIO_MARK_FROM_VIDEO"
-                iconRole: "audio-marker-to-video-time"
-                objectName: "setAudioMarkFromVideoMenuItem"
-                action: Action {
-                    id: setAudioMarkFromVideoAction
-                    text: qsTr("Set audio marker to video time")
-                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
-                }
-            }
             // V3: legacy's video context menu entries (VideoBox.cpp:979-1016),
             // which the context menu has in legacy's form, in the Video menu
             // too (V3-video-menu-entries): Unload video (VIDEO_DELETE_FILE,
@@ -2205,6 +2200,146 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_AUDIO")) root.audio.closeAudio()
                 }
             }
+            MenuSeparator {}
+            // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO,
+            // in legacy's Video menu, here since MN1 (legacy OnMenuOpened: ABox != nullptr && editor; the editor is
+            // the editing target's).
+            ShellMenuItem {
+                command: "GLOBAL_SET_AUDIO_FROM_VIDEO"
+                iconRole: "audio-to-video-time"
+                objectName: "setAudioFromVideoMenuItem"
+                action: Action {
+                    id: setAudioFromVideoAction
+                    text: qsTr("Set audio position to video time")
+                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_FROM_VIDEO")) root.app.setAudioFromVideo(false)
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SET_AUDIO_MARK_FROM_VIDEO"
+                iconRole: "audio-marker-to-video-time"
+                objectName: "setAudioMarkFromVideoMenuItem"
+                action: Action {
+                    id: setAudioMarkFromVideoAction
+                    text: qsTr("Set audio marker to video time")
+                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
+                }
+            }
+        }
+        ShellMenu {
+            id: automationMenu
+            objectName: "automationMenu"
+            title: qsTr("&Automation")
+            // S4: legacy BuildMenu on opening (the Document's scripts, changed files reloaded).
+            onAboutToShow: root.automation.menuOpened()
+            // AM1: legacy's "Open shortcut mapping window" is gone with its
+            // window (AM1-hotkeys-window-retired); each macro's shortcut is
+            // in the Automation panel and Settings → Hotkeys.
+            ShellMenuItem {
+                command: "GLOBAL_AUTOMATION_LOAD_SCRIPT"
+                help: qsTr("Load script") // HikariSubFrame.cpp:349
+                iconRole: "automation"
+                objectName: "loadScriptMenuItem"
+                action: Action {
+                    id: loadScriptAction
+                    text: qsTr("&Load script…")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_SCRIPT")) scriptDialog.open()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_AUTOMATION_RELOAD_AUTOLOAD"
+                help: qsTr("Refresh autoload scripts") // HikariSubFrame.cpp:351
+                iconRole: "automation"
+                objectName: "reloadAutoloadMenuItem"
+                action: Action {
+                    id: reloadAutoloadAction
+                    text: qsTr("Refresh autoload scripts")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")) root.automation.reloadAutoload()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT"
+                iconRole: "run-script"
+                objectName: "loadLastScriptMenuItem"
+                action: Action {
+                    id: loadLastScriptAction
+                    text: qsTr("Run the last loaded script")
+                    // Legacy's modal progress dialog blocks it while a macro
+                    // runs; D2: OnMenuOpened disables m_AutoMenu's items. AM1:
+                    // off under a modal dialog, as the macros' shortcuts.
+                    enabled: !root.automation.running && !root.workspaceLayout.modalOpen
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
+                }
+            }
+            ShellMenuItem {
+                iconRole: "rerun-macro"
+                objectName: "rerunMenuItem"
+                action: Action {
+                    text: qsTr("Rerun last macro")
+                    enabled: root.automation.canRerun && !root.workspaceLayout.modalOpen
+                    onTriggered: root.automation.rerunLast()
+                }
+            }
+            // AD2-repeat-last-run: the last run again with its answers,
+            // without its dialogs when they are unchanged.
+            ShellMenuItem {
+                command: "GLOBAL_AUTOMATION_REPEAT_LAST_RUN"
+                help: qsTr("Run the last macro again with the same answers, without its dialogs when they are unchanged")
+                iconRole: "repeat-run"
+                objectName: "repeatRunMenuItem"
+                action: Action {
+                    id: repeatRunAction
+                    text: qsTr("Repeat last run")
+                    enabled: root.automation.canRepeat && !root.workspaceLayout.modalOpen
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_REPEAT_LAST_RUN")) root.automation.repeatLast()
+                }
+            }
+            // AD3: the progress card's Cancel from the menu (it has no
+            // hotkey of its own).
+            ShellMenuItem {
+                iconRole: "run-cancelled"
+                objectName: "cancelMacroMenuItem"
+                visible: root.automation.running
+                height: visible ? implicitHeight : 0
+                action: Action {
+                    text: qsTr("Cancel macro")
+                    enabled: root.automation.running && !root.automation.cancelling
+                    onTriggered: root.automation.cancelRun()
+                }
+            }
+            ShellMenuItem {
+                iconRole: "automation-manager"
+                objectName: "automationManagerMenuItem"
+                action: Action {
+                    text: qsTr("Show &panel")
+                    onTriggered: root.showPanel(automationDock)
+                }
+            }
+            // The macros go after it, whatever static items come before.
+            MenuSeparator {
+                id: macrosSeparator
+                objectName: "macrosSeparator"
+            }
+            // AS1: a "/" in a macro's name opens submenus.
+            MacroMenuEntries {
+                menu: automationMenu
+                after: macrosSeparator
+                macros: root.macroItems
+                enabled: !root.automation.running
+                // Automation.cpp:1376-1379: Shift maps the macro's hotkey
+                // (OnMapHkey(-1, "Script <file>-<n>")); AM1: in the
+                // Automation panel, which records it in place
+                // (AM1-hotkeys-window-retired).
+                onTriggered: macro => {
+                    if (root.hotkeys.shiftClicked(true)) {
+                        root.showPanel(automationDock)
+                        automationTool.record(root.automationHotkeys.legacyNameFor(macro.path, macro.ordinal))
+                    } else {
+                        root.automationManager.run(macro.path, macro.ordinal)
+                    }
+                }
+            }
         }
         ShellMenu {
             id: viewMenu
@@ -2289,156 +2424,24 @@ ApplicationWindow {
                 enabled: root.workspaceLayout.hasBackup
                 onTriggered: root.workspaceLayout.restoreBackup()
             }
-        }
-        // Legacy Subtitles menu; its entries join as their cards land.
-        ShellMenu {
-            objectName: "subtitlesMenu"
-            title: qsTr("&Subtitles")
-            ShellMenuItem {
-                command: "GLOBAL_SHOW_SHIFT_TIMES"
-                help: qsTr("Shifting subtitle times") // HikariSubFrame.cpp:336
-                id: showShiftTimesItem
-                iconRole: "shift-times"
-                objectName: "showShiftTimes"
-                text: qsTr("Shift &times...")
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SHIFT_TIMES"
-                id: runShiftTimesItem
-                iconRole: "shift-times-run"
-                objectName: "runShiftTimes"
-                text: qsTr("Shift times / run time post processor")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_STYLE_MANAGER"
-                help: qsTr("Is used to manage ASS styles") // HikariSubFrame.cpp:320
-                id: styleManagerItem
-                iconRole: "styles"
-                objectName: "styleManagerMenuItem"
-                text: qsTr("Style &manager")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) styleManagerWindow.showFor(root.app.activeLineStyle())
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_ASS_PROPERTIES"
-                help: qsTr("ASS subtitle properties") // HikariSubFrame.cpp:318
-                id: assPropertiesItem
-                iconRole: "script-properties"
-                objectName: "assProperties"
-                text: qsTr("ASS file properties")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
-            }
-            ShellMenu {
-                help: qsTr("Converts from one format to another") // HikariSubFrame.cpp:334
-                id: conversionMenu
-                iconRole: "convert"
-                objectName: "conversionMenu"
-                title: qsTr("Conversion")
-                property var targets: []
-                onAboutToShow: targets = root.app.conversionTargets()
-                Repeater {
-                    model: root.conversionItems
-                    ShellMenuItem {
-                        objectName: "convertTo_" + modelData[0]
-                        command: modelData[2]
-                        help: modelData[3]
-                        iconRole: ["convert-ass", "convert-srt", "convert-mdvd", "convert-mpl2", "convert-tmp"][index]
-                        text: modelData[1]
-                        enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
-                        onTriggered: if (!root.hotkeyGesture(modelData[2])) root.openConversion(modelData[0], modelData[1])
-                    }
-                }
-            }
-            // Legacy SubsMenu: Font collector after Conversion and Shift times
-            // (HikariSubFrame.cpp:338), enabled for subsFormat < SRT (2407).
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_FONT_COLLECTOR"
-                help: qsTr("Font collector") // HikariSubFrame.cpp:338
-                id: fontCollectorItem
-                objectName: "fontCollectorMenuItem"
-                iconRole: "font-collector"
-                text: qsTr("Font collector")
-                enabled: root.shell.hasEditingTarget && root.shell.assColumns
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_SUBS_RESAMPLE"
-                help: qsTr("Resample subtitles") // HikariSubFrame.cpp:340
-                id: resampleItem
-                iconRole: "resample"
-                objectName: "resampleMenuItem"
-                text: qsTr("Resample subtitles")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) root.openResample()
-            }
-            // Legacy HikariSubFrame: after Resample subtitles.
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_SPELLCHECKER"
-                help: qsTr("Check spelling") // HikariSubFrame.cpp:342
-                id: checkSpellingItem
-                iconRole: "spellchecker"
-                objectName: "checkSpellingMenuItem"
-                text: qsTr("Check spelling")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) root.openSpellChecker()
-            }
-            // KA7: the Karaoke check window, after Check spelling.
-            ShellMenuItem {
-                command: "GLOBAL_CHECK_KARAOKE"
-                help: qsTr("Checks the karaoke syllables of every line")
-                id: checkKaraokeItem
-                iconRole: "karaoke"
-                objectName: "checkKaraokeMenuItem"
-                text: qsTr("Check karaoke")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) root.openKaraokeCheck()
-            }
-            // KA3: the Kanji timer window, after Check karaoke.
-            ShellMenuItem {
-                command: "GLOBAL_KANJI_TIMER"
-                help: qsTr("Copies the karaoke timing of romaji lines to their kanji lines")
-                id: kanjiTimerItem
-                iconRole: "karaoke-split"
-                objectName: "kanjiTimerMenuItem"
-                text: qsTr("Kanji timer…")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
-            }
             MenuSeparator {}
-            // TM1 (#232): the editing target's Translation mode, which the
-            // Line editor's "Translator mode" check box switched in legacy
-            // (TM1-translator-check-removed). On is one "Turning on translator
-            // mode" step; off asks first (TranslationModeOffConfirm).
+            // NT1: the Log panel, shown or hidden (legacy's place was File;
+            // MN1: with the view switches).
             ShellMenuItem {
-                command: "GLOBAL_TRANSLATION_MODE"
-                help: root.app.translationHint.length > 0 ? root.app.translationHint
-                    : qsTranslate("HikariSub.Translation", "Translator mode displays and saves both foreign text and translation text")
-                iconRole: "translation-mode"
-                objectName: "translationModeMenuItem"
+                iconRole: "log"
+                objectName: "logMenuItem"
                 action: Action {
-                    id: translationModeAction
-                    text: qsTranslate("HikariSub.Translation", "Translation mode")
-                    checkable: true
-                    checked: root.editor.translationMode
-                    enabled: root.shell.hasEditingTarget && (root.editor.translationMode || root.app.translatorModeAvailable)
-                    onToggled: {
-                        if (!root.hotkeyGesture("GLOBAL_TRANSLATION_MODE")) {
-                            if (checked)
-                                root.app.turnOnTranslationMode()
-                            else
-                                root.openInMainWindow(translationModeOffConfirm)
-                        }
-                        checked = Qt.binding(() => root.editor.translationMode)
+                    text: qsTr("Log")
+                    onTriggered: {
+                        if (logDock.isOpen)
+                            logDock.close()
+                        else
+                            root.showPanel(logDock)
                     }
                 }
             }
-            MenuSeparator {}
             // E6: legacy SubsMenu's last item, "Hides tags in ASS and MDVD"
-            // (HikariSubFrame.cpp:344-345): the Grid's switch.
+            // (HikariSubFrame.cpp:344-345): the Grid's switch, in View since MN1.
             ShellMenuItem {
                 command: "GLOBAL_HIDE_TAGS"
                 id: hideTagsItem

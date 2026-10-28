@@ -7,7 +7,7 @@ pkgrel=1
 pkgdesc=@PKGDESC@
 arch=('x86_64')
 url='https://hikarisub.altqx.com'
-license=('GPL-3.0-or-later' 'BSD-3-Clause' 'Apache-2.0')
+license=('GPL-3.0-or-later' 'BSD-3-Clause' 'Apache-2.0' 'MPL-1.1' 'LGPL-2.0-or-later')
 depends=(@DEPENDS@)
 optdepends=(@OPTDEPENDS@)
 provides=('hikarisub')
@@ -21,7 +21,8 @@ package() {
   install -d "$pkgdir/opt/hikarisub" "$pkgdir/usr/bin" "$pkgdir/usr/share"
   cp -a --no-preserve=ownership share/. "$pkgdir/usr/share/"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
-  # The bundled MeCab's and UniDic's BSD notices, Harper's Apache-2.0 and its crates' (since 0.1.0).
+  # The bundled MeCab's and UniDic's BSD notices, Harper's Apache-2.0 and its crates' (since 0.1.0),
+  # the spelling dictionaries' notices (licenses/dictionaries).
   [ ! -d licenses ] || cp -a --no-preserve=ownership licenses/. "$pkgdir/usr/share/licenses/$pkgname/"
   rm -rf share install-desktop-integration.sh SHA256SUMS
   cp -a --no-preserve=ownership . "$pkgdir/opt/hikarisub/"

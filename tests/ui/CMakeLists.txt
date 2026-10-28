@@ -83,8 +83,8 @@ target_compile_definitions(hikari_ui_automation_dialog_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
-    HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/capture-probe.lua"
-    HIKARI_LEGACY_CAPTURE_PLAN="${PROJECT_SOURCE_DIR}/tools/legacy-capture/plan.json"
+    HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/automation/capture-probe.lua"
+    HIKARI_LEGACY_PLAN="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/plan.json"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
 add_dependencies(hikari_ui_automation_dialog_tests hikari_lua_helper)
 # N7: the scene-graph presenter against the CPU composite (start of M50-present).
@@ -115,7 +115,7 @@ target_compile_definitions(hikari_ui_automation_services_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
-    HIKARI_VISUAL_T3_MEASURE_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-t3-measure-cases.txt"
+    HIKARI_VISUAL_T3_MEASURE_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/visual-t3-measure-cases.txt"
     HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-measure-20261012/observations.jsonl")
 add_dependencies(hikari_ui_automation_services_tests hikari_lua_helper)
 # I1: indexed video in the Classic shell (Spix workflow).
@@ -209,10 +209,10 @@ target_compile_definitions(hikari_ui_automation_document_scripts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
-    # The legacy capture (document_scripts_capture.py) and its scripts.
+    # The legacy observations of the Document scripts, and the scripts.
     HIKARI_S4_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-s4-document-scripts-20261013/s4.json"
     HIKARI_S4_WINDOWS_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-s4-document-scripts-20261013/s4-windows.json"
-    HIKARI_S4_SCRIPTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/document-scripts")
+    HIKARI_S4_SCRIPTS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/automation/document-scripts")
 add_dependencies(hikari_ui_automation_document_scripts_tests hikari_lua_helper hikari_automation_stage
     hikari_media_helper hikari_media_fixtures)
 # AD2: Repeat last run and "Fill in my last answers" with the real Lua helper.

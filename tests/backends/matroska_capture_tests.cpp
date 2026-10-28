@@ -1,6 +1,6 @@
 // Y9: the rewrite's MKV extraction against legacy Demux run on the same
 // files (tests/fixtures/legacy-observations/local-y9-demux-20261013, captured
-// by tools/legacy-capture's legacy_demux_capture from the mkvmerge-muxed
+// by the legacy_demux_capture probe from the mkvmerge-muxed
 // files in tests/fixtures/matroska-muxed). Each case goes through the real
 // media helper: the packets FFMS2's extension hands over (start, duration,
 // total and bytes, in order), the Line legacy's packet callback built from

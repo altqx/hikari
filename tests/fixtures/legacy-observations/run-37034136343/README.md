@@ -1,6 +1,6 @@
 # Legacy observations: run 37034136343
 
-Captured by [legacy-capture](../../../../.github/workflows/legacy-capture.yml) [run 37034136343](https://github.com/altqx/hikari/actions/runs/37034136343) from the legacy wx app at `20d647c4`, under the same conditions as [run 36591631319](../run-36591631319/README.md). `observations.json` is the complete record, including the key scripts. All earlier cases reproduced byte for byte, so only the two new cases' outputs are kept.
+Captured by [legacy-capture](https://github.com/altqx/hikari/blob/350c1152a3560230913ce89d163ebd52766cc5ce/.github/workflows/legacy-capture.yml) [run 37034136343](https://github.com/altqx/hikari/actions/runs/37034136343) from the legacy wx app at `20d647c4`, under the same conditions as [run 36591631319](../run-36591631319/README.md). `observations.json` is the complete record, including the key scripts. All earlier cases reproduced byte for byte, so only the two new cases' outputs are kept.
 
 | Case | Key script | Old app observed | Rewrite |
 | --- | --- | --- | --- |

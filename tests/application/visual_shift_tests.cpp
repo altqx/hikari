@@ -1,6 +1,5 @@
 // T6: the Position shifter and the all-tags tool. The tools replay the
-// legacy probe's captures (tools/legacy-capture/visual_t6_capture.cpp over
-// inputs/visual-t6-cases.txt; tests/fixtures/legacy-observations/
+// legacy probe's captures (tests/fixtures/legacy-cases/inputs/visual-t6-cases.txt; tests/fixtures/legacy-observations/
 // local-t6-visual-20261006): every Line's text and translation after each
 // step, the editor's text and caret on the one-Line path, the commits, the
 // tools' state and what they draw must be legacy's exactly, but for the

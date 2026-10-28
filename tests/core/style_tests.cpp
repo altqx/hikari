@@ -88,7 +88,7 @@ TEST(Style, AssLayout)
 
 TEST(Style, SsaV4CaptureInput)
 {
-    // tools/legacy-capture/inputs/ssa-v4.ssa: decimal and hex colours, SSA
+    // tests/fixtures/legacy-cases/inputs/ssa-v4.ssa: decimal and hex colours, SSA
     // alignment numbering, Tertiary colour and AlphaLevel with no ASS field.
     const auto doc = loadAss(readFile(QStringLiteral(HIKARI_CAPTURE_INPUTS "/ssa-v4.ssa"))).document;
     const auto styles = decodeStyles(doc);
