@@ -146,13 +146,12 @@ Get the latest release from the [releases page](https://github.com/altqx/hikari/
 | --- | --- |
 | Windows 10 (1809) or 11, x64 | `HikariSub-<version>-windows-x64-setup.exe` installer or `.zip` portable |
 | Linux x86_64, glibc 2.35 or later | `.AppImage`, `.deb`, `.rpm` or `.tar.gz` portable |
-| Arch Linux | AUR: `hikarisub-stable-bin` (stable releases) or `hikarisub-beta-bin` (release candidates too) |
 
 The installer is not code-signed, so Windows SmartScreen may ask you to confirm it. [docs/install.md](docs/install.md) covers each package, the installer's silent switches and its exit codes.
 
 ## Updates and privacy
 
-At most once a day, HikariSub asks GitHub whether a newer release is out. The installer, AppImage, deb and rpm then download it, check its SHA-256 and install it when you choose Restart now or quit. The AUR packages and portable copies only tell you. Turn the check off in File > Settings, on the Editor page, under Updates.
+At most once a day, HikariSub asks GitHub whether a newer release is out. The installer, AppImage, deb and rpm then download it, check its SHA-256 and install it when you choose Restart now or quit. Portable copies only tell you. Turn the check off in File > Settings, on the Editor page, under Updates.
 
 <details>
 <summary>What is sent and how updates install</summary>
@@ -162,7 +161,6 @@ At most once a day, HikariSub asks GitHub whether a newer release is out. The in
   - On Windows that is the installed HikariSub. An all-users installation starts it through the administrator prompt, only when its folder cannot be changed without administrator rights, and it then runs the installer. If you start HikariSub while that installer runs, it starts when the installer is done.
   - On Linux it is the deb and rpm packages' update helper, which asks for your password through the system's prompt (pkexec) and installs the package only if it is that release's own file.
 - An AppImage installs at the next start after that quit, so that a version that cannot start is put back.
-- `hikarisub-stable-bin` says when a stable release is out, `hikarisub-beta-bin` also for release candidates; update with your AUR helper or pacman as usual.
 - A portable copy (zip or tar.gz) says a new version is out and opens the release page.
 - Turning off "Install updates automatically" makes an installed copy only say a new version is out, as a portable copy does. Help > Check for updates checks at any time.
 
@@ -174,7 +172,7 @@ At most once a day, HikariSub asks GitHub whether a newer release is out. The in
 git clone --recurse-submodules https://github.com/altqx/hikari.git
 ```
 
-Windows builds with Visual Studio 2022 or newer from `HikariSub.sln` after `Thirdparty\bootstrap.ps1`. Linux builds with CMake against system packages and a pinned wxWidgets. [docs/build.md](docs/build.md) has the steps, the dependencies for each distribution and the AUR publishing notes.
+Windows builds with Visual Studio 2022 or newer from `HikariSub.sln` after `Thirdparty\bootstrap.ps1`. Linux builds with CMake against system packages and a pinned wxWidgets. [docs/build.md](docs/build.md) has the steps and the dependencies for each distribution.
 
 ## Why a fork?
 
