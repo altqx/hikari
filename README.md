@@ -165,7 +165,6 @@ There is no Qt release yet; the first will be 0.1.0-beta.1. Each release will pu
 | --- | --- |
 | Windows 10 (1809) or 11, x64 | `HikariSub-<version>-windows-x64-setup.exe` installer or `.zip` portable |
 | Linux x86_64, glibc 2.34 or later | `.AppImage`, `.deb`, `.rpm` or `.tar.gz` portable |
-| Arch Linux | AUR: `hikarisub-beta-bin` (every release) or `hikarisub-stable-bin` (stable releases) |
 
 Nothing is code-signed; each release lists SHA-256 sums in `SHA256SUMS`. HikariSub legacy users will be offered the update once it is out. [docs/qt/distribution.md](docs/qt/distribution.md) covers each package.
 
@@ -185,7 +184,7 @@ HikariSub looks for updates only when you choose **Help > Check for updates**, o
 - Windows: the installed program checks the download again against the release's `SHA256SUMS` before it runs the installer. An all-users installation asks for administrator rights for this.
 - AppImage: the old image is kept until the new one starts, and it is put back if the new one does not open its window.
 - deb and rpm: a helper installs the package after the system's password prompt (`pkexec`), and only when the file matches the release's `SHA256SUMS`.
-- The AUR packages and portable copies only say a new version is out.
+- Portable copies only say a new version is out.
 - Turn off "Install updates automatically" to get only the notice.
 
 </details>

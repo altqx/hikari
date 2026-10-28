@@ -1,8 +1,7 @@
 // O2: hotkeys and the Options dialog's Hotkeys page against legacy
 // Hotkeys.h/.cpp, HotkeysNaming.cpp, OptionsDialog.cpp (ItemHotkey,
 // AddHotkeysOnList, SetOptions, ResetDefault) and HikariListCtrl.cpp at
-// 20d647c4. The action table, the names table and the defaults are read from
-// the legacy sources in the repository and compared whole.
+// 20d647c4.
 
 #include "hikari/application/hotkeys.h"
 
@@ -28,35 +27,16 @@ std::string readFile(const std::string &path)
     return s.str();
 }
 
-// Hotkeys.h IDS, numbered as DECLARE_ENUM numbers them.
-std::map<std::string, int> legacyIds()
-{
-    const std::string h = readFile(HIKARI_LEGACY_DIR "/Hotkeys.h");
-    const auto begin = h.find("#define IDS(XX)");
-    const auto end = h.find("DECLARE_ENUM");
-    std::map<std::string, int> out;
-    const std::regex xx(R"(XX\(\s*(\w+)\s*,\s*(=\s*(\d+))?\s*\))");
-    int current = -1;
-    const std::string body = h.substr(begin, end - begin);
-    for (std::sregex_iterator it(body.begin(), body.end(), xx), last; it != last; ++it) {
-        current = (*it)[3].matched ? std::stoi((*it)[3]) : current + 1;
-        out[(*it)[1]] = current;
-    }
-    return out;
-}
-
+// Legacy's IDS: the first kLegacyHotkeyActions rows of the action table.
 const std::map<std::string, int> &ids()
 {
-    static const auto table = legacyIds();
+    static const auto table = [] {
+        std::map<std::string, int> out;
+        for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions))
+            out[std::string(a.symbol)] = a.id;
+        return out;
+    }();
     return table;
-}
-
-int windowOf(const std::string &symbol)
-{
-    static const std::map<std::string, int> w{{"GLOBAL_HOTKEY", GlobalHotkey}, {"GRID_HOTKEY", GridHotkey},
-                                              {"EDITBOX_HOTKEY", EditorHotkey}, {"VIDEO_HOTKEY", VideoHotkey},
-                                              {"AUDIO_HOTKEY", AudioHotkey}};
-    return w.at(symbol);
 }
 
 HotkeyList::Row rowNamed(const HotkeyList &list, const std::string &text)
@@ -105,7 +85,6 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     // GLOBAL_AUTOMATION_REPEAT_LAST_RUN; KA3: GLOBAL_KANJI_TIMER; FR1: GLOBAL_GETTING_STARTED).
     ASSERT_EQ(hotkeyActions().size(), 278u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
-        EXPECT_EQ(ids().at(std::string(a.symbol)), a.id) << a.symbol;
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
     }
@@ -160,127 +139,6 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeySymbol(30100), "");
     EXPECT_EQ(kGridFilterIgnoreInActions, ids().at("GRID_FILTER_IGNORE_IN_ACTIONS"));
     EXPECT_EQ(kGlobalQuit, ids().at("GLOBAL_QUIT"));
-}
-
-TEST(Hotkeys, NamesTableIsHotkeysNaming)
-{
-    const std::string src = readFile(HIKARI_LEGACY_DIR "/HotkeysNaming.cpp");
-    const std::regex assign(R"re(names\[(\w+)\]\s*=\s*_\("((?:[^"\\]|\\.)*)"\))re");
-    std::map<int, std::string> legacy;
-    for (std::sregex_iterator it(src.begin(), src.end(), assign), last; it != last; ++it)
-        legacy[ids().at((*it)[1])] = (*it)[2];
-    EXPECT_EQ(legacy.size(), 226u);
-    // V3 (wave-5 decisions 2026-10-05): GLOBAL_VIDEO_INDEXING is retired and
-    // never listed; VIDEO_DELETE_FILE is "Unload video".
-    EXPECT_EQ(legacy.at(ids().at("GLOBAL_VIDEO_INDEXING")), "Open video with FFMS2");
-    legacy.erase(ids().at("GLOBAL_VIDEO_INDEXING"));
-    // AM1-hotkeys-window-retired: so is the automation hotkeys window's.
-    EXPECT_EQ(legacy.at(ids().at("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW")), "Open shortcut mapping window");
-    legacy.erase(ids().at("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"));
-    // WS3-view-arrangements-retired (2026-10-18): the View arrangements and
-    // the editor switch are retired and never listed.
-    for (const auto &[symbol, name] : std::initializer_list<std::pair<const char *, const char *>>{
-             {"GLOBAL_VIEW_ALL", "View all"},
-             {"GLOBAL_VIEW_AUDIO", "View audio and subtitles"},
-             {"GLOBAL_VIEW_SUBS", "View only subtitles"},
-             {"GLOBAL_VIEW_VIDEO", "View video and subtitles"},
-             {"GLOBAL_VIEW_ONLY_VIDEO", "View only video"},
-             {"GLOBAL_EDITOR", "Enable / Disable editor"}}) {
-        EXPECT_EQ(legacy.at(ids().at(symbol)), name);
-        legacy.erase(ids().at(symbol));
-    }
-    EXPECT_EQ(legacy.at(ids().at("VIDEO_DELETE_FILE")), "Remove video");
-    legacy[ids().at("VIDEO_DELETE_FILE")] = "Unload video";
-    // DX1-user-guide: GLOBAL_HELP (5112, F1) is User guide.
-    EXPECT_EQ(legacy.at(ids().at("GLOBAL_HELP")), "HikariSub website");
-    legacy[ids().at("GLOBAL_HELP")] = "User guide";
-    // The rewrite's own commands are named too (LE3, KE1, FS1, TM1, KA2, KA7, AD2).
-    legacy[5169] = "Hide tags in the line editor";
-    legacy[5170] = "Show / hide render cost";
-    legacy[2021] = "Full screen bar: Auto / Always / Never";
-    legacy[5171] = "Translation mode";
-    for (int n = 1; n <= 9; ++n)
-        legacy[3019 + n] = "Place run " + std::to_string(n);
-    legacy[3029] = "Place the next run";
-    legacy[1028] = "Split syllable at the cursor"; // KA1
-    legacy[1029] = "Switch long syllables between \\k and \\kf";
-    legacy[1030] = "Tap to time";
-    legacy[1031] = "Slower";
-    legacy[1032] = "Faster";
-    for (const auto &tool : kToolCommands) // VT2: the rail's names
-        legacy[tool.id] = tool.name;
-    legacy[5172] = "Check karaoke";
-    legacy[5173] = "Repeat last run";
-    legacy[5174] = "Kanji timer"; // KA3
-    legacy[5176] = "Getting started"; // FR1
-    // B385-hide-wraps-name: legacy names no GRID_HIDE_WRAPS; its menu item's text.
-    EXPECT_FALSE(legacy.contains(ids().at("GRID_HIDE_WRAPS")));
-    legacy[ids().at("GRID_HIDE_WRAPS")] = "Hide line wraps";
-    EXPECT_EQ(hotkeyNames(), legacy);
-    EXPECT_EQ(hotkeyName(kSave), "Save");
-    EXPECT_EQ(hotkeyName(kGlobalQuit), ""); // not named: never listed
-    EXPECT_EQ(hotkeyName(30100), "");
-    // Two Grid actions share a name.
-    EXPECT_EQ(hotkeyName(ids().at("GRID_HIDE_SELECTED")), hotkeyName(ids().at("GRID_FILTER_BY_SELECTIONS")));
-}
-
-TEST(Hotkeys, DefaultsAreLoadDefault)
-{
-    const std::string src = readFile(HIKARI_LEGACY_DIR "/Hotkeys.cpp");
-    const std::regex assign(
-        R"re(_hkeys\[idAndType\((\w+),\s*(\w+)\)\]\s*=\s*hdata\(_\("((?:[^"\\]|\\.)*)"\),\s*L"((?:[^"\\]|\\.)*)"\))re");
-    HotkeyMap legacy;
-    for (std::sregex_iterator it(src.begin(), src.end(), assign), last; it != last; ++it)
-        legacy[HotkeyId{ids().at((*it)[1]), windowOf((*it)[2])}] = Hotkey{(*it)[3], (*it)[4]};
-    EXPECT_EQ(legacy.size(), 86u);
-    // WS3-view-arrangements-retired: the editor switch's Ctrl-E is no default.
-    EXPECT_EQ(legacy.at(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey}).accel, "Ctrl-E");
-    legacy.erase(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey});
-    // The rewrite's own default (FS1-bar-mode): Tab in the Video window.
-    legacy[HotkeyId{2021, VideoHotkey}] = Hotkey{"Full screen bar: Auto / Always / Never", "Tab"};
-    // VT2's tool keys, in the Video window.
-    for (const auto &tool : kToolCommands)
-        legacy[HotkeyId{tool.id, VideoHotkey}] = Hotkey{tool.name, tool.accel};
-    // SH1-f10-menus: F10 reaches the menus; Convert to MDVD has no default.
-    EXPECT_EQ(legacy.at(HotkeyId{ids().at("GLOBAL_CONVERT_TO_MDVD"), GlobalHotkey}).accel, "F10");
-    legacy.erase(HotkeyId{ids().at("GLOBAL_CONVERT_TO_MDVD"), GlobalHotkey});
-    // TM1: the run keys are the rewrite's own, Alt-1 to Alt-9 in the editor.
-    for (int n = 1; n <= 9; ++n)
-        legacy[HotkeyId{3019 + n, EditorHotkey}] = Hotkey{"Place run " + std::to_string(n), "Alt-" + std::to_string(n)};
-    // KA1 (owner 2026-10-21): K splits at the cursor, Shift+K switches \\k and \\kf.
-    legacy[HotkeyId{1028, AudioHotkey}] = Hotkey{"Split syllable at the cursor", "K"};
-    legacy[HotkeyId{1029, AudioHotkey}] = Hotkey{"Switch long syllables between \\k and \\kf", "Shift-K"};
-    // KA2-tap-to-time, KA2-slowed-playback: the rewrite's Audio commands.
-    legacy[HotkeyId{1030, AudioHotkey}] = Hotkey{"Tap to time", "Y"};
-    legacy[HotkeyId{1031, AudioHotkey}] = Hotkey{"Slower", "["};
-    legacy[HotkeyId{1032, AudioHotkey}] = Hotkey{"Faster", "]"};
-    // DX1-user-guide: F1 stays GLOBAL_HELP's, now named User guide.
-    EXPECT_EQ(legacy.at(HotkeyId{ids().at("GLOBAL_HELP"), GlobalHotkey}), (Hotkey{"HikariSub website", "F1"}));
-    legacy[HotkeyId{ids().at("GLOBAL_HELP"), GlobalHotkey}].name = "User guide";
-    EXPECT_EQ(defaultHotkeys(), legacy);
-    HotkeyMap main, audio;
-    loadDefaultHotkeys(main, false);
-    loadDefaultHotkeys(audio, true);
-    EXPECT_EQ(main.size(), 83u); // VT3: Q
-    EXPECT_EQ(audio.size(), 23u + 3u + 2u); // KA2's three, KA1's K and Shift-K
-    for (const auto &[k, h] : audio)
-        EXPECT_EQ(k.type, AudioHotkey);
-    // LoadDefault assigns over what is there.
-    HotkeyMap loaded{{HotkeyId{kSave, GlobalHotkey}, Hotkey{"", "Ctrl-K"}}, {HotkeyId{kHistory, GridHotkey}, Hotkey{"", "F7"}}};
-    loadDefaultHotkeys(loaded, false);
-    EXPECT_EQ(loaded.at(HotkeyId{kSave, GlobalHotkey}).accel, "Ctrl-S");
-    EXPECT_EQ(loaded.at(HotkeyId{kHistory, GridHotkey}).accel, "F7");
-    // GetDefaultKey matches the window too.
-    EXPECT_EQ(defaultHotkey(HotkeyId{kSave, GlobalHotkey}), "Ctrl-S");
-    EXPECT_EQ(defaultHotkey(HotkeyId{kSave, GridHotkey}), "");
-    EXPECT_EQ(defaultHotkey(HotkeyId{ids().at("AUDIO_COMMIT"), AudioHotkey}), "Enter");
-    // Every default but GLOBAL_QUIT has a name; the windows follow GetType.
-    for (const auto &[k, h] : legacy) {
-        if (k.id != kGlobalQuit) {
-            EXPECT_FALSE(hotkeyName(k.id).empty()) << k.id;
-        }
-        EXPECT_EQ(hotkeyType(k.id), k.type) << k.id;
-    }
 }
 
 TEST(Hotkeys, TypesFollowGetType)

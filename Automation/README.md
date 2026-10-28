@@ -57,7 +57,7 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
 - `BM/`, `DM/`, `PT/` are HikariSub's DependencyControl modules; their `.lua` is
   what the released package ships and their DLLs are built from this repository
   (`Thirdparty/DependencyControl/`) and installed into those directories by
-  `.github/scripts/package.py`.
+  the build (`src/helpers/lua/CMakeLists.txt`).
 
 The modules we build ourselves (`BM/BadMutex.dll`, `PT/PreciseTimer.dll`,
 `DM/DownloadManager.dll`) are not tracked here; packaging takes them from the
@@ -68,4 +68,5 @@ solution does not build them.
 
 Bump a revision, copy the files in, and commit: there is no build-time fetching
 or patching to keep in step. Dictionaries and the VSFiltermod renderer are still
-fetched at build time, pinned in `.github/scripts/runtime-assets.json`.
+fetched at build time (`cmake/HikariPackageWindows.cmake`,
+`cmake/HikariVsfilterMod.cmake`).

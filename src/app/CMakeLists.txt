@@ -106,7 +106,6 @@ endif()
 # GUI program carrying legacy's icon resources with legacy's ids. The
 # installer's payload is staged by the hikari_package_windows target.
 if(WIN32)
-    set(HIKARI_LEGACY_DIR "${PROJECT_SOURCE_DIR}/HikariSub")
     set(HIKARI_RC_VERSION "${PROJECT_VERSION}")
     if(HIKARI_VERSION_SUFFIX)
         string(APPEND HIKARI_RC_VERSION "-${HIKARI_VERSION_SUFFIX}")
