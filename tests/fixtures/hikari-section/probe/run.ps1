@@ -1,7 +1,7 @@
 # WS2 (#216): the fixtures with and without [Hikari] through each CSRI
 # renderer at hand, read from the file as a player reads it (csri-probe.cpp).
 # Renderers: the legacy release's Csri folder (xy-VSFilter_hikarisub.dll and
-# VSFiltermod.dll; run the winix task legacy-win-setup first) and the pinned
+# VSFiltermod.dll), when extracted into out\legacy-win\bundled, and the pinned
 # VSFilterMod a windows-x64-vsfiltermod build fetched, when there is one.
 # Each pair's frames must hash the same. Run inside the MSVC environment
 # (tools/winix/msvc.ps1); OUT (default out\ws2-csri) takes the build and log.
@@ -21,7 +21,7 @@ $legacy = Join-Path $PWD 'out\legacy-win\bundled\HikariSub_x64\Csri'
 if (Test-Path $legacy) { $renderers += Get-ChildItem $legacy -Filter '*.dll' | ForEach-Object FullName }
 $pinned = Join-Path $PWD 'out\build\windows-x64-vsfiltermod\tests\backends\vsfiltermod-csri\VSFiltermod.dll'
 if (Test-Path $pinned) { $renderers += $pinned }
-if (-not $renderers) { throw 'no CSRI renderer: run legacy-win-setup first' }
+if (-not $renderers) { throw 'no CSRI renderer: build windows-x64-vsfiltermod first' }
 
 $pairs = @(@('plain.ass', 'plain-hikari.ass'), @('fonts.ass', 'fonts-hikari.ass'))
 $failed = 0

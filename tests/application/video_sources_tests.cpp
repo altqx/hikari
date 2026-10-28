@@ -155,7 +155,7 @@ TEST(NaturalNameOrder, CaseLeftOutThenThePlainName)
     EXPECT_GT(naturalNameCompare("\xff.mkv", "z.mkv"), 0);
 }
 
-// The capture folder's names (tools/legacy-capture/inputs/next-file-names.txt)
+// The capture folder's names (tests/fixtures/legacy-observations/local-v3-next-file-20261013)
 // in natural order: a strict weak order from any starting order.
 TEST(NaturalNameOrder, TheCaptureFolderInOrder)
 {
