@@ -27,7 +27,6 @@
 #include "hikari/application/video_matrix.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
-#include "spelling_text.h"
 #include "hikari/core/conversion.h"
 #include "hikari/application/keyframe_files.h"
 #include "hikari/core/line_groups.h"
@@ -4651,36 +4650,12 @@ void Application::setSpellingOn(bool on)
     spellingRefresh();
 }
 
-// A language from the editor menu: DICTIONARY_LANGUAGE, SpellChecker::Destroy
-// and ClearErrs, also for the language already chosen.
-void Application::setDictionaryLanguage(const QString &symbol)
-{
-    m_settings->set("editor.dictionaryLanguage", symbol);
-    restartSpellChecker();
-    spellingRefresh();
-}
-
 void Application::setSuggestionsOnDoubleClick(bool on)
 {
     if (on == suggestionsOnDoubleClick())
         return;
     m_settings->set("editor.suggestionsOnDoubleClick", on);
     emit spellingChanged();
-}
-
-QVariantList Application::dictionaries() const
-{
-    QVariantList out;
-    if (!m_spellChecker)
-        return out;
-    for (const auto &symbol : application::availableDictionaries(m_spellChecker->folders()))
-        out << QVariantMap{{QStringLiteral("symbol"), qstr(symbol)}, {QStringLiteral("name"), ui::dictionaryName(qstr(symbol))}};
-    return out;
-}
-
-QString Application::dictionaryName(const QString &symbol) const
-{
-    return ui::dictionaryName(symbol);
 }
 
 int Application::spellingRole() const
@@ -4740,7 +4715,8 @@ QVariantMap Application::editorMisspellAt(int role, int position)
     auto *checker = spellChecker();
     if (!raw || !checker)
         return {};
-    const auto marks = application::editorMarks(*raw, targetSession()->document().format(), *checker, m_spellingText);
+    const auto format = targetSession()->document().format();
+    const auto marks = application::editorMarks(*raw, format, *checker, m_spellingText);
     int at = position;
     if (!m_editor->showTags())
         at = static_cast<int>(core::rawOffset(core::project(*raw), static_cast<std::size_t>(std::max(position, 0)), true));
@@ -4749,7 +4725,7 @@ QVariantMap Application::editorMisspellAt(int role, int position)
         return {};
     const auto &misspell = marks.misspells[*found];
     QStringList suggestions;
-    for (const auto &s : checker->suggestions(misspell.word))
+    for (const auto &s : checker->suggestions(misspell.word, application::lineWords(*raw, format, m_spellingText)))
         suggestions << qstr(s);
     return {{QStringLiteral("word"), qstr(misspell.word)},
             {QStringLiteral("start"), misspell.start},

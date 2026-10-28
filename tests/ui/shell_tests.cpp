@@ -12484,9 +12484,10 @@ private slots:
     }
 
     // F3: the editor's spelling menu and the double-click suggestion list.
-    // The suggestions come first; "Spellchecker" and "Installed languages"
-    // are only in the spell-checked field (the Translated one in translation
-    // mode). A double click on a misspelling with
+    // The suggestions come first; "Spellchecker" is only in the spell-checked
+    // field (the Translated one in translation mode), and SP1 (#474) took
+    // "Installed languages" out (the primary language is chosen in Settings
+    // only). A double click on a misspelling with
     // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK lists its suggestions without
     // selecting the word.
     void editorSpellingMenuAndDoubleClick()
@@ -12507,7 +12508,7 @@ private slots:
         auto entries = menuItems(menu);
         QVERIFY(!entries.isEmpty());
         QCOMPARE(entries.first()->property("text").toString(), QStringLiteral("world"));
-        QVERIFY(hasSubMenu(menu, QStringLiteral("Installed languages")));
+        QVERIFY(!hasSubMenu(menu, QStringLiteral("Installed languages")));
         auto *spellingOn = field->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"));
         QVERIFY(spellingOn && spellingOn->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(entries.first(), "triggered"));
@@ -12529,7 +12530,7 @@ private slots:
         QTRY_VERIFY(!fix->property("opened").toBool());
         application->setSuggestionsOnDoubleClick(false);
 
-        // Translation mode: the Original field has neither entry.
+        // Translation mode: the Original field has no "Spellchecker".
         const QString tl = writeFile(dir, "spelling-tl.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
         QFile f(tl);
         QVERIFY(f.open(QIODevice::ReadOnly));
@@ -12551,7 +12552,6 @@ private slots:
         QTRY_VERIFY(item("editorPanel")->height() >= item("editorPanel")->property("minimumSize").toSizeF().height());
         rightClick(fieldPoint(field, 1));
         QTRY_VERIFY(menu->property("visible").toBool());
-        QVERIFY(!hasSubMenu(menu, QStringLiteral("Installed languages")));
         QVERIFY(!field->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"))->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         auto *translated = item("translationText");
@@ -12559,8 +12559,75 @@ private slots:
         QVERIFY(tlMenu);
         rightClick(translated->mapToScene(QPointF(10, 10)).toPoint());
         QTRY_VERIFY(tlMenu->property("visible").toBool());
-        QVERIFY(hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
+        QVERIFY(translated->findChild<QObject *>(QStringLiteral("translationTextSpellingOn"))->property("visible").toBool());
+        QVERIFY(!hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
         QVERIFY(QMetaObject::invokeMethod(tlMenu, "close"));
+        application->editor().discard();
+    }
+
+    // SP1 (#474): every installed dictionary checks the words of its script,
+    // the Settings language (here an existing hikari.ini's "pl") being the
+    // primary one. A mixed Line marks only the real misspellings in the Grid
+    // and the Line editor; a script without a dictionary is not marked.
+    // With HIKARI_SURFACE_SHOT_DIR the window is saved in each theme
+    // (sp1-mixed-<theme>.png).
+    void multilingualSpellingMarksOnlyRealMisspellings()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        const auto write = [&](const QString &name, const QByteArray &bytes) {
+            QFile f(home.filePath(QStringLiteral("Dictionary/") + name));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        };
+        write(QStringLiteral("pl.aff"), "SET UTF-8\n");
+        write(QStringLiteral("pl.dic"), "3\nAla\nma\nkota\n");
+        write(QStringLiteral("ko_KR.aff"), "SET UTF-8\n");
+        write(QStringLiteral("ko_KR.dic"), "2\n\xEC\x95\x88\xEB\x85\x95\xED\x95\x98\xEC\x84\xB8\xEC\x9A\x94\n\xEC\x84\xB8\xEA\xB3\x84\n");
+        write(QStringLiteral("ta.aff"), "SET UTF-8\n");
+        write(QStringLiteral("ta.dic"), "1\n\xE0\xAE\xB5\xE0\xAE\xA3\xE0\xAE\x95\xE0\xAF\x8D\xE0\xAE\x95\xE0\xAE\xAE\xE0\xAF\x8D\n");
+        {
+            QSettings ini(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat);
+            ini.setValue(QStringLiteral("profile/editor.dictionaryLanguage"), QStringLiteral("pl"));
+        }
+        restartWithSpelling(home.path(), true);
+        QCOMPARE(application->dictionaryLanguage(), QStringLiteral("pl"));
+        // English and Polish, Korean, Tamil and Russian words; "wrold",
+        // "kotta", "세게계" and "வணக்கமம்" are misspelled.
+        const QString line = QStringLiteral("Hello world, Ala ma kota! wrold kotta 안녕하세요 "
+                                            "세계 세게계 வணக்கம் "
+                                            "வணக்கமம் привет");
+        const QByteArray events = QStringLiteral("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,%1\n").arg(line).toUtf8();
+        const QString path = writeFile(dir, "sp1-mixed.ass", events.constData());
+        QVERIFY(application->openFile(path));
+        QVariantList grid, editor;
+        for (const QString &word : {QStringLiteral("wrold"), QStringLiteral("kotta"), QStringLiteral("세게계"),
+                                    QStringLiteral("வணக்கமம்")}) {
+            const int at = int(line.indexOf(word));
+            grid << at << at + int(word.size()) - 1; // inclusive
+            editor << at << at + int(word.size());
+        }
+        QCOMPARE(application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(), grid);
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), editor);
+        // Suggestions for a Korean word come from the Korean dictionary.
+        const QVariantMap found = application->editorMisspellAt(0, int(line.indexOf(QStringLiteral("세게"))) + 1);
+        QCOMPARE(found.value(QStringLiteral("word")).toString(), QStringLiteral("세게계"));
+        QVERIFY(found.value(QStringLiteral("suggestions")).toStringList().contains(QStringLiteral("세계")));
+
+        if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(400);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/sp1-mixed-") + ui::theme::codeName(code) +
+                                                  QStringLiteral(".png")));
+            }
+        }
         application->editor().discard();
     }
 

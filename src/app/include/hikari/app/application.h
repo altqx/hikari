@@ -632,18 +632,15 @@ public:
     // (TextEditor::SpellCheckerOnOff) that the menu and the Options dialog
     // set. Turning spell checking on does not start a spell checker created
     // while it was off (legacy SpellChecker::Get); choosing a language restarts it.
+    // SP1 (#474): the language is the primary one, chosen in Settings only.
     Q_PROPERTY(bool spellingOn READ spellingOn WRITE setSpellingOn NOTIFY spellingChanged)
-    Q_PROPERTY(QString dictionaryLanguage READ dictionaryLanguage WRITE setDictionaryLanguage NOTIFY spellingChanged)
+    Q_PROPERTY(QString dictionaryLanguage READ dictionaryLanguage NOTIFY spellingChanged)
     Q_PROPERTY(bool suggestionsOnDoubleClick READ suggestionsOnDoubleClick WRITE setSuggestionsOnDoubleClick NOTIFY spellingChanged)
     bool spellingOn() const;
     void setSpellingOn(bool on);
     QString dictionaryLanguage() const;
-    void setDictionaryLanguage(const QString &symbol);
     bool suggestionsOnDoubleClick() const;
     void setSuggestionsOnDoubleClick(bool on);
-    // The "Dictionary" folder's dictionaries: {symbol, name} (legacy AvailableDics, FindLanguage).
-    Q_INVOKABLE QVariantList dictionaries() const;
-    Q_INVOKABLE QString dictionaryName(const QString &symbol) const;
     // The Line editor's spell-checked field: 1 (Translated) in translation
     // mode, else 0. Its marks as flat [start, end) pairs of the field's text
     // (none while spelling is off); the misspelling at a field position
