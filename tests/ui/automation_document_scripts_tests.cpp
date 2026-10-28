@@ -151,7 +151,12 @@ private slots:
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_LUA_INCLUDE "/moonscript.lua"),
                             shipped.filePath(QStringLiteral("automation/Include/moonscript.lua"))));
         const QString a = QDir::toNativeSeparators(shipped.filePath(QStringLiteral("automation/Autoload/a.lua")));
+#ifdef Q_OS_WIN
+        // One folder under either name, listed as `Autoload` (automationFolders).
+        const QString b = QDir::toNativeSeparators(user.filePath(QStringLiteral("automation/Autoload/b.lua")));
+#else
         const QString b = QDir::toNativeSeparators(user.filePath(QStringLiteral("automation/autoload/b.lua")));
+#endif
         app.reset();
         auto o = options();
         o.automationDir = shipped.path();
