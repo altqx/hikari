@@ -300,6 +300,13 @@ private slots:
         hikari::ui::SettingsStore settings;
         Analytics analytics(settings, config(endpoint));
         analytics.frameRendered(3);
+        analytics.frameRendered(500);
+        // Frames while it is off are not counted, and turning it off drops
+        // those before.
+        settings.set("privacy.usageData", false);
+        analytics.frameRendered(500);
+        settings.set("privacy.usageData", true);
+        analytics.frameRendered(3);
         analytics.frameRendered(3);
         analytics.frameRendered(40);
         analytics.quit(3000);

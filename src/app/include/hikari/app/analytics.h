@@ -106,7 +106,8 @@ public:
     // video_opened / audio_opened: `kind` file, dummy (and from_video for audio).
     void mediaOpened(bool video, qint64 milliseconds, bool ready, const QString &kind);
     // One frame's subtitles took this long to draw (app_closed's buckets);
-    // from any thread.
+    // from any thread. Counted only while sending is on; turning it off
+    // drops the counts.
     void frameRendered(double milliseconds);
 
     struct StartFacts {
@@ -172,6 +173,8 @@ private:
     int m_layoutChanges = 0;
     bool m_started = false;
     bool m_closed = false;
+    // Frames are counted only while active (the render thread reads it).
+    std::atomic<bool> m_counting = false;
     std::array<std::atomic<qint64>, kFrameBuckets.size()> m_frames{};
 };
 

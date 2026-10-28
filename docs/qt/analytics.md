@@ -49,7 +49,7 @@ Turning it off stops sending at once. It also deletes the events waiting to go a
 | Event | When | Properties |
 |---|---|---|
 | `app_started` | The main window's first frame | `version`: the app version<br>`channel`: `stable` or `prerelease`<br>`$os`: `windows`, `linux` or `other`<br>`$os_version`: the system's version (`QSysInfo::productVersion`), else `other`<br>`arch`: `x86_64`, `arm64` or `other`<br>`package`: `installer`, `portable`, `appimage`, `deb`, `rpm`, `aur` or `build_tree`<br>`qt_version`: e.g. `6.11.2`<br>`language`: `en`, `ko_KR`, `pl`, `ta` or `th_TH`<br>`theme`: `light`, `dark`, `high_contrast_white` or `high_contrast_black`<br>`theme_follows_system`: bool<br>`layout`: `editing`, `timing`, `translation`, `typesetting`, `karaoke`, `saved` or `custom`<br>`screens`: `1`, `2` or `3+`<br>`scale`: `1x`, `1.25x`, `1.5x`, `2x` or `3x+`<br>`startup_time`: a time bucket |
-| `app_closed` | Quit | `session_length`: `<1m`, `1-5m`, `5-15m`, `15-60m`, `1-3h` or `3h+`<br>`render_frames_lt8ms`, `render_frames_8_16ms`, `render_frames_16_33ms`, `render_frames_33_66ms`, `render_frames_66_200ms`, `render_frames_200ms_plus`: how many subtitle frames took that long to draw this session |
+| `app_closed` | Quit | `session_length` (since start, or since sending was turned on): `<1m`, `1-5m`, `5-15m`, `15-60m`, `1-3h` or `3h+`<br>`render_frames_lt8ms`, `render_frames_8_16ms`, `render_frames_16_33ms`, `render_frames_33_66ms`, `render_frames_66_200ms`, `render_frames_200ms_plus`: how many subtitle frames took that long to draw this session, while sending was on |
 
 Time buckets: `<250ms`, `250-500ms`, `0.5-1s`, `1-2s`, `2-5s`, `5-15s`, `15-60s`, `60s+`.
 

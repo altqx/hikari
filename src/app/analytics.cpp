@@ -271,6 +271,7 @@ Analytics::Analytics(ui::SettingsStore &settings, Config config, QObject *parent
 {
     m_session.start();
     m_enabled = m_settings.boolean(kEnabled);
+    m_counting = active();
     m_flushTimer.setInterval(m_config.flushIntervalMs);
     connect(&m_flushTimer, &QTimer::timeout, this, &Analytics::flush);
     // The queue's file is written a little after it changes, not per event.
@@ -313,10 +314,14 @@ void Analytics::settingChanged(const QString &id)
     }
     if (was == active())
         return;
-    if (active())
+    m_counting = active();
+    if (active()) {
+        // app_closed counts from here: nothing of the time it was off.
+        m_session.start();
         m_flushTimer.start();
-    else
+    } else {
         m_flushTimer.stop();
+    }
     emit activeChanged();
 }
 
@@ -335,6 +340,8 @@ void Analytics::clear()
         QFile::remove(m_config.queueFile);
     if (!m_config.crashRecord.isEmpty())
         QFile::remove(m_config.crashRecord);
+    for (auto &count : m_frames)
+        count = 0;
 }
 
 QString Analytics::distinctId() const
@@ -596,6 +603,8 @@ void Analytics::mediaOpened(bool video, qint64 milliseconds, bool ready, const Q
 
 void Analytics::frameRendered(double milliseconds)
 {
+    if (!m_counting.load(std::memory_order_relaxed))
+        return; // not while sending is off
     m_frames[std::size_t(frameBucket(milliseconds))].fetch_add(1, std::memory_order_relaxed);
 }
 
