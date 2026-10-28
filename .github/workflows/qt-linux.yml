@@ -5,7 +5,7 @@ name: Qt rewrite — Ubuntu
 # build and tests run without it. No caches, no SDK or binary publication.
 on:
   push:
-    branches: [qt]
+    branches: [main]
     paths:
       - CMakeLists.txt
       - CMakePresets.json

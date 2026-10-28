@@ -5,7 +5,7 @@ name: Qt rewrite — Fedora
 # Qt installer secret. No caches, no SDK or binary publication.
 on:
   push:
-    branches: [qt]
+    branches: [main]
     paths:
       - CMakeLists.txt
       - CMakePresets.json

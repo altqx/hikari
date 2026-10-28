@@ -5,7 +5,7 @@ name: Legacy capture
 # only; nothing here builds or tests the Qt rewrite.
 on:
   push:
-    branches: [qt]
+    branches: [main]
     paths:
       - tools/legacy-capture/**
       - docs/qt/fixtures/approved-departures/**

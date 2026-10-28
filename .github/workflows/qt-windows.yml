@@ -4,7 +4,7 @@ name: Qt rewrite — Windows
 # the latest MSVC, from an empty cache, using the same presets as Linux.
 on:
   push:
-    branches: [qt]
+    branches: [main]
     paths:
       - CMakeLists.txt
       - CMakePresets.json

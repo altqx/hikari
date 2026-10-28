@@ -13,7 +13,7 @@ name: AUR publish
 #
 #   gh workflow run aur-publish.yml -f tag=v0.0.2-rc.1 [-f dry_run=true]
 #
-# This file has the same bytes on the legacy (main) and Qt (qt) branches.
+# This file has the same bytes on the legacy (legacy) and Qt (main) branches.
 on:
   workflow_dispatch:
     inputs:
