@@ -107,9 +107,12 @@ Domain = {
   ---@param rootDir? string Aegisub path token to resolve against (defaults to "?user").
   ---@return string? dir Absolute directory path, or nil for an unrecognized script type.
   getAutomationDir: (scriptType, rootDir = "?user") ->
+    -- HikariSub (#402): the program's own folders are automation/Autoload and Include, the user folder's
+    -- lower-case; on a case-sensitive file system the lower-case ?data folders don't exist
+    shipped = rootDir == "?data"
     switch scriptType
-      when ScriptType.Automation then aegisub.decode_path("#{rootDir}/automation/autoload")
-      when ScriptType.Module then aegisub.decode_path("#{rootDir}/automation/include")
+      when ScriptType.Automation then aegisub.decode_path("#{rootDir}/automation/#{shipped and 'Autoload' or 'autoload'}")
+      when ScriptType.Module then aegisub.decode_path("#{rootDir}/automation/#{shipped and 'Include' or 'include'}")
       else nil
 
   ---Returns the DepUnit test directory for scripts of the given type.
