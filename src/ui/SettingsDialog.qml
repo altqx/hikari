@@ -30,6 +30,7 @@ DialogWindow {
     required property ColourPickerController colourPicker
     property var hotkeys: null // O2: the Hotkeys page's HotkeysController
     property var updates: null // PU7: the Updates page's UpdateChecker (what this install offers)
+    property var crashReports: null // CR1 (#468): CrashReports, whether this build can send one
     property TagButtonsController tagButtons: null // LE5: the Line editor page's tag button list
     title: qsTr("Settings")
     dialogId: "settings"
@@ -1669,9 +1670,17 @@ DialogWindow {
                             onClicked: dialog.app.openWhatIsSent()
                         }
                         // CR1 (#452): a crash or freeze report goes without
-                        // its window, usage data on or off.
-                        SettingCheck { setting: "privacy.alwaysSendCrashReports"; text: qsTr("Always send crash reports") }
-                        SettingNote { text: qsTr("After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.") }
+                        // its window, usage data on or off; #468: only in a
+                        // build that can send one (with the PostHog key).
+                        SettingCheck {
+                            setting: "privacy.alwaysSendCrashReports"
+                            visible: !dialog.crashReports || dialog.crashReports.canSend
+                            text: qsTr("Always send crash reports")
+                        }
+                        SettingNote {
+                            visible: !dialog.crashReports || dialog.crashReports.canSend
+                            text: qsTr("After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.")
+                        }
                     }
                 }
             }

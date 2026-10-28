@@ -2503,7 +2503,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_ANSI"
-                help: qsTr("Opens the HikariSub issue tracker") // HikariSubFrame.cpp:362
+                help: qsTr("Opens a form for a bug, feature request or question on GitHub") // HikariSubFrame.cpp:362; CR1 (#468): the form
                 iconRole: "report-issue"
                 objectName: "reportIssueMenuItem"
                 action: Action {
@@ -7650,6 +7650,7 @@ ApplicationWindow {
                 notices: root.notices
                 hotkeys: root.hotkeys
                 updates: root.updates
+                crashReports: root.crashReports
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
                 onCreditsRequested: creditsDialog.open() // GR1: Harper's licence notice

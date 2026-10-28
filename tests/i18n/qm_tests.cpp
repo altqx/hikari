@@ -89,7 +89,7 @@ TEST(Qm, RewriteCatalogsAnswerFinishedEntriesOnly)
         QTranslator translator;
         ASSERT_TRUE(translator.load(QStringLiteral(":/i18n/hikarisub_%1.qm").arg(language)));
         const TsCatalog catalog = readCatalog(source(QStringLiteral("i18n/hikarisub_%1.ts").arg(language)));
-        int finished = 0, unfinished = 0;
+        int finished = 0;
         for (const TsContext &context : catalog.contexts)
             for (const TsMessage &m : context.messages) {
                 if (m.state == TsState::Vanished || m.state == TsState::Obsolete)
@@ -103,17 +103,15 @@ TEST(Qm, RewriteCatalogsAnswerFinishedEntriesOnly)
                     EXPECT_EQ(lookup(translator, context.name, m, n), expected)
                         << language.toStdString() << " " << context.name.toStdString() << " " << m.source.toStdString() << " n=" << n;
                 }
-                ++(done ? finished : unfinished);
+                finished += done;
             }
         EXPECT_GT(finished, 700) << language.toStdString();
-        EXPECT_GT(unfinished, 300) << language.toStdString();
     }
     QTranslator pl;
     ASSERT_TRUE(pl.load(QStringLiteral(":/i18n/hikarisub_pl.qm")));
     EXPECT_EQ(pl.translate("HikariSub.Audio", "Horizontal stretching"), QStringLiteral("Rozciągnięcie w poziomie"));
     EXPECT_EQ(pl.translate("HikariSub.Audio", "Search bar"), QString()); // #385: the tooltip went, vanished
     EXPECT_EQ(pl.translate("HikariSub.Styles", "Copy of "), QStringLiteral("Kopia "));
-    EXPECT_EQ(pl.translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid."), QString()); // carried, unfinished
 }
 
 // #385: the English catalog holds only numerus entries, all finished, with

@@ -6,7 +6,7 @@
 extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
-int luaopen_lpeg(lua_State *L);    // HikariSub/AutomationLPeg.c
+int luaopen_lpeg(lua_State *L);    // AutomationLPeg.c
 int luaopen_luabins(lua_State *L); // Thirdparty/luabins
 }
 
