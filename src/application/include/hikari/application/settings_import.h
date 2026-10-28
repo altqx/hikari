@@ -254,6 +254,9 @@ struct Receipt {
     // Row id -> the value it wrote; kept rows are absent.
     std::map<std::string, SettingValue, std::less<>> imported;
     std::set<std::string, std::less<>> kept;
+    // The legacy root it was read from (#401: its autosaves); not part of
+    // the identity.
+    std::string root;
     bool sameIdentity(const Receipt &other) const;
 };
 

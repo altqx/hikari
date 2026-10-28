@@ -7,9 +7,11 @@
 // the mouse.
 
 #include "hikari/app/application.h"
+#include "hikari/app/settings_import_store.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
 #include "line_table_model.h"
+#include "settings_store.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -971,6 +973,59 @@ private slots:
         const QString file = files.first().toMap().value(QStringLiteral("versions")).toList().first().toMap().value(
             QStringLiteral("file")).toString();
         QCOMPARE(QFileInfo(file).absolutePath(), QFileInfo(legacy + QStringLiteral("/Subs")).absoluteFilePath());
+    }
+
+    // #401: and Subs in the root the active import came from, which the
+    // user may have picked by hand in Import legacy settings (here no legacy
+    // root is found on its own).
+    void legacyAutosavesComeFromTheImportedRoot()
+    {
+        QTemporaryDir data;
+        QTemporaryDir picked;
+        QVERIFY(data.isValid() && picked.isValid());
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        QVERIFY(QDir().mkpath(picked.filePath(QStringLiteral("Config"))));
+        QFile configFile(picked.filePath(QStringLiteral("Config/Config.txt")));
+        QVERIFY(configFile.open(QIODevice::WriteOnly));
+        configFile.write(config + "GRID_FONT=Arial\r\n");
+        configFile.close();
+        writeAss(picked.filePath(QStringLiteral("Subs/picked_0_1.ass")), {}, "picked");
+#ifdef _WIN32
+        const char *variable = "LOCALAPPDATA";
+#else
+        const char *variable = "XDG_DATA_HOME";
+#endif
+        const QByteArray before = qgetenv(variable);
+        const bool wasSet = qEnvironmentVariableIsSet(variable);
+        const auto restore = qScopeGuard([&] {
+            if (wasSet)
+                qputenv(variable, before);
+            else
+                qunsetenv(variable);
+            legacyRoots = false;
+            QDir(home.filePath(QStringLiteral("Import"))).removeRecursively();
+        });
+        qputenv(variable, QDir::toNativeSeparators(data.path()).toLocal8Bit());
+        cleanup();
+        {
+            ui::SettingsStore settings(home.filePath(QStringLiteral("hikari.ini")));
+            app::SettingsImportStore store(settings, home.path());
+            const auto root = app::SettingsImportStore::inspectRoot(picked.path());
+            QVERIFY(root);
+            const auto snapshot = store.snapshot(*root);
+            QVERIFY(snapshot);
+            const auto plan = hikari::application::settings_import::buildPlan(snapshot->sources, store.destination());
+            QCOMPARE(store.activate(plan, hikari::application::settings_import::proposedRows(plan), *snapshot, store.revision()),
+                     app::SettingsImportStore::Result::Activated);
+            settings.sync();
+        }
+        legacyRoots = true;
+        start();
+        const QVariantList files = application->legacyAutosaves();
+        QCOMPARE(files.size(), 1);
+        QCOMPARE(files.first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("picked.ass"));
     }
 
     // P9-no-legacy-folder-log: without a legacy Subs folder Open auto save

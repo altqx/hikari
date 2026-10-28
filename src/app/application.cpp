@@ -3601,14 +3601,23 @@ QVariantList Application::legacyAutosaves()
     QVariantList rows;
     // Legacy wrote them to Options.dataPath/Subs (AutoSaveOpen.cpp:127):
     // its program folder, or HikariSub/Legacy once installed (ADR 0019),
-    // the roots the settings importer finds; never 0.1's own folder (#387).
+    // the roots the settings importer finds, and the root the active import
+    // came from, which the user may have picked by hand (#401); never 0.1's
+    // own folder (#387).
     QString folder = m_legacyAutosaveDir;
-    if (folder.isEmpty() && !m_settingsFile.isEmpty())
+    if (folder.isEmpty() && !m_settingsFile.isEmpty()) {
+        QStringList roots;
+        if (const auto receipt = m_importStore ? m_importStore->activeReceipt() : std::nullopt;
+            receipt && !receipt->root.empty())
+            roots << QString::fromStdString(receipt->root);
         for (const auto &root : SettingsImportStore::discoverRoots(SettingsImportStore::defaultCandidates()))
-            if (QFileInfo(root.path + QStringLiteral("/Subs")).isDir()) {
-                folder = root.path + QStringLiteral("/Subs");
+            roots << root.path;
+        for (const QString &root : std::as_const(roots))
+            if (QFileInfo(root + QStringLiteral("/Subs")).isDir()) {
+                folder = root + QStringLiteral("/Subs");
                 break;
             }
+    }
     if (folder.isEmpty() || !QFileInfo(folder).isDir())
         return rows; // no legacy folder: nothing to list (and nothing logged)
     const auto files = application::listLegacyAutosaves(std::filesystem::path(folder.toStdU16String()),
