@@ -17,7 +17,7 @@
 
 // Icon resource ids for HikariSub.exe.
 //
-// Plain #defines only: resource.rc includes this, so no C++ here.
+// Plain #defines only: hikarisub.rc.in includes this, so no C++ here.
 //
 // IDI_HIKARISUB_APP must keep the lowest id. Explorer shows an executable's
 // first icon group, ordered by numeric id with string-named ones last.
