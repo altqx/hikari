@@ -6685,6 +6685,14 @@ when find results window is open</source>
 <context>
     <name>HikariSub.GettingStarted</name>
     <message>
+        <source>Updates and privacy</source>
+        <translation>புதுப்பிப்புகளும் தனியுரிமையும்</translation>
+    </message>
+    <message>
+        <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
+        <translation>HikariSub உங்களுக்கு எந்தப் பதிப்புகளை வழங்குகிறது, அது தானாகவே அவற்றைத் தேடுகிறதா, அநாமதேய பயன்பாட்டுத் தரவை அனுப்புகிறதா என்பது.</translation>
+    </message>
+    <message>
         <source>Later: Settings › Updates and privacy</source>
         <translation>பின்னர்: அமைப்புகள் › புதுப்பிப்புகளும் தனியுரிமையும்</translation>
     </message>
@@ -10201,7 +10209,7 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sentence starts, titles, brands and other case-sensitive text.</source>
+        <source>Personal pronouns, titles, brands and other case-sensitive text.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -25,6 +25,8 @@
 #include <QUrlQuery>
 #include <QtTest>
 
+#include <algorithm>
+
 #ifdef Q_OS_UNIX
 #include <sys/stat.h>
 #endif
@@ -50,7 +52,12 @@ void startProbe(QProcess &probe, const QString &record, const QString &how)
 {
     const QFileInfo program(QStringLiteral(HIKARI_CRASH_PROBE));
     probe.setWorkingDirectory(program.absolutePath());
+    // Windows resolves a relative program against this process's folder,
+    // not the child's working directory (#454).
+    const QString here = QDir::currentPath();
+    QDir::setCurrent(program.absolutePath());
     probe.start(QStringLiteral("./") + program.fileName(), {record, how});
+    QDir::setCurrent(here);
 }
 
 QStringList modulesOf(const crash::Record &record)
@@ -59,6 +66,14 @@ QStringList modulesOf(const crash::Record &record)
     for (const auto &frame : record.frames)
         modules << frame.module;
     return modules;
+}
+
+// What the app posted to the endpoint: another program on the machine may
+// knock on the loopback port too (a GET /), which is not the app's.
+qsizetype posts(const AnalyticsEndpoint &endpoint)
+{
+    return std::count_if(endpoint.requests.begin(), endpoint.requests.end(),
+                         [](const AnalyticsEndpoint::Request &r) { return r.method == QLatin1String("POST"); });
 }
 
 QJsonObject propertiesOf(const QJsonArray &events, const QString &name)
@@ -284,7 +299,7 @@ private slots:
         QVERIFY(reports.send(kStart, note));
         QVERIFY(sent.wait(5000));
         QCOMPARE(sent.first().at(1).toBool(), true);
-        QCOMPARE(endpoint.requests.size(), 1);
+        QCOMPARE(posts(endpoint), 1);
         const QJsonArray events = endpoint.events();
         QCOMPARE(events.size(), 2);
         const QJsonObject exception = propertiesOf(events, QStringLiteral("$exception"));
@@ -346,7 +361,7 @@ private slots:
             QCOMPARE(reports.pending(), QString());
         }
         QTest::qWait(500);
-        QVERIFY(endpoint.requests.isEmpty());
+        QCOMPARE(posts(endpoint), 0);
         QVERIFY(!QFile::exists(path("crash-report.json")));
         CrashReports next(settings, analytics, log, config());
         QCOMPARE(next.pending(), QString());
@@ -450,7 +465,7 @@ private slots:
         QSignalSpy sent(&reports, &CrashReports::sent);
         QVERIFY(reports.send(kStart, {}));
         QVERIFY(sent.wait(5000));
-        QCOMPARE(endpoint.requests.size(), 1);
+        QCOMPARE(posts(endpoint), 1);
         QCOMPARE(endpoint.events().size(), 2);
         QVERIFY(!propertiesOf(endpoint.events(), QStringLiteral("$exception")).isEmpty());
     }
@@ -720,7 +735,7 @@ private slots:
         QVERIFY(!reports.canSend());
         QVERIFY(!reports.send(kStart, {}));
         QTest::qWait(300);
-        QVERIFY(endpoint.requests.isEmpty());
+        QCOMPARE(posts(endpoint), 0);
     }
 
     // "Always send crash reports": the start's report goes by itself, without a note.
@@ -874,7 +889,7 @@ private slots:
         QVERIFY(copied.first().contains(QStringLiteral("a line of the Log")));
         QCOMPARE(reports.pending(), QString()); // taken to GitHub: done
         QTest::qWait(200);
-        QVERIFY(endpoint.requests.isEmpty());
+        QCOMPARE(posts(endpoint), 0);
     }
 
     // No browser opened: the issue is on the clipboard and the report kept.

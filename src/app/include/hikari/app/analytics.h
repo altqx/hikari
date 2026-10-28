@@ -52,10 +52,10 @@ public:
         int firstFlushMs = 60 * 1000;
     };
     static QUrl defaultEndpoint() { return QUrl(QStringLiteral("https://eu.i.posthog.com/batch/")); }
-    // "What is sent": the event table, docs/qt/analytics.md.
+    // "What is sent": the site's page on it (docs/qt/analytics.md for developers).
     static QUrl whatIsSentUrl()
     {
-        return QUrl(QStringLiteral("https://github.com/altqx/hikari/blob/qt/docs/qt/analytics.md"));
+        return QUrl(QStringLiteral("https://hikarisub.altqx.com/en/docs/help/what-is-sent"));
     }
     // The key this build was made with (HIKARI_POSTHOG_KEY), "" for none.
     static QString compiledKey();

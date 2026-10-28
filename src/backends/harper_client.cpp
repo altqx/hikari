@@ -1,5 +1,7 @@
 #include "hikari/backends/harper_client.h"
 
+#include "hikari/core/grammar.h"
+
 #include <QCoreApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -256,8 +258,11 @@ void HarperClient::diagnostics(const QJsonObject &params)
         const auto [start, end] = rangeOf(check.text, diagnostic.value(QStringLiteral("range")).toObject());
         if (start >= end)
             continue;
-        check.findings.append({start, end, diagnostic.value(QStringLiteral("code")).toVariant().toString(),
-                               diagnostic.value(QStringLiteral("message")).toString(), {}, false});
+        // Its message is Markdown: `code` spans read as quotations (#409).
+        const QString message = QString::fromStdU16String(
+            core::grammar::plainMessage(diagnostic.value(QStringLiteral("message")).toString().toStdU16String()));
+        check.findings.append(
+            {start, end, diagnostic.value(QStringLiteral("code")).toVariant().toString(), message, {}, false});
     }
     if (check.findings.isEmpty() || check.cancelled) {
         finish(ticket);

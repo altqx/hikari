@@ -52,6 +52,16 @@ std::optional<Replaced> replace(std::u16string_view raw, SubtitleFormat format, 
 std::optional<std::pair<std::size_t, std::size_t>> rawRange(const CheckedText &text, std::size_t start,
                                                              std::size_t end);
 
+// A harper-ls message as plain text: its Markdown `code` spans in quotation
+// marks, a backtick without its pair left out.
+std::u16string plainMessage(std::u16string_view markdown);
+
+// The Spellchecker panel's text before and after a finding (both modes): the
+// last (first) `most` units of it, cut back to a whole word where text is
+// left out, with an ellipsis there. A word longer than that is cut.
+std::u16string contextBefore(std::u16string_view before, std::size_t most);
+std::u16string contextAfter(std::u16string_view after, std::size_t most);
+
 // Harper's rules (harper-core/default_config.json at the pinned release):
 // each in one of the curated groups, with Harper's default.
 struct Rule {
@@ -70,8 +80,9 @@ std::optional<std::size_t> groupOfRule(std::string_view rule);
 
 // harper-ls's `linters`: every rule on when its group is on and Harper has it
 // on, except two. SpellCheck is off while Hunspell checks spelling (a word is
-// never marked twice), and SentenceCapitalization is off: a subtitle Line is
-// often the middle of a sentence (owner, 2026-10-27).
+// never marked twice), and SentenceCapitalization is always off, whatever its
+// group's switch: a subtitle Line is often the middle of a sentence (owner,
+// 2026-10-27).
 std::vector<std::pair<std::string_view, bool>> linterSwitches(std::span<const bool> groupsOn, bool hunspellOn);
 
 } // namespace hikari::core::grammar

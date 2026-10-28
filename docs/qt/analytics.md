@@ -1,6 +1,6 @@
 # Anonymous usage data
 
-HikariSub sends anonymous usage data to PostHog Cloud EU (`https://eu.i.posthog.com`). This page lists every event and property it can send ([AN1 #404](https://github.com/altqx/hikari/issues/404)).
+HikariSub sends anonymous usage data to PostHog Cloud EU (`https://eu.i.posthog.com`). This page lists every event and property it can send ([AN1 #404](https://github.com/altqx/hikari/issues/404)). The app's "What is sent" link opens the site's page on it, https://hikarisub.altqx.com/en/docs/help/what-is-sent, which follows this one.
 
 ## The basics
 
@@ -8,16 +8,18 @@ HikariSub sends anonymous usage data to PostHog Cloud EU (`https://eu.i.posthog.
 
 **To turn it off**, use either:
 - **Settings > Updates and privacy > Send anonymous usage data**
-- **Getting started**, on its Updates page
+- **Getting started**, on its Updates and privacy page
 
 Turning it off stops sending at once. It also deletes the events waiting to go and the install id. If you turn it on again, you start with a new id.
 
-**`DO_NOT_TRACK`** set to anything other than `0` in the environment turns sending off for that run.
+**Reset page** on Settings' Updates and privacy page and **Reset all settings…** turn it back on, since on is the default. Reset all also clears the install id, so the next event starts a new one.
+
+**`DO_NOT_TRACK`** set to anything other than `0` in the environment turns sending off for that run. A run started with it set deletes the events waiting to go and the crash record, and keeps the install id.
 
 **Only release packages send.** The PostHog project key is compiled in by the release workflows (`HIKARI_POSTHOG_KEY`). A build without the key queues nothing and sends nothing; the switch still shows. That covers builds from source, forks, CI test builds and tests.
 
 **What identifies you:**
-- A random UUID made the first time something is sent (`privacy.usageDataId`). It is not tied to anything else.
+- A random UUID made when the first event is queued (`privacy.usageDataId`). It is not tied to anything else.
 - No person profiles are made (`$process_person_profile: false`).
 - PostHog does no GeoIP lookup (`$geoip_disable: true`). The project discards client IP addresses.
 
@@ -29,7 +31,9 @@ Turning it off stops sending at once. It also deletes the events waiting to go a
 - They are sent to `POST /batch/`, at most 100 at a time:
   - 60 seconds after start, then every 5 minutes
   - once at quit, after the window has closed, waiting at most 2 seconds
-- A send that fails waits for the next one. There is no retry loop, no waiting in the window, and no error message.
+- Each batch carries the PostHog project key (`api_key`, the compiled-in `HIKARI_POSTHOG_KEY`, the same for every copy) and the user agent `HikariSub/<version>`.
+- A send that fails (no network, a timeout, a 5xx, or a 408 or 429) waits for the next one. There is no retry loop, no waiting in the window, and no error message.
+- A batch refused with any other 4xx (a bad key, a batch PostHog will never take) is dropped for good, not retried.
 
 ## Properties on every event
 
@@ -41,6 +45,8 @@ Turning it off stops sending at once. It also deletes the events waiting to go a
 | `$session_id` | A random UUID for each run, never stored |
 | `$lib` | `hikarisub` |
 | `$lib_version` | The app version, e.g. `0.1.0-beta.1` |
+
+Each event also carries its `timestamp`: when it was queued, in UTC (ISO 8601, to the second).
 
 ## Events
 
