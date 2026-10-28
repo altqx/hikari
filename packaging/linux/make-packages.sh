@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds the Qt rewrite's Linux release packages from a configured and built
+# Builds HikariSub's Linux release packages from a configured and built
 # build tree (installers spec 2.1, 5.2 to 5.4):
 #
 #   hikarisub-<V>-linux-x86_64.tar.gz      the portable tree; also the AUR source

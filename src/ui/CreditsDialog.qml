@@ -5,7 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// DG1 (#222): Help › Credits on the dialog frame, redone for the Qt rewrite
+// DG1 (#222): Help › Credits on the dialog frame, redone for HikariSub
 // (the owner's decision of 2026-10-21, DG1-credits-rewrite): who made it,
 // who translated it, and the components it is built with (vcpkg.json, and
 // libass's text stack), each with its copyright holder and licence, in a

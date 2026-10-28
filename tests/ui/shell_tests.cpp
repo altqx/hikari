@@ -8838,7 +8838,7 @@ private slots:
 
     // P8, DG1 (#222): Help > About shows this build's version (copied by its
     // button), the author and the GPL notice, with no legacy attribution
-    // (DG1-about-layout); Credits the Qt rewrite's people and the components
+    // (DG1-about-layout); Credits HikariSub's people and the components
     // it is built with (DG1-credits-rewrite). Both are windows of their own
     // on the dialog frame, modeless.
     void aboutAndCreditsShowTheNotices()

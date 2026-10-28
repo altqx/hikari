@@ -1,5 +1,5 @@
 #!/bin/sh
-# The Qt rewrite's Linux build floor (installers spec 5.1): AlmaLinux 9
+# HikariSub's Linux build floor (installers spec 5.1): AlmaLinux 9
 # (glibc 2.34) with gcc-toolset-14. gcc-toolset links the C++ runtime parts
 # newer than the system libstdc++ statically, so the binaries need only the
 # system GLIBCXX_3.4.29, the same as the Qt SDK, and no libstdc++ is bundled.

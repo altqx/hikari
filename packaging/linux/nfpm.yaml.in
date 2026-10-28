@@ -1,4 +1,4 @@
-# nFPM config for the deb and the rpm (installers spec 5.4), Qt rewrite.
+# nFPM config for the deb and the rpm (installers spec 5.4).
 # make-packages.sh fills the @...@ values; the dependency lists are YAML
 # flow sequences generated from the app tree and the deps maps.
 name: hikarisub
