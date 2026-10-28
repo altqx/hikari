@@ -6,6 +6,7 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <tuple>
 
 namespace hikari::application {
 
@@ -191,6 +192,53 @@ std::vector<KanjiText::Unit> unitsOf(u16v t)
     return units;
 }
 
+// KA4-furigana: a unit that is a kanji (its first code point), or kana.
+bool kanjiUnit(const KanjiText::Unit &unit)
+{
+    const u16 &t = unit.text;
+    if (t.empty())
+        return false;
+    if (t.size() > 1 && t[0] >= 0xD800 && t[0] < 0xDC00 && t[1] >= 0xDC00 && t[1] < 0xE000)
+        return isKanji(0x10000 + ((char32_t(t[0]) - 0xD800) << 10) + (char32_t(t[1]) - 0xDC00));
+    return isKanji(t[0]);
+}
+
+bool kanaUnit(const KanjiText::Unit &unit)
+{
+    return !unit.text.empty() && isKana(unit.text[0]);
+}
+
+// The runs of kanji units in [from, to).
+std::vector<std::pair<std::size_t, std::size_t>> kanjiRunsIn(const std::vector<KanjiText::Unit> &units,
+                                                             std::size_t from, std::size_t to)
+{
+    std::vector<std::pair<std::size_t, std::size_t>> runs;
+    for (std::size_t u = from; u < to; ++u) {
+        if (!kanjiUnit(units[u]))
+            continue;
+        if (!runs.empty() && runs.back().second == u)
+            ++runs.back().second;
+        else
+            runs.emplace_back(u, u + 1);
+    }
+    return runs;
+}
+
+// A reading split over the kanji runs of [from, to), its kana spelt
+// between them (the units that are neither left out).
+std::optional<std::vector<u16>> splitOver(const std::vector<KanjiText::Unit> &units, std::size_t from,
+                                          std::size_t to, u16v reading)
+{
+    u16 surface;
+    for (std::size_t u = from; u < to; ++u)
+        if (kanjiUnit(units[u]) || kanaUnit(units[u]))
+            surface += units[u].text;
+    auto parts = splitReading(surface, reading);
+    if (!parts || parts->size() != kanjiRunsIn(units, from, to).size())
+        return std::nullopt;
+    return parts;
+}
+
 } // namespace
 
 KanjiText kanjiText(u16v text)
@@ -224,6 +272,131 @@ KanjiText kanjiText(u16v text)
         tags.insert(tags.end(), removed, out.text.size());
         i = end;
     }
+    // KA4-furigana: each syllable's reading out of the text (base|reading,
+    // the full-width forms, a ! or < after the | dropped), in one pass; a
+    // syllable with none is kept too (none), as a # highlight after it reads on
+    struct Read {
+        std::size_t syllable, begin, end;
+        u16 text;
+        bool hash, none = false;
+    };
+    std::vector<Read> read;
+    bool any = false; // a syllable has a reading
+    {
+        u16 kept;
+        std::vector<std::size_t> moved(tags.size());
+        std::size_t copied = 0, gone = 0;
+        for (std::size_t t = 0; t < tags.size(); ++t) {
+            const std::size_t from = tags[t], to = t + 1 < tags.size() ? tags[t + 1] : out.text.size();
+            moved[t] = from - gone;
+            auto skipBlock = [&](std::size_t j) {
+                const std::size_t close = out.text.find(u'}', j);
+                return close == u16::npos || close >= to ? to : close + 1;
+            };
+            std::size_t bar = u16::npos, characters = 0;
+            char16_t sole = 0;
+            for (std::size_t j = from; j < to && bar == u16::npos;) {
+                if (out.text[j] == u'{') {
+                    j = skipBlock(j);
+                } else if (out.text[j] == u'|' || out.text[j] == u'｜') {
+                    bar = j;
+                } else {
+                    ++characters;
+                    sole = out.text[j++];
+                }
+            }
+            // (a # highlight: its one character outside blocks a #)
+            const bool hash = t > 0 && characters == 1 && (sole == u'#' || sole == u'＃');
+            if (bar == u16::npos) {
+                read.push_back({t, from - gone, to - gone, u16(), hash, true});
+                continue;
+            }
+            any = true;
+            u16 reading, blocks;
+            for (std::size_t j = bar + 1; j < to;) {
+                if (out.text[j] == u'{') {
+                    const std::size_t close = skipBlock(j);
+                    blocks.append(out.text, j, close - j);
+                    j = close;
+                } else {
+                    reading += out.text[j++];
+                }
+            }
+            if (!reading.empty() && u16v(u"!<！＜").find(reading.front()) != u16v::npos)
+                reading.erase(0, 1);
+            // (the spaces after it are the syllable's, as karaskel's postspace)
+            const std::size_t spaces = reading.size() - std::min(reading.size(), reading.find_last_not_of(u" \t") + 1);
+            const u16 post = reading.substr(reading.size() - spaces);
+            reading.resize(reading.size() - spaces);
+            if (kept.empty())
+                kept.reserve(out.text.size());
+            kept.append(out.text, copied, bar - copied);
+            kept += blocks;
+            kept += post;
+            copied = to;
+            read.push_back({t, from - gone, bar - gone, std::move(reading), hash});
+            gone += to - bar - blocks.size() - spaces;
+        }
+        if (any) {
+            kept.append(out.text, copied);
+            out.text = std::move(kept);
+            tags = std::move(moved);
+        }
+    }
+    // a # syllable's reading goes on the base before it, through the #
+    // highlights with none (karaskel keeps the base over every one); a base
+    // that reads nothing is no reading
+    {
+        std::vector<Read> merged;
+        for (Read &r : read) {
+            if (!r.hash) {
+                if (!merged.empty() && merged.back().none)
+                    merged.pop_back();
+                merged.push_back(std::move(r));
+            } else if (!merged.empty() && merged.back().syllable + 1 == r.syllable) {
+                merged.back().text += r.text;
+                merged.back().none = merged.back().none && r.none;
+                merged.back().syllable = r.syllable;
+            }
+        }
+        if (!merged.empty() && merged.back().none)
+            merged.pop_back();
+        read = any ? std::move(merged) : std::vector<Read>();
+    }
+    // the readings by the kanji runs of their bases' units
+    // (in order: one pass over the units)
+    auto finish = [&] {
+        std::size_t from = 0;
+        for (const Read &r : read) {
+            while (from < out.units.size() && out.units[from].begin < r.begin)
+                ++from;
+            std::size_t to = from;
+            while (to < out.units.size() && out.units[to].end <= r.end)
+                ++to;
+            const auto runs = kanjiRunsIn(out.units, from, to);
+            // (a base with no kanji keeps its reading too, as karaskel reads it)
+            if (runs.empty()) {
+                if (from < to)
+                    out.readings.push_back({from, to, r.text});
+                continue;
+            }
+            // (split in hiragana; each part as the Line writes it)
+            const auto parts = splitOver(out.units, from, to, r.text);
+            std::size_t at = 0, k = 0;
+            for (std::size_t u = from; u < to && parts && k < runs.size(); ++u) {
+                if (u == runs[k].first) {
+                    out.readings.push_back({runs[k].first, runs[k].second, r.text.substr(at, (*parts)[k].size())});
+                    at += (*parts)[k++].size();
+                    u = runs[k - 1].second - 1;
+                } else if (kanaUnit(out.units[u])) {
+                    at += out.units[u].text.size();
+                }
+            }
+            // (none: the whole base keeps it, as karaskel reads it)
+            if (!parts)
+                out.readings.push_back({from, to, r.text});
+        }
+    };
     out.units = unitsOf(out.text);
     // KA8-multi-highlight: the # syllables, one character each up to the next tag
     std::vector<bool> hash(tags.size());
@@ -238,8 +411,10 @@ KanjiText kanjiText(u16v text)
             erased.push_back(u);
         }
     }
-    if (erased.empty())
+    if (erased.empty()) {
+        finish();
         return out;
+    }
     // the text without them, and each tag moved back by what went before it,
     // in one pass each (a Line of many # syllables must not take n² here)
     u16 kept;
@@ -256,11 +431,20 @@ KanjiText kanjiText(u16v text)
             gone += out.units[erased[e]].end - out.units[erased[e]].begin;
         tags[t] -= gone;
     }
+    gone = 0;
+    for (std::size_t r = 0, e = 0; r < read.size(); ++r) {
+        for (; e < erased.size() && out.units[erased[e]].end <= read[r].begin; ++e)
+            gone += out.units[erased[e]].end - out.units[erased[e]].begin;
+        read[r].begin -= gone;
+        read[r].end -= gone;
+    }
     out.text = std::move(kept);
     out.units = unitsOf(out.text);
     // the groups the tags make, when no character comes before the first
-    if (!out.units.empty() && out.units.front().begin < tags.front())
+    if (!out.units.empty() && out.units.front().begin < tags.front()) {
+        finish();
         return out;
+    }
     std::size_t u = 0;
     for (std::size_t t = 0; t < tags.size(); ++t) {
         if (hash[t]) {
@@ -275,6 +459,7 @@ KanjiText kanjiText(u16v text)
             ++g.characters;
         out.tagged.push_back(g);
     }
+    finish();
     return out;
 }
 
@@ -407,15 +592,400 @@ KanjiSuggestion suggestGroups(const std::vector<KanjiSyllable> &syllables, std::
     return out;
 }
 
-std::u16string kanjiOutput(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
-                           const std::vector<KanjiGroup> &groups, bool multi)
+namespace {
+
+// The kana `count` syllables from `from` sing: their romaji (ASCII marks
+// left out) read as kana; none when part of it is no romaji.
+std::optional<u16> sungKana(const std::vector<KanjiSyllable> &syllables, std::size_t from, std::size_t count)
 {
+    u16 romaji;
+    for (std::size_t k = from; k < from + count && k < syllables.size(); ++k)
+        for (const char16_t c : syllables[k].text)
+            if (c >= 128 || (c >= u'a' && c <= u'z') || (c >= u'A' && c <= u'Z') || c == u'\'' || c == u' ')
+                romaji += c;
+    if (romaji.empty())
+        return std::nullopt;
+    return romajiToHiragana(romaji);
+}
+
+// Whether [from, to) of the text is override blocks only.
+bool onlyBlocks(u16v text, std::size_t from, std::size_t to)
+{
+    while (from < to) {
+        const std::size_t close = text.find(u'}', from);
+        if (text[from] != u'{' || close == u16v::npos || close >= to)
+            return false;
+        from = close + 1;
+    }
+    return true;
+}
+
+// The dictionary's reading of a kanji run: its words' runs within it when
+// they take every kanji of it (blocks between them are none of its kanji).
+// `word`: the first word not before it (the runs are asked in order).
+u16 dictionaryReading(const KanjiText &kanji, const std::vector<FuriganaRun> &dictionary, std::size_t &word,
+                      std::size_t from, std::size_t to)
+{
+    const std::size_t begin = kanji.units[from].begin, end = kanji.units[to - 1].end;
+    while (word < dictionary.size() && dictionary[word].end <= begin)
+        ++word;
+    u16 out;
+    std::size_t covered = begin;
+    for (std::size_t w = word; w < dictionary.size() && dictionary[w].begin < end; ++w) {
+        const FuriganaRun &run = dictionary[w];
+        if (run.begin < begin || run.end > end)
+            return {};
+        if (run.suggested.empty())
+            return {};
+        // (kana between two runs is no kanji of this one)
+        if (run.begin != covered && !onlyBlocks(kanji.text, covered, run.begin))
+            return {};
+        out += run.suggested;
+        covered = run.end;
+    }
+    return covered == end ? out : u16();
+}
+
+// The kanji runs of each group, in order.
+std::vector<std::pair<std::size_t, std::size_t>> runsOver(const KanjiText &kanji, const std::vector<KanjiGroup> &groups)
+{
+    std::vector<std::pair<std::size_t, std::size_t>> out;
+    std::size_t character = 0;
+    for (const KanjiGroup &g : groups) {
+        const auto runs = kanjiRunsIn(kanji.units, std::min(character, kanji.units.size()),
+                                      std::min(character + g.characters, kanji.units.size()));
+        out.insert(out.end(), runs.begin(), runs.end());
+        character += g.characters;
+    }
+    return out;
+}
+
+// Whether a typed reading's units take kana: a Line's own that split over
+// none of its base's runs, kept over the whole base.
+bool spellsKana(const KanjiText &kanji, const std::pair<std::size_t, std::size_t> &range)
+{
+    for (std::size_t u = range.first; u < range.second && u < kanji.units.size(); ++u)
+        if (kanaUnit(kanji.units[u]))
+            return true;
+    return false;
+}
+
+// The typed readings on these runs, so regrouping loses none: the ones in
+// a run one after another, one over more runs all on the first (the others
+// none), one over no run or over kana too as it was. (Both in order: one pass.)
+KanjiTyped fitTyped(const KanjiText &kanji, const std::vector<std::pair<std::size_t, std::size_t>> &runs,
+                    const KanjiTyped &typed)
+{
+    KanjiTyped out;
+    std::size_t r = 0;
+    for (const auto &[range, text] : typed) {
+        while (r < runs.size() && runs[r].second <= range.first)
+            ++r;
+        if (r == runs.size() || runs[r].first >= range.second || spellsKana(kanji, range)) {
+            out.emplace(range, text);
+            continue;
+        }
+        out[runs[r]] += text;
+        while (r + 1 < runs.size() && runs[r + 1].first < range.second)
+            out.try_emplace(runs[++r]);
+    }
+    return out;
+}
+
+// Whether a typed reading's units take no kanji: a Line's own over a base
+// of kana (or other characters) only.
+bool noKanji(const KanjiText &kanji, const std::pair<std::size_t, std::size_t> &range)
+{
+    for (std::size_t u = range.first; u < range.second && u < kanji.units.size(); ++u)
+        if (kanjiUnit(kanji.units[u]))
+            return false;
+    return true;
+}
+
+// The typed readings over no kanji that start in [from, to).
+std::vector<std::pair<std::size_t, std::size_t>> bareIn(const KanjiTyped &typed, const KanjiText &kanji,
+                                                        std::size_t from, std::size_t to)
+{
+    std::vector<std::pair<std::size_t, std::size_t>> out;
+    for (auto it = typed.lower_bound({from, 0}); it != typed.end() && it->first.first < to; ++it)
+        if (noKanji(kanji, it->first))
+            out.push_back(it->first);
+    return out;
+}
+
+// What a group's reading is over: its kanji runs and the Line's own readings
+// over no kanji in it, in order.
+std::vector<std::pair<std::size_t, std::size_t>> readingsIn(const KanjiTyped &typed, const KanjiText &kanji,
+                                                            std::size_t from, std::size_t to)
+{
+    auto out = kanjiRunsIn(kanji.units, from, to);
+    const auto bare = bareIn(typed, kanji, from, to);
+    out.insert(out.end(), bare.begin(), bare.end());
+    std::ranges::sort(out);
+    return out;
+}
+
+// Takes the typed readings over any of these runs out.
+void eraseTyped(KanjiTyped &typed, const std::vector<std::pair<std::size_t, std::size_t>> &runs)
+{
+    std::size_t r = 0;
+    for (auto it = typed.begin(); it != typed.end();) {
+        while (r < runs.size() && runs[r].second <= it->first.first)
+            ++r;
+        if (r < runs.size() && runs[r].first < it->first.second)
+            it = typed.erase(it);
+        else
+            ++it;
+    }
+}
+
+} // namespace
+
+std::vector<KanjiReading> kanjiReadings(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
+                                        const std::vector<KanjiGroup> &groups,
+                                        const std::vector<FuriganaRun> &dictionary, const KanjiTyped &typed,
+                                        bool suggest)
+{
+    std::vector<KanjiReading> out;
+    const KanjiTyped fitted = fitTyped(kanji, runsOver(kanji, groups), typed);
+    auto entry = fitted.begin();
+    std::size_t syllable = 0, character = 0, word = 0, before = 0; // (before: the last run's end)
+    for (std::size_t g = 0; g < groups.size(); ++g) {
+        const std::size_t from = std::min(character, kanji.units.size());
+        const std::size_t to = std::min(character + groups[g].characters, kanji.units.size());
+        const auto runs = kanjiRunsIn(kanji.units, from, to);
+        std::optional<std::vector<u16>> parts;
+        if (suggest && !runs.empty())
+            if (const auto sung = sungKana(syllables, syllable, groups[g].syllables))
+                parts = splitOver(kanji.units, from, to, *sung);
+        // a Line's own readings over no kanji in this group, up to `upTo`
+        // (one over kanji stops it only when it reaches a run from there)
+        const auto bare = [&](std::size_t upTo) {
+            for (; entry != fitted.end() && entry->first.first < upTo; ++entry) {
+                const bool none = noKanji(kanji, entry->first);
+                if (none && entry->first.first >= from) {
+                    KanjiReading k{g, entry->first.first, entry->first.second};
+                    k.typed = entry->second;
+                    std::tie(k.spellsFrom, k.spellsTo) = entry->first;
+                    out.push_back(std::move(k));
+                } else if (!none && entry->first.second > upTo) {
+                    break;
+                }
+            }
+        };
+        for (std::size_t r = 0; r < runs.size(); ++r) {
+            bare(runs[r].first);
+            KanjiReading k{g, runs[r].first, runs[r].second};
+            if (suggest) {
+                k.dictionary = dictionaryReading(kanji, dictionary, word, runs[r].first, runs[r].second);
+                k.sung = parts.has_value();
+                k.suggested = parts ? (*parts)[r] : k.dictionary;
+            }
+            while (entry != fitted.end() && entry->first.second <= runs[r].first)
+                ++entry;
+            // every typed one over it, one after another; a Line's own over
+            // kanji and kana goes all on its first run (with the units it
+            // spells) and is none of the runs after
+            for (auto it = entry; it != fitted.end() && it->first.first < runs[r].second; ++it) {
+                if (noKanji(kanji, it->first)) // (bare: its group's)
+                    continue;
+                if (!k.typed)
+                    k.typed.emplace();
+                if (it->first.first < before)
+                    continue;
+                *k.typed += it->second;
+                if (it->first != runs[r]) {
+                    k.spellsFrom = k.spellsTo ? std::min(k.spellsFrom, it->first.first) : it->first.first;
+                    k.spellsTo = std::max(k.spellsTo, it->first.second);
+                }
+            }
+            // (the ones read to their end are done with)
+            while (entry != fitted.end() && entry->first.second <= runs[r].second)
+                ++entry;
+            before = runs[r].second;
+            if (suggest || k.typed)
+                out.push_back(std::move(k));
+        }
+        bare(to);
+        syllable += groups[g].syllables;
+        character += groups[g].characters;
+    }
+    for (KanjiReading &k : out)
+        k.differs = k.sung && !k.dictionary.empty() && k.dictionary != k.suggested;
+    // a word over more runs, one after another (both in order)
+    std::size_t first = 0;
+    for (const FuriganaRun &word : dictionary) {
+        if (!suggest || word.suggested.empty())
+            continue;
+        while (first < out.size() && kanji.units[out[first].begin].begin < word.begin)
+            ++first;
+        std::size_t last = first;
+        u16 sung;
+        bool allSung = true;
+        while (last < out.size() && kanjiUnit(kanji.units[out[last].begin]) && kanji.units[out[last].end - 1].end <= word.end &&
+               kanji.units[out[last].begin].begin == (last == first ? word.begin : kanji.units[out[last - 1].end - 1].end)) {
+            sung += out[last].suggested;
+            allSung = allSung && out[last].sung;
+            ++last;
+        }
+        if (last - first < 2 || kanji.units[out[last - 1].end - 1].end != word.end)
+            continue;
+        for (std::size_t r = first; r < last; ++r) {
+            out[r].dictionary = word.suggested;
+            out[r].differs = allSung && sung != word.suggested;
+        }
+    }
+    return out;
+}
+
+namespace {
+
+// KA4-furigana: the groups as kanjiOutput writes them and each one's reading
+// pieces (none: no furigana; one per syllable: the first after the base,
+// the others after its # syllables).
+struct Furigana {
+    std::vector<KanjiGroup> groups;
+    std::vector<std::vector<u16>> pieces;
+};
+
+Furigana furiganaOf(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
+                    const std::vector<KanjiGroup> &groups, bool multi, const std::vector<KanjiReading> &readings)
+{
+    Furigana out;
+    std::size_t syllable = 0, character = 0, next = 0;
+    std::size_t spelt = 0; // the units up to here a reading spells (across groups: a Line's own may)
+    // a group's pieces: its reading (its kana spelt between the kanji runs'
+    // readings), per syllable when the reading is the sung one
+    auto piecesOf = [&](std::size_t from, std::size_t count, std::size_t at, std::size_t to,
+                        const std::vector<const KanjiReading *> &runs) -> std::vector<u16> {
+        u16 whole;
+        bool any = false;
+        std::size_t r = 0;
+        for (std::size_t u = at; u < to; ++u) {
+            if (r < runs.size() && u == runs[r]->begin) {
+                whole += runs[r]->reading();
+                any = any || !runs[r]->reading().empty();
+                spelt = std::max(spelt, runs[r]->spellsTo);
+                u = runs[r++]->end - 1;
+            } else if (kanaUnit(kanji.units[u]) && u >= spelt &&
+                       !(r < runs.size() && runs[r]->spellsFrom <= u && u < runs[r]->spellsTo)) {
+                whole += kanji.units[u].text;
+            }
+        }
+        if (!any)
+            return {};
+        if (multi && count > 1 && to > at) {
+            std::vector<u16> each;
+            u16 sung;
+            for (std::size_t k = from; k < from + count; ++k) {
+                const auto kana = sungKana(syllables, k, 1);
+                if (!kana || kana->empty())
+                    return {whole};
+                sung += *kana;
+                each.push_back(*kana);
+            }
+            if (hiragana(whole) == sung)
+                return each;
+        }
+        return {whole};
+    };
+    for (std::size_t i = 0; i < groups.size(); ++i) {
+        const KanjiGroup &g = groups[i];
+        const std::size_t at = std::min(character, kanji.units.size());
+        // the last group's characters are the rest of the Line (KA3-leftover-kanji)
+        const std::size_t to = i + 1 == groups.size() ? kanji.units.size() : std::min(character + g.characters, kanji.units.size());
+        std::vector<const KanjiReading *> runs;
+        for (; next < readings.size() && readings[next].group <= i; ++next)
+            if (readings[next].group == i)
+                runs.push_back(&readings[next]);
+        // a group of kanji and kana, sung as its runs' suggestions, whose
+        // syllables line up with them: one group per stretch of kanji or not
+        bool split = false;
+        if (!runs.empty() && g.syllables > 1 &&
+            std::ranges::all_of(runs, [](const auto *r) { return r->sung && r->spellsTo == 0; })) {
+            // each stretch's units and kana
+            std::vector<std::tuple<std::size_t, std::size_t, std::size_t>> stretches; // from, to, kana
+            const std::size_t own = std::min(at + g.characters, kanji.units.size());
+            std::size_t r = 0;
+            for (std::size_t u = at; u < own;) {
+                std::size_t end = u, kana = 0;
+                if (r < runs.size() && u == runs[r]->begin) {
+                    end = runs[r]->end;
+                    kana = runs[r++]->suggested.size();
+                } else {
+                    while (end < own && !(r < runs.size() && end == runs[r]->begin)) {
+                        if (kanaUnit(kanji.units[end]))
+                            kana += hiragana(kanji.units[end].text).size();
+                        ++end;
+                    }
+                }
+                // (a stretch with no kana goes with the one before)
+                if (kana == 0 && !stretches.empty())
+                    std::get<1>(stretches.back()) = end;
+                else if (!stretches.empty() && std::get<2>(stretches.back()) == 0)
+                    stretches.back() = {std::get<0>(stretches.back()), end, kana};
+                else
+                    stretches.emplace_back(u, end, kana);
+                u = end;
+            }
+            std::vector<std::size_t> counts; // the syllables of each stretch
+            std::size_t k = syllable, sungSoFar = 0, stretchEnd = 0;
+            bool lined = stretches.size() > 1;
+            for (const auto &[from, end, kana] : stretches) {
+                stretchEnd += kana;
+                std::size_t n = 0;
+                while (lined && sungSoFar < stretchEnd && k < syllable + g.syllables) {
+                    const auto sung = sungKana(syllables, k++, 1);
+                    if (!sung || sung->empty())
+                        lined = false;
+                    else
+                        sungSoFar += sung->size();
+                    ++n;
+                }
+                lined = lined && sungSoFar == stretchEnd && n > 0;
+                counts.push_back(n);
+            }
+            if (lined && k == syllable + g.syllables) {
+                split = true;
+                std::size_t s = syllable, rr = 0;
+                for (std::size_t t = 0; t < stretches.size(); ++t) {
+                    const auto &[from, end, kana] = stretches[t];
+                    std::vector<const KanjiReading *> its;
+                    for (; rr < runs.size() && runs[rr]->begin < end; ++rr)
+                        its.push_back(runs[rr]);
+                    out.groups.push_back({counts[t], end - from});
+                    out.pieces.push_back(its.empty() ? std::vector<u16>{} : piecesOf(s, counts[t], from, end, its));
+                    s += counts[t];
+                }
+            }
+        }
+        if (!split) {
+            out.groups.push_back(g);
+            out.pieces.push_back(runs.empty() ? std::vector<u16>{} : piecesOf(syllable, g.syllables, at, to, runs));
+        }
+        syllable += g.syllables;
+        character += g.characters;
+    }
+    return out;
+}
+
+} // namespace
+
+std::u16string kanjiOutput(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
+                           const std::vector<KanjiGroup> &written, bool multi, const std::vector<KanjiReading> *readings)
+{
+    Furigana furigana;
+    if (readings && !readings->empty())
+        furigana = furiganaOf(syllables, kanji, written, multi, *readings);
+    const std::vector<KanjiGroup> &groups = furigana.groups.empty() ? written : furigana.groups;
     // each group's tag and where it goes; a # syllable's (KA8-multi-highlight)
     // with its "#" after the group's characters
+    // and KA4-furigana's readings, each after its base
     struct Tag {
         std::size_t at;
         u16 tag;
         bool hash;
+        bool reading = false;
     };
     std::vector<Tag> tags;
     auto tagOf = [&](std::size_t syllable, int cs) {
@@ -433,23 +1003,41 @@ std::u16string kanjiOutput(const std::vector<KanjiSyllable> &syllables, const Ka
             cs += syllables[k].cs;
         const std::size_t at = character < kanji.units.size() ? kanji.units[character].begin : kanji.text.size();
         tags.push_back({at, tagOf(syllable, cs), false});
+        const std::size_t first = std::min(character, kanji.units.size());
         character += g.characters;
+        // the last group's characters are the rest of the Line (KA3-leftover-kanji)
+        const std::size_t last = i + 1 == groups.size() ? kanji.units.size() : std::min(character, kanji.units.size());
+        const std::size_t after = last ? kanji.units[last - 1].end : 0;
+        // (a reading goes before the spaces that end the group: karaskel's
+        // postspace is none of its base)
+        std::size_t based = last;
+        while (based > first + 1 && (kanji.units[based - 1].text == u" " || kanji.units[based - 1].text == u"\t"))
+            --based;
+        const std::size_t readingAt = based ? kanji.units[based - 1].end : 0;
+        const std::vector<u16> none;
+        const auto &pieces = i < furigana.pieces.size() ? furigana.pieces[i] : none;
+        const bool each = hashes && pieces.size() == end - syllable;
+        if (!pieces.empty() && g.characters > 0)
+            tags.push_back({readingAt, pieces.front(), false, true});
         if (hashes) {
-            // the last group's characters are the rest of the Line (KA3-leftover-kanji)
-            const std::size_t last = i + 1 == groups.size() ? kanji.units.size() : std::min(character, kanji.units.size());
-            const std::size_t after = last ? kanji.units[last - 1].end : 0;
-            for (std::size_t k = syllable + 1; k < end; ++k)
+            for (std::size_t k = syllable + 1; k < end; ++k) {
                 tags.push_back({after, tagOf(k, syllables[k].cs), true});
+                if (each)
+                    tags.push_back({after, pieces[k - syllable], false, true});
+            }
         }
         syllable += g.syllables;
     }
     u16 out;
     std::size_t copied = 0;
     std::size_t lastAt = u16::npos;
-    for (const auto &[at, tag, hash] : tags) {
+    for (const auto &[at, tag, hash, reading] : tags) {
         out.append(kanji.text, copied, at - copied);
         copied = at;
-        if (hash) {
+        if (reading) {
+            out += u'|';
+            out += tag;
+        } else if (hash) {
             out += u'{';
             out += tag;
             out += u"}#";
@@ -487,6 +1075,41 @@ void KanjiTimer::setSuggest(bool on)
 {
     m_suggest = on;
     derive();
+}
+
+void KanjiTimer::setDictionary(ReadingAnalyzer analyze)
+{
+    m_analyze = std::move(analyze);
+    m_dictionary.clear();
+}
+
+const std::vector<FuriganaRun> &KanjiTimer::dictionaryOf(const KanjiText &kanji) const
+{
+    static const std::vector<FuriganaRun> none;
+    if (!m_analyze)
+        return none;
+    auto found = m_dictionary.find(kanji.text);
+    if (found == m_dictionary.end())
+        found = m_dictionary.emplace(kanji.text, suggestReadings(kanji.text, m_analyze)).first;
+    return found->second;
+}
+
+std::vector<KanjiReading> KanjiTimer::readingsOf(const Work &work, const std::vector<KanjiSyllable> &syllables,
+                                                 const KanjiText &kanji, const std::vector<KanjiGroup> &groups) const
+{
+    static const std::vector<FuriganaRun> none;
+    return kanjiReadings(syllables, kanji, groups, m_furigana ? dictionaryOf(kanji) : none, work.typed, m_furigana);
+}
+
+std::u16string KanjiTimer::outputOf(const Work &work, const std::vector<KanjiSyllable> &syllables,
+                                    const KanjiText &kanji, const std::vector<KanjiGroup> &groups) const
+{
+    // (the characters after the last group are its: KA3-leftover-kanji)
+    std::vector<KanjiGroup> all = groups;
+    if (const std::size_t used = charactersIn(all); !all.empty() && used < kanji.units.size())
+        all.back().characters += kanji.units.size() - used;
+    const auto readings = readingsOf(work, syllables, kanji, all);
+    return kanjiOutput(syllables, kanji, all, m_multi, &readings);
 }
 
 namespace {
@@ -624,9 +1247,13 @@ KanjiTimer::Work &KanjiTimer::workFor(const Pair &pair)
         work.changed = had;
         work.romajiText = pair.romaji->text;
         work.kanjiText = pair.kanji->text;
+        auto kanji = kanjiText(pair.kanji->text);
+        // KA4-furigana: the Line's own readings as typed ones
+        for (const auto &reading : kanji.readings)
+            work.typed[{reading.begin, reading.end}] = reading.text;
         // KA8-multi-highlight: a kanji Line with # syllables starts linked
         // as its tags group it, when that takes every syllable
-        auto tagged = kanjiText(pair.kanji->text).tagged;
+        auto tagged = std::move(kanji.tagged);
         if (!tagged.empty() &&
             syllablesIn(tagged) == kanjiSyllables(pair.romaji->text, pair.romaji->startMs, pair.romaji->endMs).size())
             work.linked = std::move(tagged);
@@ -727,8 +1354,10 @@ std::optional<KanjiTimer::View> KanjiTimer::view() const
     }
     const bool covers = syllablesIn(all) >= v.syllables.size() && !v.syllables.empty();
     v.canAccept = covers && !blank;
+    if (m_furigana)
+        v.readings = readingsOf(work, v.syllables, v.kanji, all);
     if (covers)
-        v.output = kanjiOutput(v.syllables, v.kanji, all, m_multi);
+        v.output = outputOf(work, v.syllables, v.kanji, all);
     return v;
 }
 
@@ -985,6 +1614,54 @@ bool KanjiTimer::enter()
     return link();
 }
 
+bool KanjiTimer::setReading(std::u16string_view reading)
+{
+    return editCurrent([&](Work &work, const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji) {
+        const std::size_t from = std::min(charactersIn(work.linked), kanji.units.size());
+        const std::size_t to = std::min(from + selectionOf(work, syllables, kanji).characters, kanji.units.size());
+        // (and the Line's own readings over no kanji in it)
+        const auto runs = readingsIn(work.typed, kanji, from, to);
+        if (runs.empty())
+            return false;
+        // a reading for each run when it has as many, split at spaces;
+        // else all of it for the first
+        std::vector<u16> pieces;
+        for (std::size_t i = 0; i <= reading.size();) {
+            std::size_t end = reading.find_first_of(u" \u3000", i);
+            if (end == u16v::npos)
+                end = reading.size();
+            if (end > i)
+                pieces.emplace_back(reading.substr(i, end - i));
+            i = end + 1;
+        }
+        if (pieces.size() != runs.size()) {
+            u16 whole;
+            for (const auto &piece : pieces)
+                whole += piece;
+            pieces.assign(runs.size(), u16());
+            pieces.front() = std::move(whole);
+        }
+        const KanjiTyped before = work.typed;
+        work.typed = fitTyped(kanji, runsOver(kanji, proposal(work, syllables, kanji)), work.typed);
+        eraseTyped(work.typed, runs);
+        for (std::size_t r = 0; r < runs.size(); ++r)
+            work.typed[runs[r]] = pieces[r];
+        return work.typed != before;
+    });
+}
+
+bool KanjiTimer::useSuggestion()
+{
+    return editCurrent([&](Work &work, const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji) {
+        const std::size_t from = std::min(charactersIn(work.linked), kanji.units.size());
+        const std::size_t to = std::min(from + selectionOf(work, syllables, kanji).characters, kanji.units.size());
+        const KanjiTyped before = work.typed;
+        work.typed = fitTyped(kanji, runsOver(kanji, proposal(work, syllables, kanji)), work.typed);
+        eraseTyped(work.typed, readingsIn(work.typed, kanji, from, to));
+        return work.typed != before;
+    });
+}
+
 bool KanjiTimer::clickSyllable(std::size_t syllable)
 {
     return editCurrent([&](Work &w, const auto &syllables, const auto &kanji) {
@@ -1145,7 +1822,7 @@ std::vector<std::pair<core::LineId, std::u16string>> KanjiTimer::pending() const
         if (found == m_state.works.end())
             continue;
         const auto syllables = kanjiSyllables(pair.romaji->text, pair.romaji->startMs, pair.romaji->endMs);
-        out.emplace_back(pair.kanji->id, kanjiOutput(syllables, kanjiText(pair.kanji->text), found->second.linked, m_multi));
+        out.emplace_back(pair.kanji->id, outputOf(found->second, syllables, kanjiText(pair.kanji->text), found->second.linked));
     }
     return out;
 }
@@ -1157,7 +1834,12 @@ void KanjiTimer::applied()
             continue;
         Work &work = m_state.works[keyOf(pair)];
         const auto syllables = kanjiSyllables(pair.romaji->text, pair.romaji->startMs, pair.romaji->endMs);
-        work.kanjiText = kanjiOutput(syllables, kanjiText(pair.kanji->text), work.linked, m_multi);
+        work.kanjiText = outputOf(work, syllables, kanjiText(pair.kanji->text), work.linked);
+        // KA4-furigana: the readings written are the Line's own now, as when
+        // it is opened (so Furigana off keeps them)
+        work.typed.clear();
+        for (const auto &reading : kanjiText(work.kanjiText).readings)
+            work.typed[{reading.begin, reading.end}] = reading.text;
         work.done = false;
         work.applied = true;
     }

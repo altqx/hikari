@@ -1619,7 +1619,8 @@ DialogWindow {
                         text: qsTr("%n styles: the preview shows %1", "", manager.editedRows.length).arg(manager.values.name || "")
                     }
                 }
-                // Legacy STYLE_PREVIEW_TEXT, edited by clicking the preview.
+                // Legacy STYLE_PREVIEW_TEXT, edited by clicking the preview
+                // (Settings > Appearance has it too, PV1 #398).
                 // SY3: kept when edited, as legacy's StylePreview kept it
                 // (StylePreview.cpp:136-141).
                 TextField {
@@ -1629,7 +1630,8 @@ DialogWindow {
                     Accessible.name: qsTr("Preview text")
                     leftPadding: 28
                     Layout.fillWidth: true
-                    onTextEdited: manager.updatePreview()
+                    // PV1 (#398): typed, or changed in Settings.
+                    onTextChanged: manager.updatePreview()
                     onEditingFinished: manager.catalogs.setPreviewText(text)
                     // Enter keeps the text (it is not the window's OK here).
                     Keys.onReturnPressed: manager.catalogs.setPreviewText(text)

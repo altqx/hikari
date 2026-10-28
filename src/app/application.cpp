@@ -3,6 +3,7 @@
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
+#include "hikari/backends/mecab_readings.h"
 #include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/qt_audio_devices.h"
@@ -128,6 +129,18 @@ QString luaHelperPath(const QString &configured)
 #ifdef HIKARI_BUILD_LUA_HELPER
     if (!QFileInfo::exists(sibling))
         return QStringLiteral(HIKARI_BUILD_LUA_HELPER);
+#endif
+    return sibling;
+}
+
+QString readingDictionaryPath(const QString &configured)
+{
+    if (!configured.isEmpty())
+        return configured;
+    const QString sibling = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary/unidic-lite");
+#ifdef HIKARI_BUILD_UNIDIC
+    if (!QFileInfo::exists(sibling + QStringLiteral("/sys.dic")))
+        return QStringLiteral(HIKARI_BUILD_UNIDIC);
 #endif
     return sibling;
 }
@@ -884,6 +897,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.refresh = [this] {
             m_editor->reloadFromSession();
             refreshViews();
+        };
+        // KA4: MeCab over UniDic, opened when Furigana is first on
+        hooks.dictionary = [folder = readingDictionaryPath(options.readingDictionaryDir)]() -> application::ReadingAnalyzer {
+            std::shared_ptr<const backends::MecabReadings> readings =
+                backends::MecabReadings::open(std::filesystem::path(folder.toStdU16String()));
+            return readings ? backends::MecabReadings::analyzer(std::move(readings)) : application::ReadingAnalyzer{};
         };
         m_kanjiTimer = std::make_unique<KanjiTimerController>(*m_settings, std::move(hooks));
     }
@@ -3572,9 +3591,19 @@ bool Application::recoverBundle(const QString &key, qulonglong generation)
 QVariantList Application::legacyAutosaves()
 {
     QVariantList rows;
-    if (m_legacyAutosaveDir.isEmpty() || !QFileInfo(m_legacyAutosaveDir).isDir())
+    // Legacy wrote them to Options.dataPath/Subs (AutoSaveOpen.cpp:127):
+    // its program folder, or HikariSub/Legacy once installed (ADR 0019),
+    // the roots the settings importer finds; never 0.1's own folder (#387).
+    QString folder = m_legacyAutosaveDir;
+    if (folder.isEmpty() && !m_settingsFile.isEmpty())
+        for (const auto &root : SettingsImportStore::discoverRoots(SettingsImportStore::defaultCandidates()))
+            if (QFileInfo(root.path + QStringLiteral("/Subs")).isDir()) {
+                folder = root.path + QStringLiteral("/Subs");
+                break;
+            }
+    if (folder.isEmpty() || !QFileInfo(folder).isDir())
         return rows; // no legacy folder: nothing to list (and nothing logged)
-    const auto files = application::listLegacyAutosaves(std::filesystem::path(m_legacyAutosaveDir.toStdU16String()),
+    const auto files = application::listLegacyAutosaves(std::filesystem::path(folder.toStdU16String()),
                                                         QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdU16String());
     if (files.empty()) {
         // GenerateList: "Cannot open auto save folder" when FindFirstFileW
@@ -3584,7 +3613,7 @@ QVariantList Application::legacyAutosaves()
         m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open auto save"),
                       QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
 #else
-        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open auto save"), QDir(m_legacyAutosaveDir).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
+        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open auto save"), QDir(folder).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
                        ? QCoreApplication::translate("HikariSub.Session", "Cannot open auto save folder")
                        : QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
 #endif

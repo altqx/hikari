@@ -254,7 +254,18 @@ DialogWindow {
             picker.resolve()
             renderTimer.restart()
         }
-        function onFilterChanged() { if (picker.visible) picker.relist() }
+        // The filter, or (PV1 #398) the preview text changed in Settings or
+        // the Style editor: a sample without the Line's text follows it.
+        function onFilterChanged() {
+            if (!picker.visible)
+                return
+            picker.relist()
+            if (!picker.loading && picker.sampleText.trim().length === 0
+                    && picker.catalogs.samplePlain(picker.catalogs.previewText, true) !== picker.resolvedFor) {
+                picker.resolve()
+                renderTimer.restart()
+            }
+        }
     }
     onAccepted: {
         if (mode === "line") {

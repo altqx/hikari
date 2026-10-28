@@ -643,6 +643,7 @@ DialogWindow {
                                 Layout.preferredWidth: 130
                             }
                             Label {
+                                objectName: "fontCatalogSample"
                                 textFormat: Text.PlainText
                                 text: window.catalogs.previewText
                                 font.family: row.modelData

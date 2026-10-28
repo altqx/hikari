@@ -199,6 +199,9 @@ public:
         // Bundled dictionaries, searched after the user's folder (legacy
         // <executable dir>/Dictionary; the composition sets it).
         QString bundledDictionaryDir;
+        // KA4: the furigana reading dictionary (MeCab's UniDic); empty:
+        // Dictionary/unidic-lite beside the executable, else the build tree's.
+        QString readingDictionaryDir;
         // A1: legacy's AudioCache folder; empty: "AudioCache" beside the
         // settings file, or a temporary directory without one (tests).
         QString audioCacheDir;
@@ -212,8 +215,9 @@ public:
         // P9: legacy SelectInFolder (the tab menu's folder items, a Ctrl+click
         // on a recent file); unset: backends::desktop::selectInFolder. Tests record.
         std::function<void(const QString &path)> revealInFolder;
-        // P9: legacy's autosave folder (Options.pathfull/Subs), read only;
-        // empty: "Subs" beside the settings file, or none without one.
+        // P9: legacy's autosave folder (Options.dataPath/Subs), read only;
+        // empty: "Subs" in the first legacy root that has one (#387), or
+        // none without a settings file.
         QString legacyAutosaveDir;
         // UD1: the user folder (Help > Open user folder; empty: none, the
         // command does nothing) and what its start moved in and seeded,

@@ -894,6 +894,10 @@ Output device: %2</source>
         <translation>이 자막에는 스크립트가 추가되지 않았습니다</translation>
     </message>
     <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1에 실행할 매크로가 없습니다</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation type="vanished">오류</translation>
     </message>
@@ -4760,6 +4764,38 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Furigana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write each kanji&apos;s reading after it (漢|かん), as the romaji sings it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No reading dictionary: readings come from the romaji only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dictionary: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not sung in kana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No furigana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use the suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Choose two different styles.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6634,6 +6670,14 @@ when find results window is open</source>
     <message>
         <source>Program font</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview text</source>
+        <translation>미리보기 텍스트</translation>
+    </message>
+    <message>
+        <source>The sample text of the style and font previews.</source>
+        <translation>스타일 및 글꼴 미리보기에 표시되는 예시 텍스트입니다.</translation>
     </message>
     <message>
         <source>Window</source>

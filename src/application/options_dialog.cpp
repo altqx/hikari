@@ -151,6 +151,10 @@ constexpr OptionsBinding kBindings[] = {
     // SV1 (#365): "Preview subtitles at" (0 Video resolution, 1 Screen
     // size), the Video page's Subtitles on video section.
     {"video.previewSubtitlesAt", IndexChoice, Video, 0, 0, 2},
+    // PV1 (#398): the style and font samples' text (STYLE_PREVIEW_TEXT,
+    // before only the Style editor's preview), the Appearance page's Font
+    // section.
+    {"styles.previewText", Text, Appearance},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.

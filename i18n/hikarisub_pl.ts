@@ -906,6 +906,10 @@ Output device: %2</source>
         <translation>Ten plik napisów nie ma dodanych żadnych skryptów</translation>
     </message>
     <message>
+        <source>%1 has no macros to run</source>
+        <translation>%1 nie ma makr do uruchomienia</translation>
+    </message>
+    <message>
         <source>Error</source>
         <translation type="vanished">Błąd</translation>
     </message>
@@ -4837,6 +4841,38 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Furigana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write each kanji&apos;s reading after it (漢|かん), as the romaji sings it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No reading dictionary: readings come from the romaji only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dictionary: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not sung in kana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No furigana</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use the suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Choose two different styles.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6719,6 +6755,14 @@ gdy okno wyników szukania jest otwarte</translation>
     <message>
         <source>Program font</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview text</source>
+        <translation>Tekst podglądu</translation>
+    </message>
+    <message>
+        <source>The sample text of the style and font previews.</source>
+        <translation>Tekst przykładowy podglądów stylów i czcionek.</translation>
     </message>
     <message>
         <source>Window</source>

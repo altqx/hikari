@@ -78,6 +78,7 @@ class TabMenuTests : public QObject {
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
     QStringList revealed; // SelectInFolder calls
+    bool legacyRoots = false; // the legacy autosave folder from the legacy roots, not home/Subs
 
     void start()
     {
@@ -86,6 +87,8 @@ class TabMenuTests : public QObject {
         o.playbackAudio = false;
         o.revealInFolder = [this](const QString &path) { revealed << path; };
         o.spellingBackend = {}; // no spell checker, so no notice over the window
+        if (!legacyRoots)
+            o.legacyAutosaveDir = home.filePath(QStringLiteral("Subs"));
         application = new app::Application(o);
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
@@ -928,6 +931,46 @@ private slots:
         QCOMPARE(hash(older), olderHash);
         QCOMPARE(hash(newer), newerHash);
         QCOMPARE(QDir(subs).entryList(QDir::Files).size(), 3);
+    }
+
+    // #387: unset, the folder is Subs in a legacy root the settings importer
+    // finds (an installed legacy's HikariSub/Legacy, ADR 0019), not Subs
+    // beside 0.1's own settings file.
+    void legacyAutosavesComeFromTheLegacyRoot()
+    {
+        QTemporaryDir data;
+        QVERIFY(data.isValid());
+        const QString legacy = data.filePath(QStringLiteral("HikariSub/Legacy"));
+        QVERIFY(QDir().mkpath(legacy + QStringLiteral("/Config")) && QDir().mkpath(legacy + QStringLiteral("/Subs")));
+        writeAss(legacy + QStringLiteral("/Config/Config.txt"), {}, "config");
+        writeAss(legacy + QStringLiteral("/Subs/legacy_0_1.ass"), {}, "legacy");
+        QVERIFY(QDir().mkpath(home.filePath(QStringLiteral("Subs"))));
+        writeAss(home.filePath(QStringLiteral("Subs/own_0_1.ass")), {}, "own");
+#ifdef _WIN32
+        const char *variable = "LOCALAPPDATA";
+#else
+        const char *variable = "XDG_DATA_HOME";
+#endif
+        const QByteArray before = qgetenv(variable);
+        const bool wasSet = qEnvironmentVariableIsSet(variable);
+        const auto restore = qScopeGuard([&] {
+            if (wasSet)
+                qputenv(variable, before);
+            else
+                qunsetenv(variable);
+            legacyRoots = false;
+            QFile::remove(home.filePath(QStringLiteral("Subs/own_0_1.ass")));
+        });
+        qputenv(variable, QDir::toNativeSeparators(data.path()).toLocal8Bit());
+        cleanup();
+        legacyRoots = true;
+        start();
+        const QVariantList files = application->legacyAutosaves();
+        QCOMPARE(files.size(), 1);
+        QCOMPARE(files.first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("legacy.ass"));
+        const QString file = files.first().toMap().value(QStringLiteral("versions")).toList().first().toMap().value(
+            QStringLiteral("file")).toString();
+        QCOMPARE(QFileInfo(file).absolutePath(), QFileInfo(legacy + QStringLiteral("/Subs")).absoluteFilePath());
     }
 
     // P9-no-legacy-folder-log: without a legacy Subs folder Open auto save
