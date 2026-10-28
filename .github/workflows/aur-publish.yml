@@ -5,15 +5,16 @@ name: AUR publish
 # down. The same rules as the release jobs: a stable vX.Y.Z goes to
 # hikarisub-stable-bin and hikarisub-beta-bin, a prerelease to
 # hikarisub-beta-bin only; a package is refused when a newer release of its
-# channel exists or the AUR has a higher version. The packages follow legacy
-# (0.0.x) until the repository variable HIKARISUB_OFFER_QT_TO_LEGACY is
-# true, then the Qt rewrite (0.1.0 and up); a tag of the other codebase is
-# refused. Here a missing key, a refused push or a run that publishes to no
-# package fails the run.
+# channel exists or the AUR has a higher version. Each package follows its
+# own codebase (release-aur.sh, ADR-0021): hikarisub-beta-bin follows 0.1.0
+# and up from 0.1.0-beta.1, hikarisub-stable-bin from the first stable 0.1.0
+# or higher, and legacy (0.0.x) until then; a tag of the other codebase is
+# refused for it. Here a missing key, a refused push or a run that publishes
+# to no package fails the run.
 #
 #   gh workflow run aur-publish.yml -f tag=v0.0.2-rc.1 [-f dry_run=true]
 #
-# This file has the same bytes on the legacy (legacy) and Qt (main) branches.
+# This file has the same bytes on the main and legacy branches.
 on:
   workflow_dispatch:
     inputs:
@@ -49,22 +50,13 @@ jobs:
 
       - name: Check the tag
         id: tag
-        env:
-          OFFER_QT_TO_LEGACY: ${{ vars.HIKARISUB_OFFER_QT_TO_LEGACY }}
         run: |
           set -euo pipefail
-          if ! [[ "$TAG" =~ ^v(([0-9]+)\.([0-9]+)\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?)$ ]]; then
+          if ! [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?)$ ]]; then
             echo "::error::$TAG is not vX.Y.Z or vX.Y.Z-{alpha,beta,rc}.N."
             exit 1
           fi
           version=${BASH_REMATCH[1]}
-          if [[ "${BASH_REMATCH[2]}.${BASH_REMATCH[3]}" == 0.0 ]]; then codebase=legacy; else codebase=qt; fi
-          follows=legacy
-          [[ "$OFFER_QT_TO_LEGACY" == true ]] && follows=qt
-          if [[ "$codebase" != "$follows" ]]; then
-            echo "::error::$TAG is a $codebase release, but the AUR packages follow $follows (HIKARISUB_OFFER_QT_TO_LEGACY)."
-            exit 1
-          fi
           if [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" != false ]]; then
             echo "::error::$TAG is not a published release."
             exit 1
