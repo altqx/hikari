@@ -348,7 +348,12 @@ private slots:
         const QFileInfo program(QStringLiteral(HIKARI_CRASH_PROBE));
         QProcess probe;
         probe.setWorkingDirectory(program.absolutePath());
+        // Windows resolves a relative program against this process's folder,
+        // not the child's working directory (#454).
+        const QString here = QDir::currentPath();
+        QDir::setCurrent(program.absolutePath());
         probe.start(QStringLiteral("./") + program.fileName(), {c.crashRecord, how});
+        QDir::setCurrent(here);
         QVERIFY(probe.waitForFinished(30000));
         QVERIFY(probe.exitStatus() == QProcess::CrashExit || probe.exitCode() != 0);
         const auto record = hikari::app::crash::read(c.crashRecord);
