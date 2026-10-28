@@ -3,7 +3,7 @@ status: accepted
 amends: 0018, 0019
 ---
 
-# Offer the rewrite to legacy users opt-in, from the release feed
+# Offer HikariSub to legacy users opt-in, from the release feed
 
 On 2026-10-21 altqx decided how legacy users move to the rewrite. Moving is always the user's choice. Legacy (0.0.x) keeps its own releases until the owner ends its support. This replaces the `offer_to` gate in [ADR-0019](0019-installers-and-seamless-updates.md) and the [distribution policy](../distribution.md).
 

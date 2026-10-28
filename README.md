@@ -15,7 +15,7 @@
 </picture>
 <p align="center"><sub>Subtitles: Jibrill</sub></p>
 
-This is the Qt rewrite, version 0.1, on the `main` branch. The wxWidgets app it replaces, [HikariSub legacy](https://github.com/altqx/hikari/tree/legacy) (0.0.x), is still maintained.
+This is HikariSub 0.1, on the `main` branch. The wxWidgets app it replaces, [HikariSub legacy](https://github.com/altqx/hikari/tree/legacy) (0.0.x), is still maintained.
 
 ## Features
 

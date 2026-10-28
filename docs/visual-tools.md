@@ -76,7 +76,7 @@ The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPane
 | Vector drawing | the selected points one unit | a tenth | W/A/S/D |
 | Perspective (VT3) | the corner grabbed last one unit, the whole quad before one is | a tenth | none (arch1t3cht's fork) |
 
-The legacy probes' presses replay as the rewrite's (`tests/application/legacy_visual_keys.h`): a press legacy nudged with becomes the arrow for the same nudge.
+The legacy probes' presses replay as HikariSub's (`tests/application/legacy_visual_keys.h`): a press legacy nudged with becomes the arrow for the same nudge.
 
 ## What T2 added for the families
 

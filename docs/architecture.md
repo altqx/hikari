@@ -1,6 +1,6 @@
 # Hikari-owned application architecture
 
-Accepted foundation, 2026-09-27: [Own the HikariSub Qt application layer](adr/0001-hikari-owned-qt-layer.md). This is the module contract for the rewrite, not a claim that the application has been implemented. The existing wx tree is reference material; it is not the new core or a library to wrap.
+Accepted foundation, 2026-09-27: [Own the HikariSub Qt application layer](adr/0001-hikari-owned-qt-layer.md). This is HikariSub's module contract. HikariSub legacy's wx tree is reference material; it is not the core or a library to wrap.
 
 ## Planned modules
 

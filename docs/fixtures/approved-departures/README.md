@@ -1,6 +1,6 @@
 # Initial compatibility specimens
 
-These original synthetic inputs make the six [approved departures](../../compatibility-decisions.md) concrete. They are specification data, not a rewrite parser, test suite, executed legacy oracle or complete corpus. The [manifest](manifest.json) records input bytes/hashes, provenance, steps, comparison rules, accepted expectations and separate **not-executed / not-implemented** runtime statuses. No expected complete serializer output has been invented.
+These original synthetic inputs make the six [approved departures](../../compatibility-decisions.md) concrete. They are specification data, not a parser, test suite, executed legacy oracle or complete corpus. The [manifest](manifest.json) records input bytes/hashes, provenance, steps, comparison rules, accepted expectations and separate **not-executed / not-implemented** runtime statuses. No expected complete serializer output has been invented.
 
 Run `python prepare-fixtures.py` from this directory to regenerate only these known synthetic files and the manifest. It does not launch HikariSub, load a decoder/font, read credentials, alter user data or access the network. Git attributes preserve exact input bytes, including the deliberate UTF-8 BOM, CRLF, trailing spaces and repeated unknown sections. The embedded font-like payload is deliberately opaque and invalid: this tests retention, not font parsing or renderer output.
 

@@ -6,7 +6,7 @@ Issues are tracked in GitHub Issues for altqx/hikari (via the `gh` CLI). See `do
 
 ### Triage labels
 
-Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`, plus `legacy` for issues about HikariSub legacy. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 

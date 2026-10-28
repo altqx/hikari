@@ -6,12 +6,12 @@ The source evidence is [Localisation in Qt: gettext .po vs Qt .ts, migrating exi
 
 ## Ownership and contribution
 
-| Artifact | Role in the rewrite |
+| Artifact | Role |
 | --- | --- |
 | Existing PO/POT at a recorded commit | Immutable migration input, including translator attribution and history. Never regenerate it from Qt strings. |
 | Reviewed TS catalogs | Sole authoring source for rewritten application translations, including the Lua compatibility entries described below. |
 | QM files | Generated runtime artifacts compiled from TS by the selected Qt toolchain. Never hand-edit them. |
-| wx application on `main` | Existing PO workflow for bugfix maintenance only; separate from Qt translation authoring. |
+| HikariSub legacy on `legacy` | Existing PO workflow for bugfix maintenance only; separate from TS translation authoring. |
 
 O4 started from the [inspected PO baseline](https://github.com/altqx/hikari/tree/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/Locale). Record the exact input commit in the migration report; preserve the original files/history. A later relevant maintenance fix may be imported through an explicit reviewed mapping update, not bidirectional synchronization or continuous PO-to-TS generation. Legacy 0.0.1's finished catalogs ([b31505da](https://github.com/altqx/hikari/tree/b31505da24dcc0c4053ad5e0cc73e15266a85bac/Locale)) were imported this way on 2026-10-13 and are now the input ([below](#keys-added-after-o4-o4-post-keys-carried)).
 

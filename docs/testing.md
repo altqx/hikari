@@ -1,4 +1,4 @@
-# Rewrite test strategy
+# Test strategy
 
 **Accepted on 2026-09-27 in the live review with altqx for [test strategy #34](https://github.com/altqx/hikari/issues/34).** The user accepted the complete test stack and evidence-gated completion rule from the [reviewed proposal](https://github.com/altqx/hikari/blob/cb3246ec5e058455a7978c2a8f8369338ca21e97/docs/qt/proposals/testing.md); [ADR-0015](adr/0015-behavioral-and-native-test-evidence.md) records the decision. It applies the accepted [compatibility](compatibility.md), [build](build.md) and [performance](performance.md) contracts. The [completed testing research](https://github.com/altqx/hikari/blob/ee59a12872f3d9e0ddeb203e5fa3c09566b158ce/docs/research/qml-testing.md) supports these choices; no new runner, suite or reference machine has been qualified.
 
@@ -48,7 +48,7 @@ On failure, retain traces, artifacts and environment metadata. A rerun diagnoses
 
 Each implementation ticket must link its accepted behavior and affected inventory/defect entries; ship the smallest meaningful regression evidence for that behavior, including applicable failure/cancellation boundaries; document fixture provenance and exact commands; pass relevant automated checks; and link required native/accessibility/performance observations or explicitly state why they do not apply. Reversible copy/layout-only changes can use focused inspection without invented unit tests. Prototype tickets retain their separate throwaway/human-reaction contract.
 
-**Accepted rule: evidence-gated completion.** Code may merge into `qt` after its applicable merge checks while a named native/reference-runner follow-up is pending, but the affected implementation ticket and capability remain incomplete until required evidence passes. A merged change is not a completed capability when its required native, accessibility or performance observations are missing. Release gates remain mandatory.
+**Accepted rule: evidence-gated completion.** Code may merge into `main` after its applicable merge checks while a named native/reference-runner follow-up is pending, but the affected implementation ticket and capability remain incomplete until required evidence passes. A merged change is not a completed capability when its required native, accessibility or performance observations are missing. Release gates remain mandatory.
 
 First infrastructure work must qualify the tool integrations, native sessions, fixture store and performance reference bindings. No coverage percentage or test-count quota substitutes for these observable contracts. Acceptance records the policy only: no new test framework integration, native session, fixture corpus, calibrated reference host or runtime gate is claimed qualified or passed.
 

@@ -1,7 +1,7 @@
 # Thai (th_TH) glossary
 
 The terms `i18n/hikarisub_th_TH.ts` uses for HikariSub's domain words (CONTEXT.md).
-Where the legacy catalog (`i18n/hikarisub_gettext_th_TH.ts`) already names a thing, the rewrite keeps that name,
+Where the legacy catalog (`i18n/hikarisub_gettext_th_TH.ts`) already names a thing, HikariSub keeps that name,
 so a user moving from HikariSub legacy sees the same words.
 
 ## Conventions

@@ -6,13 +6,13 @@
 
 Existing subtitle files, style/font catalogs, sessions/autosaves and Lua scripts must work as-is. Opening or importing them must leave original source files unchanged. Settings and hotkeys receive one-shot migration, retaining their meaning, scopes and identities and reporting unresolved entries. Preserve authored rules and dictionaries. **Legacy theme files, color mappings and `PROGRAM_THEME` are excluded from migration.**
 
-Every inventoried capability remains in scope unless the user explicitly approves its merge or removal. Combining UI surfaces must retain their operations and command scopes; accepted styling, renderer or workspace decisions do not implicitly remove capabilities. The rewrite uses a new core in the big-bang migration. Compatibility is an observable contract, not a requirement to reuse wx classes or their internal structure.
+Every inventoried capability remains in scope unless the user explicitly approves its merge or removal. Combining UI surfaces must retain their operations and command scopes; accepted styling, renderer or workspace decisions do not implicitly remove capabilities. HikariSub uses a new core, not legacy's, in a big-bang migration. Compatibility is an observable contract, not a requirement to reuse wx classes or their internal structure.
 
 ## Acceptance classes
 
 | Class | Contract and required decision |
 | --- | --- |
-| Required compatibility | Preserve documented workflows, data meanings and working script behavior. Internal implementation can change. An observable departure requires explicit classification and approval rather than being excused by the rewrite. |
+| Required compatibility | Preserve documented workflows, data meanings and working script behavior. Internal implementation can change. An observable departure requires explicit classification and approval rather than being excused by the new core. |
 | Explicit defect fix | Document a named defect entry with its trigger, old evidence, intended result, affected data/scripts/workflows and fixtures. The user must explicitly approve that entry or an enumerated batch. Once approved and implemented, the corrected behavior is the default; users do not need to opt into each fix. |
 | UX redesign | Obtain reaction to a concrete prototype and record which interactions changed. A visual approval does not authorize altered serialization, script APIs or command outcomes. Trace any approved capability merge/removal explicitly. |
 | Unsupported input / recovery | Bound the unsupported case, preserve original/raw input, explain the diagnostic and provide the applicable recovery, relink or export path. Rejecting formerly accepted input or dropping information requires explicit user approval. Missing media, fonts or other dependencies must remain distinguishable from malformed documents. |
