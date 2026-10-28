@@ -1,0 +1,149 @@
+File
+File > Open… [GLOBAL_OPEN_SUBS]
+File > Recently opened subtitles >
+File > Recently opened subtitles > None
+File > Remove subtitles from the editor [GLOBAL_REMOVE_SUBS]
+File > Close [GLOBAL_CLOSE_PAGE]
+File > Open video… [GLOBAL_OPEN_VIDEO]
+File > Save [GLOBAL_SAVE_SUBS]
+File > Save all [GLOBAL_SAVE_ALL_SUBS]
+File > Save as… [GLOBAL_SAVE_SUBS_AS]
+File > Save translation [GLOBAL_SAVE_TRANSLATION]
+File > Save subtitles using the video name [GLOBAL_SAVE_WITH_VIDEO_NAME]
+File > Open auto save [GLOBAL_OPEN_AUTO_SAVE]
+File > Remove temporary files [GLOBAL_DELETE_TEMPORARY_FILES]
+File > Log
+File > Last session >
+File > Last session > Load last session [GLOBAL_LOAD_LAST_SESSION]
+File > Last session > Load session from file [GLOBAL_LOAD_EXTERNAL_SESSION]
+File > Last session > Save session to file [GLOBAL_SAVE_EXTERNAL_SESSION]
+File > Last session > Ask whether to load the last session at program startup
+File > Last session > Load last session after program start
+File > Settings [GLOBAL_SETTINGS]
+File > Import legacy settings...
+File > Exit
+Edit
+Edit > Undo [GLOBAL_UNDO]
+Edit > Redo [GLOBAL_REDO]
+Edit > Sort all lines >
+Edit > Sort all lines > The starting time [GLOBAL_SORT_ALL_BY_START_TIMES]
+Edit > Sort all lines > End time [GLOBAL_SORT_ALL_BY_END_TIMES]
+Edit > Sort all lines > Styles [GLOBAL_SORT_ALL_BY_STYLE]
+Edit > Sort all lines > Actor [GLOBAL_SORT_ALL_BY_ACTOR]
+Edit > Sort all lines > Effect [GLOBAL_SORT_ALL_BY_EFFECT]
+Edit > Sort all lines > Layer [GLOBAL_SORT_ALL_BY_LAYER]
+Edit > Sort selected lines >
+Edit > Sort selected lines > The starting time [GLOBAL_SORT_SELECTED_BY_START_TIMES]
+Edit > Sort selected lines > End time [GLOBAL_SORT_SELECTED_BY_END_TIMES]
+Edit > Sort selected lines > Styles [GLOBAL_SORT_SELECTED_BY_STYLE]
+Edit > Sort selected lines > Actor [GLOBAL_SORT_SELECTED_BY_ACTOR]
+Edit > Sort selected lines > Effect [GLOBAL_SORT_SELECTED_BY_EFFECT]
+Edit > Sort selected lines > Layer [GLOBAL_SORT_SELECTED_BY_LAYER]
+Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
+Edit > History [GLOBAL_HISTORY]
+Edit > Fix minor errors (experimental) [GLOBAL_MISSPELLS_REPLACER]
+Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
+Edit > Find and replace [GLOBAL_FIND_REPLACE]
+Edit > Find [GLOBAL_SEARCH]
+Edit > Find next [GLOBAL_FIND_NEXT]
+Automation
+Automation > Load script… [GLOBAL_AUTOMATION_LOAD_SCRIPT]
+Automation > Refresh autoload scripts [GLOBAL_AUTOMATION_RELOAD_AUTOLOAD]
+Automation > Run the last loaded script [GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT]
+Automation > Rerun last macro
+Automation > Repeat last run [GLOBAL_AUTOMATION_REPEAT_LAST_RUN]
+Automation > Cancel macro
+Automation > Show panel
+Automation > -
+Video
+Video > Open video… [GLOBAL_OPEN_VIDEO]
+Video > Recently opened videos >
+Video > Recently opened videos > None
+Video > Open keyframes [GLOBAL_OPEN_KEYFRAMES]
+Video > Recently opened keyframes >
+Video > Recently opened keyframes > None
+Video > Open dummy video [GLOBAL_OPEN_DUMMY_VIDEO]
+Video > Insert start time from video [GLOBAL_SET_START_TIME]
+Video > Insert end time from video [GLOBAL_SET_END_TIME]
+Video > Previous frame [GLOBAL_PREVIOUS_FRAME]
+Video > Next frame [GLOBAL_NEXT_FRAME]
+Video > Go to start time [GLOBAL_SET_VIDEO_AT_START_TIME]
+Video > Go to end time of line [GLOBAL_SET_VIDEO_AT_END_TIME]
+Video > Play / Pause [GLOBAL_PLAY_PAUSE]
+Video > Go to previous keyframe [GLOBAL_GO_TO_PREVIOUS_KEYFRAME]
+Video > Go to next keyframe [GLOBAL_GO_TO_NEXT_KEYFRAME]
+Video > Set audio position to video time [GLOBAL_SET_AUDIO_FROM_VIDEO]
+Video > Set audio marker to video time [GLOBAL_SET_AUDIO_MARK_FROM_VIDEO]
+Video > -
+Video > Unload video
+Video > Streams >
+Video > Chapters >
+Video > Zoom video [GLOBAL_VIDEO_ZOOM]
+Video > Turn off video zoom [GLOBAL_RESET_VIDEO_ZOOM]
+Video > Show / hide render cost [GLOBAL_VIDEO_RENDER_COST]
+Audio
+Audio > Open audio [GLOBAL_OPEN_AUDIO]
+Audio > Recently opened audio >
+Audio > Recently opened audio > None
+Audio > Open audio from video [GLOBAL_AUDIO_FROM_VIDEO]
+Audio > Close audio [GLOBAL_CLOSE_AUDIO]
+View
+View > Layout >
+View > Layout > Editing
+View > Layout > Timing
+View > Layout > Translation
+View > Layout > Typesetting
+View > Layout > Karaoke
+View > Layout > -
+View > Layout > -
+View > Layout > Save layout as…
+View > Layout > Reset this layout
+View > Layout > Manage layouts…
+View > -
+View > Panels >
+View > Panels > Video >
+View > Panels > Audio >
+View > Panels > Original text >
+View > Panels > Line editor >
+View > Panels > Grid >
+View > Panels > Reference >
+View > Panels > Shift times >
+View > Panels > Search >
+View > Panels > Automation >
+View > Panels > Spellchecker >
+View > Panels > Log >
+View > Panels > Styles >
+View > Panels > Fix minor errors >
+View > Panels > Template editor >
+View > Move panel…
+View > Restore the previous layout
+Subtitles
+Subtitles > Shift times... [GLOBAL_SHOW_SHIFT_TIMES]
+Subtitles > Shift times / run time post processor [GLOBAL_SHIFT_TIMES]
+Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
+Subtitles > ASS file properties [GLOBAL_OPEN_ASS_PROPERTIES]
+Subtitles > Conversion >
+Subtitles > Conversion > Convert to ASS [GLOBAL_CONVERT_TO_ASS]
+Subtitles > Conversion > Convert to SRT [GLOBAL_CONVERT_TO_SRT]
+Subtitles > Conversion > Convert to MDVD [GLOBAL_CONVERT_TO_MDVD]
+Subtitles > Conversion > Convert to MPL2 [GLOBAL_CONVERT_TO_MPL2]
+Subtitles > Conversion > Convert to TMP [GLOBAL_CONVERT_TO_TMP]
+Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
+Subtitles > Resample subtitles [GLOBAL_OPEN_SUBS_RESAMPLE]
+Subtitles > Check spelling [GLOBAL_OPEN_SPELLCHECKER]
+Subtitles > Check karaoke [GLOBAL_CHECK_KARAOKE]
+Subtitles > Kanji timer… [GLOBAL_KANJI_TIMER]
+Subtitles > -
+Subtitles > Translation mode [GLOBAL_TRANSLATION_MODE]
+Subtitles > -
+Subtitles > Hide tags [GLOBAL_HIDE_TAGS]
+Subtitles > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]
+Help
+Help > Getting started [GLOBAL_GETTING_STARTED]
+Help > User guide [GLOBAL_HELP]
+Help > Report an issue [GLOBAL_ANSI]
+Help > Check for updates [GLOBAL_CHECK_FOR_UPDATES]
+Help > Open user folder
+Help > What's new
+Help > About [GLOBAL_ABOUT]
+Help > Credits [GLOBAL_HELPERS]

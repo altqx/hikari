@@ -6257,6 +6257,69 @@ private slots:
         history->close();
     }
 
+    // MN1 (#472): the menu bar is tests/ui/menu_bar.txt, line for line: each
+    // menu, its items and separators ("-") in order with their commands, and
+    // a submenu's items one level down (a deeper submenu by its title). An
+    // item moved or lost shows in the file's diff. Entries named by their
+    // data (macros, recent files, saved layouts) are left out.
+    void menuBarIsTheListedOne()
+    {
+        static const QRegularExpression byData(QStringLiteral(R"(^(macro_|recent\w*\d+$|viewLayoutSaved\d+$))"));
+        const auto plain = [](QString text) {
+            text = text.section(QLatin1Char('\t'), 0, 0);
+            text.replace(QStringLiteral("&&"), QStringLiteral("\x01"));
+            text.remove(QLatin1Char('&'));
+            return text.replace(QLatin1Char('\x01'), QLatin1Char('&'));
+        };
+        QStringList shown;
+        std::function<void(QObject *, const QString &, int)> walk = [&](QObject *menu, const QString &path, int depth) {
+            for (QQuickItem *entry : menuItems(menu)) {
+                if (!entry)
+                    continue;
+                if (entry->inherits("QQuickMenuSeparator"))
+                    shown << path + QStringLiteral(" > -");
+                if (!entry->inherits("QQuickMenuItem"))
+                    continue;
+                if (byData.match(entry->objectName()).hasMatch())
+                    continue;
+                if (auto *sub = entry->property("subMenu").value<QObject *>()) {
+                    const QString place = path + QStringLiteral(" > ") + plain(sub->property("title").toString());
+                    shown << place + QStringLiteral(" >");
+                    if (depth < 1)
+                        walk(sub, place, depth + 1);
+                    continue;
+                }
+                const QString command = entry->property("command").toString();
+                shown << path + QStringLiteral(" > ") + plain(entry->property("text").toString())
+                             + (command.isEmpty() ? QString() : QStringLiteral(" [%1]").arg(command));
+            }
+        };
+        QObject *bar = named("appMenus");
+        QVERIFY(bar);
+        for (int i = 0; i < bar->property("count").toInt(); ++i) {
+            QQuickItem *title = nullptr;
+            QVERIFY(QMetaObject::invokeMethod(bar, "itemAt", Q_RETURN_ARG(QQuickItem *, title), Q_ARG(int, i)));
+            auto *menu = title->property("menu").value<QObject *>();
+            QVERIFY(menu);
+            const QString name = plain(menu->property("title").toString());
+            shown << name;
+            walk(menu, name, 0);
+        }
+        QFile file(QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tests/ui/menu_bar.txt"));
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QStringList listed = QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+        if (shown != listed) {
+            QFile actual(QDir::current().filePath(QStringLiteral("menu_bar.actual.txt")));
+            QVERIFY(actual.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            actual.write(shown.join(QLatin1Char('\n')).toUtf8() + '\n');
+            qsizetype at = 0;
+            while (at < shown.size() && at < listed.size() && shown[at] == listed[at])
+                ++at;
+            QFAIL(qPrintable(QStringLiteral("line %1: the menus have \"%2\", menu_bar.txt \"%3\" (the menus are in %4)")
+                                 .arg(at + 1).arg(shown.value(at), listed.value(at), actual.fileName())));
+        }
+    }
+
     // D1 Windows gate: Right on View > Panels did not open it. Menus open as
     // items of the main window (Popup.Item), so it stays the focus window and
     // the shell's Right and Left (Next and Previous frame) took the keys on
