@@ -82,6 +82,10 @@ struct OptionsBinding {
 // video.playbackPlayer (W1).
 std::span<const OptionsBinding> optionsBindings();
 const OptionsBinding *findOptionsBinding(std::string_view setting);
+// #383: whether the Settings window shows the binding's control. Those
+// nothing reads yet are left out of the window (and the docs export) until
+// they work; they keep their binding, so their stored values stay.
+bool optionsBindingShown(std::string_view setting);
 
 // The conversion FPS entries (FPSes).
 std::span<const std::string_view> optionsConversionFps();

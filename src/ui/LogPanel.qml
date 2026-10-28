@@ -212,7 +212,7 @@ Pane {
                                 wrapMode: TextEdit.Wrap
                                 color: Theme.text
                                 selectionColor: Theme.accent
-                                selectedTextColor: Theme.onaccent
+                                selectedTextColor: Theme.onAccent
                                 font: Application.font
                                 text: (row.title.length > 0 ? "<b>" + panel.escaped(row.title) + "</b> " : "")
                                       + panel.escaped(row.text).replace(/\n/g, "<br>")
@@ -226,7 +226,7 @@ Pane {
                                 wrapMode: TextEdit.Wrap
                                 color: Theme.muted
                                 selectionColor: Theme.accent
-                                selectedTextColor: Theme.onaccent
+                                selectedTextColor: Theme.onAccent
                                 font: Application.font
                                 leftPadding: 14
                                 textFormat: TextEdit.PlainText

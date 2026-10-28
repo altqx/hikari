@@ -405,6 +405,7 @@ constexpr NameRow kNames[] = {
         {4128, "Hide vertical margin"}, // GRID_HIDE_MARGINV
         {4002, "Hide start time"}, // GRID_HIDE_START
         {4008, "Hide style"}, // GRID_HIDE_STYLE
+        {4513, "Hide line wraps"}, // GRID_HIDE_WRAPS (#385: legacy names none)
         {4547, "Make tree"}, // GRID_TREE_MAKE
         {4520, "Select all lines visible on video"}, // GRID_SELECT_VISIBLE_LINES
         {4535, "Hide selected lines"}, // GRID_HIDE_SELECTED

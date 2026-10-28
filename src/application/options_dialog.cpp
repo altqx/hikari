@@ -250,6 +250,21 @@ std::string externalFontsPath(std::string path, const OptionsLists &lists)
     return path;
 }
 
+// #383: the options nothing reads.
+constexpr std::string_view kNotShown[] = {
+    "scriptProperties.title",        "scriptProperties.titleOn",
+    "scriptProperties.script",       "scriptProperties.scriptOn",
+    "scriptProperties.translation",  "scriptProperties.translationOn",
+    "scriptProperties.editing",      "scriptProperties.editingOn",
+    "scriptProperties.timing",       "scriptProperties.timingOn",
+    "scriptProperties.update",       "scriptProperties.updateOn",
+    "scriptProperties.askForChange", "grid.loadSortedSubs",
+    "grid.autoSelectLinesFromLastTab", "grid.dontCenterActiveLine",
+    "grid.font",                     "editor.saveAfterCharacterCount",
+    "automation.loadingMethod",      "automation.oldScriptsCompatibility",
+    "convert.showSettings",
+};
+
 } // namespace
 
 std::span<const OptionsBinding> optionsBindings()
@@ -261,6 +276,11 @@ const OptionsBinding *findOptionsBinding(std::string_view setting)
 {
     const auto it = std::ranges::find(kBindings, setting, &OptionsBinding::setting);
     return it == std::end(kBindings) ? nullptr : &*it;
+}
+
+bool optionsBindingShown(std::string_view setting)
+{
+    return !std::ranges::contains(kNotShown, setting);
 }
 
 std::span<const std::string_view> optionsConversionFps()

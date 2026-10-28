@@ -16823,9 +16823,7 @@ private slots:
             {"settingsPageGeneral",
              {{"program.language", nullptr},
               {"subtitles.openInNewTab", "Always open subtitles in a new tab"},
-              {"grid.loadSortedSubs", "Open sorted subtitles"},
               {"program.tabTextMaxChars", nullptr},
-              {"editor.saveAfterCharacterCount", nullptr},
               {"autosave.maxFiles", nullptr},
               {"notices.toasts", "Show notices as toasts"}, // PK1
               {"fonts.externalDirectory", nullptr}}},
@@ -16842,12 +16840,8 @@ private slots:
               {"translation.showOriginal", "Show the original"},
               {"translation.hideOriginalOnVideo", "Hide the original on the video"}}},
             {"settingsPageGrid",
-             {{"grid.font", nullptr},
-              {"grid.fontSize", nullptr},
-              {"grid.autoSelectLinesFromLastTab", "Select the line at the previous tab's time"},
-              {"grid.changeActiveOnSelection", "Change the active line when adding to the selection"},
+             {{"grid.changeActiveOnSelection", "Change the active line when adding to the selection"},
               {"grid.duplicationDontChangeSelection", "Keep the selection when duplicating lines"},
-              {"grid.dontCenterActiveLine", "Don't center the active line"},
               {"grid.setVisibleLineAfterFullScreen", "Find the visible line after leaving full screen"},
               {"grid.autoHideColumns", "Hide empty columns"}, // GR3
               {"grid.calcSpacesAndPunctuationForWraps", "Count spaces and punctuation for wraps"},
@@ -16911,28 +16905,12 @@ private slots:
               {"convert.timePerCharacter", nullptr},
               {"convert.resolutionWidth", nullptr},
               {"convert.resolutionHeight", nullptr},
-              {"convert.assTagsToInsertInLine", nullptr},
-              {"convert.showSettings", "Show the conversion window first"}}},
+              {"convert.assTagsToInsertInLine", nullptr}}},
             {"settingsPageSubtitleProperties",
-             {{"scriptProperties.title", nullptr},
-              {"scriptProperties.titleOn", nullptr},
-              {"scriptProperties.script", nullptr},
-              {"scriptProperties.scriptOn", nullptr},
-              {"scriptProperties.translation", nullptr},
-              {"scriptProperties.translationOn", nullptr},
-              {"scriptProperties.editing", nullptr},
-              {"scriptProperties.editingOn", nullptr},
-              {"scriptProperties.timing", nullptr},
-              {"scriptProperties.timingOn", nullptr},
-              {"scriptProperties.update", nullptr},
-              {"scriptProperties.updateOn", nullptr},
-              {"scriptProperties.askForChange", "Always ask before changing subtitle information"},
-              // WS2, the rewrite's own
+             {// WS2, the rewrite's own
               {"subtitles.layoutInFile", "Save the panel layout in subtitle files"}}},
             {"settingsPageAutomation",
-             {{"automation.loadingMethod", nullptr},
-              {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
-              {"automation.traceLevel", nullptr},
+             {{"automation.traceLevel", nullptr},
               {"automation.fillLastAnswers", "Fill in my last answers"}}}, // AD2
             // PU7 (#309): the options that left the update window (the
             // skipped version is a row of its own, below).
@@ -16961,17 +16939,24 @@ private slots:
                 shown.insert(controls[i].setting);
             }
         }
-        // Every bound option has its control, and the dialog holds nothing else.
-        std::set<std::string> bound;
+        // Every bound option has its control, and the dialog holds nothing
+        // else; #383: those nothing reads are held without one.
+        std::set<std::string> bound, notShown;
         for (const auto &b : application::optionsBindings()) {
-            bound.insert(std::string(b.setting));
+            auto &into = application::optionsBindingShown(b.setting) ? bound : notShown;
+            into.insert(std::string(b.setting));
             if (!b.sizeSetting.empty())
-                bound.insert(std::string(b.sizeSetting));
+                into.insert(std::string(b.sizeSetting));
         }
         // PU7: the skipped version's row, named with Offer it again.
         QVERIFY(bound.erase("updater.skippedVersion"));
         QVERIFY(dialogItem("settingsDialog", "settingsOfferAgain"));
         QCOMPARE(shown, bound);
+        QCOMPARE(notShown.size(), std::size_t{22}); // with grid.fontSize
+        for (const auto &id : notShown)
+            QVERIFY2(!dialogItem("settingsDialog", qPrintable(QStringLiteral("setting_") + QString::fromStdString(id))),
+                     id.c_str());
+        bound.merge(notShown);
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
             held.insert(id.toStdString());
@@ -16995,6 +16980,35 @@ private slots:
 
     // PK1 (#301): Ask again brings back the questions hidden with "Don't
     // ask again" when OK or Apply saves it; Cancel keeps them hidden.
+    // #386: Appearance in a window narrower than its rows (the offscreen
+    // screen's 800 px): the page scrolls sideways to its last theme card and
+    // the font size, which were cut off at its edge.
+    void settingsAppearanceScrollsSidewaysWhenNarrow()
+    {
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("appearance");
+        auto *page = dialogItem("settingsDialog", "settingsPageAppearance");
+        QVERIFY(page);
+        auto *flick = page->property("contentItem").value<QQuickItem *>();
+        QVERIFY(flick);
+        auto *content = flick->property("contentItem").value<QQuickItem *>();
+        for (const char *name : {"setting_program.fontSize", "appearanceTheme_highContrastBlack"}) {
+            auto *item = dialogItem("settingsDialog", name);
+            QVERIFY2(item, name);
+            QTRY_VERIFY2(item->mapToItem(content, QPointF(item->width(), 0)).x() <= flick->property("contentWidth").toReal() + 0.5,
+                         name);
+        }
+        // Scrolled to its end, the font size shows whole.
+        flick->setProperty("contentX", std::max(0.0, flick->property("contentWidth").toReal() - flick->width()));
+        auto *size = dialogItem("settingsDialog", "setting_program.fontSize");
+        QTRY_VERIFY(size->mapToItem(flick, QPointF(size->width(), 0)).x() <= flick->width() + 0.5);
+        flick->setProperty("contentX", 0);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     void settingsAskAgainBringsBackHiddenQuestions()
     {
         auto &settings = *application->settingsStore();
@@ -17034,7 +17048,7 @@ private slots:
         auto *dialog = openSettings();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("settingsDialog", "setting_automation.loadingMethod")->property("currentIndex").toInt(), -1);
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), -1);
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("audio.inactiveLinesDisplayMode")).toInt(), -2);
         // A value written elsewhere while the dialog is open is not reverted
         // (the update check's next date, say).
@@ -17044,11 +17058,11 @@ private slots:
         QCOMPARE(settings.integer("audio.inactiveLinesDisplayMode"), -2);
         QCOMPARE(settings.integer("updater.nextCheck"), 200);
         // Apply leaves the controls as they are.
-        QCOMPARE(dialogItem("settingsDialog", "setting_automation.loadingMethod")->property("currentIndex").toInt(), -1);
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), -1);
         // Choosing an entry stages it.
-        auto *method = dialogItem("settingsDialog", "setting_automation.loadingMethod");
-        QVERIFY(QMetaObject::invokeMethod(method, "activated", Q_ARG(int, 3)));
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), 3);
+        auto *mode = dialogItem("settingsDialog", "setting_audio.inactiveLinesDisplayMode");
+        QVERIFY(QMetaObject::invokeMethod(mode, "activated", Q_ARG(int, 2)));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("audio.inactiveLinesDisplayMode")).toInt(), 2);
         // The shift times panel keeps its values through the reset.
         auto shift = application->shiftTimesSettings().settingsMap();
         shift.insert(QStringLiteral("forward"), true);
@@ -17060,7 +17074,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
         answerSettingsQuestion("reset");
         QCOMPARE(settings.integer("updater.nextCheck"), 200);
-        QCOMPARE(dialogItem("settingsDialog", "setting_automation.loadingMethod")->property("currentIndex").toInt(), -1);
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.inactiveLinesDisplayMode")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 20);
@@ -17472,6 +17486,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedSkip"), "click"));
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
         QCOMPARE(application->settingsStore()->text("workspace.gettingStarted"), QStringLiteral("done"));
+        // #393: no "Default settings in use" then, as nothing was reset.
+        QVERIFY(!lastNotice().startsWith(u"Default settings in use"));
     }
 
     // Nothing is written before Finish; the theme is previewed. Finish writes
@@ -17499,7 +17515,6 @@ private slots:
         QVERIFY(setupItem("gettingStartedFrame")->property("source").toString().startsWith(u"data:image/png;base64,"));
         setupNext(); // Editing
         setupPut("autosave.maxFiles", 7);
-        setupPut("editor.saveAfterCharacterCount", 5);
         setupNext(); // Updates
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedPrereleases"), "click"));
         setupPut("updater.autoCheck", true);
@@ -17512,7 +17527,6 @@ private slots:
         QCOMPARE(store->boolean("appearance.followSystem"), false);
         QCOMPARE(store->text(other == u"dark" ? "appearance.darkAccent" : "appearance.lightAccent"), QStringLiteral("blue"));
         QCOMPARE(store->integer("autosave.maxFiles"), 7);
-        QCOMPARE(store->integer("editor.saveAfterCharacterCount"), 5);
         QCOMPARE(store->boolean("updater.checkForStable"), false);
         QCOMPARE(store->boolean("updater.autoCheck"), true);
         QCOMPARE(store->text("workspace.gettingStarted"), QStringLiteral("done"));
@@ -17533,7 +17547,7 @@ private slots:
             config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
         // TAB_TEXT_MAX_CHARS is on no page: the Settings window would make its
         // default 0 into 40, which Finish must not write over the import.
-        config += "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\nGRID_SAVE_AFTER_CHARACTER_COUNT=4\r\nTAB_TEXT_MAX_CHARS=25\r\n";
+        config += "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\nUPDATER_CHECK_FOR_STABLE=false\r\nTAB_TEXT_MAX_CHARS=25\r\n";
         const LegacyHere legacy(config);
         QTemporaryDir home;
         QVERIFY(home.isValid());
@@ -17547,30 +17561,30 @@ private slots:
         QVERIFY(importer.chosen().contains("setting:autosave.maxFiles"));
         setupNext(); // Look: the pages start from the import
         QCOMPARE(setupValues().value(QStringLiteral("autosave.maxFiles")).toInt(), 10);
-        QCOMPARE(setupValues().value(QStringLiteral("editor.saveAfterCharacterCount")).toInt(), 4);
+        QCOMPARE(setupValues().value(QStringLiteral("updater.checkForStable")).toBool(), false);
         auto *store = application->settingsStore();
         QVERIFY(!store->isSet(QStringLiteral("autosave.maxFiles")));
         // A page's change wins over the import, also after going back.
-        setupPut("editor.saveAfterCharacterCount", 6);
+        setupPut("autosave.maxFiles", 6);
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedBack"), "click"));
         setupNext();
-        QCOMPARE(setupValues().value(QStringLiteral("editor.saveAfterCharacterCount")).toInt(), 6);
-        QCOMPARE(setupValues().value(QStringLiteral("autosave.maxFiles")).toInt(), 10);
+        QCOMPARE(setupValues().value(QStringLiteral("autosave.maxFiles")).toInt(), 6);
+        QCOMPARE(setupValues().value(QStringLiteral("updater.checkForStable")).toBool(), false);
         while (setupPage() != u"files")
             setupNext();
         QVERIFY(!store->isSet(QStringLiteral("grid.font")));
         setupNext(); // Finish
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
-        QCOMPARE(store->integer("autosave.maxFiles"), 10);
-        QCOMPARE(store->integer("editor.saveAfterCharacterCount"), 6);
+        QCOMPARE(store->integer("autosave.maxFiles"), 6);
+        QCOMPARE(store->boolean("updater.checkForStable"), false);
         QVERIFY(!store->isSet(QStringLiteral("program.tabTextMaxChars"))); // only the pages are written
         QVERIFY(importer.pending());
         restartWithSpelling(home.path(), false, {}, true);
         store = application->settingsStore();
         QCOMPARE(store->text("grid.font"), QStringLiteral("Arial"));
         QCOMPARE(store->integer("program.tabTextMaxChars"), 25);
-        QCOMPARE(store->integer("editor.saveAfterCharacterCount"), 6);
-        QCOMPARE(store->integer("autosave.maxFiles"), 10);
+        QCOMPARE(store->integer("autosave.maxFiles"), 6);
+        QCOMPARE(store->boolean("updater.checkForStable"), false);
         QTest::qWait(100);
         QVERIFY(!gettingStarted()->property("visible").toBool());
     }
@@ -20023,8 +20037,9 @@ private slots:
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
         // "Translation mode" and its run keys and VT2's eleven visual tools listed; KA2's Tap
         // to time, Slower and Faster; VT3's Perspective; KA7's "Check karaoke"; KA1's two syllable
-        // commands; AD2's "Repeat last run"; KA3's "Kanji timer"; FR1's "Getting started".
-        QCOMPARE(hotkeyRows().size(), 253);
+        // commands; AD2's "Repeat last run"; KA3's "Kanji timer"; FR1's "Getting started";
+        // #385's "Hide line wraps".
+        QCOMPARE(hotkeyRows().size(), 254);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.

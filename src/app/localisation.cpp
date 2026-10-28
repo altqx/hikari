@@ -135,11 +135,18 @@ Localisation::Localisation(QString catalogDir, QObject *parent)
     : QObject(parent), m_dir(std::move(catalogDir)), m_qtDir(QLibraryInfo::path(QLibraryInfo::TranslationsPath))
 {
     QCoreApplication::instance()->installEventFilter(this);
+    // #385: the English numerus forms, installed first so every other
+    // catalog is searched before them.
+    m_english = std::make_unique<QTranslator>();
+    if (m_english->load(QStringLiteral("hikarisub_en"), m_dir))
+        QCoreApplication::installTranslator(m_english.get());
+    else
+        m_english.reset();
 }
 
 Localisation::~Localisation()
 {
-    for (auto *t : {m_pseudoTranslator.get(), m_app.get(), m_qt.get()})
+    for (auto *t : {m_pseudoTranslator.get(), m_app.get(), m_qt.get(), m_english.get()})
         if (t)
             QCoreApplication::removeTranslator(t);
     if (m_rightToLeft)

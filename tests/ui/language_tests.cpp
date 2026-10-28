@@ -303,6 +303,25 @@ private slots:
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Close"));
     }
 
+    // #385: a count reads in English through the English numerus catalog,
+    // below every other: in English, and in Polish where its entry is still
+    // unfinished. Without the Localisation the source text shows.
+    void englishCountsHaveTheirPlural()
+    {
+        const auto remove = [](int n) {
+            return QCoreApplication::translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, n);
+        };
+        {
+            app::Localisation localisation;
+            QCOMPARE(remove(1), QStringLiteral("Remove 1 word"));
+            QCOMPARE(remove(3), QStringLiteral("Remove 3 words"));
+            QVERIFY(localisation.setLanguage(QStringLiteral("pl")));
+            QCOMPARE(remove(2), QStringLiteral("Remove 2 words"));
+            QVERIFY(!localisation.catalogLanguages().contains(QStringLiteral("en"))); // not a language to choose
+        }
+        QCOMPARE(remove(1), QStringLiteral("Remove 1 word(s)"));
+    }
+
     // By default Qt's catalog comes from the Qt installation (the build's Qt
     // ships qt_pl and qt_ko; packaging them is distribution's).
     void qtCatalogComesFromTheQtInstallation()
@@ -413,9 +432,9 @@ private slots:
         QCOMPARE(settingsButton("settingsApply")->property("text").toString(), QStringLiteral("Zastosuj"));
         QCOMPARE(dialogItem("setting_program.language")->property("currentIndex").toInt(), 2);
         // An accessible name (Accessible.name: text, a check box's).
-        QAccessibleInterface *a = QAccessible::queryAccessibleInterface(dialogItem("setting_grid.loadSortedSubs"));
+        QAccessibleInterface *a = QAccessible::queryAccessibleInterface(dialogItem("setting_subtitles.openInNewTab"));
         QVERIFY(a);
-        QCOMPARE(a->text(QAccessible::Name), QStringLiteral("Wczytywanie posortowanych napisów"));
+        QCOMPARE(a->text(QAccessible::Name), QStringLiteral("Otwieraj napisy zawsze w nowej karcie"));
         // PF1's keys (the window's title, the language label) are new and
         // unfinished until translator review: English, never the legacy
         // restart text.

@@ -29,7 +29,7 @@
     </message>
     <message>
         <source>Search bar</source>
-        <translation>검색 바</translation>
+        <translation type="vanished">검색 바</translation>
     </message>
     <message>
         <source>Horizontal stretching</source>
@@ -6797,7 +6797,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Open sorted subtitles</source>
-        <translation>정렬된 자막으로 열기</translation>
+        <translation type="vanished">정렬된 자막으로 열기</translation>
     </message>
     <message>
         <source>Turn spell checking</source>
@@ -6871,7 +6871,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Compatibility with older HikariSub scripts</source>
-        <translation>이전 HikariSub 스크립트와의 호환성</translation>
+        <translation type="vanished">이전 HikariSub 스크립트와의 호환성</translation>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
@@ -7003,19 +7003,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>After program start asynchronously</source>
-        <translation>프로그램 시작 후 (비동기)</translation>
+        <translation type="vanished">프로그램 시작 후 (비동기)</translation>
     </message>
     <message>
         <source>After program start</source>
-        <translation>프로그램 시작과 동시에</translation>
+        <translation type="vanished">프로그램 시작과 동시에</translation>
     </message>
     <message>
         <source>After open menu asynchronously</source>
-        <translation>자동화 메뉴를 연 후 (비동기)</translation>
+        <translation type="vanished">자동화 메뉴를 연 후 (비동기)</translation>
     </message>
     <message>
         <source>After open menu</source>
-        <translation>자동화 메뉴를 연 후</translation>
+        <translation type="vanished">자동화 메뉴를 연 후</translation>
     </message>
     <message>
         <source>Folder with external fonts</source>
@@ -7316,18 +7316,6 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save while editing every</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>0 turns saving while editing off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>edits</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Autosave files kept</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7404,15 +7392,7 @@ removing audio cache files.</source>
         <translation type="unfinished">글꼴</translation>
     </message>
     <message>
-        <source>Grid font</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Active line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select the line at the previous tab&apos;s time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7421,10 +7401,6 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Keep the selection when duplicating lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Don&apos;t center the active line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7660,23 +7636,11 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show the conversion window first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Files</source>
         <translation type="unfinished">파일</translation>
     </message>
     <message>
         <source>Save the panel layout in subtitle files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Loading</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Load scripts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7879,35 +7843,27 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Subtitle information</source>
-        <translation>자막 정보</translation>
-    </message>
-    <message>
-        <source>Use</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Write the value into the subtitles&apos; information</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">자막 정보</translation>
     </message>
     <message>
         <source>Title</source>
-        <translation>제목</translation>
+        <translation type="vanished">제목</translation>
     </message>
     <message>
         <source>Author</source>
-        <translation>제작자</translation>
+        <translation type="vanished">제작자</translation>
     </message>
     <message>
         <source>Translator</source>
-        <translation>번역자</translation>
+        <translation type="vanished">번역자</translation>
     </message>
     <message>
         <source>Proofreading</source>
-        <translation>편집</translation>
+        <translation type="vanished">편집</translation>
     </message>
     <message>
         <source>Timer</source>
-        <translation>시간</translation>
+        <translation type="vanished">시간</translation>
     </message>
     <message>
         <source>Editing</source>
@@ -7915,7 +7871,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Always ask before changing subtitle information</source>
-        <translation>저장시 자막 정보 선택창 띄우기</translation>
+        <translation type="vanished">저장시 자막 정보 선택창 띄우기</translation>
     </message>
     <message>
         <source>Choose choose external font folder</source>

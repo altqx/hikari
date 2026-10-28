@@ -213,6 +213,9 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     legacy[5173] = "Repeat last run";
     legacy[5174] = "Kanji timer"; // KA3
     legacy[5176] = "Getting started"; // FR1
+    // B385-hide-wraps-name: legacy names no GRID_HIDE_WRAPS; its menu item's text.
+    EXPECT_FALSE(legacy.contains(ids().at("GRID_HIDE_WRAPS")));
+    legacy[ids().at("GRID_HIDE_WRAPS")] = "Hide line wraps";
     EXPECT_EQ(hotkeyNames(), legacy);
     EXPECT_EQ(hotkeyName(kSave), "Save");
     EXPECT_EQ(hotkeyName(kGlobalQuit), ""); // not named: never listed
@@ -437,8 +440,9 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     // The names table from the highest id down; no GLOBAL_QUIT.
     // V3, AM1: no "Open video with FFMS2" or "Open shortcut mapping window"
     // row; WS3: none for the five View arrangements and the editor switch;
-    // LE3's, KE1's, FS1's, TM1's (the run keys too), VT2's and VT3's commands, KA2's three, KA7's, KA1's two, AD2's, KA3's and FR1's have their own.
-    ASSERT_EQ(list.rowCount(), 253u);
+    // LE3's, KE1's, FS1's, TM1's (the run keys too), VT2's and VT3's commands, KA2's three, KA7's, KA1's two, AD2's, KA3's and FR1's have their own;
+    // #385 names Hide line wraps, which legacy left without a name.
+    ASSERT_EQ(list.rowCount(), 254u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -450,6 +454,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(rowNamed(list, "Global Check karaoke").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Kanji timer").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Getting started").accel, "");
+    EXPECT_EQ(rowNamed(list, "Subtitles Hide line wraps").key.id, 4513); // #385
     EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Commit alt");
     EXPECT_EQ(list.find("Global Exit"), -1);
     EXPECT_EQ(list.selection(), 0);
@@ -470,7 +475,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 255u); // V3, AM1, WS3, TM1, VT2, KA2, VT3, KA7, KA1, AD2, KA3, FR1: 253 named rows and these two
+    ASSERT_EQ(more.rowCount(), 256u); // V3, AM1, WS3, TM1, VT2, KA2, VT3, KA7, KA1, AD2, KA3, FR1, #385: 254 named rows and these two
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -486,7 +491,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 252u); // V3, AM1, WS3, TM1, VT2, KA2, VT3, KA7, KA1, AD2, KA3, FR1: 253 named rows less Commit alt
+    EXPECT_EQ(cut.rowCount(), 253u); // V3, AM1, WS3, TM1, VT2, KA2, VT3, KA7, KA1, AD2, KA3, FR1, #385: 254 named rows less Commit alt
     EXPECT_EQ(cut.find("Audio Commit alt"), -1);
     // A binding in a window legacy cannot name (-1) is never listed, and so
     // the list never ends early.
@@ -494,7 +499,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 253u);
+    EXPECT_EQ(whole.rowCount(), 254u);
 }
 
 TEST(Hotkeys, FilterModesAndSelection)
@@ -523,7 +528,7 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     EXPECT_EQ(list.shown().size(), 109u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 253u);
+    EXPECT_EQ(list.shown().size(), 254u);
 }
 
 // PF1 (#225): the Hotkeys page's search, within the filter, by the
@@ -759,8 +764,8 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S"); // the Global row keeps its keys
-    ASSERT_EQ(list.rowCount(), 254u);
-    const auto &added = list.row(253);
+    ASSERT_EQ(list.rowCount(), 255u);
+    const auto &added = list.row(254);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
@@ -768,9 +773,9 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     // Again: that row changes and is selected.
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 254u);
-    EXPECT_EQ(list.row(253).accel, "F6");
-    EXPECT_EQ(list.selection(), 253);
+    EXPECT_EQ(list.rowCount(), 255u);
+    EXPECT_EQ(list.row(254).accel, "F6");
+    EXPECT_EQ(list.selection(), 254);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -862,7 +867,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 253u); // every row shown, the filter choice as it was
+    EXPECT_EQ(third.shown().size(), 254u); // every row shown, the filter choice as it was
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
