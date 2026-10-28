@@ -5755,6 +5755,10 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub 이슈 트래커를 엽니다</translation>
     </message>
     <message>
+        <source>Opens a form for a bug, feature request or question on GitHub</source>
+        <translation>GitHub에 올릴 버그, 기능 요청 또는 질문 양식을 엽니다</translation>
+    </message>
+    <message>
         <source>Checks whether a newer version is available</source>
         <translation>새 버전이 있는지 확인합니다</translation>
     </message>
