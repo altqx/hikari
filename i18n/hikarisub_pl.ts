@@ -50,16 +50,7 @@
     <message>
         <source>%1 and %2 change the speed.</source>
         <extracomment>%1 the key that slows the audio down, %2 the key that speeds it up</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>and</source>
-        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
-        <translation type="vanished">i</translation>
-    </message>
-    <message>
-        <source>change the speed.</source>
-        <translation type="vanished">zmieniają prędkość.</translation>
+        <translation>%1 i %2 zmieniają prędkość.</translation>
     </message>
     <message>
         <source>Output device</source>
@@ -110,28 +101,8 @@
         <translation>Zatrzymaj odtwarzanie</translation>
     </message>
     <message>
-        <source>Play before the tag</source>
-        <translation type="vanished">Odtwórz przed znacznikiem</translation>
-    </message>
-    <message>
-        <source>Play after the tag</source>
-        <translation type="vanished">Odtwórz po znaczniku</translation>
-    </message>
-    <message>
-        <source>Play 500ms before the start time</source>
-        <translation type="vanished">Odtwórz 500ms przed czasem początkowym</translation>
-    </message>
-    <message>
         <source>Play 500 ms after the start time</source>
         <translation>Odtwórz 500 ms po czasie początkowym</translation>
-    </message>
-    <message>
-        <source>Play 500ms before the end time</source>
-        <translation type="vanished">Odtwórz 500ms przed czasem końcowym</translation>
-    </message>
-    <message>
-        <source>Play 500ms after the end time</source>
-        <translation type="vanished">Odtwórz 500ms po czasie końcowym</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -220,7 +191,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz 500 ms przed czasem początkowym</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -228,7 +199,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz 500 ms przed czasem końcowym</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -236,7 +207,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz 500 ms po czasie końcowym</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -560,17 +531,9 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Kalibracja opóźnienia stukania</translation>
     </message>
     <message>
-        <source>Press</source>
-        <translation type="vanished">Naciśnij</translation>
-    </message>
-    <message>
-        <source>on each beep.</source>
-        <translation type="vanished">przy każdym sygnale.</translation>
-    </message>
-    <message>
         <source>Press %1 on each beep.</source>
         <extracomment>%1 the Space key</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Naciśnij %1 przy każdym sygnale.</translation>
     </message>
     <message>
         <source>16 beeps at 100 BPM; the first four are practice.</source>
@@ -2562,7 +2525,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
-        <translation type="unfinished"></translation>
+        <translation>Wklej zaznaczony tekst</translation>
     </message>
     <message>
         <source>Add a tag button</source>
@@ -2599,10 +2562,6 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     <message>
         <source>Paste all</source>
         <translation>Wklej wszystko</translation>
-    </message>
-    <message>
-        <source>Paste the selected</source>
-        <translation type="vanished">Wklej zaznaczone</translation>
     </message>
     <message>
         <source>Comment out original</source>
@@ -4255,16 +4214,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Dodaj linijki</translation>
     </message>
     <message>
-        <source>Copy tree</source>
-        <translation type="vanished">Kopiuj drzewko</translation>
-    </message>
-    <message>
         <source>Change description</source>
         <translation>Zmień opis</translation>
-    </message>
-    <message>
-        <source>Select tree lines</source>
-        <translation type="vanished">Zaznacz linijki drzewka</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -4319,14 +4270,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Złącz linijki i zostaw ostatnią</translation>
     </message>
     <message>
-        <source>Set times as a continuous (previous line)</source>
-        <translation type="vanished">Ustaw czasy jako ciągłe (poprzednia linijka)</translation>
-    </message>
-    <message>
-        <source>Set times as a continuous (next line)</source>
-        <translation type="vanished">Ustaw czasy jako ciągłe (następna linijka)</translation>
-    </message>
-    <message>
         <source>Split lines</source>
         <translation>Podziel linijki</translation>
     </message>
@@ -4353,10 +4296,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Select all lines visible on video</source>
         <translation>Zaznacz wszystkie linijki widoczne na wideo</translation>
-    </message>
-    <message>
-        <source>Make tree</source>
-        <translation type="vanished">Stwórz drzewko</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
@@ -4548,23 +4487,23 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Copy line group</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj grupę linijek</translation>
     </message>
     <message>
         <source>Select the group&apos;s lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacz linijki grupy</translation>
     </message>
     <message>
         <source>Make times continuous with the previous line</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustaw czasy jako ciągłe z poprzednią linijką</translation>
     </message>
     <message>
         <source>Make times continuous with the next line</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustaw czasy jako ciągłe z następną linijką</translation>
     </message>
     <message>
         <source>Make line group</source>
-        <translation type="unfinished"></translation>
+        <translation>Utwórz grupę linijek</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5115,22 +5054,6 @@ Co chcesz zrobić?</translation>
         <translation>Odtwórz po znaczniku</translation>
     </message>
     <message>
-        <source>Play first 500ms</source>
-        <translation type="vanished">Odtwórz pierwsze 500ms</translation>
-    </message>
-    <message>
-        <source>Play last 500ms</source>
-        <translation type="vanished">Odtwórz ostatnie 500ms</translation>
-    </message>
-    <message>
-        <source>Play 500ms before</source>
-        <translation type="vanished">Odtwórz 500ms przed</translation>
-    </message>
-    <message>
-        <source>Play 500ms after</source>
-        <translation type="vanished">Odtwórz 500ms po</translation>
-    </message>
-    <message>
         <source>Play to the end</source>
         <translation>Odtwarzaj do końca</translation>
     </message>
@@ -5201,10 +5124,6 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Paste all</source>
         <translation>Wklej wszystko</translation>
-    </message>
-    <message>
-        <source>Paste the selected</source>
-        <translation type="vanished">Wklej zaznaczone</translation>
     </message>
     <message>
         <source>Insert difference to the end</source>
@@ -5301,14 +5220,6 @@ Co chcesz zrobić?</translation>
     <message>
         <source>20th tag button</source>
         <translation>Przycisk tagu 20</translation>
-    </message>
-    <message>
-        <source>Set times as a continuous (next line)</source>
-        <translation type="vanished">Ustaw czasy jako ciągłe (następna linijka)</translation>
-    </message>
-    <message>
-        <source>Set times as a continuous (previous line)</source>
-        <translation type="vanished">Ustaw czasy jako ciągłe (poprzednia linijka)</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -5409,10 +5320,6 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Hide line wraps</source>
         <translation>Ukryj łamania wierszy</translation>
-    </message>
-    <message>
-        <source>Make tree</source>
-        <translation type="vanished">Stwórz drzewko</translation>
     </message>
     <message>
         <source>Select all lines visible on video</source>
@@ -5651,10 +5558,6 @@ Co chcesz zrobić?</translation>
         <translation>Sortuj zaznaczone linijki według warstwy</translation>
     </message>
     <message>
-        <source>Shift times / run time post processor</source>
-        <translation type="vanished">Przesuń czasy / uruchom postprocesor</translation>
-    </message>
-    <message>
         <source>Go to previous keyframe</source>
         <translation>Przejdź do poprzedniej klatki kluczowej</translation>
     </message>
@@ -5767,10 +5670,6 @@ Co chcesz zrobić?</translation>
         <translation>Zapisz</translation>
     </message>
     <message>
-        <source>Save as...</source>
-        <translation type="vanished">Zapisz jako...</translation>
-    </message>
-    <message>
         <source>Save translation</source>
         <translation>Zapisz tłumaczenie</translation>
     </message>
@@ -5811,56 +5710,52 @@ Co chcesz zrobić?</translation>
         <translation>Ustawienia</translation>
     </message>
     <message>
-        <source>Go to start time</source>
-        <translation type="vanished">Przejdź do czasu początkowego linijki</translation>
-    </message>
-    <message>
         <source>Play first 500 ms</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz pierwsze 500 ms</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz ostatnie 500 ms</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz 500 ms przed</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz 500 ms po</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
-        <translation type="unfinished"></translation>
+        <translation>Wklej zaznaczony tekst</translation>
     </message>
     <message>
         <source>Make times continuous with the next line</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustaw czasy jako ciągłe z następną linijką</translation>
     </message>
     <message>
         <source>Make times continuous with the previous line</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustaw czasy jako ciągłe z poprzednią linijką</translation>
     </message>
     <message>
         <source>Filtering: hide selected lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtrowanie: ukryj zaznaczone linijki</translation>
     </message>
     <message>
         <source>Make line group</source>
-        <translation type="unfinished"></translation>
+        <translation>Utwórz grupę linijek</translation>
     </message>
     <message>
         <source>Shift times / run timing postprocessor</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń czasy / uruchom postprocesor timingu</translation>
     </message>
     <message>
         <source>Save as…</source>
-        <translation type="unfinished">Zapisz jako…</translation>
+        <translation>Zapisz jako…</translation>
     </message>
     <message>
         <source>Go to start time of line</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejdź do czasu początkowego linijki</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -6674,7 +6569,7 @@ Co chcesz zrobić?</translation>
     </message>
     <message>
         <source>Shows or hides the Fix minor errors panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuje lub ukrywa panel poprawiania drobnych błędów</translation>
     </message>
     <message>
         <source>Fix minor errors (experimental)</source>
@@ -6698,11 +6593,11 @@ Co chcesz zrobić?</translation>
     </message>
     <message>
         <source>Shift times / run timing postprocessor</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń czasy / uruchom postprocesor timingu</translation>
     </message>
     <message>
         <source>Go to start time of line</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejdź do czasu początkowego linijki</translation>
     </message>
     <message>
         <source>&amp;Automation</source>
@@ -6735,10 +6630,6 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Next frame</source>
         <translation>Klatka w przód</translation>
-    </message>
-    <message>
-        <source>Go to start time</source>
-        <translation type="vanished">Przejdź do czasu początkowego linijki</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -6893,10 +6784,6 @@ Co chcesz zrobić?</translation>
         <translation>Przesuń &amp;czasy...</translation>
     </message>
     <message>
-        <source>Shift times / run time post processor</source>
-        <translation type="vanished">Przesuń czasy / uruchom postprocesor</translation>
-    </message>
-    <message>
         <source>Style &amp;manager</source>
         <translation>&amp;Menedżer stylów</translation>
     </message>
@@ -6964,16 +6851,12 @@ Co chcesz zrobić?</translation>
         <source>1 step. Steps after the current one can be redone.</source>
         <translation>1 krok. Kroki po bieżącym można ponowić.</translation>
     </message>
-    <message>
-        <source>%1 steps. Steps after the current one can be redone.</source>
-        <translation type="vanished">Liczba kroków: %1. Kroki po bieżącym można ponowić.</translation>
-    </message>
     <message numerus="yes">
         <source>%n steps. Steps after the current one can be redone.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n krok. Kroki po bieżącym można ponowić.</numerusform>
+            <numerusform>%n kroki. Kroki po bieżącym można ponowić.</numerusform>
+            <numerusform>%n kroków. Kroki po bieżącym można ponowić.</numerusform>
         </translation>
     </message>
     <message>
@@ -7131,10 +7014,6 @@ Co chcesz zrobić?</translation>
     <message>
         <source>History</source>
         <translation>Historia</translation>
-    </message>
-    <message>
-        <source>Turns on multireplacer</source>
-        <translation type="vanished">Włącza okno poprawiania błędów</translation>
     </message>
     <message>
         <source>Selects lines by expressions</source>
@@ -7933,16 +7812,18 @@ Co chcesz zrobić?</translation>
     <message>
         <source>Cannot change rules
 when the find results window is open</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zmieniać reguł,
+gdy okno wyników szukania jest otwarte</translation>
     </message>
     <message>
         <source>Line %1 cannot be replaced,
 because it was edited.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zamienić linijki %1,
+ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zamienić &quot;%1&quot; na &quot;%2&quot; przy użyciu reguły &quot;%3&quot; w linijce %4.</translation>
     </message>
     <message>
         <source>Rule description</source>
@@ -8015,10 +7896,6 @@ because it was edited.</source>
     <message>
         <source>Update rule</source>
         <translation>Zaktualizuj regułę</translation>
-    </message>
-    <message>
-        <source>%1 of %2 rules on</source>
-        <translation type="vanished">Włączone reguły: %1 z %2</translation>
     </message>
     <message>
         <source>Rule</source>
@@ -8102,23 +7979,15 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%n checked</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n zaznaczony</numerusform>
+            <numerusform>%n zaznaczone</numerusform>
+            <numerusform>%n zaznaczonych</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>%1 errors</source>
-        <translation type="vanished">Błędów: %1</translation>
     </message>
     <message>
         <source>in 1 file</source>
         <translation>w 1 pliku</translation>
-    </message>
-    <message>
-        <source>in %1 files</source>
-        <translation type="vanished">(plików: %1)</translation>
     </message>
     <message>
         <source>All</source>
@@ -8145,10 +8014,6 @@ because it was edited.</source>
         <translation>Ukryj znalezione</translation>
     </message>
     <message>
-        <source>%1 checked</source>
-        <translation type="vanished">Zaznaczone: %1</translation>
-    </message>
-    <message>
         <source>Replace checked</source>
         <translation>Zamień zaznaczone</translation>
     </message>
@@ -8167,26 +8032,26 @@ because it was edited.</source>
     <message numerus="yes">
         <source>%1 of %n rules on</source>
         <extracomment>%1 the rules turned on, %n all the rules</extracomment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Włączone: %1 z %n reguły</numerusform>
+            <numerusform>Włączone: %1 z %n reguł</numerusform>
+            <numerusform>Włączone: %1 z %n reguł</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n errors</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n błąd</numerusform>
+            <numerusform>%n błędy</numerusform>
+            <numerusform>%n błędów</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>in %n files</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>w %n pliku</numerusform>
+            <numerusform>w %n plikach</numerusform>
+            <numerusform>w %n plikach</numerusform>
         </translation>
     </message>
     <message>
@@ -8202,24 +8067,8 @@ because it was edited.</source>
         <translation>Zamień</translation>
     </message>
     <message>
-        <source>Line %1 cannot be replaced,
-cause it was edited.</source>
-        <translation type="vanished">Nie można zamienić linijki %1,
-ponieważ została zmieniona.</translation>
-    </message>
-    <message>
         <source>Rule &quot;%1&quot; is invalid.</source>
         <translation>Reguła &quot;%1&quot; jest nieprawidłowa.</translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when find results window is open</source>
-        <translation type="vanished">Nie można zmieniać reguł,
-gdy okno wyników szukania jest otwarte</translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; to &quot;%2&quot;, with rule &quot;%3&quot; in line %4.</source>
-        <translation type="vanished">Nie można zamienić &quot;%1&quot; na &quot;%2&quot; przy użyciu reguły &quot;%3&quot; w linijce %4.</translation>
     </message>
 </context>
 <context>
@@ -8556,7 +8405,7 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     </message>
     <message>
         <source>Audio shortcuts</source>
-        <translation type="unfinished"></translation>
+        <translation>Skróty audio</translation>
     </message>
     <message>
         <source>Privacy</source>
@@ -9121,10 +8970,6 @@ całkowicie usuwanie plików pamięci podręcznej audio.</translation>
     <message>
         <source>Video shortcuts</source>
         <translation>Skróty wideo</translation>
-    </message>
-    <message>
-        <source>Audio Shortcuts</source>
-        <translation type="vanished">Skróty audio</translation>
     </message>
     <message>
         <source>Automation shortcuts</source>
@@ -10004,7 +9849,8 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>Line %1 cannot be replaced,
 because it was edited.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zamienić linijki %1,
+ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>In files</source>
@@ -10209,12 +10055,6 @@ because it was edited.</source>
     <message>
         <source>Failed to find match for regular expression: %1</source>
         <translation>Nie znaleziono dopasowania do wyrażenia regularnego: %1</translation>
-    </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-cause it was edited.</source>
-        <translation type="vanished">Nie można zamienić linijki %1,
-ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Cannot back up %1.</source>
@@ -10800,7 +10640,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>It is not valid JSON: %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>To nie jest poprawny JSON: %1.</translation>
     </message>
     <message>
         <source>It is not a session file.</source>
@@ -10886,10 +10726,6 @@ ponieważ została zmieniona.</translation>
         <translation>Wybierz folder…</translation>
     </message>
     <message>
-        <source>Choose...</source>
-        <translation type="vanished">Wybierz...</translation>
-    </message>
-    <message>
         <source>Latin-1 (ISO 8859-1)</source>
         <translation>Latin-1 (ISO 8859-1)</translation>
     </message>
@@ -10947,7 +10783,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Choose…</source>
-        <translation type="unfinished">Wybierz…</translation>
+        <translation>Wybierz…</translation>
     </message>
     <message>
         <source>An import waits for the next start. These settings changed since it was made keep your change: %1.</source>
@@ -11666,7 +11502,7 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
     </message>
     <message>
         <source>ASS subtitle files</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki napisów ASS</translation>
     </message>
     <message>
         <source>Load</source>
@@ -12215,10 +12051,6 @@ Sprawdzanie pisowni zostanie wyłączone</translation>
     <message>
         <source>Choose ASS file</source>
         <translation>Wybierz plik ASS</translation>
-    </message>
-    <message>
-        <source>ASS subtitle files(*.ass)</source>
-        <translation type="vanished">Pliki napisów ASS(*.ass)</translation>
     </message>
     <message>
         <source>Copy of </source>
@@ -12770,11 +12602,7 @@ Usunięte style:
     </message>
     <message>
         <source>Show VSFilterMod tags</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show VSFiltermod tags</source>
-        <translation type="vanished">Pokaż tagi VSFiltermoda</translation>
+        <translation>Pokaż tagi VSFilterMod</translation>
     </message>
     <message>
         <source>%1, %2, %3 of %4</source>
@@ -12875,7 +12703,7 @@ Usunięte style:
     </message>
     <message>
         <source>These templates made the active line without a karaoke line. Apply them to the whole file to preview it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Te szablony utworzyły aktywną linijkę bez linijki karaoke. Zastosuj je do całego pliku, aby zobaczyć podgląd.</translation>
     </message>
     <message>
         <source>L</source>
@@ -12901,19 +12729,19 @@ Usunięte style:
     <message numerus="yes">
         <source>Applied with problems: %n lines from %1; the log lists the problems. Undo removes them in one step.</source>
         <extracomment>After an Apply with problems: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;)</extracomment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zastosowano z problemami: %n wygenerowana linijka (źródło: %1); problemy są wymienione w dzienniku. Cofnij usuwa ją jednym krokiem.</numerusform>
+            <numerusform>Zastosowano z problemami: %n wygenerowane linijki (źródło: %1); problemy są wymienione w dzienniku. Cofnij usuwa je jednym krokiem.</numerusform>
+            <numerusform>Zastosowano z problemami: %n wygenerowanych linijek (źródło: %1); problemy są wymienione w dzienniku. Cofnij usuwa je jednym krokiem.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Applied: %n lines from %1 in %2 s. Undo removes them in one step.</source>
         <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;), %2 the run&apos;s time</extracomment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zastosowano: %n wygenerowana linijka (źródło: %1) w %2 s. Cofnij usuwa ją jednym krokiem.</numerusform>
+            <numerusform>Zastosowano: %n wygenerowane linijki (źródło: %1) w %2 s. Cofnij usuwa je jednym krokiem.</numerusform>
+            <numerusform>Zastosowano: %n wygenerowanych linijek (źródło: %1) w %2 s. Cofnij usuwa je jednym krokiem.</numerusform>
         </translation>
     </message>
     <message>
@@ -13030,10 +12858,6 @@ Usunięte style:
         <translation>Podgląd na linijce %1</translation>
     </message>
     <message>
-        <source>These templates give the active line from no karaoke line. Apply them to the whole file to preview it.</source>
-        <translation type="vanished">Nie wiadomo, z której linijki karaoke te szablony utworzyły aktywną linijkę. Zastosuj je do całego pliku, aby zobaczyć podgląd.</translation>
-    </message>
-    <message>
         <source>Select a karaoke line to preview the templates on it.</source>
         <translation>Zaznacz linijkę karaoke, aby zobaczyć na niej podgląd szablonów.</translation>
     </message>
@@ -13044,16 +12868,6 @@ Usunięte style:
     <message>
         <source>No preview of line %1: the templates stopped with a problem.</source>
         <translation>Brak podglądu linijki %1: szablony przerwały działanie z powodu problemu.</translation>
-    </message>
-    <message>
-        <source>Applied with problems: %1 lines from %2 karaoke lines; the log lists the problems. Undo removes them in one step.</source>
-        <extracomment>After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from</extracomment>
-        <translation type="vanished">Zastosowano z problemami. Wygenerowane linijki: %1, z linijek karaoke: %2; problemy są wymienione w dzienniku. Cofnij usuwa je jednym krokiem.</translation>
-    </message>
-    <message>
-        <source>Applied: %1 lines from %2 karaoke lines in %3 s. Undo removes them in one step.</source>
-        <extracomment>After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run&apos;s time</extracomment>
-        <translation type="vanished">Zastosowano. Wygenerowane linijki: %1, z linijek karaoke: %2, w %3 s. Cofnij usuwa je jednym krokiem.</translation>
     </message>
     <message>
         <source>Line %1 changed since the last Apply; the generated lines are older.</source>
@@ -13141,7 +12955,7 @@ Usunięte style:
     </message>
     <message>
         <source>The Effect text keeps the standard template syntax; this picker only writes it for you.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekst efektu zachowuje standardową składnię szablonów; ta lista tylko wpisuje go za ciebie.</translation>
     </message>
     <message>
         <source>Syllable variables · values for line %1, syllable 1</source>
@@ -13163,10 +12977,6 @@ Usunięte style:
     <message>
         <source>Modifiers</source>
         <translation>Modyfikatory</translation>
-    </message>
-    <message>
-        <source>The Effect text stays stock syntax; this picker only writes it.</source>
-        <translation type="vanished">Tekst efektu zostaje w standardowej składni; ta lista tylko go wpisuje.</translation>
     </message>
     <message>
         <source>Template functions</source>
@@ -13212,10 +13022,6 @@ Usunięte style:
     <message>
         <source>Classic fill</source>
         <translation>Klasyczne wypełnienie</translation>
-    </message>
-    <message>
-        <source>The karaoke fill from left to right, fading in with the line and out after it.</source>
-        <translation type="vanished">Wypełnienie karaoke od lewej do prawej, pojawiające się razem z linijką i znikające po niej.</translation>
     </message>
     <message>
         <source>Staggered fade</source>
@@ -13392,7 +13198,7 @@ Usunięte style:
     </message>
     <message>
         <source>The karaoke fills from left to right, fading in with the line and out after it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Karaoke wypełnia się od lewej do prawej, pojawiając się razem z linijką i znikając po niej.</translation>
     </message>
     <message>
         <source>syllable duration (ms)</source>
@@ -13639,15 +13445,15 @@ Usunięte style:
     </message>
     <message>
         <source>Move according to the following styles (separated by a comma)</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń według następujących stylów (oddzielonych przecinkiem)</translation>
     </message>
     <message>
         <source>End time correction</source>
-        <translation type="unfinished"></translation>
+        <translation>Korekcja czasów końcowych</translation>
     </message>
     <message>
         <source>Corrects end times that are improper or overlap each other</source>
-        <translation type="unfinished"></translation>
+        <translation>Koryguje czasy końcowe, które są niewłaściwe albo nachodzą na siebie</translation>
     </message>
     <message>
         <source>Shift by video / audio</source>
@@ -13659,7 +13465,7 @@ Usunięte style:
     </message>
     <message>
         <source>Moves the start time to the video/audio time</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuwa czas początkowy do czasu wideo / audio</translation>
     </message>
     <message>
         <source>Move the marker to video time</source>
@@ -13675,7 +13481,7 @@ Usunięte style:
     </message>
     <message>
         <source>Timing postprocessor</source>
-        <translation type="unfinished"></translation>
+        <translation>Postprocesor timingu</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -13747,11 +13553,7 @@ by ich pozycja na wideo się nie zmieniła
     </message>
     <message>
         <source>Run timing postprocessor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move according to the following styles (separated by a coma)</source>
-        <translation type="vanished">Przesuń według następujących stylów (oddzielone przecinkiem)</translation>
+        <translation>Uruchom postprocesor timingu</translation>
     </message>
     <message>
         <source>A method of time shift</source>
@@ -13766,14 +13568,6 @@ by ich pozycja na wideo się nie zmieniła
         <translation>Obydwa czasy</translation>
     </message>
     <message>
-        <source>Correction end times</source>
-        <translation type="vanished">Korekcja czasów końcowych</translation>
-    </message>
-    <message>
-        <source>Correction end times, when they are improper or overlap each other</source>
-        <translation type="vanished">Korekcja czasów końcowych, gdy są niewłaściwe albo nachodzą na siebie</translation>
-    </message>
-    <message>
         <source>Leave unchanged</source>
         <translation>Pozostaw bez zmian</translation>
     </message>
@@ -13784,10 +13578,6 @@ by ich pozycja na wideo się nie zmieniła
     <message>
         <source>New times</source>
         <translation>Nowe czasy</translation>
-    </message>
-    <message>
-        <source>Move the start time to the time video / audio</source>
-        <translation type="vanished">Przesuwa czas początkowy do czasu wideo / audio</translation>
     </message>
     <message>
         <source>Moves the end time to the video/audio time</source>
@@ -13810,10 +13600,6 @@ by ich pozycja na wideo się nie zmieniła
         <translation>Wstawia zakończenie do czasu końcowego (dobre przy stosowaniu fad)</translation>
     </message>
     <message>
-        <source>End time in milliseconds</source>
-        <translation type="vanished">Czas zakończenia w milisekundach</translation>
-    </message>
-    <message>
         <source>Enable</source>
         <translation>Włącz</translation>
     </message>
@@ -13827,7 +13613,7 @@ by ich pozycja na wideo się nie zmieniła
     </message>
     <message>
         <source>Before the start time</source>
-        <translation type="unfinished"></translation>
+        <translation>Przed czasem początku</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
@@ -13854,14 +13640,6 @@ after the end time in milliseconds</source>
 po czasie końcowym w milisekundach</translation>
     </message>
     <message>
-        <source>Run post processor</source>
-        <translation type="vanished">Uruchom postprocesor</translation>
-    </message>
-    <message>
-        <source>Post processor</source>
-        <translation type="vanished">Postprocesor</translation>
-    </message>
-    <message>
         <source>Lead-in</source>
         <translation>Wstęp</translation>
     </message>
@@ -13871,7 +13649,7 @@ po czasie końcowym w milisekundach</translation>
     </message>
     <message>
         <source>Lead-out time in milliseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas zakończenia w milisekundach</translation>
     </message>
     <message>
         <source>Set times as continuous</source>
@@ -13888,10 +13666,6 @@ po czasie końcowym w milisekundach</translation>
     <message>
         <source>Snap to keyframes</source>
         <translation>Przyklejaj do klatek kluczowych</translation>
-    </message>
-    <message>
-        <source>Before the start of time</source>
-        <translation type="vanished">Przed czasem początku</translation>
     </message>
     <message>
         <source>After the start time</source>
@@ -15600,17 +15374,19 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>A double &quot;m&quot; was blocked because of a VSFilter bug</source>
-        <translation type="unfinished"></translation>
+        <translation>Podwójne &quot;m&quot; zostało zablokowane z powodu błędu w VSFilter</translation>
     </message>
     <message>
         <source>List of ASS drawings with an edit option.
 After choosing a drawing from the list, put the cursor
 where the drawing should start, then hold the left mouse button and drag.</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista rysunków ASS z możliwością edycji.
+Po wybraniu rysunku z listy ustaw kursor tam,
+gdzie rysunek ma się zaczynać, przytrzymaj lewy przycisk myszy i przeciągnij.</translation>
     </message>
     <message>
         <source>List of tags the visual tool can edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista tagów, które może edytować narzędzie wizualne</translation>
     </message>
     <message>
         <source>Tag change options:
@@ -15621,15 +15397,18 @@ Multiply - multiplies the slider value by the selected line number;
 the first line is not changed.
 Gradient - inserts a tag at each character or in each selected line,
 increasing or decreasing the value.</source>
-        <translation type="unfinished"></translation>
+        <translation>Opcje zmiany tagów:
+Ustaw - wstawia tag w miejscu kursora dla jednej linijki
+albo na początku tekstu dla wielu linijek.
+Dodaj - zmienia wszystkie tagi, dodając wartość suwaka.
+Pomnóż - mnoży wartość suwaka przez numer zaznaczonej linijki;
+pierwsza linijka nie jest zmieniana.
+Gradient - wstawia tag przy każdym znaku albo w każdej zaznaczonej linijce,
+zwiększając lub zmniejszając wartość.</translation>
     </message>
     <message>
         <source>Text alignment works the same as in styles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Double &quot;m&quot; was blocked because of Vsfilter bug</source>
-        <translation type="vanished">Podwójne &quot;m&quot; zostało zablokowane z powodu błędu w Vsfilter</translation>
+        <translation>Położenie tekstu działa tak samo jak w stylach</translation>
     </message>
     <message>
         <source>Edit</source>
@@ -15656,18 +15435,6 @@ increasing or decreasing the value.</source>
 or has zero duration</source>
         <translation>Linijka nie jest widoczna na wideo
 albo ma zerowy czas trwania</translation>
-    </message>
-    <message>
-        <source>List of ASS drawings with edit option.
-After choose drawing from list just set cursor i n place
-of start of drawing and click left mouse button and drag.</source>
-        <translation type="vanished">Lista rysunków ASS z możliwością edycji.
-Po wybraniu rysunku z listy ustaw kursor w miejscu
-początku rysunku, przytrzymaj lewy przycisk myszy i przeciągnij.</translation>
-    </message>
-    <message>
-        <source>List of tags that can edit visual tool</source>
-        <translation type="vanished">Lista tagów, które może edytować narzędzie wizualne</translation>
     </message>
     <message>
         <source>Lock outer quad
@@ -15814,32 +15581,6 @@ przeskalowany w jednej lub dwóch osiach.</translation>
 A rectangle of the text&apos;s plane: match it to one in the shot, then place the text inside it</source>
         <translation>Pokaż otaczającą płaszczyznę
 Prostokąt płaszczyzny tekstu: dopasuj go do prostokąta w kadrze, a potem umieść w nim tekst</translation>
-    </message>
-    <message>
-        <source>Tag change options:
-Add - changes all tags by adding the slider value.
-Insert - inserts the tag at the cursor position for one line,
-or at the start for multiple lines.
-Multiply - multiplies the slider value by the selected line number;
-the first line is not changed.
-Gradient text increasing - inserts a tag at each character, increasing the value.
-Gradient text decreasing - inserts a tag at each character, decreasing the value.
-Gradient line increasing - inserts a tag in selected lines, increasing the value.
-Gradient line decreasing - inserts a tag in selected lines, decreasing the value.</source>
-        <translation type="vanished">Opcje zmiany tagów:
-Dodaj - zmienia wszystkie tagi, dodając wartość suwaka.
-Wstaw - wstawia tag w miejscu kursora dla jednej linijki
-albo na początku tekstu dla wielu linijek.
-Pomnóż - mnoży wartość suwaka przez numer zaznaczonej linijki;
-pierwsza linijka nie jest zmieniana.
-Gradient tekstu rosnąco - wstawia tag przy każdym znaku, zwiększając wartość.
-Gradient tekstu malejąco - wstawia tag przy każdym znaku, zmniejszając wartość.
-Gradient linijek rosnąco - wstawia tag w zaznaczonych linijkach, zwiększając wartość.
-Gradient linijek malejąco - wstawia tag w zaznaczonych linijkach, zmniejszając wartość.</translation>
-    </message>
-    <message>
-        <source>Text placing works similar like in styles</source>
-        <translation type="vanished">Położenie tekstu działa tak samo jak w stylach</translation>
     </message>
     <message>
         <source>Top-center</source>
