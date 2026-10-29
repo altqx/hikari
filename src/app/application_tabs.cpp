@@ -509,13 +509,14 @@ void Application::convertLastSession()
             return false;
         const QByteArray bytes = file.readAll();
         application::ParseFailure failure;
-        const auto session = readSession(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), &failure);
+        const auto session =
+            readSession(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), &failure);
         if (!session) {
             // Empty or corrupt: legacy restored nothing from it either.
             if (!failure.message.empty())
                 m_log->notice(ui::LogController::Warning,
                               QCoreApplication::translate("HikariSub.MainWindow", "Load last session"),
-                              QCoreApplication::translate("HikariSub.Session", "%1 It was kept as %2.")
+                              QCoreApplication::translate("HikariSub.Session", "%1. It was kept as %2.")
                                   .arg(sessionProblem(QStringLiteral("LastSession.txt"), failure),
                                        QStringLiteral("LastSession.txt.old")));
             return true;
@@ -544,8 +545,8 @@ std::optional<application::Session> Application::loadLastSession()
         const QString problem = sessionProblem(fileName(load.problem->file), load.problem->failure);
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Load last session"),
                       load.problem->keptAs.empty()
-                          ? QCoreApplication::translate("HikariSub.Session", "%1 No tabs were restored.").arg(problem)
-                          : QCoreApplication::translate("HikariSub.Session", "%1 It was kept as %2; no tabs were restored.")
+                          ? QCoreApplication::translate("HikariSub.Session", "%1. No tabs were restored.").arg(problem)
+                          : QCoreApplication::translate("HikariSub.Session", "%1. It was kept as %2; no tabs were restored.")
                                 .arg(problem, fileName(load.problem->keptAs)));
         session.reset();
     }
