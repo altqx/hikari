@@ -1,8 +1,3 @@
-// P8: the update check against a fixture release feed (local files, so
-// nothing leaves the machine), as legacy UpdateChecker reads GitHub's list.
-// ADR 0019: the manifests, offer_to, the offer by package kind and the
-// automatic download.
-
 #include "hikari/app/update_checker.h"
 #include "desktop_guard.h"
 
@@ -38,10 +33,8 @@ void write(const QString &path, const QByteArray &bytes)
     f.write(bytes);
 }
 
-} // namespace
+}
 
-// Some tests use Linux's package kinds (deb, rpm, AppImage, AUR); on
-// Windows the same choice is UpdateOffer.ByPackageKind's, with NSIS.
 #ifdef Q_OS_WIN
 #define linuxKindsOnly() QSKIP("Linux package kinds; Windows' choice is tested by UpdateOffer.ByPackageKind")
 #else
@@ -52,7 +45,6 @@ class UpdateCheckerTest : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
 
-    // A feed in its own folder: releases.json, download/v<V>/<asset>.
     UpdateFeed feed(const QByteArray &json, const QString &name = QStringLiteral("feed"))
     {
         const QString base = dir.filePath(name);
@@ -61,7 +53,6 @@ class UpdateCheckerTest : public QObject {
     }
     static const QByteArray kFeed;
 
-    // A release of `version` with a deb, an AppImage and, when given, a manifest.
     struct Published {
         QJsonObject release;
         QByteArray deb, appImage;
@@ -105,7 +96,7 @@ class UpdateCheckerTest : public QObject {
         env.package = PackageInfo{kind, {}};
         env.cacheDir = cache;
         env.glibcVersion = QStringLiteral("2.39");
-        env.pkexec = QStringLiteral("/bin/false"); // never run by these tests
+        env.pkexec = QStringLiteral("/bin/false");
         return env;
     }
 
@@ -129,11 +120,10 @@ private slots:
         QCOMPARE(spy.at(0).at(0).toString(), QStringLiteral("available"));
         const auto release = spy.at(0).at(1).toMap();
         QCOMPARE(release.value(QStringLiteral("tag")).toString(), QStringLiteral("v0.1.2"));
-        QCOMPARE(release.value(QStringLiteral("name")).toString(), QStringLiteral("v0.1.2")); // no name: the tag
+        QCOMPARE(release.value(QStringLiteral("name")).toString(), QStringLiteral("v0.1.2"));
         QCOMPARE(release.value(QStringLiteral("notes")).toString(), QStringLiteral("Fixes"));
-        // The page is built from the tag, never taken from the reply.
         QCOMPARE(release.value(QStringLiteral("url")).toString(), f.pageBase + QStringLiteral("v0.1.2"));
-        QCOMPARE(release.value(QStringLiteral("offer")).toString(), QStringLiteral("notify")); // portable
+        QCOMPARE(release.value(QStringLiteral("offer")).toString(), QStringLiteral("notify"));
         checker.setStableOnly(false);
         checker.checkNow();
         QVERIFY(spy.wait(5000));
@@ -161,12 +151,9 @@ private slots:
         QSignalSpy listed(&garbage, &UpdateChecker::releasesRead);
         garbage.checkNow();
         QVERIFY(none.wait(5000));
-        QCOMPARE(none.at(0).at(0).toString(), QStringLiteral("current")); // legacy: no array, nothing newer
-        // SH3: but the list was not read (What's new does not take it).
+        QCOMPARE(none.at(0).at(0).toString(), QStringLiteral("current"));
         QCOMPARE(listed.count(), 1);
         QCOMPARE(listed.at(0).at(0).toBool(), false);
-        // An entry that is no release (no object, no tag name) makes the
-        // list unread too.
         UpdateChecker malformed({}, feed("[null, {\"tag_name\": 7}]", QStringLiteral("malformed")),
                                 QStringLiteral("0.1.0"));
         QSignalSpy malformedDone(&malformed, &UpdateChecker::finished);
@@ -188,17 +175,17 @@ private slots:
         const QString ini = dir.filePath(QStringLiteral("settings.toml"));
         const UpdateFeed missing = UpdateFeed::local(QUrl::fromLocalFile(dir.filePath(QStringLiteral("missing/"))));
         UpdateChecker checker(ini, missing, QStringLiteral("0.1.0"));
-        QVERIFY(!checker.autoCheck()); // legacy default: off
-        QVERIFY(checker.stableOnly());  // legacy default: stable only
-        QVERIFY(checker.autoInstall()); // ADR 0019: on by default
+        QVERIFY(!checker.autoCheck());
+        QVERIFY(checker.stableOnly());
+        QVERIFY(checker.autoInstall());
         QVERIFY(!checker.checkOnStartup());
         checker.setAutoCheck(true);
         QSignalSpy spy(&checker, &UpdateChecker::finished);
         const qint64 before = QDateTime::currentSecsSinceEpoch();
         QVERIFY(checker.checkOnStartup());
         QTRY_VERIFY(!checker.checking());
-        QCOMPARE(spy.count(), 0); // a failed automatic check is silent
-        QVERIFY(checker.nextCheck() >= before + 24 * 60 * 60); // backs off a day
+        QCOMPARE(spy.count(), 0);
+        QVERIFY(checker.nextCheck() >= before + 24 * 60 * 60);
         QVERIFY(!checker.checkOnStartup());
         checker.remindInAWeek();
         QVERIFY(checker.nextCheck() >= before + 7 * 24 * 60 * 60);
@@ -207,7 +194,6 @@ private slots:
         QVERIFY(again.autoCheck());
         QVERIFY(!again.autoInstall());
         QCOMPARE(again.nextCheck(), checker.nextCheck());
-        // A due automatic check reports a newer release.
         UpdateChecker due(ini, feed(kFeed), QStringLiteral("0.1.0"));
         due.setNextCheck(0);
         QSignalSpy found(&due, &UpdateChecker::finished);
@@ -215,9 +201,6 @@ private slots:
         QVERIFY(found.wait(5000));
         QCOMPARE(found.at(0).at(0).toString(), QStringLiteral("available"));
         QCOMPARE(found.at(0).at(2).toBool(), false);
-        // PU7 (#309): Skip this version, kept; the automatic check passes
-        // the skipped version over in silence (backing off a day as ever,
-        // nothing downloaded), Check for updates still shows it.
         const QString version = found.at(0).at(1).toMap().value(QStringLiteral("version")).toString();
         QVERIFY(!version.isEmpty());
         due.skipVersion(version);
@@ -233,7 +216,6 @@ private slots:
         QVERIFY(skipping.nextCheck() >= skippedAt + 24 * 60 * 60);
         QCOMPARE(skipping.installer().state(), QStringLiteral("idle"));
         QCOMPARE(checkedOffer(skipping).value(QStringLiteral("version")).toString(), version);
-        // Offer it again (Settings > Updates): the automatic check shows it.
         skipping.skipVersion(QString());
         UpdateChecker offered(ini, feed(kFeed), QStringLiteral("0.1.0"));
         QVERIFY(offered.skippedVersion().isEmpty());
@@ -244,8 +226,6 @@ private slots:
         QCOMPARE(shown.at(0).at(1).toMap().value(QStringLiteral("version")).toString(), version);
     }
 
-    // The highest version is chosen, not the first listed; a release not
-    // offered to this codebase or with a broken manifest is passed over.
     void manifestsChooseTheReleaseAndItsPackage()
     {
         linuxKindsOnly();
@@ -263,7 +243,6 @@ private slots:
         QCOMPARE(offer.value(QStringLiteral("offer")).toString(), QStringLiteral("install"));
         QCOMPARE(checker.versionLabel(), QStringLiteral("0.1.0 (deb)"));
         QVERIFY(checker.installsUpdates());
-        // "Download and install": the deb lands in the cache, verified.
         auto &installer = checker.installer();
         QSignalSpy ready(&installer, &hikari::app::UpdateInstaller::ready);
         checker.downloadOffer();
@@ -278,7 +257,6 @@ private slots:
         QVERIFY(QFileInfo::exists(cache + QStringLiteral("/pending-deb.json")));
     }
 
-    // Without a manifest (every release before them): the assets' digests.
     void releasesWithoutManifestUseTheirDigests()
     {
         linuxKindsOnly();
@@ -295,17 +273,13 @@ private slots:
         const QString name = QStringLiteral("kinds");
         const auto r = publish(name, QStringLiteral("0.2.0"), QJsonArray{QStringLiteral("qt")}, true, QStringLiteral("2.40"));
         const UpdateFeed f = feed(QJsonDocument(QJsonArray{r.release}).toJson(), name);
-        // The deb needs glibc 2.40: the system's 2.39 is not enough.
         UpdateChecker deb({}, f, QStringLiteral("0.1.0"), environment(PackageKind::Deb, dir.filePath(QStringLiteral("cache-kinds"))));
         const auto requirement = checkedOffer(deb);
         QCOMPARE(requirement.value(QStringLiteral("offer")).toString(), QStringLiteral("requirement"));
         QCOMPARE(requirement.value(QStringLiteral("requirement")).toString(), QStringLiteral("2.40"));
         QVERIFY(!requirement.value(QStringLiteral("requirementIsOs")).toBool());
-        // An rpm copy finds no rpm in this release: the notice only.
         UpdateChecker rpm({}, f, QStringLiteral("0.1.0"), environment(PackageKind::Rpm, dir.filePath(QStringLiteral("cache-kinds"))));
         QCOMPARE(checkedOffer(rpm).value(QStringLiteral("offer")).toString(), QStringLiteral("notify"));
-        // The AUR: its own notice, and nothing is downloaded, even by the
-        // automatic check with "Install updates automatically" on.
         const QString aurCache = dir.filePath(QStringLiteral("cache-aur"));
         UpdateChecker aur({}, f, QStringLiteral("0.1.0"), environment(PackageKind::Arch, aurCache));
         QVERIFY(!aur.installsUpdates());
@@ -321,8 +295,6 @@ private slots:
         QVERIFY(!QFileInfo::exists(aurCache));
     }
 
-    // The automatic check downloads an installable update without asking
-    // and says nothing until it is ready; with the option off it only tells.
     void automaticCheckDownloadsWhenInstallingIsOn()
     {
         linuxKindsOnly();
@@ -359,8 +331,6 @@ private slots:
         UpdateChecker checker({}, github, QStringLiteral("0.1.0"));
         QCOMPARE(checker.releasePageOf(QStringLiteral("0.2.0")), QStringLiteral("https://github.com/altqx/hikari/releases/tag/v0.2.0"));
         QCOMPARE(checker.releasePageOf(QStringLiteral("../x")), QString());
-        // Only the feed's own page goes to the browser (38e: recorded; it
-        // never reaches the desktop's browser).
         hikari::test::desktop::clear();
         checker.openReleasePage(QStringLiteral("https://example.invalid/altqx/hikari/releases/tag/v0.2.0"));
         checker.openReleasePage(QString());

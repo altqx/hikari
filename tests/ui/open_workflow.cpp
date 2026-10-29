@@ -1,8 +1,3 @@
-// P2 workflow through the real UI (Spix): opening other subtitles over
-// unsaved work shows the close review, Cancel keeps the work and Discard all
-// opens the file; the recent list then names both files; a file changed by
-// another program offers a reload, and Yes reloads it.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -48,7 +43,6 @@ public:
     hikari::app::Application *application = nullptr;
 
 protected:
-    // The window title names the editing target ("<name> - HikariSub").
     std::string targets() { return getStringProperty("mainWindow", "title"); }
     std::string lineText() { return getStringProperty("mainWindow/lineText", "text"); }
     void executeTest() override
@@ -61,15 +55,15 @@ protected:
             enterKey("mainWindow/lineText", Qt::Key_Return, spix::KeyModifiers::Control);
             wait(300ms);
             invokeMethod("mainWindow", "openSubtitles", {g_second.toStdString()});
-            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review"); // 0
+            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review");
             mouseClick("closeQuestion/messageBoxChoice_cancel");
             wait(300ms);
-            observed.push_back(targets()); // 1: unchanged
+            observed.push_back(targets());
             invokeMethod("mainWindow", "openSubtitles", {g_second.toStdString()});
             wait(500ms);
             mouseClick("closeQuestion/messageBoxChoice_discard");
             wait(500ms);
-            observed.push_back(targets()); // 2: the other file
+            observed.push_back(targets());
             std::string recent;
             QMetaObject::invokeMethod(
                 application,
@@ -78,15 +72,14 @@ protected:
                         recent += row.toMap().value(QStringLiteral("label")).toString().toStdString() + ";";
                 },
                 Qt::BlockingQueuedConnection);
-            observed.push_back(recent); // 3
+            observed.push_back(recent);
             write(g_second, "Changed");
             invokeMethod("mainWindow", "checkExternalChange", {});
             wait(300ms);
-            // PU1-disk-change-bar: a bar on the Document, not a question.
-            observed.push_back(existsAndVisible("mainWindow/diskChangeBar") ? "prompt" : "no prompt"); // 4
+            observed.push_back(existsAndVisible("mainWindow/diskChangeBar") ? "prompt" : "no prompt");
             mouseClick("mainWindow/reloadYes");
             wait(500ms);
-            observed.push_back(lineText()); // 5
+            observed.push_back(lineText());
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -96,7 +89,7 @@ protected:
     }
 };
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

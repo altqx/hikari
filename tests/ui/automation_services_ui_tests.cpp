@@ -1,6 +1,3 @@
-// L3: the Qt adapters behind automation host services — the system
-// clipboard (also through the real Lua helper), text measurement for
-// text_extents, wildcard conversion and the fixed QML file picker.
 #include "automation_services_qt.h"
 #include "hikari/backends/lua_script_host.h"
 
@@ -33,7 +30,6 @@ using hikari::ui::QtTextMeasurePort;
 
 namespace {
 
-// Every GetLineTextExtents call the T3 measure probe recorded, once each.
 std::vector<QJsonObject> legacyExtents()
 {
     QFile f(QStringLiteral(HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS));
@@ -62,7 +58,7 @@ std::vector<std::string> style(const std::string &font, const std::string &scale
             scaleX, scaleY, spacing, "0", "1", "2", "2", "2", "10", "10", "10", "1"};
 }
 
-} // namespace
+}
 
 class AutomationServicesUiTests : public QObject {
     Q_OBJECT
@@ -76,7 +72,6 @@ private slots:
         QVERIFY(id >= 0);
         family = QFontDatabase::applicationFontFamilies(id).value(0);
         QVERIFY(!family.isEmpty());
-        // The bold face beside it, as the T3 measure probe had it.
         const QString bold = QFileInfo(QStringLiteral(HIKARI_TEST_FONT)).dir().filePath(QStringLiteral("TitilliumWeb-Bold.ttf"));
         QVERIFY(QFontDatabase::addApplicationFont(bold) >= 0);
     }
@@ -90,7 +85,6 @@ private slots:
         QCOMPARE(clipboard.text(), std::string("from the app"));
     }
 
-    // The script's aegisub.__init_clipboard table reaches the system clipboard.
     void clipboardThroughTheHelper()
     {
         QtClipboardPort clipboard;
@@ -130,13 +124,11 @@ private slots:
         QVERIFY(plain->descent > 0);
         const auto empty = measure.measure(style(f), "");
         QVERIFY(empty && empty->width == 0 && empty->height == 0);
-        // ScaleX and ScaleY scale the measured extents.
         const auto wide = measure.measure(style(f, "200", "50"), "Hello");
         QVERIFY(wide);
         QVERIFY(qAbs(wide->width - 2 * plain->width) < 1e-3);
         QVERIFY(qAbs(wide->height - plain->height / 2) < 1e-3);
         QVERIFY(qAbs(wide->descent - plain->descent / 2) < 1e-3);
-        // Spacing measures each character alone and adds the spacing to each.
         double perCharacter = 0;
         for (const char *c : {"H", "e", "l", "l", "o"})
             perCharacter += measure.measure(style(f), c)->width;
@@ -146,18 +138,7 @@ private slots:
                  qPrintable(QStringLiteral("%1 vs %2").arg(spaced->width).arg(perCharacter + 10)));
     }
 
-    // T3: the measure Scale's rectangle mode runs on, against legacy's
-    // (the measure probe's capture, local-t3-measure-20261012: the Linux
-    // build's GetLineTextExtents through wxGTK's memory DC, Titillium Web
-    // given to fontconfig). Every piece legacy measured, with the measuring
-    // Style it had, goes through QtTextMeasurePort. The font is legacy's (the
-    // line as high as the style's size, by whole points); what remains is the
-    // two engines' hinting. Before the scale, the gaps measured are at most 3
-    // pixels in 211 for a whole piece, 5 in 10 characters for a spaced one
-    // (each character is measured and rounded alone), 2 in the line's height
-    // and 1 in the descent. So a width agrees within 1.5 percent and a pixel,
-    // or half a pixel a character and a pixel when spaced, a height within 2
-    // pixels and a descent within 1, all times the style's scale.
+    // The slack covers hinting differences between Qt's and wxGTK's text engines; spaced text rounds each character alone.
     void textExtentsAgainstTheLegacyLinuxMeasure()
     {
 #ifdef _WIN32
@@ -201,9 +182,6 @@ private slots:
 #endif
     }
 
-    // The point size found for a face is kept for the face the font resolves
-    // to: a face measured before it is added (another face answering for it)
-    // is searched again once it is there.
     void textExtentsOfAFaceAddedAfterAMeasure()
     {
 #ifdef _WIN32
@@ -254,7 +232,7 @@ private slots:
         QCOMPARE(picker.nameFilters(), QStringList{QStringLiteral("Text (*.txt)")});
         const QString chosen = QDir::temp().absoluteFilePath(QStringLiteral("b.txt"));
         picker.accept({QUrl::fromLocalFile(chosen)});
-        picker.accept({QUrl::fromLocalFile(chosen)}); // only the first answer counts
+        picker.accept({QUrl::fromLocalFile(chosen)});
         QCOMPARE(answers.size(), std::size_t(1));
         QCOMPARE(answers[0].value(), std::vector<std::string>{QDir::toNativeSeparators(chosen).toStdString()});
 
@@ -270,8 +248,6 @@ private slots:
         QCOMPARE(answers.size(), std::size_t(2));
     }
 
-    // The fixed QML FileDialog over the picker. Native dialogs block, so this
-    // runs only with the offscreen platform's Qt Quick implementation.
     void qmlPickerAcceptsTheChosenFile()
     {
         if (QGuiApplication::platformName() != QLatin1String("offscreen"))

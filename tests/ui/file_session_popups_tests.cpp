@@ -1,9 +1,3 @@
-// PU1 (#303): the file and session popups on the popup kit, in the main
-// window. A file changed by another program is a bar on its Document
-// (PU1-disk-change-bar); what a session restore could not find is a bar
-// each on its tab (PU1-session-entries-bar); "Load last session?" is a card
-// on the Home page (PU1-startup-cards).
-
 #include "hikari/app/application.h"
 #include "hikari/app/matroska_controller.h"
 #include "docking.h"
@@ -57,7 +51,7 @@ QStringList titles(const app::Application &a)
     return out;
 }
 
-} // namespace
+}
 
 class FileSessionPopupsTests : public QObject {
     Q_OBJECT
@@ -89,7 +83,6 @@ class FileSessionPopupsTests : public QObject {
         QVERIFY(window);
         QVERIFY(QTest::qWaitForWindowExposed(window));
     }
-    // An object by name: a QObject child, else an item of a view's delegate.
     static QQuickItem *itemNamed(QQuickItem *from, const QString &name)
     {
         if (from->objectName() == name)
@@ -119,7 +112,6 @@ class FileSessionPopupsTests : public QObject {
         const auto t = application->workspace().editingTarget();
         return t ? application->files().session(*t) : nullptr;
     }
-    // Another program writes the file, a second later than it was read.
     void changeOnDisk(const QString &path, const char *text)
     {
         const QDateTime later = QFileInfo(path).lastModified().addSecs(2);
@@ -143,10 +135,6 @@ private slots:
         window = nullptr;
     }
 
-    // The window's activation (and a tab change) checks the editing
-    // target's file: changed by another program, the Document gets a bar
-    // with Reload, Compare and Keep mine; with unsaved work it warns that
-    // Reload drops it. The bar is that Document's: another tab shows none.
     void aFileChangedOnDiskIsABarOnItsDocument()
     {
         start();
@@ -155,59 +143,50 @@ private slots:
         QObject *bar = named("diskChangeBar");
         QVERIFY(bar);
         QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
-        QVERIFY(!bar->property("visible").toBool()); // not changed
+        QVERIFY(!bar->property("visible").toBool());
         changeOnDisk(path, "theirs");
         QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
         QTRY_VERIFY(bar->property("visible").toBool());
         QCOMPARE(bar->property("severity").toString(), QStringLiteral("info"));
         QCOMPARE(bar->property("text").toString(), QStringLiteral("changed.ass was changed by another program."));
         QVERIFY(!bar->property("closable").toBool());
-        // Unsaved work: a warning.
         application->duplicateLines();
         QTRY_COMPARE(bar->property("severity").toString(), QStringLiteral("warning"));
         QCOMPARE(bar->property("text").toString(),
                  QStringLiteral("changed.ass was changed by another program. Reloading drops the changes you made here."));
-        // Another tab: no bar; back: the bar again.
         application->addPage();
         QTRY_VERIFY(!bar->property("visible").toBool());
         application->selectTab(0);
         QTRY_VERIFY(bar->property("visible").toBool());
-        // Compare: the file as it is on disk, the protected reference.
         const auto documents = application->workspace().documents().size();
         QVERIFY(QMetaObject::invokeMethod(named("diskChangeCompare"), "clicked"));
         QTRY_VERIFY(application->workspace().reference().has_value());
         QVERIFY(bar->property("visible").toBool());
         QCOMPARE(application->workspace().documents().size(), documents + 1);
-        // Again: the earlier copy goes, no tab is left of it.
         const auto tabs = application->workspace().tabs().size();
         QVERIFY(QMetaObject::invokeMethod(named("diskChangeCompare"), "clicked"));
         QTRY_VERIFY(application->workspace().reference().has_value());
         QCOMPARE(application->workspace().tabs().size(), tabs);
         QCOMPARE(application->workspace().documents().size(), documents + 1);
-        // Keep mine: the bar goes; the work stays. A second change made while
-        // the bar showed is the one accepted: it isn't asked about again.
         changeOnDisk(path, "theirs twice");
         QVERIFY(QMetaObject::invokeMethod(named("reloadNo"), "clicked"));
         QTRY_VERIFY(!bar->property("visible").toBool());
         QCOMPARE(target()->document().lines().size(), std::size_t(2));
         QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
-        QVERIFY(!bar->property("visible").toBool()); // asked once per change
-        // and a save writes over their change.
+        QVERIFY(!bar->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
         application->waitForWrites();
         QTRY_COMPARE(readAll(path).count("mine"), qsizetype(2));
-        // Changed again: Reload reads it.
         changeOnDisk(path, "theirs again");
         QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
         QTRY_VERIFY(bar->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("reloadYes"), "clicked"));
         QTRY_VERIFY(!bar->property("visible").toBool());
         QCOMPARE(firstLine(), QStringLiteral("theirs again"));
-        // A save while the bar shows asks first; Cancel writes nothing.
         changeOnDisk(path, "theirs third");
         QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
         QTRY_VERIFY(bar->property("visible").toBool());
-        application->duplicateLines(); // work to save
+        application->duplicateLines();
         const auto save = [this] {
             return QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant()));
         };
@@ -219,7 +198,6 @@ private slots:
         application->waitForWrites();
         QVERIFY(readAll(path).contains("theirs third"));
         QVERIFY(bar->property("visible").toBool());
-        // Save over it: the bar goes and the file is this copy.
         QVERIFY(save());
         QTRY_VERIFY(shown("diskSaveQuestion"));
         QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("saveOver"))));
@@ -229,8 +207,6 @@ private slots:
         QVERIFY(!readAll(path).contains("theirs third"));
     }
 
-    // Compared, then reloaded: the comparison is made again with the file as
-    // it now is (the reloaded Document matches the copy from disk).
     void aReloadComparesAgain()
     {
         start();
@@ -254,8 +230,6 @@ private slots:
         QVERIFY(!differs());
     }
 
-    // PU1-picker-titles: a picker with no folder of its own (no video, no
-    // recent file) starts where its kind was last left.
     void pickersStartWhereTheirKindWasLeft()
     {
         start();
@@ -274,8 +248,6 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("videoOpenDialog"), "close"));
     }
 
-    // What a restore could not find stays on its tab: a bar each, with
-    // Retry, Relink… and Remove, and no ×; the window opens nothing.
     void missingSessionFilesAreBarsOnTheirTab()
     {
         start();
@@ -306,12 +278,10 @@ private slots:
         QCOMPARE(named("unresolvedBar1")->property("text").toString(), QStringLiteral("missing.mkv, this tab’s video, was not found."));
         QVERIFY(!named("unresolvedBar0")->property("closable").toBool());
         QVERIFY(shown("restoreRetry0") && shown("restoreRelink0") && shown("restoreRemove0"));
-        // The first tab has all it had: no bar.
         application->selectTab(0);
         QTRY_VERIFY(!named("unresolvedBar0"));
         application->selectTab(1);
         QTRY_VERIFY(shown("unresolvedBar1"));
-        // Remove forgets the video; Retry finds the subtitles once there.
         QVERIFY(QMetaObject::invokeMethod(named("restoreRemove1"), "clicked"));
         QTRY_VERIFY(!named("unresolvedBar1"));
         QCOMPARE(application->unresolvedRestores().size(), qsizetype(1));
@@ -322,9 +292,6 @@ private slots:
         QCOMPARE(titles(*application), (QStringList{QStringLiteral("here.ass"), QStringLiteral("gone.ass")}));
     }
 
-    // On start: Ask. "Load last session?" no longer holds the start back:
-    // Home shows it where the Last session row is, Restore loads it, and
-    // "Restore it at every start" sets On start to Restore.
     void askingToRestoreIsACardOnHome()
     {
         {
@@ -337,7 +304,7 @@ private slots:
         QTRY_VERIFY(card->property("visible").toBool());
         QVERIFY(!shown("homeSession"));
         QVERIFY(!shown("startupBar"));
-        QVERIFY(titles(*application).isEmpty()); // nothing loaded yet
+        QVERIFY(titles(*application).isEmpty());
         QCOMPARE(named("homeOfferTitle")->property("text").toString(), QStringLiteral("Restore the last session?"));
         QCOMPARE(named("homeOfferDetail")->property("text").toString(), QStringLiteral("1 document · last.ass"));
         QVERIFY(shown("homeOfferRestore"));
@@ -354,10 +321,6 @@ private slots:
         QVERIFY(!shown("startupBar"));
     }
 
-    // Started with files (On start: Ask): the offer is the startup bar over
-    // the Document, and Restore replaces the tabs after the review.
-    // Closing a Document whose file another program changed, choosing Save:
-    // Save over it is asked first; Cancel cancels the close.
     void closingAFileChangedOnDiskAsksToSaveOverIt()
     {
         start();
@@ -387,8 +350,6 @@ private slots:
         QCOMPARE(readAll(path).count("mine"), qsizetype(2));
     }
 
-    // The file gone after its bar showed: Reload, Keep mine and Save over
-    // it can't use it, and the bar stays for Save as.
     void aFileGoneAfterItsBarKeepsTheBar()
     {
         start();
@@ -415,9 +376,6 @@ private slots:
         QVERIFY(!QFileInfo::exists(path));
     }
 
-    // A save that won't write over the file (a read-only file's question,
-    // a Save As) doesn't ask about it: Save all's question leaves it out,
-    // and the change on disk stays unaccepted.
     void aSaveAllThatDoesNotWriteTheFileLeavesItsBar()
     {
         start();
@@ -443,7 +401,6 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!box->isVisible());
         QVERIFY(shown("diskChangeBar"));
-        // Writable again, a save still asks first.
         writable.dismiss();
         QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
         QVERIFY(QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
@@ -453,12 +410,7 @@ private slots:
         QVERIFY(readAll(path).contains("theirs"));
     }
 
-    // An MKV load's Save and load over a file changed on disk (Y9): the load
-    // goes on once the save is written; a write that fails cancels it, so
-    // the work it was to save is not replaced.
 private:
-    // The MKV load's states once Save and load was chosen: 1 (listing) when
-    // it went on.
     QList<int> mkvStates;
     QObject *saveOverForAnMkvLoad(const QString &path, const std::function<void()> &beforeAnswer)
     {
@@ -466,7 +418,6 @@ private:
         QObject *flow = named("matroskaSubtitles");
         if (!flow || !application->openFile(path))
             return nullptr;
-        // File > Open's MKV (none there: a load that goes on lists nothing).
         if (!application->matroska().beginFile(dir.filePath(QStringLiteral("none.mkv"))))
             return nullptr;
         mkvStates.clear();
@@ -477,7 +428,7 @@ private:
         if (!QTest::qWaitFor([&] { return shown("diskChangeBar"); }))
             return nullptr;
         application->duplicateLines();
-        flow->setProperty("waitingForSave", true); // Save and load was chosen
+        flow->setProperty("waitingForSave", true);
         QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant()));
         if (!QTest::qWaitFor([&] { return shown("diskSaveQuestion"); }))
             return nullptr;
@@ -492,15 +443,12 @@ private slots:
         const QString path = writeAss(dir.filePath(QStringLiteral("mkvwait/written.ass")), "mine");
         QObject *flow = saveOverForAnMkvLoad(path, [] {});
         QVERIFY(flow);
-        QVERIFY(flow->property("waitingForSave").toBool()); // the write is not done yet
+        QVERIFY(flow->property("waitingForSave").toBool());
         application->waitForWrites();
         QTRY_VERIFY(!flow->property("waitingForSave").toBool());
         QCOMPARE(readAll(path).count("mine"), qsizetype(2));
         QVERIFY(mkvStates.contains(1));
     }
-    // Another tab chosen while the save is written, or work typed after it
-    // started: the load is cancelled (it would act on another tab, or
-    // replace what wasn't saved).
     void anMkvLoadIsCancelledWhenAnotherTabIsChosenDuringTheSave()
     {
         const QString path = writeAss(dir.filePath(QStringLiteral("mkvwait/switched.ass")), "mine");
@@ -516,7 +464,7 @@ private slots:
         const QString path = writeAss(dir.filePath(QStringLiteral("mkvwait/newer.ass")), "mine");
         QObject *flow = saveOverForAnMkvLoad(path, [] {});
         QVERIFY(flow);
-        application->duplicateLines(); // after the save started
+        application->duplicateLines();
         application->waitForWrites();
         QTRY_VERIFY(!flow->property("waitingForSave").toBool());
         QVERIFY(!mkvStates.contains(1));
@@ -531,7 +479,6 @@ private slots:
         });
         bool rootWrites = false;
         QObject *flow = saveOverForAnMkvLoad(path, [&] {
-            // The folder can't be written: the save fails.
             QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::ExeOwner);
             rootWrites = QFileInfo(locked).isWritable(); // root (CI containers) writes read-only folders
         });
@@ -547,7 +494,6 @@ private slots:
         QVERIFY(readAll(path).contains("theirs"));
     }
 
-    // Saved under another name, the bar about the file it came from goes.
     void saveAsEndsTheDiskChangeBar()
     {
         start();
@@ -568,8 +514,6 @@ private slots:
         QVERIFY(readAll(path).contains("theirs"));
     }
 
-    // A crash's autosaved work stays offered once the session is restored:
-    // the startup bar keeps Autosaves…, without Restore.
     void aRestoredSessionKeepsTheAutosavesOffered()
     {
         start();
@@ -580,14 +524,13 @@ private slots:
         offer->setProperty("autosaveCount", 1);
         offer->setProperty("restorable", true);
         offer->setProperty("kind", QStringLiteral("crash"));
-        offer->setProperty("restoring", true); // Restore chosen
+        offer->setProperty("restoring", true);
         QVERIFY(application->openFile(writeAss(dir.filePath(QStringLiteral("restored/kept.ass")), "kept")));
         QVERIFY(QMetaObject::invokeMethod(application.get(), "sessionRestored", Q_ARG(int, 0)));
         QTRY_VERIFY(shown("startupBar"));
         QCOMPARE(offer->property("kind").toString(), QStringLiteral("crash"));
         QVERIFY(!shown("startupRestore"));
         QVERIFY(shown("startupAutosaves"));
-        // On start: Ask, restored: nothing more to offer.
         offer->setProperty("restorable", true);
         offer->setProperty("kind", QStringLiteral("ask"));
         QVERIFY(QMetaObject::invokeMethod(application.get(), "sessionRestored", Q_ARG(int, 0)));
@@ -622,8 +565,6 @@ private slots:
         QTRY_VERIFY(!bar->property("visible").toBool());
     }
 
-    // The popups in the four themes, for review: written to
-    // HIKARI_SURFACE_SHOT_DIR when it is set (pu1-<part>-<theme>.png).
     void screenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -636,7 +577,7 @@ private slots:
         QObject *offer = named("startupBar")->property("offer").value<QObject *>();
         QVERIFY(offer);
         const auto shotOf = [](QQuickWindow *w, const QRect &part = {}) {
-            QTest::qWait(400); // laid out and painted
+            QTest::qWait(400);
             const QImage image = w->grabWindow();
             return part.isNull() ? image : image.copy(part & QRect(QPoint(), image.size()));
         };
@@ -647,7 +588,6 @@ private slots:
             offer->setProperty("kind", QLatin1String(kind));
         };
         const QString d = QDir::fromNativeSeparators(dir.filePath(QStringLiteral("shots")));
-        // Home's recent files, as after some work.
         QVERIFY(application->openFile(writeAss(d + QStringLiteral("/Signs.ass"), "mine")));
         QVERIFY(application->openFile(writeAss(d + QStringLiteral("/Episode 03.ass"), "e")));
         QVERIFY(application->reviewClose(QStringLiteral("all")).isEmpty());
@@ -659,14 +599,12 @@ private slots:
             const auto save = [&](const char *part, const QImage &image) {
                 QVERIFY(image.save(out + QStringLiteral("/pu1-") + QLatin1String(part) + QLatin1Char('-') + theme + QStringLiteral(".png")));
             };
-            // Home: the crash card and the Ask card.
             QTRY_VERIFY(application->home());
             offerAs("crash");
             save("home-crash", shotOf(window, QRect(0, 0, 1280, 420)));
             offerAs("ask");
             save("home-ask", shotOf(window, QRect(0, 0, 1280, 420)));
             offer->setProperty("kind", QString());
-            // A Document: the startup bar, changed on disk, a restore's missing video.
             const QString path = writeAss(d + QStringLiteral("/Signs.ass"), "mine");
             QVERIFY(application->openFile(path));
             offerAs("crash");
@@ -678,7 +616,6 @@ private slots:
             save("bars", shotOf(window, QRect(0, 0, 1280, 260)));
             offer->setProperty("kind", QString());
             QVERIFY(QMetaObject::invokeMethod(named("reloadNo"), "clicked"));
-            // One Document with unsaved work: the message box.
             window->close();
             QTRY_VERIFY(named("closeQuestion"));
             auto *question = qobject_cast<QQuickWindow *>(named("closeQuestion"));
@@ -686,7 +623,6 @@ private slots:
             save("unsaved-one", shotOf(question));
             QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!question->isVisible());
-            // Several: the Unsaved changes window, one row Untitled.
             QVERIFY(application->openFile(writeAss(d + QStringLiteral("/Episode 03.ass"), "e")));
             application->selectTab(1);
             application->duplicateLines();
@@ -700,7 +636,6 @@ private slots:
             save("unsaved-window", shotOf(review));
             QVERIFY(QMetaObject::invokeMethod(named("closeCancel"), "clicked"));
             QTRY_VERIFY(!review->isVisible());
-            // Close all tabs.
             QVERIFY(QMetaObject::invokeMethod(named("tabCommands"), "confirmCloseAll"));
             QTRY_VERIFY(named("closeAllPrompt"));
             auto *closeAll = qobject_cast<QQuickWindow *>(named("closeAllPrompt"));
@@ -708,7 +643,6 @@ private slots:
             save("close-all", shotOf(closeAll));
             QVERIFY(QMetaObject::invokeMethod(closeAll, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!closeAll->isVisible());
-            // The Autosaves window, with Delete older than… open.
             QObject *autosaves = named("autosaves");
             QVERIFY(QMetaObject::invokeMethod(autosaves, "show", Q_ARG(QVariant, false)));
             const QDateTime now = QDateTime::currentDateTime();
@@ -735,7 +669,6 @@ private slots:
             save("autosaves-delete-older", shotOf(autosavesWindow));
             QVERIFY(QMetaObject::invokeMethod(autosavesWindow, "reject"));
             QTRY_VERIFY(!autosavesWindow->isVisible());
-            // Back to Home for the next theme.
             QVariantList discard;
             for (const QVariant &r : application->reviewClose(QStringLiteral("all")))
                 discard << QVariantMap{{QStringLiteral("id"), r.toMap().value(QStringLiteral("id"))},

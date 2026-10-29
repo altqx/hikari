@@ -1,16 +1,3 @@
-// Y4-playres-ask (user decision 2026-10-13) through the composition with real
-// Lua helpers and media: legacy GetASSRes wrote a missing PlayResX/PlayResY
-// (1280x720, or a 16:9 partner) silently whenever a macro read the script
-// resolution (subtitles.script_resolution, karaskel's collect_head). Here
-// the user is asked to set it when a macro reads it: the question starts
-// from the open video's size, else legacy's values; Set writes it as its own
-// undo step and the macro goes on with it; Cancel stops the macro; "Always
-// set it from the video" sets it from the video in later runs without
-// asking (both keys take the video's size, even when the file has one). A
-// Document that has it, or a macro that never reads it, is never
-// asked about; without a window to ask in nothing waits and nothing is
-// written (the macro gets legacy's values).
-
 #include "hikari/app/application.h"
 #include "hikari/application/script_resolution.h"
 
@@ -51,14 +38,15 @@ std::string str(const std::optional<std::u8string> &v)
     return v ? std::string(v->begin(), v->end()) : std::string("<none>");
 }
 
-} // namespace
+}
 
 class AutomationResolutionTests : public QObject {
     Q_OBJECT
 
     QTemporaryDir dir;
     std::unique_ptr<app::Application> app;
-    QObject view; // stands for the window that shows the question
+    // MUST KILL: a bare QObject named view stands in for the window that shows the question
+    QObject view;
     int files = 0;
 
     app::Application::Options options()
@@ -86,7 +74,7 @@ class AutomationResolutionTests : public QObject {
         f.close();
         if (!app->openFile(path))
             return false;
-        app->selectTab(files - 1); // each file in its own tab, the newest edited
+        app->selectTab(files - 1);
         return QTest::qWaitFor([&] {
             const auto target = app->workspace().editingTarget();
             const auto destination = target ? app->files().destination(*target) : std::nullopt;
@@ -131,7 +119,7 @@ class AutomationResolutionTests : public QObject {
     }
     bool openVideo()
     {
-        app->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv")); // 320 x 240
+        app->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         return QTest::qWaitFor([&] { return app->video().session().lastFrame() != nullptr; }, 20'000);
     }
     std::vector<std::string> steps()
@@ -158,9 +146,6 @@ private slots:
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 
-    // The macro reads the resolution of a Document without it: asked, with
-    // the open video's size; Set writes both keys as one step and the macro
-    // goes on with them; Undo takes them away.
     void aMissingResolutionIsAskedForWithTheVideosSize()
     {
         QVERIFY(open(""));
@@ -174,7 +159,7 @@ private slots:
         QCOMPARE(prompt().videoHeight(), 240);
         QCOMPARE(prompt().width(), 320);
         QCOMPARE(prompt().height(), 240);
-        QVERIFY(app->automation().running()); // the macro waits for the answer
+        QVERIFY(app->automation().running());
         prompt().accept(320, 240, false);
         QVERIFY(ended());
         QVERIFY(!prompt().isOpen());
@@ -182,7 +167,6 @@ private slots:
                  qPrintable(app->automation().log()));
         QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("320"));
         QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("240"));
-        // One step: the macro changed nothing else.
         auto after = before;
         after.push_back(std::string(application::kScriptResolutionStep));
         QCOMPARE(steps(), after);
@@ -193,9 +177,6 @@ private slots:
         QVERIFY(!document().scriptInfo(u8"PlayResY"));
     }
 
-    // Without a video the question starts from legacy's values (1280x720,
-    // or the 16:9 partner of the one value written); the values typed are
-    // the ones set.
     void withoutAVideoItStartsFromLegacysValues()
     {
         QVERIFY(open(""));
@@ -204,7 +185,7 @@ private slots:
         QVERIFY(!prompt().hasVideo());
         QCOMPARE(prompt().width(), 1280);
         QCOMPARE(prompt().height(), 720);
-        prompt().accept(1280, 720, true); // "Always" needs a video: not kept
+        prompt().accept(1280, 720, true);
         QVERIFY(ended());
         QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("1280"));
         QVERIFY(!app->settingsStore()->boolean("automation.scriptResolutionFromVideo"));
@@ -221,8 +202,6 @@ private slots:
         QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("576"));
     }
 
-    // Cancel: the macro does not go on; nothing changes and nothing is said
-    // (the user chose not to run it).
     void cancelStopsTheMacro()
     {
         QVERIFY(open(""));
@@ -239,7 +218,6 @@ private slots:
         QVERIFY(!session().isReadOnly());
     }
 
-    // Set, then the macro's own edits: two steps, the resolution first.
     void theResolutionAndTheMacrosEditsAreTwoSteps()
     {
         QVERIFY(open(""));
@@ -262,10 +240,6 @@ private slots:
         QVERIFY(!document().scriptInfo(u8"PlayResX"));
     }
 
-    // "Always set it from the video": kept in the settings, and later runs
-    // set both keys to the video's size without asking, replacing a value the
-    // file has.
-    // Without a video it is asked for anyway.
     void alwaysFromTheVideoSkipsTheQuestion()
     {
         QVERIFY(open(""));
@@ -277,13 +251,12 @@ private slots:
         QVERIFY(app->settingsStore()->boolean("automation.scriptResolutionFromVideo"));
 
         QVERIFY(open("PlayResX: 1920\n"));
-        QVERIFY(openVideo()); // each tab has its own video
+        QVERIFY(openVideo());
         QSignalSpy asked(&prompt(), &ui::ScriptResolutionPromptController::changed);
         const auto before = steps();
         QVERIFY(run("Read resolution"));
         QVERIFY(ended());
         QCOMPARE(asked.count(), 0);
-        // PlayResX 1920 replaced too: both keys are the video's 320x240.
         QVERIFY2(app->automation().log().contains(QStringLiteral("320 x 240, 320 x 240, PlayResX=320;PlayResY=240")),
                  qPrintable(app->automation().log()));
         QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("320"));
@@ -292,7 +265,7 @@ private slots:
         after.push_back(std::string(application::kScriptResolutionStep));
         QCOMPARE(steps(), after);
 
-        QVERIFY(open("")); // a tab without a video
+        QVERIFY(open(""));
         QVERIFY(!app->video().hasVideo());
         QVERIFY(run("Read resolution"));
         QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
@@ -300,9 +273,6 @@ private slots:
         QVERIFY(ended());
     }
 
-    // With a video and one value written, the question starts from the
-    // video's own size for both keys ("Always" would set the same); Set
-    // replaces the written one.
     void aWrittenValueIsReplacedByTheVideosSuggestion()
     {
         QVERIFY(open("PlayResY: 480\n"));
@@ -319,8 +289,6 @@ private slots:
         QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("240"));
     }
 
-    // The validation function reads it: asked once, there; the processing
-    // function goes on with the same values; two steps as from the macro.
     void aValidationReadIsAskedOnce()
     {
         QVERIFY(open(""));
@@ -342,7 +310,6 @@ private slots:
         QCOMPARE(steps(), after);
     }
 
-    // Cancel in validation: the macro does not run, nothing changes.
     void cancelInValidationStopsTheMacro()
     {
         QVERIFY(open(""));
@@ -358,8 +325,6 @@ private slots:
         QVERIFY(!session().isReadOnly());
     }
 
-    // Set, then the validation refuses: the macro does not run, and the
-    // resolution the user set stays as its own step.
     void aRefusingValidationKeepsTheResolutionSet()
     {
         QVERIFY(open(""));
@@ -376,10 +341,6 @@ private slots:
         QCOMPARE(steps(), after);
     }
 
-    // The Document changes under the run while the question is open (the
-    // run holds it read-only, so this stands for any change that slips
-    // past): the resolution the user set is still its own step, and the
-    // macro's result is refused as for any stale run.
     void aDocumentChangedUnderTheRunKeepsTheResolution()
     {
         QVERIFY(open(""));
@@ -403,8 +364,6 @@ private slots:
                  QStringLiteral("The document changed while the macro ran; nothing was changed."));
     }
 
-    // A Document with both values, or a macro that never reads them: no
-    // question, nothing written.
     void nothingIsAskedWhenNothingIsMissingOrRead()
     {
         QSignalSpy asked(&prompt(), &ui::ScriptResolutionPromptController::changed);
@@ -422,8 +381,6 @@ private slots:
         QCOMPARE(asked.count(), 0);
     }
 
-    // No window to ask in: the macro is not held up; it gets legacy's
-    // values and nothing is written.
     void withoutAWindowNothingWaits()
     {
         prompt().setView(nullptr);
@@ -440,8 +397,6 @@ private slots:
         QCOMPARE(steps(), before);
     }
 
-    // The run is cancelled from the progress window while the question is
-    // open: the question goes away and the late answer is dropped.
     void cancellingTheRunWithdrawsTheQuestion()
     {
         QVERIFY(open(""));
@@ -450,13 +405,11 @@ private slots:
         app->automation().cancelRun();
         QVERIFY(ended());
         QTRY_VERIFY(!prompt().isOpen());
-        prompt().accept(320, 240, false); // nothing is waiting
+        prompt().accept(320, 240, false);
         QVERIFY(!document().scriptInfo(u8"PlayResX"));
         QCOMPARE(app->automation().lastMessage(), QStringLiteral("The macro was cancelled; nothing was changed."));
     }
 
-    // The run is cancelled after the user pressed Set: the resolution stays
-    // its own step, and the message says so.
     void cancellingAfterSetKeepsTheResolution()
     {
         QVERIFY(open(""));
@@ -476,9 +429,6 @@ private slots:
                  QStringLiteral("The macro was cancelled; only the script resolution was set."));
     }
 
-    // S4-run-validation: a dependency's validation reads the resolution
-    // first. The question names the dependency, and the resolution set
-    // there is what the macro then reads, without a second question.
     void aDependencyAsksOnceForTheRun()
     {
         const QString deps = dir.filePath(QStringLiteral("deps"));

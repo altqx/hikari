@@ -1,8 +1,3 @@
-// E4 workflow through the real UI (Spix): the Line editor's metadata fields.
-// A Layer typed and sent with Enter, Undo and Redo of it, an Actor typed in
-// its box and sent with Enter, the Comment box clicked (sent at once), then
-// Save through the File menu and a reopen: the file holds each field.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -40,7 +35,6 @@ protected:
         enterKey(std::string("mainWindow/") + item, code, mods);
         wait(200ms);
     }
-    // Clicks a field, selects its text and types over it.
     void typeInto(const char *item, const std::string &text)
     {
         mouseClick(std::string("mainWindow/") + item);
@@ -56,27 +50,27 @@ protected:
             mouseClick("mainWindow/editingGrid");
             enterKey("mainWindow/editingGrid", Qt::Key_Home, spix::KeyModifiers::None);
             wait(300ms);
-            observed.push_back(property("layerField", "text")); // 0: the first Line's Layer
+            observed.push_back(property("layerField", "text"));
             typeInto("layerField", "7");
-            key("layerField", Qt::Key_Return); // sent; the next Line is shown
-            observed.push_back(property("lineText", "text")); // 1
-            observed.push_back(property("layerField", "text")); // 2: the second Line's Layer
+            key("layerField", Qt::Key_Return);
+            observed.push_back(property("lineText", "text"));
+            observed.push_back(property("layerField", "text"));
             invokeMethod("mainWindow/lineText", "forceActiveFocus", {});
             key("lineText", Qt::Key_Z, spix::KeyModifiers::Control);
-            observed.push_back(property("lineText", "text")); // 3: Undo shows the first Line again
-            observed.push_back(property("layerField", "text")); // 4: with its old Layer
+            observed.push_back(property("lineText", "text"));
+            observed.push_back(property("layerField", "text"));
             key("lineText", Qt::Key_Y, spix::KeyModifiers::Control);
-            observed.push_back(property("layerField", "text")); // 5: Redo
+            observed.push_back(property("layerField", "text"));
             mouseClick("mainWindow/editingGrid");
             enterKey("mainWindow/editingGrid", Qt::Key_Down, spix::KeyModifiers::None);
             wait(300ms);
             typeInto("actorBoxText", "Narrator");
-            key("actorBoxText", Qt::Key_Return); // sent; the third Line is shown
-            observed.push_back(property("lineText", "text")); // 6
-            mouseClick("mainWindow/commentBox"); // sent at once
+            key("actorBoxText", Qt::Key_Return);
+            observed.push_back(property("lineText", "text"));
+            mouseClick("mainWindow/commentBox");
             wait(300ms);
-            observed.push_back(property("commentBox", "checked")); // 7
-            observed.push_back(property("charsCounter", "text")); // 8: no counters on a comment
+            observed.push_back(property("commentBox", "checked"));
+            observed.push_back(property("charsCounter", "text"));
             mouseClick("mainWindow/fileMenuBarItem");
             wait(300ms);
             mouseClick("mainWindow/saveMenuItem");
@@ -87,7 +81,7 @@ protected:
                 if (status == "Saved")
                     break;
             }
-            observed.push_back(status); // 9
+            observed.push_back(status);
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -107,7 +101,7 @@ QByteArray readAll(const QString &path)
     return f.readAll();
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

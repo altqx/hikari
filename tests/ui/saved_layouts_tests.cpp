@@ -1,11 +1,3 @@
-// WS3 (#217): layout presets and the user's saved layouts replace legacy's
-// View arrangements (GLOBAL_VIEW_ALL..GLOBAL_VIEW_SUBS) and the editor switch
-// (GLOBAL_EDITOR). The layout switcher and View > Layout list the presets and
-// the saved layouts; Save layout as…, Manage layouts… (rename, delete) and
-// applying a layout change the current Document tab; saved layouts are global
-// and persist across restarts. The retired commands are in no menu, have no
-// name or default binding, and a stored binding is dropped with a notice.
-
 #include "hikari/app/application.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/session_file.h"
@@ -61,7 +53,6 @@ bool writeAll(const QString &path, const QByteArray &bytes)
     return f.open(QIODevice::WriteOnly | QIODevice::Truncate) && f.write(bytes) == bytes.size();
 }
 
-// The saved layouts' names as the file holds them.
 QStringList namesInFile(const QString &path)
 {
     QStringList names;
@@ -70,7 +61,7 @@ QStringList namesInFile(const QString &path)
     return names;
 }
 
-} // namespace
+}
 
 class SavedLayoutsTest : public QObject {
     Q_OBJECT
@@ -80,7 +71,6 @@ class SavedLayoutsTest : public QObject {
 
     QString settingsFile() const { return dir.filePath(QStringLiteral("settings.toml")); }
     QString layoutsFile() const { return dir.filePath(QStringLiteral("layouts.json")); }
-    // The saved layout file's envelope (layout.json, beside layouts.json).
     QJsonObject layoutEnvelope() const
     {
         return QJsonDocument::fromJson(readAll(dir.filePath(QStringLiteral("layout.json")))).object();
@@ -120,8 +110,7 @@ class SavedLayoutsTest : public QObject {
         return nullptr;
     }
     QObject *named(const char *name) const { return named(QLatin1String(name)); }
-    // PU7: a part of Manage layouts' current row (a ListView delegate is no
-    // QObject child of the window).
+    // A ListView delegate is no QObject child of the window.
     QQuickItem *inManage(const char *name) const
     {
         auto *manage = qobject_cast<QQuickWindow *>(named("manageLayoutsDialog"));
@@ -156,25 +145,21 @@ class SavedLayoutsTest : public QObject {
         QCoreApplication::processEvents();
     }
     QString switcherText() const { return named("layoutSwitcherLabel")->property("text").toString(); }
-    // A Document open in the first tab (no dictionary here: a toast, NT1).
     void openEpisode()
     {
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("episode.ass")))));
     }
-    // Save layout as… from View > Layout, typed into its dialog and saved.
     void saveAs(const QString &name)
     {
         trigger(QStringLiteral("viewLayoutSaveAs"));
         QObject *dialog = named("saveLayoutDialog");
         QTRY_VERIFY(dialog->property("opened").toBool());
-        // Modal to the main window: Save takes the arrangement it opened for.
         QCOMPARE(qobject_cast<QQuickWindow *>(dialog)->modality(), Qt::WindowModal);
         QVERIFY(named("saveLayoutName")->setProperty("text", name));
         QTRY_VERIFY(named("saveLayoutSave")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
-    // The saved layout `name`'s item in a LayoutMenu (prefix "viewLayout" or "switcher").
     QObject *savedItem(const char *prefix, const QString &name) const
     {
         for (int i = 0; QObject *item = named(QLatin1String(prefix) + QStringLiteral("Saved") + QString::number(i)); ++i)
@@ -192,13 +177,10 @@ private slots:
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
                                  "layouts.json", "layouts.json.unrestored", "last-session.json", "settings.toml", "hotkeys.toml", "state.json"}) {
             QFile::remove(dir.filePath(QLatin1String(name)));
-            QDir().rmdir(dir.filePath(QLatin1String(name))); // a test's folder in a file's place
+            QDir().rmdir(dir.filePath(QLatin1String(name)));
         }
     }
 
-    // The View menu has no arrangements and the Subtitles menu no editor
-    // switch; View > Layout and the switcher list the four presets, the
-    // current one checked, and no saved layout yet (Manage layouts… off).
     void theMenusListTheLayouts()
     {
         start();
@@ -217,7 +199,6 @@ private slots:
             QVERIFY(!named(p + QStringLiteral("Manage"))->property("enabled").toBool());
             QVERIFY(named(p + QStringLiteral("SaveAs"))->property("enabled").toBool());
         }
-        // A preset from the switcher's menu: checked there and in View > Layout.
         trigger(QStringLiteral("switcherPresetTiming"));
         QTRY_VERIFY(!isOpen("videoDock"));
         QCOMPARE(switcherText(), QStringLiteral("Timing"));
@@ -226,9 +207,6 @@ private slots:
         stop();
     }
 
-    // Save layout as… keeps the tab's arrangement under a name; another
-    // layout replaces it, and choosing the saved layout brings it back. The
-    // tab's layout is the saved one: the switcher names it, the menus check it.
     void saveAndApplyALayout()
     {
         start();
@@ -242,15 +220,12 @@ private slots:
         QVERIFY(item->property("checked").toBool());
         QVERIFY(!named("viewLayoutPresetEditing")->property("checked").toBool());
         QVERIFY(named("viewLayoutManage")->property("enabled").toBool());
-        // A layout saved now is read in the menu's order too: accessibility
-        // lists a menu's items in their parent's order (the native gate's
-        // keyboard walk counts on it).
         for (const char *prefix : {"viewLayout", "switcher"}) {
             auto *saved = qobject_cast<QQuickItem *>(savedItem(prefix, QStringLiteral("Subs only")));
             auto *preset = qobject_cast<QQuickItem *>(named(QLatin1String(prefix) + QStringLiteral("PresetTypesetting")));
             auto *saveAs = qobject_cast<QQuickItem *>(named(QLatin1String(prefix) + QStringLiteral("SaveAs")));
             QVERIFY(saved && preset && saveAs);
-            // As the menu shows: its list view lays the new item out.
+            // QQuickListView lays a new delegate out lazily; the shown menu would have laid it out.
             for (QQuickItem *list = saved->parentItem(); list; list = list->parentItem())
                 if (list->inherits("QQuickListView")) {
                     QVERIFY(QMetaObject::invokeMethod(list, "forceLayout"));
@@ -273,7 +248,6 @@ private slots:
         QCOMPARE(switcherText(), QStringLiteral("Subs only"));
         QVERIFY(savedItem("viewLayout", QStringLiteral("Subs only"))->property("checked").toBool());
 
-        // The saved file names the layout the arrangement started from.
         stop();
         QString problem, preset, layout;
         QVERIFY(ui::WorkspaceLayoutController::payloadOf(readAll(dir.filePath(QStringLiteral("layout.json"))), &problem,
@@ -281,14 +255,12 @@ private slots:
         QCOMPARE(layout, QStringLiteral("Subs only"));
     }
 
-    // Saved layouts are global: every tab can use them, a tab keeps the one
-    // it chose, and they persist across restarts.
     void savedLayoutsAreGlobalAndPersist()
     {
         start();
         close("videoDock");
         saveAs(QStringLiteral("No video"));
-        application->addPage(); // a copy of the arrangement shown
+        application->addPage();
         QCOMPARE(application->currentTab(), 1);
         trigger(QStringLiteral("viewLayoutPresetEditing"));
         QTRY_VERIFY(isOpen("videoDock"));
@@ -311,8 +283,6 @@ private slots:
         stop();
     }
 
-    // Reset this layout goes back to the saved layout the tab started from,
-    // or to its preset.
     void resetGoesBackToTheTabsLayout()
     {
         start();
@@ -331,10 +301,6 @@ private slots:
         stop();
     }
 
-    // Manage layouts… renames and deletes. A tab whose arrangement started
-    // from the layout follows the new name; once it is deleted the tab keeps
-    // its arrangement under its preset's name. PU7 (#309): the row renames
-    // in place and Delete asks first.
     void renameAndDelete()
     {
         start();
@@ -351,25 +317,22 @@ private slots:
         auto *dialog = qobject_cast<QQuickWindow *>(named("manageLayoutsDialog"));
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("opened").toBool());
-        QCOMPARE(dialog->modality(), Qt::WindowModal); // no layout chosen meanwhile
+        QCOMPARE(dialog->modality(), Qt::WindowModal);
         QObject *list = named("manageLayoutsList");
-        QCOMPARE(list->property("currentIndex").toInt(), 0); // the tab's layout
-        // PU7: Rename turns the current row into its name field.
+        QCOMPARE(list->property("currentIndex").toInt(), 0);
         QVERIFY(!inManage("manageLayoutsName"));
         QVERIFY(QMetaObject::invokeMethod(inManage("manageLayoutsRename"), "clicked"));
         QObject *name = nullptr;
         QTRY_VERIFY((name = inManage("manageLayoutsName")) != nullptr);
         QCOMPARE(name->property("text").toString(), QStringLiteral("First"));
         QTRY_VERIFY(name->property("activeFocus").toBool());
-        QVERIFY(!inManage("manageLayoutsRename")->isVisible()); // the row's buttons give way to the field
+        QVERIFY(!inManage("manageLayoutsRename")->isVisible());
         const auto type = [&](const QString &text) {
             QTest::keyClick(dialog, Qt::Key_A, Qt::ControlModifier);
-            for (const QChar c : text) // (no keyClicks for a QWindow)
+            for (const QChar c : text) // QTest has no keyClicks for a QWindow
                 QTest::keyClick(dialog, c.toLatin1());
             QTRY_COMPARE(name->property("text").toString(), text);
         };
-        // A name in use, or a preset's, is refused with the reason, and
-        // Enter leaves the field as it is.
         type(QStringLiteral("second"));
         QTRY_VERIFY(named("manageLayoutsProblem")->property("text").toString().contains(QStringLiteral("Second")));
         QTest::keyClick(dialog, Qt::Key_Return);
@@ -377,7 +340,6 @@ private slots:
         QCOMPARE(namesInFile(layoutsFile()), (QStringList{QStringLiteral("First"), QStringLiteral("Second")}));
         type(QStringLiteral("Timing"));
         QTRY_VERIFY(!named("manageLayoutsProblem")->property("text").toString().isEmpty());
-        // Esc puts the name back and keeps the window.
         QTest::keyClick(dialog, Qt::Key_Escape);
         QTRY_VERIFY(!inManage("manageLayoutsName"));
         QVERIFY(dialog->isVisible());
@@ -394,10 +356,6 @@ private slots:
         QTRY_VERIFY(!inManage("manageLayoutsName"));
         QVERIFY(savedItem("switcher", QStringLiteral("Main"))->property("checked").toBool());
 
-        // From the keyboard, as the dialog opens: F2 goes to the name, Return
-        // renames; the list keeps the layout and Delete asks, then deletes.
-        // Both are global hotkeys' keys too (F2: GLOBAL_SELECT_FROM_VIDEO),
-        // live while a Document is open: the list takes them first.
         QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         trigger(QStringLiteral("viewLayoutManage"));
@@ -412,15 +370,13 @@ private slots:
         QTest::keyClick(dialog, Qt::Key_Return);
         QTRY_COMPARE(switcherText(), QStringLiteral("lead"));
         QCOMPARE(namesInFile(layoutsFile()), (QStringList{QStringLiteral("lead"), QStringLiteral("Second")}));
-        QVERIFY(dialog->property("visible").toBool()); // Return renamed: the dialog stays
+        QVERIFY(dialog->property("visible").toBool());
         QTRY_VERIFY(list->property("activeFocus").toBool());
         QTest::keyClick(dialog, Qt::Key_Escape);
         QTRY_VERIFY(!dialog->property("visible").toBool());
         trigger(QStringLiteral("viewLayoutManage"));
         QTRY_VERIFY(dialog->property("opened").toBool());
 
-        // Delete asks first: Cancel keeps the layout, Delete deletes it; the
-        // tab keeps its arrangement, named by its preset now.
         const auto deleteBox = [&] {
             auto *host = named("manageLayoutsMessages");
             return host ? qvariant_cast<QQuickWindow *>(host->property("box")) : nullptr;
@@ -437,24 +393,22 @@ private slots:
         QTest::keyClick(dialog, Qt::Key_Delete);
         answer(QStringLiteral("lead"), "cancel");
         QCOMPARE(namesInFile(layoutsFile()), (QStringList{QStringLiteral("lead"), QStringLiteral("Second")}));
-        QTRY_VERIFY(list->property("activeFocus").toBool()); // back from the question
+        QTRY_VERIFY(list->property("activeFocus").toBool());
         QTest::keyClick(dialog, Qt::Key_Delete);
         answer(QStringLiteral("lead"), "delete");
         QTRY_COMPARE(namesInFile(layoutsFile()), QStringList{QStringLiteral("Second")});
         QCOMPARE(switcherText(), QStringLiteral("Editing"));
         QVERIFY(!isOpen("audioDock"));
-        QVERIFY(dialog->property("visible").toBool()); // one is left
+        QVERIFY(dialog->property("visible").toBool());
         QCOMPARE(list->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(inManage("manageLayoutsDelete"), "clicked"));
         answer(QStringLiteral("Second"), "delete");
-        QTRY_VERIFY(!dialog->property("visible").toBool()); // none is left
+        QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(namesInFile(layoutsFile()).isEmpty());
         QVERIFY(!named("viewLayoutManage")->property("enabled").toBool());
         stop();
     }
 
-    // The Reference tray is part of the Grid: a comparison opened in a layout
-    // with the Grid closed leaves the tray closed; with the Grid, it shows.
     void aReferenceFollowsTheGrid()
     {
         start();
@@ -475,8 +429,6 @@ private slots:
         QVERIFY(isOpen("gridDock"));
         QVERIFY(application->openReference(writeSubtitles(dir.filePath(QStringLiteral("ref.ass")))));
         QTRY_VERIFY(isOpen("referenceDock"));
-        // A preset, Reset this layout and Restore the previous layout bring
-        // back panels without the tray: it comes back with the Grid.
         for (const QString &step : {QStringLiteral("viewLayoutPresetTiming"), QStringLiteral("viewLayoutReset"),
                                     QStringLiteral("backup")}) {
             if (step == QLatin1String("backup"))
@@ -490,15 +442,12 @@ private slots:
         stop();
     }
 
-    // A layout, a preset or Reset that hides the Video panel pauses a
-    // playing video (no transport shows it playing), and a panel with the
-    // focus that it hides gives the focus to the Grid.
     void aHiddenVideoPausesAndTheFocusStaysShown()
     {
         start();
         openEpisode();
         auto &video = application->video();
-        application->setAskForBadResolution(false); // PU6: the resolution question is a message box with the keyboard
+        application->setAskForBadResolution(false);
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(video.session().lastFrame() != nullptr, 20000);
         close("videoDock");
@@ -515,7 +464,6 @@ private slots:
         trigger(QStringLiteral("viewLayoutPresetTiming"));
         QTRY_VERIFY(!isOpen("videoDock"));
         QVERIFY(!video.playing());
-        // A preset that keeps Video leaves it playing.
         trigger(QStringLiteral("viewLayoutPresetEditing"));
         QTRY_VERIFY(isOpen("videoDock"));
         QVERIFY(video.play());
@@ -523,8 +471,6 @@ private slots:
         QTRY_VERIFY(!isOpen("audioDock"));
         QVERIFY(video.playing());
         video.pause();
-        // Not now to TM1's question, a message box in its own window that
-        // has the keyboard (PU2-translation-mode-off).
         auto *question = qobject_cast<QQuickWindow *>(named("translationModeQuestion"));
         QVERIFY(question);
         QTRY_VERIFY(question->isVisible());
@@ -545,8 +491,6 @@ private slots:
         stop();
     }
 
-    // Restore the previous layout takes back the arrangement the backup
-    // names too: the switcher and Reset this layout follow it.
     void theBackupNamesItsLayout()
     {
         start();
@@ -557,21 +501,18 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(savedItem("viewLayout", QStringLiteral("Foo")), "triggered"));
         QTRY_COMPARE(switcherText(), QStringLiteral("Foo"));
         QVERIFY(!isOpen("audioDock"));
-        QVERIFY(layouts().restoreBackup()); // Editing, as it was before Foo
+        QVERIFY(layouts().restoreBackup());
         QTRY_VERIFY(isOpen("audioDock"));
         QCOMPARE(switcherText(), QStringLiteral("Editing"));
         QVERIFY(layouts().layout().isEmpty());
-        QVERIFY(layouts().restoreBackup()); // Foo again (each restore saves: the backup is the other)
+        QVERIFY(layouts().restoreBackup());
         QTRY_VERIFY(!isOpen("audioDock"));
         QCOMPARE(switcherText(), QStringLiteral("Foo"));
         QVERIFY(layouts().restoreBackup());
         QTRY_COMPARE(switcherText(), QStringLiteral("Editing"));
         trigger(QStringLiteral("viewLayoutReset"));
-        QVERIFY(isOpen("audioDock")); // Editing's, not Foo's
+        QVERIFY(isOpen("audioDock"));
         QCOMPARE(switcherText(), QStringLiteral("Editing"));
-        // The same panels under another name (the backup is the saved file
-        // without its layout): the saved file names the restored one too, as
-        // the next start reads it.
         saveAs(QStringLiteral("Bar"));
         QJsonObject backup = layoutEnvelope();
         QCOMPARE(backup.take(QStringLiteral("layout")).toString(), QStringLiteral("Bar"));
@@ -582,15 +523,12 @@ private slots:
         stop();
     }
 
-    // The panel layout's file not written (here its name is a folder's) after
-    // a saved layout is chosen: the notice says so, and the next save writes
-    // the layout and its origin once it can.
     void aPanelLayoutNotWrittenIsSaid()
     {
         start();
         auto &l = layouts();
         const QString layoutFile = dir.filePath(QStringLiteral("layout.json"));
-        QFile::remove(layoutFile); // none yet, or the first frame's
+        QFile::remove(layoutFile);
         QVERIFY(QDir().mkdir(layoutFile));
         close("audioDock");
         saveAs(QStringLiteral("Quiet"));
@@ -603,9 +541,6 @@ private slots:
         stop();
     }
 
-    // Both files refused at start: each notice names its kept copy, side by
-    // side. A layout chosen answers the panel layout's; the saved layouts'
-    // stays until it is dismissed.
     void bothRecoveryNoticesAreShown()
     {
         start();
@@ -626,10 +561,6 @@ private slots:
         stop();
     }
 
-    // A layout the profile has not saved (a saved file or a Session from
-    // another profile names it) is not the tab's origin: one saved later
-    // under that name, from another tab, is not it, and Reset this layout
-    // gives the tab's preset.
     void aMissingLayoutIsNoOrigin()
     {
         start();
@@ -640,7 +571,7 @@ private slots:
         start();
         auto &l = layouts();
         QVERIFY(l.layout().isEmpty());
-        constexpr std::uint64_t other = 999999; // a tab the Session gives
+        constexpr std::uint64_t other = 999999;
         l.setTabArrangement(other, ui::WorkspaceArrangement{QStringLiteral("Timing"), {}, QStringLiteral("Ghost")}.serialise());
         QVERIFY(l.tabArrangement(other));
         QVERIFY(l.tabArrangement(other)->layout.isEmpty());
@@ -654,10 +585,6 @@ private slots:
         stop();
     }
 
-    // A saved layout under a preset's name in another shipped language
-    // (Polish "Edycja": Editing) is not offered: a switch to that language
-    // would list it twice. The file as it was is kept aside, and Save layout
-    // as… refuses the name.
     void presetNamesInOtherLanguagesAreRefused()
     {
         start();
@@ -683,9 +610,6 @@ private slots:
         stop();
     }
 
-    // A change the layouts file cannot take (here the file's name is a
-    // folder's) is undone with the notice: the saved layouts stay as the file
-    // has them, so the change can be made again once the file can be written.
     void aChangeNotWrittenIsUndone()
     {
         start();
@@ -709,10 +633,9 @@ private slots:
         QVERIFY(l.deleteSavedLayout(QStringLiteral("First")));
         QVERIFY(namesInFile(layoutsFile()).isEmpty());
         QCOMPARE(switcherText(), QStringLiteral("Editing"));
-        QVERIFY2(l.notice().isEmpty(), qPrintable(l.notice())); // the write went through
+        QVERIFY2(l.notice().isEmpty(), qPrintable(l.notice()));
         stop();
 
-        // Nor is a file larger than the next start reads: the layouts would be lost.
         QJsonObject padding{{QStringLiteral("name"), QStringLiteral("Padding")},
                             {QStringLiteral("arrangement"),
                              QJsonObject{{QStringLiteral("pad"),
@@ -733,8 +656,6 @@ private slots:
         stop();
     }
 
-    // The names Save layout as… and Manage layouts… refuse, and saving under
-    // a name in use (in any case) replaces that layout.
     void namesAndReplacing()
     {
         start();
@@ -753,7 +674,6 @@ private slots:
 
         close("audioDock");
         saveAs(QStringLiteral("Mine"));
-        // The dialog starts with the tab's layout's name: saving replaces it.
         trigger(QStringLiteral("viewLayoutSaveAs"));
         QObject *dialog = named("saveLayoutDialog");
         QTRY_VERIFY(dialog->property("opened").toBool());
@@ -764,7 +684,6 @@ private slots:
         QTRY_VERIFY(!named("saveLayoutSave")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        // A replacement under another case keeps the place and takes the name.
         openDock("audioDock");
         close("videoDock");
         saveAs(QStringLiteral("MINE"));
@@ -777,9 +696,6 @@ private slots:
         stop();
     }
 
-    // A saved layout this version cannot use is listed, disabled, says why,
-    // and is written back as it was; a layouts file that cannot be read is
-    // kept beside it with a notice.
     void unusableLayoutsAreKept()
     {
         start();
@@ -809,13 +725,9 @@ private slots:
         saveAs(QStringLiteral("Another"));
         const QJsonArray written = QJsonDocument::fromJson(readAll(layoutsFile())).object().value(QStringLiteral("layouts")).toArray();
         QCOMPARE(written.size(), 3);
-        QCOMPARE(written[1].toObject(), newer); // as it was read
+        QCOMPARE(written[1].toObject(), newer);
         stop();
 
-        // Records the list cannot offer (not a record, no name, a name listed
-        // before, a name Save layout as… refuses: a preset's, too long, a line
-        // break) are not written away: the file as it was is kept aside, and
-        // the other layouts are used.
         const QJsonValue usable = written[0].toObject().value(QStringLiteral("arrangement"));
         const auto named = [&](const QString &name) {
             return QJsonObject{{QStringLiteral("name"), name}, {QStringLiteral("arrangement"), usable}};
@@ -833,9 +745,7 @@ private slots:
         QCOMPARE(readAll(layoutsFile() + QStringLiteral(".unrestored")), withOdd);
         stop();
 
-        // A broken file, one without its list of layouts, or one too large
-        // to read is kept aside whole.
-        // (No raw strings with unbalanced braces here: moc misreads them.)
+        // No raw strings with unbalanced braces here: moc misreads them.
         const QByteArray tooLarge = QByteArray("{\"schema\": 1, \"layouts\": [], \"pad\": \"")
                                     + QByteArray(ui::WorkspaceLayoutController::kMaximumBytes + 100, 'x') + "\"}";
         for (const QByteArray &broken : {QByteArray("{not json"), QByteArray(R"({"schema": 1, "layouts": {}})"),
@@ -849,8 +759,6 @@ private slots:
         }
     }
 
-    // A layouts file or a saved layout file that is there but cannot be
-    // read (here the name is a folder's) is neither used nor written over.
     void unreadableFilesAreNotWrittenOver()
     {
         QVERIFY(QDir().mkdir(layoutsFile()));
@@ -876,10 +784,6 @@ private slots:
         QVERIFY(QDir().rmdir(layoutFile));
     }
 
-    // The retired commands: no name in the shortcut editor, no default
-    // binding, a stored binding dropped with a notice as the hotkeys are
-    // read (the list written without it), and the importer marks them retired
-    // (settings_import_tests). Running one by its symbol does nothing.
     void retiredCommandsAreGone()
     {
         const QStringList retired{QStringLiteral("GLOBAL_VIEW_ALL"), QStringLiteral("GLOBAL_VIEW_VIDEO"),
@@ -898,8 +802,6 @@ private slots:
         QStringList lines = application->settingsStore()->list("shortcuts.hotkeys");
         lines << QStringLiteral("GLOBAL_VIEW_ALL G=Ctrl-Alt-1") << QStringLiteral("GLOBAL_EDITOR G=Ctrl-E");
         application->settingsStore()->set("shortcuts.hotkeys", lines);
-        // The shortcut editor binds any command for the Audio window too: that
-        // binding is in the audio list.
         QStringList audio = application->settingsStore()->list("shortcuts.audioHotkeys");
         audio << QStringLiteral("GLOBAL_VIEW_SUBS A=Ctrl-Alt-5");
         application->settingsStore()->set("shortcuts.audioHotkeys", audio);
@@ -915,7 +817,6 @@ private slots:
             for (const QString &line : application->settingsStore()->list(list))
                 QVERIFY2(!line.startsWith(QLatin1String("GLOBAL_VIEW_")) && !line.startsWith(QLatin1String("GLOBAL_EDITOR ")),
                          qPrintable(line));
-        // Given once: the next start reads the lists without them.
         stop();
         start();
         QVERIFY2(!application->log().history().contains(QStringLiteral("was removed")),
@@ -930,13 +831,9 @@ private slots:
         for (const char *shown : {"videoDock", "audioDock", "editorDock", "gridDock"})
             QVERIFY2(isOpen(shown), shown);
         stop();
-        // The editor switch's setting is gone from the settings file.
         QVERIFY(!readAll(settingsFile()).contains("editorOn"));
     }
 
-    // A legacy Session tab saved in the player layout ("Editor: 0") opens
-    // with the editor (there is no player layout); CF3: the Session written
-    // has no such field.
     void aPlayerLayoutSessionTabOpensWithTheEditor()
     {
         start();
@@ -962,8 +859,6 @@ private slots:
         stop();
     }
 
-    // The switcher, its menu, View > Layout and both dialogs in the Light and
-    // Dark themes (HIKARI_SURFACE_SHOT_DIR, as shell_tests' surfaces).
     void surfaceScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -994,7 +889,7 @@ private slots:
                                    .intersected(shot.rect());
             QVERIFY(shot.copy(crop).save(file));
         };
-        // A Popup is no item: its frame is its background's parent.
+        // A Popup is no QQuickItem: its frame is its background's parent.
         const auto frameOf = [](QObject *popup) {
             auto *background = popup->property("background").value<QQuickItem *>();
             return background ? background->parentItem() : nullptr;
@@ -1042,6 +937,5 @@ private slots:
     }
 };
 
-// Two processes, one per part (tests/ui/CMakeLists.txt PARTS).
 HIKARI_QTEST_MAIN_IN_PARTS(SavedLayoutsTest)
 #include "saved_layouts_tests.moc"

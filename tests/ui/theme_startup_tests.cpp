@@ -1,10 +1,4 @@
-// K2 / W1: the theme's palette reaches the popups from the start. A Qt Quick
-// window makes its own palette, which its popups inherit, when it is first
-// read, from the controls' theme; made after the theme's palette was set,
-// it stayed light under Dark until the theme next changed, so every menu and
-// dialog opened light (the video context menu and its DirectShow Filters
-// submenu among them). Only the first engine of a process shows it, so this
-// test loads the application window once, as the program does.
+// A Qt Quick window reads its palette from the controls' theme once; only a process's first engine shows that, so this loads one.
 
 #include "hikari/app/application.h"
 #include "docking.h"
@@ -27,11 +21,11 @@ class ThemeStartupTests : public QObject {
 private slots:
     void menusOpenOnTheThemesSurface()
     {
-        ui::theme::forceSystemScheme(Qt::ColorScheme::Dark); // Dark, the default, by following the system
+        ui::theme::forceSystemScheme(Qt::ColorScheme::Dark);
         app::Application::Options options;
         options.playbackAudio = false;
         app::Application application(options);
-        ui::theme::chooseControlsStyle(); // as the program does (composition.cpp)
+        ui::theme::chooseControlsStyle();
         QQmlApplicationEngine engine;
         ui::attachDocking(engine);
         engine.setInitialProperties(application.qmlProperties());
@@ -46,7 +40,6 @@ private slots:
         const auto surface = [](QObject *menu) {
             return menu->property("background").value<QQuickItem *>()->property("color").value<QColor>();
         };
-        // The first popup opened: the video's context menu.
         auto *videoMenu = window->findChild<QObject *>(QStringLiteral("videoContextMenu"));
         QVERIFY(videoMenu);
         QVERIFY(QMetaObject::invokeMethod(videoMenu, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
@@ -55,7 +48,6 @@ private slots:
         QCOMPARE(window->property("palette").value<QObject *>()->property("base").value<QColor>(), field);
         QVERIFY(QMetaObject::invokeMethod(videoMenu, "close"));
         QTRY_VERIFY(!videoMenu->property("visible").toBool());
-        // A menu of the menu bar.
         auto *bar = window->findChild<QQuickItem *>(QStringLiteral("fileMenuBarItem"));
         QVERIFY(bar);
         auto *fileMenu = bar->property("menu").value<QObject *>();

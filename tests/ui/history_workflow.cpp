@@ -1,7 +1,3 @@
-// G10 workflow through the real UI (Spix): two committed edits, the History
-// window (Ctrl+Shift+H) lists them with the current step, and Set returns the
-// Line to the opened text.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -48,18 +44,18 @@ protected:
             wait(200ms);
             edit(" one");
             edit(" two");
-            observed.push_back(text()); // 0
+            observed.push_back(text());
             enterKey("mainWindow/lineText", Qt::Key_H, spix::KeyModifiers::Control | spix::KeyModifiers::Shift);
             if (waitForItem("historyWindow/historyGo", 5s)) {
-                observed.push_back(getStringProperty("historyWindow", "title")); // 1
-                observed.push_back(getStringProperty("historyWindow/historyList", "currentIndex")); // 2
+                observed.push_back(getStringProperty("historyWindow", "title"));
+                observed.push_back(getStringProperty("historyWindow/historyList", "currentIndex"));
                 invokeMethod("historyWindow/historyList", "forceActiveFocus", {});
                 enterKey("historyWindow/historyList", Qt::Key_Up, spix::KeyModifiers::None);
                 enterKey("historyWindow/historyList", Qt::Key_Up, spix::KeyModifiers::None);
                 wait(200ms);
-                mouseClick("historyWindow/historyGo"); // Go to step: jumps, the window stays
+                mouseClick("historyWindow/historyGo");
                 wait(500ms);
-                observed.push_back(text()); // 3
+                observed.push_back(text());
             }
         }
         for (const auto &e : getErrors())
@@ -70,7 +66,7 @@ protected:
     }
 };
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

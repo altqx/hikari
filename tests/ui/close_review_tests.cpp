@@ -1,9 +1,3 @@
-// P1: close review through the composition (accepted L58-write-close): a
-// Save-dependent close proceeds only after an acknowledged write; Discard
-// covers only the work it was chosen for; Cancel keeps everything; one quit
-// review covers every Document; New leaves an Untitled Document that saves
-// through Save As.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -53,7 +47,7 @@ QVariantList choose(const QVariantList &rows, bool save, const QString &path = {
     return out;
 }
 
-} // namespace
+}
 
 class CloseReviewTests : public QObject {
     Q_OBJECT
@@ -73,14 +67,11 @@ class CloseReviewTests : public QObject {
                                             [&](core::Document &d) { return d.setLineText(line, text); }}));
     }
 
-    // SH2-last-tab-home: closing the last tab leaves no Document, and the
-    // Home page shows (legacy Notebook::DeletePage made a new Untitled tab).
     bool closedToHome(app::Application &a)
     {
         return !a.workspace().editingTarget() && a.workspace().documents().empty() && a.tabs().isEmpty();
     }
 
-    // An object by name: a QObject child, else an item (a view's rows).
     static QQuickItem *itemNamed(QQuickItem *from, const QString &name)
     {
         if (from->objectName() == name)
@@ -136,7 +127,7 @@ private slots:
         edit(a, u8"saved");
         QSignalSpy finished(&a, &app::Application::closeFinished);
         a.resolveClose(choose(a.reviewClose(QStringLiteral("close")), true));
-        QVERIFY(a.workspace().editingTarget()); // still open while the write runs
+        QVERIFY(a.workspace().editingTarget());
         a.waitForWrites();
         QTRY_COMPARE(finished.size(), 1);
         QVERIFY(finished.first().at(0).toBool());
@@ -144,9 +135,6 @@ private slots:
         QVERIFY(readAll(path).contains(",,saved"));
     }
 
-    // PU1-unsaved-window: one Document's question closes at its answer, so
-    // another tab can be chosen while the save is written: the reviewed
-    // tab closes, the chosen one stays.
     void theReviewedTabClosesThoughAnotherWasChosenMeanwhile()
     {
         app::Application a;
@@ -168,10 +156,6 @@ private slots:
         QVERIFY(readAll(path).contains(",,saved"));
     }
 
-    // KA3-close-review: the Kanji timer's done pairs not applied are unsaved
-    // work of their Document (Codex review on #352): its close asks though
-    // the Document is unchanged; Don't save drops them, Save writes them
-    // into the file first.
     void kanjiTimerPairsNotAppliedAreReviewed()
     {
         const QString path = dir.filePath(QStringLiteral("kanji.ass"));
@@ -188,7 +172,7 @@ private slots:
                     "2,10,10,10,1\n\n"
                     "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Song,,0,0,0,,{\\k50}yu{\\k50}me\n"
-                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song kanji,,0,0,0,,\xE5\xA4\xA2\n"); // 夢
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song kanji,,0,0,0,,\xE5\xA4\xA2\n");
         };
         write();
         const QByteArray before = readAll(path);
@@ -197,7 +181,7 @@ private slots:
         QVERIFY(a.openFile(path));
         timer.open();
         QCOMPARE(timer.acceptAll(), 1);
-        timer.close(); // (the window asks itself; another Document's pairs wait unasked)
+        timer.close();
         QVERIFY(!target(a)->isDirty());
         auto rows = a.reviewClose(QStringLiteral("close"));
         QCOMPARE(rows.size(), qsizetype(1));
@@ -208,7 +192,6 @@ private slots:
         QCOMPARE(readAll(path), before);
         QCOMPARE(timer.pending(), 0);
 
-        // Save: the kanji Line written, then the file.
         QVERIFY(a.openFile(path));
         timer.open();
         QCOMPARE(timer.acceptAll(), 1);
@@ -222,10 +205,6 @@ private slots:
         QVERIFY(readAll(path).contains(",,{\\k100}\xE5\xA4\xA2"));
     }
 
-    // A Document's pairs kept while another was the target are read again
-    // before Save writes them: a kanji Line edited since is not written over
-    // (Codex review on #352). Suggest groupings changed on the other
-    // Document holds for this one's timer too.
     void kanjiTimerPairsKeptForAnotherDocumentAreReadAgain()
     {
         const QString path = dir.filePath(QStringLiteral("kept.ass"));
@@ -242,7 +221,7 @@ private slots:
                     "2,10,10,10,1\n\n"
                     "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Song,,0,0,0,,{\\k50}yu{\\k50}me\n"
-                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song kanji,,0,0,0,,\xE5\xA4\xA2\n"         // 夢
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song kanji,,0,0,0,,\xE5\xA4\xA2\n"
                     "Dialogue: 0,0:00:03.00,0:00:04.00,Song,,0,0,0,,{\\k50}yu{\\k50}me\n"
                     "Dialogue: 0,0:00:03.00,0:00:04.00,Song kanji,,0,0,0,,\xE5\xA4\xA2\n");
         }
@@ -255,14 +234,12 @@ private slots:
         timer.open();
         QCOMPARE(timer.acceptAll(), 2);
         QCOMPARE(timer.pending(), 2);
-        // another Document as the target, Suggest groupings off there
         QVERIFY(a.openFile(writeFile(dir, "kept-other.ass", "x")));
         a.selectTab(static_cast<int>(a.workspace().tabs().size()) - 1);
         QVERIFY(a.currentTab() != kanjiTab);
         timer.open();
         timer.setSuggest(false);
         timer.close();
-        // back, the window closed: the second kanji Line edited
         a.selectTab(kanjiTab);
         auto *s = target(a);
         const auto lines = s->document().lines();
@@ -277,13 +254,12 @@ private slots:
         QTRY_COMPARE(finished.size(), 1);
         QVERIFY(finished.first().at(0).toBool());
         const QByteArray saved = readAll(path);
-        QVERIFY(saved.contains(",,{\\k100}\xE5\xA4\xA2")); // the first, unchanged
-        QVERIFY(saved.contains(",,edited"));                // the second, not written over
+        QVERIFY(saved.contains(",,{\\k100}\xE5\xA4\xA2"));
+        QVERIFY(saved.contains(",,edited"));
         QCOMPARE(saved.count("{\\k100}"), qsizetype(1));
 
-        // the setting holds on a kept timer when it is the window's again
         QVERIFY(a.openFile(path));
-        const int again = static_cast<int>(a.workspace().tabs().size()) - 1; // (opened in a tab of its own)
+        const int again = static_cast<int>(a.workspace().tabs().size()) - 1;
         a.selectTab(again);
         timer.open();
         QVERIFY(a.openFile(writeFile(dir, "kept-other2.ass", "x")));
@@ -299,8 +275,6 @@ private slots:
         timer.setSuggest(suggest);
     }
 
-    // KA8 (#354): Multi-highlight (#) turned on while another Document is the
-    // target holds when a kept Document's pairs are saved at quit.
     void kanjiTimerPairsKeptAreSavedWithMultiHighlightAsItIsNow()
     {
         const QString path = dir.filePath(QStringLiteral("kept-multi.ass"));
@@ -317,7 +291,7 @@ private slots:
                     "2,10,10,10,1\n\n"
                     "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                     "Dialogue: 0,0:00:01.00,0:00:01.60,Song,,0,0,0,,{\\k20}ge{\\k10}ki{\\k30}no\n"
-                    "Dialogue: 0,0:00:01.00,0:00:01.60,Song kanji,,0,0,0,,\xE6\x92\x83\xE3\x81\xAE\n"); // 撃の
+                    "Dialogue: 0,0:00:01.00,0:00:01.60,Song kanji,,0,0,0,,\xE6\x92\x83\xE3\x81\xAE\n");
         }
         app::Application a;
         auto &timer = a.kanjiTimer();
@@ -327,7 +301,6 @@ private slots:
         timer.open();
         QCOMPARE(timer.acceptAll(), 1);
         timer.close();
-        // another Document as the target, Multi-highlight turned on there
         QVERIFY(a.openFile(writeFile(dir, "kept-multi-other.ass", "x")));
         a.selectTab(static_cast<int>(a.workspace().tabs().size()) - 1);
         timer.open();
@@ -340,7 +313,7 @@ private slots:
         a.waitForWrites();
         QTRY_COMPARE(finished.size(), 1);
         QVERIFY(finished.first().at(0).toBool());
-        QVERIFY(readAll(path).contains(",,{\\k20}\xE6\x92\x83{\\k10}#{\\k30}\xE3\x81\xAE")); // 撃 ge, # ki, の no
+        QVERIFY(readAll(path).contains(",,{\\k20}\xE6\x92\x83{\\k10}#{\\k30}\xE3\x81\xAE"));
         timer.setMulti(multi);
     }
 
@@ -351,7 +324,7 @@ private slots:
         edit(a, u8"first");
         QSignalSpy finished(&a, &app::Application::closeFinished);
         a.resolveClose(choose(a.reviewClose(QStringLiteral("close")), true));
-        edit(a, u8"newer"); // after Save was authorized
+        edit(a, u8"newer");
         a.waitForWrites();
         QTRY_COMPARE(finished.size(), 1);
         QVERIFY(!finished.first().at(0).toBool());
@@ -365,7 +338,7 @@ private slots:
         QVERIFY(a.openFile(writeFile(dir, "fail.ass", "x")));
         a.closeEditingTarget();
         a.reviewClose(QStringLiteral("new"));
-        a.finishClose(); // an Untitled Document
+        a.finishClose();
         edit(a, u8"unsaved");
         QSignalSpy finished(&a, &app::Application::closeFinished);
         const QString missing = dir.filePath(QStringLiteral("no-such-dir/out.ass"));
@@ -376,15 +349,13 @@ private slots:
         QVERIFY(a.workspace().editingTarget());
     }
 
-    // A save that failed shows the review again: its retry closes the
-    // reviewed tab, not one chosen meanwhile.
     void aRetryAfterAFailedSaveClosesTheReviewedTab()
     {
         app::Application a;
         QVERIFY(a.openFile(writeFile(dir, "retry.ass", "x")));
         a.closeEditingTarget();
         a.reviewClose(QStringLiteral("new"));
-        a.finishClose(); // an Untitled Document
+        a.finishClose();
         edit(a, u8"unsaved");
         const auto reviewed = *a.workspace().editingTarget();
         QSignalSpy finished(&a, &app::Application::closeFinished);
@@ -407,8 +378,6 @@ private slots:
         QVERIFY(readAll(good).contains(",,unsaved"));
     }
 
-    // Two Untitled rows: the second's picker doesn't start on the file
-    // picked for the first (both would save to it).
     void eachUntitledRowStartsWithoutTheFileBefore()
     {
         app::Application a;
@@ -432,7 +401,7 @@ private slots:
         const QUrl first = QUrl::fromLocalFile(dir.filePath(QStringLiteral("first.ass")));
         picker->setProperty("selectedFile", first);
         QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));
-        QTRY_VERIFY(picker->property("visible").toBool()); // the second row's turn
+        QTRY_VERIFY(picker->property("visible").toBool());
         QVERIFY(picker->property("selectedFile").toUrl() != first);
         picker->setProperty("selectedFile", QUrl::fromLocalFile(dir.filePath(QStringLiteral("second.ass"))));
         QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));
@@ -460,7 +429,7 @@ private slots:
         const QString one = writeFile(dir, "quit1.ass", "x"), two = writeFile(dir, "quit2.ass", "y");
         QVERIFY(a.openFile(one));
         edit(a, u8"one!");
-        QVERIFY(a.openFile(two)); // a second Document; the first stays the editing target
+        QVERIFY(a.openFile(two));
         const auto second = a.workspace().documents().back();
         auto *s2 = a.files().session(second);
         const auto line = s2->document().lines().front()->id;
@@ -484,7 +453,7 @@ private slots:
         a.finishClose();
         QVERIFY(a.targetUntitled());
         QCOMPARE(QString::fromStdString(*a.workspace().title(*a.workspace().editingTarget())), QStringLiteral("Untitled"));
-        QVERIFY(!target(a)->isDirty()); // untouched: nothing to review
+        QVERIFY(!target(a)->isDirty());
         QCOMPARE(target(a)->document().lines().size(), std::size_t(1));
         edit(a, u8"hello");
         const QString path = dir.filePath(QStringLiteral("untitled.ass"));
@@ -499,7 +468,6 @@ private slots:
         QVERIFY(bytes.contains(",,hello"));
     }
 
-    // The window close is intercepted while there is unsaved work.
     void closingTheWindowShowsTheReview()
     {
         app::Application a;
@@ -513,7 +481,6 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(window));
         window->close();
         QVERIFY(window->isVisible());
-        // PU1-unsaved-window: one Document is asked about in a message box.
         QTRY_VERIFY(window->findChild<QQuickWindow *>(QStringLiteral("closeQuestion")));
         auto *review = window->findChild<QQuickWindow *>(QStringLiteral("closeQuestion"));
         QTRY_VERIFY(review->isVisible());
@@ -522,9 +489,6 @@ private slots:
         QTRY_VERIFY(!window->isVisible());
     }
 
-    // The review holds the close back before the docking engine sees it: the
-    // engine closes every panel on a close the window receives, which left
-    // the window empty while the review showed and after Cancel.
     void cancellingTheReviewKeepsThePanels()
     {
         app::Application a;
@@ -557,9 +521,6 @@ private slots:
         QVERIFY(panelsOpen());
     }
 
-    // PU1-unsaved-window: several Documents are reviewed in one window, a
-    // row each with its folder and a Save / Don't save switch; the count says
-    // what the button does, and the buttons are named for the command.
     void severalDocumentsAreReviewedInTheWindow()
     {
         app::Application a;
@@ -587,7 +548,6 @@ private slots:
         QCOMPARE(named("closeReviewCount")->property("text").toString(), QStringLiteral("Saves 2 · Discards 0"));
         QCOMPARE(named("closeSaveAndClose")->property("text").toString(), QStringLiteral("Save and quit"));
         QCOMPARE(named("closeWithoutSaving")->property("text").toString(), QStringLiteral("Quit without saving"));
-        // The second row set to Don't save: only the first is written.
         QVERIFY(QMetaObject::invokeMethod(named("closeDiscard1"), "clicked"));
         QTRY_COMPARE(named("closeReviewCount")->property("text").toString(), QStringLiteral("Saves 1 · Discards 1"));
         QVERIFY(QMetaObject::invokeMethod(named("closeSaveAndClose"), "clicked"));
@@ -597,8 +557,6 @@ private slots:
         QVERIFY(!readAll(dir.filePath(QStringLiteral("second.ass"))).contains("two"));
     }
 
-    // An Untitled Document set to Save asks for its file with the picker,
-    // titled for it, when Save and quit is pressed; then everything is written.
     void anUntitledRowAsksForItsFileInTurn()
     {
         app::Application a;
@@ -625,8 +583,7 @@ private slots:
         QObject *picker = named("closeSaveAs");
         QTRY_VERIFY(picker->property("visible").toBool());
         QCOMPARE(picker->property("title").toString(), QStringLiteral("Save “Untitled” as"));
-        QVERIFY(!a.quitApproved()); // nothing written before the file is chosen
-        // A name without the extension gets the format's, as Save as gives it.
+        QVERIFY(!a.quitApproved());
         const QString chosen = dir.filePath(QStringLiteral("chosen.ass"));
         picker->setProperty("selectedFile", QUrl::fromLocalFile(dir.filePath(QStringLiteral("chosen"))));
         QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));

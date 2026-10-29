@@ -1,12 +1,3 @@
-// TM1 (#232): Translation mode through the Translation preset. Choosing
-// the preset for a Document without TLMode asks once ("Turn on Translation
-// mode for this file?"); another preset keeps the mode on; Subtitles >
-// Translation mode (GLOBAL_TRANSLATION_MODE) switches it, asking before off.
-// The Original text is a panel of its own, its header holding the
-// translation buttons and toggles, and it follows the editing target's mode
-// as the Reference tray follows the comparison. A preset carries its mode
-// through WorkspaceLayoutController::presetMode, which KP1 reuses.
-
 #include "hikari/app/application.h"
 
 #include "docking.h"
@@ -31,7 +22,6 @@ using namespace hikari;
 
 namespace {
 
-// An ASS file of three Lines, with TLMode: Yes when `translation`.
 QString writeSubtitles(const QString &path, bool translation = false)
 {
     QFile f(path);
@@ -53,7 +43,7 @@ QString writeSubtitles(const QString &path, bool translation = false)
     return path;
 }
 
-} // namespace
+}
 
 class TranslationPresetTest : public QObject {
     Q_OBJECT
@@ -67,8 +57,7 @@ class TranslationPresetTest : public QObject {
         options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         options.playbackAudio = false;
         application = std::make_unique<app::Application>(options);
-        // No dictionaries here: the first spell check would turn spelling off
-        // and show its notice, which takes the focus.
+        // MUST KILL: spell check off so its no-dictionary notice does not take the focus
         application->applySettings({{QStringLiteral("editor.spellchecker"), false}});
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
@@ -116,7 +105,6 @@ class TranslationPresetTest : public QObject {
         QVERIFY(QMetaObject::invokeMethod(question(), turnOn ? "accept" : "reject"));
         QTRY_VERIFY(!asked());
     }
-    // The Original text field shows in the panel (true) or in the Line editor.
     bool originalInPanel() const
     {
         return item("lineText")->parentItem() == item("originalSlot");
@@ -136,9 +124,6 @@ private slots:
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 
-    // A preset carries a mode (Translation's is Translation mode): choosing
-    // it starts the mode, choosing another afterwards leaves it. Reset this
-    // layout starts nothing, nor does showing a tab.
     void aPresetCarriesItsMode()
     {
         QCOMPARE(ui::WorkspaceLayoutController::presetMode(QStringLiteral("Translation")), QStringLiteral("Translation"));
@@ -155,14 +140,13 @@ private slots:
         QCOMPARE(chosen.first().first().toString(), QStringLiteral("Translation"));
         QVERIFY(layout.resetCurrentLayout());
         QCOMPARE(chosen.size(), 1);
-        application->addPage(); // a copy of this tab's arrangement
+        application->addPage();
         application->selectTab(0);
         QCOMPARE(chosen.size(), 1);
         QCOMPARE(left.size(), 0);
         applyPreset("Typesetting");
         QCOMPARE(left.size(), 1);
         QCOMPARE(left.first().first().toString(), QStringLiteral("Translation"));
-        // A saved layout made from the Translation preset carries its mode.
         applyPreset("Translation");
         QVERIFY(layout.saveLayoutAs(QStringLiteral("My translation")));
         applyPreset("Editing");
@@ -172,17 +156,13 @@ private slots:
         stop();
     }
 
-    // A TLMode file opens in the Translation preset (WS1) with the Original
-    // text panel above the Line editor: the Line editor's field is the
-    // Translated text, and the panel's header holds the translation buttons
-    // and toggles. The Translator mode check box is gone.
     void aTranslationFileShowsTheOriginalTextPanel()
     {
         start();
         openFile("tl.ass", true);
         QCOMPARE(preset(), QStringLiteral("Translation"));
         QVERIFY(translationMode());
-        QVERIFY(!asked()); // the mode is on already
+        QVERIFY(!asked());
         QTRY_VERIFY(isOpen("originalDock"));
         QVERIFY(!isFloating("originalDock"));
         QVERIFY(originalInPanel());
@@ -191,13 +171,10 @@ private slots:
         QCOMPARE(item("translationText")->property("text").toString(), QStringLiteral("linia 1"));
         QVERIFY(item("translationText")->isVisible());
         QVERIFY(!item("lineTextSlot")->isVisible());
-        // Above the Line editor, in the same column.
         auto *original = item("originalPanel");
         auto *editor = item("editorPanel");
         QTRY_VERIFY(original->mapToScene(QPointF(0, 0)).y() < editor->mapToScene(QPointF(0, 0)).y());
         QCOMPARE(original->mapToScene(QPointF(0, 0)).x(), editor->mapToScene(QPointF(0, 0)).x());
-        // The header's toolbar slot holds the buttons, and the Line editor
-        // does not repeat them.
         auto *buttons = item("originalTextButtons");
         QTRY_VERIFY(buttons->isVisible());
         QCOMPARE(buttons->parentItem()->parentItem()->objectName(), QStringLiteral("dockToolbarSlot"));
@@ -206,16 +183,11 @@ private slots:
                                  "originalMovingTags"})
             QVERIFY2(item(name)->isVisible() && !item(name)->property("text").toString().isEmpty(), name);
         QVERIFY(!item<QObject>("translatorMode"));
-        // Paste all from the header.
         QVERIFY(QMetaObject::invokeMethod(item<QObject>("originalPasteAll"), "clicked"));
         QTRY_COMPARE(item("translationText")->property("text").toString(), QStringLiteral("line 1"));
         stop();
     }
 
-    // Choosing the Translation preset for a Document without TLMode asks
-    // once: Turn on is one step and shows the Original text panel; Not now
-    // keeps the arrangement without the mode and is not asked again for that
-    // Document. Another preset keeps the mode on, the panel with it.
     void choosingTranslationAsksOnce()
     {
         start();
@@ -232,7 +204,6 @@ private slots:
         QVERIFY(!asked());
         QVERIFY(!translationMode());
 
-        // Another file asks again; Turn on.
         application->addPage();
         openFile("b.ass", false);
         applyPreset("Editing");
@@ -243,7 +214,6 @@ private slots:
         QVERIFY(originalInPanel());
         QCOMPARE(item("lineText")->property("text").toString(), QStringLiteral("line 1"));
 
-        // Another preset: the mode stays on, the panel too, in its place.
         applyPreset("Editing");
         QVERIFY(translationMode());
         QVERIFY(!asked());
@@ -251,7 +221,6 @@ private slots:
         QTRY_VERIFY(isOpen("originalDock"));
         QVERIFY(!isFloating("originalDock"));
         QVERIFY(originalInPanel());
-        // The first tab, mode off, has the panel closed.
         application->selectTab(0);
         QVERIFY(!translationMode());
         QTRY_VERIFY(!isOpen("originalDock"));
@@ -260,8 +229,6 @@ private slots:
         stop();
     }
 
-    // A plain-text Document cannot hold the mode: the preset arranges the
-    // panels and asks nothing, and the command is disabled.
     void plainTextGetsTheArrangementOnly()
     {
         start();
@@ -278,9 +245,6 @@ private slots:
         stop();
     }
 
-    // Subtitles > Translation mode: on at once, without changing the
-    // layout; off after today's question (No by default), closing the
-    // Original text panel.
     void theMenuCommandSwitchesTheMode()
     {
         start();
@@ -314,9 +278,6 @@ private slots:
         stop();
     }
 
-    // Closed by hand, the Original text panel gives the Original text back
-    // to the Line editor, with the buttons under it, until the panel is shown
-    // again (View > Panels) or the arrangement changes.
     void aClosedPanelPutsTheOriginalBackInTheLineEditor()
     {
         start();
@@ -326,7 +287,6 @@ private slots:
         QTRY_VERIFY(!isOpen("originalDock"));
         QVERIFY(!originalInPanel());
         QTRY_VERIFY(item("lineText")->isVisible());
-        // LE1: on the tag strip, as icons or folded into its More menu.
         QVERIFY(item("translationButtons")->property("active").toBool());
         QVERIFY(QMetaObject::invokeMethod(window(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock("originalDock")))));
         QTRY_VERIFY(isOpen("originalDock"));
@@ -336,9 +296,6 @@ private slots:
         stop();
     }
 
-    // Tab in the Original text goes on to the Translated text in the Line
-    // editor, and Shift+Tab comes back, as in legacy's one EditBox; nothing
-    // is typed.
     void tabCrossesFromTheOriginalToTheTranslation()
     {
         start();
@@ -360,8 +317,6 @@ private slots:
         stop();
     }
 
-    // The same from a floating Original text panel: Tab activates the main
-    // window, where the Translated text is, and Shift+Tab goes back.
     void tabCrossesIntoAnotherWindow()
     {
         start();
@@ -386,9 +341,6 @@ private slots:
         stop();
     }
 
-    // With the Original text panel tabbed with the Line editor, Tab brings
-    // the Line editor's tab to the front and gives the Translated text the
-    // focus; Shift+Tab brings the Original text back.
     void tabRaisesTheOtherTabOfTheGroup()
     {
         start();
@@ -417,10 +369,6 @@ private slots:
         stop();
     }
 
-    // A tag button acts on the text field focused last. With the Original
-    // text panel floating, the main window's activation by the button's
-    // click gives the Translated text its window's focus back; the Original
-    // text, focused last, still takes the tag.
     void tagButtonsActOnTheFieldFocusedLast()
     {
         start();
@@ -443,16 +391,13 @@ private slots:
         QTRY_VERIFY(original->hasActiveFocus());
         window()->requestActivate();
         QTRY_COMPARE(QGuiApplication::focusWindow(), window());
-        QTRY_VERIFY(translated->hasActiveFocus()); // its window's focus item
+        QTRY_VERIFY(translated->hasActiveFocus());
         QTest::mouseClick(window(), Qt::LeftButton, {}, bold->mapToScene(bold->boundingRect().center()).toPoint());
         QTRY_VERIFY(original->property("text").toString() != QStringLiteral("line 1"));
         QCOMPARE(translated->property("text").toString(), QStringLiteral("linia 1"));
         stop();
     }
 
-    // Only the user's command asks before turning the mode off: showing a
-    // tab without the mode, or undoing the step that turned it on, changes
-    // the menu item's check without the question.
     void onlyTheCommandAsksBeforeOff()
     {
         start();
@@ -476,8 +421,6 @@ private slots:
         stop();
     }
 
-    // Moving tags turned on from a floating Original text panel gives the
-    // Translated field the focus in the main window, which it activates.
     void movingTagsFocusReachesTheMainWindow()
     {
         start();
@@ -488,7 +431,7 @@ private slots:
                 "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,{\\i1}Wall\n"
                 "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
         f.close();
-        application->setMoveTags(false); // TM1: Tags from original starts on
+        application->setMoveTags(false);
         QVERIFY(application->openFile(f.fileName()));
         QTRY_VERIFY(isOpen("originalDock"));
         QVERIFY(dock("originalDock")->setProperty("isFloating", true));
@@ -505,8 +448,6 @@ private slots:
         stop();
     }
 
-    // The same with the Original text panel in front of the Line editor in
-    // one tab group: the Line editor's tab comes to the front.
     void movingTagsFocusRaisesTheLineEditorTab()
     {
         start();
@@ -517,7 +458,7 @@ private slots:
                 "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,{\\i1}Wall\n"
                 "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
         f.close();
-        application->setMoveTags(false); // TM1: Tags from original starts on
+        application->setMoveTags(false);
         QVERIFY(application->openFile(f.fileName()));
         QTRY_VERIFY(isOpen("originalDock"));
         QVariant placed;
@@ -537,8 +478,6 @@ private slots:
         stop();
     }
 
-    // An alignment chosen for an untranslated Line sends the focus to the
-    // Original text in its floating panel, whose window it activates.
     void alignmentFocusReachesTheFloatingOriginal()
     {
         start();
@@ -567,9 +506,6 @@ private slots:
         stop();
     }
 
-    // Translation mode turned off from a floating Original text panel (its
-    // hotkey there) asks in PK1's message box, which takes the keyboard
-    // (PU2-translation-mode-off).
     void theOffQuestionActivatesTheMainWindow()
     {
         start();
@@ -593,8 +529,6 @@ private slots:
         stop();
     }
 
-    // Outside translation mode nothing opens the Original text panel: not
-    // View > Panels, not Move panel (its Move button is disabled for it).
     void theOriginalPanelOpensInTranslationModeOnly()
     {
         start();
@@ -631,8 +565,6 @@ private slots:
         stop();
     }
 
-    // The mode's questions answer for the tab they were asked in: showing
-    // another tab closes them unanswered.
     void anotherTabClosesTheModeQuestions()
     {
         start();
@@ -657,14 +589,11 @@ private slots:
         QVERIFY(!translationMode());
         applyPreset("Editing");
         applyPreset("Translation");
-        QTRY_VERIFY(asked()); // not answered Not now
+        QTRY_VERIFY(asked());
         answer(false);
         stop();
     }
 
-    // An arrangement that never had the Original text panel (an older saved
-    // layout; the default one keeps its place) puts it above the Line
-    // editor, in the Line editor's own window when that floats.
     void theOriginalJoinsAFloatingLineEditor()
     {
         start();
@@ -684,9 +613,6 @@ private slots:
         stop();
     }
 
-    // Showing a tab in Translation mode keeps the Original text panel its
-    // arrangement restores, floating here: it is not closed for the mode of
-    // the tab left and opened again.
     void anotherTabKeepsItsOriginalPanel()
     {
         start();
@@ -708,8 +634,6 @@ private slots:
         stop();
     }
 
-    // A narrow Original text panel folds its header's buttons into one
-    // "More" button whose menu holds them in the same order.
     void aNarrowHeaderFoldsTheButtons()
     {
         start();
@@ -726,14 +650,10 @@ private slots:
         QVERIFY(item("originalTextMore")->isVisible());
         QVERIFY(!item("originalTextButtons")->isVisible());
         auto *menu = item<QObject>("originalTextMoreMenu");
-        QCOMPARE(menu->property("count").toInt(), 6); // five items and the separator
+        QCOMPARE(menu->property("count").toInt(), 6);
         stop();
     }
 
-    // The Translation preset with the Original text panel, the Editing preset
-    // with the mode on, a narrow panel's folded header and the one-time
-    // question, in the four themes, for review: written to
-    // HIKARI_SURFACE_SHOT_DIR when it is set (translation-<state>-<theme>.png).
     void translationModeScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -771,8 +691,6 @@ private slots:
             QVERIFY(dock("originalDock")->setProperty("isFloating", false));
             QTRY_VERIFY(!isFloating("originalDock"));
         }
-        // The question, over a file without TLMode (one per theme: Not now is
-        // remembered for the Document).
         for (const auto code : ui::theme::kCodes) {
             const QString theme = ui::theme::codeName(code);
             settings.setValue(QStringLiteral("appearance.theme"), theme);
@@ -791,9 +709,6 @@ private slots:
         stop();
     }
 
-    // TM1 tags from the original, for the card's evidence: a Line with two
-    // runs, one suggested, then both placed; the Grid marks the Lines with
-    // runs not placed. HIKARI_SURFACE_SHOT_DIR as above.
     void tagsFromOriginalScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -833,9 +748,6 @@ private slots:
         }
     }
 
-    // #341, for the card's evidence: the Translated field and its runs for
-    // Originals Tags from original reads as libass does, each after the
-    // translator's steps (tm2-<case>.png; HIKARI_SURFACE_SHOT_DIR as above).
     void tagsFromOriginalLibassScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -887,7 +799,6 @@ private slots:
             if (c.steps)
                 c.steps(application->editor());
             QTest::qWait(400);
-            // The field with the run strip beside it.
             const auto scene = [&](const char *name) {
                 auto *it = item(name);
                 return QRectF(it->mapToScene(QPointF()), it->size());

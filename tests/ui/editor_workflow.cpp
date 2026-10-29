@@ -1,7 +1,3 @@
-// V2 workflow through the real UI (Spix): open a copied file, edit the first
-// Line in the Line editor, commit with Enter, Undo and Redo, save through the
-// File menu, then reopen it. Every unrelated byte of the file must survive.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -47,26 +43,22 @@ protected:
             mouseClick("mainWindow/editingGrid");
             enterKey("mainWindow/editingGrid", Qt::Key_Home, spix::KeyModifiers::None);
             wait(200ms);
-            observed.push_back(text()); // 0: the first Line, shown with tags hidden
-            // Focus the field and put the caret after the text with End. (A
-            // click at a computed position missed the field on Windows.)
+            observed.push_back(text());
             invokeMethod("mainWindow/lineText", "forceActiveFocus", {});
             enterKey("mainWindow/lineText", Qt::Key_End, spix::KeyModifiers::None);
             wait(200ms);
             inputText("mainWindow/lineText", " edited");
             wait(300ms);
-            observed.push_back(text()); // 1: the draft
+            observed.push_back(text());
             key(Qt::Key_Return);
-            observed.push_back(text()); // 2: committed and advanced to the next Line
+            observed.push_back(text());
             key(Qt::Key_Z, spix::KeyModifiers::Control);
-            observed.push_back(text()); // 3: Undo restores the first Line's committed text
+            observed.push_back(text());
             key(Qt::Key_Y, spix::KeyModifiers::Control);
-            observed.push_back(text()); // 4: Redo
+            observed.push_back(text());
             mouseClick("mainWindow/fileMenuBarItem");
             wait(300ms);
             mouseClick("mainWindow/saveMenuItem");
-            // The write is asynchronous (temporary file, flush, rename): poll
-            // until it is acknowledged rather than sleeping a fixed time.
             std::string status;
             for (int i = 0; i < 100; ++i) {
                 wait(100ms);
@@ -74,7 +66,7 @@ protected:
                 if (status == "Saved")
                     break;
             }
-            observed.push_back(status); // 5
+            observed.push_back(status);
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -94,7 +86,7 @@ QByteArray readAll(const QString &path)
     return f.readAll();
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -119,8 +111,7 @@ int main(int argc, char **argv)
         engine.loadFromModule("Hikari.Ui", "Main");
         if (engine.rootObjects().isEmpty())
             return 2;
-        // Under a real X server without a window manager the window is not
-        // exposed or active at once; Spix posts input to it, so wait first.
+        // Without a window manager, X exposes and activates the window late, and Spix input needs both.
         auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
         window->requestActivate();
         QDeadlineTimer deadline(10'000);
@@ -149,11 +140,8 @@ int main(int argc, char **argv)
     }
 
     QByteArray expected = original;
-    expected.replace(",,Gate\r\n", ",,Gate edited\r\n"); // the fixture uses CRLF
-    // S4: the save also writes the active Line's row after the last property
-    // (Undo and Redo make the edited first Line active again).
+    expected.replace(",,Gate\r\n", ",,Gate edited\r\n");
     expected.replace("YCbCr Matrix: TV.601\r\n", "YCbCr Matrix: TV.601\r\nActive Line: 0\r\n");
-    // WS2: and the tab's arrangement in a [Hikari] section at the end.
     const QByteArray saved = readAll(path);
     const QRegularExpression hikari(QStringLiteral("\\A\r\n\\[Hikari\\]\r\nLayout=[A-Za-z0-9+/=]+\r\n\\z"));
     const bool same = saved.startsWith(expected) && hikari.match(QString::fromLatin1(saved.mid(expected.size()))).hasMatch();
@@ -161,7 +149,6 @@ int main(int argc, char **argv)
         std::printf("saved bytes:\n%s\n", saved.constData());
     expect(same, "only the edited Line changed on disk");
 
-    // Reopen in a fresh composition.
     hikari::app::Application reopened;
     expect(reopened.openFile(path), "reopen");
     const auto target = reopened.workspace().editingTarget();

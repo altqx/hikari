@@ -1,10 +1,3 @@
-// O1: the settings registry over its files. CF1 (#488): every setting
-// round-trips through settings.toml, hotkeys.toml or state.json, which hold
-// only values that differ from the default; hikari.ini converts into them
-// once (the interim keys the rewrite used before the registry moved onto
-// their settings on the way) and becomes hikari.ini.old; a file that does
-// not read is kept as <name>.broken and its settings take their defaults.
-
 #include "colour_picker_controller.h"
 #include "grid_filter_controller.h"
 #include "settings_files.h"
@@ -48,8 +41,6 @@ application::SettingValue sampleFor(const application::SettingDefinition &settin
     return false;
 }
 
-// The shortcuts are stored as changes from the defaults, so only real
-// SaveHkeys lines and macro rows come back as they were.
 bool shortcutSetting(std::string_view id)
 {
     return id == application::kHotkeysSetting || id == application::kAudioHotkeysSetting ||
@@ -90,7 +81,6 @@ QStringList qLines(const std::vector<std::string> &lines)
     return out;
 }
 
-// The INI store's writing of a value (SettingsStore::toVariant).
 QVariant iniVariant(const application::SettingValue &value)
 {
     return SettingsStore::toVariant(value);
@@ -102,8 +92,6 @@ QString iniKey(const application::SettingDefinition &s)
            QString::fromUtf8(s.id.data(), qsizetype(s.id.size()));
 }
 
-// Main bindings with one changed, one copied to another window and one taken
-// away; audio bindings with one changed.
 application::HotkeyMap changedHotkeys()
 {
     using namespace application;
@@ -115,7 +103,7 @@ application::HotkeyMap changedHotkeys()
     return map;
 }
 
-} // namespace
+}
 
 class SettingsStoreTests : public QObject {
     Q_OBJECT
@@ -140,8 +128,6 @@ private slots:
             QVERIFY2(again.settings().isSet(s.id), s.id.data());
             QVERIFY2(again.settings().value(s.id) == sampleFor(s), s.id.data());
         }
-        // A dotted id is tables and a key; the [workspace] keys and what the
-        // app remembers are in state.json.
         const toml::table settings = tomlOf(file);
         QCOMPARE(settings["grid"]["hideColumns"].value_or(std::int64_t{0}),
                  std::get<std::int64_t>(sampleFor(*application::findSetting("grid.hideColumns"))));
@@ -150,7 +136,7 @@ private slots:
         QVERIFY(settings["editor"]["tagButton"].is_array());
         QVERIFY(!settings["program"]["theme"]);
         QVERIFY(!settings["workspace"]["windowSize"]);
-        QVERIFY(settings["workspace"]["shiftTimesOn"].is_boolean()); // a profile setting
+        QVERIFY(settings["workspace"]["shiftTimesOn"].is_boolean());
         QVERIFY(!settings["recent"]);
         QVERIFY(readAll(file).startsWith("version = 1\n"));
         const QJsonObject state = jsonOf(dir.filePath(QStringLiteral("state.json")));
@@ -168,9 +154,9 @@ private slots:
         {
             SettingsStore store(file);
             store.set("audio.cacheFilesLimit", 20);
-            store.set("audio.volume", 50); // its default
+            store.set("audio.volume", 50);
             store.set("recent.subtitles", QStringList{QStringLiteral("/a.ass")});
-            store.set("workspace.settingsPage", QStringLiteral("general")); // its default
+            store.set("workspace.settingsPage", QStringLiteral("general"));
         }
         QCOMPARE(readAll(file), QByteArray("version = 1\n\n[audio]\ncacheFilesLimit = 20\n"));
         QCOMPARE(jsonOf(dir.filePath(QStringLiteral("state.json"))).keys(),
@@ -179,7 +165,7 @@ private slots:
             SettingsStore store(file);
             QVERIFY(!store.contains("audio.volume"));
             QCOMPARE(store.integer("audio.cacheFilesLimit"), 20);
-            store.set("audio.cacheFilesLimit", 10); // back to the default: the key and its table go
+            store.set("audio.cacheFilesLimit", 10);
             store.reset("recent.subtitles");
         }
         QCOMPARE(readAll(file), QByteArray("version = 1\n"));
@@ -193,7 +179,7 @@ private slots:
         QVERIFY(!store.boolean("subtitles.saveWithVideoName"));
         QVERIFY(store.setValue(QStringLiteral("subtitles.saveWithVideoName"), true));
         QVERIFY(store.boolean("subtitles.saveWithVideoName"));
-        store.set("subtitles.saveWithVideoName", true); // no change, no signal
+        store.set("subtitles.saveWithVideoName", true);
         QCOMPARE(changed.count(), 1);
         QCOMPARE(changed.at(0).at(0).toString(), QStringLiteral("subtitles.saveWithVideoName"));
         store.resetAll();
@@ -202,7 +188,6 @@ private slots:
         QVERIFY(!store.setValue(QStringLiteral("program.theme"), QStringLiteral("LightSentro")));
     }
 
-    // Stores on one folder share its files, as they shared QSettings' cache.
     void storesOnOneFolderShareTheFiles()
     {
         QTemporaryDir dir;
@@ -211,14 +196,11 @@ private slots:
         SettingsStore b(file);
         a.set("audio.volume", 70);
         QCOMPARE(b.integer("audio.volume"), 70);
-        QVERIFY(!QFileInfo::exists(file)); // kept until the next event loop pass
+        QVERIFY(!QFileInfo::exists(file));
         QCoreApplication::processEvents();
         QVERIFY(QFileInfo::exists(file));
     }
 
-    // hotkeys.toml: the changes from the defaults per window, Qt's key text,
-    // "" for a default taken away, each with its command's name; the
-    // controller still sees SaveHkeys lines.
     void hotkeysStoreOnlyTheirChanges()
     {
         using namespace application;
@@ -257,19 +239,16 @@ private slots:
         readHotkeyLines(expected, audio);
         QVERIFY(read == expected);
         QCOMPARE(again.list(kAutomationHotkeysSetting.data()), macros);
-        // The defaults again: nothing is stored.
         again.set(kHotkeysSetting.data(), qLines(hotkeyLines(defaultHotkeys(), false)));
         QVERIFY(!again.contains(kHotkeysSetting.data()));
         QVERIFY(again.contains(kAudioHotkeysSetting.data()));
     }
 
-    // Every default binding's key comes back the same through Qt's text.
     void defaultHotkeysRoundTripThroughTheirText()
     {
         using namespace application;
         QTemporaryDir dir;
         const QString file = dir.filePath(QStringLiteral("settings.toml"));
-        // Each default moved to the Video window, so each is written out.
         HotkeyMap moved;
         for (const auto &[at, hotkey] : defaultHotkeys())
             if (at.type != AudioHotkey)
@@ -286,8 +265,6 @@ private slots:
         QVERIFY(read == expected);
     }
 
-    // The model has one shortcut per command and window: an array's first is
-    // used and the rest are named as ignored.
     void aHotkeyArrayGivesItsFirstShortcut()
     {
         QTemporaryDir dir;
@@ -302,8 +279,6 @@ private slots:
                  std::string("Ctrl-Shift-W"));
         QCOMPARE(read.at({application::hotkeyIdOf("GLOBAL_UNDO"), application::GlobalHotkey}).accel, std::string("F3"));
         QVERIFY(store.ignored() == std::vector<std::string>{"global.GLOBAL_SAVE_SUBS: only the first shortcut is used"});
-        // Written again (with one more change): one key each, the later
-        // version's entries kept where they were.
         read[{application::hotkeyIdOf("GLOBAL_REDO"), application::GlobalHotkey}].accel = "F6";
         store.set(application::kHotkeysSetting.data(), qLines(application::hotkeyLines(read, false)));
         store.sync();
@@ -313,12 +288,11 @@ private slots:
         QCOMPARE(hotkeys["futureOption"].value_or(std::string()), std::string("keep"));
     }
 
-    // Collections and rows as TOML and JSON structures, not tab-joined text.
     void listsAreArraysAndTables()
     {
         QTemporaryDir dir;
         const QString file = dir.filePath(QStringLiteral("settings.toml"));
-        const QString odd = QStringLiteral("{\n\t\\b1\n\tx\n\tBold\n}"); // a type that is no number
+        const QString odd = QStringLiteral("{\n\t\\b1\n\tx\n\tBold\n}");
         const QStringList answers{QStringLiteral("k2\t{\"answered\":{\"blur\":2},\"button\":1,\"sent\":{}}"),
                                   QStringLiteral("k1\t{\"answered\":{},\"button\":0,\"sent\":{\"a\":\"b\"}}")};
         const QStringList presets{
@@ -328,7 +302,7 @@ private slots:
             store.set("editor.tagButtons", 3);
             store.set("editor.tagButton1", QStringLiteral("{\n\t\\b1\n\t0\n\tBold\n\ttag-bold\n}"));
             store.set("editor.tagButton3", odd);
-            store.set("editor.tagButton5", QStringLiteral("{\n\t\\i1\n\t1\n\tItalic\n}")); // past the count: kept
+            store.set("editor.tagButton5", QStringLiteral("{\n\t\\i1\n\t1\n\tItalic\n}"));
             store.set("grid.filterStyles", QStringList{QStringLiteral("Sign"), QStringLiteral("Default")});
             store.set("workspace.dialogGeometry",
                       QStringList{QStringLiteral("settings\t120,80,900,640"), QStringLiteral("find\t-5,7,400,300")});
@@ -365,20 +339,17 @@ private slots:
         QCOMPARE(again.text("editor.tagButton5"), QStringLiteral("{\n\t\\i1\n\t1\n\tItalic\n}"));
         QCOMPARE(again.list("workspace.dialogGeometry"),
                  (QStringList{QStringLiteral("find\t-5,7,400,300"), QStringLiteral("settings\t120,80,900,640")}));
-        QCOMPARE(again.list("automation.dialogAnswers"), answers); // newest first, as written
+        QCOMPARE(again.list("automation.dialogAnswers"), answers);
         QCOMPARE(again.list("automation.dialogPresets"), presets);
         ui::TagButtonsController buttons(again);
         QCOMPARE(buttons.count(), 3);
         QCOMPARE(buttons.button(0).icon, QStringLiteral("tag-bold"));
-        // Taking the last slots away leaves the empty ones out.
         again.reset("editor.tagButton5");
         again.reset("editor.tagButton3");
         again.sync();
         QCOMPARE(int(tomlOf(file)["editor"]["tagButton"].as_array()->size()), 1);
     }
 
-    // Keys this build does not know (a later version's, a typo) stay when
-    // the app writes the file; comments do not.
     void unknownKeysStay()
     {
         QTemporaryDir dir;
@@ -395,7 +366,6 @@ private slots:
         QVERIFY(!readAll(file).contains("comment"));
     }
 
-    // A hand edit's value of another type reads as the INI store read text.
     void handEditedValuesConvert()
     {
         QTemporaryDir dir;
@@ -405,12 +375,10 @@ private slots:
         SettingsStore store(file);
         QCOMPARE(store.integer("audio.cacheFilesLimit"), 20);
         QVERIFY(!store.boolean("audio.autoCommit"));
-        QCOMPARE(store.integer("audio.volume"), 50); // a table: unset
+        QCOMPARE(store.integer("audio.volume"), 50);
         QCOMPARE(store.list("grid.filterStyles"), QStringList{QStringLiteral("Sign")});
     }
 
-    // CF1: hikari.ini converts once into the three files and becomes
-    // hikari.ini.old; every value reads back as the INI store read it.
     void hikariIniConvertsIntoTheThreeFiles()
     {
         using namespace application;
@@ -426,7 +394,6 @@ private slots:
                 if (setting.disposition == SettingDisposition::Excluded || shortcutSetting(setting.id))
                     continue;
                 SettingValue v = sampleFor(setting);
-                // Real rows where the files give them structure.
                 if (setting.id == "workspace.dialogGeometry")
                     v = std::vector<std::string>{"settings\t120,80,900,640", "find\t1,2,3,4"};
                 else if (setting.id == "workspace.pickerFolders")
@@ -452,7 +419,7 @@ private slots:
             QVERIFY(store.problems().empty());
             for (const auto &[id, v] : expected) {
                 auto want = v;
-                if (id == "workspace.dialogGeometry") // rows come back in key order
+                if (id == "workspace.dialogGeometry")
                     want = std::vector<std::string>{"find\t1,2,3,4", "settings\t120,80,900,640"};
                 QVERIFY2(store.settings().value(id) == want, id.data());
             }
@@ -465,10 +432,9 @@ private slots:
             QCOMPARE(store.list(kAutomationHotkeysSetting.data()), QStringList{QStringLiteral("Script a.lua-0\tCtrl+K\tA\tsha")});
         }
         QVERIFY(!QFileInfo::exists(ini));
-        QCOMPARE(readAll(ini + QStringLiteral(".old")), before); // never written
+        QCOMPARE(readAll(ini + QStringLiteral(".old")), before);
         for (const auto *name : {"settings.toml", "hotkeys.toml", "state.json"})
             QVERIFY2(QFileInfo::exists(dir.filePath(QLatin1String(name))), name);
-        // The tag button slot is a table, the geometry an array of numbers.
         QCOMPARE(tomlOf(file)["editor"]["tagButton"][1]["tag"].value_or(std::string()), std::string("\\blur2"));
         QVERIFY(jsonOf(dir.filePath(QStringLiteral("state.json")))
                     .value(QLatin1String("workspace"))
@@ -477,7 +443,6 @@ private slots:
                     .toObject()
                     .value(QLatin1String("find"))
                     .isArray());
-        // Once only: an hikari.ini put back later is left alone.
         {
             QSettings s(ini, QSettings::IniFormat);
             s.setValue(QStringLiteral("profile/audio.volume"), 3);
@@ -488,15 +453,12 @@ private slots:
         QVERIFY(QFileInfo::exists(ini));
     }
 
-    // The interim keys the rewrite used before the registry move onto their
-    // settings as hikari.ini converts, and the controllers read them.
     void interimKeysConvertOntoTheirSettings()
     {
         QTemporaryDir dir;
         const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
         const QString file = dir.filePath(QStringLiteral("settings.toml"));
         {
-            // As the interim code wrote them.
             QSettings s(ini, QSettings::IniFormat);
             s.setValue(QStringLiteral("SelectLines/Options"), 1289);
             s.setValue(QStringLiteral("SelectLines/Recent"), QStringList{QStringLiteral("b"), QStringLiteral("a")});
@@ -527,7 +489,6 @@ private slots:
             s.setValue(QStringLiteral("Recovery/Capacity"), 7);
             s.setValue(QStringLiteral("AutomationHotkeys/Script 1-0"),
                        QStringList{QStringLiteral("Ctrl+Alt+B"), QStringLiteral("Blur"), QStringLiteral("abc")});
-            // Already under the registry: it wins over the interim key.
             s.setValue(QStringLiteral("Grid/PasteColumns"), 3);
             s.setValue(QStringLiteral("profile/grid.pasteColumns"), 9);
             s.setValue(QStringLiteral("Unrelated/Key"), QStringLiteral("dropped"));
@@ -540,11 +501,11 @@ private slots:
         QCOMPARE(store.text("convert.fps"), QStringLiteral("25"));
         QCOMPARE(store.text("convert.assTagsToInsertInLine"), QStringLiteral("{\\an8}"));
         QCOMPARE(store.integer("convert.timePerCharacter"), 90);
-        QCOMPARE(store.text("convert.style"), QStringLiteral("Default")); // never stored: the legacy default
+        QCOMPARE(store.text("convert.style"), QStringLiteral("Default"));
         QVERIFY(store.boolean("updater.autoCheck"));
         QVERIFY(store.boolean("updater.checkForStable"));
         QCOMPARE(store.integer64("updater.nextCheck"), qint64(1790000000));
-        QCOMPARE(store.integer("shiftTimes.options"), 16 | 32); // backward, frames, tag times
+        QCOMPARE(store.integer("shiftTimes.options"), 16 | 32);
         QCOMPARE(store.integer("shiftTimes.time"), 1500);
         QCOMPARE(store.text("shiftTimes.styles"), QStringLiteral("Default,Sign"));
         QCOMPARE(store.integer("postprocessor.on"), 19);
@@ -563,7 +524,6 @@ private slots:
         QCOMPARE(store.list(application::kAutomationHotkeysSetting.data()),
                  QStringList{QStringLiteral("Script 1-0\tCtrl+Alt+B\tBlur\tabc")});
         QVERIFY(!readAll(file).contains("Unrelated"));
-        // The controllers that used the interim keys read the moved values.
         ui::TagButtonsController buttons(file);
         QCOMPARE(buttons.count(), 2);
         QCOMPARE(buttons.button(1).tag, QStringLiteral("\\blur2"));
@@ -583,9 +543,6 @@ private slots:
         QCOMPARE(shift.profileNames(), QStringList{QStringLiteral("p1")});
     }
 
-    // K2: the colour settings K2 withdrew (A2's audio.spectrum* colours,
-    // K1's icons.<appearance>.<state> colours) and WS3's editor switch
-    // (workspace.editorOn) do not come into the new files. Other values do.
     void withdrawnColourSettingsLeaveTheProfile()
     {
         QTemporaryDir dir;
@@ -615,8 +572,6 @@ private slots:
         QVERIFY(text.contains("audioBoxHeight"));
     }
 
-    // A broken file is never overwritten: kept as <name>.broken (numbered when
-    // one is there), its settings at their defaults, the other files read.
     void aBrokenFileIsKeptAndItsSettingsAreDefaults()
     {
         QTemporaryDir dir;
@@ -636,7 +591,7 @@ private slots:
             QVERIFY(!problem.failure.message.empty());
             QCOMPARE(QString::fromStdU16String(problem.keptAs.u16string()),
                      dir.filePath(QStringLiteral("settings.toml.broken-2")));
-            QVERIFY(!QFileInfo::exists(file)); // nothing changed yet
+            QVERIFY(!QFileInfo::exists(file));
             store.set("audio.delay", 5);
         }
         QCOMPARE(readAll(dir.filePath(QStringLiteral("settings.toml.broken-2"))), broken);
@@ -671,7 +626,6 @@ private slots:
         }
     }
 
-    // A folder in a file's place makes its write fail.
     void aConversionThatCannotBeWrittenIsTriedAgainWhole()
     {
         QTemporaryDir dir;
@@ -687,7 +641,7 @@ private slots:
         SettingsStore store(file);
         QVERIFY(!store.converted());
         QCOMPARE(store.integer("audio.volume"), 70);
-        QVERIFY(!QFileInfo::exists(file)); // not done: the next start converts again
+        QVERIFY(!QFileInfo::exists(file));
         QVERIFY(QFileInfo::exists(ini));
         store.set("audio.delay", 5);
         store.sync();
@@ -714,8 +668,6 @@ private slots:
         QVERIFY(readAll(state).contains("/v.mkv"));
     }
 
-    // Another HikariSub writing the folder holds the lock: the change waits
-    // for it and is written once the lock is free.
     void aLockedFolderIsWrittenOnceFree()
     {
         QTemporaryDir dir;
@@ -731,14 +683,12 @@ private slots:
         QTRY_VERIFY(readAll(file).contains("volume = 70"));
     }
 
-    // Two HikariSubs on one folder: each writes only its own changes over
-    // what the file holds by then.
     void anotherProcessesChangesStay()
     {
         QTemporaryDir dir;
         const QString file = dir.filePath(QStringLiteral("settings.toml"));
         SettingsStore store(file);
-        auto other = std::make_shared<SettingsFiles>(dir.path()); // read before the store wrote
+        auto other = std::make_shared<SettingsFiles>(dir.path());
         store.set("audio.volume", 70);
         store.sync();
         other->write(*application::findSetting("audio.delay"), std::int64_t{5});
@@ -755,7 +705,6 @@ private slots:
         const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
         const QString file = dir.filePath(QStringLiteral("settings.toml"));
         writeAll(ini, "[profile]\naudio.volume=70\n");
-        // Windows keeps read access whatever setPermissions asks.
         if (QFile probe(ini); !QFile::setPermissions(ini, {}) || probe.open(QIODevice::ReadOnly))
             QSKIP("the file reads without permissions (Windows, root, or a file system without them)");
         {
@@ -821,8 +770,6 @@ private slots:
         QVERIFY(QFileInfo(dir.filePath(QStringLiteral("state.json"))).isDir());
     }
 
-    // The panel reads the legacy options (SHIFT_TIMES_TIME 2000, backward
-    // when SHIFT_TIMES_OPTIONS is unset) and stores nothing until it changes.
     void shiftTimesPanelStartsFromTheLegacyOptions()
     {
         SettingsStore store;
@@ -857,8 +804,6 @@ private slots:
         QCOMPARE(SettingsStore(file).integer("shiftTimes.options"), 128 | 4);
     }
 
-    // TS1: the panel's collapsed sections are kept apart from the shift's
-    // options: all open by default, stored only when one closes, read back.
     void shiftTimesRemembersCollapsedSections()
     {
         QTemporaryDir dir;
@@ -871,7 +816,7 @@ private slots:
             shift.setCollapsedSections({QStringLiteral("amount"), QStringLiteral("snap")});
             QCOMPARE(spy.count(), 1);
             shift.setCollapsedSections({QStringLiteral("amount"), QStringLiteral("snap")});
-            QCOMPARE(spy.count(), 1); // unchanged
+            QCOMPARE(spy.count(), 1);
             QVERIFY(!store.contains("shiftTimes.options"));
             QVERIFY(!store.contains("shiftTimes.time"));
         }

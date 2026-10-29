@@ -1,9 +1,3 @@
-// A stand-in for an update's setup in update_apply_tests: it waits <delay>
-// ms as if starting up, then holds the mutex <name> for <hold> ms.
-//   hikari_setup_mutex_helper <name> <delay> <hold>
-// Plain Win32 with no Qt, so it starts at once even on a loaded machine;
-// the delay is its own, not the machine's.
-
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif

@@ -1,7 +1,1 @@
-# PK1 (#301): the in-window popups (a Qt Quick Controls Dialog or a
-# MessageDialog) that are left to move onto the popup kit: a message box,
-# a popover, a toast or an inline bar, or a window on DG1's frame
-# (docs/ux/visual-language.md "Popups"). One per line, as File.qml:id.
-# shell_tests popupsAreOnTheKit fails on one not listed here, so no new
-# one comes in, and on a line that matches none, so the list shrinks as
-# the PU cards take them off.
+# Popups allowed off the popup kit, one File.qml:id per line.

@@ -1,25 +1,3 @@
-// V5 (#184) workflow through the real UI (Spix): open a Document beside its
-// video, press F in the Video panel and see the picture fullscreen on the
-// main window's monitor; Space (the Video window's VIDEO_PLAY_PAUSE) plays
-// and pauses there, Right (the Global GLOBAL_NEXT_FRAME) steps a frame;
-// FS1 (#275): the bar shows on entering (Auto); Tab (VIDEO_FULLSCREEN_BAR)
-// cycles Always, Never (no bar) and Auto; in Auto, playing with the pointer
-// still, the bar and the pointer hide (the idle time shortened to 400 ms).
-// Esc leaves with the main window's geometry, state and keyboard focus as
-// they were. With two monitors (`--monitors 2`), the context menu's "Open in
-// full screen on monitor 2" puts it on the second one at that monitor's own
-// scale, the docked video closes meanwhile (m_IsOnAnotherMonitor), the
-// fullscreen context menu then offers "Switch full screen to monitor 2", and
-// Esc brings everything back.
-//
-// Linux runs it offscreen with two screens (fullscreen-two-screens.json, the
-// second at scale 2), and again with `--primary-second`, the second screen
-// made the primary before the window opens: Qt's screens, which are the
-// monitors, are then that screen first and the other after it
-// (V5-monitor-order), so "monitor 2" is the screen the system listed first. Windows runs it on the real desktop.
-// Every run checks the fullscreen window's owner (V5-wayland-parent): the
-// main window, except on Wayland.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -54,7 +32,6 @@ using namespace std::chrono_literals;
 
 namespace {
 
-// What the GUI thread saw at each fullscreen change.
 struct Seen {
     bool active = false;
     int monitor = -1;
@@ -92,8 +69,7 @@ public:
 
 protected:
     std::string status() { return getStringProperty("mainWindow/videoStatus", "text"); }
-    // A synchronous read that lets the queued commands run (the main
-    // window's title: the Video panel may be closed meanwhile).
+    // A synchronous Spix read, so the queued commands run first.
     void sync() { getStringProperty("mainWindow", "title"); }
     bool waitFor(const std::function<bool()> &done, int tenths = 100)
     {
@@ -109,39 +85,34 @@ protected:
 
     void executeTest() override
     {
-        // Indexed and showing its first frame.
         note(waitFor([&] { return status().rfind("Frame", 0) == 0; }, 200) ? "indexed" : "not indexed");
         invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
         enterKey("mainWindow/videoPanel", Qt::Key_F, spix::KeyModifiers::None);
-        note(waitFor([&] { return changes() >= 1; }) ? "entered" : "not entered"); // 1
+        note(waitFor([&] { return changes() >= 1; }) ? "entered" : "not entered");
         wait(500ms);
-        note(existsAndVisible("videoFullscreen/videoFullscreenPanel") ? "panel" : "no panel"); // 2
+        note(existsAndVisible("videoFullscreen/videoFullscreenPanel") ? "panel" : "no panel");
         QDir().mkpath(HIKARI_TEST_ARTIFACT_DIR);
         takeScreenshot("videoFullscreen", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen.png");
-        // The transport keys in the fullscreen window.
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
         note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenPlayPause", "text") == "Pause"; })
-                               ? "playing" : "not playing"); // 3
+                               ? "playing" : "not playing");
         wait(300ms);
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
         note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenPlayPause", "text") == "Play"; })
-                               ? "paused" : "not paused"); // 4
+                               ? "paused" : "not paused");
         const std::string before = getStringProperty("videoFullscreen/fullscreenTimes", "text");
         wait(200ms);
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Right, spix::KeyModifiers::None);
         note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenTimes", "text") != before; })
-                               ? "stepped" : "not stepped"); // 5
-        // FS1-bar-mode: Tab cycles the bar's mode.
+                               ? "stepped" : "not stepped");
         const auto mode = [&] { return getStringProperty("videoFullscreen/fullscreenBarMode", "text"); };
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
-        note(waitFor([&] { return mode() == "Always"; }) ? "always" : "not always: " + mode()); // 6
+        note(waitFor([&] { return mode() == "Always"; }) ? "always" : "not always: " + mode());
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
         note(waitFor([&] { return mode() == "Never" && !existsAndVisible("videoFullscreen/videoFullscreenPanel"); })
-                 ? "never" : "not never: " + mode()); // 7
+                 ? "never" : "not never: " + mode());
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
-        note(waitFor([&] { return mode() == "Auto"; }) ? "auto" : "not auto: " + mode()); // 8
-        // FS1-bar-auto-hide, FS1-cursor-hide: playing, nothing moving: the
-        // bar goes and the pointer is hidden over the picture.
+        note(waitFor([&] { return mode() == "Auto"; }) ? "auto" : "not auto: " + mode());
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
         const std::string blank = std::to_string(int(Qt::BlankCursor));
         note(waitFor([&] {
@@ -150,32 +121,30 @@ protected:
         }, 15) ? "hidden"
                : "not hidden: panel " + std::to_string(existsAndVisible("videoFullscreen/videoFullscreenPanel"))
                      + ", cursor " + getStringProperty("videoFullscreen/visualOverlay", "cursorOverride") + ", "
-                     + getStringProperty("videoFullscreen/fullscreenPlayPause", "text")); // 9
+                     + getStringProperty("videoFullscreen/fullscreenPlayPause", "text"));
         takeScreenshot("videoFullscreen", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-idle.png");
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
         note(waitFor([&] { return existsAndVisible("videoFullscreen/videoFullscreenPanel"); }) ? "paused, shown"
-                                                                                               : "paused, not shown"); // 10
+                                                                                               : "paused, not shown");
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Escape, spix::KeyModifiers::None);
-        note(waitFor([&] { return changes() >= 2; }) ? "left" : "not left"); // 11
+        note(waitFor([&] { return changes() >= 2; }) ? "left" : "not left");
         wait(500ms);
         if (monitors > 1) {
-            // The context menu's monitor entry (VideoBox.cpp:941-948, 1053-1056).
             mouseClick("mainWindow/visualOverlay", spix::MouseButtons::Right);
             note(waitForItem("mainWindow/videoMenuMonitor1", 3s)
-                                   ? getStringProperty("mainWindow/videoMenuMonitor1", "text") : "no monitor entry"); // 12
+                                   ? getStringProperty("mainWindow/videoMenuMonitor1", "text") : "no monitor entry");
             invokeMethod("mainWindow/videoMenuMonitor1", "triggered", {});
-            note(waitFor([&] { return changes() >= 3; }) ? "on monitor 2" : "not on monitor 2"); // 13
+            note(waitFor([&] { return changes() >= 3; }) ? "on monitor 2" : "not on monitor 2");
             wait(800ms);
             takeScreenshot("videoFullscreen", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-monitor2.png");
-            // In fullscreen the entry switches (VideoBox.cpp:943-944).
             mouseClick("videoFullscreen/visualOverlay", spix::MouseButtons::Right);
             note(waitForItem("videoFullscreen/fullscreenMenuMonitor1", 3s)
                                    ? getStringProperty("videoFullscreen/fullscreenMenuMonitor1", "text")
-                                   : "no monitor entry"); // 14
-            enterKey("videoFullscreen/fullscreenMenuMonitor1", Qt::Key_Escape, spix::KeyModifiers::None); // the menu closes
+                                   : "no monitor entry");
+            enterKey("videoFullscreen/fullscreenMenuMonitor1", Qt::Key_Escape, spix::KeyModifiers::None);
             wait(300ms);
             enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Escape, spix::KeyModifiers::None);
-            note(waitFor([&] { return changes() >= 4; }) ? "left monitor 2" : "not left"); // 15
+            note(waitFor([&] { return changes() >= 4; }) ? "left monitor 2" : "not left");
             wait(500ms);
         }
         takeScreenshot("mainWindow", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-after.png");
@@ -188,11 +157,11 @@ protected:
     }
 };
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
-    std::setvbuf(stdout, nullptr, _IONBF, 0); // each line as it comes (a task's log)
+    std::setvbuf(stdout, nullptr, _IONBF, 0);
     QGuiApplication app(argc, argv);
     int monitors = 1;
     bool primarySecond = false;
@@ -207,8 +176,6 @@ int main(int argc, char **argv)
         std::printf("%s: %s\n", ok ? "ok" : "FAILED", what);
         failures += ok ? 0 : 1;
     };
-    // The system's list at start, and with --primary-second its second
-    // screen made the primary (as a display setting would).
     const auto systemScreens = QGuiApplication::screens();
     if (primarySecond) {
         expect(systemScreens.size() >= 2, "two screens for --primary-second");
@@ -217,7 +184,6 @@ int main(int argc, char **argv)
         expect(QGuiApplication::primaryScreen() == systemScreens.value(1), "the second screen is the primary");
     }
     {
-        // V5-monitor-order: the primary first, then the other screen.
         const auto ordered = hikari::ui::VideoFullscreenController::monitors();
         QList<QScreen *> expected{QGuiApplication::primaryScreen()};
         for (QScreen *s : systemScreens)
@@ -240,14 +206,13 @@ int main(int argc, char **argv)
     {
         QFile f(subtitles);
         expect(f.open(QIODevice::WriteOnly), "write the subtitles");
-        // PlayRes as the video's: no resolution question over the window.
         f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n"
                 "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                 "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\n");
     }
     hikari::app::Application::Options options;
     options.mediaHelper = QStringLiteral(HIKARI_MEDIA_HELPER);
-    options.playbackAudio = false; // CI and the VM have no audio device
+    options.playbackAudio = false;
     hikari::app::Application application(options);
     expect(application.openFile(subtitles), "open the subtitles");
     application.video().openVideo(dir.filePath(QStringLiteral("ep1.mkv")));
@@ -267,14 +232,11 @@ int main(int argc, char **argv)
     const int mainVisibility = window->visibility();
 
     auto &fs = application.videoFullscreen();
-    fs.setIdleInterval(400); // FS1: the bar's idle time, shortened for the two-second clip
+    fs.setIdleInterval(400);
     // Found while docked: a closed dock's content leaves the window's object tree.
     QPointer<QQuickItem> presenter = window->findChild<QQuickItem *>(QStringLiteral("videoPresenter"));
     expect(presenter != nullptr, "the presenter is there");
-    // Each change once it has settled: the window manager placed the window,
-    // the compositor gave the keyboard to it (or back), and the window took
-    // its screen's scale (on Wayland these come as events a moment later);
-    // at most four seconds after it.
+    // The window manager's placement, the keyboard and the screen's scale come a moment later (Wayland).
     auto record = [&](bool active) {
         Seen s;
         s.active = active;
@@ -337,7 +299,6 @@ int main(int argc, char **argv)
                     s.mainGeometry.width(), s.mainGeometry.height(), s.mainGeometry.x(), s.mainGeometry.y(),
                     s.mainVisibility, s.presenterInFullscreen ? "fullscreen" : "panel", s.videoDockOpen ? "open" : "closed",
                     s.focusInFullscreen ? "fullscreen" : "other", qPrintable(s.focusItem));
-    // V5-wayland-parent: owned by the main window, except on Wayland.
     {
         const bool wayland = QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
         QQuickWindow *w = fs.window();
@@ -367,8 +328,6 @@ int main(int argc, char **argv)
     expect(changes.size() == (monitors > 1 ? 4u : 2u), "each change seen");
     if (changes.size() >= 2) {
         const auto &in = changes[0], &out = changes[1];
-        // SetFullscreen(0): the monitor holding the main window (on Wayland the
-        // one the compositor shows it on; Qt's primary need not be that one).
         expect(in.active && window->screen() && in.screen == window->screen()->name(),
                "fullscreen on the main window's monitor");
         expect(in.fullscreenGeometry == in.screenGeometry, "the window covers its monitor");
@@ -385,7 +344,6 @@ int main(int argc, char **argv)
     }
     if (monitors > 1 && changes.size() == 4) {
         const auto &in = changes[2], &out = changes[3];
-        // Monitor 2 (index 1): the first screen after the primary in the system's order.
         const auto ordered = hikari::ui::VideoFullscreenController::monitors();
         const QScreen *second = ordered.size() > 1 ? ordered[1] : nullptr;
         if (primarySecond)

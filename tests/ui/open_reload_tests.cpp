@@ -1,9 +1,3 @@
-// P2 through the composition: opening subtitles stages the file before the
-// review replaces the editing target (L58-staged-replacement); the recent
-// list follows opens and saves and persists; a file changed by another
-// program is offered for reload once, and a removed one makes the Document
-// unsaved; dropped files follow the legacy extension rules.
-
 #include "hikari/app/application.h"
 
 #include <QDateTime>
@@ -48,7 +42,7 @@ QVariantList discardAll(const QVariantList &rows)
     return out;
 }
 
-} // namespace
+}
 
 class OpenReloadTests : public QObject {
     Q_OBJECT
@@ -93,8 +87,6 @@ private slots:
         QVERIFY(target(a)->isDirty());
     }
 
-    // KA6: a lyrics file opens as an Untitled ASS Document of karaoke
-    // Lines, named and saved beside it as ASS; the lyrics stay untouched.
     void lyricsOpenAsAnUntitledAssDocument()
     {
         app::Application a;
@@ -125,8 +117,6 @@ private slots:
         QCOMPARE(result.value(QStringLiteral("problem")).toString(),
                  QStringLiteral("Could not import malformed.lrc: line 3: the word at <00:04.20> starts before the word "
                                 "before it. Nothing was imported."));
-        // A time outside its parent's says so; a long line is cut short, never
-        // inside a surrogate pair.
         const auto lyrics = [this](const char *name, const QByteArray &text) {
             QFile f(dir.filePath(QLatin1String(name)));
             return f.open(QIODevice::WriteOnly) && f.write(text) == text.size() ? f.fileName() : QString();
@@ -167,13 +157,11 @@ private slots:
         auto result = a.reviewOpen(writeFile(dir, "other.ass", "two"));
         const auto rows = result.value(QStringLiteral("rows")).toList();
         QCOMPARE(rows.size(), qsizetype(1));
-        // Cancel keeps the work and forgets the staged file.
         a.cancelClose();
         QCOMPARE(targetText(a), std::string("unsaved"));
         a.reviewClose(QStringLiteral("close"));
         a.cancelClose();
         QCOMPARE(targetTitle(a), std::string("work.ass"));
-        // Discard publishes the replacement.
         result = a.reviewOpen(dir.filePath(QStringLiteral("other.ass")));
         QSignalSpy finished(&a, &app::Application::closeFinished);
         a.resolveClose(discardAll(result.value(QStringLiteral("rows")).toList()));
@@ -209,9 +197,6 @@ private slots:
         options.settingsFile = settings;
         app::Application again(options);
         QCOMPARE(again.recentEntries().size(), std::size_t(3));
-        // Shown: missing files are left out, labels number the file names.
-        // SH2-recent-opened-and-missing: the missing file stays in the list
-        // (legacy pruned it) until Home's Remove missing files.
         QVERIFY(QFile::remove(b1));
         const auto rows = again.recentSubtitles();
         QCOMPARE(rows.size(), qsizetype(2));
@@ -235,8 +220,8 @@ private slots:
         {
             app::Application a(options);
             QCOMPARE(a.shell().hiddenColumns(), 0);
-            a.shell().toggleColumn(8192); // GRID_HIDE_WRAPS
-            a.shell().toggleColumn(1);    // GRID_HIDE_LAYER
+            a.shell().toggleColumn(8192);
+            a.shell().toggleColumn(1);
         }
         app::Application again(options);
         QCOMPARE(again.shell().hiddenColumns(), 8193);
@@ -257,7 +242,7 @@ private slots:
         }
         {
             app::Application a(options);
-            a.gridFilter().setFilterBy(4, true); // Hide comments
+            a.gridFilter().setFilterBy(4, true);
             a.gridFilter().setAfterLoad(true);
             a.gridFilter().setInverted(false);
         }
@@ -281,11 +266,11 @@ private slots:
         writeFile(dir, "changed.ass", "theirs");
         touchLater(path, 10);
         QCOMPARE(a.externalChange(), QStringLiteral("modified"));
-        QCOMPARE(a.externalChange(), QString()); // asked once per change
+        QCOMPARE(a.externalChange(), QString());
         QVERIFY(a.reloadTarget());
         QCOMPARE(targetText(a), std::string("theirs"));
         QVERIFY(!target(a)->isDirty());
-        QCOMPARE(target(a)->historySize(), std::size_t(1)); // fresh history
+        QCOMPARE(target(a)->historySize(), std::size_t(1));
         QVERIFY(target(a)->selection().active);
     }
 
@@ -318,7 +303,6 @@ private slots:
         app::Application a;
         const QString b = writeFile(dir, "drop-b.srt", "b"), c = writeFile(dir, "drop-a.ass", "a");
         auto kind = [](const QVariantMap &r) { return r.value(QStringLiteral("kind")).toString(); };
-        // One file: OpenFile's route (the window reviews and opens it).
         QVariantMap one = a.openDropped({QUrl::fromLocalFile(c)});
         QCOMPARE(kind(one), QStringLiteral("subtitles"));
         QCOMPARE(one.value(QStringLiteral("path")).toString(), c);
@@ -326,8 +310,6 @@ private slots:
         QCOMPARE(kind(a.openDropped({QUrl::fromLocalFile(dir.filePath(QStringLiteral("x.7z")))})), QString());
         QCOMPARE(kind(a.openDropped({QUrl::fromLocalFile(dir.filePath(QStringLiteral("k_keyframes.txt")))})), QString());
         QCOMPARE(kind(a.openDropped({QUrl(QStringLiteral("https://example.com/a.ass"))})), QString());
-        // P9: several (legacy OpenFiles): sorted, archives refused, each
-        // subtitle file a tab; the first goes into the untouched Untitled tab.
         const QVariantMap several = a.openDropped({QUrl::fromLocalFile(b), QUrl::fromLocalFile(c),
                                                    QUrl::fromLocalFile(dir.filePath(QStringLiteral("x.zip")))});
         QCOMPARE(kind(several), QStringLiteral("files"));
@@ -336,7 +318,7 @@ private slots:
         for (const QVariant &tab : a.tabs())
             titles << tab.toMap().value(QStringLiteral("title")).toString();
         QCOMPARE(titles, (QStringList{QStringLiteral("drop-a.ass"), QStringLiteral("drop-b.srt")}));
-        QCOMPARE(a.currentTab(), 1); // the last one opened is shown
+        QCOMPARE(a.currentTab(), 1);
     }
 };
 

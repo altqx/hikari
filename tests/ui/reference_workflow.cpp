@@ -1,12 +1,3 @@
-// R2 workflow through the real UI (Spix): Ctrl+Q ("Show subtitles preview",
-// legacy GRID_SHOW_PREVIEW) shows the next tab in the reference tray, linked
-// to the editing Line; Next match steps between the candidates; the editing
-// Grid's Down arrow moves the linked reference (legacy NewSeeking); a click
-// on "Follow the editing line" makes the tray independent, and its Down
-// arrow then moves only the reference; Ctrl+V there is refused; Close
-// reference in the tray's header menu (D3: a right click on its toolbar)
-// ends the reference and its tab stays. Neither file is written.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -37,11 +28,9 @@ public:
 
 protected:
     std::string status() { return getStringProperty("mainWindow/referenceMatchStatus", "text"); }
-    // The reference's active row (Document order), or "none".
     std::string referenceRow()
     {
-        // Spix runs its commands in order on the GUI thread: a property read
-        // first lets every earlier command finish before this direct call.
+        // Spix runs commands in order on the GUI thread: this read waits for the earlier ones.
         (void)getStringProperty("mainWindow", "title");
         std::string out = "none";
         QMetaObject::invokeMethod(qApp, [&] {
@@ -62,39 +51,37 @@ protected:
             invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
             enterKey("mainWindow/editingGrid", Qt::Key_Q, spix::KeyModifiers::Control);
             wait(500ms);
-            observed.push_back(waitForItem("mainWindow/referenceMatchStatus", 5s) ? status() : "no tray"); // 0
-            observed.push_back(referenceRow());                                                           // 1: 0
+            observed.push_back(waitForItem("mainWindow/referenceMatchStatus", 5s) ? status() : "no tray");
+            observed.push_back(referenceRow());
             mouseClick("mainWindow/referenceNextMatch");
             wait(300ms);
-            observed.push_back(status());       // 2: Match 2 of 2
-            observed.push_back(referenceRow()); // 3: 2
+            observed.push_back(status());
+            observed.push_back(referenceRow());
             invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
             enterKey("mainWindow/editingGrid", Qt::Key_Down, spix::KeyModifiers::None);
             wait(300ms);
-            observed.push_back(status());       // 4: Match 1 of 1
-            observed.push_back(referenceRow()); // 5: 2
+            observed.push_back(status());
+            observed.push_back(referenceRow());
             mouseClick("mainWindow/referenceLinked");
             wait(300ms);
-            observed.push_back(status()); // 6: Independent navigation
+            observed.push_back(status());
             invokeMethod("mainWindow/referenceGrid", "forceActiveFocus", {});
             enterKey("mainWindow/referenceGrid", Qt::Key_Down, spix::KeyModifiers::None);
             wait(300ms);
-            observed.push_back(referenceRow()); // 7: 3
+            observed.push_back(referenceRow());
             enterKey("mainWindow/referenceGrid", Qt::Key_V, spix::KeyModifiers::Control);
             wait(300ms);
-            // 8: the tray still names the reference (the status bar no longer
-            // names the targets: the panel's title, its accessible name, does).
             observed.push_back(getStringProperty("mainWindow/referencePanel", "title"));
             invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
             enterKey("mainWindow/editingGrid", Qt::Key_Down, spix::KeyModifiers::None);
             wait(300ms);
-            observed.push_back(referenceRow()); // 9: 3, not followed
+            observed.push_back(referenceRow());
             mouseClick("mainWindow/referenceMatchStatus", spix::MouseButtons::Right);
             wait(300ms);
             mouseClick("mainWindow/panelOptionsClose");
             wait(500ms);
-            observed.push_back(referenceRow());                                                          // 10: none
-            observed.push_back(existsAndVisible("mainWindow/documentTab1") ? "tab kept" : "tab gone"); // 11
+            observed.push_back(referenceRow());
+            observed.push_back(existsAndVisible("mainWindow/documentTab1") ? "tab kept" : "tab gone");
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -120,7 +107,7 @@ QByteArray read(const QString &path)
     return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -132,7 +119,6 @@ int main(int argc, char **argv)
         failures += ok ? 0 : 1;
     };
     const QString edit = dir.filePath(QStringLiteral("edit.ass")), ref = dir.filePath(QStringLiteral("ref.ass"));
-    // As reference_tests.cpp: e1 overlaps ref rows 0 and 2, e2 rows 2-3.
     write(edit, "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,e1\n"
                 "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,e2\n"
                 "Dialogue: 0,0:00:08.00,0:00:09.00,Default,,0,0,0,,e3\n");

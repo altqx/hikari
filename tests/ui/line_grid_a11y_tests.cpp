@@ -1,6 +1,3 @@
-// V1-A: accessibility of the painted Grid (automated tree checks; human
-// NVDA/Orca observation is V1-A-Q).
-
 #include "line_grid.h"
 #include "line_grid_accessible.h"
 #include "line_table_model.h"
@@ -67,7 +64,6 @@ struct Rig {
         QObject::connect(grid, &LineGrid::activeLineRequested, grid, [this](qulonglong id) {
             lines.setSelection({core::LineId{id}, lines.selection().selected}, core::LineId{id});
         });
-        // A hidden active Line: only the active Line moves.
         QObject::connect(grid, &LineGrid::activeLineFallbackRequested, grid, [this](qulonglong id) {
             lines.setSelection({core::LineId{id}, lines.selection().selected}, core::LineId{id});
         });
@@ -81,7 +77,7 @@ struct Rig {
     }
 };
 
-} // namespace
+}
 
 class LineGridA11yTest : public QObject {
     Q_OBJECT
@@ -96,7 +92,7 @@ private slots:
         QCOMPARE(iface->role(), QAccessible::Table);
         QCOMPARE(iface->text(QAccessible::Name), QStringLiteral("Subtitle lines"));
         QCOMPARE(rig.table()->rowCount(), 50'000);
-        QCOMPARE(rig.table()->columnCount(), 13); // every legacy ASS column
+        QCOMPARE(rig.table()->columnCount(), 13);
         QCOMPARE(rig.table()->columnDescription(12), QStringLiteral("Text"));
         QCOMPARE(rig.table()->columnDescription(10), QStringLiteral("CPS"));
         QAccessibleInterface *cell = rig.table()->cellAt(49'999, 12);
@@ -105,11 +101,7 @@ private slots:
         QCOMPARE(cell->text(QAccessible::Name), QStringLiteral("line 50000"));
     }
 
-    // D1 Windows gate: UI Automation listed the main window again under each
-    // Grid cell, and focus in the Grid resolved to the main window. Qt's
-    // Windows bridge (qwindowsuiautils.cpp, hwndForAccessible) gives an element
-    // a host HWND when it has a window() and its parent has another window
-    // (or none); the Grid's cells and table must stay fragments of the window.
+    // Qt's Windows UIA bridge gives an element its own host HWND when its parent has another window or none.
     void cellsAndTableAreFragmentsOfTheWindow()
     {
         Rig rig(10);
@@ -127,8 +119,6 @@ private slots:
         QCOMPARE(table->role(), QAccessible::Table);
         QVERIFY(!hostsAWindow(cell));
         QVERIFY(!hostsAWindow(table));
-        // Up from the table: items of the window, then the window's own
-        // interface, which alone hosts the HWND.
         QAccessibleInterface *windowIface = QAccessible::queryAccessibleInterface(&rig.window);
         QAccessibleInterface *up = table;
         for (int steps = 0; up && up != windowIface && steps < 10; ++steps) {
@@ -139,7 +129,6 @@ private slots:
         QCOMPARE(up, windowIface);
         QVERIFY(hostsAWindow(windowIface));
 
-        // Focus in the Grid resolves to the current cell, from the window down.
         rig.grid->forceActiveFocus();
         QTest::keyClick(&rig.window, Qt::Key_Down);
         QTest::keyClick(&rig.window, Qt::Key_Down);
@@ -159,7 +148,6 @@ private slots:
     void hiddenColumnsLeaveTheTable()
     {
         Rig rig(10);
-        // GRID_HIDE_COLUMNS: Layer (1), CPS (512) and Wraps (8192).
         rig.lines.setHiddenColumns(1 | 512 | 8192);
         QCOMPARE(rig.table()->columnCount(), 10);
         QCOMPARE(rig.table()->columnDescription(1), QStringLiteral("Start"));
@@ -172,10 +160,9 @@ private slots:
     void cellsKeepLineIdentityThroughFiltering()
     {
         Rig rig(100);
-        QAccessibleInterface *cell = rig.table()->cellAt(20, 12); // Line 21
-        QCOMPARE(cell, rig.table()->cellAt(20, 12));               // same object on repeat
+        QAccessibleInterface *cell = rig.table()->cellAt(20, 12);
+        QCOMPARE(cell, rig.table()->cellAt(20, 12));
         rig.filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
-        // Comments 2 and 12 are now hidden: Line 21 moved up two rows, same cell.
         QCOMPARE(cell->tableCellInterface()->rowIndex(), 18);
         QCOMPARE(cell, rig.table()->cellAt(18, 12));
         QCOMPARE(cell->text(QAccessible::Name), QStringLiteral("line 21"));
@@ -187,7 +174,7 @@ private slots:
         rig.lines.setSelection({core::LineId{3}, {core::LineId{2}, core::LineId{3}}}, core::LineId{2});
         QCOMPARE(rig.table()->selectedRows(), (QList<int>{1, 2}));
         rig.filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
-        QCOMPARE(rig.table()->selectedRows(), (QList<int>{1})); // Line 2 is a hidden Comment
+        QCOMPARE(rig.table()->selectedRows(), (QList<int>{1}));
         QCOMPARE(rig.grid->selectedCount(), 2);
         QCOMPARE(rig.grid->hiddenSelectedCount(), 1);
     }
@@ -201,7 +188,7 @@ private slots:
             QVERIFY(rig.table()->cellAt(row, 12));
         QCOMPARE(a11y->cellsCreated(), std::size_t{1'000});
         QCOMPARE(a11y->cachedCellCount(), LineGridAccessible::kCellCacheCapacity);
-        QVERIFY(!QAccessible::accessibleInterface(first)); // evicted and released
+        QVERIFY(!QAccessible::accessibleInterface(first));
     }
 
     void announcesTheCellFirstAndCountsOnlyWhenTheyChange()
@@ -212,7 +199,7 @@ private slots:
         captured.clear();
         QAccessible::installUpdateHandler(captureUpdates);
         rig.lines.setSelection({core::LineId{5}, {core::LineId{5}}}, core::LineId{5});
-        rig.lines.setSelection({core::LineId{6}, {core::LineId{5}}}, core::LineId{5}); // move, same count
+        rig.lines.setSelection({core::LineId{6}, {core::LineId{5}}}, core::LineId{5});
         QAccessible::installUpdateHandler(nullptr);
         QList<Captured> focus, announce;
         for (const auto &c : captured) {
@@ -224,9 +211,8 @@ private slots:
         QCOMPARE(focus.size(), 2);
         QCOMPARE(focus[0].text, QStringLiteral("line 5"));
         QCOMPARE(focus[1].text, QStringLiteral("line 6"));
-        QCOMPARE(announce.size(), 1); // only the first change altered the count
+        QCOMPARE(announce.size(), 1);
         QCOMPARE(announce[0].text, QStringLiteral("1 selected"));
-        // Focus came before the count announcement.
         int firstFocus = -1, firstAnnounce = -1;
         for (int i = 0; i < captured.size(); ++i) {
             if (captured[i].type == QAccessible::Focus && firstFocus < 0)
@@ -242,7 +228,7 @@ private slots:
         Rig rig(100);
         rig.grid->forceActiveFocus();
         QSignalSpy requested(rig.grid, &LineGrid::activeLineRequested);
-        QTest::keyClick(&rig.window, Qt::Key_Down); // no current Line yet: first row
+        QTest::keyClick(&rig.window, Qt::Key_Down);
         QTest::keyClick(&rig.window, Qt::Key_Down);
         QTest::keyClick(&rig.window, Qt::Key_End);
         QCOMPARE(requested.count(), 3);
@@ -250,16 +236,16 @@ private slots:
         QCOMPARE(requested[1][0].toULongLong(), 2ULL);
         QCOMPARE(requested[2][0].toULongLong(), 100ULL);
         QCOMPARE(rig.grid->currentRow(), 99);
-        QVERIFY(rig.grid->contentY() > 0); // scrolled to keep the current row visible
+        QVERIFY(rig.grid->contentY() > 0);
     }
 
     void hiddenCurrentLineMovesToTheNearestShownRow()
     {
         Rig rig(100);
         rig.lines.setSelection({core::LineId{12}, {core::LineId{12}}}, core::LineId{12});
-        rig.filter.setPredicate([](const core::LineRecord &l) { return !l.comment; }); // hides Line 12
-        QCOMPARE(rig.lines.selection().active->value, 13ULL);   // following neighbour on a tie
-        QVERIFY(rig.lines.selection().selected.contains(core::LineId{12})); // still selected
+        rig.filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
+        QCOMPARE(rig.lines.selection().active->value, 13ULL);
+        QVERIFY(rig.lines.selection().selected.contains(core::LineId{12}));
         QCOMPARE(rig.grid->hiddenSelectedCount(), 1);
     }
 };

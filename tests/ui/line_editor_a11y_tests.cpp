@@ -1,8 +1,3 @@
-// E4: the Line editor's metadata fields, counters and switches in the shell's
-// accessibility tree (the E2-a11y route; human NVDA/Orca observation stays a
-// separate procedure). Each control carries its legacy label or tooltip as
-// its name.
-
 #include "a11y_tree.h"
 #include "docking.h"
 #include "hikari/app/application.h"
@@ -70,15 +65,10 @@ private slots:
         expect(QAccessible::EditableText, "Right margin");
         expect(QAccessible::EditableText, "Vertical margin");
         expect(QAccessible::ComboBox, "Effect");
-        // LE4: the icon button that opens the position grid.
         expect(QAccessible::Button, "Text position");
-        // LE5: the custom tag buttons' "+".
         expect(QAccessible::Button, "Add a tag button");
-        // LE2: no Time / Frames radios here (the Video panel's menu has them).
         QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show times")), qPrintable(tree));
         QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show frames")), qPrintable(tree));
-        // The counters read as their names and numbers (EditBox::UpdateChars,
-        // LE1-counters).
         expect(QAccessible::StaticText, "Wraps 5/43");
         expect(QAccessible::StaticText, "CPS 5/15");
     }

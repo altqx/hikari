@@ -1,10 +1,3 @@
-// P5, NT1 (#302): the Log's presenter. Every message is kept as an entry
-// stamped "HH:MM:SS" (legacy LogHandler at 20d647c4); a silent message only
-// goes into the Log, a notice also asks for a toast; the panel's entries
-// filter by severity and text; a toast's Details marks its entry and shows
-// it whatever the filters; notices before the toasts are given again;
-// other threads are published here.
-
 #include "log_controller.h"
 
 #include <QSignalSpy>
@@ -62,7 +55,6 @@ private slots:
         log.entries()->setFilterText(QStringLiteral("hotkeys"));
         QCOMPARE(shownTexts(log), QStringList{QStringLiteral("invalid")});
         QCOMPARE(log.shownText().count(QLatin1Char('\n')), 1);
-        // New entries join the filtered view as they come.
         log.notice(LogController::Warning, QStringLiteral("Hotkeys"), QStringLiteral("again"));
         QCOMPARE(shownTexts(log), (QStringList{QStringLiteral("invalid"), QStringLiteral("again")}));
     }
@@ -81,14 +73,11 @@ private slots:
         QVERIFY(log.entries()->showInfo());
         QCOMPARE(log.entries()->filterText(), QString());
         QCOMPARE(log.entries()->rowOf(1), 0);
-        // "N more notices": the panel, nothing marked.
         log.reveal(0);
         QCOMPARE(log.marked(), 0);
         QCOMPARE(revealed.size(), 2);
     }
 
-    // Notices of the start come before Main's toasts: kept (the last ten)
-    // and given again once the toasts ask.
     void noticesBeforeTheToastsAreGivenAgain()
     {
         LogController log;

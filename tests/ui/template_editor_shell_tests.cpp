@@ -1,10 +1,3 @@
-// KE2: the Template editor in the shell: a panel tabbed with the Line editor,
-// closed by default and listed under View › Panels; its previews run only
-// while it shows; the video draws the preview with a badge saying so, the
-// render cost below it; Apply is the Automation menu's run of the bundled
-// karaoke templater, its report in the panel, one undo step. With
-// HIKARI_TEMPLATE_SHOT_DIR set, the panel in the four themes for review.
-
 #include "hikari/app/application.h"
 #include "hikari/application/generated_runs.h"
 #include "docking.h"
@@ -46,7 +39,7 @@ QObject *findIn(QQuickItem *at, const QString &name)
     return nullptr;
 }
 
-} // namespace
+}
 
 class TemplateEditorShellTests : public QObject {
     Q_OBJECT
@@ -106,9 +99,6 @@ class TemplateEditorShellTests : public QObject {
         }
         return false;
     }
-    // A copy of a corpus song open, the templater loaded, its first karaoke
-    // Line active; with `video`, a dummy video of the song's size.
-    // `trust`: the user chose to preview the song's templates.
     bool openSong(const char *name, bool video, bool trust = true)
     {
         const QString path = dir.filePath(QLatin1String(name));
@@ -147,7 +137,7 @@ private slots:
         if (QTest::currentTestFunction() == QByteArrayLiteral("aTemplateTypedBeforeATabChangeIsAutosaved"))
             options.recoveryDir = dir.filePath(QStringLiteral("Recovery"));
         application = new app::Application(options);
-        // No dictionary here: legacy's notice would pop up over the panel.
+        // MUST KILL: spelling off only to keep its missing-dictionary notice off the panel
         application->settingsStore()->setValue(QStringLiteral("editor.spellchecker"), false);
         engine = new QQmlApplicationEngine;
         ui::attachDocking(*engine);
@@ -168,8 +158,6 @@ private slots:
         application = nullptr;
     }
 
-    // A tab beside the Line editor, closed until opened (View › Panels
-    // lists it), its previews only while it is the tab shown.
     void itIsATabBesideTheLineEditorAndPreviewsOnlyWhileShown()
     {
         auto *dock = object(QStringLiteral("templateDock"));
@@ -188,7 +176,6 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(docking, "tabCount", Q_RETURN_ARG(int, editorTabs), Q_ARG(QString, QStringLiteral("Editor"))));
         QVERIFY(tabs >= 2);
         QCOMPARE(tabs, editorTabs);
-        // The header holds its tools while it is the current tab.
         auto *eye = item(QStringLiteral("templatePreviewOnVideo"));
         QVERIFY(eye);
         QTRY_VERIFY(eye->isVisible());
@@ -206,8 +193,6 @@ private slots:
         QTRY_VERIFY(editor().shown());
     }
 
-    // The video draws the preview with the badge; the render cost moves
-    // below it; the eye turns it off.
     void theVideoShowsThePreviewWithABadge()
     {
         QVERIFY(openSong("stock-tutorials.ass", true));
@@ -229,8 +214,6 @@ private slots:
         QVERIFY(application->videoView().toggleRenderCost());
     }
 
-    // Apply is the Automation menu's run: one undo step, its report in the
-    // panel's footer.
     void applyIsTheShellsRunAndOneUndoStep()
     {
         QVERIFY(openSong("stock-tutorials.ass", false));
@@ -248,8 +231,6 @@ private slots:
         QCOMPARE(session()->document().lines().size(), lines);
     }
 
-    // A template typed just before another tab is chosen, or before the tab
-    // is closed, is kept: in its own Document, and the close asks to save it.
     void aTemplateTypedBeforeATabChangeIsKept()
     {
         QVERIFY(openSong("km-minimal.ass", false));
@@ -269,15 +250,12 @@ private slots:
         application->selectTab(0);
         QVERIFY(std::u8string_view(textOfTyped()).ends_with(u8"{\\bord7}"));
         QVERIFY(typed->isDirty());
-        // Tab 0, untouched until now: closing it asks to save the edit.
         QVERIFY(!session()->isDirty());
         QTRY_VERIFY_WITH_TIMEOUT(!editor().text().isEmpty(), 20'000);
         editor().setText(editor().text() + QStringLiteral("{\\bord8}"));
         QCOMPARE(application->reviewCloseTab(0).size(), qsizetype(1));
     }
 
-    // The template typed before another tab is chosen goes into its own
-    // Document, which then waits for its autosave as any edit does.
     void aTemplateTypedBeforeATabChangeIsAutosaved()
     {
         QVERIFY(openSong("km-minimal.ass", false));
@@ -292,8 +270,6 @@ private slots:
         QVERIFY(application->autosavePending(typed));
     }
 
-    // The Line editor's own moves (Enter, Ctrl+D) take the preview to the
-    // karaoke Line they reach, as a Grid click does.
     void thePreviewFollowsTheLineEditorsMoves()
     {
         QVERIFY(openSong("stock-tutorials.ass", false));
@@ -314,8 +290,6 @@ private slots:
         QCOMPARE(editor().source(), reached->value);
     }
 
-    // A macro run another way than the panel's (a shortcut, the Automation
-    // menu) starts from the template edit just typed, committed first.
     void aShortcutsRunSeesTheEditJustTyped()
     {
         QVERIFY(openSong("stock-tutorials.ass", false));
@@ -331,8 +305,6 @@ private slots:
         }));
     }
 
-    // A template typed just before Save or Save all is saved with the file:
-    // the pending edit goes in first, and the file is left clean.
     void aSaveWritesTheTemplateJustTyped()
     {
         QVERIFY(openSong("stock-tutorials.ass", false));
@@ -344,10 +316,10 @@ private slots:
         };
         QVERIFY(!session()->isDirty());
         editor().setText(editor().text() + QStringLiteral("{\\bord8}"));
-        application->saveAll(); // the file looked clean
+        application->saveAll();
         QTRY_VERIFY_WITH_TIMEOUT(saved("bord8"), 10'000);
         QTRY_VERIFY(!session()->isDirty());
-        QTest::qWait(1'000); // past the commit delay: nothing comes in after
+        QTest::qWait(1'000);
         QVERIFY(!session()->isDirty());
         editor().setText(editor().text() + QStringLiteral("{\\bord9}"));
         QVERIFY(application->editor().save());
@@ -356,8 +328,6 @@ private slots:
         QVERIFY(!session()->isDirty());
     }
 
-    // A file opened while the panel shows runs none of its templates or
-    // code until the user previews it; a second file asks again.
     void aFileRunsNoCodeUntilTheUserPreviewsIt()
     {
         showPanel("templateDock");
@@ -374,15 +344,13 @@ private slots:
         QTRY_VERIFY(editor().trusted());
     }
 
-    // A karaoke Line clicked in the Grid is the one previewed, the video
-    // playing too.
     void thePreviewFollowsTheLineClicked()
     {
         QVERIFY(openSong("stock-tutorials.ass", true));
         showPanel("templateDock");
         QTRY_VERIFY_WITH_TIMEOUT(editor().source() != 0, 20'000);
         const auto first = editor().source();
-        // The test's first playback opens the player and may end there.
+        // MUST KILL: a throwaway first playback with a fixed 500 ms wait opens the player
         application->video().loopRange(editor().sourceStartMs(), editor().sourceEndMs());
         QTest::qWait(500);
         application->video().pause();
@@ -397,8 +365,6 @@ private slots:
         QFAIL("no second karaoke Line");
     }
 
-    // Loop the Line follows the preview's Line: choosing another karaoke Line
-    // (no seek on a single click) loops that one.
     void theLoopFollowsTheLinePreviewed()
     {
         QVERIFY(openSong("stock-tutorials.ass", true));
@@ -406,8 +372,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(editor().source() != 0, 20'000);
         auto *loop = item(QStringLiteral("templateLoop"));
         QTRY_VERIFY(loop->isEnabled());
-        // The test's first playback opens the player and may end there;
-        // later ones play on.
+        // MUST KILL: a throwaway first playback with a fixed 500 ms wait opens the player
         application->video().loopRange(editor().sourceStartMs(), editor().sourceEndMs());
         QTest::qWait(500);
         application->video().pause();
@@ -427,8 +392,6 @@ private slots:
         QVERIFY(application->video().looping());
         click(loop);
         QTRY_VERIFY(!application->video().looping());
-        // A seek by time (a chapter) ends the loop and plays on: the button
-        // unchecks without pausing.
         click(loop);
         QTRY_VERIFY(application->video().looping());
         QVERIFY(application->video().session().seekToMs(static_cast<int>(editor().sourceEndMs()) + 500));
@@ -437,8 +400,6 @@ private slots:
         QVERIFY(application->video().playing());
     }
 
-    // A reload from the file is new content: a trusted Document asks again,
-    // one without templates before too.
     void aReloadedFileAsksAgain()
     {
         showPanel("templateDock");
@@ -451,9 +412,6 @@ private slots:
         QVERIFY(!editor().hasPreview());
     }
 
-    // An Apply still running when the file is reloaded belongs to the old
-    // content: its result is not written into the new one, which stays
-    // untrusted.
     void anApplyAcrossAReloadIsRefused()
     {
         QVERIFY(openSong("stock-tutorials.ass", false, false));
@@ -472,9 +430,6 @@ private slots:
         QVERIFY(editor().lastApply().isEmpty());
     }
 
-    // Apply's report belongs to the Document it ran on: a tab chosen while
-    // the run goes on shows no Apply of its own, and the tab it ran on shows
-    // it once chosen again.
     void applyOnAnotherTabLeavesThisTabsSummary()
     {
         QVERIFY(openSong("km-minimal.ass", false));
@@ -494,16 +449,12 @@ private slots:
         QVERIFY(editor().lastApply().isEmpty());
         QTest::qWait(100);
         QVERIFY(!textOf(QStringLiteral("templateStatus")).startsWith(QStringLiteral("Applied: ")));
-        // Back on the tab it ran on, its Apply is there: the summary, and
-        // nothing changed since.
         application->selectTab(1);
         QTRY_VERIFY(!editor().lastApply().isEmpty());
         QCOMPARE(editor().changedCount(), 0);
         QVERIFY(editor().trusted());
     }
 
-    // For review: the panel beside the video in the four themes; a problem;
-    // the variables list; the narrow fold.
     void screenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_TEMPLATE_SHOT_DIR");
@@ -511,8 +462,6 @@ private slots:
             QSKIP("HIKARI_TEMPLATE_SHOT_DIR is not set");
         QVERIFY(QDir().mkpath(out));
         window->resize(1600, 1000);
-        // The design's song: a code Line, a Line, syllable and line template,
-        // and karaoke Lines in two Styles.
         const QString path = dir.filePath(QStringLiteral("song.ass"));
         QFile f(path);
         QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
@@ -538,7 +487,6 @@ private slots:
                 "{\\k40}the {\\k60}spring {\\k80}wind\n");
         f.close();
         QVERIFY(openPath(path, true, false));
-        // The panel its whole height beside the video (no audio here).
         QVERIFY(QMetaObject::invokeMethod(object(QStringLiteral("audioDock")), "close"));
         showPanel("templateDock");
         auto &settings = *application->settingsStore();
@@ -553,13 +501,11 @@ private slots:
                                   QStringLiteral(".png")));
             }
         };
-        // The file just opened: its templates wait for the user's Preview.
         QTRY_VERIFY(item(QStringLiteral("templatePreviewTrust"))->isVisible());
         QTest::qWait(500);
         shoot(QStringLiteral("trust"));
         editor().trustDocument();
         QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview(), 20'000);
-        // The syllable template current; the frame on its third syllable.
         for (const QVariant &v : editor().templates())
             if (v.toMap().value(QStringLiteral("effect")).toString().startsWith(QStringLiteral("template syl"))) {
                 editor().setCurrent(v.toMap().value(QStringLiteral("id")).toULongLong());
@@ -568,7 +514,6 @@ private slots:
         application->video().showFrameAt(qRound(1.75 * 23.976));
         QTest::qWait(1500);
         shoot(QStringLiteral("editor"));
-        // A problem in the current template.
         const QString text = editor().text();
         editor().setText(QStringLiteral("{\\fscx!math.rnd(1,5)!}") + text);
         QTRY_VERIFY_WITH_TIMEOUT(editor().hasProblems(), 20'000);
@@ -576,7 +521,6 @@ private slots:
         shoot(QStringLiteral("problem"));
         editor().setText(text);
         QTRY_VERIFY_WITH_TIMEOUT(!editor().hasProblems(), 20'000);
-        // `$` typed: the variables with their values.
         auto *field = item(QStringLiteral("templateText"));
         field->forceActiveFocus();
         field->setProperty("cursorPosition", 0);
@@ -591,7 +535,6 @@ private slots:
         QTRY_VERIFY(!list->property("opened").toBool());
         editor().setText(text);
         editor().commit();
-        // Floating at its minimum width: the fields stacked, the preview folded.
         auto *dock = object(QStringLiteral("templateDock"));
         dock->setProperty("isFloating", true);
         auto *panel = item(QStringLiteral("templatePanel"));
@@ -609,8 +552,6 @@ private slots:
         dock->setProperty("isFloating", false);
     }
 
-    // KP1 with KE3: in the Karaoke arrangement, the Lines a preset's
-    // templates generate show in the Grid as one folded row per run.
     void aPresetsLinesFoldInTheKaraokeGrid()
     {
         const QString path = dir.filePath(QStringLiteral("fold.ass"));
@@ -652,9 +593,6 @@ private slots:
         QVERIFY(rows > 0 && rows < generated.size());
     }
 
-    // KE3, for review: New › From a preset open on a song without
-    // templates, then Sparkles and Falling letters inserted and previewed on
-    // the video, in the four themes.
     void presetScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_TEMPLATE_SHOT_DIR");
@@ -702,16 +640,15 @@ private slots:
         QTRY_VERIFY(sparkles->isVisible() && sparkles->width() > 0);
         QTest::mouseMove(sparkles->window(), sparkles->mapToScene(QPointF(sparkles->width() / 2, sparkles->height() / 2))
                                                  .toPoint());
-        QTest::qWait(1500); // the description's tooltip
+        // MUST KILL: fixed 1500 ms wait for the description's tooltip
+        QTest::qWait(1500);
         shoot(QStringLiteral("presets-menu"));
         QVERIFY(QMetaObject::invokeMethod(sparkles, "triggered"));
         QTRY_VERIFY(!menu->property("opened").toBool() || QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview(), 20'000);
-        // The frame as the fourth syllable sings and its sparks fly.
         application->video().showFrameAt(qRound(2.0 * 23.976));
         QTest::qWait(1500);
         shoot(QStringLiteral("presets-preview"));
-        // Falling letters instead: the letters still dropping in before the Line.
         QVERIFY(session()->undo());
         QVERIFY(editor().insertPreset(8));
         QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview() && !editor().previewPending(), 20'000);

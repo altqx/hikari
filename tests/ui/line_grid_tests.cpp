@@ -1,5 +1,3 @@
-// V1-G: painted Grid viewport geometry and visible-row painting.
-
 #include "line_grid.h"
 #include "line_table_model.h"
 #include "settings_store.h"
@@ -54,7 +52,7 @@ int paintOnce(LineGrid &grid)
     return grid.lastPaintedRowCount();
 }
 
-} // namespace
+}
 
 class LineGridTest : public QObject {
     Q_OBJECT
@@ -64,15 +62,15 @@ private slots:
         const GridGeometry g{20, 20};
         QCOMPARE(g.firstVisibleRow(0), 0);
         QCOMPARE(g.firstVisibleRow(39.9), 1);
-        QCOMPARE(g.visibleRowCount(0, 100, 1000), 4);  // 80 px of body: rows 0-3
-        QCOMPARE(g.visibleRowCount(10, 100, 1000), 5); // partial rows at both edges
-        QCOMPARE(g.visibleRowCount(0, 100, 2), 2);     // fewer rows than fit
-        QCOMPARE(g.visibleRowCount(0, 15, 1000), 0);   // header only
-        QCOMPARE(g.visibleRowCount(5000, 100, 10), 0); // scrolled past the end
-        QCOMPARE(g.rowAt(10, 0, 1000), -1);            // header
+        QCOMPARE(g.visibleRowCount(0, 100, 1000), 4);
+        QCOMPARE(g.visibleRowCount(10, 100, 1000), 5);
+        QCOMPARE(g.visibleRowCount(0, 100, 2), 2);
+        QCOMPARE(g.visibleRowCount(0, 15, 1000), 0);
+        QCOMPARE(g.visibleRowCount(5000, 100, 10), 0);
+        QCOMPARE(g.rowAt(10, 0, 1000), -1);
         QCOMPARE(g.rowAt(25, 0, 1000), 0);
         QCOMPARE(g.rowAt(25, 40, 1000), 2);
-        QCOMPARE(g.rowAt(99, 0, 3), -1); // below the last of three rows
+        QCOMPARE(g.rowAt(99, 0, 3), -1);
         QCOMPARE(g.contentHeight(1000), 20020.0);
     }
 
@@ -102,14 +100,10 @@ private slots:
         QCOMPARE(grid.contentY(), 0.0);
         grid.setContentY(1e9);
         QCOMPARE(grid.contentY(), grid.contentHeight() - 300);
-        // The last row is fully reachable.
         const int last = grid.rowAt(299);
         QCOMPARE(last, 99);
     }
 
-    // #400: a layout that shrinks the Grid keeps the active Line in view
-    // (line 34 of 40 under a seven-row Grid); one scrolled out of view
-    // before stays where it is.
     void shrinkingKeepsTheActiveLineInView()
     {
         LineTableModel model;
@@ -125,7 +119,6 @@ private slots:
         grid.setHeight(header + 7 * rowHeight);
         QVERIFY(grid.rowAt(header + 1) <= 33);
         QCOMPARE(grid.rowAt(header + 7 * rowHeight - 1), 33);
-        // Out of view before: the view keeps its place.
         grid.setHeight(header + 41 * rowHeight);
         grid.setContentY(0);
         grid.setHeight(header + 20 * rowHeight);
@@ -136,8 +129,6 @@ private slots:
 
     void savesAReviewFrame()
     {
-        // A small frame with selection, the active Line, a Comment and mixed
-        // scripts, kept as a test artifact for human review (not a reference).
         const char *script = "[Events]\n"
                              "Dialogue: 0,0:00:01.00,0:00:02.50,Default,Alice,0,0,0,,{\\i1}Hello{\\i0} there\n"
                              "Comment: 0,0:00:02.50,0:00:04.00,Default,,0,0,0,,a comment line\n"
@@ -160,32 +151,20 @@ private slots:
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-review-frame.png")));
     }
 
-    // R1: legacy SubsGridWindow.cpp:419-429: a compared row is painted in
-    // the mismatch or match colour (the comment ones on a Comment), and a
-    // selected one with GRID_SELECTION blended over it (GetColorWithAlpha).
     void comparisonBackgrounds()
     {
         const QVariantList colours{QColor(0x27, 0x00, 0xFF), QColor(0x27, 0x2B, 0x32), QColor(0x3A, 0x3E, 0x45),
                                    QColor(0x00, 0x31, 0x76), QColor(0x36, 0x62, 0xA1)};
-        // legacy's dark GRID_SELECTION (config.cpp:422)
         const QColor legacySelection(0x87, 0x91, 0xFD, 75);
         QVERIFY(!comparisonBackground(0, false, false, colours, legacySelection));
         QCOMPARE(*comparisonBackground(2, false, false, colours, legacySelection), QColor(0x27, 0x2B, 0x32));
         QCOMPARE(*comparisonBackground(1, false, false, colours, legacySelection), QColor(0x3A, 0x3E, 0x45));
         QCOMPARE(*comparisonBackground(2, true, false, colours, legacySelection), QColor(0x00, 0x31, 0x76));
         QCOMPARE(*comparisonBackground(1, true, false, colours, legacySelection), QColor(0x36, 0x62, 0xA1));
-        // #8791FD at alpha 75 over #272B32, in legacy's integer arithmetic:
-        // r = 0x27 * 180 / 255 + (0x87 - 180 * 0x87 / 255) = 27 + 40 = 67.
         QCOMPARE(*comparisonBackground(2, false, true, colours, legacySelection), QColor(67, 73, 110));
-        // K2: GRID_SELECTION is a selection-type mark, the theme's accent at
-        // legacy's alpha 75 (Dark's green #9CDBC9): the same arithmetic.
-        // r = 27 + (0x9C - 180 * 0x9C / 255) = 27 + 46 = 73.
         QCOMPARE(*comparisonBackground(2, false, true, colours, QColor(0x9C, 0xDB, 0xC9, 75)), QColor(73, 95, 95));
     }
 
-    // R1: the painted rows: backgrounds per state, and the differing
-    // characters outlined in GRID_COMPARISON_OUTLINE (SubsGridWindow.cpp:
-    // 508-528); a row without a table is painted as before.
     void paintsComparisonColours()
     {
         const char *script = "[Events]\n"
@@ -203,9 +182,7 @@ private slots:
         model.setDocument(core::loadAss(bytes).document, &table);
         model.setComparisonColours({QColor(0, 255, 0), QColor(200, 0, 0), QColor(0, 0, 200), QColor(1, 1, 1),
                                     QColor(2, 2, 2)});
-        // The outline is drawn glyphs: measure and paint in a font every
-        // platform has (offscreen on Windows reads Qt's own font directory,
-        // which holds none, and draws every character as a box).
+        // Offscreen on Windows finds no font and draws every character as a box.
         const int font = QFontDatabase::addApplicationFont(QStringLiteral(HIKARI_TEST_FONT));
         QVERIFY(font >= 0);
         const QFont before = QGuiApplication::font();
@@ -213,7 +190,6 @@ private slots:
         QFont testFont(QFontDatabase::applicationFontFamilies(font).value(0));
         testFont.setPixelSize(20);
         QGuiApplication::setFont(testFont);
-        // Wide enough for every fixed column and the Text column after them.
         LineGrid grid;
         grid.setSize(QSizeF(1280, 200));
         grid.setModel(&model);
@@ -224,11 +200,7 @@ private slots:
         painter.end();
         const double rh = grid.rowHeight();
         const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
-        // A cell of the row away from any text (the margin column's right edge).
         const QRectF text1 = grid.cellRect(1, grid.columnCount() - 1);
-        // The comparison colour from the second column on; the number column
-        // takes its label colour (E6), as legacy paints column 0 in its
-        // label colour and only the others in kol (SubsGridWindow.cpp:495).
         const QRectF number0 = grid.cellRect(0, 0);
         QCOMPARE(grid.columnTitle(0), model.headerData(LineTableModel::NumberColumn, Qt::Horizontal).toString());
         const int afterNumber = int(number0.right()) + 2;
@@ -240,8 +212,6 @@ private slots:
             const QColor number = image.pixelColor(2, rowY(row));
             QVERIFY2(number != QColor(200, 0, 0) && number != QColor(0, 0, 200), qPrintable(number.name()));
         }
-        // The outline colour around "WWWW" in the Text cell of row 1, and none
-        // in row 0's equal text.
         int outline1 = 0, outline0 = 0;
         const QRectF text0 = grid.cellRect(0, grid.columnCount() - 1);
         for (int x = int(text1.left()); x < int(text1.left()) + 60; ++x)
@@ -256,13 +226,6 @@ private slots:
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-comparison-frame.png")));
     }
 
-    // K2: the Grid paints with the theme layer's roles in every theme: the
-    // header on the raised surface, rows on the panel with every other one
-    // in the theme's alternate shade, a selected row on the selected
-    // background with the 3-wide leading accent marker (visual-language.md,
-    // "Selected row marker"), the active Line outlined in the accent, the
-    // empty area below the rows on the panel. (The repaint on a theme change
-    // is hikari_ui_shell_tests themeSwitchRetintsEverySurface's.)
     void paintsTheThemeRoles()
     {
         const char *script = "[Events]\n"
@@ -284,7 +247,6 @@ private slots:
         store.setValue(QStringLiteral("appearance.followSystem"), false);
         const double rh = grid.rowHeight();
         const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
-        // Between the Actor and Left columns' text (the Actor cells are empty).
         QCOMPARE(grid.columnTitle(6), QStringLiteral("Left"));
         const int right = int(grid.cellRect(0, 6).left()) - 6;
         for (const auto code : theme::kCodes) {
@@ -304,12 +266,11 @@ private slots:
             };
             expect(right, int(grid.geometry().headerHeight / 2), roles.raised, "header");
             expect(right, rowY(0), roles.panel, "row");
-            expect(right, rowY(1), content.gridComment, "comment row"); // GR4
-            if (!theme::isHighContrast(code)) // high contrast does not shade every other row
+            expect(right, rowY(1), content.gridComment, "comment row");
+            if (!theme::isHighContrast(code))
                 QVERIFY(content.gridAlternate != roles.panel);
             expect(right, rowY(2), roles.select, "selected row");
             expect(1, rowY(2), roles.accent, "selected marker");
-            // E6: the number cell, at the row's left edge, is in its label colour.
             const QColor label = LineTableModel::themeLabelColours(theme::isDark(code))[0];
             expect(4, rowY(2), label, "past the 3-wide marker");
             expect(0, rowY(3), roles.accent, "active outline (left)");
@@ -319,10 +280,6 @@ private slots:
         }
     }
 
-    // GR4: a Comment row is painted on the theme's comment background
-    // (legacy GRID_COMMENT), whatever its parity, in secondary text that
-    // reads on it; selected, the selection blends over it (GetColorWithAlpha),
-    // with the accent marker. Every theme; screenshots for the card.
     void paintsCommentRows()
     {
         const char *script = "[Events]\n"
@@ -345,7 +302,7 @@ private slots:
         store.setValue(QStringLiteral("appearance.followSystem"), false);
         const double rh = grid.rowHeight();
         const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
-        const int right = int(grid.cellRect(0, 6).left()) - 6; // between the Actor and Left columns' text
+        const int right = int(grid.cellRect(0, 6).left()) - 6;
         QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
         for (const auto code : theme::kCodes) {
             store.setValue(QStringLiteral("appearance.theme"), theme::codeName(code));
@@ -353,10 +310,6 @@ private slots:
             const auto &content = theme::current().content;
             const QString name = theme::codeName(code);
             const QColor selectedComment = selectionOver(content.gridComment, content.comparisonSelection);
-            // The comment colour stands apart from the rows around it and
-            // from the selection, and both text roles read on it. Selected,
-            // the Comment's ink (secondary, or the primary text where the
-            // blend leaves secondary short) reads at 4.5:1 with every accent.
             for (const QColor &other : {roles.panel, content.gridAlternate, roles.select})
                 QVERIFY2(content.gridComment != other, qPrintable(name));
             for (const QColor &ink : {roles.text, roles.muted})
@@ -396,14 +349,6 @@ private slots:
         }
     }
 
-    // K2 focus (visual-language.md, "Keyboard focus"): while the Grid has
-    // keyboard focus its focused cell, the current Line's row, carries the
-    // focus ring, 1 wide in the text colour tight inside the current Line's
-    // accent outline (the user's 2026-10-13 decision: "grid row should still
-    // use the ring too", 1 wide like the controls'); a selected current row
-    // keeps its 3-wide accent marker over the ring's left side. Without
-    // focus no ring. Every theme; focus stays apart from the selection's
-    // accent and background.
     void focusRingOnTheCurrentRow()
     {
         const char *script = "[Events]\n"
@@ -431,11 +376,10 @@ private slots:
         store.setValue(QStringLiteral("appearance.followSystem"), false);
         const double rh = grid.rowHeight();
         const auto top = [&](int row) { return int(grid.geometry().headerHeight + row * rh); };
-        const int middle = int(grid.cellRect(0, 6).left()) - 6; // between the Actor and Left columns' text
+        const int middle = int(grid.cellRect(0, 6).left()) - 6;
         for (const auto code : theme::kCodes) {
             store.setValue(QStringLiteral("appearance.theme"), theme::codeName(code));
             const auto &roles = theme::current().roles;
-            // E6: the number cell, at the row's left edge, is in its label colour.
             const QColor label = LineTableModel::themeLabelColours(theme::isDark(code))[0];
             QVERIFY(roles.focus == roles.text && roles.focus != roles.accent && roles.focus != roles.select);
             const auto paint = [&] {
@@ -451,7 +395,6 @@ private slots:
                                         .arg(image.pixelColor(x, y).name(), colour.name())));
             };
             const int mid = top(1) + int(rh / 2);
-            // Unfocused: the current Line's accent outline, no ring.
             grid.setFocus(false);
             other.forceActiveFocus();
             QTRY_VERIFY(!grid.hasActiveFocus());
@@ -459,7 +402,6 @@ private slots:
             expect(image, 0, mid, roles.accent, "current outline");
             expect(image, 1, mid, label, "no ring");
             expect(image, middle, top(1) + 1, theme::current().content.gridAlternate, "no ring (top)");
-            // Focused: the ring inside the outline, on all four sides.
             grid.forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY(grid.hasActiveFocus());
             image = paint();
@@ -475,12 +417,10 @@ private slots:
             expect(image, middle, top(2) - 3, theme::current().content.gridAlternate, "inside the ring (bottom, 1 wide)");
             expect(image, middle, top(2) - 2, roles.focus, "ring (bottom)");
             expect(image, middle, top(2) - 1, roles.accent, "current outline (bottom)");
-            // only on the current row
             expect(image, 1, top(0) + int(rh / 2), label, "another row");
             expect(image, 1, top(2) + int(rh / 2), roles.accent, "a selected row's marker");
             expect(image, 4, top(2) + int(rh / 2), label, "a selected row");
             expect(image, middle, top(2) + int(rh / 2), roles.select, "a selected row (its cells)");
-            // A selected current row: the marker over the ring's left side.
             model.setSelection({core::LineId{3}, {core::LineId{3}}}, core::LineId{3});
             image = paint();
             const int selectedMid = top(2) + int(rh / 2);
@@ -496,13 +436,6 @@ private slots:
         }
     }
 
-    // V6: a press and a double click report whether they are in the End
-    // column (legacy SubsGrid::SetVideoLineTime seeks to the end there,
-    // SubsGridWindow.cpp:1382-1395); a double click is reported as such.
-    // GR1: a notch scrolls the system's lines per notch, whatever the
-    // modifiers (legacy SubsGridWindow.cpp:1460-1466 ignores them, Ctrl
-    // included); a touchpad's pixel deltas scroll by pixels; a sideways
-    // delta is not the Grid's; the selection and active Line stay.
     void wheelScrollsTheGrid()
     {
         struct Grid : LineGrid {
@@ -532,23 +465,18 @@ private slots:
         QCOMPARE(grid.contentY(), 4 * notch);
         QVERIFY(wheel({}, {0, 120}));
         QCOMPARE(grid.contentY(), 3 * notch);
-        // A high-resolution wheel's eighth of a notch moves an eighth.
         QVERIFY(wheel({}, {0, -15}));
         QCOMPARE(grid.contentY(), 3 * notch + notch / 8);
-        // Pixel deltas win over the angle a touchpad also reports.
         const qreal before = grid.contentY();
         QVERIFY(wheel({0, -7}, {0, -56}));
         QCOMPARE(grid.contentY(), before + 7);
-        // Sideways only: not handled, nothing moves.
         QVERIFY(!wheel({}, {-120, 0}));
         QVERIFY(!wheel({-30, 0}, {-240, 0}));
         QCOMPARE(grid.contentY(), before + 7);
-        // Shift+wheel that the platform turned sideways scrolls as the wheel.
         QVERIFY(wheel({}, {-120, 0}, Qt::ShiftModifier));
         QCOMPARE(grid.contentY(), before + 7 + notch);
         QVERIFY(wheel({-5, 0}, {-40, 0}, Qt::ShiftModifier));
         QCOMPARE(grid.contentY(), before + 12 + notch);
-        // Clamped at both ends.
         QVERIFY(wheel({}, {0, 120 * 1000}));
         QCOMPARE(grid.contentY(), 0.0);
         QVERIFY(wheel({}, {0, -120 * 1000}));
@@ -589,19 +517,16 @@ private slots:
         send(QEvent::MouseButtonDblClick, grid.cellRect(2, start).center());
         QCOMPARE(clicked.size(), 3);
         QCOMPARE(clicked[0].at(0).toULongLong(), grid.lineAtRow(1)->value);
-        QCOMPARE(clicked[0].at(2).toBool(), true);  // End column
-        QCOMPARE(clicked[0].at(3).toBool(), false); // a press
+        QCOMPARE(clicked[0].at(2).toBool(), true);
+        QCOMPARE(clicked[0].at(3).toBool(), false);
         QCOMPARE(clicked[1].at(1).toInt(), int(Qt::ControlModifier));
         QCOMPARE(clicked[1].at(2).toBool(), true);
-        QCOMPARE(clicked[1].at(3).toBool(), true); // a double click
+        QCOMPARE(clicked[1].at(3).toBool(), true);
         QCOMPARE(clicked[2].at(0).toULongLong(), grid.lineAtRow(2)->value);
-        QCOMPARE(clicked[2].at(2).toBool(), false); // the Start column
+        QCOMPARE(clicked[2].at(2).toBool(), false);
         QCOMPARE(clicked[2].at(3).toBool(), true);
     }
 
-    // The abbreviated headings name their column in full under the pointer
-    // (legacy's names in Paste columns and Hide columns, SubsGrid.cpp:199-200
-    // and 501-508); a heading that is a word, and the rows, have none.
     void abbreviatedHeadingsNameTheirColumnOnHover()
     {
         struct Grid : LineGrid {
@@ -637,29 +562,22 @@ private slots:
             QVERIFY2(tips.contains(QLatin1String(word)), word);
             QVERIFY2(tips.value(QLatin1String(word)).isEmpty(), word);
         }
-        // The tip sits under its heading's cell.
         QCOMPARE(hover(QPointF(grid.cellRect(0, vert).center().x(), headerY)), QStringLiteral("Vertical margin"));
         QCOMPARE(grid.headerToolTipCell().x(), grid.cellRect(0, vert).x());
         QCOMPARE(grid.headerToolTipCell().width(), grid.cellRect(0, vert).width());
         QCOMPARE(grid.headerToolTipCell().bottom(), grid.rowHeight());
-        // Over a row, and after the pointer leaves: nothing.
         QCOMPARE(hover(grid.cellRect(1, vert).center()), QString());
         hover(QPointF(grid.cellRect(0, vert).center().x(), headerY));
         QHoverEvent leave(QEvent::HoverLeave, QPointF(-1, -1), QPointF(-1, -1), QPointF());
         grid.hoverLeaveEvent(&leave);
         QCOMPARE(grid.headerToolTip(), QString());
         QVERIFY(changed.size() >= 4);
-        // A heading the model hides (GRID_HIDE_COLUMNS) takes its tip with it.
         hover(QPointF(grid.cellRect(0, vert).center().x(), headerY));
         QCOMPARE(grid.headerToolTip(), QStringLiteral("Vertical margin"));
         model.setHiddenColumns(LineTableModel::hideBit(LineTableModel::MarginVerticalColumn));
         QCOMPARE(grid.headerToolTip(), QString());
     }
 
-    // E6: the number cell in its label colour by State (SubsGridWindow.cpp:
-    // 478-479, 495), selected or not, with a dot for a changed Line and a
-    // ring for a changed and saved one; the state named for assistive
-    // technology.
     void paintsTheChangedLineMark()
     {
         const char *script = "[Events]\n"
@@ -684,13 +602,10 @@ private slots:
         const double rh = grid.rowHeight();
         const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
         const QRectF number = grid.cellRect(0, 0);
-        // A pixel of the cell left of the number's text, past a selected
-        // row's 3-wide accent marker (K2).
         QCOMPARE(image.pixelColor(3, rowY(0)), colours[0]);
-        QCOMPARE(image.pixelColor(3, rowY(1)), colours[1]); // selected: still its label colour
+        QCOMPARE(image.pixelColor(3, rowY(1)), colours[1]);
         QCOMPARE(image.pixelColor(3, rowY(2)), colours[2]);
         QCOMPARE(image.pixelColor(3, rowY(3)), colours[3]);
-        // The mark's centre: filled for changed, the label colour inside a ring for saved.
         const int markX = int(number.right() - 6.5);
         QVERIFY(image.pixelColor(markX, rowY(1)) != colours[1]);
         QCOMPARE(image.pixelColor(markX, rowY(2)), colours[2]);
@@ -707,9 +622,6 @@ private slots:
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-changed-lines.png")));
     }
 
-    // TM1 (#232): with tags from the original carried, a translation that
-    // leaves a run of its Original unplaced gets a corner mark on its text
-    // and "runs not placed" for assistive technology; off, neither.
     void paintsTheUnplacedRunsMark()
     {
         const char *script =
@@ -733,7 +645,7 @@ private slots:
         QVERIFY(model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
         QVERIFY(!model.index(1, 0).data(LineTableModel::UnplacedRunsRole).toBool());
         LineGrid grid;
-        grid.setSize(QSizeF(1280, 100)); // the Text column whole, whatever the fonts make the others
+        grid.setSize(QSizeF(1280, 100));
         grid.setModel(&model);
         QCOMPARE(grid.rowStateText(0), QStringLiteral("runs not placed"));
         QCOMPARE(grid.rowStateText(1), QString());
@@ -749,7 +661,6 @@ private slots:
             grid.paint(&painter);
             return image;
         };
-        // The cell's top right corner, against its bottom right one.
         const QRectF marked = grid.cellRect(0, text);
         QVERIFY2(marked.right() <= 1280, qPrintable(QString::number(marked.right())));
         const QPoint corner(int(marked.right()) - 2, int(marked.top()) + 2);
@@ -758,7 +669,6 @@ private slots:
         QVERIFY(image.pixelColor(corner) != image.pixelColor(below));
         QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-unplaced-runs.png")));
-        // The Line editor's draft placing the run takes the mark off its row.
         auto draft = *model.recordAt(0);
         draft.translation = u8"{\\i1}Mur {\\b1}wysoki";
         model.setDraft(draft);
@@ -771,8 +681,6 @@ private slots:
         QCOMPARE(image.pixelColor(corner), image.pixelColor(below));
     }
 
-    // TM1: a Line naming a Style the Document lacks reads its runs against
-    // the first Style (legacy GetStyle(0, name)), as the Line editor does.
     void unplacedRunsOfAMissingStyleUseTheFirstStyle()
     {
         const char *script =
@@ -790,14 +698,9 @@ private slots:
         model.setRunMarks(true);
         model.setDocument(core::loadAss(bytes).document);
         QCOMPARE(model.rowCount(), 1);
-        // Under the bold first Style the run is the unbold "B", not placed;
-        // read against no Style it would be the bold "C", placed on "Z".
         QVERIFY(model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
     }
 
-    // GR2: a row showing the Line editor's uncommitted draft paints its text
-    // live and a triangle in place of the changed-Line circle, on the
-    // committed Line's label colour; reverting brings the circle back.
     void paintsTheDraftTriangle()
     {
         const char *script = "[Events]\n"
@@ -821,9 +724,6 @@ private slots:
             grid.paint(&painter);
             return image;
         };
-        // The mark's ink around its centre: its box, and how tall it is at
-        // the box's left and right columns. The triangle is 7 tall at its
-        // left side and comes to a point; the 5-wide circle is symmetric.
         struct Shape {
             int height = 0, left = 0, right = 0;
         };
@@ -857,7 +757,7 @@ private slots:
         };
         QImage before = render();
         QVERIFY(circle(before, 1, colours[1]));
-        QCOMPARE(before.pixelColor(markX, rowY(0)), colours[0]); // no mark
+        QCOMPARE(before.pixelColor(markX, rowY(0)), colours[0]);
 
         auto first = *model.recordAt(0);
         first.text = u8"typed but not committed";
@@ -865,7 +765,7 @@ private slots:
         QCOMPARE(grid.cellText(0, grid.columnCount() - 1), QStringLiteral("typed but not committed"));
         QImage drafted = render();
         QVERIFY(triangle(drafted, 0, colours[0]));
-        QCOMPARE(drafted.pixelColor(3, rowY(0)), colours[0]); // the committed Line's label
+        QCOMPARE(drafted.pixelColor(3, rowY(0)), colours[0]);
         QCOMPARE(grid.rowStateText(0), QStringLiteral("uncommitted"));
         QVERIFY(circle(drafted, 1, colours[1]));
 
@@ -875,7 +775,7 @@ private slots:
         drafted = render();
         QVERIFY(triangle(drafted, 1, colours[1]));
         QCOMPARE(grid.rowStateText(1), QStringLiteral("changed, uncommitted"));
-        QCOMPARE(drafted.pixelColor(markX, rowY(0)), colours[0]); // the first row is back to no mark
+        QCOMPARE(drafted.pixelColor(markX, rowY(0)), colours[0]);
         QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
         QVERIFY(drafted.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-draft-line.png")));
 
@@ -884,8 +784,6 @@ private slots:
         QCOMPARE(grid.rowStateText(1), QStringLiteral("changed"));
     }
 
-    // GR2: typing in a 10k-Line Document repaints one row: a keystroke's
-    // draft and the Grid's paint stay far below a frame.
     void draftKeystrokesStayCheapOnALargeDocument()
     {
         LineTableModel model;
@@ -911,9 +809,6 @@ private slots:
         QCOMPARE(model.index(5005, LineTableModel::TextColumn).data().toString().size(), qsizetype(9 + keystrokes));
     }
 
-    // E6 (E6-mark-shape): the dot and the ring take the theme layer's roles,
-    // not a fixed colour: text, or field where text would not stand out from
-    // the label colour, so the mark stays visible in every theme (K2).
     void changedLineMarkTakesThemeRoles()
     {
         const char *script = "[Events]\n"
@@ -936,7 +831,7 @@ private slots:
             const auto &roles = theme::current().roles;
             const auto colours = LineTableModel::themeLabelColours(theme::isDark(code));
             QCOMPARE(model.headerData(0, Qt::Horizontal, LineTableModel::LabelColoursRole).toList().value(2).value<QColor>(),
-                     colours[2]); // the model follows the theme
+                     colours[2]);
             const auto markOn = [&](const QColor &label) {
                 return theme::contrastRatio(roles.field, label) > theme::contrastRatio(roles.text, label) ? roles.field
                                                                                                          : roles.text;
@@ -952,10 +847,8 @@ private slots:
             const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
             const int markX = int(grid.cellRect(0, 0).right() - 6.5);
             const QString name = theme::codeName(code);
-            // The dot's centre is the mark colour.
             QVERIFY2(distance(image.pixelColor(markX, rowY(0)), markOn(colours[1])) <= 6,
                      qPrintable(name + QLatin1Char(' ') + image.pixelColor(markX, rowY(0)).name()));
-            // The ring: the label colour inside, the mark colour around it.
             QCOMPARE(image.pixelColor(markX, rowY(1)), colours[2]);
             int nearest = 1000;
             for (int x = markX - 3; x <= markX + 3; ++x)
@@ -964,10 +857,6 @@ private slots:
         }
     }
 
-    // UI polish: the number's digits sit on their label colour and read on
-    // it in every theme, for every Line state and on a Comment: they take the
-    // label's ink (text, or field where text contrasts less), at 4.5:1 or
-    // more, and are painted in it.
     void numberDigitsReadOnTheirLabel()
     {
         const char *script = "[Events]\n"
@@ -987,9 +876,7 @@ private slots:
         auto restore = qScopeGuard([] { theme::useSettings(nullptr); });
         theme::useSettings(&store);
         store.setValue(QStringLiteral("appearance.followSystem"), false);
-        // Digits in a bold test font, whose stems are wider than a pixel: a
-        // platform's thin default (Fedora's Noto Sans) is all antialiasing
-        // and never reaches the ink itself.
+        // A thin platform font (Fedora's Noto Sans) is all antialiasing and never reaches the ink.
         const int font = QFontDatabase::addApplicationFont(QStringLiteral(HIKARI_TEST_FONT));
         QVERIFY(font >= 0);
         const QFont before = QGuiApplication::font();
@@ -1023,7 +910,6 @@ private slots:
                 const QString what = theme::codeName(code) + QStringLiteral(" row %1").arg(row);
                 QVERIFY2(theme::contrastRatio(ink, label) >= 4.5,
                          qPrintable(what + QStringLiteral(": %1 on %2").arg(ink.name(), label.name())));
-                // The digit's nearest pixel to the ink, left of the mark.
                 const int top = int(grid.geometry().headerHeight + row * rh);
                 int nearest = 1000;
                 for (int y = top + 2; y < int(top + rh) - 2; ++y)
@@ -1034,7 +920,6 @@ private slots:
         }
     }
 
-    // E6: hidden tags as painted (the Text column's swapped text).
     void paintsHiddenTags()
     {
         const char *script = "[Events]\n"
@@ -1066,7 +951,7 @@ private slots:
         grid.setSize(QSizeF(400, 1000));
         grid.setModel(&model);
         QCOMPARE(paintOnce(grid), 10);
-        model.setDocument(generate(3)); // modelReset
+        model.setDocument(generate(3));
         QCOMPARE(grid.contentHeight(), grid.geometry().contentHeight(3));
         QCOMPARE(paintOnce(grid), 3);
         grid.setModel(nullptr);
