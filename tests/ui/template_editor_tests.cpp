@@ -27,6 +27,7 @@
 #include <QSignalSpy>
 #include <QtTest>
 
+#include <algorithm>
 #include <cstring>
 #include <functional>
 #include <memory>
@@ -3399,72 +3400,78 @@ private slots:
         QCOMPARE(editor->templateCount() + editor->codeCount(), 0);
     }
 
-    // Each preset goes in above the first karaoke Line as its template and
+    // A preset goes in above the first karaoke Line as its template and
     // code Lines, with that Line's Style, in one undo step; the first is
     // current and editable. It previews on each karaoke Line what Apply then
-    // writes, and Apply gives karaoke_presets_tests' golden.
-    void eachPresetInsertsPreviewsAndApplies()
+    // writes, and Apply gives karaoke_presets_tests' golden. Palette is the
+    // preset that reads the Line's index ($li), which a preview leaving the
+    // Lines before it out must keep; KaraokePresets.EachPresetGeneratesItsGolden
+    // checks every preset's output (TP1 #462).
+    void aPresetInsertsPreviewsAndApplies()
     {
         const QVariantList presets = TemplateEditorController::presets();
-        for (int i = 0; i < presets.size(); ++i) {
-            const QString file = presets[i].toMap().value(QStringLiteral("file")).toString();
-            const auto preset = presetFile(file);
-            QVERIFY2(preset.has_value(), qPrintable(file));
-            openDocument(presetFixture(), true);
-            editor->refresh();
-            const core::LineId source = *firstKaraoke();
-            activate(source);
-            editor->setShown(true);
-            const std::string before = bytesOf(session->document());
+        const auto palette = std::ranges::find_if(presets, [](const QVariant &p) {
+            return p.toMap().value(QStringLiteral("file")).toString() == u"10-palette.ass";
+        });
+        QVERIFY(palette != presets.end());
+        const int i = static_cast<int>(palette - presets.begin());
+        const QString file = palette->toMap().value(QStringLiteral("file")).toString();
+        const auto preset = presetFile(file);
+        QVERIFY2(preset.has_value(), qPrintable(file));
+        openDocument(presetFixture(), true);
+        editor->refresh();
+        const core::LineId source = *firstKaraoke();
+        activate(source);
+        editor->setShown(true);
+        const std::string before = bytesOf(session->document());
 
-            QVERIFY2(editor->insertPreset(i), qPrintable(file));
-            editor->refresh();
-            QCOMPARE(static_cast<std::size_t>(editor->templateCount() + editor->codeCount()), preset->lines.size());
-            const auto lines = session->document().lines();
-            for (std::size_t n = 0; n < preset->lines.size(); ++n) {
-                const auto *l = lines[n];
-                QVERIFY(l->comment);
-                QCOMPARE(qs(l->style), QStringLiteral("Romaji"));
-                QCOMPARE(l->layer.value, preset->lines[n].layer);
-                QCOMPARE(qs(l->effect), qs(preset->lines[n].effect));
-                QCOMPARE(qs(l->text), qs(preset->lines[n].text));
-            }
-            QCOMPARE(lines[preset->lines.size()]->id, source);
-            QCOMPARE(editor->current(), static_cast<qulonglong>(lines.front()->id.value));
-            QCOMPARE(editor->text(), qs(preset->lines.front().text));
-
-            QVERIFY2(previewCame(), qPrintable(file));
-            // Each karaoke Line of the Style previews what Apply writes for
-            // it, the later ones too (their Lines before them left out).
-            std::vector<std::pair<core::LineId, QStringList>> previews;
-            for (const auto *l : session->document().lines())
-                if (application::isKaraokeLine(*l) && l->style == u8"Romaji")
-                    previews.emplace_back(l->id, QStringList());
-            QCOMPARE(previews.size(), std::size_t{3});
-            for (auto &[id, preview] : previews) {
-                activate(id);
-                QVERIFY(QTest::qWaitFor([&] { return settled() && editor->source() == id.value; }, 20'000));
-                QVERIFY2(!editor->hasProblems(), qPrintable(editor->problem()));
-                preview = previewTexts();
-                QVERIFY(!preview.isEmpty());
-            }
-
-            QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
-            QVERIFY(editor->apply(false));
-            editor->applied(templater->report);
-            QCOMPARE(bytesOf(session->document()), presetGolden(file));
-            for (const auto &[id, preview] : previews) {
-                QStringList written;
-                for (const auto *l : session->document().lines())
-                    if (l->generatedFrom == id)
-                        written << QString::fromStdString(lineText(*l)).section(QLatin1Char(','), 9);
-                QCOMPARE(preview, written);
-            }
-
-            QVERIFY(session->undo());
-            QVERIFY(session->undo());
-            QCOMPARE(bytesOf(session->document()), before);
+        QVERIFY2(editor->insertPreset(i), qPrintable(file));
+        editor->refresh();
+        QCOMPARE(static_cast<std::size_t>(editor->templateCount() + editor->codeCount()), preset->lines.size());
+        const auto lines = session->document().lines();
+        for (std::size_t n = 0; n < preset->lines.size(); ++n) {
+            const auto *l = lines[n];
+            QVERIFY(l->comment);
+            QCOMPARE(qs(l->style), QStringLiteral("Romaji"));
+            QCOMPARE(l->layer.value, preset->lines[n].layer);
+            QCOMPARE(qs(l->effect), qs(preset->lines[n].effect));
+            QCOMPARE(qs(l->text), qs(preset->lines[n].text));
         }
+        QCOMPARE(lines[preset->lines.size()]->id, source);
+        QCOMPARE(editor->current(), static_cast<qulonglong>(lines.front()->id.value));
+        QCOMPARE(editor->text(), qs(preset->lines.front().text));
+
+        QVERIFY2(previewCame(), qPrintable(file));
+        // Each karaoke Line of the Style previews what Apply writes for
+        // it, the later ones too (their Lines before them left out).
+        std::vector<std::pair<core::LineId, QStringList>> previews;
+        for (const auto *l : session->document().lines())
+            if (application::isKaraokeLine(*l) && l->style == u8"Romaji")
+                previews.emplace_back(l->id, QStringList());
+        QCOMPARE(previews.size(), std::size_t{3});
+        for (auto &[id, preview] : previews) {
+            activate(id);
+            QVERIFY(QTest::qWaitFor([&] { return settled() && editor->source() == id.value; }, 20'000));
+            QVERIFY2(!editor->hasProblems(), qPrintable(editor->problem()));
+            preview = previewTexts();
+            QVERIFY(!preview.isEmpty());
+        }
+
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
+        QVERIFY(editor->apply(false));
+        editor->applied(templater->report);
+        QCOMPARE(bytesOf(session->document()), presetGolden(file));
+        for (const auto &[id, preview] : previews) {
+            QStringList written;
+            for (const auto *l : session->document().lines())
+                if (l->generatedFrom == id)
+                    written << QString::fromStdString(lineText(*l)).section(QLatin1Char(','), 9);
+            QCOMPARE(preview, written);
+        }
+
+        QVERIFY(session->undo());
+        QVERIFY(session->undo());
+        QCOMPARE(bytesOf(session->document()), before);
     }
 
     // A preset's Lines are the user's to edit like any other template.

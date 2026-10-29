@@ -9,6 +9,7 @@
 
 #include <QFile>
 #include <QProcess>
+#include <QSet>
 #include <QTemporaryDir>
 #include <QTranslator>
 
@@ -113,7 +114,6 @@ TEST(Qm, EnglishCatalogGivesTheNumerusForms)
     ASSERT_TRUE(en.load(QStringLiteral(":/i18n/hikarisub_en.qm")));
     EXPECT_EQ(en.language(), QStringLiteral("en"));
     const TsCatalog catalog = readCatalog(source(QStringLiteral("i18n/hikarisub_en.ts")));
-    int numerus = 0;
     for (const TsContext &context : catalog.contexts)
         for (const TsMessage &m : context.messages) {
             ASSERT_TRUE(m.numerus) << m.source.toStdString();
@@ -125,14 +125,34 @@ TEST(Qm, EnglishCatalogGivesTheNumerusForms)
             for (int n : counts)
                 EXPECT_EQ(lookup(en, context.name, m, n), m.translations.value(n == 1 ? 0 : 1))
                     << m.source.toStdString() << " n=" << n;
-            ++numerus;
         }
-    // 79 with KP1's "%n generated lines", UD1's three user folder notices and
-    // GR1's rule count, ignored group's toast and the walk's two line counts.
-    // 81 with the freeze report's and the freeze notice's seconds (CR1).
-    EXPECT_EQ(numerus, 81);
     EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 1), QStringLiteral("Remove %n word"));
     EXPECT_EQ(en.translate("HikariSub.Spelling", "Remove %n word(s)", nullptr, 3), QStringLiteral("Remove %n words"));
+}
+
+// Every live numerus key of the interface catalogs has its English forms, so
+// English never shows a source's "(s)" (TP1 #462: this replaces the pinned
+// key counts every card with a counted string had to edit).
+TEST(Qm, EveryNumerusKeyHasItsEnglishForms)
+{
+    const auto key = [](const TsContext &context, const TsMessage &m) {
+        return QStringList{context.name, m.source, m.comment}.join(QChar(4));
+    };
+    QSet<QString> english;
+    for (const TsContext &context : readCatalog(source(QStringLiteral("i18n/hikarisub_en.ts"))).contexts)
+        for (const TsMessage &m : context.messages)
+            english.insert(key(context, m));
+    for (const QString &language : languages) {
+        int numerus = 0;
+        for (const TsContext &context : readCatalog(source(QStringLiteral("i18n/hikarisub_%1.ts").arg(language))).contexts)
+            for (const TsMessage &m : context.messages)
+                if (m.numerus && m.state != TsState::Vanished && m.state != TsState::Obsolete) {
+                    EXPECT_TRUE(english.contains(key(context, m)))
+                        << language.toStdString() << " " << context.name.toStdString() << " " << m.source.toStdString();
+                    ++numerus;
+                }
+        EXPECT_GT(numerus, 0) << language.toStdString();
+    }
 }
 
 TEST(Qm, GettextCatalogsAnswerTheirFinishedEntries)
@@ -175,36 +195,7 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
                     m.state = TsState::Finished;
                     ++numerus;
                 }
-        // 13 since the UI polish: the batch picker's tooltip and description
-        // came, its untranslated "Targets: %n picked line(s)" went. 14 with
-        // the Home page's "%n documents" (SH2). 16 with the Automation
-        // panel's script offer, "… and %n more" and its tooltip's (AM1); 19
-        // with the karaoke templater's report, its summary, its problems and
-        // its template Lines (KE1). 20 with the inspector bar's picked count
-        // beside its picker, "%n lines" (VT1). 23 with the popup kit's "%n
-        // more notice(s)" and the style copy's count and clash summary (PK1);
-        // 24 with What's new's "And %n earlier versions" (SH3). 25 with the
-        // karaoke check's problems not listed (KA7). 26 with the notices' "%n
-        // value(s) could not be scaled." (NT1; its "%n style(s) deleted"
-        // gave way to SY1's toast). 27 with Hydra's "Changes %n lines" (HY1).
-        // 36 with the file and session popups' counts: the close review's
-        // three questions, the autosaves, the startup offer's four and Close
-        // all tabs (PU1). 41 with the import wizard's "Import %n setting(s)"
-        // and "%n setting(s) imported." and the hotkeys import's three counts
-        // (PU7). 46 with a macro run's lines, its template problems, the
-        // card's log and a run's line count (AD3). 56 with the font picker's
-        // counts, the catalog load's accept button, summary and its four
-        // parts, and the fonts added from subtitles and their open files (PU3).
-        // 61 with the Style manager's rows, multi-style preview, rename, apply
-        // and catalog questions and its clean-up toast (SY1).
-        // 62 with the added words window's "Remove %n word(s)" (PU6). 65 with
-        // Edit shapes' and Edit tags' restore questions and the tags' count,
-        // "The tag takes %n value(s)" (PU5). 66 with the Kanji timer's "Apply the
-        // kanji timing of %n lines?" (KA3). 71 with the Grid's folded run,
-        // "%n generated lines" (KP1), the grammar check's rule groups, its
-        // ignored group's toast and the walk's two line counts (GR1). 73 with
-        // the freeze report's and the freeze notice's seconds (CR1).
-        ASSERT_EQ(numerus, 73) << language.toStdString();
+        ASSERT_GT(numerus, 0) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

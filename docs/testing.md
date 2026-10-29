@@ -59,8 +59,10 @@ First infrastructure work must qualify the tool integrations, native sessions, f
 | Runner | Helper | Labels | Modes |
 | --- | --- | --- | --- |
 | GoogleTest 1.18.0 (plain C++) | `hikari_add_gtest(target SOURCES … [LIBRARIES …] [LABELS …])`; each test case is its own CTest entry | `gtest` | none needed |
-| QtTest (C++ Qt) | `hikari_add_qttest(target SOURCES … [LIBRARIES …] [PARTS …])` | `qttest` plus the mode | `offscreen` always; `xvfb` when `xvfb-run` exists |
+| QtTest (C++ Qt) | `hikari_add_qttest(target SOURCES … [LIBRARIES …] [PARTS …])` | `qttest` plus the mode | `offscreen` always; `xvfb` when `xvfb-run` exists and the suite is in `HIKARI_XVFB_SUITES` |
 | Qt Quick Test (QML) | `hikari_add_quicktest(target QML_DIR dir)` over `tst_*.qml` | `quicktest` plus the mode | same |
+
+Only the suites in `HIKARI_XVFB_SUITES` (`cmake/HikariTesting.cmake`) also run on a real X server (TP1, [#462](https://github.com/altqx/hikari/issues/462)). They test window-system behaviour that offscreen cannot show: windowing, focus, hover, popups, timers and fullscreen. Each entry names the bug only its xvfb run caught, or what it covers. Every other suite runs offscreen only, because running it twice found nothing offscreen missed and took about half of Ubuntu's test time. A suite joins the list with the bug that only xvfb found. The configure fails on a listed name no suite registers.
 
 A long QtTest suite runs in parts (decision 38f, 2026-10-14): `PARTS <name> <name>=<first function>… PART_TIMEOUT <s>` registers `<target>.<name>.<mode>` per part, each running the executable with `-part FROM..BEFORE`: its functions from its first function up to the next part's first, in declaration order ([`tests/support/qtest_parts.h`](../tests/support/qtest_parts.h); the source ends with `HIKARI_QTEST_MAIN_IN_PARTS` instead of `QTEST_MAIN`). A function added anywhere joins the part around it, and `<target>.parts` checks that the parts list every function exactly once. `hikari_ui_shell_tests` is split this way: in one process it took about 800-850 s under Xvfb against a 900 s timeout. Run one function as before (`hikari_ui_shell_tests <function>`); `hikari_ui_shell_tests -part FROM..BEFORE -functions` lists a part.
 
@@ -103,11 +105,11 @@ The controls avoid host fonts. QML uses shapes only. libass, which needs one fon
 
 `tests/support/perf` follows the [performance contract](performance.md)'s statistics: each benchmark runs independent repetitions (five by default), and nearest-rank p50/p95/p99, maximum and mean are reported per run, never pooled. The p95 spread across runs is reported alongside. Reports are JSON and carry the host's identity: CPU, logical cores, OS and compiler.
 
-A host counts as calibrated only when its fingerprint is listed in `tests/perf/reference-hosts.json`, which is empty until reference hosts are bound. Results from any other host are labelled observations, never budget passes. Perf tests carry the `perf` label: the `*-verify` presets exclude them, and `ctest --preset <platform>-x64-perf` runs them. The Ubuntu CI job runs them and keeps `perf-report-core.json`.
+A host counts as calibrated only when its fingerprint is listed in `tests/perf/reference-hosts.json`, which is empty until reference hosts are bound. Results from any other host are labelled observations, never budget passes. Perf tests carry the `perf` label: the `*-verify` presets exclude them, and `ctest --preset <platform>-x64-perf` runs them. CI doesn't run them (TP1, #462): its hosts are uncalibrated, so the numbers were observations that could not fail. Run them on a calibrated host.
 
 The harness enforces the contract minimums for warm latency workloads: ten seconds of warmup and at least 1,000 timed operations. A spec below either one throws before it runs, and a `control` self-test checks this with the ordinary tests. Each report records the warmup used. Without the warmup, the first run of the ASS-load workload was about twice as slow as the rest (a 98% p95 spread on the Ubuntu runner).
 
-First workloads, each 5×200 operations: loading a generated 50,000-Line ASS script (the G fixture size), NTSC `frameAtOrAfter` lookups timed in batches of 1,000 because one lookup is close to the clock's resolution, and painting the Grid over 50,000 Lines at 1280×720. The Ubuntu CI job keeps both `perf-report-core.json` and `perf-report-ui.json`.
+First workloads, each 5×200 operations: loading a generated 50,000-Line ASS script (the G fixture size), NTSC `frameAtOrAfter` lookups timed in batches of 1,000 because one lookup is close to the clock's resolution, and painting the Grid over 50,000 Lines at 1280×720.
 
 ## The desktop in tests (38e, 2026-10-14)
 
