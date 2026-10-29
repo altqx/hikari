@@ -394,6 +394,11 @@ target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DI
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # O1: the settings registry over the INI file and the interim keys' move.
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
+# CF2 (#489): the user's lists as TOML files, each converted once from legacy's.
+hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_list_files_tests PRIVATE
+    HIKARI_LIST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/list-files"
+    HIKARI_FONT_CATALOG_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/font-catalogs")
 # O3: the legacy settings importer's snapshot, generations and rollback.
 hikari_add_qttest(hikari_ui_settings_import_tests SOURCES settings_import_ui_tests.cpp LIBRARIES hikari_composition)
 # O2: remapping a command in the shortcut editor and using it (Spix workflow).
