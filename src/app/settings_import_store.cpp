@@ -1,5 +1,6 @@
 #include "hikari/app/settings_import_store.h"
 
+#include "hikari/application/hotkeys.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
@@ -208,14 +209,25 @@ void mergeInto(Map &out, const Map &base, const Map &target)
 
 // A setting at its default is the same as one not set: the settings files
 // hold no defaults (CF1), so a base staged from hikari.ini, which could,
-// compares equal to the converted live profile. Not the main and audio
-// shortcuts: an empty list there is every default taken away, and not set
-// is the defaults.
+// compares equal to the converted live profile. The main and audio
+// shortcuts are at their default when they hold the default bindings: an
+// empty list there is every default taken away.
+bool defaultShortcuts(const SettingValue &value, bool audio)
+{
+    const auto *lines = std::get_if<std::vector<std::string>>(&value);
+    if (!lines)
+        return false;
+    application::HotkeyMap stored, defaults;
+    application::readHotkeyLines(stored, *lines);
+    application::loadDefaultHotkeys(defaults, audio);
+    return application::hotkeyLines(stored, audio) == application::hotkeyLines(defaults, audio);
+}
+
 si::Profile withoutDefaults(si::Profile profile)
 {
     std::erase_if(profile.values, [](const auto &entry) {
         if (entry.first == application::kHotkeysSetting || entry.first == application::kAudioHotkeysSetting)
-            return false;
+            return defaultShortcuts(entry.second, entry.first == application::kAudioHotkeysSetting);
         const auto *def = application::findSetting(entry.first);
         return def && application::convertSetting(entry.second, def->type) == def->defaultValue;
     });

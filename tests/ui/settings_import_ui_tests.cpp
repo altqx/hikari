@@ -11,6 +11,7 @@
 
 #include "hikari/app/settings_import_controller.h"
 #include "hikari/app/settings_import_store.h"
+#include "hikari/application/hotkeys.h"
 
 #include "settings_store.h"
 
@@ -261,7 +262,8 @@ private slots:
         QCOMPARE(legacy.bytes(), before);
     }
 
-    // CF1: a base staged from hikari.ini could hold a setting at its default;
+    // CF1: a base staged from hikari.ini could hold a setting at its default
+    // (here grid.font and the main shortcuts);
     // the settings files never do, and that is not an edit since staging.
     void aDefaultInTheStagedBaseIsNotAnEdit()
     {
@@ -286,11 +288,19 @@ private slots:
         QJsonObject base = o.value(QStringLiteral("baseValues")).toObject();
         const auto font = std::get<std::string>(application::findSetting("grid.font")->defaultValue);
         base.insert(QStringLiteral("grid.font"), QJsonObject{{QStringLiteral("string"), QString::fromStdString(font)}});
+        // and the main shortcuts with every default binding, as SaveHkeys wrote them
+        application::HotkeyMap defaults;
+        application::loadDefaultHotkeys(defaults, false);
+        QJsonArray lines;
+        for (const auto &line : application::hotkeyLines(defaults, false))
+            lines.append(QString::fromStdString(line));
+        base.insert(QString::fromLatin1(application::kHotkeysSetting.data()), QJsonObject{{QStringLiteral("list"), lines}});
         o.insert(QStringLiteral("baseValues"), base);
         writeFile(profile, QJsonDocument(o).toJson());
         Session next(folder.path());
         QVERIFY(next.store->recover());
         QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial"));
+        QVERIFY(next.settings->list(application::kHotkeysSetting.data()).contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
     }
 
     // Every audio shortcut taken away is an empty list, not the defaults: an
