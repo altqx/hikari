@@ -622,6 +622,11 @@ std::optional<SettingsImportStore::Generation> SettingsImportStore::readGenerati
         return std::nullopt;
     g.profile = std::move(*profile);
     g.base = std::move(*base);
+    // CF2: a generation from before rules.toml holds legacy's Rules.txt,
+    // which is the live rules.toml's conversion now.
+    for (si::Profile *p : {&g.profile, &g.base})
+        if (auto rules = p->files.extract("Rules.txt"); !rules.empty() && !p->files.contains("rules.toml"))
+            p->files.emplace("rules.toml", legacyRulesToml(QByteArray::fromStdString(rules.mapped())));
     if (o.value(QStringLiteral("receipt")).isObject())
         g.receipt = receiptFrom(o.value(QStringLiteral("receipt")).toObject());
     return g;

@@ -87,9 +87,10 @@ public:
         // before the external ones (the picker's preview and its note).
         std::function<std::vector<application::FontLease>()> documentFonts;
         // CF2: a catalog file converted from its legacy file, or kept aside
-        // when it did not read (ui::ListFile::Report).
+        // when it did not read, at reading or writing (ui::ListFile::Report).
         std::function<void(const std::filesystem::path &legacy, const std::filesystem::path &file)> fileConverted;
         std::function<void(const application::FileProblem &)> fileProblem;
+        std::function<void(const application::FileProblem &)> fileReplaced;
     };
 
     FontCatalogsController(ui::SettingsStore &settings, std::filesystem::path catalogDir, Hooks hooks,

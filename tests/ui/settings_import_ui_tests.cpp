@@ -625,6 +625,64 @@ private slots:
         QVERIFY(again.plan.row("setting:grid.fontSize")->proposedImport);
     }
 
+    // CF2: a generation staged before rules.toml holds legacy's Rules.txt.
+    // It reads as the rules.toml it converts to: the live rules are no edit
+    // since, and a rollback to it restores them.
+    void generationsFromBeforeRulesTomlReadAsRulesToml()
+    {
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        const QByteArray mine = "#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n";
+        for (const QByteArray &rules : {QByteArray(kLegacyRules), mine}) {
+            writeFile(legacy.path("Config/Rules.txt"), rules);
+            {
+                Session s(folder.path());
+                const Review r = review(*s.store, legacy.dir.path());
+                auto chosen = si::proposedRows(r.plan);
+                chosen.insert("collection:rules.toml");
+                QCOMPARE(s.store->activate(r.plan, chosen, r.snapshot, r.revision),
+                         SettingsImportStore::Result::Activated);
+            }
+            Session s(folder.path());
+            QVERIFY(s.store->recover());
+        }
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(mine));
+        // The generations as the version before wrote them.
+        const QDir generations(folder.filePath(QStringLiteral("Import/generations")));
+        int rewritten = 0;
+        for (const QString &name : generations.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            const QString dir = generations.filePath(name);
+            QJsonObject o = QJsonDocument::fromJson(readFile(dir + QStringLiteral("/profile.json"))).object();
+            for (const QString part : {QStringLiteral("profile"), QStringLiteral("base")}) {
+                QJsonArray files = o.value(part + QStringLiteral("Files")).toArray();
+                for (qsizetype i = 0; i < files.size(); ++i) {
+                    if (files[i].toString() != QLatin1String("rules.toml"))
+                        continue;
+                    const QString from = dir + QLatin1Char('/') + part + QStringLiteral("/rules.toml");
+                    const QByteArray toml = readFile(from);
+                    QVERIFY(toml == rulesToml(kLegacyRules) || toml == rulesToml(mine));
+                    QVERIFY(QFile::remove(from));
+                    writeFile(dir + QLatin1Char('/') + part + QStringLiteral("/Rules.txt"),
+                              toml == rulesToml(mine) ? mine : QByteArray(kLegacyRules));
+                    files[i] = QStringLiteral("Rules.txt");
+                    ++rewritten;
+                }
+                o[part + QStringLiteral("Files")] = files;
+            }
+            writeFile(dir + QStringLiteral("/profile.json"), QJsonDocument(o).toJson());
+        }
+        QVERIFY(rewritten >= 2);
+        {
+            Session s(folder.path());
+            QCOMPARE(s.store->editsSinceActivation(), QStringList());
+            QCOMPARE(s.store->rollback(), SettingsImportStore::Result::Activated);
+        }
+        Session back(folder.path());
+        QVERIFY(back.store->recover());
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
+    }
+
     void staleSourcesAndDestinationsAreRefused()
     {
         LegacyRoot legacy;

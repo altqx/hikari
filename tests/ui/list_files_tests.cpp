@@ -2,8 +2,9 @@
 // file converts once into its TOML file and reads back the values legacy
 // read; an edit is saved and read back, keeping what this version does not
 // know; a file that does not read is kept as <name>.broken and the list
-// takes its defaults; a folder in the file's place, an unreadable legacy
-// file and another HikariSub holding the folder's lock are no harm.
+// takes its defaults, also when it is found at writing; a folder in the
+// file's place, an unreadable legacy file and another HikariSub holding the
+// folder's lock (also at the conversion) are no harm.
 
 #include "hikari/app/settings_import_store.h"
 #include "list_files.h"
@@ -99,13 +100,15 @@ List listOf(Kind kind)
 struct Reports {
     QStringList converted; // "<legacy> -> <file>"
     std::vector<application::FileProblem> problems;
+    std::vector<application::FileProblem> replaced;
     ListFile::Report report()
     {
         return {[this](const fs::path &legacy, const fs::path &file) {
                     converted << QString::fromStdU16String(legacy.filename().u16string()) + QStringLiteral(" -> ") +
                                      QString::fromStdU16String(file.filename().u16string());
                 },
-                [this](const application::FileProblem &problem) { problems.push_back(problem); }};
+                [this](const application::FileProblem &problem) { problems.push_back(problem); },
+                [this](const application::FileProblem &problem) { replaced.push_back(problem); }};
     }
 };
 
@@ -429,6 +432,75 @@ private slots:
         QTRY_VERIFY(QFileInfo::exists(path));
         QVERIFY(file->flush());
         QCOMPARE(open(dir, list)->read()->size(), shapes.size());
+    }
+
+    // What this HikariSub wrote while waiting for the lock is what it reads.
+    void listWaitingForTheLockIsRead()
+    {
+        const List list = listOf(Kind::Tags);
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        auto file = open(dir, list);
+        QCOMPARE(file->write(ui::tagsToToml(application::visual::defaultAllTags())), ListFile::Write::Written);
+        QLockFile other(dir.filePath(QStringLiteral(".settings.lock")));
+        QVERIFY(other.tryLock(0));
+        const toml::array one = edited(Kind::Tags, *file->read());
+        QCOMPARE(file->write(one), ListFile::Write::Waiting);
+        const auto read = file->read();
+        QVERIFY(read);
+        QCOMPARE(*read, one);
+        other.unlock();
+        QVERIFY(file->flush());
+        QCOMPARE(*open(dir, list)->read(), one);
+    }
+
+    // The conversion is under the folder's lock, so two HikariSubs starting
+    // at once convert once: while another holds it, nothing moves, and the
+    // next read converts.
+    void conversionWaitsForTheLock_data() { eachList_data(); }
+    void conversionWaitsForTheLock()
+    {
+        QFETCH(int, kind);
+        const List list = listOf(Kind(kind));
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString legacy = dir.filePath(QLatin1String(list.legacy));
+        QVERIFY(QFile::copy(list.fixture, legacy));
+        Reports reports;
+        auto file = open(dir, list, &reports);
+        QLockFile other(dir.filePath(QStringLiteral(".settings.lock")));
+        QVERIFY(other.tryLock(0));
+        QVERIFY(!file->read());
+        QVERIFY(QFileInfo::exists(legacy));
+        QVERIFY(!QFileInfo::exists(legacy + QStringLiteral(".old")));
+        QVERIFY(!QFileInfo::exists(dir.filePath(QLatin1String(list.file))));
+        QVERIFY(reports.converted.isEmpty());
+        other.unlock();
+        const auto items = file->read();
+        QVERIFY(items);
+        QVERIFY(sameAsLegacy(Kind(kind), legacy + QStringLiteral(".old"), *items));
+        QCOMPARE(reports.converted.size(), 1);
+        QVERIFY(reports.problems.empty());
+    }
+
+    // A file found broken when it is written (an autosave is never read) is
+    // kept aside and said, and the list is written in its place.
+    void brokenFileFoundAtWritingIsKeptAside()
+    {
+        const List list = listOf(Kind::FontCatalogs);
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString path = dir.filePath(QLatin1String(list.file));
+        QVERIFY(writeAll(path, "version = 2\n"));
+        Reports reports;
+        auto file = open(dir, list, &reports);
+        const toml::array catalogs = ui::fontCatalogsToToml({{u"A", {u"Arial"}}});
+        QCOMPARE(file->write(catalogs), ListFile::Write::Written);
+        QVERIFY(reports.problems.empty());
+        QCOMPARE(reports.replaced.size(), std::size_t(1));
+        QVERIFY(reports.replaced[0].keptAs == pathOf(path + QStringLiteral(".broken")));
+        QCOMPARE(readAll(path + QStringLiteral(".broken")), QByteArray("version = 2\n"));
+        QCOMPARE(*open(dir, list)->read(), catalogs);
     }
 
     // The fields as they are written: named choices, a choice legacy could

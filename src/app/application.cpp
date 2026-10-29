@@ -176,16 +176,18 @@ ui::ListFile::Report listFileReport(ui::LogController &logController)
                     .arg(name(legacy), name(file), name(legacy) + QStringLiteral(".old")),
                 ui::LogController::Info, title);
     };
-    report.problem = [log, title, name](const application::FileProblem &problem) {
+    const auto where = [](const application::FileProblem &problem) {
+        const QString file = QString::fromStdString(application::displayPath(problem.file));
+        return (problem.failure.line > 0 ? QCoreApplication::translate("HikariSub.MainWindow", "%1, line %2, column %3")
+                                               .arg(file)
+                                               .arg(problem.failure.line)
+                                               .arg(problem.failure.column)
+                                         : file) +
+               QLatin1String(": ") + QString::fromStdString(problem.failure.message);
+    };
+    report.problem = [log, title, name, where](const application::FileProblem &problem) {
         if (!log)
             return;
-        const QString file = QString::fromStdString(application::displayPath(problem.file));
-        const QString where = problem.failure.line > 0
-                                  ? QCoreApplication::translate("HikariSub.MainWindow", "%1, line %2, column %3")
-                                        .arg(file)
-                                        .arg(problem.failure.line)
-                                        .arg(problem.failure.column)
-                                  : file;
         const QString text =
             problem.keptAs.empty()
                 ? QCoreApplication::translate("HikariSub.MainWindow",
@@ -197,8 +199,15 @@ ui::ListFile::Report listFileReport(ui::LogController &logController)
                                               "is kept as %2: fix it while HikariSub is closed and give it its name "
                                               "back to use it again.")
                       .arg(name(problem.file), name(problem.keptAs));
-        log->notice(ui::LogController::Warning, title, text,
-                    where + QLatin1String(": ") + QString::fromStdString(problem.failure.message));
+        log->notice(ui::LogController::Warning, title, text, where(problem));
+    };
+    report.replaced = [log, title, name, where](const application::FileProblem &problem) {
+        if (log)
+            log->notice(ui::LogController::Warning, title,
+                        QCoreApplication::translate("HikariSub.MainWindow",
+                                                    "%1 could not be read, so it is kept as %2 and a new one is saved.")
+                            .arg(name(problem.file), name(problem.keptAs)),
+                        where(problem));
     };
     return report;
 }
@@ -1129,6 +1138,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         const auto report = listFileReport(*m_log); // CF2
         hooks.fileConverted = report.converted;
         hooks.fileProblem = report.problem;
+        hooks.fileReplaced = report.replaced;
         // FontEnumerator's RefreshVideo(true): libass's fonts are loaded
         // again (ReloadLibraries, so a font installed meanwhile is found), and
         // the video's subtitles render again with the external fonts.

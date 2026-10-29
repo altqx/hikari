@@ -6477,6 +6477,10 @@ great help testing HikariSub on a slow computer)
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 could not be read, so it is kept as %2 and a new one is saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
         <translation type="unfinished"></translation>
     </message>

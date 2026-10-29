@@ -104,7 +104,7 @@ FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std:
 {
     // CF2: fonts.toml and fonts.autosave-<n>.toml, each converted once from
     // legacy's file of the same role.
-    const ui::ListFile::Report report{m_hooks.fileConverted, m_hooks.fileProblem};
+    const ui::ListFile::Report report{m_hooks.fileConverted, m_hooks.fileProblem, m_hooks.fileReplaced};
     const auto convert = [](const std::filesystem::path &legacy) -> std::optional<toml::array> {
         if (const auto catalogs = ui::readLegacyFontCatalogs(legacy))
             return ui::fontCatalogsToToml(*catalogs);

@@ -39,6 +39,8 @@
 #include <variant>
 #include <vector>
 
+class QLockFile;
+
 namespace hikari::ui {
 
 using application::ParseFailure;
@@ -98,6 +100,10 @@ public:
     struct Report {
         std::function<void(const std::filesystem::path &legacy, const std::filesystem::path &file)> converted;
         std::function<void(const application::FileProblem &)> problem;
+        // A file that did not read when it was written (an autosave is
+        // written without being read): it is kept aside, and the list
+        // written in its place.
+        std::function<void(const application::FileProblem &)> replaced;
     };
 
     static std::shared_ptr<ListFile> make(QString path, QString legacy, const ListFormat &format, Convert convert,
@@ -107,12 +113,14 @@ public:
     const QString &path() const { return m_path; }
     const QString &legacyPath() const { return m_legacy; }
 
-    // The legacy file converted when there is no list file yet. A legacy
-    // file that cannot be read is not, and the list is not written this
-    // session (so the next start tries again).
+    // The legacy file converted when there is no list file yet, under the
+    // folder's lock (while another HikariSub holds it, the next read or
+    // write tries again). A legacy file that cannot be read is not, and the
+    // list is not written this session (so the next start tries again).
     void convert();
-    // The file's items: nothing when there is none, or when it (or the
-    // legacy file) did not read: the list's defaults.
+    // The file's items (a list waiting for the lock is this one's): nothing
+    // when there is none, or when it (or the legacy file) did not read: the
+    // list's defaults.
     std::optional<toml::array> read();
     // Writes `items` over the file (its unknown keys kept).
     enum class Write { Written, Waiting, Failed };
@@ -124,7 +132,9 @@ public:
 
 private:
     std::optional<ParseFailure> parse(std::string_view text, toml::table &into) const;
-    toml::table mergedWithFile(toml::array items) const;
+    toml::table merged(toml::array items, toml::table onDisk) const;
+    std::unique_ptr<QLockFile> lockFolder() const;
+    void convertLocked();
     Write writePending();
     void retryLater();
     void problem(application::FileProblem problem);

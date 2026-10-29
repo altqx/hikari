@@ -502,7 +502,29 @@ void ListFile::problem(application::FileProblem problem)
         m_report.problem(problem);
 }
 
+std::unique_ptr<QLockFile> ListFile::lockFolder() const
+{
+    // One writer at a time on the folder (settings_files.h's lock): nothing
+    // while another HikariSub holds it. A folder that cannot hold a lock is
+    // used without one.
+    const QString folder = QFileInfo(m_path).absolutePath();
+    QDir().mkpath(folder);
+    auto lock = std::make_unique<QLockFile>(folder + QStringLiteral("/.settings.lock"));
+    if (!lock->tryLock(2000) && lock->error() == QLockFile::LockFailedError)
+        return nullptr;
+    return lock;
+}
+
 void ListFile::convert()
+{
+    if (m_legacy.isEmpty() || m_converted || QFileInfo::exists(m_path) || !QFileInfo::exists(m_legacy))
+        return;
+    // Two HikariSubs starting at once convert it once.
+    if (const auto lock = lockFolder())
+        convertLocked();
+}
+
+void ListFile::convertLocked()
 {
     if (m_legacy.isEmpty() || m_converted)
         return;
@@ -538,6 +560,8 @@ std::optional<toml::array> ListFile::read()
     // moved aside: the defaults, reported once.
     if (!m_writable)
         return std::nullopt;
+    if (m_pending)
+        return *m_pending;
     if (m_converted)
         return *m_converted;
     toml::table table;
@@ -555,15 +579,12 @@ std::optional<toml::array> ListFile::read()
     return toml::array();
 }
 
-toml::table ListFile::mergedWithFile(toml::array items) const
+toml::table ListFile::merged(toml::array items, toml::table onDisk) const
 {
     // The file as it is now keeps what this HikariSub does not know: its
     // other keys, and each item's (the k-th of a name gets the k-th's).
-    toml::table out;
-    if (const auto bytes = application::readOwnedFile(pathOf(m_path)))
-        parse(*bytes, out);
     std::map<std::string, std::vector<const toml::table *>> before;
-    if (const auto *old = out[m_format.array].as_array())
+    if (const auto *old = onDisk[m_format.array].as_array())
         for (const auto &node : *old)
             if (const auto *item = node.as_table())
                 before[item->get(m_format.name) ? item->get(m_format.name)->value_or(std::string()) : std::string()]
@@ -582,8 +603,8 @@ toml::table ListFile::mergedWithFile(toml::array items) const
             if (std::ranges::find(m_format.keys, key.str()) == m_format.keys.end() && !item->contains(key.str()))
                 item->insert(key, value);
     }
-    out.insert_or_assign(m_format.array, std::move(items));
-    return out;
+    onDisk.insert_or_assign(m_format.array, std::move(items));
+    return onDisk;
 }
 
 ListFile::Write ListFile::write(toml::array items)
@@ -599,34 +620,51 @@ bool ListFile::flush()
 
 ListFile::Write ListFile::writePending()
 {
+    std::unique_ptr<QLockFile> lock;
+    if (m_writable) {
+        lock = lockFolder();
+        if (!lock) {
+            retryLater();
+            return Write::Waiting;
+        }
+        convertLocked(); // when the start could not
+    }
     if (!m_writable) {
         m_pending.reset();
         return Write::Failed;
     }
-    const QString folder = QFileInfo(m_path).absolutePath();
-    QDir().mkpath(folder);
-    // One writer at a time on the folder (settings_files.h's lock); a folder
-    // that cannot hold a lock is written without one.
-    QLockFile lock(folder + QStringLiteral("/.settings.lock"));
-    if (!lock.tryLock(2000) && lock.error() == QLockFile::LockFailedError) {
-        retryLater();
-        return Write::Waiting;
-    }
-    const std::string text = formatTomlFile(mergedWithFile(std::move(*m_pending)), kVersion);
+    toml::array items = std::move(*m_pending);
     m_pending.reset();
-    bool written = false;
     if (m_converted) {
         // The conversion's file could not be written before: it is this
         // list, and the old file moves aside once it is.
-        written = application::convertOnce(pathOf(m_path), pathOf(m_legacy), [&] {
-                      return application::writeFileAtomically(pathOf(m_path), text, pathOf(m_legacy));
-                  }) != application::Conversion::Failed;
-        if (written)
-            m_converted.reset();
-    } else {
-        written = application::writeFileAtomically(pathOf(m_path), text);
+        const std::string text = listFileText(m_format, items);
+        const auto conversion = application::convertOnce(pathOf(m_path), pathOf(m_legacy), [&] {
+            return application::writeFileAtomically(pathOf(m_path), text, pathOf(m_legacy));
+        });
+        if (conversion == application::Conversion::Failed) {
+            m_converted = std::move(items);
+            return Write::Failed;
+        }
+        m_converted.reset();
+        if (conversion == application::Conversion::Converted)
+            return Write::Written;
+        // Another HikariSub converted it meanwhile: this list goes over it.
     }
-    return written ? Write::Written : Write::Failed;
+    toml::table onDisk;
+    const auto load =
+        application::loadOwnedFile(pathOf(m_path), [&](std::string_view text) { return parse(text, onDisk); });
+    if (load.problem) {
+        m_writable = !load.problem->keptAs.empty();
+        if (!m_writable) {
+            problem(*load.problem);
+            return Write::Failed;
+        }
+        if (m_report.replaced)
+            m_report.replaced(*load.problem);
+    }
+    const std::string text = formatTomlFile(merged(std::move(items), std::move(onDisk)), kVersion);
+    return application::writeFileAtomically(pathOf(m_path), text) ? Write::Written : Write::Failed;
 }
 
 void ListFile::retryLater()
