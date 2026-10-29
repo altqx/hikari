@@ -5339,6 +5339,21 @@ Failed to copy %2 fonts.</source>
         <translation>첫 번째 단축키 설정 / 쉬프트 + 클릭</translation>
     </message>
     <message>
+        <source>This hotkey already exists for &quot;%1&quot;.
+What to do?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This shortcut already exists in other windows as a shortcut for &quot;%1&quot;.
+What would you like to do?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This shortcut already exists in another window as a shortcut for &quot;%1&quot;.
+What would you like to do?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Exit</source>
         <translation>종료</translation>
     </message>
@@ -6401,6 +6416,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Audio</source>
         <translation type="unfinished">소리</translation>
+    </message>
+    <message>
+        <source>Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You cannot use shortcuts for copying, cutting, and pasting.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You cannot use the program exit shortcut.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -16766,7 +16793,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Preserve aspect ratio</source>
-        <translation type="vanished">비율을 유지</translation>
+        <translation>비율을 유지</translation>
     </message>
     <message>
         <source>Changed is only width</source>
@@ -16978,6 +17005,316 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Perspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\org mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add B-spline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add Bézier curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add line</source>
+        <translation type="unfinished">줄 추가</translation>
+    </message>
+    <message>
+        <source>Add separate point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>After-bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>After-center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>After-top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bad range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before-bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before-center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before-top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom-center</source>
+        <translation type="unfinished">중앙 아래</translation>
+    </message>
+    <message>
+        <source>Bottom-left</source>
+        <translation type="unfinished">왼쪽 아래</translation>
+    </message>
+    <message>
+        <source>Bottom-right</source>
+        <translation type="unfinished">오른쪽 아래</translation>
+    </message>
+    <message>
+        <source>Cannot read clip rectangle values.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Center</source>
+        <translation type="unfinished">중앙</translation>
+    </message>
+    <message>
+        <source>Center-above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Center-below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change \move ending points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change \move starting points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change all scale tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changing all X/Y-rotation tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changing all Z-rotation tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose</source>
+        <translation type="unfinished">선택</translation>
+    </message>
+    <message>
+        <source>Clip rectangle with \t animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Double &quot;m&quot; was blocked because of Vsfilter bug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">편집</translation>
+    </message>
+    <message>
+        <source>Invert clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left-above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left-below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line is not visible on video
+or has zero duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List of ASS drawings with edit option.
+After choose drawing from list just set cursor i n place
+of start of drawing and click left mouse button and drag.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List of tags that can edit visual tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock outer quad
+Off: the inner quad is resized within the plane. On: the outer quad is, and the inner one sets the perspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Middle-left</source>
+        <translation type="unfinished">왼쪽 중앙</translation>
+    </message>
+    <message>
+        <source>Middle-right</source>
+        <translation type="unfinished">오른쪽 중앙</translation>
+    </message>
+    <message>
+        <source>Move \org points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move drawings;
+use only when you want
+to move drawing points.
+Do not combine with the first three options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move position points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>No \fax</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Positioning in X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Positioning in Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preserve proportions so that vector drawings and text
+keep their original positions after rotation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preserve proportions so that vector drawings and text
+keep their original positions after scaling.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right-above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right-below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set a custom rectangle for the current scale.
+If automatic size calculation does not work correctly,
+you can set a rectangle for the original scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set angle from 2 points.
+After setting 2 points below text on video
+it calculates angle from it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set movement using 2 points and the video position.
+After placing the first point before the moving text,
+advance the video by enough frames
+so that the same video element
+for which the start point was set remains visible.
+Movement is generated by placing the second point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set position by rectangle.
+After drawing a rectangle, the line will be
+positioned on one or both axes
+for the selected alignment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set scale by rectangle.
+After drawing rectangle text is scaled
+in two or one axis.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show surrounding plane
+A rectangle of the text&apos;s plane: match it to one in the shot, then place the text inside it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag change options:
+Add - changes all tags by adding the slider value.
+Insert - inserts the tag at the cursor position for one line,
+or at the start for multiple lines.
+Multiply - multiplies the slider value by the selected line number;
+the first line is not changed.
+Gradient text increasing - inserts a tag at each character, increasing the value.
+Gradient text decreasing - inserts a tag at each character, decreasing the value.
+Gradient line increasing - inserts a tag in selected lines, increasing the value.
+Gradient line decreasing - inserts a tag in selected lines, decreasing the value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text placing works similar like in styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top-center</source>
+        <translation type="unfinished">중앙 위</translation>
+    </message>
+    <message>
+        <source>Top-left</source>
+        <translation type="unfinished">왼쪽 위</translation>
+    </message>
+    <message>
+        <source>Top-right</source>
+        <translation type="unfinished">오른쪽 위</translation>
+    </message>
+    <message>
+        <source>Video must be set at least one frame after the line&apos;s start time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Visual editing tools
+do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
