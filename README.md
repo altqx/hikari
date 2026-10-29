@@ -104,7 +104,7 @@ This is HikariSub 0.1, on the `main` branch. The wxWidgets app it replaces, [Hik
 - Autosaves, a browser for them, last-session restore and crash recovery.
 - Every command can have its own hotkey.
 - Imports the settings of HikariSub legacy, with a review of conflicts and a roll back.
-- Interface in English, with partial Polish, Korean, Thai and Tamil translations.
+- Interface in English, Korean, Polish, Tamil and Thai.
 
 ### Editing
 
@@ -159,14 +159,14 @@ Position, positioning in a rectangle, move, scale, Z rotation, X/Y rotation, per
 
 ## Download
 
-There is no Qt release yet; the first will be 0.1.0-beta.1. Each release will publish these on the [releases page](https://github.com/altqx/hikari/releases):
+The first beta is [0.1.0-beta.1](https://github.com/altqx/hikari/releases/tag/v0.1.0-beta.1). Each release publishes these on the [releases page](https://github.com/altqx/hikari/releases):
 
 | System | Download |
 | --- | --- |
 | Windows 10 (1809) or 11, x64 | `HikariSub-<version>-windows-x64-setup.exe` installer or `.zip` portable |
 | Linux x86_64, glibc 2.34 or later | `.AppImage`, `.deb`, `.rpm` or `.tar.gz` portable |
 
-Nothing is code-signed; each release lists SHA-256 sums in `SHA256SUMS`. HikariSub legacy users will be offered the update once it is out. [docs/distribution.md](docs/distribution.md) covers each package.
+Nothing is code-signed; each release lists SHA-256 sums in `SHA256SUMS`. HikariSub legacy users are offered the update; moving is optional. [docs/distribution.md](docs/distribution.md) covers each package.
 
 ## Updates and privacy
 
@@ -194,7 +194,7 @@ HikariSub looks for updates only when you choose **Help > Check for updates**, o
 The build is one CMake workflow. It downloads the pinned Qt 6.11.2 SDK and vcpkg dependencies itself:
 
 ```bash
-git clone https://github.com/altqx/hikari.git -b qt
+git clone https://github.com/altqx/hikari.git
 cd hikari
 cmake --workflow --preset ubuntu-x64-release   # or fedora-x64-release, windows-x64-release
 ```
