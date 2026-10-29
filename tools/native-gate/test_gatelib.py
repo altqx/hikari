@@ -149,7 +149,7 @@ class TestSkips(unittest.TestCase):
         self.assertEqual(gatelib.unexpected_skips([skip]), [skip])
 
     def test_an_unknown_skip_fails(self):
-        skips = ["SKIP   : Shell::a() On Wayland the compositor places windows (docs/qt/docking.md)",
+        skips = ["SKIP   : Shell::a() On Wayland the compositor places windows (docs/docking.md)",
                  "SKIP   : Shell::b() HIKARI_SURFACE_SHOT_DIR is not set"]
         self.assertEqual(gatelib.unexpected_skips(skips), skips[1:])
 

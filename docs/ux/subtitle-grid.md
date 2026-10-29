@@ -1,0 +1,45 @@
+# Subtitle grid
+
+**Accepted direction: a custom painted grid.** altqx chose [“Use painted grid”](https://github.com/altqx/hikari/issues/27#issuecomment-5849499565); [ADR-0003](../adr/0003-painted-subtitle-grid.md) records the decision. This supersedes the TableView-first recommendation in [Rendering a 50k-line subtitle grid in QML](https://github.com/altqx/hikari/blob/c9f7088a9c4a0c26cb858c9129a8d5d6caa21628/docs/research/qml-grid.md). It is a renderer direction, not approval of every prototype interaction or evidence that a performance threshold has passed.
+
+## Evidence and implementation boundary
+
+The [native prototype at d99b429e](https://github.com/altqx/hikari/blob/d99b429e7a6e16107fa6d6bf80cc5fba04a6264d/HikariSub/prototypes/qml-grid/README.md) compares a Python `QQuickPaintedItem` viewport with TableView using 50,000 generated ASS rows. Its Windows/D3D11 scroll samples measure Python-delivered frame-signal cadence. Both views remain allocated, so the samples establish neither a fair memory comparison nor optimized C++ performance. The separate [28 keyboard observations](https://github.com/altqx/hikari/blob/d99b429e7a6e16107fa6d6bf80cc5fba04a6264d/HikariSub/prototypes/qml-grid/evidence/keyboard-boundaries-windows.json) exercise 120 generated rows through native key events.
+
+The production rendering API, text-layout/cache strategy and CPU/GPU work split remain implementation choices. The accepted direction does not require shipping Python, using `QQuickPaintedItem`, or retaining the prototype's fixed row height and six columns. The [UI inventory](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md) remains the capability baseline; the small spike does not remove column controls, row operations, filtering, tree behavior, translation or comparison support.
+
+## Interaction contract
+
+Document-owned stable line IDs identify commands and selection. A displayed row number is a projection after sorting, filtering or grouping, never document identity. Preserve selected IDs across reorder/filter operations, visibly account for hidden selections, and make batch-command scope explicit. Inserting or deleting rows must not transfer selection to an unrelated line occupying the same position.
+
+Keep three states distinct: the selected set for batch operations, the current line used for inspection/editing, and keyboard focus indicating where input goes. Focus changes do not change the document's **editing target**. A **protected reference** remains read-only even when its grid has focus or selection.
+
+Arrow and page navigation operate on displayed order. Home/End reach its first/last row. The [detailed Grid outcome](grid-operations.md) preserves characterized legacy range membership: Shift selects the inclusive Document-order interval between the stable anchor and displayed destination, including hidden Lines; Ctrl+Shift adds that interval. A hidden anchor retains its identity, so the spike's destination fallback is not adopted. Empty results leave retained selection intact without seeking an invalid row. Keep Ctrl selection and reveal-current behavior coherent with those rules. Keyboard focus must remain reachable after filtering or group collapse, including when the current Line is hidden.
+
+The detailed outcome also records approved G56-contiguity and J56-selected-only-join, preserving valid within-group operations and unselected intervening Lines. Shared draft/history policy remains with its own decision; native evidence below is not implied by this UX resolution.
+
+## Text and visible state
+
+Provide raw ASS and tag-hidden display without modifying authoritative source text. The prototype's stripping regex is fixture code: production display must use the defined ASS interpretation and invalidate cached text when the line or display mode changes. Preserve correct shaping and clipping for Arabic/Hebrew, CJK, combining marks, emoji and mixed-direction text. UI direction must not reorder source text, timestamps or document data.
+
+Retain selected/current/comment and other applicable row-state cues. Colours need accompanying accessible state names and non-colour distinctions; define precedence when states overlap. Column sizing, scrolling, hit testing, focus indicators and header interaction must agree at fractional scaling and when columns are hidden. Dense presentation must not make commands available only through hover or a pointer.
+
+## Required accessibility follow-up
+
+The follow-up ticket [Prototype the painted grid's native accessibility and performance contract](https://github.com/altqx/hikari/issues/45) covers the focused native study before accepting the production grid. The original Python spike exposes a pane and current-Line inspector; the inspector is not a substitute for navigating the table.
+
+The [C++ follow-up](https://github.com/altqx/hikari/blob/be0c5821c9c6baed2fe2381a3f9ad25fde89f359/HikariSub/prototypes/grid-accessibility-cpp/README.md) built and ran against both installed Qt 6.11.2 kits on Windows, using MinGW 13.1 and latest MSVC 19.51.36260. Each run matched 22 bounded in-process observations of real table, cell, selection and action interfaces over 50,000 synthetic Lines. Queried cell identity survived sorting/filtering; hidden selection, empty results, synthetic key dispatch and temporary-Grid cell destruction were exercised. This removes the Python binding limitation as a C++ feasibility blocker. It uses an offscreen window and replacement Qt event handler: no Windows UIA, NVDA, Linux AT-SPI/Orca, physical keyboard/IME or performance pass follows.
+
+The C++ cache creates cells on demand and keeps every queried cell until its Grid dies; ten remained in the exercised path, but exhaustive enumeration could materialize all 200,000 cells. Production cache lifetime, insertion/deletion, logical headers and granular events remain unproved. The visible screenshot was inspected and source/captured-artifact hashes were checked against the published Git blobs; those checks establish provenance, not native assistive-technology behavior.
+
+The follow-up must design the accessible table/cell hierarchy, logical headers and counts, names, selection/current/focus states, bounds, actions and change notifications. Its objects must continue to identify the correct source lines as rows move, disappear or enter the viewport. Verify keyboard entry/exit and offscreen navigation with NVDA on Windows and Orca on Linux, including multi-selection, sorting, hidden selections, grouped rows and empty results. Inspect actual native accessibility exposure rather than treating attached role/name properties as proof. Record any platform gaps with an explicit resolution plan.
+
+**Announcement policy, accepted by altqx on 2026-09-29:** moving the current row announces the current cell first: row, column and displayed text. The selected count and hidden-selected count are a separate, shorter status, announced only when they change. When a filter hides the current Line, current moves to the nearest visible row. Hidden selection is kept and reported in that status, not silently dropped.
+
+**Closure and transferred obligations.** The in-process C++ evidence answers the design question: Qt table/cell/selection interfaces can represent the painted Grid independently of painting, keyed by stable Line identity. The [native Grid ticket](https://github.com/altqx/hikari/issues/45) closed on that basis. These obligations transfer by name to [V1-G/V1-A in the implementation sequence](../proposals/implementation-sequence.md) as required evidence, not passes: **G45-uia** Windows UIA table/selection/focus patterns with NVDA; **G45-atspi** Linux AT-SPI with Orca; **G45-input** physical keyboard and IME navigation; **G45-cache** bounded cell-cache lifetime/eviction, insertion/deletion and granular change events; **G45-headers** logical header/row objects and a full text interface; **G45-perf** reference-host performance and resource calibration under the [performance contract](../performance.md). A failure reopens the Grid design through a new decision ticket rather than narrowing accessibility.
+
+## Acceptance still required
+
+The [performance contract](../performance.md) and [test strategy](../testing.md) are accepted. Bind exact reference hosts and fixtures before applying the accepted workloads, percentiles and gates to representative ASS corpora, cold/warm load, scroll/jump, large selection, filter/sort, edits and long mixed-script rows. Measure input response, CPU/GPU costs, memory/cache growth, resizing and scaling on the supported Windows/Linux configurations.
+
+No real-corpus budget, native assistive-technology, CPU/GPU or memory pass is claimed here. The renderer choice is settled; those engineering and interaction obligations remain release evidence to produce, with failures resolved explicitly rather than excused by the chosen direction.

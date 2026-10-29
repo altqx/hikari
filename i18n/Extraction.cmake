@@ -20,7 +20,7 @@ qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES "${hikari_k
 # keys.ts is today's extraction (semantic contexts, i18n/contexts.tsv) and
 # keymap.tsv the keymap step below over it: keys whose text equals a legacy id
 # are mapped and take the legacy translation (O4-post-keys-carried,
-# docs/qt/localisation.md). hikari_i18n_convert rewrites every catalog from
+# docs/localisation.md). hikari_i18n_convert rewrites every catalog from
 # the PO and keys.ts alone, dropping the vanished entries lupdate keeps for
 # their translation and any translator's work; after a rerun, convert into a
 # scratch directory and carry its entries into the catalogs where they are

@@ -445,7 +445,7 @@ std::u8string editorText(const TestHost &host, const Case &c)
     return tl ? line->translation : line->text;
 }
 
-// The approved departures (docs/qt/compatibility-decisions.md, the T3 rows)
+// The approved departures (docs/compatibility-decisions.md, the T3 rows)
 // where the capture holds legacy's defect: the rewrite gives `expected`, and
 // legacy's text, kept as the old evidence, must still differ from it.
 struct Departure {

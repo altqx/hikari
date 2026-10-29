@@ -1,6 +1,6 @@
 #pragma once
 
-// The application side of automation host services (L3; docs/qt/automation.md).
+// The application side of automation host services (L3; docs/automation.md).
 // The router answers each HostServiceRequest once through a platform port; a
 // port that is not attached answers Unavailable (the legacy nil). Ports run on
 // the GUI thread; a file picker answers later, and a run that ends first

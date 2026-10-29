@@ -2,7 +2,7 @@
 
 // T6: the all-tags tool's tag definitions (legacy AllTagsSetting,
 // LoadSettings, GetNames, SaveSettings and the AllTagsEdition dialog,
-// HikariSub/VisualAllTagsEdition.h and .cpp at 20d647c4; docs/qt/
+// HikariSub/VisualAllTagsEdition.h and .cpp at 20d647c4; docs/
 // visual-tools.md, "The Position shifter and the all-tags tool"). The
 // definitions live in Config/AllTagsSettings.txt beside the settings: a
 // "HYDRA2.0" line, then one "Tag: <name>, <tag>, <min>, <max>, <value>,

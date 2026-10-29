@@ -1,4 +1,4 @@
-# rpm dependencies of the Qt rewrite's host libraries (installers spec 5.4).
+# rpm dependencies of HikariSub's host libraries (installers spec 5.4).
 # "<soname> <dependency>"; read by resolve-deps.sh. A soname without a line
 # becomes its own capability, "<soname>()(64bit)", which Fedora and openSUSE
 # both provide, so only the glibc family needs a line here.

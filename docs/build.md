@@ -1,0 +1,175 @@
+# Stateless CMake workflow
+
+**Accepted build contract, 2026-09-27:** pinned vcpkg manifests/overlays, CMake-managed pinned official Qt provisioning, declared development-tool prerequisites and `cmake --workflow --preset …`. [ADR 0008](adr/0008-stateless-cmake-workflow.md) records the choice from [Choose the dependency and build strategy for the stateless CMake build](https://github.com/altqx/hikari/issues/24). This selects the mechanism; installer behavior, exact locks and clean Windows/Linux reconstruction remain unproved.
+
+## One-command entry and prerequisites
+
+After a fresh clone on a machine with the declared toolchain, `cmake --workflow --preset windows-x64-release` configures and builds. Use corresponding `ubuntu-x64-release` and `fedora-x64-release` workflows. Separate `*-verify` workflows add tests and packaging. Bare `cmake --preset NAME` only configures; `cmake --build --preset NAME` builds an already configured tree. The workflow spelling corrects the map's original shorthand.
+
+The machine prerequisites are Git, a pinned compatible CMake/Ninja kit, network/disk capacity and the named compiler/SDK. In the follow-up review on 2026-09-27, altqx selected **latest MSVC**, superseding the initial MSVC2022-only prerequisite, with Windows SDK in its initialized development environment. Linux uses the selected distro's GCC and system development packages. Pin exact compiler/SDK/CMake/Ninja/Git versions for each qualified build rather than using a floating latest toolset inside a reproducibility claim. A clean-machine test starts without HikariSub/Qt/dependency caches, not without an installed development toolchain. Compiler installation and required Qt account/license authorization are explicit prerequisites, not implicit consent supplied by CMake.
+
+The current workstation has VS2026/MSVC19.51 and official Qt6.11.2 kits at `C:/Qt/6.11.2/mingw_64` and `C:/Qt/6.11.2/msvc2022_64`. The latter was added successfully through the existing official MaintenanceTool on 2026-09-27; the tool reused its existing authorized installation and requested no new license acceptance. The [sanitized SDK observation](https://github.com/altqx/hikari/blob/4959243fefdf0737e655985e300ff9f20e12d9ac/HikariSub/prototypes/build-workflow/windows-sdk-observed.json) records package revisions and selected file hashes. The MinGW kit must not be linked by MSVC. The [C++ Grid experiment](https://github.com/altqx/hikari/blob/be0c5821c9c6baed2fe2381a3f9ad25fde89f359/HikariSub/prototypes/grid-accessibility-cpp/README.md) built, linked and ran the Qt Quick slice with MSVC19.51.36260, toolset14.51.36231 and SDK10.0.26100.0; loaded Qt DLL paths matched the MSVC kit. This is limited installed-kit compatibility evidence, not complete dependency, deployment or clean-provisioning qualification. The vendor kit directory's older MSVC name does not select Hikari's compiler version.
+
+Use Ninja and CMake orchestration. Do not add project shell/PowerShell/Python bootstrap scripts, `.sln`/`.vcxproj` build paths or checked-in output. Dependency recipes may invoke their upstream build tools.
+
+## Dependency ownership and provisioning
+
+Use vcpkg manifest mode with repository-owned overlay ports/triplets and a separate pinned official Qt SDK. Pin the vcpkg Git revision, compatible executable/digest, registry baseline, package versions/features, overlays and compiler/runtime inputs. Assign one owner per dependency; do not silently fall back to system libraries or a second Qt. A registry baseline alone does not pin all machine inputs or promise bit-identical binaries.
+
+The root CMake configuration must run its idempotent provisioning include before the first `project()` call. It validates prerequisites, loads the committed artifact lock, fetches the exact vcpkg checkout and verifies the compatible official executable. Only then set the toolchain path and triplets/manifest settings and call `project()`. A preset must not reference a downloaded toolchain that does not yet exist. Supplying the executable avoids relying on automatic vcpkg bootstrap scripts; failed verification must stop explicitly. Reconfiguration/compiler probes reuse verified state.
+
+CMake likewise downloads a digest-pinned official Qt installer and invokes its documented CLI into an ignored SDK directory. Lock exact Qt package IDs, patch version, architecture, module/host-tool set and repository/package archive identities; pinning only the installer or a mutable package alias is insufficient. Start with Qt 6.11.2 and follow the accepted [platform policy](platform-policy.md). Include Quick/QML and Linguist tooling; exclude Qt from vcpkg's graph and audit overlapping transitive libraries.
+
+Before qualifying this path, verify public SDK availability, unattended account/license requirements and permitted immutable artifact retention. Credentials stay outside source and logs. Missing artifacts/entitlement or changed archive hashes fail explicitly instead of selecting another kit. No paid Qt entitlement is assumed.
+
+## Forks, outputs and CI
+
+Use the existing [patch ledger](../Thirdparty/PATCHES.md) as provenance input, not as a production recipe. FFMS2 starts from `45d5f72100d88c52acdd54bfedcc0315a44c735d`; its additional API implementation outside the fork also needs a pinned source identity. Build private headers and linked library from matching sources; avoid the old fork-header/distro-library ABI mismatch. Pin overlay patches and archive hashes. HikariSub does not build or ship xy-VSFilter (user decision 2026-10-14, [W2-no-xy-vsfilter](compatibility-decisions.md)); the only CSRI renderer it ships is VSFilterMod on Windows, a prebuilt release pinned by URL and SHA-256 in `cmake/HikariVsfilterMod.cmake`, staged into the Windows payload and never part of the default cross-platform graph.
+
+Commit manifests/locks, overlays and shared presets. Ignore machine-specific `CMakeUserPresets.json` and separate generated `out/build/<preset>`, SDK, download and binary-package directories. Generated state must be reconstructible. Native debug/release presets cover Windows x64, Ubuntu and Fedora; arm64 needs separate qualification.
+
+CI uses the same workflows in pinned build environments, with native runtime/deployment jobs for the claimed Windows 10/11 and Linux versions. **Linux validation runs in GitHub Actions for now**, as selected by altqx on 2026-09-27; a local WSL/container runner is not a prerequisite to that work. Record exact runner image, distro, toolchain and package identities. A mutable hosted-runner label alone is not an immutable environment or proof of Fedora/native-desktop coverage. Windows 10 gates remain until explicit retirement. Keep download caches separate from ABI-keyed package caches; untrusted fork jobs cannot publish trusted caches. Schedule empty-cache reconstruction and missing/corrupt-artifact cases.
+
+## Remaining proof
+
+Prove a complete Windows/Linux FFMS2 + libass + Qt slice using the declared prerequisites, actual installer path and exact artifact locks. Observe cold/warm reconstruction, ABI/linkage, deployment and failure diagnostics. If an assumed provisioning mechanism fails, reopen it explicitly rather than weakening the contract. No configure/build, license acceptance, installation or clean-machine pass is claimed by this decision.
+
+Sources and alternatives: [reviewed proposal](proposals/stateless-build.md), [CMake workflow presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html), [vcpkg CMake integration](https://learn.microsoft.com/en-us/vcpkg/users/buildsystems/cmake-integration), [Qt installer CLI](https://doc.qt.io/qtinstallerframework/ifw-use-cases-cli.html).
+
+## First Linux CI preflight
+
+The [first GitHub Actions run](https://github.com/altqx/hikari/actions/runs/36299849291) completed on Ubuntu26.04.1/image20260920.143.1. The [retained report](https://github.com/altqx/hikari/blob/3df736df3f44afeb64dc731f75972a739027504b/HikariSub/prototypes/build-workflow/linux-ci/ci-run-notes.md) records GCC15.2, glibc2.43, CMake4.4.3 and Ninja1.13.2, and verifies the pinned public Qt metadata and nine publisher checksum declarations. The workflow used `project(... LANGUAGES NONE)` and a report target; no dependency was installed or built. It establishes a working CI execution route and host observations, not immutable environment or Windows/Linux build qualification.
+
+NASM and Meson were absent from PATH. The report distinguishes absent commands from package-query/version-flag limitations. Official Qt CI authentication/terms scope, complete installer-consumed artifact enforcement, the owned FFMS2 graph and cold/warm/deployment/failure-case evidence remain required. No workstation credentials were exported.
+
+## Linux source-build observation
+
+[Run 36302050812](https://github.com/altqx/hikari/actions/runs/36302050812) subsequently compiled the owned FFMS2 plus pinned FFmpeg/zlib graph and passed its three-frame/private-metadata CTest on Ubuntu 26.04.1/GCC 15.2. The [retained report](https://github.com/altqx/hikari/blob/8e93cc24d3a72befb55e439664ba7da68a69c94a/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/ci-run-notes.md) pins the run source, resolved features/host tools, archive/recipe hashes and actual observations. All 18 captured recipe digests matched the run's Git blobs; 22 retained text files have byte-level publication checks.
+
+The top-level manifest explicitly disables FFmpeg default features, correcting an actual resolver finding that a transitive request alone did not suppress avdevice/avfilter. This source slice establishes matching fork/private headers and library, metadata lookup and exact pixels for a small synthetic random-order frame test. It does not establish the full Qt/libass provisioner, standalone FFMS-only static closure, audio behavior, full media corpus, deployment, other platforms or cold/warm/offline failure qualification. The FFmpeg version remains a compatibility candidate rather than a shipping-maintenance pin.
+
+## Windows source-build observation and Qt acquisition follow-up
+
+The [Windows report](https://github.com/altqx/hikari/blob/1ee21bbd5e3aed25ebb44aa9ba1fb46f7ccf277e/HikariSub/prototypes/build-workflow/ffms2-overlay/evidence/windows-20260927/README.md) records successful MSVC source builds and both the three-frame/private-metadata specimen and an independent consumer linking only `HikariFFMS2::ffms2`. That consumer decoded the authored first frame with the expected pixel, qualifying the exercised Windows static target closure. All 20 canonical input hashes match the unchanged lock, and a non-line-ending corruption specimen still fails without rewriting its bad input. Root checked all 33 retained evidence files against published Git bytes.
+
+The original deep-root workflow failed in a compiler probe. Success used documented short-directory overrides with separate configure/build/CTest commands; it is not a bare `windows-overlay` or full one-command provisioning pass. Git's Windows archive line endings required an exact-digest-guarded LF restoration in the port; source content/API behavior and lock digests did not change. Both earlier failure evidence and sampled resource bounds are retained. Actual audio, wider private APIs/media corpus, deployment and reconstruction remain unproved.
+
+The [official Qt metadata/script audit](https://github.com/altqx/hikari/blob/6e2dcb7e82fd8bc37acd836e5b508703cb3f6325/docs/research/qt-provisioning-followup.md) inspected 27 hash-verified metadata archives without running scripts/installers or acquiring SDK payloads. Base documentation/example dependencies persist in the inspected scripts; the current `qt.tools.qtcreator` ID supplies SDKTool, with full Creator GUI separate. A frozen official repository snapshot consumed by the official installer is the candidate for complete content locking. Exact runtime-resolved closure, support scripts/conditional components, controller behavior, authorization and bounded acquisition still need a concrete execution plan and proof; the minimal-module preflight cannot stand in for them.
+
+## Official Qt provisioning proved on Linux (2026-09-29)
+
+With the owner's secret and license authorization, [run 36577045109](https://github.com/altqx/hikari/actions/runs/36577045109) ran the [frozen repository experiment](https://github.com/altqx/hikari/blob/f9e0cb999831b7b174631d4d29f5c282c86ef8c5/HikariSub/prototypes/build-workflow/qt-frozen/README.md) on Ubuntu 26.04. Its [evidence](https://github.com/altqx/hikari/blob/f9e0cb999831b7b174631d4d29f5c282c86ef8c5/HikariSub/prototypes/build-workflow/qt-frozen/evidence/run-36577045109/README.md) shows:
+
+- A CMake stage before `project()` acquired a script-resolved lock of 125 objects, verified them and rejected a corrupted one. A warm re-run refetched only that object.
+- Official installer 4.11.0 installed Qt 6.11.2 from the loopback mirror, reading exactly the locked objects and nothing outside them.
+- A credential-free Quick/Multimedia/ShaderTools/Linguist consumer built and passed offscreen and Xvfb/OpenGL render tests.
+
+The token reached only the install step. The earlier run showed that the installer skips virtual package IDs yet exits 0, so a closure check against the lock is mandatory.
+
+altqx closed [Prove pinned CMake workflow provisioning on Windows and Linux](https://github.com/altqx/hikari/issues/48) on this basis. The mechanism is viable. These obligations transfer by name to the B1/B2 build cards as required evidence, not passes:
+
+- **B48-win-qt:** the same frozen run for `win64_msvc2022_64` with latest MSVC.
+- **B48-libass:** an owned libass/fontconfig/harfbuzz recipe on both platforms.
+- **B48-combined:** one Qt + FFMS2 + libass slice per platform.
+- **B48-workflow:** a one-command user entry, with the installer still isolated from later build processes.
+- **B48-winpath:** the Windows deep-path compiler probe without manual short-directory overrides.
+- **B48-fedora:** a Fedora host.
+- **B48-offline:** offline prefetch and cold reconstruction on a clean non-CI machine.
+- **B48-deploy:** deployment.
+
+A failure in any of them reopens the build decision rather than substituting another Qt source.
+
+## Production build inputs (B1, 2026-09-29)
+
+[B1](https://github.com/altqx/hikari/issues/67) promoted the proven slices into the `qt` root. Linux is first; Windows follows on a Windows host (B2-W).
+
+- **Entry:** `cmake --workflow --preset ubuntu-x64-release` (or `-verify` to add tests, `fedora-x64-*` on Fedora). The root `CMakeLists.txt` includes `cmake/provision/Provision.cmake` before `project()`. That include checks the declared host tools, then verifies or acquires the Qt mirror, installs Qt from it, provisions the pinned vcpkg checkout and tool, and sets the toolchain.
+- **Locks:** [`cmake/locks/qt-linux.lock.json`](../cmake/locks/qt-linux.lock.json) (the lock proven in CI) and [`cmake/locks/vcpkg.lock.json`](../cmake/locks/vcpkg.lock.json). `tools/qt-lock/make-lock.py` regenerates Qt locks. [`cmake/locks/qt-windows.lock.json`](../cmake/locks/qt-windows.lock.json) (B2-W) locks `win64_msvc2022_64` with the same add-ons: 125 objects, 487 MB, reusing the shared `all_os` digests from the Linux lock. Its 18 metadata files are retained in the release [`qt-metadata-windows-6.11.2-20261002`](https://github.com/altqx/hikari/releases/tag/qt-metadata-windows-6.11.2-20261002).
+- **Dependencies:** the root [`vcpkg.json`](../vcpkg.json) pins FFmpeg 7.1.2#5 (four features), the owned `ports/libass` (the altqx/libass fork, see [libass fork](#libass-fork)) and the owned `ports/hikari-ffms2`, with release-only static `triplets/`. Qt never enters the vcpkg graph. `cmake/HikariDependencies.cmake` fails if `Qt6_DIR` is outside the provisioned prefix, and links libass through static pkg-config, only from the vcpkg installation and only when `ass.h` has the fork's feature macros.
+- **SDK state:** `out/sdk` holds the Qt mirror, the Qt installation (stamped with the lock digest), the metadata cache and the vcpkg checkout. It is shared by presets, ignored, and reconstructible. A Qt installation from a different lock stops the configure instead of being reused.
+- **Authentication:** with `QT_INSTALLER_JWT_TOKEN` set, the installer runs under a private HOME (on Windows also a private `APPDATA` and `LOCALAPPDATA`, where it keeps its account file) that is deleted afterwards. Without it, the installer uses the developer's existing Qt Account login. The owner authorized local and CI installs under the locked license set on 2026-09-29.
+- **Isolation in CI:** `cmake --workflow --preset provision` is the only step given the secret. The credential-free `*-verify` workflow then reuses the stamped installation.
+- **Linux host tools** (checked up front): git, ninja, a C/C++ compiler, make, pkg-config, autoconf, autoconf-archive, automake, libtool, nasm, python3, curl, tar, zip and unzip, plus the ALSA development files (PortAudio's host API links the system ALSA library) and the PulseAudio client library `libpulse.so.0`, which the official Qt Multimedia build links. At run time its FFmpeg plugin also loads X11, Xrandr, Xext, libdrm, bzip2 and zlib; both Linux workflows install them.
+
+Failure behavior exercised locally: a corrupted or stray Qt mirror object and a vcpkg checkout at another commit each stop the configure with the path named; a tampered vcpkg tool is replaced by the verified download. The wx Linux root build moved to `cmake/linux-compat/LegacyWxLinux.CMakeLists.txt` as reference.
+
+## Retained Qt repository metadata (2026-10-02)
+
+Qt republishes and deletes its online-repository metadata. On 2026-09-28 `all_os/default_install` was republished and its previous metadata archive removed, so clean builds could no longer reproduce the Sept 29 lock (B2-U/F runs failed at acquisition with a SHA-256 mismatch, as designed). altqx chose to keep our own copy of the pinned metadata:
+
+- The 9 `Updates.xml` indexes and 9 metadata archives (about 300 KB, including Qt's license texts and installer scripts) are assets of the release [`qt-metadata-linux-6.11.2-20261002`](https://github.com/altqx/hikari/releases/tag/qt-metadata-linux-6.11.2-20261002), redistributed unchanged.
+- The lock gives each such entry a `retained_url`, and acquisition prefers it. Versioned payload archives still come from download.qt.io. The SHA-256 check is the same either way.
+- `tools/qt-lock/make-lock.py --previous <lock> --retention-base <url>` reuses verified digests by URL and length, and hashes only new or changed objects. The refresh reused 124 of 125; the selected closure and license texts are unchanged.
+- Acquisition removes mirror files the lock no longer lists; verify-only mode still reports them as failures. The installed-Qt stamp now identifies installed content (requested packages and payload digests), so a metadata-only refresh keeps an existing installation.
+
+Payloads remain exposed to Qt moving 6.11.2 off its online repository; retaining them too is a separate, unmade decision.
+
+## Windows builds (B2-W, 2026-10-02)
+
+- **CI:** `.github/workflows/windows.yml` runs on `windows-2025` with the newest Visual Studio's x64 developer environment (Visual Studio 18, MSVC 14.51 on the first runs). The empty-cache job provisions with the secret in one step only, rejects and repairs a corrupted mirror object, then builds and tests without credentials. It saves `out/sdk` for a second job, which reruns the verify workflow from that warm SDK with no secret at all.
+- **Windows specifics found by the first runs:** the vcpkg partial clone's on-demand fetch of an override's port tree is now prefetched with retries during provisioning; FFmpeg is found before Qt, because Qt's `FindFFmpeg.cmake` shadows vcpkg's `FindFFMPEG` on a case-insensitive filesystem; MSVC compiles sources as UTF-8 (`/utf-8`); and the Qt installer's private home also redirects `APPDATA`/`LOCALAPPDATA`, where it keeps its account file on Windows.
+- **Host tools:** git, ninja and cl, checked up front. vcpkg downloads its own CMake, 7-Zip and MSYS2 tools.
+- **Local Windows VM:** [`winix.yaml`](../winix.yaml) runs the same presets through Winix (`provision`, `build`, `test`, `backends`). `tools/winix/msvc.ps1` loads the developer environment and falls back to Visual Studio's bundled Git. `out/` stays in the VM. Qt provisioning there uses a Qt Account login made once inside the VM; the CI secret is never copied into it.
+- **vcpkg binary cache:** `out/sdk/vcpkg-archives`, on every platform, so one directory makes a run warm.
+
+## Phase 3 native inputs (B4, 2026-10-03)
+
+- **PortAudio** comes from the owned overlay `ports/portaudio`: upstream vcpkg's revision `147dd722…` and patches, without the jack2 dependency, with the host APIs pinned. Linux gets ALSA only (PipeWire and PulseAudio desktops reach it through their ALSA plugins); Windows gets WASAPI and DirectSound (the legacy app used DirectSound). JACK, ASIO, WDM-KS, MME and PulseAudio are off. `dependency-load` fails if the runtime host API set differs. Target: `Hikari::portaudio`.
+- **SoundTouch** (KA2-slowed-playback, #277) comes from vcpkg's `soundtouch` port at the baseline: 2.4.1, LGPL-2.1-or-later (`COPYING.TXT` installed as the port's copyright), static, float samples, without the `soundstretch` tool or the DLL wrapper. HikariSub is GPL-3.0-or-later and ships its whole source, which LGPL-2.1 §3 allows for a statically linked copy. It is used on the audio box's fill thread only, never in the output callback. Target: `Hikari::soundtouch` (the backends only).
+- **MeCab and UniDic** (KA4, #279, owner decision on the card) give the furigana reading suggestions. Both are GPL / LGPL / BSD at the user's choice, and HikariSub takes the **BSD** licence of each.
+  - MeCab comes from the owned overlay `ports/mecab`: vcpkg's port at the baseline (the 2019-09-25 snapshot `3a07c4ee`, which vcpkg's own CI skips on every triplet), static, libmecab only, built with Ninja. On Linux it memory-maps the dictionary; the upstream port left `HAVE_MMAP` out and read `sys.dic` into the heap. On Windows every file opens through a wide path (UTF-8 to UTF-16), so a dictionary under a non-ASCII user folder loads, and a static build has neither `dllimport` nor `<windows.h>` inside `extern "C"`. Target: `Hikari::mecab` (the backends only).
+  - The dictionary is UniDic 2.1.2, the files unidic-lite packages, from NINJAL's `unidic-mecab-2.1.2_bin.zip` (46 MB, SHA-512 pinned) through the overlay `ports/hikari-unidic-lite`. Only what MeCab reads at run time is installed (`sys.dic`, `matrix.bin`, `char.bin`, `unk.dic`, `dicrc`, 248 MB), with an empty `mecabrc` and the licence texts. The compiled files are the same on every platform. `HIKARI_UNIDIC_DIR` is that folder; the packages ship it as `Dictionary/unidic-lite`, and MeCab gets `-d` and `-r` for it, so a system `mecabrc` is never read.
+  - The readings are UniDic's kana form (feature 17, エイエン), not its pronunciation (エーエン). IPADIC read 一人 and 二人 as counters, and full UniDic 3.1.0 is 775 MB for about the same readings on lyrics, so neither was taken (comparison on #279).
+  - The runner without network needs both source archives in its `vcpkg/downloads`: `taku910-mecab-3a07c4eefaffb4e7a0690a7f4e5e0263d3ddb8a3.tar.gz` and `unidic-mecab-2.1.2_bin.zip`.
+- **LuaJIT** comes from vcpkg's port at the baseline (2026-09-08 snapshot, static, with FFI). Its link flags export the executable's symbols (`-Wl,-E`), which Lua native modules need, so `Hikari::luajit` is for the Lua helper only, never the application. `luajit-load` runs it in its own process and checks the JIT and FFI.
+
+## Lua helper native modules (L6, 2026-10-03)
+
+The Lua helper preloads the legacy native modules. lpeg 0.10 (`HikariSub/AutomationLPeg.c`) and luabins (`Thirdparty/luabins`) build from the unchanged legacy sources. `aegisub.__re_impl` uses Boost.Regex's `u32regex` over ICU, and `aegisub.__unicode_impl` uses Boost.Locale's ICU backend. Both come from vcpkg at the baseline: `boost-regex[icu]` and `boost-locale[icu]` 1.92 with `icu` 78.3, static, linked into the helper only (`U_STATIC_IMPLEMENTATION`). The legacy app shipped its own Boost and ICU builds, so regex and case-mapping results that depend on Unicode data versions are characterized, not assumed. `aegisub.__lfs_impl` is the legacy function set over `std::filesystem`. Its char paths use the ANSI code page on Windows, as boost::filesystem's did. Building ICU through a compiler-cache shim that renames objects fails: ICU writes `.ao` files. Configure with the real `CC`/`CXX` in that case.
+
+## Spell checker (F3, R2-hunspell, 2026-10-04)
+
+**Hunspell** 1.7.3 comes from vcpkg's port at the baseline (static, `HUNSPELL_STATIC`). The port ships pkg-config metadata only, so `cmake/HikariDependencies.cmake` finds it as `Hikari::hunspell`, linked privately into `hikari_backends`. The spell checker's word segmentation is legacy's Boost.Locale `boundary::word` over ICU, so `boost-locale[icu]` and `icu` (the Lua helper's packages) now also link statically into the application through `hikari_backends`; dictionary encodings are converted with ICU's converters. The application reads the user folder's `dictionaries`, then `<executable dir>/Dictionary`, and no system dictionaries. Since DK1 (#473) every package bundles the same dictionaries, pinned in `cmake/HikariDictionaries.cmake` by commit and SHA-256: en_US from Aegisub's dictionary repository, and pl, th_TH, ko_KR (built from spellcheck-ko's hunspell-dict-ko, GPL-3.0-or-later) and ta_IN (ThamiZha! Solthiruthi, MPL-1.1) from LibreOffice's. LibreOffice's `ta_IN.aff` declares one entry too few for its SFX D and SFX v tables, so Hunspell stopped parsing it at SFX D and lost every later suffix table; `packaging/dictionaries/ta_IN.aff` is that file with the two counts fixed and a comment saying so, pinned by its own hash (owner, 2026-10-29). Configure fetches them, with each one's notice, into `<build>/dictionary-downloads` (the cache path `HIKARI_DICTIONARY_DOWNLOADS` names another; a seeded folder works offline). The install tree puts them in `Dictionary/` and the notices in `licenses/dictionaries/<name>/`, the Windows payload stages the same tree, and `hikari_backends_bundled_dictionaries_tests` checks a word in each and a misspelling each rejects.
+
+## Grammar check (GR1, 2026-10-27)
+
+**harper-ls** 3.0.0, Automattic's Harper as a language server, is upstream's release build pinned in `cmake/HikariHarper.cmake`: the archive, the binary in it and Harper's `LICENSE` at the tag, each by SHA-256. Linux takes the static musl build, so it needs no host library and passes the packages' glibc ceiling; Windows takes the MSVC build, whose VCRUNTIME140 the package already ships. Configure fetches them into `<build>/harper-downloads` (the cache path `HIKARI_HARPER_DOWNLOADS` names another; a folder already holding them works offline), and the install tree puts `harper-ls` (`harper-ls.exe`) beside the application, with `licenses/harper/LICENSE` and `licenses/harper/THIRD-PARTY.txt`, the cargo-about list of the licences of the crates built into it. The application starts it only while Settings › Spelling & grammar has an English chosen, and talks LSP to it over stdio (`hikari::backends::HarperClient`). Its rule groups (`src/core/grammar_rules.inc`) are generated from the pinned tag; `tools/harper/README.md` lists what moves with the pin. harper-ls 3.0.0 deadlocks when two of its texts are opened at once (each opening pulls the settings and takes their write lock while another holds a read lock it takes twice, `load_user_dictionary`), so the client keeps one text open at a time and queues the rest.
+
+## Editor audio output tests (N6, 2026-10-03)
+
+`audio_engine_tests` cover the callback half (`OutputEngine`) on every host: no allocation while rendering, silence when nothing is ready, underrun/suspend/stop/loss invalidation and untorn clock snapshots. `portaudio_tests` open a real PortAudio stream on the device named by `HIKARI_TEST_AUDIO_DEVICE` (a substring of the device name; a named device that is missing fails the tests), or else the host default. With no output device they skip and say so. They write silence only. The Linux CI jobs define a null ALSA PCM, `hikari_null`, in `~/.asoundrc` and select it. That covers the stream, rescan, reopen and loss paths, but its callbacks run unpaced, so its timings mean nothing. The Winix VM and GitHub's Windows runners have no audio endpoint, so WASAPI and DirectSound streams still need a host that has one.
+
+## libass fork
+
+Every build (Windows, Ubuntu, Fedora, the Linux floor packages and the Windows packages) links the [altqx/libass](https://github.com/altqx/libass) fork, built statically by `ports/libass` with `vcpkg_from_git` at master `4f5ea43630bb89c9caacaf4742a8af4f3e26edf7` (version string `0.17.5-altqx-4f5ea436`). The user chose to pin the master commit, not a tag (2026-10-15). The port carries no patches: the fork has what used to be this overlay's two patches (the arm64 Windows assembly with clang and the font diagnostics below). The port keeps its options explicit: no libunibreak, no Core Text, DirectWrite on Windows and Fontconfig elsewhere, and `-Dlarge-tiles=false` (the rasterizer's 16x16 tiles, upstream's default).
+
+The fork is upstream libass (0.17.5 plus upstream's later commits) with a performance batch: the event-time index (`ass_track_events_modified`), the frame atlas (`ass_frame_pack_atlas`) and the font diagnostics. On Yoru at 1080p (34,692 frames) its render CPU was 10.8-11.3 s against 17.4-19.9 s for upstream `4a05d81`, with every frame hash identical. The [event-index contract and threading rule](backends.md) apply to any code that touches an `ASS_Track`.
+
+Three gates keep a distribution's or upstream's libass out:
+
+- `cmake/HikariDependencies.cmake` stops the configure when pkg-config's libass is not under the vcpkg installation, or when its `ass.h` lacks `LIBASS_HAS_TRACK_EVENTS_MODIFIED`, `LIBASS_HAS_FRAME_ATLAS` or `LIBASS_HAS_FONT_DIAGNOSTICS`. pkg-config's `libass>=0.17.5` alone cannot tell them apart: the fork reports upstream's version.
+- `src/backends/libass_renderer.cpp` and `libass_font_service.cpp` stop the compile (`#error`) without those macros, and require `LIBASS_VERSION >= 0x01705020`.
+- `dependency-load` checks `ass_library_version() >= 0x01705020` at run time, then packs a rendered frame with `ass_frame_pack_atlas` and shows an event moved in place after `ass_track_events_modified`.
+
+The macros, not the version, prove the fork: upstream also bumps the version's low byte between releases.
+
+The legacy wx reference build (`cmake/linux-compat/LegacyWxLinux.CMakeLists.txt`, `build.yml`) is the legacy app's and still links the distribution's libass; legacy's own move to the fork is separate.
+
+### Font diagnostics (N4, 2026-10-03)
+
+The fork's font diagnostics API (`ass_set_font_diagnostics`, `ASS_FontDiagnostics` version `ASS_FONT_DIAGNOSTICS_VERSION` 1, `LIBASS_HAS_FONT_DIAGNOSTICS`) is what the font collector uses to verify identity (F47-abi). Until 2026-10-15 it was this overlay's `hikari-font-diagnostics.patch` under `ass_hikari_*` names. The user chose plain libass-style names when it moved into the fork. Per library it reports:
+
+- every selection, with its stage (`ASS_FONT_STAGE_REQUESTED`, `_DEFAULT_FAMILY`, `_FALLBACK` or `_DEFAULT_PATH`) and a reader for stream bytes;
+- each opened face's actual index, face count and variation coordinates (with FreeType 2.9 or newer);
+- glyphs libass emboldens or slants synthetically;
+- characters no face covers.
+
+Rendering is unchanged; the hooks only observe. A fork update must keep the API and pass `font_service_tests`. On Linux those tests set `FONTCONFIG_FILE` to a generated configuration that lists only the build's CC0 font fixtures and the locked Qt install's OFL fonts (Georama, Titillium Web). On Windows they use DirectWrite and the installed fonts.
+
+## LuaJIT fusion patch (2026-10-03)
+
+The owned LuaJIT overlay (`ports/luajit`, the vcpkg port at the 2026-09-08 snapshot) adds `hikari-xload-fusion-across-calls.patch`. On x86/x64 the stock backend fuses an FFI memory load (XLOAD) into a later instruction's operand without checking for a C call (CALLXS) in between, so the load can run after that call. `aegisub/re.moon` reads a search result and then calls `ffi.C.free` on it (`first, last = res[0], res[1]`). Once traced, the read of `res[1]` could land after the free and return glibc's tcache link word. `re.split` and `re.find` then lost matches in streaks. This was the intermittent `LuaHelper.NativePreloadsMatchTheLegacyModules` failure (about 4% of runs; 60% with the `RegexTraced` loop). The patch treats a CALLXS as a fusion conflict for XLOAD and changes nothing else; other fusion and the other backends are untouched. A LuaJIT update must re-apply it, or confirm that upstream fixed it, and pass the `RegexTraced` check.
+
+## Docking engine (D1, 2026-10-03)
+
+The owned overlay `ports/kddockwidgets` builds KDDockWidgets 2.4.1 (commit c1d28d25, QtQuick frontend only, static) against the provisioned Qt. Its package config is patched to find the dependencies a static build links: Qt's GuiPrivate and QuickPrivate, KDBindings and nlohmann_json. On Linux, Qt's GuiPrivate package needs the XKB development headers. So the Linux host prerequisites now include `libxkbcommon-dev` on Ubuntu and `libxkbcommon-devel` on Fedora. D3's floating panels ask a Wayland compositor for no frame through Qt's WaylandClient module and the xdg-decoration protocol (vendored in `src/ui/wayland`), which needs `wayland-scanner` and the Wayland client headers: `libwayland-dev` on Ubuntu, `wayland-devel` on Fedora.

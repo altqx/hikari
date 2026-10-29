@@ -9,7 +9,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
-    spelling_text.cpp spelling_text.h editor_highlighter.cpp editor_highlighter.h
+    editor_highlighter.cpp editor_highlighter.h
     settings_store.cpp settings_store.h dialog_placement.cpp dialog_placement.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
     visual_tools_controller.cpp visual_tools_controller.h shape_editor.cpp shape_editor.h
@@ -111,7 +111,7 @@ qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml Save
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h)
 set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES StatusBar.qml StatusHelp.qml)
-# K1: the vector icon set (docs/qt/ux/icons.md), drawn by tools/icons/draw_icons.py:
+# K1: the vector icon set (docs/ux/icons.md), drawn by tools/icons/draw_icons.py:
 # the SVGs and their manifest as module resources, the Icon item, the
 # icon-only button, the menu items, tab button and dialog title that draw the
 # set through IconTheme's image provider. Kept in this block of their own (not the shared lists
@@ -123,7 +123,7 @@ file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEP
 qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml IconTextButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
-# K2: the theme layer (docs/qt/ux/visual-language.md): the Theme singleton and
+# K2: the theme layer (docs/ux/visual-language.md): the Theme singleton and
 # the appearance state, the Options dialog's Appearance page and its focus
 # ring, the focused panel's accent corner mark, and the docking engine's
 # separators (D1's splitter), group frames and floating windows in the theme's
@@ -183,7 +183,7 @@ if(UNIX AND NOT APPLE)
     target_sources(hikari_ui PRIVATE portal_colour_scheme.cpp portal_colour_scheme.h)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_COLOUR_SCHEME_PORTAL)
 endif()
-# D3: the dock chrome after MuseScore 4 (docs/qt/docking.md, "Chrome"): the
+# D3: the dock chrome after MuseScore 4 (docs/docking.md, "Chrome"): the
 # panel header's "⋯" button, the drop highlight and the floating header's
 # system-move area.
 qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml DockSystemMoveArea.qml)
@@ -229,7 +229,7 @@ qt_target_qml_sources(hikari_ui QML_FILES DialogWindow.qml DialogTitleBar.qml Ab
 qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml WhatsNewCard.qml WhatsNewDialog.qml)
 # CR1 (#452): the crash and freeze report, and Report an issue.
 qt_target_qml_sources(hikari_ui QML_FILES CrashReportWindow.qml ReportIssueWindow.qml)
-# PK1: the popup kit on DG1's frame (docs/qt/ux/visual-language.md "Popups"): the message box, the popover,
+# PK1: the popup kit on DG1's frame (docs/ux/visual-language.md "Popups"): the message box, the popover,
 # toasts and the inline bar, and the clash review, Choose styles, hotkey capture, list chooser and date picker;
 # NT1: the application's message box (MessageHost) and the Log panel.
 qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml

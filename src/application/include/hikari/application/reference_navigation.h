@@ -1,6 +1,6 @@
 #pragma once
 
-// R2: reference navigation (docs/qt/ux/translation-comparison.md) and the
+// R2: reference navigation (docs/ux/translation-comparison.md) and the
 // matching of legacy's in-Grid subtitles preview (SubsGridPreview at
 // 20d647c4). The reference tray shows the protected reference Document; it
 // is navigated on its own, and optionally follows the editing target's active

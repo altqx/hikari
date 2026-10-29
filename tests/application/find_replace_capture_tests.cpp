@@ -155,7 +155,7 @@ QJsonObject legacyDump(const QJsonObject &state)
 }
 
 // Cases where the rewrite departs from what the legacy app did, by an
-// approved departure (docs/qt/compatibility-decisions.md): the step whose
+// approved departure (docs/compatibility-decisions.md): the step whose
 // dump differs, and why.
 const std::map<std::string, std::string> kDepartures = {
     {"F1-replace-next-stale", "F1-stale-replace (R3-hang-crash-loss): legacy replaced the stale match again"},

@@ -68,7 +68,7 @@ std::u16string copyCoordinatesText(const VideoView &view, int x, int y)
     // VideoBox::OnCopyCoords (VideoBox.cpp:1395-1412) wrote "x,y" from the
     // pointer scaled by the whole client less one pixel, so the letterbox,
     // pillarbox and zoom were ignored. Approved departure
-    // T1-copy-coords-view (docs/qt/compatibility-decisions.md): the
+    // T1-copy-coords-view (docs/compatibility-decisions.md): the
     // crosshair's own conversion, truncated as its label is, so the text is
     // the script coordinate under the pointer.
     const CrossCoefficients coeff = crossCoefficients(view);

@@ -3,9 +3,9 @@ status: accepted
 amends: 0018, 0019
 ---
 
-# Offer the rewrite to legacy users opt-in, from the release feed
+# Offer HikariSub to legacy users opt-in, from the release feed
 
-On 2026-10-21 altqx decided how legacy users move to the rewrite. Moving is always the user's choice. Legacy (0.0.x) keeps its own releases until the owner ends its support. This replaces the `offer_to` gate in [ADR-0019](0019-installers-and-seamless-updates.md) and the [distribution policy](../qt/distribution.md).
+On 2026-10-21 altqx decided how legacy users move to the rewrite. Moving is always the user's choice. Legacy (0.0.x) keeps its own releases until the owner ends its support. This replaces the `offer_to` gate in [ADR-0019](0019-installers-and-seamless-updates.md) and the [distribution policy](../distribution.md).
 
 ## Why the gate changes
 
@@ -66,7 +66,7 @@ The manifest is uploaded after `SHA256SUMS` is computed. To change a published o
 
 ## Moving and going back
 
-The rewrite installs over legacy under the same identity, as ADR-0019 decided, for betas as for stable releases. This replaces the separate legacy and Qt beta installation identities of the [readiness policy](../qt/proposals/cutover-readiness.md). The profiles stay separate: the rewrite keeps its own settings and only reads legacy's, so going back is reinstalling a legacy 0.0.x release with the settings intact. Portable packages still unpack side by side. A user who moves keeps the channel they had in legacy, and the rewrite's own updater takes over.
+The rewrite installs over legacy under the same identity, as ADR-0019 decided, for betas as for stable releases. This replaces the separate legacy and Qt beta installation identities of the [readiness policy](../proposals/cutover-readiness.md). The profiles stay separate: the rewrite keeps its own settings and only reads legacy's, so going back is reinstalling a legacy 0.0.x release with the settings intact. Portable packages still unpack side by side. A user who moves keeps the channel they had in legacy, and the rewrite's own updater takes over.
 
 ## AUR
 

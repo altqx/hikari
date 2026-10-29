@@ -16,7 +16,7 @@ The cases: a 16:9 frame filling the window, pillarbox, letterbox, an anamorphic 
 
 ## Compared with the rewrite
 
-`VisualCapture.ReplaysTheLegacyProbe` (`hikari_application_visual_tools_tests`) sets every case up through `visual::VideoView` from logical coordinates at the case's device pixel ratio and replays it through `visual::CrosshairTool` and `visual::copyCoordinatesText`: every rectangle, zoom value, coefficient, conversion, label, label rectangle (on the video), line end, visibility flag, copied text and clicked Line text is equal, float for float, but for two approved departures (User, 2026-10-05, with the T1 review; [compatibility-decisions.md](../../../../docs/qt/compatibility-decisions.md)), for which this capture is the old evidence:
+`VisualCapture.ReplaysTheLegacyProbe` (`hikari_application_visual_tools_tests`) sets every case up through `visual::VideoView` from logical coordinates at the case's device pixel ratio and replays it through `visual::CrosshairTool` and `visual::copyCoordinatesText`: every rectangle, zoom value, coefficient, conversion, label, label rectangle (on the video), line end, visibility flag, copied text and clicked Line text is equal, float for float, but for two approved departures (User, 2026-10-05, with the T1 review; [compatibility-decisions.md](../../../../docs/compatibility-decisions.md)), for which this capture is the old evidence:
 
 - T1-copy-coords-view: the copied text is the crosshair's position under the pointer (the point's `label` as "x,y"), not the point's `copy`.
 - T1-wheel-zoom-stale: the case `zoom-wheel-stale` expects what `zoom-at-point` (the same zoom followed by `setvisual`) captured, since every zoom refreshes the tools' transform.

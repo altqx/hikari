@@ -121,7 +121,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_AUTOMATION_REPEAT_LAST_RUN"), 5173);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_KANJI_TIMER"), 5174);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_GETTING_STARTED"), 5176);
-    // docs/qt/proposals/settings-migration-map/actions.csv: symbol, numeric alias.
+    // docs/proposals/settings-migration-map/actions.csv: symbol, numeric alias.
     std::istringstream csv(readFile(HIKARI_ACTIONS_CSV));
     std::string line;
     std::getline(csv, line);

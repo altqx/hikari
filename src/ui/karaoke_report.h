@@ -1,7 +1,7 @@
 #pragma once
 
 // KE1-template-timing: the run report the bundled karaoke templater attaches
-// to its result (aegisub.hikari.report; docs/qt/karaoke-templater.md), read
+// to its result (aegisub.hikari.report; docs/karaoke-templater.md), read
 // and put in words: a summary for the status bar and, per template Line, what
 // it cost for the log window.
 

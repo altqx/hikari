@@ -1,6 +1,6 @@
 #pragma once
 
-// One Document's editing state (A1; docs/qt/proposals/edit-transactions.md):
+// One Document's editing state (A1; docs/proposals/edit-transactions.md):
 // committed content and its history, the single pending Line draft, the
 // selection, and saved identity. Accepted policy: commit on leave, commands
 // commit an overlapping draft first, Save commits then saves, Undo restores

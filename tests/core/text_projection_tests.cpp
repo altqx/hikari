@@ -1,4 +1,4 @@
-// Hidden-tag projection (V2; docs/qt/ux/ass-editor.md). Ports the accepted
+// Hidden-tag projection (V2; docs/ux/ass-editor.md). Ports the accepted
 // prototype's mapping fixtures for the accepted defaults: insertion after
 // boundary tags, and replacements that keep intervening tags.
 

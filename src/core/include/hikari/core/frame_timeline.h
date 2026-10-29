@@ -1,6 +1,6 @@
 #pragma once
 
-// Frame lookup over presentation starts B[i] (docs/qt/time-semantics.md).
+// Frame lookup over presentation starts B[i] (docs/time-semantics.md).
 // Constant rate: B[i] = origin + i / fps, compared exactly as rationals.
 // Indexed (VFR): authored starts in presentation order; frame identity is never
 // renumbered, and disordered starts make the timeline Estimated, not Exact.

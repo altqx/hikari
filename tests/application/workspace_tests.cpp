@@ -1,4 +1,4 @@
-// V1-S: editing target and protected reference guards (docs/qt/ux/workspaces.md).
+// V1-S: editing target and protected reference guards (docs/ux/workspaces.md).
 
 #include "hikari/application/workspace.h"
 

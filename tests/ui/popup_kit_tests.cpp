@@ -1,4 +1,4 @@
-// PK1 (#301): the popup kit (docs/qt/ux/visual-language.md "Popups"): the
+// PK1 (#301): the popup kit (docs/ux/visual-language.md "Popups"): the
 // message box (MessageBox.qml), the popover (Popover.qml), the toasts
 // (ToastStack.qml), the inline bar (InlineBar.qml), and the forms built on
 // them: the clash review, Choose styles, the hotkey capture, the list

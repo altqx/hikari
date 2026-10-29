@@ -76,7 +76,7 @@ namespace {
 int crashTestSink = 0;
 
 // CR1 (#452): a forced crash or freeze, to check the reports end to end
-// (docs/qt/crash-reports.md; release CI symbolizes the record it leaves).
+// (docs/crash-reports.md; release CI symbolizes the record it leaves).
 // HIKARISUB_CRASH_TEST=segv or abort crashes once the handler is in; hang
 // freezes the window 15 s, 3 s after it is up.
 #if defined(_MSC_VER)

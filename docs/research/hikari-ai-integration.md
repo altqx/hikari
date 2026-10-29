@@ -10,7 +10,7 @@ SDK, the OpenAI and Anthropic platform endpoints, and other OpenAI-style endpoin
 
 Sources read:
 
-- HikariSub `qt` at `6c0d80daa` (2026-10-27). Paths such as `docs/qt/automation.md:11` refer to that
+- HikariSub `qt` at `6c0d80daa` (2026-10-27). Paths such as `docs/automation.md:11` refer to that
   commit.
 - Honya at `83b6209` (`/home/altq/Work/honya-cli`). Paths such as `honya:src/agents/prompts.rs:44` refer
   to that commit.
@@ -69,7 +69,7 @@ whoever runs the loop.
 - **Hikari already has the parts frame inspection needs.** `snapshotImage` composes a frame with or
   without the libass overlay (`video_snapshot.h:34`), the renderer reports where it drew
   (`subtitle_render.h:101`), automation's `get_frame` returns pixels with subtitles
-  (`docs/qt/compatibility-decisions.md:210`), and VT3's perspective maths converts between tags and quads
+  (`docs/compatibility-decisions.md:210`), and VT3's perspective maths converts between tags and quads
   (`visual_perspective.h:78-86`). A 1920×1080 frame costs 2,691 visual tokens on Claude's high-resolution
   tier (about $0.011 on Opus 5.5 at $4/M) and 258 tokens per frame on Gemini video; crops cost far less.
 - **Vision gives approximate coordinates.** Anthropic says Claude's localization outputs "are approximate".
@@ -84,7 +84,7 @@ whoever runs the loop.
 - **Safety is mostly approval and staging.** Subtitle text and scripts are untrusted input (indirect prompt
   injection). Hikari's macro transaction already stages edits against a revision and applies them as one
   undo step (`macro_transaction.h:1-6`), but its Lua helper "is not a security sandbox"
-  (`docs/qt/automation.md:11`), so AI-written Lua needs explicit approval. Keys belong in the OS keychain
+  (`docs/automation.md:11`), so AI-written Lua needs explicit approval. Keys belong in the OS keychain
   (QtKeychain has a `qtkeychain-qt6` vcpkg port).
 - **Recommendation:** build one Hikari tool surface first, serve it to external agents over MCP, then add
   a native C++ agent loop with the three wire adapters and a Keep/Undo review on the Document, then an ACP
@@ -202,7 +202,7 @@ be verified per agent.
 | Model picker | Zed per-thread, Zed inline alternatives, Honya per-role ModelSet | Per thread plus per role (translator, reviewer, vision) |
 | Tool approval | Zed deny > confirm > allow; VS Code once/session/workspace/always | Reads unasked; Document edits staged (no prompt); file, Lua, network and MCP calls prompt |
 | Diff/review | Zed hunks, VS Code Keep/Undo, JetBrains per file | Per-Line Keep/Undo over a staged change set, drawn like R1's comparison (`subtitle_comparison.h:1-12`) |
-| Undo | Checkpoints per request; restores do not undo external effects | Accepted set = one undo step (the macro transaction rule, `docs/qt/automation.md:85`); a checkpoint is the Document revision before the turn |
+| Undo | Checkpoints per request; restores do not undo external effects | Accepted set = one undo step (the macro transaction rule, `docs/automation.md:85`); a checkpoint is the Document revision before the turn |
 | Profiles | Write/Ask/Minimal; custom agents with tool lists | Ask, Edit, Agent; task presets (Typeset, Translate, Karaoke) carrying tools and skills |
 
 ## 2. Providers and auth
@@ -374,14 +374,14 @@ in `session/new`.
 For Hikari: load skills from the user folder (UD1) and from bundled `skills/` (for example
 `ass-typesetting`, `honya-translation`, `karaoke-templater`, `hikari-lua-automation`), inject only the
 catalog, add a `read_skill` tool, and treat scripts inside a skill as untrusted (they are Lua or shell, and
-§7 applies). Skill bodies should reference Hikari's docs (`docs/qt/visual-tools.md`,
-`docs/qt/karaoke-templater.md`) rather than duplicate them.
+§7 applies). Skill bodies should reference Hikari's docs (`docs/visual-tools.md`,
+`docs/karaoke-templater.md`) rather than duplicate them.
 
 ### 3.3 Exposing a large surface
 
 - Hikari has 243 legacy command symbols plus the rewrite's own (`hotkeys.h:71-78`) and 13 panels
   (`workspace_layout.cpp:129-136`), behind one command boundary for menus, toolbars, shortcuts and
-  automation (`docs/qt/architecture.md:31-35`).
+  automation (`docs/architecture.md:31-35`).
 - Limits: VS Code 128 tools per request ([VS Code tools]); Anthropic: "Claude's ability to pick the right
   tool degrades once you exceed 30–50 available tools", use tool search at ≥ 10 tools or > 10k tokens of
   definitions, keep 3–5 tools non-deferred, namespace names by prefix, up to 10,000 deferred tools, custom
@@ -402,7 +402,7 @@ catalog, add a `read_skill` tool, and treat scripts inside a skill as untrusted 
     `panel.*`.
   - Every tool gets JSON Schema input and output, a read/write class (maps to MCP `readOnlyHint` and the
     approval policy), revision checks on writes, and model-facing error text. Edits use stable Line IDs,
-    never row numbers (`docs/qt/document-model.md`, the source-preserving model of ADR 0013).
+    never row numbers (`docs/document-model.md`, the source-preserving model of ADR 0013).
 
 ## 4. Frame inspection for typesetting
 
@@ -431,13 +431,13 @@ on request.
 - `IndexedSource::frame(index, done)` gives owned BGRA frames (`indexed_source.h:129-137`, `:189`) and
   `keyframes` (`:44`).
 - Automation's `get_frame` with subtitles goes through `VideoSession::requestFrame`
-  (`docs/qt/compatibility-decisions.md:210`); the helper returns its pixels (`docs/qt/coverage.md:97`).
+  (`docs/compatibility-decisions.md:210`); the helper returns its pixels (`docs/coverage.md:97`).
 - VT3: `textToQuad` and `quadToTransform` with three `\org` modes, after arch1t3cht's fork, with a libass
   render check that ink corners lie within a pixel of the quad (`visual_perspective.h:78-86`,
-  `docs/qt/visual-tools.md:203-225`). HY1's Hydra strip drives legacy's all-tags engine (Set, Add, Multiply,
-  gradients) as one "Visual Hydra tool" step (`docs/qt/visual-tools.md:193-201`). `lineBox` gives a Line's box
+  `docs/visual-tools.md:203-225`). HY1's Hydra strip drives legacy's all-tags engine (Set, Add, Multiply,
+  gradients) as one "Visual Hydra tool" step (`docs/visual-tools.md:193-201`). `lineBox` gives a Line's box
   at a time (`visual_transform.h:164`). Clips, vector drawings and the position shifter are T4–T6
-  (`docs/qt/visual-tools.md:127-190`).
+  (`docs/visual-tools.md:127-190`).
 
 ### 4.3 Existing automatic and semi-automatic typesetting tools
 
@@ -523,10 +523,10 @@ Anthropic notes that coordinates are returned relative to the resized image and 
 | Honya | Hikari |
 | --- | --- |
 | Chapter / chunk | A run of Lines in Grid order (by time or by the user's selection), packed to a token budget, never splitting a Line; Comment Lines and generated karaoke Lines skipped |
-| Source Markdown | Original text (TM1: the Original text panel keeps its tags, `docs/qt/compatibility-decisions.md:371-372`) |
+| Source Markdown | Original text (TM1: the Original text panel keeps its tags, `docs/compatibility-decisions.md:371-372`) |
 | `translated_text` | Translated text of each Line, returned per Line ID (a JSON array, not one blob), so alignment is structural |
 | Markdown atoms (`**`, ruby) | ASS override blocks, `\N`, `\h`, karaoke `\k` runs, drawings (`\p`) — protected spans |
-| Line-wide formatting | Carried silently by TM1: leading blocks and line-wide tags (`\pos \move \org \fad \fade \clip \iclip \an \a \q`) and whole-line wrappers (`docs/qt/compatibility-decisions.md:372`) |
+| Line-wide formatting | Carried silently by TM1: leading blocks and line-wide tags (`\pos \move \org \fad \fade \clip \iclip \an \a \q`) and whole-line wrappers (`docs/compatibility-decisions.md:372`) |
 | Inner formatting | Numbered runs the translator places (EDITBOX_PLACE_RUN_1…9); the agent returns run marks in its text and Hikari writes them as ASS, the design recommended in [translation-tag-transfer.md](translation-tag-transfer.md) §0 |
 | `[REVIEW NEEDED]` / NeedsReview | The Unconfirmed flag (`CONTEXT.md:103`), plus a note in the Line's comment or the Log |
 | Previous 5 sentences | Previous N translated Lines, plus the timing gap (a scene change is a long gap or a keyframe) |
@@ -547,8 +547,8 @@ width), on-screen signs (translate the sign Lines with the frame as context, kee
   vocal-onset snapping by band-limited spectral flux, "unreliable on smooth singing" (KA5,
   `vocal_onsets.h:1-12`), the karaoke checker (KA7, `src/ui/KaraokeCheckDialog.qml`), and the bundled
   Karaoke Templater 2.1.7-compatible templater with Kara Effector, per-template timing reports and
-  regenerate-selected (KE1–KE3, `docs/qt/karaoke-templater.md:1-31`), with `aegisub.hikari` helpers for
-  scripts (`docs/qt/karaoke-templater.md:74-86`).
+  regenerate-selected (KE1–KE3, `docs/karaoke-templater.md:1-31`), with `aegisub.hikari` helpers for
+  scripts (`docs/karaoke-templater.md:74-86`).
 - **Forced alignment:** WhisperX (BSD-2-Clause) gives "word-level timestamps using wav2vec2 alignment";
   alignment models are language-specific and include Japanese
   (`jonatasgrosman/wav2vec2-large-xlsr-53-japanese`) and Korean; "Transcript words which do not contain
@@ -580,13 +580,13 @@ width), on-screen signs (translate the sign Lines with the frame as context, kee
   typed tools against a revision, not free text.
 - **Approval.** Read tools run unasked. Document edits are staged and shown as pending (Keep/Undo), applied as
   one undo step per accepted set, with stale-revision rejection — the macro transaction rule
-  (`macro_transaction.h:1-6`, `docs/qt/automation.md:85`). Prompt every time for: writing files outside the
+  (`macro_transaction.h:1-6`, `docs/automation.md:85`). Prompt every time for: writing files outside the
   Document (save, export, font collection), running or loading Lua, network fetches, MCP tool calls from a
   server not marked trusted, and anything touching settings or the user folder. A deny-first rule list as in
   Zed, with session-scoped grants as VS Code's security guide recommends.
 - **AI-authored Lua.** The helper process "is not a security sandbox. Lua/native/FFI filesystem and network
   access retain ordinary operating-system permissions. Terminating the helper cannot roll back file writes"
-  (`docs/qt/automation.md:11`). So: show the script, require approval per run (no "always"), run it as an
+  (`docs/automation.md:11`). So: show the script, require approval per run (no "always"), run it as an
   ordinary macro (target read-only while it runs, one undo step, cancel and Force stop as AM1 has), and keep
   AI-written scripts in a scratch folder rather than Autoload unless the user saves them there.
 - **Keys.** QtKeychain stores secrets in the macOS Keychain, GNOME Keyring/KWallet/libsecret on Linux and

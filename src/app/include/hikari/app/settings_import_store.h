@@ -1,7 +1,7 @@
 #pragma once
 
 // O3: the importer's transaction over the settings folder (S44-import,
-// docs/qt/proposals/settings-import.md "Import transaction"): legacy roots
+// docs/proposals/settings-import.md "Import transaction"): legacy roots
 // listed, never combined; the chosen root's files copied to a preserved
 // snapshot with their hashes and encoding evidence; staged generations of
 // the complete destination profile (registry values and the authored

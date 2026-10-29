@@ -27,7 +27,6 @@
 #include "hikari/application/video_matrix.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
-#include "spelling_text.h"
 #include "hikari/core/conversion.h"
 #include "hikari/application/keyframe_files.h"
 #include "hikari/core/line_groups.h"
@@ -1136,6 +1135,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (!m_bundledDictionaryDir.isEmpty() && m_bundledDictionaryDir != m_dictionaryDir)
             folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
         m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
+        // SP1: a dictionary loaded in the background checks the marks again.
+        m_spellChecker->setLoadedHandler(
+            [this] { QMetaObject::invokeMethod(this, [this] { spellingRefresh(); }, Qt::QueuedConnection); });
     }
     setUpGrammar(options); // GR1 (#364)
     m_spellingLoader = options.spellingBackend;
@@ -4651,8 +4653,6 @@ void Application::setSpellingOn(bool on)
     spellingRefresh();
 }
 
-// A language from the editor menu: DICTIONARY_LANGUAGE, SpellChecker::Destroy
-// and ClearErrs, also for the language already chosen.
 void Application::setDictionaryLanguage(const QString &symbol)
 {
     m_settings->set("editor.dictionaryLanguage", symbol);
@@ -4666,21 +4666,6 @@ void Application::setSuggestionsOnDoubleClick(bool on)
         return;
     m_settings->set("editor.suggestionsOnDoubleClick", on);
     emit spellingChanged();
-}
-
-QVariantList Application::dictionaries() const
-{
-    QVariantList out;
-    if (!m_spellChecker)
-        return out;
-    for (const auto &symbol : application::availableDictionaries(m_spellChecker->folders()))
-        out << QVariantMap{{QStringLiteral("symbol"), qstr(symbol)}, {QStringLiteral("name"), ui::dictionaryName(qstr(symbol))}};
-    return out;
-}
-
-QString Application::dictionaryName(const QString &symbol) const
-{
-    return ui::dictionaryName(symbol);
 }
 
 int Application::spellingRole() const
@@ -4740,7 +4725,9 @@ QVariantMap Application::editorMisspellAt(int role, int position)
     auto *checker = spellChecker();
     if (!raw || !checker)
         return {};
-    const auto marks = application::editorMarks(*raw, targetSession()->document().format(), *checker, m_spellingText);
+    const auto format = targetSession()->document().format();
+    // SP1: asked once (the menu, the double-click popup): waits for the loads.
+    const auto marks = application::editorMarks(*raw, format, *checker, m_spellingText, true);
     int at = position;
     if (!m_editor->showTags())
         at = static_cast<int>(core::rawOffset(core::project(*raw), static_cast<std::size_t>(std::max(position, 0)), true));
@@ -4749,7 +4736,7 @@ QVariantMap Application::editorMisspellAt(int role, int position)
         return {};
     const auto &misspell = marks.misspells[*found];
     QStringList suggestions;
-    for (const auto &s : checker->suggestions(misspell.word))
+    for (const auto &s : checker->suggestions(misspell.word, application::lineWords(*raw, format, m_spellingText)))
         suggestions << qstr(s);
     return {{QStringLiteral("word"), qstr(misspell.word)},
             {QStringLiteral("start"), misspell.start},
@@ -6374,7 +6361,7 @@ QVariantList Application::sampleSpellingMarks(const QString &text, bool on, int 
     if (!m_sampleCheckerReady)
         return out;
     const auto marks = application::editorMarks(text.toStdU16String(), core::SubtitleFormat::Ass, *m_sampleChecker,
-                                                m_spellingText);
+                                                m_spellingText, true);
     for (std::size_t i = 0; i + 1 < marks.errors.size(); i += 2)
         out << marks.errors[i] << marks.errors[i + 1] + 1;
     return out;

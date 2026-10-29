@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # CR1 (#452): turns a crash or freeze report's module + offset frames into
 # functions and lines, with the debug symbols release CI keeps for each
-# version (docs/qt/crash-reports.md).
+# version (docs/crash-reports.md).
 #
 #   symbolize.py REPORT [--symbols DIR] [--version V] [--repo altqx/hikari]
 #

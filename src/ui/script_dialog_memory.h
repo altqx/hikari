@@ -1,7 +1,7 @@
 #pragma once
 
 // AD2 (#311): script dialogs' last answers and presets, kept in the profile
-// (docs/qt/automation.md). Both are kept per dialog key: the script's file
+// (docs/automation.md). Both are kept per dialog key: the script's file
 // and the dialog's controls (each one's class and name), so the script's
 // macros that show the same dialog share them and a script with two
 // dialogs keeps them apart.

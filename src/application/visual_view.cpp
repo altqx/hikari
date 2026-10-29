@@ -172,7 +172,7 @@ void VideoView::zoomAt(float percent, int mouseX, int mouseY)
     m_zoomPercent = x / (m_zoomRect.width - m_zoomRect.x);
     // Legacy SetZoom left the tools' transform unzoomed until the next
     // resize, tool change or edit. Approved departure T1-wheel-zoom-stale
-    // (docs/qt/compatibility-decisions.md): the tools follow every zoom.
+    // (docs/compatibility-decisions.md): the tools follow every zoom.
     refreshToolTransform();
 }
 

@@ -1,4 +1,4 @@
-// C1: typed time values and frame lookup (docs/qt/time-semantics.md).
+// C1: typed time values and frame lookup (docs/time-semantics.md).
 // Fixture-driven cases read the approved-departure inputs and the recorded
 // legacy observations, so each approved change keeps its old result beside it.
 

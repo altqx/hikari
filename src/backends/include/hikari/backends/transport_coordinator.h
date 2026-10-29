@@ -1,6 +1,6 @@
 #pragma once
 
-// General <-> indexed transport handoff (I4; docs/qt/media.md, the accepted
+// General <-> indexed transport handoff (I4; docs/media.md, the accepted
 // media handoff closure). One media file is open in both owners; only the
 // active one plays and owns the clock. A switch stops and flushes the old
 // owner, invalidates its pending work and clock, and acknowledges the

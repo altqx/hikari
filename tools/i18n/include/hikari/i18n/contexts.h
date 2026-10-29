@@ -1,5 +1,5 @@
 #pragma once
-// O6: semantic translation contexts (docs/qt/localisation.md, "Keys and
+// O6: semantic translation contexts (docs/localisation.md, "Keys and
 // migration"). Every interface string is keyed by the surface it belongs to
 // (HikariSub.Editor, HikariSub.Grid, ...), named in the registry
 // i18n/contexts.tsv, rather than by the QML file or C++ class that happens to

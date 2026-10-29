@@ -1,4 +1,4 @@
-// O6 (#205): semantic translation contexts (docs/qt/localisation.md, "Keys
+// O6 (#205): semantic translation contexts (docs/localisation.md, "Keys
 // and migration"). The lint over small fixtures, the record of the move from
 // lupdate's default contexts (pairing, escaping, joining entries, the
 // comparison), and the checked-in registry, map and catalogs.
@@ -323,7 +323,7 @@ TEST(CheckedIn, CatalogsHoldTheGridHeadings)
     }
 }
 
-// The rewrite's own copy is in sentence case (docs/qt/ux/visual-language.md,
+// The rewrite's own copy is in sentence case (docs/ux/visual-language.md,
 // "Sentence case"): "line", "document" and "untitled" are ordinary words
 // inside a sentence ("1 line selected", "Follow the editing line"), not the
 // glossary's capitalized terms. Legacy's own ids (keymap.tsv's exact and

@@ -69,7 +69,7 @@ QVariantList TagButtonsController::buttons() const
 
 QStringList TagButtonsController::iconRoles()
 {
-    // The set's icons of override tags (docs/qt/ux/icons.md: one icon, one
+    // The set's icons of override tags (docs/ux/icons.md: one icon, one
     // meaning): \b \i \u \s, \fn, \1c-\4c, \an1-9, \fscx \fscy, \frz
     // \frx/\fry, \pos, \move, \clip (rectangle, vector), \p, \k.
     static const QStringList roles{

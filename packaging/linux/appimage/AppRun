@@ -1,5 +1,5 @@
 #!/bin/sh
-# HikariSub AppImage entry point (installers spec 5.3), Qt rewrite.
+# HikariSub AppImage entry point (installers spec 5.3).
 #
 # The app tree is usr/lib/hikarisub; its qt.conf points Qt at the bundled
 # plugins and QML modules, so no QT_* variable is needed. The libraries of

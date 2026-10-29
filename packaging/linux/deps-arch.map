@@ -1,4 +1,4 @@
-# Arch dependencies of the Qt rewrite's host libraries, for the AUR packages
+# Arch dependencies of HikariSub's host libraries, for the AUR packages
 # hikarisub-stable-bin and hikarisub-beta-bin (installers spec 5.4, 5.5). "<soname> <package>"; read by
 # resolve-deps.sh through aur/render-pkgbuild.sh. Every soname the app tree
 # needs from the host must have a line. Owners checked with pacman -F.

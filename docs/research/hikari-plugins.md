@@ -38,7 +38,7 @@ started by the application.
   versioned, bounded IPC protocol. Macros stage edits that the application validates and applies as one
   undo step (ADR 0006). The process boundary protects the application from crashes and hangs. **It is
   not a security boundary:** the helper opens every standard library, including `io`, `os`, `debug` and
-  `ffi`, with the user's full OS rights (`docs/qt/automation.md`, "Process containment is not a security
+  `ffi`, with the user's full OS rights (`docs/automation.md`, "Process containment is not a security
   sandbox").
 - **LuaJIT 2.1 is maintained but only roughly sandboxable.** The v2.1 branch is the recommended
   "Production" branch, with rolling releases and 96 commits so far in 2026. It supports Windows
@@ -105,7 +105,7 @@ started by the application.
   (`src/application/include/hikari/application/macro_transaction.h:1-6`).
 - **Dialogs.** The helper sends a `DialogRequest`: a list of `DialogControl{kind, name, x, y, width,
   height, label, text, …}` plus buttons (`automation.h:41-62`). `AutomationDialog.qml` maps each `kind`
-  to a fixed QML component (`src/ui/AutomationDialog.qml:640-651`). `docs/qt/automation.md` (service
+  to a fixed QML component (`src/ui/AutomationDialog.qml:640-651`). `docs/automation.md` (service
   table) records the rule: "App creates fixed QML control types from plain data … no script-generated
   QML."
 
@@ -136,7 +136,7 @@ started by the application.
   (`l0/DependencyControl/UpdateTask.moon:1026-1033`). Trust is a list of trusted and blocked feed URLs,
   with a `fetchUntrustedFeeds` policy of `always`, `never` or `prompt`
   (`l0/DependencyControl/FeedTrust.moon:14-15, 41-60`). **There are no signatures.**
-- **The stance.** `docs/qt/automation.md` says: "Process containment is not a security sandbox.
+- **The stance.** `docs/automation.md` says: "Process containment is not a security sandbox.
   Lua/native/FFI filesystem and network access retain ordinary operating-system permissions … No
   additional permission system or restricted scripting API is accepted here." That stance is right for
   Aegisub compatibility. A plugin format can take a different one.
@@ -150,7 +150,7 @@ started by the application.
 | Commands and hotkeys | Numeric action ids. Legacy's 243 actions, then the rewrite's own (5169–5176, …), with script bindings from `kFirstScriptHotkey = 30100` (`src/application/include/hikari/application/hotkeys.h:72-89`). Macro bindings are stored by legacy name with the macro name and script SHA-256, and resolve only while that registration still matches (`automation_hotkeys.h:3-7`). | String command ids (`plugin.<id>.<command>`), bound like macro aliases. |
 | Settings | A compile-time table of `SettingDefinition{id, legacyKey, type, scope, …}` (`src/application/include/hikari/application/settings.h:36-47`). | Plugin settings declared in the manifest and stored per plugin, outside the static table. |
 | Dialogs | DG1 `DialogWindow.qml` is the frame of every dialog: a top-level window with a per-`dialogId` placement and a guide link (`src/ui/DialogWindow.qml:8-35`). Automation dialogs already use one id per script. | Plugin dialogs inside the same frame, with `dialogId = plugin.<id>.<dialog>`. |
-| Architecture docs | "does not require … a third-party plugin SDK" (`docs/qt/architecture.md:51`). "The map's exclusion of a general plugin ecosystem" (`architecture.md:57`). "without … a general extension SDK" (`docs/qt/backends.md:60`). | **A new ADR**, since these lines rule out exactly this feature. |
+| Architecture docs | "does not require … a third-party plugin SDK" (`docs/architecture.md:51`). "The map's exclusion of a general plugin ecosystem" (`architecture.md:57`). "without … a general extension SDK" (`docs/backends.md:60`). | **A new ADR**, since these lines rule out exactly this feature. |
 
 ## 2. LuaJIT 2.1 today
 
@@ -207,7 +207,7 @@ started by the application.
 | Instruction-count hooks | `lua_sethook` with a count. | "Debug hooks are not called from compiled code" (lua-l above; the FAQ's Ctrl-C entry). `LUAJIT_ENABLE_CHECKHOOK` makes traces check for hooks, but "is disabled by default, since the hook checks may be quite expensive in tight loops" (`src/lj_record.c:2949-2962`). Turning the JIT off (`luaJIT_setmode`) also works, at the cost of speed. |
 | A memory cap through the allocator | `lua_newstate(allocf, ud)` with a counting allocator. On 64-bit it is available with GC64, the default; only 64-bit builds without GC64 replace it (`src/lj_state.c:246-250`; [install](https://luajit.org/install.html): "All LuaJIT 64 bit ports use 64 bit GC objects by default"). | It catches `string.rep` blow-ups only if the allocator refuses. Native modules allocate outside it. |
 | VM hardening flags | `LUAJIT_SECURITY_PRNG/STRHASH/STRID/MCODE`, all secure by default (`src/lj_arch.h:736-768`). | These harden the VM against hash flooding and similar attacks. They are not a sandbox. |
-| A process with OS limits | A wall-clock watchdog plus a kill (already in place: Force stop after 3 s, `docs/qt/automation.md`), job-object or cgroup memory caps, and an OS filesystem and network sandbox (§5.3). | This is the only enforcing layer, per the LuaJIT FAQ. |
+| A process with OS limits | A wall-clock watchdog plus a kill (already in place: Force stop after 3 s, `docs/automation.md`), job-object or cgroup memory caps, and an OS filesystem and network sandbox (§5.3). | This is the only enforcing layer, per the LuaJIT FAQ. |
 
 ## 3. Prior art
 
@@ -304,7 +304,7 @@ except as the "unrestricted" tier's own business.
 
 A `QtWebEngine` view with a CSP and `postMessage` would isolate the panel's code in Chromium's renderer
 sandbox. It adds Chromium to every package (Qt WebEngine is not among the packaged Qt modules today,
-`docs/qt/distribution.md:94`). The UI would not look native, and plugins would be
+`docs/distribution.md:94`). The UI would not look native, and plugins would be
 written in two languages. VS Code itself calls webviews "resource heavy". **Not recommended** for v1.
 
 ## 5. Safe file, network and OS access

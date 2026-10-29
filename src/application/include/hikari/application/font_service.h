@@ -1,6 +1,6 @@
 #pragma once
 
-// Subtitle font identity (N4; docs/qt/fonts.md, ADR 0007). Resolution asks
+// Subtitle font identity (N4; docs/fonts.md, ADR 0007). Resolution asks
 // the renderer itself: the pinned libass, with the document's attachments and
 // the platform provider it would use (fontconfig on Linux, DirectWrite on
 // Windows), reports which bytes, collection faces, instances, fallbacks and

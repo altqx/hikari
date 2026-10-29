@@ -14,9 +14,13 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cstring>
 #include <fstream>
+#include <future>
 #include <iterator>
+#include <mutex>
 #include <random>
 
 #ifdef _WIN32
@@ -110,9 +114,9 @@ std::vector<std::string> readdirPairs(const fs::path &folder)
         closedir(dir);
     }
     std::vector<std::string> out;
-    for (std::size_t i = 0; i < dics.size() && i < affs.size(); ++i)
-        if (dics[i] == affs[i])
-            out.push_back(dics[i]);
+    for (const auto &dic : dics)
+        if (std::ranges::find(affs, dic) != affs.end())
+            out.push_back(dic);
     return out;
 }
 #endif
@@ -127,13 +131,12 @@ std::vector<std::string> names(const std::vector<std::u16string> &words)
 
 } // namespace
 
-// AvailableDics pairs the n-th .dic with the n-th .aff of the listing: a
-// .dic without its .aff shifts every later pair out of step. Legacy then
-// reads past the shorter .aff list (undefined); the pairing stops at its end
-// (R3-hang-crash-loss). The listing is the file system's own order on each
-// platform (R5-per-platform): NTFS's upper-cased order on Windows, readdir's
-// on Linux; directories and hidden entries are not listed.
-TEST_F(Spelling, AvailableDictionariesPairByPosition)
+// SP1: AvailableDics pairs each .dic with the .aff of its name (legacy
+// paired them by position, so a .dic without its .aff dropped the pairs
+// after it). The order is the file system's listing of the .dic files on
+// each platform (R5-per-platform): NTFS's upper-cased order on Windows,
+// readdir's on Linux; directories and hidden entries are not listed.
+TEST_F(Spelling, AvailableDictionariesPairByName)
 {
     writeFile(folder / "pl.dic", "1\nkot\n");
     writeFile(folder / "pl.aff", "");
@@ -148,15 +151,25 @@ TEST_F(Spelling, AvailableDictionariesPairByPosition)
     SetFileAttributesW((folder / "hidden.aff").c_str(), FILE_ATTRIBUTE_HIDDEN);
     EXPECT_EQ(names(availableDictionaries(folder)), (std::vector<std::string>{"en_US", "pl"}));
     writeFile(folder / "de.dic", "1\nHaus\n");
-    EXPECT_TRUE(availableDictionaries(folder).empty());
+    writeFile(folder / "ko_KR.aff", "");
+    writeFile(folder / "ta.dic", "1\nx\n");
+    writeFile(folder / "ta.aff", "");
+    EXPECT_EQ(names(availableDictionaries(folder)), (std::vector<std::string>{"en_US", "pl", "ta"}));
 #else
     writeFile(folder / ".hidden.dic", "1\nx\n");
     writeFile(folder / ".hidden.aff", "");
     const auto listed = names(availableDictionaries(folder));
     EXPECT_EQ(listed, readdirPairs(folder));
     EXPECT_TRUE(std::ranges::find(listed, ".hidden") == listed.end());
+    // Unpaired files drop no pair, wherever readdir puts them.
     writeFile(folder / "de.dic", "1\nHaus\n");
-    EXPECT_EQ(names(availableDictionaries(folder)), readdirPairs(folder));
+    writeFile(folder / "ko_KR.aff", "");
+    writeFile(folder / "ta.dic", "1\nx\n");
+    writeFile(folder / "ta.aff", "");
+    auto sorted = names(availableDictionaries(folder));
+    EXPECT_EQ(sorted, readdirPairs(folder));
+    std::ranges::sort(sorted);
+    EXPECT_EQ(sorted, (std::vector<std::string>{"en_US", "pl", "ta"}));
     // Case matters on Linux: "*.dic" does not match EN.DIC.
     writeFile(folder / "EN.DIC", "");
     writeFile(folder / "EN.AFF", "");
@@ -279,8 +292,7 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
 #ifdef _WIN32
     const std::vector<std::string> listed{"en_US", "pl"};
 #else
-    // Each folder pairs in readdir's order, which a hashed directory may give
-    // as pl.dic, en_US.dic beside en_US.aff, pl.aff (no pair from it then).
+    // Each folder lists its pairs in readdir's .dic order.
     std::vector<std::string> listed = readdirPairs(folder);
     for (auto &symbol : readdirPairs(bundled))
         if (std::ranges::find(listed, symbol) == listed.end())
@@ -293,12 +305,140 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
     EXPECT_TRUE(both.checkWord(u"kot"));
     ASSERT_EQ(both.initialize(u"en_US"), SpellChecker::Status::Ready);
     EXPECT_TRUE(both.checkWord(u"Hello")); // the user's folder first
-    EXPECT_FALSE(both.checkWord(u"bundled"));
+    EXPECT_FALSE(both.checkWord(u"bundled", true)); // waiting for pl, which lacks it too
     EXPECT_EQ(both.userDictionary(), folder / "UserDic.udic");
     EXPECT_TRUE(both.addWord(u"Hikari"));
     EXPECT_TRUE(fs::exists(folder / "UserDic.udic"));
     EXPECT_FALSE(fs::exists(bundled / "UserDic.udic"));
     EXPECT_EQ(both.initialize(u"de"), SpellChecker::Status::NoDictionary);
+}
+
+// SP1 (#474): the primary language loads at Initialize; every other
+// installed dictionary loads the first time a word of its script is
+// checked. A word is correct when any dictionary of its scripts accepts it,
+// and when one of its scripts has no dictionary; the user's words reach the
+// dictionaries that load later.
+TEST_F(Spelling, MultilingualRoutesWordsByScript)
+{
+    writeFile(folder / "pl.aff", "SET UTF-8\n");
+    writeFile(folder / "pl.dic", "3\nAla\nma\nkota\n");
+    writeFile(folder / "ko_KR.aff", "SET UTF-8\n");
+    writeFile(folder / "ko_KR.dic", "2\n\xEC\x95\x88\xEB\x85\x95\xED\x95\x98\xEC\x84\xB8\xEC\x9A\x94\n\xEC\x84\xB8\xEA\xB3\x84\n");
+    writeFile(folder / "ta.aff", "SET UTF-8\n");
+    writeFile(folder / "ta.dic", "1\n\xE0\xAE\xB5\xE0\xAE\xA3\xE0\xAE\x95\xE0\xAF\x8D\xE0\xAE\x95\xE0\xAE\xAE\xE0\xAF\x8D\n");
+    // A dictionary whose language is in no table: its TRY letters say Greek.
+    writeFile(folder / "custom.aff", "SET UTF-8\nTRY \xCE\xB1\xCE\xB5\xCE\xB9\n");
+    writeFile(folder / "custom.dic", "1\n\xCE\xB3\xCE\xB5\xCE\xB9\xCE\xAC\n");
+    writeFile(checker->userDictionary(), "\xEF\xBB\xBFHikari\n\xEC\x84\x9C\xEC\x9A\xB8");
+    std::mutex mutex; // the other dictionaries load on their own threads
+    std::vector<std::string> loaded;
+    SpellChecker multi(folder, [&, inner = fakes::FakeSpelling::loader()](const fs::path &aff, const fs::path &dic) {
+        const std::lock_guard lock(mutex);
+        loaded.push_back(utf8(dic.stem().u8string()));
+        return inner(aff, dic);
+    });
+    ASSERT_EQ(multi.initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_EQ(loaded, (std::vector<std::string>{"en_US"}));
+    // Latin: English or Polish (waiting for Polish, as the window does).
+    EXPECT_TRUE(multi.checkWord(u"Hello", true));
+    EXPECT_TRUE(multi.checkWord(u"kota", true));
+    EXPECT_TRUE(multi.checkWord(u"Hikari", true));
+    EXPECT_FALSE(multi.checkWord(u"wrold", true));
+    EXPECT_FALSE(multi.checkWord(u"kotta", true));
+    std::ranges::sort(loaded);
+    EXPECT_EQ(loaded, (std::vector<std::string>{"en_US", "pl"}));
+    // Hangul and Tamil: their own dictionaries, the user's words too.
+    EXPECT_TRUE(multi.checkWord(u"안녕하세요", true));
+    EXPECT_TRUE(multi.checkWord(u"서울", true));
+    EXPECT_FALSE(multi.checkWord(u"세게계", true));
+    EXPECT_TRUE(multi.checkWord(u"வணக்கம்", true));
+    EXPECT_FALSE(multi.checkWord(u"வணக்கமம்", true));
+    EXPECT_TRUE(multi.checkWord(u"γειά", true));
+    EXPECT_FALSE(multi.checkWord(u"γεια", true));
+    EXPECT_EQ(loaded.size(), 5u);
+    // No Cyrillic or Japanese dictionary: not marked.
+    EXPECT_TRUE(multi.checkWord(u"привет", true));
+    EXPECT_TRUE(multi.checkWord(u"こんにちは", true));
+    EXPECT_TRUE(multi.checkWord(u"Привет세계", true)); // one of its scripts has none
+    EXPECT_FALSE(multi.checkWord(u"Seoul세게계", true)); // both have one, and neither knows it
+    EXPECT_TRUE(multi.checkWord(u"123", true));
+    EXPECT_FALSE(multi.checkWord(u"١wrold", true)); // an Arabic digit is no Arabic word
+    EXPECT_FALSE(multi.checkWord(u"", true));
+    // A word added now reaches every loaded dictionary.
+    EXPECT_TRUE(multi.addWord(u"세게계"));
+    EXPECT_TRUE(multi.checkWord(u"세게계", true));
+    EXPECT_TRUE(multi.removeWords({u"세게계"}));
+    EXPECT_FALSE(multi.checkWord(u"세게계", true));
+    // The primary decides only the order: Polish first checks the same way.
+    ASSERT_EQ(multi.initialize(u"pl"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(multi.checkWord(u"Hello", true));
+    EXPECT_TRUE(multi.checkWord(u"안녕하세요", true));
+    EXPECT_FALSE(multi.checkWord(u"wrold", true));
+}
+
+// SP1: the Grid and the editor don't wait for a dictionary still loading:
+// its script's words are not marked, and not kept, until it is in; then the
+// loaded handler asks for the marks again.
+TEST_F(Spelling, MultilingualMarksWaitForNoLoad)
+{
+    writeFile(folder / "ko_KR.aff", "SET UTF-8\n");
+    writeFile(folder / "ko_KR.dic", "1\n\xEC\x84\xB8\xEA\xB3\x84\n");
+    std::promise<void> release;
+    std::shared_future<void> released = release.get_future().share();
+    std::promise<void> loadedOnce;
+    std::atomic<int> handled = 0;
+    SpellChecker multi(folder, [&, inner = fakes::FakeSpelling::loader()](const fs::path &aff, const fs::path &dic) {
+        if (dic.stem() == "ko_KR")
+            released.wait();
+        return inner(aff, dic);
+    });
+    multi.setLoadedHandler([&] {
+        if (++handled == 1)
+            loadedOnce.set_value();
+    });
+    ASSERT_EQ(multi.initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(multi.checkWord(u"세게계")); // ko_KR is loading
+    EXPECT_TRUE(multi.checkWord(u"세게계"));
+    EXPECT_FALSE(multi.checkWord(u"wrold")); // en_US checks Latin alone
+    EXPECT_EQ(handled, 0);
+    release.set_value();
+    ASSERT_EQ(loadedOnce.get_future().wait_for(std::chrono::seconds(10)), std::future_status::ready);
+    EXPECT_FALSE(multi.checkWord(u"세게계"));
+    EXPECT_TRUE(multi.checkWord(u"세계"));
+    EXPECT_EQ(handled, 1);
+}
+
+// SP1: suggestions from the primary first when it checks the word's script,
+// then from the script's other dictionaries, the one knowing more of the
+// Line's other words first; each suggestion once. The window and the editor
+// pass the Line's words.
+TEST_F(Spelling, MultilingualSuggestionsFollowThePrimaryThenTheNeighbours)
+{
+    writeFile(folder / "en_US.dic", "3\nHello\nthe\ncot\n");
+    writeFile(folder / "pl.aff", "");
+    writeFile(folder / "pl.dic", "5\nAla\nma\nkot\nkota\ncot\n"); // "cot" in both
+    writeFile(folder / "ko_KR.aff", "");
+    writeFile(folder / "ko_KR.dic", "1\n\xEC\x84\xB8\xEA\xB3\x84\n");
+    const std::vector<std::u16string> polish{u"Ala", u"ma", u"kott"};
+    const std::vector<std::u16string> english{u"Hello", u"the", u"kott"};
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_EQ(names(checker->suggestions(u"kott", polish)), (std::vector<std::string>{"cot", "kot", "kota"}));
+    EXPECT_EQ(names(checker->suggestions(u"kott")), (std::vector<std::string>{"cot", "kot", "kota"}));
+    ASSERT_EQ(checker->initialize(u"pl"), SpellChecker::Status::Ready);
+    EXPECT_EQ(names(checker->suggestions(u"kott", english)), (std::vector<std::string>{"kot", "kota", "cot"}));
+    // A Korean primary checks no Latin word: the neighbours decide.
+    ASSERT_EQ(checker->initialize(u"ko_KR"), SpellChecker::Status::Ready);
+    EXPECT_EQ(names(checker->suggestions(u"kott", polish)), (std::vector<std::string>{"kot", "kota", "cot"}));
+    EXPECT_EQ(names(checker->suggestions(u"kott", english)), (std::vector<std::string>{"cot", "kot", "kota"}));
+    EXPECT_EQ(names(checker->suggestions(u"세게")), (std::vector<std::string>{"\xEC\x84\xB8\xEA\xB3\x84"}));
+    EXPECT_EQ(names(lineWords(u"{\\i1}Ala ma kott, 42", core::SubtitleFormat::Ass, text)),
+              (std::vector<std::string>{"Ala", "ma", "kott"}));
+
+    core::Document document = load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Ala ma kott\n");
+    EditSession session(std::move(document));
+    SpellCheckWalk walk(*checker, text);
+    ASSERT_TRUE(walk.next(session, {}));
+    EXPECT_EQ(names(walk.current()->suggestions), (std::vector<std::string>{"kot", "kota", "cot"}));
 }
 
 // The Spellchecker window walks from the active Line; the found word's Line

@@ -1,5 +1,5 @@
 # Windows build and test through Winix (a local Windows VM). The tasks run the
-# same presets as .github/workflows/qt-windows.yml inside the latest MSVC
+# same presets as .github/workflows/windows.yml inside the latest MSVC
 # environment. out/ (the SDK and build trees) stays in the VM between runs;
 # it is git-ignored, so `winix sync` never copies it.
 #
