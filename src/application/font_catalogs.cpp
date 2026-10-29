@@ -195,7 +195,12 @@ void FontCatalogs::load(u16v text)
     // LoadCatalogs: AddCatalog per block, then each font it lacks. Names
     // are exact here (catalogs once saved as A and a stay two); only the
     // reviewed Load (apply) takes another case as the same catalog.
-    for (const auto &c : parse(text)) {
+    load(parse(text));
+}
+
+void FontCatalogs::load(const std::vector<Catalog> &catalogs)
+{
+    for (const auto &c : catalogs) {
         addCatalog(c.name);
         Catalog *target = findMutable(c.name);
         for (const auto &font : c.fonts)

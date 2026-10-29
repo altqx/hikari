@@ -33,6 +33,7 @@ class QQuickItem;
 
 namespace hikari::ui {
 
+class ListFile;
 class VideoController;
 
 class VisualToolsController : public QObject, public application::visual::VisualHost {
@@ -123,17 +124,18 @@ public:
     void setEditorSelectionPlacer(std::function<void(long, long)> place) { m_placeSelection = std::move(place); }
     // The editing target, its content, active Line or format changed.
     void refresh();
-    // T5: the drawing's shape presets' file (legacy Config/ShapesSettings.txt
-    // beside the settings). Without one the presets are kept in memory.
-    void setShapesFile(const QString &path) { m_shapesFile = path; }
-    const QString &shapesFile() const { return m_shapesFile; }
+    // T5: the drawing's shape presets' file (shapes.toml in the user
+    // folder, CF2; legacy Config/ShapesSettings.txt). Without one the
+    // presets are kept in memory.
+    void setShapesFile(std::shared_ptr<ListFile> file) { m_shapesFile = std::move(file); }
+    const std::shared_ptr<ListFile> &shapesFile() const { return m_shapesFile; }
     ShapeEditor *shapeEditor() const { return m_shapeEditor; }
-    // T6: the all-tags tool's definitions' file (legacy Config/
-    // AllTagsSettings.txt beside the settings; without one they are kept in
-    // memory), which Lines the Grid shows, and the Line editor's hotkeys
-    // (the "Insert difference" keys the tool takes).
-    void setAllTagsFile(const QString &path) { m_tagsFile = path; }
-    const QString &allTagsFile() const { return m_tagsFile; }
+    // T6: the all-tags tool's definitions' file (tags.toml in the user
+    // folder, CF2; legacy Config/AllTagsSettings.txt; without one they are
+    // kept in memory), which Lines the Grid shows, and the Line editor's
+    // hotkeys (the "Insert difference" keys the tool takes).
+    void setAllTagsFile(std::shared_ptr<ListFile> file) { m_tagsFile = std::move(file); }
+    const std::shared_ptr<ListFile> &allTagsFile() const { return m_tagsFile; }
     AllTagsEditor *tagsEditor() const { return m_tagsEditor; }
     void setShownLines(std::function<std::function<bool(core::LineId)>()> shown) { m_shownLines = std::move(shown); }
     void setEditorHotkey(std::function<std::string(int)> accel) { m_editorHotkey = std::move(accel); }
@@ -331,10 +333,10 @@ private:
     QVariantList m_options; // the tool's buttons as last shown
     int m_bells = 0;
     std::u8string m_previewKey; // what the preview showed last
-    QString m_shapesFile;
+    std::shared_ptr<ListFile> m_shapesFile;
     mutable std::vector<application::visual::ShapePreset> m_shapes; // VideoToolbar::shapes
     QPointer<ShapeEditor> m_shapeEditor;
-    QString m_tagsFile;
+    std::shared_ptr<ListFile> m_tagsFile;
     mutable std::vector<application::visual::AllTagsSetting> m_allTags; // VideoToolbar::tags
     QPointer<AllTagsEditor> m_tagsEditor;
     std::function<std::function<bool(core::LineId)>()> m_shownLines;

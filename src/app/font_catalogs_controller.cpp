@@ -4,6 +4,7 @@
 #include "hikari/backends/libass_font_service.h"
 #include "hikari/core/style.h"
 #include "hikari/core/text_projection.h"
+#include "list_files.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
@@ -101,6 +102,23 @@ FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std:
       m_catalogs(kLower), m_service(std::make_shared<backends::LibassFontService>()),
       m_families(std::make_unique<application::FontFamilies>(*m_service, kLower))
 {
+    // CF2: fonts.toml and fonts.autosave-<n>.toml, each converted once from
+    // legacy's file of the same role.
+    const ui::ListFile::Report report{m_hooks.fileConverted, m_hooks.fileProblem};
+    const auto convert = [](const std::filesystem::path &legacy) -> std::optional<toml::array> {
+        if (const auto catalogs = ui::readLegacyFontCatalogs(legacy))
+            return ui::fontCatalogsToToml(*catalogs);
+        return std::nullopt;
+    };
+    const auto file = [&](std::u16string_view name, std::u16string_view legacy) {
+        return ui::ListFile::make(QString::fromStdU16String(catalogPath(m_dir, name).u16string()),
+                                  QString::fromStdU16String(catalogPath(m_dir, legacy).u16string()),
+                                  ui::kFontCatalogsFormat, convert, report);
+    };
+    m_file = file(u"fonts.toml", application::kFontCatalogsFile);
+    for (int n = 0; n < 3; ++n)
+        m_autosaveFiles[n] = file(u"fonts.autosave-" + std::u16string(1, char16_t(u'0' + n)) + u".toml",
+                                  application::fontCatalogsAutosaveFile(n));
     // FontCatalogManagement::saveInterval; the label goes after 10 s.
     m_autosave.setSingleShot(true);
     m_autosave.setInterval(20000);
@@ -130,7 +148,7 @@ FontCatalogsController::~FontCatalogsController()
 {
     // ~FontCatalogList: FCManagement.SaveCatalogs() (FontCatalogList.cpp:
     // 218-221 at 20d647c4). A window that was made lived until the end, so
-    // the catalogs as they are then are written to FontCatalogs.txt.
+    // the catalogs as they are then are written to fonts.toml.
     if (m_windowMade || m_unsaved) // PU3: and a save that failed is tried again
         save();
     stopResolver();
@@ -161,16 +179,23 @@ void FontCatalogsController::setFontService(std::unique_ptr<application::FontSer
 
 void FontCatalogsController::ensureLoaded()
 {
-    // FCManagement.LoadCatalogs(): Config/FontCatalogs.txt, once.
+    // FCManagement.LoadCatalogs(): fonts.toml (legacy Config/FontCatalogs.txt), once.
     if (m_loaded)
         return;
     m_loaded = true;
-    if (const auto text = application::readFontCatalogFile(catalogPath(m_dir, application::kFontCatalogsFile)))
-        m_catalogs.load(*text);
-    // A header with no '=' read as a catalog with no name: nothing could
-    // choose or manage it (as Load leaves it out).
+    if (const auto items = m_file->read())
+        m_catalogs.load(std::get<std::vector<application::FontCatalogs::Catalog>>(ui::fontCatalogsFromToml(*items)));
+    // A catalog with no name: nothing could choose or manage it (as Load
+    // leaves it out).
     if (m_catalogs.find(u""))
         m_catalogs.remove(u"");
+}
+
+void FontCatalogsController::convertFiles()
+{
+    m_file->convert();
+    for (const auto &file : m_autosaveFiles)
+        file->convert();
 }
 
 QStringList FontCatalogsController::catalogNames() const
@@ -376,8 +401,15 @@ QVariantMap FontCatalogsController::reviewCatalogFile(const QUrl &file)
     ensureLoaded();
     const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
     m_reviewed.clear();
-    if (const auto text = application::readFontCatalogFile(std::filesystem::path(path.toStdU16String())))
-        m_reviewed = application::FontCatalogs::parse(*text);
+    // CF2: a fonts.toml (or an autosave) is read as one; any other file as
+    // legacy's FontCatalogs.txt.
+    const std::filesystem::path chosen(path.toStdU16String());
+    if (const auto bytes = application::readOwnedFile(chosen)) {
+        if (auto catalogs = ui::fontCatalogsFromText(*bytes))
+            m_reviewed = std::move(*catalogs);
+        else if (const auto text = application::readFontCatalogFile(chosen))
+            m_reviewed = application::FontCatalogs::parse(*text);
+    }
     // A header with no '=' parses as a catalog with no name (LoadCatalogs):
     // nothing could choose or manage it, so it is not loaded.
     std::erase_if(m_reviewed, [](const auto &c) { return c.name.empty(); });
@@ -480,8 +512,8 @@ QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
 bool FontCatalogsController::save()
 {
     ensureLoaded();
-    const bool written =
-        application::writeFontCatalogFile(catalogPath(m_dir, application::kFontCatalogsFile), m_catalogs.serialize());
+    // A write waiting for another HikariSub's lock is made shortly.
+    const bool written = m_file->write(ui::fontCatalogsToToml(m_catalogs.catalogs())) != ui::ListFile::Write::Failed;
     m_unsaved = !written;
     return written;
 }
@@ -509,11 +541,12 @@ void FontCatalogsController::startAutosave()
 
 void FontCatalogsController::autosaveNow()
 {
-    // The edition timer: "Autosave", Config/FontCatalogsAutosave<i>.txt with i
-    // going 0, 1, 2 and round again. The status says so only once the copy
-    // is written; a failed write is said until one succeeds.
-    const bool written = application::writeFontCatalogFile(
-        catalogPath(m_dir, application::fontCatalogsAutosaveFile(m_autosaveIndex)), m_catalogs.serialize());
+    // The edition timer: "Autosave", fonts.autosave-<i>.toml (legacy
+    // Config/FontCatalogsAutosave<i>.txt) with i going 0, 1, 2 and round
+    // again. The status says so only once the copy is written; a failed
+    // write is said until one succeeds.
+    const bool written = m_autosaveFiles[m_autosaveIndex]->write(ui::fontCatalogsToToml(m_catalogs.catalogs())) !=
+                         ui::ListFile::Write::Failed;
     m_autosaveStatus = written ? QCoreApplication::translate("HikariSub.Fonts", "Autosave") : QString();
     m_autosaveFailed = !written;
     emit autosaveStatusChanged();

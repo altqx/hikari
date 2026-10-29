@@ -4,9 +4,10 @@
 // FontCatalogManagement, FontCatalogList, GetFontsFromASSDialog and
 // FontEnumerator at 20d647c4). One instance serves the font dialog (E1),
 // the Style editor (Y1) and the "Manage font catalogs" window, as legacy's
-// FCManagement and FontEnum globals did. FontCatalogs.txt and the
-// FontCatalogsAutosave<n>.txt safety copies live in the catalog folder
-// (legacy <program>/Config).
+// FCManagement and FontEnum globals did. fonts.toml and the
+// fonts.autosave-<n>.toml safety copies live in the catalog folder (CF2,
+// list_files.h; legacy <program>/Config/FontCatalogs.txt and
+// FontCatalogsAutosave<n>.txt, converted once).
 //
 // The font lists come from the FontService (FontFamilies over the
 // renderer's provider) with EXTERNAL_FONTS_DIRECTORY's fonts added. A
@@ -16,6 +17,7 @@
 
 #include "hikari/application/font_catalogs.h"
 #include "hikari/application/font_families.h"
+#include "hikari/application/owned_file.h"
 #include "hikari/application/subtitle_render.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/core/document.h"
@@ -40,6 +42,7 @@
 #include <vector>
 
 namespace hikari::ui {
+class ListFile;
 class SettingsStore;
 }
 
@@ -83,6 +86,10 @@ public:
         // The editing target's attached fonts, which its renderer takes
         // before the external ones (the picker's preview and its note).
         std::function<std::vector<application::FontLease>()> documentFonts;
+        // CF2: a catalog file converted from its legacy file, or kept aside
+        // when it did not read (ui::ListFile::Report).
+        std::function<void(const std::filesystem::path &legacy, const std::filesystem::path &file)> fileConverted;
+        std::function<void(const application::FileProblem &)> fileProblem;
     };
 
     FontCatalogsController(ui::SettingsStore &settings, std::filesystem::path catalogDir, Hooks hooks,
@@ -176,15 +183,15 @@ public:
     // so on.
     Q_INVOKABLE QVariantMap loadReviewed(const QVariantList &choices);
     // SaveCatalogs (the windows' closing, CATALOG_CHANGED); false when
-    // FontCatalogs.txt could not be written (tried again at the end).
+    // fonts.toml could not be written (tried again at the end).
     Q_INVOKABLE bool save();
     // A "Manage font catalogs" window was made (new FontCatalogList): from
     // then on ~FontCatalogList's SaveCatalogs runs when the controller goes
     // at the application's end, keeping edits made while a window is open.
     Q_INVOKABLE void windowMade() { m_windowMade = true; }
     // GetFontsFromASSDialog's OK: CollectFontsFromSubtitles then SaveCatalogs.
-    // {done: the catalog existed and took the fonts, saved: FontCatalogs.txt
-    // was written}.
+    // {done: the catalog existed and took the fonts, saved: fonts.toml was
+    // written}.
     Q_INVOKABLE QVariantMap collectFromSubtitles(const QString &catalog, bool clear, bool allTabs);
 
     // The management window's preview: the "FontPreview" Style with `font`
@@ -238,6 +245,8 @@ public:
     void setFontService(std::unique_ptr<application::FontServicePort> service);
     bool waitResolved(int ms = 30000);
     std::filesystem::path catalogDir() const { return m_dir; }
+    // CF2: the legacy catalog files converted, once (the start does).
+    void convertFiles();
     int autosaveInterval() const { return m_autosave.interval(); }
     void setAutosaveInterval(int ms) { m_autosave.setInterval(ms); }
     void setWatchDelay(int ms) { m_watchDelay.setInterval(ms); }
@@ -299,7 +308,10 @@ private:
     int m_resolveRequest = 0;  // the latest request made (GUI thread)
     int m_resolveAnswered = 0; // the latest request answered (GUI thread)
     bool m_windowMade = false; // a FontCatalogList exists
-    bool m_unsaved = false;    // the last save could not write FontCatalogs.txt
+    bool m_unsaved = false;    // the last save could not write fonts.toml
+    // CF2: fonts.toml and its three autosaves.
+    std::shared_ptr<ui::ListFile> m_file;
+    std::shared_ptr<ui::ListFile> m_autosaveFiles[3];
 };
 
 // "image://fontcatalogpreview/<key>": the management window's preview.

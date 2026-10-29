@@ -6325,7 +6325,7 @@ ApplicationWindow {
             objectName: "misspellDock"
             uniqueName: "FixMinorErrors"
             title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
-            // MR->Show() read Rules.txt again at each showing. Not on the
+            // MR->Show() read the rules file (rules.toml) again at each showing. Not on the
             // passing open of the default arrangement, which closes it at
             // once: read rules are written back at exit (Codex review).
             onIsOpenChanged: if (isOpen) Qt.callLater(misspellDock.reloadIfOpen)

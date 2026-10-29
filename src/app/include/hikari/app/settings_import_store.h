@@ -23,11 +23,13 @@
 //   generations/<n>/complete     written last when staging succeeded
 //   live                         the generation the live profile holds
 
+#include "hikari/application/misspell_replacer.h"
 #include "hikari/application/settings_import.h"
 
 #include <QString>
 #include <QStringList>
 
+#include <filesystem>
 #include <functional>
 #include <optional>
 #include <set>
@@ -40,10 +42,20 @@ class SettingsStore;
 
 namespace hikari::app {
 
+// F4: Rules.txt's bytes as FillRulesList read them through
+// OpenWrite::FileOpen (R4-uchardet: UTF-8, else uchardet's charset, else
+// wxConvLocal; R5-per-platform line ends): text that does not decode was
+// read as none, which gave the shipped rules.
+application::ReplacerRules readLegacyRules(const QByteArray &bytes);
+// The same from a file; nothing when it cannot be read.
+std::optional<application::ReplacerRules> readLegacyRulesFile(const std::filesystem::path &path);
+// CF2 (#489): those rules as rules.toml's text.
+std::string legacyRulesToml(const QByteArray &bytes);
+
 class SettingsImportStore {
 public:
     // `settings` is the live registry; `folder` the settings folder (beside
-    // settings.toml: Rules.txt, Dictionary/).
+    // settings.toml: rules.toml, Dictionary/).
     SettingsImportStore(ui::SettingsStore &settings, QString folder, QString profileName = QStringLiteral("default"));
     // UD1: the user's dictionaries are elsewhere (the user folder's
     // dictionaries); a profile still names them Dictionary/<name>. The

@@ -38,6 +38,7 @@
 #include "hikari/core/ass_attachments.h"
 #include "automation_services_qt.h"
 #include "dialog_placement.h"
+#include "list_files.h"
 #include "theme.h"
 #include "window_frame.h"
 
@@ -156,6 +157,50 @@ QString automationPath(const QString &configured)
         return QStringLiteral(HIKARI_BUILD_AUTOMATION);
 #endif
     return sibling;
+}
+
+// CF2: a list converted is a Log line; a file that did not read a notice,
+// as the settings files' (reportSettingsFiles). The Log may be gone when a
+// list is read at the end (the font catalogs' last save).
+ui::ListFile::Report listFileReport(ui::LogController &logController)
+{
+    QPointer<ui::LogController> log(&logController);
+    const QString title = QCoreApplication::translate("HikariSub.MainWindow", "Settings");
+    const auto name = [](const std::filesystem::path &path) {
+        return QString::fromStdString(application::displayPath(path.filename()));
+    };
+    ui::ListFile::Report report;
+    report.converted = [log, title, name](const std::filesystem::path &legacy, const std::filesystem::path &file) {
+        if (log)
+            log->log(QCoreApplication::translate("HikariSub.MainWindow", "%1 moved to %2. The old file is kept as %3.")
+                    .arg(name(legacy), name(file), name(legacy) + QStringLiteral(".old")),
+                ui::LogController::Info, title);
+    };
+    report.problem = [log, title, name](const application::FileProblem &problem) {
+        if (!log)
+            return;
+        const QString file = QString::fromStdString(application::displayPath(problem.file));
+        const QString where = problem.failure.line > 0
+                                  ? QCoreApplication::translate("HikariSub.MainWindow", "%1, line %2, column %3")
+                                        .arg(file)
+                                        .arg(problem.failure.line)
+                                        .arg(problem.failure.column)
+                                  : file;
+        const QString text =
+            problem.keptAs.empty()
+                ? QCoreApplication::translate("HikariSub.MainWindow",
+                                              "%1 could not be read, so its list is at its defaults for now. "
+                                              "HikariSub will not write over it.")
+                      .arg(name(problem.file))
+                : QCoreApplication::translate("HikariSub.MainWindow",
+                                              "%1 could not be read, so its list is back at its defaults. The file "
+                                              "is kept as %2: fix it while HikariSub is closed and give it its name "
+                                              "back to use it again.")
+                      .arg(name(problem.file), name(problem.keptAs));
+        log->notice(ui::LogController::Warning, title, text,
+                    where + QLatin1String(": ") + QString::fromStdString(problem.failure.message));
+    };
+    return report;
 }
 
 } // namespace
@@ -760,16 +805,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     // T1: the visual tools edit the editing target, never the reference.
     m_visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings, [this] { return targetSession(); });
-    // T5: the drawing's shape presets beside the settings (legacy
-    // Config/ShapesSettings.txt); none without a settings file.
-    if (!m_settingsFile.isEmpty())
-        m_visualTools->setShapesFile(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ShapesSettings.txt"));
-    // T6: the all-tags tool's definitions beside them (legacy
-    // Config/AllTagsSettings.txt); the shifter and the all-tags tool edit
-    // only the selected Lines the Grid shows (SubsFile::GetSelections), and
-    // the all-tags tool takes the Line editor's "Insert difference" keys.
-    if (!m_settingsFile.isEmpty())
-        m_visualTools->setAllTagsFile(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/AllTagsSettings.txt"));
+    // T5, T6: the shape presets' and the tag definitions' files are set by
+    // convertListFiles(). The shifter and the all-tags tool edit only the
+    // selected Lines the Grid shows (SubsFile::GetSelections), and the
+    // all-tags tool takes the Line editor's "Insert difference" keys.
     m_visualTools->setShownLines([this] { return shownLines(); });
     m_visualTools->setEditorHotkey([this](int id) {
         if (!m_hotkeys)
@@ -1062,7 +1101,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         connect(this, &Application::tabsChanged, m_matroska.get(), &MatroskaController::refresh);
     }
     {
-        // Y6: Font catalogs (legacy Config/FontCatalogs.txt) and the font
+        // Y6: Font catalogs (fonts.toml, CF2; legacy Config/FontCatalogs.txt) and the font
         // lists of the font dialog, the Style editor and the catalog window.
         QString dir = options.fontCatalogDir;
         if (dir.isEmpty() && !m_settingsFile.isEmpty())
@@ -1087,6 +1126,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogs"), text);
         };
         hooks.documentFonts = [this] { return attachedFontLeases(m_workspace.editingTarget()); };
+        const auto report = listFileReport(*m_log); // CF2
+        hooks.fileConverted = report.converted;
+        hooks.fileProblem = report.problem;
         // FontEnumerator's RefreshVideo(true): libass's fonts are loaded
         // again (ReloadLibraries, so a font installed meanwhile is found), and
         // the video's subtitles render again with the external fonts.
@@ -1489,6 +1531,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     setupTabMenu(options); // P9
     reportUserFolder(options.userFolderMove, options.userFolderSeed); // UD1
     reportSettingsFiles(); // CF1
+    convertListFiles(); // CF2
     refreshViews();
 }
 
@@ -1858,18 +1901,12 @@ Application::~Application()
         QGuiApplication::setFont(m_startFont); // O5: the program font was the application's
 }
 
-// F4: MisspellReplacer's destructor saves a non-empty rules list (SaveRules,
-// UTF-8 with a BOM as OpenWrite::FileWrite writes it).
+// F4: MisspellReplacer's destructor saves a non-empty rules list (SaveRules;
+// rules.toml since CF2).
 void Application::saveMisspellRules()
 {
-    if (m_misspellRules && !m_misspellRules->empty() && !m_settingsFile.isEmpty()) {
-        QFile file(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Rules.txt"));
-        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            const auto text = application::writeReplacerRules(*m_misspellRules);
-            file.write("\xEF\xBB\xBF");
-            file.write(reinterpret_cast<const char *>(text.data()), static_cast<qint64>(text.size()));
-        }
-    }
+    if (m_misspellRules && !m_misspellRules->empty() && m_rulesFile)
+        m_rulesFile->write(ui::rulesToToml(*m_misspellRules));
 }
 
 namespace {
@@ -4410,22 +4447,58 @@ application::SpellCheckWalk::Options walkOptions(const QVariantMap &options)
 std::vector<application::ReplacerRule> &Application::misspellRuleList()
 {
     if (!m_misspellRules) {
-        // FillRulesList: Rules.txt in the configuration folder through
-        // OpenWrite::FileOpen (R4-uchardet: UTF-8, else uchardet's charset,
-        // else wxConvLocal; R5-per-platform line ends), else the shipped rules.
-        QByteArray text;
-        if (!m_settingsFile.isEmpty())
-            if (const auto rules =
-                    backends::readLegacyTextFile(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Rules.txt")))
-                text = QString::fromStdU16String(*rules).toUtf8();
-        auto read = application::readReplacerRules(
-            std::u8string_view(reinterpret_cast<const char8_t *>(text.constData()), static_cast<std::size_t>(text.size())));
-        for (const auto &line : read.invalid)
-            m_log->notice(ui::LogController::Warning, replacerTitle(),
-                          QCoreApplication::translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid.").arg(fromUtf8(line)));
-        m_misspellRules = std::move(read.rules);
+        // FillRulesList: the rules file (rules.toml, CF2), else the shipped rules.
+        if (const auto items = m_rulesFile ? m_rulesFile->read() : std::nullopt)
+            m_misspellRules = std::get<std::vector<application::ReplacerRule>>(ui::rulesFromToml(*items));
+        else
+            m_misspellRules = application::readReplacerRules({}).rules;
     }
     return *m_misspellRules;
+}
+
+void Application::convertListFiles()
+{
+    m_fontCatalogs->convertFiles();
+    // Without a settings file (tests) the lists are kept in memory.
+    if (m_settingsFile.isEmpty())
+        return;
+    const QString folder = QFileInfo(m_settingsFile).absolutePath();
+    // F4: Rules.txt as FillRulesList read it (readLegacyRules). A rule it
+    // cannot read whole is kept as far as it got, and named in the Log.
+    m_rulesFile = ui::ListFile::make(
+        folder + QStringLiteral("/rules.toml"), folder + QStringLiteral("/Rules.txt"), ui::kRulesFormat,
+        [this](const std::filesystem::path &legacy) -> std::optional<toml::array> {
+            const auto read = readLegacyRulesFile(legacy);
+            if (!read)
+                return std::nullopt;
+            for (const auto &line : read->invalid)
+                m_log->notice(ui::LogController::Warning, replacerTitle(),
+                              QCoreApplication::translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid.")
+                                  .arg(fromUtf8(line)));
+            return ui::rulesToToml(read->rules);
+        },
+        listFileReport(*m_log));
+    // T5: the drawing's shape presets; T6: the all-tags tool's definitions.
+    auto shapes = ui::ListFile::make(folder + QStringLiteral("/shapes.toml"), folder + QStringLiteral("/ShapesSettings.txt"),
+                                     ui::kShapesFormat,
+                                     [](const std::filesystem::path &legacy) -> std::optional<toml::array> {
+                                         if (const auto shapes = ui::readLegacyShapes(legacy))
+                                             return ui::shapesToToml(*shapes);
+                                         return std::nullopt;
+                                     },
+                                     listFileReport(*m_log));
+    auto tags = ui::ListFile::make(folder + QStringLiteral("/tags.toml"), folder + QStringLiteral("/AllTagsSettings.txt"),
+                                   ui::kTagsFormat,
+                                   [](const std::filesystem::path &legacy) -> std::optional<toml::array> {
+                                       if (const auto tags = ui::readLegacyTags(legacy))
+                                           return ui::tagsToToml(*tags);
+                                       return std::nullopt;
+                                   },
+                                   listFileReport(*m_log));
+    for (const auto &file : {m_rulesFile, shapes, tags})
+        file->convert();
+    m_visualTools->setShapesFile(std::move(shapes));
+    m_visualTools->setAllTagsFile(std::move(tags));
 }
 
 QVariantList Application::misspellRules()

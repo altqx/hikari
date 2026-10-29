@@ -2,8 +2,10 @@
 
 // Y6: Font catalogs (legacy FontCatalogManagement, FontCatalogList.cpp at
 // 20d647c4). A Font catalog is a named list of font-family names; the
-// catalogs live in <settings>/FontCatalogs.txt and the management dialog's
-// safety copies FontCatalogsAutosave0..2.txt, in legacy's grammar:
+// catalogs live in catalogs/fonts.toml and the management dialog's safety
+// copies fonts.autosave-0..2.toml (CF2, ui/list_files.h). Legacy kept them
+// in <settings>/FontCatalogs.txt and FontCatalogsAutosave0..2.txt, which
+// are converted once, in legacy's grammar:
 //
 //     Name={<CR><LF>
 //     <TAB>Family<CR><LF>
@@ -46,7 +48,7 @@ inline constexpr CatalogOrder kCatalogOrder = CatalogOrder::Utf16;
 inline constexpr CatalogOrder kCatalogOrder = CatalogOrder::Utf32;
 #endif
 
-// "FontCatalogs.txt" and "FontCatalogsAutosave<n>.txt" (FontCatalogList.cpp:573, 203).
+// Legacy's "FontCatalogs.txt" and "FontCatalogsAutosave<n>.txt" (FontCatalogList.cpp:573, 203).
 inline constexpr const char16_t *kFontCatalogsFile = u"FontCatalogs.txt";
 std::u16string fontCatalogsAutosaveFile(int n);
 
@@ -65,6 +67,8 @@ public:
     // empty name without one), "}" closes it, and the lines between, trimmed,
     // are its fonts (each once, exactly); other lines are ignored.
     void load(std::u16string_view text);
+    // CF2 (#489): the same over catalogs already read (fonts.toml).
+    void load(const std::vector<Catalog> &catalogs);
     // The catalogs a file's text holds, as load() reads them, in the order
     // they first appear, without touching these: a catalog named twice
     // gathers both blocks' fonts (each once, exactly).

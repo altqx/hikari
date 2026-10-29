@@ -4,10 +4,11 @@
 // LoadSettings, GetNames, SaveSettings and the AllTagsEdition dialog,
 // HikariSub/VisualAllTagsEdition.h and .cpp at 20d647c4; docs/
 // visual-tools.md, "The Position shifter and the all-tags tool"). The
-// definitions live in Config/AllTagsSettings.txt beside the settings: a
-// "HYDRA2.0" line, then one "Tag: <name>, <tag>, <min>, <max>, <value>,
-// <step>, <decimal places>, <placing>, <change option>[, <more values>]"
-// line each; without the file legacy's 22 defaults are used.
+// definitions live in tags.toml in the user folder (CF2, ui/list_files.h);
+// legacy's Config/AllTagsSettings.txt, a "HYDRA2.0" line, then one "Tag:
+// <name>, <tag>, <min>, <max>, <value>, <step>, <decimal places>, <placing>,
+// <change option>[, <more values>]" line each, is converted into it once.
+// Without the file legacy's 22 defaults are used.
 
 #include "hikari/application/edit_history.h"
 

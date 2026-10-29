@@ -1391,6 +1391,7 @@ private:
     bool m_misspellResultsShown = false;
     std::vector<application::ReplacerRule> &misspellRuleList();
     void saveMisspellRules();
+    std::shared_ptr<ui::ListFile> m_rulesFile; // CF2: rules.toml, none without a settings file
     void destroyDialogs();
     // ResetDefault's reset of the store and of what reads it at once, at OK
     // or Apply after "Reset all settings…" (PF1-staged-reset).
@@ -1535,6 +1536,9 @@ private:
     // UD1: the notice of the move into the user folder and the seeding's Log lines.
     void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
     void reportSettingsFiles();
+    // CF2 (#489): the user's lists converted from their legacy files at the
+    // start (a Log line, or a notice for one that did not read).
+    void convertListFiles();
     // Modification time of each Document's file when last read or written,
     // and the Documents whose removal was already noticed.
     std::map<std::uint64_t, QDateTime> m_fileTimes;
