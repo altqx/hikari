@@ -30,7 +30,8 @@ first column below is the one to use.
 
 | English | Polish | Notes |
 | --- | --- | --- |
-| Line | linijka (pl. linijki, linijek) | A subtitle Line; legacy's main term. "wiersz" only for a text row or a log line. |
+| Line | linijka (pl. linijki, linijek) | A subtitle Line; never "linia". "wiersz" for a text row or a log line; "linia" only for a drawn line (audio markers, vector drawing). |
+| Line wrap | łamanie wiersza | Grid column: "Łamania". |
 | Line editor | edytor linijki | |
 | Line group | grupa linijek | |
 | Document | dokument | |
@@ -48,13 +49,19 @@ first column below is the one to use.
 | Font collector | kolekcjoner czcionek | |
 | ASS override tag | tag (ASS) | Legacy "tag". |
 | Visual tool | narzędzie wizualne | |
+| Visual tool names | Wskaźnik pozycji, Pozycjonowanie tekstu, Ruch tekstu, Skalowanie tekstu, Obrót tekstu wokół osi Z, Obrót tekstu wokół osi X / Y, Wycinek prostokątny, Wycinek wektorowy, Rysunek wektorowy, Przesuwanie pozycji, Hydra, Perspektywa | Rail, Hotkeys page and tool bar. |
+| Shear (`\fax`) | pochylenie | |
+| Quad (Perspective) | czworokąt | |
+| Secondary colour | kolor zastępczy | |
+| Aspect ratio | proporcje obrazu | |
+| Dummy video | atrapa wideo | |
 | Typesetting | typesetting | Kept, as Polish fansubbing says it. |
 | Timing | timing | Legacy. "czasy" for the start/end times themselves. |
 | Time shift | przesunięcie czasów | Window: "Przesuwanie czasów". |
 | Timing postprocessor | postprocesor timingu | |
 | Keyframe | klatka kluczowa | |
 | Frame | klatka | |
-| Start / End time | czas początkowy / końcowy | Short labels: Początek / Koniec. |
+| Start / End time | czas początkowy / końcowy | Short labels and columns: Początek / Koniec. A "Start" button that starts something: Rozpocznij. |
 | Duration | czas trwania | |
 | Layer | warstwa | |
 | Actor | aktor | |
@@ -73,8 +80,20 @@ first column below is the one to use.
 | Automation script | skrypt automatyzacji | |
 | Export filter | filtr eksportu | |
 | Template | szablon | |
+| Template editor | edytor szablonów | |
+| Template line / code line | linijka szablonu / linijka kodu | |
+| Karaoke line | linijka karaoke | |
+| Generated lines | wygenerowane linijki | "older" (stale): nieaktualne. |
+| Karaoke templater | templater karaoke | Keywords (`template`, `code`, `pre-line`, `noblank`…) and variables stay as written. |
+| Run (Translation mode) | fragment | "Fragment %1", "Wstaw fragment 1", placed: wstawiony. |
+| Run (of a macro or script) | uruchomienie | "Powtórz ostatnie uruchomienie". |
+| Tap to time | timing stukaniem | tap: stukać / wystukać; latency: opóźnienie. |
+| Kanji timer | timer kanji | |
+| Getting started | Pierwsze kroki | |
 | Preset | preset / ustawienie wstępne | Short labels: "Preset". |
 | Hotkey | skrót klawiszowy (short: skrót) | |
+| Hotkey command "X alt" | X (drugi skrót) | The alternate binding of X. |
+| Tag button N | Przycisk tagu N | |
 | Settings | Ustawienia | |
 | User folder | folder użytkownika | |
 | Spell check | sprawdzanie pisowni | |
