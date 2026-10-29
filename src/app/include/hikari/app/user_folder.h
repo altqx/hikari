@@ -3,12 +3,14 @@
 // UD1 (#362): the user folder, Aegisub's `?user`: everything a user may edit
 // or want to keep, in one place.
 //
-//   hikari.ini
+//   settings.toml   preferences (CF1 #488; hikari.ini before, kept as
+//   hotkeys.toml    hikari.ini.old once converted)
+//   state.json      window places, recents and other things the app remembers
 //   automation/autoload, automation/include   (?user; DependencyControl's too)
 //   dictionaries/   Hunspell .dic/.aff, UserDic.udic
 //   catalogs/       style and font catalogs
 //   presets/        saved workspace layouts and other presets
-//   autosave/  recovery/  log/
+//   recovery/
 //
 // Where it is: HIKARISUB_USER_DIR when set; beside the program in a portable
 // copy (`user`); else $XDG_CONFIG_HOME/hikarisub (~/.config/hikarisub) on
@@ -44,7 +46,7 @@ public:
 
     QString root() const { return m_root; }
     QString cache() const { return m_cache; }
-    QString settingsFile() const { return m_root + QStringLiteral("/hikari.ini"); }
+    QString settingsFile() const { return m_root + QStringLiteral("/settings.toml"); }
     QString dictionaries() const { return m_root + QStringLiteral("/dictionaries"); }
     QString catalogs() const { return m_root + QStringLiteral("/catalogs"); }
     QString presets() const { return m_root + QStringLiteral("/presets"); }
@@ -94,7 +96,7 @@ public:
         static OldFolders of(const Environment &env);
     };
     // Moves the old folders' contents in once: the first time the user folder
-    // has no hikari.ini, recorded in `.old-folders` in it. Caches go to the
+    // has no settings (settings.toml, hikari.ini or hikari.ini.old), recorded in `.old-folders` in it. Caches go to the
     // cache folder, the rest into the user folder's layout; an entry whose
     // name the user folder already has stays, and so do DependencyControl's
     // own files (the old package's or its self-update), which would shadow

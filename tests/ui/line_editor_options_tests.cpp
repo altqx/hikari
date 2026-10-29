@@ -24,7 +24,6 @@
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
-#include <QSettings>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -66,11 +65,11 @@ class LineEditorOptionsTest : public QObject {
     std::unique_ptr<QQmlApplicationEngine> engine;
     QQuickWindow *window = nullptr;
 
-    QString settingsFile() const { return dir.filePath(QStringLiteral("hikari.ini")); }
+    QString settingsFile() const { return dir.filePath(QStringLiteral("settings.toml")); }
     void start()
     {
         // No spell checker: its missing-dictionary notice is not these cards'.
-        QSettings(settingsFile(), QSettings::IniFormat).setValue(QStringLiteral("profile/editor.spellchecker"), false);
+        ui::SettingsStore(settingsFile()).set("editor.spellchecker", false);
         app::Application::Options options;
         options.settingsFile = settingsFile();
         options.playbackAudio = false; // CI runners without an audio device
