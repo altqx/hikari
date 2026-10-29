@@ -332,7 +332,7 @@ bool isRetiredOption(std::string_view legacyKey)
 std::string_view retiredOptionReason(std::string_view legacyKey)
 {
     if (legacyKey == "TOOLBAR_IDS" || legacyKey == "TOOLBAR_ALIGNMENT")
-        return "retired: the rewrite has no main toolbar (user decision, 2026-10-05)";
+        return "retired: HikariSub has no main toolbar (user decision, 2026-10-05)";
     if (legacyKey == "EDITOR_ON")
         return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
     return {};
@@ -346,7 +346,7 @@ bool isRetiredAction(int id)
 std::string_view retiredActionReason(int id)
 {
     if (id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING"))
-        return "retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)";
+        return "retired: HikariSub has no FFMS2 indexing command (user decision, 2026-10-05)";
     if (id == hotkeyIdOf("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"))
         return "retired: the shortcut mapping window is gone; each macro's shortcut is set in the "
                "Automation panel (user decision, 2026-10-19)";
@@ -983,7 +983,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         }
         row.value = storedValue(*def, convertSetting(reading.value, def->type));
         if (def->disposition == SettingDisposition::Unresolved)
-            because("kept for review: its use in the rewrite is not settled (the migration map's preserve-unresolved)");
+            because("kept for review: its use in HikariSub is not settled (the migration map's preserve-unresolved)");
         if (isPathSetting(def->id)) {
             const std::string &path = std::get<std::string>(*row.value);
             if (isForeignPath(path, destination.windowsHost)) {
