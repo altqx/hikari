@@ -31,6 +31,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QRegularExpression>
 #include <algorithm>
 #include <QFile>
 #include <QFileInfo>
@@ -53,6 +54,26 @@ std::string utf8(const QString &s)
 bool isFile(const QString &path)
 {
     return !path.isEmpty() && QFileInfo(path).isFile();
+}
+
+// The computers a session's UNC paths (\\host\share, //host/share) name.
+QStringList networkHosts(const application::Session &session)
+{
+    QStringList hosts;
+    for (const auto &tab : session.tabs)
+        for (const std::string *path : {&tab.subtitles, &tab.video, &tab.audio, &tab.keyframes}) {
+            const QString p = QString::fromStdString(*path);
+            const bool unc = p.size() > 2 && (p[0] == u'\\' || p[0] == u'/') && (p[1] == u'\\' || p[1] == u'/');
+            // \\?\C:\ and \\.\ are this computer's own paths.
+            if (!unc || p.startsWith(QLatin1String("\\\\.\\")) ||
+                (p.startsWith(QLatin1String("\\\\?\\")) && !p.mid(4).startsWith(QLatin1String("UNC\\"), Qt::CaseInsensitive)))
+                continue;
+            const QString rest = p.mid(p.startsWith(QLatin1String("\\\\?\\")) ? 8 : 2);
+            const QString host = rest.section(QRegularExpression(QStringLiteral("[\\\\/]")), 0, 0);
+            if (!host.isEmpty() && !hosts.contains(host, Qt::CaseInsensitive))
+                hosts << host;
+        }
+    return hosts;
 }
 
 std::filesystem::path fsPath(const QString &path)
@@ -644,14 +665,18 @@ void Application::endSession()
     saveLastSession(true); // HikariSubFrame::OnClose: SaveLastSession(true)
 }
 
-QString Application::saveSessionTo(const QUrl &file)
+QString Application::saveSessionTo(const QUrl &file, bool replace)
 {
     QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
     if (path.isEmpty())
         return QStringLiteral("failed");
-    // CF3: a session is never written as a legacy .kls.
-    if (path.endsWith(QLatin1String(".kls"), Qt::CaseInsensitive))
+    // CF3: a session is never written as a legacy .kls. The dialog asked
+    // about replacing the name typed, not this one.
+    if (path.endsWith(QLatin1String(".kls"), Qt::CaseInsensitive)) {
         path = path.chopped(4) + QStringLiteral(".hksession");
+        if (!replace && QFileInfo::exists(path))
+            return QStringLiteral("exists");
+    }
     // OnExternalSession: a read-only file asks for another name.
     if (const QFileInfo info(path); info.exists() && !info.isWritable())
         return QStringLiteral("readonly");
@@ -756,7 +781,7 @@ bool Application::forwardedOpenWaits() const
     return m_startupSessionPending || !m_closeThen.isEmpty() || m_quitApproved;
 }
 
-QVariantMap Application::reviewSession(const QUrl &file)
+QVariantMap Application::reviewSession(const QUrl &file, bool networkAllowed)
 {
     if (file.isEmpty())
         return reviewSessionRead(loadLastSession());
@@ -769,6 +794,14 @@ QVariantMap Application::reviewSession(const QUrl &file)
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Load session from file"),
                       problem);
         return reviewSessionRead(std::nullopt, problem);
+    }
+    // CF3: a session file from elsewhere may name files on other computers;
+    // looking one up connects there (Windows signs in to an SMB share), so
+    // nothing is looked up until the user allows it.
+    if (const QStringList hosts = session ? networkHosts(*session) : QStringList(); !hosts.isEmpty() && !networkAllowed) {
+        QVariantMap result = reviewSessionRead(std::nullopt);
+        result.insert(QStringLiteral("network"), hosts);
+        return result;
     }
     return reviewSessionRead(std::move(session));
 }

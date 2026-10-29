@@ -1072,11 +1072,14 @@ public:
     // (a .hksession or a legacy .kls file): the session is read and its subtitles staged
     // (L58-staged-replacement), then every open Document's unsaved work is
     // reviewed as for Quit (P6-session-review). Returns {ok, problem, rows}; with ok and no rows,
-    // finishClose() replaces the open tabs with the session's.
-    Q_INVOKABLE QVariantMap reviewSession(const QUrl &file = {});
+    // finishClose() replaces the open tabs with the session's. CF3: a file
+    // naming files on other computers (UNC paths) is not looked into until
+    // `networkAllowed`: until then {ok: false, network: [the computers]}.
+    Q_INVOKABLE QVariantMap reviewSession(const QUrl &file = {}, bool networkAllowed = false);
     // GLOBAL_SAVE_EXTERNAL_SESSION: "readonly" (legacy asks again), "failed" or "".
-    // CF3: written as a .hksession (a name ending in .kls takes that suffix).
-    Q_INVOKABLE QString saveSessionTo(const QUrl &file);
+    // CF3: written as a .hksession; a name ending in .kls takes that suffix,
+    // and "exists" when that file is there and not `replace`.
+    Q_INVOKABLE QString saveSessionTo(const QUrl &file, bool replace = false);
     // Where the session dialogs start (legacy Options.configPath).
     Q_INVOKABLE QUrl sessionFolder() const;
     // At startup (legacy hikarisubApp::OnInit): "load", "ask" or "crash" (the

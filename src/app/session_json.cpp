@@ -74,7 +74,10 @@ std::optional<application::Session> readJson(std::string_view bytes, application
 
     application::Session session;
     session.header = o.value(QStringLiteral("program")).toString().toStdString();
-    session.closed = o.value(QStringLiteral("closed")).toBool(true);
+    const QJsonValue closed = o.value(QStringLiteral("closed"));
+    if (!closed.isBool() && !closed.isUndefined())
+        return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "\"closed\" is not true or false"))});
+    session.closed = closed.toBool(true);
     const QJsonArray tabs = o.value(QStringLiteral("tabs")).toArray();
     for (qsizetype i = 0; i < tabs.size(); ++i) {
         const QString where = QString::number(i + 1);

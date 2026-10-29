@@ -165,6 +165,32 @@ private slots:
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("s1.ass"), QStringLiteral("s2.ass"), QStringLiteral("s3.ass")}));
     }
 
+    // CF3: a session naming files on another computer asks before anything
+    // is looked up; Cancel leaves the tabs, Open loads it.
+    void aSessionOnAnotherComputerAsksFirst()
+    {
+        start();
+        application::SessionTab share;
+        share.subtitles = "\\\\nas\\subs\\x.ass";
+        const QString file = dir.filePath(QStringLiteral("shared.hksession"));
+        {
+            QFile f(file);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(app::writeSessionJson(application::Session{"HikariSub", true, {share}, {}}));
+        }
+        take({file});
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = qvariant_cast<QQuickWindow *>(named("sessionMessages")->property("box"))) && box->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QVERIFY(titles().isEmpty());
+        take({file});
+        QTRY_VERIFY(box->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("open"))));
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("Untitled")});
+        QCOMPARE(application->unresolvedRestores().size(), qsizetype(1));
+    }
+
     // A tab with work keeps it: the subtitles open in a new tab after the
     // last, shown, with nothing asked (File > Open with "Open subtitles in a
     // new tab"). The new tab is in the session.

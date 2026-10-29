@@ -695,6 +695,42 @@ private slots:
         QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(kls)), QString());
         QVERIFY(!QFile::exists(kls));
         QCOMPARE(readSession(home.filePath(QStringLiteral("typed.hksession"))).tabs.size(), std::size_t(2));
+        // The dialog asked about typed.kls: typed.hksession is replaced only
+        // when the user says so.
+        a.addPage();
+        const QByteArray typed = hash(home.filePath(QStringLiteral("typed.hksession")));
+        QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(kls)), QStringLiteral("exists"));
+        QCOMPARE(hash(home.filePath(QStringLiteral("typed.hksession"))), typed);
+        QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(kls), true), QString());
+        QCOMPARE(readSession(home.filePath(QStringLiteral("typed.hksession"))).tabs.size(), std::size_t(3));
+    }
+
+    // CF3: a session file naming files on other computers is not looked into
+    // (Windows would sign in to the share) until the user allows it; this
+    // computer's own \\?\ paths do not count.
+    void filesOnOtherComputersWaitForTheUser()
+    {
+        QTemporaryDir home;
+        app::Application a(options(home));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("here.ass")), "here")));
+        application::SessionTab share, media, local;
+        share.subtitles = "\\\\nas\\subs\\x.ass";
+        media.video = "//media-box/v/x.mkv";
+        media.subtitles = "\\\\NAS\\subs\\y.ass";
+        local.subtitles = "\\\\?\\C:\\subs\\z.ass";
+        const QString file = home.filePath(QStringLiteral("shared.hksession"));
+        writeSession(file, app::writeSessionJson(application::Session{"HikariSub", true, {share, media, local}, {}}));
+        QVariantMap review = a.reviewSession(QUrl::fromLocalFile(file));
+        QVERIFY(!review.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(review.value(QStringLiteral("network")).toStringList(), (QStringList{"nas", "media-box"}));
+        QCOMPARE(titles(a), (QStringList{"here.ass"}));
+        review = a.reviewSession(QUrl::fromLocalFile(file), true);
+        QVERIFY(review.value(QStringLiteral("ok")).toBool());
+        QVERIFY(review.value(QStringLiteral("rows")).toList().isEmpty());
+        a.finishClose();
+        QCOMPARE(a.tabs().size(), qsizetype(3));
+        // The program's own last session is not asked about.
+        QVERIFY(a.reviewSession({}).value(QStringLiteral("ok")).toBool());
     }
 
     // CF3: a legacy .kls still loads, as legacy wrote it (CRLF, a BOM): the
@@ -798,6 +834,10 @@ private slots:
         writeSession(a.lastSessionPath(), R"({"version": 1, "tabs": [{"position": "soon"}]})");
         QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
         QVERIFY(a.log().history().contains(QStringLiteral("tab 1: \"position\" has the wrong type")));
+        // A crash must not pass for an orderly end.
+        writeSession(a.lastSessionPath(), R"({"version": 1, "closed": "false", "tabs": []})");
+        QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
+        QVERIFY(a.log().history().contains(QStringLiteral("\"closed\" is not true or false")));
     }
 
     // CF3: a broken .hksession the user opens is named in the Log with its
