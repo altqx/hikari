@@ -12972,6 +12972,10 @@ or codecs or a splitter may be missing</source>
         <translation>활성 줄 변경</translation>
     </message>
     <message>
+        <source>More options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation>선택한 줄 지정 (1줄 지정됨: 도구가 활성 줄 대신 이 줄을 편집함)</translation>
     </message>
@@ -13570,6 +13574,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Warning</source>
         <translation type="vanished">경고</translation>
+    </message>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

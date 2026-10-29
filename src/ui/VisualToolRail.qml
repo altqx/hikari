@@ -23,118 +23,143 @@ Frame {
     required property VisualToolsController tools
     // VT2: (command) => its keys in the Video window, for the tooltips.
     property var keyOf: symbol => ""
-    // The buttons sit 1 inside the scrolled area (2 inside the frame, as
+    // The buttons sit 1 inside the frame's padding (2 inside the frame, as
     // before the 2026-10-13 focus ring), so a focused button's 1-wide ring
     // is not clipped by it.
     padding: 1
-    // A Video panel too short for the twelve families shows a thin scroll bar
-    // beside them: the families below the fold are reached by the mouse, and
-    // the bar says that there are more. The rail widens by the bar.
-    readonly property bool overflows: railScroll.contentHeight > railScroll.height + 0.5
-    readonly property int barWidth: 6
-    implicitWidth: 30 + (overflows ? barWidth + 1 : 0) + leftPadding + rightPadding
+    implicitWidth: 30 + leftPadding + rightPadding
+    // Every family's height, whatever is folded: a rail placed by its
+    // implicit height (fullscreen's) gets them back when there is room.
+    implicitHeight: tools.railOrder.length * 29 - 1 + 2 + topPadding + bottomPadding
 
-    ScrollView {
-        id: railScroll
-        objectName: "visualToolRailScroll"
-        anchors.fill: parent
-        clip: true
-        contentWidth: 30
-        contentHeight: familyColumn.implicitHeight + 2
-        ScrollBar.vertical: ScrollBar {
-            objectName: "visualToolRailScrollBar"
-            parent: railScroll
-            x: railScroll.width - width
-            y: 0
-            height: railScroll.height
-            width: rail.barWidth
-            padding: 0
-            policy: rail.overflows ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-            focusPolicy: Qt.NoFocus
-            // A visible track in the boundary colour, as the audio display's.
-            background: Rectangle {
-                implicitWidth: rail.barWidth
-                radius: rail.barWidth / 2
-                color: Theme.field
-                border.color: Theme.line
-            }
-            contentItem: Rectangle {
-                implicitWidth: rail.barWidth
-                implicitHeight: 12
-                radius: rail.barWidth / 2
-                color: parent.pressed ? Theme.text : Theme.muted
-                opacity: parent.pressed || parent.hovered ? 0.9 : 0.6
+    // VB1 (#481): a Video panel too short for the twelve families shows the
+    // ones that fit and ends in More tools, which lists the others; the on
+    // family keeps the last slot, so it stays in sight. No family is ever
+    // cut off.
+    readonly property int slots: Math.max(1, Math.floor((availableHeight - 2 + familyColumn.spacing) / (28 + familyColumn.spacing)))
+    readonly property bool overflows: tools.railOrder.length > slots
+    // The families shown, in the rail's order.
+    readonly property var shown: {
+        const order = tools.railOrder
+        if (!overflows)
+            return order
+        const out = order.slice(0, Math.max(0, slots - 1))
+        if (out.length > 0 && !out.includes(tools.activeFamily) && order.includes(tools.activeFamily))
+            out[out.length - 1] = tools.activeFamily
+        return out
+    }
+    readonly property var folded: tools.railOrder.filter(f => !shown.includes(f))
+    // Fullscreen's bar stays while it is open (its rail grows as the bar
+    // hides, which would change the menu under the pointer; Codex on #496).
+    readonly property bool menuOpen: moreMenu.opened
+
+    ColumnLayout {
+        id: familyColumn
+        x: 1
+        y: 1
+        width: 28
+        spacing: 1
+        Repeater {
+            id: families
+            // VT3: in the rail's order; each button names its family's id.
+            model: rail.tools.railOrder
+            delegate: ToolButton {
+                id: familyButton
+                required property int modelData
+                readonly property int family: modelData
+                readonly property var info: rail.tools.families[family] ?? ({})
+                objectName: "visualTool" + family
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 28
+                Layout.alignment: Qt.AlignHCenter
+                visible: rail.shown.includes(family)
+                text: info.name ?? ""
+                display: AbstractButton.IconOnly
+                checked: rail.tools.activeFamily === family
+                enabled: rail.tools.railEnabled
+                focusPolicy: Qt.TabFocus
+                contentItem: Icon {
+                    objectName: "visualToolIcon" + familyButton.family
+                    // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
+                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][familyButton.family] ?? ""
+                }
+                ToolTip.visible: hovered || visualFocus
+                // VT2: the tool's key beside its name, as the shell's tooltips show theirs.
+                ToolTip.text: rail.tipOf(family)
+                Accessible.name: text
+                Accessible.checkable: true
+                Keys.onUpPressed: rail.focusNext(this, -1)
+                Keys.onDownPressed: rail.focusNext(this, 1)
+                onClicked: rail.tools.selectFamily(family)
             }
         }
-        ColumnLayout {
-            id: familyColumn
-            x: 1
-            y: 1
-            width: 28
-            spacing: 1
-            Repeater {
-                id: families
-                // VT3: in the rail's order; each button names its family's id.
-                model: rail.tools.railOrder
-                delegate: ToolButton {
-                    id: familyButton
-                    required property int modelData
-                    required property int index
-                    readonly property int family: modelData
-                    readonly property var info: rail.tools.families[family] ?? ({})
-                    objectName: "visualTool" + family
-                    Layout.preferredWidth: 28
-                    Layout.preferredHeight: 28
-                    Layout.alignment: Qt.AlignHCenter
-                    text: info.name ?? ""
-                    display: AbstractButton.IconOnly
-                    checked: rail.tools.activeFamily === family
-                    enabled: rail.tools.railEnabled
-                    focusPolicy: Qt.TabFocus
-                    contentItem: Icon {
-                        objectName: "visualToolIcon" + familyButton.family
-                        // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
-                        iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][familyButton.family] ?? ""
-                    }
-                    ToolTip.visible: hovered || visualFocus
-                    // VT2: the tool's key beside its name, as the shell's tooltips show theirs.
-                    readonly property string key: rail.keyOf(info.hotkey ?? "")
-                    ToolTip.text: !info.available ? qsTr("%1 (not available yet)").arg(text)
-                                                  : key.length ? text + " (" + key + ")" : text
-                    Accessible.name: text
-                    Accessible.checkable: true
-                    Keys.onUpPressed: rail.focusFamily(index - 1)
-                    Keys.onDownPressed: rail.focusFamily(index + 1)
-                    onClicked: rail.tools.selectFamily(family)
+        ToolButton {
+            id: more
+            objectName: "visualToolsMore"
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            Layout.alignment: Qt.AlignHCenter
+            visible: rail.overflows
+            text: qsTr("More tools")
+            display: AbstractButton.IconOnly
+            enabled: rail.tools.railEnabled
+            focusPolicy: Qt.TabFocus
+            contentItem: Icon { iconRole: "menu-more" }
+            ToolTip.visible: (hovered || visualFocus) && !moreMenu.visible
+            ToolTip.text: text
+            Accessible.name: text
+            Keys.onUpPressed: rail.focusNext(this, -1)
+            Keys.onDownPressed: rail.focusNext(this, 1)
+            // Beside the rail, its top at the button's.
+            onClicked: moreMenu.popup(more, more.width + 2, 0)
+        }
+    }
+
+    // The families that do not fit, in the rail's order.
+    ShellMenu {
+        id: moreMenu
+        objectName: "visualToolsMoreMenu"
+        Instantiator {
+            model: rail.folded
+            delegate: ShellMenuItem {
+                required property int modelData
+                readonly property int family: modelData
+                objectName: "visualToolsMore" + family
+                // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
+                iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][family] ?? ""
+                text: rail.tools.families[family]?.name ?? ""
+                help: rail.tipOf(family)
+                enabled: rail.tools.railEnabled
+                keepsMenuOpen: false
+                // The menu first: choosing a family changes its entries.
+                onTriggered: {
+                    moreMenu.close()
+                    rail.tools.selectFamily(family)
                 }
             }
+            onObjectAdded: (index, object) => moreMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => moreMenu.removeItem(object)
         }
     }
 
-    function focusFamily(i) {
-        const button = families.itemAt((i + families.count) % families.count)
-        if (button)
-            button.forceActiveFocus(Qt.TabFocusReason)
+    function tipOf(family) {
+        const info = tools.families[family] ?? ({})
+        const name = info.name ?? ""
+        const key = rail.keyOf(info.hotkey ?? "")
+        return !info.available ? qsTr("%1 (not available yet)").arg(name) : key.length ? name + " (" + key + ")" : name
     }
-    // A Video panel too short for the twelve families scrolls the rail so the
-    // on family stays in view: chosen by a hotkey or a menu, after a resize,
-    // or when the panel opens with a family below the fold.
-    function showActiveFamily() {
-        const button = families.itemAt(rail.tools.railOrder.indexOf(rail.tools.activeFamily))
-        const view = railScroll.contentItem
-        if (!button || !view || view.height <= 0)
-            return
-        const top = familyColumn.y + button.y - 1 // with the focus ring
-        const bottom = familyColumn.y + button.y + button.height + 1
-        if (top < view.contentY)
-            view.contentY = top
-        else if (bottom > view.contentY + view.height)
-            view.contentY = Math.min(bottom - view.height, Math.max(0, view.contentHeight - view.height))
+    // Up and Down walk the buttons shown, More tools included, round.
+    function focusNext(from, step) {
+        const buttons = []
+        for (let i = 0; i < families.count; ++i)
+            if (families.itemAt(i).visible)
+                buttons.push(families.itemAt(i))
+        if (more.visible)
+            buttons.push(more)
+        const at = buttons.indexOf(from)
+        if (buttons.length > 0)
+            buttons[(at + step + buttons.length) % buttons.length].forceActiveFocus(Qt.TabFocusReason)
     }
-    // Only a change of family scrolls (the controller's changed() also
-    // fires for options and gestures), so a rail scrolled by hand stays put.
-    readonly property int activeFamily: tools.activeFamily
-    onActiveFamilyChanged: Qt.callLater(rail.showActiveFamily)
-    onHeightChanged: Qt.callLater(rail.showActiveFamily)
-    Component.onCompleted: Qt.callLater(rail.showActiveFamily)
+    // The menu goes with the room it was opened for.
+    onOverflowsChanged: if (!overflows) moreMenu.close()
 }

@@ -12978,6 +12978,10 @@ or codecs or a splitter may be missing</source>
         <translation>เปลี่ยนบรรทัดปัจจุบัน</translation>
     </message>
     <message>
+        <source>More options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation>ตรึงบรรทัดที่เลือก (ตรึงไว้ 1 บรรทัด: เครื่องมือจะแก้ไขบรรทัดนั้น ไม่ใช่บรรทัดปัจจุบัน)</translation>
     </message>
@@ -13576,6 +13580,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Warning</source>
         <translation type="vanished">คำเตือน</translation>
+    </message>
+    <message>
+        <source>More tools</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

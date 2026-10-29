@@ -88,7 +88,7 @@ qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml LineEditorStrip.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 # T1: the visual tool rail and the overlay over the Video canvas; VT1: the inspector bar below it and its fields.
-qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
+qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 # T2-T6: the families' options in the bar (Position, Move, Scale, the rotations,
 # the clips' point modes and Invert clip, ...) and the tools' dialogs.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)
