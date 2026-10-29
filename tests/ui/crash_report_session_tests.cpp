@@ -1,13 +1,3 @@
-// CR1 (#452): the crash, freeze and issue report windows through the whole
-// window, sending to a fake endpoint on the loopback and opening links into
-// a list: the window after a crash shows what goes and sends it only on
-// Send report (usage data off too); Don't send sends nothing; the freeze
-// notice opens Report a freeze; Report an issue opens the matching GitHub
-// form, filled in. "Always send crash reports" opens no window.
-//
-// HIKARI_SURFACE_SHOT_DIR=<dir>: the windows in each theme (the card's
-// evidence); HIKARI_CRASH_PAYLOAD_OUT=<file>: the report Send report sent.
-
 #include "hikari/app/application.h"
 #include "hikari/app/crash_record.h"
 
@@ -45,7 +35,7 @@ QByteArray crashRecordText()
            "frame hikarisub 0x1f3a2c\nframe libQt6Core.so.6 0x2c41b8\nframe other 0x4d2a0\n";
 }
 
-} // namespace
+}
 
 class CrashReportSessionTest : public QObject {
     Q_OBJECT
@@ -59,7 +49,6 @@ class CrashReportSessionTest : public QObject {
 
     QQuickWindow *window() const { return qobject_cast<QQuickWindow *>(engine->rootObjects().first()); }
     QString path(const char *name) const { return folder + u'/' + QLatin1String(name); }
-    // `before`: on the application, before the window loads.
     void start(const std::function<void(app::Application &)> &before = {})
     {
         endpoint = std::make_unique<test::AnalyticsEndpoint>();
@@ -93,7 +82,6 @@ class CrashReportSessionTest : public QObject {
         QVERIFY(!engine->rootObjects().isEmpty());
         QVERIFY(QTest::qWaitForWindowExposed(window()));
         QTRY_VERIFY(window()->property("arrangementSettled").toBool());
-        // As runWindow does once the window shows.
         application->crashReports().started(QStringLiteral("appimage"), 1, 1.0, QStringLiteral("typesetting"));
     }
     void writeRecord(const char *name, const QByteArray &text)
@@ -132,7 +120,6 @@ class CrashReportSessionTest : public QObject {
             qWarning() << expression.error();
         return out;
     }
-    // HIKARI_SURFACE_SHOT_DIR: `shown` in each theme as <name>-<theme>.png.
     void shoot(QQuickWindow *shown, const QString &name)
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -174,9 +161,6 @@ private slots:
         endpoint.reset();
     }
 
-    // The start after a crash: the window shows the whole report; Send
-    // report with usage data off sends the record and the report, the note
-    // in it, once; the notice thanks.
     void crashWindowSendsOnlyOnSendReport()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -187,7 +171,7 @@ private slots:
         QCOMPARE(report->title(), QStringLiteral("HikariSub closed unexpectedly"));
         QVERIFY(in(report, "crashReportHeadline")->property("text").toString().startsWith(QStringLiteral("HikariSub crashed ")));
         QVERIFY(in(report, "crashReportSend")->isVisible());
-        QVERIFY(!in(report, "crashReportText")->isVisible()); // collapsed
+        QVERIFY(!in(report, "crashReportText")->isVisible());
         in(report, "crashReportNote")->setProperty("text", QStringLiteral("I had just switched to the Perspective tool."));
         report->setProperty("expanded", true);
         QTRY_VERIFY(in(report, "crashReportText")->isVisible());
@@ -197,7 +181,7 @@ private slots:
         QVERIFY(shown.contains(QStringLiteral("#0  hikarisub")));
         shoot(report, QStringLiteral("crash-report"));
         QTest::qWait(200);
-        QVERIFY(endpoint->events().isEmpty()); // nothing yet
+        QVERIFY(endpoint->events().isEmpty());
         QVERIFY(click(report, "crashReportSend"));
         QTRY_COMPARE(eventNames(), (QStringList{QStringLiteral("$exception"), QStringLiteral("crash_report")}));
         QTRY_VERIFY(!report->isVisible());
@@ -214,8 +198,6 @@ private slots:
         }
     }
 
-    // Don't send: the record and the report go, nothing is sent; the next
-    // start shows no window.
     void dontSendSendsNothing()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -232,7 +214,6 @@ private slots:
         QVERIFY(opened.isEmpty());
     }
 
-    // Open GitHub issue: a Bug issue with the report, nothing sent.
     void openGitHubIssueOpensTheBugForm()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -249,8 +230,6 @@ private slots:
         QVERIFY(endpoint->events().isEmpty());
     }
 
-    // "Always send crash reports": no window, the report goes at the start
-    // and a notice says so.
     void alwaysSendOpensNoWindow()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -263,7 +242,6 @@ private slots:
         QVERIFY(report && !report->isVisible());
         QTRY_COMPARE(shell(QStringLiteral("notices.entries.length > 0 ? notices.entries[0].title : ''")).toString(),
                      QStringLiteral("HikariSub closed unexpectedly. A crash report was sent."));
-        // Show report: what went, read only.
         shell(QStringLiteral("notices.entries[0].actions[0].run()"));
         QTRY_VERIFY(report->isVisible());
         QVERIFY(in(report, "crashReportClose")->isVisible());
@@ -272,8 +250,6 @@ private slots:
         report->close();
     }
 
-    // A freeze the window came back from: a warning notice whose Report…
-    // opens Report a freeze.
     void freezeNoticeOpensReportAFreeze()
     {
         start();
@@ -302,8 +278,6 @@ private slots:
         QVERIFY(!application->crashReports().freezeOffered());
     }
 
-    // Help › Report an issue: the form for each kind; Open on GitHub opens
-    // the matching form filled in, then Finish on GitHub; nothing is sent.
     void reportIssueOpensTheFilledForm()
     {
         start();
@@ -313,10 +287,9 @@ private slots:
         QQuickWindow *form = dialog("reportIssue");
         QVERIFY(form);
         QTRY_VERIFY(form->isVisible());
-        // The thumbnail loads on its own thread; Windows removes no file
-        // that thread still has open, so Done waits for it as a user would.
-        QTRY_COMPARE(in(form, "reportIssueThumbnail")->property("status").toInt(), 1); // Image.Ready
-        QVERIFY(!in(form, "reportIssueOpen")->isEnabled()); // no title yet
+        // Windows can't remove the thumbnail while its loader thread holds it open: wait for Image.Ready (1).
+        QTRY_COMPARE(in(form, "reportIssueThumbnail")->property("status").toInt(), 1);
+        QVERIFY(!in(form, "reportIssueOpen")->isEnabled());
         in(form, "reportIssueTitle")->setProperty("text", QStringLiteral("The handles jump when zoomed"));
         in(form, "reportIssueFirst")->setProperty("text", QStringLiteral("Dragging a corner moves it twice as far."));
         in(form, "reportIssueSecond")->setProperty("text", QStringLiteral("1. Zoom to 200 %\n2. Drag a corner handle"));
@@ -336,10 +309,9 @@ private slots:
         shoot(form, QStringLiteral("report-issue-finish"));
         QVERIFY(click(form, "reportIssueDone"));
         QTRY_VERIFY(!form->isVisible());
-        QVERIFY2(!QDir(path("issue-report")).exists(), // the screenshot went with Done
+        QVERIFY2(!QDir(path("issue-report")).exists(),
                  qPrintable(QDir(path("issue-report")).entryList(QDir::AllEntries | QDir::NoDotAndDotDot).join(u' ')));
 
-        // A feature request: its two fields and its form.
         QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(form->isVisible());
         QVERIFY(click(form, "reportIssueKind_feature"));

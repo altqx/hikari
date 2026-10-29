@@ -1,11 +1,5 @@
 #pragma once
 
-// IC1 (#226): reads the QML sources for the shell's menus, so that a test can
-// require an icon on every menu and context-menu item. A small reader, not a
-// QML parser: it finds the object blocks ("Type {"), matches their braces
-// with string literals and comments blanked out, and reads a block's own
-// properties (its text without the nested blocks and brace expressions).
-
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
@@ -20,23 +14,21 @@ namespace menu_icon_scan {
 
 struct Block {
     QString type;
-    qsizetype typeAt = 0; // where the type name starts
-    qsizetype open = 0;   // its "{"
-    qsizetype close = 0;  // its matching "}"
+    qsizetype typeAt = 0;
+    qsizetype open = 0;
+    qsizetype close = 0;
     int parent = -1;
 };
 
 struct QmlFile {
     QString name;
-    QString text;  // the source
-    QString code;  // the source with its comments as spaces
-    QString blank; // the source with string contents and comments as spaces
+    QString text;
+    QString code;
+    QString blank;
     QList<Block> blocks;
 
     int line(qsizetype at) const { return int(text.left(at).count(QLatin1Char('\n'))) + 1; }
 
-    // The block's own text: its body without its nested blocks or any other
-    // brace expression (handlers, object literals), from the code.
     QString own(int index) const
     {
         const Block &b = blocks[index];
@@ -54,7 +46,6 @@ struct QmlFile {
         return out;
     }
 
-    // What stands before the block's type on its line ("delegate: ").
     QString lead(int index) const
     {
         const qsizetype at = blocks[index].typeAt;
@@ -63,8 +54,6 @@ struct QmlFile {
     }
 };
 
-// The text with its comments as spaces, and with its string contents too
-// unless keepStrings.
 inline QString blankOut(const QString &text, bool keepStrings = false)
 {
     QString out = text;
@@ -103,6 +92,7 @@ inline QString blankOut(const QString &text, bool keepStrings = false)
     return out;
 }
 
+// MUST KILL: a hand-rolled brace and regex scanner reads the QML instead of a QML parser
 inline QmlFile read(const QString &path)
 {
     QmlFile file;
@@ -113,8 +103,6 @@ inline QmlFile read(const QString &path)
     file.text = QString::fromUtf8(f.readAll());
     file.code = blankOut(file.text, true);
     file.blank = blankOut(file.text);
-    // An object declaration: a type name (capitalised, perhaps qualified)
-    // and its brace, not a property's name.
     static const QRegularExpression object(QStringLiteral(R"re((?:^|[^\w.])((?:\w+\.)*[A-Z]\w*)\s*\{)re"));
     for (auto m = object.globalMatch(file.blank); m.hasNext();) {
         const auto match = m.next();
@@ -148,7 +136,6 @@ inline bool hasProperty(const QString &own, const QString &name)
     return QRegularExpression(QStringLiteral(R"re((?:^|[\s;{])%1\s*:)re").arg(name)).match(own).hasMatch();
 }
 
-// A check item: checkable, unless it says false.
 inline bool isCheckable(const QString &own)
 {
     static const QRegularExpression checkable(QStringLiteral(R"re((?:^|[\s;{])checkable\s*:(?!\s*false\b))re"));
@@ -166,22 +153,16 @@ inline QString shown(const QString &own)
 
 struct Exemption {
     QString file;
-    QString needle; // a piece of the item's own text that identifies it
+    QString needle;
     QString reason;
 };
 
-// The menu items without an icon: an item of a menu (ShellMenuItem) or a
-// submenu (a ShellMenu, or a type built on it, inside a menu) without an
-// iconRole, which is no check item, no menu's item template (its
-// `delegate`) and no exemption. Each exemption that matched nothing is
-// reported too, as stale.
 inline QStringList itemsWithoutIcons(const QString &dir, const QList<Exemption> &exemptions)
 {
     QList<QmlFile> files;
     QDirIterator it(dir, {QStringLiteral("*.qml")}, QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         const QString path = it.next();
-        // K2: the controls style defines Menu itself (ShellMenu builds on it).
         if (path.startsWith(dir + QStringLiteral("/style/")))
             continue;
         const QString name = QFileInfo(path).fileName();
@@ -189,8 +170,6 @@ inline QStringList itemsWithoutIcons(const QString &dir, const QList<Exemption> 
             continue;
         files.append(read(path));
     }
-    // The menu types: ShellMenu and the files whose root is one; such a root
-    // with an iconRole gives every use its icon.
     QSet<QString> menuTypes{QStringLiteral("ShellMenu")};
     QHash<QString, bool> rootIcon;
     for (bool grew = true; grew;) {
@@ -218,10 +197,10 @@ inline QStringList itemsWithoutIcons(const QString &dir, const QList<Exemption> 
                 p = file.blocks[p].parent;
             const bool inMenu = p >= 0 && menuTypes.contains(file.blocks[p].type);
             if (menu && !inMenu)
-                continue; // a menu of its own (menu bar, context menu, file root)
+                continue;
             if (item && b.parent >= 0 && menuTypes.contains(file.blocks[b.parent].type)
                 && file.lead(i).startsWith(QLatin1String("delegate")))
-                continue; // the menu's item template
+                continue;
             const QString own = file.own(i);
             if (hasProperty(own, QStringLiteral("iconRole")) || (menu && rootIcon.value(b.type)))
                 continue;
@@ -246,4 +225,4 @@ inline QStringList itemsWithoutIcons(const QString &dir, const QList<Exemption> 
     return problems;
 }
 
-} // namespace menu_icon_scan
+}

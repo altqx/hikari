@@ -1,13 +1,3 @@
-// S2, AM1 through the composition with real Lua scripts: a macro's
-// shortcut is set through the shortcut editor's gesture path (the Automation
-// panel records it there) at once, saved and installed; a taken shortcut
-// asks first and moves; bindings persist and run their macro; a binding
-// whose script is gone stays visible as missing (S44-macro-alias); a legacy
-// Hotkeys.txt adds only what has no binding yet; Settings → Hotkeys lists
-// every macro, by name, under the Automation filter; a binding left missing
-// by a changed script resolves again once its shortcut is recorded; PU7:
-// Settings → Hotkeys imports a legacy Hotkeys.txt's script bindings.
-
 #include "hikari/app/application.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/application/settings.h"
@@ -63,8 +53,6 @@ QVariantMap missing(app::AutomationHotkeysController &c, const char *name)
     return {};
 }
 
-// The panel's Enter: the gesture's question, then the answer ("cancel"
-// sets the keys when nothing holds them).
 QVariantMap map(app::HotkeysController &h, const char *name, const char *accel, const char *answer = "cancel")
 {
     const QVariantMap target = h.gestureTarget(QLatin1String(name));
@@ -74,7 +62,7 @@ QVariantMap map(app::HotkeysController &h, const char *name, const char *accel, 
     return conflict;
 }
 
-} // namespace
+}
 
 class AutomationHotkeysUiTests : public QObject {
     Q_OBJECT
@@ -106,17 +94,13 @@ private slots:
             auto &macros = a.automationHotkeys();
             auto &h = a.hotkeys();
             QVERIFY(map(h, kPrefix, "Ctrl-Shift-P").isEmpty());
-            // At once: saved and installed, no OK.
             QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Shift+P"));
             QCOMPARE(macros.shortcuts().size(), qsizetype(1));
-            // A taken shortcut asks; "delete" (the panel's Reassign) moves it.
             QVERIFY(!map(h, kEdgeblur, "Ctrl-Shift-P", "delete").isEmpty());
             QCOMPARE(keysOf(macros, kPrefix), QString());
             QCOMPARE(keysOf(macros, kEdgeblur), QStringLiteral("Ctrl+Shift+P"));
             QCOMPARE(h.holdersOf(QStringLiteral("Ctrl-Shift-P"), h.gestureTarget(QLatin1String(kPrefix)).value("id").toInt()),
                      QStringList{QStringLiteral("Add edgeblur")});
-            // A Global command's keys: the holder is named, and its binding
-            // takes them from a macro that keeps them anyway.
             QCOMPARE(h.holdersOf(QStringLiteral("Ctrl-S"), -1), QStringList{QStringLiteral("Save")});
             QCOMPARE(h.globalHolder(QStringLiteral("Ctrl+S")), QStringLiteral("Save"));
             QCOMPARE(h.globalHolder(QStringLiteral("Ctrl+Shift+P")), QString());
@@ -124,8 +108,7 @@ private slots:
             macros.replaceCommitted({{kEdgeblur, "Ctrl+Shift+E"}, {"Script gone.lua-0", "F8"}});
             macros.save();
             macros.install();
-            QCOMPARE(macros.shortcuts().size(), qsizetype(1)); // the missing script's binding does not resolve
-            // Clear: at once.
+            QCOMPARE(macros.shortcuts().size(), qsizetype(1));
             QVERIFY(map(h, kWait, "Ctrl-Alt-Q").isEmpty());
             QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+Q"));
             macros.clearKeys(QLatin1String(kWait));
@@ -141,8 +124,6 @@ private slots:
         const QVariantMap gone = missing(macros, "Script gone.lua-0");
         QCOMPARE(gone.value(QStringLiteral("keys")).toString(), QStringLiteral("F8"));
         QCOMPARE(gone.value(QStringLiteral("problem")).toString(), QStringLiteral("No loaded script has this macro"));
-        // Settings → Hotkeys: every macro is listed by name, the bound and
-        // the unbound, and the missing one with why.
         auto &h = again.hotkeys();
         h.beginOptions();
         h.filter(7);
@@ -159,7 +140,6 @@ private slots:
         QVERIFY2(shown.contains(QStringLiteral("Shell fixture > Wait for cancel = ")), qPrintable(shown.join('\n')));
         QVERIFY2(shown.contains(QStringLiteral("Add edgeblur > Add edgeblur = Ctrl-Shift-E")), qPrintable(shown.join('\n')));
         QCOMPARE(goneNote, QStringLiteral("No loaded script has this macro"));
-        // An unbound macro's row maps there too, into the same binding.
         int waitRow = -1;
         for (int i = 0; i < h.rows().size(); ++i)
             if (h.rows().at(i).toMap().value(QStringLiteral("macro")).toString() == QStringLiteral("Wait for cancel"))
@@ -169,7 +149,6 @@ private slots:
         h.optionsMap(QStringLiteral("Ctrl-Alt-W"), 0, QStringLiteral("cancel"));
         h.commitOptions();
         QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W"));
-        // The shortcut runs its macro on the editing target.
         QSignalSpy done(&again.automation(), &app::AutomationShell::runCompleted);
         QVERIFY(macros.run(QLatin1String(kEdgeblur)));
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
@@ -178,10 +157,6 @@ private slots:
         QVERIFY(std::u8string_view(text) != u8"Gate");
     }
 
-    // A binding made for an earlier version of its script is missing until
-    // its shortcut is recorded again, with new keys or the same: it is then
-    // made for the macro loaded now. Stored keys in legacy's modifier order
-    // (Settings Import) read back in Qt's.
     void rerecordingAChangedMacroBindsItAgain()
     {
         app::Application::Options o = options();
@@ -206,14 +181,12 @@ private slots:
         QVERIFY(missing(macros, kPrefix).isEmpty());
         QSignalSpy committed(&macros, &app::AutomationHotkeysController::committed);
         QVERIFY(map(h, kWait, "Ctrl-Alt-L").isEmpty());
-        QCOMPARE(committed.size(), 1); // saved and installed at once
+        QCOMPARE(committed.size(), 1);
         QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+L"));
         QCOMPARE(macros.missing().size(), qsizetype(1));
         QCOMPARE(macros.shortcuts().size(), qsizetype(2));
-        // Recorded again as it now is: nothing to save.
         QVERIFY(map(h, kWait, "Ctrl-Alt-L").isEmpty());
         QCOMPARE(committed.size(), 1);
-        // The same in Settings → Hotkeys, its keys given again there.
         h.beginOptions();
         h.filter(7);
         int edgeblur = -1;
@@ -227,8 +200,6 @@ private slots:
         QCOMPARE(keysOf(macros, kEdgeblur), QStringLiteral("Ctrl+Alt+E"));
         QVERIFY(macros.missing().isEmpty());
         QCOMPARE(macros.shortcuts().size(), qsizetype(3));
-        // Set default clears them (in memory); the loaded macros stay
-        // listed there, unbound, to be mapped again.
         h.beginOptions();
         h.resetDefaults();
         h.filter(7);
@@ -241,8 +212,6 @@ private slots:
                                       QStringLiteral("Wait for cancel = ")}));
     }
 
-    // A script that registers while Settings → Hotkeys is open: its macros
-    // are listed there too, and what the page changed meanwhile stays.
     void aMacroRegisteredWhileSettingsIsOpenIsListed()
     {
         app::Application::Options o = options();
@@ -268,7 +237,6 @@ private slots:
                                                           QStringLiteral("Prefix from dialog = "),
                                                           QStringLiteral("Wait for cancel = ")}),
                                   30'000);
-        // A new macro's row maps like the others; OK applies both.
         for (int i = 0; i < h.rows().size(); ++i)
             if (h.rows().at(i).toMap().value(QStringLiteral("macro")).toString() == QStringLiteral("Wait for cancel"))
                 h.select(i);
@@ -278,8 +246,6 @@ private slots:
         QCOMPARE(keysOf(a.automationHotkeys(), kWait), QStringLiteral("Ctrl+Alt+W"));
     }
 
-    // A bound macro whose script loads while Settings → Hotkeys is open: its
-    // row, listed as missing, names the macro once it registers.
     void aBoundMacroLoadedWhileSettingsIsOpenResolves()
     {
         app::Application::Options o = options();
@@ -300,11 +266,9 @@ private slots:
         a.automation().load(HIKARI_AUTOLOAD_DIR "/macro-1-edgeblur.lua");
         QTRY_VERIFY_WITH_TIMEOUT(!refreshed.isEmpty() && row().value(QStringLiteral("note")).toString().isEmpty(), 30'000);
         QCOMPARE(row().value(QStringLiteral("macro")).toString(), QStringLiteral("Add edgeblur"));
-        QCOMPARE(row().value(QStringLiteral("accel")).toString(), QStringLiteral("Alt-Ctrl-E")); // legacy's order
+        QCOMPARE(row().value(QStringLiteral("accel")).toString(), QStringLiteral("Alt-Ctrl-E"));
     }
 
-    // ...and a search by its macro's name finds the row once the script
-    // loads, without the search being typed again.
     void aSearchFindsAMacroLoadedWhileSettingsIsOpen()
     {
         app::Application::Options o = options();
@@ -323,8 +287,6 @@ private slots:
         QCOMPARE(h.rows().at(h.selected()).toMap().value(QStringLiteral("macro")).toString(), QStringLiteral("Add edgeblur"));
     }
 
-    // Macros unloaded while Settings → Hotkeys is open: an unbound one's row
-    // goes (keys given it would bind nothing), one given keys there stays.
     void aMacroUnloadedWhileSettingsIsOpenLeavesTheList()
     {
         app::Application::Options o = options();
@@ -361,12 +323,9 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(position("Script one.lua-0"), -1, 30'000);
         QVERIFY(position("Script two.lua-0") >= 0);
         QCOMPARE(h.rows().at(h.selected()).toMap().value(QStringLiteral("text")).toString(),
-                 QStringLiteral("Global Script two.lua-0")); // the selection stays on it
+                 QStringLiteral("Global Script two.lua-0"));
     }
 
-    // A binding of a name two loaded scripts share (S44-macro-alias's
-    // collision) runs neither macro: Settings → Hotkeys does not give it keys,
-    // and Delete hotkey still removes it.
     void aNameTwoScriptsShareTakesNoKeysInSettings()
     {
         app::Application::Options o = options();
@@ -403,8 +362,6 @@ private slots:
         QVERIFY(missing(macros, twin).isEmpty());
     }
 
-    // A macro given Exit's keys (a carried configuration): Settings says
-    // Exit takes them, though the page does not list Exit.
     void aMacroOnTheExitKeysSaysExitTakesThem()
     {
         app::Application::Options o = options();
@@ -425,8 +382,6 @@ private slots:
         QCOMPARE(note, QStringLiteral("Exit takes it"));
     }
 
-    // AM1-hotkeys-window-retired: the window's command given Audio keys (the
-    // Audio list is stored apart) is dropped there too, once.
     void retiredWindowAudioBindingIsDropped()
     {
         app::Application::Options o = options();
@@ -441,7 +396,8 @@ private slots:
 
     void legacyImportAddsOnlyWhatIsFree()
     {
-        app::Application a(options()); // keeps Ctrl+Shift+E on edgeblur from the test above
+        // MUST KILL: relies on the Ctrl+Shift+E binding the previous test left in the shared settings
+        app::Application a(options());
         QVERIFY(loadScripts(a));
         auto &hotkeys = a.automationHotkeys();
         hotkeys.clearKeys(QLatin1String(kWait));
@@ -450,9 +406,9 @@ private slots:
             QFile f(legacy);
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("[HikariSub 0.8.0.1200]\r\n"
-                    "Script macro-1-edgeblur.lua-0=Ctrl-Alt-B\r\n" // has a binding: kept
-                    "Script shell-fixture.lua-0=Shift-Ctrl-E\r\n"  // keys taken: skipped
-                    "Script shell-fixture.lua-1=Alt-Ctrl-W\r\n");  // added, in Qt's order
+                    "Script macro-1-edgeblur.lua-0=Ctrl-Alt-B\r\n"
+                    "Script shell-fixture.lua-0=Shift-Ctrl-E\r\n"
+                    "Script shell-fixture.lua-1=Alt-Ctrl-W\r\n");
         }
         QSignalSpy committed(&hotkeys, &app::AutomationHotkeysController::committed);
         const QVariantMap result = hotkeys.importLegacy(legacy);
@@ -462,7 +418,7 @@ private slots:
         QCOMPARE(result.value(QStringLiteral("skipped")).toInt(), 1);
         QCOMPARE(result.value(QStringLiteral("skippedNames")).toStringList(),
                  QStringList{QStringLiteral("Script shell-fixture.lua-0 (Ctrl+Shift+E)")});
-        QCOMPARE(committed.size(), 1); // saved and installed at once
+        QCOMPARE(committed.size(), 1);
         QCOMPARE(keysOf(hotkeys, kEdgeblur), QStringLiteral("Ctrl+Shift+E"));
         QCOMPARE(keysOf(hotkeys, kWait), QStringLiteral("Ctrl+Alt+W"));
         QCOMPARE(keysOf(hotkeys, kPrefix), QString());
@@ -471,10 +427,6 @@ private slots:
         QCOMPARE(hotkeys.keysOf(Qt::Key_Shift, Qt::ShiftModifier), QString());
     }
 
-    // PU7 (#309): Settings → Hotkeys' Import legacy hotkeys…, refused while
-    // the page holds an edit (OK would write the list over the import); in
-    // effect at once, the list shows the added binding, and OK after a later
-    // edit keeps it (also after Apply).
     void settingsHotkeysPageImportsLegacyScripts()
     {
         app::Application::Options o = options();
@@ -510,7 +462,6 @@ private slots:
         QCOMPARE(h.importLegacyScripts(legacy).value(QStringLiteral("read")).toBool(), false);
         QCOMPARE(keysOf(macros, kWait), QString());
 
-        // An applied edit (Apply keeps the page open): no edits then.
         h.commitOptions();
         QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Alt+P"));
         QVERIFY(!h.optionsModified());
@@ -519,12 +470,10 @@ private slots:
         QCOMPARE(result.value(QStringLiteral("read")).toBool(), true);
         QCOMPARE(result.value(QStringLiteral("added")).toInt(), 1);
         QVERIFY(!refreshed.isEmpty());
-        QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W")); // in effect at once
+        QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W"));
         QCOMPARE(h.filterMode(), 7);
-        QCOMPARE(accel(kWait), QStringLiteral("Alt-Ctrl-W")); // legacy's order
+        QCOMPARE(accel(kWait), QStringLiteral("Alt-Ctrl-W"));
         QVERIFY(!h.optionsModified());
-        // A later edit and OK keep the import (the staged copy is the
-        // bindings after it, not those Apply left).
         h.select(position(kPrefix));
         h.optionsMap(QStringLiteral("Ctrl-Alt-Q"), 0, QStringLiteral("cancel"));
         h.commitOptions();

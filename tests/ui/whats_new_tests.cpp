@@ -1,11 +1,3 @@
-// SH3 (#223): What's new from the GitHub release notes, against a recorded
-// answer of GitHub's release list (tests/fixtures/github-releases), served
-// as a local feed so nothing leaves the machine. The owner-approved rules
-// (2026-10-21): the notes after the version run before, up to the installed
-// one, on the update checker's channel; fetched only while "Check for
-// updates automatically" is on, once per installed version, and cached;
-// Markdown without raw HTML or images, http(s) links only.
-
 #include "hikari/app/update_checker.h"
 #include "hikari/app/update_installer.h"
 #include "hikari/app/whats_new.h"
@@ -52,16 +44,13 @@ QStringList versions(const WhatsNew &whatsNew)
     return out;
 }
 
-} // namespace
+}
 
 class WhatsNewTest : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
     int runs = 0;
 
-    // One copy of the program: its settings, its feed (the recorded list,
-    // when `online`) and its cache (which also keeps the version run last),
-    // in a folder of its own.
     struct Copy {
         QString root;
         std::unique_ptr<SettingsStore> settings;
@@ -87,7 +76,6 @@ class WhatsNewTest : public QObject {
         if (!lastVersion.isEmpty() && !QFile::exists(cacheOf(copy->root)))
             setHistory(copy->root, lastVersion, QString());
         copy->settings->set("updater.autoCheck", autoCheck);
-        // A day ahead: the start's own update check stays away.
         copy->settings->set("updater.nextCheck", QDateTime::currentSecsSinceEpoch() + 86400);
         const UpdateFeed feed = UpdateFeed::local(QUrl::fromLocalFile(copy->root + QStringLiteral("/feed/")));
         copy->updates = std::make_unique<UpdateChecker>(*copy->settings, feed, version);
@@ -102,7 +90,6 @@ class WhatsNewTest : public QObject {
         QFile file(cacheOf(root));
         return file.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(file.readAll()).object() : QJsonObject();
     }
-    // The cache as a run of `installed` left it, its notes from `since`.
     static void setHistory(const QString &root, const QString &installed, const QString &since)
     {
         QDir().mkpath(root + QStringLiteral("/cache"));
@@ -111,7 +98,6 @@ class WhatsNewTest : public QObject {
             file.write(QJsonDocument(QJsonObject{{QStringLiteral("installed"), installed}, {QStringLiteral("since"), since}})
                            .toJson(QJsonDocument::Compact));
     }
-    // The same copy started again, as the next run of `version`.
     std::unique_ptr<Copy> restart(std::unique_ptr<Copy> copy, const QString &version, bool online = true)
     {
         const QString name = QDir(dir.path()).relativeFilePath(copy->root);
@@ -130,22 +116,18 @@ class WhatsNewTest : public QObject {
 private slots:
     void init() { desktop::clear(); }
 
-    // Off: no request, nothing to show, the card hidden.
     void nothingIsFetchedWhileUpdateChecksAreOff()
     {
         auto copy = start(QStringLiteral("off"), QStringLiteral("0.1.3"), false, true, QStringLiteral("0.1.1"));
         QVERIFY(copy);
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("off"));
         QVERIFY(copy->whatsNew->releases().isEmpty());
-        // The version run before is still recorded, for when checks go on.
         QCOMPARE(copy->whatsNew->since(), QStringLiteral("0.1.1"));
         QCOMPARE(cacheIn(copy->root).value(QStringLiteral("installed")).toString(), QStringLiteral("0.1.3"));
         QCOMPARE(cacheIn(copy->root).value(QStringLiteral("since")).toString(), QStringLiteral("0.1.1"));
-        // Help > What's new asks for nothing either: no notes in the cache.
         copy->whatsNew->fetchIfNeeded();
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("off"));
         QVERIFY(!cacheIn(copy->root).contains(QStringLiteral("releases")));
-        // Checks turned on (an open dialog shows it at once): the notes come.
         copy->updates->setAutoCheck(true);
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("fetching"));
         QVERIFY(settled(*copy->whatsNew));
@@ -153,13 +135,12 @@ private slots:
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
     }
 
-    // The first start ever: the installed version alone.
     void aFirstStartShowsTheInstalledVersion()
     {
         auto copy = start(QStringLiteral("first"), QStringLiteral("0.1.3"), true);
         QVERIFY(copy);
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("fetching"));
-        QVERIFY(copy->whatsNew->releases().isEmpty()); // hidden while the first fetch runs
+        QVERIFY(copy->whatsNew->releases().isEmpty());
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("ready"));
         QCOMPARE(versions(*copy->whatsNew), QStringList{QStringLiteral("0.1.3")});
@@ -169,12 +150,9 @@ private slots:
         QCOMPARE(release.value(QStringLiteral("date")).toDate(), QDate(2026, 10, 21));
         QCOMPARE(release.value(QStringLiteral("prerelease")).toBool(), false);
         QVERIFY(release.value(QStringLiteral("notes")).toString().startsWith(QStringLiteral("## New")));
-        // The list read for What's new is no update check: its time stays.
         QVERIFY(copy->settings->integer64("updater.nextCheck") > QDateTime::currentSecsSinceEpoch() + 86000);
     }
 
-    // After an update: every release since the version run before, kept on
-    // the next starts (from the cache, offline too) until the next update.
     void anUpdateShowsTheReleasesSinceTheVersionRunBefore()
     {
         auto copy = start(QStringLiteral("update"), QStringLiteral("0.1.3"), true, true, QStringLiteral("0.1.1"));
@@ -184,18 +162,13 @@ private slots:
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
         QCOMPARE(copy->whatsNew->more(), 0);
         QVERIFY(QFile::exists(copy->root + QStringLiteral("/cache/whats-new.json")));
-        // The next start of the same version: from the cache, no request
-        // (the feed is gone), the same notes.
         copy = restart(std::move(copy), QStringLiteral("0.1.3"), false);
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("ready"));
         QCOMPARE(copy->whatsNew->since(), QStringLiteral("0.1.1"));
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
-        // Checks turned off later: the cached notes still show.
         copy->settings->set("updater.autoCheck", false);
         copy = restart(std::move(copy), QStringLiteral("0.1.3"), false);
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
-        // The next update starts after 0.1.3 (none of the fixture's
-        // releases lie between 0.1.3 and 0.1.4 but 0.1.4's draft).
         copy->settings->set("updater.autoCheck", true);
         copy = restart(std::move(copy), QStringLiteral("0.1.4"), true);
         QVERIFY(settled(*copy->whatsNew));
@@ -204,7 +177,6 @@ private slots:
         QVERIFY(copy->whatsNew->releases().isEmpty());
     }
 
-    // A downgrade shows the installed version alone, named since none.
     void aDowngradeNamesNoEarlierVersion()
     {
         auto copy = start(QStringLiteral("downgrade"), QStringLiteral("0.1.3"), true, true, QStringLiteral("0.2.0"));
@@ -214,7 +186,6 @@ private slots:
         QCOMPARE(copy->whatsNew->since(), QString());
     }
 
-    // The channel is the update checker's; switching needs no new fetch.
     void theChannelFollowsTheUpdateChecker()
     {
         auto copy = start(QStringLiteral("channel"), QStringLiteral("0.1.3"), true, true, QStringLiteral("0.1.1"));
@@ -230,11 +201,9 @@ private slots:
         QVERIFY(beta.value(QStringLiteral("prerelease")).toBool());
         copy->updates->setStableOnly(true);
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
-        // A release without a name is named for its version.
         copy->updates->setStableOnly(false);
         setHistory(copy->root, QStringLiteral("0.1.0"), QString());
         copy = restart(std::move(copy), QStringLiteral("0.1.2"), true);
-        // (lastVersion 0.1.0 ran last, so 0.1.2 starts after it.)
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.2"), QStringLiteral("0.1.2-rc.1"),
                                                           QStringLiteral("0.1.1")}));
@@ -242,8 +211,6 @@ private slots:
                  QStringLiteral("HikariSub 0.1.1"));
     }
 
-    // Offline with nothing cached: failed, hidden, tried again at the next
-    // start; Help > What's new tries again when asked.
     void offlineWithNothingCachedHidesTheCard()
     {
         auto copy = start(QStringLiteral("offline"), QStringLiteral("0.1.3"), true, false, QStringLiteral("0.1.1"));
@@ -251,8 +218,7 @@ private slots:
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("failed"));
         QVERIFY(copy->whatsNew->releases().isEmpty());
-        QVERIFY(!cacheIn(copy->root).contains(QStringLiteral("releases"))); // the history alone
-        // Back online: Help > What's new fetches.
+        QVERIFY(!cacheIn(copy->root).contains(QStringLiteral("releases")));
         QFile list(copy->root + QStringLiteral("/feed/releases.json"));
         QVERIFY(list.open(QIODevice::WriteOnly));
         list.write(recordedList());
@@ -261,13 +227,10 @@ private slots:
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("fetching"));
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
-        // With notes cached, asking again fetches nothing.
         copy->whatsNew->fetchIfNeeded();
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("ready"));
     }
 
-    // A list that does not read (a 200 with an error object, say) is a
-    // failed fetch: nothing cached, the next start tries again.
     void aListThatDoesNotReadIsAFailedFetch()
     {
         auto copy = start(QStringLiteral("garbage"), QStringLiteral("0.1.3"), true, false, QStringLiteral("0.1.1"));
@@ -281,7 +244,6 @@ private slots:
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("failed"));
         QVERIFY(!cacheIn(copy->root).contains(QStringLiteral("releases")));
-        // An array whose entries are no releases does not read either.
         QVERIFY(list.open(QIODevice::WriteOnly | QIODevice::Truncate));
         list.write("[null]");
         list.close();
@@ -294,21 +256,16 @@ private slots:
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
     }
 
-    // A cache written for another version or another starting point is
-    // not used; one that does not read is ignored, the version run before
-    // with it (a first start: the installed version alone).
     void aCacheForAnotherRangeIsNotUsed()
     {
         auto copy = start(QStringLiteral("stale"), QStringLiteral("0.1.2"), true, true, QStringLiteral("0.1.1"));
         QVERIFY(copy);
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(versions(*copy->whatsNew), QStringList{QStringLiteral("0.1.2")});
-        // 0.1.3 offline: the 0.1.2 cache is not its notes.
         copy = restart(std::move(copy), QStringLiteral("0.1.3"), false);
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("failed"));
         QVERIFY(copy->whatsNew->releases().isEmpty());
-        // A damaged cache reads as none.
         QFile cache(copy->root + QStringLiteral("/cache/whats-new.json"));
         QVERIFY(cache.open(QIODevice::WriteOnly | QIODevice::Truncate));
         cache.write("{not json");
@@ -319,8 +276,6 @@ private slots:
         QCOMPARE(versions(*copy->whatsNew), QStringList{QStringLiteral("0.1.3")});
     }
 
-    // Two copies sharing the settings (a package and an AppImage) keep each
-    // its own version run before, with its own cache.
     void eachCopyKeepsItsOwnHistory()
     {
         const QString shared = dir.filePath(QStringLiteral("shared.ini"));
@@ -351,14 +306,11 @@ private slots:
         QVERIFY(std::get<0>(appImage));
         QCOMPARE(std::get<1>(appImage), QStringLiteral("0.1.1"));
         QCOMPARE(std::get<2>(appImage), QStringList{QStringLiteral("0.1.2")});
-        // The package again, offline: still since 0.1.1, from its cache.
         const auto again = run(QStringLiteral("package"), QStringLiteral("0.1.3"), false);
         QCOMPARE(std::get<1>(again), QStringLiteral("0.1.1"));
         QCOMPARE(std::get<2>(again), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
     }
 
-    // Each copy has its own cache file in the shared cache folder: an
-    // AppImage by its image, every other copy by its executable.
     void eachCopyHasItsOwnCacheFile()
     {
         const auto file = [](PackageKind kind, const QString &executable, const QString &appImage = {}) {
@@ -380,9 +332,6 @@ private slots:
                 file(PackageKind::AppImage, QString(), QStringLiteral("/home/u/Apps/Other.AppImage")));
     }
 
-    // The cache holds what its reader takes: past the limit the lowest
-    // versions' notes go first (they are past the ten shown, and kept they
-    // still count in "And N earlier versions"), then the lowest versions.
     void theCacheStaysWithinWhatItsReaderTakes()
     {
         std::vector<hikari::application::ReleaseEntry> releases;
@@ -393,7 +342,6 @@ private slots:
             release.notes = std::string(1000, 'x');
             releases.push_back(release);
         }
-        // tag: notes length, highest first.
         const auto entries = [](const QByteArray &content) {
             QStringList out;
             for (const QJsonValue &r : QJsonDocument::fromJson(content).object().value(QStringLiteral("releases")).toArray())
@@ -412,12 +360,9 @@ private slots:
         QVERIFY(one.size() <= 1500);
         QCOMPARE(entries(one), (QStringList{QStringLiteral("v0.1.3:1000"), QStringLiteral("v0.1.2:0"), QStringLiteral("v0.1.1:0")}));
         QCOMPARE(QJsonDocument::fromJson(one).object().value(QStringLiteral("since")).toString(), since);
-        // No notes at all fit: then versions go too.
         const QByteArray none = WhatsNew::cacheContent(installed, since, releases, 200);
         QVERIFY(none.size() <= 200);
         QVERIFY(entries(none).size() < 3);
-        // The ten each channel shows keep their notes while others can go:
-        // here the stable channel shows 0.2.0 and 0.1.9, below twelve betas.
         std::vector<hikari::application::ReleaseEntry> channels;
         const auto add = [&](const std::string &tag, bool prerelease) {
             hikari::application::ReleaseEntry release;
@@ -436,12 +381,9 @@ private slots:
         QCOMPARE(kept.last(), QStringLiteral("v0.1.9:1000"));
         QCOMPARE(kept.at(12), QStringLiteral("v0.2.0-beta.1:0"));
         QCOMPARE(kept.at(10), QStringLiteral("v0.2.0-beta.3:1000"));
-        // Not even the header: nothing to write.
         QVERIFY(WhatsNew::cacheContent(installed, since, releases, 10).isEmpty());
     }
 
-    // A cache whose lowest versions lost their notes still counts them in
-    // "And N earlier versions", offline too.
     void aTrimmedCacheKeepsTheEarlierVersionsCount()
     {
         auto copy = start(QStringLiteral("trimmed"), QStringLiteral("0.1.13"), true, false, QStringLiteral("0.1.0"));
@@ -456,7 +398,6 @@ private slots:
         }
         const QByteArray full = WhatsNew::cacheContent(QStringLiteral("0.1.13"), QStringLiteral("0.1.0"), releases,
                                                        WhatsNew::kMaxCacheBytes);
-        // Room for the ten shown with their notes, not for the three past them.
         const QByteArray trimmed = WhatsNew::cacheContent(QStringLiteral("0.1.13"), QStringLiteral("0.1.0"), releases,
                                                           full.size() - 2000);
         QFile cache(copy->root + QStringLiteral("/cache/whats-new.json"));
@@ -470,39 +411,31 @@ private slots:
         QCOMPARE(copy->whatsNew->more(), 3);
     }
 
-    // The automatic update check at start reads the list once for both; a
-    // menu check during What's new's own read still reports.
     void theUpdateCheckAndWhatsNewShareTheList()
     {
         auto copy = start(QStringLiteral("shared"), QStringLiteral("0.1.2"), true, true, QStringLiteral("0.1.1"));
         QVERIFY(copy);
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("fetching"));
-        QVERIFY(!copy->updates->checking()); // What's new's read is no check
+        QVERIFY(!copy->updates->checking());
         QSignalSpy finished(copy->updates.get(), &UpdateChecker::finished);
-        copy->updates->checkNow(); // joins the read
+        copy->updates->checkNow();
         QVERIFY(copy->updates->checking());
         QVERIFY(finished.wait(5000));
         QCOMPARE(finished.at(0).at(0).toString(), QStringLiteral("available"));
         QCOMPARE(finished.at(0).at(1).toMap().value(QStringLiteral("version")).toString(), QStringLiteral("0.1.3"));
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(versions(*copy->whatsNew), QStringList{QStringLiteral("0.1.2")});
-        // An update check's list refreshes the notes (edited on GitHub
-        // since), checks on.
         QSignalSpy read(copy->updates.get(), &UpdateChecker::releasesRead);
         copy->updates->checkNow();
         QVERIFY(read.wait(5000));
         QCOMPARE(read.at(0).at(0).toBool(), true);
     }
 
-    // What's new asking while a check is past its list (checking the
-    // releases' manifests) takes the list that check read.
     void aReadDuringACheckPastItsListTakesThatList()
     {
         auto copy = start(QStringLiteral("late"), QStringLiteral("0.1.3"), false, true, QStringLiteral("0.1.1"));
         QVERIFY(copy);
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("off"));
-        // A menu check with checks off: once its list is read, checks go on
-        // and Help > What's new opens.
         bool asked = false;
         connect(copy->updates.get(), &UpdateChecker::releasesRead, copy->whatsNew.get(), [&](bool ok) {
             if (asked || !ok)
@@ -517,8 +450,6 @@ private slots:
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
     }
 
-    // Markdown as plain rich text: headings shrink to section labels, raw
-    // HTML and images never come through, only http(s) links stay links.
     void releaseNotesRenderAsPlainRichText()
     {
         auto copy = start(QStringLiteral("render"), QStringLiteral("0.1.3"), true);
@@ -531,24 +462,19 @@ private slots:
         const QString html = copy->whatsNew->render(notes, muted, link, code);
         QVERIFY(html.contains(QStringLiteral("Translation mode:")));
         QVERIFY(html.contains(QStringLiteral("Fixed")));
-        // No heading elements: section labels in the muted colour.
         for (int level = 1; level <= 6; ++level)
             QVERIFY2(!html.contains(QStringLiteral("<h%1").arg(level), Qt::CaseInsensitive), qPrintable(html));
         QVERIFY(html.contains(muted.name(), Qt::CaseInsensitive));
-        // Links in the link colour, code on the code background.
         QVERIFY(html.contains(link.name(), Qt::CaseInsensitive));
         QVERIFY(html.contains(code.name(), Qt::CaseInsensitive));
-        // Links: GitHub's, and a bare URL made a link.
         QVERIFY(html.contains(QStringLiteral("href=\"https://github.com/altqx/hikari/pull/287\"")));
         QVERIFY2(html.contains(QStringLiteral("href=\"https://github.com/altqx/hikari/compare/v0.1.2...v0.1.3\"")), qPrintable(html));
-        // No image, the alt text instead; no raw HTML, no other scheme.
         QVERIFY2(!html.contains(QStringLiteral("<img"), Qt::CaseInsensitive), qPrintable(html));
         QVERIFY(html.contains(QStringLiteral("The karaoke check")));
         QVERIFY(!html.contains(QStringLiteral("karaoke-check.png")));
         QVERIFY2(!html.contains(QStringLiteral("tracker.gif")), qPrintable(html));
         QVERIFY(!html.contains(QStringLiteral("<script"), Qt::CaseInsensitive));
         QVERIFY2(!html.contains(QStringLiteral("&lt;script"), Qt::CaseInsensitive), qPrintable(html));
-        // A script's or a style's text goes with it, over lines too.
         QVERIFY2(!html.contains(QStringLiteral("alert(1)")), qPrintable(html));
         const QString scripted = copy->whatsNew->render(
             QStringLiteral("Keep <SCRIPT type=\"x\">gone()</script> this\n<style>\np { color: red }\n</style >\nand this"),
@@ -557,7 +483,6 @@ private slots:
         QVERIFY(scripted.contains(QStringLiteral("and this")));
         QVERIFY(!scripted.contains(QStringLiteral("gone()")));
         QVERIFY(!scripted.contains(QStringLiteral("color: red")));
-        // Code inside what goes goes with it.
         const QString ticked = copy->whatsNew->render(
             QStringLiteral("A <!-- run `foo` before publishing --> B\n<script>x = `bar`\n`baz`</script> C `kept`"),
             muted, link, code);
@@ -566,8 +491,6 @@ private slots:
         QVERIFY(!ticked.contains(QStringLiteral("baz")));
         QVERIFY(ticked.contains(QStringLiteral("kept")));
         QVERIFY(ticked.contains(QStringLiteral("C")));
-        // A fence closes only on its own kind, at least as long; a code
-        // span runs to the next run of as many backticks, over a line break.
         const QString fenced = copy->whatsNew->render(
             QStringLiteral("````\n```\n<b>in four</b>\n~~~\n````\n\n"
                            "Use ``a `<i>tick</i>` here`` and ``two\n<u>lines</u>`` then <s>gone</s> ` lone <q>dropped</q>"),
@@ -579,8 +502,6 @@ private slots:
         QVERIFY(fenced.contains(QStringLiteral("gone")));
         QVERIFY(!fenced.contains(QStringLiteral("&lt;q&gt;")));
         QVERIFY(fenced.contains(QStringLiteral("dropped")));
-        // An indented code block is code; text indented under a list item
-        // after a blank line is the item's, not code.
         const QString indented = copy->whatsNew->render(
             QStringLiteral("Run:\n\n    <b>literal</b> https://example.com/x\n\n- item\n\n    more <i>of it</i>\n"),
             muted, link, code);
@@ -588,7 +509,6 @@ private slots:
         QVERIFY(!indented.contains(QStringLiteral("href=\"https://example.com/x")));
         QVERIFY(!indented.contains(QStringLiteral("&lt;i&gt;")));
         QVERIFY(indented.contains(QStringLiteral("of it")));
-        // Fences inside a list item or a quote, with a blank line inside.
         const QString contained = copy->whatsNew->render(
             QStringLiteral("- item\n\n    ```\n    <b>in item</b>\n\n    https://example.com/y <u>u</u>\n    ```\n\n"
                            "> ```\n> <i>quoted</i>\n>\n> <s>s</s>\n> ```\n"),
@@ -598,21 +518,16 @@ private slots:
         QVERIFY(!contained.contains(QStringLiteral("href=\"https://example.com/y")));
         QVERIFY(contained.contains(QStringLiteral("&lt;i&gt;quoted&lt;/i&gt;")));
         QVERIFY(contained.contains(QStringLiteral("&lt;s&gt;s&lt;/s&gt;")));
-        // A paragraph that was raw HTML alone leaves no empty paragraph.
         const QString alone = copy->whatsNew->render(QStringLiteral("One\n\n<img src=\"x.gif\"> <br>\n\nTwo"), muted, link, code);
         QCOMPARE(alone.count(QStringLiteral("<p")), 2);
-        // A script whose name ends the line.
         const QString split = copy->whatsNew->render(
             QStringLiteral("Before <script\ntype=\"x\">hidden()</script> after"), muted, link, code);
         QVERIFY2(!split.contains(QStringLiteral("hidden()")), qPrintable(split));
         QVERIFY(split.contains(QStringLiteral("after")));
-        // "<script/>" is a tag like any: what follows it stays.
         const QString selfClosed = copy->whatsNew->render(
             QStringLiteral("Before <script/> after\n\nNext paragraph"), muted, link, code);
         QVERIFY2(selfClosed.contains(QStringLiteral("Before  after")), qPrintable(selfClosed));
         QVERIFY(selfClosed.contains(QStringLiteral("Next paragraph")));
-        // Markup written escaped is text, in prose as in code; raw HTML
-        // beside it still goes, and an escaped ">" closes nothing.
         const QString escaped = copy->whatsNew->render(
             QStringLiteral("Use \\<video\\> or &lt;audio&gt; or &#60;x&#x3E; but <b>gone</b>, \\\\<i>y</i>\n\n"
                            "`\\<v\\> &lt;a&gt;` <!-- a --\\> b --> after"),
@@ -622,7 +537,6 @@ private slots:
         QVERIFY(escaped.contains(QStringLiteral("\\&lt;v\\&gt; &amp;lt;a&amp;gt;")));
         QVERIFY(escaped.contains(QStringLiteral("after")));
         QVERIFY(!escaped.contains(QStringLiteral(" b ")));
-        // A linked image's alt text keeps the link.
         const QString badge = copy->whatsNew->render(
             QStringLiteral("[![Build status](badge.svg)](https://example.com/build)"), muted, link, code);
         QVERIFY2(badge.contains(QStringLiteral("href=\"https://example.com/build\"")), qPrintable(badge));
@@ -638,14 +552,12 @@ private slots:
         QVERIFY(!badges.contains(QStringLiteral("href=\"https://example.com/c")));
         QVERIFY(badges.contains(QStringLiteral("[![d](e.svg)](https://example.com/f) \\&lt;g\\&gt;")));
         QVERIFY(!badges.contains(QStringLiteral("href=\"https://example.com/f")));
-        // A destination may hold balanced or escaped parentheses.
         const QString parens = copy->whatsNew->render(
             QStringLiteral("[![Build](b_(1).svg)](https://example.com/build_(linux)) and "
                            "[![Test](t.svg)](https://example.com/t\\(x)"),
             muted, link, code);
         QVERIFY2(parens.contains(QStringLiteral("href=\"https://example.com/build_(linux)\"")), qPrintable(parens));
         QVERIFY(parens.contains(QStringLiteral("href=\"https://example.com/t(x\"")));
-        // Linked by reference, the image inline or by reference too.
         const QString referenced = copy->whatsNew->render(
             QStringLiteral("[![Build](badge.svg)][build] and [![Test][tbadge]][test] and [![Lint][]][test]\n\n"
                            "[build]: https://example.com/build\n[test]: https://example.com/test\n[tbadge]: t.svg\n"
@@ -657,7 +569,6 @@ private slots:
         QVERIFY(referenced.contains(QStringLiteral("Test")));
         QVERIFY(referenced.contains(QStringLiteral("Lint")));
         QCOMPARE(referenced.count(QStringLiteral("href=\"https://example.com/test\"")), 2);
-        // Many marks in one paragraph stay linear too.
         QString many;
         for (int i = 0; i < 5000; ++i)
             many += QStringLiteral("[![b](%1.svg)](https://example.com/%1) \\<v\\> &lt;a&gt; ").arg(i);
@@ -666,7 +577,6 @@ private slots:
         const QString manyHtml = copy->whatsNew->render(many, muted, link, code);
         QVERIFY2(marked.elapsed() < 2000, qPrintable(QString::number(marked.elapsed())));
         QVERIFY(manyHtml.contains(QStringLiteral("href=\"https://example.com/4999\"")));
-        // As do the most marks there are, with more links to restore.
         QString linked;
         for (int i = 0; i < 20000; ++i)
             linked += QStringLiteral("[![b](%1.svg)](https://example.com/%1) \\<%1\\> ").arg(i);
@@ -675,7 +585,6 @@ private slots:
         const QString linkedHtml = copy->whatsNew->render(linked, muted, link, code);
         QVERIFY2(restored.elapsed() < 2000, qPrintable(QString::number(restored.elapsed())));
         QVERIFY(linkedHtml.contains(QStringLiteral("&lt;19999&gt;")));
-        // An image's alt text is text, escaped markup in it too.
         const QString alts = copy->whatsNew->render(
             QStringLiteral("Before ![Use \\<video\\>](a.png) mid ![x \\<script\\>](b.png) after\n\nNext"),
             muted, link, code);
@@ -683,7 +592,6 @@ private slots:
         QVERIFY(alts.contains(QStringLiteral("x &lt;script&gt;")));
         QVERIFY(alts.contains(QStringLiteral("after")));
         QVERIFY(alts.contains(QStringLiteral("Next")));
-        // What is dropped ends at its closer in code too; what follows stays.
         const QString closed = copy->whatsNew->render(
             QStringLiteral("<script>const x = `</script>` kept\n\nNext paragraph\n\n"
                            "<!-- note `-->` after\n\nLast paragraph"),
@@ -694,7 +602,6 @@ private slots:
         QVERIFY(closed.contains(QStringLiteral("after")));
         QVERIFY(!closed.contains(QStringLiteral("const x")));
         QVERIFY(!closed.contains(QStringLiteral("note")));
-        // Declarations, processing instructions and CDATA go whole too.
         const QString declared = copy->whatsNew->render(
             QStringLiteral("A <!DOCTYPE html> B <?xml version=\"1.0\"?> C <![CDATA[x < y]]> D <?php  \necho 1;\n?> E "
                            "`<?kept?>`"),
@@ -707,19 +614,16 @@ private slots:
         QVERIFY(!declared.contains(QStringLiteral("x &lt; y")));
         QVERIFY(!declared.contains(QStringLiteral("echo")));
         QVERIFY(declared.contains(QStringLiteral("&lt;?kept?&gt;")));
-        // A tag's attributes may go on over a line break, soft or hard.
         const QString wrapped = copy->whatsNew->render(
             QStringLiteral("Text <div\nclass=\"note\"\nid=x>inside</div> more <span  \ntitle=y>z</span>"), muted,
             link, code);
         QVERIFY2(wrapped.contains(QStringLiteral("Text inside more z")), qPrintable(wrapped));
         QVERIFY(!wrapped.contains(QStringLiteral("class=")));
         QVERIFY(!wrapped.contains(QStringLiteral("title=")));
-        // Escaped, it is text; after an escaped backslash it is a tag.
         const QString wrappedEscaped = copy->whatsNew->render(
             QStringLiteral("Use \\<div\nclass=x> literally, not \\\\<span\ntitle=y>this</span>"), muted, link, code);
         QVERIFY2(wrappedEscaped.contains(QStringLiteral("Use &lt;div class=x&gt; literally, not \\this")),
                  qPrintable(wrappedEscaped));
-        // In code such a tag stays as written; a line opening a quote ends it.
         const QString wrappedCode = copy->whatsNew->render(
             QStringLiteral("```\n<div\nclass=a>\n```\n\nUse `<span\ntitle=b>` here\n\nSee <q\n> quoted"), muted, link,
             code);
@@ -728,7 +632,6 @@ private slots:
         QVERIFY(!wrappedCode.contains(QStringLiteral("&lt;div class")));
         QVERIFY(wrappedCode.contains(QStringLiteral("&lt;span title=b&gt;")));
         QVERIFY(wrappedCode.contains(QStringLiteral("quoted")));
-        // A quoted attribute value may hold ">": the tag ends after it.
         const QString quoted = copy->whatsNew->render(
             QStringLiteral("A <span title=\"1 > 0\" data-x='a>b'>kept</span> B"), muted, link, code);
         QVERIFY2(quoted.contains(QStringLiteral("A kept B")), qPrintable(quoted));
@@ -738,9 +641,7 @@ private slots:
         QVERIFY(!html.contains(QStringLiteral("javascript:"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("file:///etc/passwd")));
         QVERIFY(html.contains(QStringLiteral("Run this")));
-        // The table's cells come through.
         QVERIFY(html.contains(QStringLiteral("AppImage")));
-        // A bare URL in code stays code; one in a link's syntax is that link.
         const QString inCode = copy->whatsNew->render(
             QStringLiteral("Run `curl https://example.com/a...b` or\n```\nhttps://example.com/c\n```\n"
                            "[the compare](https://example.com/d...e)."),
@@ -749,8 +650,6 @@ private slots:
         QVERIFY(!inCode.contains(QStringLiteral("href=\"https://example.com/c")));
         QVERIFY(inCode.contains(QStringLiteral("href=\"https://example.com/d...e\"")));
         QVERIFY(!inCode.contains(QStringLiteral("&lt;https")));
-        // A bare URL ends as GitHub ends it: a balanced ")" is the URL's,
-        // an unbalanced one and trailing punctuation are the prose's.
         const QString ends = copy->whatsNew->render(
             QStringLiteral("See https://en.wikipedia.org/wiki/Foo_(bar) and (https://example.com/f) or "
                            "https://example.com/g_(h)_i?x=(1)(2)). Also \"https://example.com/j\"; "
@@ -761,23 +660,19 @@ private slots:
         QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/g_(h)_i?x=(1)(2)\"")));
         QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/j\"")));
         QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/k\"")));
-        // Trimming a long tail stays linear: a note near the size limit
-        // must not hold the window up.
         QElapsedTimer timer;
         timer.start();
         const QString tail = copy->whatsNew->render(
             QStringLiteral("https://example.com/x") + QString(100000, u')') + QString(100000, u';'), muted, link, code);
         QVERIFY2(timer.elapsed() < 2000, qPrintable(QString::number(timer.elapsed())));
         QVERIFY(tail.contains(QStringLiteral("href=\"https://example.com/x\"")));
-        // An HTML comment (release templates leave them), over lines too.
         const QString commented = copy->whatsNew->render(
             QStringLiteral("Before <!-- one --> after\n<!-- two\nlines -->\nlast `<b>kept</b>`"), muted, link, code);
         QVERIFY2(commented.contains(QStringLiteral("Before  after")), qPrintable(commented));
         QVERIFY(!commented.contains(QStringLiteral("one")));
         QVERIFY(!commented.contains(QStringLiteral("lines")));
         QVERIFY(commented.contains(QStringLiteral("last")));
-        QVERIFY(commented.contains(QStringLiteral("&lt;b&gt;kept&lt;/b&gt;"))); // code keeps its text
-        // The body takes the view's font, not the document's.
+        QVERIFY(commented.contains(QStringLiteral("&lt;b&gt;kept&lt;/b&gt;")));
         QVERIFY(!html.contains(QStringLiteral("<body style"), Qt::CaseInsensitive));
     }
 
@@ -794,7 +689,6 @@ private slots:
         QCOMPARE(desktop::opened(),
                  (QList<QUrl>{QUrl(QStringLiteral("https://github.com/altqx/hikari/pull/287")),
                               QUrl::fromLocalFile(copy->root + QStringLiteral("/feed/releases"))}));
-        // GitHub's feed: the releases page.
         QCOMPARE(WhatsNew::allReleaseNotesUrl(UpdateFeed::github()),
                  QUrl(QStringLiteral("https://github.com/altqx/hikari/releases")));
     }

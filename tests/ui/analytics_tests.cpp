@@ -1,8 +1,3 @@
-// AN1 (#404): anonymous usage data against a fake PostHog endpoint on the
-// loopback; nothing leaves the machine. What is sent, when nothing is (no
-// key, the switch off, DO_NOT_TRACK), the queue's bounds offline, the switch
-// dropping the queue and the id. (A crash's record: crash_report_tests.)
-
 #include "analytics_endpoint.h"
 
 #include "hikari/app/analytics.h"
@@ -35,7 +30,7 @@ class AnalyticsTest : public QObject {
         c.endpoint = endpoint.url();
         c.queueFile = dir.filePath(QStringLiteral("analytics-queue.json"));
         c.version = QStringLiteral("0.1.0-beta.1");
-        c.firstFlushMs = 60 * 60 * 1000; // the tests send
+        c.firstFlushMs = 60 * 60 * 1000;
         return c;
     }
     static Analytics::StartFacts facts()
@@ -55,9 +50,6 @@ private slots:
         QFile::remove(dir.filePath(QStringLiteral("analytics-queue.json")));
     }
 
-    // A fresh profile with a key and the switch on sends app_started: the
-    // batch's shape, the anonymous id, no person profile, no GeoIP, and
-    // only properties of the table.
     void sendsAppStarted()
     {
         AnalyticsEndpoint endpoint;
@@ -100,8 +92,6 @@ private slots:
         QVERIFY(analytics.queued().isEmpty());
     }
 
-    // No key (every build but a release's), the switch off, or DO_NOT_TRACK:
-    // nothing is queued and nothing is sent.
     void nothingWithoutKeySwitchOrConsent_data()
     {
         QTest::addColumn<QString>("key");
@@ -143,8 +133,6 @@ private slots:
         QVERIFY(Analytics::doNotTrack("yes"));
     }
 
-    // Turning the switch off drops the queue (memory and file) and the id
-    // and stops sending; turning it on again starts with a new id.
     void switchOffDropsQueueAndId()
     {
         AnalyticsEndpoint endpoint;
@@ -152,7 +140,7 @@ private slots:
         const Analytics::Config c = config(endpoint);
         Analytics analytics(settings, c);
         analytics.appStarted(facts());
-        analytics.quit(0); // writes the file; the endpoint is not answered in time
+        analytics.quit(0);
         QTRY_VERIFY(QFile::exists(c.queueFile));
         const QString first = analytics.distinctId();
         QVERIFY(!first.isEmpty());
@@ -172,8 +160,6 @@ private slots:
         QVERIFY(second != first);
     }
 
-    // Offline: sends fail fast and wait for the next flush, the queue stays
-    // within its bounds (oldest dropped), nothing waits on the network.
     void offlineQueueIsBounded()
     {
         quint16 closedPort = 0;
@@ -198,17 +184,15 @@ private slots:
         QVERIFY(QJsonDocument(analytics.queued()).toJson(QJsonDocument::Compact).size() <= Analytics::kMaxBytes);
         clock.restart();
         analytics.flush();
-        QVERIFY(clock.elapsed() < 100); // starts a send, never waits for it
+        QVERIFY(clock.elapsed() < 100);
         QTest::qWait(300);
-        QCOMPARE(analytics.queued().size(), Analytics::kMaxEvents); // failed: kept for later
+        QCOMPARE(analytics.queued().size(), Analytics::kMaxEvents);
         analytics.quit(500);
         QVERIFY(clock.elapsed() < 3000);
-        // The next start takes the file's queue up again.
         Analytics next(settings, c);
         QCOMPARE(next.queued().size(), Analytics::kMaxEvents);
     }
 
-    // A send the endpoint answers later; the queue keeps what came meanwhile.
     void sendsInBatches()
     {
         AnalyticsEndpoint endpoint;
@@ -227,7 +211,6 @@ private slots:
         QCOMPARE(endpoint.requests.size(), 2);
     }
 
-    // The table: anything outside it is dropped, free text above all.
     void onlyTheTableGoes()
     {
         QVERIFY(Analytics::conforms(QStringLiteral("panel_opened"), {{QStringLiteral("panel"), QStringLiteral("audio")}}));
@@ -242,7 +225,6 @@ private slots:
                                     {{QStringLiteral("kind"), QStringLiteral("failed")}, {QStringLiteral("script"), QStringLiteral("user script")}}));
         QVERIFY(!Analytics::conforms(QStringLiteral("getting_started_finished"),
                                      {{QStringLiteral("pages_changed"), QJsonArray{QStringLiteral("look"), QStringLiteral("Japanese")}}}));
-        // Only audio comes from a video (#453).
         const auto opened = [](const char *kind) {
             return QJsonObject{{QStringLiteral("open_time"), QStringLiteral("<250ms")},
                                {QStringLiteral("outcome"), QStringLiteral("ready")},
@@ -255,13 +237,12 @@ private slots:
         AnalyticsEndpoint endpoint;
         hikari::ui::SettingsStore settings;
         Analytics analytics(settings, config(endpoint));
-        analytics.commandUsed(QStringLiteral("My macro: do things"), QStringLiteral("key")); // a script's macro
-        analytics.commandUsed(QStringLiteral("GLOBAL_SAVE_SUBS"), QStringLiteral("menu"));   // no such way
+        analytics.commandUsed(QStringLiteral("My macro: do things"), QStringLiteral("key"));
+        analytics.commandUsed(QStringLiteral("GLOBAL_SAVE_SUBS"), QStringLiteral("menu"));
         analytics.dialogOpened(QStringLiteral("someScript.lua/Settings"));
         analytics.panelOpened(QStringLiteral("NoSuchPanel"));
         analytics.layoutChanged(QStringLiteral("My layout"));
         QVERIFY(analytics.queued().isEmpty());
-        // Once per command and way, panel and dialog in a session.
         analytics.commandUsed(QStringLiteral("GLOBAL_SAVE_SUBS"), QStringLiteral("key"));
         analytics.commandUsed(QStringLiteral("GLOBAL_SAVE_SUBS"), QStringLiteral("key"));
         analytics.commandUsed(QStringLiteral("GLOBAL_SAVE_SUBS"), QStringLiteral("pointer"));
@@ -275,7 +256,6 @@ private slots:
         for (int i = 0; i < Analytics::kMaxLayoutChanges + 5; ++i)
             analytics.layoutChanged(QStringLiteral("saved"));
         QCOMPARE(analytics.queued().size(), 4 + Analytics::kMaxLayoutChanges);
-        // A bundled script's name with a space still goes.
         analytics.automationError(QStringLiteral("failed"), QStringLiteral("skew gradient.lua"));
         QCOMPARE(analytics.queued().last().toObject().value(QStringLiteral("properties")).toObject().value(QStringLiteral("script")).toString(),
                  QStringLiteral("skew_gradient.lua"));
@@ -300,7 +280,6 @@ private slots:
         QCOMPARE(Analytics::frameBucket(500), 5);
     }
 
-    // app_closed: the session's length and the frame-time buckets' counts.
     void appClosedCountsFrames()
     {
         AnalyticsEndpoint endpoint;
@@ -308,8 +287,6 @@ private slots:
         Analytics analytics(settings, config(endpoint));
         analytics.frameRendered(3);
         analytics.frameRendered(500);
-        // Frames while it is off are not counted, and turning it off drops
-        // those before.
         settings.set("privacy.usageData", false);
         analytics.frameRendered(500);
         settings.set("privacy.usageData", true);
@@ -325,12 +302,9 @@ private slots:
         QCOMPARE(p.value(QStringLiteral("render_frames_lt8ms")).toInt(), 2);
         QCOMPARE(p.value(QStringLiteral("render_frames_33_66ms")).toInt(), 1);
         QCOMPARE(p.value(QStringLiteral("render_frames_200ms_plus")).toInt(), 0);
-        QVERIFY(!QFile::exists(config(endpoint).queueFile)); // all sent
+        QVERIFY(!QFile::exists(config(endpoint).queueFile));
     }
 
-    // A script's name goes only while its bytes are the bundled manifest's,
-    // wherever it lies: one dropped into a writable program folder is the
-    // user's.
     void bundledScriptsByTheManifest()
     {
         const QByteArray shipped = "-- bundled\n";
@@ -350,7 +324,6 @@ private slots:
         const QString added = program + QStringLiteral("/PrivateCustomer.lua");
         write(added, "-- mine\n");
         QCOMPARE(Analytics::bundledScript(added, manifest), QString());
-        // Same bytes, another name; a bundled name, other bytes.
         write(added, shipped);
         QCOMPARE(Analytics::bundledScript(added, manifest), QString());
         write(bundled, "-- edited\n");

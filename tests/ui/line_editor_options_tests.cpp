@@ -1,14 +1,3 @@
-// Wave 6's Line editor cards through the composition, with a settings file
-// so that a restart reads what the last run stored:
-// - LE2 (#227): the Times/Frames switch (EDITBOX_TIMES_TO_FRAMES_SWITCH) out
-//   of the Line editor, into Settings > Editor and the Video panel's menu;
-// - LE3 (#228, LE3-tags-shown): the Line editor shows tags by default; hiding
-//   them is editor.hideTags and GLOBAL_EDITOR_HIDE_TAGS;
-// - LE5 (#230): the custom tag buttons' "+" popover, context menu and
-//   Settings > Editor list, and (#263) its menu's Move left and Move right in
-//   either layout direction;
-// - LE6 (#231): Edit style opens the Style editor on the Line's Style.
-
 #include "hikari/app/application.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/style_manager_controller.h"
@@ -53,7 +42,7 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
     return path;
 }
 
-} // namespace
+}
 
 class LineEditorOptionsTest : public QObject {
     Q_OBJECT
@@ -68,7 +57,6 @@ class LineEditorOptionsTest : public QObject {
     QString settingsFile() const { return dir.filePath(QStringLiteral("settings.toml")); }
     void start()
     {
-        // No spell checker: its missing-dictionary notice is not these cards'.
         ui::SettingsStore(settingsFile()).set("editor.spellchecker", false);
         app::Application::Options options;
         options.settingsFile = settingsFile();
@@ -104,7 +92,6 @@ class LineEditorOptionsTest : public QObject {
         for (QObject *o : root()->findChildren<QObject *>())
             if (o->objectName() == QLatin1String(name))
                 return o;
-        // PF1: the Settings window, once made, and what it holds.
         auto *loader = root()->findChild<QObject *>(QStringLiteral("settingsLoader"));
         if (auto *settings = loader ? loader->property("item").value<QObject *>() : nullptr) {
             if (settings->objectName() == QLatin1String(name))
@@ -124,8 +111,7 @@ class LineEditorOptionsTest : public QObject {
                 return found;
         return nullptr;
     }
-    // The items shown first: a Repeater's old delegates stay QObject
-    // children until they are deleted.
+    // A Repeater's old delegates stay QObject children until deleted: search the item tree first.
     QQuickItem *item(const char *name) const
     {
         if (auto *found = findItem(window->contentItem(), QLatin1String(name)))
@@ -154,8 +140,6 @@ class LineEditorOptionsTest : public QObject {
         return QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran), Q_ARG(QVariant, symbol))
                && ran.toBool();
     }
-    // Settings: File > Settings, then the dialog's check box for `setting`
-    // clicked and OK.
     void clickSettingAndOk(const char *setting, bool expectedBefore)
     {
         auto *action = named("settingsMenuItem")->property("action").value<QObject *>();
@@ -167,12 +151,12 @@ class LineEditorOptionsTest : public QObject {
         QVERIFY(check);
         QCOMPARE(check->property("checked").toBool(), expectedBefore);
         QVERIFY(QMetaObject::invokeMethod(check, "click"));
-        auto *ok = findItem(content, QStringLiteral("settingsOk")); // in the window's footer
+        auto *ok = findItem(content, QStringLiteral("settingsOk"));
         QVERIFY(ok && QMetaObject::invokeMethod(ok, "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
-    // A control inside a popup (popups keep their items under contentItem).
+    // A Popup is not an item: its controls live under its contentItem.
     static QQuickItem *inside(QObject *popup, const char *name)
     {
         auto *content = popup ? popup->property("contentItem").value<QQuickItem *>() : nullptr;
@@ -187,7 +171,6 @@ class LineEditorOptionsTest : public QObject {
         QTRY_VERIFY(control->isVisible());
         QTest::mouseClick(w, button, {}, control->mapToScene(QPointF(control->width() / 2, control->height() / 2)).toPoint());
     }
-    // Types `text` into the popover's field, replacing what it holds.
     void typeInto(QQuickItem *field, const QString &text)
     {
         QVERIFY(field);
@@ -198,7 +181,6 @@ class LineEditorOptionsTest : public QObject {
             QTest::keyClick(field->window(), c.toLatin1());
         QCOMPARE(field->property("text").toString(), text);
     }
-    // The strip's popover after "+" or Edit...: name, tag, then Save.
     void fillTagButton(QObject *popover, const QString &name, const QString &tag, const char *icon = nullptr)
     {
         QTRY_VERIFY(popover->property("opened").toBool());
@@ -209,7 +191,6 @@ class LineEditorOptionsTest : public QObject {
         click(inside(popover, "saveTag"));
         QTRY_VERIFY(!popover->property("visible").toBool());
     }
-    // A context menu's item, chosen: the menu closes, then the item runs.
     void choose(QObject *menu, const char *item)
     {
         auto *entry = named(item);
@@ -218,8 +199,6 @@ class LineEditorOptionsTest : public QObject {
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QVERIFY(QMetaObject::invokeMethod(entry, "triggered"));
     }
-    // The tag strip laid out again after its buttons changed (new delegates
-    // take their places at the next polish): `count` buttons side by side.
     void waitForStrip(int count)
     {
         QTRY_VERIFY([&] {
@@ -233,13 +212,11 @@ class LineEditorOptionsTest : public QObject {
                         return false;
                 }
             }
-            // and the last one before "+".
             auto *last = item(qPrintable(QStringLiteral("tagButton%1").arg(count - 1)));
             auto *add = item("addTagButton");
             return !add || !add->isVisible() || last->mapToScene({}).x() + last->width() <= add->mapToScene({}).x();
         }());
     }
-    // The strip's `count` buttons, shown: the one named `name`.
     QQuickItem *showing(const QString &name, int count) const
     {
         for (int i = 0; i < count; ++i) {
@@ -249,8 +226,6 @@ class LineEditorOptionsTest : public QObject {
         }
         return nullptr;
     }
-    // The strip's `count` buttons' names as they read from the left on
-    // screen, one letter each; empty until all of them are laid out.
     QString stripFromLeft(int count) const
     {
         QList<QQuickItem *> shown;
@@ -265,7 +240,7 @@ class LineEditorOptionsTest : public QObject {
         QString names;
         for (int i = 0; i < count; ++i) {
             if (i > 0 && shown[i]->mapToScene({}).x() < shown[i - 1]->mapToScene({}).x() + shown[i - 1]->width())
-                return {}; // still overlapping
+                return {};
             names += shown[i]->property("text").toString();
         }
         return names;
@@ -287,9 +262,6 @@ private slots:
     }
     void cleanup() { stop(); }
 
-    // LE2: the counters row keeps Wraps and characters per second only; the
-    // switch is stored and read back at the next start, where the Video
-    // panel's menu (once a video is open) and Settings show it.
     void framesSwitchLeftTheEditorAndPersists()
     {
         QVERIFY(showLine(tagged));
@@ -302,16 +274,12 @@ private slots:
         QVERIFY(application->settingsStore()->boolean("editor.timesToFramesSwitch"));
         restart();
         QVERIFY(application->editor().showFrames());
-        // Settings > Editor shows the stored choice and turns it off.
         clickSettingAndOk("editor.timesToFramesSwitch", true);
         QVERIFY(!application->editor().showFrames());
         restart();
         QVERIFY(!application->editor().showFrames());
     }
 
-    // LE3-tags-shown: a first run shows the Line's tags; the editor strip has
-    // no Hide tags button; the command and the setting switch the same
-    // state, which the next start reads.
     void tagsShownByDefaultAndTheChoicePersists()
     {
         QVERIFY(!application->settingsStore()->contains("editor.hideTags"));
@@ -322,25 +290,21 @@ private slots:
         auto *action = named("hideEditorTagsMenuItem")->property("action").value<QObject *>();
         QVERIFY(action);
         QVERIFY(!action->property("checked").toBool());
-        // The command (View > Hide tags in the line editor).
         QVERIFY(runGlobal(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS")));
         QVERIFY(!application->editor().showTags());
         QTRY_COMPARE(shownText(), QStringLiteral("Hi there"));
         QVERIFY(action->property("checked").toBool());
         QVERIFY(application->settingsStore()->boolean("editor.hideTags"));
-        // The Grid's own switch is separate.
         QVERIFY(!application->settingsStore()->boolean("grid.hideTags"));
         restart();
         QVERIFY(!application->editor().showTags());
         QVERIFY(showLine(tagged));
         QCOMPARE(shownText(), QStringLiteral("Hi there"));
-        // Settings > Editor shows the choice and shows the tags again.
         clickSettingAndOk("editor.hideTags", true);
         QVERIFY(application->editor().showTags());
         QTRY_COMPARE(shownText(), QStringLiteral("{\\i1}Hi{\\i0} there"));
         action = named("hideEditorTagsMenuItem")->property("action").value<QObject *>();
         QVERIFY(!action->property("checked").toBool());
-        // The menu item switches it too.
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QVERIFY(!application->editor().showTags());
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
@@ -349,8 +313,6 @@ private slots:
         QVERIFY(application->editor().showTags());
     }
 
-    // LE3: the command is in the shortcut editor ("Global Hide tags in the
-    // Line editor", no key by default) and a key mapped to it runs it.
     void hideTagsCommandIsBindable()
     {
         QVERIFY(showLine(tagged));
@@ -373,9 +335,6 @@ private slots:
                  QStringLiteral("Ctrl-Shift-Y"));
     }
 
-    // LE5: "+" opens the popover; a tag text it cannot take keeps Save off
-    // and says why; Save adds the button at the strip's end, with its icon;
-    // the right click's menu edits, moves and removes; the next start reads it.
     void tagButtonsFromThePopoverAndTheMenu()
     {
         QVERIFY(showLine(tagged));
@@ -386,7 +345,6 @@ private slots:
         QVERIFY(popover);
         click(item("addTagButton"));
         QTRY_VERIFY(popover->property("opened").toBool());
-        // No backslash: the problem shows and Save is off.
         typeInto(inside(popover, "tagName"), QStringLiteral("Blur"));
         typeInto(inside(popover, "tagText"), QStringLiteral("blur2"));
         QTRY_VERIFY(inside(popover, "tagProblem")->isVisible());
@@ -400,14 +358,12 @@ private slots:
         click(inside(popover, "saveTag"));
         QTRY_COMPARE(buttons.count(), 1);
         QCOMPARE(buttons.button(0).tag, QStringLiteral("\\blur2"));
-        // A second, with an icon: the strip shows the icon, the name is its tooltip.
         click(item("addTagButton"));
         fillTagButton(popover, QStringLiteral("Bold"), QStringLiteral("\\b1"), "tagIcon_tag-bold");
         QCOMPARE(buttons.count(), 2);
         QTRY_VERIFY(item("tagButton1"));
         QCOMPARE(item("tagButton1")->property("iconRole").toString(), QStringLiteral("tag-bold"));
         QCOMPARE(item("tagButton1")->property("text").toString(), QStringLiteral("Bold"));
-        // The context menu: Move left, Edit..., Remove.
         auto *menu = named("tagButtonMenu");
         QVERIFY(menu);
         waitForStrip(2);
@@ -417,7 +373,6 @@ private slots:
         choose(menu, "tagButtonMoveLeft");
         QTRY_COMPARE(buttons.button(0).name, QStringLiteral("Bold"));
         QCOMPARE(buttons.button(1).name, QStringLiteral("Blur"));
-        // The Repeater makes its delegates again for the new order.
         QTRY_COMPARE(item("tagButton1")->property("text").toString(), QStringLiteral("Blur"));
         waitForStrip(2);
         click(item("tagButton1"), Qt::RightButton);
@@ -435,7 +390,6 @@ private slots:
         QCOMPARE(application->tagButtons().count(), 2);
         QCOMPARE(application->tagButtons().button(0).icon, QStringLiteral("tag-bold"));
         QCOMPARE(application->tagButtons().button(1).name, QStringLiteral("Soft"));
-        // Remove: the strip closes up.
         auto *menuAgain = named("tagButtonMenu");
         QTRY_COMPARE(item("tagButton0")->property("text").toString(), QStringLiteral("Bold"));
         waitForStrip(2);
@@ -446,12 +400,10 @@ private slots:
         QCOMPARE(application->tagButtons().button(0).name, QStringLiteral("Soft"));
         QTRY_COMPARE(item("tagButton0")->property("text").toString(), QStringLiteral("Soft"));
         waitForStrip(1);
-        // Pressing it puts its tag.
         item("lineText")->forceActiveFocus();
         QVERIFY(QMetaObject::invokeMethod(item("lineText"), "select", Q_ARG(int, 0), Q_ARG(int, 0)));
         click(item("tagButton0"));
         QTRY_VERIFY(shownText().contains(QStringLiteral("\\blur4")));
-        // An icon-only button reads as its tag.
         QVERIFY(application->tagButtons().add(QString(), QStringLiteral("\\i1"), 0, QStringLiteral("tag-italic")));
         QTRY_VERIFY(item("tagButton1"));
         auto *iconOnly = QAccessible::queryAccessibleInterface(item("tagButton1"));
@@ -459,9 +411,6 @@ private slots:
         QCOMPARE(iconOnly->text(QAccessible::Name), QStringLiteral("\\i1"));
     }
 
-    // #263: the context menu's Move left and Move right go the way they say
-    // in either layout direction. Right to left, the strip starts at the
-    // right, so Move left takes a button toward the strip's end.
     void tagButtonMovesFollowTheLayoutDirection_data()
     {
         QTest::addColumn<bool>("rightToLeft");
@@ -479,8 +428,6 @@ private slots:
         QVERIFY(buttons.add(QStringLiteral("A"), QStringLiteral("\\b1"), 0));
         QVERIFY(buttons.add(QStringLiteral("B"), QStringLiteral("\\i1"), 0));
         QVERIFY(buttons.add(QStringLiteral("C"), QStringLiteral("\\u1"), 0));
-        // LE1: room for the three buttons, which fold into More when the
-        // strip is short of it (the pseudo-translated names are longer).
         QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), 600, 0, 0, 0));
         QTRY_COMPARE(stripFromLeft(3), rightToLeft ? QStringLiteral("CBA") : QStringLiteral("ABC"));
         auto *menu = named("tagButtonMenu");
@@ -490,26 +437,21 @@ private slots:
             click(showing(name, 3), Qt::RightButton);
             QTRY_VERIFY(menu->property("opened").toBool());
         };
-        // The middle button, one step left on screen.
         openOn(QStringLiteral("B"));
         choose(menu, "tagButtonMoveLeft");
         QTRY_COMPARE(stripFromLeft(3), rightToLeft ? QStringLiteral("BCA") : QStringLiteral("BAC"));
         QCOMPARE(buttons.button(rightToLeft ? 2 : 0).name, QStringLiteral("B"));
-        // At the strip's left end: Move left is off, Move right on.
         openOn(QStringLiteral("B"));
         QVERIFY(!named("tagButtonMoveLeft")->property("enabled").toBool());
         QVERIFY(named("tagButtonMoveRight")->property("enabled").toBool());
         choose(menu, "tagButtonMoveRight");
         QTRY_COMPARE(stripFromLeft(3), rightToLeft ? QStringLiteral("CBA") : QStringLiteral("ABC"));
-        // At the strip's right end: Move right is off, Move left on.
         openOn(rightToLeft ? QStringLiteral("A") : QStringLiteral("C"));
         QVERIFY(named("tagButtonMoveLeft")->property("enabled").toBool());
         QVERIFY(!named("tagButtonMoveRight")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
     }
 
-    // LE5: Settings > Editor lists the buttons; its changes stay staged until
-    // OK, then the strip shows them.
     void tagButtonsListInSettings()
     {
         auto &buttons = application->tagButtons();
@@ -523,7 +465,6 @@ private slots:
         auto *list = findItem(content, QStringLiteral("settingsTagButtonList"));
         QVERIFY(list);
         QTRY_COMPARE(list->property("count").toInt(), 2);
-        // Move "Two" up, remove "One", add "Three".
         list->setProperty("currentIndex", 1);
         QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsMoveTagButtonUp")), "click"));
         QCOMPARE(list->property("currentIndex").toInt(), 0);
@@ -535,7 +476,6 @@ private slots:
         QVERIFY(popover);
         fillTagButton(popover, QStringLiteral("Three"), QStringLiteral("\\u1"), "tagIcon_tag-underline");
         QCOMPARE(list->property("count").toInt(), 2);
-        // Staged: the strip still has the two it had.
         QCOMPARE(buttons.count(), 2);
         QCOMPARE(buttons.button(0).name, QStringLiteral("One"));
         QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsOk")), "click"));
@@ -550,15 +490,11 @@ private slots:
         QCOMPARE(application->tagButtons().button(1).tag, QStringLiteral("\\u1"));
     }
 
-    // LE6: one click on Edit style lands in the Style editor on the Line's
-    // Style, its name field focused, also when the manager is open on
-    // another Style.
     void editStyleOpensTheLinesStyle()
     {
         QVERIFY(showLine(signLine));
         auto *styles = styleWindow();
         QVERIFY(styles);
-        // Already open, editing Default.
         QVERIFY(QMetaObject::invokeMethod(styles, "editStyle", Q_ARG(QVariant, QStringLiteral("Default"))));
         QTRY_VERIFY(styles->isVisible());
         QVERIFY(styles->property("editing").toBool());
@@ -571,7 +507,6 @@ private slots:
         QCOMPARE(styles->property("assSelected").toList().value(0).toInt(), 1);
         QTRY_VERIFY(nameField->hasActiveFocus());
         styles->close();
-        // From closed: the same.
         QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
         QTRY_VERIFY(styles->isVisible());
         QTRY_COMPARE(nameField->property("text").toString(), QStringLiteral("Sign"));
@@ -579,18 +514,15 @@ private slots:
         styles->close();
     }
 
-    // SY1: the catalog chosen last is the Style manager's at the next start.
-    // Settings loading the conversion catalog is not a choice, nor its Reset.
     void styleManagerKeepsTheLastCatalog()
     {
         QVERIFY(application->styleManager().createCatalog(QStringLiteral("Kept")));
         QCOMPARE(application->styleManager().catalog(), QStringLiteral("Kept"));
-        application->styleManager().saveCatalog(); // the manager's close writes the new catalog
+        application->styleManager().saveCatalog();
         application->settingsStore()->set("convert.styleCatalog", QStringLiteral("Default"));
         application->openSettingsDialog();
         QCOMPARE(application->styleManager().catalog(), QStringLiteral("Default"));
         QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("Kept"));
-        // Nor is the Conversion page's Reset, which loads its default catalog.
         application->resetSettingsPage(QVariantMap{}, QStringLiteral("conversion"));
         QCOMPARE(application->styleManager().catalog(), QStringLiteral("Default"));
         QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("Kept"));
@@ -601,9 +533,6 @@ private slots:
         QCOMPARE(application->styleManager().catalog(), QStringLiteral("Default"));
     }
 
-    // LE6: a Style the Document lacks: the question (SY1: PK1's message
-    // box, "Edit style"); Cancel does nothing, Create adds it from Default
-    // and opens it.
     void editStyleOffersToCreateAMissingStyle()
     {
         QVERIFY(showLine(missingStyle));
@@ -620,11 +549,9 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
         QTRY_VERIFY(question() && question()->isVisible());
         QCOMPARE(question()->property("text").toString(), QStringLiteral("This file has no style named \u201cKaraoke\u201d."));
-        // Opened from closed: on the file's first Style.
         QVERIFY(styles->property("editing").toBool());
         answer("cancel");
         QCOMPARE(controller.documentStyles().size(), 2);
-        // Open on Sign: Cancel leaves its selection and its editor alone.
         QVERIFY(QMetaObject::invokeMethod(styles, "editStyle", Q_ARG(QVariant, QStringLiteral("Sign"))));
         QTRY_VERIFY(styles->property("editing").toBool());
         QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
@@ -646,7 +573,6 @@ private slots:
         auto *nameField = findItem(styles->contentItem(), QStringLiteral("styleName"));
         QCOMPARE(nameField->property("text").toString(), QStringLiteral("Karaoke"));
         QTRY_VERIFY(nameField->hasActiveFocus());
-        // Prefilled from Default (alignment 2; Sign's is 8).
         const auto values = styles->property("values").toMap();
         QCOMPARE(values.value(QStringLiteral("alignment")).toString(), QStringLiteral("2"));
         QCOMPARE(values.value(QStringLiteral("fontname")).toString(), QStringLiteral("Arial"));

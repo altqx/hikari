@@ -1,7 +1,3 @@
-// G2 workflow through the real UI (Spix): Ctrl+C and Ctrl+V in the Grid paste
-// a copy of the active Line before the next one, Ctrl+X cuts it again, and
-// Paste columns with only Text chosen replaces the selected Line's text.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -39,8 +35,7 @@ protected:
     }
     std::string texts()
     {
-        // A Spix getter first: it runs after the queued input, so the read
-        // below sees its effects.
+        // A Spix getter runs after the queued input, so the read below sees its effects.
         (void)getStringProperty("mainWindow/selectionStatus", "text");
         std::string out;
         QMetaObject::invokeMethod(
@@ -62,10 +57,10 @@ protected:
             key(Qt::Key_C, spix::KeyModifiers::Control);
             key(Qt::Key_Down);
             key(Qt::Key_V, spix::KeyModifiers::Control);
-            observed.push_back(texts()); // 0
-            observed.push_back(getStringProperty("mainWindow/selectionStatus", "text")); // 1
+            observed.push_back(texts());
+            observed.push_back(getStringProperty("mainWindow/selectionStatus", "text"));
             key(Qt::Key_X, spix::KeyModifiers::Control);
-            observed.push_back(texts()); // 2
+            observed.push_back(texts());
             key(Qt::Key_End);
             QMetaObject::invokeMethod(
                 application,
@@ -76,38 +71,29 @@ protected:
                 Qt::BlockingQueuedConnection);
             (void)getStringProperty("mainWindow/selectionStatus", "text");
             invokeMethod("columnsWindow", "choose", {true});
-            observed.push_back(waitForItem("columnsWindow/column9", 5s) ? "columns" : "no columns"); // 3
-            // The rows exist as soon as choose() sets them; Spix clicks where
-            // an item is when the click runs, so wait until the window's
-            // layout has placed Text below Layer, and until the click has
-            // checked it before OK reads the choice (Spix posts a click's
-            // press and release).
-            // Each wait's condition is observed after it, so a wait that
-            // ran out fails the step it guards instead of the paste.
+            observed.push_back(waitForItem("columnsWindow/column9", 5s) ? "columns" : "no columns");
+            // Spix clicks wherever the item is when the click runs, and posts press and release apart.
             const auto placed = [this] {
                 return getStringProperty("columnsWindow/column9", "y") != getStringProperty("columnsWindow/column0", "y");
             };
             for (int i = 0; i < 100 && !placed(); ++i)
                 wait(50ms);
-            observed.push_back(placed() ? "Text placed" : "Text not placed"); // 4
-            mouseClick("columnsWindow/column9"); // Text
+            observed.push_back(placed() ? "Text placed" : "Text not placed");
+            mouseClick("columnsWindow/column9");
             const auto checked = [this] { return getStringProperty("columnsWindow/column9", "checked") == "true"; };
             for (int i = 0; i < 100 && !checked(); ++i)
                 wait(50ms);
-            observed.push_back(checked() ? "Text checked" : "Text not checked"); // 5
+            observed.push_back(checked() ? "Text checked" : "Text not checked");
             mouseClick("columnsWindow/columnsOk");
-            // The paste lands after the window closes; under load that can
-            // take longer than a fixed wait, so poll for it (up to 5 s).
             for (int i = 0; i < 100 && texts().find("pasted text") == std::string::npos; ++i)
                 wait(50ms);
-            observed.push_back(texts()); // 6
-            observed.push_back(getStringProperty("mainWindow/lineText", "text")); // 7
+            observed.push_back(texts());
+            observed.push_back(getStringProperty("mainWindow/lineText", "text"));
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
         if (!getErrors().empty())
             observed.clear();
-        // Discard the work through the quit review so the window can close.
         QMetaObject::invokeMethod(
             application,
             [this] {
@@ -122,7 +108,7 @@ protected:
     }
 };
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

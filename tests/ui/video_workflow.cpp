@@ -1,11 +1,3 @@
-// I1 workflow through the real UI (Spix): open a subtitle Document whose
-// Script Info names its video, accept the "Associated files" offer, select
-// the second Line ("Every line change", V6) and see that Line's start frame
-// with its overlay, then step
-// one frame. Frame identity is read from the barcode each fixture frame
-// carries. A Document whose video is missing offers nothing and stays
-// editable.
-
 #include "hikari/app/application.h"
 #include "hikari/application/ycbcr_frame.h"
 #include "docking.h"
@@ -36,8 +28,6 @@ namespace {
 
 int barcode(const hikari::application::IndexedFrame &shown)
 {
-    // A player frame may be kept as Y'CbCr planes for the presenter's shader:
-    // read it as the CPU conversion shows it.
     hikari::application::IndexedFrame converted;
     const auto &f = shown.ycbcr && hikari::application::ycbcrToBgra(shown, converted) ? converted : shown;
     const QImage image =
@@ -53,7 +43,6 @@ int barcode(const hikari::application::IndexedFrame &shown)
     return value;
 }
 
-// What the Video panel last presented, recorded on the GUI thread.
 struct Shown {
     int frame = -1;
     int barcode = -1;
@@ -78,7 +67,6 @@ public:
 
 protected:
     std::string status() { return getStringProperty("mainWindow/videoStatus", "text"); }
-    // Waits until the presenter accepted `frame`.
     bool waitForFrame(int frame)
     {
         for (int i = 0; i < 100; ++i) {
@@ -94,22 +82,22 @@ protected:
     void executeTest() override
     {
         if (waitForItem("mainWindow/loadAssociated", 5s)) {
-            observed.push_back(getStringProperty("mainWindow/associationText", "text")); // 0
+            observed.push_back(getStringProperty("mainWindow/associationText", "text"));
             mouseClick("mainWindow/loadAssociated");
             for (int i = 0; i < 100 && status().rfind("Frame", 0) != 0; ++i)
                 wait(100ms);
-            observed.push_back(status()); // 1: indexed, showing the active Line's frame
+            observed.push_back(status());
             mouseClick("mainWindow/editingGrid");
             invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
             enterKey("mainWindow/editingGrid", Qt::Key_Home, spix::KeyModifiers::None);
             wait(200ms);
             enterKey("mainWindow/editingGrid", Qt::Key_Down, spix::KeyModifiers::None);
-            observed.push_back(waitForFrame(24) ? "frame 24" : "no frame 24"); // 2
+            observed.push_back(waitForFrame(24) ? "frame 24" : "no frame 24");
             frames.push_back(shown());
             mouseClick("mainWindow/nextFrame");
-            observed.push_back(waitForFrame(25) ? "frame 25" : "no frame 25"); // 3
+            observed.push_back(waitForFrame(25) ? "frame 25" : "no frame 25");
             frames.push_back(shown());
-            observed.push_back(status()); // 4
+            observed.push_back(status());
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -149,7 +137,7 @@ bool write(const QString &path, const QString &videoFile)
     return true;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -183,9 +171,6 @@ int main(int argc, char **argv)
             g_shown = s;
         });
         expect(application.openFile(subtitles), "open the subtitles");
-        // V6: the video follows a selected Line with the video toolbar's
-        // "Every line change" (legacy MOVE_VIDEO_TO_ACTIVE_LINE 1; its default
-        // moves the video only on a double click).
         application.settingsStore()->set("video.moveToActiveLine", 1);
         QQmlApplicationEngine engine;
         hikari::ui::attachDocking(engine);
@@ -224,7 +209,6 @@ int main(int argc, char **argv)
                "the second Line's overlay is drawn on its frames");
     }
 
-    // Missing video: nothing is offered, and the Document stays editable.
     hikari::app::Application missing({QStringLiteral(HIKARI_MEDIA_HELPER)});
     expect(missing.openFile(orphan), "open the subtitles whose video is missing");
     expect(!missing.video().offering(), "nothing is offered for a missing video");

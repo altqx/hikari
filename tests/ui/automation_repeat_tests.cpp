@@ -1,10 +1,3 @@
-// AD2 (#311): Repeat last run and "Fill in my last answers" through the
-// composition, with the real Lua helper (lua-fixtures/repeat-dialogs.lua).
-// The fixture's first dialog takes "count" from the selection and gains a
-// "clip" check box from three selected Lines on; a second dialog follows.
-// The script dialogs are answered through their controller, as the QML
-// window does.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -50,7 +43,6 @@ QByteArray document()
            "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,Four\n";
 }
 
-// A shown dialog: its controls by name as the controller shows them.
 struct Shown {
     QVariantList controls;
     QString notice;
@@ -69,15 +61,13 @@ struct Shown {
     }
 };
 
-} // namespace
+}
 
 class AutomationRepeatTests : public QObject {
     Q_OBJECT
 
     QTemporaryDir dir;
     std::unique_ptr<app::Application> app;
-    // How the next dialogs are answered: the button and the values to
-    // change by name. Each shown dialog is kept.
     struct Answer {
         int pressed = 0;
         QVariantMap values;
@@ -123,7 +113,6 @@ class AutomationRepeatTests : public QObject {
         }
         dialogs->finish(a.pressed, values);
     }
-    // Runs the fixture's macro (or repeats the last run) and returns its log.
     QString ran(const std::function<bool()> &start)
     {
         QSignalSpy done(&app->automation(), &app::AutomationShell::runCompleted);
@@ -164,8 +153,6 @@ private slots:
     }
     void cleanup() { app.reset(); }
 
-    // Same dialog at the same point: replayed, not shown, even though the
-    // script works out another count now; the replayed run is logged so.
     void repeatReplaysUnchangedDialogs()
     {
         QVERIFY(!app->automation().canRepeat());
@@ -186,7 +173,6 @@ private slots:
                                           "first button=Apply tags=\\fs count=7 flag=false clip=nil\n"
                                           "second button=Yes tags=nil count=nil flag=true clip=nil\n"));
         QVERIFY(shown.isEmpty());
-        // Rerun last macro is unchanged: the dialogs show with the script's values.
         answers = {{0, {}}, {1, {}}};
         QVERIFY(ran([this] { return app->automation().rerunLast(); }).startsWith(
             QStringLiteral("first button=Apply tags=\\blur count=2 flag=true")));
@@ -194,46 +180,40 @@ private slots:
         QVERIFY(shown[0].notice.isEmpty());
     }
 
-    // A changed dialog is shown filled with the last answers and says why;
-    // the run then goes on as a normal one, later dialogs shown too.
     void repeatShowsAChangedDialogFilledIn()
     {
         select(1);
         answers = {{0, {{QStringLiteral("tags"), QStringLiteral("\\fs")}, {QStringLiteral("count"), 7}}},
                    {0, {{QStringLiteral("flag"), true}}}};
         run();
-        select(3); // the script adds "clip"
+        select(3);
         shown.clear();
         answers = {{0, {}}, {0, {}}};
         const QString log = repeat();
         QCOMPARE(shown.size(), 2);
         QCOMPARE(shown[0].value(QStringLiteral("tags")).toString(), QStringLiteral("\\fs"));
         QCOMPARE(shown[0].value(QStringLiteral("count")).toInt(), 7);
-        QCOMPARE(shown[0].value(QStringLiteral("clip")).toBool(), false); // the script's
+        QCOMPARE(shown[0].value(QStringLiteral("clip")).toBool(), false);
         QCOMPARE(shown[0].notice, QStringLiteral("This dialog has changed since the last run, so it is shown with "
                                                  "your last answers filled in."));
-        // The second dialog is unchanged, but the run is no longer replayed.
         QCOMPARE(shown[1].value(QStringLiteral("flag")).toBool(), true);
         QCOMPARE(shown[1].notice, QStringLiteral("An earlier dialog of this run has changed, so this one is shown "
                                                  "with your last answers filled in."));
         QVERIFY(log.contains(QStringLiteral("first button=Apply tags=\\fs count=7 flag=true clip=false")));
     }
 
-    // A run cancelled at a dialog is not recorded: Repeat repeats the one
-    // before, which got past its dialogs.
     void cancelledRunsAreNotRecorded()
     {
         select(1);
         answers = {{0, {{QStringLiteral("count"), 9}}}, {0, {}}};
         run();
-        answers = {{1, {{QStringLiteral("count"), 4}}}}; // Cancel at the first
+        answers = {{1, {{QStringLiteral("count"), 4}}}};
         QVERIFY(run().startsWith(QStringLiteral("first button=false")));
-        answers = {{-1, {}}}; // Esc
+        answers = {{-1, {}}};
         run();
         shown.clear();
         QVERIFY(repeat().contains(QStringLiteral("first button=Apply tags=\\blur count=9 flag=true")));
         QVERIFY(shown.isEmpty());
-        // The cancelled answers are not the last ones either.
         const auto key = ui::ScriptDialogMemory::keyOf(kScript, [] {
             application::DialogRequest r;
             for (const char *kind : {"label", "edit", "intedit", "checkbox"})
@@ -249,8 +229,6 @@ private slots:
         QCOMPARE(std::get<double>(last->answered.at("count")), 9.0);
     }
 
-    // "Fill in my last answers": a last answer fills a control only where
-    // the script sends what it sent last time; off, the script's values.
     void fillLastAnswersKeepsWhatTheScriptWorksOut()
     {
         select(1);
@@ -259,7 +237,6 @@ private slots:
                         {QStringLiteral("flag"), false}}},
                    {0, {}}};
         run();
-        // Off (the default): the script's values.
         shown.clear();
         answers = {{1, {}}};
         run();
@@ -271,11 +248,11 @@ private slots:
         answers = {{1, {}}};
         run();
         QCOMPARE(shown[0].value(QStringLiteral("tags")).toString(), QStringLiteral("\\fs"));
-        QCOMPARE(shown[0].value(QStringLiteral("count")).toInt(), 7); // the script sent 1 again
+        QCOMPARE(shown[0].value(QStringLiteral("count")).toInt(), 7);
         QCOMPARE(shown[0].value(QStringLiteral("flag")).toBool(), false);
         QVERIFY(shown[0].notice.isEmpty());
 
-        select(2); // the script works out count = 2 now: it wins
+        select(2);
         shown.clear();
         answers = {{1, {}}};
         run();
@@ -283,7 +260,6 @@ private slots:
         QCOMPARE(shown[0].value(QStringLiteral("count")).toInt(), 2);
     }
 
-    // Settings > Automation > Clear last answers forgets them and Repeat's record.
     void clearingTheAnswersEndsRepeat()
     {
         select(1);
@@ -291,14 +267,11 @@ private slots:
         run();
         QVERIFY(app->automation().canRepeat());
         QVERIFY(!app->settingsStore()->list("automation.dialogAnswers").isEmpty());
-        // Clear last answers…, then OK.
         app->applySettings({{QStringLiteral("automation.dialogAnswers"), QStringList()}}, false);
         QVERIFY(app->settingsStore()->list("automation.dialogAnswers").isEmpty());
         QVERIFY(!app->automation().canRepeat());
     }
 
-    // The script reloaded since: Repeat runs the recorded macro by name
-    // wherever it now is, and with it gone the record goes too.
     void repeatFollowsTheMacroAcrossAReload()
     {
         const QString copy = dir.filePath(QStringLiteral("moving.lua"));
@@ -331,7 +304,6 @@ private slots:
         QVERIFY(ran([&] { return shell.run(copy.toStdString(), 0); }).startsWith(QStringLiteral("first button=Apply")));
         QVERIFY(shell.canRepeat());
 
-        // Another macro registered before it.
         QByteArray moved = source;
         moved.replace("aegisub.register_macro(\"Two dialogs\"",
                       "aegisub.register_macro(\"Other\", \"\", function() aegisub.debug.out(\"other ran\\n\") end)\n"
@@ -343,7 +315,6 @@ private slots:
                                   30'000);
         QVERIFY(repeat().startsWith(QStringLiteral("Repeated with the last answers\nfirst button=Apply")));
 
-        // Renamed: nothing to repeat.
         QByteArray renamed = source;
         renamed.replace("\"Two dialogs\"", "\"Renamed\"");
         write(renamed);
@@ -356,8 +327,6 @@ private slots:
         QCOMPARE(shell.lastMessage(), QStringLiteral("The last run's macro is no longer loaded, so it can't be repeated."));
     }
 
-    // The tooltip names the button as the dialog showed it: "&&" is an "&",
-    // a lone "&" marks the mnemonic.
     void repeatTextShowsTheButtonAsShown()
     {
         answers = {{0, {}}};
@@ -367,17 +336,12 @@ private slots:
                  QStringLiteral("Repeat last run: Save and close, as Save & Close with the same answers"));
     }
 
-    // A question (labels and buttons only, as a feed trust prompt) is asked
-    // again with a notice; the form after it still replays, and the tooltip
-    // names the form's button.
     void repeatAsksQuestionsAgain()
     {
         app->settingsStore()->setValue(QStringLiteral("automation.dialogAnswers"), QStringList());
         answers = {{1, {}}, {0, {{QStringLiteral("tags"), QStringLiteral("\\fs")}}}};
         QCOMPARE(ran([this] { return app->automation().run(kScript.toStdString(), 2); }),
                  QStringLiteral("trust=Trust this time\nform=Apply tags=\\fs\n"));
-        // Only the form is kept as a last answer: the question has nothing
-        // to fill in.
         const QStringList kept = app->settingsStore()->list("automation.dialogAnswers");
         QCOMPARE(kept.size(), 1);
         QVERIFY(kept[0].contains(QStringLiteral("tags")));
@@ -388,13 +352,10 @@ private slots:
         QCOMPARE(repeat(), QStringLiteral("Repeated with the last answers\ntrust=Trust this time\nform=Apply tags=\\fs\n"));
         QCOMPARE(shown.size(), 1);
         QCOMPARE(shown[0].notice, QStringLiteral("Repeat last run asks questions again rather than answering them for you."));
-        // Cancel at the question this time: the run stops there.
         answers = {{0, {}}};
         QCOMPARE(repeat(), QStringLiteral("Repeated with the last answers\ntrust=false\n"));
     }
 
-    // Settings > Reset all settings resets "Fill in my last answers" but
-    // keeps the answers, the presets and so Repeat: none is an option.
     void resetAllSettingsKeepsAnswersAndPresets()
     {
         select(1);
@@ -406,8 +367,6 @@ private slots:
         const QStringList presets{QStringLiteral("0123456789abcdef\t[{\"name\":\"Mine\",\"values\":{\"tags\":\"\\\\fs\"}}]")};
         settings.setValue(QStringLiteral("automation.dialogPresets"), presets);
         settings.setValue(QStringLiteral("automation.fillLastAnswers"), true);
-        // Reset all settings… shows the answers as they are, so Clear last
-        // answers stays on; then OK.
         const QVariantMap shown = app->resetSettings(app->openSettingsDialog().value(QStringLiteral("values")).toMap());
         QCOMPARE(shown.value(QStringLiteral("automation.dialogAnswers")).toStringList(), kept);
         app->applySettings(shown, true);
@@ -416,7 +375,6 @@ private slots:
         QVERIFY(!settings.boolean("automation.fillLastAnswers"));
         QVERIFY(app->automation().canRepeat());
 
-        // Clear last answers, then Reset all settings…, then OK: cleared.
         QVariantMap staged = app->openSettingsDialog().value(QStringLiteral("values")).toMap();
         staged.insert(QStringLiteral("automation.dialogAnswers"), QStringList());
         app->applySettings(app->resetSettings(staged), true);
@@ -425,10 +383,6 @@ private slots:
         QVERIFY(!app->automation().canRepeat());
     }
 
-    // For review (HIKARI_SURFACE_SHOT_DIR; skipped without it), in the four
-    // themes (ad2-<part>-<theme>.png): the Automation panel's Repeat last
-    // run with its tooltip, the Automation menu, Settings > Automation's Script dialogs
-    // group and the Clear last answers question.
     void screenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -453,8 +407,7 @@ private slots:
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
         const auto named = [&](const char *name) { return root->findChild<QObject *>(QLatin1String(name)); };
-        // The earlier apps of this case left their session open: No to the
-        // crash prompt, which (a modal) keeps the macro commands off.
+        // MUST KILL: the earlier apps of this case leave their session open, so a crash prompt can show here
         if (auto *prompt = named("crashSessionPrompt"); prompt && prompt->property("visible").toBool())
             QVERIFY(QMetaObject::invokeMethod(prompt, "reject"));
         QTRY_VERIFY(!root->property("workspaceLayout").value<QObject *>()->property("modalOpen").toBool());
@@ -475,7 +428,8 @@ private slots:
             QTRY_VERIFY(repeatButton->isEnabled());
             QTest::mouseMove(window, repeatButton->mapToScene(QPointF(repeatButton->width() / 2,
                                                                       repeatButton->height() / 2)).toPoint());
-            QTest::qWait(1200); // the tooltip's delay
+            // MUST KILL: fixed 1200 ms wait for the tooltip's delay
+            QTest::qWait(1200);
             save(QStringLiteral("panel-") + code);
             QTest::mouseMove(window, QPoint(640, 790));
 

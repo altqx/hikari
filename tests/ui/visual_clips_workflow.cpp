@@ -1,11 +1,3 @@
-// T4 workflow through the real UI (Spix): open a Document and its video,
-// choose the vector clip on the rail, add three points with the Add line mode
-// (the tool's own row), switch to Move points, select a point with a click
-// and nudge it with the D key (one step on the key's release), invert the
-// clip with its button; then the rectangle clip: a click and Invert clip.
-// The written clip is compared with the shared view's legacy arithmetic for
-// the clicked positions.
-
 #include "hikari/app/application.h"
 #include "hikari/application/visual_view.h"
 #include "docking.h"
@@ -41,8 +33,6 @@ public:
 
 protected:
     std::string prop(const char *path, const char *name) { return getStringProperty(path, name); }
-    // A family from the rail, or from its More tools when the rail is too
-    // short for it (VB1).
     void choose(int family)
     {
         const std::string button = "mainWindow/visualTool" + std::to_string(family);
@@ -63,39 +53,31 @@ protected:
             if (!shown)
                 wait(100ms);
         }
-        observed.push_back(shown ? "video shown" : "no video"); // 0
-        // The vector clip, Add line on (VectorItem's default). In the default
-        // window the rail is too short for it (VB1): chosen from More tools,
-        // as a user would.
+        observed.push_back(shown ? "video shown" : "no video");
         choose(7);
         wait(200ms);
-        observed.push_back(prop("mainWindow/visualTool7", "checked"));        // 1
-        observed.push_back(prop("mainWindow/visualOption_mode1", "checked")); // 2
-        observed.push_back(prop("mainWindow/visualOption_mode1", "iconRole")); // 3
-        // Three points: an "m" then two lines.
+        observed.push_back(prop("mainWindow/visualTool7", "checked"));
+        observed.push_back(prop("mainWindow/visualOption_mode1", "checked"));
+        observed.push_back(prop("mainWindow/visualOption_mode1", "iconRole"));
         mouseClick("mainWindow/visualOverlay", spix::Point(0.25, 0.25));
         wait(200ms);
         mouseClick("mainWindow/visualOverlay", spix::Point(0.75, 0.25));
         wait(200ms);
         mouseClick("mainWindow/visualOverlay", spix::Point(0.75, 0.75));
         wait(300ms);
-        // Move points: a click selects the last point, Right (legacy's D) nudges it.
         mouseClick("mainWindow/visualOption_mode0");
         wait(100ms);
-        observed.push_back(prop("mainWindow/visualOption_mode0", "checked")); // 4
+        observed.push_back(prop("mainWindow/visualOption_mode0", "checked"));
         mouseClick("mainWindow/visualOverlay", spix::Point(0.75, 0.75));
         wait(200ms);
         enterKey("mainWindow/visualOverlay", Qt::Key_Right, 0);
         wait(300ms);
-        // Invert clip.
         mouseClick("mainWindow/visualOption_invert");
         wait(300ms);
-        // The rectangle clip: a click at a point leaves a rectangle without
-        // width, which writes nothing (legacy); Invert clip then has no clip.
         choose(6);
         wait(200ms);
-        observed.push_back(prop("mainWindow/visualTool6", "checked")); // 5
-        observed.push_back(prop("mainWindow/visualOption_invert", "iconRole")); // 6
+        observed.push_back(prop("mainWindow/visualTool6", "checked"));
+        observed.push_back(prop("mainWindow/visualOption_invert", "iconRole"));
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
         if (!getErrors().empty())
@@ -115,7 +97,7 @@ constexpr char kSubtitles[] = "[Script Info]\r\n"
                               "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
                               "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\an7}sign\r\n";
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -132,7 +114,7 @@ int main(int argc, char **argv)
         expect(f.open(QIODevice::WriteOnly) && f.write(kSubtitles) > 0, "write the subtitles");
     }
     hikari::app::Application application({QStringLiteral(HIKARI_MEDIA_HELPER)});
-    application.setAskForBadResolution(false); // the script is 640x480, the video 320x240
+    application.setAskForBadResolution(false);
     expect(application.openFile(subtitles), "open the subtitles");
     QQmlApplicationEngine engine;
     hikari::ui::attachDocking(engine);
@@ -172,9 +154,6 @@ int main(int argc, char **argv)
         expect(o[5] == "true", "the rail chooses the rectangle clip");
         expect(o[6] == "clip-invert", "the rectangle clip's Invert clip button");
     }
-    // The points as the vector clip's arithmetic puts them (legacy
-    // DrawingAndClip::AddMove / AddLine: (zoomed-out view x) * coeffW, written
-    // with "%6.0f"), the last one nudged by D, then \iclip.
     auto &tools = application.visualTools();
     const auto &view = tools.videoView();
     auto *overlay = window->findChild<QQuickItem *>(QStringLiteral("visualOverlay"));
@@ -198,7 +177,6 @@ int main(int argc, char **argv)
         const std::string line(reinterpret_cast<const char *>(text.data()), text.size());
         std::printf("line %s, expected %s\n", line.c_str(), expected.c_str());
         expect(line == expected, "the clicks and the nudge write legacy's clip, inverted");
-        // Three clicks (three steps), the nudge (one), the inversion (one).
         int clipSteps = 0;
         for (const auto &step : session->history())
             clipSteps += step.name == "Visual vector clipping tool";

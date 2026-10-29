@@ -1,15 +1,3 @@
-// DG1 (#222): the dialog frame (src/ui/DialogWindow.qml, dialog_placement.h,
-// window_frame.h DialogFrame). The frame offers a dialog's window buttons
-// (Close, Maximise only while resizable, never Minimise). The first open
-// is centred on the opener, 20 lower, inside the screen's free area; later
-// opens are where the dialog was left and as big, per dialog, back on a
-// screen when the place is off every one, and only the size on Wayland.
-// Esc closes (rejected), Enter presses the focused button or the default
-// one, the keyboard goes back to the opener's control, a shown dialog is
-// raised again rather than opened twice, modality is per dialog, and a
-// dialog closes with the window it opened from. A dialog bigger than the
-// screen fits it, and a maximised one keeps its normal place.
-
 #include "dialog_placement.h"
 #include "settings_store.h"
 #include "window_frame.h"
@@ -65,8 +53,6 @@ Window {
 }
 )";
 
-// Credits' shape: a column of a set width, in it a row with a label of a
-// set width and one that wraps; nothing holds the column's width but it.
 const QByteArray kWrappingQml = R"(
 import QtQuick
 import QtQuick.Controls
@@ -105,7 +91,7 @@ QQuickItem *findItem(QQuickItem *root, const QString &name)
     return nullptr;
 }
 
-} // namespace
+}
 
 class DialogFrameTests : public QObject {
     Q_OBJECT
@@ -172,7 +158,6 @@ private slots:
         QVERIFY(!window.flags().testFlag(Qt::WindowMinimizeButtonHint));
         frame.setCustom(false);
         QVERIFY(!window.flags().testFlag(Qt::FramelessWindowHint));
-        // With the window system's frame from the start, the same buttons.
         QQuickWindow system;
         system.setFlags(Qt::Dialog);
         DialogFrame systemFrame;
@@ -185,7 +170,6 @@ private slots:
         systemFrame.setResizable(false);
         QVERIFY(!system.flags().testFlag(Qt::WindowMaximizeButtonHint));
         QVERIFY(!ui::WindowFrame::remaking(&system));
-        // The main window's frame keeps all three.
         QQuickWindow main;
         ui::MainWindowFrame mainFrame;
         QVERIFY(!mainFrame.dialog());
@@ -198,17 +182,12 @@ private slots:
     void firstOpenIsCentredOnTheOpener()
     {
         const QRect screen(0, 0, 1920, 1040);
-        // Centred on the opener, 20 lower.
         QCOMPARE(dp::centred(QRect(100, 100, 800, 600), QSize(400, 300), screen), QRect(300, 270, 400, 300));
-        // Kept 20 inside the free area at its edges.
         QCOMPARE(dp::centred(QRect(1500, 800, 400, 240), QSize(500, 400), screen), QRect(1400, 620, 500, 400));
         QCOMPARE(dp::centred(QRect(-300, -200, 400, 240), QSize(500, 400), screen), QRect(20, 20, 500, 400));
-        // Shrunk to the free area less the margins.
         QCOMPARE(dp::centred(QRect(0, 0, 1920, 1040), QSize(3000, 2000), screen), QRect(20, 20, 1880, 1000));
-        // The window system's frame counts: the window (without it) sits inside.
         const QMargins frame(8, 31, 8, 8);
         QCOMPARE(dp::centred(QRect(100, 100, 800, 600), QSize(400, 300), screen, frame), QRect(300, 281, 400, 300));
-        // On a second screen.
         QCOMPARE(dp::centred(QRect(2000, 100, 800, 600), QSize(400, 300), QRect(1920, 0, 1920, 1040)),
                  QRect(2200, 270, 400, 300));
     }
@@ -216,32 +195,23 @@ private slots:
     void rememberedPlacesStayOnAScreen()
     {
         const QList<QRect> screens{QRect(0, 0, 1920, 1040), QRect(1920, 0, 1280, 984)};
-        // Where it was left, at its fixed size.
         QCOMPARE(dp::restored(QRect(500, 300, 999, 999), QSize(400, 300), QSize(400, 300), false, screens),
                  QRect(500, 300, 400, 300));
-        // A resizable dialog as big as it was left, never under its smallest.
         QCOMPARE(dp::restored(QRect(500, 300, 700, 500), QSize(400, 300), QSize(400, 300), true, screens),
                  QRect(500, 300, 700, 500));
         QCOMPARE(dp::restored(QRect(500, 300, 200, 100), QSize(400, 300), QSize(400, 300), true, screens),
                  QRect(500, 300, 400, 300));
-        // Bigger than the screen: a resizable one fills it, a fixed one keeps
-        // the first open's 20 clear at each side (the same size either way).
         QCOMPARE(dp::restored(QRect(0, 0, 3000, 2000), QSize(400, 300), QSize(400, 300), true, screens.mid(0, 1)),
                  QRect(0, 0, 1920, 1040));
         QCOMPARE(dp::restored(QRect(0, 0, 400, 300), QSize(2000, 1100), QSize(2000, 1100), false, screens.mid(0, 1)),
                  QRect(0, 0, 1880, 1000));
-        // Partly off its screen: moved whole onto it.
         QCOMPARE(dp::restored(QRect(1700, 900, 400, 300), QSize(400, 300), QSize(400, 300), false, screens.mid(0, 1)),
                  QRect(1520, 740, 400, 300));
-        // On the second screen, kept there.
         QCOMPARE(dp::restored(QRect(2500, 200, 400, 300), QSize(400, 300), QSize(400, 300), false, screens),
                  QRect(2500, 200, 400, 300));
-        // The second screen unplugged: no place (the first-open rule).
         QCOMPARE(dp::restored(QRect(2500, 200, 400, 300), QSize(400, 300), QSize(400, 300), false, screens.mid(0, 1)),
                  std::nullopt);
-        // Its top edge above every screen: none either.
         QCOMPARE(dp::restored(QRect(500, -400, 400, 300), QSize(400, 300), QSize(400, 300), false, screens), std::nullopt);
-        // Only a sliver of the top edge on a screen is not enough to move it by.
         QCOMPARE(dp::restored(QRect(-380, 100, 400, 300), QSize(400, 300), QSize(400, 300), false, screens), std::nullopt);
         QCOMPARE(dp::restored(QRect(-300, 100, 400, 300), QSize(400, 300), QSize(400, 300), false, screens),
                  QRect(0, 100, 400, 300));
@@ -278,10 +248,8 @@ private slots:
             expected.moveCenter(opener.center() + QPoint(0, 20));
             if (area.contains(expected))
                 QCOMPARE(s.dialog->frameGeometry().topLeft(), expected.topLeft());
-            // Fixed size: the content's.
             QCOMPARE(s.dialog->minimumSize(), first.size());
             QCOMPARE(s.dialog->maximumSize(), first.size());
-            // Moved, closed, opened again: where it was left.
             s.dialog->setPosition(first.topLeft() + QPoint(37, 11));
             QTRY_COMPARE(s.dialog->position(), first.topLeft() + QPoint(37, 11));
             QMetaObject::invokeMethod(s.dialog, "close");
@@ -293,7 +261,6 @@ private slots:
             QMetaObject::invokeMethod(s.dialog, "close");
             QTRY_VERIFY(!s.dialog->isVisible());
         }
-        // A new start (a new window, the same settings): still there.
         const QRect kept = *dp::find(store->list(dp::kSetting), QStringLiteral("test"));
         {
             Shown s = show();
@@ -303,7 +270,6 @@ private slots:
             QMetaObject::invokeMethod(s.dialog, "close");
             QTRY_VERIFY(!s.dialog->isVisible());
         }
-        // A place off every screen: centred on the opener again.
         store->setValue(QLatin1String(dp::kSetting), QStringList{QStringLiteral("test\t-30000,-30000,10,10")});
         {
             Shown s = show();
@@ -333,7 +299,6 @@ private slots:
         QCOMPARE(s.dialog->position(), at);
         QMetaObject::invokeMethod(s.dialog, "close");
         QTRY_VERIFY(!s.dialog->isVisible());
-        // Wayland: the size, and the place is the compositor's (left as it is).
         DialogPlacement::overrideWayland(true);
         store->setValue(QLatin1String(dp::kSetting),
                         QStringList{QStringLiteral("test\t%1,%2,%3,%4").arg(at.x() + 50).arg(at.y() + 50).arg(natural.width() + 10).arg(natural.height() + 10)});
@@ -342,7 +307,6 @@ private slots:
         QVERIFY(s.dialog->position() != at + QPoint(50, 50));
         QMetaObject::invokeMethod(s.dialog, "close");
         QTRY_VERIFY(!s.dialog->isVisible());
-        // Left bigger than this screen (another one, another resolution): the screen's.
         store->setValue(QLatin1String(dp::kSetting), QStringList{QStringLiteral("test\t0,0,30000,20000")});
         QVERIFY(open(s));
         QCOMPARE(s.dialog->size(), s.dialog->screen()->availableGeometry().size());
@@ -353,7 +317,6 @@ private slots:
         Shown s = show(true, kWrappingQml);
         QVERIFY(s.dialog);
         QVERIFY(QTest::qWaitForWindowExposed(s.opener.get()));
-        // Laid out at the width it opens at, not the never-shown window's.
         QMetaObject::invokeMethod(s.dialog, "open");
         const int opened = s.dialog->height();
         const qreal width = s.item("wrapped")->width();
@@ -367,13 +330,10 @@ private slots:
 
     void wrappedTextHasItsHeightOnANarrowerScreen()
     {
-        // Wider than the screen: laid out at the room it gets, before it is placed.
         Shown s = show(true, kWrappingQml);
         QVERIFY(s.dialog);
         s.opener->setProperty("columnWidth", 3000);
         QVERIFY(QTest::qWaitForWindowExposed(s.opener.get()));
-        // Text three times as wide as the screen in the label's own font,
-        // whatever the font and the screen: it wraps in any room.
         QQuickItem *label = s.item("wrapped");
         const QFontMetricsF metrics(label->property("font").value<QFont>());
         const qreal wide = 3.0 * s.opener->screen()->availableGeometry().width();
@@ -400,7 +360,6 @@ private slots:
         QVERIFY(QTest::qWaitForWindowActive(s.opener.get()));
         QVERIFY(open(s));
         QVERIFY(QTest::qWaitForWindowActive(s.dialog));
-        // Another window in use when the program closes the dialog: it stays so.
         QQuickWindow other;
         other.resize(200, 100);
         other.show();
@@ -410,7 +369,6 @@ private slots:
         QTRY_VERIFY(!s.dialog->isVisible());
         QTest::qWait(50);
         QCOMPARE(QGuiApplication::focusWindow(), &other);
-        // The opener's own control has the focus again for when it is used.
         QVERIFY(s.opener->property("opening").value<QQuickItem *>()->hasFocus());
     }
 
@@ -423,16 +381,14 @@ private slots:
         other.show();
         other.requestActivate();
         QVERIFY(QTest::qWaitForWindowActive(&other));
-        // Shown without activating (Qt's _q_showWithoutActivating), raised by nothing.
         QVERIFY(QMetaObject::invokeMethod(s.dialog, "openQuietly"));
         QVERIFY(s.dialog->isVisible());
         QVERIFY(QTest::qWaitForWindowExposed(s.dialog));
         QTest::qWait(50);
         QVERIFY(s.dialog->property("_q_showWithoutActivating").toBool());
-        // (The offscreen platform activates every window it shows.)
+        // The offscreen platform activates every window it shows.
         if (QGuiApplication::platformName() != QLatin1String("offscreen"))
             QCOMPARE(QGuiApplication::focusWindow(), &other);
-        // Asked for: it takes the keyboard.
         QMetaObject::invokeMethod(s.dialog, "close");
         QTRY_VERIFY(!s.dialog->isVisible());
         QVERIFY(open(s));
@@ -455,7 +411,7 @@ private slots:
     void aShownDialogKeepsToTheScreenWhenItsFrameChanges()
     {
         namespace wf = ui::windowframe;
-        // The offscreen platform has no desktop: KDE Plasma's, where a dialog can draw its own frame.
+        // The offscreen platform has no desktop; Plasma's lets a dialog draw its own frame.
         wf::overrideDesktop(wf::Desktop::Kde);
         auto restore = qScopeGuard([] { wf::overrideDesktop(std::nullopt); });
         store->setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
@@ -466,10 +422,7 @@ private slots:
         QVERIFY(s.dialog->flags().testFlag(Qt::FramelessWindowHint));
         const QRect area = s.dialog->screen()->availableGeometry().marginsRemoved(QMargins(20, 20, 20, 20));
         QCOMPARE(s.dialog->frameGeometry().height(), area.height());
-        // Moved partly off the screen, then the system's frame: kept on the
-        // screen with the room the frame leaves (the offscreen platform
-        // keeps a shown window's frame margins, so the move stands in for
-        // the borders a real frame adds).
+        // Offscreen keeps a shown window's frame margins, so the move off the screen stands in for a real frame's borders.
         const QRect screen = s.dialog->screen()->availableGeometry();
         s.dialog->setY(s.dialog->y() + 200);
         QTRY_VERIFY(!screen.contains(s.dialog->frameGeometry()));
@@ -487,11 +440,9 @@ private slots:
         QVERIFY(open(s));
         const int natural = s.dialog->property("naturalHeight").toInt();
         QVERIFY(natural > 5000);
-        // The window with its frame (none, or the platform's) fills the room.
         const QRect area = s.dialog->screen()->availableGeometry().marginsRemoved(QMargins(20, 20, 20, 20));
         QCOMPARE(s.dialog->frameGeometry().height(), area.height());
         QVERIFY(area.contains(s.dialog->frameGeometry()));
-        // Its smallest and (fixed) biggest are the screen's room, not the content's.
         QCOMPARE(s.dialog->minimumHeight(), s.dialog->height());
         QCOMPARE(s.dialog->maximumHeight(), s.dialog->height());
     }
@@ -509,11 +460,10 @@ private slots:
         QVERIFY(open(s));
         s.dialog->showMaximized();
         QTRY_COMPARE(s.dialog->visibility(), QWindow::Maximized);
-        // The window system's own report of it, before closing.
+        // MUST KILL: fixed 50 ms wait for the window system's report of the maximised window
         QTest::qWait(50);
         QMetaObject::invokeMethod(s.dialog, "close");
         QTRY_VERIFY(!s.dialog->isVisible());
-        // The place before maximising is kept, and it opens there, not maximised.
         QCOMPARE(dp::find(store->list(dp::kSetting), QStringLiteral("test")), normal);
         QVERIFY(open(s));
         QCOMPARE(s.dialog->visibility(), QWindow::Windowed);
@@ -531,7 +481,6 @@ private slots:
         QSignalSpy accepted(s.dialog, SIGNAL(accepted()));
         QVERIFY(open(s));
         QVERIFY(QTest::qWaitForWindowActive(s.dialog));
-        // The keyboard starts on the default button, ringed.
         QTRY_COMPARE(s.dialog->activeFocusItem(), s.item("ok"));
         QVERIFY(s.item("ok")->property("visualFocus").toBool());
         QTest::keyClick(s.dialog, Qt::Key_Escape);
@@ -540,7 +489,6 @@ private slots:
         QCOMPARE(accepted.count(), 0);
         QTRY_VERIFY(s.opener->isActive());
         QTRY_VERIFY(opening->hasActiveFocus());
-        // Close in the title bar (window close) is a rejection too.
         QVERIFY(open(s));
         QVERIFY(s.dialog->close());
         QTRY_VERIFY(!s.dialog->isVisible());
@@ -553,21 +501,18 @@ private slots:
         QVERIFY(QTest::qWaitForWindowActive(s.opener.get()));
         QSignalSpy rejected(s.dialog, SIGNAL(rejected()));
         QSignalSpy accepted(s.dialog, SIGNAL(accepted()));
-        // From a single-line field: the default button.
         QVERIFY(open(s));
         QVERIFY(QTest::qWaitForWindowActive(s.dialog));
         s.item("field")->forceActiveFocus();
         QTest::keyClick(s.dialog, Qt::Key_Return);
         QTRY_VERIFY(!s.dialog->isVisible());
         QCOMPARE(accepted.count(), 1);
-        // A multiline field keeps its Enter.
         QVERIFY(open(s));
         QVERIFY(QTest::qWaitForWindowActive(s.dialog));
         s.item("notes")->forceActiveFocus();
         QTest::keyClick(s.dialog, Qt::Key_Return);
         QVERIFY(s.dialog->isVisible());
         QCOMPARE(s.item("notes")->property("lineCount").toInt(), 2);
-        // On another button: that button.
         s.item("cancel")->forceActiveFocus(Qt::TabFocusReason);
         QTest::keyClick(s.dialog, Qt::Key_Enter);
         QTRY_VERIFY(!s.dialog->isVisible());
@@ -584,9 +529,8 @@ private slots:
         s.dialog->setPosition(at);
         QTRY_COMPARE(s.dialog->position(), at);
         QMetaObject::invokeMethod(s.dialog, "open");
-        QCOMPARE(s.dialog->position(), at); // not placed again
+        QCOMPARE(s.dialog->position(), at);
         QVERIFY(s.dialog->isVisible());
-        // Modal to its opener only, when a dialog asks it.
         QMetaObject::invokeMethod(s.dialog, "close");
         QTRY_VERIFY(!s.dialog->isVisible());
         s.dialog->setProperty("modal", true);

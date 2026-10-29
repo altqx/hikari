@@ -1,11 +1,3 @@
-// 38e: no test reaches the desktop's programs (tests/support/desktop/
-// desktop_guard.h). The recording handlers take file, http and https URLs
-// from QDesktopServices and from QML; the application's hand-offs
-// (backends::desktop) are recorded; a URL of any other scheme is refused
-// before the desktop's handler and fails the run. The shell's own hand-offs
-// (Help > User guide, Help > Report an issue, the tab menu's folder
-// items) go through the composition and the real QML.
-
 #include "hikari/app/application.h"
 #include "hikari/backends/desktop_handoff.h"
 #include "desktop_guard.h"
@@ -33,7 +25,6 @@ namespace recorded = hikari::test::desktop;
 
 namespace {
 
-// The child run of aRefusalFailsTheRun.
 constexpr char kChild[] = "HIKARI_DESKTOP_GUARD_CHILD";
 
 QString writeAss(const QString &path)
@@ -48,13 +39,13 @@ QString writeAss(const QString &path)
     return path;
 }
 
-} // namespace
+}
 
 class DesktopHandoffTests : public QObject {
     Q_OBJECT
 
-    QTemporaryDir home; // the settings folder
-    QTemporaryDir dir;  // subtitles
+    QTemporaryDir home;
+    QTemporaryDir dir;
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
 
@@ -64,8 +55,8 @@ class DesktopHandoffTests : public QObject {
         o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.userFolder = userFolder;
         o.playbackAudio = false;
-        o.spellingBackend = {}; // no spell checker, so no notice over the window
-        application = new app::Application(o); // revealInFolder unset: backends::desktop
+        o.spellingBackend = {};
+        application = new app::Application(o);
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
         engine->setInitialProperties(application->qmlProperties());
@@ -85,7 +76,6 @@ class DesktopHandoffTests : public QObject {
                 return o;
         return nullptr;
     }
-    // A menu item's Action, triggered as a click on the item triggers it.
     void triggerAction(const char *item)
     {
         QObject *menuItem = named(item);
@@ -113,8 +103,6 @@ private slots:
         recorded::clear();
     }
 
-    // Every executable starts with the handlers in place: QDesktopServices
-    // hands them its file, http and https URLs.
     void theRecordingHandlersTakeFileHttpAndHttps()
     {
         QCOMPARE(recorded::recordedSchemes(),
@@ -127,7 +115,6 @@ private slots:
         QVERIFY(recorded::refused().isEmpty());
     }
 
-    // QML's Qt.openUrlExternally is QDesktopServices::openUrl.
     void qmlOpensThroughTheRecordingHandlers()
     {
         QQmlEngine qml;
@@ -140,9 +127,6 @@ private slots:
         QCOMPARE(recorded::opened(), QList<QUrl>{QUrl(QStringLiteral("https://example.invalid/qml"))});
     }
 
-    // backends::desktop's routes: a URL through the recording handlers, a
-    // file to show in its folder and a detached program recorded, with the
-    // start's answer the test sets.
     void theApplicationsHandOffsAreRecorded()
     {
         const QUrl page(QStringLiteral("https://example.invalid/c"));
@@ -160,8 +144,6 @@ private slots:
         QVERIFY(recorded::refused().isEmpty());
     }
 
-    // A scheme no handler records never reaches QDesktopServices: refused
-    // and reported.
     void anotherSchemeIsRefusedBeforeTheDesktop()
     {
         QList<QUrl> reported;
@@ -176,10 +158,7 @@ private slots:
         QVERIFY(recorded::opened().isEmpty());
     }
 
-    // The guard: a run in which a URL was refused fails. The executable runs
-    // again with only refuseInTheChild, which passes; the run still exits
-    // with kUnhandledExitCode. The child's QtTest log goes to a file (on
-    // Windows its standard output does not arrive; HikariTesting.cmake).
+    // The child logs to a file: on Windows its standard output does not arrive.
     void aRefusalFailsTheRun()
     {
         const QString log = dir.filePath(QStringLiteral("child-log.txt"));
@@ -197,7 +176,6 @@ private slots:
         const QString out = QString::fromLocal8Bit(file.readAll());
         QCOMPARE(child.exitStatus(), QProcess::NormalExit);
         QVERIFY2(out.contains(QStringLiteral("PASS   : DesktopHandoffTests::refuseInTheChild()")), qPrintable(out));
-        // The refusal names the URL as it happens.
         QVERIFY2(out.contains(QStringLiteral("hikari-guard-probe:child was not opened")), qPrintable(out));
         QCOMPARE(child.exitCode(), recorded::kUnhandledExitCode);
     }
@@ -208,13 +186,6 @@ private slots:
         QVERIFY(!backends::desktop::openUrl(QUrl(QStringLiteral("hikari-guard-probe:child"))));
     }
 
-    // The shell: Help > User guide (GLOBAL_HELP, DX1: a page of the user
-    // guide, user_guide_tests) opens its page in the browser, and Help >
-    // Report an issue (GLOBAL_ANSI; legacy HikariSubFrame.cpp:360-362 opened
-    // the tracker) the report window, whose Open on GitHub opens the Bug
-    // form, filled in (CR1 #452); the tab menu's
-    // folder item shows the subtitles in their folder (SelectInFolder). All
-    // recorded.
     void theShellsHandOffsAreRecorded()
     {
         const QString file = writeAss(dir.filePath(QStringLiteral("tabs/a.ass")));
@@ -255,9 +226,6 @@ private slots:
         QVERIFY(recorded::refused().isEmpty());
     }
 
-    // UD1 (#362): Help > Open user folder and Settings > General's Open
-    // open the user folder in the file manager, made first when missing;
-    // without a user folder nothing opens.
     void openUserFolderOpensItInTheFileManager()
     {
         const QString folder = dir.filePath(QStringLiteral("user folder"));

@@ -1,10 +1,3 @@
-// KE2: the Template editor's controller over the bundled karaoke templater.
-// Edits go into the template Line, one undo step per pause; each edit
-// previews the templater on the current karaoke Line without changing the
-// Document; problems are placed in the text; Apply is the stock run, one
-// undo step; the video draws the preview in place of the Line's Lines. The
-// panel (TemplateEditor.qml) shows and edits it. KE3: the built-in effect
-// presets insert from New as template and code Lines that preview and apply.
 #include "template_editor_controller.h"
 
 #include "hikari/application/edit_session.h"
@@ -76,8 +69,6 @@ void services(const HostServiceRequest &r, LuaScriptHost::ServiceReply reply)
     reply(r.service == HostService::TextExtents ? textExtents(r) : HostServiceReply::unavailable());
 }
 
-// KE3: the Document karaoke_presets_tests applies each preset to, and that
-// test's golden for a preset file.
 core::Document presetFixture()
 {
     QFile f(QStringLiteral(HIKARI_KARAOKE_PRESET_FIXTURES "/fixture.ass"));
@@ -123,8 +114,6 @@ std::string lineText(const core::LineRecord &l)
     return std::string(t.begin(), t.end());
 }
 
-// The templater as the app gives it: previews in a runner of their own, and
-// Apply as the Automation menu runs the stock macro on the session.
 class Templater : public application::KaraokeTemplaterPort {
 public:
     explicit Templater(application::EditSession &session) : m_session(session)
@@ -141,11 +130,11 @@ public:
         for (const auto &d : snapshot.dialogues)
             text += d.text + '\n';
         texts.push_back(std::move(text));
-        if (dropPreviews > 0) { // as a run cancelled by a newer one: no answer
+        if (dropPreviews > 0) {
             --dropPreviews;
             return;
         }
-        if (holdPreviews > 0) { // answered when the test says
+        if (holdPreviews > 0) {
             --holdPreviews;
             held.emplace_back(snapshot, std::move(done));
             return;
@@ -182,10 +171,10 @@ public:
     int previews = 0;
     int dropPreviews = 0;
     int holdPreviews = 0;
-    bool down = false; // as while the script reloads
+    bool down = false;
     std::vector<std::pair<application::MacroSnapshot, PreviewDone>> held;
-    std::vector<std::size_t> sizes; // each run's Lines
-    std::vector<std::string> texts; // each run's Lines' text, joined
+    std::vector<std::size_t> sizes;
+    std::vector<std::string> texts;
     int applies = 0;
     bool lastSelectedOnly = false;
 
@@ -193,7 +182,7 @@ private:
     application::EditSession &m_session;
 };
 
-} // namespace
+}
 
 class TemplateEditorTests : public QObject {
     Q_OBJECT
@@ -203,10 +192,7 @@ class TemplateEditorTests : public QObject {
     std::unique_ptr<TemplateEditorController> editor;
     std::unique_ptr<QQuickView> view;
 
-    // `trust`: the user chose to preview this file's templates (most tests).
     void open(const QString &name, bool trust = true) { openDocument(loadFile(name), trust); }
-    // The templates without Lua (no `!` expression, no code Line), so that
-    // karaoke text edits keep the choice.
     static core::Document withoutLua(core::Document doc)
     {
         std::vector<core::LineId> lua;
@@ -249,7 +235,6 @@ class TemplateEditorTests : public QObject {
         return std::nullopt;
     }
 
-    // One step on the session, as the Grid or another panel makes it.
     bool change(std::function<bool(core::Document &)> apply)
     {
         application::Command command;
@@ -258,7 +243,6 @@ class TemplateEditorTests : public QObject {
         command.apply = std::move(apply);
         return session->run(command).has_value();
     }
-    // Answers the run held first, as its runner would.
     bool answerHeld()
     {
         auto [snapshot, done] = std::move(templater->held.front());
@@ -284,10 +268,7 @@ class TemplateEditorTests : public QObject {
     {
         return QTest::qWaitFor([&] { return editor->hasPreview(); }, 20'000);
     }
-    // The current text's preview has come.
     bool settled() const { return editor->hasPreview() && !editor->previewPending(); }
-    // In the middle of `source`'s time the video holds no second copy of a
-    // preview Line (the file's old Line beside it).
     bool oneCopyOnTheVideo(core::LineId source)
     {
         const core::LineRecord *l = nullptr;
@@ -312,7 +293,6 @@ class TemplateEditorTests : public QObject {
         return true;
     }
 
-    // The panel over the editor, `width` wide.
     void showPanel(int width = 640)
     {
         view = std::make_unique<QQuickView>();
@@ -324,8 +304,7 @@ class TemplateEditorTests : public QObject {
         view->show();
         QVERIFY(QTest::qWaitForWindowExposed(view.get()));
     }
-    // By objectName: declared objects are the root's children, a Repeater's
-    // delegates and a popup's contents are found through the items.
+    // Repeater delegates and Popup contents are not QObject children of the root: walk the item tree.
     static QObject *findIn(QQuickItem *at, const QString &name)
     {
         if (!at)
@@ -356,7 +335,6 @@ class TemplateEditorTests : public QObject {
         QTest::mouseClick(view.get(), Qt::LeftButton, {},
                           at->mapToScene(QPointF(at->width() / 2, at->height() / 2)).toPoint());
     }
-    // Types `text` into the focused item, one key at a time.
     void type(const QString &text)
     {
         for (const QChar c : text)
@@ -412,7 +390,7 @@ private slots:
         editor->setText(before + QStringLiteral("{\\b"));
         editor->setText(before + QStringLiteral("{\\b1}"));
         QCOMPARE(editor->text(), before + QStringLiteral("{\\b1}"));
-        QCOMPARE(session->historySize(), steps); // nothing in the Document while typing
+        QCOMPARE(session->historySize(), steps);
         QVERIFY(editor->templates().front().toMap().value(QStringLiteral("changed")).toBool());
         QVERIFY(QTest::qWaitFor([&] { return session->historySize() == steps + 1; }, 5'000));
         const auto *l = [&]() -> const core::LineRecord * {
@@ -439,7 +417,6 @@ private slots:
         QVERIFY(previewCame());
         QCOMPARE(editor->source(), source->value);
         QVERIFY(!editor->previewLines().isEmpty());
-        // The preview is the Lines Apply writes for that Line.
         application::EditSession copy(session->document());
         Templater whole(copy);
         QVERIFY(QTest::qWaitFor([&] { return whole.available(); }, 20'000));
@@ -449,8 +426,6 @@ private slots:
             if (l->generatedFrom == *source)
                 applied << QString::fromStdString(lineText(*l)).section(QLatin1Char(','), 9);
         QCOMPARE(previewTexts(), applied);
-        // An edit gives a new preview; every Line but the template Line stays
-        // as it was.
         const auto others = [&] {
             std::vector<std::string> out;
             for (const auto *l : session->document().lines())
@@ -468,8 +443,6 @@ private slots:
         QVERIFY(editor->previewMs() >= 0);
     }
 
-    // A later Line's index ($li) is the one a whole run gives it, the Lines
-    // before it left out of the preview's run.
     void aLaterLinesIndexIsTheWholeRunsOne()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -482,7 +455,6 @@ private slots:
         editor->setShown(true);
         QVERIFY(previewCame());
         QCOMPARE(editor->source(), last->value);
-        // A template for the Line's Style.
         std::u8string style;
         for (const auto *l : session->document().lines())
             if (l->id == *last)
@@ -514,8 +486,6 @@ private slots:
         }));
     }
 
-    // A problem the last karaoke Line's preview had goes with that Line: no
-    // preview is left to say otherwise.
     void aProblemGoesWithTheLastKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -581,28 +551,23 @@ private slots:
         QCOMPARE(bytesOf(session->document()), before);
     }
 
-    // Script Info is part of what the templates read (meta, karaskel's
-    // resolution): a change of it previews again. Tag-only templates: under
-    // Lua the change is not one the user chose to run
-    // (luaReadingTheHeadTrustsItsStylesAndInfo).
     void aScriptInfoChangePreviewsAgain()
     {
         openDocument(withoutLua(loadFile(QStringLiteral("stock-tutorials.ass"))), true);
         activate(*firstKaraoke());
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
-        QTest::qWait(500); // the run marking the current template's own Lines
+        // MUST KILL: fixed 500 ms sleep for the background marking run instead of a condition
+        QTest::qWait(500);
         const int before = templater->previews;
         editor->refresh();
         QTest::qWait(300);
-        QCOMPARE(templater->previews, before); // nothing changed: no run
+        QCOMPARE(templater->previews, before);
         QVERIFY(application::setScriptResolution(*session, {1920, 1080}).has_value());
         editor->refresh();
         QVERIFY(QTest::qWaitFor([&] { return templater->previews > before && settled(); }, 20'000));
     }
 
-    // The video, keyframes, audio selection, frame shown and file name are
-    // read by the templates too: a change of them previews again.
     void aHostChangePreviewsAgain()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -611,22 +576,21 @@ private slots:
         activate(*firstKaraoke());
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
-        QTest::qWait(500); // the run marking the current template's own Lines
+        // MUST KILL: fixed 500 ms sleep for the background marking run instead of a condition
+        QTest::qWait(500);
         const int before = templater->previews;
         editor->hostChanged();
         QTest::qWait(300);
-        QCOMPARE(templater->previews, before); // the same host: no run
+        QCOMPARE(templater->previews, before);
         *host = "video b";
         editor->hostChanged();
         QVERIFY(QTest::qWaitFor([&] { return templater->previews > before && settled(); }, 20'000));
         const int after = templater->previews;
-        *host = "video c"; // seen at the next refresh too
+        *host = "video c";
         editor->refresh();
         QVERIFY(QTest::qWaitFor([&] { return templater->previews > after && settled(); }, 20'000));
     }
 
-    // Apply waits for the preview of the last edit: a problem typed just
-    // before it is known before the stock macro runs.
     void applyWaitsForTheLastEditsPreview()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -644,7 +608,6 @@ private slots:
         QVERIFY(!editor->canApply());
         QVERIFY(!editor->apply(false));
         QCOMPARE(templater->applies, 0);
-        // Only the template Line's edit went in.
         QVERIFY(bytesOf(session->document()) != before);
     }
 
@@ -655,13 +618,12 @@ private slots:
         const std::size_t steps = session->historySize();
         editor->setText(editor->text() + QStringLiteral("{\\be1}"));
         QVERIFY(editor->apply(false));
-        QCOMPARE(session->historySize(), steps + 2); // the edit, then Apply
+        QCOMPARE(session->historySize(), steps + 2);
     }
 
     void theVideoDrawsThePreviewInPlaceOfTheLinesOwn()
     {
         open(QStringLiteral("stock-tutorials.ass"));
-        // Apply once so every generated Line is marked with its source.
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
         QVERIFY(editor->apply(false));
@@ -701,9 +663,6 @@ private slots:
         QVERIFY(!editor->videoDocument(session->document(), mid, false));
     }
 
-    // The stock furigana run makes its `-furigana` Style when the file has
-    // none (karaskel.collect_head): Apply puts it in, so the video draws the
-    // preview with it; the file stays without it.
     void theVideoDrawsWithTheStylesTheRunMakes()
     {
         core::Document doc = loadFile(QStringLiteral("stock-furigana.ass"));
@@ -738,10 +697,6 @@ private slots:
         QVERIFY(furigana);
     }
 
-    // The matching run for a file without marks runs the templates as the
-    // file holds them, not the Line editor's draft: it runs only once the user
-    // chose that state too, so a draft taking Lua out of a template and then
-    // Preview never runs the Lua.
     void theMatchingRunNeedsTheFilesOwnStateChosen()
     {
         open(QStringLiteral("stock-tutorials.out.ass"), false);
@@ -764,8 +719,6 @@ private slots:
         QVERIFY(templater->previews > 0);
         for (const auto &text : templater->texts)
             QVERIFY(text.find(luaText) == std::string::npos);
-        // The draft goes in: the file's state is the one chosen, and matching
-        // runs.
         QVERIFY(session->commitDraft());
         editor->refresh();
         const int before = templater->previews;
@@ -790,7 +743,6 @@ private slots:
         const std::int64_t mid = (l->start.value.microseconds() + l->end.value.microseconds()) / 2000;
         const auto shown = editor->videoDocument(session->document(), mid, false);
         QVERIFY(shown);
-        // The frame holds the preview's Lines and no second copy of them.
         QStringList texts;
         for (const auto *x : shown->lines())
             texts << QString::fromStdString(lineText(*x)).section(QLatin1Char(','), 9);
@@ -799,12 +751,8 @@ private slots:
                 QCOMPARE(texts.count(t), previewTexts().count(t));
     }
 
-    // An edit that cancels the matching run, and an Undo that brings the
-    // unmarked Lines back after Apply, match again: the frame never holds the
-    // file's old Lines beside the preview.
     void anEditDuringTheMatchingRunMatchesAgain()
     {
-        // The file's generated Lines the frame keeps beside the preview.
         const auto fileLines = [&](core::LineId source) {
             const core::LineRecord *l = nullptr;
             for (const auto *x : session->document().lines())
@@ -827,12 +775,11 @@ private slots:
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
         const QStringList kept = fileLines(*firstKaraoke());
-        // Again, the matching run cancelled by an edit still pending.
         open(QStringLiteral("stock-tutorials.out.ass"));
         const auto source = firstKaraoke();
         activate(*source);
         editor->setDelays(10, 60'000);
-        templater->dropPreviews = 1; // the matching run
+        templater->dropPreviews = 1;
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return templater->previews >= 1; }, 20'000));
         editor->setText(editor->text() + QStringLiteral("{\\bord3}"));
@@ -841,9 +788,6 @@ private slots:
         QCOMPARE(fileLines(*source), kept);
     }
 
-    // A file opened without marks where a karaoke Line made no Lines (its
-    // template came after): its first preview stands before the Lines of
-    // the karaoke Lines after it, as a whole Apply writes them.
     void aFirstPreviewInAnUnmarkedFileStandsBeforeLaterLines()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.out.ass"));
@@ -861,7 +805,7 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return settled() && !previewTexts().isEmpty(); }, 20'000));
         QTest::qWait(500);
         QVERIFY(settled());
-        const auto shown = editor->videoDocument(session->document(), 0, true); // every Line
+        const auto shown = editor->videoDocument(session->document(), 0, true);
         QVERIFY(shown);
         const QStringList preview = previewTexts();
         int first = -1, later = -1, at = 0;
@@ -877,16 +821,13 @@ private slots:
         QVERIFY2(first < later, qPrintable(QStringLiteral("preview at %1, T2a's Lines at %2").arg(first).arg(later)));
     }
 
-    // A matching run that answers after another tab is chosen is that
-    // tab's no more: the new one matches for itself.
     void aMatchFromAnotherTabIsDropped()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
         activate(*firstKaraoke());
-        templater->holdPreviews = 1; // the matching run
+        templater->holdPreviews = 1;
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
-        // The same file in another tab, not trusted yet: nothing new runs.
         auto first = std::move(session);
         session = std::make_unique<application::EditSession>(loadFile(QStringLiteral("stock-tutorials.out.ass")));
         editor->refresh();
@@ -908,8 +849,6 @@ private slots:
                                     templater->sizes.end(), [&](std::size_t n) { return n == whole; }));
     }
 
-    // A run that answers after the last karaoke Line went shows nothing:
-    // its Line is no source any more.
     void aRunForALineGoneIsDropped()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -930,7 +869,6 @@ private slots:
         QVERIFY(!editor->previewPending());
     }
 
-    // With the last template gone the preview goes, the one running too.
     void noTemplatesLeftClearsThePreview()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -938,7 +876,8 @@ private slots:
         activate(*source);
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
-        QTest::qWait(500); // the run marking the current template's own Lines
+        // MUST KILL: fixed 500 ms sleep for the background marking run instead of a condition
+        QTest::qWait(500);
         QVERIFY(editor->videoPreview());
         templater->holdPreviews = 1;
         QVERIFY(change([&](core::Document &doc) {
@@ -964,12 +903,8 @@ private slots:
         QVERIFY(!editor->previewPending());
     }
 
-    // The last template turned into code in the panel while its first
-    // preview runs, or after it failed: the run's answer and its problems go
-    // with it.
     void noTemplatesLeftEndsAnUnfinishedPreview()
     {
-        // One template only, as `text` has it.
         const auto oneTemplate = [](const std::u8string &text) {
             core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
             std::optional<core::LineId> kept;
@@ -1001,7 +936,6 @@ private slots:
         QTest::qWait(100);
         QVERIFY(!editor->hasPreview());
         QVERIFY(!editor->previewPending());
-        // A first preview that failed.
         auto [broken, brokenId] = oneTemplate(u8"{\\fscx!nosuch.field!}");
         openDocument(std::move(broken), true);
         activate(*firstKaraoke());
@@ -1014,15 +948,14 @@ private slots:
         QVERIFY(!editor->hasProblems());
     }
 
-    // The values asked for on one tab stay that tab's: the same file in
-    // another tab (the same Line ids) shows none until asked there.
     void valuesFromAnotherTabAreDropped()
     {
         open(QStringLiteral("stock-tutorials.ass"));
         activate(*firstKaraoke());
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
-        QTest::qWait(500); // the run marking the current template's own Lines
+        // MUST KILL: fixed 500 ms sleep for the background marking run instead of a condition
+        QTest::qWait(500);
         templater->holdPreviews = 1;
         editor->requestValues();
         QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
@@ -1033,7 +966,6 @@ private slots:
         QVERIFY(answerHeld());
         QTest::qWait(100);
         QVERIFY(editor->values().isEmpty());
-        // Asked on this tab, they come.
         activate(*firstKaraoke());
         editor->trustDocument();
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
@@ -1041,8 +973,6 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return !editor->values().isEmpty(); }, 20'000));
     }
 
-    // A template edited since Apply stays marked after a visit to another
-    // tab: its generated Lines are still the old Apply's.
     void aChangeSinceApplyOutlastsATabSwitch()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -1074,8 +1004,6 @@ private slots:
         editor->setDocumentKey({});
     }
 
-    // An edit typed before its file was reloaded has no Document left to go
-    // into: it is dropped, not committed into the reloaded one.
     void anEditTypedBeforeAReloadIsDropped()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -1088,7 +1016,7 @@ private slots:
         const QString before = editor->text();
         editor->setText(before + QStringLiteral("{\\bord3}"));
         session = std::make_unique<application::EditSession>(loadFile(QStringLiteral("stock-tutorials.ass")));
-        key = {1, 2}; // the same Document, loaded again
+        key = {1, 2};
         const std::size_t steps = session->historySize();
         editor->refresh();
         editor->commit();
@@ -1116,10 +1044,9 @@ private slots:
         QVERIFY(oneCopyOnTheVideo(*source));
     }
 
-    // Choosing another template marks its own Lines, the Document unchanged.
     void anotherTemplateChosenMarksItsOwnLines()
     {
-        open(QStringLiteral("stock-environment.ass")); // six syllable templates on one Style
+        open(QStringLiteral("stock-environment.ass"));
         activate(*firstKaraoke());
         editor->setShown(true);
         const auto own = [&] {
@@ -1143,7 +1070,6 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return settled() && own() != first && own().contains(true); }, 20'000));
     }
 
-    // A reloaded templater may write otherwise: the preview runs again.
     void aReloadedTemplaterPreviewsAgain()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -1194,7 +1120,6 @@ private slots:
         QVERIFY(number);
         list = editor->completions(text, static_cast<int>(text.size()));
         QVERIFY(!list.front().toMap().value(QStringLiteral("value")).toString().isEmpty());
-        // `!` lists the template environment inside an expression only.
         const QString expression = QStringLiteral("{\\fscx!re");
         list = editor->completions(expression, static_cast<int>(expression.size()));
         QStringList names;
@@ -1227,8 +1152,6 @@ private slots:
                  QStringLiteral("code once all"));
         QCOMPARE(e.effectParts(QStringLiteral("template line named")).value(QStringLiteral("name")).toString(),
                  QStringLiteral("named"));
-        // The class may come after modifiers, as the stock parser reads it,
-        // but not as a modifier's argument.
         const QVariantMap late = e.effectParts(QStringLiteral("template noblank line named"));
         QCOMPARE(late.value(QStringLiteral("className")).toString(), QStringLiteral("line"));
         QCOMPARE(late.value(QStringLiteral("name")).toString(), QStringLiteral("named"));
@@ -1243,9 +1166,6 @@ private slots:
                  (QStringList{QStringLiteral("fx"), QStringLiteral("line")}));
     }
 
-    // A file's templates and code run Lua: nothing of them runs until the
-    // user previews the file or applies it, as the Automation menu runs
-    // them only when asked.
     void aFilesTemplatesRunOnlyOnceTheUserPreviewsIt()
     {
         open(QStringLiteral("stock-tutorials.ass"), false);
@@ -1257,7 +1177,7 @@ private slots:
         QCOMPARE(templater->previews, 0);
         QVERIFY(!editor->hasPreview());
         QVERIFY(!editor->previewPending());
-        QVERIFY(editor->canApply()); // Apply is the user's to run, as in the Automation menu
+        QVERIFY(editor->canApply());
         editor->trustDocument();
         QVERIFY(editor->trusted());
         QVERIFY(previewCame());
@@ -1272,9 +1192,6 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
-    // A file without templates runs no code of its own, but its Actor and
-    // Style values reach the templates the user writes ($actor, $style, the
-    // values probe): those run only once the user previews them.
     void aFileWithoutTemplatesAsksBeforeItsValuesRun()
     {
         core::Document plain = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -1296,14 +1213,9 @@ private slots:
         QCOMPARE(templater->previews, 0);
         editor->trustDocument();
         QVERIFY(editor->trusted());
-        // Asked, it runs (the Actor is no expression the templater can
-        // evaluate: a problem, no preview).
         QVERIFY(QTest::qWaitFor([&] { return templater->previews > 0 && !editor->previewPending(); }, 20'000));
     }
 
-    // Template or code Lines that come another way than New (a paste, an
-    // import) are Lua the user did not write: the panel asks before it runs
-    // them, on a file without templates the user previewed, and again after.
     void templatesPastedInAskFirst()
     {
         const core::Document file = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -1336,9 +1248,9 @@ private slots:
         editor->trustDocument();
         QVERIFY(editor->trusted());
         QVERIFY(previewCame());
-        // Previewed once; more pasted in asks again.
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
-        QTest::qWait(500); // the run marking the current template's own Lines
+        // MUST KILL: fixed 500 ms sleep for the background marking run instead of a condition
+        QTest::qWait(500);
         const int before = templater->previews;
         QVERIFY(paste());
         editor->refresh();
@@ -1347,17 +1259,14 @@ private slots:
         QCOMPARE(templater->previews, before);
     }
 
-    // A template Line keeps its id when another way changes its Lua (a
-    // translation pasted over it): the panel asks before it runs the new
-    // text. The user's own edits and their Undo stay trusted.
     void aTemplateRewrittenElsewhereAsksFirst()
     {
         open(QStringLiteral("stock-tutorials.ass"));
         activate(*firstKaraoke());
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
-        QTest::qWait(500); // the run marking the current template's own Lines
-        // The panel's edit, committed, and its Undo.
+        // MUST KILL: fixed 500 ms sleep for the background marking run instead of a condition
+        QTest::qWait(500);
         editor->setText(editor->text() + QStringLiteral("{\\bord3}"));
         editor->commit();
         editor->refresh();
@@ -1378,9 +1287,6 @@ private slots:
         QCOMPARE(templater->previews, before);
     }
 
-    // The templater puts a Line's Actor and Style into a template before it
-    // runs the template's !expressions!: a Line pasted in with a new one
-    // asks first; one with the values already there does not.
     void aNewActorOrStyleAsksFirst()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -1388,7 +1294,8 @@ private slots:
         activate(*source);
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
-        QTest::qWait(500); // the run marking the current template's own Lines
+        // MUST KILL: fixed 500 ms sleep for the background marking run instead of a condition
+        QTest::qWait(500);
         core::LineRecord row = *lineAt(0);
         for (const auto *l : session->document().lines())
             if (l->id == *source)
@@ -1417,8 +1324,6 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
-    // A preview made before trust went is not this file's result: it goes
-    // with the run making one.
     void revokedTrustTakesThePreviewAway()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -1448,8 +1353,6 @@ private slots:
         QVERIFY(!editor->hasPreview());
     }
 
-    // A code Line made a template in the panel previews before the Effect
-    // is committed, as the first template of its file.
     void aFirstTemplateByItsEffectPreviews()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -1474,8 +1377,6 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
     }
 
-    // Typing that ends where it began changes nothing: no step, no save
-    // question.
     void anEditBackToTheStartIsNoStep()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -1489,8 +1390,6 @@ private slots:
         QVERIFY(!session->isDirty());
     }
 
-    // A Line editor draft that gives the template a translation, or takes
-    // it away, decides which text the panel shows, as the preview runs it.
     void theDraftsTranslationChoosesTheTextShown()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -1515,8 +1414,6 @@ private slots:
         QCOMPARE(rowText(), QStringLiteral("{\\bord6}"));
     }
 
-    // In TLMode the templater reads a Line's translation: the panel shows
-    // and edits that, and the preview runs it.
     void aTranslatedTemplateEditsItsTranslation()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -1538,7 +1435,7 @@ private slots:
                     return v.toMap().value(QStringLiteral("text")).toString();
             return QString();
         };
-        QVERIFY(rowText().endsWith(QStringLiteral("{\\bord4}"))); // the list shows it too
+        QVERIFY(rowText().endsWith(QStringLiteral("{\\bord4}")));
         activate(*firstKaraoke());
         editor->setDelays(10, 60'000);
         editor->setShown(true);
@@ -1556,8 +1453,6 @@ private slots:
         QVERIFY(std::u8string_view(l->translation).ends_with(u8"{\\bord4}{\\bord5}"));
     }
 
-    // In TLMode a karaoke Line is templated from its translation: the
-    // preview lists the generated text Apply writes there, not the original.
     void aTranslatedLinesPreviewListsWhatApplyWrites()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -1585,12 +1480,10 @@ private slots:
                                              static_cast<qsizetype>(l->translation.size()));
         QVERIFY(!applied.isEmpty());
         QCOMPARE(previewTexts(), applied);
-        QVERIFY(editor->sourceText() != QStringLiteral("original")); // the heading names what ran
+        QVERIFY(editor->sourceText() != QStringLiteral("original"));
         QVERIFY(!editor->sourceText().contains(QLatin1Char('{')));
     }
 
-    // Apply's summary is of the Document Apply left: an Undo or another
-    // edit after it takes it away.
     void anUndoneApplyLeavesNoSummary()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -1608,8 +1501,6 @@ private slots:
         QVERIFY(editor->lastApply().isEmpty());
     }
 
-    // A templater unloaded from the Automation panel takes its preview with
-    // it, and the run it had going.
     void anUnloadedTemplaterTakesThePreviewAway()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -1626,8 +1517,6 @@ private slots:
         QVERIFY(!editor->previewPending());
     }
 
-    // A problem found before trust went is the old text's: it no longer
-    // keeps Apply off.
     void revokedTrustDropsTheOldProblem()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -1641,7 +1530,7 @@ private slots:
         QVERIFY(change([&](core::Document &doc) {
             return doc.editLine(core::LineId{editor->current()}, [](core::LineRecord &l) {
                 l.text = std::u8string(l.text).substr(std::u8string_view(u8"{\\fscx!nosuch.field!}").size()) +
-                         u8"{\\bord1}"; // fixed in the Line editor
+                         u8"{\\bord1}";
             });
         }));
         editor->refresh();
@@ -1650,15 +1539,11 @@ private slots:
         QVERIFY(editor->canApply());
     }
 
-    // A generated Line clicked in a file opened without marks previews the
-    // karaoke Line it came from, found as KE1 finds it, not the first one.
     void anUnmarkedGeneratedLinePreviewsItsOwnKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
         const auto first = firstKaraoke();
         QVERIFY(first);
-        // The last generated Line whose Style and times are one karaoke
-        // Line's alone.
         std::optional<core::LineId> clicked, owner;
         for (const auto *g : session->document().lines()) {
             if (!application::isGeneratedLine(*g))
@@ -1679,8 +1564,6 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->source() == owner->value && settled(); }, 20'000));
     }
 
-    // What the user chose is each whole state: a template from one preview
-    // and an Actor from another were never run together, so their mix asks.
     void templatesAndActorsFromTwoChoicesAsk()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -1696,8 +1579,6 @@ private slots:
         QVERIFY(doc.editLine(*karaoke, [](core::LineRecord &l) { l.actor = u8"plain"; }));
         openDocument(std::move(doc), true);
         QVERIFY(editor->trusted());
-        // Pasted over: a literal template and an expression for an Actor,
-        // previewed as such.
         QVERIFY(change([&](core::Document &d) {
             return d.editLine(*tl, [](core::LineRecord &l) { l.text = u8"{\\bord1}literal"; }) &&
                    d.editLine(*karaoke, [](core::LineRecord &l) { l.actor = u8"!_G.marker = 1!"; });
@@ -1706,13 +1587,11 @@ private slots:
         QVERIFY(!editor->trusted());
         editor->trustDocument();
         QVERIFY(editor->trusted());
-        // The first template's text pasted back: never run with that Actor.
         QVERIFY(change([&](core::Document &d) {
             return d.editLine(*tl, [](core::LineRecord &l) { l.text = u8"{\\bord1}$actor"; });
         }));
         editor->refresh();
         QVERIFY(!editor->trusted());
-        // Back as it was chosen first, it runs again.
         QVERIFY(change([&](core::Document &d) {
             return d.editLine(*karaoke, [](core::LineRecord &l) { l.actor = u8"plain"; });
         }));
@@ -1720,12 +1599,8 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
-    // A template that puts an Actor or Style into an expression (`!$actor!`)
-    // makes any Actor Lua: then every karaoke Line is trusted as a whole, so
-    // a blank one given text asks again.
     void aTemplateRunningActorsTrustsWholeLines()
     {
-        // The templater reads a variable's name in any case.
         for (const std::u8string expression : {u8"!$actor!", u8"!$ACTOR!", u8"!$Style!"}) {
             core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
             std::optional<core::LineId> tl;
@@ -1752,10 +1627,6 @@ private slots:
         }
     }
 
-    // Lua in the templates (a code Line, or a `!` expression in a template)
-    // can read a karaoke Line's text (`orgline.text`): then a new text,
-    // translation or Effect asks again, a retime doesn't. Templates with no
-    // Lua leave the text to the user.
     void luaReadingTheLinesTrustsTheirText()
     {
         const auto openWith = [&](const std::u8string &effect, const std::u8string &text) {
@@ -1785,7 +1656,6 @@ private slots:
             QVERIFY(change([&](core::Document &d) { return d.editLine(id, how); }));
             editor->refresh();
         };
-        // Tag-only templates: the text is the user's.
         auto karaoke = openWith(u8"template line", u8"{\\bord2}");
         QVERIFY(editor->trusted());
         edit(karaoke, [](core::LineRecord &l) { l.text = u8"{\\k50}zzq"; });
@@ -1804,9 +1674,6 @@ private slots:
         }
     }
 
-    // Lua reads the file's Styles (`orgline.styleref`) and Script Info
-    // (`meta`) too: a Style or property changed since (an import) is not
-    // what the user chose to run. Tag-only templates read neither.
     void luaReadingTheHeadTrustsItsStylesAndInfo()
     {
         const auto openWith = [&](const std::u8string &effect, const std::u8string &text) {
@@ -1860,9 +1727,6 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
-    // An Actor or Style holding a `!` is an expression once a template puts
-    // it in (`$actor`): Lua, which reads the Styles, Script Info and every
-    // karaoke Line, as a template's own would.
     void anExpressionInAnActorTrustsTheHeadAndLines()
     {
         core::Document doc = withoutLua(loadFile(QStringLiteral("stock-tutorials.ass")));
@@ -1899,8 +1763,6 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
-    // A named template's parts are joined before the templater runs them:
-    // an expression split across two parts is Lua too.
     void anExpressionSplitAcrossNamedPartsTrustsWholeLines()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -1935,11 +1797,6 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
-    // Whether a karaoke Line's Actor reaches the templates hangs on its other
-    // fields too (a blank Line `noblank` passes over): an Actor or Style
-    // holding `!` is trusted with the whole Line, so a new text asks again.
-    // It is Lua in the file, so the other karaoke Lines' text is chosen too
-    // (anExpressionInAnActorTrustsTheHeadAndLines).
     void anActorHoldingAnExpressionIsTrustedWithItsWholeLine()
     {
         core::Document doc = withoutLua(loadFile(QStringLiteral("stock-tutorials.ass")));
@@ -1971,9 +1828,6 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
-    // The stock selected-Lines run takes karaoke Lines and the generated
-    // Lines marked with theirs: with only a file's unmarked Lines selected
-    // it would refuse, so the panel offers it only when it can run.
     void applyToTheSelectedLinesNeedsAKaraokeLineSelected()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
@@ -1988,7 +1842,6 @@ private slots:
         QVERIFY(!editor->canApplySelected());
         activate(*firstKaraoke());
         QVERIFY(QTest::qWaitFor([&] { return editor->canApplySelected(); }, 20'000));
-        // A Line marked with its karaoke Line counts too.
         QVERIFY(change([&](core::Document &d) {
             return d.editLine(*unmarked, [&](core::LineRecord &l) { l.generatedFrom = *firstKaraoke(); });
         }));
@@ -1996,8 +1849,6 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->canApplySelected(); }, 20'000));
     }
 
-    // An unmarked generated Line the Line editor's draft makes a karaoke
-    // Line is the one Apply runs on: its old karaoke Line no longer counts.
     void aDraftThatEndsAnUnmarkedLinesOutputPreviewsIt()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
@@ -2017,9 +1868,6 @@ private slots:
         QCOMPARE(editor->source(), clicked->value);
     }
 
-    // Only the Lines the templater runs give trusted Actor and Style
-    // values, each in its own role: a value a comment held, or a Style's
-    // name, put as a runnable Line's Actor asks first.
     void onlyRunnableLinesValuesAreTrusted()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2033,7 +1881,8 @@ private slots:
         activate(*source);
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
-        QTest::qWait(500); // the run marking the current template's own Lines
+        // MUST KILL: fixed 500 ms sleep for the background marking run instead of a condition
+        QTest::qWait(500);
         const int before = templater->previews;
         core::LineRecord row;
         for (const auto *l : session->document().lines())
@@ -2045,7 +1894,6 @@ private slots:
         QVERIFY(!editor->trusted());
         QTest::qWait(300);
         QCOMPARE(templater->previews, before);
-        // A Style's name as an Actor.
         QVERIFY(change([&](core::Document &d) {
             return d.removeLinesIf([](const core::LineRecord &l) {
                        return !l.comment && l.actor == u8"!_G.marker = 1!";
@@ -2059,8 +1907,6 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
-    // A Style picks the templates an Actor goes into: a runnable Line pairing
-    // a trusted Actor with another trusted Style asks first.
     void aNewPairingOfActorAndStyleAsksFirst()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2086,15 +1932,12 @@ private slots:
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
         QVERIFY(editor->trusted());
-        pairing.actor = u8"!_G.marker = 1!"; // T1b's templates with T1a's Actor
+        pairing.actor = u8"!_G.marker = 1!";
         QVERIFY(change([&](core::Document &d) { return d.appendLine(pairing).has_value(); }));
         editor->refresh();
         QVERIFY(!editor->trusted());
     }
 
-    // The Style picks the karaoke Lines a template runs on, and so whose
-    // Actor goes into its `$actor`: a Style changed outside the panel asks
-    // first.
     void aTemplatesStyleChangedElsewhereAsksFirst()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2112,9 +1955,6 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
-    // A named template joins its Lines' text in file order, and code Lines
-    // run in it: the same Lines in another order are other Lua, so a sort
-    // or a move outside the panel asks first.
     void templatesReorderedElsewhereAskFirst()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2130,9 +1970,6 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
-    // Apply commits the Line editor's draft before it runs, so the preview
-    // runs on the draft too; and a drafted Actor is one the user has not
-    // chosen to run yet.
     void theLineEditorsDraftIsPreviewed()
     {
         openDocument(withoutLua(loadFile(QStringLiteral("stock-tutorials.ass"))), true);
@@ -2146,7 +1983,7 @@ private slots:
         editor->refresh();
         QVERIFY(QTest::qWaitFor(
             [&] { return settled() && previewTexts().join(QString()).contains(QStringLiteral("zzq")); }, 20'000));
-        QCOMPARE(session->revision(), revision); // still a draft
+        QCOMPARE(session->revision(), revision);
         application::DraftChange actor;
         actor.actor = u8"!_G.marker = 1!";
         QVERIFY(session->editDraft(*source, actor));
@@ -2154,8 +1991,6 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
-    // The `$` values of a TLMode Line are read from the translation, where
-    // the templater writes them.
     void aTranslatedLinesValuesAreRead()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2179,16 +2014,12 @@ private slots:
         QVERIFY(number);
     }
 
-    // A file whose generated Lines its templates no longer give: the matching
-    // run's refusal is the preview's problem, as Apply's would be, and is
-    // not kept as a match: once the Lines match again, it previews.
     void aFailedMatchIsNotKept()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
         const auto source = firstKaraoke();
         std::optional<core::LineId> generated;
         std::u8string was;
-        // Another karaoke Line's (the last one's): those must match.
         for (const auto *l : session->document().lines())
             if (application::isGeneratedLine(*l) && l->generatedFrom.value == 0) {
                 generated = l->id;
@@ -2210,9 +2041,6 @@ private slots:
         QVERIFY(editor->problem().isEmpty());
     }
 
-    // Another karaoke Line's generated Line changed, its id kept: the file's
-    // Lines are matched again, and the refusal Apply would give is the
-    // preview's problem.
     void aGeneratedLineChangedInPlaceIsMatchedAgain()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
@@ -2220,7 +2048,7 @@ private slots:
         std::optional<core::LineId> generated;
         for (const auto *l : session->document().lines())
             if (application::isGeneratedLine(*l) && l->generatedFrom.value == 0)
-                generated = l->id; // the last karaoke Line's
+                generated = l->id;
         QVERIFY(generated);
         activate(*source);
         editor->setShown(true);
@@ -2233,8 +2061,6 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return !editor->previewPending() && !editor->problem().isEmpty(); }, 20'000));
     }
 
-    // While a macro holds the Document, an edit that can't go in keeps its
-    // template current: choosing another one would lose it.
     void anEditThatCantGoInKeepsItsTemplate()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2263,9 +2089,6 @@ private slots:
         QCOMPARE(editor->current(), other);
     }
 
-    // Apply to the selected Lines runs on the active Line as the draft makes
-    // it: an Effect typed that makes it a karaoke Line makes it the Line
-    // previewed.
     void aDraftThatMakesAKaraokeLineIsPreviewed()
     {
         core::Document doc = withoutLua(loadFile(QStringLiteral("stock-tutorials.ass")));
@@ -2287,8 +2110,6 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->source() == karaoke[1].value && settled(); }, 20'000));
     }
 
-    // A generated Line clicked that no karaoke Line gives with these
-    // templates previews no other Line in its place, and says why.
     void aGeneratedLineNoTemplateGivesPreviewsNothingElse()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
@@ -2307,7 +2128,6 @@ private slots:
         QVERIFY(!editor->hasPreview());
     }
 
-    // Loop the Line plays the times the preview ran on: the draft's.
     void theLoopPlaysTheDraftsTimes()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2323,8 +2143,6 @@ private slots:
         QCOMPARE(editor->sourceEndMs(), end + 1000);
     }
 
-    // A modifier's argument may be a modifier's word (`fx loop`: the
-    // syllables marked `loop`); the picker leaves it alone.
     void aModifiersArgumentIsNotAModifier()
     {
         TemplateEditorController e;
@@ -2338,8 +2156,6 @@ private slots:
                  QStringLiteral("template syl fx loop"));
     }
 
-    // `repeat` is the templater's other word for `loop`: the picker's Repeat
-    // reads and removes either.
     void repeatIsTheLoopModifiersOtherWord()
     {
         TemplateEditorController e;
@@ -2351,8 +2167,6 @@ private slots:
         QVERIFY(!e.hasModifier(QStringLiteral("template syl fx repeat"), QStringLiteral("loop 2")));
     }
 
-    // The panel's own edit that takes a Line out of the templates keeps the
-    // user's choice for the others.
     void anEffectEditThatEndsATemplateKeepsTheChoice()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2366,8 +2180,6 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
-    // A TLMode Line's generated Lines differ in their translations only:
-    // the current template's own are told apart by them.
     void aTranslatedLinesOwnLinesAreMarked()
     {
         const auto own = [&] {
@@ -2400,12 +2212,9 @@ private slots:
         QCOMPARE(own(), plain);
     }
 
-    // Another tab's generated Lines and their karaoke Lines are not this
-    // one's: a tab chosen finds its own.
     void anotherTabsOwnersAreNotThisOnes()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
-        // A generated Line of the last karaoke Line.
         std::optional<core::LineId> clicked;
         for (const auto *l : session->document().lines())
             if (application::isGeneratedLine(*l) && l->generatedFrom.value == 0)
@@ -2414,8 +2223,6 @@ private slots:
         activate(*clicked);
         QVERIFY(QTest::qWaitFor([&] { return editor->source() != 0 && settled(); }, 20'000));
         const auto owner = editor->source();
-        // The same file in another tab at the same revision, that Line no
-        // karaoke Line's there: the old tab's answer would pick its owner.
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.out.ass"));
         QVERIFY(doc.editLine(*clicked, [](core::LineRecord &l) { l.text += u8"{\\bord9}"; }));
         auto next = std::make_unique<application::EditSession>(std::move(doc));
@@ -2427,8 +2234,6 @@ private slots:
         QVERIFY(editor->source() != owner);
     }
 
-    // An Apply whose run had problems on other karaoke Lines says so, not
-    // that it went well.
     void anApplyWithProblemsSaysSo()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2445,8 +2250,6 @@ private slots:
         QTRY_VERIFY(textOf(QStringLiteral("templateStatus")).startsWith(QStringLiteral("Applied with problems")));
     }
 
-    // The Line editor holding a draft of the template edited: the edit goes
-    // in after it, not left pending for the timer (Save writes both).
     void aTemplateEditGoesInAfterTheLineEditorsDraft()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2458,7 +2261,7 @@ private slots:
         actor.actor = u8"drafted";
         QVERIFY(session->editDraft(templ, actor));
         editor->setText(editor->text() + QStringLiteral("{\\bord4}"));
-        editor->commit(); // once, as Save's runs it
+        editor->commit();
         QVERIFY(!session->draftLine());
         for (const auto *l : session->document().lines())
             if (l->id == templ) {
@@ -2467,9 +2270,6 @@ private slots:
             }
     }
 
-    // The preview's heading names the Line as the draft has it.
-    // Panel typing that ends at the committed text still overrides a Line
-    // editor draft of that template: the draft goes in, then the panel's.
     void aPanelEditBackToTheCommittedTextOverridesTheDraft()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2501,8 +2301,6 @@ private slots:
         QCOMPARE(editor->sourceText(), QStringLiteral("zzq"));
     }
 
-    // The picker's class is one choice: choosing another replaces every
-    // class the Effect had.
     void choosingAClassReplacesEveryClass()
     {
         TemplateEditorController e;
@@ -2514,8 +2312,6 @@ private slots:
                  QStringList{QStringLiteral("noblank")});
     }
 
-    // A `template line karaoke` the panel moves to another Style is the
-    // user's own edit: its new Style and Actor pairing is theirs too.
     void aPanelStyleOnATemplateThatIsAlsoAKaraokeLineKeepsTheChoice()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2533,14 +2329,12 @@ private slots:
         QVERIFY(editor->trusted());
         editor->setCurrent(id->value);
         QVERIFY(editor->style() != QStringLiteral("T1a"));
-        editor->setStyle(QStringLiteral("T1a")); // no T1a karaoke Line has the Actor `plain`
+        editor->setStyle(QStringLiteral("T1a"));
         editor->commit();
         editor->refresh();
         QVERIFY(editor->trusted());
     }
 
-    // A Line editor draft of the template goes in before a panel edit of
-    // another field: the draft is not the user's choice, so it still asks.
     void aDraftCommittedWithAPanelEditStillAsks()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2556,8 +2350,6 @@ private slots:
         QVERIFY(!session->draftLine());
         editor->refresh();
         QVERIFY(!editor->trusted());
-        // An Actor drafted on a `template line karaoke`, then its Style
-        // changed in the panel: the drafted pairing asks too.
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
         core::LineRecord both;
         for (const auto *l : doc.lines())
@@ -2583,8 +2375,6 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
-    // A pending Effect, Style or Layer goes onto the Line editor's draft of
-    // the template, as the commit puts it: the drafted Layer stays.
     void aPendingEffectKeepsTheLineEditorsDraft()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2611,8 +2401,6 @@ private slots:
             20'000));
     }
 
-    // An Effect still pending that makes the active template a karaoke Line
-    // too previews that Line, as the commit will.
     void aPendingEffectChoosesTheKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2631,8 +2419,6 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->source() == templ->value; }, 5'000));
     }
 
-    // The `$` values of a `template line karaoke` source come from the probe
-    // alone: its own template writes nothing in their place.
     void theValuesOfATemplateThatIsAlsoAKaraokeLine()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2656,8 +2442,6 @@ private slots:
         QCOMPARE(editor->values().value(QStringLiteral("style")).toString(), QString::fromStdString(std::string(both.style.begin(), both.style.end())));
     }
 
-    // A `template line karaoke` source's text still pending in the panel is
-    // the one its `$` values come from, as the preview's.
     void theValuesReadAPendingTextOfATemplateThatIsAlsoAKaraokeLine()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2683,9 +2467,6 @@ private slots:
         QCOMPARE(editor->values().value(QStringLiteral("syln")).toString(), QStringLiteral("3"));
     }
 
-    // A `template line karaoke` both chosen and previewed keeps its own
-    // Lines marked: the run that tells them apart still has it as the
-    // karaoke Line.
     void aTemplateThatIsAlsoTheKaraokeLineMarksItsOwnLines()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2714,8 +2495,6 @@ private slots:
             20'000));
     }
 
-    // The heading of a `template line karaoke` source reads the text still
-    // pending in the panel, as its preview does.
     void thePreviewsHeadingReadsAPendingTextOfATemplateThatIsAlsoAKaraokeLine()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2739,8 +2518,6 @@ private slots:
         QCOMPARE(editor->sourceText(), QStringLiteral("kazeru"));
     }
 
-    // A Line editor draft of the template that changes nothing goes away at
-    // the commit, and the panel's edit goes in then, not after a pause.
     void aPanelEditGoesInOverADraftThatChangesNothing()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2762,8 +2539,6 @@ private slots:
                 QCOMPARE(QString::fromStdString(std::string(l->text.begin(), l->text.end())), committed + QStringLiteral("x"));
     }
 
-    // The panel shows the Line editor's draft of the current template, the
-    // one the preview runs and Apply commits.
     void thePanelShowsTheLineEditorsDraftOfTheTemplate()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2780,8 +2555,6 @@ private slots:
         QCOMPARE(editor->layer(), 7);
     }
 
-    // New with the Line editor's draft on the karaoke Line it goes above:
-    // the draft goes in, then the template.
     void newGoesInOverADraftOfTheLineBelow()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2800,8 +2573,6 @@ private slots:
                 QCOMPARE(QString::fromStdString(std::string(l->text.begin(), l->text.end())), QStringLiteral("{\\k50}zzq"));
     }
 
-    // `template line karaoke` is a template the stock templater also runs as
-    // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2845,8 +2616,6 @@ private slots:
         QCOMPARE(editor->text(), QString());
     }
 
-    // A `template line karaoke` is a karaoke Line too: New goes above it,
-    // in its Style, when it is the only one.
     void newPutsATemplateAboveATemplateThatIsAlsoAKaraokeLine()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -2883,11 +2652,9 @@ private slots:
         activate(*karaoke);
         activate(second);
         QCOMPARE(editor->current(), second.value);
-        QCOMPARE(editor->source(), karaoke->value); // editing a template keeps the karaoke Line
+        QCOMPARE(editor->source(), karaoke->value);
     }
 
-    // The templater's helper still loading when the panel shows: the preview
-    // runs once it is ready (the application refreshes on its readiness).
     void thePreviewRunsOnceTheTemplaterIsReady()
     {
         view.reset();
@@ -2925,7 +2692,6 @@ private slots:
         QVERIFY(roles(text).contains(int(core::syntax::Role::TemplateCodeMarks)));
     }
 
-    // The panel: the list, the current Line's fields and text, typed into.
     void thePanelListsTheTemplatesAndEditsTheOneClicked()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -2949,13 +2715,11 @@ private slots:
         type(QStringLiteral("{\\b1}"));
         QCOMPARE(editor->text(), before + QStringLiteral("{\\b1}"));
         QTRY_VERIFY(row("templateRowChanged_", 1)->isVisible());
-        // Coloured as the Line editor colours a template.
         auto *marks = object(QStringLiteral("templateTextHighlighter"));
         QVERIFY(marks);
         QVariantList applied;
         QTRY_VERIFY((QMetaObject::invokeMethod(marks, "appliedColours", Q_RETURN_ARG(QVariantList, applied)),
                      !applied.isEmpty()));
-        // The edit goes into the Line when the field is left.
         const std::size_t steps = session->historySize();
         text->setFocus(false);
         QTRY_COMPARE(session->historySize(), steps + 1);
@@ -2975,7 +2739,6 @@ private slots:
         const QString problem = textOf(QStringLiteral("templateProblemText"));
         QVERIFY2(problem.contains(QStringLiteral("Template Line: %1").arg(editor->currentNumber())), qPrintable(problem));
         QVERIFY2(problem.contains(QStringLiteral("!nosuch.field!")), qPrintable(problem));
-        // A wavy line under the expression, from its first character.
         auto *wave = item(QStringLiteral("templateProblemWave"));
         QVERIFY(wave);
         auto *field = item(QStringLiteral("templateText"));
@@ -3001,8 +2764,6 @@ private slots:
         QTRY_VERIFY(item(QStringLiteral("templateApply"))->isEnabled());
     }
 
-    // Until the user previews a file, the panel says why nothing runs and
-    // offers to.
     void thePanelAsksBeforeRunningAFilesTemplates()
     {
         open(QStringLiteral("stock-tutorials.ass"), false);
@@ -3038,8 +2799,6 @@ private slots:
         QVERIFY(!item(QStringLiteral("templatePreviewKept"))->isVisible());
     }
 
-    // `$` lists the variables with their values on the current Line; ↓ and
-    // Enter insert one.
     void dollarOpensTheVariablesAndEnterInsertsOne()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -3058,21 +2817,18 @@ private slots:
         QVERIFY(entries.size() > 5);
         QTRY_VERIFY(row("templateCompletionValue_", 0) &&
                     !row("templateCompletionValue_", 0)->property("text").toString().isEmpty());
-        QVERIFY(text->hasActiveFocus()); // the list does not take the keys
+        QVERIFY(text->hasActiveFocus());
         QTest::keyClick(view.get(), Qt::Key_Down);
         QTest::keyClick(view.get(), Qt::Key_Return);
         QTRY_VERIFY2(!list->property("opened").toBool(),
                      qPrintable(editor->text().left(40) + QLatin1Char('|') + list->property("chosen").toString()));
         const QString second = entries[1].toMap().value(QStringLiteral("name")).toString();
         QVERIFY2(editor->text().startsWith(QStringLiteral("{\\pos(") + second), qPrintable(editor->text()));
-        // Esc closes it, the text as typed.
         type(QStringLiteral(",$"));
         QTRY_VERIFY(list->property("opened").toBool());
         QTest::keyClick(view.get(), Qt::Key_Escape);
         QTRY_VERIFY(!list->property("opened").toBool());
         QVERIFY(editor->text().startsWith(QStringLiteral("{\\pos(") + second + QStringLiteral(",$")));
-        // Text put in from elsewhere (another template, an undo) opens nothing,
-        // the cursor inside an expression or not.
         text->setProperty("cursorPosition", 3);
         editor->setText(QStringLiteral("!ret!{\\b1}"));
         QTest::qWait(200);
@@ -3102,7 +2858,6 @@ private slots:
         QTRY_COMPARE(textOf(QStringLiteral("templateEffect")), editor->effect());
     }
 
-    // A template's Layer may be negative, as the Line editor's may.
     void theLayerFieldTakesANegativeLayer()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -3121,8 +2876,6 @@ private slots:
         QCOMPARE(layer->property("to").toInt(), 10'000'000);
     }
 
-    // A first preview that fails has ended: the panel says so, not that the
-    // templates are still running.
     void aFailedFirstPreviewIsNotStillRunning()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -3139,8 +2892,6 @@ private slots:
         QVERIFY(textOf(QStringLiteral("templatePreviewEmpty")).contains(QStringLiteral("problem")));
     }
 
-    // Before the first template there is nothing to preview, and nothing went
-    // wrong: the panel says the templates are still to come.
     void noTemplatesYetIsNoProblem()
     {
         core::Document plain = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -3155,8 +2906,6 @@ private slots:
         QVERIFY(!textOf(QStringLiteral("templatePreviewEmpty")).contains(QStringLiteral("problem")));
     }
 
-    // Markup in a Line's fields is text: as rich text an <img> would be
-    // fetched (from a server, on Windows a share) before the user previews.
     void markupInTheFileIsShownAsText()
     {
         const std::u8string img = u8"<img src=\"http://127.0.0.1:9/x\">";
@@ -3197,8 +2946,7 @@ private slots:
             }
         };
         walk(view->rootObject());
-        QVERIFY(seen >= 3); // the row's text, the source note, the Effect note
-        // The Style list's names too.
+        QVERIFY(seen >= 3);
         auto *popup = item(QStringLiteral("templateStyle"))->property("popup").value<QObject *>();
         QVERIFY(popup);
         QMetaObject::invokeMethod(popup, "open");
@@ -3228,7 +2976,6 @@ private slots:
 
     void aStyleInTheEffectPickerIsShownAsText()
     {
-        // The "all" modifier names the template's Style, which is the file's.
         const std::u8string img = u8"<img src=\"http://127.0.0.1:9/x\">";
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
         std::optional<core::LineId> tl;
@@ -3261,8 +3008,6 @@ private slots:
         QMetaObject::invokeMethod(popup, "close");
     }
 
-    // Apply to the selected Lines leaves the other Lines' output from the
-    // old templates: an edit since stays marked as not applied.
     void aSelectedApplyKeepsTheChangedMarks()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -3289,8 +3034,6 @@ private slots:
         QCOMPARE(editor->changedCount(), 0);
     }
 
-    // Two templates made one named template are reported under its first
-    // Line: the second no longer shows the counts it had on its own.
     void aTemplateJoinedIntoANamedOneLosesItsCounts()
     {
         core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -3341,8 +3084,6 @@ private slots:
         QVERIFY(textOf(QStringLiteral("templateStatus")).endsWith(QStringLiteral("Undo removes them in one step.")));
         QVERIFY(session->undo());
         QCOMPARE(bytesOf(session->document()), before);
-        // The arrow: the selected Lines (a karaoke Line), once the Undo's
-        // preview came.
         activate(*firstKaraoke());
         QTRY_VERIFY(item(QStringLiteral("templateApplyArrow"))->isEnabled());
         QTRY_VERIFY(editor->canApplySelected());
@@ -3354,8 +3095,6 @@ private slots:
         QVERIFY(templater->lastSelectedOnly);
     }
 
-    // At its minimum width the fields stack and the preview folds into a row
-    // that unfolds on a click.
     void atItsMinimumWidthThePreviewFolds()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -3368,16 +3107,12 @@ private slots:
         QVERIFY(!item(QStringLiteral("templatePreviewList"))->isVisible());
         click(item(QStringLiteral("templatePreviewTitle")));
         QTRY_VERIFY(item(QStringLiteral("templatePreviewList"))->isVisible());
-        // The panel's parts fit its width: nothing reaches past it.
         auto *text = item(QStringLiteral("templateText"));
         QVERIFY(text->mapToScene(QPointF(text->width(), 0)).x() <= 360);
         auto *apply = item(QStringLiteral("templateApplyArrow"));
         QVERIFY(apply->mapToScene(QPointF(apply->width(), 0)).x() <= 360);
     }
 
-    // KE3: the presets are the files in :/hikari/ui/karaoke-presets, named
-    // and described as each file says (for the translators, the controller
-    // lists the same words).
     void presetsAreTheirFilesInOrder()
     {
         const QVariantList presets = TemplateEditorController::presets();
@@ -3400,13 +3135,6 @@ private slots:
         QCOMPARE(editor->templateCount() + editor->codeCount(), 0);
     }
 
-    // A preset goes in above the first karaoke Line as its template and
-    // code Lines, with that Line's Style, in one undo step; the first is
-    // current and editable. It previews on each karaoke Line what Apply then
-    // writes, and Apply gives karaoke_presets_tests' golden. Palette is the
-    // preset that reads the Line's index ($li), which a preview leaving the
-    // Lines before it out must keep; KaraokePresets.EachPresetGeneratesItsGolden
-    // checks every preset's output (TP1 #462).
     void aPresetInsertsPreviewsAndApplies()
     {
         const QVariantList presets = TemplateEditorController::presets();
@@ -3442,8 +3170,6 @@ private slots:
         QCOMPARE(editor->text(), qs(preset->lines.front().text));
 
         QVERIFY2(previewCame(), qPrintable(file));
-        // Each karaoke Line of the Style previews what Apply writes for
-        // it, the later ones too (their Lines before them left out).
         std::vector<std::pair<core::LineId, QStringList>> previews;
         for (const auto *l : session->document().lines())
             if (application::isKaraokeLine(*l) && l->style == u8"Romaji")
@@ -3474,7 +3200,6 @@ private slots:
         QCOMPARE(bytesOf(session->document()), before);
     }
 
-    // A preset's Lines are the user's to edit like any other template.
     void aPresetLineEditsLikeAnyTemplate()
     {
         openDocument(presetFixture(), true);
@@ -3494,8 +3219,6 @@ private slots:
         QVERIFY(previewTexts().front().startsWith(QStringLiteral("{\\fad(300,300)\\k30\\bord4}")));
     }
 
-    // New's "From a preset" lists every preset by name, its description on
-    // hover; choosing one inserts it.
     void newOffersThePresets()
     {
         openDocument(presetFixture(), true);
@@ -3538,7 +3261,6 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(first, "triggered"));
         QCOMPARE(editor->templateCount(), count + 1);
         QCOMPARE(editor->effect(), QStringLiteral("template syl"));
-        // Every stock kind, the furigana ones too.
         QStringList effects;
         for (int i = 0; auto *o = object(QStringLiteral("templateNew_%1").arg(i)); ++i)
             effects << o->property("text").toString().section(QLatin1Char('\t'), 1);

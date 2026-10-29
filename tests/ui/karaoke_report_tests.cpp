@@ -1,8 +1,3 @@
-// KE1-template-timing: the karaoke templater's run report, read and put in
-// words, and the composition showing it: the summary in the status bar, the
-// per-template details in the log window without popping it up, and the
-// progress window kept when the run named template problems.
-
 #include "hikari/app/application.h"
 #include "karaoke_report.h"
 
@@ -47,7 +42,7 @@ bool loadTemplater(app::Application &a)
     return false;
 }
 
-} // namespace
+}
 
 class KaraokeReportTests : public QObject {
     Q_OBJECT
@@ -62,7 +57,6 @@ class KaraokeReportTests : public QObject {
         return o;
     }
 
-    // Opens a copy of a corpus Document and applies the whole template.
     bool templated(app::Application &a, const char *name)
     {
         const QString path = dir.filePath(QLatin1String(name));
@@ -101,7 +95,6 @@ private slots:
         QCOMPARE(ui::karaokeReportSummary(*r),
                  QStringLiteral("Karaoke template: 30 line(s) generated from 2 karaoke line(s) in 1.50 s. "
                                 "1 template problem(s): see the log."));
-        // The slowest template first.
         QCOMPARE(ui::karaokeReportDetails(*r).split(QLatin1Char('\n')),
                  (QStringList{ui::karaokeReportSummary(*r), QStringLiteral("Measuring the karaoke lines: 250 ms"),
                               QStringLiteral("Template line 3 (template line, Romaji): 1.25 s, 6 line(s) generated"),
@@ -121,7 +114,6 @@ private slots:
             QStringLiteral("Karaoke template: %1 line(s) generated from 6 karaoke line(s) in ").arg(generated)));
         QVERIFY(a.log().history().contains(QStringLiteral("Template line 5 (template syl, T2c): ")));
         QVERIFY(a.log().history().contains(QStringLiteral("Measuring the karaoke lines: ")));
-        // Silent: no toast (the test profile has no dictionary, which is one).
         for (const QList<QVariant> &notice : std::as_const(noticed))
             QCOMPARE(notice.at(2).toString(), QStringLiteral("Spellchecker"));
         QVERIFY(!a.automation().keepLog());

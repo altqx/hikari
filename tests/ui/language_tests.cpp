@@ -1,14 +1,3 @@
-// O5 (#197): the interface language over the O4 catalogs (docs/localisation.md).
-// Settings lists English and the embedded catalogs as legacy OptionsDialog
-// does (OptionsDialog.cpp:322-341); the choice is stored in PROGRAM_LANGUAGE
-// and read at start as hikarisubApp.cpp:327-369 reads it, and it switches
-// live (the card's departure from "program restart required"): QML, dialogs,
-// menus, models, cached controller strings and accessible names follow.
-// aegisub.gettext resolves through the HikariSub.Automation.Gettext QM
-// (Automation.cpp:83-88). Pseudolocalized and right-to-left layouts, the
-// Document's bytes, times and numbers across a switch, and the program font
-// applied live (OptionsDialog.cpp:1105-1112).
-
 #include "hikari/app/application.h"
 #include "hikari/app/localisation.h"
 #include "docking.h"
@@ -48,16 +37,12 @@ QByteArray readAll(const QString &path)
     return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
 }
 
-// A saved ASS file without the [Hikari] section a save adds at its end (WS2):
-// the tab's arrangement, which is not document content.
 QByteArray withoutLayout(const QByteArray &saved)
 {
     const qsizetype at = saved.lastIndexOf("[Hikari]");
     return at < 0 ? saved : saved.left(at);
 }
 
-// Every source text the interface catalogs key (the Polish catalog's entries
-// lupdate keeps for the sources, so not the vanished or obsolete ones).
 QSet<QString> catalogSources()
 {
     QSet<QString> out;
@@ -77,8 +62,6 @@ QSet<QString> catalogSources()
     return out;
 }
 
-// A TS catalog's entry: its translation's type ("unfinished", "vanished",
-// "" when finished) and text; nullopt when the context has no such source.
 std::optional<std::pair<QString, QString>> tsEntry(const QString &file, const QString &context, const QString &source)
 {
     QXmlStreamReader xml(readAll(file));
@@ -103,7 +86,7 @@ bool hasLetter(const QString &s)
     return std::any_of(s.begin(), s.end(), [](QChar c) { return c.isLetter(); });
 }
 
-} // namespace
+}
 
 class LanguageTest : public QObject {
     Q_OBJECT
@@ -156,7 +139,6 @@ class LanguageTest : public QObject {
         return nullptr;
     }
     QString fileMenuTitle() const { return item("fileMenuBarItem")->property("text").toString(); }
-    // PF1: the Settings window, made at its first opening.
     QObject *settingsDialog() const
     {
         QVariant made;
@@ -170,7 +152,7 @@ class LanguageTest : public QObject {
     }
     QQuickItem *settingsButton(const char *name) const
     {
-        return dialogItem(name); // in the window's footer
+        return dialogItem(name);
     }
     void openSettings()
     {
@@ -179,7 +161,6 @@ class LanguageTest : public QObject {
         QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(settingsDialog()->property("visible").toBool());
     }
-    // A choice of the dialog, as the user makes it (ComboBox activated).
     void choose(const char *setting, int index)
     {
         auto *combo = dialogItem(setting);
@@ -188,7 +169,6 @@ class LanguageTest : public QObject {
         QVERIFY(QMetaObject::invokeMethod(combo, "activated", Q_ARG(int, index)));
     }
     QString tabTitle(int i) const { return application->tabs().value(i).toMap().value(QStringLiteral("title")).toString(); }
-    // Every text an item or a menu object shows, with its accessible name.
     QList<std::pair<QPointer<QObject>, QString>> shownTexts() const
     {
         QList<std::pair<QPointer<QObject>, QString>> out;
@@ -231,8 +211,6 @@ private slots:
         episode = dir.filePath(QStringLiteral("episode.ass"));
         QFile f(episode);
         QVERIFY(f.open(QIODevice::WriteOnly));
-        // A style with decimal values and Lines with times: what a language
-        // must not change.
         f.write("\xEF\xBB\xBF[Script Info]\r\nScriptType: v4.00+\r\nPlayResX: 1280\r\nPlayResY: 720\r\n\r\n"
                 "[V4+ Styles]\r\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
                 "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
@@ -249,8 +227,6 @@ private slots:
         QCOMPARE(QGuiApplication::layoutDirection(), Qt::LeftToRight);
     }
 
-    // The QM the build embeds (hikari_translations), sorted as
-    // wxArrayString::Sort sorts GetAvailableTranslations' tags.
     void catalogsAreTheEmbeddedQm()
     {
         app::Localisation localisation;
@@ -259,7 +235,6 @@ private slots:
         QCOMPARE(localisation.language(), QString());
     }
 
-    // Locale selection and fallback, the same on every platform.
     void languageResolution()
     {
         const QStringList shipped{QStringLiteral("ko_KR"), QStringLiteral("pl"), QStringLiteral("ta"), QStringLiteral("th_TH")};
@@ -270,15 +245,11 @@ private slots:
                 qWarning() << tag << "found" << found;
             return found == expectFound ? out : QStringLiteral("?");
         };
-        // English: the source language, no catalog (legacy "" and "en";
-        // "0" and "1" are old values legacy turns into "").
         QCOMPARE(resolve(""), QString());
         QCOMPARE(resolve("en"), QString());
         QCOMPARE(resolve("0"), QString());
         QCOMPARE(resolve("1"), QString());
         QCOMPARE(resolve("en_GB"), QString());
-        // A catalog's tag, or a tag of its language (wxLocale's canonical
-        // names: ko -> ko_KR, pl_PL -> pl, th -> th_TH, ta_IN -> ta).
         QCOMPARE(resolve("pl"), QStringLiteral("pl"));
         QCOMPARE(resolve("ko_KR"), QStringLiteral("ko_KR"));
         QCOMPARE(resolve("ko"), QStringLiteral("ko_KR"));
@@ -286,18 +257,13 @@ private slots:
         QCOMPARE(resolve("th"), QStringLiteral("th_TH"));
         QCOMPARE(resolve("ta_IN"), QStringLiteral("ta"));
         QCOMPARE(resolve("pl-PL"), QStringLiteral("pl"));
-        // No catalog of the language: English, reported.
         QCOMPARE(resolve("de", false), QString());
         QCOMPARE(resolve("zz_ZZ", false), QString());
-        // Legacy's first start on a Polish system (hikarisubApp.cpp:319-325).
         QCOMPARE(app::Localisation::firstStartLanguage({QStringLiteral("pl-PL"), QStringLiteral("en-US")}), QStringLiteral("pl"));
         QCOMPARE(app::Localisation::firstStartLanguage({QStringLiteral("en-US"), QStringLiteral("pl-PL")}), QString());
         QCOMPARE(app::Localisation::firstStartLanguage({}), QString());
     }
 
-    // O5-qt-catalog: Qt's own catalog (qt_<language>) loads with the
-    // language, below HikariSub's: a string both answer is HikariSub's, one
-    // only Qt's catalog has is Qt's; English removes both.
     void qtCatalogLoadsBelowHikariSubs()
     {
         app::Localisation localisation(QStringLiteral(HIKARI_LANGUAGE_FIXTURES));
@@ -312,9 +278,6 @@ private slots:
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Close"));
     }
 
-    // #385: a count reads in English through the English numerus catalog,
-    // below every other: in English, and in Polish the pl catalog's own forms
-    // (TR1 #475 finished it). Without the Localisation the source text shows.
     void englishCountsHaveTheirPlural()
     {
         const auto remove = [](int n) {
@@ -327,13 +290,11 @@ private slots:
             QVERIFY(localisation.setLanguage(QStringLiteral("pl")));
             QCOMPARE(remove(2), QStringLiteral("Usuń 2 słowa"));
             QCOMPARE(remove(5), QStringLiteral("Usuń 5 słów"));
-            QVERIFY(!localisation.catalogLanguages().contains(QStringLiteral("en"))); // not a language to choose
+            QVERIFY(!localisation.catalogLanguages().contains(QStringLiteral("en")));
         }
         QCOMPARE(remove(1), QStringLiteral("Remove 1 word(s)"));
     }
 
-    // By default Qt's catalog comes from the Qt installation (the build's Qt
-    // ships qt_pl and qt_ko; packaging them is distribution's).
     void qtCatalogComesFromTheQtInstallation()
     {
         QTranslator qt;
@@ -349,10 +310,6 @@ private slots:
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Close"));
     }
 
-    // O5-language-label: the Options label is the new key "Language" in
-    // every interface catalog (each old translation names the restart); the
-    // old key is vanished there and stays in the gettext catalogs, where
-    // scripts reach it.
     void languageLabelKeyIsNew()
     {
         for (const char *language : {"ko_KR", "pl", "ta", "th_TH"}) {
@@ -370,28 +327,18 @@ private slots:
         }
     }
 
-    // aegisub.gettext's lookup: the legacy MO's answers (O4's qm_tests
-    // compare the whole catalogs), missing keys, conversion edge cases and
-    // the catalog after a switch.
     void gettextResolvesThroughTheGettextCatalog()
     {
         app::Localisation localisation;
-        // English: no catalog, every source comes back.
         QCOMPARE(localisation.gettext("Search bar"), std::string("Search bar"));
         QVERIFY(localisation.setLanguage(QStringLiteral("pl")));
         QCOMPARE(localisation.gettext("Search bar"), std::string("Pasek szukania"));
         QCOMPARE(localisation.gettext("no such key"), std::string("no such key"));
-        // A plural entry's msgstr[0] under its singular id, printf kept (a
-        // script formats it itself).
         QCOMPARE(localisation.gettext("%d element"), std::string("%d element"));
-        // wxString(str, wxConvUTF8, len) is empty for bytes that are not
-        // UTF-8, and the empty string is never translated.
         QCOMPARE(localisation.gettext(""), std::string());
         QCOMPARE(localisation.gettext("\xff" "bad"), std::string());
-        QCOMPARE(localisation.gettext("\xed\xa0\x80"), std::string()); // an encoded surrogate
-        // A NUL never matches an entry ("Search" alone is not looked up).
+        QCOMPARE(localisation.gettext("\xed\xa0\x80"), std::string());
         QCOMPARE(localisation.gettext(std::string("Search bar\0x", 12)), std::string("Search bar\0x", 12));
-        // UTF-8 out: a Thai translation, after a live switch.
         QVERIFY(localisation.setLanguage(QStringLiteral("th")));
         QCOMPARE(localisation.language(), QStringLiteral("th_TH"));
         QTranslator thai;
@@ -399,10 +346,9 @@ private slots:
         const QString expected = thai.translate(app::Localisation::kGettextContext, "Search bar");
         QVERIFY(!expected.isEmpty());
         QCOMPARE(localisation.gettext("Search bar"), expected.toStdString());
-        // The rewrite's interface contexts never answer for scripts.
         QVERIFY(localisation.setLanguage(QStringLiteral("pl")));
         QCOMPARE(QCoreApplication::translate("HikariSub.MainWindow", "&File"), QStringLiteral("&Plik"));
-        QCOMPARE(localisation.gettext("&File"), std::string("&Plik")); // the legacy id, from the gettext catalog
+        QCOMPARE(localisation.gettext("&File"), std::string("&Plik"));
         QCOMPARE(localisation.gettext("Language (program restart required)"),
                  std::string("Język (wymaga restartu programu)"));
         QVERIFY(localisation.setLanguage(QStringLiteral("en")));
@@ -410,14 +356,12 @@ private slots:
         QCOMPARE(QCoreApplication::translate("HikariSub.MainWindow", "&File"), QStringLiteral("&File"));
     }
 
-    // Settings: English and the catalogs; Apply switches the open window,
-    // its dialogs, menus and accessible names at once and stores the tag.
     void settingsSwitchesTheLanguageLive()
     {
         start();
         QCOMPARE(fileMenuTitle(), QStringLiteral("&File"));
         QVERIFY(application->openFile(episode));
-        application->addPage(); // an Untitled tab (legacy SubsName = _("Untitled"))
+        application->addPage();
         QCOMPARE(tabTitle(1), QStringLiteral("Untitled"));
         openSettings();
         QCOMPARE(settingsDialog()->property("languages").toStringList(),
@@ -425,8 +369,6 @@ private slots:
                               QStringLiteral("தமிழ்"), QStringLiteral("ไทย")}));
         QCOMPARE(dialogItem("setting_program.language")->property("currentIndex").toInt(), 0);
         QCOMPARE(settingsDialog()->property("title").toString(), QStringLiteral("Settings"));
-        // The choice applies at once, so its label asks for no restart
-        // (O5-language-label; legacy "Language (program restart required)").
         QCOMPARE(dialogItem("settingsLanguageGroup")->property("title").toString(), QStringLiteral("Language"));
         QAccessibleInterface *languageChoice = QAccessible::queryAccessibleInterface(dialogItem("setting_program.language"));
         QVERIFY(languageChoice);
@@ -435,36 +377,25 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl"));
         QCOMPARE(application->localisation().language(), QStringLiteral("pl"));
-        // The window and the open dialog, retranslated.
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&Plik"));
         QCOMPARE(settingsButton("settingsApply")->property("text").toString(), QStringLiteral("Zastosuj"));
         QCOMPARE(dialogItem("setting_program.language")->property("currentIndex").toInt(), 2);
-        // An accessible name (Accessible.name: text, a check box's).
         QAccessibleInterface *a = QAccessible::queryAccessibleInterface(dialogItem("setting_subtitles.openInNewTab"));
         QVERIFY(a);
         QCOMPARE(a->text(QAccessible::Name), QStringLiteral("Otwieraj napisy zawsze w nowej karcie"));
-        // PF1's keys (the window's title, the language label), translated
-        // by TR1 #475: never the legacy restart text.
         QCOMPARE(settingsDialog()->property("title").toString(), QStringLiteral("Ustawienia"));
         QCOMPARE(dialogItem("settingsLanguageGroup")->property("title").toString(), QStringLiteral("Język"));
         QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Język interfejsu"));
-        // A string the application keeps: the Untitled tab's name; a tab
-        // named after its file keeps it.
         QCOMPARE(tabTitle(0), QStringLiteral("episode.ass"));
         QCOMPARE(tabTitle(1), QStringLiteral("Bez nazwy"));
-        // The dictionary choice's entry for an empty Dictionary folder.
         QCOMPARE(settingsDialog()->property("dictionaries").toStringList().value(0),
                  QStringLiteral("Umieść pliki .dic i .aff do folderu \"Dictionary\""));
-        // OK with English again.
         choose("setting_program.language", 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!settingsDialog()->property("visible").toBool());
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("en"));
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&File"));
         QCOMPARE(tabTitle(1), QStringLiteral("Untitled"));
-        // "Reset all settings…" resets PROGRAM_LANGUAGE (legacy
-        // ResetDefault) at OK (PF1-staged-reset), so the interface is
-        // English then too.
         application->settingsStore()->set("program.language", QStringLiteral("ko_KR"));
         QCOMPARE(application->localisation().language(), QStringLiteral("ko_KR"));
         openSettings();
@@ -480,8 +411,6 @@ private slots:
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&File"));
     }
 
-    // Cold start: the stored language before the window exists, also from
-    // a tag of the language only; one without a catalog is English, logged.
     void coldStartReadsTheStoredLanguage()
     {
         const QString ini = dir.filePath(QStringLiteral("cold.ini"));
@@ -497,7 +426,7 @@ private slots:
         QCOMPARE(fileMenuTitle(), QStringLiteral("&Plik"));
         application->addPage();
         QCOMPARE(tabTitle(application->tabs().size() - 1), QStringLiteral("Bez nazwy"));
-        QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl_PL")); // not rewritten
+        QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl_PL"));
         stop();
         {
             app::Application::Options options;
@@ -511,7 +440,6 @@ private slots:
         QCOMPARE(fileMenuTitle(), QStringLiteral("&File"));
         QVERIFY(application->log().history().contains(QStringLiteral("Cannot find translation, language change failed")));
         stop();
-        // Legacy "0" and "1" are English, written back as "".
         {
             app::Application::Options options;
             options.settingsFile = ini;
@@ -524,11 +452,6 @@ private slots:
         QVERIFY(!application->log().history().contains(QStringLiteral("Cannot find translation")));
     }
 
-    // Legacy's first start: LoadOptions() finds no settings file (2) and the
-    // system's interface language is Polish, so PROGRAM_LANGUAGE and
-    // DICTIONARY_LANGUAGE become "pl" before either is read
-    // (hikarisubApp.cpp:319-325). Only then: a settings file that exists, or
-    // another first system language, leaves both as they are.
     void firstStartOnAPolishSystemTakesPolish()
     {
         const QStringList polish{QStringLiteral("pl-PL"), QStringLiteral("en-US")};
@@ -537,7 +460,6 @@ private slots:
         start(ini, polish);
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl"));
         QCOMPARE(application->dictionaryLanguage(), QStringLiteral("pl"));
-        // Read at start: the window opens in Polish.
         QCOMPARE(application->localisation().language(), QStringLiteral("pl"));
         QCOMPARE(fileMenuTitle(), QStringLiteral("&Plik"));
         application->settingsStore()->set("program.language", QString());
@@ -545,14 +467,11 @@ private slots:
         application->settingsStore()->sync();
         stop();
         QVERIFY(QFile::exists(ini));
-        // The second start keeps what the settings say.
         start(ini, polish);
         QCOMPARE(application->settingsStore()->text("program.language"), QString());
         QCOMPARE(application->dictionaryLanguage(), QStringLiteral("en_US"));
         QCOMPARE(fileMenuTitle(), QStringLiteral("&File"));
         stop();
-        // A first start whose first system language is not Polish (legacy
-        // GetSystemDefaultUILanguage() is one language, the first here).
         const QString other = dir.filePath(QStringLiteral("first-start/other.ini"));
         start(other, {QStringLiteral("en-US"), QStringLiteral("pl-PL")});
         QCOMPARE(application->settingsStore()->text("program.language"), QString());
@@ -560,10 +479,6 @@ private slots:
         QCOMPARE(fileMenuTitle(), QStringLiteral("&File"));
     }
 
-    // What controllers and models keep is made again after a switch: the
-    // video and audio status, the selection status, the Grid's headings and
-    // its accessible name. The pseudolocale translates every string, so a
-    // stale one stays English.
     void cachedStringsFollowASwitch()
     {
         start();
@@ -593,7 +508,6 @@ private slots:
         QTRY_VERIFY(item("audioStatus")->property("text").toString() != audio);
         QVERIFY(a->text(QAccessible::Name) != gridName);
         QVERIFY(a->text(QAccessible::Name).startsWith(QLatin1Char('[')));
-        // And back.
         application->localisation().setPseudo(app::Localisation::Pseudo::None);
         QTRY_COMPARE(item("selectionStatus")->property("text").toString(), QStringLiteral("1 line selected"));
         QCOMPARE(model->headerData(2, Qt::Horizontal).toString(), heading);
@@ -601,8 +515,6 @@ private slots:
         QTRY_COMPARE(item("audioStatus")->property("text").toString(), audio);
     }
 
-    // The selection status with hidden selected Lines (G8): the " (%1
-    // hidden)" part is made again after a switch too, with the same count.
     void hiddenSelectionStatusFollowsASwitch()
     {
         start();
@@ -623,16 +535,8 @@ private slots:
         QTRY_COMPARE(application->shell().selectionStatus(), english);
     }
 
-    // A live switch re-evaluates the closed Dialogs' implicit sizes, where
-    // the Fusion Dialog and DialogButtonBox bindings report "Binding loop
-    // detected for property implicitWidth" (as a text change in a closed
-    // Dialog does without a switch). Opened afterwards, each Dialog has the
-    // size it has when the program starts in that language or with that
-    // font.
     void dialogsSizeAfterASwitchAsAtStart()
     {
-        // The Fusion Dialogs whose size is all text and buttons (PU4 put the
-        // Yes / No questions on the message box, a window of its own).
         const auto sizes = [this] {
             QList<QSizeF> out;
             for (const char *name : {"aboutDialog", "creditsDialog"}) {
@@ -663,7 +567,6 @@ private slots:
         QCOMPARE(sizes(), switched);
         QVERIFY(switched != english);
         stop();
-        // The program font, live and at start.
         start();
         application->settingsStore()->set("program.fontSize", 14);
         QCoreApplication::processEvents();
@@ -682,9 +585,6 @@ private slots:
         QVERIFY(larger != english);
     }
 
-    // The pseudolocalized window: after the switch no item or menu shows a
-    // catalog source text any more, so every translatable string on it was
-    // refreshed (strings never translated stay, as the allowance says).
     void pseudolocalizedWindowLeavesNoSourceText()
     {
         start();
@@ -697,16 +597,9 @@ private slots:
         QVERIFY2(before > 100, qPrintable(QString::number(before)));
         application->localisation().setPseudo(app::Localisation::Pseudo::Accents);
         QCoreApplication::processEvents();
-        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); // standard buttons made anew
-        // Text legacy never translates either: the OK buttons' literal label
-        // (OptionsDialog.cpp:1016, MappedButton(this, wxID_OK, L"OK")).
-        // A Style's name ("Default", the document's data) that is also a key.
+        // MUST KILL: flushes DeferredDelete so the replaced standard buttons are gone before the scan
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         const QSet<QString> allowed{QStringLiteral("OK"), QStringLiteral("Default")};
-        // The History list shows the edits' own names (edit_session.cpp's
-        // "Open" for the opening state), never catalog strings, though "Open"
-        // is also a key.
-        // The inspector bar's unseen copies of every family's groups, which
-        // it only measures (VT1), are never shown.
         const auto unshown = [](QObject *o) {
             for (auto *i = qobject_cast<QQuickItem *>(o); i; i = i->parentItem())
                 if (i->objectName() == u"historyList" || i->objectName() == u"visualToolMeasure")
@@ -715,10 +608,6 @@ private slots:
         };
         QStringList stale;
         for (const auto &[o, text] : shownTexts())
-            // A menu item's binding (menuItemKeys) is the hotkey's key names
-            // (hotkeys.cpp's legacy names: "Left" for Previous frame), never
-            // a catalog string, though "Left" and "Right" are also Grid
-            // headings since they took legacy's translations.
             if (sources.contains(text) && !allowed.contains(text) && o && o->objectName() != u"menuItemKeys" && !unshown(o))
             {
                 QString chain;
@@ -730,9 +619,6 @@ private slots:
         QVERIFY2(stale.isEmpty(), qPrintable(stale.join(u'\n')));
     }
 
-    // Right to left: the catalogs' QT_LAYOUT_DIRECTION, the application's
-    // direction and LayoutMirroring on each window's root item, inherited by
-    // the menu bar, the panels and the popups.
     void rightToLeftMirrorsTheShell()
     {
         start();
@@ -744,9 +630,7 @@ private slots:
         QVERIFY(application->localisation().rightToLeft());
         QCOMPARE(QGuiApplication::layoutDirection(), Qt::RightToLeft);
         QCOMPARE(QQmlProperty(window->contentItem(), QStringLiteral("LayoutMirroring.enabled"), qmlContext(window)).read().toBool(), true);
-        // The menu bar starts at the right.
         QTRY_VERIFY(file->mapToScene(QPointF(file->width(), 0)).x() > window->width() / 2);
-        // A popup opened now is mirrored too (the overlay inherits).
         openSettings();
         auto *ok = settingsButton("settingsOk");
         auto *cancel = settingsButton("settingsCancel");
@@ -763,14 +647,9 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
 
-    // The Document never follows the interface: its saved bytes, the
-    // times and numbers the views show, the locale numbers are read in and
-    // a right-to-left line's text are the same before and after switches.
     void documentIgnoresTheLanguage()
     {
         start();
-        // Every save writes the tab's arrangement ([Hikari], WS2), which the
-        // tab has once the window's first arrangement is shown.
         QTRY_VERIFY(window->property("arrangementSettled").toBool());
         QVERIFY(application->openFile(episode));
         auto *session = application->files().session(*application->workspace().editingTarget());
@@ -810,9 +689,6 @@ private slots:
         QVERIFY(readAll(english).contains("1:02:03.04,1:02:04.99"));
     }
 
-    // aegisub.gettext through the application: a script loaded in Polish
-    // registers Polish names; after a switch its next lookups read the new
-    // catalog and what it already holds stays until it is reloaded.
     void luaGettextFollowsTheLanguage()
     {
         start();
@@ -833,36 +709,29 @@ private slots:
         const auto runOnce = [&](QString &out) {
             if (!automation.run(script, 0) || !QTest::qWaitFor([&] { return !automation.running(); }, 15000))
                 return false;
-            out = automation.log(); // the run's log
+            out = automation.log();
             return true;
         };
         QString log;
         QVERIFY(runOnce(log));
         QVERIFY2(log.contains(QStringLiteral("Pasek szukania|Pasek szukania|no such key|%d element|12|")), qPrintable(log));
         QVERIFY2(log.contains(QStringLiteral("3 element")), qPrintable(log));
-        // (aegisub.log adds no line break) the text to its NUL, and bytes
-        // that are not UTF-8 give the empty string.
         QVERIFY2(log.endsWith(QStringLiteral("6|Search0")), qPrintable(log));
         application->settingsStore()->set("program.language", QStringLiteral("en"));
         QVERIFY(runOnce(log));
         QVERIFY2(log.contains(QStringLiteral("Pasek szukania|Search bar|no such key|%d element|12|")), qPrintable(log));
-        QCOMPARE(status().info.name, std::string("Pasek szukania")); // registered while Polish
+        QCOMPARE(status().info.name, std::string("Pasek szukania"));
         QVERIFY(automation.reload(script));
         QTRY_VERIFY_WITH_TIMEOUT(status().state == application::ScriptStatus::State::Ready, 15000);
         QCOMPARE(status().info.name, std::string("Search bar"));
     }
 
-    // PROGRAM_FONT and PROGRAM_FONT_SIZE are the application's font from the
-    // start (Options.GetFont(): Tahoma, 10 points by default) and follow a
-    // change at once; the font before the application comes back after it.
     void programFontAppliesLive()
     {
         const QFont before = QGuiApplication::font();
         start();
         QCOMPARE(QGuiApplication::font().families().value(0), QStringLiteral("Tahoma"));
         QCOMPARE(QGuiApplication::font().pointSize(), 10);
-        // The status bar's fields (P10) take the status text role, 10/13 of
-        // the program font and at least 8 points (visual-language.md).
         const auto statusSize = [](qreal points) { return std::max(points * 10 / 13, 8.0); };
         auto *label = item("selectionStatus");
         QVERIFY(label);
@@ -873,25 +742,16 @@ private slots:
         QCOMPARE(QGuiApplication::font().pointSize(), 14);
         QCOMPARE(QGuiApplication::font().families().value(0), QStringLiteral("DejaVu Sans"));
         QTRY_COMPARE(label->property("font").value<QFont>().pointSizeF(), statusSize(14));
-        // A control in a window made with the main one (the History window).
         QCOMPARE(item("historyGo")->property("font").value<QFont>().pointSize(), 14);
         QTRY_COMPARE(label->property("font").value<QFont>().families().value(0), QStringLiteral("DejaVu Sans"));
-        application->settingsStore()->set("program.fontSize", 0); // legacy GetFont: 10
+        application->settingsStore()->set("program.fontSize", 0);
         QCOMPARE(QGuiApplication::font().pointSize(), 10);
         stop();
         QCOMPARE(QGuiApplication::font(), before);
     }
 
-    // O6: the semantic contexts reach the window. Every text an item shows
-    // in English and then in Polish is looked up among the pl catalog's
-    // finished entries: the Polish text is the translation of the English
-    // one under a registered surface context (HikariSub.*), and the
-    // embedded QM answers that context. The main window's surfaces are each
-    // seen; lupdate's old file and class contexts answer nothing.
     void semanticContextsShowTheCatalogOnSurfaces()
     {
-        // The pl catalog's finished singular entries: source -> context ->
-        // translation.
         QHash<QString, QHash<QString, QString>> finished;
         {
             QXmlStreamReader xml(readAll(QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_pl.ts")));
@@ -915,7 +775,6 @@ private slots:
         QVERIFY(finished.size() > 500);
         QTranslator qm;
         QVERIFY(qm.load(QStringLiteral(":/i18n/hikarisub_pl.qm")));
-        // What each object shows, per property, and its accessible name.
         using Shown = QHash<std::pair<QObject *, QString>, QString>;
         const auto shown = [] {
             Shown out;
@@ -947,7 +806,8 @@ private slots:
         };
         start();
         QVERIFY(application->openFile(episode));
-        QVERIFY(settingsDialog()); // PF1: the Settings window, made at its first opening
+        // MUST KILL: settingsDialog() is called for its side effect, making the Settings window
+        QVERIFY(settingsDialog());
         QCoreApplication::processEvents();
         const Shown english = shown();
         application->settingsStore()->set("program.language", QStringLiteral("pl"));
@@ -955,10 +815,6 @@ private slots:
         QCoreApplication::processEvents();
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         const Shown polish = shown();
-        // The surface contexts whose translation an object now shows where it
-        // showed the source in English. A context counts as seen through a
-        // source only it translates that way, so a shared text such as
-        // "Cancel" proves no particular context.
         QMap<QString, QSet<QString>> seen;
         int shownTranslations = 0;
         for (auto it = english.cbegin(); it != english.cend(); ++it) {
@@ -982,30 +838,19 @@ private slots:
             found << QStringLiteral("%1 (%2)").arg(context).arg(sources.size());
         qInfo().noquote() << shownTranslations << "shown translations; sources one context translates, by context:"
                           << found.join(QStringLiteral(", "));
-        // Not HikariSub.Session: PU1's session and autosave popups replaced
-        // the windows whose legacy texts were translated, and their own
-        // texts wait for the translators. Nor HikariSub.Conversion: PU4's Set
-        // new FPS and PU6's conversion windows are made at their first
-        // opening, and the resolution question is a message box.
         for (const char *context : {"HikariSub.MainWindow", "HikariSub.Audio", "HikariSub.Video", "HikariSub.Editor",
                                     "HikariSub.Grid", "HikariSub.TimeShift", "HikariSub.Options", "HikariSub.Styles",
                                     "HikariSub.Documents"})
             QVERIFY2(seen.contains(QLatin1String(context)), context);
-        // A surface string the application keeps: the Untitled tab's name.
         application->addPage();
         QCOMPARE(tabTitle(application->tabs().size() - 1), qm.translate("HikariSub.Documents", "Untitled"));
         QCOMPARE(tabTitle(application->tabs().size() - 1), QStringLiteral("Bez nazwy"));
-        // The contexts O4 extracted (the QML file, the C++ class) are not in
-        // the QM any more.
         QCOMPARE(qm.translate("HikariSub.MainWindow", "&File"), QStringLiteral("&Plik"));
         QCOMPARE(qm.translate("Main", "&File"), QString());
         QCOMPARE(qm.translate("hikari::app::Application", "Untitled"), QString());
         application->settingsStore()->set("program.language", QStringLiteral("en"));
     }
 
-    // #477: the Script Properties wrap styles that name \N and \n show their
-    // translation in every language. lupdate read the backslashes of the
-    // old keys as escapes, so no catalog held the text the combo asked for.
     void wrapStylesShowTheirTranslation()
     {
         start();
@@ -1034,10 +879,6 @@ private slots:
         application->settingsStore()->set("program.language", QStringLiteral("en"));
     }
 
-    // Screenshots for review (HIKARI_LANGUAGE_SHOT_DIR; skipped without it):
-    // the main window with the File menu and the Options dialog (on its
-    // first page) in Polish, Thai, the accented pseudolocale and the
-    // right-to-left one.
     void screenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_LANGUAGE_SHOT_DIR");
@@ -1057,8 +898,6 @@ private slots:
         for (const auto &c : cases) {
             application->settingsStore()->set("program.language", QLatin1String(c.language));
             application->localisation().setPseudo(c.pseudo);
-            // The language switched: the menus are not in English, and only
-            // the right-to-left pseudolocale mirrors the layout.
             QTRY_VERIFY(fileMenuTitle() != QStringLiteral("&File"));
             QCOMPARE(QGuiApplication::layoutDirection(),
                      c.pseudo == app::Localisation::Pseudo::RightToLeft ? Qt::RightToLeft : Qt::LeftToRight);

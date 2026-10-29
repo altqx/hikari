@@ -1,7 +1,3 @@
-// L1, AM1: the Automation panel in QML over the real manager and helpers:
-// scripts in load order, macros with their legacy aliases, a script's state
-// shown only when it is not ready, a visible reload, a failed load explained,
-// and one macro at a time.
 #include "automation_manager_controller.h"
 #include "hikari/backends/automation_manager.h"
 
@@ -30,7 +26,7 @@ QObject *findNamed(QQuickItem *root, const QString &name)
     return nullptr;
 }
 
-} // namespace
+}
 
 class AutomationManagerUiTests : public QObject {
     Q_OBJECT
@@ -73,7 +69,7 @@ private slots:
         QTRY_VERIFY(item(QStringLiteral("macro_0_2")));
         QCOMPARE(item(QStringLiteral("macro_0_2"))->property("text").toString(), QStringLiteral("Count"));
         QCOMPARE(item(QStringLiteral("state_0"))->property("scriptState").toString(), QStringLiteral("ready"));
-        QVERIFY(!item(QStringLiteral("state_0"))->property("visible").toBool()); // AM1: no "Ready" on every row
+        QVERIFY(!item(QStringLiteral("state_0"))->property("visible").toBool());
     }
 
     void aFailedLoadSaysWhy()
@@ -81,15 +77,12 @@ private slots:
         controller->load(QStringLiteral(HIKARI_LUA_FIXTURES "/syntax-error.lua"));
         QTRY_COMPARE(scriptState(0), QStringLiteral("failed"));
         QTRY_VERIFY(item(QStringLiteral("error_0")));
-        // #390: the row names the file, not Lua's [string "<path>"] chunk.
         const QString error = item(QStringLiteral("error_0"))->property("text").toString();
         QVERIFY2(error.startsWith(QStringLiteral("syntax-error.lua:")), qPrintable(error));
         QVERIFY(error.contains(QStringLiteral("expected")));
         QVERIFY(item(QStringLiteral("error_0"))->property("visible").toBool());
     }
 
-    // #397: an autoload script turned off lists unticked, muted, without
-    // Reload; its box turns it on, and a loaded one's box turns it off.
     void autoloadScriptsHaveAnEnabledBox()
     {
         const QString on = QStringLiteral(HIKARI_LUA_FIXTURES "/host-fixture.lua");
@@ -109,7 +102,6 @@ private slots:
         QVERIFY(!item(QStringLiteral("reload_1"))->property("visible").toBool());
         QVERIFY(!item(QStringLiteral("state_1"))->property("visible").toBool());
         QVERIFY(item(QStringLiteral("enabled_0"))->property("checked").toBool());
-        // For the PR's review: the panel with one script on and one off.
         if (const QString out = qEnvironmentVariable("HIKARI_AUTOMATION_SHOT_DIR"); !out.isEmpty()) {
             QVERIFY(QDir().mkpath(out));
             QTest::qWait(300);
@@ -121,7 +113,6 @@ private slots:
         QTest::mouseClick(view.get(), Qt::LeftButton, {},
                           onBox->mapToScene(QPointF(onBox->width() / 2, onBox->height() / 2)).toPoint());
         QCOMPARE(toggled.last(), std::pair(on, false));
-        // Off while it loads or runs a macro, as Reload.
         QVERIFY(controller->reload(on));
         QCOMPARE(scriptState(0), QStringLiteral("loading"));
         QTRY_VERIFY(!item(QStringLiteral("enabled_0"))->property("enabled").toBool());
@@ -146,11 +137,11 @@ private slots:
         controller->load(path);
         QTRY_COMPARE(scriptState(0), QStringLiteral("ready"));
         QTRY_VERIFY(item(QStringLiteral("macro_0_4")));
-        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("run_0_4")), "clicked")); // Wait for cancel
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("run_0_4")), "clicked"));
         QTRY_VERIFY(controller->busy());
         QTRY_VERIFY(!item(QStringLiteral("run_0_2"))->property("enabled").toBool());
         QVERIFY(!controller->run(path, 2));
-        controller->cancel(); // the shell's run status cancels through AutomationShell (automation_workflow)
+        controller->cancel();
         QTRY_VERIFY(!controller->busy());
         QTRY_VERIFY(item(QStringLiteral("run_0_2"))->property("enabled").toBool());
     }
