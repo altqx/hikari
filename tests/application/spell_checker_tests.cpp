@@ -362,6 +362,7 @@ TEST_F(Spelling, MultilingualRoutesWordsByScript)
     EXPECT_TRUE(multi.checkWord(u"Привет세계", true)); // one of its scripts has none
     EXPECT_FALSE(multi.checkWord(u"Seoul세게계", true)); // both have one, and neither knows it
     EXPECT_TRUE(multi.checkWord(u"123", true));
+    EXPECT_FALSE(multi.checkWord(u"١wrold", true)); // an Arabic digit is no Arabic word
     EXPECT_FALSE(multi.checkWord(u"", true));
     // A word added now reaches every loaded dictionary.
     EXPECT_TRUE(multi.addWord(u"세게계"));

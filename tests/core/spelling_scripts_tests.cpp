@@ -27,6 +27,12 @@ TEST(SpellingScripts, WordScriptsComeFromTheLetters)
     EXPECT_EQ(wordScripts(u"Seoul서울"), Scripts(Script::Latin) | Script::Hangul);
     EXPECT_EQ(wordScripts(u"é"), Scripts(Script::Latin));
     EXPECT_TRUE(wordScripts(u"123").empty());
+    // Other scripts' digits too: "١wrold" is a Latin word to check.
+    EXPECT_EQ(wordScripts(u"١wrold"), Scripts(Script::Latin));
+    EXPECT_EQ(wordScripts(u"१wrold"), Scripts(Script::Latin));
+    EXPECT_TRUE(wordScripts(u"١٢٣۴").empty());
+    EXPECT_TRUE(wordScripts(u"௧௨௰๕").empty()); // Tamil digits and ten, a Thai digit
+    EXPECT_EQ(wordScripts(u"ك١"), Scripts(Script::Arabic));
     EXPECT_TRUE(wordScripts(u"́").empty());
     EXPECT_TRUE(wordScripts(u"Ꭰ").empty()); // Cherokee: not in the table
     EXPECT_TRUE(wordScripts(std::u16string(1, char16_t(0xD800))).empty());

@@ -57,8 +57,8 @@ private:
     std::uint32_t m_bits = 0;
 };
 
-// The script of a code point's letter; nothing for digits, punctuation,
-// combining marks and scripts outside the table.
+// The script of a code point's letter; nothing for digits (any script's),
+// punctuation, combining marks and scripts outside the table.
 bool scriptOf(char32_t c, Script &out);
 // Every script among a word's letters (UTF-16, surrogate pairs decoded).
 Scripts wordScripts(std::u16string_view word);

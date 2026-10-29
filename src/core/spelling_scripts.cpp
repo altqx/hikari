@@ -30,7 +30,7 @@ constexpr Range kRanges[] = {
     {0x0C80, 0x0CFF, Script::Kannada},    {0x0D00, 0x0D7F, Script::Malayalam},  {0x0D80, 0x0DFF, Script::Sinhala},
     {0x0E00, 0x0E7F, Script::Thai},       {0x0E80, 0x0EFF, Script::Lao},        {0x0F00, 0x0FFF, Script::Tibetan},
     {0x1000, 0x109F, Script::Myanmar},    {0x10A0, 0x10FF, Script::Georgian},   {0x1100, 0x11FF, Script::Hangul},
-    {0x1200, 0x139F, Script::Ethiopic},   {0x1780, 0x17FF, Script::Khmer},      {0x19E0, 0x19FF, Script::Khmer},
+    {0x1200, 0x139F, Script::Ethiopic},   {0x1780, 0x17FF, Script::Khmer},
     {0x1C80, 0x1C8F, Script::Cyrillic},   {0x1C90, 0x1CBF, Script::Georgian},   {0x1D00, 0x1D7F, Script::Latin},
     {0x1E00, 0x1EFF, Script::Latin},      {0x1F00, 0x1FFF, Script::Greek},      {0x2C60, 0x2C7F, Script::Latin},
     {0x2D00, 0x2D2F, Script::Georgian},   {0x2D80, 0x2DDF, Script::Ethiopic},   {0x2DE0, 0x2DFF, Script::Cyrillic},
@@ -45,6 +45,21 @@ constexpr Range kRanges[] = {
     {0xFF21, 0xFF3A, Script::Latin},      {0xFF41, 0xFF5A, Script::Latin},      {0xFF66, 0xFF9D, Script::Kana},
     {0xFFA0, 0xFFDC, Script::Hangul},     {0x11FC0, 0x11FFF, Script::Tamil},    {0x1B000, 0x1B16F, Script::Kana},
     {0x20000, 0x3134F, Script::Han},
+};
+
+struct Numbers {
+    char32_t first;
+    char32_t last;
+};
+
+// Digits and number signs inside the letter blocks, by start: not letters, so
+// "١wrold" (one ICU word) is Latin alone.
+constexpr Numbers kNumbers[] = {
+    {0x0660, 0x0669}, {0x06F0, 0x06F9}, {0x0966, 0x096F}, {0x09E6, 0x09EF}, {0x0A66, 0x0A6F},
+    {0x0AE6, 0x0AEF}, {0x0B66, 0x0B6F}, {0x0BE6, 0x0BF2}, {0x0C66, 0x0C6F}, {0x0CE6, 0x0CEF},
+    {0x0D66, 0x0D6F}, {0x0DE6, 0x0DEF}, {0x0E50, 0x0E59}, {0x0ED0, 0x0ED9}, {0x0F20, 0x0F33},
+    {0x1040, 0x1049}, {0x1090, 0x1099}, {0x1369, 0x137C}, {0x17E0, 0x17E9}, {0x17F0, 0x17F9},
+    {0xA9F0, 0xA9F9}, {0x11FC0, 0x11FD4},
 };
 
 struct Language {
@@ -141,6 +156,9 @@ bool scriptOf(char32_t c, Script &out)
         return false;
     const Range &range = *std::prev(it);
     if (c > range.last)
+        return false;
+    if (const auto n = std::ranges::upper_bound(kNumbers, c, {}, &Numbers::first);
+        n != std::ranges::begin(kNumbers) && c <= std::prev(n)->last)
         return false;
     out = range.script;
     return true;
