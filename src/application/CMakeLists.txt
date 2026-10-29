@@ -122,3 +122,6 @@ target_sources(hikari_application PRIVATE video_timing.cpp)
 # E5: translation mode controls (Translator mode, Not confirmed, Moving tags,
 # the Grid's Original text / Translation columns).
 target_sources(hikari_application PRIVATE translation_mode.cpp)
+# CF1 (#488): the owned files' convert-once / .old / .broken rules, which the
+# settings store, CF2's list files and CF3's sessions share.
+target_sources(hikari_application PRIVATE owned_file.cpp include/hikari/application/owned_file.h)
