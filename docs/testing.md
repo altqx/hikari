@@ -59,8 +59,10 @@ First infrastructure work must qualify the tool integrations, native sessions, f
 | Runner | Helper | Labels | Modes |
 | --- | --- | --- | --- |
 | GoogleTest 1.18.0 (plain C++) | `hikari_add_gtest(target SOURCES … [LIBRARIES …] [LABELS …])`; each test case is its own CTest entry | `gtest` | none needed |
-| QtTest (C++ Qt) | `hikari_add_qttest(target SOURCES … [LIBRARIES …] [PARTS …])` | `qttest` plus the mode | `offscreen` always; `xvfb` when `xvfb-run` exists |
+| QtTest (C++ Qt) | `hikari_add_qttest(target SOURCES … [LIBRARIES …] [PARTS …])` | `qttest` plus the mode | `offscreen` always; `xvfb` when `xvfb-run` exists and the suite is in `HIKARI_XVFB_SUITES` |
 | Qt Quick Test (QML) | `hikari_add_quicktest(target QML_DIR dir)` over `tst_*.qml` | `quicktest` plus the mode | same |
+
+Only the suites in `HIKARI_XVFB_SUITES` (`cmake/HikariTesting.cmake`) also run on a real X server (TP1, [#462](https://github.com/altqx/hikari/issues/462)). They test window-system behaviour that offscreen cannot show: windowing, focus, hover, popups, timers and fullscreen. Each entry names the bug only its xvfb run caught, or what it covers. Every other suite runs offscreen only, because running it twice found nothing offscreen missed and took about half of Ubuntu's test time. A suite joins the list with the bug that only xvfb found. The configure fails on a listed name no suite registers.
 
 A long QtTest suite runs in parts (decision 38f, 2026-10-14): `PARTS <name> <name>=<first function>… PART_TIMEOUT <s>` registers `<target>.<name>.<mode>` per part, each running the executable with `-part FROM..BEFORE`: its functions from its first function up to the next part's first, in declaration order ([`tests/support/qtest_parts.h`](../tests/support/qtest_parts.h); the source ends with `HIKARI_QTEST_MAIN_IN_PARTS` instead of `QTEST_MAIN`). A function added anywhere joins the part around it, and `<target>.parts` checks that the parts list every function exactly once. `hikari_ui_shell_tests` is split this way: in one process it took about 800-850 s under Xvfb against a 900 s timeout. Run one function as before (`hikari_ui_shell_tests <function>`); `hikari_ui_shell_tests -part FROM..BEFORE -functions` lists a part.
 

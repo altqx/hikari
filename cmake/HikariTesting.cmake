@@ -19,17 +19,70 @@ endfunction()
 find_package(Qt6 REQUIRED COMPONENTS Test QuickTest)
 find_program(HIKARI_XVFB_RUN xvfb-run)
 
+# TP1 (#462): the suites that also run on a real X server (xvfb-run), for
+# window-system behaviour offscreen cannot show: windowing, focus, hover,
+# popups, timers and fullscreen. Every other suite runs offscreen only. A
+# suite joins with the bug that only its xvfb run caught.
+set(HIKARI_XVFB_SUITES
+    # TP1 12dd265e4: an arrangement built at the first frame upset the X11
+    # window (a tab's cursor); KB3 fa5dacc6d: xcb's Redo key let Ctrl+Y skip
+    # the Line text's draft.
+    hikari_ui_shell_tests.documents
+    # TP1 12dd265e4: the Timing panel's sections and a floating panel's focus.
+    hikari_ui_shell_tests.panels
+    # TP1 12dd265e4: the audio holds.
+    hikari_ui_shell_tests.hotkeys
+    # FS1 3c1a1ebd8: on xcb the fullscreen rail took the hover from the picture.
+    hikari_ui_shell_tests.video
+    # GR1 (#364): a restart after Cancel stalled harper-ls under xcb.
+    hikari_ui_grammar_tests
+    # AD3 (#312): the progress card's timer fired only under X11.
+    hikari_ui_automation_progress_tests
+    hikari_ui_automation_workflow
+    hikari_ui_video_fullscreen_workflow # fullscreen
+    hikari_ui_popup_kit_tests # popups (PK1)
+    hikari_ui_dialog_frame_tests # popups (DG1's frame)
+    hikari_ui_theme_startup_tests # the popups' palette at start (K2, W1)
+    hikari_ui_window_frame_tests # the window frame (SH1)
+    hikari_ui_title_bar_tests # the title bar (SH1)
+    hikari_ui_docking_qualification_tests # floating panels' windows
+    hikari_ui_workspace_layout_tests # floating panels' windows
+    hikari_ui_single_instance_tests # raising and activating the running window
+    hikari_ui_tabs_workflow # focus and keys through the window
+    hikari_ui_shortcuts_workflow # focus and keys through the window
+    hikari_ui_colour_picker_tests # the picker's pointer grab (Y7 9d8cd0d95)
+    hikari_ui_automation_submenus_tests # submenus opened by hover
+    # The runners' controls: the xvfb runner still reports a failure.
+    hikari_qttest_controls hikari_qttest_failing_control
+    hikari_quicktest_controls hikari_quicktest_failing_control
+    hikari_ui_controls hikari_ui_failing_control
+    hikari_a11y_controls hikari_a11y_failing_control)
+
+# A listed name no suite registers (a rename, a removed suite) fails the
+# configure, so no suite leaves the xvfb run unnoticed.
+function(_hikari_check_xvfb_suites)
+    get_property(registered GLOBAL PROPERTY HIKARI_QT_MODE_NAMES)
+    foreach(name IN LISTS HIKARI_XVFB_SUITES)
+        if(NOT name IN_LIST registered)
+            message(FATAL_ERROR "HIKARI_XVFB_SUITES names ${name}, which no test registers")
+        endif()
+    endforeach()
+endfunction()
+cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL _hikari_check_xvfb_suites)
+
 # Register one command in the platform modes available on this host: always
-# offscreen, plus a real X server through xvfb-run when it is installed.
+# offscreen, plus a real X server through xvfb-run when it is installed and
+# the name is in HIKARI_XVFB_SUITES.
 # 120 s: several UI suites take 40-51 s on the shared Windows MSVC runners,
 # and a slow runner took them past 60 s.
 function(_hikari_add_qt_modes name label)
     cmake_parse_arguments(mode "OFFSCREEN_ONLY" "" "" ${ARGN})
     set(ARGN ${mode_UNPARSED_ARGUMENTS})
+    set_property(GLOBAL APPEND PROPERTY HIKARI_QT_MODE_NAMES ${name})
     add_test(NAME ${name}.offscreen COMMAND ${ARGN})
     set_tests_properties(${name}.offscreen PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen" LABELS "${label};offscreen" TIMEOUT 120)
-    if(HIKARI_XVFB_RUN AND NOT mode_OFFSCREEN_ONLY)
+    if(HIKARI_XVFB_RUN AND NOT mode_OFFSCREEN_ONLY AND name IN_LIST HIKARI_XVFB_SUITES)
         add_test(NAME ${name}.xvfb COMMAND "${HIKARI_XVFB_RUN}" -a ${ARGN})
         set_tests_properties(${name}.xvfb PROPERTIES
             ENVIRONMENT "QT_QPA_PLATFORM=xcb" LABELS "${label};xvfb" TIMEOUT 120)
