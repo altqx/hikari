@@ -153,3 +153,40 @@ that name so the two read alike. The English terms are those of `CONTEXT.md`.
 | Suggestion | 제안 | |
 | Reassign (a shortcut) | 재할당 | |
 | Don't save / save and close | 저장 안 함 / 저장 후 닫기 | |
+| Replace / replace all | 바꾸기 / 모두 바꾸기 | "Replace" an existing file or preset 교체 |
+| Paste | 붙여 넣기 | |
+| Duplicate (lines) | 복제 | |
+| Proofreading | 교정 | Script properties |
+| Getting started | 시작하기 | |
+| Dialog (script dialog) | 대화 상자 | |
+| Answers / last answers | 답변 / 마지막 답변 | Script dialog answers |
+| Repeat last run | 마지막 실행 반복 | |
+| Bundled (shipped with HikariSub) | 기본 제공 | |
+| Template editor | 템플릿 편집기 | |
+| Template line / code line / karaoke line | 템플릿 줄 / 코드 줄 / 노래방 줄 | "%n template lines" 템플릿 줄 %n개 |
+| Template / code for each X | X별 템플릿 / X별 코드 | "Template for each syllable" 음절별 템플릿 |
+| Pre-line template | 줄 앞 템플릿 | |
+| Modifier (template) | 수정자 | Modifier names (noblank, loop) stay in Latin |
+| Run (formatting run, Translation mode) | 서식 구간 | Short form 구간: "Run %1" 구간 %1 |
+| Tap to time / tapping | 탭 타이밍 / 탭 | "Tap latency" 탭 지연 시간 |
+| Beep (calibration) | 신호음 | |
+| Shear (\fax, \fay) | 기울이기 | |
+| Position pointer | 위치 포인터 | Visual tool names |
+| Text positioning / moving / scaling | 텍스트 위치 지정 / 텍스트 이동 / 텍스트 크기 조정 | |
+| Text Z rotation / X / Y rotation | 텍스트 Z 회전 / 텍스트 X / Y 회전 | |
+| Rectangle / vector clipping | 사각형 클립 / 벡터 클립 | |
+| Vector drawing | 도형 그리기 | Legacy |
+| Position shifter | 위치 일괄 이동 | |
+| Hydra / Perspective | 히드라 / 원근 | |
+| Point / B-spline / Bézier curve | 점 / B-스플라인 / 베지어 곡선 | Drawing and clip tools; "Add line" there 직선 추가 |
+
+## Hotkeys
+
+- A command's name on the Hotkeys page reads as its menu item, without the
+  accelerator: "Find and replace" 찾아서 바꾸기, "Font collector" 글꼴 수집기.
+- A name ending in " alt" is the second key for the same command: the base
+  name plus " (보조)", "Commit alt" 적용 (보조).
+- Grid "Hide <column>" commands name the column: "Hide actor" 배우 열 숨김.
+  In the Grid's Hide columns menu the item is the column name alone.
+- Hotkey windows: Global 전역, Subtitles 자막 목록, Editor 편집기, Video 영상,
+  Audio 소리.
