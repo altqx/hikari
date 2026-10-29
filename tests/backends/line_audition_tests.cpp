@@ -1,7 +1,3 @@
-// I3 (M50-audio, automated parts): a Line's source range through the editor
-// output. A simulated device drives the real OutputEngine at a real-time pace
-// and records every sample it renders, so sample accuracy and the tail/drain
-// report are checked on every host; the PortAudio run needs an output device.
 #include "hikari/backends/audio_output_engine.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/line_audition.h"
@@ -38,7 +34,6 @@ double now()
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-// A device with a 50 ms reported latency rendering 256-frame buffers.
 class SimulatedDevice : public AudioOutputPort {
 public:
     explicit SimulatedDevice(OutputFormat format) : m_format(format), m_engine(format, 0.05, 0.5)
@@ -122,7 +117,7 @@ float ramp(std::int64_t index)
     return float(index % 32768) / 32768.0f;
 }
 
-} // namespace
+}
 
 TEST_F(Audition, TheDeviceReceivesExactlyTheRange)
 {
@@ -149,7 +144,6 @@ TEST_F(Audition, StopTailAndDrainAreSeparateMoments)
     EXPECT_LE(report->startedAt, report->logicalStopAt);
     EXPECT_LE(report->logicalStopAt, report->lastFrameConsumedAt) << "handed over before the device took it";
     EXPECT_GT(report->audibleEndAt, report->lastFrameConsumedAt);
-    // The DAC end of the last buffer: the 50 ms latency plus its queued frames.
     EXPECT_GE(report->outputLatency, 0.05);
     EXPECT_LE(report->outputLatency, 0.05 + 256.0 / 48000 + 1e-9);
     std::fprintf(stderr, "tail after logical stop: %.1f ms, latency %.1f ms\n",
@@ -185,8 +179,6 @@ TEST_F(Audition, AStopBeforeTheEndIsNotADrain)
 
 TEST_F(Audition, ThroughPortAudio)
 {
-    // The fixture is a loud ramp, so this runs only on a named device (the CI
-    // null PCM), never on a desktop's default speakers.
     const char *wanted = std::getenv("HIKARI_TEST_AUDIO_DEVICE");
     if (!wanted || !*wanted)
         GTEST_SKIP() << "set HIKARI_TEST_AUDIO_DEVICE to run against a real stream";

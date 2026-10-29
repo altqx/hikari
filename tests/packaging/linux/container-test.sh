@@ -1,34 +1,8 @@
 #!/bin/bash
-# Package tests inside one distro container (installers spec 8.1, 8.2), Qt
-# rewrite. Run as root in a fresh container with the packages mounted:
-#
+# Run as root in a fresh distro container with the packages mounted:
 #   container-test.sh --dist <dir> --version <V> --tests <list> [--expect-version-switch]
 #                     [--old <dir>]
-#
-# <list> is a comma list of:
-#   appimage   AppImage start (8.1.1, 8.1.3): first, on the bare image, every
-#              library the AppImage cannot resolve must be on the host list;
-#              then, with the desktop baseline (the host list's libraries),
-#              --version and a GUI start under Xvfb (xcb) and offscreen, with
-#              no host-list library loaded from inside the AppImage.
-#   tar        the portable tar.gz starts the same way.
-#   native     the deb or rpm (8.1.4): installed with the distro's package
-#              manager alone, it starts with only its declared dependencies;
-#              desktop-file-validate, appstreamcli, /usr/bin/hikarisub.
-#   upgrade    (8.1.5) the packages in --old (an older Qt test version and a
-#              stand-in legacy 0.0.x), each upgraded by this version; files
-#              under $HOME survive.
-#   remove     (8.1.6) removal leaves no /opt/hikarisub and $HOME untouched
-#              (the user folder ~/.config/hikarisub included, UD1).
-#   helper     (8.1.7) the update helper, run as root with PKEXEC_UID, from
-#              the --old 0.0.9 stand-in to this version, with fake-curl.sh
-#              serving made-up releases' SHA256SUMS.
-#   aur        (8.2) render the PKGBUILD from the tar.gz, makepkg, namcap,
-#              .SRCINFO, pacman -U, start, remove. archlinux only.
-#
-# --expect-version-switch: the app has the --version switch (spec 8.1.1);
-# without it, --version checks are skipped and reported. Exits non-zero on
-# the first failure; prints PASS/SKIP lines.
+# <list>: a comma list of appimage, tar, native, upgrade, remove, helper, aur (archlinux only).
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -75,9 +49,6 @@ case $family in
     zypper) zypper -q --non-interactive refresh > /dev/null ;;
 esac
 
-# The test tools: Xvfb with xvfb-run and a software GL driver (Xvfb's GLX),
-# binutils for the library checks, the desktop file and AppStream
-# validators. None of them is a dependency of the app.
 case $family in
     deb) tools=(xvfb xauth libgl1-mesa-dri binutils desktop-file-utils appstream procps) ;;
     dnf) tools=(xorg-x11-server-Xvfb xorg-x11-xauth mesa-dri-drivers binutils desktop-file-utils appstream procps-ng
@@ -86,9 +57,6 @@ case $family in
                    util-linux shadow findutils gzip tar) ;;
     arch) tools=(xorg-server-xvfb xorg-xauth mesa binutils desktop-file-utils appstream procps-ng) ;;
 esac
-# The desktop baseline: what a desktop always has, the libraries of the
-# host list (packaging/linux/appimage/host-libs.txt) the AppImage and the
-# tar.gz leave to the host.
 case $family in
     deb) baseline=(libgl1 libegl1 libopengl0 libglx0 libx11-6 libx11-xcb1 libxcb1 libxcb-randr0 libxcb-shm0
                    libxcb-sync1 libxcb-xfixes0 libxcb-render0 libxcb-shape0 libfontconfig1 libfreetype6
@@ -107,8 +75,7 @@ case $family in
     arch) baseline=(libglvnd libx11 libxcb fontconfig freetype2 wayland alsa-lib libpulse dbus libsm libice glib2) ;;
 esac
 
-# A test user owns $HOME; the app never runs as root here. Minimal images
-# (Fedora, openSUSE) lack runuser and useradd.
+# Minimal Fedora and openSUSE images lack runuser and useradd.
 case $family in
     dnf) install_pkgs util-linux shadow-utils ;;
     zypper) install_pkgs util-linux shadow ;;
@@ -116,7 +83,6 @@ esac
 id tester > /dev/null 2>&1 || useradd -m tester
 home=/home/tester
 marker=$home/.local/share/hikari-test-marker
-# UD1: and a file in the user folder, which removal never deletes either.
 user_folder=$home/.config/hikarisub
 runuser -u tester -- mkdir -p "$home/.local/share" "$home/.config/HikariSub" "$user_folder"
 runuser -u tester -- sh -c "echo keep > '$marker'; echo keep > '$home/.config/HikariSub/user-file.ini'; echo keep > '$user_folder/uninstall-keeps-this.txt'"
@@ -125,7 +91,7 @@ check_home() {
         [ "$(cat "$user_folder/uninstall-keeps-this.txt")" = keep ] || fail "files under \$HOME changed"
 }
 
-kind_name() # token -> the names --version may print for it
+kind_name()
 {
     case $1 in
         appimage) echo 'appimage|AppImage' ;;
@@ -137,7 +103,6 @@ kind_name() # token -> the names --version may print for it
 as_tester() { runuser -u tester -- env HOME=$home XDG_RUNTIME_DIR=/tmp/xdg-tester "$@"; }
 mkdir -p /tmp/xdg-tester && chown tester /tmp/xdg-tester && chmod 0700 /tmp/xdg-tester
 
-# check_version <command...>: --version prints "<V> (<kind>)" and exits 0.
 check_version() # <kind> <command...>
 {
     local kind=$1; shift
@@ -152,8 +117,6 @@ check_version() # <kind> <command...>
     pass "--version: $out"
 }
 
-# gui_start <label> <command...>: the main window starts under Xvfb (xcb)
-# and offscreen, and runs until the timeout (exit 124).
 gui_start()
 {
     local label=$1; shift
@@ -179,8 +142,6 @@ gui_start()
     done
 }
 
-# host_list_not_bundled <dir pattern>: LD_DEBUG shows no host-list library
-# loaded from inside the AppImage or the tree.
 host_list_not_bundled()
 {
     local label=$1 pattern=$2
@@ -201,10 +162,6 @@ host_list_not_bundled()
     pass "$label loads no host-list library from its payload"
 }
 
-# unresolved_on_host_list <dir> [<extra lib dir> [<host-side list>]]: on the
-# bare image, every library ldd cannot find for the payload's ELF files is
-# on the host list, or (closure rule) in the AppImage's list of what the
-# host-list libraries need.
 unresolved_on_host_list()
 {
     local dir=$1 extra=${2-} host_side=${3-}
@@ -265,8 +222,6 @@ if want tar; then
     rm -rf /tmp/tar && mkdir -p /tmp/tar && tar -xzf "$tarball" -C /tmp/tar && chown -R tester /tmp/tar
     (cd /tmp/tar/hikarisub-linux-x86_64 && sha256sum --quiet -c SHA256SUMS) || fail "the tar.gz SHA256SUMS do not match"
     [ ! -e /tmp/tar/hikarisub-linux-x86_64/package-kind.txt ] || fail "the tar.gz carries a package-kind.txt"
-    # The tar.gz is the host profile, the payload of the deb: it needs what
-    # the deb declares, which the AUR package and a desktop also provide.
     [ "$family" = deb ] || fail "the tar test runs on a deb-family image (it installs the deb's Depends)"
     deb=$(native_file "$dist" "$version")
     [ -f "$deb" ] || fail "no $deb for the tar test's dependencies"
@@ -308,7 +263,7 @@ expected_native_version() # <semver>
     [ "$core" = "$1" ] || pre="~${1#*-}"
     echo "$core$pre-1"
 }
-native_checks() # after an install
+native_checks()
 {
     local kind=$family
     [ $family = deb ] || kind=rpm
@@ -321,7 +276,6 @@ native_checks() # after an install
     desktop-file-validate /usr/share/applications/io.github.altqx.HikariSub.desktop || fail "desktop-file-validate"
     appstreamcli validate --no-net /usr/share/metainfo/io.github.altqx.HikariSub.metainfo.xml ||
         fail "appstreamcli validate"
-    # DX1 (#367): the site is the homepage, the guide the help; GitHub the tracker.
     grep -q '<url type="homepage">https://hikarisub.altqx.com</url>' \
         /usr/share/metainfo/io.github.altqx.HikariSub.metainfo.xml || fail "metainfo homepage"
     grep -q '<url type="help">https://hikarisub.altqx.com/en/docs</url>' \
@@ -345,7 +299,6 @@ native_checks() # after an install
 if want native; then
     pkg=$(native_file "$dist" "$version")
     [ -f "$pkg" ] || fail "no $pkg"
-    # The tools only; the app's own dependencies come from the package.
     install_pkgs "${tools[@]}"
     native_install "$pkg"
     native_checks
@@ -363,14 +316,10 @@ if want helper; then
         asset=${pkg##*/}
         stand_in=$(native_file "$old" 0.0.9)
         uid=$(id -u tester)
-        # The helper of this version, root's, run from outside /opt so the
-        # older stand-in it upgrades from can be installed under it.
         install -m 0755 "$helper" /usr/local/sbin/hikarisub-update-helper
         helper=/usr/local/sbin/hikarisub-update-helper
         native_remove > /dev/null 2>&1 || true
         native_install "$stand_in"
-        # The stand-in for GitHub: the helper's curl serves made-up
-        # releases' SHA256SUMS from /srv/hikarisub-releases.
         install -m 0755 "$src/tests/packaging/linux/fake-curl.sh" /usr/local/bin/curl
         releases=/srv/hikarisub-releases
         rm -rf "$releases"
@@ -393,14 +342,10 @@ if want helper; then
             [ $rc -eq "$want_rc" ] || { cat /tmp/helper.log >&2; fail "helper $label: exit $rc, expected $want_rc"; }
             pass "helper $label: exit $rc"
         }
-        # The caller has no say in the digest: the old form that passed one
-        # is refused, and the caller's own package, at a released version,
-        # is not that release's file.
         expect_rc 2 'a caller-supplied kind and SHA-256' "$kind" "$forged" "$(sha256sum "$forged" | cut -d' ' -f1)" "$version"
         expect_rc 2 'a caller-supplied SHA-256' "$forged" "$(sha256sum "$forged" | cut -d' ' -f1)" "$version"
         expect_rc 3 "the caller's own package" "$forged" "$version"
-        # The command the app shows without pkexec runs the helper through
-        # sudo, which names the user in SUDO_UID: the same checks apply.
+        # sudo names the asking user in SUDO_UID.
         set +e; env -u PKEXEC_UID SUDO_UID=$uid "$helper" install "$forged" "$version" > /tmp/helper.log 2>&1
         rc=$?; set -e
         [ $rc -eq 3 ] || { cat /tmp/helper.log >&2; fail "helper the caller's own package, through sudo: exit $rc, expected 3"; }

@@ -1,5 +1,3 @@
-// F2-L: native Linux write owner on a real temporary directory.
-
 #include "hikari/backends/posix_file_port.h"
 
 #include <gtest/gtest.h>
@@ -70,7 +68,7 @@ struct PortTest : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST_F(PortTest, WritesANewFile)
 {
@@ -121,7 +119,7 @@ TEST_F(PortTest, ReadOnlyDirectoryFailsAndKeepsTheOriginal)
 
 TEST_F(PortTest, PublishFailureLeavesNoTemporaryFile)
 {
-    // A directory at the destination makes the rename fail after a full write.
+    // rename() onto a non-empty directory fails, after the full write.
     fs::create_directories(dir / "occupied.ass" / "child");
     backends::PosixFilePort port(record());
     port.startWrite(PermitId{5}, DestinationKey{(dir / "occupied.ass").string()}, bytes("data"));
@@ -161,7 +159,6 @@ TEST_F(PortTest, EndToEndThroughTheCoordinator)
     ASSERT_TRUE(permit);
     ASSERT_TRUE(coordinator.write(*permit, bytes("[Script Info]\n")));
     port.waitIdle();
-    // The application thread delivers the worker's report to the coordinator.
     for (const auto &[id, o] : reports)
         coordinator.complete(id, o);
     ASSERT_EQ(results.size(), 1u);

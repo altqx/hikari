@@ -3,7 +3,7 @@
 # legacy_visual_t3_measure_capture). The view is the T3 cases' (a 1280x720
 # frame in a 640x400 client, the script 1920x1080, coefficient 3); every
 # Style is Titillium Web (the Qt examples' TitilliumWeb-Regular.ttf and
-# TitilliumWeb-Bold.ttf, given to the probe and to the rewrite's test as
+# TitilliumWeb-Bold.ttf, given to the probe and to HikariSub's test as
 # installed fonts).
 #
 # Each Scale case: the tool with the rectangle, both axes and the original

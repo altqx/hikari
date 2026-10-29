@@ -1,6 +1,3 @@
-// Y4: resampling against legacy SubsGrid::ResizeSubs, GetASSRes and the
-// resample dialogs' OK at 20d647c4.
-
 #include "hikari/application/resample.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/core/ass_load.h"
@@ -48,7 +45,7 @@ constexpr std::string_view kScript =
     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,10,0,7,,{\\fscx100\\xbord2\\yshad2\\move(10, 20,30,40,0,500)\\clip(1,2,3,4)}b\n"
     "Comment: 0,0:00:01.00,0:00:02.00,Default,,10,0,0,,{\\pos(100,50)}c\n";
 
-} // namespace
+}
 
 TEST(Resample, ScalesStylesTagsDrawingsAndMargins)
 {
@@ -64,13 +61,11 @@ TEST(Resample, ScalesStylesTagsDrawingsAndMargins)
     EXPECT_EQ(style.marginVertical, u8"20");
     EXPECT_EQ(style.scaleX, u8"100");
     EXPECT_EQ(text(d, 0), "{\\pos(200,100)\\bord4\\fs40\\clip(m 0 0 l 20 0 20 20)}a{\\p1}m 0 0 l 8 8{\\p0}");
-    // Tokens are trimmed; times after the four coordinates stay.
     EXPECT_EQ(text(d, 1), "{\\fscx100\\xbord4\\yshad4\\move(20,40,60,80,0,500)\\clip(2,4,6,8)}b");
     EXPECT_EQ(d.lines()[1]->marginLeft.value, 20);
     EXPECT_EQ(d.lines()[1]->marginVertical.value, 14);
-    EXPECT_EQ(text(d, 2), "{\\pos(100,50)}c"); // comments stay
+    EXPECT_EQ(text(d, 2), "{\\pos(100,50)}c");
     EXPECT_EQ(d.lines()[2]->marginLeft.value, 10);
-    // The Style is written as legacy Styles::GetRaw writes it, in place.
     const auto file = saved(d);
     EXPECT_NE(file.find("Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,3,0,1,4,2,2,20,30,20,1\n"),
               std::string::npos)
@@ -82,16 +77,13 @@ TEST(Resample, StretchScalesWidthThroughFscxAndFontSizeByTheLargerFactor)
     auto d = load(kScript);
     resizeSubtitles(d, 2.f, 1.f, true);
     const auto style = core::decodeStyles(d).front();
-    EXPECT_EQ(style.fontsize, u8"20"); // the smaller factor for Styles
+    EXPECT_EQ(style.fontsize, u8"20");
     EXPECT_EQ(style.scaleX, u8"200");
     EXPECT_EQ(style.outlineWidth, u8"2");
     EXPECT_EQ(style.marginLeft, u8"20");
     EXPECT_EQ(style.marginVertical, u8"10");
-    // \fs takes the larger factor (legacy val1); drawings keep their width
-    // (the stretch goes through \fscx).
     EXPECT_EQ(text(d, 0), "{\\pos(200,50)\\bord2\\fs40\\clip(m 0 0 l 20 0 20 10)}a{\\p1}m 0 0 l 4 4{\\p0}");
     EXPECT_EQ(text(d, 1), "{\\fscx200\\xbord4\\yshad2\\move(20,20,60,40,0,500)\\clip(2,2,6,4)}b");
-    // Without stretch the aspect change leaves \fscx and Style ScaleX.
     auto plain = load(kScript);
     resizeSubtitles(plain, 2.f, 1.f, false);
     EXPECT_EQ(core::decodeStyles(plain).front().scaleX, u8"100");
@@ -130,8 +122,6 @@ TEST(Resample, ScriptResolutionDefaults)
     EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResX: 1920\n")), (Resolution{1920, 1080}));
 }
 
-// Y4-playres-ask (user decision 2026-10-13): what GetASSRes tested, the
-// values it gave, without its write.
 TEST(ScriptResolution, MissingValuesAreFoundWithoutWriting)
 {
     const auto bare = load("[Script Info]\nTitle: x\n");
@@ -140,21 +130,16 @@ TEST(ScriptResolution, MissingValuesAreFoundWithoutWriting)
     EXPECT_TRUE(lacksScriptResolution(writtenScriptResolution(load("[Script Info]\nPlayResX: 1920\n"))));
     EXPECT_TRUE(lacksScriptResolution(writtenScriptResolution(load("[Script Info]\nPlayResX: 0\nPlayResY: 720\n"))));
     EXPECT_FALSE(lacksScriptResolution(writtenScriptResolution(load("[Script Info]\nPlayResX: 640\nPlayResY: 360\n"))));
-    // The last entry wins, as AddSInfo replaced it (and wxAtoi reads "720p" as 720).
     EXPECT_EQ(writtenScriptResolution(load("[Script Info]\nPlayResX: 1\nPlayResX: 640\nPlayResY: 720p\n")),
               (Resolution{640, 720}));
     EXPECT_EQ(legacyScriptResolution({0, 0}), (Resolution{1280, 720}));
     EXPECT_EQ(legacyScriptResolution({0, 480}), (Resolution{853, 480}));
     EXPECT_EQ(legacyScriptResolution({1920, -1}), (Resolution{1920, 1080}));
-    // Reading never writes.
     EXPECT_FALSE(bare.scriptInfo(u8"PlayResX"));
     const std::vector<MacroInfoLine> staged{{"Title", "x"}, {"PlayResY", "480"}};
     EXPECT_EQ(writtenScriptResolution(staged), (Resolution{0, 480}));
 }
 
-// The question starts from the open video's size, else legacy's values.
-// With a video, both keys take its size, even when the file has one of them
-// (user decision 14, 2026-10-13 night).
 TEST(ScriptResolution, TheSuggestionIsTheVideosElseLegacys)
 {
     const auto bare = writtenScriptResolution(load("[Script Info]\nTitle: x\n"));
@@ -163,16 +148,12 @@ TEST(ScriptResolution, TheSuggestionIsTheVideosElseLegacys)
     EXPECT_EQ(suggestedScriptResolution(bare, Resolution{0, 0}), (Resolution{1280, 720}));
     EXPECT_EQ(suggestedScriptResolution(writtenScriptResolution(load("[Script Info]\nPlayResY: 480\n")), std::nullopt),
               (Resolution{853, 480}));
-    // A value the file has is replaced by the video's too.
     EXPECT_EQ(suggestedScriptResolution({0, 480}, Resolution{320, 240}), (Resolution{320, 240}));
     EXPECT_EQ(suggestedScriptResolution({1920, 0}, Resolution{320, 240}), (Resolution{320, 240}));
     EXPECT_EQ(suggestedScriptResolution({-1, 1080}, Resolution{720, 576}), (Resolution{720, 576}));
-    // No usable video: legacy's 16:9 partner of the written value.
     EXPECT_EQ(suggestedScriptResolution({1920, 0}, Resolution{0, 240}), (Resolution{1920, 1080}));
 }
 
-// Setting it is one undoable step; both keys are written, an existing one
-// in place and a missing one after the section's last property.
 TEST(ScriptResolution, SettingItIsOneUndoableStep)
 {
     EditSession session{load("[Script Info]\nTitle: x\nPlayResY: 480\nScriptType: v4.00+\n\n[Events]\n"
@@ -186,20 +167,16 @@ TEST(ScriptResolution, SettingItIsOneUndoableStep)
     EXPECT_TRUE(saved(session.document())
                     .starts_with("[Script Info]\nTitle: x\nPlayResY: 1080\nScriptType: v4.00+\nPlayResX: 1920\n\n[Events]"))
         << saved(session.document());
-    // The same values again change nothing and add no step.
     ASSERT_TRUE(setScriptResolution(session, {1920, 1080}));
     EXPECT_EQ(session.historySize(), steps + 1);
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(saved(session.document()), before);
-    // Not below 1x1, and not on a read-only (macro-owned) Document.
     EXPECT_FALSE(setScriptResolution(session, {0, 720}));
     session.setReadOnly(true);
     EXPECT_FALSE(setScriptResolution(session, {1280, 720}));
     EXPECT_EQ(saved(session.document()), before);
 }
 
-// The staged Script Info follows Document::setScriptInfo: the last entry of
-// the key takes the value, else it is added at the end.
 TEST(ScriptResolution, StagedScriptInfoFollowsTheDocument)
 {
     std::vector<MacroInfoLine> info{{"Title", "x"}, {"PlayResX", "1"}, {"PlayResX", "2"}, {"WrapStyle", "0"}};
@@ -219,7 +196,6 @@ TEST(Resample, ChangeResolutionIsOneStep)
     EXPECT_EQ(d.scriptInfo(u8"LayoutResX"), u8"1280");
     EXPECT_EQ(d.scriptInfo(u8"LayoutResY"), u8"720");
     EXPECT_EQ(text(d, 0).substr(0, 15), "{\\pos(200,100)\\");
-    // Only the resolution ("Change only the subtitle resolution").
     EditSession only{load(kScript)};
     ASSERT_TRUE(changeResolution(only, {640, 360}, {1920, 1080}, false, false));
     EXPECT_EQ(only.document().scriptInfo(u8"PlayResX"), u8"1920");

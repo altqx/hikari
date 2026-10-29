@@ -1,10 +1,3 @@
-// R1: subtitle comparison against legacy SubsGrid::SubsComparison,
-// CompareTexts, RemoveComparison and GetCommonStyles (SubsGridBase.cpp) and
-// the Notebook tab menu's handlers (Notebook.cpp) at 20d647c4. Expected
-// values are worked through the legacy code by hand; each case names the
-// lines it follows. LegacyComparisonCapture replays the legacy probe's
-// observations (tests/fixtures/legacy-observations/local-r1-comparison-20261005).
-
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/core/ass_load.h"
 
@@ -51,13 +44,11 @@ std::string styles(std::initializer_list<const char *> names)
     return out;
 }
 
-// The first Document (legacy CG1, the active tab).
 const std::string kFirst = styles({"Default", "Sign"}) +
                            "\n[Events]\n"
                            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
                            "Dialogue: 0,0:00:03.00,0:00:04.00,Sign,,0,0,0,,two\n"
                            "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n";
-// The second (CG2, the tab the menu was opened on).
 const std::string kSecond = styles({"Sign", "Other", "Default"}) +
                             "\n[Events]\n"
                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
@@ -65,8 +56,6 @@ const std::string kSecond = styles({"Sign", "Other", "Default"}) +
                             "Dialogue: 0,0:00:05.00,0:00:06.00,Sign,,0,0,0,,three\n"
                             "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,four\n";
 
-// A row's state as the Grid paints it (SubsGridWindow.cpp:419-426): '=' the
-// match colour, 'x' the mismatch colour, '.' neither.
 std::string states(const std::vector<LineComparison> &rows)
 {
     std::string out;
@@ -75,7 +64,6 @@ std::string states(const std::vector<LineComparison> &rows)
     return out;
 }
 
-// The pairs as "i-j" for each row of the first that has a partner.
 std::string pairs(const ComparisonResult &result)
 {
     std::string out;
@@ -107,9 +95,6 @@ std::u16string u(const char16_t *s)
     return s;
 }
 
-// SubsGridBase.cpp:1796-1884 transcribed line by line (wxString as UTF-16 or
-// UTF-32, wxArrayInt as a vector, the size guards left out), to check the
-// port against on many texts.
 template <typename Text>
 void legacyCompareTexts(LineComparison &firstCompare, LineComparison &secondCompare, const Text &first,
                         const Text &second)
@@ -183,9 +168,8 @@ void legacyCompareTexts(LineComparison &firstCompare, LineComparison &secondComp
     }
 }
 
-} // namespace
+}
 
-// SubsGridBase.cpp:1796-1801: equal texts are a match without ranges.
 TEST(CompareTexts, EqualTextsMatch)
 {
     LineComparison x, y;
@@ -197,8 +181,6 @@ TEST(CompareTexts, EqualTextsMatch)
     EXPECT_FALSE(x.mismatch());
 }
 
-// SubsGridBase.cpp:1803-1883: the leading 1, then inclusive ranges of the
-// characters outside the common subsequence, in each text's own offsets.
 TEST(CompareTexts, RangesOfTheDifferingCharacters)
 {
     LineComparison x, y;
@@ -208,15 +190,12 @@ TEST(CompareTexts, RangesOfTheDifferingCharacters)
     EXPECT_TRUE(x.differences);
     EXPECT_TRUE(x.mismatch());
 
-    // Several runs, of other lengths in each text.
     LineComparison p, q;
     compareTexts(p, q, u(u"I saw a cat."), u(u"I sawed the cat!"));
     EXPECT_EQ(p.marks, (std::vector<int>{1, 6, 6, 11, 11}));
     EXPECT_EQ(q.marks, (std::vector<int>{1, 5, 6, 8, 10, 15, 15}));
 }
 
-// A text that is a prefix of the other has no range of its own, but it is
-// still a mismatch: the leading 1 alone (legacy size() > 0).
 TEST(CompareTexts, ATextContainedInTheOtherIsStillAMismatch)
 {
     LineComparison x, y;
@@ -231,22 +210,17 @@ TEST(CompareTexts, ATextContainedInTheOtherIsStillAMismatch)
     EXPECT_EQ(f.marks, (std::vector<int>{1, 0, 0}));
 }
 
-// wxString compares UTF-16 code units on Windows: a character outside the
-// BMP is two units, and a range covers both.
 TEST(CompareTexts, OffsetsAreUtf16CodeUnits)
 {
     LineComparison x, y;
     compareTexts(x, y, u(u"a\U0001F600b"), u(u"ab"));
     EXPECT_EQ(x.marks, (std::vector<int>{1, 1, 2}));
     EXPECT_EQ(y.marks, (std::vector<int>{1}));
-    // U+1F600 and U+1F601 share their high surrogate: only the low one differs.
     LineComparison p, q;
     compareTexts(p, q, u(u"\U0001F600"), u(u"\U0001F601"));
     EXPECT_EQ(p.marks, (std::vector<int>{1, 1, 1}));
 }
 
-// wxString compares code points on Linux (wxGTK): a character outside the BMP
-// is one position.
 TEST(CompareTexts, OffsetsAreCodePointsOnTheLinuxBuild)
 {
     LineComparison x, y;
@@ -258,7 +232,6 @@ TEST(CompareTexts, OffsetsAreCodePointsOnTheLinuxBuild)
     EXPECT_EQ(p.marks, (std::vector<int>{1, 0, 0}));
 }
 
-// R5-per-platform: each platform compares as its own legacy build did.
 TEST(CompareTexts, EachPlatformCountsAsItsLegacyBuild)
 {
 #ifdef _WIN32
@@ -276,19 +249,14 @@ TEST(CompareTexts, EachPlatformCountsAsItsLegacyBuild)
               compareSubtitles(first, second, 0, {}, kLegacyTextUnits).first[0]);
 }
 
-// SubsGridWindow.cpp:510-525: a range is SubString(start, end) of the shown
-// text, in the platform's units, here as UTF-16 offsets for drawing; a run
-// starting past the text is empty and skipped, one running past it is cut.
 TEST(CompareTexts, MarkedRunsInTheShownText)
 {
     const std::u16string_view shown = u"a\U0001F600b\U0001F601";
-    // Code points: a, U+1F600, b, U+1F601.
     EXPECT_EQ(markedRun(shown, 1, 1, TextUnits::CodePoints), (MarkedRun{1, 2}));
     EXPECT_EQ(markedRun(shown, 2, 3, TextUnits::CodePoints), (MarkedRun{3, 3}));
     EXPECT_EQ(markedRun(shown, 0, 9, TextUnits::CodePoints), (MarkedRun{0, 6}));
     EXPECT_EQ(markedRun(shown, 3, 3, TextUnits::CodePoints), (MarkedRun{4, 2}));
     EXPECT_FALSE(markedRun(shown, 4, 4, TextUnits::CodePoints));
-    // UTF-16 units: the same offsets index the text directly.
     EXPECT_EQ(markedRun(shown, 1, 1, TextUnits::Utf16), (MarkedRun{1, 1}));
     EXPECT_EQ(markedRun(shown, 2, 3, TextUnits::Utf16), (MarkedRun{2, 2}));
     EXPECT_EQ(markedRun(shown, 4, 9, TextUnits::Utf16), (MarkedRun{4, 2}));
@@ -297,8 +265,6 @@ TEST(CompareTexts, MarkedRunsInTheShownText)
     EXPECT_FALSE(markedRun(u"", 0, 0, TextUnits::Utf16));
 }
 
-// The port gives the transcription's tables on random texts over a small
-// alphabet (so that runs of equal and differing characters both occur).
 TEST(CompareTexts, AgreesWithTheLegacyTranscription)
 {
     std::mt19937 random(193);
@@ -316,7 +282,6 @@ TEST(CompareTexts, AgreesWithTheLegacyTranscription)
         ASSERT_EQ(x, lx) << n;
         ASSERT_EQ(y, ly) << n;
     }
-    // The Linux build's form, with characters outside the BMP.
     const char32_t astral[] = U"a\U0001F600\U0001F601 ";
     for (int n = 0; n < 4000; ++n) {
         std::u32string a, b;
@@ -332,8 +297,6 @@ TEST(CompareTexts, AgreesWithTheLegacyTranscription)
     }
 }
 
-// SubsGridBase.cpp:1780-1781: the translation in translation mode when there
-// is one, otherwise the text.
 TEST(CompareTexts, TheTranslationIsComparedInTranslationMode)
 {
     core::LineRecord line;
@@ -344,21 +307,17 @@ TEST(CompareTexts, TheTranslationIsComparedInTranslationMode)
     EXPECT_EQ(comparedText(line, false), u"original");
 }
 
-// SubsGridBase.cpp:1757-1790 with no criterion: Lines pair in order; the
-// second's extra Line has no partner and keeps its usual colour.
 TEST_F(ComparisonTest, WithoutCriteriaLinesPairInOrder)
 {
     const auto r = compareSubtitles(first(), second(), 0, {});
     EXPECT_EQ(pairs(r), "0-0 1-1 2-2");
     EXPECT_EQ(states(r.first), "=x=");
     EXPECT_EQ(states(r.second), "=x=.");
-    EXPECT_EQ(r.first[1].marks, (std::vector<int>{1, 1, 1})); // "two" / "too"
+    EXPECT_EQ(r.first[1].marks, (std::vector<int>{1, 1, 1}));
     EXPECT_EQ(r.second[1].marks, (std::vector<int>{1, 2, 2}));
     EXPECT_FALSE(r.second[3].matchedRow);
 }
 
-// SubsGridBase.cpp:1769: Start and End must both be equal (in milliseconds).
-// A Line without a partner leaves the search where it was (lastJ).
 TEST_F(ComparisonTest, ByTimes)
 {
     const auto r = compareSubtitles(first(), second(), compare_by::Times, {});
@@ -367,8 +326,6 @@ TEST_F(ComparisonTest, ByTimes)
     EXPECT_EQ(states(r.second), "=.=.");
 }
 
-// SubsGridBase.cpp:1771: the same style. "three" (Default) passes over the
-// second's "three" (Sign) to "four".
 TEST_F(ComparisonTest, ByStyles)
 {
     const auto r = compareSubtitles(first(), second(), compare_by::Styles, {});
@@ -377,19 +334,15 @@ TEST_F(ComparisonTest, ByStyles)
     EXPECT_EQ(states(r.second), "=x.x");
 }
 
-// SubsGridBase.cpp:1773: with chosen styles, only Lines of a chosen style
-// pair, with a Line of the same style.
 TEST_F(ComparisonTest, BySelectedStyles)
 {
     const auto r = compareSubtitles(first(), second(), 0, {u8"Sign"});
     EXPECT_EQ(pairs(r), "1-1");
     EXPECT_EQ(states(r.first), ".x.");
     EXPECT_EQ(states(r.second), ".x..");
-    // The list is read, not the ChosenStyles bit (SubsGridBase.cpp:1743).
     EXPECT_EQ(pairs(compareSubtitles(first(), second(), compare_by::ChosenStyles, {})), "0-0 1-1 2-2");
 }
 
-// SubsGridBase.cpp:1763-1767: hidden Lines of either Document are passed over.
 TEST_F(ComparisonTest, ByVisibleLines)
 {
     hide(a, 1);
@@ -400,15 +353,11 @@ TEST_F(ComparisonTest, ByVisibleLines)
     r = compareSubtitles(first(), second(), compare_by::Visible, {});
     EXPECT_EQ(pairs(r), "0-0 2-2");
     EXPECT_EQ(states(r.second), "=.=.");
-    // Without the criterion hidden Lines pair as any other.
     EXPECT_EQ(pairs(compareSubtitles(first(), second(), 0, {})), "0-0 1-1 2-2");
-    // A revealed block (VISIBLE_BLOCK) is visible: the first's "two" now
-    // pairs with the second's next visible Line, and "three" with "four".
     a.editLine(row(a, 1), [](core::LineRecord &l) { l.visibility = core::LineVisibility::VisibleBlock; });
     EXPECT_EQ(pairs(compareSubtitles(first(), second(), compare_by::Visible, {})), "0-0 1-2 2-3");
 }
 
-// SubsGridBase.cpp:1775: both Lines selected.
 TEST_F(ComparisonTest, BySelections)
 {
     selectedA = {row(a, 1), row(a, 2)};
@@ -419,7 +368,6 @@ TEST_F(ComparisonTest, BySelections)
     EXPECT_EQ(states(r.second), "x.=.");
 }
 
-// The criteria combine: every one must pass.
 TEST_F(ComparisonTest, CriteriaCombine)
 {
     EXPECT_EQ(pairs(compareSubtitles(first(), second(), compare_by::Times | compare_by::Styles, {})), "0-0");
@@ -435,7 +383,6 @@ TEST_F(ComparisonTest, CriteriaCombine)
     EXPECT_EQ(pairs(compareSubtitles(first(), second(), compare_by::Times, {u8"Default", u8"Sign"})), "0-0");
 }
 
-// Translation mode on either side compares that side's translations.
 TEST_F(ComparisonTest, TranslationModeComparesTheTranslations)
 {
     a.editLine(row(a, 1), [](core::LineRecord &l) { l.translation = u8"too"; });
@@ -443,11 +390,9 @@ TEST_F(ComparisonTest, TranslationModeComparesTheTranslations)
     withTl.translationMode = true;
     const auto r = compareSubtitles(withTl, second(), 0, {});
     EXPECT_EQ(states(r.first), "===");
-    // Off, the text is compared even with a translation.
     EXPECT_EQ(states(compareSubtitles(first(), second(), 0, {}).first), "=x=");
 }
 
-// Comparing never changes either Document.
 TEST_F(ComparisonTest, TheDocumentsAreNotChanged)
 {
     const auto before = b.lines().size();
@@ -458,17 +403,12 @@ TEST_F(ComparisonTest, TheDocumentsAreNotChanged)
     EXPECT_FALSE(b.lines()[1]->edited);
 }
 
-// SubsGrid::GetCommonStyles: the first's Styles, in its order, that the
-// second has too.
 TEST_F(ComparisonTest, CommonStyles)
 {
     EXPECT_EQ(commonStyles(a, b), (std::vector<std::u8string>{u8"Default", u8"Sign"}));
     EXPECT_EQ(commonStyles(b, a), (std::vector<std::u8string>{u8"Sign", u8"Default"}));
 }
 
-// Notebook.cpp:922-928 and 97-123: the menu shows the shared styles checked
-// as SUBS_COMPARISON_STYLES has them and adds those to compareStyles when it
-// opens; legacy never clears the list.
 TEST(ComparisonMenu, OpeningTheMenuAddsTheCheckedStyles)
 {
     SubtitleComparison c;
@@ -479,7 +419,6 @@ TEST(ComparisonMenu, OpeningTheMenuAddsTheCheckedStyles)
     EXPECT_TRUE(items[1].checked);
     EXPECT_TRUE(c.chosenStylesShown());
     EXPECT_EQ(c.chosenStyles(), (std::vector<std::u8string>{u8"Sign"}));
-    // Unchecking in the same menu removes it; the bit follows the list.
     int type = compare_by::ChosenStyles;
     type = c.toggleStyle(type, u8"Sign", false);
     EXPECT_TRUE(c.chosenStyles().empty());
@@ -488,9 +427,6 @@ TEST(ComparisonMenu, OpeningTheMenuAddsTheCheckedStyles)
     EXPECT_EQ(c.chosenStyles(), (std::vector<std::u8string>{u8"Default"}));
     EXPECT_EQ(type, compare_by::ChosenStyles);
 
-    // Opened twice, the style is listed once, so one uncheck takes it out
-    // (R1-stuck-style: legacy listed it twice, removed one copy and kept it
-    // chosen and in SUBS_COMPARISON_STYLES).
     SubtitleComparison twice;
     twice.openMenu(common, {u8"Sign"});
     twice.openMenu(common, {u8"Sign"});
@@ -499,15 +435,12 @@ TEST(ComparisonMenu, OpeningTheMenuAddsTheCheckedStyles)
     EXPECT_TRUE(twice.chosenStyles().empty());
     EXPECT_EQ(type, compare_by::Times);
 
-    // A style from another pair of tabs stays in the list (never cleared).
     SubtitleComparison kept;
     kept.openMenu(common, {u8"Sign"});
     kept.openMenu({u8"Other"}, {u8"Sign"});
     EXPECT_EQ(kept.chosenStyles(), (std::vector<std::u8string>{u8"Sign"}));
 }
 
-// Notebook.cpp:98-100: a set bit with an empty list is cleared first, so a
-// checked item sets it again; MENU_COMPARE + 1..4 flip their bit.
 TEST(ComparisonMenu, BitsFlip)
 {
     SubtitleComparison c;
@@ -518,8 +451,6 @@ TEST(ComparisonMenu, BitsFlip)
               compare_by::Times | compare_by::Visible);
 }
 
-// Notebook.cpp:947-956, RemoveComparison and Clearing: the tables of each
-// grid, kept per Document.
 TEST_F(ComparisonTest, TablesFollowCompareRemoveAndReplace)
 {
     SubtitleComparison c;
@@ -532,9 +463,6 @@ TEST_F(ComparisonTest, TablesFollowCompareRemoveAndReplace)
     EXPECT_EQ(states(*c.table(one)), "=x=");
     EXPECT_EQ(states(*c.table(two)), "=x=.");
 
-    // R1-stale-table: a new pair drops the earlier pair's tables (legacy
-    // Notebook.cpp:948-951 left them on their grids, never compared again),
-    // and Turn off leaves no table.
     c.compare(one, three, first(), second(), compare_by::Times);
     EXPECT_EQ(c.first(), one);
     EXPECT_TRUE(c.table(one));
@@ -546,7 +474,6 @@ TEST_F(ComparisonTest, TablesFollowCompareRemoveAndReplace)
     EXPECT_FALSE(c.active());
     EXPECT_TRUE(c.tabled().empty());
     EXPECT_FALSE(c.first());
-    // Again: nothing.
     c.remove();
     EXPECT_TRUE(c.tabled().empty());
     c.compare(one, two, first(), second(), 0);
@@ -554,8 +481,6 @@ TEST_F(ComparisonTest, TablesFollowCompareRemoveAndReplace)
     EXPECT_FALSE(c.table(one));
     c.remove();
 
-    // Clearing a compared tab (other subtitles loaded into it) removes its
-    // table; the pair now names the replacement and comparing again fills it.
     c.compare(one, two, first(), second(), 0);
     c.replaced(one, three);
     EXPECT_FALSE(c.table(one));
@@ -567,11 +492,7 @@ TEST_F(ComparisonTest, TablesFollowCompareRemoveAndReplace)
     EXPECT_TRUE(c.table(three));
 }
 
-// ---- the legacy probe's observations -----------------------------------------
-
 namespace {
-
-// inputs/comparison-cases.txt (the format is comparison_capture.cpp's).
 struct CaseLine {
     int start = 0, end = 0, visibility = 1;
     bool selected = false;
@@ -649,9 +570,6 @@ std::string assTime(int ms)
     return buffer;
 }
 
-// A Document with the case's Lines: times through the ASS loader (the cases
-// use whole centiseconds), the other fields set as the probe sets them on
-// legacy's Dialogue.
 core::Document caseDocument(const std::vector<CaseLine> &lines, std::set<core::LineId> &selected)
 {
     std::string ass = "[Events]\n";
@@ -676,7 +594,6 @@ core::Document caseDocument(const std::vector<CaseLine> &lines, std::set<core::L
     return d;
 }
 
-// A table as the probe writes it: [secondComparedLine, differences, lineCompare...].
 QJsonArray observedForm(const std::vector<LineComparison> &rows)
 {
     QJsonArray out;
@@ -694,14 +611,8 @@ std::string compact(const QJsonValue &value)
     return QJsonDocument(value.toArray()).toJson(QJsonDocument::Compact).toStdString();
 }
 
-} // namespace
+}
 
-// Every run of the probe (SubsComparison and CompareTexts compiled from the
-// legacy source unchanged) replayed through compareSubtitles: the pairs, the
-// match state and the ranges of both tables are legacy's. Each run is held to
-// both legacy builds' tables (R5-per-platform): counted in UTF-16 units it
-// gives the "windows" tables (wxMSW's wxString), counted in code points the
-// "linux" ones (wxGTK's); the default on each platform is that build's.
 TEST(LegacyComparisonCapture, ReplaysTheLegacyObservations)
 {
     const auto cases = readCases(HIKARI_COMPARISON_CASES);
@@ -741,8 +652,6 @@ TEST(LegacyComparisonCapture, ReplaysTheLegacyObservations)
             for (const auto &[units, build] :
                  {std::pair{TextUnits::Utf16, onWindows}, std::pair{TextUnits::CodePoints, onLinux}}) {
                 SCOPED_TRACE(units == TextUnits::Utf16 ? "windows" : "linux");
-                // Comparing changed neither file, and a second SubsComparison
-                // (the tables cleared and refilled) gave the same tables.
                 EXPECT_TRUE(build["unchanged"].toBool());
                 EXPECT_TRUE(build["repeatable"].toBool());
                 const auto result = compareSubtitles(first, second, run.type, run.styles, units);
@@ -751,9 +660,6 @@ TEST(LegacyComparisonCapture, ReplaysTheLegacyObservations)
                 EXPECT_EQ(compareSubtitles(first, second, run.type, run.styles, units).first, result.first);
                 if (units == kLegacyTextUnits)
                     EXPECT_EQ(compareSubtitles(first, second, run.type, run.styles).first, result.first);
-                // The Grid's colour per row (SubsGridWindow.cpp:419-426): the
-                // mismatch background when the legacy array is not empty, the
-                // match background when differences is false.
                 for (const auto &[rowsOf, table] : {std::pair{&result.first, build["first"].toArray()},
                                                     std::pair{&result.second, build["second"].toArray()}}) {
                     ASSERT_EQ(qsizetype(rowsOf->size()), table.size());
@@ -774,7 +680,5 @@ TEST(LegacyComparisonCapture, ReplaysTheLegacyObservations)
     }
     EXPECT_EQ(runs, 2 * 207);
     EXPECT_EQ(rows, 2 * 4239);
-    // Only the cases with characters outside the BMP count differently on
-    // the two legacy builds.
     EXPECT_EQ(widthsDiffer, (std::set<std::string>{"rand-astral", "texts"}));
 }

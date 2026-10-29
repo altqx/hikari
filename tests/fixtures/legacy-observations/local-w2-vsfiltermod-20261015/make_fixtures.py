@@ -1,16 +1,7 @@
-"""W2: the scripts and the video the legacy VSFilterMod captures were taken with.
+"""The scripts and the video of the legacy VSFilterMod captures.
 
     python make_fixtures.py <dir>            # scripts/*.ass and captures.json
     python make_fixtures.py <dir> --video    # also probe/media/w2-gradient.mkv (ffmpeg)
-
-Each script is one fixture of VsfilterMod.MatchesTheLegacyAppsCaptures. After
-its Lines it has one Comment per capture time, starting at that time: the
-probe (probe/run.ps1) writes "Active Line: <index>" into a copy of the script
-so the legacy app opens the video at that Comment's start (the
-OPEN_VIDEO_AT_ACTIVE_LINE option). A Comment is never drawn.
-
-The video is 640x360 at 20 frames a second, so every capture time is the
-start of a frame. Its frames are one still gradient.
 """
 import json
 import struct
@@ -46,12 +37,10 @@ def png(w, h, pix):
 
 
 def quad(x, y):
-    """64x64: top-left red, top-right green, bottom-left blue, bottom-right yellow."""
     return [(255, 0, 0, 255), (0, 255, 0, 255), (0, 0, 255, 255), (255, 255, 0, 255)][(x >= 32) + 2 * (y >= 32)]
 
 
 def uuencode(data):
-    """The attachment encoding: 6-bit groups + 33, 80 characters a line."""
     out, line = [], ""
     for pos in range(0, len(data), 3):
         src = data[pos:pos + 3] + b"\0" * (3 - len(data[pos:pos + 3]))
@@ -72,8 +61,6 @@ def dialogue(text, end="0:00:05.00"):
 
 BOX = r"{\an7\pos(%d,%d)\bord0\shad0%s\p1}m 0 0 l 128 0 128 128 0 128{\p0}"
 
-# name -> (Script Info lines, styles, Lines, graphics, capture times in ms).
-# positions .. matrix-tv709 are the fixtures of VsfilterMod.OverlayMatchesDrawingOnTheFrame.
 FIXTURES = {
     "positions": ("", "", [
         dialogue(r"{\an1}an1"),
@@ -105,8 +92,6 @@ FIXTURES = {
     "matrix-none": ("", "", [dialogue(r"{\c&H3080E0&}matrix")], None, [1000]),
     "matrix-tv601": ("YCbCr Matrix: TV.601\n", "", [dialogue(r"{\c&H3080E0&}matrix")], None, [1000]),
     "matrix-tv709": ("YCbCr Matrix: TV.709\n", "", [dialogue(r"{\c&H3080E0&}matrix")], None, [1000]),
-    # The fork's \img from the script's own [Graphics]: plain, with x/y
-    # offsets, and the offsets animated by \t.
     "img-attached": ("", "", [
         dialogue(BOX % (60, 60, r"\1img(w2quad.png)")),
         dialogue(BOX % (260, 60, r"\1img(w2quad.png,32,16)")),

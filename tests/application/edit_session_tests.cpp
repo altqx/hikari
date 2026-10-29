@@ -1,5 +1,3 @@
-// A1: one-Line command, draft and undo transactions (accepted policy, T43/C07/C43).
-
 #include "hikari/application/edit_session.h"
 #include "hikari/core/ass_load.h"
 
@@ -44,7 +42,7 @@ struct SessionTest : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST_F(SessionTest, StartsCleanWithNoHistory)
 {
@@ -56,15 +54,15 @@ TEST_F(SessionTest, StartsCleanWithNoHistory)
 TEST_F(SessionTest, DraftIsOneAndCommitsOnLeave)
 {
     ASSERT_TRUE(session.editDraftText(l1, u8"one!"));
-    EXPECT_TRUE(session.isDirty()); // a pending draft is unsaved work
-    EXPECT_EQ(textOf(session, l1), u8"one"); // not committed yet
-    ASSERT_TRUE(session.editDraftText(l2, u8"two!")); // leaving l1 commits it
+    EXPECT_TRUE(session.isDirty());
+    EXPECT_EQ(textOf(session, l1), u8"one");
+    ASSERT_TRUE(session.editDraftText(l2, u8"two!"));
     EXPECT_EQ(textOf(session, l1), u8"one!");
     EXPECT_EQ(session.draftLine(), l2);
-    session.navigateTo(l3); // navigating commits too
+    session.navigateTo(l3);
     EXPECT_EQ(textOf(session, l2), u8"two!");
     EXPECT_FALSE(session.draftLine());
-    EXPECT_EQ(session.historySize(), 3u); // two committed drafts, two steps
+    EXPECT_EQ(session.historySize(), 3u);
 }
 
 TEST_F(SessionTest, DiscardLeavesContentAndHistory)
@@ -91,7 +89,7 @@ TEST_F(SessionTest, CommandOverDraftCommitsDraftFirstAsItsOwnStep)
     }}));
     EXPECT_EQ(textOf(session, l2), u8"TYPED");
     ASSERT_TRUE(session.undo());
-    EXPECT_EQ(textOf(session, l2), u8"typed"); // the draft step remains
+    EXPECT_EQ(textOf(session, l2), u8"typed");
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(textOf(session, l2), u8"two");
 }
@@ -105,7 +103,7 @@ TEST_F(SessionTest, RejectedCommandChangesNothing)
     const bool dirty = session.isDirty();
     auto bad = Command{"Reject", session.revision(), {l1}, [](core::Document &d) {
         d.setLineText(core::LineId{1}, u8"half-applied");
-        return false; // validation failure after touching the working copy
+        return false;
     }};
     EXPECT_EQ(session.run(bad).error(), CommandRefusal::Invalid);
     EXPECT_EQ(textOf(session, l1), u8"one");
@@ -152,19 +150,19 @@ TEST_F(SessionTest, SaveCommitsTheDraftAndUndoToSavePointIsClean)
     const auto snapshot = session.prepareSave();
     EXPECT_FALSE(session.draftLine());
     EXPECT_EQ(snapshot->document.lines()[0]->text, u8"saved text");
-    session.markSaved(snapshot->content); // the write was reported Written
+    session.markSaved(snapshot->content);
     EXPECT_FALSE(session.isDirty());
     ASSERT_TRUE(session.run(setText(l2, u8"after save")));
     EXPECT_TRUE(session.isDirty());
     ASSERT_TRUE(session.undo());
-    EXPECT_FALSE(session.isDirty()); // back at the exact saved content (C43)
+    EXPECT_FALSE(session.isDirty());
 }
 
 TEST_F(SessionTest, EditsDuringAnInFlightWriteStayDirty)
 {
     const auto snapshot = session.prepareSave();
     ASSERT_TRUE(session.run(setText(l3, u8"typed while writing")));
-    session.markSaved(snapshot->content); // the older snapshot finished writing
+    session.markSaved(snapshot->content);
     EXPECT_TRUE(session.isDirty());
     ASSERT_TRUE(session.undo());
     EXPECT_FALSE(session.isDirty());
@@ -175,7 +173,7 @@ TEST_F(SessionTest, BranchingAwayFromTheSavePointStaysDirty)
     ASSERT_TRUE(session.run(setText(l1, u8"a")));
     session.markSaved(session.prepareSave()->content);
     ASSERT_TRUE(session.undo());
-    ASSERT_TRUE(session.run(setText(l1, u8"a"))); // same bytes, different commit
+    ASSERT_TRUE(session.run(setText(l1, u8"a")));
     EXPECT_TRUE(session.isDirty());
     EXPECT_FALSE(session.canRedo());
 }
@@ -191,7 +189,7 @@ TEST_F(SessionTest, HistoryKeepsFiveHundredStepsAndTheSavedIdentity)
     while (session.undo())
         ++undone;
     EXPECT_EQ(undone, 499);
-    EXPECT_TRUE(session.isDirty()); // the saved state was pruned; nothing reaches it
+    EXPECT_TRUE(session.isDirty());
 }
 
 TEST(EditSessionProtected, ReferenceRefusesEdits)
@@ -202,8 +200,6 @@ TEST(EditSessionProtected, ReferenceRefusesEdits)
               CommandRefusal::Protected);
 }
 
-// R2-reference-tray: a tab becomes the reference and stops being one, so its
-// session is protected only meanwhile; Undo and Redo are writes too.
 TEST(EditSessionProtected, ProtectionFollowsTheReference)
 {
     EditSession tab(load(kThreeLines));
@@ -225,8 +221,6 @@ TEST(EditSessionProtected, ProtectionFollowsTheReference)
     EXPECT_TRUE(tab.undo());
 }
 
-// E63-invalid-commit: blocked by default, legacy behaviour as a preference.
-
 TEST_F(SessionTest, FieldDraftsCommitTogetherAsOneStep)
 {
     ASSERT_TRUE(session.editDraftText(l1, u8"one!"));
@@ -242,7 +236,7 @@ TEST_F(SessionTest, FieldDraftsCommitTogetherAsOneStep)
 
 TEST_F(SessionTest, InvalidDraftsAreBlockedByDefault)
 {
-    ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(500'000)})); // before Start
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(500'000)}));
     EXPECT_EQ(session.draftProblem(), DraftProblem::EndBeforeStart);
     EXPECT_FALSE(session.commitDraft());
     EXPECT_FALSE(session.navigateTo(l2));
@@ -251,8 +245,8 @@ TEST_F(SessionTest, InvalidDraftsAreBlockedByDefault)
     EXPECT_EQ(session.prepareSave().error(), DraftProblem::EndBeforeStart);
     EXPECT_EQ(session.run(setText(l1, u8"cmd")).error(), CommandRefusal::InvalidDraft);
     EXPECT_FALSE(session.undo());
-    EXPECT_EQ(session.historySize(), 1u); // nothing committed
-    ASSERT_TRUE(session.draftLine());     // the draft is kept for correction
+    EXPECT_EQ(session.historySize(), 1u);
+    ASSERT_TRUE(session.draftLine());
     ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(1'500'000)}));
     EXPECT_FALSE(session.draftProblem());
     EXPECT_TRUE(session.navigateTo(l2));
@@ -260,25 +254,22 @@ TEST_F(SessionTest, InvalidDraftsAreBlockedByDefault)
     ASSERT_TRUE(session.editDraft(l2, DraftChange{.marginVertical = 10'000}));
     EXPECT_EQ(session.draftProblem(), DraftProblem::MarginOutOfRange);
     EXPECT_FALSE(session.commitDraft());
-    session.discardDraft(); // Esc
+    session.discardDraft();
     EXPECT_TRUE(session.navigateTo(l3));
 }
 
 TEST_F(SessionTest, LegacyPreferenceCommitsAndCorrectsOnLeave)
 {
     session.setInvalidCommitPolicy(InvalidCommitPolicy::Legacy);
-    // Committing in place keeps End before Start, as the legacy editor did...
     ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(500'000), .marginRight = -5}));
     ASSERT_TRUE(session.commitDraft());
     EXPECT_EQ(session.document().lines()[0]->end.value, core::DocumentTime(500'000));
-    EXPECT_EQ(session.document().lines()[0]->marginRight.value, 0); // NumCtrl clamps
-    // ...and leaving the Line sets End to Start (EditBox::SetLine).
+    EXPECT_EQ(session.document().lines()[0]->marginRight.value, 0);
     ASSERT_TRUE(session.editDraft(l2, DraftChange{.end = core::DocumentTime(1'000'000)}));
     ASSERT_TRUE(session.navigateTo(l3));
     EXPECT_EQ(session.document().lines()[1]->end.value, core::DocumentTime(3'000'000));
 }
 
-// G10: History inspection and jumps (legacy HistoryDialog, GLOBAL_UNDO_TO_LAST_SAVE).
 TEST_F(SessionTest, HistoryListsStepsWithTheirActiveLine)
 {
     session.setSelection(Selection{l2, {l2}});
@@ -304,7 +295,7 @@ TEST_F(SessionTest, GoToJumpsLikeARunOfUndoOrRedo)
     ASSERT_TRUE(session.goTo(0));
     EXPECT_EQ(textOf(session, l1), u8"one");
     EXPECT_EQ(textOf(session, l2), u8"two");
-    EXPECT_EQ(session.selection().active, l1); // recorded with step 1, as Undo restores it
+    EXPECT_EQ(session.selection().active, l1);
     EXPECT_TRUE(session.canRedo());
     ASSERT_TRUE(session.goTo(2));
     EXPECT_EQ(textOf(session, l2), u8"two!");
@@ -321,7 +312,7 @@ TEST_F(SessionTest, GoToCommitsAPendingDraftFirst)
     ASSERT_TRUE(session.editDraftText(l2, u8"typed"));
     ASSERT_TRUE(session.goTo(0));
     EXPECT_FALSE(session.draftLine());
-    ASSERT_EQ(session.history().size(), 3u); // the draft became its own step
+    ASSERT_EQ(session.history().size(), 3u);
     EXPECT_EQ(textOf(session, l2), u8"two");
     ASSERT_TRUE(session.goTo(2));
     EXPECT_EQ(textOf(session, l2), u8"typed");
@@ -329,7 +320,7 @@ TEST_F(SessionTest, GoToCommitsAPendingDraftFirst)
 
 TEST_F(SessionTest, TheSavedStepIsKnownWhileItIsInHistory)
 {
-    EXPECT_EQ(session.savedStep(), 0u); // a freshly opened Document is saved
+    EXPECT_EQ(session.savedStep(), 0u);
     ASSERT_TRUE(session.run(setText(l1, u8"one!")));
     auto save = session.prepareSave();
     ASSERT_TRUE(save);
@@ -339,7 +330,6 @@ TEST_F(SessionTest, TheSavedStepIsKnownWhileItIsInHistory)
     ASSERT_TRUE(session.goTo(*session.savedStep()));
     EXPECT_EQ(textOf(session, l1), u8"one!");
     EXPECT_FALSE(session.isDirty());
-    // A new step after going back drops the saved step from history.
     ASSERT_TRUE(session.goTo(0));
     ASSERT_TRUE(session.run(setText(l1, u8"other")));
     EXPECT_FALSE(session.savedStep());
@@ -358,14 +348,12 @@ TEST_F(SessionTest, HistoryKeepsItsCapacityAndConsistentSteps)
     EXPECT_EQ(textOf(session, l1), u8"v" + std::u8string(1, char8_t('a' + 519 % 26)) + u8"519");
 }
 
-// E4: the Line editor's metadata fields go through the draft like text and
-// times: one step per commit, Undo restores them, nothing changed adds no step.
 TEST_F(SessionTest, MetadataFieldsRoundTripThroughTheDraft)
 {
     ASSERT_TRUE(session.editDraft(l2, DraftChange{.comment = true, .layer = 3, .style = u8"Sign",
                                                   .actor = u8"Ann", .effect = u8"Banner;0"}));
     const auto *two = session.document().lines()[1];
-    EXPECT_FALSE(two->comment); // pending only
+    EXPECT_FALSE(two->comment);
     ASSERT_TRUE(session.commitDraft());
     two = session.document().lines()[1];
     EXPECT_TRUE(two->comment);
@@ -381,14 +369,12 @@ TEST_F(SessionTest, MetadataFieldsRoundTripThroughTheDraft)
     EXPECT_EQ(two->style, u8"Default");
     EXPECT_TRUE(two->actor.empty());
     EXPECT_TRUE(two->effect.empty());
-    // Back to the committed values: nothing to commit.
     ASSERT_TRUE(session.editDraft(l2, DraftChange{.style = u8"Default", .actor = u8""}));
     EXPECT_FALSE(session.commitDraft());
 }
 
 TEST_F(SessionTest, MetadataDraftsWaitBehindAnInvalidTime)
 {
-    // E63-invalid-commit: the whole draft waits, the new fields with it.
     ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(500'000), .actor = u8"Ann"}));
     EXPECT_FALSE(session.commitDraft());
     EXPECT_TRUE(session.draftLine());
@@ -398,8 +384,6 @@ TEST_F(SessionTest, MetadataDraftsWaitBehindAnInvalidTime)
     EXPECT_EQ(session.document().lines()[0]->actor, u8"Ann");
 }
 
-// SubsGrid::ChangeLine (SubsGridBase.cpp:133-155): with several Lines selected
-// every cell the editor marked modified goes to each selected Line, as one step.
 TEST_F(SessionTest, CommitToSelectedCopiesTheModifiedCellsToEverySelectedLine)
 {
     Selection selection;
@@ -412,17 +396,15 @@ TEST_F(SessionTest, CommitToSelectedCopiesTheModifiedCellsToEverySelectedLine)
     EXPECT_EQ(lines[0]->style, u8"Sign");
     EXPECT_EQ(lines[2]->style, u8"Sign");
     EXPECT_EQ(lines[2]->actor, u8"Ann");
-    EXPECT_EQ(lines[1]->style, u8"Default"); // not selected
-    EXPECT_EQ(lines[2]->text, u8"three");    // text was not a modified cell
+    EXPECT_EQ(lines[1]->style, u8"Default");
+    EXPECT_EQ(lines[2]->text, u8"three");
     EXPECT_EQ(session.historySize(), 2u);
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(session.document().lines()[2]->style, u8"Default");
 
-    // A cell set back to the active Line's own value still goes to the others
-    // (Send reads IsModified, not a difference).
     ASSERT_TRUE(session.editDraft(l1, DraftChange{.layer = 0}));
     session.setSelection(selection);
-    EXPECT_FALSE(session.commitDraftToSelected()); // every selected Line already has layer 0
+    EXPECT_FALSE(session.commitDraftToSelected());
     ASSERT_TRUE(session.editDraft(l3, DraftChange{.layer = 4}));
     ASSERT_TRUE(session.commitDraft());
     session.setSelection(selection);
@@ -432,9 +414,6 @@ TEST_F(SessionTest, CommitToSelectedCopiesTheModifiedCellsToEverySelectedLine)
     EXPECT_EQ(session.document().lines()[2]->layer.value, 0);
 }
 
-// TM1: a translation cell that only follows the text (the Original's
-// carried tags) is the edited Line's own: the other selected Lines keep
-// theirs, which the companion may write again. One typed stays typed.
 TEST_F(SessionTest, CommitToSelectedKeepsTheOthersTranslationsWhenCarried)
 {
     Selection selection;
@@ -458,7 +437,7 @@ TEST_F(SessionTest, CommitToSelectedKeepsTheOthersTranslationsWhenCarried)
     ASSERT_TRUE(session.editDraft(l1, DraftChange{.text = u8"newer", .translation = u8"typed2", .translationCarried = true}));
     ASSERT_TRUE(session.commitDraftToSelected());
     lines = session.document().lines();
-    EXPECT_EQ(lines[2]->translation, u8"typed2"); // typed: Send's cell, copied
+    EXPECT_EQ(lines[2]->translation, u8"typed2");
 }
 
 TEST_F(SessionTest, CommitToSelectedWithOneLineIsAnOrdinaryCommit)

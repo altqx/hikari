@@ -1,16 +1,4 @@
 #!/bin/sh
-# A stand-in for curl in the update helper's tests, installed as
-# /usr/local/bin/curl in a test container, ahead of the real one in the
-# helper's PATH. It serves the GitHub release URLs the helper asks for from
-# a folder, so no test reaches the network:
-#
-#   https://github.com/altqx/hikari/releases/download/<tag>/<name>
-#     -> $FAKE_RELEASES/<tag>/<name>  (default /srv/hikarisub-releases)
-#
-# It logs each URL to $FAKE_RELEASES/requests.log, fails as curl --fail
-# does (22) for a file that is not there, and refuses to serve a request
-# that does not insist on https, as the helper's must. FAKE_CURL_OFFLINE=1
-# fails every request as an unreachable host does (6).
 
 root=${FAKE_RELEASES:-/srv/hikarisub-releases}
 prefix=https://github.com/altqx/hikari/releases/download/

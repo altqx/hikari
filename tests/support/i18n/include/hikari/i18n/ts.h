@@ -1,7 +1,5 @@
 #pragma once
-// Qt Linguist TS catalogs, read and written in the layout lupdate and
-// lconvert write (Qt 6.11.2 translator/ts.cpp), for the i18n tests and the
-// contexts lint.
+// TS catalogs in the layout lupdate and lconvert write (Qt 6.11.2 translator/ts.cpp).
 
 #include <QByteArray>
 #include <QList>
@@ -24,8 +22,7 @@ struct TsMessage {
     TsState state = TsState::Unfinished;
     QStringList translations; // one entry, or the numerus forms
     QList<std::pair<QString, QString>> extras; // <extra-NAME>, NAME without the prefix
-    // <location> elements (lupdate -locations absolute or relative): file and
-    // line. Read only; the catalogs are written without them (-locations none).
+    // <location> file and line; read only, written catalogs have none (-locations none).
     QList<std::pair<QString, int>> locations;
 };
 
@@ -46,8 +43,7 @@ struct TsCatalog {
 std::expected<TsCatalog, QString> readTs(const QByteArray &bytes);
 QByteArray writeTs(const TsCatalog &catalog);
 
-// Qt's numerus form count for the catalog languages, as lupdate
-// 6.11.2 creates them (pl 3, ko_KR 1, th_TH 1, ta 2, en 2); -1 otherwise.
+// Numerus forms lupdate 6.11.2 creates for a catalog language; -1 for others.
 int qtNumerusForms(const QString &language);
 
-} // namespace hikari::i18n
+}

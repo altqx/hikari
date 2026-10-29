@@ -1,5 +1,3 @@
-# Controls for accessibility-tree checks: a scene whose roles, names and Tab
-# order are asserted, and a failing twin asserting a name that does not exist.
 foreach(variant IN ITEMS controls failing_control)
     hikari_add_qttest(hikari_a11y_${variant} SOURCES a11y_control.cpp
         LIBRARIES hikari_a11y_testing Qt6::Qml Qt6::Quick)

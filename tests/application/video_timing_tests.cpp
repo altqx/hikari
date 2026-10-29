@@ -1,14 +1,3 @@
-// V6: timing and selecting Lines from the video, and how the video follows
-// the active Line. ReplaysTheLegacyObservations runs every case of the legacy
-// probe (tests/fixtures/legacy-cases/inputs/video-timing-cases.txt; tests/fixtures/legacy-observations/
-// local-v6-video-timing-20261005) through the rewrite and needs legacy's
-// times, selections and video calls exactly, on the CFR and VFR timelines,
-// apart from the ops of the four approved V6 departures (kDepartures), which
-// expect legacy's result with exactly that change. The other tests pin the
-// transaction rules (one undo step each, none when nothing changes, the
-// pending draft first), the departures and the Grid press's trigger
-// (SubsGridWindow.cpp:1647).
-
 #include "hikari/application/video_timing.h"
 #include "hikari/core/ass_load.h"
 
@@ -51,8 +40,6 @@ core::DocumentTime at(int value)
 {
     return core::DocumentTime(std::int64_t{value} * 1000);
 }
-
-// ---- the probe's cases -------------------------------------------------------
 
 struct LineSpec {
     int start = 0, end = 0;
@@ -130,8 +117,6 @@ std::vector<Case> readCases(const char *path)
     return cases;
 }
 
-// Timebase::FromTimecodes(timecodes, fps): without a rate, the average of the
-// timecodes (Timebase.cpp:31-40).
 LegacyTimebase timebaseOf(const Case &c)
 {
     float fps = c.fps;
@@ -141,12 +126,10 @@ LegacyTimebase timebaseOf(const Case &c)
     return LegacyTimebase(c.timecodes, fps);
 }
 
-// The case's Lines as a Document: the probe's flags become a Comment, an
-// unparsed record (legacy NonDialogue), no text, or a translation only.
 struct Built {
     EditSession session;
     std::vector<core::LineId> ids;
-    ShownLine shown; // the Lines legacy's isVisible shows
+    ShownLine shown;
 };
 
 Built build(const Case &c)
@@ -205,7 +188,6 @@ FollowedLine followed(const Case &c, int row, bool editLine)
     return line;
 }
 
-// The legacy calls as what the video and the audio box were asked to do.
 VideoFollow fromCalls(const QJsonArray &calls, VideoState state)
 {
     VideoFollow f;
@@ -218,7 +200,7 @@ VideoFollow fromCalls(const QJsonArray &calls, VideoState state)
             played = true;
         } else if (name == "Pause") {
             if (played)
-                f.playThenPause = true; // Stopped: Play(); Pause()
+                f.playThenPause = true;
             else
                 f.pause = true;
         } else if (name == "Seek") {
@@ -229,7 +211,6 @@ VideoFollow fromCalls(const QJsonArray &calls, VideoState state)
         } else if (name == "PlayLine") {
             int a = 0, b = 0;
             call >> a >> b;
-            // RendererVideo::PlayLine does nothing without a video (RendererVideo.cpp:624)
             if (state != VideoState::None)
                 f.playVideo = std::pair(a, b);
         } else if (name == "OnPlaySelection") {
@@ -242,7 +223,6 @@ VideoFollow fromCalls(const QJsonArray &calls, VideoState state)
                 f.audioUpdate = atEnd != 0;
         }
     }
-    // a seek while the video plays on (ShowEditOnVideo; SetVideoLineTime with choice 0)
     f.seekWhilePlaying = f.seekMs && state == VideoState::Playing && !f.pause;
     return f;
 }
@@ -266,30 +246,21 @@ std::string describe(const VideoFollow &f)
     return out.str();
 }
 
-// The approved V6 departures (docs/compatibility-decisions.md, user
-// 2026-10-05): each op expects legacy's result with exactly this change, and
-// its legacy observation, kept as the old evidence, must still differ.
 struct Departure {
     const char *id;
-    std::optional<int> value; // selvideo: the row; snap: the snapped time; setstart/setend: unused (no step)
+    std::optional<int> value;
 };
 const std::map<std::pair<std::string, std::string>, Departure> kDepartures = {
-    // legacy falls back to the hidden row 0
     {{"select-from-video-first-hidden", "at 200 selvideo"}, {"V6-select-shown-fallback", 1}},
     {{"select-from-video-all-hidden", "selvideo"}, {"V6-select-shown-fallback", std::nullopt}},
-    // legacy's mode-1 loop stops before the next Line (Start 950)
     {{"snap-first-line-mode-1", "snap end 1"}, {"V6-snap-next-line", 950}},
-    // legacy skips the other Line's End (1990) after its blocked Start
     {{"snap-end-blocked-start", "snap end 1"}, {"V6-snap-both-boundaries", 1990}},
-    // legacy records a step with nothing changed
     {{"insert-times-unchanged", "setstart 0"}, {"V6-insert-time-no-op", std::nullopt}},
     {{"insert-times-unchanged", "setend 0"}, {"V6-insert-time-no-op", std::nullopt}},
 };
 
-} // namespace
+}
 
-// Every op of every case: the rewrite gives legacy's results, apart from the
-// approved departures' ops, which give legacy's with exactly that change.
 TEST(VideoTimingCapture, ReplaysTheLegacyObservations)
 {
     const auto cases = readCases(HIKARI_VIDEO_TIMING_CASES);
@@ -342,12 +313,12 @@ TEST(VideoTimingCapture, ReplaysTheLegacyObservations)
                 in >> offset;
                 const bool end = op == "setend";
                 const auto before = b.session.historySize();
-                if (c.state != VideoState::None) { // the command's guard (Application::setTimeFromVideo)
+                if (c.state != VideoState::None) {
                     const int value = legacyInsertTimeFromVideo(timebase, tell, !end, offset);
                     const auto done = setTimesFromVideo(b.session, end, value);
                     EXPECT_EQ(done.has_value(), called("SetModified"));
                 }
-                if (changed) { // V6-insert-time-no-op: legacy's step, none here
+                if (changed) {
                     EXPECT_TRUE(called("SetModified"));
                     EXPECT_EQ(b.session.historySize(), before);
                 } else {
@@ -361,13 +332,13 @@ TEST(VideoTimingCapture, ReplaysTheLegacyObservations)
                     EXPECT_EQ(ms(lines[r]->end.value), times[static_cast<qsizetype>(r)][1].toInt()) << "row " << r;
                 }
             } else if (op == "selvideo") {
-                if (c.state == VideoState::None) { // SelVideoLine returns at once
+                if (c.state == VideoState::None) {
                     EXPECT_EQ(legacy["current"].toInt(), c.active);
-                } else if (changed) { // V6-select-shown-fallback
+                } else if (changed) {
                     const auto id = lineAtVideoTime(b.session.document(), b.shown, tell, c.duration);
                     const std::optional<int> row = id ? std::optional(rowsOf(b.ids, {*id}).front()) : std::nullopt;
                     EXPECT_EQ(row, changed->value);
-                    EXPECT_NE(row, std::optional(legacy["current"].toInt())); // legacy's hidden row 0
+                    EXPECT_NE(row, std::optional(legacy["current"].toInt()));
                     EXPECT_FALSE(b.shown(b.ids[static_cast<std::size_t>(legacy["current"].toInt())]));
                 } else {
                     const auto id = lineAtVideoTime(b.session.document(), b.shown, tell, c.duration);
@@ -380,7 +351,6 @@ TEST(VideoTimingCapture, ReplaysTheLegacyObservations)
                 int ignore = 0;
                 in >> ignore;
                 const ShownLine shown = ignore ? ShownLine{} : b.shown;
-                // VideoBox::Tell without a video is 0
                 const int time = c.state == VideoState::None ? 0 : tell;
                 const auto found = linesShownOnVideo(b.session.document(), shown, b.session.draftRecord()
                                                                                       ? b.session.draftRecord()
@@ -399,7 +369,7 @@ TEST(VideoTimingCapture, ReplaysTheLegacyObservations)
                 const QJsonArray edit = legacy["edit"].toArray();
                 const int startMs = c.hasEditLine ? c.editStart : c.lines[static_cast<std::size_t>(c.active)].start;
                 const int endMs = c.hasEditLine ? c.editEnd : c.lines[static_cast<std::size_t>(c.active)].end;
-                if (!abox) { // OnAudioSnap needs the audio box (HikariSubFrame.cpp:2531)
+                if (!abox) {
                     EXPECT_FALSE(called("Send"));
                 } else {
                     std::vector<int> snapTimes;
@@ -408,7 +378,7 @@ TEST(VideoTimingCapture, ReplaysTheLegacyObservations)
                     const auto spans = spansOf(c);
                     KeyframeSnapContext context{c.keyframes, snapTimes, spans, c.active, c.inactive};
                     const auto snapped = legacyKeyframeSnap(context, startMs, endMs, start);
-                    if (changed) { // V6-snap-next-line, V6-snap-both-boundaries: legacy did not snap
+                    if (changed) {
                         EXPECT_FALSE(called("Send Snapping to keyframe"));
                         EXPECT_EQ(edit[0].toInt(), startMs);
                         EXPECT_EQ(edit[1].toInt(), endMs);
@@ -423,11 +393,10 @@ TEST(VideoTimingCapture, ReplaysTheLegacyObservations)
                 int row = 0, seek = 0, play = 0, nochangeline = 0, autoPlay = 0, abox = 0;
                 in >> row >> seek >> play >> nochangeline >> autoPlay >> abox;
                 const bool rowChanged = row != c.active;
-                // the goto-done path keeps the edit box's Line (EditBox.cpp:366-371)
                 const auto line = followed(c, row, nochangeline && !rowChanged);
                 auto follow = followShownLine(static_cast<SeekAfter>(seek), static_cast<PlayAfter>(play), c.state,
                                               rowChanged, nochangeline != 0, autoPlay != 0, abox != 0, line);
-                if (follow.playVideo) // the video applies Timebase::PlayEndBefore
+                if (follow.playVideo)
                     follow.playVideo->second = timebase.msAt(timebase.frameAt(follow.playVideo->second) - 1);
                 EXPECT_EQ(describe(follow), describe(fromCalls(calls, c.state)));
             } else if (op == "press") {
@@ -449,14 +418,10 @@ TEST(VideoTimingCapture, ReplaysTheLegacyObservations)
             ++compared[op];
         }
     }
-    // every departure's op ran
     EXPECT_EQ(departed.size(), kDepartures.size());
-    // every command and choice was exercised
     for (const char *op : {"frametime", "setstart", "setend", "selvideo", "selvisible", "snap", "setline", "press", "edit"})
         EXPECT_GT(compared[op], 0) << op;
 }
-
-// ---- the rules around the commands ----------------------------------------
 
 namespace {
 
@@ -470,7 +435,7 @@ struct Fixture : ::testing::Test {
     const core::LineRecord &line(std::size_t i) const { return *session.document().lines()[i]; }
 };
 
-} // namespace
+}
 
 TEST_F(Fixture, SetStartTimeIsOneNamedStepThatUndoRestores)
 {
@@ -480,10 +445,10 @@ TEST_F(Fixture, SetStartTimeIsOneNamedStepThatUndoRestores)
     EXPECT_EQ(session.historySize(), steps + 1);
     EXPECT_EQ(session.history().back().name, "Setting start time");
     EXPECT_EQ(ms(line(0).start.value), 3500);
-    EXPECT_EQ(ms(line(0).end.value), 3500); // End < stime: the End follows
+    EXPECT_EQ(ms(line(0).end.value), 3500);
     EXPECT_EQ(ms(line(1).start.value), 3500);
     EXPECT_EQ(ms(line(1).end.value), 4000);
-    EXPECT_EQ(ms(line(2).start.value), 5000); // not selected
+    EXPECT_EQ(ms(line(2).start.value), 5000);
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{a, b}));
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(ms(line(0).start.value), 1000);
@@ -497,29 +462,25 @@ TEST_F(Fixture, SetEndTimeMovesALaterStartBack)
     EXPECT_EQ(session.history().back().name, "Setting end time");
     EXPECT_EQ(ms(line(1).start.value), 3000);
     EXPECT_EQ(ms(line(1).end.value), 4500);
-    EXPECT_EQ(ms(line(2).start.value), 4500); // Start > etime: the Start follows
+    EXPECT_EQ(ms(line(2).start.value), 4500);
     EXPECT_EQ(ms(line(2).end.value), 4500);
 }
 
-// V6-insert-time-no-op: legacy's CopyDialogue copied every selected Line, so
-// SetModified recorded a step even when no time changed; nothing is recorded.
 TEST_F(Fixture, UnchangedTimesRecordNoStep)
 {
     select({a, b}, a);
     const auto steps = session.historySize();
-    ASSERT_TRUE(setTimesFromVideo(session, false, 1000)); // a starts at 1000; b's 3000 moves...
-    EXPECT_EQ(session.historySize(), steps + 1);          // ...so one step
+    ASSERT_TRUE(setTimesFromVideo(session, false, 1000));
+    EXPECT_EQ(session.historySize(), steps + 1);
     select({a}, a);
     const auto revision = session.revision();
-    ASSERT_TRUE(setTimesFromVideo(session, false, 1000)); // nothing changes
+    ASSERT_TRUE(setTimesFromVideo(session, false, 1000));
     ASSERT_TRUE(setTimesFromVideo(session, true, 2000));
     EXPECT_EQ(session.historySize(), steps + 1);
     EXPECT_EQ(session.revision(), revision);
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{a}));
 }
 
-// A pending draft is still committed as its own step when the insert then
-// changes nothing.
 TEST_F(Fixture, UnchangedTimesStillCommitThePendingDraft)
 {
     select({a}, a);
@@ -531,8 +492,6 @@ TEST_F(Fixture, UnchangedTimesStillCommitThePendingDraft)
     EXPECT_FALSE(session.draftLine());
 }
 
-// V6-select-shown-fallback: before every shown Line (and on none), the
-// fallback is the first shown Line, not a hidden Document row 0.
 TEST(VideoTimingSelect, FallsBackToTheFirstShownLine)
 {
     const auto document = load("[Events]\n"
@@ -543,44 +502,29 @@ TEST(VideoTimingSelect, FallsBackToTheFirstShownLine)
     const auto lines = document.lines();
     const core::LineId hidden = lines[0]->id;
     const ShownLine shown = [&](core::LineId id) { return id != hidden; };
-    // Tell 200: no Line starts before it and the next (1000) is further
-    // away than 0: the earlier fallback (ip), the first shown row (the
-    // Comment, as legacy's row 0 could be one)
     EXPECT_EQ(lineAtVideoTime(document, shown, 200, 10000), lines[1]->id);
-    // Tell 600: the next Line is nearer
     EXPECT_EQ(lineAtVideoTime(document, shown, 600, 10000), lines[2]->id);
-    // Tell 9000: no Line starts after it and the video's end (10000) is
-    // nearer than c's start: the later fallback (idr), the first shown row
     EXPECT_EQ(lineAtVideoTime(document, shown, 9000, 10000), lines[1]->id);
-    // no Line shown: nothing
     EXPECT_EQ(lineAtVideoTime(document, [](core::LineId) { return false; }, 200, 10000), std::nullopt);
-    // every Line shown: row 0 as legacy
     EXPECT_EQ(lineAtVideoTime(document, ShownLine{}, 200, 10000), lines[0]->id);
 }
 
-// V6-snap-next-line and V6-snap-both-boundaries.
 TEST(VideoTimingSnap, ModeOneReachesTheNextLine)
 {
     const std::vector<AudioLineSpan> spans{{0, 900, true}, {950, 1990, true}, {2010, 2980, true}, {2000, 2600, true}};
     KeyframeSnapContext context{{}, {}, spans, 1, 1};
-    // the active End 1990: the next Line's Start (2010, 20 ms) wins
     EXPECT_EQ(legacyKeyframeSnap(context, 950, 1990, false), 2010);
-    // the Line after the next is outside mode 1's range
     context.inactiveLinesMode = 2;
     EXPECT_EQ(legacyKeyframeSnap(context, 950, 1990, false), 2000);
-    // a hidden next Line: GetKeyFromPosition passes over it to the next shown one
     const std::vector<AudioLineSpan> hiddenNext{{950, 1990, true}, {2010, 2980, false}, {2030, 2600, true}};
     KeyframeSnapContext second{{}, {}, hiddenNext, 0, 1};
     EXPECT_EQ(legacyKeyframeSnap(second, 950, 1990, false), 2030);
-    // the last shown Line: the range ends at the Line itself
     KeyframeSnapContext last{{}, {}, spans, 3, 1};
-    EXPECT_EQ(legacyKeyframeSnap(last, 2000, 2600, false), 2980); // the previous Line's End
+    EXPECT_EQ(legacyKeyframeSnap(last, 2000, 2600, false), 2980);
 }
 
 TEST(VideoTimingSnap, ABlockedStartLeavesTheEndATarget)
 {
-    // Snapping the End 2000: the other Line's Start 500 is before the
-    // active Start (blocked), its End 1990 is a target.
     const std::vector<AudioLineSpan> spans{{1000, 2000, true}, {500, 1990, true}};
     for (const int mode : {1, 2, 3}) {
         KeyframeSnapContext context{{}, {}, spans, 0, mode};
@@ -594,7 +538,7 @@ TEST_F(Fixture, ThePendingDraftIsCommittedFirstAsItsOwnStep)
     ASSERT_TRUE(session.editDraftText(a, u8"typed"));
     const auto steps = session.historySize();
     ASSERT_TRUE(setTimesFromVideo(session, false, 1500));
-    EXPECT_EQ(session.historySize(), steps + 2); // Send(EDITBOX_LINE_EDITION), then the command
+    EXPECT_EQ(session.historySize(), steps + 2);
     EXPECT_EQ(line(0).text, u8"typed");
     EXPECT_EQ(ms(line(0).start.value), 1500);
     ASSERT_TRUE(session.undo());
@@ -612,15 +556,12 @@ TEST_F(Fixture, NothingSelectedIsRefusedWithoutAStep)
 
 TEST(VideoTimingInsert, NegativeTimesClampAtZeroAfterTruncation)
 {
-    // ZEROIT truncates towards zero: -15 becomes -10, and NewTime makes it 0.
     const LegacyTimebase cfr({0, 41, 83, 125}, 24.f);
     EXPECT_EQ(legacyInsertTimeFromVideo(cfr, 0, true, -15), -10);
-    EXPECT_EQ(legacyInsertTimeFromVideo(cfr, 41, true, 0), 20); // StartTimeFor(1) = 25
-    EXPECT_EQ(legacyInsertTimeFromVideo(cfr, 41, false, 0), 60); // EndTimeFor(1) = 67
+    EXPECT_EQ(legacyInsertTimeFromVideo(cfr, 41, true, 0), 20);
+    EXPECT_EQ(legacyInsertTimeFromVideo(cfr, 41, false, 0), 60);
 }
 
-// SubsGridWindow.cpp:1647: a double click always seeks; a press seeks for
-// choices 1-3 on another Line while the play-after choice does not play the video.
 TEST(VideoFollowPress, TheGridPressSeeksOnlyWhenLegacyDid)
 {
     const FollowedLine line{1000, 2000, 2500};
@@ -634,7 +575,7 @@ TEST(VideoFollowPress, TheGridPressSeeksOnlyWhenLegacyDid)
     EXPECT_TRUE(seeks(SeekAfter::ClickOrEdit, PlayAfter::Nothing, click));
     EXPECT_FALSE(seeks(SeekAfter::EditWhenPaused, PlayAfter::Nothing, click));
     EXPECT_FALSE(seeks(SeekAfter::Edit, PlayAfter::Nothing, click));
-    EXPECT_FALSE(seeks(SeekAfter::ClickOrEdit, PlayAfter::VideoToEnd, click)); // the video plays instead
+    EXPECT_FALSE(seeks(SeekAfter::ClickOrEdit, PlayAfter::VideoToEnd, click));
     GridPress same = click;
     same.rowChanged = false;
     EXPECT_FALSE(seeks(SeekAfter::ClickOrEdit, PlayAfter::Nothing, same));

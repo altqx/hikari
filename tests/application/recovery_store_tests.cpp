@@ -1,7 +1,3 @@
-// P3: autosave recovery bundles (accepted L58-recovery-copy and the
-// 2026-09-29 retention choices): generations, verification, rotation,
-// leftovers of ended sessions, pruning.
-
 #include "hikari/application/recovery_store.h"
 
 #include <gtest/gtest.h>
@@ -44,7 +40,7 @@ std::string text(const RecoveryContent &c)
 
 auto ended = [](const std::string &) { return true; };
 
-} // namespace
+}
 
 TEST(RecoveryStore, KeepsTheLastThreeGenerations)
 {
@@ -84,8 +80,6 @@ TEST(RecoveryStore, DraftsAndTextSurviveExactly)
     EXPECT_EQ(back.frameRate, (std::pair<std::int64_t, std::int64_t>(24000, 1001)));
 }
 
-// E4: the editor's metadata fields survive in the draft, a cleared MicroDVD
-// frame as cleared and an untouched field as absent.
 TEST(RecoveryStore, MetadataDraftFieldsSurviveExactly)
 {
     TempDir dir;
@@ -158,7 +152,7 @@ TEST(RecoveryStore, OldGenerationsArePruned)
     ASSERT_EQ(left.size(), 1u);
     EXPECT_EQ(left[0].key, "mixed");
     EXPECT_EQ(left[0].generations, (std::vector<std::uint64_t>{2}));
-    EXPECT_EQ(left[0].session, "first"); // pruning keeps the bundle's session
+    EXPECT_EQ(left[0].session, "first");
 }
 
 TEST(RecoveryStore, CapacityZeroDisablesAutosave)

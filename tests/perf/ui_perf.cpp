@@ -1,6 +1,3 @@
-// Painted Grid frame cost over a 50,000-Line model at scattered scroll
-// positions (V1-G's first measurement; uncalibrated observations).
-
 #include "perf_harness.h"
 
 #include "line_grid.h"

@@ -1,12 +1,4 @@
-# W2: the legacy app's own frames with VSFilterMod drawing the fixture scripts.
-# For each capture in captures.json the app starts with a fresh Config folder
-# (Config.base.txt and Hotkeys.txt, nothing else: repeated runs shrink
-# VIDEO_WINDOW_SIZE otherwise), the video and a copy of the fixture script
-# whose "Active Line" is that capture's Comment, so the video opens at its
-# time (OPEN_VIDEO_AT_ACTIVE_LINE). Then F8 ("Save frame with subtitles as
-# PNG") and F7 ("Save frame as PNG") save the frame beside the video as
-# <video>_<n>_<time>.png, which is moved to OUT\<fixture>-<ms>-subbed.png and
-# -plain.png. A screenshot of the desktop is kept for each capture.
+# A fresh Config folder per capture: repeated runs shrink VIDEO_WINDOW_SIZE otherwise.
 # env: APPDIR (the legacy package), OUT, ONLY (optional: "fixture-ms,..." to limit).
 $ErrorActionPreference = 'Stop'
 $app = $env:APPDIR
@@ -49,7 +41,6 @@ function Foreground([System.Diagnostics.Process]$p) {
   }
   return $false
 }
-# Presses `vk` until a new PNG appears beside the video; its path, or $null.
 function SaveWith([byte]$vk) {
   $before = @(Get-ChildItem $work -Filter 'w2-gradient_*.png' | ForEach-Object FullName)
   for ($try = 0; $try -lt 3; $try++) {

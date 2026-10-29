@@ -1,13 +1,3 @@
-// W2 (Windows): VSFilterMod, the CSRI renderer the package ships
-// (Csri/VSFiltermod.dll, pinned in cmake/HikariVsfilterMod.cmake), through
-// the CSRI adapter. xy-VSFilter is not shipped (user 2026-10-14), so its
-// recipe comparisons against the legacy release are gone.
-//
-// HIKARI_VSFILTERMOD_CSRI: a folder holding VSFiltermod.dll (the package
-// payload's Csri folder); else the pinned release, when the build fetched it
-// (HIKARI_TEST_VSFILTERMOD, the windows-x64-vsfiltermod preset). Without
-// either every test is skipped, never passed.
-
 #include "hikari/application/font_families.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/ass_load.h"
@@ -64,7 +54,7 @@ std::string script(std::string_view header, std::string_view styles, std::string
 struct Fixture {
     const char *name;
     std::string text;
-    std::vector<int> times; // milliseconds
+    std::vector<int> times;
 };
 
 std::vector<Fixture> fixtures()
@@ -127,13 +117,6 @@ QImage image(const OverlayFrame &f)
     return out;
 }
 
-// The faces the renderer itself selected while it drew: its module's import
-// of gdi32!SelectObject is redirected, and each font it selects into a DC
-// (CMyFont's SelectFont(g_hDC, ...) for the metrics, CText's for the glyph
-// outlines, RTS.cpp:131 and :650) is read back on that DC right after the
-// selection: the LOGFONT it asked for (GetObject) and the face GDI's mapper
-// chose for it (GetTextFace, and the outline metrics' full name, which names
-// the font file's face, "Arial Bold Italic" where a style is a real face).
 namespace drawn {
 
 struct Face {
@@ -164,8 +147,7 @@ HGDIOBJ WINAPI selectObject(HDC dc, HGDIOBJ object)
         if (GetObjectW(object, sizeof lf, &lf) && GetTextFaceW(dc, LF_FACESIZE, face)) {
             Face f{lf.lfFaceName, lf.lfWeight, lf.lfItalic != 0, face, {}};
             if (const UINT size = GetOutlineTextMetricsW(dc, 0, nullptr)) {
-                // Whole OUTLINETEXTMETRICW elements, so the structure is aligned;
-                // its strings follow it, at offsets from its start.
+                // Whole OUTLINETEXTMETRICW elements keep it aligned; its strings follow at offsets from its start.
                 std::vector<OUTLINETEXTMETRICW> buffer((size + sizeof(OUTLINETEXTMETRICW) - 1) / sizeof(OUTLINETEXTMETRICW));
                 OUTLINETEXTMETRICW *otm = buffer.data();
                 if (GetOutlineTextMetricsW(dc, size, otm))
@@ -179,10 +161,6 @@ HGDIOBJ WINAPI selectObject(HDC dc, HGDIOBJ object)
     return previous;
 }
 
-// Points `module`'s import of dll!function at `replacement`; the import's
-// previous target, or null when the module does not import it by name.
-// Only the module's own import table: a renderer reaching gdi32 another way
-// fails the read-back, it never passes.
 void *patchImport(HMODULE module, const char *dll, const char *function, void *replacement)
 {
     auto *base = reinterpret_cast<BYTE *>(module);
@@ -215,7 +193,6 @@ void *patchImport(HMODULE module, const char *dll, const char *function, void *r
     return nullptr;
 }
 
-// The module that holds a renderer's entry points.
 HMODULE moduleOf(const std::shared_ptr<CsriRenderers> &renderers)
 {
     const auto *r = renderers->select("");
@@ -226,7 +203,6 @@ HMODULE moduleOf(const std::shared_ptr<CsriRenderers> &renderers)
     return module;
 }
 
-// A report file in the test artifacts, open for writing (closed on failure).
 std::unique_ptr<QFile> report(const char *name)
 {
     const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR);
@@ -237,9 +213,8 @@ std::unique_ptr<QFile> report(const char *name)
     return file;
 }
 
-} // namespace drawn
+}
 
-// The face GDI gives this process for `family` now.
 std::wstring gdiFace(const wchar_t *family)
 {
     HDC dc = CreateCompatibleDC(nullptr);
@@ -269,9 +244,6 @@ std::shared_ptr<const std::vector<std::byte>> leasedFontBytes()
     return bytes;
 }
 
-// HIKARI_VSFILTERMOD_CSRI (a folder holding the package's VSFiltermod.dll),
-// else the pinned release HIKARI_TEST_VSFILTERMOD fetched: VSFilterMod loaded
-// alone, from a copy in its own folder; null without either.
 std::shared_ptr<CsriRenderers> vsfilterModRenderers()
 {
     const char *mod = std::getenv("HIKARI_VSFILTERMOD_CSRI");
@@ -290,8 +262,6 @@ std::shared_ptr<CsriRenderers> vsfilterModRenderers()
     return CsriRenderers::load(folder, {});
 }
 
-// A Line in `family` (the lease's family or Arial) through `renderers`'
-// default renderer, with the Titillium Web lease or none.
 std::optional<OverlayFrame> drawLeaseProbe(const std::shared_ptr<CsriRenderers> &renderers, const char *family, bool lease,
                                            std::string &problem)
 {
@@ -319,9 +289,6 @@ std::optional<OverlayFrame> drawLeaseProbe(const std::shared_ptr<CsriRenderers> 
     return std::move(*frame);
 }
 
-// Draws `snapshot` through `renderers`' default renderer at 1 s with the
-// module's import of gdi32!SelectObject pointed at drawn::selectObject (and
-// put back before the module could go): the fonts it selected meanwhile.
 std::set<drawn::Face> readBack(const std::shared_ptr<CsriRenderers> &renderers, RenderSnapshot snapshot, std::string &problem)
 {
     HMODULE module = drawn::moduleOf(renderers);
@@ -351,8 +318,6 @@ std::set<drawn::Face> readBack(const std::shared_ptr<CsriRenderers> &renderers, 
     return drawn::faces;
 }
 
-// The renderer's own font selections while it draws the lease's family
-// (drawn::selectObject): the faces it selected for it.
 std::set<std::wstring> facesDrawnWithALease(const std::shared_ptr<CsriRenderers> &renderers, std::string &problem)
 {
     RenderSnapshot s = snapshotOf(script("",
@@ -367,9 +332,6 @@ std::set<std::wstring> facesDrawnWithALease(const std::shared_ptr<CsriRenderers>
     return out;
 }
 
-// The face GDI's mapper gives this process for a LOGFONT like the one the
-// renderer asked for: the family, weight and slant (the read-back's own
-// request, so a difference is the renderer's, not the request's).
 std::wstring gdiFaceFor(const drawn::Face &f)
 {
     HDC dc = CreateCompatibleDC(nullptr);
@@ -401,7 +363,6 @@ QString faceLine(const drawn::Face &f)
              QString::fromStdWString(gdiFaceFor(f)));
 }
 
-// W2 legacy captures: tests/fixtures/legacy-observations/local-w2-vsfiltermod-20261015.
 struct Capture {
     QString fixture;
     int ms = 0;
@@ -420,8 +381,6 @@ std::vector<Capture> legacyCaptures(const QString &dir)
     return out;
 }
 
-// The fixture script as the application hands it to the renderer: loaded
-// (loadAss) and written in renderer mode (encodeAss, as SubsGrid::GetVisible).
 std::optional<RenderSnapshot> appSnapshot(const QString &path)
 {
     QFile f(path);
@@ -434,7 +393,7 @@ std::optional<RenderSnapshot> appSnapshot(const QString &path)
     return s;
 }
 
-} // namespace
+}
 
 TEST(VsfilterMod, LoadsThroughCsri)
 {
@@ -450,13 +409,6 @@ TEST(VsfilterMod, LoadsThroughCsri)
     EXPECT_EQ(r.selectedName(), "vsfiltermod_textsub");
 }
 
-// W2: the snapshot's font leases (the external fonts, as legacy's
-// FontEnumerator added its folder with AddFontResourceExW(FR_PRIVATE)) reach
-// the CSRI renderer. A Line in Titillium Web, a family only the lease has,
-// is drawn while GDI has the family and differs from the same Line in Arial,
-// GDI's substitute for a missing family (without the lease the two are drawn
-// alike); the process no longer has the family once the context is gone.
-// The face the renderer selected is also read back from its own selections.
 TEST(VsfilterMod, DrawsWithTheSnapshotsLeasedFonts)
 {
     const auto list = vsfilterModRenderers();
@@ -485,19 +437,6 @@ TEST(VsfilterMod, DrawsWithTheSnapshotsLeasedFonts)
     EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << "the lease outlived its context";
 }
 
-// W2: a fonts reload (application::reloadSubtitleFonts, the fonts-changed
-// hook; legacy's watcher removed the external fonts from the process, added
-// the folder's anew and reopened the subtitles) reaches the kept adapter at
-// its next prepare. One VSFilterMod adapter, as the video keeps it, draws a Line in
-// Titillium Web with the external folder's fonts as the application reads
-// them (loadExternalFonts): first from an empty folder (GDI's substitute),
-// then with the font copied into the folder and the fonts reloaded (the
-// family is drawn), then with the font deleted and the fonts reloaded (the
-// substitute again, pixel for pixel, and GDI no longer has the family).
-// Between the last two, the fonts are reloaded while the context keeps the
-// same lease (the same bytes): the adapter adds it to the process again
-// before the earlier registration goes, and the family is still drawn; a
-// prepare without a reload adds nothing.
 TEST(VsfilterMod, AFontsReloadReachesTheKeptRenderer)
 {
     const auto loaded = vsfilterModRenderers();
@@ -514,8 +453,6 @@ TEST(VsfilterMod, AFontsReloadReachesTheKeptRenderer)
         const auto folder = artifacts / ("reload-" + name);
         std::filesystem::remove_all(folder);
         std::filesystem::create_directories(folder);
-        // The process's own registrations (AddFontMemResourceEx), each one
-        // and its removal noted.
         std::vector<std::string> events;
         const CsriRenderers::FontLoader addToProcess = entry.second->fontLoader();
         ASSERT_TRUE(addToProcess) << name;
@@ -603,12 +540,6 @@ TEST(VsfilterMod, AFontsReloadReachesTheKeptRenderer)
     }
 }
 
-// W2: the adapter asks VSFilterMod for BGRA, which r5.3.1-hikari.2 draws
-// with straight alpha over the cleared overlay (hikari.1 and r5.3.1 drew it
-// premultiplied with inverted alpha, invisible there). Legacy drew BGR_ onto
-// the RGB32 video frame, which blends into the frame and leaves no alpha.
-// The adapter's overlay composited over a frame must give what VSFilterMod
-// draws onto that frame itself in BGR_, on every fixture.
 TEST(VsfilterMod, OverlayMatchesDrawingOnTheFrame)
 {
     const auto renderers = vsfilterModRenderers();
@@ -617,7 +548,6 @@ TEST(VsfilterMod, OverlayMatchesDrawingOnTheFrame)
     ASSERT_EQ(renderers->names(), (std::vector<std::string>{"vsfiltermod_textsub"}));
     const csri::Renderer *mod = renderers->select("");
     ASSERT_TRUE(mod);
-    // A frame with every level in every channel, as a video frame has.
     std::vector<std::uint8_t> background(std::size_t(kWidth) * kHeight * 4);
     for (int y = 0; y < kHeight; ++y)
         for (int x = 0; x < kWidth; ++x) {
@@ -632,7 +562,7 @@ TEST(VsfilterMod, OverlayMatchesDrawingOnTheFrame)
     for (const auto &f : fixtures()) {
         CsriRenderer overlay(renderers, "");
         ASSERT_TRUE(overlay.prepare(snapshotOf(f.text))) << f.name;
-        const std::string marked = "\xEF\xBB\xBF" + f.text; // as GetVisible's text
+        const std::string marked = "\xEF\xBB\xBF" + f.text;
         void *direct = mod->openMem(mod->rend, marked.data(), marked.size(), nullptr);
         ASSERT_TRUE(direct) << f.name;
         const csri::Fmt fmt{csri::BGR_, kWidth, kHeight};
@@ -677,13 +607,6 @@ TEST(VsfilterMod, OverlayMatchesDrawingOnTheFrame)
     EXPECT_GT(frames, 0u);
 }
 
-// 38c (user decision, 2026-10-14): a script's [Graphics] and [Fonts] reach
-// VSFilterMod as the application hands them over: the renderer script keeps
-// [Graphics] and leaves [Fonts] out, and the decoded fonts are leases.
-// tests/fixtures/attachments/attached.ass fills a 100 by 100 square at
-// (400,40) with \1img(red.png), which VSFilterMod draws white without the
-// image, and draws "HH" in HikariAttachedTest, a family only its [Fonts]
-// has, whose letters are filled boxes.
 TEST(VsfilterMod, DrawsTheScriptsAttachedImageAndFonts)
 {
     const auto renderers = vsfilterModRenderers();
@@ -706,9 +629,7 @@ TEST(VsfilterMod, DrawsTheScriptsAttachedImageAndFonts)
         return &frame.pixels[std::size_t(y) * frame.stride + std::size_t(x) * 4];
     };
 
-    // Without the image: the script without [Graphics] (and without the "HH"
-    // Line: VSFilterMod keeps the fonts it made, so a substitute made now
-    // would stand for the family later in the run).
+    // Also drops the "HH" Line: VSFilterMod keeps the fonts it made, so a substitute made now would stand in later.
     {
         std::string bare = script;
         const auto graphics = bare.find("[Graphics]"), events = bare.find("[Events]");
@@ -762,13 +683,7 @@ TEST(VsfilterMod, DrawsTheScriptsAttachedImageAndFonts)
     EXPECT_GT(fill, 0.9) << "\"HH\" was not drawn in the attached font";
 }
 
-// W2: the faces read back from VSFilterMod's own font selections while it
-// drew (drawn::selectObject), not what GDI would give a LOGFONT the test
-// builds: each family GDI has is drawn with that family (Arial, Arial bold
-// italic, Times New Roman), and a family it lacks with GDI's substitute for
-// it, the face GDI alone gives that request. In words no other test draws:
-// VSFilterMod keeps measured words and outlines in module-wide caches, and a
-// cached word selects no font. Written to vsfiltermod-drawn-faces.txt.
+// VSFilterMod caches measured words module-wide and a cached word selects no font: use words no other test draws.
 TEST(VsfilterMod, ReadsBackTheFacesItDrewWith)
 {
     const auto renderers = vsfilterModRenderers();
@@ -809,10 +724,7 @@ TEST(VsfilterMod, ReadsBackTheFacesItDrewWith)
     EXPECT_EQ(drawnFor(L"Arial", FW_BOLD, true), (std::set<std::wstring>{L"Arial"})) << "Arial bold italic";
     EXPECT_EQ(drawnFor(L"Times New Roman", FW_NORMAL, false), (std::set<std::wstring>{L"Times New Roman"}))
         << "Times New Roman";
-    // The real face behind Arial bold italic: the outline metrics' full name
-    // (GDI gives the font's unique name there, "Monotype:Arial Bold Italic
-    // (Microsoft)" on Windows 11) names the bold italic file, not a
-    // synthesised slant and weight.
+    // GDI's outline-metrics full name ("Monotype:Arial Bold Italic (Microsoft)") names the real face, not a synthesised one.
     std::size_t boldItalic = 0;
     for (const auto &f : faces)
         if (_wcsicmp(f.requested.c_str(), L"Arial") == 0 && f.weight == FW_BOLD && f.italic) {
@@ -829,17 +741,6 @@ TEST(VsfilterMod, ReadsBackTheFacesItDrewWith)
         }
 }
 
-// W2: the rewrite's VSFilterMod overlay against the legacy app's own frames
-// (local-w2-vsfiltermod-20261015: the legacy package with the same fork
-// release, "Save frame with subtitles as PNG" and "Save frame as PNG" at each
-// capture time, every plain frame the same: frames/background.png; its
-// README has the provenance). Each fixture script goes
-// through the application's path (loadAss, encodeAss in renderer mode); the
-// overlay at the capture time, composited over legacy's plain frame, must give
-// legacy's subtitled frame within 2 levels per channel, the rounding the two
-// ways of compositing allow (OverlayMatchesDrawingOnTheFrame); the
-// differences are written to vsfiltermod-legacy.txt, and a capture that fails
-// leaves <capture>-composite.png and -diff.png in the artifacts.
 TEST(VsfilterMod, MatchesTheLegacyAppsCaptures)
 {
     const auto renderers = vsfilterModRenderers();
@@ -850,7 +751,6 @@ TEST(VsfilterMod, MatchesTheLegacyAppsCaptures)
     ASSERT_FALSE(captures.empty()) << qPrintable(dir);
     auto out = drawn::report("vsfiltermod-legacy.txt");
     ASSERT_TRUE(out);
-    // Every capture's "Save frame as PNG" gave these bytes (observations.jsonl).
     const QImage plain = QImage(dir + QStringLiteral("/frames/background.png")).convertToFormat(QImage::Format_RGB32);
     ASSERT_EQ(plain.size(), QSize(kWidth, kHeight));
     std::size_t compared = 0;

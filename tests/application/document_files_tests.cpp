@@ -1,7 +1,3 @@
-// A2: open, save and reopen composed from staged loading and acknowledged
-// writes. Fake ports: the "disk" is a map, and each test decides when and
-// how a write finishes.
-
 #include "hikari/application/document_files.h"
 
 #include <gtest/gtest.h>
@@ -80,7 +76,6 @@ protected:
         return *id;
     }
     core::LineId line(DocumentId doc, std::size_t i) { return service.session(doc)->document().lines().at(i)->id; }
-    // Finishes the latest write the way the adapter would, updating the disk.
     void finish(WriteOutcome outcome)
     {
         const auto &w = writer.started.back();
@@ -90,29 +85,27 @@ protected:
     }
 };
 
-} // namespace
+}
 
 TEST_F(Files, OpenEditSaveReopen)
 {
     const auto doc = open("/a.ass");
     EditSession &s = *service.session(doc);
     EXPECT_FALSE(s.isDirty());
-    // A pending draft is committed by Save (commit-then-save).
     ASSERT_TRUE(s.editDraftText(line(doc, 0), u8"edited"));
     auto plan = service.prepareSave(doc);
     ASSERT_TRUE(plan);
     EXPECT_FALSE(s.draftLine());
     ASSERT_TRUE(service.startSave(*plan));
-    EXPECT_TRUE(s.isDirty()); // not saved until the write is acknowledged
+    EXPECT_TRUE(s.isDirty());
     finish(WriteOutcome::Written);
     EXPECT_FALSE(s.isDirty());
     EXPECT_EQ(service.lastSave(doc)->outcome, WriteOutcome::Written);
 
     std::string expected = kAss;
     expected.replace(expected.find(",one"), 4, ",edited");
-    // S4: and the active Line's row, after the last property (legacy GetAssHeader).
     expected.replace(expected.find("Title: t\n"), 9, "Title: t\nActive Line: 0\n");
-    EXPECT_EQ(text(disk.files["/a.ass"]), expected); // every other byte unchanged
+    EXPECT_EQ(text(disk.files["/a.ass"]), expected);
     ASSERT_TRUE(service.close(doc));
     const auto again = open("/a.ass");
     EXPECT_EQ(service.session(again)->document().lines()[0]->text, u8"edited");
@@ -129,8 +122,6 @@ TEST_F(Files, FailedOpensKeepExistingWork)
     EXPECT_EQ(service.session(doc)->draftText(), u8"work");
 }
 
-// KA6: a lyrics file is imported, never associated: saving it asks for a
-// name, so the lyrics are not overwritten with ASS.
 TEST_F(Files, LyricsOpenAsUntitledImports)
 {
     disk.files["/song.lrc"] = bytesOf("[00:01.00]<00:01.00>Twin<00:01.50>kle<00:02.00>\n");
@@ -139,7 +130,7 @@ TEST_F(Files, LyricsOpenAsUntitledImports)
     EXPECT_TRUE(staged->imported);
     const auto doc = service.activate(std::move(*staged));
     ASSERT_TRUE(doc);
-    EXPECT_TRUE(service.destination(*doc)->value.empty()); // Untitled
+    EXPECT_TRUE(service.destination(*doc)->value.empty());
     EXPECT_TRUE(service.session(*doc)->isDirty());
     ASSERT_EQ(service.session(*doc)->document().lines().size(), 1u);
     EXPECT_EQ(service.session(*doc)->document().lines()[0]->text, u8"{\\k50}Twin{\\k50}kle");
@@ -166,12 +157,10 @@ TEST_F(Files, ReloadIsStagedAndRejectedWhenStale)
     changed.replace(changed.find(",two"), 4, ",TWO");
     disk.files["/a.ass"] = bytesOf(changed);
 
-    // Staged, then cancelled (never activated): nothing changes.
     auto cancelled = service.stageReload(doc);
     ASSERT_TRUE(cancelled);
     EXPECT_EQ(service.session(doc)->document().lines()[1]->text, u8"two");
 
-    // Staged, then the Document is edited: activation is refused.
     auto staged = service.stageReload(doc);
     ASSERT_TRUE(staged);
     ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"newer"));
@@ -179,7 +168,6 @@ TEST_F(Files, ReloadIsStagedAndRejectedWhenStale)
     EXPECT_EQ(service.activate(std::move(*staged)).error(), OpenError::StaleTarget);
     EXPECT_EQ(service.session(doc)->document().lines()[0]->text, u8"newer");
 
-    // A current staged reload replaces the content and starts a new generation.
     auto fresh = service.stageReload(doc);
     ASSERT_TRUE(fresh);
     const auto generation = service.generation(doc);
@@ -214,7 +202,7 @@ TEST_F(Files, FailedAndCancelledWritesLeaveWorkUnsaved)
         EXPECT_TRUE(s.isDirty());
         EXPECT_EQ(service.lastSave(doc)->outcome, outcome);
         EXPECT_EQ(text(disk.files["/a.ass"]), kAss);
-        EXPECT_EQ(s.document().lines()[0]->text, u8"unsaved"); // the work itself is kept
+        EXPECT_EQ(s.document().lines()[0]->text, u8"unsaved");
     }
 }
 
@@ -227,20 +215,15 @@ TEST_F(Files, ExternalChangesNeedAnExplicitOverwrite)
     ASSERT_TRUE(plan);
     EXPECT_EQ(service.startSave(*plan).error(), SaveRefusal::ExternalChange);
     EXPECT_TRUE(writer.started.empty());
-    // A deleted file is an external change too.
     disk.files.erase("/a.ass");
     EXPECT_EQ(service.startSave(*plan).error(), SaveRefusal::ExternalChange);
-    // The user chose to overwrite.
     ASSERT_TRUE(service.startSave(*plan, true));
     finish(WriteOutcome::Written);
     EXPECT_FALSE(service.session(doc)->isDirty());
-    // The next save compares against what was just written, not the old load.
     ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 1), u8"next"));
     EXPECT_TRUE(service.startSave(*service.prepareSave(doc)));
 }
 
-// PU1-disk-change-bar: Keep mine accepts the change it was shown; a later
-// change is refused again.
 TEST_F(Files, AnAcceptedExternalChangeIsWrittenOver)
 {
     const auto doc = open("/a.ass");
@@ -254,7 +237,6 @@ TEST_F(Files, AnAcceptedExternalChangeIsWrittenOver)
     ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
     finish(WriteOutcome::Written);
     EXPECT_FALSE(service.session(doc)->isDirty());
-    // Untitled, or a file that is gone: nothing to accept.
     EXPECT_FALSE(service.acceptExternalChange(service.createNew()));
     disk.files.erase("/a.ass");
     EXPECT_FALSE(service.acceptExternalChange(doc));
@@ -269,10 +251,10 @@ TEST_F(Files, EditsDuringAWriteStayUnsaved)
     ASSERT_TRUE(s.editDraftText(line(doc, 1), u8"later"));
     ASSERT_TRUE(s.commitDraft());
     finish(WriteOutcome::Written);
-    EXPECT_TRUE(s.isDirty()); // only the written snapshot became saved
+    EXPECT_TRUE(s.isDirty());
     EXPECT_EQ(s.document().lines()[1]->text, u8"later");
     ASSERT_TRUE(s.undo());
-    EXPECT_FALSE(s.isDirty()); // back at exactly the written content
+    EXPECT_FALSE(s.isDirty());
 }
 
 TEST_F(Files, SaveAsMovesTheAssociationOnlyAfterSuccess)
@@ -307,16 +289,14 @@ TEST_F(Files, LateResultsDoNotPublish)
     const auto doc = open("/a.ass");
     ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"x"));
     ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
-    // The Document is reloaded before the write reports.
     auto staged = service.stageReload(doc);
     ASSERT_TRUE(staged);
     ASSERT_TRUE(service.activate(std::move(*staged)));
     const auto content = service.session(doc)->contentId();
     finish(WriteOutcome::Written);
     EXPECT_EQ(service.session(doc)->contentId(), content);
-    EXPECT_FALSE(service.lastSave(doc)); // the reload's lifetime has no save yet
+    EXPECT_FALSE(service.lastSave(doc));
 
-    // A write that reports after its Document closed changes nothing.
     ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"y"));
     ASSERT_TRUE(service.startSave(*service.prepareSave(doc), true));
     ASSERT_TRUE(service.close(doc));
@@ -326,18 +306,12 @@ TEST_F(Files, LateResultsDoNotPublish)
 
 TEST_F(Files, ReaderDispatchFollowsTheLegacyLoader)
 {
-    // An .ass file holding SRT falls back to the SRT reader; a .txt holding
-    // ASS events reloads as ASS.
     disk.files["/cues.ass"] = bytesOf("1\n00:00:01,000 --> 00:00:02,000\nHello\n");
     disk.files["/events.txt"] = bytesOf("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n");
     EXPECT_EQ(service.session(open("/cues.ass"))->document().format(), core::SubtitleFormat::Srt);
     EXPECT_EQ(service.session(open("/events.txt"))->document().format(), core::SubtitleFormat::Ass);
 }
 
-// S4: legacy SubsGrid::SaveFile wrote the active Line's row as "Active Line"
-// into the open Document's Script Info before the header (GetAssHeader,
-// SubsGridBase.cpp:1470 at 20d647c4): in place, with no undo step and
-// nothing marked modified. The old code saved the Script Info as it was.
 TEST_F(Files, SaveWritesTheActiveLineIntoTheFileAndTheDocument)
 {
     const auto doc = open("/a.ass");
@@ -347,12 +321,11 @@ TEST_F(Files, SaveWritesTheActiveLineIntoTheFileAndTheDocument)
     const auto revision = s.revision();
     const auto content = s.contentId();
 
-    // A failed write puts nothing in the Document (legacy RestoreSInfo).
     auto failed = service.prepareSave(doc);
     ASSERT_TRUE(failed);
     EXPECT_EQ(failed->activeLine, std::optional<std::u8string>(u8"1"));
     ASSERT_TRUE(service.startSave(*failed));
-    EXPECT_FALSE(s.document().scriptInfo(kActiveLineKey)); // not before it is written
+    EXPECT_FALSE(s.document().scriptInfo(kActiveLineKey));
     finish(WriteOutcome::Failed);
     EXPECT_FALSE(s.document().scriptInfo(kActiveLineKey));
     EXPECT_EQ(text(disk.files["/a.ass"]), kAss);
@@ -365,12 +338,11 @@ TEST_F(Files, SaveWritesTheActiveLineIntoTheFileAndTheDocument)
     expected.replace(expected.find("Title: t\n"), 9, "Title: t\nActive Line: 1\n");
     EXPECT_EQ(text(disk.files["/a.ass"]), expected);
     EXPECT_EQ(s.document().scriptInfo(kActiveLineKey), std::optional<std::u8string>(u8"1"));
-    EXPECT_EQ(s.historySize(), steps); // no step
+    EXPECT_EQ(s.historySize(), steps);
     EXPECT_EQ(s.revision(), revision);
     EXPECT_EQ(s.contentId(), content);
     EXPECT_FALSE(s.isDirty());
 
-    // The next save replaces the value where it is.
     s.setSelection(Selection{line(doc, 0), {line(doc, 0)}, line(doc, 0), {}});
     ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
     finish(WriteOutcome::Written);
@@ -379,7 +351,6 @@ TEST_F(Files, SaveWritesTheActiveLineIntoTheFileAndTheDocument)
     EXPECT_EQ(s.document().scriptInfo(kActiveLineKey), std::optional<std::u8string>(u8"0"));
     EXPECT_FALSE(s.isDirty());
 
-    // A file that already has the key keeps it at its place.
     disk.files["/c.ass"] = bytesOf("[Script Info]\nActive Line: 1\nTitle: t\n[Events]\n"
                                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n");
@@ -399,10 +370,6 @@ TEST_F(Files, OnlyAssSavesWriteTheActiveLine)
     EXPECT_EQ(text(plan->bytes).find("Active Line"), std::string::npos);
 }
 
-// WS2: a save of an ASS Document writes its tab's panel arrangement into the
-// [Hikari] section, as the active Line: the arrangement changing marks
-// nothing modified, the next save writes it, the Document takes it once
-// written. Without a value (the setting off, no tab) the section stays.
 TEST_F(Files, SaveWritesTheLayoutIntoTheHikariSection)
 {
     std::map<std::uint64_t, std::u8string> layouts;
@@ -413,7 +380,7 @@ TEST_F(Files, SaveWritesTheLayoutIntoTheHikariSection)
     const auto doc = open("/a.ass");
     EditSession &s = *service.session(doc);
     layouts[doc.value] = u8"QUJD";
-    EXPECT_FALSE(s.isDirty()); // a layout is not an edit
+    EXPECT_FALSE(s.isDirty());
     const auto steps = s.historySize();
     const auto content = s.contentId();
 
@@ -422,7 +389,7 @@ TEST_F(Files, SaveWritesTheLayoutIntoTheHikariSection)
     EXPECT_EQ(failed->layout, std::optional<std::u8string>(u8"QUJD"));
     ASSERT_TRUE(service.startSave(*failed));
     finish(WriteOutcome::Failed);
-    EXPECT_FALSE(s.document().hikariProperty(kLayoutKey)); // only once written
+    EXPECT_FALSE(s.document().hikariProperty(kLayoutKey));
 
     ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
     finish(WriteOutcome::Written);
@@ -434,7 +401,6 @@ TEST_F(Files, SaveWritesTheLayoutIntoTheHikariSection)
     EXPECT_EQ(s.contentId(), content);
     EXPECT_FALSE(s.isDirty());
 
-    // The next save replaces it in place; with no value the section stays.
     layouts[doc.value] = u8"TEFTVA==";
     ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
     finish(WriteOutcome::Written);
@@ -445,7 +411,6 @@ TEST_F(Files, SaveWritesTheLayoutIntoTheHikariSection)
     EXPECT_FALSE(kept->layout);
     EXPECT_EQ(text(kept->bytes), expected + "\n[Hikari]\nLayout=TEFTVA==\n");
 
-    // Reopened, the Document has it.
     ASSERT_TRUE(service.close(doc));
     EXPECT_EQ(service.session(open("/a.ass"))->document().hikariProperty(kLayoutKey),
               std::optional<std::u8string>(u8"TEFTVA=="));

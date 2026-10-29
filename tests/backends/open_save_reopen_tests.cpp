@@ -1,8 +1,3 @@
-// A2 on the native platform: open a copied fixture, edit one Line, save
-// through the atomic writer, reopen. Real files, the platform's reader and
-// writer; the writer's worker completions are marshalled to this thread as
-// the application does.
-
 #include "hikari/application/document_files.h"
 #include "hikari/backends/platform_files.h"
 
@@ -48,7 +43,6 @@ struct Reopen : ::testing::Test {
     void SetUp() override
     {
         files = &service;
-        // Unique per run, so parallel test processes never share a directory.
         const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
         dir = fs::temp_directory_path() / ("hikari-a2-" + std::to_string(stamp) + "-" +
                                            ::testing::UnitTest::GetInstance()->current_test_info()->name());
@@ -61,7 +55,6 @@ struct Reopen : ::testing::Test {
         port->waitIdle();
         fs::remove_all(dir);
     }
-    // Waits for the writer, then delivers its reports on this thread.
     void drain()
     {
         port->waitIdle();
@@ -81,7 +74,7 @@ struct Reopen : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST_F(Reopen, CopiedFileOpenEditSaveReopen)
 {
@@ -95,8 +88,6 @@ TEST_F(Reopen, CopiedFileOpenEditSaveReopen)
     EXPECT_EQ(service.lastSave(doc)->outcome, WriteOutcome::Written);
     EXPECT_FALSE(s.isDirty());
 
-    // Only that Line's bytes changed (C03: unknown sections stay in place),
-    // and the save added the active Line's row after the last property (S4).
     std::string expected = original;
     expected.replace(expected.find(",,Gate"), 6, ",,Gate, edited");
     const std::string lastProperty = "YCbCr Matrix: TV.601\r\n";
@@ -113,7 +104,6 @@ TEST_F(Reopen, ExternalEditOnDiskIsDetectedByContent)
 {
     const auto doc = open(dir / "copy.ass");
     {
-        // Same size, different bytes: a size or timestamp check could miss it.
         std::string bytes = slurp(dir / "copy.ass");
         bytes[bytes.find("Gate")] = 'g';
         std::ofstream(dir / "copy.ass", std::ios::binary | std::ios::trunc) << bytes;
@@ -121,7 +111,7 @@ TEST_F(Reopen, ExternalEditOnDiskIsDetectedByContent)
     ASSERT_TRUE(service.session(doc)->editDraftText(service.session(doc)->document().lines().front()->id, u8"x"));
     auto plan = service.prepareSave(doc);
     EXPECT_EQ(service.startSave(*plan).error(), SaveRefusal::ExternalChange);
-    EXPECT_NE(slurp(dir / "copy.ass").find("gate"), std::string::npos); // untouched
+    EXPECT_NE(slurp(dir / "copy.ass").find("gate"), std::string::npos);
 }
 
 #ifndef _WIN32

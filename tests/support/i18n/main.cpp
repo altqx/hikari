@@ -1,7 +1,4 @@
-// hikari_i18n_lint: the O6 semantic contexts' lint (i18n/contexts.tsv,
-// docs/localisation.md) that the ctest hikari_i18n_contexts_are_semantic runs.
-//
-//   hikari_i18n_lint --contexts <contexts.tsv> --extracted <located.ts> --sources <dir>
+// Usage: hikari_i18n_lint --contexts <contexts.tsv> --extracted <located.ts> --sources <dir>
 
 #include "hikari/i18n/contexts.h"
 
@@ -44,7 +41,7 @@ std::expected<TsCatalog, QString> readKeys(const QString &path)
     return keys;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -68,7 +65,7 @@ int main(int argc, char **argv)
     auto extracted = readKeys(option(QStringLiteral("extracted")));
     if (!extracted)
         return fail(extracted.error());
-    // Locations are relative to the TS file; report them from the sources.
+    // lupdate writes locations relative to the TS file.
     const QDir tsDir = QFileInfo(option(QStringLiteral("extracted"))).absoluteDir();
     const QDir sourceDir(option(QStringLiteral("sources")));
     int messages = 0;

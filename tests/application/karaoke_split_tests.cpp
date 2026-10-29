@@ -1,9 +1,3 @@
-// KA1 (#276): Karaoke's language-aware Auto split (karaoke_split.h) and the
-// syllable model's KA1 changes (audio_karaoke.h): time by character,
-// graphemes, the \k text as it was read, a split at a time, the start moved
-// under the syllables and the \kf switch. English goes by the hyphenation
-// patterns the UI ships (src/ui/hyphenation/hyph_en_US.dic).
-
 #include "hikari/application/audio_karaoke.h"
 #include "hikari/application/karaoke_split.h"
 #include "hikari/core/text_projection.h"
@@ -51,7 +45,6 @@ struct Rules {
     bool everyN = false, doubleApart = false, hyphenate = true;
 };
 
-// The syllables Auto split gives, joined by "|".
 std::string syllables(std::string_view text, Rules rules = {})
 {
     const std::u16string t = u(text);
@@ -80,32 +73,28 @@ std::vector<std::string> strings(const std::vector<std::u16string> &values)
     return out;
 }
 
-} // namespace
-
-// ---- Auto split (KA1-auto-split-language) --------------------------------------
+}
 
 TEST(KaraokeAutoSplit, RomajiSplitsByMora)
 {
     EXPECT_EQ(syllables("karaoke"), "ka|ra|o|ke");
     EXPECT_EQ(syllables("kyou wa"), "kyo|u |wa");
     EXPECT_EQ(syllables("shinjitsu"), "shi|n|ji|tsu");
-    EXPECT_EQ(syllables("sempai"), "se|m|pa|i"); // m before b, p, m
-    EXPECT_EQ(syllables("T\xC5\x8Dky\xC5\x8D"), "T\xC5\x8D|ky\xC5\x8D"); // long vowels with a macron
+    EXPECT_EQ(syllables("sempai"), "se|m|pa|i");
+    EXPECT_EQ(syllables("T\xC5\x8Dky\xC5\x8D"), "T\xC5\x8D|ky\xC5\x8D");
     EXPECT_EQ(syllables("Toukyou"), "To|u|kyo|u");
-    // a word-final n stays with its syllable
     EXPECT_EQ(syllables("hon"), "hon");
     EXPECT_EQ(syllables("zen'in"), "ze|n'|in");
 }
 
 TEST(KaraokeAutoSplit, TheNOption)
 {
-    // AUDIO_MERGE_EVERY_N_WITH_SYLLABLE: n joins the syllable before it
     EXPECT_EQ(syllables("konnichiwa"), "ko|n|ni|chi|wa");
     EXPECT_EQ(syllables("konnichiwa", {.everyN = true}), "kon|ni|chi|wa");
     EXPECT_EQ(syllables("shinjitsu", {.everyN = true}), "shin|ji|tsu");
     EXPECT_EQ(syllables("sempai", {.everyN = true}), "sem|pa|i");
     EXPECT_EQ(syllables("zen'in", {.everyN = true}), "zen'|in");
-    EXPECT_EQ(syllables("\xE3\x81\xBB\xE3\x82\x93\xE3\x81\xA8\xE3\x81\x86"), // ほんとう
+    EXPECT_EQ(syllables("\xE3\x81\xBB\xE3\x82\x93\xE3\x81\xA8\xE3\x81\x86"),
               "\xE3\x81\xBB|\xE3\x82\x93|\xE3\x81\xA8|\xE3\x81\x86");
     EXPECT_EQ(syllables("\xE3\x81\xBB\xE3\x82\x93\xE3\x81\xA8\xE3\x81\x86", {.everyN = true}),
               "\xE3\x81\xBB\xE3\x82\x93|\xE3\x81\xA8|\xE3\x81\x86");
@@ -113,13 +102,11 @@ TEST(KaraokeAutoSplit, TheNOption)
 
 TEST(KaraokeAutoSplit, TheDoubleConsonantOption)
 {
-    // off (the default): it ends the syllable before it
     EXPECT_EQ(syllables("somatta"), "so|mat|ta");
     EXPECT_EQ(syllables("gakkou"), "gak|ko|u");
     EXPECT_EQ(syllables("matcha"), "mat|cha");
-    EXPECT_EQ(syllables("\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86"), // がっこう
+    EXPECT_EQ(syllables("\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86"),
               "\xE3\x81\x8C\xE3\x81\xA3|\xE3\x81\x93|\xE3\x81\x86");
-    // on: a syllable of its own
     EXPECT_EQ(syllables("somatta", {.doubleApart = true}), "so|ma|t|ta");
     EXPECT_EQ(syllables("gakkou", {.doubleApart = true}), "ga|k|ko|u");
     EXPECT_EQ(syllables("matcha", {.doubleApart = true}), "ma|t|cha");
@@ -129,35 +116,27 @@ TEST(KaraokeAutoSplit, TheDoubleConsonantOption)
 
 TEST(KaraokeAutoSplit, KanaSplitsByMora)
 {
-    EXPECT_EQ(syllables("\xE3\x81\x8B\xE3\x82\x89\xE3\x81\x8A\xE3\x81\x91"), // からおけ
+    EXPECT_EQ(syllables("\xE3\x81\x8B\xE3\x82\x89\xE3\x81\x8A\xE3\x81\x91"),
               "\xE3\x81\x8B|\xE3\x82\x89|\xE3\x81\x8A|\xE3\x81\x91");
-    // a small kana joins the one before it
-    EXPECT_EQ(syllables("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86"), "\xE3\x81\x8D\xE3\x82\x87|\xE3\x81\x86"); // きょう
-    // small ka and ke too (Codex); between kanji, ヶ is a run, so a syllable, of its own
-    EXPECT_EQ(syllables("\xE3\x81\x8B\xE3\x83\xB6\xE3\x81\x86"), "\xE3\x81\x8B\xE3\x83\xB6|\xE3\x81\x86"); // かヶう
-    EXPECT_EQ(syllables("\xE4\xB8\x80\xE3\x83\xB6\xE6\x9C\x88"), "\xE4\xB8\x80|\xE3\x83\xB6|\xE6\x9C\x88"); // 一ヶ月
-    // kana past the BMP (Codex): hentaigana one each, a small one joining
-    EXPECT_EQ(syllables("\xF0\x9B\x80\x82\xF0\x9B\x80\x83"), "\xF0\x9B\x80\x82|\xF0\x9B\x80\x83"); // U+1B002 U+1B003
-    EXPECT_EQ(syllables("\xE3\x81\x8B\xF0\x9B\x85\x90\xE3\x81\x86"), "\xE3\x81\x8B\xF0\x9B\x85\x90|\xE3\x81\x86"); // か U+1B150 う
-    // katakana, the long vowel mark a mora, a word-final ん with its syllable
-    EXPECT_EQ(syllables("\xE3\x83\xA9\xE3\x83\xBC\xE3\x83\xA1\xE3\x83\xB3"), // ラーメン
+    EXPECT_EQ(syllables("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86"), "\xE3\x81\x8D\xE3\x82\x87|\xE3\x81\x86");
+    EXPECT_EQ(syllables("\xE3\x81\x8B\xE3\x83\xB6\xE3\x81\x86"), "\xE3\x81\x8B\xE3\x83\xB6|\xE3\x81\x86");
+    EXPECT_EQ(syllables("\xE4\xB8\x80\xE3\x83\xB6\xE6\x9C\x88"), "\xE4\xB8\x80|\xE3\x83\xB6|\xE6\x9C\x88");
+    EXPECT_EQ(syllables("\xF0\x9B\x80\x82\xF0\x9B\x80\x83"), "\xF0\x9B\x80\x82|\xF0\x9B\x80\x83");
+    EXPECT_EQ(syllables("\xE3\x81\x8B\xF0\x9B\x85\x90\xE3\x81\x86"), "\xE3\x81\x8B\xF0\x9B\x85\x90|\xE3\x81\x86");
+    EXPECT_EQ(syllables("\xE3\x83\xA9\xE3\x83\xBC\xE3\x83\xA1\xE3\x83\xB3"),
               "\xE3\x83\xA9|\xE3\x83\xBC|\xE3\x83\xA1\xE3\x83\xB3");
-    // half-width katakana and its voiced mark
-    EXPECT_EQ(syllables("\xEF\xBD\xB6\xEF\xBE\x9E\xEF\xBE\x97"), "\xEF\xBD\xB6\xEF\xBE\x9E|\xEF\xBE\x97"); // ｶﾞﾗ
+    EXPECT_EQ(syllables("\xEF\xBD\xB6\xEF\xBE\x9E\xEF\xBE\x97"), "\xEF\xBD\xB6\xEF\xBE\x9E|\xEF\xBE\x97");
 }
 
 TEST(KaraokeAutoSplit, KanjiAndHangulOneCharacterEach)
 {
-    EXPECT_EQ(syllables("\xF0\xB1\x8D\x90\xF0\xB1\x8D\x91"), "\xF0\xB1\x8D\x90|\xF0\xB1\x8D\x91"); // Extension H (Codex)
-    EXPECT_EQ(syllables("\xE6\x9D\xB1\xE4\xBA\xAC"), "\xE6\x9D\xB1|\xE4\xBA\xAC"); // 東京
-    EXPECT_EQ(syllables("\xEC\x82\xAC\xEB\x9E\x91\xED\x95\xB4"), "\xEC\x82\xAC|\xEB\x9E\x91|\xED\x95\xB4"); // 사랑해
-    EXPECT_EQ(syllables("\xEF\xBE\xA1\xEF\xBF\x82"), "\xEF\xBE\xA1|\xEF\xBF\x82"); // halfwidth jamo (Codex)
-    // 君の名は: kanji and kana in one word
+    EXPECT_EQ(syllables("\xF0\xB1\x8D\x90\xF0\xB1\x8D\x91"), "\xF0\xB1\x8D\x90|\xF0\xB1\x8D\x91");
+    EXPECT_EQ(syllables("\xE6\x9D\xB1\xE4\xBA\xAC"), "\xE6\x9D\xB1|\xE4\xBA\xAC");
+    EXPECT_EQ(syllables("\xEC\x82\xAC\xEB\x9E\x91\xED\x95\xB4"), "\xEC\x82\xAC|\xEB\x9E\x91|\xED\x95\xB4");
+    EXPECT_EQ(syllables("\xEF\xBE\xA1\xEF\xBF\x82"), "\xEF\xBE\xA1|\xEF\xBF\x82");
     EXPECT_EQ(syllables("\xE5\x90\x9B\xE3\x81\xAE\xE5\x90\x8D\xE3\x81\xAF"),
               "\xE5\x90\x9B|\xE3\x81\xAE|\xE5\x90\x8D|\xE3\x81\xAF");
-    // 𠮷 is two UTF-16 units, one character
-    EXPECT_EQ(syllables("\xF0\xA0\xAE\xB7\xE9\x87\x8E"), "\xF0\xA0\xAE\xB7|\xE9\x87\x8E"); // 𠮷野
-    // 사랑 in jamo (NFD): one syllable per written syllable
+    EXPECT_EQ(syllables("\xF0\xA0\xAE\xB7\xE9\x87\x8E"), "\xF0\xA0\xAE\xB7|\xE9\x87\x8E");
     EXPECT_EQ(syllables("\xE1\x84\x89\xE1\x85\xA1\xE1\x84\x85\xE1\x85\xA1\xE1\x86\xBC"),
               "\xE1\x84\x89\xE1\x85\xA1|\xE1\x84\x85\xE1\x85\xA1\xE1\x86\xBC");
 }
@@ -170,32 +149,21 @@ TEST(KaraokeAutoSplit, EnglishByHyphenation)
     EXPECT_EQ(english().breaks(u"dreams"), std::vector<std::size_t>{});
     EXPECT_EQ(syllables("beautiful"), "beau|ti|ful");
     EXPECT_EQ(syllables("I want to hold your hand"), "I |want |to |hold |your |hand");
-    // in an English Line, words that would read as romaji are English too
     EXPECT_EQ(syllables("Take me home tonight"), "Take |me |home |tonight");
-    EXPECT_EQ(syllables("happy story"), "hap|py |sto|ry"); // two letters at least either side
-    // a ligature is a letter of its word, as the patterns read it (Codex)
+    EXPECT_EQ(syllables("happy story"), "hap|py |sto|ry");
     EXPECT_EQ(syllables("a\xEF\xAC\x83nity"), "a\xEF\xAC\x83n|i|ty");
-    // and so are Latin Extended-C to G's and IPA's letters (Codex): ꞵ
-    // (U+A7B5) and ɐ (U+0250) are no script boundary inside their words,
-    // which are no romaji and too short to hyphenate
     EXPECT_EQ(syllables("a\xEA\x9E\xB5" "a"), "a\xEA\x9E\xB5" "a");
     EXPECT_EQ(syllables("ka\xC9\x90ra"), "ka\xC9\x90ra");
-    // without patterns a word is one syllable
     EXPECT_EQ(syllables("beautiful", {.hyphenate = false}), "beautiful");
 }
 
 TEST(KaraokeAutoSplit, MixedLines)
 {
-    // a romaji Line: the word that is no romaji is English
     EXPECT_EQ(syllables("kimi wo love shiteru"), "ki|mi |wo |love |shi|te|ru");
     EXPECT_EQ(syllables("dakishimete beautiful"), "da|ki|shi|me|te |beau|ti|ful");
-    // kana and Latin in one word: a new script, a new syllable
-    EXPECT_EQ(syllables("\xE5\x90\x9B\xE3\x81\xA8" "dance"), "\xE5\x90\x9B|\xE3\x81\xA8|dance"); // 君とdance
+    EXPECT_EQ(syllables("\xE5\x90\x9B\xE3\x81\xA8" "dance"), "\xE5\x90\x9B|\xE3\x81\xA8|dance");
     EXPECT_EQ(syllables("\xE6\x9D\xB1\xE4\xBA\xAC love story"), "\xE6\x9D\xB1|\xE4\xBA\xAC |love |sto|ry");
-    // capitals read as the lower case does
     EXPECT_EQ(syllables("KARAOKE nani"), "KA|RA|O|KE |na|ni");
-    // a letter with a combining mark (NFD) votes as its composed form (Codex):
-    // é is no romaji, a macron or circumflex vowel is the long vowel
     const auto decomposed = [](std::string text) {
         for (const auto &[composed, nfd] : {std::pair<std::string, std::string>{"\xC3\xA9", "e\xCC\x81"},
                                             {"\xC5\x8D", "o\xCC\x84"}, {"\xC3\xBB", "u\xCC\x82"}})
@@ -211,20 +179,14 @@ TEST(KaraokeAutoSplit, MixedLines)
 TEST(KaraokeAutoSplit, SpacesPunctuationAndBlocks)
 {
     EXPECT_EQ(syllables("sakura, sakura"), "sa|ku|ra, |sa|ku|ra");
-    // punctuation after the last space opens the next word
     EXPECT_EQ(syllables("kimi \"ai\""), "ki|mi |\"a|i\"");
-    // \N \n \h are spaces; blocks go with the syllable after them
     EXPECT_EQ(syllables("ka\\Nra"), "ka\\N|ra");
     EXPECT_EQ(syllables("{\\b1}ka{\\b0}ra"), "{\\b1}ka|{\\b0}ra");
-    // an apostrophe in a word stays in it with a block beside it (Codex)
     EXPECT_EQ(syllables("I don'{\\i1}t know"), "I |don'{\\i1}t |know");
     EXPECT_EQ(syllables("I don't know"), "I |don't |know");
-    // an unclosed block is no text
     EXPECT_EQ(syllables("kara{ke"), "ka|ra{ke");
-    // digits and symbols open the syllable after them
     EXPECT_EQ(syllables("2kara"), "2ka|ra");
-    EXPECT_EQ(syllables("ka$ra"), "ka|$ra"); // symbols too, not the punctuation they are to legacy (Codex)
-    // punctuation past the BMP is read by its code point (Codex): U+10100
+    EXPECT_EQ(syllables("ka$ra"), "ka|$ra");
     auto classes = KaraokeCharClass::ascii();
     classes.punct = [](char32_t c) { return c == 0x10100 || KaraokeCharClass::ascii().punct(c); };
     const std::u16string aegean = u"ka\U00010100 ra";
@@ -232,8 +194,6 @@ TEST(KaraokeAutoSplit, SpacesPunctuationAndBlocks)
     EXPECT_EQ(karaokeWeight(aegean, classes), 4);
 }
 
-// KA1-auto-split-most (Codex security): a Line of more visible characters
-// than the bound is read as with Auto split off, at its spaces
 TEST(KaraokeAutoSplit, ALongerLineSplitsAtSpaces)
 {
     std::string most = "{\\b1}";
@@ -253,19 +213,17 @@ TEST(KaraokeAutoSplit, ALongerLineSplitsAtSpaces)
     EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(10));
 }
 
-// ---- time by character (KA1-time-by-character) ---------------------------------
-
 TEST(KaraokeWeight, VisibleCharactersOnly)
 {
     const auto ascii = KaraokeCharClass::ascii();
     EXPECT_EQ(karaokeWeight(u"ka, ra", ascii), 4);
     EXPECT_EQ(karaokeWeight(u"{\\b1}ka", ascii), 2);
     EXPECT_EQ(karaokeWeight(u"ka\\Nra\\h", ascii), 4);
-    EXPECT_EQ(karaokeWeight(u"don't", ascii), 5); // an apostrophe in a word is a letter of it
+    EXPECT_EQ(karaokeWeight(u"don't", ascii), 5);
     EXPECT_EQ(karaokeWeight(u"'ka'", ascii), 2);
-    EXPECT_EQ(karaokeWeight(u"ka$", ascii), 3); // a symbol is visible
-    EXPECT_EQ(karaokeWeight(u(" \xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD" "a"), ascii), 2); // 👍🏽 is one
-    EXPECT_EQ(karaokeWeight(u"é", ascii), 1);                                    // e and a combining acute
+    EXPECT_EQ(karaokeWeight(u"ka$", ascii), 3);
+    EXPECT_EQ(karaokeWeight(u(" \xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD" "a"), ascii), 2);
+    EXPECT_EQ(karaokeWeight(u"é", ascii), 1);
 }
 
 TEST(KaraokeTimeByCharacter, NewSyllablesShareTheLineByCharacter)
@@ -274,74 +232,58 @@ TEST(KaraokeTimeByCharacter, NewSyllablesShareTheLineByCharacter)
     k.split({u"sakura saku", 0, 1000}, true, {});
     EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"sa", "ku", "ra ", "sa", "ku"}));
     EXPECT_EQ(k.times(), (std::vector<int>{200, 400, 600, 800, 1000}));
-    k.split({u"ka ra\\Nkiss", 0, 800}, false, {}); // at spaces: 2, 2 and 4 characters
+    k.split({u"ka ra\\Nkiss", 0, 800}, false, {});
     EXPECT_EQ(k.times(), (std::vector<int>{200, 400, 800}));
-    k.split({u"... ka", 0, 1000}, false, {}); // a syllable of punctuation still takes one
+    k.split({u"... ka", 0, 1000}, false, {});
     EXPECT_EQ(k.times(), (std::vector<int>{330, 1000}));
 }
 
-// ---- graphemes (KA1-grapheme-letters) ------------------------------------------
-
 TEST(KaraokeGraphemes, ALetterIsNeverHalfACharacter)
 {
-    EXPECT_TRUE(karaokeContinuesGrapheme(u"\U00020BB7", 1));         // a low surrogate
-    EXPECT_TRUE(karaokeContinuesGrapheme(u"é", 1));            // a combining mark
-    EXPECT_TRUE(karaokeContinuesGrapheme(u"❤️", 1));       // a variation selector
-    EXPECT_TRUE(karaokeContinuesGrapheme(u"\U0001F468‍\U0001F469", 3)); // what a ZWJ joins
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"\U00020BB7", 1));
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"é", 1));
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"❤️", 1));
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"\U0001F468‍\U0001F469", 3));
     EXPECT_FALSE(karaokeContinuesGrapheme(u"ab", 1));
-    // Hangul jamo: 한 is ᄒ ᅡ ᆫ; 하 + ᆫ too; a new L starts the next one
     EXPECT_TRUE(karaokeContinuesGrapheme(u"\u1112\u1161\u11AB", 1));
     EXPECT_TRUE(karaokeContinuesGrapheme(u"\u1112\u1161\u11AB", 2));
     EXPECT_TRUE(karaokeContinuesGrapheme(u"\uD558\u11AB", 1));
-    EXPECT_FALSE(karaokeContinuesGrapheme(u"\uD55C\u1161", 1)); // LVT × V breaks
+    EXPECT_FALSE(karaokeContinuesGrapheme(u"\uD55C\u1161", 1));
     EXPECT_FALSE(karaokeContinuesGrapheme(u"\u11AB\u1112", 1));
-    // spacing marks (Codex): Devanagari का, Tamil கொ; a flag's two regional
-    // indicators (🇯🇵), and the next flag starts a new one (🇯🇵🇰🇷)
     EXPECT_TRUE(karaokeContinuesGrapheme(u"\u0915\u093E", 1));
     EXPECT_TRUE(karaokeContinuesGrapheme(u"\u0B95\u0BCA", 1));
     EXPECT_TRUE(karaokeContinuesGrapheme(u"\U0001F1EF\U0001F1F5", 2));
     EXPECT_FALSE(karaokeContinuesGrapheme(u"\U0001F1EF\U0001F1F5\U0001F1F0\U0001F1F7", 4));
     EXPECT_FALSE(karaokeContinuesGrapheme(u"\u0915\u0916", 1));
-    // a letter with more marks than the first window PCRE2 reads is still one
     const std::u16string marked = u"a" + std::u16string(200, u'\u0301') + u"b";
     EXPECT_EQ(karaokeGraphemePrefix(marked, 1), 201u);
     EXPECT_EQ(karaokeGraphemePrefix(marked, 2), 202u);
     EXPECT_EQ(karaokeGraphemePrefix(u"\U00020BB7a", 1), 2u);
     EXPECT_EQ(karaokeGraphemePrefix(u"éx", 1), 2u);
 
-    auto k = kara("{\\k20}\xF0\xA0\xAE\xB7\xE9\x87\x8E", 0, 1000); // 𠮷野
+    auto k = kara("{\\k20}\xF0\xA0\xAE\xB7\xE9\x87\x8E", 0, 1000);
     EXPECT_EQ(k.letters(0, 1), std::pair(u("{}\xF0\xA0\xAE\xB7"), u("\xE9\x87\x8E")));
     ASSERT_TRUE(k.splitSyllable(0, 1, 0));
     EXPECT_EQ(s(k.text(0)), "{\\k10}\xF0\xA0\xAE\xB7{\\k10}\xE9\x87\x8E");
-    // a click inside a syllable written in jamo splits after it: 한국 in NFD
     auto jamo = kara("{\\k20}\xE1\x84\x92\xE1\x85\xA1\xE1\x86\xAB\xE1\x84\x80\xE1\x85\xAE\xE1\x86\xA8", 0, 1000);
     EXPECT_EQ(jamo.letters(0, 1), std::pair(u("{}\xE1\x84\x92\xE1\x85\xA1\xE1\x86\xAB"),
                                             u("\xE1\x84\x80\xE1\x85\xAE\xE1\x86\xA8")));
-    // नमस्ते: न, म and the conjunct स्ते are its letters; a click after the first
     auto hindi = kara("{\\k30}\xE0\xA4\xA8\xE0\xA4\xAE\xE0\xA4\xB8\xE0\xA5\x8D\xE0\xA4\xA4\xE0\xA5\x87", 0, 1000);
     EXPECT_EQ(hindi.letters(0, 1), std::pair(u("{}\xE0\xA4\xA8"), u("\xE0\xA4\xAE\xE0\xA4\xB8\xE0\xA5\x8D\xE0\xA4\xA4\xE0\xA5\x87")));
     EXPECT_EQ(hindi.letters(0, 2).first, u("{}\xE0\xA4\xA8\xE0\xA4\xAE"));
-    // a block inside a letter (Codex): a{\b1} and its accent are one letter,
-    // for the splits and Auto split's units alike
     auto blocked = kara("{\\k20}a{\\b1}\xCC\x81" "b", 0, 1000);
     EXPECT_EQ(blocked.letters(0, 1), std::pair(u("{}a{\\b1}\xCC\x81"), u("b")));
     EXPECT_EQ(karaokeWeight(u("a{\\b1}\xCC\x81" "b"), KaraokeCharClass::ascii()), 2);
-    EXPECT_EQ(karaokeLetterEnd(u"a{\\b1}b", 0), 1u); // no mark after the block: the letter ends before it
-    EXPECT_EQ(karaokeLetterEnd(u"a{\\b1", 0), 1u);   // an unclosed "{" is text
-    // a window PCRE2 reads that would end inside a surrogate pair (Codex): an
-    // emoji, marks, a zero width joiner and an emoji are one letter, whether
-    // a block comes after the first emoji or not
+    EXPECT_EQ(karaokeLetterEnd(u"a{\\b1}b", 0), 1u);
+    EXPECT_EQ(karaokeLetterEnd(u"a{\\b1", 0), 1u);
     const std::u16string marks(60, u'\u0301');
     const std::u16string joined = u"\U0001F600" + marks + u"\u200D\U0001F600" + u"b";
     EXPECT_EQ(karaokeGraphemePrefix(joined, 1), joined.size() - 1);
     const std::u16string blocked2 = u"\U0001F600{\\b1}" + std::u16string(62, u'\u0301') + u"\u200D\U0001F600" + u"b";
     EXPECT_EQ(karaokeLetterEnd(blocked2, 0), blocked2.size() - 1);
-    // \N is one letter
     auto breaks = kara("{\\k20}a\\Nb", 0, 1000);
     EXPECT_EQ(breaks.letters(0, 2), std::pair(std::u16string(u"{}a\\N"), std::u16string(u"b")));
 }
-
-// ---- the \k text as it was read (KA1-k-round-trip, KA1-kt-tag) -------------------
 
 TEST(KaraokeRoundTrip, TaggedLinesComeBackUnchanged)
 {
@@ -379,7 +321,7 @@ TEST(KaraokeRoundTrip, TaggedLinesComeBackUnchanged)
 TEST(KaraokeRoundTrip, OnlyTheChangedTimesAreWrittenAgain)
 {
     auto k = kara("{\\k020}ka{\\k12.5}ra{\\k30}o", 1000, 9000);
-    k.times()[1] += 100; // ra 10 cs longer, o 10 shorter
+    k.times()[1] += 100;
     EXPECT_EQ(s(k.text(1000)), "{\\k020}ka{\\k22}ra{\\k20}o");
 }
 
@@ -387,24 +329,20 @@ TEST(KaraokeRoundTrip, KtIsNoSyllable)
 {
     auto k = kara("{\\k20}ka{\\kt10}{\\k30}ra", 1000, 9000);
     EXPECT_EQ(strings(k.tags()), (std::vector<std::string>{"k", "k"}));
-    EXPECT_EQ(k.times(), (std::vector<int>{1200, 1500})); // legacy read \kt10 as \k0
+    EXPECT_EQ(k.times(), (std::vector<int>{1200, 1500}));
     EXPECT_EQ(s(k.text(1000)), "{\\k20}ka{\\kt10}{\\k30}ra");
 }
-
-// ---- a split at a time (the waveform cursor) -----------------------------------
 
 TEST(KaraokeSplitAt, TheTimeChoosesTheLetter)
 {
     auto k = kara("{\\k100}sakura", 0, 2000);
-    ASSERT_TRUE(k.splitAt(0, 334, 0)); // a third of the time: 2 of 6 letters
+    ASSERT_TRUE(k.splitAt(0, 334, 0));
     EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"{}sa", "kura"}));
-    EXPECT_EQ(k.times(), (std::vector<int>{330, 1000})); // ZEROIT
+    EXPECT_EQ(k.times(), (std::vector<int>{330, 1000}));
     EXPECT_EQ(s(k.text(0)), "{\\k33}sa{\\k67}kura");
-    // spaces and punctuation stay with the letter before them
     auto spaced = kara("{\\k100}ka, ra", 0, 2000);
     ASSERT_TRUE(spaced.splitAt(0, 500, 0));
     EXPECT_EQ(strings(spaced.syllables()), (std::vector<std::string>{"{}ka, ", "ra"}));
-    // near an end all the letters go to one part
     auto edge = kara("{\\k100}sakura", 0, 2000);
     ASSERT_TRUE(edge.splitAt(0, 40, 0));
     EXPECT_EQ(s(edge.text(0)), "{\\k4}{\\k96}sakura");
@@ -415,13 +353,11 @@ TEST(KaraokeSplitAt, OnlyInsideTheSyllable)
     auto k = kara("{\\k50}ka{\\k50}ra", 0, 2000);
     EXPECT_FALSE(k.splitAt(0, 0, 0));
     EXPECT_FALSE(k.splitAt(0, 500, 0));
-    EXPECT_FALSE(k.splitAt(0, 5, 0)); // 0 after ZEROIT
+    EXPECT_FALSE(k.splitAt(0, 5, 0));
     EXPECT_FALSE(k.splitAt(1, 300, 0));
     EXPECT_FALSE(k.splitAt(2, 800, 0));
     EXPECT_EQ(k.count(), 2);
 }
-
-// ---- the start moved under the syllables (KA1-lead-in-keeps-syllables) ---------
 
 TEST(KaraokeMoveStart, AnEarlierStartIsALeadSyllable)
 {
@@ -430,13 +366,11 @@ TEST(KaraokeMoveStart, AnEarlierStartIsALeadSyllable)
     k.moveStart(1000, 800);
     EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"", "{}ka", "{}ra"}));
     EXPECT_EQ(k.times(), (std::vector<int>{1000, 1500, 2000}));
-    EXPECT_EQ(k.current, 2); // the same syllable
+    EXPECT_EQ(k.current, 2);
     EXPECT_EQ(s(k.text(800)), "{\\k20}{\\k50}ka{\\k50}ra");
-    // earlier again: the lead syllable takes it
     k.moveStart(800, 600);
     EXPECT_EQ(k.count(), 3);
     EXPECT_EQ(s(k.text(600)), "{\\k40}{\\k50}ka{\\k50}ra");
-    // back: the emptied lead syllable goes
     k.moveStart(600, 1000);
     EXPECT_EQ(s(k.text(1000)), "{\\k50}ka{\\k50}ra");
     EXPECT_EQ(k.current, 1);
@@ -447,15 +381,12 @@ TEST(KaraokeMoveStart, ALaterStartCutsTheSyllablesItPasses)
     auto k = kara("{\\k50}ka{\\k50}ra", 1000, 2000);
     k.moveStart(1000, 1600);
     EXPECT_EQ(k.times(), (std::vector<int>{1600, 2000}));
-    EXPECT_EQ(s(k.text(1600)), "{\\k0}ka{\\k40}ra"); // ka stays, of no length
-    // a lead syllable the Line already had stays when it keeps its length
+    EXPECT_EQ(s(k.text(1600)), "{\\k0}ka{\\k40}ra");
     auto lead = kara("{\\k30}{\\k50}ka", 1000, 2000);
     lead.moveStart(1000, 1100);
     EXPECT_EQ(s(lead.text(1100)), "{\\k20}{\\k50}ka");
 }
 
-// Codex: a Line is read a few tags at a time; the pieces' texts in a row
-// are the whole Line's, whatever the blocks, tags and starts.
 TEST(KaraokeMoveStart, ALineReadInPiecesIsTheWholeLine)
 {
     const std::vector<std::u16string> parts{
@@ -479,8 +410,6 @@ TEST(KaraokeMoveStart, ALineReadInPiecesIsTheWholeLine)
         EXPECT_EQ(karaokeKeepSyllables(text, from, to, 9000), karaokeKeepSyllables(text, from, to, 9000, INT_MAX));
 }
 
-// Codex: a piece ends only between blocks, so one block of more tags than a
-// piece may hold leaves the Line's text as it is, in about its length's time
 TEST(KaraokeMoveStart, OneHugeBlockLeavesTheTextAsItIs)
 {
     std::u16string fits = u"{";
@@ -504,17 +433,13 @@ TEST(KaraokeMoveStart, TheLinesTextKeepsItsSyllables)
               std::optional<std::u16string>(u"{\\k20}{\\k50}ka{\\k50}ra"));
     EXPECT_EQ(karaokeKeepSyllables(u"{\\b1}ka{\\k50}ra", 1000, 800, 9000),
               std::optional<std::u16string>(u"{\\k20}{\\b1}ka{\\k50}ra"));
-    EXPECT_EQ(karaokeKeepSyllables(u"karaoke", 1000, 800, 9000), std::nullopt); // no tags
+    EXPECT_EQ(karaokeKeepSyllables(u"karaoke", 1000, 800, 9000), std::nullopt);
     EXPECT_EQ(karaokeKeepSyllables(u"{\\k50}ka", 1000, 1000, 9000), std::nullopt);
-    // tags outside a block, or in one never closed, are no \k syllables
     EXPECT_EQ(karaokeKeepSyllables(u"\\k50 ka{\\b1}", 1000, 800, 9000), std::nullopt);
     EXPECT_EQ(karaokeKeepSyllables(u"{\\b1}{\\k50 ka", 1000, 800, 9000), std::nullopt);
-    // a last tag never closed: the text as it is (Codex), not read half as a tag
     EXPECT_EQ(karaokeKeepSyllables(u"{\\k20}ka{\\k30", 1000, 800, 2000), std::nullopt);
     EXPECT_EQ(karaokeKeepSyllables(u"{\\k20}ka{\\k30", 1000, 1300, 2000), std::nullopt);
-    EXPECT_NE(karaokeKeepSyllables(u"{\\k20}ka{\\k30}ra{", 1000, 800, 2000), std::nullopt); // no tag in it
-    // a long unclosed block of \k tags is read in one pass (Codex: the
-    // backward searches were quadratic, seconds for 300 KB)
+    EXPECT_NE(karaokeKeepSyllables(u"{\\k20}ka{\\k30}ra{", 1000, 800, 2000), std::nullopt);
     std::u16string unclosed = u"{";
     for (int i = 0; i < 100000; i++)
         unclosed += u"\\k0";
@@ -525,8 +450,6 @@ TEST(KaraokeMoveStart, TheLinesTextKeepsItsSyllables)
 
 TEST(KaraokeRoundTrip, LongLinesAreReadAndWrittenInOnePass)
 {
-    // Codex security: a long text before one block of tags was copied for
-    // each tag
     std::u16string prefixed(2'000'000, u'a');
     prefixed += u"{";
     for (int i = 0; i < 16384; i++)
@@ -536,8 +459,6 @@ TEST(KaraokeRoundTrip, LongLinesAreReadAndWrittenInOnePass)
     EXPECT_NE(karaokeKeepSyllables(prefixed, 1000, 800, 9000), std::nullopt);
     EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(2));
 
-    // Codex security: 20 000 tags in one block came back with a search for
-    // each tag, and each letter looked to the Line's end for a "{"
     std::string block = "{";
     for (int i = 0; i < 20000; i++)
         block += "\\k0\\bord1";
@@ -554,8 +475,6 @@ TEST(KaraokeRoundTrip, LongLinesAreReadAndWrittenInOnePass)
     EXPECT_EQ(karaokeWeight(u(letters), KaraokeCharClass::ascii()), 200000);
     EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(2));
 
-    // a letter cut by a block before each of its marks (Codex security): a
-    // few blocks belong to it, the rest are read once each
     std::u16string cut = u"a";
     for (int i = 0; i < 100000; i++)
         cut += u"{x}\u0301";
@@ -565,21 +484,17 @@ TEST(KaraokeRoundTrip, LongLinesAreReadAndWrittenInOnePass)
     EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(2));
 }
 
-// ---- \k and \kf (KA1-kf-switch) ---------------------------------------------------
-
 TEST(KaraokeKfSwitch, LongSyllablesSwitchInOneStep)
 {
     auto k = kara("{\\k20}ka{\\k150}raa{\\k120}o{\\K150}ke", 0, 9000);
     ASSERT_TRUE(k.switchLongToKf(1000, 0));
-    EXPECT_EQ(strings(k.tags()), (std::vector<std::string>{"k", "kf", "kf", "K"})); // \K is no \k
+    EXPECT_EQ(strings(k.tags()), (std::vector<std::string>{"k", "kf", "kf", "K"}));
     EXPECT_EQ(s(k.text(0)), "{\\k20}ka{\\kf150}raa{\\kf120}o{\\K150}ke");
-    ASSERT_TRUE(k.switchLongToKf(1000, 0)); // and back
+    ASSERT_TRUE(k.switchLongToKf(1000, 0));
     EXPECT_EQ(s(k.text(0)), "{\\k20}ka{\\k150}raa{\\k120}o{\\K150}ke");
-    // with one long \k left, every long one becomes \kf
     auto mixed = kara("{\\kf150}a{\\k150}b", 0, 9000);
     ASSERT_TRUE(mixed.switchLongToKf(1000, 0));
     EXPECT_EQ(strings(mixed.tags()), (std::vector<std::string>{"kf", "kf"}));
-    // nothing that long
     auto short_ = kara("{\\k20}ka{\\k30}ra", 0, 9000);
     EXPECT_FALSE(short_.switchLongToKf(1000, 0));
     EXPECT_EQ(strings(short_.tags()), (std::vector<std::string>{"k", "k"}));

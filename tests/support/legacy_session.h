@@ -1,9 +1,5 @@
 #pragma once
 
-// CF3 (#490): legacy SaveLastSession's bytes, for .kls and LastSession.txt
-// fixtures. The program writes JSON sessions only; the tests still need the
-// legacy files it reads.
-
 #include "hikari/application/session_file.h"
 
 #include <string>
@@ -12,12 +8,11 @@
 
 namespace hikari::testing {
 
-// The file's bytes, with the "[Close session]" line when `closed`. `program`
-// is legacy Options.progname ("HikariSub v<version>").
+// A HikariSub legacy session file (.kls, LastSession.txt); `program` is "HikariSub v<version>".
 inline std::string writeLegacySession(std::string_view program, bool closed,
                                       const std::vector<application::SessionTab> &tabs)
 {
-    std::string out = "\xEF\xBB\xBF"; // FileWrite(utf = true): a BOM, then UTF-8
+    std::string out = "\xEF\xBB\xBF";
     out += "[";
     out += program;
     out += "]\r\n";
@@ -40,4 +35,4 @@ inline std::string writeLegacySession(std::string_view program, bool closed,
     return out;
 }
 
-} // namespace hikari::testing
+}

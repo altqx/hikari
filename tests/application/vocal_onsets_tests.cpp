@@ -1,9 +1,3 @@
-// KA5 (#280): vocal-onset snapping (KA5-onset-snap). The detection over
-// synthetic sung notes (a harmonic voice with vibrato, at the onsets the test
-// places), over what must start none (a held note, bass below the voice,
-// silence), at other sample rates, its cancel, and the snap's window and
-// bounds.
-
 #include "hikari/application/vocal_onsets.h"
 
 #include <gtest/gtest.h>
@@ -15,12 +9,10 @@ using namespace hikari::application;
 
 namespace {
 
-// A sung note: harmonics of `f0` falling off by 1/k (three formant-ish
-// bumps), vibrato of `vibratoCents` at 5.5 Hz, `attackMs` up and 30 ms down.
 struct Note {
     int startMs = 0, lengthMs = 0;
     double f0 = 220;
-    double level = 0.3; // of full scale
+    double level = 0.3;
     int attackMs = 10;
     double vibratoCents = 30;
     int harmonics = 16;
@@ -58,7 +50,6 @@ public:
             m_samples[std::size_t(first + i)] += note.level * 0.35 * envelope * v;
         }
     }
-    // White noise at `level` of full scale over the whole track.
     void noise(double level)
     {
         std::uint32_t seed = 4242;
@@ -101,7 +92,6 @@ std::vector<int> onsets(const Track &track)
     return found.value_or(std::vector<int>{});
 }
 
-// Each expected onset found within `toleranceMs`, and nothing else.
 void expectOnsets(const std::vector<int> &found, const std::vector<int> &expected, int toleranceMs)
 {
     ASSERT_EQ(found.size(), expected.size()) << ::testing::PrintToString(found);
@@ -109,10 +99,8 @@ void expectOnsets(const std::vector<int> &found, const std::vector<int> &expecte
         EXPECT_NEAR(found[i], expected[i], toleranceMs) << "onset " << i << " of " << ::testing::PrintToString(found);
 }
 
-} // namespace
+}
 
-// Syllables sung after silence (between phrases, or a stop consonant) start
-// where the voice does, on the 10 ms grid.
 TEST(VocalOnsets, NotesAfterSilenceStartWhereTheVoiceDoes)
 {
     Track track(4000);
@@ -127,8 +115,6 @@ TEST(VocalOnsets, NotesAfterSilenceStartWhereTheVoiceDoes)
         EXPECT_EQ(ms % kOnsetHopMs, 0);
 }
 
-// Syllables that follow each other with only a short dip between them (a
-// consonant) and a change of pitch.
 TEST(VocalOnsets, SyllablesJoinedByAShortDip)
 {
     Track track(3000);
@@ -142,8 +128,6 @@ TEST(VocalOnsets, SyllablesJoinedByAShortDip)
     expectOnsets(onsets(track), starts, 20);
 }
 
-// A voice over a held accompaniment chord: the chord starts once, then each
-// sung syllable.
 TEST(VocalOnsets, AVoiceOverAHeldChord)
 {
     Track track(4000);
@@ -159,7 +143,6 @@ TEST(VocalOnsets, AVoiceOverAHeldChord)
     expectOnsets(onsets(track), expected, 20);
 }
 
-// A held note with vibrato and a slow swell starts once.
 TEST(VocalOnsets, AHeldNoteWithVibratoStartsOnce)
 {
     Track track(4000);
@@ -168,7 +151,6 @@ TEST(VocalOnsets, AHeldNoteWithVibratoStartsOnce)
     expectOnsets(onsets(track), {500}, 10);
 }
 
-// A bass note below the voice's band starts none; the voice over it does.
 TEST(VocalOnsets, BassBelowTheVoiceStartsNone)
 {
     Track track(3000);
@@ -178,7 +160,6 @@ TEST(VocalOnsets, BassBelowTheVoiceStartsNone)
     expectOnsets(onsets(track), {1200}, 10);
 }
 
-// Silence and noise alone start nothing, nor does audio with no samples.
 TEST(VocalOnsets, SilenceAndNoiseStartNothing)
 {
     Track quiet(2000);
@@ -191,7 +172,6 @@ TEST(VocalOnsets, SilenceAndNoiseStartNothing)
     EXPECT_TRUE(none->empty());
 }
 
-// The same notes at 44.1 and 22.05 kHz.
 TEST(VocalOnsets, OtherSampleRates)
 {
     for (const int rate : {44100, 22050}) {
@@ -204,8 +184,6 @@ TEST(VocalOnsets, OtherSampleRates)
     }
 }
 
-// Audio past kOnsetMaxMs is not looked at, however long a dummy audio's
-// name makes it (its buffers would not fit in memory).
 TEST(VocalOnsets, AudioPastTheCapIsNotLookedAt)
 {
     const auto found = detectVocalOnsets(DisplayAudio::silence(48000, std::int64_t(3000000000000000)));
@@ -213,7 +191,6 @@ TEST(VocalOnsets, AudioPastTheCapIsNotLookedAt)
     EXPECT_TRUE(found->empty());
 }
 
-// A set cancel ends the detection without onsets.
 TEST(VocalOnsets, CancelEndsTheDetection)
 {
     Track track(3000);
@@ -222,8 +199,6 @@ TEST(VocalOnsets, CancelEndsTheDetection)
     EXPECT_EQ(detectVocalOnsets(track.audio(), &cancel), std::nullopt);
 }
 
-// The nearest onset within the window, the earlier one on a tie; nothing in
-// the window, or only past the bounds, leaves the time as it is.
 TEST(VocalOnsets, SnapTakesTheNearestOnsetInTheWindowAndBounds)
 {
     const std::vector<int> found{1000, 1200, 1300, 2000};
@@ -237,7 +212,6 @@ TEST(VocalOnsets, SnapTakesTheNearestOnsetInTheWindowAndBounds)
     EXPECT_EQ(snapToOnset(found, 900, 100), 1000);
     EXPECT_EQ(snapToOnset(found, 2101, 100), 2101);
     EXPECT_EQ(snapToOnset({}, 1040, 100), 1040);
-    // bounds: the nearest one is past them, so the next nearest in the window
     EXPECT_EQ(snapToOnset(found, 1240, 100, 1210, INT_MAX), 1300);
     EXPECT_EQ(snapToOnset(found, 1240, 100, INT_MIN, 1290), 1200);
     EXPECT_EQ(snapToOnset(found, 1040, 100, 1010, 1190), 1040);

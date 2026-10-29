@@ -1,7 +1,3 @@
-// N6: the editor output's real-time half without a device. These pin the
-// callback constraints (no allocation; silence when nothing is ready), the
-// counters, and when clock estimates are invalidated (M50-device: underrun,
-// suspend/stall, stop, loss).
 #include "hikari/backends/audio_output_engine.h"
 
 #include <gtest/gtest.h>
@@ -14,12 +10,11 @@
 
 namespace {
 
-// Allocation counter for the calling thread. Replacing the global operators
-// covers every allocation in this executable; only flagged regions count.
+// Replacing the global operator new sees every allocation in the executable; only flagged regions count.
 thread_local bool t_counting = false;
 thread_local int t_allocations = 0;
 
-} // namespace
+}
 
 void *operator new(std::size_t size)
 {
@@ -49,7 +44,6 @@ std::vector<float> ramp(std::size_t samples, float first = 1)
     return v;
 }
 
-// Drives render() like a host: consecutive buffers on a regular stream clock.
 struct Host {
     OutputEngine &engine;
     std::vector<float> out = std::vector<float>(kFrames * 2);
@@ -81,7 +75,7 @@ TEST(AudioRing, PopWrapsAndFillsTheRestWithSilence)
     std::vector<float> out(6);
     ring.push(ramp(6));
     EXPECT_EQ(ring.pop(out), 6u);
-    ring.push(ramp(5, 100)); // wraps past the end of the buffer
+    ring.push(ramp(5, 100));
     std::vector<float> wide(8, -1);
     EXPECT_EQ(ring.pop(wide), 5u);
     EXPECT_EQ(wide, (std::vector<float>{100, 101, 102, 103, 104, 0, 0, 0}));
@@ -126,8 +120,6 @@ TEST(OutputEngine, RenderNeverAllocates)
     engine.write(data);
     t_allocations = 0;
     t_counting = true;
-    // Every path: full buffers, an underrun, starvation, a host underflow, a
-    // clock jump, then an injected loss.
     for (int i = 0; i < 6; ++i)
         host.tick();
     host.tick(true);
@@ -144,7 +136,7 @@ TEST(OutputEngine, WritesWholeFramesAndFillsSilence)
 {
     OutputEngine engine(kStereo, 0.02, 0.1);
     engine.started();
-    EXPECT_EQ(engine.write(ramp(201)), 200u); // the odd sample is not a frame
+    EXPECT_EQ(engine.write(ramp(201)), 200u);
     Host host{engine};
     host.tick();
     for (std::size_t i = 0; i < 200; ++i)
@@ -201,14 +193,14 @@ TEST(OutputEngine, UnderrunStartsANewEpoch)
     host.tick();
     host.tick();
     const auto before = engine.clock(10).epoch;
-    host.tick(); // 10 frames ready of 256
+    host.tick();
     const auto s = engine.status();
     EXPECT_EQ(s.underruns, 1u);
     const auto after = engine.clock(10 + 2 * kBuffer);
     EXPECT_TRUE(after.valid) << "the new epoch's estimate is usable";
     EXPECT_GT(after.epoch, before);
     EXPECT_EQ(after.readyFrames, 10u);
-    host.tick(); // still starved: one underrun, not one per callback
+    host.tick();
     EXPECT_EQ(engine.status().underruns, 1u);
     EXPECT_EQ(engine.clock(10 + 3 * kBuffer).epoch, after.epoch);
 }
@@ -233,7 +225,7 @@ TEST(OutputEngine, StreamClockJumpIsADiscontinuity)
     host.tick();
     host.tick();
     const auto before = engine.clock(10).epoch;
-    host.streamOffset = 30; // resumed after a suspend
+    host.streamOffset = 30;
     host.tick();
     EXPECT_EQ(engine.status().discontinuities, 1u);
     EXPECT_GT(engine.clock(40 + 2 * kBuffer).epoch, before);
@@ -310,5 +302,5 @@ TEST(OutputEngine, ClockSnapshotsAreNeverTorn)
     EXPECT_EQ(torn, 0) << "of " << reads << " reads";
 }
 
-} // namespace
-} // namespace hikari::backends
+}
+}

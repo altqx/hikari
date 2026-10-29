@@ -1,10 +1,3 @@
-// T4: the clips the tools write, rendered by libass (the renderer the video
-// uses), against the tools' own outline. A rectangle clip shows exactly the
-// pixels inside the outline the tool draws; a vector clip (lines, a Bézier,
-// several subpaths, a scale) shows the pixels inside the path the tool draws
-// (DrawingAndClip::Curve's flattening) and none outside it; \iclip the
-// opposite; the tool's mask Line darkens what the clip hides.
-
 #include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_vector.h"
@@ -33,9 +26,7 @@ std::vector<std::byte> bytesOf(const std::string &s)
     return out;
 }
 
-// The renderer has no system font provider (N3): a drawing needs a font
-// leased in memory, the locked Qt install's OFL Titillium Web, as
-// libass_renderer_tests uses.
+// libass needs a font even for a drawing, and the renderer has no system font provider.
 std::shared_ptr<const std::vector<std::byte>> testFont()
 {
     QFile f(QStringLiteral(HIKARI_TEST_FONT));
@@ -59,7 +50,6 @@ std::string script(const std::string &events)
            events;
 }
 
-// A white box over the whole frame, with the clip's tags in front.
 std::string boxLine(const std::u16string &tags)
 {
     return "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,," + std::string(reinterpret_cast<const char *>(core::toUtf8(tags).c_str())) +
@@ -68,7 +58,6 @@ std::string boxLine(const std::u16string &tags)
 
 struct Frame {
     OverlayFrame f;
-    // The box's alpha at a pixel (premultiplied BGRA).
     int alpha(int x, int y) const { return f.pixels[static_cast<std::size_t>(y) * f.stride + x * 4 + 3]; }
     bool painted(int x, int y) const { return alpha(x, y) > 127; }
 };
@@ -84,7 +73,6 @@ Frame render(const std::string &events)
         return out;
     out.f = std::move(*frame);
     if (out.f.empty) {
-        // An empty overlay: nothing painted anywhere.
         out.f.width = kW;
         out.f.height = kH;
         out.f.stride = kW * 4;
@@ -93,7 +81,6 @@ Frame render(const std::string &events)
     return out;
 }
 
-// A host over a 96x64 video showing a 96x64 script (one script unit a pixel).
 class Host : public VisualHost {
 public:
     VideoView v;
@@ -126,8 +113,6 @@ public:
     void toolChanged() override {}
 };
 
-// The tool's path in view pixels: its outline segments joined (lines and the
-// flattened curves), split at each "m" (the closing line returns to it).
 std::vector<std::vector<PointF>> pathOf(const VectorClipTool &tool, const Host &host)
 {
     const auto &pts = tool.editor().points;
@@ -184,8 +169,6 @@ double distanceToPath(const std::vector<std::vector<PointF>> &path, double x, do
     return best;
 }
 
-// Every pixel more than a pixel from the tool's path is painted exactly when
-// its centre is inside it (inverse: outside it).
 void expectClipFollowsPath(const Frame &frame, const std::vector<std::vector<PointF>> &path, bool inverse)
 {
     int checked = 0;
@@ -200,12 +183,10 @@ void expectClipFollowsPath(const Frame &frame, const std::vector<std::vector<Poi
     EXPECT_GT(checked, kW * kH / 2);
 }
 
-} // namespace
+}
 
 TEST(ClipRender, RectangleShowsWhatTheOutlineEncloses)
 {
-    // The tool writes the corners; its outline runs from x1, y1 to x2 - 1,
-    // y2 - 1 (ClipRect::DrawVisual): libass paints exactly those pixels.
     Host host(u"{\\clip(10,8,70,40)}x");
     RectangleClipTool tool;
     tool.reset(host);
@@ -227,7 +208,6 @@ TEST(ClipRender, RectangleShowsWhatTheOutlineEncloses)
 
 TEST(ClipRender, VectorShowsWhatThePathEncloses)
 {
-    // Lines and a Bézier in one subpath, and a second subpath.
     const std::u16string text = u"{\\clip(m 8 8 l 50 6 b 70 10 80 40 60 56 l 10 50 m 70 4 l 92 4 92 20 70 20)}x";
     Host host(text);
     VectorClipTool tool;
@@ -241,8 +221,7 @@ TEST(ClipRender, VectorShowsWhatThePathEncloses)
 
 TEST(ClipRender, ClipScaleDividesTheCoordinates)
 {
-    // \clip(3,...): the points are in quarter units; the tool draws them where
-    // libass clips (its coefficients multiplied by 2^(3-1)).
+    // libass divides \clip(scale,...) points by 2^(scale-1).
     Host host(u"{\\clip(3,m 40 40 l 320 40 320 200 40 200)}x");
     VectorClipTool tool;
     tool.reset(host);
@@ -255,8 +234,6 @@ TEST(ClipRender, ClipScaleDividesTheCoordinates)
 
 TEST(ClipRender, MaskDarkensWhatTheClipHides)
 {
-    // The mask Line (CreateClipMask) over an unclipped frame: translucent
-    // black outside a \clip's path, nothing inside it.
     Host host(u"{\\clip(m 20 10 l 80 10 80 50 20 50)}x");
     VectorClipTool tool;
     tool.reset(host);
@@ -264,7 +241,7 @@ TEST(ClipRender, MaskDarkensWhatTheClipHides)
     ASSERT_EQ(lines.size(), 1u);
     const std::string text(reinterpret_cast<const char *>(lines[0].text.c_str()));
     const Frame mask = render("Dialogue: 2147483647,0:00:00.00,0:00:05.00,Default,,0,0,0,," + text + "\n");
-    EXPECT_EQ(mask.alpha(50, 30), 0);           // inside the clip
-    EXPECT_NEAR(mask.alpha(5, 5), 0x88, 2);      // outside: \1a&H77& is 0x88 opaque
+    EXPECT_EQ(mask.alpha(50, 30), 0);
+    EXPECT_NEAR(mask.alpha(5, 5), 0x88, 2); // \1a&H77& is 0x88 opaque
     EXPECT_NEAR(mask.alpha(90, 60), 0x88, 2);
 }

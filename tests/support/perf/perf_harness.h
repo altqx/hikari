@@ -1,11 +1,5 @@
 #pragma once
 
-// Performance measurement harness (E2-perf; docs/performance.md). Each
-// benchmark runs several independent repetitions; statistics are reported per
-// run (nearest-rank p95/p99 and maximum), never pooled across runs. Results
-// carry the host's identity and whether that host is a calibrated reference;
-// an uncalibrated host's numbers are observations, never budget passes.
-
 #include <chrono>
 #include <cstdint>
 #include <functional>
@@ -19,8 +13,7 @@ struct RunStats {
     double p50Us = 0, p95Us = 0, p99Us = 0, maxUs = 0, meanUs = 0;
 };
 
-// Contract minimums for latency workloads: ten seconds of warmup for warm (W)
-// workloads and at least 1,000 timed operations across all runs.
+// Minimums: warm (W) workloads warm up for 10 s; 1,000 timed operations across all runs.
 inline constexpr std::chrono::milliseconds kWarmWarmup{10'000};
 inline constexpr std::size_t kMinimumOperations = 1'000;
 
@@ -33,10 +26,10 @@ struct BenchmarkResult {
 
 struct BenchmarkSpec {
     std::string name;
-    int runs = 5;                     // contract: five repetitions
-    std::size_t operationsPerRun = 200; // contract: at least 1,000 operations in total
+    int runs = 5;
+    std::size_t operationsPerRun = 200;
     std::chrono::milliseconds warmup = kWarmWarmup;
-    std::function<void()> operation;  // one timed operation
+    std::function<void()> operation;
 };
 
 // Nearest-rank percentile of sorted samples (p in (0, 100]).
@@ -55,12 +48,10 @@ struct HostIdentity {
 
 HostIdentity currentHost();
 
-// True when the host fingerprint appears in the reference-host list (JSON
-// array of fingerprints); a missing or empty list means no host is calibrated.
+// `referenceHostsPath` holds a JSON array of fingerprints; a missing or empty list calibrates no host.
 bool isCalibrated(const HostIdentity &host, const std::string &referenceHostsPath);
 
-// Writes one JSON document with the host, calibration state and every result.
 bool writeReport(const std::string &path, const HostIdentity &host, bool calibrated,
                  const std::vector<BenchmarkResult> &results);
 
-} // namespace hikari::perf
+}

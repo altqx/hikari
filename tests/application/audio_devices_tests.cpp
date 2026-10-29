@@ -1,7 +1,3 @@
-// H2 (#125, decision 60): the output device both audio paths follow. A fake
-// device list stands in for the system's (QMediaDevices): the default
-// changes, the device in use goes away, the chosen device is missing and
-// comes back.
 #include "hikari/application/audio_devices.h"
 
 #include <gtest/gtest.h>
@@ -56,39 +52,32 @@ struct Routing : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST(OutputRoute, FollowsTheDefaultUnlessADeviceIsChosen)
 {
     const std::vector<SystemOutputDevice> list{monitor, headset};
     EXPECT_EQ(resolveOutputRoute(list, ""), (OutputRoute{monitor.id, monitor.name, true}));
     EXPECT_EQ(resolveOutputRoute(list, headset.id), (OutputRoute{headset.id, headset.name, false}));
-    // the chosen device is not connected: the default
     EXPECT_EQ(resolveOutputRoute(list, spdif.id), (OutputRoute{monitor.id, monitor.name, true}));
-    // no default named: the first device; no device at all: none
     auto noDefault = list;
     noDefault[0].isDefault = false;
     EXPECT_EQ(resolveOutputRoute(noDefault, ""), (OutputRoute{monitor.id, monitor.name, true}));
     EXPECT_EQ(resolveOutputRoute({}, headset.id), (OutputRoute{"", "", true}));
 }
 
-// The default changes while nothing is chosen: the outputs move to the new
-// default (A9/A10/B6 in the H2 evidence stayed on the old device).
 TEST_F(Routing, ADefaultChangeMovesTheOutputs)
 {
     auto routing = make();
     EXPECT_EQ(routing.route(), (OutputRoute{monitor.id, monitor.name, true}));
-    EXPECT_TRUE(moves.empty()); // the first route is the outputs' own start
+    EXPECT_TRUE(moves.empty());
     devices.makeDefault(headset.id);
     ASSERT_EQ(moves.size(), 1u);
     EXPECT_EQ(moves.back(), (OutputRoute{headset.id, headset.name, true}));
-    // a notification that changes nothing moves nothing
     devices.notify();
     EXPECT_EQ(moves.size(), 1u);
 }
 
-// The device in use goes away (A11, B7): the outputs move to the default the
-// system picks.
 TEST_F(Routing, RemovingTheDeviceInUseMovesToTheNewDefault)
 {
     auto routing = make();
@@ -97,12 +86,10 @@ TEST_F(Routing, RemovingTheDeviceInUseMovesToTheNewDefault)
     devices.remove(monitor.id);
     ASSERT_EQ(moves.size(), 1u);
     EXPECT_EQ(moves.back(), (OutputRoute{headset.id, headset.name, true}));
-    // the last device goes too: no device
     devices.remove(headset.id);
     EXPECT_EQ(moves.back(), (OutputRoute{"", "", true}));
 }
 
-// Another device added or removed leaves the route alone.
 TEST_F(Routing, OtherDevicesComingAndGoingMoveNothing)
 {
     auto routing = make();
@@ -112,8 +99,6 @@ TEST_F(Routing, OtherDevicesComingAndGoingMoveNothing)
     EXPECT_TRUE(moves.empty());
 }
 
-// A chosen device: kept when the default changes, left for the default while
-// it is unplugged, taken again when it returns.
 TEST_F(Routing, AChosenDeviceStaysAndReturns)
 {
     chosen = headset.id;
@@ -130,8 +115,6 @@ TEST_F(Routing, AChosenDeviceStaysAndReturns)
     EXPECT_EQ(moves.back(), (OutputRoute{headset.id, headset.name, false}));
 }
 
-// The chosen device is missing at start: the default, then the device when
-// it is plugged in.
 TEST_F(Routing, AChosenDeviceMissingAtStartFallsBackToTheDefault)
 {
     chosen = spdif.id;
@@ -142,7 +125,6 @@ TEST_F(Routing, AChosenDeviceMissingAtStartFallsBackToTheDefault)
     EXPECT_EQ(moves.back(), (OutputRoute{spdif.id, spdif.name, false}));
 }
 
-// The setting changes: refresh() moves the outputs.
 TEST_F(Routing, ChoosingAnotherDeviceMovesTheOutputs)
 {
     auto routing = make();
@@ -157,19 +139,16 @@ TEST_F(Routing, ChoosingAnotherDeviceMovesTheOutputs)
     EXPECT_EQ(moves.size(), 2u);
 }
 
-// The routing stops listening when it goes.
 TEST_F(Routing, NoCallbackAfterTheRoutingGoes)
 {
     {
         auto routing = make();
     }
-    EXPECT_FALSE(devices.changed); // unregistered
+    EXPECT_FALSE(devices.changed);
     devices.makeDefault(headset.id);
     EXPECT_TRUE(moves.empty());
 }
 
-// Settings > Audio's choice: "System default", the connected devices, and a
-// chosen device that is not connected, so that OK keeps it.
 TEST(OutputDeviceChoices, ListsTheDefaultTheDevicesAndAMissingChoice)
 {
     using Kind = OutputDeviceChoice::Kind;
@@ -182,7 +161,6 @@ TEST(OutputDeviceChoices, ListsTheDefaultTheDevicesAndAMissingChoice)
     auto missing = connected;
     missing.push_back({Kind::Missing, spdif.id, spdif.name});
     EXPECT_EQ(outputDeviceChoices(list, spdif.id, spdif.name), missing);
-    // a missing device stored without its name shows its id
     missing.back().name = spdif.id;
     EXPECT_EQ(outputDeviceChoices(list, spdif.id, ""), missing);
     EXPECT_EQ(outputDeviceChoices({}, "", ""), (std::vector<OutputDeviceChoice>{{Kind::SystemDefault, "", ""}}));

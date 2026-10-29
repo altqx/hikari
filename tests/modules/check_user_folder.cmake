@@ -1,16 +1,3 @@
-# UD1 (#362): the real composition's user folder. Each case starts
-# hikari_app_startup (the window opens, then the program exits) in a home of
-# its own and checks the folders it leaves:
-#   - fresh: settings.toml in $XDG_CONFIG_HOME/hikarisub, the bundled automation
-#     seeded into automation/autoload and include from the build tree's
-#     manifest, nothing in the old Qt folders;
-#   - moved: a populated ~/.config/HikariSub/HikariSub and
-#     ~/.local/share/HikariSub/HikariSub move in once, the moved hikari.ini
-#     converted into settings.toml (CF1) and kept as hikari.ini.old;
-#     legacy's folder stays;
-#   - empty: empty old folders move nothing and are removed;
-#   - override: HIKARISUB_USER_DIR holds everything; the old folders stay.
-#
 #   cmake -DSTARTUP=<hikari_app_startup> -DWORK=<dir> -P check_user_folder.cmake
 foreach(var STARTUP WORK)
     if(NOT DEFINED ${var})
@@ -55,7 +42,6 @@ function(fresh_home case out)
     set(${out} "${home}" PARENT_SCOPE)
 endfunction()
 
-# fresh
 fresh_home(fresh home)
 start(fresh "${home}")
 set(user "${home}/config/hikarisub")
@@ -71,13 +57,11 @@ foreach(made log temp autosave)
 endforeach()
 expect_not(fresh "${home}/config/HikariSub")
 expect_not(fresh "${home}/data/HikariSub")
-# A changed seeded script is kept by the next start.
 file(WRITE "${user}/automation/autoload/kara-templater.lua" "-- mine\n")
 start(fresh-again "${home}")
 expect_text(fresh-again "${user}/automation/autoload/kara-templater.lua" "-- mine\n")
 message(STATUS "fresh: the user folder and its seeded automation")
 
-# moved
 fresh_home(moved home)
 set(config "${home}/config/HikariSub/HikariSub")
 set(data "${home}/data/HikariSub/HikariSub")
@@ -97,7 +81,6 @@ file(STRINGS "${user}/settings.toml" settings)
 if(NOT "language = 'pl'" IN_LIST settings AND NOT "language = \"pl\"" IN_LIST settings)
     message(FATAL_ERROR "moved: the converted settings lost the language:\n${settings}")
 endif()
-# CF2 (#489): the start converts the moved Rules.txt into rules.toml once.
 expect_not(moved "${user}/Rules.txt")
 expect_text(moved "${user}/Rules.txt.old" "rules\n")
 file(READ "${user}/rules.toml" rules)
@@ -114,13 +97,11 @@ expect_not(moved "${config}")
 expect_not(moved "${data}")
 expect_not(moved "${home}/config/HikariSub")
 expect_text(moved "${home}/data/HikariSub/Legacy/Config/Config.txt" "legacy\n")
-# Once: an old folder that comes back later stays where it is.
 file(WRITE "${config}/hikari.ini" "[General]\nprogram.language=de\n")
 start(moved-again "${home}")
 expect_text(moved-again "${config}/hikari.ini" "[General]\nprogram.language=de\n")
 message(STATUS "moved: the old Qt folders moved in once, legacy's untouched")
 
-# empty
 fresh_home(empty home)
 file(MAKE_DIRECTORY "${home}/config/HikariSub/HikariSub" "${home}/data/HikariSub/HikariSub")
 start(empty "${home}")
@@ -129,7 +110,6 @@ expect_not(empty "${home}/config/HikariSub")
 expect_not(empty "${home}/data/HikariSub")
 message(STATUS "empty: empty old folders removed")
 
-# override
 fresh_home(override home)
 file(WRITE "${home}/config/HikariSub/HikariSub/hikari.ini" "[General]\nprogram.language=pl\n")
 start(override "${home}" "HIKARISUB_USER_DIR=${home}/mine")

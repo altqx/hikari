@@ -115,7 +115,6 @@ bool isCalibrated(const HostIdentity &host, const std::string &referenceHostsPat
         return false;
     std::stringstream buffer;
     buffer << in.rdbuf();
-    // Minimal check: the exact fingerprint appears as a quoted JSON string.
     return buffer.str().find("\"" + host.fingerprint() + "\"") != std::string::npos;
 }
 
@@ -133,7 +132,7 @@ std::string escape(const std::string &s)
     return out;
 }
 
-} // namespace
+}
 
 bool writeReport(const std::string &path, const HostIdentity &host, bool calibrated,
                  const std::vector<BenchmarkResult> &results)
@@ -164,4 +163,4 @@ bool writeReport(const std::string &path, const HostIdentity &host, bool calibra
     return static_cast<bool>(out);
 }
 
-} // namespace hikari::perf
+}

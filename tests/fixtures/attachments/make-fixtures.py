@@ -1,14 +1,3 @@
-# Writes the fixtures of the attachment tests:
-# - HikariAttachedTest.ttf, a TrueType font whose letters are each one filled
-#   box (900 by 700 units of a 1000-unit em), under a family name no system
-#   has, so a box drawn for "H" can only come from the attached font;
-# - red.png, 16 by 16 opaque red pixels;
-# - attached.ass, a script that carries both, the font in [Fonts] and the
-#   image in [Graphics], uuencoded as Aegisub writes attachments (each 3
-#   bytes as 4 characters of 6 bits plus 33, 80 characters a line, a last
-#   group of 1 or 2 bytes as 2 or 3 characters). Its first Line draws "HH"
-#   in the attached font from (40,40) and its second a 100 by 100 square at
-#   (400,40) filled with the attached image (VSFilterMod's \1img).
 # Needs fontTools and Pillow. Run it from any directory; it writes beside itself.
 import os
 

@@ -1,4 +1,3 @@
-// Loads each provisioned dependency in one process and checks its identity.
 #include <QBuffer>
 #include <QColor>
 #include <QFile>
@@ -25,8 +24,7 @@ extern "C" {
 }
 #include <portaudio.h>
 
-// The altqx/libass fork (ports/libass): its feature macros tell it from
-// upstream libass, whose LIBASS_VERSION can carry the same number.
+// Upstream libass can carry the fork's LIBASS_VERSION; only the fork defines these macros.
 #if !defined(LIBASS_HAS_TRACK_EVENTS_MODIFIED) || !defined(LIBASS_HAS_FRAME_ATLAS) \
     || !defined(LIBASS_HAS_FONT_DIAGNOSTICS)
 #error "libass is not the altqx fork (ports/libass)"
@@ -52,8 +50,6 @@ int main(int argc, char **argv)
     if (!item || item->property("width").toInt() != 4)
         return fail(qPrintable(component.errorString()));
 
-    // K1: the Qt SVG image plugin and icon engine load from the provisioned
-    // Qt (packaging/qt-deployment.json lists both for every package).
     if (!QImageReader::supportedImageFormats().contains("svg"))
         return fail("the Qt SVG image plugin (imageformats/qsvg) does not load");
     QByteArray svg("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\">"
@@ -67,9 +63,7 @@ int main(int argc, char **argv)
     if (!dir.isValid() || !file.open(QIODevice::WriteOnly) || file.write(svg) != svg.size())
         return fail("probe.svg");
     file.close();
-    // The icon engine itself, from the plugin folder QIcon searches: QIcon
-    // falls back to reading the file through the image plugin, so a drawn
-    // icon alone would not show the engine is there.
+    // QIcon falls back to the image plugin, so load the icon engine plugin itself.
     const QDir engines(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QStringLiteral("/iconengines"));
     bool svgEngine = false;
     for (const QString &name : engines.entryList(QDir::Files)) {
@@ -78,7 +72,7 @@ int main(int argc, char **argv)
         const std::unique_ptr<QIconEngine> iconEngine(plugin ? plugin->create() : nullptr);
         if (!iconEngine || iconEngine->key() != QLatin1String("svg"))
             continue;
-        iconEngine->addFile(file.fileName(), QSize(), QIcon::Normal, QIcon::Off); // as QIcon(file) does
+        iconEngine->addFile(file.fileName(), QSize(), QIcon::Normal, QIcon::Off);
         const QImage drawn = iconEngine->pixmap(QSize(48, 48), QIcon::Normal, QIcon::Off).toImage();
         svgEngine = drawn.size() == QSize(48, 48) && drawn.pixelColor(24, 24) == QColor(255, 0, 0);
         break;
@@ -93,8 +87,6 @@ int main(int argc, char **argv)
 
     const int ass = ass_library_version();
     std::printf("libass=0x%08x\n", ass);
-    // The version only rules out an older fork; the fork's own functions,
-    // run below, show that the linked libass is the fork.
     if (ass < 0x01705020)
         return fail("libass is older than the altqx fork 0x01705020");
     ASS_Library *library = ass_library_init();
@@ -116,8 +108,6 @@ int main(int argc, char **argv)
     if (!atlas || atlas->n_instances < 1 || atlas->n_pages != 1)
         return fail("libass fork: ass_frame_pack_atlas packs no frame");
     std::printf("libass-fork=atlas %dx%d instances %d\n", atlas->width, atlas->height, atlas->n_instances);
-    // The event-index contract: a Start moved in place shows at the new time
-    // once the track is told.
     track->events[0].Start = 2000;
     ass_track_events_modified(track, 0);
     if (!ass_render_frame(renderer, track, 2500, &change))
@@ -128,7 +118,6 @@ int main(int argc, char **argv)
     ass_renderer_done(renderer);
     ass_library_done(library);
 
-    // PortAudio with exactly the pinned host APIs (ports/portaudio).
     std::printf("portaudio=%s\n", Pa_GetVersionInfo()->versionText);
     if (Pa_Initialize() != paNoError)
         return fail("Pa_Initialize");

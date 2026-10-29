@@ -1,7 +1,3 @@
-// O1: the Options dialog over the settings registry, against legacy
-// OptionsDialog.cpp, OptionsPanels.cpp (SubtitlesProperties), NumCtrl.cpp,
-// ListControls.cpp (HikariChoice) and config.cpp at 20d647c4.
-
 #include "hikari/application/options_dialog.h"
 #include "hikari/core/grammar.h"
 
@@ -17,18 +13,12 @@
 using namespace hikari::application;
 
 namespace {
-
-// The ConOpt calls of OptionsDialog's constructor, in order, with the legacy
-// control and the PF1 page that shows the option now (PF1-pages; GR1 moved
-// the Spelling section to Spelling & grammar): SubtitlesProperties first (it
-// is built before the Main page).
 struct LegacyBinding {
     const char *option;
     OptionsControl control;
     OptionsPage page;
 };
 constexpr LegacyBinding kLegacy[] = {
-    // OptionsPanels.cpp:39-56: fieldValues[i] then fieldOnValues[i], then the question.
     {"ASS_PROPERTIES_TITLE", OptionsControl::Text, OptionsPage::SubtitleProperties},
     {"ASS_PROPERTIES_TITLE_ON", OptionsControl::Check, OptionsPage::SubtitleProperties},
     {"ASS_PROPERTIES_SCRIPT", OptionsControl::Text, OptionsPage::SubtitleProperties},
@@ -42,7 +32,6 @@ constexpr LegacyBinding kLegacy[] = {
     {"ASS_PROPERTIES_UPDATE", OptionsControl::Text, OptionsPage::SubtitleProperties},
     {"ASS_PROPERTIES_UPDATE_ON", OptionsControl::Check, OptionsPage::SubtitleProperties},
     {"ASS_PROPERTIES_ASK_FOR_CHANGE", OptionsControl::Check, OptionsPage::SubtitleProperties},
-    // OptionsDialog.cpp:340-367: the two choices, then opts[18].
     {"PROGRAM_LANGUAGE", OptionsControl::Language, OptionsPage::General},
     {"DICTIONARY_LANGUAGE", OptionsControl::Dictionary, OptionsPage::Spelling},
     {"GRID_LOAD_SORTED_SUBS", OptionsControl::Check, OptionsPage::General},
@@ -62,7 +51,6 @@ constexpr LegacyBinding kLegacy[] = {
     {"VIDEO_VISUAL_WARNINGS_OFF", OptionsControl::Check, OptionsPage::Video},
     {"DONT_ASK_FOR_BAD_RESOLUTION", OptionsControl::Check, OptionsPage::Video},
     {"AUTOMATION_OLD_SCRIPTS_COMPATIBILITY", OptionsControl::Check, OptionsPage::Automation},
-    // :385-391, 412-416, 428-434, 437-452.
     {"GRID_SAVE_AFTER_CHARACTER_COUNT", OptionsControl::Number, OptionsPage::General},
     {"AUTOSAVE_MAX_FILES", OptionsControl::Number, OptionsPage::General},
     {"AUTOMATION_TRACE_LEVEL", OptionsControl::Number, OptionsPage::Automation},
@@ -76,7 +64,6 @@ constexpr LegacyBinding kLegacy[] = {
     {"CALC_SPACES_AND_PUNCTATION_FOR_CPS", OptionsControl::Check, OptionsPage::Grid},
     {"AUTOMATION_LOADING_METHOD", OptionsControl::IndexChoice, OptionsPage::Automation},
     {"EXTERNAL_FONTS_DIRECTORY", OptionsControl::Text, OptionsPage::General},
-    // :515, 535, 547, 551-567.
     {"CONVERT_STYLE_CATALOG", OptionsControl::Catalog, OptionsPage::Conversion},
     {"CONVERT_STYLE", OptionsControl::Style, OptionsPage::Conversion},
     {"CONVERT_FPS", OptionsControl::ComboText, OptionsPage::Conversion},
@@ -87,7 +74,6 @@ constexpr LegacyBinding kLegacy[] = {
     {"CONVERT_RESOLUTION_WIDTH", OptionsControl::Number, OptionsPage::Conversion},
     {"CONVERT_RESOLUTION_HEIGHT", OptionsControl::Number, OptionsPage::Conversion},
     {"CONVERT_ASS_TAGS_TO_INSERT_IN_LINE", OptionsControl::Text, OptionsPage::Conversion},
-    // :583-638, VSFILTER_INSTANCE bound last (W2).
     {"VIDEO_FULL_SCREEN_ON_START", OptionsControl::Check, OptionsPage::Video},
     {"VIDEO_PAUSE_ON_CLICK", OptionsControl::Check, OptionsPage::Video},
     {"OPEN_VIDEO_AT_ACTIVE_LINE", OptionsControl::Check, OptionsPage::Video},
@@ -96,7 +82,6 @@ constexpr LegacyBinding kLegacy[] = {
     {"FFMS2_VIDEO_SEEKING", OptionsControl::IndexChoice, OptionsPage::Video},
     {"VIDEO_ZOOM_PERCENT", OptionsControl::ZoomText, OptionsPage::Video},
     {"VSFILTER_INSTANCE", OptionsControl::Renderer, OptionsPage::Video},
-    // :704-715 opts[13].
     {"AUDIO_DRAW_TIME_CURSOR", OptionsControl::Check, OptionsPage::Audio},
     {"AUDIO_DRAW_SECONDARY_LINES", OptionsControl::Check, OptionsPage::Audio},
     {"AUDIO_DRAW_SELECTION_BACKGROUND", OptionsControl::Check, OptionsPage::Audio},
@@ -110,7 +95,6 @@ constexpr LegacyBinding kLegacy[] = {
     {"AUDIO_MERGE_EVERY_N_WITH_SYLLABLE", OptionsControl::Check, OptionsPage::Audio},
     {"AUDIO_KARAOKE_MOVE_ON_CLICK", OptionsControl::Check, OptionsPage::Audio},
     {"AUDIO_RAM_CACHE", OptionsControl::Check, OptionsPage::Audio},
-    // :733-739.
     {"AUDIO_DELAY", OptionsControl::Number, OptionsPage::Audio},
     {"AUDIO_MARK_PLAY_TIME", OptionsControl::Number, OptionsPage::Audio},
     {"AUDIO_LINE_BOUNDARIES_THICKNESS", OptionsControl::Number, OptionsPage::Audio},
@@ -150,23 +134,11 @@ std::string textOf(const OptionsState &s, const char *id)
     return std::get<std::string>(s.at(id));
 }
 
-} // namespace
+}
 
 TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
 {
     const auto all = optionsBindings();
-    // The rewrite's own after legacy's: Y4-playres-ask's check box on the
-    // Video page, GR3's on the Subtitle grid page, H2-output-device's device
-    // choice on the Audio page, LE2's Times/Frames and LE3's hidden-tag check
-    // boxes on the Line editor page, WS2's panel layout in the file on the
-    // Subtitle properties page, VF1's two follow lists on the Video page,
-    // KA1's double consonants and \\kf length on the Audio page, PK1's
-    // notices as toasts on the General page, PU7's update options on the
-    // Updates page, AD2's "Fill in my last answers" on the Automation page,
-    // SV1's "Preview subtitles at" on the Video page, PV1's preview text on
-    // the Appearance page, GR1's grammar check and rule groups on the
-    // Spelling & grammar page, then (Windows) A4-wasapi-default's output host
-    // API and W1's video player.
     ASSERT_GT(all.size(), std::size(kLegacy) + 33);
     const auto &fromVideo = all[std::size(kLegacy)];
     EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
@@ -180,12 +152,10 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(device.setting, "audio.outputDevice");
     EXPECT_EQ(device.control, OptionsControl::OutputDevice);
     EXPECT_EQ(device.page, OptionsPage::Audio);
-    // LE2: the Times/Frames switch, out of the Line editor.
     const auto &frames = all[std::size(kLegacy) + 3];
     EXPECT_EQ(frames.setting, "editor.timesToFramesSwitch");
     EXPECT_EQ(frames.control, OptionsControl::Check);
     EXPECT_EQ(frames.page, OptionsPage::LineEditor);
-    // LE3-tags-shown: the Line editor's hidden-tag view.
     const auto &tags = all[std::size(kLegacy) + 4];
     EXPECT_EQ(tags.setting, "editor.hideTags");
     EXPECT_EQ(tags.control, OptionsControl::Check);
@@ -196,7 +166,6 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(layout.page, OptionsPage::SubtitleProperties);
     ASSERT_NE(findSetting("subtitles.layoutInFile"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("subtitles.layoutInFile")->defaultValue), true);
-    // VF1: the Video panel's two follow lists, on the Video page.
     const auto &seek = all[std::size(kLegacy) + 6];
     EXPECT_EQ(seek.setting, "video.moveToActiveLine");
     EXPECT_EQ(seek.control, OptionsControl::IndexChoice);
@@ -217,12 +186,10 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(kf.page, OptionsPage::Audio);
     EXPECT_EQ(kf.min, 10);
     EXPECT_EQ(std::get<std::int64_t>(findSetting("audio.karaokeKfThreshold")->defaultValue), 100);
-    // PK1 (#301): notices as toasts (off: in the Log only).
     const auto &toasts = all[std::size(kLegacy) + 10];
     EXPECT_EQ(toasts.setting, "notices.toasts");
     EXPECT_EQ(toasts.control, OptionsControl::Check);
     EXPECT_EQ(toasts.page, OptionsPage::General);
-    // PU7 (#309): the update options, out of the update window.
     const std::pair<const char *, OptionsControl> updates[] = {{"updater.autoCheck", OptionsControl::Check},
                                                                {"updater.checkForStable", OptionsControl::Check},
                                                                {"updater.autoInstall", OptionsControl::Check},
@@ -233,14 +200,12 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         EXPECT_EQ(binding.control, updates[i].second) << updates[i].first;
         EXPECT_EQ(binding.page, OptionsPage::Updates) << updates[i].first;
     }
-    // AD2 (#311): "Fill in my last answers" (AD2-fill-last-answers).
     const auto &fill = all[std::size(kLegacy) + 15];
     EXPECT_EQ(fill.setting, "automation.fillLastAnswers");
     EXPECT_EQ(fill.control, OptionsControl::Check);
     EXPECT_EQ(fill.page, OptionsPage::Automation);
     ASSERT_NE(findSetting("automation.fillLastAnswers"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("automation.fillLastAnswers")->defaultValue), false);
-    // SV1 (#365): "Preview subtitles at", Video resolution by default.
     const auto &previewAt = all[std::size(kLegacy) + 16];
     EXPECT_EQ(previewAt.setting, "video.previewSubtitlesAt");
     EXPECT_EQ(previewAt.control, OptionsControl::IndexChoice);
@@ -248,13 +213,10 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(previewAt.entries, 2);
     ASSERT_NE(findSetting("video.previewSubtitlesAt"), nullptr);
     EXPECT_EQ(std::get<std::int64_t>(findSetting("video.previewSubtitlesAt")->defaultValue), 0);
-    // PV1 (#398): the samples' preview text, on the Appearance page.
     const auto &previewText = all[std::size(kLegacy) + 17];
     EXPECT_EQ(previewText.setting, "styles.previewText");
     EXPECT_EQ(previewText.control, OptionsControl::Text);
     EXPECT_EQ(previewText.page, OptionsPage::Appearance);
-    // GR1 (#364): grammar check, Off by default, then Harper's 15 rule
-    // groups, each on by default.
     const auto &grammar = all[std::size(kLegacy) + 18];
     EXPECT_EQ(grammar.setting, "grammar.language");
     EXPECT_EQ(grammar.control, OptionsControl::IndexChoice);
@@ -272,14 +234,12 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(binding.setting), nullptr);
         EXPECT_EQ(std::get<bool>(findSetting(binding.setting)->defaultValue), true);
     }
-    // AN1 (#404): "Send anonymous usage data", on by default, on the Updates page.
     const auto &usageData = all[std::size(kLegacy) + 34];
     EXPECT_EQ(usageData.setting, "privacy.usageData");
     EXPECT_EQ(usageData.control, OptionsControl::Check);
     EXPECT_EQ(usageData.page, OptionsPage::Updates);
     ASSERT_NE(findSetting("privacy.usageData"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("privacy.usageData")->defaultValue), true);
-    // CR1 (#452): "Always send crash reports", off by default, beside it.
     const auto &alwaysSend = all[std::size(kLegacy) + 35];
     EXPECT_EQ(alwaysSend.setting, "privacy.alwaysSendCrashReports");
     EXPECT_EQ(alwaysSend.control, OptionsControl::Check);
@@ -300,8 +260,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     const auto bindings = all.first(std::size(kLegacy));
 #else
     ASSERT_EQ(all.size(), std::size(kLegacy) + 36);
-    EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
-    EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
+    EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
+    EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
 #endif
     for (std::size_t i = 0; i < bindings.size(); ++i) {
@@ -311,7 +271,6 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         EXPECT_EQ(bindings[i].control, kLegacy[i].control) << kLegacy[i].option;
         EXPECT_EQ(bindings[i].page, kLegacy[i].page) << kLegacy[i].option;
     }
-    // NumCtrl ranges and HikariChoice entries.
     EXPECT_EQ(findOptionsBinding("autosave.maxFiles")->min, 2);
     EXPECT_EQ(findOptionsBinding("autosave.maxFiles")->max, 1000000);
     EXPECT_EQ(findOptionsBinding("audio.delay")->min, -50000000);
@@ -336,20 +295,14 @@ TEST(OptionsDialog, OpensWithTheControlsLegacyShows)
     settings.set("convert.fps", std::string("29.97"));
     const auto open = openOptionsDialog(settings, l);
     const auto &s = open.state;
-    // The seeking method is fixed and stored at once.
     EXPECT_EQ(settings.integer("video.ffms2Seeking"), 2);
     EXPECT_EQ(intOf(s, "video.ffms2Seeking"), 2);
-    // NumCtrl clamps what it shows; an unset tab-name limit shows 40, an
-    // unset zoom 200.
     EXPECT_EQ(intOf(s, "autosave.maxFiles"), 2);
     EXPECT_EQ(intOf(s, "program.tabTextMaxChars"), 40);
     EXPECT_EQ(textOf(s, "video.zoomPercent"), "200");
     EXPECT_EQ(intOf(s, "convert.resolutionWidth"), 1280);
-    // A stored index past the list leaves the choice at -1; a negative one is kept.
     EXPECT_EQ(intOf(s, "automation.loadingMethod"), -1);
     EXPECT_EQ(intOf(s, "audio.inactiveLinesDisplayMode"), -2);
-    // An unknown language shows the first; dictionaries are found by their
-    // shown name, so en_US selects the first "English" (en_GB).
     EXPECT_EQ(intOf(s, "program.language"), 0);
     EXPECT_EQ(intOf(s, "editor.dictionaryLanguage"), 0);
     EXPECT_EQ(textOf(s, "convert.fps"), "29.97");
@@ -360,7 +313,6 @@ TEST(OptionsDialog, OpensWithTheControlsLegacyShows)
     EXPECT_FALSE(open.catalogMissing);
     EXPECT_FALSE(open.styleMissing);
     EXPECT_TRUE(std::get<bool>(s.at("grid.changeActiveOnSelection")));
-    // Only bound controls are in the state.
     EXPECT_FALSE(s.contains("updater.nextCheck"));
     EXPECT_FALSE(s.contains("recent.subtitles"));
 }
@@ -371,7 +323,6 @@ TEST(OptionsDialog, MissingCatalogOrStyleFallsBackAndWarns)
     Settings settings(storage);
     auto l = lists();
     settings.set("convert.styleCatalog", std::string("karaoke"));
-    // The option's catalog (found without case) is loaded first.
     EXPECT_EQ(optionsCatalogToLoad(settings, l), std::optional<std::string>("Karaoke"));
     settings.set("convert.styleCatalog", std::string("Gone"));
     settings.set("convert.style", std::string("Gone"));
@@ -380,25 +331,20 @@ TEST(OptionsDialog, MissingCatalogOrStyleFallsBackAndWarns)
     const auto open = openOptionsDialog(settings, l);
     EXPECT_TRUE(open.catalogMissing);
     EXPECT_TRUE(open.styleMissing);
-    EXPECT_EQ(intOf(open.state, "convert.styleCatalog"), 1); // the current catalog
+    EXPECT_EQ(intOf(open.state, "convert.styleCatalog"), 1);
     EXPECT_EQ(intOf(open.state, "convert.style"), 0);
-    // OK writes what the choices now show.
     commitOptionsDialog(settings, l, open.state);
     EXPECT_EQ(settings.text("convert.styleCatalog"), "Karaoke");
     EXPECT_EQ(settings.text("convert.style"), "Default");
 }
 
-// FindString is wxArrayString::Index(text, false): CmpNoCase under the
-// process locale. Without a comparator only ASCII letters fold (legacy's "C"
-// locale); the application passes one that folds every letter when a
-// translation language set the locale at startup.
 TEST(OptionsDialog, ChoicesFindEntriesWithoutCaseAsTheLocaleFolds)
 {
     MemorySettingsStorage storage;
     Settings settings(storage);
     auto l = lists();
-    l.catalogs = {"Default", "\xC4\x86wiczenia"}; // "Ćwiczenia"
-    settings.set("convert.styleCatalog", std::string("\xC4\x87wiczenia")); // "ćwiczenia"
+    l.catalogs = {"Default", "\xC4\x86wiczenia"};
+    settings.set("convert.styleCatalog", std::string("\xC4\x87wiczenia"));
     EXPECT_EQ(optionsCatalogToLoad(settings, l), std::nullopt);
     EXPECT_TRUE(openOptionsDialog(settings, l).catalogMissing);
     settings.set("convert.style", std::string("sIGN"));
@@ -406,7 +352,6 @@ TEST(OptionsDialog, ChoicesFindEntriesWithoutCaseAsTheLocaleFolds)
     int calls = 0;
     l.sameIgnoringCase = [&](std::string_view a, std::string_view b) {
         ++calls;
-        // Stands in for full folding: the two forms of the letter compare equal.
         const auto fold = [](std::string s) {
             if (s.starts_with("\xC4\x86"))
                 s[1] = '\x87';
@@ -432,20 +377,15 @@ TEST(OptionsDialog, OkWritesOnlyBoundControlsThatDiffer)
     settings.set("program.language", std::string("ko"));
     settings.set("updater.nextCheck", std::int64_t{100});
     auto state = openOptionsDialog(settings, l).state;
-    // Something else writes while the dialog is open.
     settings.set("updater.nextCheck", std::int64_t{200});
     settings.set("recent.subtitles", std::vector<std::string>{"a.ass"});
     const auto written = commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.integer("updater.nextCheck"), 200);
     EXPECT_EQ(settings.list("recent.subtitles"), std::vector<std::string>{"a.ass"});
-    // GetSelection -1 against 7 writes -1; -2 is what the choice holds.
     EXPECT_EQ(settings.integer("automation.loadingMethod"), -1);
     EXPECT_EQ(settings.integer("audio.inactiveLinesDisplayMode"), -2);
-    // The first "English" dictionary is written over en_US (FindString by name).
     EXPECT_EQ(settings.text("editor.dictionaryLanguage"), "en_GB");
-    // The language falls back to English and is written.
     EXPECT_EQ(settings.text("program.language"), "en");
-    // The shown fallbacks are written; untouched values are not.
     EXPECT_EQ(settings.integer("program.tabTextMaxChars"), 40);
     EXPECT_EQ(settings.integer("video.zoomPercent"), 200);
     EXPECT_FALSE(settings.isSet("autosave.maxFiles"));
@@ -455,7 +395,6 @@ TEST(OptionsDialog, OkWritesOnlyBoundControlsThatDiffer)
                                             "program.tabTextMaxChars",   "automation.loadingMethod",
                                             "video.zoomPercent"};
     EXPECT_EQ(written, expected);
-    // Numbers are clamped (NumCtrl::GetInt); the zoom's text is stored as typed.
     state["autosave.maxFiles"] = std::int64_t{1};
     state["video.zoomPercent"] = std::string("50");
     state["grid.fontSize"] = std::int64_t{12};
@@ -464,7 +403,6 @@ TEST(OptionsDialog, OkWritesOnlyBoundControlsThatDiffer)
     EXPECT_EQ(settings.integer("video.zoomPercent"), 50);
     EXPECT_EQ(settings.integer("grid.fontSize"), 12);
     EXPECT_FALSE(settings.isSet("grid.font"));
-    // An emptied zoom is the empty option: unset.
     state["video.zoomPercent"] = std::string();
     commitOptionsDialog(settings, l, state);
     EXPECT_FALSE(settings.isSet("video.zoomPercent"));
@@ -478,13 +416,12 @@ TEST(OptionsDialog, ExternalFontsFolderGetsItsSeparator)
     auto state = openOptionsDialog(settings, l).state;
     state["fonts.externalDirectory"] = std::string("C:\\fonts");
     commitOptionsDialog(settings, l, state);
-    EXPECT_EQ(settings.text("fonts.externalDirectory"), "C:/fonts/"); // HikariNormalizePath off Windows
+    EXPECT_EQ(settings.text("fonts.externalDirectory"), "C:/fonts/");
     l.pathSeparator = '\\';
     l.slashesForBackslashes = false;
     state["fonts.externalDirectory"] = std::string("C:\\other");
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("fonts.externalDirectory"), "C:\\other\\");
-    // Unchanged text is not normalized again.
     state = openOptionsDialog(settings, l).state;
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("fonts.externalDirectory"), "C:\\other\\");
@@ -503,24 +440,19 @@ TEST(OptionsDialog, SetDefaultRefreshesTheControlsAsLegacyDoes)
     EXPECT_EQ(intOf(state, "program.language"), 1);
     settings.resetAll();
     state = refreshOptionsDialogAfterReset(settings, l, state);
-    // Check boxes, texts, fonts and the FPS box show the defaults.
     EXPECT_FALSE(std::get<bool>(state.at("grid.loadSortedSubs")));
     EXPECT_EQ(textOf(state, "convert.fps"), "23.976");
     EXPECT_EQ(textOf(state, "grid.font"), "Tahoma");
-    // The index choices show FindString of "0"/"2"/"1": nothing.
     EXPECT_EQ(intOf(state, "automation.loadingMethod"), -1);
     EXPECT_EQ(intOf(state, "video.ffms2Seeking"), -1);
     EXPECT_EQ(intOf(state, "audio.inactiveLinesDisplayMode"), -1);
-    // The string choices show the entry at wxAtoi of their text: 0.
     EXPECT_EQ(intOf(state, "program.language"), 0);
     EXPECT_EQ(intOf(state, "editor.dictionaryLanguage"), 0);
     EXPECT_EQ(intOf(state, "convert.styleCatalog"), 0);
     EXPECT_EQ(intOf(state, "convert.style"), 0);
-    // NumCtrl::SetInt clamps without the constructor's 40; the zoom shows its raw (empty) text.
     EXPECT_EQ(intOf(state, "program.tabTextMaxChars"), 20);
     EXPECT_EQ(intOf(state, "autosave.maxFiles"), 3);
     EXPECT_EQ(textOf(state, "video.zoomPercent"), "");
-    // OK then writes what the controls show.
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.integer("automation.loadingMethod"), -1);
     EXPECT_EQ(settings.integer("video.ffms2Seeking"), -1);
@@ -530,14 +462,10 @@ TEST(OptionsDialog, SetDefaultRefreshesTheControlsAsLegacyDoes)
     EXPECT_EQ(settings.integer("program.tabTextMaxChars"), 20);
     EXPECT_FALSE(settings.isSet("video.zoomPercent"));
     EXPECT_FALSE(settings.isSet("autosave.maxFiles"));
-    EXPECT_FALSE(settings.isSet("convert.styleCatalog")); // "Default" again
-    // Reopening fixes the seeking method once more.
+    EXPECT_FALSE(settings.isSet("convert.styleCatalog"));
     EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "video.ffms2Seeking"), 2);
 }
 
-// VF1: the follow lists show the stored choice, Set default shows their
-// default (they were never on legacy's dialog, so no FindString quirk), and
-// OK writes only a changed choice.
 TEST(OptionsDialog, TheFollowListsShowAndKeepTheirChoices)
 {
     MemorySettingsStorage storage;
@@ -572,27 +500,22 @@ TEST(OptionsDialog, SetDefaultKeepsAChoiceWhoseIndexIsPastItsList)
     l.dictionaryNames = {"Put files .dic and .aff to \"Dictionary\" folder"};
     auto state = openOptionsDialog(settings, l).state;
     EXPECT_EQ(intOf(state, "editor.dictionaryLanguage"), -1);
-    // "12" names no entry: SetSelection(12) changes nothing.
     state["program.language"] = std::int64_t{1};
     settings.resetAll();
     settings.set("program.language", std::string("12"));
     state = refreshOptionsDialogAfterReset(settings, l, state);
     EXPECT_EQ(intOf(state, "program.language"), 1);
-    EXPECT_EQ(intOf(state, "editor.dictionaryLanguage"), 0); // the placeholder entry
+    EXPECT_EQ(intOf(state, "editor.dictionaryLanguage"), 0);
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("program.language"), "pl");
-    EXPECT_FALSE(settings.isSet("editor.dictionaryLanguage")); // no symbol to write
+    EXPECT_FALSE(settings.isSet("editor.dictionaryLanguage"));
 }
 
-// W2: "Subtitle display filter" (OptionsDialog.cpp:616-638, 1145-1152):
-// libass and the CSRI renderers, VSFilterMod last; the selection's name is written.
 TEST(OptionsDialog, TheSubtitleDisplayFilterChoosesARendererByName)
 {
     MemorySettingsStorage storage;
     Settings settings(storage);
     auto l = lists();
-    // Only libass (Linux, or Windows without a CSRI renderer): not offered
-    // (W2-filter-row-hidden), whatever is stored.
     l.renderers = {"libass"};
     auto state = openOptionsDialog(settings, l).state;
     EXPECT_FALSE(state.contains("video.subtitleProvider"));
@@ -604,48 +527,31 @@ TEST(OptionsDialog, TheSubtitleDisplayFilterChoosesARendererByName)
     state = openOptionsDialog(settings, l).state;
     EXPECT_FALSE(state.contains("video.subtitleProvider"));
     commitOptionsDialog(settings, l, state);
-    EXPECT_EQ(settings.text("video.subtitleProvider"), "xy-vsfilter_textsub"); // kept, never rewritten
+    EXPECT_EQ(settings.text("video.subtitleProvider"), "xy-vsfilter_textsub");
     settings.resetAll();
 
-    // The Windows package: libass, then VSFilterMod
-    // (SubtitleRendererSelection::providers; xy-VSFilter is not shipped,
-    // W2-no-xy-vsfilter).
     l.renderers = {"libass", "vsfiltermod_textsub"};
-    // Unset reads as libass (W2-libass-default; legacy Windows showed the
-    // first entry, its default CSRI renderer). OK writes the shown name when
-    // it differs, as SetOptions does.
     state = openOptionsDialog(settings, l).state;
     EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
     EXPECT_TRUE(std::ranges::contains(commitOptionsDialog(settings, l, state), std::string("video.subtitleProvider")));
     EXPECT_EQ(settings.text("video.subtitleProvider"), "libass");
-    // An explicit VSFilterMod choice is honoured.
     settings.set("video.subtitleProvider", std::string("vsfiltermod_textsub"));
     EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "video.subtitleProvider"), 1);
-    // Index is exact: another case is not listed, and shows libass.
     settings.set("video.subtitleProvider", std::string("LIBASS"));
     state = openOptionsDialog(settings, l).state;
     EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
     state["video.subtitleProvider"] = std::int64_t{1};
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("video.subtitleProvider"), "vsfiltermod_textsub");
-    // Set default: the default is unset, which is libass, so the choice shows
-    // libass (legacy's SetSelection(GetInt("")) showed the first entry, its
-    // default CSRI renderer) and OK keeps the video on libass.
     settings.resetAll();
     state = refreshOptionsDialogAfterReset(settings, l, state);
     EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("video.subtitleProvider"), "libass");
-    // libass listed after a CSRI renderer: the reset still finds it by name.
     l.renderers = {"other_textsub", "libass"};
     settings.resetAll();
     state = refreshOptionsDialogAfterReset(settings, l, openOptionsDialog(settings, l).state);
     EXPECT_EQ(intOf(state, "video.subtitleProvider"), 1);
-    // A name that is not installed opens on libass, which draws it
-    // (W2-missing-renderer-libass; legacy opened on the first entry, the
-    // default CSRI renderer), so OK names what draws and never switches to a
-    // CSRI renderer nobody chose. Legacy's default, xy-VSFilter, is one of
-    // them now (W2-no-xy-vsfilter).
     l.renderers = {"libass", "vsfiltermod_textsub"};
     for (const char *stale : {"removed_textsub", "xy-vsfilter_textsub"}) {
         settings.set("video.subtitleProvider", std::string(stale));
@@ -656,17 +562,12 @@ TEST(OptionsDialog, TheSubtitleDisplayFilterChoosesARendererByName)
     }
 }
 
-// H2-output-device (decision 60): Settings > Audio's output device. The
-// choice lists "System default", the connected devices and a chosen device
-// that is not connected; OK stores the device's id with its name, and
-// System default stores neither (the outputs follow the default).
 TEST(OptionsDialog, TheOutputDeviceIsChosenByIdWithItsName)
 {
     using Kind = OutputDeviceChoice::Kind;
     MemorySettingsStorage storage;
     Settings settings(storage);
     auto l = lists();
-    // Without a list (no device service) the choice is not offered.
     auto state = openOptionsDialog(settings, l).state;
     EXPECT_FALSE(state.contains("audio.outputDevice"));
     EXPECT_FALSE(std::ranges::contains(commitOptionsDialog(settings, l, state), std::string("audio.outputDevice")));
@@ -674,40 +575,32 @@ TEST(OptionsDialog, TheOutputDeviceIsChosenByIdWithItsName)
     l.outputDevices = {{Kind::SystemDefault, "", ""},
                        {Kind::Device, "{0.0.0.00000000}.{F2906D39}", "22E1W (NVIDIA High Definition Audio)"},
                        {Kind::Device, "{0.0.0.00000000}.{C244E1FF}", "Speakers (Razer BlackShark V2 X USB)"}};
-    // Unset: System default; OK writes nothing.
     state = openOptionsDialog(settings, l).state;
     EXPECT_EQ(intOf(state, "audio.outputDevice"), 0);
     EXPECT_TRUE(commitOptionsDialog(settings, l, state).empty());
     EXPECT_FALSE(settings.isSet("audio.outputDevice"));
-    // A device: its id and name are stored.
     state["audio.outputDevice"] = std::int64_t{2};
     EXPECT_EQ(commitOptionsDialog(settings, l, state),
               (std::vector<std::string>{"audio.outputDevice", "audio.outputDeviceName"}));
     EXPECT_EQ(settings.text("audio.outputDevice"), "{0.0.0.00000000}.{C244E1FF}");
     EXPECT_EQ(settings.text("audio.outputDeviceName"), "Speakers (Razer BlackShark V2 X USB)");
     EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "audio.outputDevice"), 2);
-    // The chosen device is not connected: the app lists it as missing, and
-    // OK keeps it.
     l.outputDevices.erase(l.outputDevices.begin() + 2);
     l.outputDevices.push_back({Kind::Missing, "{0.0.0.00000000}.{C244E1FF}", "Speakers (Razer BlackShark V2 X USB)"});
     state = openOptionsDialog(settings, l).state;
     EXPECT_EQ(intOf(state, "audio.outputDevice"), 2);
     EXPECT_TRUE(commitOptionsDialog(settings, l, state).empty());
     EXPECT_EQ(settings.text("audio.outputDevice"), "{0.0.0.00000000}.{C244E1FF}");
-    // A stored id the list does not have at all shows System default.
     l.outputDevices.pop_back();
     EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "audio.outputDevice"), 0);
-    // Back to System default: both are cleared.
     state["audio.outputDevice"] = std::int64_t{0};
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("audio.outputDevice"), "");
     EXPECT_EQ(settings.text("audio.outputDeviceName"), "");
-    // Set default shows System default.
     settings.set("audio.outputDevice", std::string("{0.0.0.00000000}.{F2906D39}"));
     state["audio.outputDevice"] = std::int64_t{1};
     settings.resetAll();
     EXPECT_EQ(intOf(refreshOptionsDialogAfterReset(settings, l, state), "audio.outputDevice"), 0);
-    // The setting is a profile setting kept between runs.
     const auto *definition = findSetting("audio.outputDevice");
     ASSERT_NE(definition, nullptr);
     EXPECT_EQ(definition->scope, SettingScope::Profile);
@@ -725,8 +618,6 @@ TEST(OptionsDialog, ChangingTheCatalogListsItsStyles)
     chooseOptionsDialogCatalog(l, state, 1);
     EXPECT_EQ(intOf(state, "convert.styleCatalog"), 1);
     EXPECT_EQ(intOf(state, "convert.style"), 0);
-    // A catalog without Styles keeps the old index past the empty list, so
-    // OK writes an empty style.
     state["convert.style"] = std::int64_t{1};
     l.styles.clear();
     chooseOptionsDialogCatalog(l, state, 0);
@@ -749,8 +640,6 @@ TEST(OptionsDialog, NumbersReadAsLegacyReadsThem)
     EXPECT_EQ(numCtrlValue("5000000", 2, 1000000), 1000000);
 }
 
-// PF1 (#225): the pages by id (the window keeps the page shown last), and
-// "Reset page", which refreshes the page's controls alone.
 TEST(OptionsDialog, PagesHaveIdsAndAPageResetsAlone)
 {
     for (const auto page : {OptionsPage::General, OptionsPage::Appearance, OptionsPage::LineEditor,
@@ -759,22 +648,21 @@ TEST(OptionsDialog, PagesHaveIdsAndAPageResetsAlone)
                             OptionsPage::SubtitleProperties, OptionsPage::Automation, OptionsPage::Updates})
         EXPECT_EQ(optionsPageOfId(optionsPageId(page)), page);
     EXPECT_EQ(optionsPageId(OptionsPage::LineEditor), "lineEditor");
-    EXPECT_EQ(optionsPageId(OptionsPage::Updates), "updates"); // PU7
-    EXPECT_EQ(optionsPageId(OptionsPage::Spelling), "spelling"); // GR1
-    EXPECT_EQ(optionsPageOfId("hotkeys"), std::nullopt); // the hotkeys' own page
+    EXPECT_EQ(optionsPageId(OptionsPage::Updates), "updates");
+    EXPECT_EQ(optionsPageId(OptionsPage::Spelling), "spelling");
+    EXPECT_EQ(optionsPageOfId("hotkeys"), std::nullopt);
     EXPECT_EQ(optionsPageOfId(""), std::nullopt);
 
     MemorySettingsStorage storage;
     Settings settings(storage);
     const auto l = lists();
-    settings.set("grid.loadSortedSubs", true); // General
-    settings.set("grid.dontCenterActiveLine", true); // Subtitle grid
+    settings.set("grid.loadSortedSubs", true);
+    settings.set("grid.dontCenterActiveLine", true);
     auto state = openOptionsDialog(settings, l).state;
     MemorySettingsStorage defaultsStorage;
     const Settings defaults(defaultsStorage);
     state = refreshOptionsDialogAfterReset(defaults, l, state, OptionsPage::General);
     EXPECT_FALSE(std::get<bool>(state.at("grid.loadSortedSubs")));
     EXPECT_TRUE(std::get<bool>(state.at("grid.dontCenterActiveLine")));
-    // The store stays as it was until OK or Apply.
     EXPECT_TRUE(settings.boolean("grid.loadSortedSubs"));
 }

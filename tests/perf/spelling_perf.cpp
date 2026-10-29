@@ -1,15 +1,3 @@
-// SP1 (#474): spell checking a 5,000-Line file as the Grid does (each Line's
-// text through checkTextAndBrackets with Hunspell and ICU word segmentation).
-// The Lines are mostly English, with Polish, Korean, Tamil and Thai ones and
-// a made-up name in each (a word no dictionary knows, checked anew). The
-// dictionary folder is the third argument (the fixtures folder without it);
-// every dictionary in it is installed, en_US (else en_TEST) the primary.
-// Reported: each dictionary's load, the spell checker's start, the first
-// pass over every Line as the Grid makes it (the other dictionaries load in
-// the background), the same pass waiting for them as the Spellchecker window
-// does, the cached pass, and one cached Line as the Grid repaints it.
-// Observations on an uncalibrated host.
-
 #include "perf_harness.h"
 
 #include "hikari/application/spell_checker.h"
@@ -81,7 +69,7 @@ perf::BenchmarkResult once(std::string name, double milliseconds)
     return r;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -95,7 +83,6 @@ int main(int argc, char **argv)
     const auto file = lines(5000);
     std::vector<perf::BenchmarkResult> results;
 
-    // Each installed dictionary's load on its own.
     for (const auto &symbol : application::availableDictionaries(folder)) {
         const fs::path base = folder / fs::path(symbol);
         const auto start = Clock::now();

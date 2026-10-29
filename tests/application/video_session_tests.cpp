@@ -1,7 +1,3 @@
-// I1: indexed video for the editing target over fake ports — association
-// from the Document's own Script Info (C05), seeking to a Line's start frame,
-// the overlay at the frame's start, supersession and stale results.
-
 #include "hikari/application/media_association.h"
 #include "hikari/application/video_session.h"
 #include "hikari/core/ass_load.h"
@@ -38,12 +34,11 @@ TEST(MediaAssociation, ComesFromTheDocumentsOwnScriptInfo)
     const auto exists = [&](const std::string &p) { return files.contains(p); };
     const auto a = resolveMediaAssociations(doc, "/subs/ep1.ass", exists, false);
     ASSERT_TRUE(a.video && a.audio && a.keyframes);
-    EXPECT_EQ(a.video->resolved, "/subs/ep1.mkv"); // relative to the subtitle file
+    EXPECT_EQ(a.video->resolved, "/subs/ep1.mkv");
     EXPECT_EQ(a.audio->resolved, "/abs/ep1.wav");
     EXPECT_EQ(a.keyframes->authored, "gone.txt");
-    EXPECT_FALSE(a.keyframes->resolved); // missing: nothing is offered for it
+    EXPECT_FALSE(a.keyframes->resolved);
     EXPECT_TRUE(a.offersAnything());
-    // A Document without entries has no association at all (never another tab's).
     const auto none = resolveMediaAssociations(load("[Script Info]\nTitle: x\n"), "/subs/b.ass", exists, false);
     EXPECT_FALSE(none.video || none.audio || none.keyframes);
     EXPECT_FALSE(none.offersAnything());
@@ -59,18 +54,17 @@ TEST(MediaAssociation, WindowsDriveLettersAreAbsolute)
     EXPECT_EQ(a.audio->resolved, "C:\\subs\\sub\\ep1.wav");
 }
 
-// 10 frames at 25 fps (40 ms), pts in milliseconds.
 struct FakeSource : IndexedSourcePort {
     std::uint64_t gen = 0;
     Opened pendingOpen;
     IndexRequest lastRequest;
-    std::vector<int> audioTracks; // the timeline's (the first is firstAudioTrack)
+    std::vector<int> audioTracks;
     bool newIndex = true;
     std::string handoffIndexFile;
-    SourceGeometry geometry; // T1: what the timeline reports (none by default)
-    int colorSpace = 2, colorRange = 0; // V4: frame 0's matrix and range (unspecified)
+    SourceGeometry geometry;
+    int colorSpace = 2, colorRange = 0;
     std::vector<std::pair<int, int>> matrixCalls;
-    std::size_t framesBeforeMatrix = 0; // frame requests made before the last matrix call
+    std::size_t framesBeforeMatrix = 0;
     bool refuseMatrix = false;
     void setInputMatrix(int cs, int cr, MatrixSet done) override
     {
@@ -87,10 +81,10 @@ struct FakeSource : IndexedSourcePort {
         return open(path, std::move(progress), std::move(done));
     }
     std::deque<std::pair<int, FrameReady>> frames;
-    Progress pendingProgress;                // V3
-    int cancelled = 0;                       // V3
-    std::optional<OpenFailure> failure;      // V3
-    std::uint8_t fill = 0;                   // every byte of an answered frame
+    Progress pendingProgress;
+    int cancelled = 0;
+    std::optional<OpenFailure> failure;
+    std::uint8_t fill = 0;
     std::uint64_t open(const std::string &, Progress progress, Opened done) override
     {
         pendingOpen = std::move(done);
@@ -153,8 +147,8 @@ struct FakeSource : IndexedSourcePort {
 
 struct FakeRenderer : SubtitleRendererPort {
     std::vector<std::int64_t> renderedAt;
-    std::vector<OverlaySize> scaled; // renderScaled's sizes
-    OverlayPixels pixels; // the overlay's, when it is drawn at their size
+    std::vector<OverlaySize> scaled;
+    OverlayPixels pixels;
     std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
     std::expected<OverlayFrame, RenderError> renderScaled(core::DocumentTime t, int w, int h, int vw, int vh) override
     {
@@ -195,7 +189,7 @@ struct VideoTest : ::testing::Test {
 
 TEST_F(VideoTest, PlayerFramesAreKeptAsPlanesOnlyForAPresenterThatConvertsThem)
 {
-    EXPECT_FALSE(video.presenterConvertsYcbcr()); // no presenter yet
+    EXPECT_FALSE(video.presenterConvertsYcbcr());
     video.setPresenter(&presenter);
     EXPECT_FALSE(video.presenterConvertsYcbcr());
     presenter.ycbcr = true;
@@ -208,7 +202,7 @@ TEST_F(VideoTest, ASeekWhileIndexingAppliesWhenReady)
     video.setSubtitles({std::byte{'x'}});
     video.open("/m/ep1.mkv");
     EXPECT_EQ(video.state(), VideoSession::State::Opening);
-    video.seekTo(core::DocumentTime(100'000)); // 100 ms: frame 3 starts at 120 ms
+    video.seekTo(core::DocumentTime(100'000));
     source.finishOpen();
     EXPECT_EQ(video.state(), VideoSession::State::Ready);
     EXPECT_EQ(video.frameCount(), 10);
@@ -219,14 +213,10 @@ TEST_F(VideoTest, ASeekWhileIndexingAppliesWhenReady)
     ASSERT_EQ(presenter.shown.size(), 1u);
     EXPECT_EQ(presenter.shown[0].frame->index, 3);
     ASSERT_TRUE(presenter.shown[0].overlay);
-    EXPECT_EQ(renderer.renderedAt, std::vector<std::int64_t>{120'000}); // the frame's start, not the Line's
+    EXPECT_EQ(renderer.renderedAt, std::vector<std::int64_t>{120'000});
     EXPECT_EQ(video.lastPresent()->outcome, PresentOutcome::Accepted);
 }
 
-// A frame asked for with its subtitles (Automation's get_frame) has the
-// overlay laid over it as a saved snapshot lays it, the divisions rounded:
-// half-transparent grey (premultiplied 100 at alpha 128) over 200 is
-// 100 + 200 * 127 / 255 = 199.6, so 200.
 TEST_F(VideoTest, AFrameWithSubtitlesHasTheOverlayLaidAsASnapshotLaysIt)
 {
     source.fill = 200;
@@ -248,10 +238,9 @@ TEST_F(VideoTest, AFrameWithSubtitlesHasTheOverlayLaidAsASnapshotLaysIt)
     EXPECT_EQ(byte(0), 200);
     EXPECT_EQ(byte(1), 200);
     EXPECT_EQ(byte(2), 200);
-    EXPECT_EQ(byte(3), 200); // the frame's own alpha byte stays
+    EXPECT_EQ(byte(3), 200);
     for (std::size_t i = 4; i < 32; ++i)
-        EXPECT_EQ(byte(i), 200) << i; // nothing drawn there
-    // Without its subtitles the frame stays as decoded.
+        EXPECT_EQ(byte(i), 200) << i;
     video.requestFrame(2, false, [&](std::shared_ptr<const IndexedFrame> f) { got = std::move(f); });
     source.fill = 7;
     source.answer();
@@ -261,9 +250,6 @@ TEST_F(VideoTest, AFrameWithSubtitlesHasTheOverlayLaidAsASnapshotLaysIt)
 
 TEST_F(VideoTest, SourceGeometryOutlivesADecoderFailure)
 {
-    // T1: the visual tools take the source's frame size and SAR from its
-    // timeline (legacy ProviderFFMS2::Init); a frame that fails to decode
-    // leaves them, so the tools stay usable.
     source.geometry = {720, 480, 32, 27};
     video.setPresenter(&presenter);
     EXPECT_FALSE(video.sourceGeometry().valid());
@@ -284,7 +270,7 @@ TEST_F(VideoTest, SourceGeometryOutlivesADecoderFailure)
 TEST_F(VideoTest, SourceGeometryFallsBackToTheShownFrame)
 {
     video.open("/m/ep1.mkv");
-    source.finishOpen(); // a timeline without a size
+    source.finishOpen();
     EXPECT_FALSE(video.sourceGeometry().valid());
     source.answer();
     EXPECT_EQ(video.sourceGeometry(), (SourceGeometry{4, 2, 0, 1}));
@@ -292,7 +278,7 @@ TEST_F(VideoTest, SourceGeometryFallsBackToTheShownFrame)
 
 TEST_F(VideoTest, ASeekMadeBeforeOpeningAppliesToTheVideo)
 {
-    video.seekTo(core::DocumentTime(100'000)); // no video yet: the active Line's start
+    video.seekTo(core::DocumentTime(100'000));
     video.open("/m/ep1.mkv");
     source.finishOpen();
     ASSERT_EQ(source.frames.size(), 1u);
@@ -304,11 +290,11 @@ TEST_F(VideoTest, ANewerRequestSupersedesAnOlderOne)
     video.setPresenter(&presenter);
     video.open("/m/ep1.mkv");
     source.finishOpen();
-    source.answer(); // frame 0
+    source.answer();
     video.showFrame(5);
     video.showFrame(7);
-    source.answer(1); // 7 arrives first
-    source.answer(0); // then the superseded 5
+    source.answer(1);
+    source.answer(0);
     EXPECT_EQ(video.shownFrame(), 7);
     EXPECT_EQ(presenter.shown.back().frame->index, 7);
     EXPECT_EQ(presenter.shown.size(), 2u);
@@ -324,7 +310,6 @@ TEST_F(VideoTest, StepsStopAtTheEnds)
     EXPECT_EQ(video.requestedFrame(), 1);
     video.showFrame(9);
     EXPECT_FALSE(video.step(1));
-    // Past the last frame start the last frame is shown.
     video.seekTo(core::DocumentTime(10'000'000));
     EXPECT_EQ(video.requestedFrame(), 9);
 }
@@ -346,14 +331,12 @@ TEST_F(VideoTest, NewSubtitlesRenderTheShownFrameAgain)
     video.open("/m/ep1.mkv");
     source.finishOpen();
     source.answer();
-    EXPECT_FALSE(presenter.shown.back().overlay); // no subtitles yet
+    EXPECT_FALSE(presenter.shown.back().overlay);
     video.setSubtitles({std::byte{'x'}});
     EXPECT_EQ(presenter.shown.size(), 2u);
     EXPECT_TRUE(presenter.shown.back().overlay);
 }
 
-// SV1-screen-size-subtitles: a paused frame's overlay is drawn again at the
-// screen size; a frame asked for with its subtitles stays at the video's.
 TEST_F(VideoTest, AScreenSizeDrawsTheShownFramesOverlayAgain)
 {
     video.setPresenter(&presenter);
@@ -369,7 +352,7 @@ TEST_F(VideoTest, AScreenSizeDrawsTheShownFramesOverlayAgain)
     ASSERT_TRUE(presenter.shown.back().overlay);
     EXPECT_EQ(presenter.shown.back().overlay->width, width * 3);
     EXPECT_EQ(renderer.scaled, (std::vector<OverlaySize>{{width * 3, height * 3, width, height}}));
-    video.setScreenSize(std::pair{width * 3, height * 3}); // unchanged: nothing drawn
+    video.setScreenSize(std::pair{width * 3, height * 3});
     EXPECT_EQ(presenter.shown.size(), 2u);
     std::shared_ptr<const IndexedFrame> got;
     video.requestFrame(2, true, [&](std::shared_ptr<const IndexedFrame> f) { got = std::move(f); });
@@ -403,7 +386,7 @@ TEST_F(VideoTest, CloseDropsLateFrames)
     EXPECT_EQ(video.state(), VideoSession::State::Closed);
 }
 
-} // namespace
+}
 
 namespace {
 
@@ -454,7 +437,7 @@ IndexedFrame playerFrame()
     return f;
 }
 
-} // namespace
+}
 
 TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
 {
@@ -462,22 +445,20 @@ TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
     video.setGeneralPlayer(&player);
     video.setPresenter(&presenter);
     video.setSubtitles({std::byte{'x'}});
-    EXPECT_FALSE(video.play()); // no video yet
+    EXPECT_FALSE(video.play());
     video.open("/m/ep1.mkv");
     source.finishOpen();
-    source.answer(); // frame 0
+    source.answer();
     video.showFrame(2);
-    source.answer(); // frame 2 at 80 ms
+    source.answer();
     ASSERT_TRUE(video.play());
     EXPECT_TRUE(video.playing());
     player.opened();
-    player.delivered(); // the seek to the shown frame's start
+    player.delivered();
     EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.mkv", "seek 80000", "play"}));
-    // Frames from the player are shown with the overlay at their own time.
     video.generalFrame(playerFrame(), 205'000);
     EXPECT_EQ(presenter.shown.back().frame->index, -1);
     EXPECT_EQ(renderer.renderedAt.back(), 205'000);
-    // Pause: the indexed frame whose interval holds 205 ms is frame 5 (200-240 ms).
     ASSERT_TRUE(video.pause());
     EXPECT_FALSE(video.playing());
     EXPECT_EQ(player.calls.back(), "pause");
@@ -486,10 +467,8 @@ TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
     source.answer();
     EXPECT_EQ(video.shownFrame(), 5);
     EXPECT_EQ(renderer.renderedAt.back(), 200'000);
-    // A late player frame after the pause is ignored.
     video.generalFrame(playerFrame(), 250'000);
     EXPECT_EQ(video.shownFrame(), 5);
-    // Playing again does not reopen; Stop returns to the first frame.
     ASSERT_TRUE(video.play());
     player.delivered();
     EXPECT_EQ(player.calls[player.calls.size() - 2], "seek 200000");
@@ -497,8 +476,6 @@ TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
     ASSERT_TRUE(video.stop());
     source.answer();
     EXPECT_EQ(video.shownFrame(), 0);
-    // A1: legacy's Stopped state lasts until the next Play (the audio box
-    // marks the video's frame only while Paused); Stop while paused is not it.
     EXPECT_TRUE(video.stopped());
     video.showFrame(3);
     EXPECT_TRUE(video.stopped());
@@ -509,10 +486,6 @@ TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
     EXPECT_FALSE(video.stopped());
 }
 
-// The Video panel's frame follows the player's frames while playing
-// (legacy GetCurrentFrame, FrameShownAt(m_Time)); the seek bar seeks the
-// player and playback goes on from there (VideoSlider::SendTime while
-// playing); the frames themselves never seek it.
 TEST_F(VideoTest, PlayingReportsThePlayersFrameAndTheSeekBarSeeksIt)
 {
     FakePlayer player;
@@ -520,36 +493,33 @@ TEST_F(VideoTest, PlayingReportsThePlayersFrameAndTheSeekBarSeeksIt)
     video.setPresenter(&presenter);
     video.open("/m/ep1.mkv");
     source.finishOpen();
-    source.answer(); // frame 0
+    source.answer();
     EXPECT_EQ(video.currentFrame(), 0);
     ASSERT_TRUE(video.play());
     player.opened();
     player.delivered();
-    EXPECT_EQ(video.currentFrame(), 0); // nothing delivered yet: where it started
+    EXPECT_EQ(video.currentFrame(), 0);
     video.generalFrame(playerFrame(), 120'000);
     EXPECT_EQ(video.currentFrame(), 3);
-    video.generalFrame(playerFrame(), 205'000); // inside frame 5 (200-240 ms)
+    video.generalFrame(playerFrame(), 205'000);
     EXPECT_EQ(video.currentFrame(), 5);
     EXPECT_EQ(video.requestedFrame(), 0);
-    // Delivered frames never seek the player.
     EXPECT_EQ(std::count_if(player.calls.begin(), player.calls.end(),
                             [](const std::string &c) { return c.starts_with("seek"); }),
               1);
-    // The seek bar while playing: the player goes on from frame 6's start.
     ASSERT_TRUE(video.seekFrame(6));
     EXPECT_TRUE(video.playing());
     EXPECT_EQ(video.currentFrame(), 6);
     EXPECT_EQ(player.calls.back(), "seek 240000");
     player.delivered();
     EXPECT_EQ(player.calls.back(), "play");
-    EXPECT_TRUE(source.frames.empty()); // no indexed frame while playing
+    EXPECT_TRUE(source.frames.empty());
     video.generalFrame(playerFrame(), 250'000);
     EXPECT_EQ(video.currentFrame(), 6);
     video.generalFrame(playerFrame(), 285'000);
     EXPECT_EQ(video.currentFrame(), 7);
-    EXPECT_FALSE(video.seekFrame(10)); // past the last frame
+    EXPECT_FALSE(video.seekFrame(10));
     EXPECT_FALSE(video.seekFrame(-1));
-    // Paused, the seek bar shows the frame.
     ASSERT_TRUE(video.pause());
     source.answer();
     EXPECT_EQ(video.shownFrame(), 7);
@@ -562,10 +532,6 @@ TEST_F(VideoTest, PlayingReportsThePlayersFrameAndTheSeekBarSeeksIt)
     EXPECT_EQ(video.shownFrame(), 2);
 }
 
-// V2 end of video (user decision 2026-10-14): a player time past the last
-// frame's start is the last frame (clamped), so the panel never falls back
-// to the frame playback started from; one before the first frame's start is
-// the first (legacy FrameShownAt). Pause shows that frame too.
 TEST_F(VideoTest, APlayerTimePastTheLastFrameIsTheLastFrame)
 {
     FakePlayer player;
@@ -573,26 +539,25 @@ TEST_F(VideoTest, APlayerTimePastTheLastFrameIsTheLastFrame)
     video.setPresenter(&presenter);
     video.open("/m/ep1.mkv");
     source.finishOpen();
-    source.answer(); // frame 0
+    source.answer();
     video.showFrame(2);
     source.answer();
     ASSERT_TRUE(video.play());
     player.opened();
     player.delivered();
-    video.generalFrame(playerFrame(), 360'000); // frame 9's start, the last
+    video.generalFrame(playerFrame(), 360'000);
     EXPECT_EQ(video.currentFrame(), 9);
-    video.generalFrame(playerFrame(), 375'000); // inside frame 9, whose end is unknown
+    video.generalFrame(playerFrame(), 375'000);
     EXPECT_EQ(video.currentFrame(), 9);
     EXPECT_EQ(video.reportedFrame(), 9);
-    video.generalFrame(playerFrame(), 2'000'000); // far past it
+    video.generalFrame(playerFrame(), 2'000'000);
     EXPECT_EQ(video.currentFrame(), 9);
-    EXPECT_EQ(video.requestedFrame(), 2); // where playback started
+    EXPECT_EQ(video.requestedFrame(), 2);
     ASSERT_TRUE(video.pause());
     ASSERT_EQ(source.frames.size(), 1u);
     EXPECT_EQ(source.frames[0].first, 9);
     source.answer();
     EXPECT_EQ(video.shownFrame(), 9);
-    // Before the first frame's start: the first frame.
     ASSERT_TRUE(video.seekFrame(4));
     source.answer();
     ASSERT_TRUE(video.play());
@@ -601,11 +566,6 @@ TEST_F(VideoTest, APlayerTimePastTheLastFrameIsTheLastFrame)
     EXPECT_EQ(video.currentFrame(), 0);
 }
 
-// V2 shown frame during playback (user decision 2026-10-14): the frame the
-// features read (reportedFrame) is the shown indexed frame while paused,
-// the player's frame while playing (shownFrame() is then -1), and the
-// pause's frame while its indexed frame is on its way. Play again before it
-// arrives goes on from that frame, not from 0.
 TEST_F(VideoTest, TheReportedFrameIsThePlayersWhilePlaying)
 {
     FakePlayer player;
@@ -614,11 +574,10 @@ TEST_F(VideoTest, TheReportedFrameIsThePlayersWhilePlaying)
     EXPECT_EQ(video.reportedFrame(), std::nullopt);
     video.open("/m/ep1.mkv");
     source.finishOpen();
-    source.answer(); // frame 0
+    source.answer();
     video.showFrame(2);
     source.answer();
     EXPECT_EQ(video.reportedFrame(), 2);
-    // Paused with a seek on its way: still the shown frame.
     video.showFrame(3);
     EXPECT_EQ(video.reportedFrame(), 2);
     source.answer();
@@ -626,29 +585,23 @@ TEST_F(VideoTest, TheReportedFrameIsThePlayersWhilePlaying)
     ASSERT_TRUE(video.play());
     player.opened();
     player.delivered();
-    EXPECT_EQ(video.reportedFrame(), 3); // nothing delivered yet
-    video.generalFrame(playerFrame(), 285'000); // frame 7 (280-320 ms)
+    EXPECT_EQ(video.reportedFrame(), 3);
+    video.generalFrame(playerFrame(), 285'000);
     EXPECT_EQ(video.shownFrame(), -1);
     EXPECT_EQ(video.reportedFrame(), 7);
     ASSERT_TRUE(video.pause());
-    EXPECT_EQ(video.shownFrame(), -1); // frame 7 still on its way
+    EXPECT_EQ(video.shownFrame(), -1);
     EXPECT_EQ(video.reportedFrame(), 7);
-    // Play again before it arrives: from frame 7's start.
     ASSERT_TRUE(video.play());
     player.delivered();
     EXPECT_EQ(player.calls[player.calls.size() - 2], "seek 280000");
     ASSERT_TRUE(video.stop());
-    EXPECT_EQ(video.reportedFrame(), 0); // Stop's first frame, on its way
+    EXPECT_EQ(video.reportedFrame(), 0);
     while (!source.frames.empty())
         source.answer();
     EXPECT_EQ(video.reportedFrame(), 0);
 }
 
-// V2 jumps while playing (user decisions 2026-10-14, items 35-36): the
-// 5 s / 1 min jumps and the keyframe jumps start from the player's frame
-// (legacy Seek(Tell() + ms), SetPosition(NextKeyframe(Tell()))) and playback
-// goes on from their target; next/previous frame does nothing while playing
-// (RendererVideo::ChangePositionByFrame returns at once).
 TEST_F(VideoTest, JumpsWhilePlayingGoFromThePlayersFrameAndPlayOn)
 {
     FakePlayer player;
@@ -656,16 +609,15 @@ TEST_F(VideoTest, JumpsWhilePlayingGoFromThePlayersFrameAndPlayOn)
     video.setPresenter(&presenter);
     video.open("/m/ep1.mkv");
     source.finishOpen();
-    source.answer(); // frame 0; keyframes 0, 4 and 8
+    source.answer();
     ASSERT_TRUE(video.play());
     player.opened();
     player.delivered();
-    video.generalFrame(playerFrame(), 285'000); // frame 7, playback started at 0
+    video.generalFrame(playerFrame(), 285'000);
     const auto seeks = [&] {
         return std::count_if(player.calls.begin(), player.calls.end(),
                              [](const std::string &c) { return c.starts_with("seek"); });
     };
-    // 280 ms - 120 ms: frame 4, played on from.
     ASSERT_TRUE(video.seekBy(-120));
     EXPECT_TRUE(video.playing());
     EXPECT_EQ(video.requestedFrame(), 4);
@@ -673,9 +625,8 @@ TEST_F(VideoTest, JumpsWhilePlayingGoFromThePlayersFrameAndPlayOn)
     EXPECT_EQ(player.calls.back(), "seek 160000");
     player.delivered();
     EXPECT_EQ(player.calls.back(), "play");
-    EXPECT_TRUE(source.frames.empty()); // no indexed frame while playing
-    video.generalFrame(playerFrame(), 205'000); // frame 5
-    // The next keyframe after frame 5 is 8; the previous one before 8 is 4.
+    EXPECT_TRUE(source.frames.empty());
+    video.generalFrame(playerFrame(), 205'000);
     ASSERT_TRUE(video.nextKeyframe());
     EXPECT_EQ(player.calls.back(), "seek 320000");
     EXPECT_EQ(video.currentFrame(), 8);
@@ -684,19 +635,16 @@ TEST_F(VideoTest, JumpsWhilePlayingGoFromThePlayersFrameAndPlayOn)
     ASSERT_TRUE(video.previousKeyframe());
     EXPECT_EQ(player.calls.back(), "seek 160000");
     player.delivered();
-    video.generalFrame(playerFrame(), 170'000); // frame 4
-    // Past the end: the last frame.
+    video.generalFrame(playerFrame(), 170'000);
     ASSERT_TRUE(video.seekBy(60'000));
     EXPECT_EQ(player.calls.back(), "seek 360000");
     EXPECT_EQ(video.requestedFrame(), 9);
     player.delivered();
     video.generalFrame(playerFrame(), 365'000);
-    // Before the start: the first frame.
     ASSERT_TRUE(video.seekBy(-5'000));
     EXPECT_EQ(player.calls.back(), "seek 0");
     player.delivered();
-    video.generalFrame(playerFrame(), 45'000); // frame 1
-    // Next / previous frame: nothing while playing.
+    video.generalFrame(playerFrame(), 45'000);
     const auto before = seeks();
     const auto calls = player.calls.size();
     EXPECT_FALSE(video.step(1));
@@ -706,7 +654,6 @@ TEST_F(VideoTest, JumpsWhilePlayingGoFromThePlayersFrameAndPlayOn)
     EXPECT_EQ(seeks(), before);
     EXPECT_EQ(player.calls.size(), calls);
     EXPECT_TRUE(source.frames.empty());
-    // Paused, they step from the paused frame again.
     ASSERT_TRUE(video.pause());
     source.answer();
     EXPECT_EQ(video.shownFrame(), 1);
@@ -722,7 +669,7 @@ TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
 {
     video.open("/m/ep1.mkv");
     source.finishOpen();
-    source.answer(); // frame 0
+    source.answer();
     auto lands = [&](int expected) {
         if (source.frames.empty())
             return false;
@@ -732,19 +679,17 @@ TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
         return asked == expected && video.shownFrame() == expected;
     };
     video.showFrame(2);
-    EXPECT_TRUE(lands(2));                // 80 ms
-    ASSERT_TRUE(video.seekBy(100));       // 180 ms: the frame at or after is 5 (200 ms)
+    EXPECT_TRUE(lands(2));
+    ASSERT_TRUE(video.seekBy(100));
     EXPECT_TRUE(lands(5));
-    ASSERT_TRUE(video.seekBy(-5000));     // before the start: the first frame
+    ASSERT_TRUE(video.seekBy(-5000));
     EXPECT_TRUE(lands(0));
-    ASSERT_TRUE(video.seekBy(60'000));    // past the end: the last frame
+    ASSERT_TRUE(video.seekBy(60'000));
     EXPECT_TRUE(lands(9));
-    // An end time shows the frame showing 1 ms before it.
     video.seekToEnd(core::DocumentTime(200'000));
     EXPECT_TRUE(lands(4));
     video.seekToEnd(core::DocumentTime(0));
     EXPECT_TRUE(lands(0));
-    // Keyframes 0, 4, 8, wrapping at both ends.
     EXPECT_TRUE(video.isKeyframe(4));
     EXPECT_FALSE(video.isKeyframe(5));
     video.showFrame(5);
@@ -759,9 +704,6 @@ TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
     EXPECT_TRUE(lands(4));
 }
 
-// A1: the track the video's open chose (legacy's provider track, from the
-// chooser or ACCEPTED_AUDIO_STREAM) is the one general playback plays, as
-// legacy played the audio box's track; its index request reaches the source.
 TEST_F(VideoTest, PlaybackPlaysTheChosenAudioTrack)
 {
     FakePlayer player;
@@ -784,10 +726,9 @@ TEST_F(VideoTest, PlaybackPlaysTheChosenAudioTrack)
     EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.mkv", "audio track 2", "seek 0", "play"}));
     ASSERT_TRUE(video.pause());
     source.answer();
-    // the same file reopened with another track: the open player switches
     video.open("/m/ep1.mkv", IndexRequest{1, {}});
     source.newIndex = true;
-    source.handoffIndexFile = "/tmp/hikari-index-x.ffindex"; // its index file could not be written
+    source.handoffIndexFile = "/tmp/hikari-index-x.ffindex";
     source.finishOpen();
     source.answer();
     EXPECT_EQ(video.audioTrack(), 1);
@@ -796,7 +737,6 @@ TEST_F(VideoTest, PlaybackPlaysTheChosenAudioTrack)
     player.calls.clear();
     ASSERT_TRUE(video.play());
     EXPECT_EQ(player.calls.front(), "audio track 0");
-    // without a choice: the first audio track, and an open with the default request
     video.open("/m/ep2.mkv");
     EXPECT_EQ(source.lastRequest.audioTrack, IndexRequest::kEveryAudioTrack);
     EXPECT_TRUE(source.lastRequest.indexFile.empty());
@@ -807,51 +747,42 @@ TEST_F(VideoTest, PlaybackPlaysTheChosenAudioTrack)
     EXPECT_TRUE(video.indexHandoff().empty());
 }
 
-// A4: GLOBAL_PLAY_ACTUAL_LINE (legacy RendererVideo::PlayLine with
-// Timebase::PlayEndBefore): frames every 40 ms, 0..360 ms.
 TEST_F(VideoTest, PlayLinePlaysToTheFrameBeforeTheEnd)
 {
     FakePlayer player;
     video.setGeneralPlayer(&player);
-    EXPECT_FALSE(video.playLine(100, 300)); // no video
+    EXPECT_FALSE(video.playLine(100, 300));
     video.open("/m/ep1.mkv");
     source.finishOpen();
     source.answer();
-    // 300 ms is in frame 8 (320 ms): the end is frame 7's start, 280 ms;
-    // the start shows frame 3 (FrameAt(100): 120 ms) and plays from it
     ASSERT_TRUE(video.playLine(100, 300));
     ASSERT_EQ(source.frames.size(), 1u);
     EXPECT_EQ(source.frames[0].first, 3);
     player.opened();
     player.delivered();
     EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.mkv", "seek 120000", "play"}));
-    video.generalFrame(playerFrame(), 245'000); // frame 6
+    video.generalFrame(playerFrame(), 245'000);
     EXPECT_TRUE(video.playing());
-    video.generalFrame(playerFrame(), 285'000); // frame 7: the end, paused there
+    video.generalFrame(playerFrame(), 285'000);
     EXPECT_FALSE(video.playing());
     EXPECT_EQ(player.calls.back(), "pause");
     EXPECT_EQ(source.frames.back().first, 7);
-    // a start at or after that end, or at or after the last frame, plays nothing
     EXPECT_FALSE(video.playLine(280, 300));
     EXPECT_FALSE(video.playLine(360, 2000));
-    // an end past the video is the last frame's time
     player.calls.clear();
     ASSERT_TRUE(video.playLine(0, 2000));
     player.delivered();
     video.generalFrame(playerFrame(), 330'000);
     EXPECT_TRUE(video.playing());
-    // a Line played while playing pauses first
     ASSERT_TRUE(video.playLine(40, 200));
     EXPECT_EQ(player.calls, (std::vector<std::string>{"seek 0", "play", "pause", "seek 40000"}));
     player.delivered();
-    video.generalFrame(playerFrame(), 165'000); // frame 4 (160 ms): the end
+    video.generalFrame(playerFrame(), 165'000);
     EXPECT_FALSE(video.playing());
-    // an end in the first frame gives 0: legacy plays on
     ASSERT_TRUE(video.playLine(-100, 20));
     player.delivered();
     video.generalFrame(playerFrame(), 365'000);
     EXPECT_TRUE(video.playing());
-    // a plain Play has no end
     ASSERT_TRUE(video.pause());
     ASSERT_TRUE(video.play());
     player.delivered();
@@ -859,8 +790,6 @@ TEST_F(VideoTest, PlayLinePlaysToTheFrameBeforeTheEnd)
     EXPECT_TRUE(video.playing());
 }
 
-// KE2: the Template editor's Loop the Line plays the Line again from its
-// start each time its end is shown, until a pause, a stop or a seek.
 TEST_F(VideoTest, ALoopedLinePlaysAgainFromItsStart)
 {
     FakePlayer player;
@@ -873,7 +802,7 @@ TEST_F(VideoTest, ALoopedLinePlaysAgainFromItsStart)
     player.opened();
     player.delivered();
     player.calls.clear();
-    video.generalFrame(playerFrame(), 285'000); // frame 7: the end, from frame 3 again
+    video.generalFrame(playerFrame(), 285'000);
     EXPECT_TRUE(video.playing());
     EXPECT_TRUE(video.looping());
     EXPECT_EQ(source.frames.back().first, 3);
@@ -881,7 +810,6 @@ TEST_F(VideoTest, ALoopedLinePlaysAgainFromItsStart)
     EXPECT_EQ(player.calls, (std::vector<std::string>{"pause", "seek 120000", "play"}));
     video.generalFrame(playerFrame(), 285'000);
     EXPECT_TRUE(video.playing());
-    // a pause ends the loop; a Line played without it pauses at its end
     ASSERT_TRUE(video.pause());
     EXPECT_FALSE(video.looping());
     ASSERT_TRUE(video.playLine(100, 300));
@@ -889,7 +817,6 @@ TEST_F(VideoTest, ALoopedLinePlaysAgainFromItsStart)
     player.delivered();
     video.generalFrame(playerFrame(), 285'000);
     EXPECT_FALSE(video.playing());
-    // a seek by time (a chapter) ends it, and playing goes on from there
     ASSERT_TRUE(video.playLine(100, 300, true));
     player.delivered();
     ASSERT_TRUE(video.seekToMs(160));
@@ -898,16 +825,11 @@ TEST_F(VideoTest, ALoopedLinePlaysAgainFromItsStart)
     video.generalFrame(playerFrame(), 285'000);
     EXPECT_TRUE(video.playing());
     EXPECT_FALSE(video.looping());
-    // a stop ends it too
     ASSERT_TRUE(video.playLine(100, 300, true));
     ASSERT_TRUE(video.stop());
     EXPECT_FALSE(video.looping());
 }
 
-// V3: legacy ProgressSink "Indexing video" and its Cancel
-// (ProviderFFMS2.cpp:89-97, 301-312): the progress while indexing, and a
-// cancelled indexing leaves no video (the failed provider deleted the
-// renderer) and nothing to log; a failure keeps the source's stage and text.
 TEST_F(VideoTest, IndexingReportsProgressAndCanBeCancelled)
 {
     video.open("/m/ep1.mkv");
@@ -921,15 +843,12 @@ TEST_F(VideoTest, IndexingReportsProgressAndCanBeCancelled)
     EXPECT_EQ(video.state(), VideoSession::State::Closed);
     EXPECT_TRUE(video.path().empty());
     EXPECT_FALSE(video.indexingProgress());
-    // the helper's late Cancelled answer changes nothing
     source.pendingOpen(std::unexpected(SourceError::Cancelled));
     EXPECT_EQ(video.state(), VideoSession::State::Closed);
-    // a cancelled answer the session did not ask for closes it too
     video.open("/m/ep1.mkv");
     source.failure = OpenFailure{OpenStage::Indexing, "Cancelled by user"};
     source.pendingOpen(std::unexpected(SourceError::Cancelled));
     EXPECT_EQ(video.state(), VideoSession::State::Closed);
-    // a failed indexing: Failed, with FFMS2's text
     video.open("/m/ep2.mkv");
     source.failure = OpenFailure{OpenStage::Indexing, "Codec not found"};
     source.pendingOpen(std::unexpected(SourceError::BackendFailure));
@@ -942,16 +861,12 @@ TEST_F(VideoTest, IndexingReportsProgressAndCanBeCancelled)
     EXPECT_FALSE(video.dummy());
 }
 
-// V3: the stream menu's choice through both transports: chosen before
-// playback it is the track general playback opens with, chosen while playing
-// it switches the player at once, and it outlives the pause's handoff to the
-// indexed frame and the next play.
 TEST_F(VideoTest, AChosenAudioStreamPlaysThroughBothTransports)
 {
     FakePlayer player;
     video.setGeneralPlayer(&player);
     source.audioTracks = {1, 2, 4};
-    EXPECT_FALSE(video.selectPlaybackAudioTrack(0)); // no video
+    EXPECT_FALSE(video.selectPlaybackAudioTrack(0));
     video.open("/m/ep1.mkv");
     source.finishOpen();
     source.answer();
@@ -960,7 +875,7 @@ TEST_F(VideoTest, AChosenAudioStreamPlaysThroughBothTransports)
     EXPECT_FALSE(video.selectPlaybackAudioTrack(3));
     EXPECT_FALSE(video.selectPlaybackAudioTrack(-1));
     ASSERT_TRUE(video.selectPlaybackAudioTrack(2));
-    EXPECT_TRUE(player.calls.empty()); // the player has nothing open yet
+    EXPECT_TRUE(player.calls.empty());
     ASSERT_TRUE(video.play());
     MediaDescription d;
     d.audioTracks.resize(3);
@@ -968,23 +883,19 @@ TEST_F(VideoTest, AChosenAudioStreamPlaysThroughBothTransports)
     player.delivered();
     EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.mkv", "audio track 2", "seek 0", "play"}));
     player.calls.clear();
-    ASSERT_TRUE(video.selectPlaybackAudioTrack(1)); // while playing: at once
+    ASSERT_TRUE(video.selectPlaybackAudioTrack(1));
     EXPECT_EQ(player.calls, (std::vector<std::string>{"audio track 1"}));
-    EXPECT_EQ(video.audioTrack(), 1); // the box's track is not the stream menu's
+    EXPECT_EQ(video.audioTrack(), 1);
     ASSERT_TRUE(video.pause());
     source.answer();
     player.calls.clear();
     ASSERT_TRUE(video.play());
     EXPECT_EQ(player.calls.front(), "audio track 1");
-    // a new video starts from its own track again
     video.open("/m/ep2.mkv");
     source.finishOpen();
     EXPECT_EQ(video.playbackAudioTrack(), 0);
 }
 
-// V3: chapters seek with legacy Seek(ms) (SeekFrame: the frame at or after,
-// 0 at or before 0), and while playing the player goes on from there;
-// Tell() is the shown frame's start, or while playing the delivered time.
 TEST_F(VideoTest, ChapterSeeksAndTellFollowLegacy)
 {
     FakePlayer player;
@@ -994,14 +905,14 @@ TEST_F(VideoTest, ChapterSeeksAndTellFollowLegacy)
     video.open("/m/ep1.mkv");
     source.finishOpen();
     source.answer();
-    ASSERT_TRUE(video.seekToMs(100)); // frames every 40 ms: 120 ms is frame 3
+    ASSERT_TRUE(video.seekToMs(100));
     EXPECT_EQ(video.requestedFrame(), 3);
     source.answer();
     EXPECT_EQ(video.tell(), 120);
     ASSERT_TRUE(video.seekToMs(-5));
     EXPECT_EQ(video.requestedFrame(), 0);
     source.answer();
-    ASSERT_TRUE(video.seekToMs(100000)); // past the end: the last frame
+    ASSERT_TRUE(video.seekToMs(100000));
     EXPECT_EQ(video.requestedFrame(), 9);
     source.answer();
     ASSERT_TRUE(video.play());
@@ -1017,8 +928,6 @@ TEST_F(VideoTest, ChapterSeeksAndTellFollowLegacy)
     EXPECT_EQ(player.calls.back(), "play");
 }
 
-// V3: VideoBox::NextFile with no file that way: Seek(0) then Pause(false),
-// which toggles play.
 TEST_F(VideoTest, RestartGoesToTheStartAndTogglesPlay)
 {
     FakePlayer player;
@@ -1029,22 +938,18 @@ TEST_F(VideoTest, RestartGoesToTheStartAndTogglesPlay)
     source.answer();
     video.showFrame(5);
     source.answer();
-    ASSERT_TRUE(video.restartToggled()); // paused: shows frame 0 and plays from it
+    ASSERT_TRUE(video.restartToggled());
     EXPECT_EQ(video.requestedFrame(), 0);
     EXPECT_TRUE(video.playing());
     player.opened();
     EXPECT_EQ(player.soughtUs, 0);
     player.delivered();
     video.generalFrame(playerFrame(), 200000);
-    ASSERT_TRUE(video.restartToggled()); // playing: back to the start, paused there
+    ASSERT_TRUE(video.restartToggled());
     EXPECT_FALSE(video.playing());
     EXPECT_EQ(video.requestedFrame(), 0);
 }
 
-// W1: legacy built the DirectShow graph once as the video loaded and warned
-// once when it failed (VideoBox::LoadVideo, VideoBox.cpp:328-331). A failed
-// prepare is not retried on later frames or plays until the video loads
-// again or the player changes.
 TEST_F(VideoTest, AFailedPrepareIsNotRetriedUntilTheVideoLoadsAgain)
 {
     FakePlayer player;
@@ -1054,12 +959,11 @@ TEST_F(VideoTest, AFailedPrepareIsNotRetriedUntilTheVideoLoadsAgain)
     source.finishOpen();
     source.answer();
     video.preparePlayer();
-    video.preparePlayer(); // pending: not asked twice
+    video.preparePlayer();
     ASSERT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.avi"}));
     player.failed();
     EXPECT_TRUE(video.playerFailed());
     EXPECT_FALSE(video.playerHasVideo());
-    // Frame steps, seeks and plays after the failure do not open it again.
     video.showFrame(2);
     source.answer();
     video.preparePlayer();
@@ -1067,7 +971,6 @@ TEST_F(VideoTest, AFailedPrepareIsNotRetriedUntilTheVideoLoadsAgain)
     EXPECT_FALSE(video.playing());
     EXPECT_FALSE(video.playLine(0, 200));
     EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.avi"}));
-    // Loading the video again asks once more.
     video.open("/m/ep1.avi");
     source.finishOpen();
     EXPECT_FALSE(video.playerFailed());
@@ -1075,7 +978,6 @@ TEST_F(VideoTest, AFailedPrepareIsNotRetriedUntilTheVideoLoadsAgain)
     EXPECT_EQ(player.calls.size(), 2u);
     player.failed();
     EXPECT_TRUE(video.playerFailed());
-    // So does another player chosen in the settings.
     FakePlayer other;
     video.setGeneralPlayer(&other);
     EXPECT_FALSE(video.playerFailed());
@@ -1085,46 +987,37 @@ TEST_F(VideoTest, AFailedPrepareIsNotRetriedUntilTheVideoLoadsAgain)
     EXPECT_TRUE(video.playerHasVideo());
 }
 
-// V4: the Script properties matrix through the source's input matrix
-// (legacy ProviderFFMS2::Init, then SetColorSpace with a Render while
-// paused, RendererFFMS2.h:66-72).
 TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
 {
     std::vector<std::string> logged;
     video.setLog([&](const std::string &message) { logged.push_back(message); });
     video.setPresenter(&presenter);
-    source.colorSpace = 1; // BT.709, limited
+    source.colorSpace = 1;
     source.colorRange = 1;
     video.setMatrix("TV.601");
     video.open("/m/ep1.mkv");
     source.finishOpen();
-    // Before the first frame is asked for.
     ASSERT_EQ(source.matrixCalls, (std::vector<std::pair<int, int>>{{5, 1}}));
     EXPECT_EQ(source.framesBeforeMatrix, 0u);
     ASSERT_EQ(source.frames.size(), 1u);
     source.answer();
     EXPECT_EQ(video.colourMatrix().applied(), "TV.601");
-    // V1: player frames take the same matrix.
     using Input = LegacyColourMatrix::Input;
     EXPECT_EQ(video.playerColour(), (Input{5, 1}));
-    // The source's own: BT.709 set, the shown frame decoded again.
     video.setMatrix("TV.709");
     EXPECT_EQ(source.matrixCalls.back(), (std::pair<int, int>{1, 1}));
     ASSERT_EQ(source.frames.size(), 1u);
     EXPECT_EQ(source.frames[0].first, 0);
-    EXPECT_EQ(source.framesBeforeMatrix, 0u); // the frame after the matrix
+    EXPECT_EQ(source.framesBeforeMatrix, 0u);
     source.answer();
-    // Unchanged: nothing.
     video.setMatrix("TV.709");
     EXPECT_EQ(source.matrixCalls.size(), 2u);
     EXPECT_TRUE(source.frames.empty());
-    // Refused: legacy's message, the old name kept.
     source.refuseMatrix = true;
     video.setMatrix("TV.601");
     EXPECT_EQ(logged, (std::vector<std::string>{"Cannot change YCbCr matrix"}));
     EXPECT_EQ(video.colourMatrix().applied(), "TV.709");
-    EXPECT_EQ(video.playerColour(), (Input{1, 1})); // the converter kept BT.709
-    // A BT.601 source never takes "TV.709".
+    EXPECT_EQ(video.playerColour(), (Input{1, 1}));
     source.refuseMatrix = false;
     source.colorSpace = 6;
     video.setMatrix("TV.709");
@@ -1133,11 +1026,7 @@ TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
     source.finishOpen();
     EXPECT_EQ(source.matrixCalls.size(), before);
     EXPECT_EQ(video.colourMatrix().source(), "TV.601");
-    EXPECT_EQ(video.playerColour(), (Input{6, 1})); // nothing set: the source's own
-    // An untagged HD source with a Document matrix other than TV.601: its
-    // guess, BT.709, is set before the first frame (approved departure
-    // V4-untagged-matrix; legacy left the converter's BT.601 under the name
-    // TV.709), so a later "TV.709" has nothing to change.
+    EXPECT_EQ(video.playerColour(), (Input{6, 1}));
     source.colorSpace = 2;
     source.colorRange = 0;
     source.geometry.width = 1280;
@@ -1154,7 +1043,6 @@ TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
     EXPECT_EQ(source.matrixCalls.size(), 1u);
 }
 
-// V1: player frames through the playback pipeline.
 namespace {
 
 PlaybackPipeline::Make pooledPlayerFrame()
@@ -1166,7 +1054,6 @@ PlaybackPipeline::Make pooledPlayerFrame()
     };
 }
 
-// The owner's event queue: the worker's results run when the test drains it.
 struct PostQueue {
     std::mutex mutex;
     std::deque<std::function<void()>> tasks;
@@ -1177,7 +1064,6 @@ struct PostQueue {
             tasks.push_back(std::move(task));
         };
     }
-    // Waits for a posted result, then runs everything posted.
     bool drain()
     {
         const auto until = std::chrono::steady_clock::now() + std::chrono::seconds(5);
@@ -1215,7 +1101,7 @@ struct PlayingTest : VideoTest {
         video.setSubtitles({std::byte{'x'}});
         video.open("/m/ep1.mkv");
         source.finishOpen();
-        source.answer(); // frame 0
+        source.answer();
         ASSERT_TRUE(video.play());
         player.opened();
         player.delivered();
@@ -1223,7 +1109,7 @@ struct PlayingTest : VideoTest {
     }
 };
 
-} // namespace
+}
 
 TEST_F(PlayingTest, APlayerFrameIsShownWithTheWorkersOverlayAndOneNotification)
 {
@@ -1234,10 +1120,10 @@ TEST_F(PlayingTest, APlayerFrameIsShownWithTheWorkersOverlayAndOneNotification)
     const auto &p = presenter.shown.back();
     EXPECT_EQ(p.frame->index, -1);
     ASSERT_TRUE(p.overlay);
-    EXPECT_TRUE(p.overlayBoundsKnown); // measured on the worker
-    EXPECT_EQ(renderer.renderedAt.size(), renders + 1); // rendered once, not again on the owner
+    EXPECT_TRUE(p.overlayBoundsKnown);
+    EXPECT_EQ(renderer.renderedAt.size(), renders + 1);
     EXPECT_EQ(renderer.renderedAt.back(), 205'000);
-    EXPECT_EQ(notified, 1); // the presenter's answer does not notify again while playing
+    EXPECT_EQ(notified, 1);
     video.submitGeneralFrame(245'000, 285'000, pooledPlayerFrame());
     EXPECT_EQ(notified, 2);
     const auto c = video.pipelineCounters();
@@ -1249,7 +1135,7 @@ TEST_F(PlayingTest, AnOlderPlayerFrameThanTheShownOneIsDropped)
 {
     video.generalFrame(playerFrame(), 245'000);
     const auto shown = presenter.shown.size();
-    video.generalFrame(playerFrame(), 205'000); // late, out of order
+    video.generalFrame(playerFrame(), 205'000);
     EXPECT_EQ(presenter.shown.size(), shown);
     EXPECT_EQ(notified, 1);
 }
@@ -1259,16 +1145,14 @@ TEST_F(PlayingTest, AResultFromBeforeAPauseIsDropped)
     PostQueue queue;
     video.setFrameWorker(queue.post());
     video.submitGeneralFrame(205'000, std::nullopt, pooledPlayerFrame());
-    // The worker made it; the owner pauses before taking it.
     ASSERT_TRUE(video.pause());
     while (!source.frames.empty())
-        source.answer(); // the indexed frame at the pause
+        source.answer();
     const auto shown = presenter.shown.size();
     ASSERT_TRUE(queue.drain());
     EXPECT_EQ(presenter.shown.size(), shown);
     EXPECT_EQ(video.shownFrame(), 0);
     EXPECT_GE(presenter.shown.back().frame->index, 0);
-    // Playing again starts a new epoch: the old result would be dropped too.
     ASSERT_TRUE(video.play());
     player.delivered();
     video.submitGeneralFrame(245'000, std::nullopt, pooledPlayerFrame());
@@ -1282,7 +1166,6 @@ TEST_F(PlayingTest, NewSubtitlesRenderTheWorkersFrameAgain)
     PostQueue queue;
     video.setFrameWorker(queue.post());
     video.submitGeneralFrame(205'000, std::nullopt, pooledPlayerFrame());
-    // Wait for the worker's result, then prepare new subtitles before it is shown.
     {
         const auto until = std::chrono::steady_clock::now() + std::chrono::seconds(5);
         for (;;) {
@@ -1299,6 +1182,6 @@ TEST_F(PlayingTest, NewSubtitlesRenderTheWorkersFrameAgain)
     ASSERT_TRUE(queue.drain());
     EXPECT_EQ(presenter.shown.back().frame->index, -1);
     EXPECT_EQ(std::count(renderer.renderedAt.begin(), renderer.renderedAt.end(), 205'000), 2);
-    EXPECT_EQ(renderer.renderedAt.back(), 205'000); // again, for the new subtitles
+    EXPECT_EQ(renderer.renderedAt.back(), 205'000);
     video.setFrameWorker(nullptr);
 }

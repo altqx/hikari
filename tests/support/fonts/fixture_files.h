@@ -1,11 +1,5 @@
 #pragma once
 
-// Placing a font fixture file in a folder the tests do not own (the Windows
-// user font folder, Y8W) and removing it again. A file that is already there
-// with the fixture's bytes is the tests' own, left by a run that never got
-// to its cleanup; it is reused and removed like a fresh copy. A file of that
-// name with other bytes is never touched.
-
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -23,7 +17,6 @@ enum class FixturePlacement {
     Failed,  // the copy failed: nothing of the tests' is there
 };
 
-// Whether the tests own `target` after placing it, and must remove it.
 inline bool ownsPlacedFixture(FixturePlacement placement)
 {
     return placement == FixturePlacement::Copied || placement == FixturePlacement::Reused;
@@ -39,7 +32,6 @@ inline bool sameFileBytes(const std::filesystem::path &a, const std::filesystem:
     return da == db;
 }
 
-// Puts `source` at `target`; `ec` holds the reason of a failed copy.
 inline FixturePlacement placeFixtureFile(const std::filesystem::path &source, const std::filesystem::path &target,
                                          std::error_code &ec)
 {
@@ -50,10 +42,7 @@ inline FixturePlacement placeFixtureFile(const std::filesystem::path &source, co
     return ec ? FixturePlacement::Failed : FixturePlacement::Copied;
 }
 
-// Removes `path`, trying again while something still holds it (on Windows
-// the font cache can keep a just-unregistered font open for a moment) until
-// `patience` has passed. True when the file is gone; `ec` holds the last
-// reason otherwise.
+// Retries until `patience` passes: Windows' font cache can hold a just-unregistered font open for a moment.
 inline bool removeFixtureFile(const std::filesystem::path &path, std::chrono::milliseconds patience,
                               std::error_code &ec)
 {
@@ -70,4 +59,4 @@ inline bool removeFixtureFile(const std::filesystem::path &path, std::chrono::mi
     }
 }
 
-} // namespace hikari::testing
+}

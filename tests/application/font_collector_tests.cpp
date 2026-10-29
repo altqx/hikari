@@ -1,8 +1,3 @@
-// Y8: the font collector's scan, review and output rules against the legacy
-// FontCollector (FontCollector.cpp at 20d647c4), over a font service that
-// answers like a renderer from a table of faces. The renderer-verified
-// collection itself (libass, fontconfig, the files on disk) is tested in
-// tests/backends/font_collector_tests.cpp.
 #include "hikari/application/font_collector.h"
 #include "fake_font_service.h"
 
@@ -34,8 +29,6 @@ std::vector<std::byte> bytesOf(const std::string &s)
     return out;
 }
 
-// styles: "<name>,<family>,<bold>,<italic>"; events: "<style>,<text>" or
-// "#<style>,<text>" for a Comment.
 std::string script(std::initializer_list<std::string> styles, std::initializer_list<std::string> events)
 {
     std::string s = "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, "
@@ -68,7 +61,6 @@ CollectorDocument tab(int index, const std::string &text)
     return d;
 }
 
-// Records what Apply writes.
 class MemoryOutput final : public CollectorOutput {
 public:
     bool openOk = true, failFolder = false;
@@ -89,7 +81,7 @@ public:
             return false;
         written.push_back(name);
         if (cancelAfterPut)
-            cancelAfterPut->store(true); // the user cancels while this file is written
+            cancelAfterPut->store(true);
         return true;
     }
     bool label(const std::string &text) override
@@ -123,9 +115,8 @@ FakeFonts arialAndTimes()
     return f;
 }
 
-} // namespace
+}
 
-// ParseTags with {"fn","b","i","p"} and plainText (SubsDialogue.cpp:1086-1158).
 TEST(FontCollectorTags, LegacyParseTagsOrderAndValues)
 {
     const auto tags = collector::parseTags(U"{\\fnArial\\b1\\bord2}Hi {\\i1\\pos(1,2)}there");
@@ -134,12 +125,10 @@ TEST(FontCollectorTags, LegacyParseTagsOrderAndValues)
         got.emplace_back(t.name, t.value);
     EXPECT_EQ(got, (std::vector<std::pair<std::u32string, std::u32string>>{
                        {U"fn", U"Arial"}, {U"b", U"1"}, {U"plain", U"Hi "}, {U"i", U"1"}, {U"plain", U"there"}}));
-    // A value that is not a number keeps its leading number part; \b(...) its parentheses' content.
     const auto odd = collector::parseTags(U"{\\b700x\\i(1)}a");
     ASSERT_EQ(odd.size(), 3u);
     EXPECT_EQ(odd[0].value, U"700");
     EXPECT_EQ(odd[1].value, U"1");
-    // A drawing's text is "pvector", not plain.
     const auto drawing = collector::parseTags(U"{\\p1}m 0 0 l 1 1{\\p0}x");
     ASSERT_EQ(drawing.size(), 4u);
     EXPECT_EQ(drawing[1].name, U"pvector");
@@ -147,8 +136,6 @@ TEST(FontCollectorTags, LegacyParseTagsOrderAndValues)
     EXPECT_EQ(drawing[3].name, U"plain");
 }
 
-// GetAssFonts (FontCollector.cpp:572-695): Styles by tab, Lines only where an
-// \fn starts the font, characters by family, comments skipped.
 TEST(FontCollectorScan, StylesLinesAndCharactersAsLegacyGetAssFonts)
 {
     const auto a = tab(0, script({"Default,Arial,0,0", "Sign,Missing,0,0"},
@@ -163,10 +150,8 @@ TEST(FontCollectorScan, StylesLinesAndCharactersAsLegacyGetAssFonts)
     EXPECT_EQ(s.notFound.at(u"Missing").styles.at(u"Sign"), std::vector<int>{0});
     EXPECT_FALSE(s.found.contains(u"Comment"));
     EXPECT_FALSE(s.notFound.contains(u"Comment"));
-    // \N and \n are dropped, \h is a space.
     EXPECT_EQ(s.chars.at(u"Missing"), (std::set<char32_t>{U'x', U'y', U' ', U'z'}));
     EXPECT_EQ(s.chars.at(u"Times"), (std::set<char32_t>{U'A', U'b'}));
-    // foundFonts keys: the Style's 0/1, a tag's value as written (\i2 is its own key).
     std::vector<std::u16string> keys;
     for (const auto &[k, v] : s.variants)
         keys.push_back(k);
@@ -175,8 +160,6 @@ TEST(FontCollectorScan, StylesLinesAndCharactersAsLegacyGetAssFonts)
     EXPECT_TRUE(s.variants.at(u"arial12").italic);
 }
 
-// CheckPathAndGlyphs in check mode counts families (FontCollector.cpp:1234-1235);
-// an unused Style's font is skipped before any other message (1093-1100).
 TEST(FontCollectorReview, CheckModeCountsFamiliesAndWarnsAsLegacy)
 {
     auto fonts = arialAndTimes();
@@ -186,16 +169,15 @@ TEST(FontCollectorReview, CheckModeCountsFamiliesAndWarnsAsLegacy)
                        {"Default,Hello", "Bold,World"}))},
         CollectorAction::Check);
     ASSERT_TRUE(review);
-    EXPECT_FALSE(review->retrievedFonts); // only the copy modes list the files
+    EXPECT_FALSE(review->retrievedFonts);
     EXPECT_EQ(review->foundCount, 1);
-    EXPECT_EQ(review->notFoundCount, 0); // the missing font has no text: not counted
+    EXPECT_EQ(review->notFoundCount, 0);
     const Block &arial = review->found.at(u"Arial");
-    // arial11 has no bold italic face: "is missing bold italics."
     EXPECT_EQ(kinds(arial.warnings), std::vector<Note::Kind>{Note::Kind::MissingBoldItalic});
     const Block &times = review->found.at(u"Times");
     ASSERT_EQ(times.warnings.size(), 1u);
     EXPECT_EQ(times.warnings[0].kind, Note::Kind::UnusedStyle);
-    EXPECT_FALSE(times.warnings[0].flag); // no "Will not be copied." when checking
+    EXPECT_FALSE(times.warnings[0].flag);
     const Block &nowhere = review->notFound.at(u"Nowhere");
     EXPECT_EQ(nowhere.header, Block::Header::NotFound);
     EXPECT_EQ(kinds(nowhere.warnings), std::vector<Note::Kind>{Note::Kind::UnusedStyle});
@@ -205,8 +187,6 @@ TEST(FontCollectorReview, CheckModeCountsFamiliesAndWarnsAsLegacy)
     EXPECT_TRUE(collector.result(*review).complete);
 }
 
-// Characters the requested face does not draw: legacy's warning, and the
-// renderer's fallback file named with what it drew (fonts.md).
 TEST(FontCollectorReview, FallbackGlyphsAreReportedAndIncomplete)
 {
     auto fonts = arialAndTimes();
@@ -227,8 +207,6 @@ TEST(FontCollectorReview, FallbackGlyphsAreReportedAndIncomplete)
     EXPECT_NE(FontCollector::labelText(*review, nullptr).find("U+4E2D"), std::string::npos);
 }
 
-// The copy modes: the provider's files are listed once, each variant's file
-// is found by its bytes and written once, the count is of files written.
 TEST(FontCollectorApply, CopyCountsFilesAndWritesEachFileOnce)
 {
     auto fonts = arialAndTimes();
@@ -241,10 +219,8 @@ TEST(FontCollectorApply, CopyCountsFilesAndWritesEachFileOnce)
     std::vector<std::u16string> names;
     for (const auto &f : review->files)
         names.push_back(f.name);
-    // times10 has no bold face: the regular file again, written once.
     EXPECT_EQ(names, (std::vector<std::u16string>{u"arial.ttf", u"arialbd.ttf", u"times.ttf"}));
     EXPECT_EQ(kinds(review->found.at(u"Times").warnings), std::vector<Note::Kind>{Note::Kind::MissingBold});
-    // The reimport checks the collected set alone.
     ASSERT_EQ(fonts.reimported.size(), 1u);
     EXPECT_EQ(fonts.reimported[0], (std::vector<std::string>{"arial.ttf", "arialbd.ttf", "times.ttf"}));
     EXPECT_TRUE(review->complete());
@@ -255,26 +231,19 @@ TEST(FontCollectorApply, CopyCountsFilesAndWritesEachFileOnce)
     EXPECT_EQ(r.foundCount, 3);
     EXPECT_EQ(r.notCopiedCount, 0);
     EXPECT_TRUE(r.complete);
-    EXPECT_FALSE(out.labelText); // the label written first is removed at the end
+    EXPECT_FALSE(out.labelText);
     EXPECT_FALSE(r.labelled);
     EXPECT_EQ(kinds(r.found.at(u"Arial").infos),
               (std::vector<Note::Kind>{Note::Kind::FoundFile, Note::Kind::FoundFile, Note::Kind::Copied, Note::Kind::Copied}));
 
-    // fontSizes is kept: the second run does not list the files again.
     const auto again = collector.prepare(docs, CollectorAction::Zip);
     ASSERT_TRUE(again);
     EXPECT_FALSE(again->retrievedFonts);
 }
 
-// Stream bytes (DirectWrite) are named by the installed file holding them.
-// A per-user arial.ttf beside the system's answers to the same PostScript
-// name; legacy found the file by its size and bytes (FontCollector.cpp:
-// 1144-1196), so the file named is the one whose bytes the renderer used.
 TEST(FontCollectorApply, StreamBytesAreNamedByTheFileHoldingThem)
 {
     FakeFonts fonts;
-    // The provider lists the per-user copy first; the renderer draws with the
-    // system file (the fake's last exact match).
     fonts.faces = {{"Arial", 400, false, "C:/Users/u/Fonts/arial-copy.ttf", U"", "ArialMT", true},
                    {"Arial", 400, false, "C:/Windows/Fonts/arial.ttf", U"", "ArialMT", true}};
     std::vector<std::u16string> reads;
@@ -290,7 +259,6 @@ TEST(FontCollectorApply, StreamBytesAreNamedByTheFileHoldingThem)
     EXPECT_EQ(review->files[0].shown, u"C:/Windows/Fonts/arial.ttf");
     EXPECT_EQ(review->files[0].name, u"arial.ttf");
 
-    // One installed file of the name: it is named without reading it.
     FakeFonts single;
     single.faces = {{"Arial", 400, false, "C:/Windows/Fonts/arial.ttf", U"", "ArialMT", true}};
     reads.clear();
@@ -305,10 +273,9 @@ TEST(FontCollectorApply, StreamBytesAreNamedByTheFileHoldingThem)
     EXPECT_TRUE(reads.empty());
 }
 
-// "Cannot retrieve the font file sizes and names" ends a copy run.
 TEST(FontCollectorApply, NoProviderFilesCancelsCopying)
 {
-    FakeFonts fonts; // no faces
+    FakeFonts fonts;
     FontCollector collector(fonts);
     const auto review = collector.prepare({tab(0, script({"Default,Arial,0,0"}, {"Default,a"}))}, CollectorAction::Zip);
     ASSERT_TRUE(review);
@@ -319,8 +286,6 @@ TEST(FontCollectorApply, NoProviderFilesCancelsCopying)
     EXPECT_FALSE(out.opened);
 }
 
-// Partial output: refused without acknowledgment, labelled with it
-// (surface-decision-routing #54).
 TEST(FontCollectorApply, IncompleteOutputNeedsAcknowledgmentAndIsLabelled)
 {
     auto fonts = arialAndTimes();
@@ -349,8 +314,6 @@ TEST(FontCollectorApply, IncompleteOutputNeedsAcknowledgmentAndIsLabelled)
     EXPECT_NE(out.labelText->find("Fonts not found:\n  Nowhere\n"), std::string::npos);
 }
 
-// A file that cannot be written: "Cannot copy font", counted apart, and the
-// output is labelled; never success.
 TEST(FontCollectorApply, AFailedCopyIsCountedAndLabelled)
 {
     auto fonts = arialAndTimes();
@@ -370,7 +333,6 @@ TEST(FontCollectorApply, AFailedCopyIsCountedAndLabelled)
     EXPECT_NE(out.labelText->find("Fonts that could not be written:\n  times.ttf\n"), std::string::npos);
 }
 
-// Cancellation: a folder keeps its label, an archive is never published.
 TEST(FontCollectorApply, CancellationLeavesNothingUnlabelled)
 {
     auto fonts = arialAndTimes();
@@ -395,15 +357,11 @@ TEST(FontCollectorApply, CancellationLeavesNothingUnlabelled)
     EXPECT_FALSE(archive.committed);
     EXPECT_FALSE(z.written);
 
-    // Cancelled while the review is prepared: no review at all.
     const auto none = collector.prepare(docs, CollectorAction::Zip, &cancel);
     ASSERT_FALSE(none);
     EXPECT_EQ(none.error(), FontError::Cancelled);
 }
 
-// Cancelled after the first font is written: the folder holds that font
-// and the label says the writing was cancelled; the archive with an entry
-// already added is discarded, never published.
 TEST(FontCollectorApply, CancellationMidWriteLeavesNothingUnlabelled)
 {
     auto fonts = arialAndTimes();
@@ -440,9 +398,6 @@ TEST(FontCollectorApply, CancellationMidWriteLeavesNothingUnlabelled)
     EXPECT_FALSE(archive.labelText);
 }
 
-// The renderer's own files beyond the variants (here a fallback) are
-// reported with their role and not collected; the clean reimport then
-// differs and the collection is incomplete.
 TEST(FontCollectorReview, RendererOnlyFilesAreReportedNotCollected)
 {
     auto fonts = arialAndTimes();
@@ -466,9 +421,6 @@ TEST(FontCollectorReview, RendererOnlyFilesAreReportedNotCollected)
     EXPECT_NE(label.find("tab 1: 1 of 1 frames differ"), std::string::npos);
 }
 
-// A Document the renderer cannot read is not verified: the collection is
-// incomplete in every mode, never "Completed Successfully" by default, and
-// the copy is written only after acknowledgment, labelled.
 TEST(FontCollectorReview, AnUnreadableDocumentIsIncomplete)
 {
     auto fonts = arialAndTimes();
@@ -498,10 +450,6 @@ TEST(FontCollectorReview, AnUnreadableDocumentIsIncomplete)
     EXPECT_NE(out.labelText->find("Documents the renderer could not read:\n  tab 2\n"), std::string::npos);
 }
 
-// Two different fonts with one file name (here in two folders): legacy
-// writes both under that name (wxCopyFile overwrites, PutNextEntry adds a
-// second entry, FontCollector.cpp:877-911), so the output is not the set the
-// renderer verified and the collection is incomplete.
 TEST(FontCollectorApply, TwoFontsWithOneFileNameAreIncomplete)
 {
     FakeFonts fonts;
@@ -525,7 +473,6 @@ TEST(FontCollectorApply, TwoFontsWithOneFileNameAreIncomplete)
     EXPECT_NE(out.labelText->find("Different fonts with the same file name (only one is kept in a folder):\n  ARIAL.TTF\n"),
               std::string::npos);
 
-    // The same bytes reached through two families are one file, no clash.
     FakeFonts same;
     same.faces = {{"Arial", 400, false, "/a/arial.ttf"}, {"Sans", 400, false, "/a/arial.ttf"}};
     FontCollector again(same);
@@ -537,7 +484,6 @@ TEST(FontCollectorApply, TwoFontsWithOneFileNameAreIncomplete)
     EXPECT_TRUE(one->complete());
 }
 
-// The output cannot be opened: "Path is not available", nothing written.
 TEST(FontCollectorApply, PathNotAvailable)
 {
     auto fonts = arialAndTimes();
@@ -555,9 +501,6 @@ TEST(FontCollectorApply, PathNotAvailable)
     EXPECT_FALSE(r.complete);
 }
 
-// FC-type1-pair: a Type 1 file names its pair and copies it too. Legacy's
-// RemoveLast(3) cut the path in place, so it copied the cut path, which
-// failed (FontCollector.cpp:1207-1219).
 TEST(FontCollectorApply, Type1PairIsCopied)
 {
     FakeFonts fonts;
@@ -580,7 +523,6 @@ TEST(FontCollectorApply, Type1PairIsCopied)
     EXPECT_EQ(r.notCopiedCount, 0);
     EXPECT_TRUE(r.complete);
 
-    // A pair that cannot be read is "Cannot copy font" under its own name.
     FontCollector unread(fonts, [](const std::u16string &) { return nullptr; });
     const auto again =
         unread.prepare({tab(0, script({"Default,Courier,0,0"}, {"Default,a"}))}, CollectorAction::CopyToFolder);
@@ -594,8 +536,6 @@ TEST(FontCollectorApply, Type1PairIsCopied)
 }
 
 namespace {
-// Answers like FakeFonts, except that a bold probe finds no face: the
-// family is found, its bold variant is not.
 class NoBoldFonts final : public FontServicePort {
 public:
     explicit NoBoldFonts(FakeFonts &inner) : m_inner(inner) {}
@@ -625,11 +565,8 @@ public:
 private:
     FakeFonts &m_inner;
 };
-} // namespace
+}
 
-// FC-found-negative: a font not found in the folder counts as not found
-// only. Legacy also decremented `found`, which nothing had counted for it
-// (FontCollector.cpp:1228-1232), so one font written was reported as none.
 TEST(FontCollectorApply, AFontNotInTheFolderLeavesTheFoundCount)
 {
     auto inner = arialAndTimes();

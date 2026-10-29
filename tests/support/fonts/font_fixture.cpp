@@ -1,14 +1,5 @@
-// Writes original geometric font fixtures for the font identity tests (N4),
-// a C++ port of the accepted Windows experiment's fixtures.py (0f776e44).
-// Every glyph is one rectangle; no outlines or tables come from another font.
-// The generated fonts are dedicated to the public domain (CC0-1.0). They test
-// identity and coverage decisions, not credible shaping.
-//
-//   hikari_font_fixture <directory> [<refresh directory>]
-//
-// The optional second directory receives refresh.ttf (family
-// HikariProbeRefresh), kept out of the fontconfig-visible fixture directory
-// so a test can make it appear later.
+// The generated fonts are dedicated to the public domain (CC0-1.0).
+// Usage: hikari_font_fixture <directory> [<directory for refresh.ttf, outside fontconfig's view>]
 
 #include <algorithm>
 #include <cstdint>
@@ -93,9 +84,7 @@ Bytes font(const FontSpec &spec)
     chars.erase(std::unique(chars.begin(), chars.end()), chars.end());
     const int width = spec.width;
 
-    // Glyph 0 is .notdef and glyph 2 the space, both empty; glyph 1 is one
-    // original four-point rectangle. (Mapping space to .notdef would make a
-    // renderer look for a fallback space.)
+    // Space gets its own empty glyph 2: mapped to .notdef, renderers look for a fallback space.
     Writer glyph;
     glyph.i16(1).i16(0).i16(0).i16(std::int16_t(width)).i16(700);
     glyph.u16(3).u16(0).u8(1).u8(1).u8(1).u8(1);
@@ -225,7 +214,7 @@ Bytes collection(const std::vector<Bytes> &fonts)
     return result;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

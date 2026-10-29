@@ -1,5 +1,3 @@
-// 38e: the recording URL handlers (desktop_guard.h).
-
 #include "desktop_guard.h"
 
 #include <QCoreApplication>
@@ -22,7 +20,7 @@ struct State {
     QStringList revealed;
     QList<Started> started;
     QList<QUrl> refused;
-    QList<QUrl> everRefused; // for the exit check: clear() does not forget a refusal
+    QList<QUrl> everRefused;
     bool startResult = true;
     std::function<void(const QUrl &)> report;
 };
@@ -73,7 +71,7 @@ void installTheRecordingHandlers()
     qAddPostRoutine(failTheRunOnARefusal);
 }
 
-} // namespace
+}
 
 QStringList recordedSchemes()
 {
@@ -163,7 +161,7 @@ std::function<void(const QUrl &url)> replaceRefusalReport(std::function<void(con
     return std::exchange(state().report, std::move(report));
 }
 
-} // namespace hikari::test::desktop
+}
 
 namespace {
 
@@ -172,7 +170,7 @@ void installTheDesktopRecorder()
     hikari::test::desktop::installTheRecordingHandlers();
 }
 
-} // namespace
+}
 
 Q_COREAPP_STARTUP_FUNCTION(installTheDesktopRecorder)
 

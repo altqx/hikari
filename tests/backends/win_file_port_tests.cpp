@@ -1,7 +1,3 @@
-// F2-W: the Windows write owner on real files. Copied-file writes, deep
-// paths, interruption (cancel before publish), sharing violations and
-// cleanup of the temporary file.
-
 #include "hikari/backends/win_file_port.h"
 
 #include <gtest/gtest.h>
@@ -77,7 +73,7 @@ struct WinPortTest : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST_F(WinPortTest, WritesANewFile)
 {
@@ -130,7 +126,7 @@ TEST_F(WinPortTest, SharingViolationKeepsTheOriginalAndCleansUp)
     ::CloseHandle(holder);
     EXPECT_EQ(only(), WriteOutcome::Failed);
     EXPECT_EQ(slurp(dir / "busy.ass"), "original");
-    EXPECT_TRUE(onlyFile(dir / "busy.ass")); // no temporary file left behind
+    EXPECT_TRUE(onlyFile(dir / "busy.ass"));
 }
 
 TEST_F(WinPortTest, ReadOnlyDestinationIsNotOverwritten)

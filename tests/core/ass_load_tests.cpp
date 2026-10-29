@@ -1,5 +1,3 @@
-// C2: structural ASS load (docs/document-model.md).
-
 #include "hikari/core/ass_load.h"
 
 #include <QCryptographicHash>
@@ -37,7 +35,6 @@ const SourceSpan &spanOf(const Record &r)
     return std::visit([](const auto &rec) -> const SourceSpan & { return rec.span; }, r);
 }
 
-// Header and record spans plus terminators, in order, must tile the input.
 std::vector<std::byte> reassemble(const Document &doc)
 {
     const auto &b = doc.source().bytes;
@@ -67,7 +64,7 @@ bool hasDiagnostic(const LoadResult &r, Diagnostic::Kind kind)
     return std::ranges::any_of(r.diagnostics, [&](const auto &d) { return d.kind == kind; });
 }
 
-} // namespace
+}
 
 TEST(AssLoad, EveryFixtureByteIsCoveredExactlyOnce)
 {
@@ -75,16 +72,13 @@ TEST(AssLoad, EveryFixtureByteIsCoveredExactlyOnce)
                              "tlmode-pairs.ass"}) {
         const auto input = fixtureBytes(name);
         const auto result = loadAss(input);
-        EXPECT_EQ(result.document.source().bytes, input) << name;   // untouched original
-        EXPECT_EQ(reassemble(result.document), input) << name;     // spans tile the source
+        EXPECT_EQ(result.document.source().bytes, input) << name;
+        EXPECT_EQ(reassemble(result.document), input) << name;
     }
 }
 
 TEST(AssLoad, UnknownAndRepeatedSectionsStayInPlace)
 {
-    // C03-preservation: the legacy loader moved "Token: repeated-section" into
-    // Script Info and dropped both unknown sections (legacy observation run
-    // 36591631319). Here every section stays, in authored order.
     const auto result = loadAss(fixtureBytes("unknown-sections.ass"));
     const auto &sections = result.document.sections();
     std::vector<SectionKind> kinds;
@@ -94,12 +88,10 @@ TEST(AssLoad, UnknownAndRepeatedSectionsStayInPlace)
                                                SectionKind::Unknown, SectionKind::Fonts, SectionKind::Unknown,
                                                SectionKind::Events}));
     EXPECT_EQ(sections[3].header, u8"[Hikari Synthetic Opaque]");
-    // Unknown-section records are opaque: not script properties, not Lines.
     for (const auto &r : sections[3].records)
         EXPECT_TRUE(std::holds_alternative<OpaqueRecord>(r));
     for (const auto &r : sections[5].records)
         EXPECT_TRUE(std::holds_alternative<OpaqueRecord>(r));
-    // Script Info holds only its own five properties.
     std::size_t properties = 0;
     for (const auto &r : sections[0].records)
         properties += std::holds_alternative<PropertyRecord>(r);
@@ -135,22 +127,19 @@ TEST(AssLoad, EventFieldsArePositionalLikeTheLegacyLoader)
     EXPECT_TRUE(c.comment);
     EXPECT_EQ(c.layer.value, 3);
     EXPECT_EQ(c.start.value, DocumentTime(5'500'000));
-    EXPECT_EQ(c.style, u8"Sign");           // not trimmed (legacy)
-    EXPECT_EQ(c.actor, u8"Narrator");       // trimmed (legacy)
+    EXPECT_EQ(c.style, u8"Sign");
+    EXPECT_EQ(c.actor, u8"Narrator");
     EXPECT_EQ(c.marginLeft.value, 10);
     EXPECT_EQ(c.marginVertical.value, 30);
     EXPECT_EQ(c.effect, u8"fx");
-    EXPECT_EQ(c.text, u8"a, b,c");          // commas kept; surrounding whitespace trimmed
-    EXPECT_EQ(lines[1]->layer.lexeme, u8"0"); // "Marked=0" form
-    EXPECT_EQ(lines[2]->text, u8"");          // exactly 9 fields: empty text
+    EXPECT_EQ(c.text, u8"a, b,c");
+    EXPECT_EQ(lines[1]->layer.lexeme, u8"0");
+    EXPECT_EQ(lines[2]->text, u8"");
     EXPECT_TRUE(result.diagnostics.empty());
 }
 
 TEST(AssLoad, UnreadableEventsBecomePlainTextLines)
 {
-    // LoadASS takes every "Dial"/"Comm" line, but SetRaw reads it as an event
-    // only with a full "Dialogue"/"Comment" prefix and 9 fields. Anything else
-    // is a visible Line whose text is the whole line, timed 0, Default style.
     const auto result = loadAss(bytesOf("[Events]\n"
                                         "Dialog: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,t\n"
                                         "Commentary: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,c\n"
@@ -162,11 +151,10 @@ TEST(AssLoad, UnreadableEventsBecomePlainTextLines)
     EXPECT_EQ(lines[0]->text, u8"Dialog: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,t");
     EXPECT_EQ(lines[0]->style, u8"Default");
     EXPECT_EQ(lines[0]->start.value, DocumentTime(0));
-    // "Commentary" starts with "Comment": a parsed comment event.
     EXPECT_FALSE(lines[1]->unparsed);
     EXPECT_TRUE(lines[1]->comment);
     EXPECT_TRUE(lines[2]->unparsed);
-    EXPECT_EQ(lines[2]->text, u8"Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0"); // right-trimmed
+    EXPECT_EQ(lines[2]->text, u8"Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0");
     EXPECT_TRUE(hasDiagnostic(result, Diagnostic::Kind::MalformedEvent));
 }
 
@@ -185,17 +173,16 @@ TEST(AssLoad, ActorMarkersFollowLegacyPrecedence)
     ASSERT_EQ(l.size(), 8u);
     EXPECT_TRUE(l[0]->bookmark);
     EXPECT_EQ(l[0]->actor, u8"Ann");
-    // Only the first matching kind is removed: [hidden] stays as actor text.
     EXPECT_TRUE(l[1]->bookmark);
     EXPECT_EQ(l[1]->visibility, LineVisibility::Visible);
     EXPECT_EQ(l[1]->actor, u8"[hidden]Bob");
-    EXPECT_EQ(l[2]->actor, u8"AB"); // every occurrence of the kind
+    EXPECT_EQ(l[2]->actor, u8"AB");
     EXPECT_EQ(l[3]->group, GroupMarker::Closed);
     EXPECT_EQ(l[3]->visibility, LineVisibility::Hidden);
     EXPECT_EQ(l[4]->visibility, LineVisibility::VisibleBlock);
     EXPECT_EQ(l[4]->actor, u8"Cat");
-    EXPECT_EQ(l[5]->actor, u8"X[hidden]"); // the field must start with '['
-    EXPECT_EQ(l[6]->actor, u8"[hidden]");  // leading space: not examined, then trimmed
+    EXPECT_EQ(l[5]->actor, u8"X[hidden]");
+    EXPECT_EQ(l[6]->actor, u8"[hidden]");
     EXPECT_EQ(l[7]->group, GroupMarker::Description);
     EXPECT_EQ(l[7]->actor, u8"");
 }
@@ -236,7 +223,7 @@ TEST(AssLoad, StylesKeepPositionalFieldsAndDuplicates)
     const auto &records = result.document.sections()[0].records;
     ASSERT_EQ(records.size(), 2u);
     EXPECT_EQ(std::get<StyleRecord>(records[0]).name, u8"Default");
-    EXPECT_EQ(std::get<StyleRecord>(records[1]).fields[1], u8"Times"); // duplicates both kept
+    EXPECT_EQ(std::get<StyleRecord>(records[1]).fields[1], u8"Times");
 }
 
 TEST(LegacyTime, PositionalParseMatchesSubsTime)
@@ -245,8 +232,8 @@ TEST(LegacyTime, PositionalParseMatchesSubsTime)
     EXPECT_EQ(assTimeMilliseconds(u8"0:00:01.00"), 1000);
     EXPECT_EQ(assTimeMilliseconds(u8"1:02:03.45"), 3'723'450);
     EXPECT_EQ(assTimeMilliseconds(u8"10:00:00.00"), 36'000'000);
-    EXPECT_EQ(assTimeMilliseconds(u8" 0:00:02.50"), 2500);   // leading space: atoi skips it
-    EXPECT_EQ(assTimeMilliseconds(u8"0:00:01.5"), 1050);     // one centisecond digit: "5" -> 5*10
+    EXPECT_EQ(assTimeMilliseconds(u8" 0:00:02.50"), 2500);
+    EXPECT_EQ(assTimeMilliseconds(u8"0:00:01.5"), 1050);
     EXPECT_EQ(assTimeMilliseconds(u8""), 0);
     EXPECT_EQ(assTimeMilliseconds(u8"   "), 0);
     EXPECT_FALSE(legacy::isCanonicalAssTime(u8"0:00:01.5"));
@@ -259,6 +246,6 @@ TEST(LegacyAtoi, BehavesLikeWxAtoi)
     EXPECT_EQ(legacy::atoi(u8"-7"), -7);
     EXPECT_EQ(legacy::atoi(u8"abc"), 0);
     EXPECT_EQ(legacy::atoi(u8""), 0);
-    EXPECT_EQ(legacy::atoi(u8"4294967297"), 1);      // long value truncated to int
-    EXPECT_EQ(legacy::atoi(u8"99999999999999999999"), -1); // saturates at LONG_MAX, then truncates
+    EXPECT_EQ(legacy::atoi(u8"4294967297"), 1);
+    EXPECT_EQ(legacy::atoi(u8"99999999999999999999"), -1);
 }

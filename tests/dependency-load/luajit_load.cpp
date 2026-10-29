@@ -1,5 +1,3 @@
-// LuaJIT in its own process, as the Lua helper runs it: the JIT and FFI are
-// available (B4).
 #include <cstdio>
 #include <cstring>
 

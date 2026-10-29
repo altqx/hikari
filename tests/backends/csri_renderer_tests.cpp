@@ -1,7 +1,3 @@
-// W2: the CSRI adapter against legacy SubtitlesVSFilter / CsriMod (20d647c4),
-// through a fake renderer that records the CSRI calls. On Linux this adapter
-// is compiled only into this test (the application has libass alone).
-
 #include "hikari/backends/csri_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 
@@ -19,19 +15,18 @@ using namespace hikari::backends;
 
 namespace {
 
-// What the fake renderer saw; one global record, as CSRI has C entry points.
+// Global: CSRI's entry points are plain C functions.
 struct Calls {
     std::vector<std::string> opened;
     int closed = 0;
     std::vector<csri::Fmt> requested;
-    std::vector<int> refuse; // pixel formats request_fmt refuses
+    std::vector<int> refuse;
     std::vector<double> times;
     std::vector<int> renderedFormats;
     std::vector<std::ptrdiff_t> strides;
     bool failOpen = false;
     bool throwOnOpen = false;
-    // The pixel the fake draws at (1, 1): straight-alpha BGRA, as a VSFilter
-    // that takes BGRA writes into an MSP_RGBA target (MemSubPic.cpp AlphaBltOther).
+    // VSFilter writes straight-alpha BGRA into an MSP_RGBA target (MemSubPic.cpp AlphaBltOther).
     std::uint8_t pixel[4] = {200, 100, 50, 128};
     int x = 1, y = 1;
 } calls;
@@ -63,8 +58,7 @@ void render(void *, csri::Frame *frame, double time)
     calls.strides.push_back(frame->strides[0]);
     unsigned char *p = frame->planes[0] + frame->strides[0] * calls.y + 4 * calls.x;
     if (frame->pixfmt == csri::BGR_) {
-        // BGR_ (VSFilterMod's only target, VSFilter's MSP_RGB32) blends
-        // the colour into the frame and leaves the padding byte 0.
+        // BGR_ (VSFilterMod's only target) blends into the frame and leaves the padding byte 0.
         const unsigned a = calls.pixel[3];
         for (int c = 0; c < 3; ++c)
             p[c] = static_cast<unsigned char>((calls.pixel[c] * a + p[c] * (255 - a) + 127) / 255);
@@ -74,8 +68,6 @@ void render(void *, csri::Frame *frame, double time)
     std::memcpy(p, calls.pixel, 4);
 }
 
-// Another CSRI renderer someone put in the Csri folder (the package ships
-// only VSFilterMod; xy-VSFilter is not shipped, user 2026-10-14).
 const csri::Info otherInfo{"other_textsub", "1", "Another CSRI renderer", "someone", "Copyright"};
 const csri::Info modInfo{"vsfiltermod_textsub", "1", "VSFilterMod", "someone", "Copyright"};
 
@@ -95,8 +87,6 @@ int rendA = 0, rendB = 0, rendC = 0;
 
 std::shared_ptr<CsriRenderers> twoRenderers()
 {
-    // Two libraries in the Csri folder, each added at the front as legacy
-    // CsriMod did: the one loaded last is first, the CSRI default.
     return std::make_shared<CsriRenderers>(
         std::vector<csri::Renderer>{renderer(&otherInfo, &rendA), renderer(&modInfo, &rendB)});
 }
@@ -125,14 +115,12 @@ protected:
     }
 };
 
-} // namespace
+}
 
 TEST_F(Csri, ProvidersListTheRenderersThenLibass)
 {
     const auto renderers = twoRenderers();
     EXPECT_EQ(renderers->names(), (std::vector<std::string>{"other_textsub", "vsfiltermod_textsub"}));
-    // GetProviders lists nothing when the default renderer has no info, and
-    // skips a later renderer without info.
     EXPECT_TRUE(CsriRenderers({renderer(nullptr, &rendA), renderer(&otherInfo, &rendB)}).names().empty());
     EXPECT_EQ(CsriRenderers({renderer(&otherInfo, &rendA), renderer(nullptr, &rendB), renderer(&modInfo, &rendC)}).names(),
               (std::vector<std::string>{"other_textsub", "vsfiltermod_textsub"}));
@@ -144,8 +132,7 @@ TEST_F(Csri, TheNamedRendererElseTheDefault)
     EXPECT_EQ(renderers->select("vsfiltermod_textsub")->rend, &rendB);
     EXPECT_EQ(renderers->select("other_textsub")->rend, &rendA);
     EXPECT_EQ(renderers->select("")->rend, &rendA);
-    EXPECT_EQ(renderers->select("not installed")->rend, &rendA); // GetVSFilter's default
-    // A renderer without info ends GetVSFilter's walk and is the one used.
+    EXPECT_EQ(renderers->select("not installed")->rend, &rendA);
     CsriRenderers gap({renderer(&otherInfo, &rendA), renderer(nullptr, &rendB), renderer(&modInfo, &rendC)});
     EXPECT_EQ(gap.select("vsfiltermod_textsub")->rend, &rendB);
     EXPECT_EQ(CsriRenderers({}).select("other_textsub"), nullptr);
@@ -167,16 +154,14 @@ TEST_F(Csri, TheScriptIsOpenedFromMemoryUpToItsFirstNul)
     script += "ignored";
     ASSERT_TRUE(r.prepare(snapshotOf(script)));
     ASSERT_EQ(calls.opened.size(), 1u);
-    // strlen(mb_str), after GetVisible's byte order mark
     EXPECT_EQ(calls.opened[0], "\xEF\xBB\xBF[Script Info]\nTitle: x\n");
     EXPECT_EQ(r.selectedName(), "vsfiltermod_textsub");
-    // A script saved with the mark keeps one.
     ASSERT_TRUE(r.prepare(snapshotOf("\xEF\xBB\xBF[Script Info]\n")));
     EXPECT_EQ(calls.opened.back(), "\xEF\xBB\xBF[Script Info]\n");
     calls.failOpen = true;
     EXPECT_EQ(r.prepare(snapshotOf("x")).error(), RenderError::InvalidInput);
     EXPECT_EQ(log, (std::vector<std::string>{"Cannot create CSRI instance."}));
-    EXPECT_EQ(calls.closed, 2); // the previous instances
+    EXPECT_EQ(calls.closed, 2);
 }
 
 TEST_F(Csri, ARendererThatThrowsCannotCreateTheInstance)
@@ -193,7 +178,6 @@ TEST_F(Csri, TheOverlayIsDrawnWholeOntoAClearedBgraFrame)
     CsriRenderer r(twoRenderers(), "", logger());
     const auto generation = r.prepare(snapshotOf("[Script Info]\n"));
     ASSERT_TRUE(generation);
-    // 1.2345 s is drawn at the frame's whole milliseconds, in seconds.
     auto frame = r.render(core::DocumentTime(1'234'567), 4, 3);
     ASSERT_TRUE(frame);
     ASSERT_EQ(calls.requested.size(), 1u);
@@ -201,12 +185,11 @@ TEST_F(Csri, TheOverlayIsDrawnWholeOntoAClearedBgraFrame)
     EXPECT_EQ(calls.requested[0].width, 4u);
     EXPECT_EQ(calls.requested[0].height, 3u);
     EXPECT_EQ(calls.times, (std::vector<double>{1.234}));
-    EXPECT_EQ(calls.strides, (std::vector<std::ptrdiff_t>{16})); // top-down, not swapped
+    EXPECT_EQ(calls.strides, (std::vector<std::ptrdiff_t>{16}));
     EXPECT_EQ(frame->generation, *generation);
     EXPECT_FALSE(frame->empty);
     EXPECT_EQ(frame->changed, (std::vector<PixelRect>{{0, 0, 4, 3}}));
-    EXPECT_EQ(frame->bounds, (PixelRect{1, 1, 1, 1})); // what was drawn, for the presenter
-    // Straight alpha becomes premultiplied: 200 * 128 / 255 = 100.4 -> 100.
+    EXPECT_EQ(frame->bounds, (PixelRect{1, 1, 1, 1}));
     const std::uint8_t *p = &frame->pixels[1 * 16 + 4];
     EXPECT_EQ(p[0], 100);
     EXPECT_EQ(p[1], 50);
@@ -215,8 +198,6 @@ TEST_F(Csri, TheOverlayIsDrawnWholeOntoAClearedBgraFrame)
     for (std::size_t i = 0; i < frame->pixels.size(); ++i)
         if (i < 20 || i >= 24)
             EXPECT_EQ(frame->pixels[i], 0) << i;
-    // The same size is not requested again; the next frame starts cleared,
-    // and reports the old bounds of what was drawn.
     calls.pixel[3] = 0;
     frame = r.render(core::DocumentTime(2'000'000), 4, 3);
     ASSERT_TRUE(frame);
@@ -225,15 +206,11 @@ TEST_F(Csri, TheOverlayIsDrawnWholeOntoAClearedBgraFrame)
     EXPECT_FALSE(frame->bounds);
     EXPECT_EQ(frame->changed, (std::vector<PixelRect>{{1, 1, 1, 1}}));
     EXPECT_TRUE(std::ranges::all_of(frame->pixels, [](std::uint8_t b) { return b == 0; }));
-    // A new size is requested again.
     ASSERT_TRUE(r.render(core::DocumentTime(0), 6, 2));
     ASSERT_EQ(calls.requested.size(), 2u);
     EXPECT_EQ(calls.requested[1].width, 6u);
 }
 
-// The frame is drawn into a reused buffer, cleared only where it was drawn
-// last; a frame still held is never drawn over. The changed areas are the
-// bounds of what was drawn before and now.
 TEST_F(Csri, ABufferIsReusedClearedWhereItWasDrawn)
 {
     CsriRenderer r(twoRenderers(), "", logger());
@@ -245,7 +222,7 @@ TEST_F(Csri, ABufferIsReusedClearedWhereItWasDrawn)
         ASSERT_TRUE(rendered);
         first = std::move(*rendered);
     }
-    EXPECT_EQ(first->changed, (std::vector<PixelRect>{{0, 0, 8, 4}})); // a new size: all of it
+    EXPECT_EQ(first->changed, (std::vector<PixelRect>{{0, 0, 8, 4}}));
     OverlayPixels held = first->pixels;
     calls.x = 5;
     calls.y = 2;
@@ -253,10 +230,9 @@ TEST_F(Csri, ABufferIsReusedClearedWhereItWasDrawn)
     ASSERT_TRUE(second);
     EXPECT_FALSE(second->pixels.sameBuffer(held));
     EXPECT_EQ(second->changed, (std::vector<PixelRect>{{1, 1, 1, 1}, {5, 2, 1, 1}}));
-    EXPECT_EQ(held[1 * 32 + 4 + 3], 255); // the held frame is as it was
+    EXPECT_EQ(held[1 * 32 + 4 + 3], 255);
     first.reset();
     held = OverlayPixels();
-    // Released, its buffer is reused: the old pixel is gone.
     calls.x = 6;
     const OverlayPixels secondPixels = second->pixels;
     const auto third = r.render(core::DocumentTime(80'000), 8, 4);
@@ -278,22 +254,19 @@ TEST_F(Csri, BgraRefusedFallsBackToBgrx)
     ASSERT_EQ(calls.requested.size(), 2u);
     EXPECT_EQ(calls.requested[1].pixfmt, csri::BGR_);
     EXPECT_TRUE(log.empty());
-    // BGR_ blends into the frame and leaves no alpha, as legacy drew it onto
-    // the RGB32 video frame: the instant is drawn onto black, then onto
-    // white, and the overlay is the colour with the coverage the two give.
+    // BGR_ leaves no alpha: the instant is drawn onto black, then white, and the coverage is what the two give.
     EXPECT_EQ(calls.renderedFormats, (std::vector<int>{csri::BGR_, csri::BGR_}));
     EXPECT_EQ(calls.times, (std::vector<double>{1.5, 1.5}));
     EXPECT_FALSE(frame->empty);
     EXPECT_EQ(frame->bounds, (PixelRect{1, 1, 1, 1}));
     const std::uint8_t *p = &frame->pixels[1 * 16 + 4];
-    EXPECT_EQ(p[0], 100); // the same premultiplied pixel the BGRA frame gives
+    EXPECT_EQ(p[0], 100);
     EXPECT_EQ(p[1], 50);
     EXPECT_EQ(p[2], 25);
     EXPECT_EQ(p[3], 128);
     for (std::size_t i = 0; i < frame->pixels.size(); ++i)
         if (i < 20 || i >= 24)
             EXPECT_EQ(frame->pixels[i], 0) << i;
-    // Opaque and clear pixels.
     std::memcpy(calls.pixel, "\x10\x20\x30\xFF", 4);
     frame = r.render(core::DocumentTime(0), 4, 4);
     ASSERT_TRUE(frame);
@@ -306,10 +279,7 @@ TEST_F(Csri, BgraRefusedFallsBackToBgrx)
     EXPECT_TRUE(std::ranges::all_of(frame->pixels, [](std::uint8_t b) { return b == 0; }));
 }
 
-// VSFilterMod is asked for BGRA first, like any CSRI renderer: the pinned
-// altqx r5.3.1-hikari.2 draws it with straight alpha (255 opaque) over the
-// frame's, so one drawing gives the overlay where BGR_ needs two. A
-// VSFilterMod that refuses BGRA (r5.2.6) still gets BGR_.
+// VSFilterMod r5.3.1-hikari.2 draws BGRA with straight alpha; r5.2.6 refuses BGRA and gets BGR_.
 TEST_F(Csri, VsfilterModIsAskedForBgraThenBgrx)
 {
     CsriRenderer r(twoRenderers(), "vsfiltermod_textsub", logger());
@@ -325,8 +295,6 @@ TEST_F(Csri, VsfilterModIsAskedForBgraThenBgrx)
     EXPECT_EQ(p[1], 50);
     EXPECT_EQ(p[2], 25);
     EXPECT_EQ(p[3], 128);
-    // A VSFilterMod that refuses BGRA is drawn through BGR_, onto black and
-    // onto white, to the same overlay pixel.
     calls = Calls{};
     calls.refuse = {csri::BGRA};
     CsriRenderer bgrx(twoRenderers(), "vsfiltermod_textsub", logger());
@@ -356,10 +324,6 @@ TEST_F(Csri, AnUnsupportedFormatClosesTheInstance)
     EXPECT_EQ(r.render(core::DocumentTime(0), 0, 4).error(), RenderError::InvalidSize);
 }
 
-// The snapshot's font leases reach the process's GDI while their context
-// lives (legacy loaded its external fonts with AddFontResourceExW(FR_PRIVATE)
-// for the in-process VSFilter): added before the instance opens, the next
-// context's added before the previous context's go, all gone with the adapter.
 TEST_F(Csri, LeasedFontsAreAddedForTheContextsLifetime)
 {
     const auto renderers = twoRenderers();
@@ -387,8 +351,6 @@ TEST_F(Csri, LeasedFontsAreAddedForTheContextsLifetime)
         EXPECT_EQ(events, (std::vector<std::string>{"add Leased A (opened 0)", "add Leased B (opened 0)"}));
         EXPECT_EQ(live, 2);
         events.clear();
-        // The next edit's snapshot carries the same leases: nothing is added
-        // or removed again.
         ASSERT_TRUE(r.prepare(first));
         EXPECT_TRUE(events.empty());
         EXPECT_EQ(live, 2);
@@ -403,7 +365,6 @@ TEST_F(Csri, LeasedFontsAreAddedForTheContextsLifetime)
     EXPECT_TRUE(std::ranges::contains(events, std::string("remove Leased B")));
     EXPECT_TRUE(std::ranges::contains(events, std::string("remove Leased C")));
     EXPECT_EQ(live, 0);
-    // Without a renderer nothing is added.
     CsriRenderer none(std::make_shared<CsriRenderers>(std::vector<csri::Renderer>{}), "", logger());
     RenderSnapshot s = snapshotOf("[Script Info]\n");
     s.fonts = {lease("Leased D")};
@@ -411,9 +372,6 @@ TEST_F(Csri, LeasedFontsAreAddedForTheContextsLifetime)
     EXPECT_EQ(live, 0);
 }
 
-// A kept font holds its lease's bytes for as long as it stands for them, so
-// a later lease cannot take the same address and pass for a font that is
-// already added; once the context drops the font, a new lease is added.
 TEST_F(Csri, AKeptFontHoldsItsLeasesBytes)
 {
     const auto renderers = twoRenderers();
@@ -439,13 +397,6 @@ TEST_F(Csri, AKeptFontHoldsItsLeasesBytes)
     EXPECT_EQ(events, (std::vector<std::string>{"add Leased A", "add Leased B"}));
 }
 
-// A fonts reload (application::reloadSubtitleFonts; legacy's watcher removed
-// the external fonts from the process, added the folder's anew and reopened
-// the subtitles) reaches the kept adapter at its next prepare: every lease
-// of the new context is added again, even one the previous context had
-// added, before the previous context's registrations go; a lease the
-// reloaded context lacks is no longer in the process. Without a reload the
-// same leases are kept.
 TEST_F(Csri, AFontsReloadAddsTheNextContextsFontsAgain)
 {
     const auto renderers = twoRenderers();
@@ -483,7 +434,6 @@ TEST_F(Csri, AFontsReloadAddsTheNextContextsFontsAgain)
     ASSERT_TRUE(r.prepare(reloaded));
     EXPECT_TRUE(events.empty()) << "one reload re-adds the fonts once";
 
-    // A context whose script the renderer refuses takes the reload too.
     reloadSubtitleFonts();
     calls.failOpen = true;
     EXPECT_FALSE(r.prepare(reloaded));
@@ -496,17 +446,9 @@ TEST_F(Csri, AFontsReloadAddsTheNextContextsFontsAgain)
     EXPECT_EQ(live, 2);
 }
 
-// The Video page's order (user 2026-10-13, 2026-10-14): libass, the
-// default, first, VSFilterMod last; an empty or uninstalled name draws
-// through libass, never VSFilterMod or the first CSRI renderer
-// (W2-libass-default, W2-missing-renderer-libass). xy-VSFilter is not shipped
-// (W2-no-xy-vsfilter): a stored xy-VSFilter name draws through libass.
 TEST(RendererSelection, VsfilterModIsListedLastAndNeverTheDefault)
 {
-    // The Windows package: libass, then VSFilterMod.
     EXPECT_EQ(orderedProviders({"vsfiltermod_textsub"}), (std::vector<std::string>{"libass", "vsfiltermod_textsub"}));
-    // Another renderer in the Csri folder comes after libass and before
-    // VSFilterMod, for either CSRI load order.
     EXPECT_EQ(orderedProviders({"other_textsub", "vsfiltermod_textsub"}),
               (std::vector<std::string>{"libass", "other_textsub", "vsfiltermod_textsub"}));
     EXPECT_EQ(orderedProviders({"vsfiltermod_textsub", "other_textsub"}),
@@ -518,10 +460,9 @@ TEST(RendererSelection, VsfilterModIsListedLastAndNeverTheDefault)
     const std::vector<std::string> package{"libass", "vsfiltermod_textsub"};
     EXPECT_EQ(resolveProvider("", package), "libass");
     EXPECT_EQ(resolveProvider("libass", package), "libass");
-    EXPECT_EQ(resolveProvider("vsfiltermod_textsub", package), "vsfiltermod_textsub"); // chosen explicitly
-    EXPECT_EQ(resolveProvider("VSFILTERMOD_TEXTSUB", package), "libass"); // exact, as vsfilters.Index
+    EXPECT_EQ(resolveProvider("vsfiltermod_textsub", package), "vsfiltermod_textsub");
+    EXPECT_EQ(resolveProvider("VSFILTERMOD_TEXTSUB", package), "libass");
     EXPECT_EQ(resolveProvider("removed_textsub", package), "libass");
-    // Legacy's default renderer, stored or imported from a legacy profile.
     EXPECT_EQ(resolveProvider("xy-vsfilter_textsub", package), "libass");
     const std::vector<std::string> onlyLibass{"libass"};
     EXPECT_EQ(resolveProvider("xy-vsfilter_textsub", onlyLibass), "libass");
@@ -529,14 +470,12 @@ TEST(RendererSelection, VsfilterModIsListedLastAndNeverTheDefault)
 }
 
 #ifdef _WIN32
-// An uninstalled name is logged once, not on every settings write that
-// repeats it; a name chosen again after another is logged again.
 TEST(RendererSelection, AnUninstalledNameIsLoggedOnce)
 {
     SubtitleRendererSelection selection;
     std::vector<std::string> log;
     selection.setLog([&](const std::string &text) { log.push_back(text); });
-    EXPECT_EQ(selection.providers(), (std::vector<std::string>{"libass"})); // no Csri folder
+    EXPECT_EQ(selection.providers(), (std::vector<std::string>{"libass"}));
     EXPECT_FALSE(selection.select("vsfiltermod_textsub"));
     EXPECT_FALSE(selection.select("vsfiltermod_textsub"));
     EXPECT_TRUE(selection.usesLibass());
@@ -544,7 +483,6 @@ TEST(RendererSelection, AnUninstalledNameIsLoggedOnce)
     EXPECT_FALSE(selection.select("libass"));
     EXPECT_FALSE(selection.select("vsfiltermod_textsub"));
     EXPECT_EQ(log.size(), 2u);
-    // Legacy's xy-VSFilter (W2-no-xy-vsfilter): not installed, libass draws.
     EXPECT_FALSE(selection.select("xy-vsfilter_textsub"));
     EXPECT_TRUE(selection.usesLibass());
     EXPECT_EQ(selection.provider(), "libass");
@@ -553,7 +491,6 @@ TEST(RendererSelection, AnUninstalledNameIsLoggedOnce)
 #endif
 
 #ifndef _WIN32
-// Linux evidence for W2: libass is the only renderer, whatever the setting says.
 TEST(RendererSelection, LibassIsTheOnlyRendererOnLinux)
 {
     SubtitleRendererSelection selection;

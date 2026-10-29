@@ -1,6 +1,3 @@
-// O6 (#205): semantic translation contexts (docs/localisation.md, "Keys").
-// The lint over small fixtures, and the checked-in registry and catalogs.
-
 #include "hikari/i18n/contexts.h"
 
 #include <gtest/gtest.h>
@@ -50,20 +47,19 @@ bool mentions(const QStringList &problems, const QString &text)
     return std::ranges::any_of(problems, [&](const QString &p) { return p.contains(text); });
 }
 
-} // namespace
+}
 
 TEST(ContextRegistry, ReadsContextsAndRefusesBrokenFiles)
 {
     const auto read = readContextRegistry("# comment\ncontext\tsurface\nHikariSub.Editor\tThe line editor\n");
     ASSERT_TRUE(read.has_value()) << read.error().toStdString();
     EXPECT_EQ(read->value(QStringLiteral("HikariSub.Editor")), QStringLiteral("The line editor"));
-    EXPECT_FALSE(readContextRegistry("HikariSub.Editor\tx\n").has_value());                             // no header
-    EXPECT_FALSE(readContextRegistry("context\tsurface\nHikariSub.Editor\n").has_value());              // no surface
-    EXPECT_FALSE(readContextRegistry("context\tsurface\nA\tx\nA\ty\n").has_value());                    // twice
-    EXPECT_FALSE(readContextRegistry("context\tsurface\n").has_value());                                // empty
+    EXPECT_FALSE(readContextRegistry("HikariSub.Editor\tx\n").has_value());
+    EXPECT_FALSE(readContextRegistry("context\tsurface\nHikariSub.Editor\n").has_value());
+    EXPECT_FALSE(readContextRegistry("context\tsurface\nA\tx\nA\ty\n").has_value());
+    EXPECT_FALSE(readContextRegistry("context\tsurface\n").has_value());
 }
 
-// A message lupdate keys by a QML file or a C++ class fails, with where it is.
 TEST(ContextLint, FailsOnAnExtractedMessageWithoutASemanticContext)
 {
     const TsCatalog extracted = catalog({{QStringLiteral("HikariSub.Editor"), {message(QStringLiteral("Comment"))}},
@@ -78,8 +74,6 @@ TEST(ContextLint, FailsOnAnExtractedMessageWithoutASemanticContext)
     EXPECT_TRUE(lintContexts(registry, catalog({{QStringLiteral("HikariSub.Grid"), {message(QStringLiteral("x"))}}}), {}).isEmpty());
 }
 
-// Sources: literal contexts and pragmas must be registered (also a runtime
-// lookup lupdate cannot extract), and C++ never takes the class's context.
 TEST(ContextLint, ChecksTheContextsSourcesName)
 {
     const QList<SourceFile> clean{
@@ -109,10 +103,7 @@ TEST(ContextLint, ChecksTheContextsSourcesName)
     EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/b.cpp:4: translate looks up a computed text in \"DirectShowPlayer\"")));
 }
 
-// A lookup of a computed text (translate or qsTranslate with a non-literal
-// source) needs its texts marked for the same context in the same file:
-// lupdate extracts nothing from the lookup itself, so an unmarked table never
-// reaches the catalogs (as the Grid's headings did not before O6).
+// lupdate extracts nothing from a computed-text lookup, so its texts must be marked in the same file.
 TEST(ContextLint, AComputedTextNeedsItsContextMarkedInTheFile)
 {
     const QList<SourceFile> clean{
@@ -142,8 +133,6 @@ TEST(ContextLint, AComputedTextNeedsItsContextMarkedInTheFile)
     EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/U.qml:2: qsTranslate looks up a computed text in \"HikariSub.Grid\"")));
 }
 
-// The checked-in registry reads, and the interface catalogs hold registered
-// contexts only.
 TEST(CheckedIn, CatalogsUseTheRegisteredContexts)
 {
     const auto contexts = readContextRegistry(readSource(QStringLiteral("i18n/contexts.tsv")));
@@ -160,12 +149,6 @@ TEST(CheckedIn, CatalogsUseTheRegisteredContexts)
     }
 }
 
-// The Grid's column headings (line_table_model.cpp's QT_TRANSLATE_NOOP table,
-// legacy SubsGridWindow.cpp:310-330) are HikariSub.Grid keys in every
-// catalog. They were a table of plain literals translated at run time, which
-// lupdate never extracted, so no catalog had "Vert.", "CPS" or "Wraps". "#"
-// is not a key: legacy never translates it. The headings O4 had no key for
-// carry legacy's translation of the same id, finished.
 TEST(CheckedIn, CatalogsHoldTheGridHeadings)
 {
     const QStringList headings{QStringLiteral("L."),     QStringLiteral("Start"), QStringLiteral("End"),
@@ -191,11 +174,6 @@ TEST(CheckedIn, CatalogsHoldTheGridHeadings)
     }
 }
 
-// The rewrite's own copy is in sentence case (docs/ux/visual-language.md,
-// "Sentence case"): "line", "document" and "untitled" are ordinary words
-// inside a sentence ("1 line selected", "Follow the editing line"), not the
-// glossary's capitalized terms. Legacy's own ids (the gettext catalog's
-// sources) keep their text: their translations depend on it.
 TEST(CheckedIn, InterfaceCopyIsSentenceCase)
 {
     const auto gettext = readTs(readSource(QStringLiteral("i18n/hikarisub_gettext_pl.ts")));
@@ -226,8 +204,6 @@ TEST(CheckedIn, InterfaceCopyIsSentenceCase)
     EXPECT_GT(checked, 300);
 }
 
-// A translation keeps its source's placeholders: the same Qt markers (%1,
-// %L2, ...) in every interface catalog's translated plain entries.
 TEST(CheckedIn, TranslationsKeepTheSourcesPlaceholders)
 {
     static const QRegularExpression marker(QStringLiteral("%L?(\\d+)"));
@@ -253,11 +229,7 @@ TEST(CheckedIn, TranslationsKeepTheSourcesPlaceholders)
     }
 }
 
-// The DirectShow adapter (Windows only, so no lupdate run on Linux reads its
-// sources) reports a failed open step as legacy's HR text, and the
-// application translates it through its HikariSub.Video table
-// (application_directshow.cpp's kOpenMessages). Every text the adapter can
-// report must be marked there, or it would stay untranslated.
+// lupdate on Linux never reads the Windows-only DirectShow adapter, so application_directshow.cpp marks its texts.
 TEST(CheckedIn, DirectShowOpenMessagesAreMarked)
 {
     const QString adapter = QString::fromUtf8(readSource(QStringLiteral("src/backends/directshow/directshow_player.cpp")));

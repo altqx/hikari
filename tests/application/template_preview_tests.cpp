@@ -1,7 +1,3 @@
-// KE2: the template editor's preview of the karaoke templater on one Line:
-// which Lines the templater reads, the reduced snapshot a preview runs on,
-// the Lines read back from its result, and the Document the video draws.
-
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/core/ass_load.h"
@@ -27,7 +23,6 @@ core::Document load(std::string_view text)
     return core::loadAss(bytes).document;
 }
 
-// Two info lines and two Styles: dialogue script indices start at 5.
 constexpr std::string_view kSong =
     "[Script Info]\n"
     "Title: song\n"
@@ -42,17 +37,17 @@ constexpr std::string_view kSong =
     "\n"
     "[Events]\n"
     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-    "Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,code once,x = 1\n"                      // 0
-    "Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,Template syl noblank,{\\pos($x,$y)}\n"   // 1
-    "Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,templates,not a template\n"            // 2
-    "Dialogue: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template,a Dialogue is no template\n" // 3
-    "Comment: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,karaoke,{\\k50}ha{\\k50}ru\n"           // 4
-    "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,{\\pos(1,2)}ha\n"                   // 5
-    "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,{\\pos(3,2)}ru\n"                   // 6
-    "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,,{\\k50}ka{\\k50}ze\n"                 // 7
-    "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,fx,{\\pos(1,2)}ka\n"                   // 8
-    "Comment: 0,0:00:07.00,0:00:09.00,Kanji,,0,0,0,Karaoke,{\\k50}na{\\k50}tsu\n"           // 9
-    "Dialogue: 0,0:00:07.00,0:00:09.00,Kanji,,0,0,0,note,plain dialogue\n";                 // 10
+    "Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,code once,x = 1\n"
+    "Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,Template syl noblank,{\\pos($x,$y)}\n"
+    "Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,templates,not a template\n"
+    "Dialogue: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template,a Dialogue is no template\n"
+    "Comment: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,karaoke,{\\k50}ha{\\k50}ru\n"
+    "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,{\\pos(1,2)}ha\n"
+    "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,{\\pos(3,2)}ru\n"
+    "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,,{\\k50}ka{\\k50}ze\n"
+    "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,fx,{\\pos(1,2)}ka\n"
+    "Comment: 0,0:00:07.00,0:00:09.00,Kanji,,0,0,0,Karaoke,{\\k50}na{\\k50}tsu\n"
+    "Dialogue: 0,0:00:07.00,0:00:09.00,Kanji,,0,0,0,note,plain dialogue\n";
 
 class TemplatePreview : public ::testing::Test {
 protected:
@@ -61,7 +56,6 @@ protected:
         doc = load(kSong);
         for (const auto *l : doc.lines())
             ids.push_back(l->id);
-        // A run marked Lines 5 and 6 as generated from 4, and 8 from 7.
         mark(5, 4);
         mark(6, 4);
         mark(8, 7);
@@ -129,9 +123,6 @@ TEST_F(TemplatePreview, TheSnapshotHoldsTheTemplatesAndTheSourceOnly)
     ASSERT_EQ(s->info.size(), 2u);
     ASSERT_EQ(s->styles.size(), 2u);
     EXPECT_EQ(s->styles[1].fields.front(), "Kanji");
-    // Code and template Lines, then the source; every other Line before it
-    // is an empty Comment, so the source keeps the script index a whole run
-    // gives it ($li), the generated Lines gone; those after it stay out.
     ASSERT_EQ(s->dialogues.size(), 6u);
     EXPECT_EQ(s->dialogues[0].id, ids[0].value);
     EXPECT_EQ(s->dialogues[1].id, ids[1].value);
@@ -154,8 +145,6 @@ TEST_F(TemplatePreview, TheSnapshotHoldsTheTemplatesAndTheSourceOnly)
     EXPECT_FALSE(templatePreviewSnapshot(doc, core::LineId{999'999}));
 }
 
-// In TLMode the script reads a Line's translation: the text not yet in the
-// Document stands for that, and the original stays.
 TEST_F(TemplatePreview, ATranslatedTemplatesTextStandsForItsTranslation)
 {
     ASSERT_TRUE(doc.editLine(ids[1], [](core::LineRecord &l) { l.translation = u8"{\\pos(1,1)}"; }));
@@ -166,9 +155,6 @@ TEST_F(TemplatePreview, ATranslatedTemplatesTextStandsForItsTranslation)
     EXPECT_EQ(s->dialogues[1].translation, "{\\pos($x,$y)}") << "the original";
 }
 
-// A `template line karaoke` is a template and a karaoke Line at once: as
-// the source it runs with the text not yet in the Document too, and its
-// generated Lines are matched to it.
 TEST_F(TemplatePreview, ATemplateThatIsAlsoAKaraokeLineIsBoth)
 {
     ASSERT_TRUE(doc.editLine(ids[9], [](core::LineRecord &l) { l.effect = u8"template line karaoke"; }));
@@ -188,10 +174,6 @@ TEST_F(TemplatePreview, ATemplateThatIsAlsoAKaraokeLineIsBoth)
     EXPECT_TRUE(std::ranges::find(owners->selected, number) != owners->selected.end()) << "selected for the matching run";
 }
 
-// A file's unmarked generated Lines go to the karaoke Lines that give them
-// now, identical ones in file order, as KE1's selected-Lines run matches
-// them; a karaoke Line the file holds only some of the Lines of leaves them
-// all unknown.
 TEST_F(TemplatePreview, AFilesGeneratedLinesGoToTheKaraokeLinesThatGiveThem)
 {
     const auto file = load("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
@@ -215,7 +197,6 @@ TEST_F(TemplatePreview, AFilesGeneratedLinesGoToTheKaraokeLinesThatGiveThem)
     ASSERT_TRUE(s);
     ASSERT_EQ(s->dialogues.size(), 4u) << "no generated Lines";
     EXPECT_EQ(s->selected.size(), 3u) << "every karaoke Line";
-    // The run's Lines, each marked with its karaoke Line.
     MacroResult result;
     result.dialogues = s->dialogues;
     const auto made = [&](core::LineId from, std::int64_t start, const char *text) {
@@ -233,17 +214,12 @@ TEST_F(TemplatePreview, AFilesGeneratedLinesGoToTheKaraokeLinesThatGiveThem)
     result.dialogues.push_back(made(id[3], 1000, "{\\pos(1,1)}b"));
     EXPECT_EQ(templateOwners(file, result),
               (std::map<core::LineId, core::LineId>{{id[4], id[3]}, {id[5], id[1]}, {id[6], id[2]}}));
-    // A karaoke Line the file holds none of the Lines of made none when it
-    // was written (a template since gives it Lines): it takes none.
     result.dialogues.back().text = "{\\pos(2,2)}b";
     EXPECT_EQ(templateOwners(file, result), (std::map<core::LineId, core::LineId>{{id[5], id[1]}, {id[6], id[2]}}));
-    // One that holds some of them: the templates changed since.
     result.dialogues.push_back(made(id[1], 0, "{\\pos(3,3)}a"));
     EXPECT_TRUE(templateOwners(file, result).empty());
 }
 
-// A file with some generated Lines marked (selected Lines applied since) and
-// some not: a karaoke Line whose Lines are marked takes none of the others.
 TEST_F(TemplatePreview, MarkedLinesLeaveTheUnmarkedToTheOtherKaraokeLines)
 {
     auto file = load("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
@@ -280,7 +256,6 @@ TEST_F(TemplatePreview, MarkedLinesLeaveTheUnmarkedToTheOtherKaraokeLines)
 
 TEST_F(TemplatePreview, TheSnapshotKeepsTheSourcesPlaceAmongTheTemplates)
 {
-    // A template after the source stays after it, as the whole run sees it.
     ASSERT_TRUE(doc.moveLine(ids[1], std::nullopt));
     const auto s = templatePreviewSnapshot(doc, ids[7]);
     ASSERT_TRUE(s);
@@ -329,21 +304,16 @@ TEST_F(TemplatePreview, TheVideoDrawsThePreviewInPlaceOfTheSourcesLines)
     b.text = u8"{\\pos(9,9)}ru";
     b.start = {u8"0:00:02.00", core::DocumentTime(2'000'000)};
     b.end = {u8"0:00:03.00", core::DocumentTime(3'000'000)};
-    // The span of Line 4 and its preview: every Line over it stays.
     const auto out = templatePreviewDocument(doc, ids[4], {a, b}, {}, {1000, 3000});
     EXPECT_EQ(textsOf(out), (std::vector<std::u8string>{u8"{\\pos(9,9)}ha", u8"{\\pos(9,9)}ru"}))
         << "the old generated Lines go; Comments are never drawn, and later Lines are not over the span";
-    // One frame: only the Lines shown then.
     const auto frame = templatePreviewDocument(doc, ids[4], {a, b}, {}, {2500, 2500});
     EXPECT_EQ(textsOf(frame), (std::vector<std::u8string>{u8"{\\pos(9,9)}ru"}));
-    // Another Line's generated Lines stay.
     const auto later = templatePreviewDocument(doc, ids[4], {a, b}, {}, {5000, 5000});
     EXPECT_EQ(textsOf(later), (std::vector<std::u8string>{u8"{\\k50}ka{\\k50}ze", u8"{\\pos(1,2)}ka"}));
     EXPECT_EQ(doc.lines().size(), 11u) << "the Document itself is untouched";
 }
 
-// A marked Line edited out of `fx` (Effect `note`) is no generated Line:
-// Apply keeps it (the stock run replaces only `fx` Lines), so the video does.
 TEST_F(TemplatePreview, AMarkedLineNoLongerFxStays)
 {
     ASSERT_TRUE(doc.editLine(ids[6], [](core::LineRecord &l) { l.effect = u8"note"; }, core::ChangeMark::Kept));
@@ -353,15 +323,13 @@ TEST_F(TemplatePreview, AMarkedLineNoLongerFxStays)
     EXPECT_EQ(textsOf(out), (std::vector<std::u8string>{u8"{\\pos(9,9)}ha", u8"{\\pos(3,2)}ru"}));
 }
 
-// The Styles a run made or changed (karaskel's `-furigana` Style) are drawn
-// with the preview, as Apply puts them in; the file's others stay.
 TEST_F(TemplatePreview, TheVideoTakesTheStylesTheRunMade)
 {
     MacroSnapshot snapshot = macroSnapshotOf(doc, Selection{});
     MacroResult r;
     r.styles = snapshot.styles;
     ASSERT_EQ(r.styles.size(), 2u);
-    r.styles[1].fields[2] = "40"; // Kanji, bigger
+    r.styles[1].fields[2] = "40";
     MacroStyleLine furigana = r.styles[0];
     furigana.fields[0] = "Romaji-furigana";
     r.styles.push_back(furigana);
@@ -384,8 +352,6 @@ TEST_F(TemplatePreview, TheVideoTakesTheStylesTheRunMade)
     EXPECT_EQ(before, 2u) << "the Document itself is untouched";
 }
 
-// The preview takes the place of the Lines it replaces, as Apply writes them:
-// read order decides collisions and stacking among Lines on one layer.
 TEST_F(TemplatePreview, ThePreviewStandsWhereTheSourcesLinesStood)
 {
     core::LineRecord a = line(5), b = line(6);
@@ -395,15 +361,12 @@ TEST_F(TemplatePreview, ThePreviewStandsWhereTheSourcesLinesStood)
     const std::vector<std::u8string> inPlace{u8"{\\pos(9,9)}ha", u8"{\\pos(9,9)}ru", u8"{\\k50}ka{\\k50}ze",
                                              u8"{\\pos(1,2)}ka"};
     EXPECT_EQ(textsOf(templatePreviewDocument(doc, ids[4], {a, b}, {}, {1000, 5000})), inPlace);
-    // Unmarked Lines a matching run found: the same place.
     core::Document unmarked = doc;
     for (const std::size_t i : {5u, 6u})
         ASSERT_TRUE(unmarked.editLine(ids[i], [](core::LineRecord &l) { l.generatedFrom = {}; }, core::ChangeMark::Kept));
     EXPECT_EQ(textsOf(templatePreviewDocument(unmarked, ids[4], {a, b}, {ids[5], ids[6]}, {1000, 5000})), inPlace);
 }
 
-// A source that made no Lines before: Apply writes its Lines before those of
-// the karaoke Lines after it, so the preview stands there too.
 TEST_F(TemplatePreview, ANewPreviewStandsBeforeLaterKaraokeLinesLines)
 {
     core::Document none = doc;
@@ -414,16 +377,12 @@ TEST_F(TemplatePreview, ANewPreviewStandsBeforeLaterKaraokeLinesLines)
     EXPECT_EQ(textsOf(templatePreviewDocument(none, ids[4], {a, b}, {}, {1000, 5000})),
               (std::vector<std::u8string>{u8"{\\k50}ka{\\k50}ze", u8"{\\pos(9,9)}ha", u8"{\\pos(9,9)}ru",
                                           u8"{\\pos(1,2)}ka"}));
-    // A file opened without marks: the later karaoke Line's Lines are known
-    // by the run that found each unmarked Line's karaoke Line.
     ASSERT_TRUE(none.editLine(ids[8], [](core::LineRecord &l) { l.generatedFrom = {}; }, core::ChangeMark::Kept));
     EXPECT_EQ(textsOf(templatePreviewDocument(none, ids[4], {a, b}, {}, {1000, 5000}, {{ids[8], ids[7]}})),
               (std::vector<std::u8string>{u8"{\\k50}ka{\\k50}ze", u8"{\\pos(9,9)}ha", u8"{\\pos(9,9)}ru",
                                           u8"{\\pos(1,2)}ka"}));
 }
 
-// The source not applied yet (a Dialogue): Apply turns it into a Comment when
-// its templates make Lines, so the frame does not draw it under them.
 TEST_F(TemplatePreview, TheSourceIsLeftOutWhenItsTemplatesMakeLines)
 {
     core::LineRecord a;
@@ -439,7 +398,6 @@ TEST_F(TemplatePreview, TheSourceIsLeftOutWhenItsTemplatesMakeLines)
 
 TEST_F(TemplatePreview, UnmarkedLinesFoundToBeTheSourcesAreLeftOutToo)
 {
-    // A file opened without marks: the Lines a matching run found are left out.
     ASSERT_TRUE(doc.editLine(ids[5], [](core::LineRecord &l) { l.generatedFrom = {}; }));
     ASSERT_TRUE(doc.editLine(ids[6], [](core::LineRecord &l) { l.generatedFrom = {}; }));
     const auto kept = templatePreviewDocument(doc, ids[4], {}, {}, {1500, 1500});
@@ -457,8 +415,6 @@ TEST_F(TemplatePreview, PlayingTheLineKeepsOneTrack)
     const auto looping = templatePreviewWindow(2200, true, 1000, 3000, ends);
     EXPECT_EQ(looping.fromMs, 1000);
     EXPECT_EQ(looping.toMs, 3000);
-    // Elsewhere every Line not over yet: the window holds from the last end
-    // passed, so frame after frame it stays until another Line ends.
     const auto elsewhere = templatePreviewWindow(5000, true, 1000, 3000, ends);
     EXPECT_EQ(elsewhere.fromMs, 4000);
     EXPECT_EQ(elsewhere.toMs, std::numeric_limits<std::int64_t>::max());
@@ -483,4 +439,4 @@ TEST_F(TemplatePreview, PreviewRunsOnlyReadFromTheHost)
         EXPECT_FALSE(isPreviewService(service)) << static_cast<int>(service);
 }
 
-} // namespace
+}

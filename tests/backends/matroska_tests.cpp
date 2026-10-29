@@ -1,10 +1,3 @@
-// Y9: MKV extraction through the isolated media helper, against legacy Demux
-// (Demux.cpp at 20d647c4) and the FFMS2 extension it calls
-// (Thirdparty/Build/FFMS2/indexing_additional.cpp, the same file the
-// hikari-ffms2 port builds): the subtitle tracks and their codecs, each
-// track's packets in file order with their times and bytes, the codec-private
-// data, the attachments byte for byte, progress, cancel and the helper's loss.
-
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/media_protocol.h"
@@ -82,21 +75,16 @@ struct Fixture : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST_F(Fixture, SubtitleTracksInContainerOrder)
 {
-    // Every FFMS_TYPE_SUBTITLE track with its title, language and
-    // FFMS_GetSubtitleFormat (Demux.cpp:68-76); the attachments that follow
-    // the tracks are not listed.
     const auto t = tracks(fixture("subs"));
     ASSERT_TRUE(t) << t.error().text;
     std::string dump;
     for (const auto &x : *t)
         dump += std::to_string(x.track) + "|" + x.name + "|" + x.language + "|" + x.codec + "\n";
-    // FFmpeg reads S_TEXT/SSA as AV_CODEC_ID_ASS, so FFMS2 names it "ass";
-    // SubRip's decoder is "srt"; a track without a language is Matroska's
-    // default "eng"; WebVTT has no decoder in the build, so no name.
+    // FFmpeg names S_TEXT/SSA "ass"; Matroska's default language is "eng"; WebVTT has no decoder in the build.
     EXPECT_EQ(dump, "0|Signs|eng|ass\n"
                     "1||jpn|ass\n"
                     "2|Full|eng|srt\n"
@@ -107,9 +95,7 @@ TEST_F(Fixture, SubtitleTracksInContainerOrder)
 
 TEST_F(Fixture, PacketsInFileOrderWithTheirMilliseconds)
 {
-    // FFMS_GetSubtitles reads every packet of the track in file order
-    // (packets under 2 bytes skipped; a NUL ends the line), times in the
-    // track's milliseconds; the codec-private data is FFMS2's extradata.
+    // FFMS2 skips packets under 2 bytes and ends a line at its first NUL.
     const auto file = mkvfixture::subs();
     for (int track : {0, 1, 2, 3}) {
         SCOPED_TRACE(track);
@@ -129,10 +115,7 @@ TEST_F(Fixture, PacketsInFileOrderWithTheirMilliseconds)
             EXPECT_EQ(read->packets[i].duration, expected[i].duration) << i;
             EXPECT_EQ(read->packets[i].line, expected[i].line) << i;
         }
-        // One progress step per packet: its start and the stream's duration
-        // in milliseconds, which FFmpeg leaves AV_NOPTS_VALUE for a
-        // subtitle track even with a Segment duration, so legacy's percent
-        // ((Start / Total) * 100, Demux.cpp:312) stayed 0.
+        // FFmpeg leaves a subtitle stream's duration AV_NOPTS_VALUE, even with a Segment duration.
         ASSERT_EQ(progress.size(), expected.size());
         for (std::size_t i = 0; i < expected.size(); ++i) {
             EXPECT_EQ(progress[i].first, expected[i].start);
@@ -143,8 +126,6 @@ TEST_F(Fixture, PacketsInFileOrderWithTheirMilliseconds)
 
 TEST_F(Fixture, AttachmentsAreByteIdentical)
 {
-    // Every FFMS_TYPE_ATTACHMENT stream in order with FFmpeg's filename and
-    // mimetype metadata and its bytes (Demux.cpp:210-227, SaveFont 229-260).
     const auto file = mkvfixture::subs();
     const auto a = attachments(fixture("subs"));
     ASSERT_TRUE(a) << a.error().text;
@@ -152,8 +133,7 @@ TEST_F(Fixture, AttachmentsAreByteIdentical)
     for (const auto &x : *a)
         dump += std::to_string(x.track) + "|" + (x.hasFilename ? "1" : "0") + "|" + x.filename + "|" + x.mimetype + "|" +
                 std::to_string(x.data->size()) + "\n";
-    // The picture is FFmpeg's attached picture (a video stream), not an
-    // attachment; an empty name is "" with the key present.
+    // FFmpeg makes the attached picture a video stream, not an attachment.
     EXPECT_EQ(dump, "6|1|Fixture Sans.ttf|font/ttf|70000\n"
                     "7|1|dir/sub\\Nested.otf|application/vnd.ms-opentype|5000\n"
                     "8|1||font/otf|4000\n"
@@ -193,7 +173,6 @@ TEST_F(Fixture, OneTrackAndNoTracks)
 
 TEST_F(Fixture, FilesFfms2CannotOpen)
 {
-    // Demux::Open: FFMS_CreateIndexer's failure, its text logged (Demux.cpp:44-47).
     const auto missing = tracks(fixture("missing"));
     ASSERT_FALSE(missing);
     EXPECT_EQ(missing.error().failure, MatroskaFailure::CannotOpen);
@@ -201,11 +180,9 @@ TEST_F(Fixture, FilesFfms2CannotOpen)
     const auto a = attachments(fixture("missing"));
     ASSERT_FALSE(a);
     EXPECT_EQ(a.error().failure, MatroskaFailure::CannotOpen);
-    // A track that is not a subtitle track is refused.
     const auto attachment = subtitles(fixture("subs"), 6);
     ASSERT_FALSE(attachment);
     EXPECT_EQ(attachment.error().failure, MatroskaFailure::Failed);
-    // The helper keeps serving.
     EXPECT_TRUE(tracks(fixture("subs")));
 }
 
@@ -218,10 +195,6 @@ const std::string kCancelled = "error " + std::to_string(int(MatroskaFailure::Ca
 
 TEST_F(Fixture, CancelReachesARunningReadAndTheHelperGoesOn)
 {
-    // The helper is up, so the request is sent at once and its Cancel goes
-    // with it: the read stops at its first packet, onSubtitle returning
-    // non-zero as legacy's WasCancelled() did (Demux.cpp:314), and the
-    // helper ends the request Cancelled.
     ASSERT_TRUE(tracks(fixture("subs")));
     auto *host = port.helperHost();
     const auto session = host->session();
@@ -229,14 +202,12 @@ TEST_F(Fixture, CancelReachesARunningReadAndTheHelperGoesOn)
     std::vector<std::int64_t> progress;
     port.subtitles(fixture("subs"), 2, [&](std::int64_t start, std::int64_t) { progress.push_back(start); },
                    [&](auto r) { calls.push_back(outcomeOf(r)); });
-    ASSERT_EQ(host->outstanding(), 1u); // in flight
+    ASSERT_EQ(host->outstanding(), 1u);
     port.cancel();
     ASSERT_EQ(calls, std::vector<std::string>{kCancelled});
-    // The helper's Terminal arrives and is dropped: the request resolved once.
     ASSERT_TRUE(waitFor([&] { return host->outstanding() == 0; }));
     EXPECT_EQ(calls.size(), 1u);
-    EXPECT_EQ(progress.size(), 1u); // of the track's 4 packets
-    // The same helper answers the next request.
+    EXPECT_EQ(progress.size(), 1u);
     const auto read = subtitles(fixture("subs"), 2);
     ASSERT_TRUE(read);
     EXPECT_EQ(read->packets.size(), 4u);
@@ -247,7 +218,6 @@ TEST_F(Fixture, CancelReachesARunningReadAndTheHelperGoesOn)
 
 TEST_F(Fixture, TheHelperEndsACancelledReadCancelled)
 {
-    // The helper's own answer to the cancel above, read off the protocol.
     helper::HelperHost host(QStringLiteral(HIKARI_MEDIA_HELPER), {}, backends::media::kProtocolVersion);
     host.start();
     ASSERT_TRUE(waitFor([&] { return host.state() == helper::HelperHost::State::Ready; }));
@@ -269,15 +239,13 @@ TEST_F(Fixture, TheHelperEndsACancelledReadCancelled)
     host.cancel(*id);
     ASSERT_TRUE(waitFor([&] { return lost || (!events.empty() && events.back().kind == helper::Kind::Terminal); }));
     ASSERT_FALSE(lost);
-    ASSERT_EQ(events.size(), 2u); // the first packet's progress, then the Terminal
+    ASSERT_EQ(events.size(), 2u);
     EXPECT_EQ(events[0].kind, helper::Kind::Progress);
     EXPECT_EQ(events[1].outcome, helper::Outcome::Cancelled);
 }
 
 TEST_F(Fixture, CancelWhileTheHelperStartsSendsNothing)
 {
-    // A cancel before the helper is up resolves the request at once, and the
-    // request is never sent: nothing is outstanding when the helper is ready.
     std::vector<std::string> calls;
     port.subtitles(fixture("subs"), 0, {}, [&](auto r) { calls.push_back(outcomeOf(r)); });
     auto *host = port.helperHost();
@@ -285,13 +253,11 @@ TEST_F(Fixture, CancelWhileTheHelperStartsSendsNothing)
     ASSERT_NE(host->state(), helper::HelperHost::State::Ready);
     port.cancel();
     ASSERT_EQ(calls, std::vector<std::string>{kCancelled});
-    // Connected after the port's own, so this runs once the port has had
-    // its turn at the ready signal.
+    // Qt calls slots in connection order, so this runs after the port's own.
     std::optional<std::size_t> outstandingWhenReady;
     QObject::connect(host, &helper::HelperHost::ready, [&] { outstandingWhenReady = host->outstanding(); });
     ASSERT_TRUE(waitFor([&] { return outstandingWhenReady.has_value(); }));
     EXPECT_EQ(*outstandingWhenReady, 0u);
-    // The next request is answered, and the cancelled one stays resolved once.
     const auto read = subtitles(fixture("subs"), 2);
     ASSERT_TRUE(read);
     EXPECT_EQ(read->packets.size(), 4u);
@@ -304,7 +270,7 @@ TEST_F(Fixture, HelperLossResolvesTheRequestAndTheNextStartsAHelper)
     const auto session = port.helperHost()->session();
     std::optional<std::expected<std::vector<MatroskaAttachment>, MatroskaError>> pending;
     port.attachments(fixture("subs"), [&](auto r) { pending = std::move(r); });
-    port.helperHost()->stop(); // the helper dies mid-request
+    port.helperHost()->stop();
     ASSERT_TRUE(waitFor([&] { return pending.has_value(); }));
     ASSERT_FALSE(*pending);
     EXPECT_EQ(pending->error().failure, MatroskaFailure::HelperLost);
@@ -314,13 +280,6 @@ TEST_F(Fixture, HelperLossResolvesTheRequestAndTheNextStartsAHelper)
     EXPECT_GT(port.helperHost()->session(), session);
 }
 
-// User decision 28 (2026-10-14): "Kage 07 - Opening TH Softsub" lost its
-// first Thai line on every renderer. Its 38 copies sat in the first cluster
-// at 0:00:00.401, more blocks of that time in the second, and the last cue
-// of that time named the second; FFMS_GetSubtitles' seek to 0 went there
-// and never read the first cluster. Every block now arrives, and the line,
-// staged as legacy built it and handed to libass as the video renders the
-// Document, draws under its \pos at 0:00:02.
 TEST_F(Fixture, BlocksBeforeTheCuedClusterArriveAndTheirLineDraws)
 {
     const auto file = mkvfixture::scanline();
@@ -330,7 +289,7 @@ TEST_F(Fixture, BlocksBeforeTheCuedClusterArriveAndTheirLineDraws)
     for (std::size_t i = 0; i < file.packets.size(); ++i) {
         EXPECT_EQ(read->packets[i].start, file.packets[i].second.start) << i;
         EXPECT_EQ(read->packets[i].duration, file.packets[i].second.duration) << i;
-        EXPECT_EQ(read->packets[i].line, file.packets[i].second.data) << i; // whole, 38.7 KB drawings included
+        EXPECT_EQ(read->packets[i].line, file.packets[i].second.data) << i;
     }
 
     std::vector<std::u8string> lines;
@@ -350,8 +309,6 @@ TEST_F(Fixture, BlocksBeforeTheCuedClusterArriveAndTheirLineDraws)
     const auto frame = renderer.render(core::DocumentTime(2'000'000), 1920, 1080);
     ASSERT_TRUE(frame);
     ASSERT_FALSE(frame->empty);
-    // The drawing spans x 732..1187, y 985..1032 around \pos(960,1017), its
-    // border and blur a few pixels more; the romaji is at the top.
     int inside = 0, outside = 0;
     for (int y = 200; y < 1080; ++y)
         for (int x = 0; x < 1920; ++x) {
@@ -366,13 +323,6 @@ TEST_F(Fixture, BlocksBeforeTheCuedClusterArriveAndTheirLineDraws)
     EXPECT_EQ(outside, 0);
 }
 
-// User decision 38d (2026-10-14): the times reach the application in
-// milliseconds whatever the container's time base. The extension divided by
-// AVPacket.time_base.den, which av_read_frame leaves at {0, 1}, so it handed
-// over the stream's own ticks: right only for Matroska's default
-// TimestampScale (the cases above keep their times exactly). Each end is
-// rounded to the nearest millisecond and the duration taken between them,
-// on the container's own clock.
 TEST_F(Fixture, SubtitleTimesAreMillisecondsInEveryTimeBase)
 {
     const struct {
@@ -406,8 +356,6 @@ TEST_F(Fixture, SubtitleTimesAreMillisecondsInEveryTimeBase)
 
 TEST_F(Fixture, SubtitleTimesAtATenthOfAMillisecondMakeTheirLines)
 {
-    // The Matroska file at 100 us ticks, staged as legacy built the lines:
-    // 1235 ms + 5 cut to centiseconds is 0:00:01.24, the end 1735 0:00:01.74.
     const auto read = subtitles(fixture("scale100us"), 0);
     ASSERT_TRUE(read) << read.error().text;
     ASSERT_EQ(read->packets.size(), 2u);

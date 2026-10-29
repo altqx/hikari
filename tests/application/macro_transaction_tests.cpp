@@ -1,7 +1,3 @@
-// L4 (A33-transaction): a macro's staged edits against a snapshot, applied as
-// one undo step or rejected without changing anything; script indices and
-// the returned selection follow the legacy rules (Automation.cpp LuaCommand::Run).
-
 #include "hikari/application/macro_transaction.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -25,7 +21,6 @@ core::Document load(std::string_view text)
     return core::loadAss(bytes).document;
 }
 
-// Two info lines and one style: dialogue script indices start at 4.
 constexpr std::string_view kScript =
     "[Script Info]\n"
     "Title: macro\n"
@@ -83,7 +78,7 @@ struct MacroTest : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST_F(MacroTest, SnapshotListsInfoStylesAndDialogueWithLegacyIndices)
 {
@@ -107,16 +102,15 @@ TEST_F(MacroTest, AllStagedEditsApplyAsOneUndoStep)
     const auto s = snapshot();
     const auto steps = session.historySize();
     MacroResult r = unchanged(s);
-    r.dialogues[0].text = "{\\be1}one";                // modify
-    r.dialogues.erase(r.dialogues.begin() + 1);          // delete "two"
+    r.dialogues[0].text = "{\\be1}one";
+    r.dialogues.erase(r.dialogues.begin() + 1);
     MacroDialogueLine added = r.dialogues[0];
     added.id = 0;
     added.text = "added";
-    r.dialogues.push_back(added);                        // append
-    std::swap(r.dialogues[0], r.dialogues[1]);           // reorder
+    r.dialogues.push_back(added);
+    std::swap(r.dialogues[0], r.dialogues[1]);
     ASSERT_TRUE(applyMacroResult(session, s, r, "Blur"));
     EXPECT_EQ(texts(session), (std::vector<std::string>{"three", "{\\be1}one", "added"}));
-    // A reordered Line keeps its identity.
     EXPECT_EQ(session.document().lines()[0]->id, l3);
     EXPECT_EQ(session.document().lines()[1]->id, l1);
     EXPECT_EQ(session.historySize(), steps + 1);
@@ -153,15 +147,9 @@ TEST_F(MacroTest, InsertedLinesTakeTheStagedFieldsAndPosition)
     EXPECT_EQ(l.actor, u8"Narrator");
     EXPECT_EQ(l.marginLeft.value, 12);
     EXPECT_EQ(l.effect, u8"fx");
-    EXPECT_EQ(lines[1]->id, l1); // existing Lines keep their identity
+    EXPECT_EQ(lines[1]->id, l1);
 }
 
-// A Line replaced in place by two new ones, as a karaoke templater's
-// regenerate-selected does, pushes the Line after it to just past the
-// snapshot's end. It keeps its identity and order, and the result is
-// compared with the snapshot without reading past its end
-// (KaraokeTemplater's SelectingEveryLineGivesTheWholeRun crashed on Windows
-// reading there; ASan reports the read as a heap-buffer-overflow).
 TEST_F(MacroTest, LinesAfterAReplacementKeepTheirPlaceAndIdentity)
 {
     const auto s = snapshot();
@@ -202,7 +190,6 @@ TEST_F(MacroTest, AStaleResultChangesNothing)
     EXPECT_EQ(applied.error().error, MacroApplyError::Refused);
     EXPECT_EQ(applied.error().refusal, CommandRefusal::StaleRevision);
     EXPECT_EQ(texts(session), (std::vector<std::string>{"meanwhile", "two", "three"}));
-    // Even an unchanged result reports the revision it missed.
     EXPECT_EQ(applyMacroResult(session, s, unchanged(s), "Late").error().refusal, CommandRefusal::StaleRevision);
 }
 
@@ -231,7 +218,6 @@ TEST_F(MacroTest, APendingDraftIsCommittedBeforeTheSnapshot)
     MacroResult r = unchanged(s);
     r.dialogues[1].text += "!";
     ASSERT_TRUE(applyMacroResult(session, s, r, "Bang"));
-    // The draft and the macro are separate steps.
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(texts(session)[1], "typed");
     ASSERT_TRUE(session.undo());
@@ -247,7 +233,7 @@ TEST_F(MacroTest, TheTargetIsReadOnlyWhileTheMacroRuns)
                                   [this](core::Document &d) { return d.setLineText(l1, u8"x"); }})
                   .error(),
               CommandRefusal::ReadOnly);
-    select({l3}, l3); // selection still moves
+    select({l3}, l3);
     EXPECT_EQ(session.selection().active, l3);
     session.setReadOnly(false);
     MacroResult r = unchanged(s);
@@ -255,9 +241,6 @@ TEST_F(MacroTest, TheTargetIsReadOnlyWhileTheMacroRuns)
     EXPECT_TRUE(applyMacroResult(session, s, r, "Edit"));
 }
 
-// S4: Style and Script Info edits (legacy AutoToFile edits the SInfo and
-// Styles lists in place, AutomationToFile.cpp:611-625, 822-830) apply with
-// the Lines in the macro's one step, which Undo and Redo restore together.
 TEST_F(MacroTest, StyleAndInfoEditsApplyWithTheLinesAsOneStep)
 {
     const auto s = snapshot();
@@ -295,8 +278,6 @@ TEST_F(MacroTest, StyleAndInfoEditsApplyWithTheLinesAsOneStep)
     EXPECT_EQ(session.document().scriptInfo(u8"PlayResX"), std::u8string(u8"640"));
 }
 
-// Deleting and reordering: the properties and Styles left keep their bytes;
-// comments in Script Info stay where they were.
 TEST_F(MacroTest, InfoAndStyleDeletionsKeepTheRest)
 {
     constexpr std::string_view kTwoStyles =
@@ -318,7 +299,7 @@ TEST_F(MacroTest, InfoAndStyleDeletionsKeepTheRest)
     const auto s = *snapshotForMacro(other);
     ASSERT_EQ(s.info.size(), 3u);
     MacroResult r{s.info, s.styles, s.dialogues, std::nullopt, std::nullopt};
-    r.info.erase(r.info.begin() + 1); // ScriptType
+    r.info.erase(r.info.begin() + 1);
     std::swap(r.styles[0], r.styles[1]);
     ASSERT_TRUE(applyMacroResult(other, s, r, "Delete"));
     const auto bytes = core::encodeAss(other.document());
@@ -338,7 +319,6 @@ TEST_F(MacroTest, InfoAndStyleDeletionsKeepTheRest)
               "Dialogue: 0,0:00:01.00,0:00:02.00,A,,0,0,0,,one\n");
 }
 
-// A header change is refused on a stale target like a Line change.
 TEST_F(MacroTest, StaleHeaderChangesAreRefused)
 {
     const auto s = snapshot();
@@ -352,14 +332,12 @@ TEST_F(MacroTest, StaleHeaderChangesAreRefused)
     EXPECT_EQ(session.document().scriptInfo(u8"Title"), std::u8string(u8"macro"));
 }
 
-// Legacy LuaCommand::Run reads the returned rows after the run, against the
-// SInfo and Styles sizes the macro left (Automation.cpp:1010).
 TEST_F(MacroTest, ReturnedRowsCountTheHeaderTheMacroLeft)
 {
     select({l1}, l1);
-    const auto s = snapshot(); // dialogue rows 4-6
+    const auto s = snapshot();
     MacroResult r = unchanged(s);
-    r.info.push_back({"PlayResY", "360"}); // now 5-7
+    r.info.push_back({"PlayResY", "360"});
     r.selected = std::vector<int>{6};
     ASSERT_TRUE(applyMacroResult(session, s, r, "Rows"));
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{l2}));
@@ -370,14 +348,12 @@ TEST_F(MacroTest, ReturnedSelectionFollowsTheLegacyRules)
 {
     select({l1}, l1);
     auto s = snapshot();
-    // Selected rows: the first becomes active when no active row is given.
     MacroResult r = unchanged(s);
     r.selected = std::vector<int>{5, 6};
     ASSERT_TRUE(applyMacroResult(session, s, r, "Select"));
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{l2, l3}));
     EXPECT_EQ(session.selection().active, l2);
 
-    // An active row in range wins over the first selected.
     s = snapshot();
     r = unchanged(s);
     r.selected = std::vector<int>{4, 5};
@@ -386,8 +362,6 @@ TEST_F(MacroTest, ReturnedSelectionFollowsTheLegacyRules)
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{l1, l2}));
     EXPECT_EQ(session.selection().active, l3);
 
-    // Selected rows stop at the first out of range; an active row out of
-    // range keeps the original active Line.
     s = snapshot();
     r = unchanged(s);
     r.selected = std::vector<int>{6, 2, 4};
@@ -396,7 +370,6 @@ TEST_F(MacroTest, ReturnedSelectionFollowsTheLegacyRules)
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{l3}));
     EXPECT_EQ(session.selection().active, l3);
 
-    // Indices address the Document after the macro's edits.
     s = snapshot();
     r = unchanged(s);
     r.dialogues.erase(r.dialogues.begin());
@@ -405,10 +378,6 @@ TEST_F(MacroTest, ReturnedSelectionFollowsTheLegacyRules)
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{l2}));
 }
 
-// S4-validation-edits: a result whose validation function answered false
-// applies nothing, whatever it carries; the Document, its dirty state and
-// history stay as they were (legacy AutoToFile kept validation's edits in
-// the file without an undo step, LuaCommand::Validate, Automation.cpp:936-969).
 TEST_F(MacroTest, AResultThatFailedValidationChangesNothing)
 {
     const auto s = snapshot();

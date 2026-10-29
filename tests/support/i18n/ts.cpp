@@ -5,9 +5,7 @@
 namespace hikari::i18n {
 namespace {
 
-// translator/ts.cpp protect() and numericEntity(): markup characters as
-// entities, control characters as <byte/>, non-ASCII spaces as character
-// references; line breaks and tabs stay literal.
+// As Qt's translator/ts.cpp protect(): entities, <byte/> for controls, &#x; for non-ASCII spaces.
 QString protect(const QString &text)
 {
     QString out;
@@ -42,8 +40,7 @@ QString stateAttribute(TsState state)
     return {};
 }
 
-// writeExtras() sorts the written elements, not their names: "<extra-a_10>"
-// comes before "<extra-a_1>".
+// Qt's writeExtras() sorts whole elements: "<extra-a_10>" precedes "<extra-a_1>".
 void writeExtras(QString &out, const QList<std::pair<QString, QString>> &extras, const QString &indent)
 {
     QStringList lines;
@@ -91,7 +88,7 @@ TsState parseState(QStringView type)
     return TsState::Finished;
 }
 
-} // namespace
+}
 
 const TsMessage *TsCatalog::find(const QString &context, const QString &source, const QString &comment) const
 {
@@ -248,4 +245,4 @@ int qtNumerusForms(const QString &language)
     return -1;
 }
 
-} // namespace hikari::i18n
+}

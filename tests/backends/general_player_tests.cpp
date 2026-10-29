@@ -1,7 +1,3 @@
-// N5: general playback through Qt Multimedia. Every fixture frame carries its
-// index as a barcode, so a delivered frame is identified by its pixels, not by
-// a timestamp: the seek evidence compares the requested position, the
-// delivered frame's reported start time, and which frame actually arrived.
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/qt_general_player.h"
 #include "hikari/backends/video_frame_bgra.h"
@@ -33,7 +29,6 @@ std::string fixture(const char *kind)
     return std::string(HIKARI_MEDIA_FIXTURES) + "/" + kind + ".mkv";
 }
 
-// The 4x4 barcode: block (bx, by) is bit by * 4 + bx, white = 1.
 int barcode(const QVideoFrame &frame)
 {
     const QImage image = frame.toImage().convertToFormat(QImage::Format_RGB32);
@@ -49,7 +44,6 @@ int barcode(const QVideoFrame &frame)
     return value;
 }
 
-// The barcode from a converted frame (V1's conversion, not Qt's).
 int barcode(const hikari::application::IndexedFrame &frame)
 {
     int value = 0;
@@ -63,7 +57,6 @@ int barcode(const hikari::application::IndexedFrame &frame)
     return value;
 }
 
-// Frame start times of the fixtures, in microseconds.
 std::int64_t cfrStartUs(int index)
 {
     return static_cast<std::int64_t>(index) * 1'001'000'000 / 24'000;
@@ -76,7 +69,7 @@ std::int64_t vfrStartUs(int index)
     return ms * 1000;
 }
 
-} // namespace
+}
 
 class GeneralPlayerTests : public QObject {
     Q_OBJECT
@@ -90,7 +83,6 @@ class GeneralPlayerTests : public QObject {
         return **result;
     }
 
-    // Seeks while paused and returns the result with the delivered frame's index.
     std::pair<std::optional<SeekResult>, int> seek(QtGeneralPlayer &player, std::int64_t us)
     {
         int index = -1;
@@ -99,7 +91,7 @@ class GeneralPlayerTests : public QObject {
         std::optional<std::expected<SeekResult, PlayerError>> result;
         player.seek(us, [&](auto r) { result = std::move(r); });
         const bool arrived = QTest::qWaitFor([&] { return result.has_value() && index >= 0; }, 10'000);
-        Q_UNUSED(arrived); // a missing result fails below
+        Q_UNUSED(arrived);
         disconnect(connection);
         if (!result || !*result)
             return {std::nullopt, index};
@@ -198,15 +190,13 @@ private slots:
         QVERIFY(result);
         QVERIFY(index >= 0);
         QCOMPARE(result->requestedUs, requestedUs);
-        // The reported start time names the frame that actually arrived.
         const std::int64_t truth = kind == QLatin1String("vfr") ? vfrStartUs(index) : cfrStartUs(index);
         QVERIFY2(std::abs(result->deliveredStartUs - truth) <= 1000,
                  qPrintable(QStringLiteral("frame %1 reported at %2 us, starts at %3 us")
                                 .arg(index)
                                 .arg(result->deliveredStartUs)
                                 .arg(truth)));
-        // Observation, not a promise: how far the general player landed.
-        // On stderr: the Windows test logs keep it, QtTest's own output not always.
+        // stderr: the Windows test logs keep it, QtTest's own output not always.
         std::fprintf(stderr, "seek observation %s: requested %lld us, delivered frame %d at %lld us (error %lld us)\n",
                      qPrintable(kind), static_cast<long long>(requestedUs), index,
                      static_cast<long long>(result->deliveredStartUs), static_cast<long long>(result->errorUs()));
@@ -252,8 +242,6 @@ private slots:
         QVERIFY(b->has_value());
     }
 
-    // V1: a 10-bit 4:2:0 file decoded in software (the HEVC Main 10 case
-    // without hardware decoding) gives frames the player path converts.
     void tenBitFramesAreConverted()
     {
         QtGeneralPlayer player(false);
@@ -272,12 +260,10 @@ private slots:
         QVERIFY(hikari::backends::videoFrameToBgra(delivered, bgra));
         QCOMPARE(bgra.width, 320);
         QCOMPARE(bgra.height, 240);
-        // The frame the seek reports (the player may land on the one before).
+        // The player may land on the frame before the requested one.
         const int index = static_cast<int>(std::llround((*seeked)->deliveredStartUs * 24'000.0 / 1'001'000'000.0));
         QVERIFY2(index == 12 || index == 13, qPrintable(QString::number(index)));
         QCOMPARE(barcode(bgra), index);
-        // Black and white at the 10-bit limited levels: block 2 is white in
-        // frames 12 and 13 (0b1100, 0b1101), block 1 black.
         const auto *pixels = reinterpret_cast<const std::uint8_t *>(bgra.bgra.data());
         const int row = bgra.height / 8;
         const auto *white = pixels + row * bgra.stride + (5 * bgra.width / 8) * 4;
@@ -289,24 +275,22 @@ private slots:
         QCOMPARE(int(black[3]), 255);
     }
 
-    // V1: frames arriving while the GUI thread is busy do not queue up: only
-    // the newest waits, the rest are counted as superseded.
     void framesDoNotBacklogWhileTheGuiThreadIsBusy()
     {
         QtGeneralPlayer player(false);
         QVERIFY(open(player, "longgop"));
         player.play();
         QVERIFY(QTest::qWaitFor([&] { return player.deliveredFrames() > 2; }, 10'000));
-        std::this_thread::sleep_for(std::chrono::milliseconds(600)); // the GUI thread stalls
+        std::this_thread::sleep_for(std::chrono::milliseconds(600));
         const auto received = player.receivedFrames();
         const auto before = player.deliveredFrames();
-        QCoreApplication::processEvents(); // everything queued meanwhile
+        QCoreApplication::processEvents();
         const auto after = player.deliveredFrames();
         player.pause();
         qInfo() << "received" << received << "superseded" << player.supersededFrames() << "delivered after the stall"
                 << after - before;
         QVERIFY2(after - before <= 1, qPrintable(QString::number(after - before)));
-        if (received > before + 1) // the player kept rendering through the stall
+        if (received > before + 1)
             QVERIFY(player.supersededFrames() > 0);
     }
 
@@ -322,13 +306,9 @@ private slots:
         QVERIFY(seeked && !seeked->has_value());
     }
 
-    // H2 (decision 60): the output device follows the request: a device the
-    // system lists by its id, else the default (System default, or a chosen
-    // device that is not connected). Nothing plays, so nothing sounds.
-    // Without a device (CI) there is no output to move and the request waits.
     void outputDeviceFollowsTheRequest()
     {
-        QtGeneralPlayer silent(false); // no audio output: never opens a device
+        QtGeneralPlayer silent(false);
         silent.setOutputDevice("");
         QCOMPARE(silent.outputDeviceId(), std::string());
         QtGeneralPlayer player(true);

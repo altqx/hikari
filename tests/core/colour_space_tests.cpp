@@ -1,6 +1,3 @@
-// Y7: the colour picker's conversions, at fixed values of legacy
-// colorspace.cpp and color_to_html / html_to_color (20d647c4).
-
 #include "hikari/core/colour_space.h"
 #include "hikari/core/editor_font_colour.h"
 
@@ -8,8 +5,6 @@
 
 using namespace hikari::core::legacy;
 
-// The special cases (colorspace.cpp:53-87, 152-186), the hue scale of 256 per
-// turn, and rgb_to_hsv's saturation 255 for black (colorspace.cpp:303-304).
 TEST(LegacyColourSpace, Fixtures)
 {
     EXPECT_EQ(hslToRgb(171, 255, 128), (Channels{0, 0, 255}));
@@ -25,9 +20,8 @@ TEST(LegacyColourSpace, Fixtures)
     EXPECT_EQ(colourToHtml(255, 128, 0), u"#FF8000");
     EXPECT_EQ(htmlToColour(u" #ff8000\t"), (Channels{255, 128, 0}));
     EXPECT_EQ(htmlToColour(u"#f80"), (Channels{255, 136, 0}));
-    EXPECT_EQ(htmlToColour(u"#ff800"), (Channels{}));     // five digits: black
+    EXPECT_EQ(htmlToColour(u"#ff800"), (Channels{}));
     EXPECT_EQ(htmlToColour(u"#-1+f00"), (Channels{255, 15, 0})); // wcstol signs, wrapped by wxColour
-    EXPECT_EQ(htmlToColour(u"0x0000"), (Channels{}));     // "0x" alone is not read whole
-    // The ASS field shows AssColor::GetAss(false, false) (ColorPicker.cpp:788).
+    EXPECT_EQ(htmlToColour(u"0x0000"), (Channels{}));
     EXPECT_EQ(assColourText({255, 128, 0, 0x80}, false, false), u"&H0080FF&");
 }

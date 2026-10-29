@@ -1,5 +1,3 @@
-// 38e: backends::desktop's routes in the tests (desktop_guard.h).
-
 #include "desktop_guard.h"
 
 #include "hikari/backends/desktop_handoff.h"
@@ -17,12 +15,10 @@ bool openUrl(const QUrl &url)
         refuse(url);
         return false;
     }
-    // QDesktopServices::openUrl, so the recording handler takes it as it
-    // takes a QML Qt.openUrlExternally.
     const qsizetype before = opened().size();
     const bool result = QDesktopServices::openUrl(url);
     if (!recordingHandlerTook(url, before))
-        refuse(url); // a test unset the handler: the desktop may have had it
+        refuse(url);
     return result;
 }
 
@@ -33,9 +29,9 @@ void replaceTheDesktopsRoutes()
                                       .startDetached = recordStarted});
 }
 
-} // namespace
+}
 
-} // namespace hikari::test::desktop
+}
 
 namespace {
 
@@ -44,6 +40,6 @@ void replaceTheDesktopRoutes()
     hikari::test::desktop::replaceTheDesktopsRoutes();
 }
 
-} // namespace
+}
 
 Q_COREAPP_STARTUP_FUNCTION(replaceTheDesktopRoutes)

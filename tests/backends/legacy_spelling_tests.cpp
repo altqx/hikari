@@ -1,10 +1,3 @@
-// F3 / R2-hunspell: the production spelling adapters. Hunspell 1.7.3 over
-// tiny dictionaries written for these tests (tests/fixtures/spelling:
-// en_TEST in UTF-8 with one suffix rule, pl_TEST in ISO8859-2, ko_TEST and
-// ta_TEST in UTF-8 for SP1's multilingual check), and legacy's
-// word segmentation, boost::locale's boundary::word over ICU
-// (SpellChecker::Check / CheckText at 20d647c4).
-
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/application/misspell_replacer.h"
 #include "hikari/core/ass_load.h"
@@ -55,34 +48,28 @@ std::vector<Segment> words(std::u16string_view text)
     return out;
 }
 
-} // namespace
+}
 
-// Hunspell checks with the affix rules, suggests, and takes runtime words.
 TEST(HunspellSpelling, ChecksSuggestsAndAddsWords)
 {
     const auto backend = load("en_TEST");
     ASSERT_TRUE(backend);
     EXPECT_TRUE(backend->spell(u"Hello"));
-    EXPECT_TRUE(backend->spell(u"worlds")); // world/S
+    EXPECT_TRUE(backend->spell(u"worlds"));
     EXPECT_TRUE(backend->spell(u"don't"));
     EXPECT_FALSE(backend->spell(u"wrold"));
     EXPECT_FALSE(backend->spell(u""));
     EXPECT_TRUE(contains(backend->suggest(u"wrold"), u"world"));
     EXPECT_TRUE(contains(backend->suggest(u"Teh"), u"The"));
-    // A lone surrogate cannot be converted to the dictionary's UTF-8: misspelled.
     EXPECT_FALSE(backend->spell(std::u16string(1, char16_t(0xD800))));
     EXPECT_TRUE(backend->suggest(std::u16string(1, char16_t(0xD800))).empty());
     backend->add(u"Hikari");
     EXPECT_TRUE(backend->spell(u"Hikari"));
     EXPECT_TRUE(backend->remove(u"Hikari"));
     EXPECT_FALSE(backend->spell(u"Hikari"));
-    // Legacy adds a failed conversion's null buffer (undefined, a crash); it
-    // is skipped here (R3-hang-crash-loss).
     backend->add(std::u16string(1, char16_t(0xDC00)));
 }
 
-// Words travel in the dictionary's own encoding (SET ISO8859-2) both ways; a
-// character it cannot hold makes the word misspelled.
 TEST(HunspellSpelling, ConvertsToTheDictionaryEncoding)
 {
     const auto backend = load("pl_TEST");
@@ -95,7 +82,6 @@ TEST(HunspellSpelling, ConvertsToTheDictionaryEncoding)
     EXPECT_TRUE(backend->spell(u"źdźbło"));
 }
 
-// Missing files load an empty dictionary, as Hunspell's constructor does.
 TEST(HunspellSpelling, MissingFilesCheckNothingAsCorrect)
 {
     const auto backend = load("missing");
@@ -103,10 +89,7 @@ TEST(HunspellSpelling, MissingFilesCheckNothingAsCorrect)
     EXPECT_FALSE(backend->spell(u"Hello"));
 }
 
-// The SpellChecker over Hunspell and a folder holding the fixtures.
-// On Windows Hunspell gets the long-path form (UTF-8 names, no MAX_PATH);
-// a UNC location (a redirected AppData under \\server\share) takes the
-// \\?\UNC\ form, since \\?\\\server\share names nothing.
+// Windows: Hunspell gets the long-path form; a UNC path takes \\?\UNC\, since \\?\\\server\share names nothing.
 TEST(HunspellSpelling, WindowsLongPathForm)
 {
     EXPECT_EQ(backends::windowsLongPath("C:\\Users\\a\\Dictionary\\en_US.aff"), "\\\\?\\C:\\Users\\a\\Dictionary\\en_US.aff");
@@ -118,14 +101,13 @@ TEST(HunspellSpelling, WindowsLongPathForm)
 }
 
 #ifdef _WIN32
-// The loader normalizes the path before prefixing it (the prefix turns off
-// Windows' own handling of "." and ".."), so a relative-looking route opens.
+// The \\?\ prefix turns off Windows' handling of "." and "..", so the loader normalizes the path first.
 TEST(HunspellSpelling, WindowsPathWithDotsOpens)
 {
     const fs::path base = kFixtures / "subdir-that-does-not-exist" / ".." / "en_TEST";
     auto backend = backends::hunspellSpellingLoader()(fs::path(base).concat(".aff"), fs::path(base).concat(".dic"));
     ASSERT_TRUE(backend);
-    EXPECT_TRUE(backend->spell(u"Hello")); // an unopened pair knows no word
+    EXPECT_TRUE(backend->spell(u"Hello"));
 }
 #endif
 
@@ -142,17 +124,12 @@ TEST(HunspellSpelling, SpellCheckerInitializesFromTheFolder)
     EXPECT_EQ(checker.initialize(u"en_TEST"), application::SpellChecker::Status::Ready);
     EXPECT_TRUE(checker.checkWord(u"Hikari"));
     EXPECT_TRUE(checker.checkWord(u"wrold"));
-    EXPECT_FALSE(checker.checkWord(u"Teh", true)); // waiting for pl_TEST
+    EXPECT_FALSE(checker.checkWord(u"Teh", true));
     EXPECT_EQ(checker.userDictionary(), user / "UserDic.udic");
     std::error_code ec;
     fs::remove_all(user, ec);
 }
 
-// SP1 (#474): mixed Lines over Hunspell and ICU with the fixtures folder's
-// en_TEST, pl_TEST, ko_TEST and ta_TEST installed and English the primary
-// language: every word goes to the dictionaries of its script, nothing a
-// matching dictionary knows is marked, real misspellings still are, and a
-// script without a dictionary (Cyrillic, kana) is not marked.
 TEST(HunspellSpelling, MixedLinesMarkOnlyRealMisspellings)
 {
     std::random_device random;
@@ -168,28 +145,20 @@ TEST(HunspellSpelling, MixedLinesMarkOnlyRealMisspellings)
         return out;
     };
     using Words = std::vector<std::u16string>;
-    // English + Korean.
     EXPECT_EQ(marked(u"Hello world, 안녕하세요 세계!"), Words{});
     EXPECT_EQ(marked(u"Hello wrold, 안녕하세요 세게계!"), (Words{u"wrold", u"세게계"}));
-    // English + Polish (pl_TEST is ISO8859-2: "gęś" converts).
     EXPECT_EQ(marked(u"The good kot, gęś"), Words{});
     EXPECT_EQ(marked(u"The good kott, gęśi"), (Words{u"kott", u"gęśi"}));
-    // English + Tamil.
     EXPECT_EQ(marked(u"{\\i1}Hello{\\i0} வணக்கம் உலகம்"), Words{});
     EXPECT_EQ(marked(u"Hello வணக்கமம் உலகம் texts"), (Words{u"வணக்கமம்"}));
-    // No dictionary for Cyrillic or kana: not marked.
     EXPECT_EQ(marked(u"привет こんにちは Teh"), Words{u"Teh"});
-    // Suggestions come from the word's own dictionary.
     EXPECT_TRUE(contains(checker.suggestions(u"세게계"), u"세계"));
     EXPECT_TRUE(contains(checker.suggestions(u"kott", {u"The", u"good", u"kott"}), u"kot"));
     std::error_code ec;
     fs::remove_all(user, ec);
 }
 
-// boost::locale over ICU: segments cover the text; apostrophes and decimal
-// points stay inside words and numbers; letters then digits take the status
-// of ICU's last rule (a number, so legacy never checks "abc123"), digits
-// then letters are a letters word; punctuation and spaces are neither.
+// ICU: letters then digits take its last rule's status (a number); digits then letters are a letters word.
 TEST(LegacyWordSegmentation, FollowsIcuWordRules)
 {
     EXPECT_EQ(words(u"don't 3.14 abc123, 42!"),
@@ -203,13 +172,11 @@ TEST(LegacyWordSegmentation, FollowsIcuWordRules)
                                     {u"42", false, true},
                                     {u"!", false, false}}));
     EXPECT_EQ(words(u"4ever"), (std::vector<Segment>{{u"4ever", true, false}}));
-    // Polish letters are letters; ICU's dictionary segmentation keeps "世界"
-    // one ideographic word (word_ideo, inside word_letters).
+    // ICU's dictionary segmentation keeps "世界" one ideographic word.
     const auto pl = words(u"Zażółć 世界");
     ASSERT_EQ(pl.size(), 3u);
     EXPECT_EQ(pl[0], (Segment{u"Zażółć", true, false}));
     EXPECT_EQ(pl[2], (Segment{u"世界", true, false}));
-    // Offsets are UTF-16 units: a supplementary letter counts two.
     const std::u16string gothic = u"a \U00010330\U00010331 b";
     const auto segments = backends::legacySpellingText().segment(gothic);
     ASSERT_EQ(segments.size(), 5u);
@@ -220,7 +187,6 @@ TEST(LegacyWordSegmentation, FollowsIcuWordRules)
     EXPECT_TRUE(words(u"").empty());
 }
 
-// The core walk with ICU segmentation: tag-aware offsets in the raw text.
 TEST(LegacyWordSegmentation, TagAwareMarks)
 {
     const auto spelling = backends::legacySpellingText();
@@ -233,9 +199,7 @@ TEST(LegacyWordSegmentation, TagAwareMarks)
     EXPECT_EQ(marks.errors, (std::vector<int>{5, 10, 30, 33}));
     ASSERT_EQ(marks.misspells.size(), 2u);
     EXPECT_EQ(marks.misspells[0].word, u"Zażółć");
-    // Per-unit case functions, English interface (the "C" locale): only A-Z
-    // count as capitals and change, so GetRightCase lower-cases ASCII and
-    // leaves "ż"; another interface language maps every letter.
+    // The "C" locale (English interface): only A-Z count as capitals and change.
     EXPECT_EQ(core::legacy::rightCase(u"żółw", u"Zólw", spelling.cases), u"żółw");
     EXPECT_FALSE(core::legacy::isAllUpperCase(u"ŻÓŁW", spelling.cases));
     const auto everyLetter = backends::legacySpellingText(true);
@@ -243,10 +207,7 @@ TEST(LegacyWordSegmentation, TagAwareMarks)
     EXPECT_TRUE(core::legacy::isAllUpperCase(u"ŻÓŁW", everyLetter.cases));
 }
 
-// legacyCaseMapping: towlower / towupper / iswupper as glibc's "C" locale
-// has them with the English interface (checked against glibc 2.39 and 2.44:
-// U+0141 is neither lowered nor upper there), every letter otherwise; the
-// misspell replacer's MoveCase and SelectLines' MakeLower use the same.
+// glibc's "C" locale towlower/towupper/iswupper leave U+0141 alone (glibc 2.39 and 2.44).
 TEST(LegacyCaseMapping, FollowsTheInterfaceLanguage)
 {
     const auto c = backends::legacyCaseMapping(false);
@@ -262,8 +223,6 @@ TEST(LegacyCaseMapping, FollowsTheInterfaceLanguage)
     EXPECT_EQ(e.toUpper(u'ł'), u'Ł');
     EXPECT_EQ(e.toLower(u'Σ'), u'σ');
     EXPECT_TRUE(e.isUpper(u'Ł'));
-    // MoveCase: one capital in the found text capitalizes the replacement's
-    // first character; "Change to upper case" upper-cases it.
     const auto replacer = [](const core::legacy::CaseMapping &m) {
         return application::ReplacerCase{m.isUpper, m.toLower, m.toUpper};
     };
@@ -275,21 +234,12 @@ TEST(LegacyCaseMapping, FollowsTheInterfaceLanguage)
     EXPECT_EQ(application::moveCase(u"Ab", u"źdź", 0, replacer(e)), u"Źdź");
 }
 
-// F3: the legacy Spellchecker window's walk captured on the Linux build
-// (tests/fixtures/legacy-cases/plan.json "ui" cases F3-window-walk and
-// F3-window-walk-srt, tests/fixtures/legacy-observations/run-37216509697):
-// from the active row 0, Ignore after Ignore, every misspelled word as the
-// window selected it in the editor (SetNextMisspell: posStart to posEnd).
-// The same walk here: CheckText over each Line (comments included, as with
-// "Ignore comments" unchecked) with Hunspell over en_TEST and boost::locale's
-// segmentation. Offsets are compared in code points: the Linux build's
-// wxString counts UTF-32 units, the rewrite UTF-16 ones (the Windows build
-// counted UTF-16 units too).
+// Compared in code points: the legacy Linux build's wxString counted UTF-32 units.
 namespace {
 
 struct Walked {
     int row;
-    int start, end; // inclusive, code points
+    int start, end;
     bool operator==(const Walked &) const = default;
 };
 
@@ -309,7 +259,6 @@ int codePoints(std::u16string_view text, int units)
 
 std::vector<Walked> windowWalk(const char *input, core::SubtitleFormat format)
 {
-    // Legacy's one dictionary (SP1's other fixture dictionaries left out).
     const auto backend = load("en_TEST");
     EXPECT_TRUE(backend);
     std::ifstream in(fs::path(HIKARI_CAPTURE_INPUTS) / input, std::ios::binary);
@@ -329,11 +278,10 @@ std::vector<Walked> windowWalk(const char *input, core::SubtitleFormat format)
     return out;
 }
 
-} // namespace
+}
 
 TEST(LegacySpellingCapture, WindowWalkMatchesTheLinuxCapture)
 {
-    // spell-walk.ass: the legacy selections, 0-based and inclusive.
     const std::vector<Walked> legacy{
         {0, 6, 10},   {0, 16, 20},  {1, 0, 8},    {1, 10, 11},  {2, 23, 25},  {3, 6, 8},    {3, 17, 18},
         {4, 0, 1},    {4, 3, 5},    {5, 6, 9},    {5, 23, 27},  {6, 0, 5},    {6, 7, 8},    {6, 10, 14},

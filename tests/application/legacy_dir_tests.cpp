@@ -1,9 +1,3 @@
-// wxDir as legacy lists a folder on each platform (wxWidgets 3.3.3 at
-// 20d647c4: src/msw/dir.cpp, src/unix/dir.cpp, wxMatchWild in
-// src/common/filefn.cpp), used by F1's find in files and F3's dictionary
-// listing (R5-per-platform). The Windows cases run on Windows only, the
-// Linux ones off Windows.
-
 #include "hikari/application/legacy_dir.h"
 
 #include <gtest/gtest.h>
@@ -62,7 +56,7 @@ protected:
     fs::path folder;
 };
 
-} // namespace
+}
 
 TEST(LegacyMatchWild, PortsWxMatchWild)
 {
@@ -70,19 +64,19 @@ TEST(LegacyMatchWild, PortsWxMatchWild)
     EXPECT_TRUE(matchWild(U"*.dic", U"en_US.dic", true));
     EXPECT_TRUE(matchWild(U"*.dic", U"a.b.dic", true));
     EXPECT_FALSE(matchWild(U"*.dic", U"x.dicx", true));
-    EXPECT_FALSE(matchWild(U"*.dic", U"EN.DIC", true)); // case sensitive
+    EXPECT_FALSE(matchWild(U"*.dic", U"EN.DIC", true));
     EXPECT_FALSE(matchWild(U"*.dic", U".hidden.dic", true));
     EXPECT_TRUE(matchWild(U"*.dic", U".hidden.dic", false));
     EXPECT_TRUE(matchWild(U"?.dic", U"\U0001F600.dic", true)); // one code point, as Linux wchar_t
     EXPECT_FALSE(matchWild(U"?.dic", U".dic", false));
     EXPECT_TRUE(matchWild(U"a\\*", U"a*", true));
     EXPECT_FALSE(matchWild(U"a\\*", U"ab", true));
-    EXPECT_FALSE(matchWild(U"a\\", U"a", true)); // quoting nothing
+    EXPECT_FALSE(matchWild(U"a\\", U"a", true));
     EXPECT_TRUE(matchWild(U"a*", U"a", true));
     EXPECT_TRUE(matchWild(U"*", U"anything", true));
-    EXPECT_FALSE(matchWild(U"*", U"", true)); // an empty text matches only an empty pattern
+    EXPECT_FALSE(matchWild(U"*", U"", true));
     EXPECT_TRUE(matchWild(U"", U"", true));
-    EXPECT_FALSE(matchWild(U"[a].ass", U"a.ass", true)); // no character classes
+    EXPECT_FALSE(matchWild(U"[a].ass", U"a.ass", true));
     EXPECT_TRUE(matchWild(U"[a].ass", U"[a].ass", true));
 }
 
@@ -97,7 +91,6 @@ TEST_F(LegacyDir, AMissingFolderIsNotOpened)
 
 namespace {
 
-// The names FindFirstFileW / FindNextFileW return for `pattern`, raw.
 std::vector<std::string> systemOrder(const fs::path &folder, const wchar_t *pattern)
 {
     std::vector<std::string> out;
@@ -114,11 +107,8 @@ std::vector<std::string> systemOrder(const fs::path &folder, const wchar_t *patt
     return out;
 }
 
-} // namespace
+}
 
-// msw/dir.cpp: FindFirstFileW with the pattern, then CheckFoundMatch
-// (PathMatchSpecW on the long name), the entry's own attributes for the
-// folder and hidden checks, in the file system's order.
 TEST_F(LegacyDir, WindowsListsAsFindFirstFileWithWxsLongNameCheck)
 {
     touch("b.dic");
@@ -131,8 +121,7 @@ TEST_F(LegacyDir, WindowsListsAsFindFirstFileWithWxsLongNameCheck)
     SetFileAttributesW((folder / "hidden.dic").c_str(), FILE_ATTRIBUTE_HIDDEN);
     SetFileAttributesW((folder / "system.dic").c_str(), FILE_ATTRIBUTE_SYSTEM);
 
-    // The system matches "*.dic" against short names too; wx drops what the
-    // long name does not match.
+    // FindFirstFileW also matches 8.3 short names; wx rechecks the long name.
     const auto raw = systemOrder(folder, L"*.dic");
     if (std::ranges::find(raw, "x.dicx") == raw.end())
         std::cout << "note: this volume has no 8.3 name for x.dicx\n";
@@ -141,13 +130,11 @@ TEST_F(LegacyDir, WindowsListsAsFindFirstFileWithWxsLongNameCheck)
         if (name == "b.dic" || name == "A.DIC")
             expected.push_back(name);
     EXPECT_EQ(names(legacy_dir::entries(folder, u"*.dic", legacy_dir::Files)), expected);
-    // Any case; hidden and system entries with wxDIR_HIDDEN.
     expected.clear();
     for (const auto &name : raw)
         if (name != "x.dicx" && name != "folder.dic")
             expected.push_back(name);
     EXPECT_EQ(names(legacy_dir::entries(folder, u"*.dic", legacy_dir::Files | legacy_dir::Hidden)), expected);
-    // Folders alone, with no pattern ("*.*" for the system).
     EXPECT_EQ(names(legacy_dir::entries(folder, u"", legacy_dir::Dirs)), (std::vector<std::string>{"folder.dic"}));
 }
 
@@ -155,7 +142,6 @@ TEST_F(LegacyDir, WindowsListsAsFindFirstFileWithWxsLongNameCheck)
 
 namespace {
 
-// readdir's order of the folder's names.
 std::vector<std::string> readdirOrder(const fs::path &folder)
 {
     std::vector<std::string> out;
@@ -168,10 +154,8 @@ std::vector<std::string> readdirOrder(const fs::path &folder)
     return out;
 }
 
-} // namespace
+}
 
-// unix/dir.cpp: readdir order, stat (links followed) for the folder check,
-// wxMatchWild case sensitive with '.' names hidden without wxDIR_HIDDEN.
 TEST_F(LegacyDir, LinuxListsInReaddirOrderWithWxMatchWild)
 {
     for (const char *name : {"b.dic", "a.dic", "c.dic", "EN.DIC", "x.dicx", ".hidden.dic", "notes.txt", "z.dic"})
@@ -187,7 +171,6 @@ TEST_F(LegacyDir, LinuxListsInReaddirOrderWithWxMatchWild)
         std::ranges::copy_if(order, std::back_inserter(out), keep);
         return out;
     };
-    // Files: a link to a folder is a folder, a broken link a file.
     EXPECT_EQ(names(legacy_dir::entries(folder, u"*.dic", legacy_dir::Files)), pick([](const std::string &n) {
                   return n == "b.dic" || n == "a.dic" || n == "c.dic" || n == "z.dic" || n == "broken.dic";
               }));
@@ -196,12 +179,10 @@ TEST_F(LegacyDir, LinuxListsInReaddirOrderWithWxMatchWild)
                   return n == "b.dic" || n == "a.dic" || n == "c.dic" || n == "z.dic" || n == "broken.dic" ||
                          n == ".hidden.dic";
               }));
-    // Folders with no pattern: '.' names only with wxDIR_HIDDEN.
     EXPECT_EQ(names(legacy_dir::entries(folder, u"", legacy_dir::Dirs)),
               pick([](const std::string &n) { return n == "folder.dic" || n == "link.dic"; }));
     EXPECT_EQ(names(legacy_dir::entries(folder, u"", legacy_dir::Dirs | legacy_dir::Hidden)),
               pick([](const std::string &n) { return n == "folder.dic" || n == "link.dic" || n == ".hiddenfolder"; }));
-    // Every entry, no sorting.
     EXPECT_EQ(names(legacy_dir::entries(folder, u"", legacy_dir::Files | legacy_dir::Dirs | legacy_dir::Hidden)), order);
 }
 

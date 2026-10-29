@@ -1,6 +1,3 @@
-// G9: Line groups (legacy trees at 20d647c4) and the accepted
-// G56-contiguity rule across commands.
-
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_groups.h"
 #include "hikari/core/ass_load.h"
@@ -24,7 +21,6 @@ core::Document load(std::string_view text)
     return core::loadAss(bytes).document;
 }
 
-// a, then group G (description, members m1 m2, open), then z.
 constexpr std::string_view kGrouped = "[Events]\n"
                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
                                       "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,G\n"
@@ -52,7 +48,7 @@ struct GroupsTest : ::testing::Test {
     void select(std::set<core::LineId> lines, core::LineId active) { session.setSelection(Selection{active, lines, active, {}}); }
 };
 
-} // namespace
+}
 
 TEST_F(GroupsTest, OwnersFollowTheDescription)
 {
@@ -66,11 +62,11 @@ TEST_F(GroupsTest, OwnersFollowTheDescription)
 TEST_F(GroupsTest, CommandsThatKeepGroupsAreAllowed)
 {
     select({m1}, m1);
-    ASSERT_TRUE(duplicateLines(session)); // a member copy inside the run
+    ASSERT_TRUE(duplicateLines(session));
     EXPECT_EQ(shape(session), "a G[D] m1[o] m1[o] m2[o] z ");
     select({m2}, m2);
-    ASSERT_TRUE(insertLine(session, InsertWhere::After)); // the copy is a member
-    ASSERT_TRUE(deleteLines(session));                    // a member deleted, the run stays valid
+    ASSERT_TRUE(insertLine(session, InsertWhere::After));
+    ASSERT_TRUE(deleteLines(session));
     EXPECT_EQ(shape(session), "a G[D] m1[o] m1[o] m2[o] z ");
 }
 
@@ -78,16 +74,13 @@ TEST_F(GroupsTest, AGroupBreakIsRefusedBeforeAnythingChanges)
 {
     const auto steps = session.historySize();
     const auto revision = session.revision();
-    // Sorting by Start would move z (0.5 s) between... and orphan members.
     EXPECT_EQ(sortLines(session, SortKey::Start, false).error(), CommandRefusal::GroupBreak);
     EXPECT_FALSE(session.lastGroupBreak().empty());
-    // Deleting the description orphans its members.
     select({g}, g);
     EXPECT_EQ(deleteLines(session).error(), CommandRefusal::GroupBreak);
-    // Swapping a member with an ordinary Line breaks the run.
     select({m2, z}, m2);
     EXPECT_EQ(swapLines(session).error(), CommandRefusal::GroupBreak);
-    EXPECT_EQ(session.historySize(), steps); // C07: nothing changed
+    EXPECT_EQ(session.historySize(), steps);
     EXPECT_EQ(session.revision(), revision);
     EXPECT_EQ(shape(session), "a G[D] m1[o] m2[o] z ");
 }
@@ -98,7 +91,6 @@ TEST_F(GroupsTest, MakeGroupsClosesTheMembersBehindADescription)
     ASSERT_TRUE(makeGroups(session));
     EXPECT_EQ(session.history().back().name, "Adding tree");
     EXPECT_EQ(shape(session), "[D] a[c]h G[D] m1[o] m2[o] z ");
-    // The hidden member gave way to its description as the active Line.
     EXPECT_EQ(session.document().lines()[0]->id, *session.selection().active);
     EXPECT_TRUE(session.document().lines()[0]->comment);
 }
@@ -110,7 +102,6 @@ TEST_F(GroupsTest, MakingAGroupAcrossAHiddenOrdinaryLineIsRefused)
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,[hidden],0,0,0,,X\n"
                             "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,B\n")};
     hidden.setSelection(Selection{core::LineId{1}, {core::LineId{1}, core::LineId{3}}, {}, {}});
-    // Legacy would give description, A(member), X(ordinary), B(member).
     EXPECT_EQ(makeGroups(hidden).error(), CommandRefusal::GroupBreak);
 }
 
@@ -122,14 +113,14 @@ TEST_F(GroupsTest, ToggleRenameSelectAndRemove)
     EXPECT_EQ(shape(session), "a G[D] m1[o] m2[o] z ");
     ASSERT_TRUE(renameGroup(session, g, u8"Signs"));
     EXPECT_EQ(session.history().back().name, "Setting tree description");
-    EXPECT_FALSE(renameGroup(session, g, u8"")); // the dialog needs a name
+    EXPECT_FALSE(renameGroup(session, g, u8""));
     ASSERT_TRUE(toggleGroup(session, g));
-    ASSERT_TRUE(selectGroup(session, g)); // opens, then selects the members
+    ASSERT_TRUE(selectGroup(session, g));
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{m1, m2}));
     EXPECT_EQ(shape(session), "a Signs[D] m1[o] m2[o] z ");
     ASSERT_TRUE(removeGroup(session, g));
     EXPECT_EQ(session.history().back().name, "Removing tree");
-    EXPECT_EQ(shape(session), "a m1 m2 z "); // the description Line is deleted
+    EXPECT_EQ(shape(session), "a m1 m2 z ");
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(shape(session), "a Signs[D] m1[o] m2[o] z ");
 }
@@ -140,7 +131,6 @@ TEST_F(GroupsTest, AddLinesMovesThemIntoTheGroup)
     ASSERT_TRUE(addLinesToGroup(session, g));
     EXPECT_EQ(session.history().back().name, "Adding line to tree");
     EXPECT_EQ(shape(session), "G[D] a[o] m1[o] m2[o] z[o] ");
-    // Into a closed group, they are closed too.
     EditSession closed{load(kGrouped)};
     ASSERT_TRUE(toggleGroup(closed, g));
     closed.setSelection(Selection{z, {z}, z, {}});

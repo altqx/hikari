@@ -1,7 +1,3 @@
-// GR1 (#364): the pinned harper-ls (HikariHarper.cmake) as a helper process,
-// over LSP on stdio: it starts, gets diagnostics and their replacements, takes
-// its settings (dialect, rules, user dictionary) and is gone when stopped.
-
 #include "hikari/backends/harper_client.h"
 
 #include <QCoreApplication>
@@ -42,7 +38,6 @@ public:
         });
         QObject::connect(&client, &HarperClient::failed, [this](const QString &message) { failures << message; });
     }
-    // The findings for `text`, by the text each covers.
     std::optional<QList<GrammarFinding>> check(const QString &text)
     {
         const quint64 ticket = client.check(text);
@@ -70,7 +65,7 @@ public:
     QStringList failures;
 };
 
-} // namespace
+}
 
 class HarperClientTest : public ::testing::Test {
 protected:
@@ -104,10 +99,9 @@ TEST_F(HarperClientTest, StartsOnTheFirstCheckAndFindsGrammarWithReplacements)
     const auto *their = Checker::find(*findings, text, QStringLiteral("Their"));
     ASSERT_NE(their, nullptr);
     EXPECT_EQ(their->rule, QStringLiteral("TheirToTheyre"));
-    EXPECT_EQ(their->suggestions, QStringList{QStringLiteral("They're")}); // not "They're " too
+    EXPECT_EQ(their->suggestions, QStringList{QStringLiteral("They're")});
     ASSERT_NE(Checker::find(*findings, text, QStringLiteral("has")), nullptr);
 
-    // A second check reuses the process.
     const auto clean = c.check(QStringLiteral("This sentence is fine."));
     ASSERT_TRUE(clean);
     EXPECT_TRUE(clean->isEmpty());
@@ -136,7 +130,6 @@ TEST_F(HarperClientTest, SettingsSwitchRulesAndTheDialectAndRestart)
     ASSERT_TRUE(findings);
     EXPECT_EQ(Checker::find(*findings, text, QStringLiteral("tomorow")), nullptr);
 
-    // British English: "color" is a misspelling. A change restarts the process.
     c.client.setSettings(Checker::settings({}, QStringLiteral("British")));
     EXPECT_FALSE(c.client.running());
     findings = c.check(text);
@@ -179,8 +172,6 @@ TEST_F(HarperClientTest, CancelledChecksAreDroppedAndStopEndsTheProcess)
     EXPECT_TRUE(c.failures.isEmpty());
 }
 
-// The panel's walk keeps several Lines with the client at once: each gets its
-// own findings.
 TEST_F(HarperClientTest, ChecksInFlightTogetherEachGetTheirFindings)
 {
     Checker c;
@@ -200,7 +191,6 @@ TEST_F(HarperClientTest, ChecksInFlightTogetherEachGetTheirFindings)
     EXPECT_EQ(c.client.starts(), 1);
 }
 
-// As the walk sends them: a new check as each one ends, findings on some.
 // harper-ls 3.0.0 deadlocked when two of its texts were opened together.
 TEST_F(HarperClientTest, ChecksSentWhileOthersRunAllEnd)
 {
@@ -220,10 +210,6 @@ TEST_F(HarperClientTest, ChecksSentWhileOthersRunAllEnd)
     EXPECT_TRUE(c.failures.isEmpty());
 }
 
-// The walk's Cancel: every check it has in is cancelled at once, the one
-// harper-ls has open too, and new ones follow. The next text goes in only once
-// harper-ls is done with the open one (texts in together deadlock harper-ls
-// 3.0.0); a cancelled check never reports.
 TEST_F(HarperClientTest, ChecksCancelledTogetherLetTheNextEnd)
 {
     Checker c;
@@ -238,7 +224,6 @@ TEST_F(HarperClientTest, ChecksCancelledTogetherLetTheNextEnd)
         std::erase(waiting, ticket);
         if (++ended >= 20)
             return;
-        // At once, or while harper-ls reads the open one or answers its code actions.
         QTimer::singleShot(ended % 4 * 5, [&] {
             for (const quint64 t : std::exchange(waiting, {})) {
                 cancelled.insert(t);

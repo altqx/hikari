@@ -1,7 +1,3 @@
-// V1: player frames to BGRA off the GUI thread. Every Y'CbCr layout the
-// decoder hands over gives the same colours for the same samples (8- and
-// 16-bit, planar and semi-planar, either chroma order), with the frame's
-// matrix and range; other formats go through Qt's own conversion.
 #include "hikari/application/ycbcr_frame.h"
 #include "hikari/application/yuv_bgra.h"
 #include "hikari/backends/video_frame_bgra.h"
@@ -23,9 +19,8 @@ namespace yuv = hikari::application::yuv;
 
 namespace {
 
-constexpr int kY = 120, kU = 60, kV = 200; // 8-bit samples every layout carries
+constexpr int kY = 120, kU = 60, kV = 200;
 
-// The expected pixel from the documented formula.
 std::array<int, 4> expected(const yuv::Matrix &m, int y, int u, int v)
 {
     std::uint8_t out[4];
@@ -41,7 +36,6 @@ void fill16(uchar *line, int count, std::uint16_t value)
         w[i] = value;
 }
 
-// A frame of uniform samples: luma kY, chroma kU and kV, in `format`'s layout.
 QVideoFrame uniform(QVideoFrameFormat::PixelFormat format, int width, int height,
                     QVideoFrameFormat::ColorSpace space = QVideoFrameFormat::ColorSpace_BT709,
                     QVideoFrameFormat::ColorRange range = QVideoFrameFormat::ColorRange_Video)
@@ -53,7 +47,7 @@ QVideoFrame uniform(QVideoFrameFormat::PixelFormat format, int width, int height
     if (!frame.map(QVideoFrame::WriteOnly))
         return {};
     const int cw = (width + 1) / 2;
-    // The chroma rows Qt allocated (an odd height may have one fewer).
+    // Qt may allocate one chroma row fewer for an odd height.
     int ch = format == QVideoFrameFormat::Format_YUV422P ? height : (height + 1) / 2;
     for (int plane = 1; plane < frame.planeCount(); ++plane)
         ch = std::min(ch, int(frame.mappedBytes(plane) / frame.bytesPerLine(plane)));
@@ -117,8 +111,6 @@ int differing(const IndexedFrame &out, std::array<int, 4> want)
     return bad;
 }
 
-// A frame of `format` whose mapped bytes (every plane, padding included) are
-// random: 16-bit samples of any value, including out-of-range ones.
 QVideoFrame noisy(QVideoFrameFormat::PixelFormat format, int width, int height, unsigned seed)
 {
     QVideoFrame frame(QVideoFrameFormat(QSize(width, height), format));
@@ -132,7 +124,6 @@ QVideoFrame noisy(QVideoFrameFormat::PixelFormat format, int width, int height, 
     return frame;
 }
 
-// "": the same bytes; else where the first one differs.
 QString firstDifference(const IndexedFrame &a, const IndexedFrame &b)
 {
     if (a.width != b.width || a.height != b.height)
@@ -148,7 +139,7 @@ QString firstDifference(const IndexedFrame &a, const IndexedFrame &b)
     return {};
 }
 
-} // namespace
+}
 
 class VideoFrameBgraTests : public QObject {
     Q_OBJECT
@@ -169,7 +160,6 @@ private slots:
     void everyLayoutGivesTheSameColours()
     {
         QFETCH(int, format);
-        // 38 wide: SIMD blocks of 16 and a scalar tail; an odd height.
         const QVideoFrame frame = uniform(QVideoFrameFormat::PixelFormat(format), 38, 9);
         QVERIFY(frame.isValid());
         IndexedFrame out;
@@ -193,7 +183,6 @@ private slots:
             {QVideoFrameFormat::ColorSpace_BT601, QVideoFrameFormat::ColorRange_Video, 8, yuv::Space::Bt601, false},
             {QVideoFrameFormat::ColorSpace_BT709, QVideoFrameFormat::ColorRange_Full, 8, yuv::Space::Bt709, true},
             {QVideoFrameFormat::ColorSpace_BT2020, QVideoFrameFormat::ColorRange_Video, 8, yuv::Space::Bt2020, false},
-            // Untagged: legacy's guess, BT.709 from 600 lines (or wider than 1024).
             {QVideoFrameFormat::ColorSpace_Undefined, QVideoFrameFormat::ColorRange_Unknown, 598, yuv::Space::Bt601,
              false},
             {QVideoFrameFormat::ColorSpace_Undefined, QVideoFrameFormat::ColorRange_Unknown, 600, yuv::Space::Bt709,
@@ -207,9 +196,6 @@ private slots:
         }
     }
 
-    // The indexed video's matrix, when given, wins over the frame's: a
-    // player frame has the paused frame's colours (V4's YCbCr matrix,
-    // e.g. TV.601 over a BT.709 source).
     void theIndexedVideosMatrixApplies()
     {
         namespace ffms = hikari::application::ffms_colour;
@@ -226,7 +212,6 @@ private slots:
             {{ffms::kFcc, ffms::kRangeMpeg}, yuv::Space::Fcc, false},
             {{ffms::kSmpte240m, ffms::kRangeMpeg}, yuv::Space::Smpte240m, false},
             {{9, ffms::kRangeMpeg}, yuv::Space::Bt2020, false},
-            // RGB (no matrix): the frame's own (BT.709 limited here), with the input's range.
             {{ffms::kRgb, ffms::kRangeMpeg}, yuv::Space::Bt709, false},
         };
         for (const Case &c : cases) {
@@ -236,40 +221,34 @@ private slots:
         }
     }
 
-    // Rotation and mirroring are not applied (the indexed frames and the
-    // subtitles take the coded picture as it is): a rotated stream's frame
-    // keeps its coded size and pixels.
     void rotationAndMirroringAreNotApplied()
     {
         const int w = 24, h = 8;
         QVideoFrameFormat f(QSize(w, h), QVideoFrameFormat::Format_YUV420P);
         f.setColorSpace(QVideoFrameFormat::ColorSpace_BT601);
-        f.setRotation(QtVideo::Rotation::Clockwise90); // the stream's orientation
+        f.setRotation(QtVideo::Rotation::Clockwise90);
         f.setMirrored(true);
         QVideoFrame frame(f);
         QVERIFY(frame.map(QVideoFrame::WriteOnly));
         for (int y = 0; y < h; ++y)
             for (int x = 0; x < w; ++x)
-                frame.bits(0)[y * frame.bytesPerLine(0) + x] = uchar(x < w / 2 ? 40 : 200); // dark left, light right
+                frame.bits(0)[y * frame.bytesPerLine(0) + x] = uchar(x < w / 2 ? 40 : 200);
         for (int plane = 1; plane < 3; ++plane)
             std::memset(frame.bits(plane), 128, static_cast<std::size_t>(frame.mappedBytes(plane)));
         frame.unmap();
-        frame.setRotation(QtVideo::Rotation::Clockwise180); // and the frame's own
+        frame.setRotation(QtVideo::Rotation::Clockwise180);
         frame.setMirrored(true);
         IndexedFrame out;
         QVERIFY(hikari::backends::videoFrameToBgra(frame, out));
         QCOMPARE(out.width, w);
         QCOMPARE(out.height, h);
         const auto *p = reinterpret_cast<const std::uint8_t *>(out.bgra.data());
-        QVERIFY(p[0] < 64);                   // the top left is still dark
-        QVERIFY(p[(w - 1) * 4] > 192);        // and the top right light
-        // What Qt's own conversion makes of it, for the record.
+        QVERIFY(p[0] < 64);
+        QVERIFY(p[(w - 1) * 4] > 192);
         const QImage qt = QVideoFrame(frame).toImage();
         qInfo("Qt's toImage of the rotated frame: %dx%d", qt.width(), qt.height());
     }
 
-    // Qt's own CPU conversion (what the player path used before) gives the
-    // same colours within rounding, for both matrices and ranges.
     void matchesQtsOwnConversion_data()
     {
         QTest::addColumn<int>("space");
@@ -289,9 +268,6 @@ private slots:
                                           QVideoFrameFormat::ColorSpace(space), QVideoFrameFormat::ColorRange(range));
         IndexedFrame out;
         QVERIFY(hikari::backends::videoFrameToBgra(frame, out));
-        // Without a graphics device (offscreen) Qt's CPU fallback converts
-        // every frame as BT.601 limited range; with one (xvfb, a desktop)
-        // it follows the frame's matrix and range as the player path did.
         if (QGuiApplication::platformName() == QLatin1String("offscreen") &&
             !(space == QVideoFrameFormat::ColorSpace_BT601 && range == QVideoFrameFormat::ColorRange_Video))
             QSKIP("Qt's offscreen conversion is BT.601 limited only");
@@ -337,10 +313,6 @@ private slots:
         QCOMPARE(differing(out, {10, 20, 30, 255}), 0);
     }
 
-    // V1, the GPU path: the planes videoFrameToYcbcr keeps (the presenter's
-    // shader input) convert to exactly videoFrameToBgra's bytes, for every
-    // layout, odd and tiny sizes, padded rows, short chroma mappings,
-    // and the indexed video's matrix or the frame's own.
     void planesConvertToTheCpuPathsBytes_data()
     {
         QTest::addColumn<int>("format");
@@ -378,8 +350,6 @@ private slots:
         }
     }
 
-    // A 1080p NV12 or YUV420P frame's planes take 1.5 bytes a pixel (the
-    // BGRA frame 4): what the presenter uploads.
     void planesTakeOneAndAHalfBytesAPixel()
     {
         for (const auto format : {QVideoFrameFormat::Format_NV12, QVideoFrameFormat::Format_YUV420P}) {
@@ -390,7 +360,6 @@ private slots:
         }
     }
 
-    // A format without planes is made BGRA, as videoFrameToBgra makes it.
     void otherFormatsStayBgra()
     {
         QVideoFrame frame = noisy(QVideoFrameFormat::Format_BGRX8888, 5, 3, 3);

@@ -1,9 +1,4 @@
-# 38e: the tests' stand-in for the desktop (desktop_guard.h). Object
-# libraries, so each executable gets the startup functions; link both
-# directly (an object library's objects do not pass on transitively):
-#  - hikari_test_url_recorder: every UI suite and every test executable that
-#    builds the application (tests/ui, tests/modules);
-#  - hikari_test_desktop_routes: those that link the application's backends.
+# Object libraries' objects do not pass on transitively: link both directly.
 add_library(hikari_test_url_recorder OBJECT url_recorder.cpp desktop_guard.h)
 set_target_properties(hikari_test_url_recorder PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_test_url_recorder PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

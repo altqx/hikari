@@ -1,8 +1,3 @@
-// Controls for image comparison: a Qt Quick scene and a libass drawing are
-// rendered and compared with committed references; a noise case exercises the
-// tolerance. The failing twin renders a different scene against the same
-// reference. Shapes only: no text, so host fonts cannot change the pixels.
-
 #include "image_compare.h"
 
 #include <QFile>
@@ -49,9 +44,7 @@ QImage renderScene(const char *qml)
     return image;
 }
 
-// A filled ASS vector drawing (\p1). libass still needs one usable font to
-// accept the event, so the control registers a fixed font from the locked Qt
-// install (OFL Titillium Web) in memory; no system font provider is used.
+// libass needs one usable font to accept even a drawing event.
 QImage renderAssDrawing()
 {
     QFile fontFile(QStringLiteral(HIKARI_TEST_FONT));
@@ -104,7 +97,7 @@ bool check(const QImage &image, const QString &name, ImageTolerance tolerance = 
     return ok;
 }
 
-} // namespace
+}
 
 class ImageControl : public QObject {
     Q_OBJECT
@@ -112,7 +105,6 @@ private slots:
     void qtQuickSceneMatchesReference()
     {
 #if HIKARI_IMAGE_FAILING
-        // Same reference, different scene: must fail.
         const QImage image = renderScene("import QtQuick\nRectangle { width: 96; height: 64; color: \"white\" }");
 #else
         const QImage image = renderScene(kScene);
@@ -125,7 +117,6 @@ private slots:
     {
         const QImage image = renderAssDrawing();
         QVERIFY(!image.isNull());
-        // Guard against a silently empty render: the drawing must paint pixels.
         QVERIFY(image.pixel(30, 20) != qRgba(0, 0, 0, 255));
         QVERIFY(check(image, QStringLiteral("runner-libass-drawing")));
     }
@@ -138,7 +129,7 @@ private slots:
         noisy.setPixel(3, 3, qRgba(102, 100, 100, 255));
         QVERIFY(compareImages(noisy, base, {2, 0}).withinTolerance);
         QVERIFY(!compareImages(noisy, base, {0, 0}).withinTolerance);
-        QVERIFY(compareImages(noisy, base, {0, 1.0 / 1024}).withinTolerance); // one pixel in 1024 allowed
+        QVERIFY(compareImages(noisy, base, {0, 1.0 / 1024}).withinTolerance);
         QImage resized(16, 32, QImage::Format_ARGB32);
         QVERIFY(!compareImages(resized, base, {255, 1}).sizeMatches);
     }

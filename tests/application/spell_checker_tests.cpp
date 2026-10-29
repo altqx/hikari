@@ -1,10 +1,3 @@
-// F3: the spell checker against legacy SpellChecker (AvailableDics,
-// Initialize, CheckWord, AddWord, RemoveWords), SpellCheckerDialog
-// (FindNextMisspell, SetNextMisspell, Replace, ReplaceAll, Ignore, IgnoreAll,
-// AddWord, LoadAddedMisspels, OnActive) and the TextEditor's suggestion
-// replacement (EditBox::Send(EDITBOX_SPELL_CHECKER)) at 20d647c4, over an
-// in-memory fake of the Hunspell backend.
-
 #include "hikari/application/spell_checker.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
@@ -96,8 +89,6 @@ struct Spelling : ::testing::Test {
 };
 
 #ifndef _WIN32
-// Legacy's Linux AvailableDics: wxDir lists readdir's order, without hidden
-// names or directories, and the n-th .dic pairs with the n-th .aff.
 std::vector<std::string> readdirPairs(const fs::path &folder)
 {
     std::vector<std::string> dics, affs;
@@ -129,13 +120,8 @@ std::vector<std::string> names(const std::vector<std::u16string> &words)
     return out;
 }
 
-} // namespace
+}
 
-// SP1: AvailableDics pairs each .dic with the .aff of its name (legacy
-// paired them by position, so a .dic without its .aff dropped the pairs
-// after it). The order is the file system's listing of the .dic files on
-// each platform (R5-per-platform): NTFS's upper-cased order on Windows,
-// readdir's on Linux; directories and hidden entries are not listed.
 TEST_F(Spelling, AvailableDictionariesPairByName)
 {
     writeFile(folder / "pl.dic", "1\nkot\n");
@@ -161,7 +147,6 @@ TEST_F(Spelling, AvailableDictionariesPairByName)
     const auto listed = names(availableDictionaries(folder));
     EXPECT_EQ(listed, readdirPairs(folder));
     EXPECT_TRUE(std::ranges::find(listed, ".hidden") == listed.end());
-    // Unpaired files drop no pair, wherever readdir puts them.
     writeFile(folder / "de.dic", "1\nHaus\n");
     writeFile(folder / "ko_KR.aff", "");
     writeFile(folder / "ta.dic", "1\nx\n");
@@ -170,7 +155,6 @@ TEST_F(Spelling, AvailableDictionariesPairByName)
     EXPECT_EQ(sorted, readdirPairs(folder));
     std::ranges::sort(sorted);
     EXPECT_EQ(sorted, (std::vector<std::string>{"en_US", "pl", "ta"}));
-    // Case matters on Linux: "*.dic" does not match EN.DIC.
     writeFile(folder / "EN.DIC", "");
     writeFile(folder / "EN.AFF", "");
     EXPECT_EQ(names(availableDictionaries(folder)), readdirPairs(folder));
@@ -178,14 +162,12 @@ TEST_F(Spelling, AvailableDictionariesPairByName)
     EXPECT_TRUE(availableDictionaries(folder / "missing").empty());
 }
 
-// Initialize: DICTIONARY_LANGUAGE's pair (en_US when empty), then the user
-// dictionary's words; without the pair, or without a backend, nothing loads.
 TEST_F(Spelling, InitializeLoadsTheUserDictionary)
 {
     writeFile(checker->userDictionary(), "\xEF\xBB\xBFkotek\r\n123\r\n\r\nzzz \r\n");
     EXPECT_EQ(checker->initialize(u"pl"), SpellChecker::Status::NoDictionary);
     EXPECT_FALSE(checker->ready());
-    EXPECT_TRUE(checker->checkWord(u"wrold")); // spell checking off: every word is correct
+    EXPECT_TRUE(checker->checkWord(u"wrold"));
     EXPECT_EQ(checker->initialize(u""), SpellChecker::Status::Ready);
     ASSERT_TRUE(backend);
     EXPECT_EQ(names(backend->added), (std::vector<std::string>{"kotek", "zzz"}));
@@ -196,9 +178,6 @@ TEST_F(Spelling, InitializeLoadsTheUserDictionary)
     EXPECT_EQ(noBackend.initialize(u"en_US"), SpellChecker::Status::LoadFailed);
 }
 
-// AddWord appends "\n" + word to UserDic.udic (UTF-8 with a BOM, the word
-// alone for a new or empty file); RemoveWords rewrites the remaining lines
-// with CRLF.
 TEST_F(Spelling, UserWordsPersist)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -206,7 +185,7 @@ TEST_F(Spelling, UserWordsPersist)
     EXPECT_FALSE(checker->addWord(u"-12"));
     EXPECT_FALSE(checker->checkWord(u"wrold"));
     EXPECT_TRUE(checker->addWord(u"wrold"));
-    EXPECT_TRUE(checker->checkWord(u"wrold")); // the cached result was dropped
+    EXPECT_TRUE(checker->checkWord(u"wrold"));
     EXPECT_TRUE(checker->addWord(u"Gdańsk"));
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBFwrold\nGda\xC5\x84sk");
     EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold", "Gda\xC5\x84sk"}));
@@ -215,16 +194,12 @@ TEST_F(Spelling, UserWordsPersist)
     EXPECT_EQ(names(backend->removed), (std::vector<std::string>{"wrold"}));
     EXPECT_FALSE(checker->checkWord(u"wrold"));
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBFGda\xC5\x84sk\r\n");
-    // The next AddWord appends "\n" + word to the text as read: Windows text
-    // mode reads the CRLF as LF, the Linux build keeps "\r" (R5-per-platform).
     EXPECT_TRUE(checker->addWord(u"zzz"));
 #ifdef _WIN32
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBFGda\xC5\x84sk\n\nzzz");
 #else
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBFGda\xC5\x84sk\r\n\nzzz");
 #endif
-    // Removing every word leaves a BOM-only file; FileOpen reads it as a
-    // failure, so the next AddWord writes the word alone.
     EXPECT_TRUE(checker->removeWords({u"Gda\u0144sk", u"zzz"}));
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBF");
     EXPECT_FALSE(readUserDictionary(checker->userDictionary()));
@@ -236,17 +211,13 @@ TEST_F(Spelling, UserWordsPersist)
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBF" "beta");
 }
 
-// GR1 (#364): Harper's "Add to dictionary" writes UserDic.udic with no
-// Hunspell dictionary loaded (Harper checks spelling while Hunspell is off),
-// and the loaded dictionary takes the word too.
 TEST_F(Spelling, UserWordsWithoutADictionary)
 {
-    EXPECT_FALSE(checker->addWord(u"wrold")); // legacy AddWord needs a dictionary
+    EXPECT_FALSE(checker->addWord(u"wrold"));
     EXPECT_FALSE(checker->addUserWord(u""));
     EXPECT_FALSE(checker->addUserWord(u"-12"));
     EXPECT_TRUE(checker->addUserWord(u"wrold"));
     EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold"}));
-    // ...and removed the same way (Words added to dictionary).
     EXPECT_TRUE(checker->addUserWord(u"gone"));
     EXPECT_TRUE(checker->removeWords({u"gone"}));
     EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold"}));
@@ -257,10 +228,6 @@ TEST_F(Spelling, UserWordsWithoutADictionary)
     EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold", "zzyzx"}));
 }
 
-// UserDic.udic is read as each legacy build read it (R5-per-platform):
-// Windows text mode folds CR LF byte pairs and stops at Ctrl+Z, before
-// decoding; Linux keeps every byte, so a "\r"-only line is a blank entry in
-// the removal list there (wxStringTokenizer skips only empty tokens).
 TEST_F(Spelling, UserDictionaryReadsPerPlatform)
 {
     writeFile(checker->userDictionary(), "\xEF\xBB\xBF" "alpha\r\n\r\nbeta\x1Agamma\r");
@@ -271,16 +238,12 @@ TEST_F(Spelling, UserDictionaryReadsPerPlatform)
     EXPECT_EQ(readUserDictionary(checker->userDictionary()), std::u16string(u"alpha\r\n\r\nbeta\x1Agamma\r"));
     EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"alpha", "", "beta\x1Agamma"}));
 #endif
-    // A UTF-16 file: the CRT folds bytes, so "\r\0\n\0" stays as it is.
     writeFile(checker->userDictionary(), std::string("\xFF\xFE" "a\0\r\0\n\0b\0", 10));
     EXPECT_EQ(readUserDictionary(checker->userDictionary()), std::u16string(u"a\r\nb"));
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
     EXPECT_EQ(names(backend->added), (std::vector<std::string>{"a", "b"}));
 }
 
-// Two Dictionary folders: the user's (UserDic.udic) first, then the bundled
-// one beside the executable. A language loads from the first folder holding
-// both files; the list names each symbol once.
 TEST_F(Spelling, DictionaryFoldersInSearchOrder)
 {
     const fs::path bundled = folder / "bundled";
@@ -292,7 +255,6 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
 #ifdef _WIN32
     const std::vector<std::string> listed{"en_US", "pl"};
 #else
-    // Each folder lists its pairs in readdir's .dic order.
     std::vector<std::string> listed = readdirPairs(folder);
     for (auto &symbol : readdirPairs(bundled))
         if (std::ranges::find(listed, symbol) == listed.end())
@@ -304,8 +266,8 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
     ASSERT_EQ(both.initialize(u"pl"), SpellChecker::Status::Ready);
     EXPECT_TRUE(both.checkWord(u"kot"));
     ASSERT_EQ(both.initialize(u"en_US"), SpellChecker::Status::Ready);
-    EXPECT_TRUE(both.checkWord(u"Hello")); // the user's folder first
-    EXPECT_FALSE(both.checkWord(u"bundled", true)); // waiting for pl, which lacks it too
+    EXPECT_TRUE(both.checkWord(u"Hello"));
+    EXPECT_FALSE(both.checkWord(u"bundled", true));
     EXPECT_EQ(both.userDictionary(), folder / "UserDic.udic");
     EXPECT_TRUE(both.addWord(u"Hikari"));
     EXPECT_TRUE(fs::exists(folder / "UserDic.udic"));
@@ -313,11 +275,6 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
     EXPECT_EQ(both.initialize(u"de"), SpellChecker::Status::NoDictionary);
 }
 
-// SP1 (#474): the primary language loads at Initialize; every other
-// installed dictionary loads the first time a word of its script is
-// checked. A word is correct when any dictionary of its scripts accepts it,
-// and when one of its scripts has no dictionary; the user's words reach the
-// dictionaries that load later.
 TEST_F(Spelling, MultilingualRoutesWordsByScript)
 {
     writeFile(folder / "pl.aff", "SET UTF-8\n");
@@ -326,11 +283,10 @@ TEST_F(Spelling, MultilingualRoutesWordsByScript)
     writeFile(folder / "ko_KR.dic", "2\n\xEC\x95\x88\xEB\x85\x95\xED\x95\x98\xEC\x84\xB8\xEC\x9A\x94\n\xEC\x84\xB8\xEA\xB3\x84\n");
     writeFile(folder / "ta.aff", "SET UTF-8\n");
     writeFile(folder / "ta.dic", "1\n\xE0\xAE\xB5\xE0\xAE\xA3\xE0\xAE\x95\xE0\xAF\x8D\xE0\xAE\x95\xE0\xAE\xAE\xE0\xAF\x8D\n");
-    // A dictionary whose language is in no table: its TRY letters say Greek.
     writeFile(folder / "custom.aff", "SET UTF-8\nTRY \xCE\xB1\xCE\xB5\xCE\xB9\n");
     writeFile(folder / "custom.dic", "1\n\xCE\xB3\xCE\xB5\xCE\xB9\xCE\xAC\n");
     writeFile(checker->userDictionary(), "\xEF\xBB\xBFHikari\n\xEC\x84\x9C\xEC\x9A\xB8");
-    std::mutex mutex; // the other dictionaries load on their own threads
+    std::mutex mutex;
     std::vector<std::string> loaded;
     SpellChecker multi(folder, [&, inner = fakes::FakeSpelling::loader()](const fs::path &aff, const fs::path &dic) {
         const std::lock_guard lock(mutex);
@@ -339,7 +295,6 @@ TEST_F(Spelling, MultilingualRoutesWordsByScript)
     });
     ASSERT_EQ(multi.initialize(u"en_US"), SpellChecker::Status::Ready);
     EXPECT_EQ(loaded, (std::vector<std::string>{"en_US"}));
-    // Latin: English or Polish (waiting for Polish, as the window does).
     EXPECT_TRUE(multi.checkWord(u"Hello", true));
     EXPECT_TRUE(multi.checkWord(u"kota", true));
     EXPECT_TRUE(multi.checkWord(u"Hikari", true));
@@ -347,7 +302,6 @@ TEST_F(Spelling, MultilingualRoutesWordsByScript)
     EXPECT_FALSE(multi.checkWord(u"kotta", true));
     std::ranges::sort(loaded);
     EXPECT_EQ(loaded, (std::vector<std::string>{"en_US", "pl"}));
-    // Hangul and Tamil: their own dictionaries, the user's words too.
     EXPECT_TRUE(multi.checkWord(u"안녕하세요", true));
     EXPECT_TRUE(multi.checkWord(u"서울", true));
     EXPECT_FALSE(multi.checkWord(u"세게계", true));
@@ -356,29 +310,23 @@ TEST_F(Spelling, MultilingualRoutesWordsByScript)
     EXPECT_TRUE(multi.checkWord(u"γειά", true));
     EXPECT_FALSE(multi.checkWord(u"γεια", true));
     EXPECT_EQ(loaded.size(), 5u);
-    // No Cyrillic or Japanese dictionary: not marked.
     EXPECT_TRUE(multi.checkWord(u"привет", true));
     EXPECT_TRUE(multi.checkWord(u"こんにちは", true));
-    EXPECT_TRUE(multi.checkWord(u"Привет세계", true)); // one of its scripts has none
-    EXPECT_FALSE(multi.checkWord(u"Seoul세게계", true)); // both have one, and neither knows it
+    EXPECT_TRUE(multi.checkWord(u"Привет세계", true));
+    EXPECT_FALSE(multi.checkWord(u"Seoul세게계", true));
     EXPECT_TRUE(multi.checkWord(u"123", true));
-    EXPECT_FALSE(multi.checkWord(u"١wrold", true)); // an Arabic digit is no Arabic word
+    EXPECT_FALSE(multi.checkWord(u"١wrold", true));
     EXPECT_FALSE(multi.checkWord(u"", true));
-    // A word added now reaches every loaded dictionary.
     EXPECT_TRUE(multi.addWord(u"세게계"));
     EXPECT_TRUE(multi.checkWord(u"세게계", true));
     EXPECT_TRUE(multi.removeWords({u"세게계"}));
     EXPECT_FALSE(multi.checkWord(u"세게계", true));
-    // The primary decides only the order: Polish first checks the same way.
     ASSERT_EQ(multi.initialize(u"pl"), SpellChecker::Status::Ready);
     EXPECT_TRUE(multi.checkWord(u"Hello", true));
     EXPECT_TRUE(multi.checkWord(u"안녕하세요", true));
     EXPECT_FALSE(multi.checkWord(u"wrold", true));
 }
 
-// SP1: the Grid and the editor don't wait for a dictionary still loading:
-// its script's words are not marked, and not kept, until it is in; then the
-// loaded handler asks for the marks again.
 TEST_F(Spelling, MultilingualMarksWaitForNoLoad)
 {
     writeFile(folder / "ko_KR.aff", "SET UTF-8\n");
@@ -397,9 +345,9 @@ TEST_F(Spelling, MultilingualMarksWaitForNoLoad)
             loadedOnce.set_value();
     });
     ASSERT_EQ(multi.initialize(u"en_US"), SpellChecker::Status::Ready);
-    EXPECT_TRUE(multi.checkWord(u"세게계")); // ko_KR is loading
     EXPECT_TRUE(multi.checkWord(u"세게계"));
-    EXPECT_FALSE(multi.checkWord(u"wrold")); // en_US checks Latin alone
+    EXPECT_TRUE(multi.checkWord(u"세게계"));
+    EXPECT_FALSE(multi.checkWord(u"wrold"));
     EXPECT_EQ(handled, 0);
     release.set_value();
     ASSERT_EQ(loadedOnce.get_future().wait_for(std::chrono::seconds(10)), std::future_status::ready);
@@ -408,15 +356,11 @@ TEST_F(Spelling, MultilingualMarksWaitForNoLoad)
     EXPECT_EQ(handled, 1);
 }
 
-// SP1: suggestions from the primary first when it checks the word's script,
-// then from the script's other dictionaries, the one knowing more of the
-// Line's other words first; each suggestion once. The window and the editor
-// pass the Line's words.
 TEST_F(Spelling, MultilingualSuggestionsFollowThePrimaryThenTheNeighbours)
 {
     writeFile(folder / "en_US.dic", "3\nHello\nthe\ncot\n");
     writeFile(folder / "pl.aff", "");
-    writeFile(folder / "pl.dic", "5\nAla\nma\nkot\nkota\ncot\n"); // "cot" in both
+    writeFile(folder / "pl.dic", "5\nAla\nma\nkot\nkota\ncot\n");
     writeFile(folder / "ko_KR.aff", "");
     writeFile(folder / "ko_KR.dic", "1\n\xEC\x84\xB8\xEA\xB3\x84\n");
     const std::vector<std::u16string> polish{u"Ala", u"ma", u"kott"};
@@ -426,7 +370,6 @@ TEST_F(Spelling, MultilingualSuggestionsFollowThePrimaryThenTheNeighbours)
     EXPECT_EQ(names(checker->suggestions(u"kott")), (std::vector<std::string>{"cot", "kot", "kota"}));
     ASSERT_EQ(checker->initialize(u"pl"), SpellChecker::Status::Ready);
     EXPECT_EQ(names(checker->suggestions(u"kott", english)), (std::vector<std::string>{"kot", "kota", "cot"}));
-    // A Korean primary checks no Latin word: the neighbours decide.
     ASSERT_EQ(checker->initialize(u"ko_KR"), SpellChecker::Status::Ready);
     EXPECT_EQ(names(checker->suggestions(u"kott", polish)), (std::vector<std::string>{"kot", "kota", "cot"}));
     EXPECT_EQ(names(checker->suggestions(u"kott", english)), (std::vector<std::string>{"cot", "kot", "kota"}));
@@ -441,9 +384,6 @@ TEST_F(Spelling, MultilingualSuggestionsFollowThePrimaryThenTheNeighbours)
     EXPECT_EQ(names(walk.current()->suggestions), (std::vector<std::string>{"kot", "kota", "cot"}));
 }
 
-// The Spellchecker window walks from the active Line; the found word's Line
-// becomes active and selected; Ignore skips one word, Ignore all every
-// occurrence in any case; comments and upper-case words can be skipped.
 TEST_F(Spelling, WalkFindsIgnoresAndSkips)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -471,18 +411,17 @@ TEST_F(Spelling, WalkFindsIgnoresAndSkips)
     EXPECT_EQ(session.selection().selected, std::set<core::LineId>{ids[1]});
     walk.ignore(session, options);
     EXPECT_EQ(walk.current()->word, u"Teh");
-    walk.ignoreAll(session, u"wrold", options); // also "WROLD"
-    EXPECT_EQ(walk.current()->word, u"Teh");     // the current word is still the first unignored
+    walk.ignoreAll(session, u"wrold", options);
+    EXPECT_EQ(walk.current()->word, u"Teh");
     walk.ignoreAll(session, u"teh", options);
     EXPECT_EQ(walk.current()->word, u"BAD");
     walk.ignore(session, options);
     EXPECT_EQ(walk.current()->word, u"txet");
-    EXPECT_EQ(walk.current()->start, 15); // raw offsets around the blocks
+    EXPECT_EQ(walk.current()->start, 15);
     walk.ignore(session, options);
     EXPECT_FALSE(walk.current());
     EXPECT_EQ(session.historySize(), 1u);
 
-    // From the first Line again with the options: comments and BAD are skipped.
     session.setSelection(Selection{ids[0], {ids[0]}, ids[0], {}});
     SpellCheckWalk fresh(*checker, text);
     options = {.ignoreComments = true, .ignoreUpperCase = true};
@@ -493,10 +432,6 @@ TEST_F(Spelling, WalkFindsIgnoresAndSkips)
     EXPECT_EQ(fresh.current()->word, u"txet");
 }
 
-// Replace writes the current word's replacement as one "Correcting spelling
-// errors" step and goes on; a replacement still misspelled at the same
-// offset is skipped (legacy compares the offset only, so a word at that
-// offset in the next Line is skipped too).
 TEST_F(Spelling, ReplaceIsOneStepAndSkipsTheSameOffset)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -515,21 +450,15 @@ TEST_F(Spelling, ReplaceIsOneStepAndSkipsTheSameOffset)
     EXPECT_EQ(session.history().back().name, "Correcting spelling errors");
     EXPECT_EQ(utf8(session.document().lines()[0]->text), "The wo{\\i1}rdd");
     EXPECT_EQ(walk.current()->word, u"wordd");
-    // The block stays inside the corrected word.
     ASSERT_EQ(walk.replace(session, u"world", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(utf8(session.document().lines()[0]->text), "The wo{\\i1}rld");
     EXPECT_EQ(walk.current()->word, u"xyz");
-    // "xyz" -> "qqq" is still misspelled at offset 0: skipped, on to "txet".
     ASSERT_EQ(walk.replace(session, u"qqq", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(walk.current()->word, u"txet");
-    // "txet" -> "text" is correct; the next word is "abc" at offset 0 on the
-    // next Line, which is not txet's offset (4): found.
     ASSERT_EQ(walk.replace(session, u"text", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(walk.current()->word, u"abc");
     EXPECT_EQ(session.historySize(), 5u);
 
-    // The offset quirk: Line 0's "qqq" corrected to "good" moves on to Line
-    // 1's "abc", also at offset 0, which is skipped as if unchanged.
     EditSession two{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,qqq\n"
                                                 "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,abc def\n")};
     const auto top = two.document().lines()[0]->id;
@@ -540,9 +469,6 @@ TEST_F(Spelling, ReplaceIsOneStepAndSkipsTheSameOffset)
     EXPECT_EQ(quirk.current()->word, u"def");
 }
 
-// Replace all: every Line's matches in any case, each in its own case
-// (GetRightCase); one step; in translation mode the result goes to the
-// translation even when it was read from an untranslated Line's text.
 TEST_F(Spelling, ReplaceAllKeepsCaseAndTranslationQuirk)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -562,7 +488,6 @@ TEST_F(Spelling, ReplaceAllKeepsCaseAndTranslationQuirk)
     EXPECT_EQ(utf8(lines[0]->text), "world World WORLD");
     EXPECT_EQ(utf8(lines[1]->text), "wrold");
     EXPECT_EQ(utf8(lines[2]->text), "{wrold} wroldly");
-    // Nothing matched: no step.
     EXPECT_EQ(walk.replaceAll(session, u"zzz", u"x", options), SpellCheckWalk::Result::NothingReplaced);
     EXPECT_EQ(walk.replaceAll(session, u"", u"x", options), SpellCheckWalk::Result::Unchanged);
     EXPECT_EQ(session.historySize(), 2u);
@@ -573,15 +498,12 @@ TEST_F(Spelling, ReplaceAllKeepsCaseAndTranslationQuirk)
     tl.setSelection(Selection{line, {line}, line, {}});
     ASSERT_TRUE(spellsTranslation(tl.document()));
     SpellCheckWalk tlWalk(*checker, text);
-    EXPECT_FALSE(tlWalk.next(tl, options)); // the empty translation is checked
+    EXPECT_FALSE(tlWalk.next(tl, options));
     ASSERT_EQ(tlWalk.replaceAll(tl, u"wrold", u"world", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(utf8(tl.document().lines()[0]->text), "wrold");
     EXPECT_EQ(utf8(tl.document().lines()[0]->translation), "world");
 }
 
-// Add to dictionary persists the word and goes on; OnActive starts again
-// when the active Line or its text changed, but not right after "No
-// spelling errors were found".
 TEST_F(Spelling, AddWordAndActivation)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -596,12 +518,10 @@ TEST_F(Spelling, AddWordAndActivation)
     EXPECT_TRUE(walk.addWord(session, u"aaa", options));
     EXPECT_EQ(walk.current()->word, u"bbb");
     EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"aaa"}));
-    EXPECT_FALSE(walk.activated(session, options)); // nothing changed
-    // The active Line moved: start again there.
+    EXPECT_FALSE(walk.activated(session, options));
     session.setSelection(Selection{second, {second}, second, {}});
     EXPECT_TRUE(walk.activated(session, options));
     EXPECT_EQ(walk.current()->word, u"ccc");
-    // Its text changed: start again from its first word.
     ASSERT_TRUE(session.run(Command{"Line editing", session.revision(), {second}, [&](core::Document &d) {
                             return d.editLine(second, [](core::LineRecord &l) { l.text = u8"ddd ccc"; });
                         }}));
@@ -610,15 +530,12 @@ TEST_F(Spelling, AddWordAndActivation)
     walk.ignore(session, options);
     walk.ignore(session, options);
     EXPECT_FALSE(walk.current());
-    EXPECT_FALSE(walk.activated(session, options)); // the message's own activation
+    EXPECT_FALSE(walk.activated(session, options));
     session.setSelection(Selection{first, {first}, first, {}});
     EXPECT_TRUE(walk.activated(session, options));
     EXPECT_EQ(walk.current()->word, u"bbb");
 }
 
-// The editor: marks of its spell-checked field, the misspelling under the
-// caret (inclusive span), and a chosen suggestion committing the draft and
-// the replacement as one "Correcting spelling errors in the text field" step.
 TEST_F(Spelling, EditorReplacementCommitsTheDraft)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -629,7 +546,7 @@ TEST_F(Spelling, EditorReplacementCommitsTheDraft)
     const auto marks = editorMarks(u"good wrold}", core::SubtitleFormat::Ass, *checker, text);
     EXPECT_EQ(marks.errors, (std::vector<int>{10, 10, 5, 9}));
     EXPECT_EQ(misspellAt(marks, 9), std::optional<std::size_t>(1));
-    EXPECT_EQ(misspellAt(marks, 10), std::nullopt); // a bracket error has no span
+    EXPECT_EQ(misspellAt(marks, 10), std::nullopt);
     EXPECT_TRUE(editorMarks(u"", core::SubtitleFormat::Ass, *checker, text).errors.empty());
     const auto caret = replaceInEditor(session, line, false, marks.misspells[1], u"world");
     ASSERT_TRUE(caret);
@@ -641,9 +558,6 @@ TEST_F(Spelling, EditorReplacementCommitsTheDraft)
     EXPECT_FALSE(session.draftLine());
 }
 
-// GR1 (#364): a grammar suggestion goes in over the finding's projection
-// range, the tags inside it kept in order, as one step with the draft; a text
-// changed since the check, or a range over a drawing, is refused.
 TEST_F(Spelling, GrammarReplacementKeepsTagsAndRefusesStaleText)
 {
     EditSession session{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,I has a apple\n")};
@@ -658,14 +572,13 @@ TEST_F(Spelling, GrammarReplacementKeepsTagsAndRefusesStaleText)
     EXPECT_EQ(refusal(replaceGrammar(session, line, true, checked, 2, 5, u"have")), CommandRefusal::StaleRevision);
     const auto caret = replaceGrammar(session, line, false, checked, 2, 5, u"have");
     ASSERT_TRUE(caret);
-    EXPECT_EQ(*caret, 11u); // raw, before {\i0}
+    EXPECT_EQ(*caret, 11u);
     EXPECT_EQ(session.historySize(), 2u);
     EXPECT_EQ(session.history().back().name, "Correcting grammar errors in the text field");
     EXPECT_EQ(utf8(session.document().lines()[0]->text), R"(I {\i1}have{\i0} a apple)");
     EXPECT_EQ(session.document().lines()[0]->start.value.microseconds(), 1500000);
     EXPECT_FALSE(session.draftLine());
 
-    // Over a drawing's payload: refused, nothing changes.
     const std::u16string drawing = uR"(a {\p1}m 0 0{\p0}b)";
     ASSERT_TRUE(session.editDraft(line, DraftChange{.text = core::toUtf8(drawing)}));
     ASSERT_TRUE(session.commitDraftAs("Typing"));
@@ -673,9 +586,6 @@ TEST_F(Spelling, GrammarReplacementKeepsTagsAndRefusesStaleText)
     EXPECT_EQ(utf8(session.document().lines()[0]->text), R"(a {\p1}m 0 0{\p0}b)");
 }
 
-// The walk goes over every Line of the Document, hidden ones (filtered or in
-// a closed group) included, as legacy walks the file's keys; the found Line
-// becomes active and selected.
 TEST_F(Spelling, WalkReachesHiddenLines)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -695,9 +605,6 @@ TEST_F(Spelling, WalkReachesHiddenLines)
     EXPECT_EQ(session.selection().selected, std::set<core::LineId>{hidden});
 }
 
-// An invalid draft under the Block policy keeps its Line: the walk does not
-// move the selection, shows no word and says it was refused; the window's
-// next activation is its message's own and is ignored.
 TEST_F(Spelling, WalkRefusedByABlockedDraft)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -706,7 +613,7 @@ TEST_F(Spelling, WalkRefusedByABlockedDraft)
     const auto lines = session.document().lines();
     const auto first = lines[0]->id;
     session.setSelection(Selection{first, {first}, first, {}});
-    ASSERT_TRUE(session.editDraft(first, DraftChange{.end = core::DocumentTime(0)})); // ends before it starts
+    ASSERT_TRUE(session.editDraft(first, DraftChange{.end = core::DocumentTime(0)}));
     ASSERT_TRUE(session.draftProblem());
     SpellCheckWalk walk(*checker, text);
     const SpellCheckWalk::Options options;
@@ -716,7 +623,6 @@ TEST_F(Spelling, WalkRefusedByABlockedDraft)
     EXPECT_EQ(session.selection().active, first);
     EXPECT_EQ(walk.replace(session, u"world", options), SpellCheckWalk::Result::Unchanged);
     EXPECT_FALSE(walk.activated(session, options));
-    // Once the draft is fixed the next activation starts again.
     session.discardDraft();
     EXPECT_TRUE(walk.activated(session, options));
     EXPECT_FALSE(walk.refused());
@@ -724,8 +630,6 @@ TEST_F(Spelling, WalkRefusedByABlockedDraft)
     EXPECT_EQ(session.selection().active, lines[1]->id);
 }
 
-// stale(): the active Line or its text is no longer the one the word was
-// found in; restart() starts again from the active Line's first word.
 TEST_F(Spelling, StaleWordRestarts)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -736,9 +640,9 @@ TEST_F(Spelling, StaleWordRestarts)
     const SpellCheckWalk::Options options;
     ASSERT_TRUE(walk.next(session, options));
     EXPECT_FALSE(walk.stale(session));
-    EXPECT_TRUE(walk.stale(session, true)); // another Document
+    EXPECT_TRUE(walk.stale(session, true));
     ASSERT_TRUE(session.editDraft(line, DraftChange{.text = u8"xyz good wrold"}));
-    EXPECT_FALSE(walk.stale(session)); // a pending draft is not the Line's text yet
+    EXPECT_FALSE(walk.stale(session));
     ASSERT_TRUE(session.commitDraft());
     EXPECT_TRUE(walk.stale(session));
     walk.restart(session, options);

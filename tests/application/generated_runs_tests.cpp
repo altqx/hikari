@@ -1,5 +1,3 @@
-// KP1 (#286): the generated Lines the Grid folds, and their runs.
-
 #include "hikari/application/generated_runs.h"
 #include "hikari/core/ass_load.h"
 
@@ -24,18 +22,18 @@ core::Document load(std::string_view text)
 constexpr std::string_view kSong =
     "[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-    "Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template syl,{\\pos($x,$y)}\n" // 0
-    "Comment: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,karaoke,{\\k50}ha{\\k50}ru\n"  // 1
-    "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,ha\n"                      // 2
-    "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,ru\n"                      // 3
-    "Comment: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,a commented one\n"          // 4, #400: not generated
-    "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,,{\\k50}ka{\\k50}ze\n"        // 5
-    "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,Effector [fx],ka\n"           // 6
-    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,FX,not the templater's\n"     // 7
-    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx2,nor this\n"               // 8
-    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx,last\n";                   // 9
+    "Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template syl,{\\pos($x,$y)}\n"
+    "Comment: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,karaoke,{\\k50}ha{\\k50}ru\n"
+    "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,ha\n"
+    "Dialogue: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,ru\n"
+    "Comment: 0,0:00:01.00,0:00:03.00,Romaji,,0,0,0,fx,a commented one\n"
+    "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,,{\\k50}ka{\\k50}ze\n"
+    "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,Effector [fx],ka\n"
+    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,FX,not the templater's\n"
+    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx2,nor this\n"
+    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx,last\n";
 
-} // namespace
+}
 
 TEST(GeneratedRuns, OnlyTheTwoEffectsMarkAGeneratedLine)
 {

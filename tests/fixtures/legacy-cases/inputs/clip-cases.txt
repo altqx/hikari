@@ -1,4 +1,4 @@
-# T4: legacy rectangle and vector clips (clip_capture.cpp). The rewrite's
+# T4: legacy rectangle and vector clips (clip_capture.cpp). HikariSub's
 # replay (hikari_application_visual_clip_tests) sets the same view up from
 # "client", "frame" and "zoomat" and checks it gives the "video" and "zoom"
 # lines the legacy probe runs with.

@@ -1,8 +1,3 @@
-// P9: associated-file discovery (legacy HikariSubFrame::FindFile,
-// HikariSubFrame.cpp:1704-1729, and Notebook::LoadVideo's question,
-// Notebook.cpp:1155-1290, at 20d647c4). The Script Info fixtures are in
-// tests/fixtures/associations (C05: a Document's own associations only).
-
 #include "hikari/application/associated_files.h"
 #include "hikari/core/ass_load.h"
 
@@ -57,26 +52,21 @@ protected:
     fs::path folder;
 };
 
-} // namespace
+}
 
-// FindFile: "<name>.*" beside the file, the file itself counted; the first
-// with a video (or subtitle) extension, compared case sensitively.
 TEST_F(SameNamedFile, FindsTheVideoBesideTheSubtitles)
 {
     const auto subs = touch("ep01.ass");
-    EXPECT_FALSE(findSameNamedFile(subs, true)); // fewer than two files
+    EXPECT_FALSE(findSameNamedFile(subs, true));
     touch("ep01.txt");
-    EXPECT_FALSE(findSameNamedFile(subs, true)); // no video among them
+    EXPECT_FALSE(findSameNamedFile(subs, true));
     touch("ep01.mkv");
-    touch("ep02.mkv");             // another name
-    touch("ep01.extra.mkv");       // "ep01.*" matches, but its name differs before the last '.'
+    touch("ep02.mkv");
+    touch("ep01.extra.mkv");
     fs::create_directories(folder / "ep01.dir");
     const auto found = findSameNamedFile(subs, true);
     ASSERT_TRUE(found);
-    // Both "ep01.mkv" and "ep01.extra.mkv" match "ep01.*"; the one found is
-    // the first of them in the folder's own listing order, as wxDir's
-    // (readdir on Linux, FindNextFileW on Windows, as directory_iterator
-    // lists it).
+    // The OS listing order (readdir, FindNextFileW) decides which match wins.
     fs::path first;
     for (const auto &entry : fs::directory_iterator(folder)) {
         const auto name = entry.path().filename();
@@ -96,14 +86,12 @@ TEST_F(SameNamedFile, FindsTheSubtitlesBesideAVideo)
 }
 
 #ifndef _WIN32
-// The extension compare is case sensitive (AfterLast('.') without Lower):
-// "EP.MKV" is no video. On Linux wxMatchWild is case sensitive too.
 TEST_F(SameNamedFile, ExtensionsAndNamesAreCaseSensitive)
 {
     const auto subs = touch("ep.ass");
     touch("ep.MKV");
     EXPECT_FALSE(findSameNamedFile(subs, true));
-    touch("EP.mkv"); // another name on Linux
+    touch("EP.mkv");
     EXPECT_FALSE(findSameNamedFile(subs, true));
     touch(".hidden.mkv");
     touch("ep.m2ts");
@@ -111,8 +99,6 @@ TEST_F(SameNamedFile, ExtensionsAndNamesAreCaseSensitive)
 }
 #endif
 
-// The legacy question's lines: only resolved associations the tab does not
-// have yet; the audio equal to the video listed but loaded with it.
 TEST(AssociationOffer, ListsWhatTheTabDoesNotHave)
 {
     const auto doc = parse("[Script Info]\nVideo File: ep1.mkv\nAudio File: ep1.mkv\nKeyframes File: kf.txt\n");
@@ -120,31 +106,27 @@ TEST(AssociationOffer, ListsWhatTheTabDoesNotHave)
     const auto a = resolveMediaAssociations(doc, "/subs/ep1.ass", [&](const std::string &p) { return files.contains(p); }, false);
     auto offer = associationOffer(a, "", {});
     EXPECT_EQ(offer.video, "/subs/ep1.mkv");
-    EXPECT_EQ(offer.audio, "/subs/ep1.mkv"); // listed (Notebook.cpp:1197)
+    EXPECT_EQ(offer.audio, "/subs/ep1.mkv");
     EXPECT_TRUE(offer.audioIsVideo);
     EXPECT_EQ(offer.keyframes, "/subs/kf.txt");
     EXPECT_TRUE(offer.associated());
     auto load = associationLoad(offer, AssociationAnswer::LoadAssociated);
     EXPECT_EQ(load.video, "/subs/ep1.mkv");
-    EXPECT_TRUE(load.videoAudio); // sameAudioPath: hasAudioPath = false
+    EXPECT_TRUE(load.videoAudio);
     EXPECT_EQ(load.audio, "");
     EXPECT_EQ(load.keyframes, "/subs/kf.txt");
-    // The tab shows that video already: not listed, nothing reloads.
     offer = associationOffer(a, "", {"/subs/ep1.mkv", "", "/subs/kf.txt"});
     EXPECT_EQ(offer.video, "");
     EXPECT_EQ(offer.keyframes, "");
-    EXPECT_TRUE(offer.associated()); // the audio line remains
+    EXPECT_TRUE(offer.associated());
     load = associationLoad(offer, AssociationAnswer::LoadAssociated);
     EXPECT_EQ(load.video, "");
     EXPECT_EQ(load.audio, "");
-    // No loads nothing.
     load = associationLoad(associationOffer(a, "", {}), AssociationAnswer::No);
     EXPECT_EQ(load.video, "");
     EXPECT_EQ(load.keyframes, "");
 }
 
-// C05: the Script Info "Audio File" association loads that audio and the
-// video then opens without its own.
 TEST(AssociationOffer, TheAudioFileAssociationOpensItsOwnAudio)
 {
     const auto doc = parse("[Script Info]\nVideo File: ep1.mkv\nAudio File: audio/ep1.flac\n");
@@ -154,15 +136,13 @@ TEST(AssociationOffer, TheAudioFileAssociationOpensItsOwnAudio)
     EXPECT_FALSE(offer.audioIsVideo);
     const auto load = associationLoad(offer, AssociationAnswer::LoadAssociated);
     EXPECT_EQ(load.video, "/subs/ep1.mkv");
-    EXPECT_FALSE(load.videoAudio); // LoadVideo(..., !hasAudioPath)
+    EXPECT_FALSE(load.videoAudio);
     EXPECT_EQ(load.audio, "/subs/audio/ep1.flac");
-    // Only the audio: no video at all.
     const auto audioOnly = parse("[Script Info]\nAudio File: audio/ep1.flac\n");
     const auto b = resolveMediaAssociations(audioOnly, "/subs/x.ass", [&](const std::string &p) { return files.contains(p); }, false);
     const auto l = associationLoad(associationOffer(b, "", {}), AssociationAnswer::LoadAssociated);
     EXPECT_EQ(l.video, "");
     EXPECT_EQ(l.audio, "/subs/audio/ep1.flac");
-    // Dummy audio (audiopath.StartsWith("dummy")) is offered as written.
     const auto dummy = parse("[Script Info]\nAudio File: dummy-audio:silence?sr=44100&bd=16&ch=1&ln=396900000\n");
     const auto c = resolveMediaAssociations(dummy, "/subs/x.ass", [](const std::string &) { return false; }, false);
     const auto o = associationOffer(c, "", {});
@@ -170,9 +150,6 @@ TEST(AssociationOffer, TheAudioFileAssociationOpensItsOwnAudio)
     EXPECT_EQ(associationLoad(o, AssociationAnswer::LoadAssociated).audio, o.audio);
 }
 
-// "Video from directory": the folder's same-named video; Load associated
-// takes it when there is no associated video, Load from directory takes it
-// with nothing associated; the tab's own video already means no question.
 TEST(AssociationOffer, TheFoldersVideo)
 {
     const auto doc = parse("[Script Info]\nAudio File: ep1.wav\n");
@@ -182,27 +159,22 @@ TEST(AssociationOffer, TheFoldersVideo)
     EXPECT_TRUE(offer.associated());
     EXPECT_EQ(offer.directoryVideo, "/subs/ep1.mkv");
     auto load = associationLoad(offer, AssociationAnswer::LoadAssociated);
-    EXPECT_EQ(load.video, "/subs/ep1.mkv"); // found = !path.empty()
+    EXPECT_EQ(load.video, "/subs/ep1.mkv");
     EXPECT_EQ(load.audio, "/subs/ep1.wav");
     EXPECT_FALSE(load.videoAudio);
     load = associationLoad(offer, AssociationAnswer::LoadFromDirectory);
     EXPECT_EQ(load.video, "/subs/ep1.mkv");
     EXPECT_TRUE(load.videoAudio);
     EXPECT_EQ(load.audio, "");
-    // The tab shows the folder's video: return -1, nothing asked even for the audio.
     const auto none = associationOffer(a, "/subs/ep1.mkv", {"/subs/ep1.mkv", "", ""});
     EXPECT_FALSE(none.asks());
     EXPECT_EQ(associationLoad(none, AssociationAnswer::LoadAssociated).audio, "");
-    // Nothing associated, nothing beside: no question.
     EXPECT_FALSE(associationOffer(resolveMediaAssociations(parse("[Script Info]\n"), "/subs/b.ass",
                                                            [](const std::string &) { return false; }, false),
                                   "", {})
                      .asks());
 }
 
-// The fixture files of tests/fixtures/associations: ep01 names its video,
-// audio and keyframes relative to itself; ep02's associations are missing
-// and only the folder's same-named video is offered.
 TEST(AssociationOffer, Fixtures)
 {
     const fs::path dir = HIKARI_ASSOCIATION_FIXTURES;

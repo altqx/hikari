@@ -1,13 +1,3 @@
-// P9: legacy SelectInFolder (HikariSub/config.cpp:1048-1062 at 20d647c4) as
-// the "Open ... containing folder" items and a Ctrl+click on a recent file
-// use it. On Linux the desktop's file manager is asked over D-Bus
-// (org.freedesktop.FileManager1.ShowItems) and the folder opens when none
-// answers; these tests run a private session bus with a fake file manager.
-// Windows uses SHOpenFolderAndSelectItems as legacy did; the Explorer window
-// it opens is read back through the Shell automation objects, on an
-// interactive desktop and only when asked (HIKARI_SHOW_IN_FOLDER_EXPLORER=1,
-// set by the winix task show-in-folder-explorer).
-
 #include "hikari/backends/show_in_folder.h"
 
 #include <QDir>
@@ -39,9 +29,7 @@ namespace {
 
 using Microsoft::WRL::ComPtr;
 
-// Why Explorer cannot open a window for this process, or empty: a service
-// (session 0, or a window station without a desktop) shows nothing, and
-// without Explorer as the shell the call would start one.
+// A service session shows no window, and without Explorer as the shell the call would start one.
 QString noExplorerReason()
 {
     DWORD session = 0;
@@ -56,8 +44,7 @@ QString noExplorerReason()
     return {};
 }
 
-// The long form of an existing path (the temporary folder may be named
-// with 8.3 parts; Explorer reports long names).
+// The temporary folder may have 8.3 parts; Explorer reports long names.
 QString longPath(const QString &path)
 {
     const std::wstring in = QDir::toNativeSeparators(path).toStdWString();
@@ -83,8 +70,6 @@ QString pathOf(FolderItem *item)
     return text;
 }
 
-// An open Explorer window (or tab) as IShellWindows lists it: its folder
-// and the items selected in its view (IShellFolderViewDual::SelectedItems).
 struct ExplorerWindow {
     ComPtr<IWebBrowser2> browser;
     QString folder;
@@ -137,14 +122,12 @@ QList<ExplorerWindow> explorerWindowsOn(const QString &folder)
     return found;
 }
 
-// The whole desktop (every monitor) with the window raised, to a PNG; its
-// size is logged, and a capture of one colour (nothing drawn) is refused.
 bool saveDesktop(const QString &file, HWND window)
 {
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
     SetForegroundWindow(window);
-    QTest::qWait(1000); // the raised window and its selection painted
+    QTest::qWait(1000);
     const int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
     const int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
     const int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
@@ -183,12 +166,10 @@ bool saveDesktop(const QString &file, HWND window)
     return true;
 }
 
-} // namespace
+}
 #endif
 
-// moc does not see the compiler's _WIN32, so the classes and slots it reads
-// are declared on every platform; only the D-Bus test body is Linux-only.
-// The fake file manager: records each ShowItems call.
+// moc doesn't see the compiler's _WIN32, so classes and slots are declared on every platform.
 class FakeFileManager : public QObject {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.freedesktop.FileManager1")
@@ -207,7 +188,6 @@ class ShowInFolderTests : public QObject {
     Q_OBJECT
 
 private slots:
-    // wxFileName(filename).GetPath(), or the path itself without a folder part.
     void containingFolder()
     {
         using hikari::backends::containingFolder;
@@ -225,8 +205,7 @@ private slots:
         const QString daemon = QStandardPaths::findExecutable(QStringLiteral("dbus-daemon"));
         if (daemon.isEmpty())
             QSKIP("dbus-daemon is not installed");
-        // A private bus without service directories, so nothing is
-        // activated (a real file manager never starts).
+        // No service directories, so D-Bus never activates a real file manager.
         QTemporaryDir busDir;
         const QString config = busDir.filePath(QStringLiteral("bus.conf"));
         {
@@ -259,7 +238,6 @@ private slots:
         const QString file = dir.filePath(QStringLiteral("ep 01 (ä).mkv"));
         QVERIFY(QFile(file).open(QIODevice::WriteOnly));
 
-        // No file manager on the bus: the folder opens instead (legacy Linux).
         QStringList fallbacks;
         hikari::backends::selectInFolder(file, client, [&](const QString &folder) { fallbacks << folder; });
         QTRY_COMPARE(fallbacks.size(), 1);
@@ -272,25 +250,18 @@ private slots:
         hikari::backends::selectInFolder(file, client, [&](const QString &folder) { fallbacks << folder; });
         QTRY_COMPARE(manager.shown.size(), 1);
         QCOMPARE(manager.shown[0], QStringList{QUrl::fromLocalFile(file).toString(QUrl::FullyEncoded)});
-        QCOMPARE(QUrl(manager.shown[0][0]).toLocalFile(), file); // the file itself, to be selected
+        QCOMPARE(QUrl(manager.shown[0][0]).toLocalFile(), file);
         QCOMPARE(manager.startupIds[0], QString());
         QTest::qWait(100);
-        QCOMPARE(fallbacks.size(), 1); // answered: no folder opened
+        QCOMPARE(fallbacks.size(), 1);
 
-        // Without a session bus at all: the folder.
         QDBusConnection none = QDBusConnection(QStringLiteral("p9-none"));
         hikari::backends::selectInFolder(file, none, [&](const QString &folder) { fallbacks << folder; });
         QCOMPARE(fallbacks.size(), 2);
 #endif
     }
 
-    // Windows: the folder opens in Explorer with exactly that file selected
-    // (legacy SelectInFolder, config.cpp:1050-1058), read back from the
-    // window through the Shell automation objects and then closed. With
-    // HIKARI_SHOW_IN_FOLDER_SHOT set, the desktop is saved there first.
-    // It opens a real window, so it runs only with
-    // HIKARI_SHOW_IN_FOLDER_EXPLORER=1 (the winix task): on a CI runner a
-    // desktop can look usable and Explorer still be too slow to start.
+    // Opt-in: on a CI runner the desktop can look usable and Explorer still be too slow to start.
     void explorerShowsTheFileSelected()
     {
 #ifndef _WIN32
@@ -318,7 +289,6 @@ private slots:
         });
 
         hikari::backends::selectInFolder(file);
-        // Explorer opens the window, then selects the file in its view.
         QList<ExplorerWindow> shown;
         QTRY_VERIFY_WITH_TIMEOUT(!(shown = explorerWindowsOn(dir.path())).isEmpty() && !shown[0].selected.isEmpty(),
                                  30000);

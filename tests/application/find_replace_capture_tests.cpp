@@ -1,18 +1,3 @@
-// F1: the legacy captures of the Find and replace dialog replayed through
-// FindReplace. tests/fixtures/legacy-cases/plan.json's "ui" cases (card F1)
-// drove the legacy app with semantic steps; this test runs the
-// same steps here and compares every state dump with what the legacy app
-// recorded (tests/fixtures/legacy-observations/...): the Lines' texts, the
-// selected rows, the active row and the Line editor's selection, and the
-// title of every message box answered. The rewrite's run is written to
-// <build>/tests/application/artifacts/find-replace-capture.json.
-//
-// The legacy editor selection is aegisub.gui.get_selection over
-// EditBox::GetEditor (TextEdit, 1-based, end exclusive). The test host keeps
-// it as the legacy EditBox did: a match shown in TextEdit selects it, a
-// match in another editor or field leaves TextEdit unselected, and a
-// message box clears it (the captures show [1, 1] after every box).
-
 #include "hikari/application/find_replace.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
@@ -56,8 +41,6 @@ QString qs(std::u8string_view s)
     return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
 }
 
-// What the legacy app had on screen: one box (a question, a message, a log
-// line) waits for the plan's "answer" step.
 struct Box {
     FindQuestion question;
     std::function<void(FindAnswer)> answer;
@@ -69,7 +52,6 @@ struct Host : FindReplaceHost {
     std::unique_ptr<EditSession> session;
     DocumentId id{1};
     std::vector<Box> boxes;
-    // TextEdit's selection [start, end), or none.
     std::optional<std::pair<int, int>> editor;
 
     std::optional<FindTab> current() override { return FindTab{id, session.get(), u8"capture.ass"}; }
@@ -79,7 +61,6 @@ struct Host : FindReplaceHost {
         boxes.push_back({q, std::move(answer), qs(q.title), qs(q.text)});
         editor.reset();
     }
-    // wxLogError shows "Hikarisub Error"; HikariLog the "Log window".
     void logLine(const FindLog &line) override
     {
         const bool error = line.kind == FindLog::Kind::InvalidRegex || line.kind == FindLog::Kind::MatchError;
@@ -111,8 +92,6 @@ struct Host : FindReplaceHost {
     }
 };
 
-// The legacy "dump": rows among the events (comments included), the Text
-// as Lua saw it (the translation of a translation mode Line when it has one).
 QJsonObject dump(const Host &host)
 {
     const auto &doc = host.session->document();
@@ -135,7 +114,6 @@ QJsonObject dump(const Host &host)
     out[QStringLiteral("texts")] = texts;
     out[QStringLiteral("selected")] = selected;
     out[QStringLiteral("active")] = active ? rows.at(*active) : -1;
-    // Lua's 1-based [start, end) as get_selection returns it.
     const auto ed = host.editor.value_or(std::pair{0, 0});
     out[QStringLiteral("editor_selection")] = QJsonArray{ed.first + 1, ed.second + 1};
     return out;
@@ -154,9 +132,6 @@ QJsonObject legacyDump(const QJsonObject &state)
     return out;
 }
 
-// Cases where the rewrite departs from what the legacy app did, by an
-// approved departure (docs/compatibility-decisions.md): the step whose
-// dump differs, and why.
 const std::map<std::string, std::string> kDepartures = {
     {"F1-replace-next-stale", "F1-stale-replace (R3-hang-crash-loss): legacy replaced the stale match again"},
     {"F1-find-all-end-of-text", "F1-end-of-text (R3-hang-crash-loss): legacy hangs"},
@@ -174,7 +149,7 @@ std::vector<std::byte> fileBytes(const QString &path)
     return out;
 }
 
-} // namespace
+}
 
 TEST(FindReplaceCapture, ReplaysTheLegacyCaptures)
 {
@@ -206,9 +181,7 @@ TEST(FindReplaceCapture, ReplaysTheLegacyCaptures)
         host.session = std::make_unique<EditSession>(core::loadAss(fileBytes(input)).document);
         const auto lines = host.session->document().lines();
         host.session->setSelection(Selection{lines[0]->id, {lines[0]->id}, lines[0]->id, {}});
-        // The captures ran the English interface, where legacy stays in the
-        // "C" locale and wxString::Lower folds A-Z only: FindReplace's own
-        // fold. The shell folds every letter (U1-unicode-case).
+        // The captures used wx's C-locale fold (A-Z only), which FindReplace's own fold matches.
         FindReplace fr(host);
         const QJsonObject config = c[QStringLiteral("config")].toObject();
         S window = findReplaceFromOptions(config[QStringLiteral("FIND_REPLACE_OPTIONS")].toInt());
@@ -263,7 +236,6 @@ TEST(FindReplaceCapture, ReplaysTheLegacyCaptures)
                     rec[QStringLiteral("text")] = box.text;
                     const bool yes = step[QStringLiteral("answer")].toString() == QStringLiteral("yes") ||
                                      step[QStringLiteral("answer")].toString() == QStringLiteral("ok");
-                    // Return presses the focused first button; Escape the escape id.
                     FindAnswer a = FindAnswer::Ok;
                     switch (box.question.kind) {
                     case K::Wrap:
@@ -298,7 +270,7 @@ TEST(FindReplaceCapture, ReplaysTheLegacyCaptures)
                     if (mine != theirs) {
                         rec[QStringLiteral("differs")] = true;
                         EXPECT_TRUE(kDepartures.contains(id.toStdString()))
-                            << "step " << i << ": rewrite "
+                            << "step " << i << ": HikariSub "
                             << QJsonDocument(mine).toJson(QJsonDocument::Compact).toStdString() << "\n legacy "
                             << QJsonDocument(theirs).toJson(QJsonDocument::Compact).toStdString();
                     }

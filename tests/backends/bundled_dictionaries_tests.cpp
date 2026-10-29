@@ -1,8 +1,3 @@
-// DK1 (#473): the dictionaries every package bundles (HikariDictionaries.cmake,
-// as the build fetched them) through the production Hunspell adapter: the
-// Dictionary folder lists each of them, and each knows the fixture's words
-// and rejects its misspellings (tests/fixtures/spelling/bundled_words.txt).
-
 #include "hikari/application/spell_checker.h"
 #include "hikari/backends/legacy_spelling.h"
 
@@ -46,9 +41,8 @@ std::vector<Word> fixtureWords()
     return out;
 }
 
-} // namespace
+}
 
-// Settings › Spelling lists these for the Primary language.
 TEST(BundledDictionaries, TheFolderListsEveryLanguage)
 {
     auto symbols = application::availableDictionaries(kDictionaries);
@@ -74,8 +68,6 @@ TEST(BundledDictionaries, EachKnowsItsWordsAndRejectsMisspellings)
     EXPECT_EQ(loaded.size(), 5u);
 }
 
-// SP1 (#474): all five check together, each the words of its script, the
-// primary English; a mixed Line marks only the real misspellings.
 TEST(BundledDictionaries, MixedLinesMarkOnlyRealMisspellings)
 {
     application::SpellChecker checker(kDictionaries, backends::hunspellSpellingLoader());
@@ -95,8 +87,7 @@ TEST(BundledDictionaries, MixedLinesMarkOnlyRealMisspellings)
     EXPECT_EQ(marked(u"வணக்கம் தமிழ் spelling"), Words{});
     EXPECT_EQ(marked(u"வணக்கமம தமிழ் speling"), (Words{u"வணக்கமம", u"speling"}));
     EXPECT_EQ(marked(u"ภาษา spelling"), Words{});
-    EXPECT_EQ(marked(u"привет speling"), Words{u"speling"}); // no Cyrillic dictionary
-    // A Polish primary marks the same words.
+    EXPECT_EQ(marked(u"привет speling"), Words{u"speling"});
     ASSERT_EQ(checker.initialize(u"pl"), application::SpellChecker::Status::Ready);
     EXPECT_EQ(marked(u"Hello speling, 안녕하세여 학교!"), (Words{u"speling", u"안녕하세여"}));
 }

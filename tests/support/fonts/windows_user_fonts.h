@@ -1,27 +1,7 @@
 #pragma once
 
-// The Windows font fixture (Y8W): the generated CC0 fixtures installed for
-// the current user for the length of one test process, the way Windows'
-// per-user install (the shell's "Install") makes a font a system font.
-//
-// - Each file is copied into the user's font folder
-//   (%LOCALAPPDATA%\Microsoft\Windows\Fonts) under its own name, and a value
-//   under HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts names it,
-//   so DirectWrite's system collection lists it (FontService::systemFaces,
-//   the collector's availability check and the provider path of a stream
-//   font). A file of that name that is not the fixture is never replaced;
-//   one with the fixture's bytes, left by a run that never reached its
-//   TearDown, is the tests' own and is removed with the rest
-//   (fixture_files.h).
-// - AddFontResourceEx(FR_PRIVATE) loads it into this process's GDI font
-//   table, where libass's DirectWrite provider looks a family up
-//   (EnumFontFamilies, then CreateFontFaceFromHdc: "directwrite (with GDI)").
-//
-// SetUp waits until DirectWrite reports every family and opens a face from
-// every installed file, asking it to check for changes; TearDown removes all
-// of it again, so nothing stays installed: it waits for the font cache to let
-// go of each file and reports a file it could not remove as a failure.
-// A failed install is a test failure, never a skip: every test still runs.
+// DirectWrite lists a per-user font only from the user font folder plus an HKCU Fonts value; libass's
+// DirectWrite provider looks families up in the process's GDI table, hence AddFontResourceEx(FR_PRIVATE).
 
 #ifdef _WIN32
 
@@ -51,15 +31,13 @@ namespace hikari::testing {
 
 class WindowsUserFonts final : public ::testing::Environment {
 public:
-    // `files` are names inside `directory`; `families` are the GDI family
-    // names DirectWrite must list before the tests start.
+    // `files` are names inside `directory`; `families` must be listed by DirectWrite before the tests start.
     WindowsUserFonts(std::filesystem::path directory, std::vector<std::wstring> files,
                      std::vector<std::wstring> families)
         : m_directory(std::move(directory)), m_files(std::move(files)), m_families(std::move(families))
     {
     }
 
-    // Where the fixtures are installed: the user's font folder.
     static std::filesystem::path userFontFolder()
     {
         wchar_t local[MAX_PATH];
@@ -138,12 +116,7 @@ public:
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         const auto listed = std::chrono::steady_clock::now();
-        // Listed families are not yet served files: right after the previous
-        // test process removed the same files, the font cache can still list
-        // the families while their faces do not open from the new files, and
-        // the renderer then gets them as GDI streams without a path (seen as
-        // a collector naming collection.ttc "HikariProbeCollectionB-Regular.font").
-        // So wait until DirectWrite opens a face from each installed file.
+        // Right after a reinstall the font cache lists families before their faces open from the new files.
         std::vector<fs::path> unserved = m_owned;
         while (!unserved.empty() && std::chrono::steady_clock::now() - start < std::chrono::seconds(30)) {
             const std::vector<std::wstring> served = servedFiles(factory);
@@ -184,8 +157,6 @@ public:
             RegCloseKey(key);
         }
         m_registered.clear();
-        // Unregistered, a file is no longer installed, but the font cache
-        // can still hold it open for a moment.
         std::size_t removed = 0;
         for (const auto &path : m_owned) {
             std::error_code ec;
@@ -200,8 +171,6 @@ public:
     }
 
 private:
-    // The files DirectWrite's system collection opens faces from (checked
-    // for changes), as it spells their paths.
     static std::vector<std::wstring> servedFiles(IDWriteFactory *factory)
     {
         std::vector<std::wstring> out;
@@ -254,7 +223,6 @@ private:
 
     static constexpr const wchar_t *kFontsKey = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
 
-    // One value per file, recognisably the tests' own.
     static std::wstring valueName(const std::wstring &file) { return L"Hikari test font " + file + L" (TrueType)"; }
 
     std::filesystem::path m_directory;
@@ -262,11 +230,10 @@ private:
     std::vector<std::wstring> m_families;
     std::vector<std::wstring> m_registered;
     std::vector<std::wstring> m_loaded;
-    // Copied or reused: the files TearDown removes.
     std::vector<std::filesystem::path> m_owned;
     std::size_t m_reused = 0;
 };
 
-} // namespace hikari::testing
+}
 
 #endif

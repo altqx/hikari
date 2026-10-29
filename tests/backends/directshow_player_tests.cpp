@@ -1,9 +1,3 @@
-// W1: the optional DirectShow playback adapter (Windows). Its frames are
-// identified by the barcode each fixture frame carries, as the general
-// player's are (general_player_tests.cpp): a seek's evidence is the requested
-// position, the delivered frame's reported start and which frame arrived,
-// and each is compared with the default players on the same media (the Qt
-// general player for playback, the media helper's index for frame identity).
 #include "directshow/directshow_host.h"
 #include "directshow_frames.h"
 #include "hikari/backends/directshow_player.h"
@@ -45,7 +39,6 @@ void post(std::function<void()> task)
     QMetaObject::invokeMethod(QCoreApplication::instance(), std::move(task), Qt::QueuedConnection);
 }
 
-// The fixtures' 4x4 barcode: block (bx, by) is bit by * 4 + bx, white = 1.
 int barcode(const QImage &image)
 {
     if (image.isNull())
@@ -66,7 +59,6 @@ int barcode(const IndexedFrame &f)
                           QImage::Format_RGB32));
 }
 
-// Frame start times of the fixtures, in microseconds.
 std::int64_t cfrStartUs(int index)
 {
     return static_cast<std::int64_t>(index) * 1'001'000'000 / 24'000;
@@ -82,7 +74,6 @@ std::int64_t startUs(bool vfr, int index)
 {
     return vfr ? vfrStartUs(index) : cfrStartUs(index);
 }
-// The frame whose interval holds `us` (48 frames).
 int frameContaining(bool vfr, std::int64_t us)
 {
     int index = 0;
@@ -95,13 +86,11 @@ struct Delivered {
     int frames = 0;
     int lastBarcode = -1;
     std::int64_t lastStartUs = -1;
-    std::vector<std::pair<int, std::int64_t>> all; // barcode, reported start
+    std::vector<std::pair<int, std::int64_t>> all;
 };
 
-} // namespace
+}
 
-// Skips the running test when legacy's graph over video in the named codecs
-// cannot be built here (the audio renderer every graph adds, or a decoder).
 #define REQUIRE_GRAPH(...)                                                                                          \
     do {                                                                                                           \
         if (const std::string gap = m_gaps.missing({__VA_ARGS__}); !gap.empty())                                    \
@@ -115,7 +104,6 @@ class DirectShowPlayerTests : public QObject {
     std::optional<MediaDescription> open(DirectShowPlayer &player, const char *name)
     {
         std::optional<std::expected<MediaDescription, PlayerError>> result;
-        // The failed step, as legacy logged it, on stderr.
         player.setOpenFailed([name](const std::string &message) {
             std::fprintf(stderr, "%s: open failed: %s\n", name, message.c_str());
         });
@@ -125,12 +113,8 @@ class DirectShowPlayerTests : public QObject {
         return **result;
     }
 
-    // What this host lacks for legacy's graph over the fixtures, piece by piece.
     hikari::testing::DirectShowGaps m_gaps;
 
-    // The decoder a fixture's video needs beside DirectShow's own: XVID in
-    // dshow-cfr.avi, WMV2 in dshow-vfr.wmv (dshow-mpg.mpg's MPEG-1 decoder is
-    // DirectShow's own).
     static std::string codecOf(const QString &fixture)
     {
         if (fixture.endsWith(QLatin1String(".avi")))
@@ -150,8 +134,6 @@ class DirectShowPlayerTests : public QObject {
         });
     }
 
-    // Seeks and returns the result with the delivered frame's barcode: the
-    // frame the sink receives right after the answer (the same delivery).
     std::pair<std::optional<SeekResult>, int> seek(DirectShowPlayer &player, Delivered &delivered, std::int64_t us)
     {
         std::optional<std::expected<SeekResult, PlayerError>> result;
@@ -166,7 +148,6 @@ class DirectShowPlayerTests : public QObject {
         return {**result, delivered.all[at].first};
     }
 
-    // From stopped, a pause shows the first frame (legacy's paused video).
     void pauseOnFirstFrame(DirectShowPlayer &player, Delivered &delivered)
     {
         const int before = delivered.frames;
@@ -174,7 +155,6 @@ class DirectShowPlayerTests : public QObject {
         QVERIFY(QTest::qWaitFor([&] { return delivered.frames > before; }, 10'000));
     }
 
-    // The Qt general player on the same file: the frame its seek delivered.
     std::pair<std::optional<SeekResult>, int> qtSeek(const char *name, std::int64_t us)
     {
         QtGeneralPlayer player(false);
@@ -202,9 +182,6 @@ class DirectShowPlayerTests : public QObject {
 private slots:
     void initTestCase()
     {
-        // The audio renderer, XVID and WMV2 are recorded separately; each
-        // test skips only for what its fixtures' graphs need (codecOf), and
-        // the frame conversion needs no graph.
         m_gaps = hikari::testing::directShowGaps(
             {{hikari::testing::fourcc('X', 'V', 'I', 'D'), "XVID"}, {hikari::testing::fourcc('W', 'M', 'V', '2'), "WMV2"}});
         if (const std::string all = m_gaps.all(); !all.empty())
@@ -236,8 +213,6 @@ private slots:
         QVERIFY2(std::abs(*d->durationUs - durationUs) <= 150'000, qPrintable(QString::number(*d->durationUs)));
         QCOMPARE(d->videoTracks.size(), 1u);
         QVERIFY(d->audioTracks.empty());
-        // Legacy's own filters by their names, among the graph's (the
-        // splitter and decoder are the system's).
         QStringList names;
         for (const auto &f : player.filters()) {
             names << QString::fromStdString(f.name) + (f.hasPropertyPages ? QStringLiteral(" [pages]") : QString());
@@ -250,7 +225,6 @@ private slots:
         QVERIFY(has(QStringLiteral("Direct Sound Renderer")));
         QVERIFY(has(QStringLiteral("Source Filter")));
         QVERIFY(names.size() >= 4);
-        // The renderer's format, as legacy's SetMediaType records it.
         const auto format = player.videoFormat();
         std::fprintf(stderr, "%s format: %dx%d %.3f fps %s\n", qPrintable(name), format.width, format.height,
                      format.fps, format.subtype.c_str());
@@ -262,8 +236,6 @@ private slots:
         QCOMPARE(player.mediaStatus(), hikari::application::MediaStatus::Loaded);
     }
 
-    // The frame/seek fixtures: the adapter against the default players on
-    // the same media (CFR and VFR).
     void seekDeliversTheRequestedFrame_data()
     {
         QTest::addColumn<QString>("name");
@@ -288,20 +260,17 @@ private slots:
         Delivered delivered;
         watch(player, delivered);
         QVERIFY(open(player, file.constData()));
-        // Paused first (legacy shows the video paused), then sought there.
         pauseOnFirstFrame(player, delivered);
         const auto [result, index] = seek(player, delivered, requestedUs);
         QVERIFY(result);
         QVERIFY(index >= 0);
         QCOMPARE(result->requestedUs, requestedUs);
         QCOMPARE(result->generation, player.generation());
-        // The reported start names the frame that actually arrived.
         QVERIFY2(std::abs(result->deliveredStartUs - startUs(vfr, index)) <= 1000,
                  qPrintable(QStringLiteral("frame %1 reported at %2 us, starts at %3 us")
                                 .arg(index)
                                 .arg(result->deliveredStartUs)
                                 .arg(startUs(vfr, index))));
-        // The index's answer for the same time: the frame whose interval holds it.
         const int indexed = frameContaining(vfr, requestedUs);
         const auto [qt, qtIndex] = qtSeek(file.constData(), requestedUs);
         std::fprintf(stderr,
@@ -338,7 +307,6 @@ private slots:
             player.pause();
             QVERIFY(!player.clock().valid);
             QCOMPARE(player.playbackState(), PlaybackState::Paused);
-            // Each frame once, in order, at its own time.
             int previous = -1;
             for (std::size_t i = before; i < delivered.all.size(); ++i) {
                 const auto [code, start] = delivered.all[i];
@@ -367,7 +335,6 @@ private slots:
                                 10'000));
         QCOMPARE(delivered.lastBarcode, 47);
         QVERIFY(changes > 0);
-        // A seek after the end plays on from there.
         QVERIFY(seek(player, delivered, 0).first);
         QCOMPARE(player.mediaStatus(), hikari::application::MediaStatus::Loaded);
     }
@@ -385,10 +352,9 @@ private slots:
         player.open(fixture("no-such-file.avi"), [&](auto r) { missing = std::move(r); });
         QVERIFY(QTest::qWaitFor([&] { return missing.has_value(); }, 10'000));
         QVERIFY(!missing->has_value());
-        QCOMPARE(failed, std::string("Source filter not added")); // legacy's HR message
+        QCOMPARE(failed, std::string("Source filter not added"));
         QCOMPARE(player.mediaStatus(), hikari::application::MediaStatus::Invalid);
         QVERIFY(player.filters().empty());
-        // Two seeks: the first is replaced.
         Delivered delivered;
         watch(player, delivered);
         QVERIFY(open(player, "dshow-cfr.avi"));
@@ -400,7 +366,6 @@ private slots:
         QCOMPARE(a->error(), PlayerError::Stale);
         QVERIFY(b->has_value());
         QVERIFY(std::abs((*b)->deliveredStartUs - 900'000) <= 42'000);
-        // An open replaces the media: a pending seek goes stale.
         std::optional<std::expected<SeekResult, PlayerError>> c;
         player.seek(1'200'000, [&](auto r) { c = std::move(r); });
         QVERIFY(open(player, "dshow-vfr.wmv"));
@@ -410,13 +375,12 @@ private slots:
         QVERIFY(c && c->error() == PlayerError::InvalidInput);
     }
 
-    // Legacy SetVolume(-(pos * pos)) through the volume gain: hundredths of
-    // a dB on IBasicAudio.
+    // IBasicAudio's volume is in hundredths of a dB.
     void volumeIsLegacysHundredthsOfADecibel()
     {
         REQUIRE_GRAPH("XVID");
         DirectShowPlayer player(post);
-        player.setVolume(std::pow(10.0, -1.0 / 20.0)); // -1 dB: legacy pos 10
+        player.setVolume(std::pow(10.0, -1.0 / 20.0));
         if (!open(player, "dshow-cfr.avi"))
             QFAIL("open");
         if (player.appliedVolume() == 0)
@@ -426,13 +390,10 @@ private slots:
         QCOMPARE(player.appliedVolume(), -10000L);
     }
 
-    // Legacy FilterConfig: a filter's property pages in a modal frame. A
-    // watcher records the frame and closes it. The MPEG-1 graph holds a stock
-    // filter with property pages (the MPEG video decoder); the AVI and ASF
-    // graphs' DMO wrappers have none, so the menu lists them disabled.
+    // Only the MPEG-1 graph's stock MPEG video decoder has property pages; the DMO wrappers have none.
     void filterPropertyPagesOpen()
     {
-        REQUIRE_GRAPH("XVID"); // and dshow-mpg.mpg, DirectShow's own decoder
+        REQUIRE_GRAPH("XVID");
         {
             DirectShowPlayer avi(post);
             QVERIFY(open(avi, "dshow-cfr.avi"));
@@ -494,12 +455,9 @@ private slots:
         QVERIFY(!player.showFilterProperties("No such filter", 0, 0, 0));
     }
 
-    // Legacy's DXVA conversion on the CPU: limited range in, BT.601 unless
-    // the script says TV.709.
     void framesConvertWithTheScriptsMatrix()
     {
         using namespace hikari::backends::dshow;
-        // One YUY2 pixel pair: Y 81, Cb 90, Cr 240 (BT.601 pure red, 255/0/0).
         const std::uint8_t yuy2[4] = {81, 90, 81, 240};
         IndexedFrame out;
         SampleFormat format{Subtype::YUY2, 2, 1, false};
@@ -508,8 +466,7 @@ private slots:
         QVERIFY(std::abs(p[2] - 255) <= 1 && p[1] <= 1 && p[0] <= 1);
         QVERIFY(toBgra(format, yuy2, sizeof yuy2, true, out));
         p = reinterpret_cast<const std::uint8_t *>(out.bgra.data());
-        QVERIFY(p[2] == 255 && p[1] > 10); // BT.709 reads the same code values differently
-        // A short sample is refused; an RGB32 DIB is turned upright.
+        QVERIFY(p[2] == 255 && p[1] > 10);
         QVERIFY(!toBgra(format, yuy2, 3, false, out));
         const std::uint8_t rgb[8] = {1, 2, 3, 0, 4, 5, 6, 0};
         QVERIFY(toBgra(SampleFormat{Subtype::RGB32, 1, 2, true}, rgb, sizeof rgb, false, out));

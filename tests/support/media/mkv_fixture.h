@@ -1,8 +1,5 @@
 #pragma once
 
-// The content of the Y9 Matroska fixtures (hikari_mkv_fixture): the writer
-// and the tests share it, so the tests know every byte the files hold.
-
 #include <cstdint>
 #include <cstdio>
 #include <string>
@@ -26,16 +23,13 @@ struct File {
     std::vector<Track> tracks;
     std::vector<std::pair<int, Packet>> packets; // track index, packet, in file order
     std::vector<Attachment> attachments;
-    // When set, the packets go into clusters of these sizes, in order, each
-    // timed at its first packet's start minus clusterLead, and Cues before the
-    // clusters hold one point per packet, in file order. Otherwise one cluster
-    // per packet and no Cues.
+    // Set: clusters of these sizes timed at their first start minus clusterLead, after Cues with one point per
+    // packet. Empty: one cluster per packet, no Cues.
     std::vector<std::size_t> clusterSizes;
     std::int64_t clusterLead = 0;
     std::uint64_t timestampScale = 1000000; // nanoseconds per tick
 };
 
-// Deterministic bytes standing in for a font (legacy never looks inside).
 inline std::string fontBytes(int seed, std::size_t size)
 {
     std::string out(size, '\0');
@@ -82,8 +76,7 @@ inline const std::string kSsaPrivate =
     "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, AlphaLevel, Encoding\r\n"
     "Style: Default,Arial,20,16777215,65535,65535,-2147483640,-1,0,1,3,0,2,30,30,30,0,0\r\n";
 
-// Track indices in `subs`: 0 ASS, 1 SSA, 2 SubRip, 3 plain text, 4 PGS,
-// 5 WebVTT; attachments follow them as streams 6-14.
+// Tracks: 0 ASS, 1 SSA, 2 SubRip, 3 plain text, 4 PGS, 5 WebVTT; attachments are streams 6-14.
 inline File subs()
 {
     File f;
@@ -146,11 +139,6 @@ inline File noSubs()
     return f;
 }
 
-// One strip of a karaoke "scanline" line as "Kage 07 - Opening TH Softsub"
-// has it (user decision 28): the whole sentence as a \p1 drawing of about
-// 38.7 KB under \pos(960,1017), seen only through its shadow (fill and
-// border at alpha FE), with twelve \t and a horizontal \clip strip. The
-// drawing spans x -228..227, y -32..15 around the position.
 inline std::string scanlineText(int clipTop, int clipBottom)
 {
     std::string text = "{\\an7\\pos(960,1017)\\shad0.1\\blur0.8\\bord3\\1a&HFE&\\3a&HFE&\\4a&H00&\\4c&HFFFFFF&"
@@ -195,10 +183,7 @@ inline const std::string kScanlinePrivate =
 
 constexpr int kScanlineStrips = 6;
 
-// The shape of that file's start: the first line's strips at 0:00:00.401 in
-// the first cluster, two more blocks (one at the same time) in the second,
-// and Cues in file order, so the last cue at 0:00:00.401 names the second
-// cluster. libavformat keeps one index entry per timestamp, the last cue's.
+// libavformat keeps one index entry per timestamp, the last cue's: here the 0:00:00.401 one in cluster 2.
 inline File scanline()
 {
     File f;
@@ -216,10 +201,7 @@ inline File scanline()
     return f;
 }
 
-// Decision 38d (2026-10-14): subtitle times in containers whose time base is
-// not 1/1000. Each file's packets are in its own ticks; `ms` is what the
-// helper must hand over for each, start and duration, every end rounded to
-// the nearest millisecond on the container's own clock.
+// Packets in the container's own ticks; the k*Ms lists expect each end rounded on the container's clock.
 struct TimedPacket {
     std::int64_t start = 0, duration = 0; // ticks
     std::string data;
@@ -231,9 +213,6 @@ struct Expected {
 inline const std::string kTimeBaseAssLine1 = "0,0,Default,,0,0,0,,one";
 inline const std::string kTimeBaseAssLine2 = "1,2,Default,,0,0,0,,two";
 
-// "scale100us": an ASS track at a TimestampScale of 100000 ns (1/10000).
-// 12345 is 1234.5 ms, ending at 17345, 1734.5; 24691 is 2469.1, ending at
-// 34692, 3469.2.
 inline File scale100us()
 {
     File f;
@@ -244,8 +223,6 @@ inline File scale100us()
 }
 inline const std::vector<Expected> kScale100usMs = {{1235, 500}, {2469, 1000}};
 
-// "scale10ms": the same at 10 ms ticks (1/100): 123 for 50 is 1230 ms for
-// 500; 6000 for 1 is one minute for 10 ms.
 inline File scale10ms()
 {
     File f;
@@ -262,24 +239,15 @@ inline std::string movText(const std::string &text)
     return std::string(1, char(text.size() >> 8)) + char(text.size() & 0xFF) + text;
 }
 
-// hikari_media_fixture "subs-mp4": mov_text in MP4 at 1/600. 1001 is
-// 1668.33 ms, ending at 1008, 1680; 3000 is 5000 ms, ending at 3901,
-// 6501.67. The muxer fills the gaps with empty 2-byte samples, which are
-// handed over too: before the first cue and between the two.
+// "subs-mp4" at 1/600: the MP4 muxer fills gaps with empty 2-byte samples, which are handed over too.
 inline const std::vector<TimedPacket> kMp4Packets = {{1001, 7, movText("one")}, {3000, 901, movText("two")}};
 inline const std::vector<Expected> kMp4Ms = {{0, 1668}, {1668, 12}, {1680, 3320}, {5000, 1502}};
 
-// "subs-mov": mov_text in MOV at 1/90000. 111111 is 1234.57 ms, ending at
-// 156156, 1735.07: a 500 ms cue, where 45045 ticks (500.5 ms) rounded on
-// their own give 501. FFmpeg 7.1's MOV muxer (the SDK's) also ends the
-// track with an empty sample at 312222, 3469.13 ms, without a duration.
+// "subs-mov" at 1/90000: FFmpeg 7.1's MOV muxer ends the track with an empty sample without a duration.
 inline const std::vector<TimedPacket> kMovPackets = {{111111, 45045, movText("one")}, {222222, 90000, movText("two")}};
 inline const std::vector<Expected> kMovMs = {{0, 1235}, {1235, 500}, {1735, 734}, {2469, 1000}, {3469, 0}};
 
-// "subs-ts": a DVB teletext stream in MPEG-TS at 1/90000 (the subtitle
-// stream MPEG-TS keeps), written with mpegts_copyts so the times stay as
-// given. MPEG-TS carries no duration, and the times stay on the transport
-// stream's clock (it starts at 1.23 s): 8100045 is 90000.5 ms.
+// "subs-ts" at 1/90000: MPEG-TS keeps only teletext subtitles, carries no duration, and its clock starts at 1.23 s.
 inline std::string teletextPacket()
 {
     std::string data(46, char(0xFF));
@@ -290,8 +258,6 @@ inline const std::vector<TimedPacket> kTsPackets = {
     {111111, 0, teletextPacket()}, {222222, 0, teletextPacket()}, {8100045, 0, teletextPacket()}};
 inline const std::vector<Expected> kTsMs = {{1235, 0}, {2469, 0}, {90001, 0}};
 
-// The "mkvextract" media fixture (hikari_media_fixture): a video with an
-// ASS track (0) and a SubRip track (1), and two font attachments.
 inline const std::string kMkvExtractHeader =
     "[Script Info]\r\n"
     "ScriptType: v4.00+\r\n"
@@ -320,4 +286,4 @@ inline std::vector<Attachment> mkvExtractFonts()
             {"fonts/Extract Serif.otf", "application/vnd.ms-opentype", fontBytes(12, 2000)}};
 }
 
-} // namespace mkvfixture
+}

@@ -1,9 +1,3 @@
-// N4: font identity from the renderer itself (F47-abi through the libass
-// diagnostics patch; F47-fontconfig on Linux; F47-variable with the locked Qt
-// install's OFL Georama). Fixtures are original CC0 fonts generated at build
-// time. On Linux, FONTCONFIG_FILE lists only them and the Qt OFL fonts.
-// Characterizations are labelled as such: they pin what the pinned libass
-// does, not what it should do.
 #include "hikari/backends/libass_font_service.h"
 
 #include <QCryptographicHash>
@@ -21,8 +15,7 @@ using hikari::backends::LibassFontService;
 namespace {
 
 #ifndef _WIN32
-// The private configuration, set before fontconfig first initializes: the
-// ctest ENVIRONMENT property did not reach these tests on the Fedora runner.
+// Set before fontconfig initializes: ctest's ENVIRONMENT did not reach these tests on the Fedora runner.
 [[maybe_unused]] const bool kPrivateFontconfig = setenv("FONTCONFIG_FILE", HIKARI_FONTCONFIG_FILE, 1) == 0;
 #endif
 
@@ -81,7 +74,7 @@ FontReport resolve(const FontEnvironment &env, std::vector<FontRequest> requests
     return r.value_or(FontReport{});
 }
 
-} // namespace
+}
 
 TEST(FontIdentity, SameNamedAttachmentsAreToldApartByTheirBytes)
 {
@@ -92,7 +85,7 @@ TEST(FontIdentity, SameNamedAttachmentsAreToldApartByTheirBytes)
     EXPECT_EQ(face(ab, 0).postscriptName, face(ba, 0).postscriptName) << "names cannot tell them apart";
     EXPECT_EQ(face(ab, 0).sha256, sha256Of(fixture("collision-a.ttf")));
     EXPECT_EQ(face(ab, 0).attachment, "collision-a.ttf");
-    // Characterization: the first attachment wins, as in the Windows experiment.
+    // Characterization of libass: the first attachment wins.
     EXPECT_EQ(face(ba, 0).attachment, "collision-b.ttf");
     EXPECT_TRUE(face(ab, 0).embedded);
     EXPECT_TRUE(ab.complete());
@@ -120,8 +113,7 @@ TEST(FontIdentity, AuthoredNamesStayAsWrittenAndMatchesAreNamed)
     EXPECT_EQ(face(r, 0).nameMatch, NameMatch::Family);
     EXPECT_EQ(face(r, 1).nameMatch, NameMatch::FullName);
     EXPECT_EQ(face(r, 1).attachment, "legacy.ttf");
-    // Characterization: the attachment provider matches neither the
-    // typographic family nor the PostScript name; the default family stands in.
+    // Characterization of libass: the attachment provider matches neither the typographic family nor the PostScript name.
     for (std::size_t i : {2u, 3u}) {
         EXPECT_FALSE(r.requests[i].requestedFamilyFound) << r.requests[i].request.family;
         EXPECT_EQ(face(r, i).stage, SelectionStage::DefaultFamily);
@@ -146,8 +138,8 @@ TEST(FontIdentity, RealStylesAreSelectedAndSyntheticOnesReported)
 TEST(FontIdentity, FallbackMissingFontAndMissingGlyphAreDistinct)
 {
     const auto r = resolve(attachments({"base.ttf", "fallback.ttf"}, "HikariProbeFallback"),
-                           {{"HikariProbeBase", false, false, "A\xe4\xb8\xad"},     // A and a CJK character
-                            {"HikariProbeBase", false, false, "A\xf0\x9f\x98\x80"}, // A and an emoji nowhere
+                           {{"HikariProbeBase", false, false, "A\xe4\xb8\xad"},
+                            {"HikariProbeBase", false, false, "A\xf0\x9f\x98\x80"},
                             {"NoSuchFamily", false, false, " "}});
     ASSERT_EQ(r.requests[0].faces.size(), 2u);
     EXPECT_TRUE(r.requests[0].requestedFamilyFound);
@@ -170,8 +162,7 @@ TEST(FontIdentity, AttachedVariableFontIsNotFoundByItsTypographicFamily)
     env.systemFonts = false;
     env.attachments.push_back({"Georama.ttf", load(georama())});
     const auto r = resolve(env, {{"Georama", true, false, "A"}});
-    // Characterization: its family name (ID 1) is "Georama ExtraCondensed
-    // Thin"; the attachment provider ignores the typographic family.
+    // Characterization of libass: the attachment provider ignores the typographic family ("Georama ExtraCondensed Thin" is ID 1).
     EXPECT_FALSE(r.requests[0].requestedFamilyFound);
 }
 
@@ -197,8 +188,6 @@ TEST(FontIdentity, InvalidFamiliesAreRefused)
 
 extern "C" int FcGetVersion(void);
 
-// libass must use the pinned static fontconfig (vcpkg 2.17.1), configured
-// by the test's private FONTCONFIG_FILE, not a system copy Qt loads.
 TEST(FontconfigIdentity, ThePinnedFontconfigReadsThePrivateConfiguration)
 {
     const char *file = std::getenv("FONTCONFIG_FILE");
@@ -248,9 +237,7 @@ TEST(FontconfigIdentity, NamedInstancesCarryTheirIndexAndCoordinates)
     EXPECT_EQ(bold.coords, (std::vector<double>{100, 700}));
     EXPECT_EQ(regular.coords, (std::vector<double>{100, 400}));
     EXPECT_EQ(bold.postscriptName, "GeoramaRoman-Bold");
-    // Characterization (reported, not endorsed): libass judges a named
-    // instance's weight from the default instance's OS/2 class (Thin), so it
-    // also emboldens these instances synthetically.
+    // Characterization of libass: a named instance's weight comes from the default instance's OS/2 class, so these are also emboldened.
     EXPECT_TRUE(bold.emboldened);
     EXPECT_TRUE(regular.emboldened);
 }
@@ -282,11 +269,7 @@ TEST(FontconfigIdentity, SystemFacesAreTheProvidersView)
 
 #else
 
-// The stream's bytes are an installed file of the requested face. A machine
-// can hold the same face twice (a per-user copy of arial.ttf beside the one
-// in C:\Windows\Fonts): both answer to "Arial" at weight 400, and which one
-// the provider picks is its own choice, so any installed file of the face is
-// the right answer; bytes of no installed file never are.
+// Windows can hold a face twice (a per-user arial.ttf beside the system one), so any installed file of the face is right.
 TEST(DirectWriteIdentity, StreamBytesAreTheInstalledFile)
 {
     LibassFontService service;
@@ -333,12 +316,10 @@ TEST(DirectWriteIdentity, StreamBytesAreTheInstalledFile)
 
 TEST(DirectWriteIdentity, ScriptCoverageIsReportedNotAssumed)
 {
-    // Which installed fonts cover which scripts varies, so this records what
-    // DirectWrite chose and requires only an honest report: the requested face
-    // itself, a Fallback-stage face with its bytes, or a missing glyph.
-    const auto r = resolve(FontEnvironment{}, {{"Arial", false, false, "A\xe4\xb8\xad"},     // CJK
-                                               {"Arial", false, false, "A\xd8\xb9"},         // Arabic
-                                               {"Arial", false, false, "A\xe0\xa4\x95"}});  // Devanagari
+    // Installed fonts' script coverage varies, so this only requires an honest report of what DirectWrite chose.
+    const auto r = resolve(FontEnvironment{}, {{"Arial", false, false, "A\xe4\xb8\xad"},
+                                               {"Arial", false, false, "A\xd8\xb9"},
+                                               {"Arial", false, false, "A\xe0\xa4\x95"}});
     for (std::size_t i = 0; i < r.requests.size(); ++i) {
         const auto &request = r.requests[i];
         if (request.faces.size() > 1) {

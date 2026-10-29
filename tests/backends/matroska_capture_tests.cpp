@@ -1,16 +1,3 @@
-// Y9: the rewrite's MKV extraction against legacy Demux run on the same
-// files (tests/fixtures/legacy-observations/local-y9-demux-20261013, captured
-// by the legacy_demux_capture probe from the mkvmerge-muxed
-// files in tests/fixtures/matroska-muxed). Each case goes through the real
-// media helper: the packets FFMS2's extension hands over (start, duration,
-// total and bytes, in order), the Line legacy's packet callback built from
-// each, then the whole load as the application runs it
-// (MatroskaSubtitleLoad: the chooser and its labels, the progress percents,
-// the messages, the staged Document's Script Info, and its Styles and
-// Lines field by field against what legacy's own Styles::parseStyle and
-// Dialogue::SetRaw read), and the font attachments with their names and
-// bytes.
-
 #include "hikari/application/matroska.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/core/ass_save.h"
@@ -67,7 +54,6 @@ std::string fromHex(const std::string &hex)
     return out;
 }
 
-// A recorded byte string: "<key>" as UTF-8, or "<key>_hex".
 std::string bytesOf(const QJsonObject &o, const char *key)
 {
     if (o.contains(key))
@@ -107,9 +93,6 @@ std::vector<QJsonObject> opsOf(const QJsonObject &c, const char *kind)
     return out;
 }
 
-// The time fields of a raw line Demux built: "Dialogue: L,H:MM:SS.cc,..."
-// or "HH:MM:SS,mmm --> HH:MM:SS,mmm\r\n..." (SubsTime::raw, ASS and SRT), in
-// milliseconds.
 std::pair<std::int64_t, std::int64_t> rawTimes(const std::string &raw)
 {
     auto ass = [](const std::string &t) {
@@ -128,8 +111,6 @@ std::pair<std::int64_t, std::int64_t> rawTimes(const std::string &raw)
     return {srt(raw.substr(0, 12)), srt(raw.substr(17, 12))};
 }
 
-// The ten fields of a Dialogue/Comment line legacy's GetRaw wrote (the text
-// keeps its commas).
 std::vector<std::string> assFields(const std::string &line)
 {
     std::vector<std::string> out;
@@ -191,7 +172,7 @@ struct MatroskaCapture : ::testing::Test {
     }
 };
 
-} // namespace
+}
 
 TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
 {
@@ -204,8 +185,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
         SCOPED_TRACE(str(c["case"]));
         const std::string file = path(c);
 
-        // The legacy answers: the chooser's row (Cancel when absent) and the
-        // packet during which the progress dialog's Cancel was pressed.
         const auto chooser = opsOf(c, "chooser");
         const auto items = opsOf(c, "chooser-item");
         const auto readTrack = opsOf(c, "read-track");
@@ -219,7 +198,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
         hooks.noTracks = [&] { load.noTracks = true; };
         hooks.chooseTrack = [&](const std::vector<std::u8string> &labels) {
             load.labels = labels;
-            // The row legacy read, or the chooser's Cancel.
             int row = -1;
             if (!readTrack.empty())
                 for (std::size_t i = 0; i < items.size(); ++i)
@@ -243,7 +221,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
         run.start(file);
         ASSERT_TRUE(waitFor([&] { return load.done(); }));
 
-        // Demux::Open's failure: the log line, FFMS2's text naming the file.
         const auto logs = opsOf(c, "log");
         if (!c["open"].toBool()) {
             ASSERT_EQ(logs.size(), 1u);
@@ -259,7 +236,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
         EXPECT_FALSE(load.cannotOpen);
         EXPECT_TRUE(logs.empty());
 
-        // No track Demux reads: the message, nothing else.
         const auto messages = opsOf(c, "message");
         EXPECT_EQ(load.noTracks, !messages.empty());
         if (!messages.empty()) {
@@ -269,7 +245,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
             continue;
         }
 
-        // The chooser, shown for more than one track, with legacy's labels.
         EXPECT_EQ(load.labels.has_value(), !chooser.empty());
         if (load.labels) {
             EXPECT_EQ(str(chooser[0]["text"]), "Choose subtitle track");
@@ -277,7 +252,7 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
             for (std::size_t i = 0; i < items.size(); ++i)
                 EXPECT_EQ(str((*load.labels)[i]), str(items[i]["text"]));
         }
-        if (readTrack.empty()) { // the chooser's Cancel
+        if (readTrack.empty()) {
             EXPECT_EQ(load.ended, MatroskaFailure::Cancelled);
             EXPECT_FALSE(load.reading);
             ++compared;
@@ -287,7 +262,7 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
         const auto progressTitle = opsOf(c, "progress-title");
         ASSERT_EQ(progressTitle.size(), 1u);
         EXPECT_EQ(str(progressTitle[0]["text"]), "Loading subtitles from Matroska.");
-        if (cancelledRead) { // Cancel in the progress dialog: nothing loaded
+        if (cancelledRead) {
             EXPECT_EQ(load.ended, MatroskaFailure::Cancelled);
             EXPECT_FALSE(load.loaded);
             EXPECT_TRUE(opsOf(c, "clearing").empty());
@@ -297,13 +272,10 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
         ASSERT_TRUE(load.loaded);
         EXPECT_EQ(load.loaded->track, readTrack[0]["n"].toInt());
 
-        // One progress step per packet with legacy's percent.
         ASSERT_EQ(load.progress.size(), legacyProgress.size());
         for (std::size_t i = 0; i < legacyProgress.size(); ++i)
             EXPECT_EQ(load.progress[i], legacyProgress[i]["n"].toInt()) << i;
 
-        // The packets as FFMS2's extension gives them, and the Line legacy's
-        // callback built from each (Demux.cpp:262-306).
         std::optional<std::expected<MatroskaSubtitles, MatroskaError>> read;
         std::vector<std::pair<std::int64_t, std::int64_t>> progress;
         port.subtitles(file, load.loaded->track,
@@ -316,7 +288,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
         const auto lines = opsOf(c, "line");
         ASSERT_GE(lines.size(), std::size_t(packets.size()));
         const std::size_t headerLines = lines.size() - std::size_t(packets.size());
-        // The codec Demux's codecType came from (Demux.cpp:111-117).
         std::optional<std::expected<std::vector<MatroskaTrack>, MatroskaError>> tracks;
         port.subtitleTracks(file, [&](auto r) { tracks = std::move(r); });
         ASSERT_TRUE(waitFor([&] { return tracks.has_value(); }));
@@ -338,8 +309,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
                       bytesOf(lines[headerLines + std::size_t(i)], "text"));
         }
 
-        // The staged Document: legacy's Script Info (in order), then its
-        // Styles and Lines.
         const core::Document &doc = load.loaded->document;
         const QJsonArray sinfo = c["sinfo"].toArray();
         const auto saved = core::encodeAss(doc);
@@ -354,9 +323,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
             EXPECT_NE(next, std::string::npos) << key << " out of legacy's order";
             at = next == std::string::npos ? at : next + 1;
         }
-        // Each Style as legacy read it (Styles::parseStyle with the layout
-        // Demux chose, then GetRaw): the Document's Style line and its
-        // decoded values give the same fields.
         const auto styles = opsOf(c, "style");
         std::vector<const core::StyleRecord *> styleRecords;
         for (const auto &section : doc.sections())
@@ -369,14 +335,10 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
         for (std::size_t i = 0; i < styles.size(); ++i) {
             const std::string legacy = withoutNewline(bytesOf(styles[i], "parsed"));
             SCOPED_TRACE(legacy);
-            // The record keeps its fields untrimmed: the space after "Style:".
             EXPECT_EQ("Style:" + joined(styleRecords[i]->fields), legacy);
             EXPECT_EQ("Style: " + joined(core::legacy::styleRawFields(decoded[i])), legacy);
         }
 
-        // Each Line as legacy read it (Dialogue::SetRaw, then GetRaw): kind,
-        // layer, times, style, name, margins, effect and text; a SubRip
-        // Line's times and text.
         const auto docLines = doc.lines();
         ASSERT_EQ(docLines.size(), lines.size());
         for (std::size_t i = 0; i < lines.size(); ++i) {
@@ -401,7 +363,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
                 EXPECT_EQ(str(got.effect), f[8]);
                 EXPECT_EQ(str(got.text), f[9]);
             } else {
-                // "<start> --> <end>\r\n<text, \N as \r\n>\r\n\r\n".
                 ASSERT_TRUE(legacy.ends_with("\r\n\r\n"));
                 const auto text = legacy.find("\r\n");
                 std::string expected = legacy.substr(text + 2, legacy.size() - 4 - (text + 2));
@@ -434,7 +395,6 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyFontList)
             continue;
         }
         ASSERT_TRUE(*got) << got->error().text;
-        // GetFontList's names and SaveFont's bytes (Demux.cpp:178-260).
         const auto fonts = matroskaFonts(**got);
         const QJsonArray legacy = c["fonts"].toArray();
         ASSERT_EQ(fonts.size(), std::size_t(legacy.size()));

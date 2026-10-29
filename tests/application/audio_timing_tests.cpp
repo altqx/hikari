@@ -1,11 +1,3 @@
-// A3: the audio box's timing, pinned against legacy AudioDisplay.cpp
-// (OnMouseEvent without karaoke, GetBoundarySnap, AddLead, CommitChanges),
-// SubsGrid (GetKeyFromPosition, ChangeLine, NextLine, CopyDialogueWithOffset)
-// and EditBox::Send at 20d647c4. Expected values are worked out from legacy's
-// arithmetic: the view is 48 kHz at zoom 50 (1440 samples, 30 ms a column),
-// 1000 columns by 128 rows over a 22-row ruler, so a column is ms / 30 and
-// the snap range of 16 columns is 480 ms.
-
 #include "hikari/application/audio_timing.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/subtitle_load.h"
@@ -80,7 +72,6 @@ AudioMouse hover(int x, int y = 50)
     return drag(x, AudioMouse::Button::None, y);
 }
 
-// The display with the active Line's selection 3000-6000 (columns 100-200).
 struct TimingTest : ::testing::Test {
     AudioView view = minuteView();
     AudioTiming timing;
@@ -93,24 +84,23 @@ struct TimingTest : ::testing::Test {
     AudioMouseResult send(const AudioMouse &event)
     {
         auto result = timing.mouse(event, view, selection, snap, options, 16);
-        timing.drawn(view, selection); // the redraw legacy's UpdateImage makes
+        timing.drawn(view, selection);
         return result;
     }
 };
 
-} // namespace
+}
 
 TEST(AudioTiming, KeyFromPositionWithoutTheSafeFallbacks)
 {
     const std::vector<AudioLineSpan> lines{{0, 1, true}, {0, 1, false}, {0, 1, true}, {0, 1, false}};
-    EXPECT_EQ(legacyKeyFromPositionOrNone(lines, 0, 1), 2);  // the hidden Line is skipped
-    EXPECT_EQ(legacyKeyFromPositionOrNone(lines, 2, 1), -1); // only hidden Lines after it
+    EXPECT_EQ(legacyKeyFromPositionOrNone(lines, 0, 1), 2);
+    EXPECT_EQ(legacyKeyFromPositionOrNone(lines, 2, 1), -1);
     EXPECT_EQ(legacyKeyFromPositionOrNone(lines, 2, -1), 0);
-    EXPECT_EQ(legacyKeyFromPositionOrNone(lines, 0, -1), 0); // position 0 going back is itself
+    EXPECT_EQ(legacyKeyFromPositionOrNone(lines, 0, -1), 0);
     EXPECT_EQ(legacyKeyFromPositionOrNone(lines, 1, -1), 0);
     const std::vector<AudioLineSpan> hidden{{0, 1, false}, {0, 1, true}};
     EXPECT_EQ(legacyKeyFromPositionOrNone(hidden, 1, -1), -1);
-    // the safe variant (A1's) falls back where this one gives none
     EXPECT_EQ(legacyKeyFromPosition(lines, 2, 1), 2);
 }
 
@@ -119,7 +109,6 @@ TEST(AudioTiming, LeadInStopsAtZeroLeadOutDoesNot)
     EXPECT_EQ(legacyAddLead(1000, 2000, true, false, 200, 300), std::pair(800, 2000));
     EXPECT_EQ(legacyAddLead(150, 2000, true, false, 200, 300), std::pair(0, 2000));
     EXPECT_EQ(legacyAddLead(1000, 2000, false, true, 200, 300), std::pair(1000, 2300));
-    // values from the settings are taken as they are
     EXPECT_EQ(legacyAddLead(1000, 2000, true, true, 15, 7), std::pair(985, 2007));
 }
 
@@ -129,10 +118,9 @@ TEST(AudioTiming, FieldTimesKeepTheFormatsPrecision)
     EXPECT_EQ(legacyFieldTime(core::SubtitleFormat::TMPlayer, 1999), 1000);
     EXPECT_EQ(legacyFieldTime(core::SubtitleFormat::Srt, 1239), 1239);
     EXPECT_EQ(legacyFieldTime(core::SubtitleFormat::Ass, -50), 0);
-    EXPECT_EQ(legacyZeroIt(-15), -10); // ZEROIT truncates towards zero
+    EXPECT_EQ(legacyZeroIt(-15), -10);
 }
 
-// KA1: the start the commit writes, which karaoke text is written against
 TEST(AudioTiming, TheCommittedTimeIsTheOneTheFieldKeeps)
 {
     EXPECT_EQ(committedAudioTime(load("[Events]\n"), 999), 990);
@@ -144,38 +132,36 @@ TEST(AudioTiming, TheCommittedTimeIsTheOneTheFieldKeeps)
     auto &document = loaded->document;
     ASSERT_EQ(document.format(), core::SubtitleFormat::MicroDvd);
     document.setFrameRate(*core::FrameRate::make(25, 1));
-    EXPECT_EQ(committedAudioTime(document, 1001), 1040); // up to the next frame's start
+    EXPECT_EQ(committedAudioTime(document, 1001), 1040);
     EXPECT_EQ(committedAudioTime(document, 1000), 1000);
 }
 
 TEST_F(TimingTest, SnapIsOffByDefaultAndStillDropsTheMilliseconds)
 {
     EXPECT_EQ(legacyBoundarySnap(snap, 1234, 16, false, false, true), 1230);
-    EXPECT_EQ(legacyBoundarySnap(snap, 1234, 0, false, false, true), 1234); // no range: as it is
+    EXPECT_EQ(legacyBoundarySnap(snap, 1234, 0, false, false, true), 1234);
 }
 
 TEST_F(TimingTest, SnapsToKeyframesInViewWithinSixteenColumns)
 {
-    const std::vector<int> keys{3000, 40000}; // columns 100 and 1333 (out of view)
+    const std::vector<int> keys{3000, 40000};
     const std::vector<int> keyStarts{2985, 39990};
     snap.keyframesMs = keys;
     snap.keyframeSnapMs = keyStarts;
     snap.snapToKeyframes = true;
-    EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, false, false, true), 2980); // ZEROIT(2985)
-    EXPECT_EQ(legacyBoundarySnap(snap, 3460, 16, false, false, true), 2980); // 480 away
-    EXPECT_EQ(legacyBoundarySnap(snap, 3461, 16, false, false, true), 3460); // 481: out of range
-    EXPECT_EQ(legacyBoundarySnap(snap, 39900, 16, false, false, true), 39900); // not drawn, not snapped
-    EXPECT_EQ(legacyBoundarySnap(snap, 2975, 16, false, true, true), 2970);   // keysnap: under 10 ms skipped
-    // Shift inverts the option; keyframes that are not drawn never snap
+    EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, false, false, true), 2980);
+    EXPECT_EQ(legacyBoundarySnap(snap, 3460, 16, false, false, true), 2980);
+    EXPECT_EQ(legacyBoundarySnap(snap, 3461, 16, false, false, true), 3460);
+    EXPECT_EQ(legacyBoundarySnap(snap, 39900, 16, false, false, true), 39900);
+    EXPECT_EQ(legacyBoundarySnap(snap, 2975, 16, false, true, true), 2970);
     EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, true, false, true), 3300);
     snap.snapToKeyframes = false;
     EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, true, false, true), 2980);
     snap.drawKeyframes = false;
     EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, true, false, true), 3300);
-    // without a video: 21 ms before the keyframe
     snap.drawKeyframes = true;
     snap.keyframeSnapMs = {};
-    EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, true, false, true), 2970); // ZEROIT(2979)
+    EXPECT_EQ(legacyBoundarySnap(snap, 3300, 16, true, false, true), 2970);
 }
 
 TEST_F(TimingTest, SnapsToTheShadedLinesBoundaries)
@@ -184,18 +170,14 @@ TEST_F(TimingTest, SnapsToTheShadedLinesBoundaries)
     snap.lines = lines;
     snap.active = 2;
     snap.snapToOtherLines = true;
-    // mode 1: the previous and next shown Lines (the hidden one between is skipped)
-    EXPECT_EQ(legacyBoundarySnap(snap, 1300, 16, false, false, true), 1000); // 1005 zeroed
+    EXPECT_EQ(legacyBoundarySnap(snap, 1300, 16, false, false, true), 1000);
     EXPECT_EQ(legacyBoundarySnap(snap, 6200, 16, false, false, true), 6500);
-    EXPECT_EQ(legacyBoundarySnap(snap, 9100, 16, false, false, true), 9100); // not the Line after next
-    EXPECT_EQ(legacyBoundarySnap(snap, 3100, 16, false, false, true), 3100); // nor the active Line
-    // the nearest wins
+    EXPECT_EQ(legacyBoundarySnap(snap, 9100, 16, false, false, true), 9100);
+    EXPECT_EQ(legacyBoundarySnap(snap, 3100, 16, false, false, true), 3100);
     EXPECT_EQ(legacyBoundarySnap(snap, 7800, 16, false, false, true), 8000);
-    // mode 2: every shown Line
     snap.inactiveLines = 2;
     EXPECT_EQ(legacyBoundarySnap(snap, 9100, 16, false, false, true), 9000);
-    EXPECT_EQ(legacyBoundarySnap(snap, 1800, 16, false, false, true), 1800); // the hidden Line's end
-    // mode 0, Alt (otherLines false) or Shift: no Lines
+    EXPECT_EQ(legacyBoundarySnap(snap, 1800, 16, false, false, true), 1800);
     EXPECT_EQ(legacyBoundarySnap(snap, 9100, 16, false, false, false), 9100);
     EXPECT_EQ(legacyBoundarySnap(snap, 9100, 16, true, false, true), 9100);
     snap.inactiveLines = 0;
@@ -204,25 +186,23 @@ TEST_F(TimingTest, SnapsToTheShadedLinesBoundaries)
 
 TEST_F(TimingTest, DraggingTheStartSnapsAndCommitsOnRelease)
 {
-    // the cursor changes over a boundary and back
     auto r = send(hover(103));
     EXPECT_EQ(r.sizeCursor, std::optional(true));
     r = send(hover(150));
     EXPECT_EQ(r.sizeCursor, std::optional(false));
     r = send(hover(160));
-    EXPECT_FALSE(r.sizeCursor); // already the default
-    // grab the start (within 6 columns) and move it
+    EXPECT_FALSE(r.sizeCursor);
     r = send(press(102));
     EXPECT_EQ(timing.hold(), 1);
     EXPECT_TRUE(r.focus);
     EXPECT_EQ(selection.startMs, 3060);
     EXPECT_TRUE(selection.modified);
-    EXPECT_EQ(r.playEnd, std::optional<std::int64_t>(200 * 1440)); // the player's end: the end column
+    EXPECT_EQ(r.playEnd, std::optional<std::int64_t>(200 * 1440));
     r = send(drag(90));
     EXPECT_EQ(selection.startMs, 2700);
     EXPECT_FALSE(r.commit);
     r = send(release(90));
-    EXPECT_EQ(r.commit, std::optional(false)); // Commit(hold == 2)
+    EXPECT_EQ(r.commit, std::optional(false));
     EXPECT_EQ(r.adjacent, AudioAdjacent::None);
     EXPECT_EQ(timing.hold(), 0);
     EXPECT_EQ(selection.startMs, 2700);
@@ -241,26 +221,23 @@ TEST_F(TimingTest, DraggingTheEndCommitsMovingToTheEnd)
 
 TEST_F(TimingTest, TimingFromNothing)
 {
-    // a click sets the start (snapped), a drag past the sensitivity times from there
     auto r = send(press(400));
     EXPECT_EQ(timing.hold(), 3);
     EXPECT_EQ(selection.startMs, 12000);
     EXPECT_EQ(selection.endMs, 6000);
     r = send(drag(405));
-    EXPECT_EQ(timing.hold(), 3); // 5 columns: not past AUDIO_START_DRAG_SENSITIVITY (6)
+    EXPECT_EQ(timing.hold(), 3);
     r = send(drag(407));
     EXPECT_EQ(timing.hold(), 2);
     EXPECT_EQ(selection.startMs, 12000);
     EXPECT_EQ(selection.endMs, 12210);
     r = send(release(407));
     EXPECT_EQ(r.commit, std::optional(true));
-    EXPECT_EQ(selection.endMs, 12210); // ZEROIT on release
-    // a click without a drag commits as a start (hold 3)
+    EXPECT_EQ(selection.endMs, 12210);
     send(press(600));
     r = send(release(600));
     EXPECT_EQ(r.commit, std::optional(false));
     EXPECT_EQ(selection.startMs, 18000);
-    // a right click sets the end, snapped like a dragged end
     send(press(700, AudioMouse::Button::Right));
     EXPECT_EQ(selection.endMs, 21000);
     r = send(release(700, AudioMouse::Button::Right));
@@ -290,7 +267,7 @@ TEST_F(TimingTest, AltDraggingDoesNotSnapToLines)
     lines = {{1000, 2000}, {3000, 6000}, {6500, 8000}};
     snap.lines = lines;
     send(press(200));
-    send(drag(214)); // 6420: 80 ms from the next Line's start
+    send(drag(214));
     EXPECT_EQ(selection.endMs, 6500);
     AudioMouse m = drag(213);
     m.alt = true;
@@ -308,12 +285,10 @@ TEST_F(TimingTest, CtrlAndMiddleClicksSeekTheVideoWithoutTiming)
     EXPECT_EQ(selection.startMs, 3000);
     r = send(press(500, AudioMouse::Button::Middle));
     EXPECT_EQ(r.seekVideoMs, std::optional(15000));
-    // Ctrl over a boundary: still no timing
     m = press(100);
     m.ctrl = true;
     send(m);
     EXPECT_EQ(timing.hold(), 0);
-    // a middle double click plays the selection (A4)
     AudioMouse dbl;
     dbl.type = AudioMouse::Type::DoubleClick;
     dbl.button = AudioMouse::Button::Middle;
@@ -333,10 +308,9 @@ TEST_F(TimingTest, TheRulerSetsAndDragsTheMark)
     EXPECT_FALSE(r.commit);
     send(release(300, AudioMouse::Button::Right, ruler));
     r = send(press(310, AudioMouse::Button::Right, ruler));
-    EXPECT_FALSE(r.markAdded); // only the first
+    EXPECT_FALSE(r.markAdded);
     EXPECT_EQ(timing.markMs(), 9300);
     send(release(310, AudioMouse::Button::Right, ruler));
-    // over the waveform the mark is grabbed before the boundaries
     r = send(hover(312));
     EXPECT_EQ(r.sizeCursor, std::optional(true));
     send(press(312));
@@ -365,14 +339,13 @@ TEST_F(TimingTest, DraggingTheRulerScrolls)
 
 TEST_F(TimingTest, OutsideTheWaveformNothingStarts)
 {
-    send(press(400, AudioMouse::Button::Left, 200)); // below the ruler, never inside before
+    send(press(400, AudioMouse::Button::Left, 200));
     EXPECT_EQ(timing.hold(), 0);
     EXPECT_EQ(selection.startMs, 3000);
 }
 
 namespace {
 
-// a 1-2 s, b 5-6 s, c 6.5-8 s.
 constexpr std::string_view kThree = "[Events]\n"
                                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
                                     "Dialogue: 0,0:00:05.00,0:00:06.00,Sign,,0,0,0,,b\n"
@@ -391,7 +364,7 @@ struct CommitTest : ::testing::Test {
     std::string lastStep() const { return session.history().back().name; }
 };
 
-} // namespace
+}
 
 TEST_F(CommitTest, ACommitIsOneNamedStepAndGoesToTheNextLine)
 {
@@ -403,7 +376,7 @@ TEST_F(CommitTest, ACommitIsOneNamedStepAndGoesToTheNextLine)
     EXPECT_EQ(outcome->next, std::optional(b));
     EXPECT_EQ(session.historySize(), steps + 1);
     EXPECT_EQ(lastStep(), "Changing time on audio spectrum");
-    EXPECT_EQ(ms(line(0).start.value), 1230); // the field's centiseconds
+    EXPECT_EQ(ms(line(0).start.value), 1230);
     EXPECT_EQ(ms(line(0).end.value), 2560);
     EXPECT_FALSE(session.draftLine());
 }
@@ -412,7 +385,7 @@ TEST_F(CommitTest, NothingChangedMovesOnWithoutAStep)
 {
     select({a}, a);
     const auto steps = session.historySize();
-    const auto outcome = commitAudioTimes(session, {1005, 2009, true, true}, shown); // the fields show 1.00 and 2.00
+    const auto outcome = commitAudioTimes(session, {1005, 2009, true, true}, shown);
     ASSERT_TRUE(outcome);
     EXPECT_FALSE(outcome->stepped);
     EXPECT_EQ(outcome->next, std::optional(b));
@@ -429,7 +402,6 @@ TEST_F(CommitTest, WithoutSaveTheTimesWaitInTheEditor)
     ASSERT_EQ(session.draftLine(), std::optional(b));
     EXPECT_EQ(ms(session.draftRecord()->start.value), 4800);
     EXPECT_EQ(ms(line(1).start.value), 5000);
-    // the editor's other changes go with the commit, under the box's name
     session.editDraftText(b, u8"b2");
     const auto outcome = commitAudioTimes(session, {4800, 6000, true, false}, shown);
     ASSERT_TRUE(outcome);
@@ -440,11 +412,6 @@ TEST_F(CommitTest, WithoutSaveTheTimesWaitInTheEditor)
     EXPECT_EQ(ms(line(1).start.value), 4800);
 }
 
-// EditBox::Send carries every field of the Line's own pending draft that
-// differs from the Line (SubsGrid::ChangeLine's cells), to each selected Line;
-// the rewrite's draft holds the text, the translation, the times and the
-// margins (the Line editor has no Comment, Layer, Style, Actor or Effect
-// field yet), and fields the draft leaves alone stay each Line's own.
 TEST_F(CommitTest, TheLinesOwnDraftGoesWithTheCommitFieldByField)
 {
     select({a, c}, a);
@@ -462,7 +429,6 @@ TEST_F(CommitTest, TheLinesOwnDraftGoesWithTheCommitFieldByField)
         EXPECT_EQ(line(i).marginLeft.value, 12) << i;
         EXPECT_EQ(ms(line(i).end.value), 2500) << i;
     }
-    // the start was not changed: c keeps its own; so do the fields no draft holds
     EXPECT_EQ(ms(line(2).start.value), 6500);
     EXPECT_EQ(line(2).style, u8"Default");
     EXPECT_EQ(line(1).text, u8"b");
@@ -476,7 +442,6 @@ TEST_F(CommitTest, TheNextLineIsTheNextShownOne)
     const auto outcome = commitAudioTimes(session, {1000, 2000, true, true}, shown);
     ASSERT_TRUE(outcome);
     EXPECT_EQ(outcome->next, std::optional(c));
-    // while the display holds a boundary NextLine does nothing
     const auto held = commitAudioTimes(session, {1000, 2100, true, true, true}, shown);
     ASSERT_TRUE(held);
     EXPECT_EQ(held->next, std::nullopt);
@@ -495,11 +460,10 @@ TEST_F(CommitTest, OnTheLastLineTheAppendedLineNamesTheOneStep)
     EXPECT_EQ(ms(line(2).end.value), 8500);
     const auto &added = line(3);
     EXPECT_EQ(outcome->next, std::optional(added.id));
-    EXPECT_EQ(ms(added.start.value), 8500); // the committed end
+    EXPECT_EQ(ms(added.start.value), 8500);
     EXPECT_EQ(ms(added.end.value), 13500);
     EXPECT_EQ(added.text, u8"");
     EXPECT_EQ(added.style, u8"Default");
-    // nothing changed: the append alone, the same name
     select({added.id}, added.id);
     const auto again = commitAudioTimes(session, {8500, 13500, true, true}, shown);
     ASSERT_TRUE(again);
@@ -509,8 +473,6 @@ TEST_F(CommitTest, OnTheLastLineTheAppendedLineNamesTheOneStep)
 
 TEST_F(CommitTest, TheAppendedLineCopiesTheLineAtTheShownRowCountWithHiddenLines)
 {
-    // GetElementByKey(size - 1) is the last Line's row (1: b is hidden), and
-    // GetDialogue reads it as a key: b is copied, not c.
     hidden = {b};
     select({c}, c);
     const auto outcome = commitAudioTimes(session, {6500, 8000, true, true}, shown);
@@ -529,12 +491,10 @@ TEST_F(CommitTest, SeveralSelectedLinesAllTakeTheTimes)
     EXPECT_EQ(ms(line(2).start.value), 500);
     EXPECT_EQ(ms(line(2).end.value), 900);
     EXPECT_EQ(ms(line(1).start.value), 5000);
-    // only the fields that changed: the same end leaves the others' ends alone
     ASSERT_TRUE(commitAudioTimes(session, {700, 900, true, false}, shown));
     EXPECT_EQ(ms(line(2).start.value), 700);
 }
 
-// KA2-tap-to-time: a tapped Line's times and syllables are its own.
 TEST_F(CommitTest, AnActiveOnlyCommitLeavesTheOtherSelectedLinesAlone)
 {
     select({a, c}, a);
@@ -552,9 +512,6 @@ TEST_F(CommitTest, AnActiveOnlyCommitLeavesTheOtherSelectedLinesAlone)
     EXPECT_EQ(lastStep(), "Tap timing");
 }
 
-// KA1: without AUDIO_AUTO_COMMIT the active Line's syllables wait in the
-// draft; a later Commit, from the panel or the editor, sends them to that
-// Line alone (Codex)
 TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
 {
     select({a, c}, a);
@@ -570,7 +527,6 @@ TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
     EXPECT_EQ(line(2).text, u8"c");
     EXPECT_EQ(ms(line(2).start.value), 6500);
 
-    // the editor's Commit (Send) the same
     AudioCommitRequest again = draft;
     again.karaokeText = u"{\\k20}ki{\\k20}ra";
     ASSERT_TRUE(commitAudioTimes(session, again, shown));
@@ -578,15 +534,11 @@ TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
     EXPECT_EQ(line(0).text, u8"{\\k20}ki{\\k20}ra");
     EXPECT_EQ(line(2).text, u8"c");
 
-    // a draft of the times alone still goes to every selected Line
     ASSERT_TRUE(commitAudioTimes(session, {700, 900, false, false}, shown));
     EXPECT_FALSE(session.draftOwnFields()->start);
     ASSERT_TRUE(commitAudioTimes(session, {700, 900, true, false}, shown));
     EXPECT_EQ(ms(line(2).start.value), 700);
 
-    // a pending edit for every selected Line keeps its scope when an
-    // active-only text joins the draft (Codex): the Start goes to both, the
-    // syllables to the active Line
     ASSERT_TRUE(session.editDraft(a, DraftChange{.start = core::DocumentTime(300'000)}));
     AudioCommitRequest joined{300, 900, false, false};
     joined.karaokeText = u"{\\k30}ka{\\k30}ru";
@@ -599,8 +551,6 @@ TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
     EXPECT_EQ(ms(line(2).start.value), 300);
     EXPECT_EQ(line(2).text, u8"c");
 
-    // and through the editor's Commit; an active-only time it changes is the
-    // active Line's too, and a later edit of the text shares it again
     ASSERT_TRUE(session.editDraft(a, DraftChange{.actor = u8"Kara"}));
     AudioCommitRequest moved{250, 900, false, false};
     moved.karaokeText = u"{\\k35}ka{\\k30}ru";
@@ -620,8 +570,6 @@ TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
     EXPECT_EQ(line(2).text, u8"shared");
 }
 
-// KA1: with AUDIO_AUTO_COMMIT on, an active-only save keeps a pending edit
-// meant for every selected Line (Codex)
 TEST_F(CommitTest, AnActiveOnlySaveKeepsAPendingEditForEverySelectedLine)
 {
     select({a, c}, a);
@@ -637,8 +585,6 @@ TEST_F(CommitTest, AnActiveOnlySaveKeepsAPendingEditForEverySelectedLine)
     EXPECT_EQ(ms(line(2).start.value), 6500);
 }
 
-// KA1: in MicroDVD the authored frames are kept apart too: an End for every
-// selected Line, then an active-only Start (Codex)
 TEST(AudioTimingCommit, AKeptStartFrameLeavesTheSharedEndFrame)
 {
     const std::string_view sub = "{25}{50}a\n{75}{100}c\n";
@@ -679,12 +625,12 @@ TEST_F(CommitTest, AnEndBeforeTheStartIsBlockedUnlessLegacyCommitsIt)
     ASSERT_FALSE(refused);
     EXPECT_EQ(refused.error(), CommandRefusal::InvalidDraft);
     EXPECT_EQ(session.historySize(), steps);
-    EXPECT_EQ(session.draftLine(), std::optional(b)); // the draft and its reason stay
+    EXPECT_EQ(session.draftLine(), std::optional(b));
     session.setInvalidCommitPolicy(InvalidCommitPolicy::Legacy);
     const auto outcome = commitAudioTimes(session, {6000, 5000, true, true}, shown);
     ASSERT_TRUE(outcome);
     EXPECT_EQ(ms(line(1).start.value), 6000);
-    EXPECT_EQ(ms(line(1).end.value), 5000); // Send does not correct it
+    EXPECT_EQ(ms(line(1).end.value), 5000);
 }
 
 TEST_F(CommitTest, AltReleaseMovesTheNeighbourInTheSameStep)
@@ -695,21 +641,17 @@ TEST_F(CommitTest, AltReleaseMovesTheNeighbourInTheSameStep)
     EXPECT_EQ(session.historySize(), steps + 1);
     EXPECT_EQ(ms(line(1).start.value), 5500);
     EXPECT_EQ(ms(line(1).end.value), 6000);
-    // past the neighbour's end: it lasts five seconds from there
     ASSERT_TRUE(commitAudioTimes(session, {1000, 7000, true, false, false, AudioAdjacent::Next}, shown));
     EXPECT_EQ(ms(line(1).start.value), 7000);
     EXPECT_EQ(ms(line(1).end.value), 12000);
-    // the previous one ends at the start
     select({c}, c);
     ASSERT_TRUE(commitAudioTimes(session, {6000, 8000, true, false, false, AudioAdjacent::Previous}, shown));
     EXPECT_EQ(ms(line(1).end.value), 6000);
-    EXPECT_EQ(ms(line(1).start.value), 1000); // 6000 - 5000: its end fell before its start
+    EXPECT_EQ(ms(line(1).start.value), 1000);
 }
 
 TEST_F(CommitTest, AltOnTheFirstLinesStartMovesTheLineItself)
 {
-    // CopyDialogueWithOffset(0, -1) is Line 0 itself: its end goes to the new
-    // start, and Send leaves the end the editor did not change.
     select({a}, a);
     ASSERT_TRUE(commitAudioTimes(session, {500, 2000, true, false, false, AudioAdjacent::Previous}, shown));
     EXPECT_EQ(ms(line(0).start.value), 500);
@@ -718,25 +660,22 @@ TEST_F(CommitTest, AltOnTheFirstLinesStartMovesTheLineItself)
 
 TEST_F(CommitTest, AltWithoutAutoCommitIsAStepOfItsOwn)
 {
-    // A3-adjacent-step (proposed): legacy's change joined the next step
     select({a}, a);
     const auto steps = session.historySize();
     ASSERT_TRUE(commitAudioTimes(session, {1000, 5500, false, false, false, AudioAdjacent::Next}, shown));
     EXPECT_EQ(session.historySize(), steps + 1);
     EXPECT_EQ(ms(line(1).start.value), 5500);
-    EXPECT_EQ(session.draftLine(), std::optional(a)); // the box's end waits in the editor
+    EXPECT_EQ(session.draftLine(), std::optional(a));
     EXPECT_EQ(ms(line(0).end.value), 2000);
 }
 
-// DoUpdateImage after DrawTimescale: the mark two pixels wide one column to
-// the right of its x, its time centred in a 300-pixel rect above the bottom.
 TEST(AudioTiming, TheMarkIsDrawnWithItsTime)
 {
     const AudioView view = minuteView();
     AudioMarks marks;
     marks.startMs = 3000;
     marks.endMs = 6000;
-    marks.markMs = 9000; // column 300
+    marks.markMs = 9000;
     marks.markTextHeight = 14;
     const AudioDisplayOptions options;
     const auto scene = audioScene(view, {}, marks, options, [](AudioShape::Font, std::string_view) { return 30; });
@@ -757,13 +696,11 @@ TEST(AudioTiming, TheMarkIsDrawnWithItsTime)
     EXPECT_EQ(label->y1, 128 - 14 - 2);
     EXPECT_EQ(label->align, AudioShape::Align::TopCenter);
     EXPECT_TRUE(label->outlined);
-    // out of view: neither
     marks.markMs = 40000;
     for (const auto &s : audioScene(view, {}, marks, options, [](AudioShape::Font, std::string_view) { return 30; }))
         EXPECT_FALSE(s.kind == AudioShape::Kind::Text && s.text == "0:00:40.00");
 }
 
-// A modified selection is drawn as legacy NeedCommit draws it.
 TEST(AudioTiming, AModifiedSelectionSaysSo)
 {
     const AudioView view = minuteView();

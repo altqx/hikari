@@ -15,15 +15,12 @@ QString describe(const QString &context, const TsMessage &m)
              m.numerus ? QStringLiteral(" [numerus]") : QString());
 }
 
-// The 1-based line of a text offset.
 int lineAt(const QString &text, qsizetype offset)
 {
     return int(QStringView(text).left(offset).count(u'\n')) + 1;
 }
 
-// The text with C++ comments blanked (line breaks kept), and string and
-// character literals' contents too when `literals`, so a comment or a string
-// naming tr() is no call.
+// Blanks C++ comments, and literals' contents when `literals`, keeping line breaks.
 QString withoutCppComments(const QString &text, bool literals = false)
 {
     QString out = text;
@@ -98,7 +95,7 @@ QString withoutCppComments(const QString &text, bool literals = false)
     return out;
 }
 
-} // namespace
+}
 
 std::expected<ContextRegistry, QString> readContextRegistry(const QByteArray &bytes)
 {
@@ -145,8 +142,6 @@ QStringList lintContexts(const ContextRegistry &registry, const TsCatalog &extra
         }
     }
 
-    // A literal context: the first argument of the calls that take one, and
-    // QML's per-file pragma.
     static const QRegularExpression literalContext(
         QStringLiteral(R"re((?<![\w.])(qsTranslate|qsTranslateNoOp|QT_TRANSLATE_NOOP3?|QT_TRANSLATE_N_NOOP3?|)re"
                        R"re(QT_TRANSLATE_NOOP_UTF8|translate)\s*\(\s*"([^"\\]*)")re"));
@@ -155,8 +150,6 @@ QStringList lintContexts(const ContextRegistry &registry, const TsCatalog &extra
     // Calls whose context is the enclosing class (or QObject) at run time.
     static const QRegularExpression classContext(
         QStringLiteral(R"((?<![\w])(?:\w+::)?(tr|trUtf8|QT_TR_NOOP|QT_TR_N_NOOP|QT_TR_NOOP_UTF8)\s*\()"));
-    // A run-time lookup and the marks that put its possible texts in the
-    // catalogs (the marking calls of literalContext).
     static const QRegularExpression lookup(
         QStringLiteral(R"re((?<![\w.])(qsTranslate|translate)\s*\(\s*"([^"\\]*)"\s*,\s*)re"));
     static const QRegularExpression mark(
@@ -172,10 +165,7 @@ QStringList lintContexts(const ContextRegistry &registry, const TsCatalog &extra
                 problems << QStringLiteral("%1:%2: %3 names the unregistered context \"%4\"")
                                 .arg(file.path).arg(lineAt(text, match.capturedStart())).arg(match.captured(1), match.captured(2));
         }
-        // A computed source text: lupdate extracts nothing from the call, so
-        // its texts reach the catalogs only through marks with the same
-        // context. The lint cannot follow the text to its marks; it asks for
-        // at least one in the same file (the table it is looked up in).
+        // lupdate extracts nothing from a computed source text: ask for a same-context mark in the file.
         const QString uncommented = cpp ? text : withoutCppComments(file.text);
         QSet<QString> marked;
         for (auto it = mark.globalMatch(uncommented); it.hasNext();)
@@ -209,4 +199,4 @@ QStringList lintContexts(const ContextRegistry &registry, const TsCatalog &extra
     return problems;
 }
 
-} // namespace hikari::i18n
+}

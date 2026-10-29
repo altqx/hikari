@@ -1,7 +1,3 @@
-// E5: translation mode controls against legacy EditBox (OnTlMode, SetTlMode,
-// OnDoubtfulTl, SetTextWithTags) and SubsGrid (SetTlMode, showOriginal,
-// LoadSubtitles, DoUndo) at 20d647c4.
-
 #include "hikari/application/grid_translation.h"
 #include "hikari/application/translation_mode.h"
 #include "hikari/core/ass_load.h"
@@ -38,10 +34,6 @@ constexpr std::string_view kStyles =
     "Style: O,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,10,10,10,1\n"
     "\n";
 
-// Three TLMode pairs as the legacy save writes them (SubsGridBase.cpp:337-350):
-// an Unconfirmed one ("\fD" effect on the original), a translated one, and an
-// untranslated one (an original and an empty translation line, as legacy
-// loads such a file; it saves it as one line).
 const std::string kPairs = std::string("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n") +
                            std::string(kStyles) +
                            "[Events]\n"
@@ -102,12 +94,10 @@ void selectRows(EditSession &s, std::initializer_list<std::size_t> rows)
     s.setSelection(sel);
 }
 
-} // namespace
+}
 
 TEST(TranslatorMode, TurningOnIsOneStepAndUndoTakesItBack)
 {
-    // EditBox::OnTlMode -> SubsGrid::SetTlMode(true) (SubsGridBase.cpp:1313-1334)
-    // then SetModified(GRID_TURN_ON_TLMODE): "Turning on translator mode".
     EditSession session{load(kPlain)};
     const auto steps = session.historySize();
     ASSERT_TRUE(turnOnTranslationModeStep(session));
@@ -118,31 +108,25 @@ TEST(TranslatorMode, TurningOnIsOneStepAndUndoTakesItBack)
     EXPECT_EQ(d.scriptInfo(u8"TLMode Style"), u8"TLmode");
     const auto styles = core::decodeStyles(d);
     ASSERT_EQ(styles.size(), 3u);
-    EXPECT_EQ(styles.back().name, u8"TLmode"); // a copy of Default with alignment 8
+    EXPECT_EQ(styles.back().name, u8"TLmode");
     EXPECT_EQ(styles.back().alignment, u8"8");
     EXPECT_EQ(styles.back().fontname, u8"Arial");
-    // Already on: the check box is checked, nothing turns it on again.
     EXPECT_EQ(turnOnTranslationModeStep(session).error(), CommandRefusal::Invalid);
     ASSERT_TRUE(session.undo());
     EXPECT_FALSE(session.document().scriptInfo(u8"TLMode"));
     EXPECT_FALSE(session.document().scriptInfo(u8"TLMode Style"));
     EXPECT_EQ(core::decodeStyles(session.document()).size(), 2u);
-    EXPECT_EQ(saved(session.document()), kPlain); // back to the opened bytes
+    EXPECT_EQ(saved(session.document()), kPlain);
 }
 
 TEST(TranslatorMode, OnlyForAss)
 {
-    // The check box is enabled for ASS only (HikariSubFrame.cpp:2401,
-    // SubsGridBase.cpp:1239-1246).
     const auto srt = core::loadSubtitle(bytesOf("1\n00:00:01,000 --> 00:00:02,000\nA\n\n"), u8"srt");
     ASSERT_TRUE(srt);
     EditSession session{srt->document};
     EXPECT_EQ(turnOnTranslationModeStep(session).error(), CommandRefusal::Invalid);
 }
 
-// E5-tlmode-needs-script-info: an ASS file without a [Script Info] section
-// gets one at the top, as legacy's AddSInfo and SaveFile header give it
-// (SubsFile.cpp:1020-1045, SubsGridBase.cpp:1490); Undo takes it away again.
 TEST(TranslatorMode, AnAssFileWithoutScriptInfoGetsTheSection)
 {
     const std::string sectionless = std::string(kStyles) + kPlain.substr(kPlain.find("[Events]"));
@@ -154,7 +138,6 @@ TEST(TranslatorMode, AnAssFileWithoutScriptInfoGetsTheSection)
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(saved(session.document()), sectionless);
 
-    // E3's Paste translation turns the mode on there too.
     EditSession pasted{load(sectionless)};
     ASSERT_TRUE(pasteTranslation(pasted, u8"a\nb\n", u8"txt"));
     EXPECT_EQ(pasted.document().scriptInfo(u8"TLMode Showtl"), u8"Yes");
@@ -162,8 +145,6 @@ TEST(TranslatorMode, AnAssFileWithoutScriptInfoGetsTheSection)
     EXPECT_TRUE(saved(pasted.document()).starts_with("[Script Info]\nTLMode Style: TLmode\nTLMode: Yes\nTLMode Showtl: Yes\n\n"));
 }
 
-// E5-tlmode-needs-script-info: a PlainText Document (legacy LoadTXT kept it
-// ASS) has no Script Info for the mode: both are refused and nothing changes.
 TEST(TranslatorMode, PlainTextIsRefused)
 {
     const auto text = core::loadSubtitle(bytesOf("first line\nsecond line\n"), u8"txt");
@@ -181,25 +162,18 @@ TEST(TranslatorMode, PlainTextIsRefused)
 
 TEST(TranslatorMode, TurningOffAndOnRoundTripsTheTLModeFile)
 {
-    // C87-unconfirmed-roundtrip: the "\fD" original loads Unconfirmed.
     EditSession session{load(kPairs)};
     auto lines = session.document().lines();
     ASSERT_EQ(lines.size(), 3u);
     EXPECT_TRUE(lines[0]->unconfirmed);
     EXPECT_EQ(lines[1]->translation, u8"Wieza");
     EXPECT_TRUE(lines[2]->translation.empty());
-    // Unchanged, the file saves as it was opened.
     EXPECT_EQ(saved(session.document()), kPairs);
 
-    // SetTlMode(false) (SubsGridBase.cpp:1336-1373): TLMode and the TLMode
-    // Style go, translations become the text, Unconfirmed clears; one step.
     const auto steps = session.historySize();
     ASSERT_TRUE(turnOffTranslationMode(session));
     EXPECT_EQ(session.historySize(), steps + 1);
     EXPECT_EQ(session.history().back().name, "Turning off translator mode");
-    // SaveFile without TLMode writes every Dialogue as one line (GetRaw):
-    // the untranslated pair too, in its translation line's fields with the
-    // original's text.
     const std::string off = saved(session.document());
     EXPECT_EQ(events(off), "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
@@ -207,7 +181,6 @@ TEST(TranslatorMode, TurningOffAndOnRoundTripsTheTLModeFile)
                            "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,Wall\n");
     EXPECT_EQ(off.find("TLMode"), std::string::npos);
     EXPECT_EQ(off.find("Style: O,"), std::string::npos);
-    // Reloaded: three plain Lines, nothing Unconfirmed.
     {
         const auto reloaded = load(off);
         ASSERT_EQ(reloaded.lines().size(), 3u);
@@ -217,14 +190,11 @@ TEST(TranslatorMode, TurningOffAndOnRoundTripsTheTLModeFile)
         }
     }
 
-    // One Undo brings the pairs back, Unconfirmed included, and they save as
-    // they were opened.
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(saved(session.document()), kPairs);
     lines = session.document().lines();
     EXPECT_TRUE(lines[0]->unconfirmed);
 
-    // Mark the second pair Unconfirmed too: saved and reloaded, both are.
     selectRows(session, {1});
     ASSERT_TRUE(toggleUnconfirmed(session));
     const std::string marked = saved(session.document());
@@ -241,14 +211,11 @@ TEST(TranslatorMode, TurningOffAndOnRoundTripsTheTLModeFile)
 
 TEST(TranslatorMode, TurnedOffThenOnAgainMakesANewTLModeStyle)
 {
-    // After SetTlMode(false) the file has no TLMode: turning it on again
-    // copies Default as TLmode (the O Style went with the mode).
     EditSession session{load(kPairs)};
     ASSERT_TRUE(turnOffTranslationMode(session));
     ASSERT_TRUE(turnOnTranslationModeStep(session));
     EXPECT_EQ(session.document().scriptInfo(u8"TLMode Style"), u8"TLmode");
     EXPECT_EQ(session.document().scriptInfo(u8"TLMode"), u8"Yes");
-    // No Line has a translation, so each saves as one line (GetRaw(&raw, false)).
     EXPECT_EQ(events(saved(session.document())),
               "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
@@ -258,8 +225,6 @@ TEST(TranslatorMode, TurnedOffThenOnAgainMakesANewTLModeStyle)
 
 TEST(NotConfirmed, FlipsEverySelectedLineAsOneStep)
 {
-    // EditBox::OnDoubtfulTl (EditBox.cpp:1946-1962): ChangeState(4) on each
-    // selected Line, so a mixed selection flips each one.
     EditSession session{load(kPairs)};
     selectRows(session, {0, 2});
     const auto steps = session.historySize();
@@ -268,9 +233,8 @@ TEST(NotConfirmed, FlipsEverySelectedLineAsOneStep)
     EXPECT_EQ(session.history().back().name, "Mark unconfirmed");
     auto lines = session.document().lines();
     EXPECT_FALSE(lines[0]->unconfirmed);
-    EXPECT_FALSE(lines[1]->unconfirmed); // not selected
+    EXPECT_FALSE(lines[1]->unconfirmed);
     EXPECT_TRUE(lines[2]->unconfirmed);
-    // An untranslated Unconfirmed Line saves as its pair (SubsGridBase.cpp:342).
     EXPECT_NE(saved(session.document()).find("Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,\fD,Wall\n"
                                              "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,\n"),
               std::string::npos);
@@ -282,10 +246,6 @@ TEST(NotConfirmed, FlipsEverySelectedLineAsOneStep)
 
 TEST(NotConfirmed, IsItsOwnStepNotJoinedToTheNextEdit)
 {
-    // E5-unconfirmed-own-step: legacy OnDoubtfulTl (EditBox.cpp:1946-1962)
-    // flips State bit 4 without SetModified, so the flip joins whichever step
-    // comes next and one Undo takes both away. Here it is its own
-    // "Mark unconfirmed" step: the next edit undoes on its own.
     EditSession session{load(kPairs)};
     selectRows(session, {1});
     const auto id = session.document().lines()[1]->id;
@@ -295,14 +255,12 @@ TEST(NotConfirmed, IsItsOwnStepNotJoinedToTheNextEdit)
     ASSERT_TRUE(session.commitDraft());
     ASSERT_EQ(session.historySize(), steps + 2);
     EXPECT_EQ(session.history()[steps].name, "Mark unconfirmed");
-    ASSERT_TRUE(session.undo()); // the text edit only
+    ASSERT_TRUE(session.undo());
     EXPECT_EQ(session.document().lines()[1]->text, u8"Tower");
     EXPECT_TRUE(session.document().lines()[1]->unconfirmed);
-    ASSERT_TRUE(session.undo()); // then the flip
+    ASSERT_TRUE(session.undo());
     EXPECT_FALSE(session.document().lines()[1]->unconfirmed);
 
-    // A pending draft on the Line is committed as its own step first, then the
-    // flip follows as "Mark unconfirmed"; Undo takes the flip away alone.
     EditSession drafted{load(kPairs)};
     selectRows(drafted, {1});
     const auto draftedId = drafted.document().lines()[1]->id;
@@ -320,7 +278,6 @@ TEST(NotConfirmed, IsItsOwnStepNotJoinedToTheNextEdit)
 
 TEST(NotConfirmed, OnlyInTranslationMode)
 {
-    // `if (!grid->hasTLMode){ wxBell(); return; }`
     EditSession plain{load(kPlain)};
     selectRows(plain, {0});
     EXPECT_EQ(toggleUnconfirmed(plain).error(), CommandRefusal::Invalid);
@@ -329,9 +286,6 @@ TEST(NotConfirmed, OnlyInTranslationMode)
     EXPECT_EQ(toggleUnconfirmed(pairs).error(), CommandRefusal::Invalid);
 }
 
-// Legacy SetTextWithTags (EditBox.cpp:1811-1858), worked through by hand on
-// wxString: Replace("}{", ""), Find('}'), find("{"), Mid and SubString. The
-// legacy probe agrees (MovingTagsCapture below).
 TEST(MovingTags, SplitsTheOverrideBlocksFromTheText)
 {
     struct Case {
@@ -339,20 +293,12 @@ TEST(MovingTags, SplitsTheOverrideBlocksFromTheText)
         std::size_t caret;
     };
     const Case cases[] = {
-        // A leading block: the caret goes after it (pos = txtTl.length()).
         {u8"{\\i1}Gate keeper", u8"Gate keeper", u8"{\\i1}", 5},
-        // Blocks inside the text: the caret stays at 0.
         {u8"Gate {\\i1}keeper{\\i0}", u8"Gate keeper", u8"{\\i1}{\\i0}", 0},
-        // "}{" is removed first, so adjacent blocks become one.
         {u8"{\\b1}{\\i1}A}{B", u8"AB", u8"{\\b1\\i1}", 8},
-        // A '}' with no '{' before it: the text up to it stays in the original.
         {u8"a}b", u8"a}b", u8"", 0},
-        // A '{' after the first '}': SubString(brackets, getr) with getr before
-        // brackets takes the rest, then the loop reads the same block again.
         {u8"a}b{c}", u8"a}bb", u8"{c}{c}", 0},
-        // An unclosed block after the last '}' stays in the original.
         {u8"{\\an8}top {open", u8"top {open", u8"{\\an8}", 6},
-        // The caret counts UTF-16 units of the leading block.
         {u8"{\\fn\U0001D400}x", u8"x", u8"{\\fn\U0001D400}", 7},
     };
     for (const auto &c : cases) {
@@ -362,7 +308,6 @@ TEST(MovingTags, SplitsTheOverrideBlocksFromTheText)
         EXPECT_EQ(str(moved->translation), str(c.translation)) << str(c.text);
         EXPECT_EQ(moved->caret, c.caret) << str(c.text);
     }
-    // No '}': shown whole (Text.Find('}') == -1).
     EXPECT_FALSE(moveTagsFromOriginal(u8"Gate keeper"));
     EXPECT_FALSE(moveTagsFromOriginal(u8"{\\i1 never closed"));
     EXPECT_FALSE(moveTagsFromOriginal(u8""));
@@ -370,8 +315,6 @@ TEST(MovingTags, SplitsTheOverrideBlocksFromTheText)
 
 namespace {
 
-// A call of tests/fixtures/legacy-cases/inputs/tag-move-cases.txt: the state it ran
-// under (the case file's last "state" line before it).
 struct TagMoveCall {
     bool tl = true, move = true;
     int visual = 0;
@@ -416,16 +359,8 @@ std::vector<TagMoveCase> readTagMoveCases(const char *path)
     return cases;
 }
 
-} // namespace
+}
 
-// Every call of the legacy probe (EditBox::SetTextWithTags compiled from the
-// legacy source unchanged; tests/fixtures/legacy-observations/local-e5-tag-move-20261012)
-// replayed through moveTagsFromOriginal under the call's conditions
-// (EditBox.cpp:1811; LineEditorController::evaluateSplit checks them): the
-// split, both fields and the caret. Both legacy builds put the caret on the
-// same character, after a leading block; they count it in their own wchar_t
-// (wxGTK code points, wxMSW UTF-16 units). The rewrite's caret is that
-// character in UTF-16 units, Qt's text position, on every platform.
 TEST(MovingTagsCapture, ReplaysTheLegacyObservations)
 {
     const auto cases = readTagMoveCases(HIKARI_TAG_MOVE_CASES);
@@ -470,30 +405,25 @@ TEST(MovingTagsCapture, ReplaysTheLegacyObservations)
                 const QJsonArray selection = build["selection"].toArray();
                 ASSERT_EQ(selection.size(), 2);
                 EXPECT_EQ(selection[0].toInt(), selection[1].toInt());
-                // The same character: the rewrite's caret in UTF-16 units is
-                // legacy's count in the build's wchar_t.
+                // wx counts the caret in wchar_t: code points on wxGTK, UTF-16 units on wxMSW.
                 const QString before = edit.left(qsizetype(moved->caret));
                 EXPECT_EQ(selection[1].toInt(), utf16Units ? before.size() : before.toUcs4().size());
             }
         }
     }
     EXPECT_GE(splits, 50);
-    // Only the leading blocks outside the BMP differ, and only in the count.
     EXPECT_EQ(widthsDiffer, 2);
 }
 
 TEST(OriginalColumns, LoadTakesTheDocumentAndTheOption)
 {
-    // LoadSubtitles (SubsGridBase.cpp:1214-1216): hasTLMode && (Showtl || option).
     const auto doc = [](const char *extra) {
         return load(std::string("[Script Info]\n") + extra + "[Events]\n");
     };
     EXPECT_TRUE(OriginalColumns{}.observe(doc("TLMode: Yes\nTLMode Showtl: Yes\n"), false));
     EXPECT_TRUE(OriginalColumns{}.observe(doc("TLMode: Yes\n"), true));
     EXPECT_FALSE(OriginalColumns{}.observe(doc("TLMode: Yes\n"), false));
-    EXPECT_FALSE(OriginalColumns{}.observe(doc("TLMode Showtl: Yes\n"), true)); // not in translation mode
-    // The option changing later does not change the Grid (legacy reads it
-    // only at these moments).
+    EXPECT_FALSE(OriginalColumns{}.observe(doc("TLMode Showtl: Yes\n"), true));
     OriginalColumns columns;
     const auto on = doc("TLMode: Yes\n");
     EXPECT_FALSE(columns.observe(on, false));
@@ -505,33 +435,23 @@ TEST(OriginalColumns, FollowsTheSwitchPasteAndUndo)
     EditSession session{load(kPlain)};
     OriginalColumns columns;
     EXPECT_FALSE(columns.observe(session.document(), false));
-    // SetTlMode(true) without TL_MODE_SHOW_ORIGINAL leaves it as it was.
     ASSERT_TRUE(turnOnTranslationModeStep(session));
     columns.turnedOn(session.document(), false);
     EXPECT_FALSE(columns.observe(session.document(), false));
-    // OnPasteTextTl shows it and writes "TLMode Showtl: Yes".
     ASSERT_TRUE(pasteTranslation(session, u8"a\nb\n", u8"txt"));
     columns.pasted(session.document());
     EXPECT_TRUE(columns.observe(session.document(), false));
-    // SetTlMode(false) hides it; Showtl stays in Script Info.
     ASSERT_TRUE(turnOffTranslationMode(session));
     columns.turnedOff(session.document());
     EXPECT_FALSE(columns.observe(session.document(), false));
-    // Turning on again without the option: legacy keeps it hidden although
-    // the Document says Showtl.
     ASSERT_TRUE(turnOnTranslationModeStep(session));
     columns.turnedOn(session.document(), false);
     EXPECT_FALSE(columns.observe(session.document(), false));
-    // DoUndo when TLMode changes (SubsGridBase.cpp:994-998): Showtl, or
-    // TLMode Yes with the option. Undoing the turn-on leaves no TLMode but
-    // Showtl: legacy shows the two columns outside translation mode.
     ASSERT_TRUE(session.undo());
     EXPECT_FALSE(session.document().scriptInfo(u8"TLMode"));
     EXPECT_TRUE(columns.observe(session.document(), false));
-    // Undoing the turn-off: TLMode is Yes again, and Showtl shows them.
     ASSERT_TRUE(session.undo());
     EXPECT_TRUE(columns.observe(session.document(), false));
-    // Observing again without a change keeps them.
     EXPECT_TRUE(columns.observe(session.document(), false));
 }
 
@@ -544,11 +464,11 @@ TEST(OriginalColumns, UndoWithoutShowtlFollowsTheOption)
     columns.turnedOn(session.document(), true);
     EXPECT_TRUE(columns.shown());
     ASSERT_TRUE(session.undo());
-    EXPECT_FALSE(columns.observe(session.document(), true)); // no TLMode, no Showtl
+    EXPECT_FALSE(columns.observe(session.document(), true));
     ASSERT_TRUE(session.redo());
     EXPECT_TRUE(columns.observe(session.document(), true));
     ASSERT_TRUE(session.undo());
     EXPECT_FALSE(columns.observe(session.document(), false));
     ASSERT_TRUE(session.redo());
-    EXPECT_FALSE(columns.observe(session.document(), false)); // option off now
+    EXPECT_FALSE(columns.observe(session.document(), false));
 }

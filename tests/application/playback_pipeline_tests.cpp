@@ -1,8 +1,3 @@
-// V1: the playback pipeline — pooled frame buffers, the latest-wins handoff
-// in and out of the worker (no backlog), the overlay rendered ahead for the
-// next frame, the overlay's visible bounds, and the CPU Y'CbCr rows (SIMD and
-// scalar give the same bytes).
-
 #include "hikari/application/playback_pipeline.h"
 #include "hikari/application/yuv_bgra.h"
 
@@ -24,7 +19,6 @@ namespace {
 
 using namespace std::chrono_literals;
 
-// Polls until `done` holds (the worker runs on its own thread).
 template <typename F> bool eventually(F done)
 {
     const auto until = std::chrono::steady_clock::now() + 5s;
@@ -39,7 +33,7 @@ template <typename F> bool eventually(F done)
 struct Renderer : SubtitleRendererPort {
     mutable std::mutex mutex;
     std::vector<std::int64_t> renderedAt;
-    std::vector<OverlaySize> sizes; // each render's, scaled or not
+    std::vector<OverlaySize> sizes;
     std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
     std::expected<OverlayFrame, RenderError> renderScaled(core::DocumentTime t, int w, int h, int vw, int vh) override
     {
@@ -66,7 +60,7 @@ struct Renderer : SubtitleRendererPort {
         o.height = h;
         o.stride = w * 4;
         OverlayPixels::Bytes pixels(static_cast<std::size_t>(o.stride) * static_cast<std::size_t>(h), 0);
-        pixels[4 + 3] = 255; // pixel (1, 0)
+        pixels[4 + 3] = 255;
         o.pixels = std::move(pixels);
         o.empty = false;
         return o;
@@ -83,7 +77,6 @@ struct Renderer : SubtitleRendererPort {
     }
 };
 
-// The owner's event queue: posted tasks run when the test drains it.
 struct Queue {
     std::mutex mutex;
     std::deque<std::function<void()>> tasks;
@@ -115,7 +108,6 @@ struct Queue {
     }
 };
 
-// Holds the worker inside a frame's make until released.
 struct Gate {
     std::mutex mutex;
     std::condition_variable cv;
@@ -160,7 +152,7 @@ PlaybackPipeline::Input input(std::int64_t startUs, std::optional<std::int64_t> 
     return {epoch, startUs, endUs, std::move(make)};
 }
 
-} // namespace
+}
 
 TEST(FramePool, ReusesAReleasedBuffer)
 {
@@ -172,10 +164,10 @@ TEST(FramePool, ReusesAReleasedBuffer)
         first = a->bgra.data();
     }
     auto b = pool->acquire();
-    EXPECT_EQ(b->bgra.size(), 1024u); // the released one, not a fresh allocation
+    EXPECT_EQ(b->bgra.size(), 1024u);
     b->bgra.resize(1024);
     EXPECT_EQ(b->bgra.data(), first);
-    auto c = pool->acquire(); // none free: a new one
+    auto c = pool->acquire();
     EXPECT_TRUE(c->bgra.empty());
     EXPECT_EQ(pool->fresh(), 2u);
 }
@@ -186,7 +178,7 @@ TEST(FramePool, AFrameMayOutliveItsPool)
     auto frame = pool->acquire();
     frame->bgra.resize(16);
     pool.reset();
-    frame.reset(); // no pool to give the buffer back to: just freed
+    frame.reset();
     SUCCEED();
 }
 
@@ -195,7 +187,7 @@ TEST(PlaybackPipeline, InlineRendersEachFrameAtItsStart)
     Renderer renderer;
     std::vector<PlaybackPipeline::Output> got;
     PlaybackPipeline pipeline(renderer, nullptr, [&](PlaybackPipeline::Output o) { got.push_back(std::move(o)); });
-    pipeline.submit(input(40'000)); // no subtitles yet
+    pipeline.submit(input(40'000));
     pipeline.setSubtitles(3, true);
     pipeline.submit(input(80'000));
     pipeline.setSubtitles(4, false);
@@ -207,7 +199,7 @@ TEST(PlaybackPipeline, InlineRendersEachFrameAtItsStart)
     ASSERT_TRUE(got[1].overlay);
     EXPECT_EQ(got[1].overlay->width, 4);
     EXPECT_EQ(got[1].overlayBounds, (PixelRect{1, 0, 1, 1}));
-    EXPECT_EQ(got[2].subtitles, 4u); // rendered for serial 4, which has none
+    EXPECT_EQ(got[2].subtitles, 4u);
     EXPECT_FALSE(got[2].overlay);
     EXPECT_EQ(renderer.times(), std::vector<std::int64_t>{80'000});
 }
@@ -220,7 +212,7 @@ TEST(PlaybackPipeline, OnlyTheNewestFrameWaitsForTheWorker)
     PlaybackPipeline pipeline(renderer, queue.post(), [&](PlaybackPipeline::Output o) { shown.push_back(o.startUs); });
     Gate gate;
     pipeline.submit(input(0, std::nullopt, frame(4, 2, &gate)));
-    gate.waitEntered(); // the worker is busy with the first frame
+    gate.waitEntered();
     for (int i = 1; i <= 20; ++i)
         pipeline.submit(input(i * 40'000));
     gate.release();
@@ -231,8 +223,8 @@ TEST(PlaybackPipeline, OnlyTheNewestFrameWaitsForTheWorker)
     }));
     const auto c = pipeline.counters();
     EXPECT_EQ(c.submitted, 21u);
-    EXPECT_EQ(c.superseded, 19u); // 1..19 replaced while the worker was busy
-    EXPECT_LE(shown.size(), 2u);  // the first and the newest at most: no backlog
+    EXPECT_EQ(c.superseded, 19u);
+    EXPECT_LE(shown.size(), 2u);
     EXPECT_EQ(c.delivered, shown.size());
 }
 
@@ -242,14 +234,13 @@ TEST(PlaybackPipeline, OnlyTheNewestResultWaitsForTheOwner)
     Queue queue;
     std::vector<std::int64_t> shown;
     PlaybackPipeline pipeline(renderer, queue.post(), [&](PlaybackPipeline::Output o) { shown.push_back(o.startUs); });
-    // The owner is busy: three frames are made one after another.
     pipeline.submit(input(0));
     ASSERT_TRUE(eventually([&] { return queue.size() == 1; }));
     pipeline.submit(input(40'000));
     ASSERT_TRUE(eventually([&] { return pipeline.counters().replacedResults == 1; }));
     pipeline.submit(input(80'000));
     ASSERT_TRUE(eventually([&] { return pipeline.counters().replacedResults == 2; }));
-    EXPECT_EQ(queue.size(), 1u); // one task on the owner's queue, not one per frame
+    EXPECT_EQ(queue.size(), 1u);
     queue.drain();
     EXPECT_EQ(shown, std::vector<std::int64_t>{80'000});
 }
@@ -262,8 +253,6 @@ TEST(PlaybackPipeline, TheNextFramesOverlayIsRenderedAhead)
     PlaybackPipeline pipeline(renderer, queue.post(), [&](PlaybackPipeline::Output o) { got.push_back(std::move(o)); });
     pipeline.setSubtitles(1, true);
     pipeline.submit(input(0, 40'000));
-    // The frame's own overlay, then the next frame's at its end: a start
-    // within half a millisecond of 0 ends within half a millisecond of 40.
     ASSERT_TRUE(eventually([&] { return renderer.times().size() == 2; }));
     EXPECT_EQ(renderer.times(), (std::vector<std::int64_t>{0, 40'000}));
     pipeline.submit(input(40'000, 80'000));
@@ -273,13 +262,10 @@ TEST(PlaybackPipeline, TheNextFramesOverlayIsRenderedAhead)
     EXPECT_EQ(got.back().startUs, 40'000);
     ASSERT_TRUE(got.back().overlay);
     EXPECT_EQ(got.back().overlayBounds, (PixelRect{1, 0, 1, 1}));
-    // 40 ms was rendered once, ahead of its frame.
     const auto times = renderer.times();
     EXPECT_EQ(std::count(times.begin(), times.end(), 40'000), 1);
 }
 
-// SV1-screen-size-subtitles: with a screen size the overlays, the next
-// frame's too, are drawn at it; one made ahead at another size is not used.
 TEST(PlaybackPipeline, OverlaysAreDrawnAtTheScreenSize)
 {
     Renderer renderer;
@@ -296,7 +282,6 @@ TEST(PlaybackPipeline, OverlaysAreDrawnAtTheScreenSize)
     queue.drain();
     ASSERT_TRUE(got.back().overlay);
     EXPECT_EQ(got.back().overlay->width, 8);
-    // The screen changes with 80 ms made ahead at 8 x 4: drawn again at 12 x 6.
     ASSERT_TRUE(eventually([&] { return renderer.times().size() == 3; }));
     pipeline.setScreenSize(std::pair{12, 6});
     pipeline.submit(input(80'000, 120'000));
@@ -306,7 +291,6 @@ TEST(PlaybackPipeline, OverlaysAreDrawnAtTheScreenSize)
     ASSERT_TRUE(got.back().overlay);
     EXPECT_EQ(got.back().overlay->width, 12);
     EXPECT_EQ(got.back().overlay->height, 6);
-    // None: back to the video's size, drawn by render().
     ASSERT_TRUE(eventually([&] { return renderer.times().size() == 5; }));
     pipeline.setScreenSize(std::nullopt);
     pipeline.submit(input(120'000, 160'000));
@@ -326,7 +310,7 @@ TEST(PlaybackPipeline, AnOverlayRenderedAheadForOlderSubtitlesIsNotUsed)
     pipeline.setSubtitles(1, true);
     pipeline.submit(input(0, 40'000));
     ASSERT_TRUE(eventually([&] { return renderer.times().size() == 2; }));
-    pipeline.setSubtitles(2, true); // new subtitles prepared
+    pipeline.setSubtitles(2, true);
     pipeline.submit(input(40'000, 80'000));
     ASSERT_TRUE(eventually([&] {
         queue.drain();
@@ -335,13 +319,11 @@ TEST(PlaybackPipeline, AnOverlayRenderedAheadForOlderSubtitlesIsNotUsed)
     EXPECT_EQ(pipeline.counters().aheadUsed, 0u);
     EXPECT_EQ(got.back().subtitles, 2u);
     const auto times = renderer.times();
-    EXPECT_EQ(std::count(times.begin(), times.end(), 40'000), 2); // ahead, then again for serial 2
+    EXPECT_EQ(std::count(times.begin(), times.end(), 40'000), 2);
 }
 
 namespace {
 
-// Plays `starts` one frame at a time, each after the worker has rendered
-// what it planned ahead for the one before.
 PlaybackPipeline::Counters playOneByOne(const std::vector<std::int64_t> &starts, std::vector<std::int64_t> *rendered = nullptr)
 {
     Renderer renderer;
@@ -366,12 +348,8 @@ PlaybackPipeline::Counters playOneByOne(const std::vector<std::int64_t> &starts,
     return pipeline.counters();
 }
 
-} // namespace
+}
 
-// 23.976 frames a second in a millisecond timebase (Matroska): each start
-// is its exact time rounded, 41 or 42 ms after the one before. Once the
-// pace has settled the next start is known to the millisecond, so nearly
-// every frame's overlay is rendered once, ahead of it.
 TEST(PlaybackPipeline, AConstantRateInMillisecondsIsRenderedAheadOnce)
 {
     std::vector<std::int64_t> starts;
@@ -380,14 +358,11 @@ TEST(PlaybackPipeline, AConstantRateInMillisecondsIsRenderedAheadOnce)
     std::vector<std::int64_t> rendered;
     const auto c = playOneByOne(starts, &rendered);
     EXPECT_GE(c.aheadUsed, 230u);
-    EXPECT_LE(c.aheadUnused, 12u); // a guess on a rounding boundary may miss
+    EXPECT_LE(c.aheadUnused, 12u);
     EXPECT_EQ(c.aheadWithheld, 0u);
-    EXPECT_LE(rendered.size(), starts.size() + 14); // each frame's overlay about once
+    EXPECT_LE(rendered.size(), starts.size() + 14);
 }
 
-// The same with a timebase converted to microseconds (29.97 frames a
-// second at 90 kHz): the starts are a microsecond either side of the pace,
-// and an overlay rendered ahead serves a frame starting in its millisecond.
 TEST(PlaybackPipeline, AConstantRateInMicrosecondsIsRenderedAheadOnce)
 {
     std::vector<std::int64_t> starts;
@@ -398,8 +373,6 @@ TEST(PlaybackPipeline, AConstantRateInMicrosecondsIsRenderedAheadOnce)
     EXPECT_LE(c.aheadUnused, 3u);
 }
 
-// A variable frame rate: the guesses keep missing, so after a few the
-// pipeline stops rendering ahead instead of rendering for nothing.
 TEST(PlaybackPipeline, AnUnpredictablePaceStopsRenderingAhead)
 {
     std::mt19937 random(7);
@@ -410,7 +383,7 @@ TEST(PlaybackPipeline, AnUnpredictablePaceStopsRenderingAhead)
     std::vector<std::int64_t> rendered;
     const auto c = playOneByOne(starts, &rendered);
     EXPECT_GE(c.aheadWithheld, 130u);
-    EXPECT_LE(c.aheadUnused, 10u); // a few guesses, then none
+    EXPECT_LE(c.aheadUnused, 10u);
     EXPECT_LE(rendered.size(), starts.size() + 10);
 }
 
@@ -436,7 +409,7 @@ TEST(PlaybackPipeline, StoppingDropsWaitingWork)
         pipeline.submit(input(0));
         ASSERT_TRUE(eventually([&] { return queue.size() == 1; }));
     }
-    queue.drain(); // the task outlived the pipeline: it does nothing
+    queue.drain();
     EXPECT_EQ(shown, 0);
 }
 
@@ -447,19 +420,17 @@ TEST(OverlaySize, FollowsTheScreenUpToEightK)
     EXPECT_EQ(overlaySizeFor(1920, 1080, std::pair{3840, 2160}), (OverlaySize{3840, 2160, 1920, 1080}));
     EXPECT_TRUE(overlaySizeFor(1920, 1080, std::pair{3840, 2160}).scaled());
     EXPECT_FALSE(overlaySizeFor(1920, 1080, std::pair{1920, 1080}).scaled());
-    // Past 8K the shape is kept.
     EXPECT_EQ(overlaySizeFor(1920, 1080, std::pair{15360, 8640}), (OverlaySize{7680, 4320, 1920, 1080}));
     EXPECT_EQ(overlaySizeFor(640, 480, std::pair{10000, 1000}), (OverlaySize{7680, 768, 640, 480}));
-    // No screen yet: the video's.
     EXPECT_EQ(overlaySizeFor(640, 480, std::pair{0, 0}), (OverlaySize{640, 480, 640, 480}));
 }
 
 TEST(OverlayBounds, CoverTheVisiblePixels)
 {
     OverlayFrame o;
-    o.width = 9; // odd: the last pixel is checked on its own
+    o.width = 9;
     o.height = 4;
-    o.stride = 40; // padded rows
+    o.stride = 40;
     OverlayPixels::Bytes pixels(160, 0);
     o.pixels = pixels;
     o.empty = false;
@@ -473,15 +444,13 @@ TEST(OverlayBounds, CoverTheVisiblePixels)
     set(8, 2);
     set(0, 3);
     EXPECT_EQ(overlayBounds(o), (PixelRect{0, 1, 9, 3}));
-    pixels[38] = 9; // row padding is not a pixel
+    pixels[38] = 9;
     o.pixels = pixels;
     EXPECT_EQ(overlayBounds(o), (PixelRect{0, 1, 9, 3}));
     o.empty = true;
     EXPECT_FALSE(overlayBounds(o));
 }
 
-// A renderer's own bounds (OverlayFrame::bounds) are taken as they are,
-// clipped to the frame, instead of scanning the pixels.
 TEST(OverlayBounds, TheRenderersBoundsReplaceTheScan)
 {
     OverlayFrame o;
@@ -489,15 +458,15 @@ TEST(OverlayBounds, TheRenderersBoundsReplaceTheScan)
     o.height = 4;
     o.stride = 36;
     OverlayPixels::Bytes pixels(144, 0);
-    pixels[static_cast<std::size_t>(2 * o.stride + 3 * 4 + 3)] = 1; // one visible pixel at (3, 2)
+    pixels[static_cast<std::size_t>(2 * o.stride + 3 * 4 + 3)] = 1;
     o.pixels = pixels;
     o.empty = false;
-    EXPECT_EQ(overlayBounds(o), (PixelRect{3, 2, 1, 1})); // scanned
-    o.bounds = PixelRect{2, 1, 4, 3};                      // the renderer's: clear pixels at its edges
+    EXPECT_EQ(overlayBounds(o), (PixelRect{3, 2, 1, 1}));
+    o.bounds = PixelRect{2, 1, 4, 3};
     EXPECT_EQ(overlayBounds(o), (PixelRect{2, 1, 4, 3}));
-    o.bounds = PixelRect{-2, 2, 20, 9}; // clipped to the frame
+    o.bounds = PixelRect{-2, 2, 20, 9};
     EXPECT_EQ(overlayBounds(o), (PixelRect{0, 2, 9, 2}));
-    o.bounds = PixelRect{9, 0, 3, 3}; // outside it: nothing visible
+    o.bounds = PixelRect{9, 0, 3, 3};
     EXPECT_FALSE(overlayBounds(o));
     o.bounds = PixelRect{2, 1, 4, 3};
     o.empty = true;
@@ -506,7 +475,6 @@ TEST(OverlayBounds, TheRenderersBoundsReplaceTheScan)
 
 namespace {
 
-// The documented formula, one pixel at a time.
 void reference(const yuv::Matrix &m, const std::uint8_t *y, const std::uint8_t *u, const std::uint8_t *v, int width,
                std::uint8_t *out)
 {
@@ -521,7 +489,7 @@ void reference(const yuv::Matrix &m, const std::uint8_t *y, const std::uint8_t *
     }
 }
 
-} // namespace
+}
 
 TEST(YuvRow, MatchesTheFormulaForEveryMatrixAndWidth)
 {
@@ -529,8 +497,8 @@ TEST(YuvRow, MatchesTheFormulaForEveryMatrixAndWidth)
     for (auto space : {yuv::Space::Bt601, yuv::Space::Bt709, yuv::Space::Bt2020, yuv::Space::Fcc, yuv::Space::Smpte240m})
         for (bool full : {false, true})
             matrices.push_back(yuv::matrix(space, full));
-    matrices.push_back({298, 409, -100, -208, 516, 16, 8}); // W1's DirectShow BT.601
-    matrices.push_back({298, 459, -55, -136, 541, 16, 8});  // and BT.709
+    matrices.push_back({298, 409, -100, -208, 516, 16, 8}); // DirectShow BT.601
+    matrices.push_back({298, 459, -55, -136, 541, 16, 8});  // DirectShow BT.709
     std::mt19937 random(7);
     std::uniform_int_distribution<int> byte(0, 255);
     for (const auto &m : matrices)
@@ -543,7 +511,7 @@ TEST(YuvRow, MatchesTheFormulaForEveryMatrixAndWidth)
                 u[i] = static_cast<std::uint8_t>(byte(random));
                 v[i] = static_cast<std::uint8_t>(byte(random));
             }
-            y[0] = 0; // the extremes
+            y[0] = 0;
             u[0] = 255;
             v[0] = 0;
             std::vector<std::uint8_t> got(static_cast<std::size_t>(width) * 4), want(got.size());
@@ -565,7 +533,6 @@ TEST(YuvRow, LimitedRangeBlackAndWhiteAreExact)
             for (int c = 0; c < 3; ++c)
                 ASSERT_EQ(out[static_cast<std::size_t>(4 * x + c)], x % 2 ? 255 : 0);
     }
-    // BT.709 limited 100% red: Y 63, Cb 102, Cr 240.
     const auto m = yuv::matrix(yuv::Space::Bt709, false);
     const std::uint8_t y = 63, u = 102, v = 240;
     std::uint8_t out[4];

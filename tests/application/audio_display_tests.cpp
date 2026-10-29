@@ -1,7 +1,3 @@
-// A1: the audio box's display, pinned against legacy AudioDisplay.cpp,
-// Provider.cpp, ProviderFFMS2.cpp, ProviderDummy.cpp and WaveformPeaks.cpp at
-// 20d647c4. Expected values are worked out from legacy's arithmetic.
-
 #include "hikari/application/audio_box.h"
 #include "hikari/application/audio_display.h"
 
@@ -24,7 +20,6 @@ std::vector<std::int16_t> ramp(int count)
     return samples;
 }
 
-// The scene's shapes of one kind and colour.
 std::vector<AudioShape> shapes(const std::vector<AudioShape> &all, AudioShape::Kind kind, std::uint32_t colour)
 {
     std::vector<AudioShape> out;
@@ -43,11 +38,8 @@ std::vector<std::string> texts(const std::vector<AudioShape> &all)
     return out;
 }
 
-// Every text is 30 pixels wide (legacy GetTextExtent in tahoma8).
 int width30(AudioShape::Font, std::string_view) { return 30; }
 
-// 60 s at 48 kHz in a 1000 x 150 display with a 22-row ruler: zoom 50 gives
-// 1440 samples per column (33.3 columns per second).
 AudioView minuteView()
 {
     AudioView view;
@@ -57,9 +49,8 @@ AudioView minuteView()
     return view;
 }
 
-} // namespace
+}
 
-// Legacy tests/WaveformPeaksTests.cpp, unchanged.
 TEST(WaveformPeaks, CoverWholeBlocks)
 {
     const auto samples = ramp(1000);
@@ -72,7 +63,6 @@ TEST(WaveformPeaks, CoverWholeBlocks)
     ASSERT_TRUE(peaks.range(200, 300, &lo, &hi));
     EXPECT_EQ(lo, -498);
     EXPECT_EQ(hi, 499);
-    // a range takes every block it touches
     ASSERT_TRUE(peaks.range(150, 100, &lo, &hi));
     EXPECT_EQ(lo, -298);
     EXPECT_EQ(hi, 299);
@@ -104,7 +94,6 @@ TEST(WaveformPeaks, PiecesPartialBlocksAndTheEnd)
     EXPECT_TRUE(last.range(200, 1000, &lo, &hi));
 }
 
-// ProviderFFMS2::GetBuffer: the channels' sum over their count, truncated.
 TEST(DisplayAudio, MixesDownLikeLegacy)
 {
     DisplayAudio audio(48000, 4);
@@ -112,11 +101,11 @@ TEST(DisplayAudio, MixesDownLikeLegacy)
     audio.appendFrames(stereo, 4, 2);
     std::int16_t out[6];
     audio.read(0, 6, out);
-    EXPECT_EQ(out[0], -1); // -3 / 2
+    EXPECT_EQ(out[0], -1);
     EXPECT_EQ(out[1], 32767);
-    EXPECT_EQ(out[2], -32767); // -65535 / 2
+    EXPECT_EQ(out[2], -32767);
     EXPECT_EQ(out[3], 1);
-    EXPECT_EQ(out[4], 0); // past the end
+    EXPECT_EQ(out[4], 0);
     EXPECT_EQ(out[5], 0);
     DisplayAudio mono(48000, 2);
     const std::int16_t one[] = {-7, 9};
@@ -124,14 +113,12 @@ TEST(DisplayAudio, MixesDownLikeLegacy)
     mono.read(0, 2, out);
     EXPECT_EQ(out[0], -7);
     EXPECT_EQ(out[1], 9);
-    // the peak table is used only once every sample is in (legacy BuildPeaks)
     EXPECT_EQ(mono.peaks(), nullptr);
     mono.finish();
     ASSERT_NE(mono.peaks(), nullptr);
     EXPECT_EQ(mono.peaks()->blockSamples(), 256);
 }
 
-// GLOBAL_OPEN_DUMMY_AUDIO: ProviderDummy's silence, which never builds peaks.
 TEST(DisplayAudio, BlankAudioIsSilence)
 {
     const auto audio = DisplayAudio::silence(44100, 396'900'000);
@@ -142,40 +129,34 @@ TEST(DisplayAudio, BlankAudioIsSilence)
     std::int16_t out[3] = {1, 1, 1};
     audio.read(396'899'999, 3, out);
     EXPECT_EQ(out[0], 0);
-    // every column is the middle row, drawn from sample data
     const auto columns = legacyWaveform(audio, 0, 4, 100, 1323, 1.f);
     EXPECT_EQ(columns.min, (std::vector<int>{50, 50, 50, 50}));
     EXPECT_EQ(columns.peak, (std::vector<int>{50, 50, 50, 50}));
 }
 
-// Provider::GetWaveForm reading samples: y = h/2 - sample * (h/2 * scale) / 0x8000.
 TEST(Waveform, ColumnsFromSamplesAtCloseZoom)
 {
     DisplayAudio audio(48000, 33);
     std::vector<std::int16_t> mono(33, 0);
-    mono[3] = 32767;   // column 0's top: 50 - 49
-    mono[7] = -32768;  // column 0's bottom: 50 + 50
-    mono[22] = 16384;  // column 2: 50 - 25
-    mono[25] = -1;     // rounds to the middle
+    mono[3] = 32767;
+    mono[7] = -32768;
+    mono[22] = 16384;
+    mono[25] = -1;
     audio.appendFrames(mono.data(), 33, 1);
     audio.finish();
-    // zoom 10%: 11 samples per column, below four peak blocks, so samples are read
     const auto columns = legacyWaveform(audio, 0, 4, 100, 11, 1.f);
     EXPECT_EQ(columns.min, (std::vector<int>{1, 50, 25, 50}));
-    EXPECT_EQ(columns.peak, (std::vector<int>{100, 50, 50, 50})); // column 3 is past the end: silence
-    // vertical zoom 75 (scale 3.375): half amplitude 168, clipped to the area
+    EXPECT_EQ(columns.peak, (std::vector<int>{100, 50, 50, 50}));
     const auto loud = legacyWaveform(audio, 0, 3, 100, 11, audioScaleFromSlider(75));
     EXPECT_EQ(loud.min, (std::vector<int>{0, 50, 0}));
     EXPECT_EQ(loud.peak, (std::vector<int>{100, 50, 50}));
 }
 
-// Zoomed out (1440 samples, zoom 50 at 48 kHz) a column reads whole 256-sample
-// blocks: column 0 (samples 0..1439) also covers block 5, up to sample 1535.
 TEST(Waveform, ZoomedOutColumnsCoverWholePeakBlocks)
 {
     DisplayAudio audio(48000, 2880);
     std::vector<std::int16_t> mono(2880, 0);
-    mono[1500] = 32767; // in column 1, and in column 0's last block
+    mono[1500] = 32767;
     audio.appendFrames(mono.data(), 2880, 1);
     const auto beforePeaks = legacyWaveform(audio, 0, 2, 128, 1440, 1.f);
     EXPECT_EQ(beforePeaks.min, (std::vector<int>{64, 1}));
@@ -183,13 +164,10 @@ TEST(Waveform, ZoomedOutColumnsCoverWholePeakBlocks)
     const auto withPeaks = legacyWaveform(audio, 0, 2, 128, 1440, 1.f);
     EXPECT_EQ(withPeaks.min, (std::vector<int>{1, 1}));
     EXPECT_EQ(withPeaks.peak, (std::vector<int>{64, 64}));
-    // 1023 samples per column stay below four blocks: samples again, so
-    // column 0 (0..1022) misses the spike and column 1 (1023..2045) has it
     const auto close = legacyWaveform(audio, 0, 2, 128, 1023, 1.f);
     EXPECT_EQ(close.min, (std::vector<int>{64, 1}));
 }
 
-// UpdateSamples: 2 minutes in 500 columns at 100%, cubic below.
 TEST(AudioView, SamplesPerColumnAtKnownZooms)
 {
     const auto at = [](int rate, int percent) {
@@ -203,7 +181,7 @@ TEST(AudioView, SamplesPerColumnAtKnownZooms)
     EXPECT_EQ(at(48000, 50), 1440);
     EXPECT_EQ(at(44100, 50), 1323);
     EXPECT_EQ(at(48000, 10), 11);
-    EXPECT_EQ(at(48000, 1), 1); // 0.0115 samples
+    EXPECT_EQ(at(48000, 1), 1);
     EXPECT_FLOAT_EQ(audioScaleFromSlider(50), 1.f);
 }
 
@@ -219,32 +197,25 @@ TEST(AudioView, TimeAndColumnConversions)
     EXPECT_EQ(view.sampleAtX(10), 14400);
 }
 
-// MakeDialogueVisible: a Line near the right edge moves to 50 columns from the left.
 TEST(AudioView, FollowsTheActiveLine)
 {
     AudioView view = minuteView();
-    view.makeVisible(30000, 32000, false, false, 16); // columns 1000..1066
+    view.makeVisible(30000, 32000, false, false, 16);
     EXPECT_EQ(view.position(), 950);
     EXPECT_EQ(view.positionSample(), 950 * 1440);
     EXPECT_FLOAT_EQ(view.xAtMs(30000), 50.f);
-    // already in view: nothing moves
     view.makeVisible(31000, 32000, false, false, 16);
     EXPECT_EQ(view.position(), 950);
-    // forced: the Line centred ((startPos + endPos - w * samples) / 2)
     view.makeVisible(31000, 32000, true, false, 16);
     EXPECT_EQ(view.position(), (1488000 + 1536000 - 1000 * 1440) / 2 / 1440);
-    // to the end: the end 50 columns from the right edge
     view.makeVisible(50000, 52000, false, true, 16);
     EXPECT_EQ(view.position(), (2496000 - 950 * 1440) / 1440);
-    // the scrollbar: legacy units of 12 columns, plus the bar's thickness
     const auto bar = view.updateScrollbar(16);
     EXPECT_EQ(bar.page, 83);
     EXPECT_EQ(bar.range, 2000 / 12 + 16);
     EXPECT_EQ(bar.position, static_cast<int>(view.position() / 12));
 }
 
-// Audio shorter than 500 columns of the zoom starts at the beginning, and its
-// scrollbar page is the whole range.
 TEST(AudioView, ShortAudioStaysAtTheStart)
 {
     AudioView view;
@@ -264,15 +235,15 @@ TEST(AudioScene, LegacyDashes)
     ASSERT_EQ(dashes.size(), 22u);
     EXPECT_EQ(dashes[0], (std::pair<float, float>{0, 3}));
     EXPECT_EQ(dashes[20], (std::pair<float, float>{120, 123}));
-    EXPECT_EQ(dashes[21], (std::pair<float, float>{126, 128})); // the last dash reaches the end
+    EXPECT_EQ(dashes[21], (std::pair<float, float>{126, 128}));
 }
 
 TEST(AudioScene, LineMarksAtLegacyPositions)
 {
     const AudioView view = minuteView();
     AudioMarks marks;
-    marks.startMs = 1000; // column 33.3
-    marks.endMs = 2000;   // column 66.7
+    marks.startMs = 1000;
+    marks.endMs = 2000;
     WaveformColumns columns;
     columns.min.assign(1000, 60);
     columns.peak.assign(1000, 70);
@@ -282,13 +253,11 @@ TEST(AudioScene, LineMarksAtLegacyPositions)
     EXPECT_EQ(scene[0].kind, AudioShape::Kind::Fill);
     EXPECT_EQ(scene[0].colour, o.background);
     EXPECT_EQ(scene[0].y2, 150);
-    // the selection background, one column past the end
     const auto selection = shapes(scene, AudioShape::Kind::Fill, o.selectionBackground);
     ASSERT_EQ(selection.size(), 1u);
     EXPECT_EQ(selection[0].x1, 33);
     EXPECT_EQ(selection[0].x2, 67);
     EXPECT_EQ(selection[0].y2, 128);
-    // waveform columns: selected for 33 <= x < 66, from below the lowest to above the highest row
     const auto selected = shapes(scene, AudioShape::Kind::Line, o.waveformSelected);
     ASSERT_EQ(selected.size(), 33u);
     EXPECT_EQ(selected.front().x1, 33.5f);
@@ -296,7 +265,6 @@ TEST(AudioScene, LineMarksAtLegacyPositions)
     EXPECT_EQ(selected.front().y1, 70.5f);
     EXPECT_EQ(selected.front().y2, 59.5f);
     EXPECT_EQ(shapes(scene, AudioShape::Kind::Line, o.waveform).size(), 1000u - 33u);
-    // the boundaries: lineStart + width / 2, `width` wide, flags 10 pixels inwards
     const auto starts = shapes(scene, AudioShape::Kind::Line, o.lineStart);
     ASSERT_GE(starts.size(), 2u);
     EXPECT_EQ(starts[0].x1, 34);
@@ -306,10 +274,8 @@ TEST(AudioScene, LineMarksAtLegacyPositions)
     ASSERT_EQ(flags.size(), 4u);
     EXPECT_EQ(flags[0].x2, 44);
     EXPECT_EQ(flags[1].y1, 118);
-    // the end boundary at 66 + 1, its flags pointing left
     EXPECT_EQ(flags[2].x1, 67);
     EXPECT_EQ(flags[2].x2, 57);
-    // without a modified or negative Line there is no warning text
     for (const auto &t : texts(scene))
         EXPECT_TRUE(t != "Modified" && t != "Negative time");
 }
@@ -326,7 +292,6 @@ TEST(AudioScene, NegativeAndModifiedLines)
     negative.endMs = 1000;
     auto scene = audioScene(view, columns, negative, o, width30);
     EXPECT_TRUE(shapes(scene, AudioShape::Kind::Fill, o.selectionBackground).empty());
-    // nothing is selected, but the waveform takes the selected colour's list
     EXPECT_TRUE(shapes(scene, AudioShape::Kind::Line, o.waveformSelected).empty());
     auto names = texts(scene);
     ASSERT_FALSE(names.empty());
@@ -348,9 +313,6 @@ TEST(AudioScene, NegativeAndModifiedLines)
         }
 }
 
-// DrawInactiveLines: the previous Line (0..900 ms, columns 0..30) and the next
-// (2500..3000 ms, 83..100) around the active one (columns 33..66). A range
-// wholly on one side of the selection leaves a one-column shade at its edge.
 TEST(AudioScene, InactiveLinesAndTheirOneColumnShades)
 {
     const AudioView view = minuteView();
@@ -372,7 +334,7 @@ TEST(AudioScene, InactiveLinesAndTheirOneColumnShades)
     const auto inactive = shapes(scene, AudioShape::Kind::Line, o.waveformInactive);
     ASSERT_EQ(inactive.size(), 30u + 17u);
     EXPECT_EQ(inactive[0].x1, 0);
-    EXPECT_EQ(inactive[0].y1, 70); // peak to min - 1
+    EXPECT_EQ(inactive[0].y1, 70);
     EXPECT_EQ(inactive[0].y2, 59);
     EXPECT_EQ(inactive[30].x1, 83);
     const auto boundaries = shapes(scene, AudioShape::Kind::Line, o.inactiveBoundary);
@@ -381,17 +343,14 @@ TEST(AudioScene, InactiveLinesAndTheirOneColumnShades)
     EXPECT_EQ(boundaries[1].x1, 31);
     EXPECT_EQ(boundaries[2].x1, 84);
     EXPECT_EQ(boundaries[3].x1, 101);
-    // mode 0 shades nothing
     AudioDisplayOptions none;
     none.inactiveLines = 0;
     EXPECT_TRUE(shapes(audioScene(view, columns, marks, none, width30), AudioShape::Kind::Fill, o.inactiveBackground).empty());
 }
 
-// DrawKeyframes draws a keyframe in view at ((ms - 20) / 10) * 10 and stops
-// after the first one past the view; DrawTimescale and the video mark.
 TEST(AudioScene, KeyframeVideoAndRulerMarks)
 {
-    const AudioView view = minuteView(); // 0..30000 ms in view
+    const AudioView view = minuteView();
     AudioMarks marks;
     marks.startMs = 1000;
     marks.endMs = 2000;
@@ -404,24 +363,21 @@ TEST(AudioScene, KeyframeVideoAndRulerMarks)
     const auto scene = audioScene(view, columns, marks, o, width30);
     const auto keyframes = shapes(scene, AudioShape::Kind::Line, o.keyframe);
     ASSERT_EQ(keyframes.size(), 3u);
-    EXPECT_EQ(keyframes[0].x1, 0);  // -20 ms: column -0.67, truncated to 0
-    EXPECT_EQ(keyframes[1].x1, 32); // 980 ms
-    EXPECT_EQ(keyframes[2].x1, 66); // 1980 ms; 70000 ends the walk before 1500
-    // the paused video's time, dashed and two pixels wide
+    EXPECT_EQ(keyframes[0].x1, 0);
+    EXPECT_EQ(keyframes[1].x1, 32);
+    EXPECT_EQ(keyframes[2].x1, 66);
     const auto video = shapes(scene, AudioShape::Kind::Line, o.cursor);
     ASSERT_EQ(video.size(), 22u);
     EXPECT_FLOAT_EQ(video[0].x1, 1001 * 48.f / 1440.f);
     EXPECT_EQ(video[0].width, 2);
     EXPECT_EQ(video[21].y2, 128);
-    // seconds: dashed boundaries where (x * samples + start) % rate < samples
     const auto seconds = shapes(scene, AudioShape::Kind::Line, o.secondBoundaries);
-    EXPECT_EQ(seconds.size(), 30u * 22u); // seconds 0..29, 22 dashes each
+    EXPECT_EQ(seconds.size(), 30u * 22u);
     EXPECT_EQ(seconds[22].x1, 34);
     EXPECT_EQ(seconds[44].x1, 67);
-    // the ruler: second ticks h+2..h+8, half seconds h+2..h+5 (pixBounds 2), labels each second
     const auto ruler = shapes(scene, AudioShape::Kind::Line, o.timescaleText);
     ASSERT_GE(ruler.size(), 3u);
-    EXPECT_EQ(ruler[0].y1, 128); // the ruler's top line
+    EXPECT_EQ(ruler[0].y1, 128);
     EXPECT_EQ(ruler[1].x1, 0);
     EXPECT_EQ(ruler[1].y2, 136);
     EXPECT_EQ(ruler[2].x1, 17);
@@ -441,12 +397,10 @@ TEST(AudioScene, KeyframeVideoAndRulerMarks)
         }
 }
 
-// The ruler's label spacing: the distance between the second and third
-// second boundaries over the widest label's width.
 TEST(AudioScene, RulerLabelsSkipWhenCrowdedAndFillWhenSparse)
 {
     AudioView far;
-    far.setSamplesPercent(100, false); // 11520 samples: 4.17 columns a second
+    far.setSamplesPercent(100, false);
     far.setSource(48000, 48000 * 600);
     far.resize(1000, 150, 22, 16);
     WaveformColumns columns;
@@ -461,14 +415,11 @@ TEST(AudioScene, RulerLabelsSkipWhenCrowdedAndFillWhenSparse)
                 out.push_back(s.text);
         return out;
     };
-    // 4 columns between seconds, 30 per label: every int(40 / 4) = 10th second
     const auto sparse = labels(far);
     ASSERT_FALSE(sparse.empty());
     EXPECT_EQ(sparse[0], "0");
     EXPECT_EQ(sparse[1], "10");
     EXPECT_EQ(sparse[6], "1:00");
-    // close in (zoom 30: 311 samples, 154 columns a second): tenth ticks,
-    // every second one labelled (154 / 30 is over 4.5)
     AudioView close;
     close.setSamplesPercent(30, false);
     close.setSource(48000, 48000 * 600);
@@ -496,7 +447,6 @@ TEST(AudioScene, FocusBorderProgressAndCursor)
     EXPECT_EQ(last.y1, 127);
     const auto &right = scene[scene.size() - 3];
     EXPECT_EQ(right.x1, 999);
-    // DrawProgress: frames at halfY = (h + 20) / 2, a 37-pixel bar and the percentage
     const auto progress = audioProgressScene(view, 0.5f, o);
     ASSERT_EQ(progress.size(), 1u + 8u + 2u);
     EXPECT_EQ(progress[1].colour, 0xFF00FFFFu);
@@ -504,7 +454,6 @@ TEST(AudioScene, FocusBorderProgressAndCursor)
     EXPECT_EQ(progress[9].width, 37);
     EXPECT_EQ(progress[9].x2, 500);
     EXPECT_EQ(progress[10].text, "50%");
-    // DrawCursor: two pixels, antialiased, with its time unless playing
     const auto cursor = audioCursor(view, 100, false, o);
     ASSERT_EQ(cursor.size(), 2u);
     EXPECT_TRUE(cursor[0].smooth);
@@ -522,27 +471,24 @@ TEST(AudioScene, LegacyAssTime)
     EXPECT_EQ(legacyAssTime(-5), "0:00:00.00");
 }
 
-// SubsGrid::GetKeyFromPosition, DrawInactiveLines' range and SetDialogue's times.
 TEST(AudioLines, InactiveLinesAndSelections)
 {
     const std::vector<AudioLineSpan> lines = {
         {0, 1000, true}, {1500, 1800, false}, {2000, 3000, true}, {0, 0, true}, {5000, 6000, true}};
-    EXPECT_EQ(legacyKeyFromPosition(lines, 2, -1), 0); // the hidden Line is skipped
+    EXPECT_EQ(legacyKeyFromPosition(lines, 2, -1), 0);
     EXPECT_EQ(legacyKeyFromPosition(lines, 2, 1), 3);
-    EXPECT_EQ(legacyKeyFromPosition(lines, 4, 1), 4);  // none after: the last shown Line
+    EXPECT_EQ(legacyKeyFromPosition(lines, 4, 1), 4);
     EXPECT_EQ(legacyKeyFromPosition(lines, 0, -1), 0);
     EXPECT_EQ(legacyInactiveLines(1, lines, 2), (std::vector<std::pair<int, int>>{{0, 1000}, {0, 0}}));
     EXPECT_EQ(legacyInactiveLines(2, lines, 2), (std::vector<std::pair<int, int>>{{0, 1000}, {0, 0}, {5000, 6000}}));
     EXPECT_TRUE(legacyInactiveLines(0, lines, 2).empty());
     EXPECT_EQ(legacyLineSelection(lines, 2, 0), (std::pair{2000, 3000}));
-    // a 0:00:00.00 Line right after the previous active one starts at its end
     EXPECT_EQ(legacyLineSelection(lines, 3, 2), (std::pair{3000, 8000}));
     EXPECT_EQ(legacyLineSelection(lines, 3, 0), (std::pair{0, 5000}));
 }
 
 namespace {
 
-// The audio box's source: answers are delivered by the test.
 struct FakeAudioSource : DisplayAudioPort {
     std::string probedPath, openedPath, openedIndexFile;
     int openedTrack = -1;
@@ -550,11 +496,8 @@ struct FakeAudioSource : DisplayAudioPort {
     Probed pendingProbe;
     Progress progress;
     Opened pendingOpen;
-    // start, frames, the answer, and the whole request
     std::deque<std::tuple<std::int64_t, std::int64_t, Read, BlockRead>> reads;
     int cancels = 0;
-    // the media helper's block buffer (legacy DiskCache's `data`), zeroed
-    // when a track opens
     std::vector<std::int16_t> block;
     void probe(const std::string &path, Probed done) override
     {
@@ -584,10 +527,6 @@ struct FakeAudioSource : DisplayAudioPort {
         for (auto &[start, count, done, read] : pending)
             done(std::unexpected(AudioFailure{SourceError::Cancelled, AudioStage::Host, {}, {}}));
     }
-    // The helper's DisplayRead: the buffer (kept, or new and zeroed), legacy's
-    // zero fill of samples [decode, frames), then `decoded` frames written
-    // from the start, whose every channel is `value` (or, with `ramp`, frame
-    // i of the source is start + i). Returns the buffer's frames.
     std::vector<std::byte> read(const BlockRead &r, std::int64_t decoded, std::int16_t value, int channels, bool ramp)
     {
         std::vector<std::int16_t> fresh;
@@ -614,7 +553,6 @@ struct FakeAudioSource : DisplayAudioPort {
         std::exchange(pendingProbe, nullptr)(std::move(p));
     }
     void probedOneTrack() { probed({AudioTrack{1, false, false, {}, {}, "aac"}}); }
-    // `newIndex`: the helper indexed now (false: it read the index file).
     void opened(int channels, std::int64_t count, bool newIndex = true)
     {
         AudioInfo info;
@@ -629,8 +567,6 @@ struct FakeAudioSource : DisplayAudioPort {
     {
         std::exchange(pendingOpen, nullptr)(std::unexpected(AudioFailure{error, stage, std::move(text), {}}));
     }
-    // Answers the oldest read with frames whose every channel is `value`
-    // (or, with `ramp`, frame i of the source is start + i).
     void answer(std::int16_t value, int channels, bool ramp = false)
     {
         auto [start, count, done, r] = std::move(reads.front());
@@ -642,9 +578,7 @@ struct FakeAudioSource : DisplayAudioPort {
         b.samples = read(r, r.decode, value, channels, ramp);
         done(std::move(b));
     }
-    // A read FFMS2 fails: a Read failure carries the buffer as FFMS2 left it,
-    // `decoded` frames of `value` (FFMS2 copies what it decoded as it goes)
-    // and then what it held.
+    // FFMS2 leaves the frames it decoded before a failure in the buffer.
     void failRead(AudioFailure failure, int channels = 1, std::int64_t decoded = 0, std::int16_t value = 0)
     {
         auto [start, count, done, r] = std::move(reads.front());
@@ -655,8 +589,6 @@ struct FakeAudioSource : DisplayAudioPort {
     }
 };
 
-// A box with a disk cache and index files in folders of its own, logging
-// into `logged`.
 struct BoxFixture {
     FakeAudioSource source;
     AudioBox box{source};
@@ -673,8 +605,7 @@ struct BoxFixture {
     }
     ~BoxFixture()
     {
-        // The box's open cache file goes first: Windows does not remove a file
-        // that is still open, and a destructor must not throw.
+        // Windows cannot remove a file that is still open.
         box.close();
         std::error_code ec;
         std::filesystem::remove_all(settings.cacheDir, ec);
@@ -689,11 +620,8 @@ std::int16_t at(const DisplayAudio &audio, std::int64_t i)
     return s;
 }
 
-} // namespace
+}
 
-// SetFile through the source: the file's tracks, indexing, then legacy
-// DiskCache blocks of 332768 frames with their progress, the cache file
-// written as .part and named once complete, then the peak table.
 TEST(AudioBox, OpensIndexesAndCachesOnDiskInBlocks)
 {
     BoxFixture f("disk");
@@ -705,7 +633,6 @@ TEST(AudioBox, OpensIndexesAndCachesOnDiskInBlocks)
     f.source.probedOneTrack();
     EXPECT_EQ(f.source.openedPath, "/media/episode.mkv");
     EXPECT_EQ(f.source.openedTrack, 1);
-    // legacy's index file for the track: Indices/<name>_<track>.ffindex
     EXPECT_EQ(std::filesystem::path(f.source.openedIndexFile), f.settings.indexDir / "episode_1.ffindex");
     f.source.progress(40, 100);
     EXPECT_EQ(f.box.indexing(), (std::pair<std::int64_t, std::int64_t>{40, 100}));
@@ -720,7 +647,7 @@ TEST(AudioBox, OpensIndexesAndCachesOnDiskInBlocks)
     EXPECT_EQ(std::get<0>(f.source.reads.front()), 0);
     EXPECT_EQ(std::get<1>(f.source.reads.front()), 332768);
     EXPECT_EQ(std::get<3>(f.source.reads.front()).decode, 332768);
-    EXPECT_FALSE(std::get<3>(f.source.reads.front()).fresh); // DiskCache's reused block buffer
+    EXPECT_FALSE(std::get<3>(f.source.reads.front()).fresh);
     f.source.answer(-3, 2);
     EXPECT_FLOAT_EQ(f.box.progress(), 332768.f / 400000.f);
     ASSERT_EQ(f.source.reads.size(), 1u);
@@ -731,18 +658,16 @@ TEST(AudioBox, OpensIndexesAndCachesOnDiskInBlocks)
     EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
     EXPECT_FLOAT_EQ(f.box.progress(), 1.f);
     ASSERT_NE(f.box.audio()->peaks(), nullptr);
-    EXPECT_EQ(at(*f.box.audio(), 332767), -3); // read back from the file
+    EXPECT_EQ(at(*f.box.audio(), 332767), -3);
     EXPECT_EQ(at(*f.box.audio(), 332768), 100);
-    EXPECT_EQ(at(*f.box.audio(), 400000), 0); // past the end
+    EXPECT_EQ(at(*f.box.audio(), 400000), 0);
     EXPECT_GT(changes, 4);
-    // closing renames the complete cache (legacy ~ProviderFFMS2)
     f.box.close();
     EXPECT_FALSE(std::filesystem::exists(part));
     EXPECT_EQ(std::filesystem::file_size(file), 400000u * 4);
     EXPECT_TRUE(f.logged.empty());
 }
 
-// An incomplete cache is removed; opening again writes it anew (a new index).
 TEST(AudioBox, AnIncompleteDiskCacheIsRemoved)
 {
     BoxFixture f("incomplete");
@@ -760,8 +685,6 @@ TEST(AudioBox, AnIncompleteDiskCacheIsRemoved)
     EXPECT_FALSE(std::filesystem::exists(file));
 }
 
-// AUDIO_RAM_CACHE: legacy RAMCache's 4 MiB blocks (1048576 stereo frames),
-// progress i / (blocks - 1) after block i, no file.
 TEST(AudioBox, RamCacheReadsFourMebibyteBlocks)
 {
     BoxFixture f("ram");
@@ -773,9 +696,9 @@ TEST(AudioBox, RamCacheReadsFourMebibyteBlocks)
     ASSERT_EQ(f.source.reads.size(), 1u);
     EXPECT_EQ(std::get<0>(f.source.reads.front()), 0);
     EXPECT_EQ(std::get<1>(f.source.reads.front()), 1'048'576);
-    EXPECT_TRUE(std::get<3>(f.source.reads.front()).fresh); // RAMCache's new block
+    EXPECT_TRUE(std::get<3>(f.source.reads.front()).fresh);
     f.source.answer(0, 2, true);
-    EXPECT_FLOAT_EQ(f.box.progress(), 0.f); // block 0 of 2
+    EXPECT_FLOAT_EQ(f.box.progress(), 0.f);
     EXPECT_EQ(std::get<0>(f.source.reads.front()), 1'048'576);
     EXPECT_EQ(std::get<1>(f.source.reads.front()), 1'500'000 - 1'048'576);
     f.source.answer(0, 2, true);
@@ -785,9 +708,6 @@ TEST(AudioBox, RamCacheReadsFourMebibyteBlocks)
     EXPECT_FALSE(std::filesystem::exists(f.settings.cacheDir));
 }
 
-// AUDIO_DELAY: a positive delay starts with silence and keeps the length (the
-// last frames fall off); a negative one skips the start. The disk cache's
-// name carries the delay in frames.
 TEST(AudioBox, DelayShiftsTheAudioAsLegacyCachesIt)
 {
     {
@@ -803,7 +723,7 @@ TEST(AudioBox, DelayShiftsTheAudioAsLegacyCachesIt)
         EXPECT_EQ(std::get<1>(f.source.reads.front()), 10'000);
         f.source.answer(0, 1, true);
         EXPECT_EQ(at(*f.box.audio(), 4799), 0);
-        EXPECT_EQ(at(*f.box.audio(), 4800), 0); // source frame 0
+        EXPECT_EQ(at(*f.box.audio(), 4800), 0);
         EXPECT_EQ(at(*f.box.audio(), 4801), 1);
         EXPECT_EQ(at(*f.box.audio(), 9999), 5199);
         EXPECT_EQ(at(*f.box.audio(), 10'000), 0);
@@ -818,44 +738,37 @@ TEST(AudioBox, DelayShiftsTheAudioAsLegacyCachesIt)
         EXPECT_EQ(f.box.audio()->sampleCount(), 5200);
         EXPECT_EQ(std::get<0>(f.source.reads.front()), 4800);
         EXPECT_EQ(std::get<1>(f.source.reads.front()), 5200);
-        // legacy GetAudio stops at m_numSamples, which DiskCache had reduced
-        // by the skipped start: the last 4800 frames are not decoded
         EXPECT_EQ(std::get<3>(f.source.reads.front()).decode, 400);
         f.source.answer(0, 1, true);
         EXPECT_FLOAT_EQ(f.box.progress(), 1.f);
         EXPECT_EQ(at(*f.box.audio(), 0), 4800);
         EXPECT_EQ(at(*f.box.audio(), 399), 5199);
-        EXPECT_EQ(at(*f.box.audio(), 400), 0); // legacy's fill beyond
+        EXPECT_EQ(at(*f.box.audio(), 400), 0);
         EXPECT_EQ(at(*f.box.audio(), 5199), 0);
     }
     {
-        // Stereo: legacy's fill beyond counts samples, not frames, so it clears
-        // frames [decode / 2, frames / 2); past both the reused block buffer
-        // keeps the previous block's frames.
         BoxFixture f("delay-minus-stereo");
-        f.settings.delayMs = -3000; // 144000 frames
+        f.settings.delayMs = -3000;
         f.box.open("/media/a.mkv");
         f.source.probedOneTrack();
         f.source.opened(2, 700'000);
         EXPECT_EQ(f.box.audio()->sampleCount(), 556'000);
         EXPECT_EQ(std::get<3>(f.source.reads.front()).decode, 332768);
-        f.source.answer(0, 2, true); // source frames 144000..476767
+        f.source.answer(0, 2, true);
         const auto second = std::get<3>(f.source.reads.front());
         EXPECT_EQ(second.start, 476'768);
         EXPECT_EQ(second.frames, 700'000 - 476'768);
         EXPECT_EQ(second.decode, 556'000 - 476'768);
         f.source.answer(0, 2, true);
         ASSERT_EQ(f.box.state(), AudioBox::State::Ready);
-        // (the mixdown of equal channels is their value)
-        EXPECT_EQ(at(*f.box.audio(), 332'768 + 50'000), (476'768 + 50'000) % 30000); // decoded
+        EXPECT_EQ(at(*f.box.audio(), 332'768 + 50'000), (476'768 + 50'000) % 30000);
         EXPECT_EQ(at(*f.box.audio(), 332'768 + 79'231), (476'768 + 79'231) % 30000);
-        EXPECT_EQ(at(*f.box.audio(), 332'768 + 79'232), 0);  // cleared
-        EXPECT_EQ(at(*f.box.audio(), 332'768 + 111'615), 0); // the last cleared frame
-        EXPECT_EQ(at(*f.box.audio(), 332'768 + 111'616), (144'000 + 111'616) % 30000); // block 1's frame again
+        EXPECT_EQ(at(*f.box.audio(), 332'768 + 79'232), 0);
+        EXPECT_EQ(at(*f.box.audio(), 332'768 + 111'615), 0);
+        EXPECT_EQ(at(*f.box.audio(), 332'768 + 111'616), (144'000 + 111'616) % 30000);
         EXPECT_EQ(at(*f.box.audio(), 556'000 - 1), (144'000 + 223'231) % 30000);
     }
     {
-        // RAM: the silence is counted within the first block
         BoxFixture f("delay-ram");
         f.settings.ram = true;
         f.settings.delayMs = 100;
@@ -877,16 +790,10 @@ TEST(AudioBox, DelayShiftsTheAudioAsLegacyCachesIt)
         EXPECT_EQ(f.box.delayFrames(), 0);
         ASSERT_EQ(f.logged.size(), 1u);
         EXPECT_EQ(f.logged[0].first, "Delay failed, it's longer than audio duration time");
-        EXPECT_EQ(f.logged[0].second, AudioBox::LogLevel::Warning); // NT1: the audio still opened
+        EXPECT_EQ(f.logged[0].second, AudioBox::LogLevel::Warning);
     }
 }
 
-// A block FFMS2 cannot decode: legacy logged it for debugging and cached what
-// its buffer held. FFMS_GetAudio copies decoded frames into the buffer as it
-// goes before it throws, and DiskCache reuses one block buffer, so the block is
-// the frames decoded before the failure followed by the previous block's
-// (zeros before the first); a lost helper ends the open with a message (legacy
-// crashed with it).
 TEST(AudioBox, AFailedDiskBlockKeepsWhatTheBlockBufferHeldAsLegacyCachesIt)
 {
     BoxFixture f("failed-block");
@@ -898,15 +805,14 @@ TEST(AudioBox, AFailedDiskBlockKeepsWhatTheBlockBufferHeldAsLegacyCachesIt)
     f.source.answer(9, 1);
     EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
     EXPECT_EQ(at(*f.box.audio(), 332767), 332767 % 30000);
-    EXPECT_EQ(at(*f.box.audio(), 332768), 77); // decoded before the failure
+    EXPECT_EQ(at(*f.box.audio(), 332768), 77);
     EXPECT_EQ(at(*f.box.audio(), 332768 + 999), 77);
-    EXPECT_EQ(at(*f.box.audio(), 332768 + 1000), 1000); // block 0's frames again
+    EXPECT_EQ(at(*f.box.audio(), 332768 + 1000), 1000);
     EXPECT_EQ(at(*f.box.audio(), 332768 + 1234), 1234);
     EXPECT_EQ(at(*f.box.audio(), 2 * 332768), 9);
     ASSERT_EQ(f.logged.size(), 1u);
     EXPECT_EQ(f.logged[0], (std::pair<std::string, AudioBox::LogLevel>{"error audiodecode broke", AudioBox::LogLevel::Debug}));
 
-    // before any block decoded the buffer is legacy's zeroed vector
     f.box.open("/media/first.mkv");
     f.source.probedOneTrack();
     f.source.opened(1, 1000);
@@ -923,29 +829,23 @@ TEST(AudioBox, AFailedDiskBlockKeepsWhatTheBlockBufferHeldAsLegacyCachesIt)
     EXPECT_EQ(f.logged.back().first, "Cannot open audio /media/b.mkv");
 }
 
-// R3-hang-crash-loss (extended to A1): in a RAM cache legacy's failed block
-// was a new allocation; the frames FFMS2 decoded before failing stay, and the
-// rest, uninitialised memory in legacy, is silence here.
 TEST(AudioBox, AFailedRamBlockKeepsTheDecodedFramesAndIsSilenceAfter)
 {
     BoxFixture f("failed-ram-block");
     f.settings.ram = true;
     f.box.open("/media/a.mkv");
     f.source.probedOneTrack();
-    f.source.opened(1, 3'000'000); // two blocks of 2097152 mono frames
+    f.source.opened(1, 3'000'000);
     f.source.answer(7, 1);
     f.source.failRead({SourceError::BackendFailure, AudioStage::Read, "decode broke", {}}, 1, 500, 5);
     EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
     EXPECT_EQ(at(*f.box.audio(), 2'097'151), 7);
     EXPECT_EQ(at(*f.box.audio(), 2'097'152), 5);
     EXPECT_EQ(at(*f.box.audio(), 2'097'651), 5);
-    EXPECT_EQ(at(*f.box.audio(), 2'097'652), 0); // not block 0's 7: a new block
+    EXPECT_EQ(at(*f.box.audio(), 2'097'652), 0);
     EXPECT_EQ(at(*f.box.audio(), 2'999'999), 0);
 }
 
-// Legacy DiskCache(newIndex): with the index read from its file, a complete
-// cache file is read back instead of decoding (only the peak table is built,
-// a block at a time through the deferral); with a new index it is made again.
 TEST(AudioBox, ACacheIsReusedOnlyWithAnIndexReadFromItsFile)
 {
     BoxFixture f("reuse");
@@ -966,7 +866,7 @@ TEST(AudioBox, ACacheIsReusedOnlyWithAnIndexReadFromItsFile)
     f.source.opened(1, 400'000, false);
     EXPECT_TRUE(f.box.cacheReused());
     EXPECT_EQ(f.box.cacheFile(), file);
-    EXPECT_TRUE(f.source.reads.empty()); // nothing decoded
+    EXPECT_TRUE(f.source.reads.empty());
     EXPECT_EQ(f.box.state(), AudioBox::State::Loading);
     ASSERT_EQ(deferred.size(), 1u);
     std::exchange(deferred, {}).front()();
@@ -977,9 +877,8 @@ TEST(AudioBox, ACacheIsReusedOnlyWithAnIndexReadFromItsFile)
     ASSERT_TRUE(f.box.audio()->peaks()->range(0, 256, &lo, &hi));
     EXPECT_EQ(hi, 255);
     f.box.close();
-    EXPECT_TRUE(std::filesystem::exists(file)); // read back, kept as it is
+    EXPECT_TRUE(std::filesystem::exists(file));
 
-    // a new index makes the cache again (legacy removed it and wrote .part)
     f.box.setDefer(nullptr);
     f.box.open("/media/ep.mkv");
     f.source.probedOneTrack();
@@ -989,7 +888,6 @@ TEST(AudioBox, ACacheIsReusedOnlyWithAnIndexReadFromItsFile)
     EXPECT_EQ(f.source.reads.size(), 1u);
     f.box.close();
 
-    // RAM caches are never reused
     f.settings.ram = true;
     f.box.open("/media/ep.mkv");
     f.source.probedOneTrack();
@@ -998,7 +896,6 @@ TEST(AudioBox, ACacheIsReusedOnlyWithAnIndexReadFromItsFile)
     EXPECT_EQ(f.source.reads.size(), 1u);
 }
 
-// Legacy ProviderFFMS2::Init's messages, with FFMS2's own text.
 TEST(AudioBox, FailuresLogLegacyMessages)
 {
     struct Case {
@@ -1027,7 +924,6 @@ TEST(AudioBox, FailuresLogLegacyMessages)
             EXPECT_TRUE(f.logged.empty());
         }
     }
-    // a file FFMS2 cannot open is a debug message; one without audio says nothing
     BoxFixture f("probe");
     f.box.open("/media/missing.wav");
     std::exchange(f.source.pendingProbe, nullptr)(std::unexpected(AudioFailure{SourceError::InvalidInput, AudioStage::Indexer, "Can't open"}));
@@ -1038,15 +934,13 @@ TEST(AudioBox, FailuresLogLegacyMessages)
     EXPECT_EQ(f.logged.size(), 1u);
 }
 
-// A cache file that cannot be made ends the open with a message (legacy
-// waited forever on audio that never came).
 TEST(AudioBox, AnUnwritableCacheEndsTheOpen)
 {
     BoxFixture f("unwritable");
     std::filesystem::create_directories(f.settings.cacheDir);
     const auto blocker = f.settings.cacheDir / "file";
     { std::ofstream(blocker) << "x"; }
-    f.settings.cacheDir = blocker; // a file, not a folder
+    f.settings.cacheDir = blocker;
     f.box.open("/media/a.mkv");
     f.source.probedOneTrack();
     f.source.opened(1, 1000);
@@ -1056,9 +950,6 @@ TEST(AudioBox, AnUnwritableCacheEndsTheOpen)
     f.settings.cacheDir = blocker.parent_path();
 }
 
-// V1: the disk cache is written on a thread of its own, so an append never
-// waits for the disk; every frame appended reads back at once (from memory
-// until it is in the file), and the complete file is named on close.
 TEST(DisplayAudio, TheDiskCacheReadsBackFramesBeforeTheyAreWritten)
 {
     const auto dir = std::filesystem::temp_directory_path() / "hikari-v1-disk-store";
@@ -1078,7 +969,6 @@ TEST(DisplayAudio, TheDiskCacheReadsBackFramesBeforeTheyAreWritten)
                 piece[static_cast<std::size_t>(i) * 2 + c] = sample(std::int64_t(p) * kFrames + i, c);
         ASSERT_TRUE(store->append(piece.data(), kFrames));
         ASSERT_EQ(store->frames(), std::int64_t(p + 1) * kFrames);
-        // Across the last two pieces, whatever has reached the file.
         const std::int64_t start = std::max<std::int64_t>(0, std::int64_t(p) * kFrames - 1234);
         const std::int64_t count = std::int64_t(p + 1) * kFrames - start;
         std::vector<std::int16_t> out(static_cast<std::size_t>(count) * 2, 1);
@@ -1102,7 +992,6 @@ TEST(DisplayAudio, TheDiskCacheReadsBackFramesBeforeTheyAreWritten)
     std::filesystem::remove_all(dir);
 }
 
-// A store that cannot keep frames (RAM exhausted) stops the append.
 TEST(DisplayAudio, AStoreThatCannotKeepFramesFailsTheAppend)
 {
     struct Full : AudioStore {
@@ -1120,7 +1009,6 @@ TEST(DisplayAudio, AStoreThatCannotKeepFramesFailsTheAppend)
     EXPECT_EQ(out[0], 0);
 }
 
-// Legacy ProviderFFMS2::Init with several audio tracks.
 TEST(AudioTracks, LegacyChoiceAndChooserRows)
 {
     const std::vector<AudioTrack> tracks = {
@@ -1134,19 +1022,15 @@ TEST(AudioTracks, LegacyChoiceAndChooserRows)
     EXPECT_EQ(ask.rows, (std::vector<std::string>{"1: Main [jpn] (aac)", "2: eng (ac3)", "3: Untitled (flac)",
                                                    "4: Dub [pol] (opus)"}));
     EXPECT_EQ(ask.rowTracks, (std::vector<int>{1, 2, 3, 4}));
-    // the language that comes first in ACCEPTED_AUDIO_STREAM wins, case aside
     EXPECT_EQ(legacyAudioTrackChoice(tracks, {"POL", "eng"}).track, 4);
     EXPECT_EQ(legacyAudioTrackChoice(tracks, {"eng", "pol"}).track, 2);
     EXPECT_TRUE(legacyAudioTrackChoice(tracks, {"eng"}).rows.empty());
     EXPECT_FALSE(legacyAudioTrackChoice(tracks, {"ger"}).track);
-    // a bracketed language names a track without a name (text before the bracket)
-    // (only past the second character), and an untitled one shows no name
     const std::vector<AudioTrack> named = {{0, false, true, {}, "Commentary [eng]", "ac3"},
                                            {5, true, true, "", "xy[ger]", "aac"},
                                            {6, true, true, "", "x[ger]", "aac"}};
     EXPECT_EQ(legacyAudioTrackChoice(named, {}).rows,
               (std::vector<std::string>{"0: eng (ac3)", "5: xy [ger] (aac)", "6:  [ger] (aac)"}));
-    // one track is taken as it is; none gives nothing
     EXPECT_EQ(legacyAudioTrackChoice({tracks[2]}, {"eng"}).track, 3);
     EXPECT_FALSE(legacyAudioTrackChoice({}, {}).track);
     EXPECT_EQ(legacyAcceptedStreams("eng;;pol;"), (std::vector<std::string>{"eng", "pol"}));
@@ -1155,7 +1039,6 @@ TEST(AudioTracks, LegacyChoiceAndChooserRows)
     EXPECT_EQ(legacyIndexName("/media/clip.mp4", -1), "clip_-1.ffindex");
 }
 
-// "Choose the track": a row opens its track; Cancel opens nothing.
 TEST(AudioBox, TheChooserPicksTheTrack)
 {
     BoxFixture f("chooser");
@@ -1180,7 +1063,6 @@ TEST(AudioBox, TheChooserPicksTheTrack)
     EXPECT_EQ(f.box.error(), SourceError::Cancelled);
     EXPECT_TRUE(f.box.declined());
     EXPECT_TRUE(f.logged.empty());
-    // ACCEPTED_AUDIO_STREAM answers without asking
     f.settings.acceptedStreams = {"jpn"};
     f.box.open("/media/c.mkv");
     f.source.probed({{1, true, true, "A", "eng", "aac"}, {3, true, true, "B", "jpn", "aac"}});
@@ -1188,9 +1070,6 @@ TEST(AudioBox, TheChooserPicksTheTrack)
     EXPECT_EQ(f.source.openedTrack, 3);
 }
 
-// The open video's audio: the video's track, in the box's own source, from
-// the index file the video's open wrote (nothing listed or asked again). A
-// cache is reused only when neither the video nor the box indexed now.
 TEST(AudioBox, TheVideosAudioOpensTheVideosTrackFromItsIndexFile)
 {
     BoxFixture f("from-video");
@@ -1202,7 +1081,7 @@ TEST(AudioBox, TheVideosAudioOpensTheVideosTrackFromItsIndexFile)
     EXPECT_FALSE(asked);
     EXPECT_EQ(f.source.openedTrack, 3);
     EXPECT_EQ(std::filesystem::path(f.source.openedIndexFile), f.settings.indexDir / "v_3.ffindex");
-    f.source.opened(2, 1000, false); // the box read the index the video wrote
+    f.source.opened(2, 1000, false);
     ASSERT_EQ(f.source.reads.size(), 1u);
     f.source.answer(4, 2);
     ASSERT_EQ(f.box.state(), AudioBox::State::Ready);
@@ -1211,32 +1090,25 @@ TEST(AudioBox, TheVideosAudioOpensTheVideosTrackFromItsIndexFile)
     f.box.close();
     EXPECT_EQ(f.source.cancels, 0);
 
-    // the video read its index file too: the cache is read back
     f.box.openFromVideo("/media/v.mkv", 3, false);
     f.source.opened(2, 1000, false);
     EXPECT_TRUE(f.box.cacheReused());
     EXPECT_TRUE(f.source.reads.empty());
     EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
-    // the video indexed now: made again
     f.box.openFromVideo("/media/v.mkv", 3, true);
     f.source.opened(2, 1000, false);
     EXPECT_FALSE(f.box.cacheReused());
     EXPECT_EQ(f.source.reads.size(), 1u);
-    // closing while it caches cancels the box's own requests
     f.box.close();
     EXPECT_EQ(f.source.cancels, 1);
 }
 
-// When the video's index file could not be written, its helper handed the
-// index over in a temporary file: the box opens from that file instead
-// (legacy's box shared the video's index), and the cache is made again since
-// the video indexed now. A file of the box's own uses its index file.
 TEST(AudioBox, TheVideosHandedOverIndexStandsInForItsIndexFile)
 {
     BoxFixture f("from-video-handoff");
     f.box.openFromVideo("/media/v.mkv", 3, true, "/tmp/hikari-index-abc123.ffindex");
     EXPECT_EQ(f.source.openedIndexFile, "/tmp/hikari-index-abc123.ffindex");
-    f.source.opened(2, 1000, false); // read from the handed-over file
+    f.source.opened(2, 1000, false);
     EXPECT_FALSE(f.box.cacheReused());
     ASSERT_EQ(f.source.reads.size(), 1u);
     f.box.open("/media/v.mkv");
@@ -1256,10 +1128,9 @@ TEST(AudioBox, ClosingDropsLateAnswersAndAFailedOpenLeavesNoAudio)
     f.source.reads.clear();
     f.box.close();
     EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
-    late(std::unexpected(AudioFailure{SourceError::HelperLost, AudioStage::Host, {}})); // late: ignored
+    late(std::unexpected(AudioFailure{SourceError::HelperLost, AudioStage::Host, {}}));
     EXPECT_EQ(f.box.audio(), nullptr);
     EXPECT_TRUE(f.logged.empty());
-    // opening again first unloads (legacy SetFile); its failure leaves nothing open
     f.box.open("/media/b.wav");
     f.box.open("/media/c.wav");
     f.source.probedOneTrack();
@@ -1269,22 +1140,20 @@ TEST(AudioBox, ClosingDropsLateAnswersAndAFailedOpenLeavesNoAudio)
     EXPECT_EQ(f.box.path(), "/media/c.wav");
 }
 
-// GLOBAL_OPEN_DUMMY_AUDIO and Provider::Get's dummy names.
 TEST(AudioBox, BlankAudio)
 {
     BoxFixture f("blank");
     f.box.open(AudioBox::kDummyName);
     EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
-    EXPECT_TRUE(f.source.probedPath.empty()); // nothing is indexed
+    EXPECT_TRUE(f.source.probedPath.empty());
     EXPECT_EQ(f.box.audio()->sampleRate(), 44100);
     EXPECT_EQ(f.box.audio()->sampleCount(), 396'900'000);
-    EXPECT_EQ(f.box.audio()->sampleCount() * 1000 / 44100, 9'000'000); // 2 h 30 min
+    EXPECT_EQ(f.box.audio()->sampleCount() * 1000 / 44100, 9'000'000);
     f.box.open("?dummy:23.976000:40000:1280:720:47:163:254:");
     EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
     EXPECT_EQ(f.box.error(), SourceError::Unsupported);
 }
 
-// AV3 (#240): a dummy video's own silence, as long as its name says.
 TEST(AudioBox, BlankAudioOfAGivenLength)
 {
     BoxFixture f("blank");
@@ -1295,9 +1164,8 @@ TEST(AudioBox, BlankAudioOfAGivenLength)
     f.box.open(name);
     EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
     EXPECT_TRUE(f.source.probedPath.empty());
-    EXPECT_EQ(f.box.audio()->sampleCount(), 88200); // 2 s
+    EXPECT_EQ(f.box.audio()->sampleCount(), 88200);
     EXPECT_EQ(f.box.path(), name);
-    // the older sessions' name keeps its 2 h 30 min; a name without a usable length too
     EXPECT_EQ(AudioBox::dummySamples(AudioBox::kDummyName), AudioBox::kDummySamples);
     EXPECT_EQ(AudioBox::dummySamples("dummy"), AudioBox::kDummySamples);
     EXPECT_EQ(AudioBox::dummySamples("dummy-audio:silence?ln=0"), AudioBox::kDummySamples);

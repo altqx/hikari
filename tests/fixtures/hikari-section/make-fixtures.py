@@ -1,17 +1,5 @@
-# Writes the WS2 (#216) compatibility fixtures: each script without and
-# with the [Hikari] section HikariSub writes, for renderers and other
-# editors to read both and compare.
-# - plain.ass / plain-hikari.ass: a script ending with its Events; the
-#   section goes at the end of the file after a blank line.
-# - fonts.ass / fonts-hikari.ass: the same with an attached font in [Fonts]
-#   at the end, where legacy HikariSub writes attachments
-#   (SubsGrid::SaveFile); the section goes before [Fonts], since libass reads
-#   lines after [Fonts] as font data.
-# layout.txt holds the "Layout=" value: a real arrangement's file form
-# (WorkspaceArrangement::serialiseForFile, captured from the shell).
-# hikari_core_hikari_section_tests checks that the rewrite writes exactly
-# the -hikari files from the others. Run it from any directory; it writes
-# beside itself.
+# libass reads the lines after [Fonts] as font data, so [Hikari] goes before it.
+# Run it from any directory; it writes beside itself.
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +8,6 @@ FAMILY = "HikariAttachedTest"
 
 
 def uuencode(data):
-    # As tests/fixtures/attachments/make-fixtures.py (Aegisub's encoding).
     out = []
     for i in range(0, len(data), 3):
         chunk = data[i:i + 3]

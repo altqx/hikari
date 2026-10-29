@@ -1,10 +1,3 @@
-# O6: every translatable string has a semantic context (i18n/contexts.tsv).
-# lupdate extracts the sources hikari_lupdate reads, with locations, from the
-# lupdate project qt_add_lupdate configured (as check_extraction_sources.cmake
-# makes it); the lint then fails on a message whose context is not registered
-# (lupdate's default: a QML file without `pragma Translator`, a C++ class's
-# tr()) and on a source that names an unregistered context or calls tr(),
-# QT_TR_NOOP or QT_TR_N_NOOP.
 execute_process(COMMAND "${CMAKE_COMMAND}" -DIN_FILE=${PROJECT_IN} -DOUT_FILE=${PROJECT_JSON}
     -P "${GENERATE_PROJECT}" RESULT_VARIABLE generated)
 if(NOT generated EQUAL 0)

@@ -1,7 +1,3 @@
-// G2: Grid clipboard commands (legacy SubsGrid::CopyRows/OnPaste at
-// 20d647c4): what is copied, where pasted Lines go, one undo step each and
-// the selection afterwards.
-
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/core/ass_load.h"
 
@@ -41,7 +37,7 @@ struct GridClipboardTest : ::testing::Test {
     const core::LineRecord &line(std::size_t i) const { return *session.document().lines()[i]; }
 };
 
-} // namespace
+}
 
 TEST_F(GridClipboardTest, CopyTakesEverySelectedLineInDocumentOrder)
 {
@@ -60,7 +56,6 @@ TEST_F(GridClipboardTest, PasteGoesBeforeTheFirstSelectedLineAsOneStep)
     EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"x", u8"y", u8"b", u8"c"}));
     EXPECT_EQ(session.historySize(), steps + 1);
     EXPECT_EQ(session.history().back().name, "Pasting lines");
-    // The pasted Lines are the selection, the first one active.
     EXPECT_EQ(session.selection().active, line(1).id);
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{line(1).id, line(2).id}));
     ASSERT_TRUE(session.undo());
@@ -94,7 +89,6 @@ TEST_F(GridClipboardTest, PastedLinesJoinTheGroupTheyLandIn)
     grouped.setSelection(Selection{lines[1]->id, {lines[1]->id}, lines[1]->id, {}});
     ASSERT_TRUE(pasteRows(grouped, u8"x"));
     EXPECT_EQ(grouped.document().lines()[1]->group, core::GroupMarker::Opened);
-    // A hidden Line after the position hides the pasted Line.
     const auto hiddenLine = grouped.document().lines()[3]->id;
     grouped.setSelection(Selection{hiddenLine, {hiddenLine}, hiddenLine, {}});
     ASSERT_TRUE(pasteRows(grouped, u8"y"));
@@ -113,12 +107,11 @@ TEST_F(GridClipboardTest, PasteColumnsFillsTheSelectedLinesInOrder)
                              core::column::Text | core::column::Start));
     EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"first", u8"b", u8"second"}));
     EXPECT_EQ(line(0).start.value.microseconds(), 20'000'000);
-    EXPECT_EQ(line(0).end.value.microseconds(), 2'000'000); // End was not chosen
+    EXPECT_EQ(line(0).end.value.microseconds(), 2'000'000);
     EXPECT_EQ(line(0).layer.value, 0);
     EXPECT_EQ(line(0).style, u8"Default");
     EXPECT_EQ(session.historySize(), steps + 1);
     EXPECT_EQ(session.history().back().name, "Pasting columns");
-    // The selection stays; its first Line becomes active.
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{a, c}));
     EXPECT_EQ(session.selection().active, a);
     ASSERT_TRUE(session.undo());
@@ -131,5 +124,5 @@ TEST_F(GridClipboardTest, CommandsAreRefusedOnAReadOnlyTarget)
     session.setReadOnly(true);
     EXPECT_EQ(pasteRows(session, u8"x").error(), CommandRefusal::ReadOnly);
     EXPECT_EQ(pasteColumns(session, u8"x", core::column::Text).error(), CommandRefusal::ReadOnly);
-    EXPECT_FALSE(copyRows(session).empty()); // copying needs no write
+    EXPECT_FALSE(copyRows(session).empty());
 }

@@ -1,9 +1,3 @@
-// 38c (user decision, 2026-10-14): a script's [Fonts] are decoded for the
-// renderers, which take them as font leases, so the renderer script leaves
-// [Fonts] out and keeps [Graphics] for VSFilterMod's image tags.
-// tests/fixtures/attachments/attached.ass (make-fixtures.py) carries
-// HikariAttachedTest.ttf in [Fonts] and red.png in [Graphics].
-
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -37,7 +31,6 @@ std::string text(const std::vector<std::byte> &bytes)
     return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
 }
 
-// Aegisub's encoding, written from its description, not from the decoder.
 std::string encode(const std::vector<std::byte> &data)
 {
     std::string out;
@@ -58,7 +51,7 @@ Document load(const std::string &script)
     return loadAss(bytes).document;
 }
 
-} // namespace
+}
 
 TEST(AssAttachments, DecodesTheScriptsFonts)
 {
@@ -79,7 +72,7 @@ TEST(AssAttachments, DecodesEveryLengthOfTheLastGroup)
             data.push_back(static_cast<std::byte>(0xF7 - 37 * i));
         EXPECT_EQ(decodeAssAttachment(encode(data)), data) << size;
     }
-    EXPECT_TRUE(decodeAssAttachment("!!!!!").empty()); // one character over is no byte
+    EXPECT_TRUE(decodeAssAttachment("!!!!!").empty());
 }
 
 TEST(AssAttachments, KeepsEveryFontOfEverySection)
@@ -106,10 +99,9 @@ TEST(AssAttachments, TheRendererScriptLeavesTheFontsOutAndKeepsTheGraphics)
     const Document document = loadAss(bytes).document;
     const std::string saved = text(encodeAss(document));
     const std::string renderer = text(encodeAss(document, AssSaveOptions{.renderer = true}));
-    EXPECT_EQ(saved, text(bytes)); // a save keeps both
+    EXPECT_EQ(saved, text(bytes));
     EXPECT_EQ(renderer.find("[Fonts]"), std::string::npos);
     EXPECT_EQ(renderer.find("fontname:"), std::string::npos);
-    // everything else byte for byte: the script without its [Fonts] section
     const std::size_t from = saved.find("[Fonts]"), to = saved.find("[Graphics]");
     ASSERT_NE(from, std::string::npos);
     ASSERT_NE(to, std::string::npos);
@@ -118,10 +110,7 @@ TEST(AssAttachments, TheRendererScriptLeavesTheFontsOutAndKeepsTheGraphics)
     EXPECT_NE(renderer.find("\\1img(red.png)"), std::string::npos);
 }
 
-// One line in 64 of an attachment begins with '[' ('[' less 33 is 58, the
-// top six bits of 0xE8), which the loader takes for a section header as
-// legacy's did. The font goes on through it, and the renderer script leaves
-// it out with its [Fonts]; a line of [Graphics] like it stays.
+// Aegisub's encoding begins one line in 64 with '[', which reads as a section header.
 TEST(AssAttachments, ALineThatBeginsWithABracketGoesOnWithTheFont)
 {
     std::vector<std::byte> font;
@@ -130,7 +119,7 @@ TEST(AssAttachments, ALineThatBeginsWithABracketGoesOnWithTheFont)
     const std::string encoded = encode(font);
     std::string fontLines;
     int bracketLines = 0;
-    for (std::size_t i = 0; i < encoded.size(); i += 4) { // a line a group: every one of 0xE8 begins with '['
+    for (std::size_t i = 0; i < encoded.size(); i += 4) {
         fontLines += encoded.substr(i, 4) + "\r\n";
         bracketLines += encoded[i] == '[';
     }
@@ -146,7 +135,6 @@ TEST(AssAttachments, ALineThatBeginsWithABracketGoesOnWithTheFont)
     EXPECT_EQ(fonts[0].bytes, font);
     const std::string renderer = text(encodeAss(document, AssSaveOptions{.renderer = true}));
     EXPECT_EQ(renderer, "[Script Info]\r\nScriptType: v4.00+\r\n\r\n" + graphics + events);
-    // a real header ends the font
     const auto two = attachedFonts(load("[Fonts]\r\nfontname: a.ttf\r\n" + encode(font).substr(0, 8) +
                                         "\r\n[Aegisub Extradata]\r\n" + fontLines));
     ASSERT_EQ(two.size(), 1u);

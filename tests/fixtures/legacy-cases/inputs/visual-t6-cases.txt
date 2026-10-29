@@ -4,7 +4,7 @@
 # are 3 and the Line at \pos(960,540) sits at (320, 180).
 #
 # "frame" (the decoded frame: width, height, SAR) and "viewzoom" (a wheel
-# zoom: percent, x, y) are the rewrite's (its VideoView makes the rectangle
+# zoom: percent, x, y) are HikariSub's (its VideoView makes the rectangle
 # and the zoom from them); the probe takes "rect" and "zoom" as legacy's
 # RendererVideo gave them for the same, as the T1 capture
 # (local-t1-visual-20261005) records.

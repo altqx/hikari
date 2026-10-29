@@ -1,7 +1,3 @@
-// KE2: the template editor's preview runs. The bundled karaoke templater runs
-// in a helper of its own on the template and code Lines plus one Line; the
-// Lines it generates for that Line must be the Lines a whole run (Apply)
-// writes for it, and a newer run replaces one in flight.
 #include "hikari/application/edit_session.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/template_preview.h"
@@ -63,7 +59,7 @@ core::Document loadText(const std::string &text)
     return core::loadAss(bytes).document;
 }
 
-// The templater tests' deterministic text_extents (karaoke_templater_tests).
+// MUST KILL: a copy of karaoke_templater_tests' textExtents fake.
 HostServiceReply textExtents(const HostServiceRequest &r)
 {
     const auto number = [&](std::size_t i) { return i < r.style.size() ? std::stod(r.style[i]) : 0.0; };
@@ -105,7 +101,6 @@ protected:
         runner.setScript(QStringLiteral(HIKARI_KARAOKE_TEMPLATER));
     }
 
-    // One preview of `source`, waited for.
     std::optional<KaraokeTemplaterPort::Preview> preview(const core::Document &doc, core::LineId source)
     {
         const auto snapshot = application::templatePreviewSnapshot(doc, source);
@@ -118,8 +113,6 @@ protected:
         return out;
     }
 
-    // The Lines a whole run ("Apply karaoke template") writes for each
-    // karaoke Line, by that Line's id.
     std::map<core::LineId, std::vector<std::string>> applied(application::EditSession &session)
     {
         LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_KARAOKE_TEMPLATER),
@@ -149,9 +142,6 @@ protected:
     std::vector<HostService> asked;
 };
 
-// The preview of a Line is what Apply writes for it, Line for Line and byte
-// for byte, in the corpus songs whose templates carry no state from one Line
-// to the next.
 TEST_F(KaraokePreview, APreviewIsWhatApplyWritesForTheLine)
 {
     for (const char *name : {"stock-tutorials.ass", "km-minimal.ass", "stock-modifiers.ass", "stock-furigana.ass",
@@ -179,7 +169,6 @@ TEST_F(KaraokePreview, APreviewIsWhatApplyWritesForTheLine)
     EXPECT_TRUE(std::ranges::all_of(asked, application::isPreviewService));
 }
 
-// Each edit asks for a preview; only the newest one's answer comes.
 TEST_F(KaraokePreview, ANewerRunReplacesOneInFlight)
 {
     const core::Document doc = loadFile(corpus("stock-tutorials.ass"));
@@ -200,8 +189,6 @@ TEST_F(KaraokePreview, ANewerRunReplacesOneInFlight)
     EXPECT_EQ(second, 1);
 }
 
-// A template that never ends is stopped when the next edit replaces it; its
-// helper loads the script again and the next preview comes.
 TEST_F(KaraokePreview, ATemplateThatNeverEndsGivesWayToTheNextEdit)
 {
     const std::string head =
@@ -228,8 +215,6 @@ TEST_F(KaraokePreview, ATemplateThatNeverEndsGivesWayToTheNextEdit)
     EXPECT_FALSE(endlessDone);
 }
 
-// The card's budget: one preview of a Line of a sample song within a frame at
-// 23.976 fps (41.7 ms), the edit's whole round trip through the helper.
 TEST_F(KaraokePreview, APreviewFitsInAFrame)
 {
     const core::Document doc = loadFile(corpus("stock-tutorials.ass"));
@@ -252,4 +237,4 @@ TEST_F(KaraokePreview, APreviewFitsInAFrame)
     EXPECT_LT(median, 1000.0 / 23.976);
 }
 
-} // namespace
+}

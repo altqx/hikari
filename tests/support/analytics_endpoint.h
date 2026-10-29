@@ -1,10 +1,5 @@
 #pragma once
 
-// AN1 (#404): a fake PostHog capture endpoint on the loopback, which records
-// each request and answers 200; and the check every test of what is sent
-// shares: only the table's events and properties, and no string that could
-// be free text (a path, a file name, a line's text, a name the user gave).
-
 #include "hikari/app/analytics.h"
 
 #include <QHostAddress>
@@ -42,7 +37,6 @@ public:
     quint16 port() const { return m_server.serverPort(); }
     QUrl url() const { return QUrl(QStringLiteral("http://127.0.0.1:%1/batch/").arg(m_server.serverPort())); }
 
-    // Every event of every request, in order.
     QJsonArray events() const
     {
         QJsonArray out;
@@ -54,10 +48,7 @@ public:
 
     QList<Request> requests;
 
-    // Whether every event in `batch` is the table's, with the common
-    // properties and its own only, and every string in it is an id, a
-    // bucket, a version, a UUID or a time: never free text. `why` says
-    // what failed.
+    // True if every event has only the table's properties and no free-text string; `why` says what failed.
     static bool closedOnly(const QJsonArray &batch, QString *why)
     {
         static const QStringList common{QStringLiteral("distinct_id"), QStringLiteral("$process_person_profile"),
@@ -93,9 +84,6 @@ public:
     }
 
 private:
-    // Each string: ids, buckets, versions, UUIDs and ISO times look so; a
-    // path's slashes, a sentence's spaces, other scripts' letters do not.
-    // The one string with a space is the table's "user script".
     static bool plainStrings(const QJsonValue &value, QString *why)
     {
         static const QRegularExpression plain(QStringLiteral("^[A-Za-z0-9_.:+<>$-]{0,80}$"));
@@ -148,4 +136,4 @@ private:
     QTcpServer m_server;
 };
 
-} // namespace hikari::test
+}

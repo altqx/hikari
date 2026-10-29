@@ -1,13 +1,3 @@
-// T2: the Position and Move families. The replay runs the legacy probe's
-// cases (tests/fixtures/legacy-cases/inputs/position-cases.txt; tests/fixtures/legacy-observations/
-// local-t2-position-20261005) through visual::PositionTool and
-// visual::MoveTool and must give legacy's texts, history, log, positions and
-// handles exactly. A key in a case is a press and its release here: legacy
-// committed on the press, the transaction rule (#55) on the release, so the
-// texts and steps after each key agree. The other tests cover what the
-// probe does not: the gesture transaction (Esc, one step per held nudge),
-// Qt's double click order, the rail's options and the numeric values.
-
 #include "hikari/application/automation_services.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_script.h"
@@ -88,9 +78,6 @@ PointF pair(const QJsonValue &v)
     return {f(a[0]), f(a[1])};
 }
 
-// The probe's GetLineTextExtents stand-in (position_capture.cpp), the same
-// float and double steps: half the size a character, the height 1.25 times
-// the size, descent 0.25, external leading 0.125, scaled by ScaleX/ScaleY.
 class ProbeMeasure : public TextMeasurePort {
 public:
     std::optional<TextExtents> measure(const std::vector<std::string> &style, const std::string &text) override
@@ -124,10 +111,6 @@ public:
     }
 };
 
-// A VisualHost over a VideoView and an EditSession. As the controller does
-// (the shell refreshes after an edit, VisualToolsController::refresh), a
-// commit sets the tool again, as legacy's SetModified did (ShowEditOnVideo:
-// SetVisual).
 class TestHost : public VisualHost {
 public:
     VideoView v;
@@ -176,14 +159,12 @@ public:
     LegacyTimebase timebase() const override { return tb; }
     TextMeasurePort *textMeasure() const override { return const_cast<ProbeMeasure *>(&probeMeasure); }
     void log(std::u16string_view text) override { logs.emplace_back(text); }
-    // Esc in the panel (VisualToolsController::escape).
     void escape()
     {
         g.reset();
         if (tool)
             tool->reset(*this);
     }
-    // The events the host lets through (Visuals::Draw's blockevents).
     bool blocked() const
     {
         if (!tool)
@@ -206,7 +187,6 @@ std::string assTime(int ms)
     return b;
 }
 
-// One case of inputs/position-cases.txt.
 struct ProbeCase {
     std::string name;
     int clientW = 0, clientH = 0, panel = 0;
@@ -227,7 +207,7 @@ struct ProbeCase {
     std::vector<Line> lines;
     int active = 0;
     std::vector<int> select;
-    std::vector<std::string> steps; // tool, option, mouse, key, time, dump
+    std::vector<std::string> steps;
 };
 
 std::vector<ProbeCase> readCases()
@@ -322,8 +302,6 @@ std::unique_ptr<EditSession> sessionFor(const ProbeCase &c)
                   assTime(l.end) + "," + l.style + ",," + std::to_string(l.ml) + "," + std::to_string(l.mr) + "," +
                   std::to_string(l.mv) + ",," + l.text + "\n";
     core::Document document = load(script);
-    // Times in whole ms (legacy Start.mstime), beyond ASS's centiseconds,
-    // and the translations of a TLMode Document.
     std::size_t i = 0;
     for (const auto *line : document.lines()) {
         const auto &l = c.lines[i++];
@@ -340,7 +318,6 @@ std::unique_ptr<EditSession> sessionFor(const ProbeCase &c)
 
 LegacyTimebase timebaseOf(const std::vector<int> &timecodes)
 {
-    // Timebase::FromTimecodes(timecodes, 0): the frame rate from the span.
     const float fps = timecodes.size() > 1 && timecodes.back() > timecodes.front()
                           ? 1000.f * (timecodes.size() - 1) / (timecodes.back() - timecodes.front())
                           : 0.f;
@@ -359,21 +336,14 @@ struct Draw {
         << d.color << ")";
 }
 
-// The overlay as the probe records legacy's drawing: squares, arrow heads
-// (DrawArrow, Visuals.cpp:308-337: the tip and where the line now ends, then
-// the base's two corners), circles, crosses, and the dashes of the helper
-// cross (DrawDashedLine, Visuals.cpp:402-423, each line->Draw).
 std::vector<Draw> draws(const Overlay &o)
 {
     std::vector<Draw> out;
     for (const auto &p : o.polygons) {
-        // A square by its corners (DrawRect: pos - size to pos + size).
         if (p.points.size() == 4)
             out.push_back({p.fill == kHandleSelectedFill ? "rectsel" : "rect", p.points[0].x, p.points[0].y,
                            p.points[2].x, p.points[2].y, 0, 0});
         if (p.points.size() == 3) {
-            // The arrow's line ends at pend, the middle of the base: found
-            // near it, then compared exactly. None found leaves it unequal.
             const PointF mid{(p.points[1].x + p.points[2].x) / 2, (p.points[1].y + p.points[2].y) / 2};
             PointF pend{-1e9f, -1e9f};
             for (const auto &l : o.lines)
@@ -393,7 +363,6 @@ std::vector<Draw> draws(const Overlay &o)
     for (std::size_t i = 0; i + 1 < o.lines.size(); i++) {
         const auto &h = o.lines[i];
         const auto &v = o.lines[i + 1];
-        // DrawCross: x - 15 to x + 15 at y, then y - 15 to y + 15 at x.
         if (h.from.y == h.to.y && v.from.x == v.to.x && h.from.x == v.from.x - 15.0f && h.to.x == v.from.x + 15.0f &&
             v.from.y == h.from.y - 15.0f && v.to.y == h.from.y + 15.0f && h.argb == v.argb) {
             out.push_back({"cross", v.from.x, h.from.y, 0, 0, 0, h.argb});
@@ -422,7 +391,6 @@ std::vector<Draw> legacyDraws(const QJsonArray &a)
             out.push_back({kind, f(d[1]), f(d[2]), f(d[3]), f(d[4]), 0, 0});
         else if (kind == "dash")
             out.push_back({kind, f(d[1]), f(d[2]), f(d[3]), f(d[4]), 0, static_cast<std::uint32_t>(d[6].toDouble())});
-        // "dashed" is the whole line its dashes cover.
     }
     std::sort(out.begin(), out.end());
     return out;
@@ -462,7 +430,7 @@ Pointer pointerOf(const std::string &step)
     else if (type == "mup")
         p.kind = K::Release, p.button = B::Middle;
     else if (type == "ldclick")
-        p.kind = K::DoubleClick, p.button = B::Left; // wxEVT_LEFT_DCLICK in place of the second press
+        p.kind = K::DoubleClick, p.button = B::Left; // wx sends the double click in place of the second press
     else
         p.kind = K::Move;
     return p;
@@ -483,21 +451,16 @@ void setUpView(TestHost &host, const ProbeCase &c)
     }
 }
 
-// Approved departures (docs/compatibility-decisions.md) where a dump's
-// legacy value is kept as the old evidence and the rewrite expects another.
 struct Departure {
     std::string caseName;
     int dump = 0;
-    int row = -1;           // a Line's text, or -1
-    std::u16string text;    // its expected text
-    int dataTextLength = -1; // data 0's tag length, or -1
+    int row = -1;
+    std::u16string text;
+    int dataTextLength = -1;
 };
 
 const std::vector<Departure> &departures()
 {
-    // T2-rect-reread: the re-placed Line is read back, so dump 1 holds the
-    // written tag's length and dump 2's drag replaces the whole tag (legacy:
-    // 13, the old \pos(400,500), and "{\an7\pos(-16,10.5)5)}other").
     static const std::vector<Departure> list{
         {"pos-rect-other-line", 1, -1, {}, 15},
         {"pos-rect-other-line", 2, 1, u"{\\an7\\pos(-16,10.5)}other", -1},
@@ -513,7 +476,7 @@ const Departure *departureFor(const std::string &caseName, int dump)
     return nullptr;
 }
 
-} // namespace
+}
 
 TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
 {
@@ -528,7 +491,6 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
         host.tb = timebaseOf(c.timecodes);
         host.time = c.time;
         setUpView(host, c);
-        // The probe's window (SizeChanged's rectangle and SetZoom).
         ASSERT_EQ(host.v.videoRect(), c.view);
         ASSERT_EQ(host.v.zoomMove(), c.zoomMove);
         ASSERT_EQ(host.v.zoomScale(), c.zoomScale);
@@ -560,7 +522,7 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                 host.tool = tool.get();
                 tool->selected(host);
                 if (auto *p = dynamic_cast<PositionTool *>(tool.get()))
-                    p->applyToolValue(value, host); // the toolbar's state before SetVisual
+                    p->applyToolValue(value, host);
                 else
                     tool->setOption("twoPoints", value != -1 ? 1 : 0, host);
                 tool->reset(host);
@@ -581,7 +543,6 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                 host.picker.clear();
                 tool->reset(host);
             } else if (op == "mouse") {
-                // The probe draws before each event (Visuals::Draw).
                 if (host.blocked())
                     tool->blocked(host);
                 else
@@ -597,8 +558,6 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                     alt |= w == "alt";
                 }
                 Key key = legacy_keys::legacyKey(k, shift, control, alt, tool->family());
-                // VideoBox::OnKeyPress hands every key to the tool, blocked
-                // or not (VideoBox.cpp:666-668).
                 if (host.blocked())
                     tool->blocked(host);
                 (void)tool->key(key, host);
@@ -610,7 +569,6 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                 ASSERT_EQ(o[QStringLiteral("case")].toString().toStdString(), c.name);
                 const Departure *departure = departureFor(c.name, o[QStringLiteral("dump")].toInt());
                 ASSERT_EQ(o[QStringLiteral("dump")].toInt(), dump++);
-                // The Lines.
                 const QJsonArray lines = o[QStringLiteral("lines")].toArray();
                 for (std::size_t i = 0; i < rows.size(); i++) {
                     const auto *l = lineOf(*host.s, rows[i]);
@@ -623,7 +581,6 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                     }
                     EXPECT_EQ(core::toUtf16(l->translation), u16(lines[static_cast<int>(i)].toArray()[1])) << "row " << i;
                 }
-                // One history step where legacy recorded one.
                 std::vector<std::string> history;
                 const auto steps = host.s->history();
                 for (std::size_t i = 1; i < steps.size(); i++)
@@ -678,10 +635,9 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                     EXPECT_EQ(m->lineToMoveStart(), pair(two[0]));
                     EXPECT_EQ(m->lineToMoveEnd(), pair(two[1]));
                 }
-                // The handles, and the warning in their place when blocked.
                 const bool blocked = host.blocked();
                 if (blocked)
-                    tool->blocked(host); // the probe's dump draws too
+                    tool->blocked(host);
                 EXPECT_EQ(blocked, o[QStringLiteral("blocked")].toBool());
                 if (!blocked)
                     EXPECT_EQ(draws(tool->overlay(host)), legacyDraws(o[QStringLiteral("draws")].toArray()));
@@ -690,8 +646,6 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
     }
     EXPECT_EQ(next, observations.size());
 }
-
-// ----------------------------------------------------------- unit checks
 
 namespace {
 
@@ -714,7 +668,6 @@ std::vector<int> cfr25()
     return out;
 }
 
-// 1920x1080 in a 640x360 rectangle: three script pixels a view pixel.
 void standard(TestHost &host, std::size_t activeRow = 0)
 {
     host.s = std::make_unique<EditSession>(load(kScript));
@@ -743,7 +696,7 @@ Pointer at(Pointer::Kind kind, int x, int y, Pointer::Button button = Pointer::B
     return p;
 }
 
-} // namespace
+}
 
 TEST(VisualPositionTags, PositionAndMoveAreReadAsLegacyGetPosition)
 {
@@ -755,15 +708,12 @@ TEST(VisualPositionTags, PositionAndMoveAreReadAsLegacyGetPosition)
         line.text = std::u8string(t);
         return linePosition(state, line, true);
     };
-    // \pos: its values and the whole tag's place.
     auto p = read(u8"{\\an7}{\\pos(12.5,-3)}x");
     EXPECT_EQ(p.pos, (PointF{12.5f, -3.f}));
     EXPECT_EQ(p.textStart, 7u);
     EXPECT_EQ(p.textLength, 13u);
     EXPECT_FALSE(p.putInBracket);
     EXPECT_FALSE(p.move);
-    // \move with and without times: the end and the times made absolute
-    // (the Line's own without them).
     p = read(u8"{\\move(1,2,3,4)}x");
     ASSERT_TRUE(p.move);
     EXPECT_EQ(p.move->values, (std::array<double, 4>{3, 4, 1000, 3000}));
@@ -772,35 +722,28 @@ TEST(VisualPositionTags, PositionAndMoveAreReadAsLegacyGetPosition)
     ASSERT_TRUE(p.move);
     EXPECT_EQ(p.move->values, (std::array<double, 4>{3, 4, 1100, 1900}));
     EXPECT_EQ(p.move->count, 4);
-    // Malformed: the tag stays where it is and a new one goes first in the
-    // first block, at the default position (bottom centre, MarginV 20).
     p = read(u8"{\\pos(abc,2)}x");
     EXPECT_EQ(p.pos, (PointF{960, 1060}));
     EXPECT_EQ(p.textStart, 1u);
     EXPECT_EQ(p.textLength, 0u);
     EXPECT_FALSE(p.putInBracket);
-    // No block: a new one.
     p = read(u8"x");
     EXPECT_TRUE(p.putInBracket);
-    // Several: the first one.
     p = read(u8"{\\pos(1,2)\\pos(3,4)}x");
     EXPECT_EQ(p.pos, (PointF{1, 2}));
 }
 
 TEST(VisualPositionTags, MoveTimesFollowTheVideosFrames)
 {
-    // GetMoveTimes: from the first frame at or after the start to the last
-    // frame before the end, relative to the start truncated to 10 ms.
     TestHost host;
     standard(host);
     core::LineRecord line = *lineOf(*host.s, ids(*host.s)[0]);
     line.start.value = core::DocumentTime(1005000);
     line.end.value = core::DocumentTime(2995000);
-    EXPECT_EQ(moveTimes(scriptState(host), line), (std::pair{0, 1960})); // CFR 25: frames 25 (1000) to 74 (2960)
+    EXPECT_EQ(moveTimes(scriptState(host), line), (std::pair{0, 1960}));
     host.tb = LegacyTimebase({0, 33, 83, 125, 166, 199, 249, 291, 332, 365, 415, 457, 498}, 0.f);
     line.start.value = core::DocumentTime(100000);
     line.end.value = core::DocumentTime(400000);
-    // VFR: the frame at or after 100 starts at 125, the one before 400 at 365.
     EXPECT_EQ(moveTimes(scriptState(host), line), (std::pair{25, 265}));
 }
 
@@ -824,17 +767,14 @@ TEST(VisualPositionGesture, DragStagesAndCommitsOnReleaseAndEscCancels)
     tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
     tool.pointer(at(Pointer::Kind::Move, 110, 105, Pointer::Button::None, true), host);
     ASSERT_TRUE(host.g);
-    // Staged, not committed.
     EXPECT_EQ(text(host, 0), u8"{\\pos(300,300)}x");
     EXPECT_EQ(*host.g->staged(ids(*host.s)[0]), u8"{\\pos(330,315)}x");
-    // Esc drops it; the rest of the drag writes nothing.
     host.escape();
     tool.pointer(at(Pointer::Kind::Move, 130, 105, Pointer::Button::None, true), host);
     tool.pointer(at(Pointer::Kind::Release, 130, 105, Pointer::Button::Left), host);
     EXPECT_EQ(text(host, 0), u8"{\\pos(300,300)}x");
     EXPECT_EQ(host.s->history().size(), before);
     EXPECT_FALSE(host.g);
-    // The next drag works again: one step named as legacy's.
     tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
     tool.pointer(at(Pointer::Kind::Move, 101, 102, Pointer::Button::None, true), host);
     tool.pointer(at(Pointer::Kind::Release, 101, 102, Pointer::Button::Left), host);
@@ -845,9 +785,6 @@ TEST(VisualPositionGesture, DragStagesAndCommitsOnReleaseAndEscCancels)
 
 TEST(VisualPositionGesture, AHeldNudgeIsOneStepCommittedOnRelease)
 {
-    // Legacy committed every key press (VisualPosition.cpp:554); the
-    // transaction rule (#55) commits a nudge on its key's release, so the
-    // presses of a held key make one step. VT2-arrow-nudge: Right, legacy's D.
     TestHost host;
     standard(host);
     PositionTool tool;
@@ -861,7 +798,7 @@ TEST(VisualPositionGesture, AHeldNudgeIsOneStepCommittedOnRelease)
     key.autoRepeat = true;
     EXPECT_TRUE(tool.key(key, host));
     key.release = true;
-    EXPECT_TRUE(tool.key(key, host)); // an auto-repeat release: still held
+    EXPECT_TRUE(tool.key(key, host));
     key.release = false;
     EXPECT_TRUE(tool.key(key, host));
     EXPECT_EQ(text(host, 0), u8"{\\pos(300,300)}x");
@@ -870,8 +807,6 @@ TEST(VisualPositionGesture, AHeldNudgeIsOneStepCommittedOnRelease)
     EXPECT_TRUE(tool.key(key, host));
     EXPECT_EQ(text(host, 0), u8"{\\pos(303,300)}x");
     EXPECT_EQ(host.s->history().size(), before + 1);
-    // Alt and Ctrl leave the arrows to others (Ctrl+Left is the Global
-    // Insert start time from video); the letters nudge no longer.
     for (const auto &[k, control, alt] : {std::tuple{keys::Left, false, true}, std::tuple{keys::Left, true, false},
                                           std::tuple{keys::Left, true, true}, std::tuple{int('A'), false, false},
                                           std::tuple{int('D'), false, false}}) {
@@ -888,8 +823,6 @@ TEST(VisualPositionGesture, AHeldNudgeIsOneStepCommittedOnRelease)
 
 TEST(VisualPositionGesture, TheArrowsNudgeShiftATenth)
 {
-    // VT2-arrow-nudge: Left, Right, Up and Down for legacy's A, D, W and S;
-    // Shift a tenth. Each press and release is its own step.
     TestHost host;
     standard(host);
     PositionTool tool;
@@ -904,7 +837,7 @@ TEST(VisualPositionGesture, TheArrowsNudgeShiftATenth)
         EXPECT_TRUE(tool.key(key, host));
         key.release = true;
         EXPECT_TRUE(tool.key(key, host));
-        tool.reset(host); // the shell reads the Line again after the commit
+        tool.reset(host);
     };
     press(keys::Left);
     EXPECT_EQ(text(host, 0), u8"{\\pos(299,300)}x");
@@ -919,9 +852,6 @@ TEST(VisualPositionGesture, TheArrowsNudgeShiftATenth)
 
 TEST(VisualMoveGesture, TheArrowsMoveTheStartAltArrowsTheEnd)
 {
-    // VT2-arrow-nudge: the arrows move the \move's start (legacy A/D/W/S),
-    // Alt+arrows its end (legacy J/L/I/K, whose L never reached the tool:
-    // it is VIDEO_5_SECONDS_FORWARD). Ctrl+arrows stay the Global bindings'.
     TestHost host;
     standard(host, 1);
     MoveTool tool;
@@ -954,9 +884,7 @@ TEST(VisualMoveGesture, TheArrowsMoveTheStartAltArrowsTheEnd)
 
 TEST(VisualPositionGesture, QtsDoubleClickOrderGivesLegacysResult)
 {
-    // Qt delivers the second press before the double click; legacy got the
-    // double click in its place. The Line goes to the point either way and
-    // the release commits it.
+    // Qt delivers the second press before the double click.
     TestHost host;
     standard(host);
     PositionTool tool;
@@ -990,11 +918,11 @@ TEST(VisualPositionOptions, RectangleGreysXAndYAndOneStaysOn)
     EXPECT_EQ(option("y").iconRole, "scale-y");
     EXPECT_EQ(option("alignment").choices.size(), 21u);
     EXPECT_EQ(option("alignment").tooltip, u"Text placing works similar like in styles");
-    EXPECT_FALSE(tool.setOption("x", 0, host)); // greyed
+    EXPECT_FALSE(tool.setOption("x", 0, host));
     EXPECT_TRUE(tool.setOption("byRectangle", 1, host));
     EXPECT_TRUE(option("x").enabled);
     EXPECT_TRUE(tool.setOption("x", 0, host));
-    EXPECT_TRUE(tool.setOption("y", 0, host)); // the other comes back on
+    EXPECT_TRUE(tool.setOption("y", 0, host));
     EXPECT_FALSE(option("y").checked);
     EXPECT_TRUE(option("x").checked);
     EXPECT_EQ(tool.toolValue(), 1 | 32 | 64);
@@ -1005,11 +933,6 @@ TEST(VisualPositionOptions, RectangleGreysXAndYAndOneStaysOn)
 
 TEST(VisualPositionOptions, AnotherActiveLineUnderTheRectangleIsReadBack)
 {
-    // T2-rect-reread (the capture's `pos-rect-other-line`): with the
-    // rectangle shown, making another Line active re-places it with a
-    // commit; legacy did not set the tool again, so the next drag replaced
-    // the old \pos's length in the new text ("{\an7\pos(-16,10.5)5)}other").
-    // The Lines are read back after that commit.
     std::string script(kScript);
     script.replace(script.find("{\\pos(300,300)}x"), 16, "{\\pos(100,100)}Hello");
     script.replace(script.find("{\\move(30,60,90,120,0,2000)}y"), 29, "{\\an7\\pos(400,500)}other");
@@ -1021,20 +944,18 @@ TEST(VisualPositionOptions, AnotherActiveLineUnderTheRectangleIsReadBack)
     PositionTool tool;
     host.tool = &tool;
     tool.selected(host);
-    tool.applyToolValue(1 | 32 | 64 | 128 | 4, host); // by rectangle, X and Y, Center
+    tool.applyToolValue(1 | 32 | 64 | 128 | 4, host);
     tool.reset(host);
     tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
     tool.pointer(at(Pointer::Kind::Move, 300, 200, Pointer::Button::None, true), host);
     tool.pointer(at(Pointer::Kind::Release, 300, 200, Pointer::Button::Left), host);
     ASSERT_TRUE(tool.rectangleVisible());
-    // Another Line: re-placed in the rectangle, then read back.
     host.s->setSelection({rows[1], {rows[1]}, rows[1], std::nullopt});
     tool.reset(host);
     ASSERT_EQ(text(host, 1), u8"{\\an7\\pos(551,427.5)}other");
     ASSERT_EQ(tool.data().size(), 1u);
     EXPECT_EQ(tool.data()[0].textStart, 5u);
-    EXPECT_EQ(tool.data()[0].textLength, 15u); // \pos(551,427.5), not \pos(400,500)
-    // The next drag replaces the whole tag.
+    EXPECT_EQ(tool.data()[0].textLength, 15u);
     tool.pointer(at(Pointer::Kind::Press, 10, 10, Pointer::Button::Left, true), host);
     tool.pointer(at(Pointer::Kind::Move, 12, 12, Pointer::Button::None, true), host);
     tool.pointer(at(Pointer::Kind::Release, 12, 12, Pointer::Button::Left), host);
@@ -1043,9 +964,6 @@ TEST(VisualPositionOptions, AnotherActiveLineUnderTheRectangleIsReadBack)
 
 TEST(VisualPositionTags, AShortMoveEndsAtZero)
 {
-    // T2-move-short: \move(x1,y1,x2) left the end's y as legacy's
-    // uninitialised moveTable[1] had it (Visuals.cpp:853-860; VisualPosition.
-    // cpp:428-429 sets only moveTable[4]); the rewrite reads it as 0.
     std::string script(kScript);
     script.replace(script.find("{\\move(30,60,90,120,0,2000)}y"), 29, "{\\move(30,60,90)}y");
     TestHost host;
@@ -1058,7 +976,6 @@ TEST(VisualPositionTags, AShortMoveEndsAtZero)
     ASSERT_TRUE(p.move);
     EXPECT_EQ(p.move->values, (std::array<double, 4>{90, 0, 1000, 3000}));
     EXPECT_EQ(p.move->count, 1);
-    // The Position tool's \move end follows: (90, 0) in script, (30, 0) in view.
     PositionTool tool;
     host.tool = &tool;
     tool.selected(host);
@@ -1070,10 +987,7 @@ TEST(VisualPositionTags, AShortMoveEndsAtZero)
 
 TEST(VisualMoveTimes, AMoveWithoutTimesOrWithBothAtMostZeroRunsOverTheWholeLine)
 {
-    // T2-move-untimed: Move takes the \move's interval as libass does
-    // (ass_parse.c: t1 <= 0 && t2 <= 0 is t1 = 0, t2 = the event's
-    // Duration; t1 > t2 swapped), not legacy's Line start as both times
-    // (GetPosnScale, Visuals.cpp:648-675). The Line runs from 1 s to 3 s.
+    // libass ass_parse.c: \move times both <= 0 span the whole event, and t1 > t2 swap.
     TestHost host;
     standard(host);
     const ScriptState state = scriptState(host);
@@ -1086,8 +1000,6 @@ TEST(VisualMoveTimes, AMoveWithoutTimesOrWithBothAtMostZeroRunsOverTheWholeLine)
     };
     using I = std::pair<int, int>;
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4)}x"), (I{1000, 3000}));
-    // The text's own times stay in the table (0 made absolute), however
-    // often it is read: legacy added the Line's start again on each read.
     EXPECT_EQ(table[4], 1000);
     EXPECT_EQ(table[5], 1000);
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4)}x"), (I{1000, 3000}));
@@ -1096,26 +1008,19 @@ TEST(VisualMoveTimes, AMoveWithoutTimesOrWithBothAtMostZeroRunsOverTheWholeLine)
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,0,0)}x"), (I{1000, 3000}));
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-200,0)}x"), (I{1000, 3000}));
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-300,-100)}x"), (I{1000, 3000}));
-    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,0.5,0.9)}x"), (I{1000, 3000})); // whole numbers, as argtoi32
-    // Times of their own: relative to the start, the earlier first.
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,0.5,0.9)}x"), (I{1000, 3000}));
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,0,500)}x"), (I{1000, 1500}));
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,1500,300)}x"), (I{1300, 2500}));
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-200,500)}x"), (I{800, 1500}));
-    // Fractional own times truncate relative to the start (argtoi32), not
-    // once made absolute: -200.5 is -200 (800), not 799.5 cut to 799.
+    // libass argtoi32 truncates the own times before they are made absolute.
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-200.5,500.7)}x"), (I{800, 1500}));
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,500.7,-200.5)}x"), (I{800, 1500}));
-    // No \move: GetMoveTimes, the Line's first and last frames (CFR 25).
     EXPECT_EQ(interval(u8"{\\pos(1,2)}x"), (I{1000, 2960}));
     EXPECT_EQ(interval(u8"x"), (I{1000, 2960}));
 }
 
 TEST(VisualMoveTimes, MoveKeepsAnUntimedMoveUntimedOverRepeatedReads)
 {
-    // The tool reads the Line again after each commit (as the shell does).
-    // Its times stay the whole Line's, and a drag writes the text's own
-    // 0,0, which libass reads as the whole Line too; legacy's second read
-    // had the start twice and wrote `1000,1000`.
     std::string script(kScript);
     script.replace(script.find("{\\move(30,60,90,120,0,2000)}y"), 29, "{\\move(30,60,90,120)}y");
     TestHost host;
@@ -1127,22 +1032,19 @@ TEST(VisualMoveTimes, MoveKeepsAnUntimedMoveUntimedOverRepeatedReads)
     host.tool = &tool;
     tool.selected(host);
     tool.reset(host);
-    tool.reset(host); // read twice
+    tool.reset(host);
     EXPECT_EQ(tool.moveStart(), 1000);
     EXPECT_EQ(tool.moveEnd(), 3000);
     auto values = tool.values(host);
     ASSERT_EQ(values.size(), 6u);
     EXPECT_EQ(values[2].text, u"0");
     EXPECT_EQ(values[5].text, u"0");
-    // Drag the start (view 10,20) twice.
     tool.pointer(at(Pointer::Kind::Press, 10, 20, Pointer::Button::Left, true), host);
     tool.pointer(at(Pointer::Kind::Move, 12, 20, Pointer::Button::None, true), host);
     tool.pointer(at(Pointer::Kind::Release, 12, 20, Pointer::Button::Left), host);
     EXPECT_EQ(text(host, 1), u8"{\\move(36,60,90,120,0,0)}y");
     EXPECT_EQ(tool.moveStart(), 1000);
     EXPECT_EQ(tool.moveEnd(), 3000);
-    // The refresh after the tool's own commit keeps its state (the first
-    // reset); the next one reads the Line again.
     tool.reset(host);
     tool.reset(host);
     tool.pointer(at(Pointer::Kind::Press, 12, 20, Pointer::Button::Left, true), host);
@@ -1151,8 +1053,6 @@ TEST(VisualMoveTimes, MoveKeepsAnUntimedMoveUntimedOverRepeatedReads)
     EXPECT_EQ(text(host, 1), u8"{\\move(42,60,90,120,0,0)}y");
     EXPECT_EQ(tool.moveStart(), 1000);
     EXPECT_EQ(tool.moveEnd(), 3000);
-    // Halfway through the Line the cross is halfway along the \move, where
-    // libass draws the text: view (14,20) to (30,40) at 2 s.
     host.time = 2000;
     const Overlay o = tool.overlay(host);
     std::optional<float> crossX, crossY;
@@ -1183,7 +1083,7 @@ TEST(VisualPositionValues, TypedPointWritesTheActiveLineAndMovesTheOthers)
     EXPECT_FALSE(tool.setValue("x", u"abc", host));
     EXPECT_TRUE(tool.setValue("x", u"360", host));
     EXPECT_EQ(text(host, 0), u8"{\\pos(360,300)}x");
-    EXPECT_EQ(text(host, 2), u8"{\\pos(1020,1060)}plain"); // moved by the same 60
+    EXPECT_EQ(text(host, 2), u8"{\\pos(1020,1060)}plain");
     EXPECT_TRUE(tool.setValue("y", u"12.5", host));
     EXPECT_EQ(text(host, 0), u8"{\\pos(360,12.5)}x");
 }
@@ -1202,7 +1102,6 @@ TEST(VisualMoveValues, TypedPointsWriteTheMove)
     EXPECT_EQ(values[3].text, u"90");
     EXPECT_EQ(values[2].text, u"0");
     EXPECT_EQ(values[5].text, u"2000");
-    // VT1: the times are editable too, from the Line's start in ms.
     EXPECT_TRUE(values[2].editable);
     EXPECT_EQ(values[2].unit, u"ms");
     EXPECT_EQ(values[0].group, u"Start");
@@ -1216,8 +1115,6 @@ TEST(VisualMoveValues, TypedPointsWriteTheMove)
     EXPECT_EQ(tool.values(host)[5].text, u"1500");
 }
 
-// VT1 (Codex on #293): a typed time is whole milliseconds, kept exactly
-// past a float's 2^24 in the field and in the tag.
 TEST(VisualMoveValues, LargeTypedTimesAreKeptExactly)
 {
     TestHost host;
@@ -1231,7 +1128,6 @@ TEST(VisualMoveValues, LargeTypedTimesAreKeptExactly)
     EXPECT_EQ(tool.values(host)[5].text, u"16777217");
 }
 
-// The \move's two times of a Line's text ("t1,t2"), or empty.
 std::u8string moveTimesOf(const std::u8string &t)
 {
     const auto open = t.find(u8"\\move(");
@@ -1244,8 +1140,6 @@ std::u8string moveTimesOf(const std::u8string &t)
     return args;
 }
 
-// VT1 (Codex on #293): with several Lines a typed time goes into every
-// target, each from its own start, not only the Line it was read from.
 TEST(VisualMoveValues, TypedTimesGoIntoEveryPickedLine)
 {
     TestHost host;
@@ -1255,8 +1149,6 @@ TEST(VisualMoveValues, TypedTimesGoIntoEveryPickedLine)
     host.tool = &tool;
     tool.selected(host);
     tool.reset(host);
-    // Codex on #293: the points stay where they were (the press's places
-    // are the handles', not the tool's zeroes).
     EXPECT_TRUE(tool.setValue("t1", u"100", host));
     EXPECT_EQ(text(host, 1), u8"{\\move(30,60,90,120,100,2000)}y");
     EXPECT_EQ(moveTimesOf(text(host, 2)).substr(0, 4), u8"100,");
@@ -1264,14 +1156,11 @@ TEST(VisualMoveValues, TypedTimesGoIntoEveryPickedLine)
     EXPECT_TRUE(tool.setValue("t2", u"1500", host));
     EXPECT_EQ(moveTimesOf(text(host, 1)), u8"100,1500");
     EXPECT_EQ(moveTimesOf(text(host, 2)), u8"100,1500");
-    // The edit over, a point's drag keeps each Line's own times.
     tool.reset(host);
     EXPECT_TRUE(tool.setValue("x1", u"60", host));
     EXPECT_EQ(text(host, 1), u8"{\\move(60,60,90,120,100,1500)}y");
 }
 
-// VT1 (Codex on #293): over several Lines a typed time leaves the other
-// one as the tag wrote it (a drag writes wxAtoi's whole part, as legacy).
 TEST(VisualMoveValues, ATypedTimeKeepsTheOtherTimesText)
 {
     TestHost host;
@@ -1294,8 +1183,6 @@ TEST(VisualMoveValues, ATypedTimeKeepsTheOtherTimesText)
     EXPECT_EQ(moveTimesOf(text(host, 2)), u8"100,1500");
 }
 
-// VT1 (Codex on #293): the times are read and written from the start the
-// Line editor holds (its pending draft's), as the tag is.
 TEST(VisualMoveValues, TypedTimesAreFromTheDraftsStart)
 {
     TestHost host;
@@ -1312,8 +1199,6 @@ TEST(VisualMoveValues, TypedTimesAreFromTheDraftsStart)
     EXPECT_EQ(moveTimesOf(written), u8"100,2000");
 }
 
-// VT1: a scrub's samples stage on one gesture (the Document waits), its
-// release commits them as one step; Esc drops them.
 TEST(VisualPositionValues, AScrubIsOneStepAndEscDropsIt)
 {
     TestHost host;
@@ -1334,7 +1219,6 @@ TEST(VisualPositionValues, AScrubIsOneStepAndEscDropsIt)
     EXPECT_EQ(text(host, 0), u8"{\\pos(320,300)}x");
     ASSERT_EQ(host.s->history().size(), before + 1);
     EXPECT_EQ(host.s->history().back().name, "Visual positioning tool");
-    // Esc mid-scrub: nothing written; the next typed value works.
     EXPECT_TRUE(tool.setValue("y", u"280", host, ValueEdit::Sample));
     ASSERT_TRUE(host.g);
     host.escape();
@@ -1344,7 +1228,6 @@ TEST(VisualPositionValues, AScrubIsOneStepAndEscDropsIt)
     EXPECT_TRUE(tool.setValue("y", u"290", host));
     EXPECT_EQ(text(host, 0), u8"{\\pos(320,290)}x");
     EXPECT_EQ(host.s->history().size(), before + 2);
-    // A pointer's gesture is not a value's: a sample is refused during it.
     tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
     tool.pointer(at(Pointer::Kind::Move, 110, 105, Pointer::Button::None, true), host);
     ASSERT_TRUE(host.g);
@@ -1352,9 +1235,6 @@ TEST(VisualPositionValues, AScrubIsOneStepAndEscDropsIt)
     host.escape();
 }
 
-// SV1-hidpi-tool-sizes: on a screen of twice the pixels the handles keep
-// legacy's size in logical pixels: twice as many device pixels, at the same
-// device positions, and grabbed from twice as far.
 TEST(VisualPositionHidpi, HandlesKeepTheirLogicalSize)
 {
     const auto overlayAt = [](double dpr) {
@@ -1368,7 +1248,6 @@ TEST(VisualPositionHidpi, HandlesKeepTheirLogicalSize)
         return tool.overlay(host);
     };
     const Overlay one = overlayAt(1), two = overlayAt(2);
-    // The square handle: the same centre, twice the side.
     ASSERT_EQ(one.polygons.size(), 1u);
     ASSERT_EQ(two.polygons.size(), 1u);
     const auto &a = one.polygons[0].points, &b = two.polygons[0].points;
@@ -1377,13 +1256,12 @@ TEST(VisualPositionHidpi, HandlesKeepTheirLogicalSize)
     EXPECT_FLOAT_EQ(b[0].x + b[2].x, a[0].x + a[2].x);
     EXPECT_FLOAT_EQ(b[0].y + b[2].y, a[0].y + a[2].y);
     EXPECT_FLOAT_EQ(b[2].x - b[0].x, 2 * (a[2].x - a[0].x));
-    // The cross's arms twice as long.
     ASSERT_FALSE(one.lines.empty());
     ASSERT_EQ(two.lines.size(), one.lines.size());
     for (std::size_t i = 0; i < one.lines.size(); ++i) {
         const auto length = [](const OverlayLine &l) { return std::hypot(l.to.x - l.from.x, l.to.y - l.from.y); };
         EXPECT_FLOAT_EQ(length(two.lines[i]), 2 * length(one.lines[i]));
-        EXPECT_EQ(two.lines[i].width, one.lines[i].width); // logical, scaled when drawn
+        EXPECT_EQ(two.lines[i].width, one.lines[i].width);
     }
 }
 
@@ -1401,14 +1279,8 @@ TEST(VisualPositionWarning, OnlyWhileNoneOfItsLinesIsVisible)
     EXPECT_TRUE(tool.overlay(host).polygons.empty());
 }
 
-// The pointer's shapes (VideoBox::SetCursor from the Visuals; the user's
-// 2026-10-13 decision to port them).
-
 TEST(VisualPositionPointer, ADragShowsTheFourWayShapeUntilTheRelease)
 {
-    // Position::OnMouseEvent: no shape over the text's point, SIZING from
-    // the press (VisualPosition.cpp:369), the arrow back on the left
-    // release (SavePosition, :725).
     TestHost host;
     standard(host);
     PositionTool tool;
@@ -1423,7 +1295,6 @@ TEST(VisualPositionPointer, ADragShowsTheFourWayShapeUntilTheRelease)
     EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
     tool.pointer(at(Pointer::Kind::Release, 120, 110, Pointer::Button::Left), host);
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
-    // The helper cross's drag sets none (it returns before, :365-368).
     tool.pointer(at(Pointer::Kind::Press, 200, 200, Pointer::Button::Middle), host);
     tool.pointer(at(Pointer::Kind::Release, 200, 200, Pointer::Button::Middle), host);
     tool.pointer(at(Pointer::Kind::Press, 200, 200, Pointer::Button::Left, true), host);
@@ -1433,9 +1304,6 @@ TEST(VisualPositionPointer, ADragShowsTheFourWayShapeUntilTheRelease)
 
 TEST(VisualPositionPointer, TheRectanglesEdgesAndCornersShowTheirResizeShapes)
 {
-    // "Set position by rectangle" (VisualPosition.cpp:240-251): over an edge
-    // its west-east or north-south shape, over a corner its diagonal, the
-    // arrow elsewhere; a drag keeps the shape it began with.
     TestHost host;
     standard(host);
     PositionTool tool;
@@ -1446,7 +1314,6 @@ TEST(VisualPositionPointer, TheRectanglesEdgesAndCornersShowTheirResizeShapes)
     tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
     tool.pointer(at(Pointer::Kind::Move, 200, 160, Pointer::Button::None, true), host);
     tool.pointer(at(Pointer::Kind::Release, 200, 160, Pointer::Button::Left), host);
-    // The release lands on the corner just drawn.
     EXPECT_EQ(host.pointerShape(), PointerShape::SizeNWSE);
     const struct {
         int x, y;
@@ -1460,11 +1327,9 @@ TEST(VisualPositionPointer, TheRectanglesEdgesAndCornersShowTheirResizeShapes)
     for (const auto &h : hovers) {
         tool.pointer(at(Pointer::Kind::Move, h.x, h.y), host);
         EXPECT_EQ(host.pointerShape(), h.shape) << h.x << "," << h.y;
-        // Leaving the handle puts the arrow back.
         tool.pointer(at(Pointer::Kind::Move, 150, 130), host);
         EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
     }
-    // The left edge's drag keeps west-east past the edge's reach.
     tool.pointer(at(Pointer::Kind::Move, 100, 130), host);
     tool.pointer(at(Pointer::Kind::Press, 100, 130, Pointer::Button::Left, true), host);
     tool.pointer(at(Pointer::Kind::Move, 60, 30, Pointer::Button::None, true), host);
@@ -1475,9 +1340,6 @@ TEST(VisualPositionPointer, TheRectanglesEdgesAndCornersShowTheirResizeShapes)
 
 TEST(VisualMovePointer, ADragShowsTheFourWayShapeUntilTheRelease)
 {
-    // Move::OnMouseEvent: SIZING from either button's press
-    // (VisualMove.cpp:282), the arrow back on its release (:264); nothing
-    // while hovering the start or the end.
     TestHost host;
     standard(host, 1);
     MoveTool tool;
@@ -1500,9 +1362,6 @@ TEST(VisualMovePointer, ADragShowsTheFourWayShapeUntilTheRelease)
 
 TEST(VisualMovePointer, TwoPointsShowTheFourWayShapeFromTheSecondPoint)
 {
-    // "Set movement using 2 points" (VisualMove.cpp:181-228): the first
-    // point's click sets nothing; the second point's, and a drag of either,
-    // SIZING; a click elsewhere nothing; the release the arrow (:167).
     TestHost host;
     standard(host, 1);
     MoveTool tool;
@@ -1528,12 +1387,12 @@ TEST(VisualMovePointer, TwoPointsShowTheFourWayShapeFromTheSecondPoint)
 
 TEST(VisualPointerShape, TheRectanglesHitCodesAsLegacysExpression)
 {
-    EXPECT_EQ(edgePointerShape(1), PointerShape::SizeWE);  // LEFT
-    EXPECT_EQ(edgePointerShape(2), PointerShape::SizeWE);  // RIGHT
-    EXPECT_EQ(edgePointerShape(3), PointerShape::SizeWE);  // both (a narrow rectangle)
-    EXPECT_EQ(edgePointerShape(4), PointerShape::SizeNS);  // TOP
-    EXPECT_EQ(edgePointerShape(8), PointerShape::SizeNS);  // BOTTOM
-    EXPECT_EQ(edgePointerShape(12), PointerShape::SizeNS); // both
+    EXPECT_EQ(edgePointerShape(1), PointerShape::SizeWE);
+    EXPECT_EQ(edgePointerShape(2), PointerShape::SizeWE);
+    EXPECT_EQ(edgePointerShape(3), PointerShape::SizeWE);
+    EXPECT_EQ(edgePointerShape(4), PointerShape::SizeNS);
+    EXPECT_EQ(edgePointerShape(8), PointerShape::SizeNS);
+    EXPECT_EQ(edgePointerShape(12), PointerShape::SizeNS);
     EXPECT_EQ(edgePointerShape(5), PointerShape::SizeNWSE);
     EXPECT_EQ(edgePointerShape(10), PointerShape::SizeNWSE);
     EXPECT_EQ(edgePointerShape(6), PointerShape::SizeNESW);

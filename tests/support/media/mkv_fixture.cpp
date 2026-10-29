@@ -1,20 +1,4 @@
-// Writes Matroska files for MKV extraction (Y9) with a small EBML writer of
-// its own, so the tracks, codec IDs, codec-private data, block order, block
-// bytes and attachment names are exactly what the cases need (FFmpeg's muxer
-// would rewrite several of them: it has no S_TEXT/SSA and checks names).
-//
-//   hikari_mkv_fixture <out> <kind>
-//   kinds: subs    six subtitle tracks (ASS, SSA, SubRip, plain text, PGS,
-//                  WebVTT) with the packets in mkvFixtureCases() order, and
-//                  nine attachments (fonts under the four MIME types, a
-//                  directory in the name, an empty name, "..", a Latin-1
-//                  name, two of one name, a picture)
-//          onesub  one SubRip track and one PGS track, no attachments
-//          nosubs  a PGS and a WebVTT track only
-//          scanline  one ASS track shaped like the start of a karaoke file
-//                  whose first line was lost (mkvfixture::scanline())
-//
-// The content is described by mkv_fixture.h, which the tests include.
+// Our own EBML writer: FFmpeg's Matroska muxer has no S_TEXT/SSA and would rewrite names.
 #include "mkv_fixture.h"
 
 #include <bit>
@@ -95,16 +79,13 @@ Bytes blockGroup(int trackNumber, std::int64_t clusterTime, const mkvfixture::Pa
     return element(0xA0, element(0xA1, block) + uintElement(0x9B, std::uint64_t(p.duration)));
 }
 
-// One cluster per packet: its time is the packet's, so any time fits the
-// block's 16-bit relative timestamp, and the file order is the list order.
+// Each cluster is timed at its packet, so any time fits the block's 16-bit relative timestamp.
 Bytes cluster(int trackNumber, const mkvfixture::Packet &p)
 {
     return element(0x1F43B675, uintElement(0xE7, std::uint64_t(p.start)) + blockGroup(trackNumber, p.start, p));
 }
 
-// File::clusterSizes: the clusters, and Cues with one point per packet naming
-// its cluster (positions from the start of the Segment's data, which the
-// clusters begin `at`).
+// Cue positions count from the start of the Segment's data; the clusters begin at `at`.
 std::pair<Bytes, Bytes> clustersAndCues(const mkvfixture::File &file, std::uint64_t at)
 {
     std::vector<Bytes> clusters;
@@ -159,7 +140,6 @@ int write(const std::string &out, const mkvfixture::File &file)
         segment += element(0x1941A469, list);
     }
     if (!file.clusterSizes.empty()) {
-        // the Cues' size does not depend on the positions (8-byte integers)
         const std::uint64_t at = segment.size() + clustersAndCues(file, 0).first.size();
         const auto [cues, clusters] = clustersAndCues(file, at);
         segment += cues + clusters;
@@ -173,7 +153,7 @@ int write(const std::string &out, const mkvfixture::File &file)
     return f ? 0 : 1;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

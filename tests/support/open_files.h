@@ -1,9 +1,6 @@
 #pragma once
 
-// Which files a test's process and its helper processes still hold open.
-// Linux reads /proc/<pid>/fd of the process and of its descendants (the
-// media and Lua helpers); Windows opens the file with no sharing at all,
-// which any open handle refuses. Elsewhere nothing can be told.
+// Linux reads /proc/<pid>/fd of the process tree; Windows opens with no sharing, which any open handle refuses.
 
 #include <QCoreApplication>
 #include <QDir>
@@ -22,8 +19,7 @@
 
 namespace openfiles {
 
-// The files under `folder` held open, each as "<path> (process <pid>)"
-// (Linux; empty elsewhere).
+// Files under `folder` held open, as "<path> (process <pid>)"; Linux only, empty elsewhere.
 inline QStringList under(const QString &folder)
 {
     QStringList out;
@@ -54,8 +50,7 @@ inline QStringList under(const QString &folder)
     return out;
 }
 
-// Whether no process of the test holds `file` open (true where that cannot
-// be told).
+// Whether no test process holds `file` open; true where that cannot be told.
 inline bool nothingHolds(const QString &file)
 {
 #ifdef _WIN32
@@ -72,4 +67,4 @@ inline bool nothingHolds(const QString &file)
 #endif
 }
 
-} // namespace openfiles
+}

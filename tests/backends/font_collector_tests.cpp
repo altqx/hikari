@@ -1,14 +1,3 @@
-// Y8: the font collector through the libass diagnostic hook (F47 obligations
-// as under I5): the collected hashes and collection faces, the archive's
-// contents, both meanings of the font count, partial output written only
-// after acknowledgment and labelled, cancellation leaving nothing
-// unlabelled, and the written fonts reimported into a clean environment.
-// On Linux the system provider is fontconfig over the generated CC0 fixtures
-// only (FONTCONFIG_FILE), so every selection is deterministic. On Windows it
-// is libass's DirectWrite provider over the installed fonts, with the
-// fixtures the Documents name installed for the current user for the length
-// of the test process (Y8W, windows_user_fonts.h); fallback comes from
-// DirectWrite's own resolver and is reported as whichever file it chose.
 #include "hikari/backends/font_collector_output.h"
 #include "hikari/backends/libass_font_service.h"
 
@@ -49,13 +38,10 @@ using hikari::backends::ZipCollectorOutput;
 namespace {
 
 #ifndef _WIN32
-// Set before fontconfig first initializes (as the I5 tests do).
+// Set before fontconfig initializes: ctest's ENVIRONMENT did not reach these tests on the Fedora runner.
 [[maybe_unused]] const bool kPrivateFontconfig = setenv("FONTCONFIG_FILE", HIKARI_FONTCONFIG_FILE, 1) == 0;
 #else
-// The fixtures the Documents below name, installed for this process's
-// tests; fallback.ttf is not, so DirectWrite's resolver picks a system font.
-// DirectWrite's collection lists legacy.ttf under its typographic family
-// (HikariProbeModern); GDI, where libass looks, under HikariProbeLegacy.
+// DirectWrite lists legacy.ttf under its typographic family (HikariProbeModern), GDI (where libass looks) under HikariProbeLegacy.
 [[maybe_unused]] ::testing::Environment *const kUserFonts =
     ::testing::AddGlobalTestEnvironment(new hikari::testing::WindowsUserFonts(
         HIKARI_FONT_FIXTURES, {L"base.ttf", L"base-bold.ttf", L"weighted.ttf", L"legacy.ttf", L"collection.ttc"},
@@ -67,8 +53,6 @@ std::string fixture(const char *name)
     return std::string(HIKARI_FONT_FIXTURES) + "/" + name;
 }
 
-// A fixture's path as the provider names it: fontconfig the configured
-// directory's, DirectWrite the installed copy's in the user's font folder.
 std::u16string installed(const char *name)
 {
 #ifdef _WIN32
@@ -78,8 +62,6 @@ std::u16string installed(const char *name)
 #endif
 }
 
-// The system provider the collector renders with: fontconfig, or libass's
-// DirectWrite provider ("directwrite (with GDI)" on the desktop).
 bool systemProvider(const std::string &provider)
 {
 #ifdef _WIN32
@@ -112,7 +94,6 @@ std::vector<std::byte> bytesOf(const std::string &s)
     return out;
 }
 
-// styles "<name>,<family>,<bold>,<italic>", events "<style>,<text>", a second apart.
 CollectorDocument document(int tab, std::initializer_list<std::string> styles, std::initializer_list<std::string> events)
 {
     std::string s = "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\nFormat: Name, "
@@ -142,7 +123,6 @@ CollectorDocument document(int tab, std::initializer_list<std::string> styles, s
     return d;
 }
 
-// The archive's entries in order, inflated; flags and method checked.
 std::vector<std::pair<std::string, QByteArray>> unzip(const QByteArray &zip)
 {
     std::vector<std::pair<std::string, QByteArray>> out;
@@ -180,8 +160,6 @@ std::shared_ptr<const std::vector<std::byte>> shared(const QByteArray &b)
     return v;
 }
 
-// Reimport in a clean environment: the Documents rendered from the written
-// fonts alone (no system provider) against the system rendering.
 bool reimportsIdentically(LibassFontService &service, const CollectorDocument &doc,
                           const std::vector<std::pair<std::string, QByteArray>> &fonts)
 {
@@ -208,11 +186,8 @@ const CollectedFile *file(const CollectorReview &r, const std::u16string &name)
     return nullptr;
 }
 
-} // namespace
+}
 
-// Zip: every variant's file as the renderer selected it, named from its
-// provider path, the TTC's face recorded, the archive complete and
-// unlabelled, and its contents alone reproduce every frame.
 TEST(FontCollectorRenderer, ZipHoldsTheSelectedBytesAndReimportsIdentically)
 {
     const auto doc = document(0, {"A,HikariProbeBase,0,0", "B,HikariProbeCollectionB,0,0", "W,HikariProbeWeighted,1,0"},
@@ -245,7 +220,7 @@ TEST(FontCollectorRenderer, ZipHoldsTheSelectedBytesAndReimportsIdentically)
     EXPECT_TRUE(result.complete);
     EXPECT_TRUE(result.written);
     EXPECT_FALSE(result.labelled);
-    EXPECT_EQ(result.foundCount, 4); // files added
+    EXPECT_EQ(result.foundCount, 4);
     const auto entries = unzip(readAll(archive));
     ASSERT_EQ(entries.size(), 4u);
     std::vector<std::string> entryNames;
@@ -257,11 +232,6 @@ TEST(FontCollectorRenderer, ZipHoldsTheSelectedBytesAndReimportsIdentically)
     EXPECT_TRUE(reimportsIdentically(service, doc, entries));
 }
 
-// A \fn value with a comma is one family (legacy ParseTags keeps the whole
-// value, SubsDialogue.cpp:1086-1158), so the renderer is asked for it whole,
-// as the Document asks: no font is named "HikariProbeBase,Bold", so it is
-// not found, though HikariProbeBase is and a Style line would have read
-// only that.
 TEST(FontCollectorRenderer, AFamilyWithACommaIsAskedForWhole)
 {
     const auto doc = document(0, {"A,HikariProbeBase,0,0"}, {"A,Plain", "A,{\\fnHikariProbeBase,Bold}Comma"});
@@ -276,8 +246,6 @@ TEST(FontCollectorRenderer, AFamilyWithACommaIsAskedForWhole)
     EXPECT_FALSE(review->complete());
 }
 
-// Check counts families; Copy counts the files it wrote. One family used
-// regular and bold is one font found and two fonts copied.
 TEST(FontCollectorRenderer, BothMeaningsOfTheFontCount)
 {
     const auto doc = document(0, {"W,HikariProbeWeighted,0,0", "A,HikariProbeBase,0,0"},
@@ -302,10 +270,6 @@ TEST(FontCollectorRenderer, BothMeaningsOfTheFontCount)
         EXPECT_EQ(sha256(readAll(dir.filePath(QStringLiteral("Czcionki/") + name))), fixtureSha(name.toUtf8().constData()));
 }
 
-// A fallback-dependent character and a missing family: the review is
-// incomplete, the fallback file is reported with its role and not
-// collected, nothing is written without acknowledgment, and with it the
-// folder carries the label.
 TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
 {
     const auto doc = document(0, {"A,HikariProbeBase,0,0", "N,NoSuchFamily,0,0"},
@@ -327,8 +291,7 @@ TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
             fallback = &f;
     ASSERT_NE(fallback, nullptr) << "the fallback file is reported with its role";
 #ifdef _WIN32
-    // DirectWrite's resolver chose an installed system font; whichever it is,
-    // it is a file with bytes, reported and not collected.
+    // DirectWrite's resolver picks some installed system font, so only what it reports is checked.
     std::fprintf(stderr, "fallback for U+4E2D: %s (%s, faces %zu)\n",
                  QString::fromStdU16String(fallback->shown).toUtf8().constData(), fallback->sha256.substr(0, 12).c_str(),
                  fallback->faces.size());
@@ -339,7 +302,6 @@ TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
 #endif
     for (const auto &f : review->files)
         EXPECT_NE(f.sha256, fallback->sha256) << "the fallback file is not collected";
-    // Without the fallback the clean reimport differs on the frame that used it.
     ASSERT_EQ(review->reimports.size(), 1u);
     EXPECT_FALSE(review->reimports[0].identical);
     const auto &warnings = review->found.at(u"HikariProbeBase").warnings;
@@ -367,7 +329,6 @@ TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
     EXPECT_TRUE(label.contains(QString::fromStdU16String(fallback->shown) + QStringLiteral(" (fallback U+4E2D), not collected")))
         << label.toStdString();
 
-    // The same review as an archive: the label is an entry of it.
     const QString archive = dir.filePath(QStringLiteral("partial.zip"));
     const auto zipReview = collector.prepare({doc}, CollectorAction::Zip);
     ASSERT_TRUE(zipReview);
@@ -381,11 +342,7 @@ TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
     EXPECT_TRUE(entries[1].second.contains("U+4E2D"));
 }
 
-// Cancelled while writing: an archive is never published (a file of that
-// name stays as it was), a folder keeps its label.
 namespace {
-// Passes each call to the real output; the user cancels once the first
-// font is written.
 class CancelAfterFirstPut final : public CollectorOutput {
 public:
     CancelAfterFirstPut(CollectorOutput &inner, std::atomic<bool> &cancel) : m_inner(inner), m_cancel(cancel) {}
@@ -406,11 +363,8 @@ private:
     CollectorOutput &m_inner;
     std::atomic<bool> &m_cancel;
 };
-} // namespace
+}
 
-// Cancelled after the first font is written: the folder keeps that font and
-// its label; the archive, one entry already added, is discarded and the
-// previous file of that name stays, with no temporary file left beside it.
 TEST(FontCollectorRenderer, CancellationMidWriteLeavesNothingUnlabelled)
 {
     const auto doc = document(0, {"W,HikariProbeWeighted,0,0", "A,HikariProbeBase,0,0"},
@@ -497,16 +451,11 @@ TEST(FontCollectorRenderer, CancellationLeavesNothingUnlabelled)
     EXPECT_EQ(QDir(folder).entryList(QDir::Files), QStringList{QString::fromUtf8(backends::kIncompleteLabel)});
     EXPECT_TRUE(readAll(QDir(folder).filePath(QString::fromUtf8(backends::kIncompleteLabel))).contains("Writing was cancelled."));
 
-    // Cancelled while the review is prepared.
     const auto none = collector.prepare({doc}, CollectorAction::Zip, &cancel);
     ASSERT_FALSE(none);
     EXPECT_EQ(none.error(), FontError::Cancelled);
 }
 
-// Y8W: the fixture files the Windows fixture places in the user's font
-// folder belong to the tests whether copied now or left by a run that never
-// reached its cleanup, and are removed even while the font cache still
-// holds them for a moment; another file of that name is never touched.
 namespace {
 
 namespace fs = std::filesystem;
@@ -523,9 +472,7 @@ std::string readFile(const fs::path &path)
     return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
 }
 
-// Keeps `path` from being removed until release(): on Windows a handle
-// without FILE_SHARE_DELETE (as the font cache holds a font), elsewhere a
-// read-only parent folder.
+// Windows: a handle without FILE_SHARE_DELETE blocks removal, as the font cache's does; elsewhere a read-only parent folder.
 class RemovalBlocker {
 public:
     explicit RemovalBlocker(fs::path path) : m_path(std::move(path))
@@ -563,7 +510,7 @@ private:
 #endif
 };
 
-} // namespace
+}
 
 TEST(FontFixtureFiles, ACopiedFixtureIsOwnedAndRemoved)
 {
@@ -590,7 +537,6 @@ TEST(FontFixtureFiles, TheFixtureLeftByAnEarlierRunIsOwnedAndRemoved)
     const fs::path folder = dir.path().toStdU16String();
     const fs::path source = fixture("base-bold.ttf");
     const fs::path target = folder / "base-bold.ttf";
-    // A run that crashed, or whose removal failed, left its copy behind.
     fs::copy_file(source, target);
 
     std::error_code ec;

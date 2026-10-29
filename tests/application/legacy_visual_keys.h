@@ -1,13 +1,5 @@
 #pragma once
 
-// VT2-arrow-nudge: a legacy probe's key press as the rewrite's. Legacy nudged
-// with A/D/W/S (Move's end point with J/L/I/K); the rewrite nudges with the
-// arrows (Move's end point with Alt+arrows), Shift a tenth. A press legacy
-// nudged with is replayed as the rewrite's press for the same nudge: legacy
-// read no Ctrl there, nor Alt unless alone, so they are dropped. Any other
-// press is replayed as written; the rewrite ignores the letters, as legacy
-// ignored them with Alt alone.
-
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_vector.h"
 
@@ -40,4 +32,4 @@ inline Key legacyKey(const std::string &k, bool shift, bool control, bool alt, F
     return key;
 }
 
-} // namespace hikari::application::visual::legacy_keys
+}
