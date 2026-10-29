@@ -21,7 +21,7 @@ private:
     WinFilePort m_port;
 };
 
-} // namespace
+}
 
 std::unique_ptr<application::FileReadPort> makeFileReader()
 {
@@ -33,4 +33,4 @@ std::unique_ptr<PlatformFilePort> makeFilePort(WriteCompletion completion)
     return std::make_unique<WinPlatformFilePort>(std::move(completion));
 }
 
-} // namespace hikari::backends
+}

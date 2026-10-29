@@ -24,9 +24,7 @@ QString fileNameOf(const std::string &path)
     return QFileInfo(QString::fromStdString(path)).fileName();
 }
 
-// The keys as Qt writes them ("Ctrl+Alt+K"): legacy recorded modifiers in
-// its own order ("Alt-Ctrl-K"), and the shell compares keys as text (the
-// Global bindings taking a macro's keys). Keys Qt cannot read stay as given.
+// Legacy files write modifiers as "Alt-Ctrl-K"; keys Qt cannot read stay as given.
 std::string canonicalKeys(const std::string &keys)
 {
     const QKeySequence seq = QKeySequence::fromString(qs(keys), QKeySequence::PortableText);
@@ -53,7 +51,7 @@ QString problemText(application::AliasProblem problem)
     return QCoreApplication::translate("HikariSub.Automation", "Not a macro shortcut");
 }
 
-} // namespace
+}
 
 AutomationHotkeysController::AutomationHotkeysController(AutomationShell &automation, ui::SettingsStore &settings,
                                                          QObject *parent)
@@ -61,15 +59,12 @@ AutomationHotkeysController::AutomationHotkeysController(AutomationShell &automa
 {
     load();
     m_installed = m_committed;
-    // Scripts loading or reloading change what resolves (the manager's single
-    // observer belongs to the manager tool, which announces each change).
     connect(m_automation.managerController(), &ui::AutomationManagerController::changed, this, [this] {
         emit bindingsChanged();
         emit shortcutsChanged();
     });
 }
 
-// One "legacy name\tkeys\tmacro\tsha256" row per binding.
 void AutomationHotkeysController::load()
 {
     for (const QString &row : m_settings.list(application::kAutomationHotkeysSetting.data())) {
@@ -166,8 +161,6 @@ std::vector<std::string> AutomationHotkeysController::unboundMacros() const
     std::set<std::string> seen;
     for (const auto &m : m_automation.manager().registry().macros()) {
         const std::string name = application::legacyNameOf(fileNameOf(m.scriptPath).toStdString(), m.ordinal);
-        // A name that several loaded scripts share is not offered for a
-        // binding: it would resolve to none of them.
         if (!m_committed.contains(name) && seen.insert(name).second && recordingProblem(qs(name)).isEmpty())
             out.push_back(name);
     }
@@ -181,7 +174,7 @@ QVariantMap AutomationHotkeysController::describe(const std::string &legacyName)
     if (it != m_committed.end())
         binding = it->second;
     else
-        binding.legacyName = legacyName; // an unbound macro: by its alias alone
+        binding.legacyName = legacyName;
     const auto r = resolution(binding);
     if (r.identity)
         return {{QStringLiteral("script"), scriptLabel(r.identity->scriptPath)},
@@ -202,8 +195,6 @@ std::map<std::string, std::string> AutomationHotkeysController::committedKeys() 
     return out;
 }
 
-// The registration a binding made now is for: the loaded macro its legacy
-// name names (what it had is kept while no loaded macro has it).
 void AutomationHotkeysController::recordIdentity(application::MacroBinding &binding) const
 {
     for (const auto &m : m_automation.manager().registry().macros())
@@ -222,11 +213,9 @@ void AutomationHotkeysController::replaceCommitted(const std::map<std::string, s
         const auto kept = m_committed.find(name);
         application::MacroBinding b;
         if (kept != m_committed.end())
-            b = kept->second; // the registration it was made for
+            b = kept->second;
         else
             b.legacyName = name;
-        // New keys are a binding made now, for the macro loaded now: one left
-        // missing by a changed script resolves again once remapped.
         if (kept == m_committed.end() || kept->second.keys != k)
             recordIdentity(b);
         b.keys = k;
@@ -275,7 +264,7 @@ void AutomationHotkeysController::commitChange()
 {
     save();
     emit bindingsChanged();
-    emit committed(); // the shortcut editor saves and installs the whole map
+    emit committed();
 }
 
 void AutomationHotkeysController::clearKeys(const QString &legacyName)
@@ -291,7 +280,6 @@ bool AutomationHotkeysController::run(const QString &legacyName)
     if (it == m_committed.end())
         return false;
     const auto target = resolve(it->second);
-    // HikariSubFrame::OnRunScript: validated first, failure said (S4).
     return target && m_automation.run(target->first, target->second, AutomationShell::RunOrigin::Hotkey);
 }
 
@@ -306,14 +294,14 @@ QVariantMap AutomationHotkeysController::importLegacy(const QString &path)
     QStringList skipped;
     for (auto &b : application::parseLegacyScriptHotkeys(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())))) {
         if (m_committed.contains(b.legacyName)) {
-            ++kept; // the current binding is kept
+            ++kept;
             continue;
         }
         b.keys = canonicalKeys(b.keys);
         bool taken = false;
         for (const auto &[name, existing] : m_committed)
             taken = taken || existing.keys == b.keys;
-        if (taken) { // the keys already belong to another macro
+        if (taken) {
             skipped << QStringLiteral("%1 (%2)").arg(QString::fromStdString(b.legacyName), QString::fromStdString(b.keys));
             continue;
         }
@@ -339,4 +327,4 @@ QString AutomationHotkeysController::keysOf(int key, int modifiers) const
     return QKeySequence(QKeyCombination(mods, Qt::Key(key))).toString(QKeySequence::PortableText);
 }
 
-} // namespace hikari::app
+}

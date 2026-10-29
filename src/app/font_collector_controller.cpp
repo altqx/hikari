@@ -40,7 +40,6 @@ QString qs(const std::string &s)
     return QString::fromStdString(s);
 }
 
-// HikariNormalizePath (config.h:38-45): outside Windows, '\' is '/'.
 QString normalizePath(QString path)
 {
 #ifndef _WIN32
@@ -58,9 +57,6 @@ QChar separator()
 #endif
 }
 
-// HikariPathDir (wxFileName::GetPath with the volume): the directory part
-// in native form, without a trailing separator; with `withSeparator`,
-// followed by one.
 QString pathDir(const QString &path, bool withSeparator = false)
 {
     const QString p = QDir::toNativeSeparators(normalizePath(path));
@@ -71,7 +67,6 @@ QString pathDir(const QString &path, bool withSeparator = false)
     return dir;
 }
 
-// HikariPathName: the file name, or the path when it has none.
 QString pathName(const QString &path)
 {
     const QString p = normalizePath(path);
@@ -80,7 +75,6 @@ QString pathName(const QString &path)
     return name.isEmpty() ? p : name;
 }
 
-// HikariPathJoin (wxFileName::GetFullPath: native form).
 QString pathJoin(const QString &dir, const QString &name)
 {
     QString d = QDir::toNativeSeparators(normalizePath(dir));
@@ -89,14 +83,12 @@ QString pathJoin(const QString &dir, const QString &name)
     return d + name;
 }
 
-// wxGETTEXT_IN_CONTEXT_PLURAL("found or copied", "%d font", "%d fonts", n).
 QString fonts(int n)
 {
     return n == 1 ? QCoreApplication::translate("HikariSub.Fonts", "%1 font").arg(n)
                   : QCoreApplication::translate("HikariSub.Fonts", "%1 fonts").arg(n);
 }
 
-// SubsTime::GetFormatted(SRT): "%02i:%02i:%02i,%03i".
 QString srtTime(qint64 ms)
 {
     return QString::asprintf("%02d:%02d:%02d,%03d", int(ms / 3600000), int(ms / 60000 % 60), int(ms / 1000 % 60),
@@ -116,15 +108,15 @@ QString noteText(const Note &n)
     using K = Note::Kind;
     const QString fn = qs(n.family), a = qs(n.a), b = qs(n.b);
     switch (n.kind) {
-    case K::FoundFile: // AppendInfo (FontCollector.cpp:1189)
+    case K::FoundFile:
         return QCoreApplication::translate("HikariSub.Fonts", "Found \"%1\" font file.").arg(a);
     case K::RendererFile:
         return QCoreApplication::translate("HikariSub.Fonts", "The renderer also used \"%1\" (%2); it is not collected.").arg(a, b);
-    case K::Copied: // SaveFont (902)
+    case K::Copied:
         return QCoreApplication::translate("HikariSub.Fonts", "Copied font \"%1\".").arg(a);
-    case K::AddedToArchive: // SaveFont (887)
+    case K::AddedToArchive:
         return QCoreApplication::translate("HikariSub.Fonts", "Added font \"%1\" to the archive.").arg(a);
-    case K::UnusedStyle: // CheckPathAndGlyphs (1096), CheckOrCopyFonts (835)
+    case K::UnusedStyle:
         return QCoreApplication::translate("HikariSub.Fonts", "Font \"%1\" belongs to a style\nthat is not used.").arg(fn) +
                (n.flag ? QCoreApplication::translate("HikariSub.Fonts", "\nWill not be copied.") : QString());
     case K::MissingNormal:
@@ -155,7 +147,6 @@ QString noteText(const Note &n)
     return {};
 }
 
-// The other half of a Type 1 pair, read from the disk (FC-type1-pair).
 std::shared_ptr<const std::vector<std::byte>> readFontFile(const std::u16string &path)
 {
     QFile f(QString::fromUtf16(path.data(), qsizetype(path.size())));
@@ -167,7 +158,7 @@ std::shared_ptr<const std::vector<std::byte>> readFontFile(const std::u16string 
     return out;
 }
 
-} // namespace
+}
 
 FontCollectorController::FontCollectorController(ui::SettingsStore &settings, Hooks hooks, QObject *parent)
     : QObject(parent), m_settings(settings), m_hooks(std::move(hooks)),
@@ -234,7 +225,6 @@ void FontCollectorController::setStage(Stage stage)
 
 void FontCollectorController::send(const QString &text, int kind)
 {
-    // SendMessageD: AppendTextWithStyle in its colour.
     if (text.isEmpty())
         return;
     m_log.push_back({text, kind});
@@ -253,8 +243,6 @@ void FontCollectorController::open()
     m_action = std::clamp(m_settings.integer("fontCollector.action"), 0, 2);
     m_directory = m_settings.text("fontCollector.directory");
     m_useSubsDirectory = m_settings.boolean("fontCollector.useSubsDirectory");
-    // FontCollectorDialog (FontCollector.cpp:181-183): enabled for an MKV
-    // video whatever the Options choice; checked from the setting.
     m_fromMkv = m_settings.boolean("fontCollector.fromMkv");
     m_fromMkvEnabled = application::fontsFromMkvEnabled(currentVideo().toStdU16String());
     clearLog();
@@ -269,22 +257,17 @@ void FontCollectorController::open()
 
 void FontCollectorController::changeOptions(int action, bool useSubsDirectory)
 {
-    // OnChangeOpt (FontCollector.cpp:543-553).
     m_action = std::clamp(action, 0, 2);
     m_useSubsDirectory = useSubsDirectory;
     m_settings.set("fontCollector.action", m_action);
     m_settings.set("fontCollector.useSubsDirectory", m_useSubsDirectory);
     m_settings.sync();
-    // fromMKV->Enable(opts->GetSelection() != 0 && VideoPath ends with ".mkv").
     m_fromMkvEnabled = m_action != 0 && application::fontsFromMkvEnabled(currentVideo().toStdU16String());
     emit settingsChanged();
 }
 
 void FontCollectorController::setFromMkv(bool on)
 {
-    // Legacy's checkbox had no handler, so FONT_COLLECTOR_FROM_MKV was read
-    // and never written (FontCollector.cpp:181-183); it is kept as the
-    // other options are (Y9-from-mkv-saved).
     if (m_fromMkv == on)
         return;
     m_fromMkv = on;
@@ -302,9 +285,6 @@ QString FontCollectorController::currentVideo() const
 
 QVariantMap FontCollectorController::chooserStart(const QString &path) const
 {
-    // OnButtonPath (FontCollector.cpp:418-429): the folder chooser starts in
-    // the path; the archive chooser in its folder with its name when it
-    // ends with "zip".
     if (m_action == 1)
         return {{QStringLiteral("folder"), path}, {QStringLiteral("name"), QString()}};
     const bool zip = path.endsWith(QLatin1String("zip"));
@@ -313,9 +293,6 @@ QVariantMap FontCollectorController::chooserStart(const QString &path) const
 
 void FontCollectorController::chooseDirectory(const QString &path)
 {
-    // Options.SetString(FONT_COLLECTOR_DIRECTORY, destdir) and SaveOptions.
-    // Legacy also stored a cancelled chooser's empty answer
-    // (FontCollector.cpp:418-433); the previous path stays (FC-chooser-cancel).
     if (path.isEmpty())
         return;
     m_directory = path;
@@ -328,7 +305,6 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
 {
     if (m_stage == Working)
         return {};
-    // OnButtonStart (FontCollector.cpp:435-541).
     clearLog();
     emit logChanged();
     m_review.reset();
@@ -349,8 +325,6 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     m_runAction = CollectorAction(m_action);
     m_pendingArchive.clear();
     m_removeArchive.clear();
-    // operation = fromMKV checked and enabled ? COPY_MKV_FONTS : ...
-    // (FontCollector.cpp:440-445); ON_ALL_TABS for "Start on tabs".
     m_runMkv = m_fromMkv && m_fromMkvEnabled;
     m_runAllTabs = allTabs;
     m_runZip = false;
@@ -359,10 +333,6 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
         if (allTabs || i == current)
             m_mkvVideos.push_back(tabs[std::size_t(i)].video);
     if (m_action == 0) {
-        // StartCollect at once. Legacy's MKV run here wrote into the window's
-        // last copypath ("Cannot create folder." without one, FontCollector.cpp:
-        // 440-447); it lists the MKV's fonts and writes nothing
-        // (Y9-mkv-check-only).
         if (m_runMkv)
             runMkvPrepare();
         else
@@ -380,11 +350,6 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     const QString subsPath = current >= 0 && current < int(tabs.size()) ? tabs[std::size_t(current)].path : QString();
     if (path.isEmpty() && !m_useSubsDirectory)
         return refuse(QCoreApplication::translate("HikariSub.Fonts", "Select the folder where you want to copy fonts"));
-    // Legacy's subsfromMkv was the checkbox's value, enabled or not
-    // (FontCollector.cpp:453-467); a disabled box could be checked there only
-    // in the check mode, which never reaches this. With the value kept
-    // (Y9-from-mkv-saved) a checked box is disabled for a video that is not
-    // an MKV file, and then demuxes nothing: the run's own MKV choice.
     if (!m_runMkv && m_useSubsDirectory && subsPath.isEmpty())
         return refuse(QCoreApplication::translate("HikariSub.Fonts", "No subtitles loaded. Load subtitles or deselect this option."));
     const QString pathValue = normalizePath(path);
@@ -393,12 +358,8 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
         return refuse(QCoreApplication::translate("HikariSub.Fonts", "Choose a name for the archive"));
     QString copypath;
     if (m_useSubsDirectory) {
-        // sourcePath: the video when demuxing fonts from the MKV (480).
         const QString sourcePath = m_runMkv ? currentVideo() : subsPath;
         const QString rest = pathName(sourcePath);
-        // Legacy always wrote a Polish "Czcionki" folder (FontCollector.cpp:
-        // 482); the folder is named in the interface language
-        // (FC-czcionki). An existing Czcionki folder is left as it is.
         const QString fontDir =
             pathJoin(pathDir(sourcePath), QCoreApplication::translate("HikariSub.Fonts",
                                                                       "Fonts", "the folder the font collector writes beside the subtitles"));
@@ -407,7 +368,6 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     } else {
         copypath = pathValue;
 #ifdef _WIN32
-        // wxFileName::GetVolume: a drive letter.
         const bool valid = QRegularExpression(QStringLiteral("^[A-Za-z]:")).match(copypath).hasMatch();
 #else
         const bool valid = !copypath.isEmpty();
@@ -444,12 +404,6 @@ bool FontCollectorController::confirmReplace(bool remove)
     if (m_pendingArchive.isEmpty())
         return false;
     const QString archive = std::exchange(m_pendingArchive, QString());
-    // Legacy removes the archive on Yes (wxRemoveFile, FontCollector.cpp:514-518)
-    // and the run that writes the new one follows at once. Here a review
-    // stands between them and nothing is written until Apply (routing #60,
-    // L58-staged-replacement), so Yes is remembered and the archive removed
-    // when Apply starts writing; a review closed or refused keeps it. No
-    // keeps it, and the new archive replaces it when written.
     if (remove)
         m_removeArchive = archive;
     if (m_runMkv)
@@ -477,7 +431,6 @@ void FontCollectorController::runPrepare()
 
 void FontCollectorController::doLog(const Block &block)
 {
-    // FontLogContent::DoLog (FontCollector.cpp:95-132).
     QString info;
     switch (block.header) {
     case Block::Header::Found:
@@ -542,9 +495,6 @@ void FontCollectorController::logBlocks(const std::map<std::u16string, Block> &f
 
 void FontCollectorController::logRenderer(const CollectorReview &review)
 {
-    // The renderer's verification (fonts.md): what it did not find, what a
-    // font of another name or a fallback drew, and whether the collected
-    // fonts alone reproduce every frame.
     QString text;
     if (!review.provider.empty())
         text += QCoreApplication::translate("HikariSub.Fonts", "Checked by the subtitle renderer (%1).\n").arg(qs(review.provider));
@@ -585,7 +535,6 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
     for (const auto &r : review.reimports)
         reproduced = reproduced && r.identical;
     send(text, kNormal);
-    // W2: a libass agreement does not certify another renderer's output.
     if (!m_displayRenderer.isEmpty() && m_displayRenderer != QLatin1String("libass"))
         send(QCoreApplication::translate("HikariSub.Fonts",
                                          "The video shows the subtitles through %1, whose output this check does not verify.\n")
@@ -598,9 +547,6 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
 
 void FontCollectorController::logSummary(const CollectorReview &review, const CollectorResult &result)
 {
-    // CheckOrCopyFonts (FontCollector.cpp:844-873). Output the renderer does
-    // not agree with, or that was not all written, is never reported as
-    // success (fonts.md; partial-output rule).
     const bool checkFonts = review.action == CollectorAction::Check;
     const QString verb = checkFonts ? QCoreApplication::translate("HikariSub.Fonts", "found")
                                     : QCoreApplication::translate("HikariSub.Fonts", "copied");
@@ -634,7 +580,6 @@ void FontCollectorController::logSummary(const CollectorReview &review, const Co
 
 void FontCollectorController::logFinished()
 {
-    // FontCollectorThread::Entry (FontCollector.cpp:1335-1336).
     send(QStringLiteral("\n") + QCoreApplication::translate("HikariSub.Fonts", "Finished in %1ms").arg(srtTime(m_elapsed)), kNormal);
 }
 
@@ -660,7 +605,7 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
                                          "Cannot retrieve the font file sizes and names;\n"
                                          "copying will be canceled.\n"), kWarning);
         logFinished();
-        m_canSaveFolder = true; // EVT_ENABLE_OPEN_FOLDER after any copy run
+        m_canSaveFolder = true;
         m_review.reset();
         emit logChanged();
         setStage(Done);
@@ -681,7 +626,6 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
         setStage(Done);
         return;
     }
-    // The staged review: what Apply would write, and where.
     const int files = int(m_review->files.size());
     QString ready = QStringLiteral("\n") +
                     (m_runAction == CollectorAction::Zip
@@ -707,8 +651,6 @@ void FontCollectorController::apply(bool acknowledged)
         return;
     if (!m_review->complete() && !acknowledged)
         return;
-    // The Yes to "The zip file already exists, delete it?": legacy's
-    // wxRemoveFile, and when it fails nothing runs (FontCollector.cpp:515-518).
     if (!m_removeArchive.isEmpty() && QFileInfo::exists(m_removeArchive) && !QFile::remove(m_removeArchive))
         return;
     m_removeArchive.clear();
@@ -735,7 +677,7 @@ void FontCollectorController::applied(CollectorResult result)
 {
     join();
     m_elapsed += m_clock.elapsed();
-    if (!m_review) { // not expected: close() keeps the review while a job runs
+    if (!m_review) {
         setStage(Done);
         return;
     }
@@ -748,7 +690,6 @@ void FontCollectorController::applied(CollectorResult result)
                  .arg(srtTime(review.retrieveMs)),
              kNormal);
     if (result.pathNotAvailable) {
-        // MakeDirectory and CheckOrCopyFonts (FontCollector.cpp:1005, 822).
         if (result.cannotCreateFolder)
             send(QCoreApplication::translate("HikariSub.Fonts", "Cannot create folder."), kWarning);
         send(QCoreApplication::translate("HikariSub.Fonts", "Path is not available"), kWarning);
@@ -763,11 +704,8 @@ void FontCollectorController::applied(CollectorResult result)
     setStage(Done);
 }
 
-// --- Y9: COPY_MKV_FONTS ---------------------------------------------------
-
 namespace {
 
-// MakeDirectory with an empty copypath: wxDir::Make("") fails.
 class NoFolderOutput final : public application::CollectorOutput {
 public:
     bool open() override { return false; }
@@ -779,7 +717,7 @@ public:
     void discard() override {}
 };
 
-} // namespace
+}
 
 void FontCollectorController::runMkvPrepare()
 {
@@ -794,7 +732,6 @@ void FontCollectorController::runMkvPrepare()
 
 void FontCollectorController::mkvNext(std::uint64_t run)
 {
-    // CopyMKVFontsFromTab for each tab in order (FontCollector.cpp:933-950).
     if (run != m_mkvRun)
         return;
     if (m_cancel)
@@ -818,7 +755,7 @@ void FontCollectorController::mkvNext(std::uint64_t run)
         if (!read && read.error().failure == application::MatroskaFailure::Cancelled) {
             m_cancel = true;
         } else if (!read) {
-            tab.status = Status::CannotOpen; // Demux::Open failed (or the helper was lost)
+            tab.status = Status::CannotOpen;
         } else {
             tab.fonts = application::matroskaFonts(*read);
             tab.status = tab.fonts.empty() ? Status::NoFonts : Status::Fonts;
@@ -833,7 +770,7 @@ void FontCollectorController::logMkvTab(std::size_t index)
 {
     using Status = application::MatroskaFontTab::Status;
     const auto &tab = m_mkvTabs[index];
-    if (m_runAllTabs) // CopyMKVFonts with ON_ALL_TABS (FontCollector.cpp:921)
+    if (m_runAllTabs)
         send(QCoreApplication::translate("HikariSub.Fonts", "Video: %1\n\n").arg(qs(tab.video)), kNormal);
     switch (tab.status) {
     case Status::NotMkv:
@@ -862,7 +799,6 @@ void FontCollectorController::mkvPrepared(bool cancelled)
         setStage(Done);
         return;
     }
-    // The staged review: each tab's outcome and the fonts Apply would write.
     int count = 0;
     for (std::size_t i = 0; i < m_mkvTabs.size(); ++i) {
         logMkvTab(i);
@@ -872,7 +808,6 @@ void FontCollectorController::mkvPrepared(bool cancelled)
         }
     }
     if (m_runAction == CollectorAction::Check) {
-        // Y9-mkv-check-only: the list is the result; there is no review.
         m_mkvTabs.clear();
         logFinished();
         emit logChanged();
@@ -880,7 +815,6 @@ void FontCollectorController::mkvPrepared(bool cancelled)
         return;
     }
     if (count == 0) {
-        // Nothing to write: the run ends as legacy's did, with "Save folder".
         m_mkvTabs.clear();
         logFinished();
         m_canSaveFolder = true;
@@ -911,8 +845,6 @@ void FontCollectorController::mkvApply()
     const QString path = m_copyPath;
     const bool zip = m_runZip;
     m_worker = std::thread([this, tabs, path, zip] {
-        // MakeDirectory(operation & AS_ZIP) and SaveFont: the archive, or the
-        // folder SaveFont writes into (HikariPathDir(copypath)).
         std::unique_ptr<application::CollectorOutput> output;
         if (zip)
             output = std::make_unique<backends::ZipCollectorOutput>(path);
@@ -934,7 +866,6 @@ void FontCollectorController::mkvApplied(std::vector<application::MatroskaFontsS
     join();
     m_elapsed += m_clock.elapsed();
     clearLog();
-    // CopyMKVFontsFromTab's messages (FontCollector.cpp:953-981).
     for (std::size_t i = 0; i < m_mkvTabs.size() && i < saved.size(); ++i) {
         logMkvTab(i);
         const auto &tab = m_mkvTabs[i];
@@ -971,7 +902,7 @@ void FontCollectorController::mkvApplied(std::vector<application::MatroskaFontsS
     (void)cancelled;
     m_mkvTabs.clear();
     logFinished();
-    m_canSaveFolder = true; // EVT_ENABLE_OPEN_FOLDER after a COPY_MKV_FONTS run
+    m_canSaveFolder = true;
     emit logChanged();
     setStage(Done);
 }
@@ -980,19 +911,17 @@ void FontCollectorController::cancel()
 {
     m_cancel = true;
     if (m_runMkv && m_stage == Working && m_matroska)
-        m_matroska->cancel(); // the attachments being read
+        m_matroska->cancel();
 }
 
 void FontCollectorController::close()
 {
     cancel();
-    // A job that outlasts the wait ends cancelled later; its result (applied)
-    // still reads the review and drops it then.
     if (m_stage == Working && !waitIdle(m_closeWaitMs))
         return;
     m_review.reset();
     m_mkvTabs.clear();
-    m_removeArchive.clear(); // the review's Yes goes with it: the archive stays
+    m_removeArchive.clear();
     if (m_stage == Review)
         setStage(Options);
 }
@@ -1006,11 +935,9 @@ void FontCollectorController::saveFolder()
         return;
     }
 #ifdef _WIN32
-    // SHOpenFolderAndSelectItems on the path.
     backends::desktop::startDetached(QStringLiteral("explorer.exe"),
                                      {QStringLiteral("/select,") + QDir::toNativeSeparators(m_copyPath)});
 #else
-    // SelectInFolder outside Windows opens the path's folder.
     QString target = pathDir(m_copyPath);
     if (target.isEmpty())
         target = m_copyPath;
@@ -1020,7 +947,6 @@ void FontCollectorController::saveFolder()
 
 void FontCollectorController::logDoubleClicked(int position)
 {
-    // OnConsoleDoubleClick and ParseDoubleClickResults (FontCollector.cpp:269-389).
     const Area *hit = nullptr;
     bool isStyle = false;
     for (const auto &area : m_areas) {
@@ -1094,4 +1020,4 @@ void FontCollectorController::logDoubleClicked(int position)
     }
 }
 
-} // namespace hikari::app
+}

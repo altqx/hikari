@@ -95,7 +95,6 @@ void LuaScriptHost::startHelper()
             return;
         }
         if (was == State::Ready || was == State::Running) {
-            // Its Lua state is gone; nothing reruns on its own.
             m_state = State::Unavailable;
             m_lastError = QStringLiteral("the script's helper process ended; restart to load it again");
             emit unavailable(m_lastError);
@@ -111,7 +110,6 @@ void LuaScriptHost::sendLoad()
         .str(m_scriptPath.toStdString())
         .str(m_sharedInclude.toStdString())
         .i32(m_traceLevel);
-    // The script's top level may ask for host services while it loads.
     auto id = std::make_shared<std::uint64_t>(0);
     const auto sent = m_host->request(0, w.take(), [this, id](std::expected<Event, HostError> e) {
         if (e && e->kind == Kind::Service && *id == m_loadRequest) {
@@ -119,11 +117,11 @@ void LuaScriptHost::sendLoad()
             if (static_cast<lua::Service>(r.i32()) == lua::Service::Host && r.ok())
                 handleHostService(*id, *e);
             else
-                m_host->answer(*id, e->call, Outcome::Unsupported); // no dialogs at load
+                m_host->answer(*id, e->call, Outcome::Unsupported);
             return;
         }
         if (!e || e->kind != Kind::Terminal)
-            return; // loss is reported through HelperHost::lost
+            return;
         m_loadRequest = 0;
         m_pendingServices.clear();
         if (e->outcome == Outcome::Ok) {
@@ -181,7 +179,7 @@ bool LuaScriptHost::send(lua::Command command, int macroIndex, const application
     const auto body = lua::encodeSnapshot(snapshot);
     auto payload = w.take();
     payload.insert(payload.end(), body.begin(), body.end());
-    // Each handler belongs to one request; it learns its ID once request() returns.
+    // MUST KILL: the handler's request id is filled in only after request() returns.
     auto id = std::make_shared<std::uint64_t>(0);
     const auto sent = m_host->request(m_nextRun++, std::move(payload), [this, id](std::expected<Event, HostError> e) {
         onEvent(*id, std::move(e));
@@ -224,7 +222,6 @@ void LuaScriptHost::terminate()
         disconnect(m_host.get(), nullptr, this, nullptr);
         m_host->stop();
     }
-    // The script's state is gone; only an explicit restart brings it back.
     m_state = State::Unavailable;
     m_lastError = QStringLiteral("the script's helper was stopped; restart to load it again");
     emit unavailable(m_lastError);
@@ -233,7 +230,7 @@ void LuaScriptHost::terminate()
 void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostError> event)
 {
     if (!event)
-        return; // HelperLost: reported through HelperHost::lost
+        return;
     if (request != m_runRequest || m_state != State::Running)
         return;
     switch (event->kind) {
@@ -281,7 +278,6 @@ void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostErro
         m_dialogOpen = true;
         QPointer<LuaScriptHost> self(this);
         m_dialogHandler(*dialog, [self, session, request, call](application::DialogResult result) {
-            // Resolve once, and only for the run and helper that asked.
             if (!self || !self->m_host || self->m_host->session() != session || self->m_runRequest != request ||
                 !self->m_dialogOpen)
                 return;
@@ -296,11 +292,11 @@ void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostErro
                              : event->outcome == Outcome::Cancelled ? RunOutcome::Cancelled
                                                                     : RunOutcome::Failed;
         if (outcome == RunOutcome::Ok && m_cancelRequested)
-            outcome = RunOutcome::Cancelled; // the latch wins over a late success
+            outcome = RunOutcome::Cancelled;
         if (outcome == RunOutcome::Ok) {
             m_lastResult = lua::decodeMacroResult(event->payload);
             if (!m_lastResult)
-                outcome = RunOutcome::Failed; // a malformed result applies nothing
+                outcome = RunOutcome::Failed;
             else if (!m_lastResult->valid)
                 return endRun(RunOutcome::NotValid, QString::fromStdString(m_lastResult->validationError));
         }
@@ -321,7 +317,7 @@ void LuaScriptHost::handleHostService(std::uint64_t request, const Event &event)
         return;
     }
     host->script = m_scriptPath.toStdString();
-    host->run = request == m_loadRequest ? 0 : request; // 0: the script's top level while loading
+    host->run = request == m_loadRequest ? 0 : request;
     if (!m_serviceHandler) {
         m_host->answer(request, call, Outcome::Ok, lua::encodeHostReply(application::HostServiceReply::unavailable()));
         return;
@@ -330,7 +326,6 @@ void LuaScriptHost::handleHostService(std::uint64_t request, const Event &event)
     QPointer<LuaScriptHost> self(this);
     const std::uint64_t session = m_host->session();
     m_serviceHandler(*host, [self, session, request, call](application::HostServiceReply reply) {
-        // Resolve once, and only for the request and helper that asked.
         if (!self || !self->m_host || self->m_host->session() != session ||
             (request != self->m_runRequest && request != self->m_loadRequest) || !self->m_pendingServices.erase(call))
             return;
@@ -357,4 +352,4 @@ void LuaScriptHost::endRun(RunOutcome outcome, const QString &message)
     emit finished(outcome, message);
 }
 
-} // namespace hikari::backends
+}

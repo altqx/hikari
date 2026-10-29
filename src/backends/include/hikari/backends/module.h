@@ -6,4 +6,4 @@ namespace hikari::backends {
 
 std::string_view moduleName() noexcept;
 
-} // namespace hikari::backends
+}

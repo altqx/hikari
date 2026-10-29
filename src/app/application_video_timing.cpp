@@ -1,8 +1,3 @@
-// V6: timing and selecting Lines from the video, and the video following the
-// active Line (legacy at 20d647c4; the rules are in
-// hikari/application/video_timing.h, this file feeds them the shell's state
-// and carries out what they return).
-
 #include "hikari/app/application.h"
 
 #include <memory>
@@ -26,12 +21,10 @@ int msOf(core::DocumentTime t)
     return static_cast<int>(t.microseconds() / 1000);
 }
 
-} // namespace
+}
 
 application::VideoState Application::videoState() const
 {
-    // Legacy PlaybackState: None until a video is open, Paused once it is,
-    // Stopped after Stop while playing.
     const auto &video = m_video->session();
     if (video.state() != VideoSession::State::Ready)
         return application::VideoState::None;
@@ -40,8 +33,6 @@ application::VideoState Application::videoState() const
     return video.stopped() ? application::VideoState::Stopped : application::VideoState::Paused;
 }
 
-// The edit box's Line (legacy edit->line: the active Line with its pending
-// draft) and the next shown Line's start (GetKeyFromPosition(currentLine, 1)).
 std::optional<application::FollowedLine> Application::followedLine() const
 {
     auto *session = targetSession();
@@ -50,7 +41,6 @@ std::optional<application::FollowedLine> Application::followedLine() const
     return followedLine(*session->selection().active);
 }
 
-// The same for any Line (the one an edit was committed on leaving).
 std::optional<application::FollowedLine> Application::followedLine(core::LineId id) const
 {
     auto *session = targetSession();
@@ -97,7 +87,7 @@ void Application::applyVideoFollow(const application::VideoFollow &follow)
     if (follow.audioUpdate && m_audio)
         m_audio->followLine(*follow.audioUpdate);
     if (follow.playAudio && m_audio) {
-        refreshAudio(); // the box shows the new Line before it plays its selection
+        refreshAudio();
         m_audio->playSelection();
     }
 }
@@ -115,11 +105,7 @@ void Application::followShownLine(bool rowChanged, LineChangeOrigin origin)
 
 void Application::followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left)
 {
-    // An edit committed because the active Line changed. EditBox::SetLine
-    // sends the old Line first (EditBox.cpp:383-384), so ShowEditOnVideo
-    // follows the edited Line before the new one is shown. Enter is the
-    // other way round: SubsGrid::ChangeLine runs NextLine before SetModified
-    // (SubsGridBase.cpp:150-154), so ShowEditOnVideo follows the new Line.
+    // MUST KILL: the Line an edit left is followed before the new one, except on Enter.
     const bool nextLine = m_lineChangeOrigin && !m_lineChangeOrigin->gridClick && m_lineChangeOrigin->autoPlay;
     if (rowChanged && edited && left && !nextLine) {
         if (const auto line = followedLine(*left))
@@ -137,7 +123,6 @@ void Application::followActiveLine(bool rowChanged, bool edited, std::optional<c
 
 void Application::followEditOn(const application::FollowedLine &line)
 {
-    // ShowEditOnVideo: `edit->Visual < CHANGEPOS` (no tool, or the crosshair)
     const bool visualTool = m_visualTools && m_visualTools->activeFamily() > 0;
     const auto seek = static_cast<application::SeekAfter>(m_settings->integer("video.moveToActiveLine"));
     applyVideoFollow(application::followEdit(seek, videoState(), visualTool, line));
@@ -165,10 +150,6 @@ void Application::followGridPress(std::optional<core::LineId> before, core::Line
 
 void Application::trackVideoFollow()
 {
-    // OPEN_VIDEO_AT_ACTIVE_LINE (VideoBox::LoadVideo, VideoBox.cpp:407-410):
-    // a video opened for a Document with a file starts at the active Line's
-    // start; otherwise at its first frame. The seek is made when the open
-    // starts and applies once the video is indexed.
     auto last = std::make_shared<VideoSession::State>(VideoSession::State::Closed);
     connect(m_video.get(), &ui::VideoController::changed, this, [this, last] {
         auto &video = m_video->session();
@@ -185,7 +166,6 @@ void Application::trackVideoFollow()
 bool Application::setTimeFromVideo(bool end)
 {
     auto *session = targetSession();
-    // HikariSubFrame.cpp:750-751: only with a video (the menu item: also the editor)
     if (!session || videoState() == application::VideoState::None)
         return false;
     const auto &video = m_video->session();
@@ -201,14 +181,12 @@ bool Application::setTimeFromVideo(bool end)
 bool Application::selectLineFromVideo()
 {
     auto *session = targetSession();
-    // SubsGrid::SelVideoLine: nothing without a video
     if (!session || videoState() == application::VideoState::None)
         return false;
     const auto &video = m_video->session();
     const auto id = application::lineAtVideoTime(session->document(), shownLines(), video.tellMs(), video.durationMs());
     if (!id)
         return false;
-    // edit->SetLine(i); SelectRow(i); MakeVisible(i)
     return applySelection(gridSelection().plain(session->selection(), *id));
 }
 
@@ -221,21 +199,18 @@ bool Application::selectLinesVisibleOnVideo()
     std::optional<core::LineRecord> editorLine;
     if (active)
         editorLine = session->draftLine() == active ? session->draftRecord() : committedLine(*session, *active);
-    // VideoBox::Tell is 0 without a video; "Ignore filtering in some actions"
-    // takes the hidden Lines too.
     const application::ShownLine shown = m_gridFilter->ignoreInActions() ? application::ShownLine{} : shownLines();
     const auto found = application::linesShownOnVideo(session->document(), shown, editorLine, m_video->session().tellMs());
     application::Selection next = session->selection();
     next.selected = std::set<core::LineId>(found.begin(), found.end());
     if (!found.empty())
-        next.active = found.front(); // edit->SetLine(FirstSelection())
+        next.active = found.front();
     return applySelection(std::move(next));
 }
 
 bool Application::snapToKeyframe(bool start)
 {
     auto *session = targetSession();
-    // HikariSubFrame.cpp:2531: an audio box and an exact (FFMS2) timebase
     if (!session || !m_audio || !m_audio->hasAudio() || !exactTimebase() || !session->selection().active)
         return false;
     const auto line = followedLine();
@@ -266,8 +241,6 @@ bool Application::snapToKeyframe(bool start)
     const auto snapped = application::legacyKeyframeSnap(context, line->startMs, line->endMs, start);
     if (!snapped)
         return false;
-    // StartEdit / EndEdit get the time, then Send(SNAP_TO_KEYFRAME_OR_LINE_TIME):
-    // the edit box's Line is committed as "Snapping to keyframe".
     application::DraftChange change;
     (start ? change.start : change.end) = core::DocumentTime(std::int64_t{*snapped} * 1000);
     if (!session->editDraft(active, change))
@@ -280,10 +253,8 @@ bool Application::snapToKeyframe(bool start)
 
 bool Application::commitAndAdvance()
 {
-    m_lineChangeOrigin = LineChangeOrigin{false, true}; // SubsGrid::NextLine: SetLine(..., autoPlay)
-    // E4 sends the draft before the move (EditBox::Send, then NextLine); the
-    // video sees both at once, as ShowEditOnVideo ran after NextLine
-    // (SubsGrid::ChangeLine, SubsGridBase.cpp:150-154).
+    m_lineChangeOrigin = LineChangeOrigin{false, true};
+    // MUST KILL: the video refresh is held so the draft and the move reach the video at once.
     m_holdVideoRefresh = true;
     const bool done = m_editor->commitAndAdvance();
     m_holdVideoRefresh = false;
@@ -292,30 +263,27 @@ bool Application::commitAndAdvance()
     return done;
 }
 
-} // namespace hikari::app
+}
 
 namespace hikari::app {
 
 bool Application::selectVisibleLineAfterFullScreen()
 {
-    // VideoBox.cpp:555-559: `tab->SubsPath != emptyString &&
-    // Options.GetBool(GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN)`.
     if (!m_settings->boolean("grid.setVisibleLineAfterFullScreen") || targetUntitled())
         return false;
-    m_editor->commit(); // tab->edit->Send(EDITBOX_LINE_EDITION, false)
+    m_editor->commit();
     return selectLineFromVideo();
 }
 
 bool Application::openEditorFromFullScreen()
 {
-    // VideoBox::OpenEditor (esc defaults to true: the window is not minimized).
     if (!m_videoFullscreen->active())
         return false;
     if (m_video->playing())
         m_video->pause();
     if (!targetUntitled())
-        selectLineFromVideo(); // tab->grid->SelVideoLine()
+        selectLineFromVideo();
     return m_videoFullscreen->leave();
 }
 
-} // namespace hikari::app
+}

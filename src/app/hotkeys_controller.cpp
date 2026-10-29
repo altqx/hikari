@@ -66,8 +66,7 @@ QVariantMap conflictMap(const std::optional<application::HotkeyConflict> &c)
             {QStringLiteral("commands"), qLines(c->commands)}};
 }
 
-// US-layout base keys of shifted punctuation: wx reports the unshifted key
-// with Shift ("Shift-;"), Qt the shifted character.
+// Stored accelerators name the unshifted US key with Shift ("Shift-;"); Qt gives the shifted one.
 int unshifted(int key)
 {
     static constexpr std::pair<char, char> table[] = {
@@ -80,7 +79,6 @@ int unshifted(int key)
     return key;
 }
 
-// The wx key code legacy's key events carry for a Qt key press.
 int wxKeyOf(int key, Qt::KeyboardModifiers modifiers)
 {
     namespace wxk = application::wxk;
@@ -128,7 +126,7 @@ int wxKeyOf(int key, Qt::KeyboardModifiers modifiers)
     }
     if (key > 0x20 && key < 0x7f)
         return (modifiers & Qt::ShiftModifier) ? unshifted(key) : key;
-    return key; // other characters: their code, which no table names
+    return key;
 }
 
 application::HotkeyPress pressOf(int key, int modifiers)
@@ -144,7 +142,6 @@ application::HotkeyPress pressOf(int key, int modifiers)
     return p;
 }
 
-// The accelerator text of a key press, as the mapping window writes it.
 std::string accelOfPress(const application::HotkeyPress &p)
 {
     std::string out;
@@ -163,7 +160,6 @@ std::string accelOfPress(const application::HotkeyPress &p)
     return {};
 }
 
-// The same key and modifiers as GetHKey reads them.
 bool sameChord(const std::string &a, const std::string &b)
 {
     if (a.empty() || b.empty())
@@ -178,8 +174,6 @@ std::string symbolOf(int id)
     return s.empty() ? std::to_string(id) : std::string(s);
 }
 
-// A command as the user knows it: its Hotkeys page name; GLOBAL_QUIT, never
-// listed there, by its menu item (File > Exit); else its symbol.
 QString commandName(int id)
 {
     if (id == application::kGlobalQuit)
@@ -188,32 +182,32 @@ QString commandName(int id)
     return qs(name.empty() ? symbolOf(id) : name);
 }
 
-// The notice for a dropped binding of a retired command (%1: its keys).
+// MUST KILL: raw command ids, and the default branch stands for GLOBAL_VIDEO_INDEXING alone.
 QString retiredNotice(int id)
 {
     switch (id) {
-    case 5031: // GLOBAL_VIEW_ALL
+    case 5031:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View all\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
-    case 5032: // GLOBAL_VIEW_AUDIO
+    case 5032:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View audio and subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
-    case 5033: // GLOBAL_VIEW_VIDEO
+    case 5033:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View video and subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
-    case 5034: // GLOBAL_VIEW_ONLY_VIDEO
+    case 5034:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View only video\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
-    case 5035: // GLOBAL_VIEW_SUBS
+    case 5035:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View only subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
-    case 5109: // GLOBAL_EDITOR
+    case 5109:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Enable / Disable editor\" was removed: the editor is always shown; hide panels or choose a layout instead.");
-    case 5039: // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW
+    case 5039:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open shortcut mapping window\" was removed: the window is gone and each macro's shortcut is set in the Automation panel.");
-    case 5104: // GLOBAL_OPEN_DUMMY_AUDIO
+    case 5104:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open blank 2h30m audio\" was removed: the command is retired and a dummy video brings its own silent audio.");
-    default: // GLOBAL_VIDEO_INDEXING
+    default:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed.");
     }
 }
 
-} // namespace
+}
 
 HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
                                      std::function<void(const QString &, bool warning)> log, QObject *parent)
@@ -225,15 +219,11 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
     if (m_log)
         for (const QString &notice : std::exchange(m_retiredNotices, {}))
             m_log(notice, false);
-    logInvalid(); // the frame's SetAccels(false) at startup
-    // A change in the Automation panel (AM1; legacy's automation hotkeys
-    // window's OK): SetHotkeysMap, SetAccels(true), SaveHkeys().
+    logInvalid();
     connect(&m_scripts, &AutomationHotkeysController::committed, this, [this] {
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
         setAccels();
     });
-    // A script that registers while Settings → Hotkeys is open lists its
-    // macros there too, the page's edits kept.
     connect(&m_scripts, &AutomationHotkeysController::bindingsChanged, this, &HotkeysController::relistMacros);
     QCoreApplication::instance()->installEventFilter(this);
 }
@@ -244,8 +234,6 @@ HotkeysController::~HotkeysController()
         QCoreApplication::instance()->removeEventFilter(this);
 }
 
-// LoadHkeys for each file: what is stored, else LoadDefault. Any number of
-// stored bindings is read as stored (C04-short-file).
 void HotkeysController::load()
 {
     m_live.clear();
@@ -257,14 +245,6 @@ void HotkeysController::load()
         application::readHotkeyLines(m_live, stdLines(m_settings.list(kAudioSetting)));
     else
         application::loadDefaultHotkeys(m_live, true);
-    // V3-indexing-retired: a binding of "Open video with FFMS2" (legacy
-    // GLOBAL_VIDEO_INDEXING, from a carried-over Hotkeys.txt) is dropped with
-    // a notice, and the list is written without it so the notice is given once.
-    // AM1-hotkeys-window-retired: so is one of "Open shortcut mapping window"
-    // (GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW). WS3-view-arrangements-retired:
-    // the same for the View arrangements and the editor switch, and AV3 for
-    // "Open blank 2h30m audio" (GLOBAL_OPEN_DUMMY_AUDIO). A binding for the
-    // Audio window is in the audio list, which is written again too.
     const auto dropped = application::dropRetiredHotkeys(m_live);
     bool main = false, audio = false;
     for (const auto &[key, hotkey] : dropped) {
@@ -291,18 +271,12 @@ void HotkeysController::saveAudio()
 void HotkeysController::setAccels()
 {
     m_installed = m_live;
-    // TabPanel::SetAccels reads the tag button count when it installs.
     m_installedTagButtons = m_settings.integer("editor.tagButtons");
     m_scripts.install();
     logInvalid();
     emit installedChanged();
 }
 
-// Hotkeys::GetHKey (Hotkeys.cpp:372-375) for every binding SetAccels
-// installs: a key that is neither a FillTable name nor one character is
-// logged and installs nothing. Legacy logs it once per accelerator table the
-// binding goes to (the frame's, each tab's, the audio box's); the rewrite
-// once per binding at each install.
 void HotkeysController::logInvalid() const
 {
     if (!m_log)
@@ -325,16 +299,13 @@ HotkeyMap HotkeysController::bindings() const
     return out;
 }
 
-// A whole map back: the static bindings here, the scripts' by name to S2.
 void HotkeysController::split(const HotkeyMap &combined)
 {
     m_live.clear();
     std::map<std::string, std::string> scripts;
     for (const auto &[key, hotkey] : combined) {
         if (key.id >= application::kFirstScriptHotkey) {
-            // A nameless binding there came from a numeric line past the
-            // static ids (LoadHkeys); legacy saves it as "=<keys>", which it
-            // cannot read back, so it is gone at the next start either way.
+            // A nameless one came from a numeric Hotkeys.txt line and cannot be saved.
             if (!hotkey.name.empty())
                 scripts[hotkey.name] = application::qtKeysOfAccel(hotkey.accel);
         } else
@@ -371,9 +342,8 @@ QVariantList HotkeysController::globalShortcuts() const
         const auto seq = qtKeysOfAccel(hotkey.accel);
         if (seq.empty())
             continue;
-        // GetHKey sends an id under AUDIO_COMMIT as id + 10; the frame
-        // handles it only when it bound that id (an installed Global binding).
         int id = key.id;
+        // MUST KILL: audio ids under AUDIO_COMMIT run as id + 10, and only while that id is bound.
         if (id < kAudioCommit) {
             id += 10;
             const auto main = m_installed.find(HotkeyId{id, GlobalHotkey});
@@ -398,13 +368,12 @@ QStringList HotkeysController::globalSequences() const
 
 namespace {
 
-// KB2: the Video window's VIDEO_PLAY_PAUSE acts from every panel.
 bool playsEverywhere(const application::HotkeyId &key)
 {
     return key.type == application::VideoHotkey && key.id == application::hotkeyIdOf("VIDEO_PLAY_PAUSE");
 }
 
-} // namespace
+}
 
 QStringList HotkeysController::macroTakenSequences() const
 {
@@ -423,7 +392,6 @@ QStringList HotkeysController::macroTakenSequences() const
 
 bool HotkeysController::repeatedKey(const QString &action, int interval)
 {
-    // config::CheckLastKeyEvent: an ignored key does not move lastCheckedTime.
     const qint64 now = m_keyClock ? m_keyClock() : QDateTime::currentMSecsSinceEpoch();
     if (now < m_lastCheckedTime && m_lastCheckedTime != 0)
         m_lastCheckedTime = now;
@@ -447,11 +415,10 @@ QString HotkeysController::actionFor(int window, int key, int modifiers, bool te
     const std::string pressed = accelOfPress(pressOf(key, modifiers));
     if (pressed.empty())
         return {};
-    // The text field's own accelerators act first in the Line editor.
     if (window == EditorHotkey && textField &&
         textFieldOwnsKey(pressed, m_settings.boolean("editor.allowNumpadHotkeys")))
         return {};
-    // TabPanel::SetAccels: which window's table each binding goes to.
+    // MUST KILL: id ranges, not the binding's window, pick its table; Editor 4000s go nowhere.
     const auto routed = [&](const HotkeyId &k) -> int {
         const int id = k.id;
         if (k.type != AudioHotkey) {
@@ -460,20 +427,15 @@ QString HotkeysController::actionFor(int window, int key, int modifiers, bool te
             if (id >= 3000 && id < 4000 && k.type != EditorHotkey)
                 return k.type == GridHotkey ? GridHotkey : VideoHotkey;
             if (id >= 4000 && id < 5000 && k.type != GridHotkey)
-                return k.type == VideoHotkey ? VideoHotkey : -1; // the Editor branch is unreachable
+                return k.type == VideoHotkey ? VideoHotkey : -1;
         }
         return k.type;
     };
     for (const auto &[k, hotkey] : m_installed) {
         if (hotkey.accel.empty() || k.type == GlobalHotkey)
-            continue; // Global: the main window's
+            continue;
         int table = routed(k);
-        // Video play/seek bindings also go to the Grid.
         bool alsoGrid = k.type == VideoHotkey && k.id >= kVideoPlayPause && k.id <= kVideo5SecondsBackward;
-        // The Audio window's bindings: the audio box's own table
-        // (AudioBox::SetAccels), and the Grid's too except AUDIO_COMMIT to
-        // AUDIO_NEXT (the _ALT ids stay), which SubsGrid::OnAccelerator
-        // hands to the box; so do the Grid's own bindings of audio ids.
         if (k.type == AudioHotkey) {
             table = AudioHotkey;
             alsoGrid = !(k.id >= kAudioCommit && k.id <= kAudioNext);
@@ -482,25 +444,18 @@ QString HotkeysController::actionFor(int window, int key, int modifiers, bool te
         }
         if (table != window && !(alsoGrid && window == GridHotkey))
             continue;
-        // No hotkeys for hidden tag buttons.
         if (table == EditorHotkey && k.type == EditorHotkey && k.id >= kEditorTagButton1 + m_installedTagButtons &&
             k.id <= kEditorTagButton20)
             continue;
-        // Hotkeys::GetHKey: an id under AUDIO_COMMIT (the _ALT ones) sends
-        // its id + 10, so AUDIO_PLAY_LINE_ALT runs AUDIO_PLAY_LINE.
+        // MUST KILL: ids under AUDIO_COMMIT (the _ALT ones) run as id + 10.
         if (sameChord(hotkey.accel, pressed))
             return qs(symbolOf(k.id < kAudioCommit ? k.id + 10 : k.id));
     }
     return {};
 }
 
-// ---- The Options page ----
-
 void HotkeysController::beginOptions()
 {
-    // O2-stale-copy (approved): each dialog edits its own copy of the
-    // bindings, filled at its first edit; a cancelled dialog's copy goes
-    // with it (legacy's static hotkeysCopy outlived the dialog).
     m_copy.clear();
     m_list = std::make_unique<application::HotkeyList>(m_copy);
     m_list->build(listed());
@@ -536,9 +491,6 @@ void HotkeysController::relistMacros()
             more[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
     if (!more.empty())
         m_list->addRows(more);
-    // A search matches the macros' rows by their script and macro too: the
-    // rows listed already are searched again, the selected one kept if it
-    // still shows.
     if (!m_list->searchText().empty()) {
         const int selected = m_list->selection();
         m_list->filter(m_list->filterMode());
@@ -546,14 +498,9 @@ void HotkeysController::relistMacros()
         if (const auto at = std::ranges::find(shown, selected); at != shown.end())
             m_list->selectShown(int(at - shown.begin()));
     }
-    // The rows listed already show their macro by name, or why it is
-    // missing, from the registrations: a script that loads changes them too.
     emit rowsChanged();
 }
 
-// AM1: every registered macro is listed, a macro without a binding as a
-// script row without keys (an id after the bound ones), so it can be mapped
-// here as in the Automation panel.
 HotkeyMap HotkeysController::listed() const
 {
     auto out = bindings();
@@ -575,8 +522,6 @@ QVariantList HotkeysController::rows() const
     int position = 0;
     for (const int i : m_list->shown()) {
         const auto &r = m_list->row(i);
-        // PF1: "context" (the window's index) and "name" for the page's
-        // context headings, the row showing its name under its heading.
         QVariantMap row{{QStringLiteral("row"), i},
                         {QStringLiteral("text"), qs(r.text)},
                         {QStringLiteral("context"), r.key.type},
@@ -586,11 +531,6 @@ QVariantList HotkeysController::rows() const
                         {QStringLiteral("keyModified"), r.keyModified},
                         {QStringLiteral("block"), filtered ? m_list->hiddenBlock(position) : 0},
                         {QStringLiteral("inBlock"), filtered && r.visible == 2}};
-        // AM1: a macro's row shows its script and macro by name ("script"
-        // and "macro"), and a note in the warning colour when the binding
-        // does not resolve or a Global command's binding of the same keys
-        // takes them (the static table comes first, as the shell installs
-        // it), or the Video window's Play / Pause's does (KB2: every panel).
         if (r.key.id >= application::kFirstScriptHotkey) {
             const QVariantMap macro = m_scripts.describe(r.name);
             row.insert(QStringLiteral("script"), macro.value(QStringLiteral("script")));
@@ -606,8 +546,6 @@ QVariantList HotkeysController::rows() const
                         break;
                     }
                 }
-            // A Global binding the page does not list (GLOBAL_QUIT) takes
-            // them too, as the shell installs it.
             const auto listedKey = [this](const HotkeyId &key) {
                 for (std::size_t j = 0; j < m_list->rowCount(); ++j)
                     if (m_list->row(int(j)).key.id == key.id && m_list->row(int(j)).key.type == key.type)
@@ -780,8 +718,7 @@ QVariantMap HotkeysController::importLegacyScripts(const QString &path)
     QVariantMap result = m_scripts.importLegacy(path);
     if (m_list && result.value(QStringLiteral("added")).toInt() > 0) {
         const int mode = m_list->filterMode();
-        // The staged copy an applied edit left is the bindings before the
-        // import: the next edit stages from the bindings now, import included.
+        // MUST KILL: m_copy must be cleared, or the next edit stages from the pre-import bindings.
         m_copy.clear();
         m_list->clear();
         m_list->build(listed());
@@ -795,8 +732,6 @@ void HotkeysController::commitOptions()
 {
     if (!m_list)
         return;
-    // AM1: a macro's row given keys here is a binding made for the macro
-    // loaded now, as one recorded in the Automation panel.
     std::vector<QString> mapped;
     for (std::size_t i = 0; i < m_list->rowCount(); ++i) {
         const auto &r = m_list->row(int(i));
@@ -806,7 +741,6 @@ void HotkeysController::commitOptions()
     const auto committed = m_list->commit();
     if (!committed)
         return;
-    // SetHotkeysMap(hotkeysCopy), SaveHkeys(), SaveHkeys(true), SetAccels().
     split(*committed);
     saveMain();
     saveAudio();
@@ -818,12 +752,10 @@ void HotkeysController::commitOptions()
 
 void HotkeysController::resetDefaults()
 {
-    // Hkeys.ResetDefaults(): the defaults in memory (the scripts' bindings
-    // go too); nothing is saved or installed. ClearList, AddHotkeysOnList.
     split(application::defaultHotkeys());
     if (m_list) {
         m_list->clear();
-        m_list->build(listed()); // the loaded macros stay listed, unbound
+        m_list->build(listed());
     }
     emit rowsChanged();
 }
@@ -840,15 +772,11 @@ QVariantMap HotkeysController::capture(int key, int modifiers, int window) const
             {QStringLiteral("message"), qs(c.message)}};
 }
 
-// ---- The gesture (Hotkeys::OnMapHkey) ----
-
 bool HotkeysController::eventFilter(QObject *watched, QEvent *event)
 {
     switch (event->type()) {
     case QEvent::MouseButtonPress:
     case QEvent::MouseButtonRelease: {
-        // Only a click on a button or menu item counts (a Shift+click in the
-        // Grid extends the selection); the window sees the event first.
         const auto mods = static_cast<QMouseEvent *>(event)->modifiers() &
                           (Qt::ShiftModifier | Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
         const bool button = watched->inherits("QQuickAbstractButton");
@@ -878,7 +806,6 @@ QVariantMap HotkeysController::gestureTarget(const QString &symbolOrScript, bool
 {
     const std::string s = symbolOrScript.toStdString();
     if (s.starts_with("Script ")) {
-        // OnMapHkey(-1, name): the script's binding, else the next script id.
         int id = application::kFirstScriptHotkey;
         for (const auto &[key, hotkey] : bindings())
             if (key.id >= application::kFirstScriptHotkey) {
@@ -903,16 +830,12 @@ void HotkeysController::gestureMap(int id, const QString &name, const QString &a
     const auto r = application::mapHotkeyNow(combined, id, name.toStdString(), accel.toStdString(), type,
                                              answerOf(answer));
     if (r.changed) {
-        // SetAccels(true), SaveHkeys(), and SaveHkeys(true) when Audio was involved.
         split(combined);
         setAccels();
         saveMain();
         if (r.saveAudio)
             saveAudio();
     }
-    // AM1: a macro's shortcut recorded is a binding made for the macro loaded
-    // now, its keys new or not, so one missing since its script changed
-    // resolves again (saved and installed when that changes it).
     const bool renewed = id >= application::kFirstScriptHotkey &&
                          m_scripts.committedKeys()[name.toStdString()] == application::qtKeysOfAccel(accel.toStdString()) &&
                          m_scripts.renew(name);
@@ -960,4 +883,4 @@ bool HotkeysController::ignoreFilteringFromOption() const
     return !m_settings.boolean("grid.ignoreFiltering");
 }
 
-} // namespace hikari::app
+}

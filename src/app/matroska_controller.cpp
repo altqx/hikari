@@ -11,20 +11,18 @@ namespace {
 
 QString elapsedText(qint64 ms)
 {
-    // _("Time elapsed: %s") with SubsTime::raw() (ProgressDialog.cpp:108-110).
     const auto raw = core::legacy::assTimeText(ms);
     return QCoreApplication::translate("HikariSub.Matroska", "Time elapsed: %1")
         .arg(QString::fromUtf8(reinterpret_cast<const char *>(raw.data()), qsizetype(raw.size())));
 }
 
-} // namespace
+}
 
 MatroskaController::MatroskaController(std::unique_ptr<application::MatroskaPort> port, Hooks hooks, QObject *parent)
     : QObject(parent), m_port(std::move(port)), m_hooks(std::move(hooks)), m_elapsedText(elapsedText(0))
 {
     application::MatroskaSubtitleLoad::Hooks h;
     h.cannotOpen = [this](const std::string &error) {
-        // Demux::Open (Demux.cpp:44-47).
         if (m_hooks.log)
             m_hooks.log(QCoreApplication::translate("HikariSub.Matroska", "Indexing error occurred: %1").arg(QString::fromUtf8(error)));
     };
@@ -48,7 +46,6 @@ MatroskaController::MatroskaController(std::unique_ptr<application::MatroskaPort
         emit stateChanged();
     };
     h.progress = [this](int percent) {
-        // ProgresDialog::Progress: shown when more than 10 ms passed.
         const qint64 now = m_clock.isValid() ? m_clock.elapsed() : 0;
         if (m_lastProgress + 10 < now) {
             m_progress = percent;
@@ -76,8 +73,7 @@ MatroskaController::MatroskaController(std::unique_ptr<application::MatroskaPort
 
 MatroskaController::~MatroskaController()
 {
-    // The helper goes first; whatever it resolves on its way out reaches no
-    // hook and no signal.
+    // MUST KILL: order matters; hooks and signals are cut, then the port goes before m_load.
     blockSignals(true);
     m_hooks = {};
     m_port.reset();
@@ -86,8 +82,6 @@ MatroskaController::~MatroskaController()
 
 void MatroskaController::refresh()
 {
-    // SubsGrid.cpp:289: tab->VideoName ends with ".mkv" or ".ogm", in any
-    // case here (Y9-mkv-case).
     const QString path = m_hooks.videoPath ? m_hooks.videoPath() : QString();
     const bool available = application::subtitlesFromMkvEnabled(QFileInfo(path).fileName().toStdU16String());
     if (available != m_available) {
@@ -98,7 +92,6 @@ void MatroskaController::refresh()
 
 bool MatroskaController::needsSaveQuestion() const
 {
-    // File > Open's new tab is empty: nothing to save there.
     if (!m_file.isEmpty() && m_fileNewTab)
         return false;
     return m_hooks.modified && m_hooks.modified();
@@ -106,7 +99,6 @@ bool MatroskaController::needsSaveQuestion() const
 
 bool MatroskaController::opensAsMatroska(const QString &path)
 {
-    // file.AfterLast(L'.') == L"mkv" (HikariSubFrame.cpp:1026).
     return application::isMkvExtension(QFileInfo(path).fileName().toStdU16String());
 }
 
@@ -128,13 +120,12 @@ bool MatroskaController::start()
         refresh();
         if (!m_available)
             return false;
-        // mkvpath = tab->VideoPath (SubsGrid.cpp:1143).
         path = m_hooks.videoPath();
     }
-    // mkvpath = event.GetString() for File > Open; FFMS2 gets it as UTF-8.
     m_source = QFileInfo(path).fileName();
     if (m_hooks.started)
         m_hooks.started();
+    // FFMS2 takes the path as UTF-8.
     m_load->start(path.toStdString());
     emit stateChanged();
     return true;
@@ -148,9 +139,9 @@ void MatroskaController::choose(int row)
 
 void MatroskaController::cancel()
 {
-    m_file.clear(); // the question's Cancel takes back beginFile's file
+    m_file.clear();
     m_load->cancel();
     emit stateChanged();
 }
 
-} // namespace hikari::app
+}

@@ -1,10 +1,5 @@
 #pragma once
 
-// The PortAudio editor output owner (N6, ADR 0010): the only editor-output
-// library. PortAudio is initialized once per process; enumeration rescans the
-// host when no stream is open so device changes appear. The callback hands
-// each buffer to OutputEngine and nothing else.
-
 #include "hikari/application/audio_output.h"
 
 #include <cstdint>
@@ -18,19 +13,16 @@ class OutputEngine;
 class PortAudioOutput final : public application::AudioOutputPort {
 public:
     struct Options {
-        double queueSeconds = 0.5;    // ready-queue capacity
+        double queueSeconds = 0.5;
         double latencySeconds = -1;   // < 0: the device's default low output latency
-        // The host API whose default output device "the default device" is
-        // ("" = PortAudio's own default). WASAPI on Windows: it reports an
-        // unplugged device as lost, where DirectSound only stalls
-        // (audio.outputHostApi; the user's choice, 2026-10-04).
+        // "" is PortAudio's own default. WASAPI reports an unplugged device as lost; DirectSound
+        // only stalls.
         std::string hostApi = defaultHostApi();
     };
     // "Windows WASAPI" on Windows, "" elsewhere.
     static std::string defaultHostApi();
-    // audio.outputHostApi (0 WASAPI, 1 DirectSound) as the host API to ask
-    // for on Windows; elsewhere (`windows` false) the setting does nothing
-    // and the default stays (defaultHostApi()).
+    // audio.outputHostApi (0 WASAPI, 1 DirectSound) as a host API; with `windows` false,
+    // defaultHostApi().
     static std::string hostApiForSetting(std::int64_t value, bool windows = onWindows);
 #ifdef _WIN32
     static constexpr bool onWindows = true;
@@ -56,11 +48,9 @@ public:
     application::ClockEstimate clock() const override;
     application::OutputFormat format() const override;
 
-    // The opened device's id and the stream's reported output latency.
     std::string openDeviceId() const;
     double outputLatency() const;
-    // Fault injection for device-loss evidence: the next callback aborts the
-    // stream exactly as a host does when its device disappears.
+    // The next callback aborts the stream as a host does when its device disappears.
     void simulateDeviceLoss();
 
 private:
@@ -68,4 +58,4 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-} // namespace hikari::backends
+}

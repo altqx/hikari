@@ -14,7 +14,6 @@ namespace {
 
 constexpr QByteArrayView kHeaderEnd = "\r\n\r\n";
 
-// The UTF-16 offset of an LSP position in `text`.
 int offsetOf(const QString &text, const QJsonObject &position)
 {
     int line = position.value(QStringLiteral("line")).toInt();
@@ -42,7 +41,7 @@ std::pair<int, int> rangeOf(const QString &text, const QJsonObject &range)
             offsetOf(text, range.value(QStringLiteral("end")).toObject())};
 }
 
-} // namespace
+}
 
 HarperClient::HarperClient(QString program, QString workingDirectory, QObject *parent)
     : QObject(parent), m_program(std::move(program)), m_workingDirectory(std::move(workingDirectory))
@@ -92,8 +91,7 @@ void HarperClient::cancel(quint64 ticket)
     const auto it = m_checks.find(ticket);
     if (it == m_checks.end())
         return;
-    // Closing an open text at once would let the next one's didOpen overlap
-    // its own: harper-ls 3.0.0 deadlocks (see openNext). finish drops it.
+    // Closing an open text now could overlap the next didOpen, deadlocking harper-ls 3.0.0.
     if (it->second.opened)
         it->second.cancelled = true;
     else
@@ -155,9 +153,7 @@ void HarperClient::notify(const QString &method, const QJsonObject &params)
 
 void HarperClient::openNext()
 {
-    // One text at a time: harper-ls 3.0.0 deadlocks when a didOpen's settings
-    // pull overlaps another text's (a write lock queued between the two read
-    // locks load_user_dictionary takes).
+    // One text at a time: overlapping didOpen settings pulls deadlock harper-ls 3.0.0.
     if (!m_ready || std::ranges::any_of(m_checks, [](const auto &c) { return c.second.opened; }))
         return;
     const auto next = std::ranges::find_if(m_checks, [](const auto &c) { return !c.second.opened; });
@@ -207,7 +203,7 @@ void HarperClient::handle(const QJsonObject &message)
     const QString method = message.value(QStringLiteral("method")).toString();
     if (!method.isEmpty()) {
         if (message.contains(QStringLiteral("id"))) {
-            // A request from harper-ls: its settings; anything else has no result.
+            // A server request needs an answer: the settings, or null for anything else.
             QJsonValue result = QJsonValue::Null;
             if (method == QLatin1String("workspace/configuration")) {
                 QJsonArray answers;
@@ -247,7 +243,6 @@ void HarperClient::diagnostics(const QJsonObject &params)
     auto it = m_checks.begin();
     while (it != m_checks.end() && it->second.uri != uri)
         ++it;
-    // A closed check's, or a second publish of one already being read.
     if (it == m_checks.end() || !it->second.opened || it->second.actionsPending > 0 || !it->second.findings.isEmpty())
         return;
     const quint64 ticket = it->first;
@@ -258,7 +253,7 @@ void HarperClient::diagnostics(const QJsonObject &params)
         const auto [start, end] = rangeOf(check.text, diagnostic.value(QStringLiteral("range")).toObject());
         if (start >= end)
             continue;
-        // Its message is Markdown: `code` spans read as quotations (#409).
+        // harper-ls messages are Markdown.
         const QString message = QString::fromStdU16String(
             core::grammar::plainMessage(diagnostic.value(QStringLiteral("message")).toString().toStdU16String()));
         check.findings.append(
@@ -268,7 +263,7 @@ void HarperClient::diagnostics(const QJsonObject &params)
         finish(ticket);
         return;
     }
-    // Each finding's quick fixes: the lints at its start.
+    // harper-ls answers a code action with the lints at one position: ask at each start.
     check.actionsPending = int(check.findings.size());
     for (int i = 0; i < check.findings.size(); ++i) {
         const QJsonObject at = positionOf(check.text, check.findings[i].start);
@@ -291,7 +286,7 @@ void HarperClient::actions(quint64 ticket, int index, const QJsonValue &result)
     for (const QJsonValue &value : result.toArray()) {
         const QJsonObject action = value.toObject();
         const QJsonValue command = action.value(QStringLiteral("command"));
-        // A Command (not a CodeAction's): adding the finding's word.
+        // A bare Command, not a CodeAction: harper-ls's add-to-dictionary.
         if (command.isString()) {
             const QJsonArray arguments = action.value(QStringLiteral("arguments")).toArray();
             if (command.toString() == QLatin1String("HarperAddToUserDict") && !arguments.isEmpty()
@@ -303,8 +298,7 @@ void HarperClient::actions(quint64 ticket, int index, const QJsonValue &result)
         for (const QJsonValue &edit : changes.value(check.uri).toArray()) {
             const QJsonObject e = edit.toObject();
             const QString with = e.value(QStringLiteral("newText")).toString();
-            // harper-ls 3.0.0 offers some fixes twice, once with a space
-            // after (TheirToTheyre: "They're" and "They're "): the first is kept.
+            // harper-ls 3.0.0 offers some fixes twice, once with a trailing space: keep the first.
             if (rangeOf(check.text, e.value(QStringLiteral("range")).toObject()) == std::pair{finding.start, finding.end}
                 && std::ranges::none_of(finding.suggestions,
                                         [&](const QString &s) { return s.trimmed() == with.trimmed(); }))
@@ -344,4 +338,4 @@ void HarperClient::lost(const QString &message)
     emit failed(message);
 }
 
-} // namespace hikari::backends
+}

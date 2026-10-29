@@ -1,16 +1,5 @@
 #pragma once
 
-// FontService through the pinned libass and its Hikari font diagnostics patch
-// (N4, F47-abi). Each request renders in a fresh renderer, so its selections
-// are not hidden by another request's font cache. Bytes are hashed as the
-// renderer read them: from the provider's stream, or from the file the
-// provider named. System faces are listed through the same provider libass
-// uses (its static fontconfig on Linux, DirectWrite on Windows).
-//
-// Y6: the font picker's faces add the environment's external fonts (read
-// from their bytes), coverage answers the font filter, and refresh() makes
-// the next listing read the installed fonts again (F47-refresh).
-
 #include "hikari/application/font_service.h"
 
 #include <atomic>
@@ -37,9 +26,8 @@ public:
     std::vector<std::string> fontDirectories() override;
 };
 
-// VT3: the names libass matches a font's faces by (family, typographic
-// family, full and PostScript names, of every face of a collection), read
-// from its bytes.
+// The names libass matches a font's faces by: family, typographic family, full and PostScript
+// names, of every face of a collection.
 std::vector<std::string> fontNames(const std::vector<std::byte> &bytes);
 
-} // namespace hikari::backends
+}

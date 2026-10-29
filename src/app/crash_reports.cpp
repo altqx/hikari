@@ -42,8 +42,6 @@ QString severityName(int severity)
 
 constexpr qint64 kMaxRead = 1024 * 1024;
 
-// A report file read back: on Unix a regular file of the user's, opened
-// without following a link; "" otherwise.
 QByteArray readPrivate(const QString &path)
 {
     if (path.isEmpty())
@@ -68,12 +66,6 @@ QByteArray readPrivate(const QString &path)
 #endif
 }
 
-// The folder a report's files go in (scrubbed Logs, a screenshot, a
-// subtitle file): made when missing, never through a link, and on Unix the
-// user's alone (0700), whatever the umask. Its parent must not let another
-// account swap it: one of the user's that others could write to is closed
-// to them, any other must be closed or sticky (/tmp). False when it cannot
-// be so.
 bool privateFolder(const QString &folder)
 {
     if (folder.isEmpty() || QFileInfo(folder).isSymLink() || !QDir().mkpath(folder))
@@ -105,7 +97,7 @@ bool inPrivateFolder(const QString &path)
     return privateFolder(QFileInfo(path).absolutePath());
 }
 
-} // namespace
+}
 
 CrashReports::CrashReports(ui::SettingsStore &settings, Analytics &analytics, ui::LogController &log, Config config,
                            QObject *parent)
@@ -134,17 +126,13 @@ CrashReports::CrashReports(ui::SettingsStore &settings, Analytics &analytics, ui
         m_sending = false;
         m_sendingAuto = false;
         writeReport(sendingFile(), std::nullopt);
-        // A newer freeze may have taken the slot while it went.
         const auto *r = slot(source);
         const bool current = *r && (*r)->id == sentReport.id;
-        // Where a report that failed is kept: nothing tries again by itself.
         QString kept = source;
         if (ok) {
             if (current)
                 done(source);
         } else if (source != kStart) {
-            // A freeze: for the next start when no report waits there, else
-            // for this run, unless a newer freeze took its place.
             if (!m_pending) {
                 m_pending = sentReport;
                 savePending();
@@ -162,8 +150,7 @@ CrashReports::CrashReports(ui::SettingsStore &settings, Analytics &analytics, ui
         else
             emit sent(kept, ok);
     });
-    // Usage data off drops what it had queued, perhaps a report's
-    // $exception: Send report sends the record again.
+    // MUST KILL: Analytics drops its queue when turned off, so exceptionSent is reset here
     connect(&m_analytics, &Analytics::activeChanged, this, [this] {
         if (m_analytics.active())
             return;
@@ -191,8 +178,6 @@ report::Report CrashReports::fresh() const
 
 void CrashReports::collect()
 {
-    // The last run's Log, then the records it left: a crash, or a freeze
-    // it was closed in (the later, when both).
     const QStringList lastLog = report::boundLog(QString::fromUtf8(readPrivate(m_config.logTail)).split(u'\n', Qt::SkipEmptyParts));
     QFile::remove(m_config.logTail);
     std::optional<crash::Record> record;
@@ -224,8 +209,6 @@ void CrashReports::collect()
             QFile::remove(m_config.pendingFile);
         }
     }
-    // A freeze report still on its way when the last run ended: no answer
-    // came, so it is offered again (when no other report waits).
     if (const QByteArray json = readPrivate(sendingFile()); !json.isEmpty() && !m_pending) {
         m_pending = report::Report::fromJson(QJsonDocument::fromJson(json).object());
         if (m_pending && m_pending->record)
@@ -274,7 +257,6 @@ void CrashReports::started(const QString &package, int screens, qreal scale, con
         return;
     m_pending->system = m_system;
     m_pending->settings = report::settingsSummary(m_settings);
-    // Usage data: the record alone, as AN1 sent it; Send report adds the rest.
     if (!m_pending->exceptionSent && m_analytics.active() &&
         m_analytics.capture(QStringLiteral("$exception"), m_pending->exceptionProperties()))
         m_pending->exceptionSent = true;
@@ -294,7 +276,6 @@ void CrashReports::freezeRecovered(const crash::Record &record)
     if (m_analytics.active() && m_analytics.capture(QStringLiteral("$exception"), m_freeze->exceptionProperties()))
         m_freeze->exceptionSent = true;
     emit changed();
-    // "Always send" offers it as well when it cannot go now (another send).
     if (!m_settings.boolean(kAlwaysSend) || !canSend() || !sendAuto(QStringLiteral("freeze")))
         emit freezeNoticed(record.seconds);
 }
@@ -358,8 +339,6 @@ bool CrashReports::send(const QString &source, const QString &note)
         return false;
     m_sentText = (*r)->text(note);
     m_inFlight = **r;
-    // A freeze lives only in memory: kept on disk until the answer comes,
-    // should the app close first.
     if (source != kStart)
         writeReport(sendingFile(), m_inFlight);
     m_sending = true;
@@ -400,7 +379,6 @@ void CrashReports::entryAdded(const QString &time, int severity, const QString &
                               const QString &details)
 {
     const QString head = time + u' ' + severityName(severity).leftJustified(8, u' ');
-    // Scrubbed whole, then split: quoted text or a Line's text can span lines.
     const QStringList textLines = m_scrubber.scrub(text).split(u'\n');
     for (qsizetype i = 0; i < textLines.size(); ++i)
         m_tail << (i == 0 ? head + (title.isEmpty() ? QString() : m_scrubber.scrub(title) + QStringLiteral(": "))
@@ -409,7 +387,6 @@ void CrashReports::entryAdded(const QString &time, int severity, const QString &
     for (const QString &d : m_scrubber.scrub(details).split(u'\n', Qt::SkipEmptyParts))
         m_tail << QStringLiteral("    ") + d;
     m_tail = report::boundLog(std::move(m_tail));
-    // Within 500 ms of the first entry not yet written, however many follow.
     if (!m_config.logTail.isEmpty() && !m_tailTimer.isActive())
         m_tailTimer.start();
 }
@@ -435,7 +412,6 @@ void CrashReports::beginIssue()
     m_issueFile = m_currentFile ? m_currentFile() : QString();
     m_issueFileId = {};
 #ifdef Q_OS_UNIX
-    // Which file that is now: the .zip takes it only if it still is.
     if (struct stat st {}; !m_issueFile.isEmpty() && ::stat(QFile::encodeName(m_issueFile).constData(), &st) == 0 &&
                            S_ISREG(st.st_mode))
         m_issueFileId = {quint64(st.st_dev), quint64(st.st_ino)};
@@ -487,7 +463,6 @@ QVariantMap CrashReports::open(const report::Issue &issue)
     if (!link.complete)
         m_config.copy(issue.markdown());
     const bool opened = m_config.openUrl(link.url);
-    // No browser: the issue goes to the clipboard all the same.
     if (!opened && link.complete)
         m_config.copy(issue.markdown());
     return {{QStringLiteral("complete"), link.complete}, {QStringLiteral("opened"), opened}};
@@ -525,7 +500,6 @@ QString CrashReports::zipSubtitleFile()
     const QString &file = m_issueFile;
     QFile in;
 #ifdef Q_OS_UNIX
-    // The file the form named, not whatever its path leads to now.
     const int fd = ::open(QFile::encodeName(file).constData(), O_RDONLY | O_CLOEXEC);
     if (fd < 0)
         return {};
@@ -565,4 +539,4 @@ void CrashReports::discardAttachments()
         QDir(m_config.attachments).removeRecursively();
 }
 
-} // namespace hikari::app
+}

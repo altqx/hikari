@@ -1,9 +1,5 @@
 #pragma once
 
-// The composed application services (composition root). main() and the UI
-// workflow tests build the same graph: native file ports, the write
-// coordinator, Documents, the workspace and the shell/editor presenters.
-
 #include "hikari/app/automation_hotkeys_controller.h"
 #include "hikari/app/settings_import_controller.h"
 #include "hikari/app/settings_import_store.h"
@@ -95,288 +91,189 @@ class Application : public QObject {
     Q_OBJECT
 signals:
     void closeFinished(bool done, const QString &problem);
-    // O1: a changed program font destroyed the Select dialog (DestroyDialogs).
+    // A changed program font closed the Select dialog.
     void selectLinesDestroyed();
     void quitApprovedChanged();
-    // WS5: a quit review ended without the quit (cancelled, a save failed,
-    // or another review took its place).
+    // Also when a save failed or another review took the quit review's place.
     void quitCancelled();
     void saveWithVideoNameChanged();
     void askForBadResolutionChanged();
-    // Y4: the open video's size differs from the editing target's PlayRes
-    // (legacy SetSubsResolution / SetVideoResolution): {subsWidth,
-    // subsHeight, videoWidth, videoHeight}.
+    // The video's size differs from the target's PlayRes:
+    // {subsWidth, subsHeight, videoWidth, videoHeight}.
     void resolutionMismatch(const QVariantMap &sizes);
     void recentChanged();
-    // G56: a command was refused because it would break the group described
-    // by `description` (0 when the break makes a new malformed group).
+    // description: the group the command would break (0: it would make a new
+    // malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
-    // F3: the spelling options or the dictionary changed (marks are stale);
-    // when the spell checker cannot start, legacy's message box is a toast
-    // (NT1).
     void spellingChanged();
-    // PU6: the spell checker was made again (another dictionary): a check
-    // going on starts again with it.
+    // The dictionary changed; a running check starts over with it.
     void spellCheckerRestarted();
-    // GR1 (#364): grammar check was switched, its settings changed, or the
-    // Line editor's text has new findings (its marks are stale).
+    // Also when the Line editor's text has new findings.
     void grammarChanged();
-    // The Spellchecker panel's Grammar walk moved on (grammarWalkState).
     void grammarWalkChanged();
-    // W1: the chosen player changed (video.playbackPlayer).
     void playbackPlayerChanged();
-    // AV1: the route both audio paths follow changed.
     void audioOutputChanged();
-    // F1: find and replace shows a legacy message box (kind: 0 message, 1
-    // "Reached end", 2 missing styles, 3 no style found, 4 replace in files);
-    // a question (kinds 1-4) waits for answerFindQuestion(id, ...), a message
-    // needs no answer. Nothing blocks meanwhile.
+    // kind: 0 message, 1 "Reached end", 2 missing styles, 3 no style found, 4 replace in
+    // files; kinds 1-4 wait for answerFindQuestion(id, ...).
     void findQuestion(int id, int kind, const QVariantMap &question);
     void findResultsChanged();
-    // An operation finished (also after its questions): the tab as it is now
-    // (the styles question may have changed its styles) with the recent lists.
+    // Also after its questions; settings: the tab as it is now, with the recent lists.
     void findFinished(const QVariantMap &settings);
     void findBusyChanged();
-    // F1: a file result opens into the Untitled editing target, which has
-    // changes: the close review shows these rows (as reviewOpen's), and the
-    // result is shown once it finishes or is cancelled.
+    // A file result opens into the Untitled target, which has changes: rows as
+    // reviewOpen's.
     void findOpenReview(const QVariantList &rows);
-    // O1: HikariSubFrame::DestroyDialogs (a changed program font). The
-    // Search tool saves its tab (FR->SaveOptions) and closes with its
-    // results; the Multireplacer and its Search results close.
+    // Both fire when a changed program font closes the Search tool / Multireplacer.
     void findReplaceDestroyed();
     void misspellReplacerDestroyed();
-    // O5: the interface language changed while the Options dialog is open:
-    // its dictionary choice's entries in the new language.
+    // The interface language changed while Options is open: the dictionaries' new names.
     void settingsListsChanged(const QStringList &dictionaries);
 
 public:
     struct Options {
-        // The media helper program; empty: next to the application, else the build tree's.
+        // Empty: next to the application, else the build tree's.
         QString mediaHelper;
-        // The Lua helper and the Automation directory (holding automation/{Autoload,Include});
-        // empty: next to the application, else the build tree's.
+        // automationDir holds automation/{Autoload,Include}. Empty: next to the
+        // application, else the build tree's.
         QString luaHelper;
         QString automationDir;
-        // An installed copy's own Automation folder (AutomationShell::Paths);
-        // empty: automationDir.
+        // Empty: automationDir.
         QString userAutomationDir;
-        // Load the Autoload scripts at start (the application does; tests choose).
         bool autoload = false;
-        // FR1: the first start marks Getting started due (the application
-        // does; tests choose).
+        // The first start marks Getting started due.
         bool gettingStarted = false;
-        // INI file holding the settings registry; empty: in memory only (tests).
+        // Empty: in memory only.
         QString settingsFile;
-        // O5: the system's interface languages, most preferred first
-        // (QLocale::system().uiLanguages(); the composition sets it). On the
-        // first start (a settingsFile that does not exist yet) a Polish first
-        // one takes Polish for the interface and the spell checker.
+        // Most preferred first; on the first start a leading Polish one picks Polish for
+        // the interface and the spell checker.
         QStringList systemUiLanguages;
-        // P3: where recovery bundles live; empty: no autosave (tests).
+        // Empty: no autosave.
         QString recoveryDir;
-        // V1: whether video playback may open an audio device.
+        // Whether video playback may open an audio device.
         bool playbackAudio = true;
-        // A4: makes the audio box's output with the options the settings
-        // give (tests record them); unset: PortAudio, or with playbackAudio
-        // off an output without a device.
+        // Unset: PortAudio, or with playbackAudio off an output without a device.
         std::function<std::unique_ptr<application::AudioOutputPort>(const backends::PortAudioOutput::Options &)>
             makeAudioOutput;
-        // Whether audio.outputHostApi chooses the host API (Windows; tests
-        // elsewhere may say so).
+        // Whether audio.outputHostApi chooses the host API.
         bool outputHostApiSetting = backends::PortAudioOutput::onWindows;
-        // H2 (decision 60): the system's output devices both audio paths
-        // follow (tests give a fake); unset: Qt's QMediaDevices, or with
-        // playbackAudio off none.
+        // Unset: QMediaDevices, or with playbackAudio off none.
         std::function<std::unique_ptr<application::AudioDevicesPort>()> makeAudioDevices;
-        // P8: the release list the update check reads (tests: a file).
         UpdateFeed updateFeed = UpdateFeed::github();
-        // Tests: the version the update check and What's new take as this
-        // one's; empty: HIKARI_VERSION.
+        // Empty: HIKARI_VERSION.
         QString appVersion;
-        // ADR 0019: the package kind, update cache and installers; the
-        // default installs nothing (tests). The composition sets this process's.
+        // The default installs nothing.
         UpdateEnvironment updateEnvironment;
-        // Y2: where the style catalogs live; empty: "Catalog" beside the settings
-        // file, or a temporary directory without one (tests).
+        // Empty: "Catalog" beside the settings file, or a temporary directory without one.
         QString catalogDir;
-        // F3 / R2-hunspell: the spelling backend (Hunspell; tests may pass a
-        // fake). Without one there is no spell checker: no marks but bracket
-        // errors, no notice, and SPELLCHECKER_ON is left as it is.
+        // Unset: no spell checker (only bracket errors are marked; SPELLCHECKER_ON is left
+        // as it is).
         application::SpellingBackendLoader spellingBackend = backends::hunspellSpellingLoader();
-        // The user's "Dictionary" folder (UserDic.udic and dictionaries the
-        // user adds); empty: beside the settings file (none without one, and
-        // then no spell checker).
+        // Holds UserDic.udic and added dictionaries; empty: beside the settings file (none,
+        // and no spell checker, without one).
         QString dictionaryDir;
-        // Bundled dictionaries, searched after the user's folder (legacy
-        // <executable dir>/Dictionary; the composition sets it).
+        // Searched after dictionaryDir.
         QString bundledDictionaryDir;
-        // GR1 (#364): the harper-ls program; empty: next to the application,
-        // else the build tree's.
+        // Empty: next to the application, else the build tree's.
         QString harperLs;
-        // GR1: harper-ls's own files (its copy of the user dictionary, and the
-        // dictionaries, ignored lints and statistics it would otherwise keep in
-        // the user's config folders); empty: "Harper" beside the settings
-        // file, or a temporary directory without one (tests).
+        // harper-ls's own files; empty: "Harper" beside the settings file, or a temporary
+        // directory without one.
         QString grammarDir;
-        // KA4: the furigana reading dictionary (MeCab's UniDic); empty:
-        // Dictionary/unidic-lite beside the executable, else the build tree's.
+        // MeCab's UniDic; empty: Dictionary/unidic-lite beside the executable, else the
+        // build tree's.
         QString readingDictionaryDir;
-        // A1: legacy's AudioCache folder; empty: "AudioCache" beside the
-        // settings file, or a temporary directory without one (tests).
+        // Empty: "AudioCache" beside the settings file, or a temporary directory without one.
         QString audioCacheDir;
-        // A1: legacy's FFMS2 index files (Indices); empty: "Indices" beside
-        // the settings file, or none without one (tests).
+        // FFMS2 index files; empty: "Indices" beside the settings file, or none without one.
         QString indexDir;
-        // Y6: where FontCatalogs.txt and its autosave copies live (legacy
-        // Config); empty: beside the settings file, or a temporary
-        // directory of this Application without one (tests).
+        // Empty: beside the settings file, or a temporary directory without one.
         QString fontCatalogDir;
-        // P9: legacy SelectInFolder (the tab menu's folder items, a Ctrl+click
-        // on a recent file); unset: backends::desktop::selectInFolder. Tests record.
+        // Unset: backends::desktop::selectInFolder.
         std::function<void(const QString &path)> revealInFolder;
-        // P9: legacy's autosave folder (Options.dataPath/Subs), read only;
-        // empty: "Subs" in the first legacy root that has one (#387), or
-        // none without a settings file.
+        // HikariSub legacy's autosave folder, read only; empty: "Subs" in the first legacy
+        // root that has one, or none without a settings file.
         QString legacyAutosaveDir;
-        // UD1: the user folder (Help > Open user folder; empty: none, the
-        // command does nothing) and what its start moved in and seeded,
-        // which the Log tells.
+        // Empty: none (Open user folder does nothing).
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
         UserFolder::SeedReport userFolderSeed;
-        // UD1: where saved presets live (workspace layouts' layouts.json);
-        // empty: beside the settings file.
+        // Empty: beside the settings file.
         QString presetsDir;
-        // AN1 (#404): anonymous usage data; the default has no key, so
-        // nothing is queued or sent (tests give a fake endpoint).
+        // The default has no key: nothing is queued or sent.
         Analytics::Config analytics;
-        // CR1 (#452): crash, freeze and issue reports; empty paths keep
-        // nothing on disk.
+        // Empty paths keep nothing on disk.
         CrashReports::Config crashReports;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
     ~Application() override;
 
-    // Opens a file as a new Document; the first becomes the editing target.
-    // P6: an untouched empty Untitled tab is replaced by it (legacy OpenFile).
+    // The first becomes the editing target; an untouched empty Untitled tab is replaced.
     Q_INVOKABLE bool openFile(const QString &path);
-    // Opens a file as the protected comparison reference.
     Q_INVOKABLE bool openReference(const QString &path);
-    // Closes the editing target at once, without review (callers review first).
+    // No review: callers review first.
     Q_INVOKABLE bool closeEditingTarget();
 
-    // Close review (P1; accepted L58-write-close). `then` is "close" (the
-    // editing target), "new" (replace it with an Untitled Document, legacy
-    // "Remove subtitles from the editor") or "quit" (every Document). Returns
-    // one row per Document with unsaved work: {id, title, untitled, folder
-    // (its file's, native; "" when untitled)}. With none, call finishClose()
-    // to carry `then` out at once.
+    // then: "close", "new" or "quit". One row per Document with unsaved work: {id,
+    // title, untitled, folder (native; "" when untitled)}; none: call finishClose().
     Q_INVOKABLE QVariantList reviewClose(const QString &then);
-    // PU1-unsaved-window: the `then` of the review in progress ("" without
-    // one), so the window and its buttons name the command that asked.
+    // The `then` of the review in progress; "" without one.
     Q_INVOKABLE QString closeKind() const { return m_closeThen; }
-    // One choice per row: {id, save: bool, path: Save As destination for an
-    // Untitled Document}. Save commits the draft and writes; Discard drops the
-    // draft. Nothing is closed until every save is acknowledged Written, and a
-    // Document edited after its choice stays open. closeFinished reports the result.
+    // choices: {id, save, path (Save As destination for an Untitled one)}. A Document
+    // edited after its choice stays open; closeFinished reports the result.
     Q_INVOKABLE void resolveClose(const QVariantList &choices);
     Q_INVOKABLE void finishClose();
     Q_INVOKABLE void cancelClose();
-    // Opening subtitles into the editing target (P2; legacy OpenFile): the
-    // file is staged first, so a failed open changes nothing
-    // (L58-staged-replacement); then the target's unsaved work is reviewed as
-    // for Close. Returns {ok, problem, rows}: rows as reviewClose; with ok and
-    // no rows, call finishClose() to publish the new content.
+    // A failed open changes nothing. Returns {ok, problem, rows}: rows as reviewClose's;
+    // ok without rows: call finishClose().
     Q_INVOKABLE QVariantMap reviewOpen(const QString &path);
     Q_INVOKABLE QVariantMap reviewOpenUrl(const QUrl &url) { return reviewOpen(url.toLocalFile()); }
-    // Dropped files by the legacy rules (OpenFile for one, OpenFiles for
-    // several, sorted). One file: {kind: "subtitles" (open with reviewOpen),
-    // "video" (open with openVideoFile), "session" (CF3: a .hksession or
-    // .kls, loaded as Load session loads it), or "" when it was handled (a
-    // script or keyframes)}. Several (P9, legacy OpenFiles): scripts load and the
-    // subtitles and videos open as tabs, pairing the i-th subtitles with the
-    // i-th video; {kind: "files", rows} with the close review's rows when the
-    // first subtitles go into the editing target and it has unsaved work
-    // (then finishClose() or cancelClose() carries the rest out).
+    // One file: {kind: "subtitles" (reviewOpen it), "video" (openVideoFile it),
+    // "session", or "" when handled}. Several: {kind: "files", rows}, rows as
+    // reviewClose's when the target has unsaved work (then finishClose() or cancelClose()).
     Q_INVOKABLE QVariantMap openDropped(const QList<QUrl> &urls);
-    // WS5: the files a later start of the program handed over (SingleInstance),
-    // in new tabs: subtitles as File > Open opens them into a new tab, a
-    // video in a new tab, several as dropped ones but each in a new tab; an
-    // untouched empty tab (P6) takes the first. Nothing is reviewed, so a
-    // tab's work is never replaced, but a session file (CF3) waits for the
-    // shell's openSessionFile, whose review the replaced tabs go through.
-    // Returns {kind: "video", path} when a video waits for the shell's
-    // openSingleVideo in its tab, else as openDropped. Call it only while forwardedOpenWaits() is false.
+    // Opens in new tabs without review. Returns {kind: "video", path} when a video waits
+    // for openSingleVideo, else as openDropped. Call only while forwardedOpenWaits() is false.
     QVariantMap openForwarded(const QStringList &files);
-    // True while a review or a startup session question has the next word:
-    // forwarded files wait (legacy hikarisubApp::OnOpen waited while IsBusy).
+    // True while a review or a startup session question is open.
     bool forwardedOpenWaits() const;
-    // WS5: the quit is being reviewed or has gone ahead.
     bool quitting() const { return m_quitApproved || m_closeThen == QLatin1String("quit"); }
-    // WS5: the quit reviews so far, the one going on (or that went ahead)
-    // last: what came during a quit belongs to that one only.
     int quitReviews() const { return m_quitReviews; }
-    // P9: opening a video (legacy OpenFile on a video): subtitles named as
-    // the video beside it (FindFile) are offered first, {subtitles} ("" when
-    // none, or when the tab already has them). Then openVideo(path), or, on
-    // "Yes", reviewOpenWithVideo: the subtitles load into the tab (after the
-    // review) and the video opens afterwards.
+    // Returns {subtitles}: same-named subtitles beside the video to offer ("" when none,
+    // or the tab has them); then openVideo(path), or on "Yes" reviewOpenWithVideo.
     Q_INVOKABLE QVariantMap openVideoFile(const QString &path);
     Q_INVOKABLE QVariantMap openVideoFileUrl(const QUrl &url) { return openVideoFile(url.toLocalFile()); }
     Q_INVOKABLE void openVideo(const QString &path);
-    // V5: `fullscreen` (video.fullScreenOnStart) shows the video fullscreen
-    // once it is shown, when it opens.
     Q_INVOKABLE QVariantMap reviewOpenWithVideo(const QString &subtitles, const QString &video,
                                                 bool fullscreen = false);
-    // P9: a recent file's entry clicked; with Ctrl alone held (legacy
-    // OnRecent's wxMOD_CONTROL) it is shown in its folder instead of opened:
-    // true then.
+    // With Ctrl alone held, shows the file in its folder instead and returns true.
     Q_INVOKABLE bool revealRecent(const QString &path);
-    // P9: legacy SelectInFolder.
     Q_INVOKABLE void showInFolder(const QString &path);
-    // SH2: the Home page's "Copy path".
     Q_INVOKABLE void copyText(const QString &text);
-    // P9: the "Associated files" question's answer for the editing target
-    // (0 load associated, 1 load from directory, 2 no); with Apply to All
-    // the same answer goes to the other questions of the same opening.
+    // answer: 0 load associated, 1 load from directory, 2 no; applyToAll answers the
+    // rest of the same opening.
     void answerAssociation(int answer, bool applyToAll);
-    // GLOBAL_RECENT_SUBS: {path, label} rows. Missing local files are left
-    // out but kept in the list, where the Home page shows them (SH2).
+    // {path, label} rows; missing local files are left out.
     Q_INVOKABLE QVariantList recentSubtitles();
-    // SH2: the Home page's recent files, most recent first: {path, name,
-    // folder, opened (a QDateTime, invalid for an entry carried over from
-    // legacy), missing}.
+    // Most recent first: {path, name, folder, opened (invalid for an entry imported
+    // from HikariSub legacy), missing}.
     Q_INVOKABLE QVariantList homeRecent();
-    // SH2: Home's Remove (one entry) and "Remove missing files".
     Q_INVOKABLE void removeRecent(const QString &path);
     Q_INVOKABLE void removeMissingRecent();
     std::vector<std::string> recentEntries() const { return m_recent.entries(); }
-    // The legacy check when the window activates (TabPanel::ReloadSubsIfModified):
-    // "modified" when the editing target's file is newer than when it was
-    // last read or written (ask, then reloadTarget()); a removed file makes
-    // the Document unsaved once and reports "removed".
+    // "modified" when the target's file is newer than when last read or written;
+    // "removed" once when it is gone (the Document becomes unsaved).
     Q_INVOKABLE QString externalChange();
-    // Reloads the editing target from its file with fresh history; a failed
-    // or stale reload keeps the Document as it is (L58-staged-replacement).
+    // A failed or stale reload keeps the Document as it is.
     Q_INVOKABLE bool reloadTarget();
-    // PU1-disk-change-bar: Keep mine (and Save over it) for the Document `id`
-    // (0: the editing target): its next save writes over the change shown.
+    // id 0: the editing target. Its next save writes over the change on disk.
     Q_INVOKABLE bool acceptFileOnDisk(qulonglong id);
-    // PU1-disk-change-bar: the changed-on-disk bar's Compare. The editing
-    // target's file, as it is on disk now, opens as the protected reference
-    // (read only, so neither copy can be saved over the other) and Subtitle
-    // comparison compares the two; false when it could not be read.
+    // Opens the file on disk as the read-only reference and compares the two; false
+    // when it could not be read.
     Q_INVOKABLE bool compareWithFileOnDisk();
 
-    // Saves the editing target to a new destination (GLOBAL_SAVE_SUBS_AS).
     Q_INVOKABLE bool saveAs(const QString &path);
     Q_INVOKABLE bool saveAsUrl(const QUrl &url) { return saveAs(url.toLocalFile()); }
     Q_INVOKABLE QString localPath(const QUrl &url) const { return url.toLocalFile(); }
-    // PU1-picker-titles: the URL of the folder a file is in, for the
-    // pickers' remembered folders ("" for anything but a local file, or a
-    // folder that does not exist).
     Q_INVOKABLE QUrl fileUrl(const QString &path) const { return QUrl::fromLocalFile(path); }
     Q_INVOKABLE QString folderOf(const QUrl &file) const
     {
@@ -385,289 +282,183 @@ public:
         const QString folder = QFileInfo(file.toLocalFile()).absolutePath();
         return QFileInfo(folder).isDir() ? QUrl::fromLocalFile(folder).toString() : QString();
     }
-    // The editing target has no file yet (its first save needs Save As).
     Q_INVOKABLE bool targetUntitled() const;
-    // P7: legacy HikariSubFrame::Save. saveRoute is "dialog" when Save asks
-    // for a file (none yet, or "Save subtitles using the video name" with a
-    // name other than the video's), "readonly" when the file is read-only
-    // (a warning, then the dialog), or "" to save in place.
+    // "dialog" when Save must ask for a file, "readonly" for a read-only file, "" to
+    // save in place.
     Q_INVOKABLE QString saveRoute() const;
-    // Where the "Save subtitle file" dialog starts: {folder, file, filter, extension}.
+    // {folder, file, filter, extension}.
     Q_INVOKABLE QVariantMap saveDialogValues() const;
-    // The dialog's file: the format's extension is added unless the path
-    // already ends with it. "readonly" asks again; "" when the save started.
+    // Adds the format's extension when missing. "readonly" asks again; "" when the
+    // save started.
     Q_INVOKABLE QString saveChosen(const QUrl &file);
-    // GLOBAL_SAVE_ALL_SUBS (legacy SaveAll, HikariSubFrame.cpp:2105-2113):
-    // every modified tab through Save's route, in tab order. Those saved in
-    // place are written now; the others, which need the "Save subtitle file"
-    // dialog (an Untitled Document, a converted format, the video name) or
-    // the read-only warning first, are returned in tab order as {id, route,
-    // title} for the dialogs to follow one after another (P9).
+    // Saves in-place tabs now; returns the others, in tab order, as {id, route, title}.
     Q_INVOKABLE QVariantList saveAll();
-    // P9: Save for any tab (the tab menu's "Save", legacy Save(false, i)):
-    // saveRoute, saveDialogValues and saveChosen of Document `id` (0: the
-    // editing target), and the save in place.
+    // As saveRoute, saveDialogValues, saveChosen and Save for Document id (0: the
+    // editing target).
     Q_INVOKABLE QString saveRouteFor(qulonglong id) const;
     Q_INVOKABLE QVariantMap saveDialogValuesFor(qulonglong id) const;
     Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file);
     Q_INVOKABLE bool saveDocument(qulonglong id);
-    // GLOBAL_SAVE_TRANSLATION: translator mode off (one step), then the dialog.
     Q_INVOKABLE bool turnOffTranslationMode();
-    // E5 (application_translation.cpp): the editor's "Translator mode" check
-    // box is enabled for an ASS Document that has a file (legacy
-    // HikariSubFrame.cpp:2401); turning it on is one "Turning on translator
-    // mode" step; turning it off (after QML's confirmation) is
-    // turnOffTranslationMode. "Moving tags" writes AUTO_MOVE_TAGS_FROM_ORIGINAL.
-    // E5-tlmode-needs-script-info: a PlainText Document has no Script Info to
-    // hold the mode, so the check box and Paste translation are disabled and
-    // translationHint says why (empty for every other Document).
+    // translationHint: why the mode is unavailable (a PlainText Document); else empty.
     Q_PROPERTY(bool translatorModeAvailable READ translatorModeAvailable NOTIFY tabsChanged)
     Q_PROPERTY(QString translationHint READ translationHint NOTIFY tabsChanged)
-    // W1: DirectShow plays the video (Windows, video.playbackPlayer 1).
     Q_PROPERTY(bool directShowPlayback READ directShowPlayback NOTIFY playbackPlayerChanged)
     bool translatorModeAvailable() const;
     QString translationHint() const;
     Q_INVOKABLE bool turnOnTranslationMode();
     Q_INVOKABLE void setMoveTags(bool on);
-    // TM1 (#232): choosing the Translation preset asks "Turn on Translation
-    // mode for this file?" when the editing target can take the mode, has it
-    // off and was not answered Not now (declineTranslationMode) this session.
+    // The target can take Translation mode, has it off and was not declined this session.
     Q_INVOKABLE bool translationQuestionDue() const;
     Q_INVOKABLE void declineTranslationMode();
-    // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING, subtitles.saveWithVideoName).
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
     bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
     void setSaveWithVideoName(bool on);
-    // About's "HikariSub website": the site's home page in the browser.
     Q_INVOKABLE void openWebsite();
-    // DX1 (#367): GLOBAL_HELP ("User guide", F1) and a DG1 window's "?": the
-    // guide's page for a surface, `kind` "panel" or "window" (guide_links.h),
-    // else the guide's home, in the browser.
+    // kind: "panel" or "window" (guide_links.h); anything else opens the guide's home.
     Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
-    // UD1: the user folder (user_folder.h), native separators; empty without one.
+    // Native separators; empty without one.
     Q_PROPERTY(QString userFolder READ userFolder CONSTANT)
     QString userFolder() const;
-    // Help > Open user folder: the desktop's file manager on it.
     Q_INVOKABLE void openUserFolder();
-    // AN1 (#404): "What is sent" (Settings, Getting started): the browser on
-    // the usage data's documentation.
     Q_INVOKABLE void openWhatIsSent();
-    // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
-    // F1: a find and replace question waits for its answer.
+    // A find and replace question waits for its answer.
     Q_PROPERTY(bool findBusy READ findBusy NOTIFY findBusyChanged)
     bool quitApproved() const { return m_quitApproved; }
 
-    // Grid selection gestures (G1). The active Line moves through the Line
-    // editor (a pending draft commits by policy); a refusal leaves everything as it was.
+    // A refused move of the active Line (its draft) leaves everything as it was.
     Q_INVOKABLE void selectLine(qulonglong id);
     Q_INVOKABLE void extendSelection(int rows);
-    // V6: `endColumn` (the press is in the End column) and `doubleClick` carry
-    // what legacy's Grid click reads to move the video (SetVideoLineTime).
     Q_INVOKABLE void clickLine(qulonglong id, int modifiers, bool endColumn = false, bool doubleClick = false);
     Q_INVOKABLE void dragSelection(qulonglong id);
-    // KP1 (#286): the Grid's fold arrow on a run of generated Lines (its first Line).
+    // first: the first Line of a run of generated Lines.
     Q_INVOKABLE void toggleFold(qulonglong first);
     Q_INVOKABLE void selectAllLines();
-    // The Grid's active Line was hidden: only the active Line moves.
+    // Only the active Line moves (the Grid's active Line was hidden).
     Q_INVOKABLE void moveActiveLine(qulonglong id);
 
-    // Grid structural commands (G3): one undo step each, on the editing target.
-    // `timing`: "" plain, "video" (the video frame's time, 4 s) or "frame"
-    // (copies of the selection timed to the video frame). The video frame is
-    // VideoSession::reportedFrame: the player's while playing.
+    // One undo step each. timing: "" plain, "video" (at the video frame's time, 4 s
+    // long) or "frame" (copies of the selection timed to the video frame).
     Q_INVOKABLE bool insertLine(bool before, const QString &timing = {});
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
-    // E6: GLOBAL_REMOVE_TEXT ("Delete text") and GLOBAL_HIDE_TAGS.
     Q_INVOKABLE bool deleteText();
     Q_INVOKABLE void toggleHideTags();
-    // G5: "join", "previous", "next", "first", "last".
+    // kind: "join", "previous", "next", "first", "last".
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
     Q_INVOKABLE bool makeContinuous(bool withPrevious);
-    // G11: GRID_SET_NEW_FPS from the FPS window's texts (digits and '.'), and
-    // GRID_SET_FPS_FROM_VIDEO with the video frame's time (the player's
-    // while playing).
     Q_INVOKABLE bool setNewFps(const QString &oldFps, const QString &newFps);
     Q_INVOKABLE bool setFpsFromVideo();
-    // G8: GRID_FILTER with the Filtering preferences, GRID_HIDE_SELECTED,
-    // Turn off filtering, and a +/- mark (the block after a Document row).
     Q_INVOKABLE bool filterLines();
     Q_INVOKABLE bool hideSelectedLines();
     Q_INVOKABLE bool turnOffFiltering();
+    // documentRow: the Document row the +/- mark's hidden block follows.
     Q_INVOKABLE bool toggleHiddenBlock(int documentRow);
-    // The editing target's Style names, for "Hide lines with styles".
     Q_INVOKABLE QStringList styleNames() const;
-    // PK1's Choose styles: the lines that use each style (by name), the
-    // target's styles first at 0.
+    // Lines using each style, by name; the target's styles are there with 0.
     Q_INVOKABLE QVariantMap styleLineCounts() const;
-    // TP1 (#274): the Styles panel's Select Lines with this Style: the
-    // editing target's shown Lines using `style` become the selection, the
-    // first of them active unless the active Line is one. False when none.
+    // The target's shown Lines using style become the selection; false when none.
     Q_INVOKABLE bool selectLinesWithStyle(const QString &style);
-    // P3: autosave recovery. Bundles left by a session that ended without
-    // closing cleanly: {key, title, original, written, generations:[{generation, written}]}.
+    // {key, title, original, written, generations: [{generation, written}]}.
     Q_INVOKABLE QVariantList recoveryBundles() const;
-    // Opens a generation as a new unsaved copy with its draft still pending
-    // (L58-recovery-copy); the bundle stays until it is dismissed.
+    // Opens a new unsaved copy with its draft pending; the bundle stays until dismissed.
     Q_INVOKABLE bool recoverBundle(const QString &key, qulonglong generation);
     Q_INVOKABLE void dismissBundle(const QString &key);
-    // P4 (GLOBAL_DELETE_TEMPORARY_FILES): removes the recovery work of ended
-    // sessions whose newest autosave is older than `date` (all when invalid);
-    // a running session's work is never touched. Returns how many were removed.
+    // All when date is invalid; a running session's work is never touched. Returns the
+    // count removed.
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
-    // Writes the editing target's recovery now (the autosave timer's work; tests).
     bool autosaveNow();
-    // Whether `document` waits for its autosave (tests).
     bool autosavePending(application::DocumentId document) const;
-    // G4: "Split lines": "videoTime" (GRID_SPLIT_BY_VIDEO_TIME) or "frames"
-    // (GRID_SPLIT_BY_FRAME), against the open video's timebase.
+    // kind: "videoTime" or "frames".
     Q_INVOKABLE bool splitLines(const QString &kind);
-    // E3: GRID_PASTE_TRANSLATION from a file (ASS Documents with a file; not
-    // PlainText, E5-tlmode-needs-script-info), and
-    // the "Dialogue shifting window" moves (TLDialog, legacy MoveTextTL modes 0-5).
     Q_INVOKABLE bool canPasteTranslation() const;
     Q_INVOKABLE QUrl targetFolder() const;
     Q_INVOKABLE bool pasteTranslationFile(const QUrl &file);
     Q_INVOKABLE bool canShiftTranslation() const;
-    // Y3: GLOBAL_OPEN_ASS_PROPERTIES. The values the dialog opens with (ASS
-    // Documents only; empty otherwise), plus the video size for "From video"
-    // and the linked-resolutions option; OK applies the edited fields.
-    // F5: GLOBAL_SHIFT_TIMES with the panel's settings and the video's
-    // timebase and frame (the player's while playing); an empty result
-    // means shifted, otherwise the legacy message. Frames need an exact
-    // (indexed) timebase.
+    // Empty when shifted, else the message; frames need an exact (indexed) timebase.
     Q_INVOKABLE QString shiftTimes();
-    // PU4: the editing target's document id (0: none). Ids are never reused,
-    // so a question can tell the target it asked about from a later one.
+    // 0: none. Ids are never reused.
     Q_INVOKABLE qulonglong editingTargetId() const;
     Q_INVOKABLE bool exactTimebase() const;
-    // F6: GLOBAL_OPEN_KEYFRAMES. Empty result: loaded (or kept until a video
-    // opens, as legacy does); otherwise the legacy message.
+    // Empty: loaded (or kept until a video opens); else the message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
-    // Y5: GLOBAL_CONVERT_TO_ASS/SRT/MDVD/MPL2/TMP with the CONVERT_* options
-    // {fps, fpsFromVideo, style, newEndTimes, timePerCharacter, prefix,
-    // resolutionWidth, resolutionHeight}, kept in the settings registry (convert.*).
+    // {fps, fpsFromVideo, style, newEndTimes, timePerCharacter, prefix, resolutionWidth,
+    // resolutionHeight}.
     Q_INVOKABLE QVariantMap conversionOptions() const;
     Q_INVOKABLE void setConversionOptions(const QVariantMap &options);
-    // The formats the editing target can be converted to ("ass", "srt",
-    // "mdvd", "mpl2", "tmp"); none in translation mode.
+    // "ass", "srt", "mdvd", "mpl2", "tmp"; none in translation mode.
     Q_INVOKABLE QStringList conversionTargets() const;
-    // PU6: the Style names of a catalog, for the conversion's Style choice
-    // (empty for a catalog that is not there).
     Q_INVOKABLE QStringList conversionStyles(const QString &catalog) const;
-    // Y1: the active Line's Style, which the Style manager selects when it opens.
     Q_INVOKABLE QString activeLineStyle() const;
-    // C02-loss-preview: converts a copy and lists what it removes or
-    // synthesizes ({ok, problem, fpsInvalid, losses, kinds}, kinds "warning"
-    // for what is removed, else "info"); acceptConversion applies that plan
-    // as one "Subtitles conversion" step unless the Document or the options
-    // changed since.
+    // {ok, problem, fpsInvalid, losses, kinds ("warning" removed, else "info")};
+    // acceptConversion applies it unless the Document or the options changed since.
     Q_INVOKABLE QVariantMap previewConversion(const QString &target);
     Q_INVOKABLE bool acceptConversion();
-    // Y4: GLOBAL_OPEN_SUBS_RESAMPLE ("Change resolution"): {subsWidth,
-    // subsHeight, videoWidth, videoHeight, hasVideo}, the video's being the
-    // subtitles' without a video; empty for a Document that is not ASS.
+    // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
+    // video size is the subtitles'); empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
-    // OK: nothing when the sizes match, else "Changing subtitles resolution".
     Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch);
-    // The SubsMismatchResolutionDialog's Change: 0 only the resolution,
-    // 1 resample (no stretch), 2 resample (stretch).
+    // option: 0 only the resolution, 1 resample, 2 resample with stretch.
     Q_INVOKABLE bool matchVideoResolution(int option);
-    // W2: the About notice's CSRI line (the Windows CSRI adapter, after
-    // legacy CsriMod) and its VSFilter line (VSFilterMod, a VSFilter
-    // derivative, is in the program's Csri folder, as the package ships it).
     Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
     Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
     static bool includesCsri();
     static bool includesVsfilter();
-    // "Disable warning" (legacy DONT_ASK_FOR_BAD_RESOLUTION, video.dontAskForBadResolution).
     Q_PROPERTY(bool askForBadResolution READ askForBadResolution WRITE setAskForBadResolution NOTIFY askForBadResolutionChanged)
     bool askForBadResolution() const { return !m_settings->boolean("video.dontAskForBadResolution"); }
     void setAskForBadResolution(bool on);
-    // F2: GLOBAL_OPEN_SELECT_LINES. The dialog's settings {find, with,
-    // matchCase, regex, field, dialogues, comments, mode, action} and its
-    // recent searches (legacy SELECT_LINES_OPTIONS and _RECENT_SELECTIONS,
-    // kept in the settings registry); selectLines runs on the editing target or on
-    // every open Document and returns the legacy message.
+    // {find, with, matchCase, regex, field, dialogues, comments, mode, action} and the
+    // recent searches.
     Q_INVOKABLE QVariantMap selectLinesSettings() const;
-    // The dialog opens (legacy creates SelectLines once and keeps it until
-    // the app closes or DestroyDialogs): selectLinesSettings, and from now
-    // on the dialog's options and recent searches survive "Set default".
+    // From now on the dialog's options and recent searches survive "Set default".
     Q_INVOKABLE QVariantMap openSelectLines();
-    // The dialog closes: its options are written (not the recent searches,
-    // which legacy writes only when a selection runs).
+    // Writes the options, not the recent searches (only a selection run writes those).
     Q_INVOKABLE void saveSelectLinesSettings(const QVariantMap &settings);
+    // Returns the message to show.
     Q_INVOKABLE QString selectLines(const QVariantMap &settings, bool allTabs);
-    // The "+" button: the chosen styles as the legacy anchored pattern.
+    // The chosen styles as an anchored pattern.
     Q_INVOKABLE QString selectStylesPattern(const QStringList &styles) const;
-    // F4: GLOBAL_MISSPELLS_REPLACER ("Fix minor errors (experimental)", the
-    // "Multireplacer" dialog). The rules are read from Rules.txt beside the
-    // INI file (the shipped rules without one) when first asked for, and
-    // written back when the application ends unless the list is empty
-    // (legacy: when the dialog is destroyed with the main window). Rows
-    // {description, find, replace, options, checked}.
+    // Rows {description, find, replace, options, checked}; read from Rules.txt beside the
+    // INI file (the shipped rules without one), written back at exit unless empty.
     Q_INVOKABLE QVariantList misspellRules();
-    // Add rule / Edit rule / Delete rule: refused with the legacy message in
-    // the log while the results window is shown.
+    // Refused while the results window is shown.
     Q_INVOKABLE bool addMisspellRule(const QVariantMap &rule);
     Q_INVOKABLE bool editMisspellRule(int index, const QVariantMap &rule);
     Q_INVOKABLE bool removeMisspellRule(int index);
     Q_INVOKABLE void checkMisspellRule(int index, bool checked);
     Q_INVOKABLE void setMisspellResultsShown(bool shown) { m_misspellResultsShown = shown; }
-    // "Find errors in current tab / in all tabs" with {lines (the "Which
-    // lines" choice 0-3), styles}: the results list, a header row {header:
-    // true, text: the file's path} before each Document's finds {header:
-    // false, find (its index), line, text, position, length}.
+    // scope: {lines (0-3), styles}. A {header: true, text: path} row before each
+    // Document's finds {header: false, find (its index), line, text, position, length}.
     Q_INVOKABLE QVariantList findMisspells(const QVariantMap &scope, bool allTabs);
-    // "Replace all errors in current tab / in all tabs": one step per Document.
+    // One step per Document.
     Q_INVOKABLE void replaceMisspells(const QVariantMap &scope, bool allTabs);
-    // The results window's Replace with the checked finds' indices.
     Q_INVOKABLE void replaceMisspellFinds(const QVariantList &finds);
-    // A double click on a find: its Document, Line and text in the editor.
     Q_INVOKABLE void showMisspellFind(int find);
-    // F3: spelling. SPELLCHECKER_ON, DICTIONARY_LANGUAGE and
-    // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK in the settings registry
-    // (editor.spellchecker, editor.dictionaryLanguage,
-    // editor.suggestionsOnDoubleClick); the Line editor keeps its own switch
-    // (TextEditor::SpellCheckerOnOff) that the menu and the Options dialog
-    // set. Turning spell checking on does not start a spell checker created
-    // while it was off (legacy SpellChecker::Get); choosing a language restarts it.
-    // SP1 (#474): the language is the primary one, chosen in Settings only.
     Q_PROPERTY(bool spellingOn READ spellingOn WRITE setSpellingOn NOTIFY spellingChanged)
     Q_PROPERTY(QString dictionaryLanguage READ dictionaryLanguage NOTIFY spellingChanged)
     Q_PROPERTY(bool suggestionsOnDoubleClick READ suggestionsOnDoubleClick WRITE setSuggestionsOnDoubleClick NOTIFY spellingChanged)
     bool spellingOn() const;
     void setSpellingOn(bool on);
     QString dictionaryLanguage() const;
-    // The primary language as Settings' OK applies it: DICTIONARY_LANGUAGE,
-    // SpellChecker::Destroy and ClearErrs, also for the language already chosen.
+    // Restarts the spell checker and clears its marks, also for the current language.
     void setDictionaryLanguage(const QString &symbol);
     bool suggestionsOnDoubleClick() const;
     void setSuggestionsOnDoubleClick(bool on);
-    // The Line editor's spell-checked field: 1 (Translated) in translation
-    // mode, else 0. Its marks as flat [start, end) pairs of the field's text
-    // (none while spelling is off); the misspelling at a field position
-    // {word, start, end, suggestions} (empty when none); a suggestion
-    // replacing it ("Correcting spelling errors in the text field"); and
-    // "Add word to dictionary".
+    // 1 (Translated) in translation mode, else 0.
     Q_INVOKABLE int spellingRole() const;
+    // Flat [start, end) pairs of the field's text; none while spelling is off.
     Q_INVOKABLE QVariantList editorSpellingMarks(int role);
+    // {word, start, end, suggestions}; empty when none.
     Q_INVOKABLE QVariantMap editorMisspellAt(int role, int position);
     Q_INVOKABLE bool replaceEditorMisspell(int role, int position, const QString &replacement);
     Q_INVOKABLE bool addEditorWord(const QString &word);
-    // GLOBAL_OPEN_SPELLCHECKER: the Spellchecker panel (PU6). Each call takes
-    // the panel's {ignoreComments, ignoreUpperCase} and returns its state
-    // {found, available, line, before, after, word, suggestions, replacement,
-    // changed, problem, unchanged, restarted}; found false is "No spelling
-    // errors were found", available false that no dictionary is loaded; line
-    // is the word's Line (the Grid's number), before and after the text
-    // around the word as the Line editor shows it. unchanged:
-    // the action did nothing (legacy returns without touching the window).
-    // restarted: the active Line or its text changed since the word was
-    // shown (the editor's draft commits when the window acts), so the walk
-    // started again from the active Line instead of acting.
+    // options: {ignoreComments, ignoreUpperCase}. Each returns {found, available, line,
+    // before, after, word, suggestions, replacement, changed, problem, unchanged,
+    // restarted}: found false: no errors; available false: no dictionary; line: the
+    // Grid's number; unchanged: the action did nothing; restarted: the Line changed since
+    // the word was shown, so the walk started again from it.
     Q_INVOKABLE QVariantMap openSpellChecker(const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerActivated(const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerReplace(const QString &replacement, const QVariantMap &options);
@@ -677,48 +468,32 @@ public:
     Q_INVOKABLE QVariantMap spellCheckerIgnoreAll(const QString &word, const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerAddWord(const QString &word, const QVariantMap &options);
     Q_INVOKABLE void closeSpellChecker();
-    // "Remove from dictionary": the user dictionary's lines, and removing the chosen ones.
     Q_INVOKABLE QStringList addedDictionaryWords() const;
     Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
-    // GR1 (#364): grammar check with Harper (harper-ls, a helper process
-    // started at the first check while grammar.language is not Off, and ended
-    // when it is set Off). The Line editor's spell-checked field is checked
-    // 300 ms after its text stops changing; its findings as flat [start, end)
-    // pairs of the field's text while that text is the one checked (none for a
-    // comment, or while grammar check is off), and the finding at a field
-    // position: {rule, group (its index), groupName, message, suggestions,
-    // word: a spelling finding (Harper checks spelling while Hunspell is off),
-    // text: the text it covers, start, end}.
     Q_PROPERTY(bool grammarOn READ grammarOn NOTIFY grammarChanged)
-    // The pinned harper-ls release (cmake/HikariHarper.cmake), for the
-    // Settings page's licence line.
+    // The pinned harper-ls release.
     Q_PROPERTY(QString grammarVersion READ grammarVersion CONSTANT)
     bool grammarOn() const;
     QString grammarVersion() const;
+    // Flat [start, end) pairs while the field's text is the one checked (none for a
+    // comment, or while grammar check is off).
     Q_INVOKABLE QVariantList editorGrammarMarks(int role);
+    // {rule, group (its index), groupName, message, suggestions, word (a spelling
+    // finding), text, start, end}.
     Q_INVOKABLE QVariantMap editorGrammarAt(int role, int position);
-    // A suggestion replaces the finding's text, the tags inside it kept in
-    // order, as one "Correcting grammar errors in the text field" step.
+    // Tags inside the finding's text are kept in order.
     Q_INVOKABLE bool replaceEditorGrammar(int role, int position, const QString &replacement);
-    // "Ignore this rule": the rule's group is switched off (the index, for the
-    // toast's Undo, which is setGrammarGroup(index, true)); -1 for a rule
-    // Harper doesn't list.
+    // The switched-off group's index (undo: setGrammarGroup(index, true)); -1 for a
+    // rule Harper doesn't list.
     Q_INVOKABLE int ignoreGrammarRule(const QString &rule);
     Q_INVOKABLE void setGrammarGroup(int group, bool on);
-    // Harper's rule groups for the Settings page: {id, name, description, rules}.
+    // {id, name, description, rules}.
     Q_INVOKABLE QVariantList grammarGroups() const;
-    // "Add to dictionary" on a Harper spelling finding: the user dictionary
-    // (UserDic.udic, and Hunspell's when loaded), which harper-ls reads too.
     Q_INVOKABLE bool addGrammarWord(const QString &word);
-    // The Spellchecker panel's Grammar filter: the whole file from the active
-    // Line, in the background (grammarWalkChanged as it goes), cancellable.
-    // Each call returns the panel's state {on, walking, done, checked, total,
-    // count, index, found, line, groupName, message, before, text, after,
-    // suggestions, replacement, word, problem}: index is the shown finding's
-    // (1-based) among count; found false with done is "No grammar findings".
-    // As in the Line editor, only dialogue Lines are checked (no comments,
-    // templates or code). grammarWalkIgnoreRule's state also has the group
-    // switched off (ignoredGroup), for the toast's Undo.
+    // Each returns {on, walking, done, checked, total, count, index (1-based among
+    // count), found, line, groupName, message, before, text, after, suggestions,
+    // replacement, word, problem}; found false with done: no findings.
+    // grammarWalkIgnoreRule's also has ignoredGroup. Only dialogue Lines are checked.
     Q_INVOKABLE QVariantMap startGrammarWalk();
     Q_INVOKABLE QVariantMap grammarWalkState();
     Q_INVOKABLE QVariantMap cancelGrammarWalk();
@@ -727,50 +502,32 @@ public:
     Q_INVOKABLE QVariantMap grammarWalkIgnoreRule();
     Q_INVOKABLE QVariantMap grammarWalkAddWord();
     Q_INVOKABLE void closeGrammarWalk();
-    // KA7: the Karaoke check window (Subtitles > Check karaoke,
-    // GLOBAL_CHECK_KARAOKE). The editing target's karaoke problems
-    // (core::checkKaraoke, with the editor's pending draft applied):
-    // {rows, unlisted}, a row for each of the first core::kListedProblems
-    // ({document and line (ids), number (the Grid's 1-based row), check,
-    // detail}) and how many more there are. showKaraokeLine selects a
-    // row's Line; false when the editing target is another Document now or
-    // no longer has the Line (Line ids are only unique within a Document),
-    // or when the editor refuses to leave its Line (a draft it cannot commit).
+    // {rows, unlisted}: a row for each of the first core::kListedProblems ({document,
+    // line (ids), number (the Grid's 1-based row), check, detail}), unlisted the rest.
     Q_INVOKABLE QVariantMap checkKaraoke() const;
+    // False when the target changed, lacks the Line, or the editor refuses to leave it.
     Q_INVOKABLE bool showKaraokeLine(qulonglong document, qulonglong line);
-    // F1: GLOBAL_SEARCH, GLOBAL_FIND_REPLACE and GLOBAL_FIND_NEXT. A tab of
-    // the dialog as {tab (0 Find, 1 Find and replace, 2 Find in subtitles),
-    // find, replace, styles, filters, folder, field, lines, matchCase, regex,
-    // startOfText, endOfText, includeComments, skipTags, skipText,
-    // subfolders, hiddenFolders} plus the recent lists {finds, replacements,
-    // filterList, paths}; legacy FIND_REPLACE_OPTIONS, FIND_REPLACE_STYLES
-    // and the recent lists live in the settings registry (find.options,
-    // find.styles, find.recentFinds, find.recentReplacements,
-    // findInSubs.recentFilters, findInSubs.recentPaths). openFindReplace is
-    // the tool's first opening (legacy creates FindReplaceDialog: the recent
-    // lists are read then and kept until it is destroyed); findReplaceSettings
-    // is a tab as it shows; switchFindReplaceTab saves the tab left
-    // (SaveValues) and gives the next one (SetValues).
+    // A tab: {tab (0 Find, 1 Find and replace, 2 Find in subtitles), find, replace,
+    // styles, filters, folder, field, lines, matchCase, regex, startOfText, endOfText,
+    // includeComments, skipTags, skipText, subfolders, hiddenFolders} plus the recent
+    // lists {finds, replacements, filterList, paths}. openFindReplace reads the recent
+    // lists; switchFindReplaceTab saves `settings` and returns tab `tab`.
     Q_INVOKABLE QVariantMap openFindReplace(int tab);
     Q_INVOKABLE QVariantMap findReplaceSettings(int tab) const;
     Q_INVOKABLE QVariantMap switchFindReplaceTab(const QVariantMap &settings, int tab);
     Q_INVOKABLE void saveFindReplaceSettings(const QVariantMap &settings);
-    // A button: "find", "findAllCurrent", "findAllTabs", "replace",
-    // "replaceAll", "replaceAllTabs", "findInFiles" or "replaceInFiles". The
-    // legacy messages and questions come as findQuestion; findFinished
-    // gives the tab afterwards (the styles may change) with the recent lists.
-    // Ignored while a question waits (findBusy).
+    // action: "find", "findAllCurrent", "findAllTabs", "replace", "replaceAll",
+    // "replaceAllTabs", "findInFiles" or "replaceInFiles"; findFinished ends it.
+    // Ignored while findBusy.
     Q_INVOKABLE void runFindReplace(const QString &action, const QVariantMap &settings);
     Q_INVOKABLE void findNext();
-    // The answer to question `id`: 0 Ok, 1 Yes, 2 No, 3 Cancel.
+    // answer: 0 Ok, 1 Yes, 2 No, 3 Cancel.
     Q_INVOKABLE void answerFindQuestion(int id, int answer);
     bool findBusy() const;
-    // The Search tool gains the focus (FindReplaceDialog::OnActivate): the text selected
-    // in the Line editor, or `find` as it is.
+    // The text selected in the Line editor, or find as it is.
     Q_INVOKABLE QString findReplaceActivated(const QString &find);
-    // A Lines radio button (TabWindow::Reset): the next search starts over.
     Q_INVOKABLE void resetFindReplace();
-    // The results dialog: rows {header, text, line, before, match, after, checked, visible}.
+    // Rows {header, text, line, before, match, after, checked, visible}.
     Q_INVOKABLE QVariantList findResults() const;
     Q_INVOKABLE bool findResultsShown() const;
     Q_INVOKABLE bool canReplaceFindResults() const;
@@ -779,17 +536,16 @@ public:
     Q_INVOKABLE void toggleFindGroup(int row);
     Q_INVOKABLE void showFindResult(int row);
     Q_INVOKABLE void replaceFindResults(const QString &replacement);
-    // Tests answer the questions themselves; backups go to this folder
-    // (default: ReplaceBackup beside the settings file, none without one).
     void setFindQuestionHandler(std::function<int(int kind, const QString &text)> handler);
+    // Default: ReplaceBackup beside the settings file, none without one.
     void setReplaceBackupFolder(const QString &folder) { m_replaceBackup = folder; }
-    // Legacy numOfProcessors for replacing in files (0: this machine's).
+    // 0: this machine's processor count.
     void setFindProcessorCount(int count) { m_findProcessors = count; }
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
-    // G9: Line groups (legacy trees). The id is the description Line's.
     Q_INVOKABLE bool makeGroups();
+    // description: the id of the group's description Line.
     Q_INVOKABLE bool toggleGroup(qulonglong description);
     Q_INVOKABLE bool renameGroup(qulonglong description, const QString &text);
     Q_INVOKABLE bool removeGroup(qulonglong description);
@@ -797,477 +553,321 @@ public:
     Q_INVOKABLE bool addLinesToGroup(qulonglong description);
     Q_INVOKABLE bool copyGroup(qulonglong description);
     Q_INVOKABLE QString groupTitle(qulonglong description) const;
-    // G6: Edit > Sort all lines / Sort selected lines by "start", "end",
-    // "style", "actor", "effect" or "layer"; text keys use the locale's collation.
+    // key: "start", "end", "style", "actor", "effect" or "layer"; text keys use
+    // the locale's collation.
     Q_INVOKABLE bool sortLines(const QString &key, bool selectedOnly);
-    // G2: the Grid clipboard (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE
-    // Ctrl+V, GRID_COPY_COLUMNS, GRID_PASTE_COLUMNS) through the system clipboard.
     Q_INVOKABLE bool copyLines();
     Q_INVOKABLE bool cutLines();
     Q_INVOKABLE bool pasteLines();
-    // The column choices for the editing target's format: {label, bit,
-    // checked}, checked as last chosen (COPY_COLLUMS_SELECTIONS /
-    // PASTE_COLUMNS_SELECTION); copy and paste offer different lists.
+    // {label, bit, checked (as last chosen)}; copy and paste offer different lists.
     Q_INVOKABLE QVariantList columnChoices(bool paste);
-    // PU2: how many Lines the editing target has selected (Copy / Paste columns says it);
-    // shownOnly: those the filter shows, the ones Paste columns changes.
+    // shownOnly: only those the filter shows.
     Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
-    // Copies or pastes the chosen columns (bits OR'ed) and remembers the choice.
+    // columns: bits OR'ed; the choice is remembered.
     Q_INVOKABLE bool copyColumns(int columns);
     Q_INVOKABLE bool pasteColumns(int columns);
-    // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (grid.changeActiveOnSelection, default true).
     void setChangeActiveOnSelection(bool on) { m_settings->set("grid.changeActiveOnSelection", on); }
 
-    // O1: GLOBAL_SETTINGS, the Options dialog (legacy OptionsDialog at
-    // 20d647c4) over the settings registry. The dialog reads each page's
-    // values as legacy shows them and writes the changed ones on OK/Apply.
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
     ui::SettingsStore *settingsStore() const { return m_settings.get(); }
-    // E4: the subtitles the video overlay was given last (live editing shows the draft).
+    // The subtitles the video overlay was given last (the draft while editing live).
     const std::vector<std::byte> &videoScript() const { return m_videoScript; }
-    // A1: the options the audio box's next open reads.
     application::AudioCacheSettings audioSettings() const { return m_audioSettings(); }
-    // Opening the dialog (application::openOptionsDialog): {values: the
-    // controls' state by setting id, languages, dictionaries, catalogs,
-    // styles: the choices' entries, warnings: the legacy "does not exist"
-    // messages}. Opening fixes an FFMS2 seeking value outside 0-3 to 2 at
-    // once and loads the conversion catalog, as legacy does.
+    // {values (by setting id), languages, dictionaries, catalogs, styles, warnings}.
+    // Opening fixes an FFMS2 seeking value outside 0-3 to 2 and loads the conversion
+    // catalog.
     Q_INVOKABLE QVariantMap openSettingsDialog();
-    // OK/Apply (legacy SetOptions): each bound control whose value differs
-    // from the stored one is written; nothing else. `resetAll`: "Reset all
-    // settings…" was chosen since the last OK or Apply, and every setting
-    // but the appearance, the hotkeys and the recent files goes back to its
-    // default first (legacy ResetDefault, PF1-staged-reset).
+    // Writes only controls whose value differs from the stored one. resetAll: every
+    // setting but the appearance, hotkeys and recent files goes back to its default first.
     Q_INVOKABLE void applySettings(const QVariantMap &values, bool resetAll = false);
-    // FR1 (#363): Getting started. Whether it opens by itself now: the first
-    // start (no settings file) marks it due, and Finish, Skip setup, Close
-    // and Esc mark it done (workspace.gettingStarted).
+    // Due after the first start; Finish, Skip setup, Close and Esc mark it done.
     Q_INVOKABLE bool gettingStartedDue() const;
-    // Opening it: what openSettingsDialog() gives (the pages are a few of the
-    // Settings window's controls, and Finish applies them as OK does), with
-    // `legacy`: whether a legacy installation was found, for the Import page.
+    // As openSettingsDialog(), plus legacy: whether a HikariSub legacy installation was
+    // found.
     Q_INVOKABLE QVariantMap openGettingStarted();
-    // The pages' values with the settings the import's chosen rows would
-    // leave (the live ones otherwise); nothing is written.
+    // The values as the import's chosen rows would leave them; nothing is written.
     Q_INVOKABLE QVariantMap gettingStartedImported(const QVariantMap &values);
-    // The interface in the language at `index` of the opening's list while
-    // the window shows it, and back to the stored one; neither is saved.
+    // index: into the opening's languages; neither call saves anything.
     Q_INVOKABLE void previewLanguage(int index);
     Q_INVOKABLE void endLanguagePreview();
-    // Finish: with `import`, first the import's chosen rows but the settings
-    // the pages set, in effect at the next start as an import is; then every
-    // page's value, as OK writes the Settings window's (a live edit, so it
-    // wins over the import). False, with nothing written, when the import
-    // cannot be staged (the importer's status says why).
+    // import: the chosen rows first (in effect at the next start), then the pages'
+    // values over them. False, with nothing written, when the import cannot be staged.
     Q_INVOKABLE bool finishGettingStarted(const QVariantMap &values, bool import);
-    // Skip setup, Close and Esc: the defaults stay, nothing is imported.
     Q_INVOKABLE void skipGettingStarted();
-    // The Editing page's example: the misspelt words of `text` (pairs of
-    // [start, end)) with the dictionary at `dictionary` of the opening's
-    // list, none while `on` is off.
+    // [start, end) pairs; dictionary: an index into the opening's list; none while on
+    // is false.
     Q_INVOKABLE QVariantList sampleSpellingMarks(const QString &text, bool on, int dictionary);
-    // The Video and audio page's example: a frame with a subtitle drawn by
-    // the renderer at `renderer` of the opening's list, as a PNG data URL.
+    // renderer: an index into the opening's list. Returns a PNG data URL.
     Q_INVOKABLE QString sampleFrame(int renderer, int width, int height);
-    // A short tone through the device at `device` of the opening's list;
-    // the editor's output goes back to its own device after it.
+    // device: an index into the opening's list.
     Q_INVOKABLE void playTestSound(int device);
-    // "Reset all settings…": the controls' state at the defaults, as legacy
-    // ResetDefault refreshes them (its defects included); nothing is
-    // stored until OK or Apply (PF1-staged-reset).
+    // The controls' state at the defaults; nothing is stored until OK or Apply.
     Q_INVOKABLE QVariantMap resetSettings(const QVariantMap &values);
-    // "Reset page": `values` with the page's controls at their defaults
-    // (page: an OptionsPage id, "general", "appearance", ...); staged too.
+    // page: an OptionsPage id ("general", "appearance", ...); stored only at OK or Apply.
     Q_INVOKABLE QVariantMap resetSettingsPage(const QVariantMap &values, const QString &page);
-    // The conversion catalog's Styles as the dialog lists them (after a
-    // Reset page on Conversion loaded the default catalog).
+    // The conversion catalog's Styles.
     Q_INVOKABLE QStringList settingsStyles() const;
-    // OnChangeCatalog: loads the catalog and returns {values, styles}.
+    // Loads the catalog; returns {values, styles}.
     Q_INVOKABLE QVariantMap chooseSettingsCatalog(const QVariantMap &values, int index);
-    // wxDirDialog::GetPath: the chosen folder with native separators.
+    // Native separators.
     Q_INVOKABLE QString settingsFolderPath(const QUrl &url) const;
 
-    // A1: the Audio menu. GLOBAL_AUDIO_FROM_VIDEO opens the video's file
-    // again as audio; GLOBAL_RECENT_AUDIO lists {path, label} rows (missing
-    // local files pruned first, as legacy AppendRecent); the GLOBAL_OPEN_AUDIO
-    // dialog starts in the video's folder, else the latest recent video's (V3).
     Q_INVOKABLE void openAudioFromVideo();
+    // {path, label} rows; missing local files are pruned first.
     Q_INVOKABLE QVariantList recentAudio();
+    // The video's folder, else the latest recent video's.
     Q_INVOKABLE QUrl audioDialogFolder() const;
-    // V3 (application_video.cpp): the Video menu's recent lists
-    // (GLOBAL_RECENT_VIDEO, GLOBAL_RECENT_KEYFRAMES: {path, label} rows,
-    // missing local files pruned first as legacy AppendRecent), keyframes
-    // opened from the dialog or the list (SetRecent(3) either way), the
-    // dialogs' folders (legacy OnMenuSelected), the dummy video
-    // (GLOBAL_OPEN_DUMMY_VIDEO; the error text to log, else empty) and
-    // VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE.
+    // {path, label} rows; missing local files are pruned first.
     Q_INVOKABLE QVariantList recentVideos();
     Q_INVOKABLE QVariantList recentKeyframes();
     Q_INVOKABLE QString openKeyframesFile(const QString &path);
     Q_INVOKABLE QUrl videoDialogFolder() const;
     Q_INVOKABLE QUrl keyframesDialogFolder() const;
     Q_INVOKABLE QVariantMap dummyVideoDefaults() const;
+    // The error to log, else empty.
     Q_INVOKABLE QString openDummyVideo(const QVariantMap &values);
     Q_INVOKABLE bool nextVideoFile(bool next);
-    // PU4 (#306): the dummy video's frames for a typed rate and duration
-    // (-1: a rate it refuses), and the file name the previous / next file
-    // would open, asked before the walk ("" when it would open none).
+    // -1: a rate it refuses.
     Q_INVOKABLE int dummyVideoFrames(const QString &fps, int durationMs) const;
+    // "" when it would open none.
     Q_INVOKABLE QString nextVideoFileName(bool next) const;
-    // The file itself ("" when the walk would open none), and the walk made
-    // only while it still leads to `expected` (the question's answer, when
-    // another video opened while it was asked: false, nothing done).
+    // "" when the walk would open none.
     Q_INVOKABLE QString nextVideoFilePath(bool next) const;
+    // Walks only while it still leads to expected; else false, nothing done.
     Q_INVOKABLE bool nextVideoFileIfStill(bool next, const QString &expected);
-    // A3: GLOBAL_SET_AUDIO_FROM_VIDEO and GLOBAL_SET_AUDIO_MARK_FROM_VIDEO (the
-    // Video menu, enabled while the audio box exists): the box centred on the
-    // video's time (VideoBox::Tell, 0 without video), with the mark there too.
+    // Centres the audio box on the video's time (0 without video); mark: the mark too.
     Q_INVOKABLE void setAudioFromVideo(bool mark);
-    // V6 (application_video_timing.cpp): GLOBAL_SET_START_TIME /
-    // GLOBAL_SET_END_TIME ("Insert start/end time from video"),
-    // GLOBAL_SELECT_FROM_VIDEO, GRID_SELECT_VISIBLE_LINES and
-    // GLOBAL_SNAP_WITH_START / _END; each false when legacy does nothing.
     Q_INVOKABLE bool setTimeFromVideo(bool end);
     Q_INVOKABLE bool selectLineFromVideo();
-    // V5: leaving fullscreen with a double click on the video selects the
-    // Line shown at the video's time when GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN
-    // is on and the Document has a file, after the Line editor's change is
-    // sent (VideoBox.cpp:555-559: Send(EDITBOX_LINE_EDITION, false), then
-    // SelVideoLine).
+    // Commits the Line editor's change first; acts only with
+    // GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN on and a Document with a file.
     Q_INVOKABLE bool selectVisibleLineAfterFullScreen();
-    // V5: the fullscreen context menu's "Open editor" (legacy GLOBAL_EDITOR
-    // in fullscreen, VideoBox::OpenEditor, VideoBox.cpp:1116-1130): pauses,
-    // selects the Line shown at the video's time when the Document has a
-    // file, and leaves fullscreen (WS3: no editor switch to turn on).
+    // Pauses, selects the Line at the video's time (a Document with a file) and leaves
+    // fullscreen.
     Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
-    // EDITBOX_COMMIT_GO_NEXT_LINE (Enter): the editor's commit and advance,
-    // which legacy's SubsGrid::NextLine follows with the play-after choice.
     Q_INVOKABLE bool commitAndAdvance();
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
     ui::TemplateEditorController &templateEditor() { return *m_templateEditor; }
     ui::VideoController &video() { return *m_video; }
-    backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; } // tests: general playback (V3), its volume (V4)
-    // W1: the player that plays video: the general player, or on Windows the
-    // DirectShow adapter when video.playbackPlayer is 1 (chosen there only,
-    // never as a fallback; other platforms ignore the setting).
+    backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; }
+    // The general player, or on Windows DirectShow when video.playbackPlayer is 1 (never
+    // a fallback).
     application::GeneralPlayerPort &activePlayer() { return *m_activePlayer; }
     bool directShowPlayback() const;
 #ifdef _WIN32
     backends::DirectShowPlayer *directShowPlayer() { return m_directShow.get(); } // tests
 #endif
-    // W1: legacy's Filters menu (VideoBox::ContextMenu, DShowPlayer::
-    // EnumFilters): while DirectShow plays the loaded video, its graph's
-    // filters in order, each {name, enabled}, enabled when it has property
-    // pages; empty otherwise.
+    // While DirectShow plays: its graph's filters in order, {name, enabled (has property
+    // pages)}; empty otherwise.
     Q_INVOKABLE QVariantList playerFilters() const;
-    // W1: legacy FilterConfig: the named filter's property pages in a modal
-    // frame owned by `item`'s window, at (x, y) in `item`.
+    // Modal, owned by item's window, at (x, y) in item.
     Q_INVOKABLE bool showPlayerFilterProperties(const QString &name, QObject *item, qreal x, qreal y);
     ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
-    // O3: the "Import legacy settings" window.
     SettingsImportController &settingsImport() { return *m_settingsImport; }
-    // O2: the shortcut editor and the bindings in effect.
     HotkeysController &hotkeys() { return *m_hotkeys; }
     UpdateChecker &updates() { return *m_updates; }
     Analytics &analytics() { return *m_analytics; }
     CrashReports &crashReports() { return *m_crashReports; }
-    WhatsNew &whatsNew() { return *m_whatsNew; } // SH3
+    WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
-    KanjiTimerController &kanjiTimer() { return *m_kanjiTimer; } // KA3
-    // Y8: the font collector (GLOBAL_OPEN_FONT_COLLECTOR).
+    KanjiTimerController &kanjiTimer() { return *m_kanjiTimer; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
-    FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; } // Y6
-    // Y9: GRID_SUBS_FROM_MKV (the font collector reads attachments through its own helper).
+    FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
-    backends::SubtitleRendererSelection &subtitleRenderer() { return m_renderer; } // W2
-    // W2: a renderer as the Video page's choice shows it: its name, and for
-    // VSFilterMod a note that it is slow and only for its own tags.
+    backends::SubtitleRendererSelection &subtitleRenderer() { return m_renderer; }
     static QString subtitleRendererLabel(const std::string &name);
-    // H2: an entry of Settings > Audio's output device choice as shown.
     static QString outputDeviceLabel(const application::OutputDeviceChoice &choice);
-    // tests: the route both audio paths follow now
     application::OutputRoute audioRoute() const { return m_audioRouting->route(); }
-    // AV1 (#238, application_audio.cpp): the audio panel's output menu, the
-    // entries of Settings > Audio's device choice: {label, checked, id, name}
-    // each, the stored choice checked. Choosing one (its id and name, as the
-    // menu showed it) stores it as the dialog's OK does.
+    // {label, checked, id, name} entries, the stored choice checked; choosing one stores
+    // it as Settings' OK does.
     Q_INVOKABLE QVariantList audioOutputMenu() const;
     Q_INVOKABLE void chooseAudioOutput(const QString &id, const QString &name);
-    // The device audio plays through now, as the speaker button's tooltip names it.
     Q_PROPERTY(QString audioOutputName READ audioOutputName NOTIFY audioOutputChanged)
     QString audioOutputName() const;
     backends::AudioBoxPlayer &audioPlayer() { return *m_audioPlayer; }
     ui::LogController &log() { return *m_log; }
-    // O5: the interface language (PROGRAM_LANGUAGE, switched live) and
-    // aegisub.gettext's catalog.
     Localisation &localisation() { return *m_localisation; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
-    // E1/O1: the Line editor's colour picker opens for the editing target
-    // (legacy DialogColorPicker::Get(EditBox of that tab)).
     Q_INVOKABLE void colourPickerOpened();
     ui::WorkspaceLayoutController &workspaceLayout() { return *m_workspaceLayout; }
     ui::ShiftTimesController &shiftTimesSettings() { return *m_shiftTimes; }
     ui::GridFilterController &gridFilter() { return *m_gridFilter; }
-    // T1: the Video panel's visual tools.
     ui::VisualToolsController &visualTools() { return *m_visualTools; }
     ui::VideoViewController &videoView() { return *m_videoView; }
-    // P10: the status bar's video and subtitle fields.
     ui::StatusBarController &statusBar() { return *m_statusBar; }
-    // V5: video fullscreen (VideoBox::SetFullscreen) and its monitor choice.
     ui::VideoFullscreenController &videoFullscreen() { return *m_videoFullscreen; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
-    // Properties for Main.qml.
     QVariantMap qmlProperties();
-    // Tests: waits for running writes and delivers their results.
+    // Waits for running writes and delivers their results.
     void waitForWrites();
 
-    // P6: tabs and session restore (legacy Notebook, HikariSubFrame at
-    // 20d647c4). The tabs are the Workspace's Documents but the protected
-    // reference, in order; the editing target is the active tab. Each tab
-    // keeps its own media (video and its position, its own audio file,
-    // keyframes) and Grid scroll, shown again when it becomes active.
     // Rows {id, label ("<step>*name" when modified, at most TAB_TEXT_MAX_CHARS
-    // characters), title, current, tip (subtitles and video paths)}.
+    // characters), title, current, tip}; the protected reference is not a tab.
     Q_PROPERTY(QVariantList tabs READ tabs NOTIFY tabsChanged)
     Q_PROPERTY(int currentTab READ currentTab NOTIFY tabsChanged)
-    // SH2: no Document is open, neither a tab nor a protected reference
-    // (whose tray needs the panels): the Home page shows.
     Q_PROPERTY(bool home READ home NOTIFY tabsChanged)
-    // LAST_SESSION_CONFIG (session.restore): 0 nothing, 1 ask, 2 load at start.
+    // 0 nothing, 1 ask, 2 load at start.
     Q_PROPERTY(int sessionRestore READ sessionRestore WRITE setSessionRestore NOTIFY sessionRestoreChanged)
-    // Session entries a restore could not resolve (L58 "unresolved restores
-    // stay visible"): {row, tab, title, kind ("subtitles", "video", "audio",
-    // "keyframes"), path}.
+    // {row, tab, title, kind ("subtitles", "video", "audio", "keyframes"), path}.
     Q_PROPERTY(QVariantList unresolvedRestores READ unresolvedRestores NOTIFY unresolvedRestoresChanged)
     QVariantList tabs() const;
     bool home() const { return m_workspace.tabs().empty() && !m_workspace.reference(); }
     int currentTab() const;
-    // PU6: the editing target's id (a tab row's `id`), 0 without one. A
-    // document window remembers it at its opening and applies to that
-    // Document only (tabsChanged tells when it changes).
+    // A tab row's id; 0 without one.
     Q_INVOKABLE qulonglong editingDocument() const;
     int sessionRestore() const;
     void setSessionRestore(int value);
     QVariantList unresolvedRestores() const;
-    // GLOBAL_ADD_PAGE (Ctrl+T): a new Untitled tab after the last, shown.
-    // The tab bar's "+" (fromTabBar) also writes the session, as legacy's did.
+    // fromTabBar also writes the session.
     Q_INVOKABLE void addPage(bool fromTabBar = false);
-    // GLOBAL_NEXT_TAB (+1, Ctrl+PgDown) / GLOBAL_PREVIOUS_TAB (-1, Ctrl+PgUp),
-    // wrapping; nothing with fewer than two tabs.
+    // step: +1 or -1, wrapping; nothing with fewer than two tabs.
     Q_INVOKABLE void changeTab(int step);
-    // A click on a tab.
     Q_INVOKABLE void selectTab(int index);
-    // A middle click on a tab (legacy DeletePage of that tab): its review
-    // rows as reviewClose's; with none, finishClose() closes it.
+    // Rows as reviewClose's; with none, finishClose() closes the tab.
     Q_INVOKABLE QVariantList reviewCloseTab(int index);
-    // GLOBAL_LOAD_LAST_SESSION (empty file) and GLOBAL_LOAD_EXTERNAL_SESSION
-    // (a .hksession or a legacy .kls file): the session is read and its subtitles staged
-    // (L58-staged-replacement), then every open Document's unsaved work is
-    // reviewed as for Quit (P6-session-review). Returns {ok, problem, rows}; with ok and no rows,
-    // finishClose() replaces the open tabs with the session's. CF3: a file
-    // naming files on other computers (UNC paths) is not looked into until
-    // the user allows them: until every one is in `allowedHosts` (the list
-    // the prompt named, so a file changed meanwhile asks again), {ok: false,
-    // network: [the computers]}.
+    // Empty file: the last session. Returns {ok, problem, rows}, rows as reviewClose's
+    // for every open Document; ok without rows: finishClose() replaces the tabs. UNC
+    // hosts not all in allowedHosts: {ok: false, network: [hosts]}.
     Q_INVOKABLE QVariantMap reviewSession(const QUrl &file = {}, const QStringList &allowedHosts = {});
-    // GLOBAL_SAVE_EXTERNAL_SESSION: "readonly" (legacy asks again), "failed" or "".
-    // CF3: written as a .hksession; a name ending in .kls takes that suffix,
-    // and "exists" when that file is there and not `replace`.
+    // "readonly", "failed", "exists" (a .kls name's file is there and not replace)
+    // or "". Written as .hksession unless the name ends in .kls.
     Q_INVOKABLE QString saveSessionTo(const QUrl &file, bool replace = false);
-    // Where the session dialogs start (legacy Options.configPath).
     Q_INVOKABLE QUrl sessionFolder() const;
-    // At startup (legacy hikarisubApp::OnInit): "load", "ask" or "crash" (the
-    // last session was not written as the program closed), or "".
+    // "load", "ask", "crash" (the last session was not written at close) or "".
     Q_INVOKABLE QString startupSession() const;
-    // The shell has carried out what startupSession() asked (loaded the
-    // session, or the prompts were answered).
     Q_INVOKABLE void startupSessionDecided() { m_startupSessionPending = false; }
-    // SH2: what Load last session would open, for the Home page: {names (each
-    // Document's file name, or its video's for a tab without subtitles)}; no
-    // names when the last session has no Document with a file.
+    // {names: each Document's file name, or its video's for a tab without subtitles}.
     Q_INVOKABLE QVariantMap lastSessionSummary() const;
     Q_INVOKABLE bool lastSessionCrashed() const;
-    // PU1-startup-cards: what the start offers instead of legacy's prompts,
-    // as a Home card, or as the startup bar when files were opened from the
-    // command line (legacy asked nothing then): "crash" (the last session did
-    // not end with "[Close session]", or autosaved work was left), "ask"
-    // (On start: Ask), or "". It asks nothing and holds nothing back.
+    // "crash" (the last session did not end with "[Close session]", or autosaved work
+    // was left), "ask" (On start: Ask) or "".
     Q_INVOKABLE QString startupOffer() const;
-    // The offer is about the last session as it was when this program
-    // started (a start with files writes the session before the window
-    // shows): its Documents' names (as lastSessionSummary's), and Restore's
-    // review (as reviewSession's).
+    // About the last session as it was at start: names as lastSessionSummary's, the
+    // review as reviewSession's.
     Q_INVOKABLE QStringList startupOfferNames() const;
     Q_INVOKABLE QVariantMap reviewStartupSession();
     Q_INVOKABLE bool startedWithPaths() const { return m_startedWithPaths; }
     void setStartedWithPaths(bool paths) { m_startedWithPaths = paths; }
-    // The unresolved entry `row`: try again, choose another file, or forget it.
+    // row: an unresolvedRestores row.
     Q_INVOKABLE bool retryRestore(int row);
     Q_INVOKABLE bool relinkRestore(int row, const QUrl &file);
     Q_INVOKABLE void removeRestore(int row);
-    // The Grid's first shown row for the active tab (legacy Scroll). Ignored
-    // from a tab change (tabShown) until the Grid has restored that tab's
-    // scroll and called scrollRestored(), so a model reset's transient 0
-    // never overwrites it.
+    // Ignored after tabShown until scrollRestored(), so a model reset's transient 0
+    // never overwrites the tab's scroll.
     Q_INVOKABLE void setTargetScroll(int row);
     Q_INVOKABLE void scrollRestored() { m_scrollRestoring = false; }
-    // The program closes: the session is written with "[Close session]".
+    // Writes the session with "[Close session]".
     Q_INVOKABLE void endSession();
 
-    // P9: the rest of the tab menu (legacy Notebook::ContextMenu,
-    // Notebook.cpp:882-969) on tab `index` (-1: not on a tab): {tabs:
-    // [{title, current}], save (Save is enabled: the tab is modified),
-    // folders: [{kind: "subtitles"|"video"|"audio"|"keyframes", path}] (the
-    // tab's files that have a path, in that order)}.
+    // index -1: not on a tab. {tabs: [{title, current}], save (the tab is modified),
+    // folders: [{kind: "subtitles"|"video"|"audio"|"keyframes", path}]}.
     Q_INVOKABLE QVariantMap tabMenu(int index);
-    // MENU_CHOOSE + g (Notebook::OnTabSel): tab `index` trades places with
-    // the first visible tab, `firstVisible`, and is shown there.
+    // Tab index trades places with the first visible tab and is shown there.
     Q_INVOKABLE void chooseTab(int index, int firstVisible);
-    // A tab dragged over another (Notebook::OnMouseEvent): the two trade
-    // places and the dragged tab is shown; endTabDrag writes the session once
-    // a drag swapped tabs (legacy tabsWasSwapped).
+    // The two tabs trade places; endTabDrag writes the session once a drag swapped tabs.
     Q_INVOKABLE bool dragTab(int from, int to);
     Q_INVOKABLE void endTabDrag();
-    // Document `id` of tab `index` (0: none).
+    // 0: none.
     Q_INVOKABLE qulonglong tabDocument(int index) const;
-    // MENU_CHOOSE - 1, "Close all tabs" (after legacy's "All tabs will be
-    // closed, continue?"): the close review's rows for every tab; with none,
-    // finishClose() closes them all and the Home page shows (SH2).
+    // Rows as reviewClose's for every tab; with none, finishClose() closes them all.
     Q_INVOKABLE QVariantList reviewCloseAll();
-    // P9: GLOBAL_OPEN_AUTO_SAVE's legacy autosaves (the Subs folder, read
-    // only): [{name, versions: [{written, time (ISO), file}]}], and the Files list's
-    // filter (AutoSaveOpen::FindFiles: the names to show, by index).
+    // HikariSub legacy's autosaves, read only: [{name, versions: [{written, time (ISO),
+    // file}]}]; filterLegacyAutosaves returns the indices of the names to show.
     Q_INVOKABLE QVariantList legacyAutosaves();
     Q_INVOKABLE QVariantList filterLegacyAutosaves(const QVariantList &files, const QString &query, bool allWords) const;
-    // Opens a legacy autosave as a new unsaved copy (L58-recovery-copy); the
-    // file is not changed.
+    // Opens a new unsaved copy; the file is not changed.
     Q_INVOKABLE bool openLegacyAutosave(const QString &file);
 
-    // R1: the tab menu's "Subtitle comparison" (legacy Notebook::ContextMenu,
-    // its ID_CHECK_EVENT handler and SubsGrid::SubsComparison at 20d647c4).
-    // The menu opened on tab `index` (-1: not on a tab): {enabled,
-    // canCompare, active, times, visible, selections, selectionsEnabled,
-    // styles, chosenStyles, styleItems: [{name, checked}]}. Opening it adds
-    // the checked styles to the chosen ones again, as legacy's did.
+    // index -1: not on a tab. {enabled, canCompare, active, times, visible, selections,
+    // selectionsEnabled, styles, chosenStyles, styleItems: [{name, checked}]}. Opening
+    // adds the checked styles to the chosen ones again.
     Q_INVOKABLE QVariantMap openComparisonMenu(int index);
-    // MENU_COMPARE + 1..4: flips SUBS_COMPARISON_TYPE's bit; the new value.
+    // Flips SUBS_COMPARISON_TYPE's bit; returns the new value.
     Q_INVOKABLE int toggleComparisonBit(int bit);
-    // A style of "Compare by selected styles" checked or unchecked; whether
-    // "Compare by selected styles" is now shown checked.
+    // Whether "Compare by selected styles" is now checked.
     Q_INVOKABLE bool toggleComparisonStyle(const QString &name, bool checked);
-    // MENU_COMPARE: the editing target (CG1) with tab `index` (CG2).
     Q_INVOKABLE bool compareWithTab(int index);
-    // R1-compare-reference: the reference tray's "Compare with reference",
-    // the editing target (CG1) with the Protected reference (CG2), also one
-    // opened as no tab (openReference), which the tab menu cannot reach.
+    // Also for a reference opened as no tab (openReference).
     Q_INVOKABLE bool compareWithReference();
-    // MENU_COMPARE - 1, "Turn off comparison".
     Q_INVOKABLE void turnOffComparison();
     const application::SubtitleComparison &comparison() const { return m_comparison; }
 
-    // R2: reference navigation and the subtitles preview (legacy
-    // SubsGridPreview and SubsGrid::OnShowPreview / ShowSecondComparedLine at
-    // 20d647c4), in application_reference.cpp. GRID_SHOW_PREVIEW ("Show
-    // subtitles preview") is enabled with more than one tab and no reference
-    // shown (SubsGrid.cpp:277, 884-887).
+    // More than one tab and no reference shown.
     Q_INVOKABLE bool canShowPreview() const;
     Q_INVOKABLE bool showPreview();
     // One-way linked matching from the editing target's active Line.
     Q_INVOKABLE void setReferenceLinked(bool linked);
-    // The previous (-1) or next (+1) linked candidate.
+    // delta: -1 the previous, +1 the next linked candidate.
     Q_INVOKABLE bool stepReferenceMatch(int delta);
-    // In the no-match state: legacy's nearest Line, on request.
+    // In the no-match state.
     Q_INVOKABLE bool showNearestReferenceLine();
-    // The tray's close mark (legacy DestroyPreview): no reference is shown;
-    // its Document stays open as a tab.
+    // The reference's Document stays open as a tab.
     Q_INVOKABLE void closeReference();
-    // The tray's own navigation: the reference's selection, never its content.
+    // The reference's selection only, never its content.
     Q_INVOKABLE void selectReferenceLine(qulonglong id);
     Q_INVOKABLE void clickReferenceLine(qulonglong id, int modifiers);
     Q_INVOKABLE void extendReferenceSelection(int rows);
     Q_INVOKABLE void dragReferenceSelection(qulonglong id);
     Q_INVOKABLE void selectAllReferenceLines();
-    // PREVIEW_COPY (Ctrl+C in the preview): the reference's selected Lines.
     Q_INVOKABLE bool copyReferenceLines();
-    // A content change asked of the reference (PREVIEW_PASTE's Ctrl+V): refused.
     Q_INVOKABLE void refuseReferenceChange();
-    // The tray's menu (SubsGridPreview::ContextMenu): every occurrence of the
-    // editing Line in each other Document, [{text, checked}]; then one of them.
+    // Every occurrence of the editing Line in each other Document: [{text, checked}].
     Q_INVOKABLE QVariantList referenceOccurrences();
     Q_INVOKABLE bool chooseReferenceOccurrence(int index);
-    // While comparing with the linked reference: the reference row paired
-    // with the editing Grid's shown row `row` (legacy's synchronized scroll,
-    // ShowSecondComparedLine with setViaScroll), or -1.
+    // The reference row paired with the editing Grid's shown row, or -1.
     Q_INVOKABLE int comparedReferenceRow(int row) const;
     QString lastSessionPath() const;
-    // Writes last-session.json (legacy SaveLastSession), or the .hksession `path`.
+    // Writes last-session.json, or the .hksession path.
     bool saveLastSession(bool closing = false, const QString &path = {});
 signals:
     void tabsChanged();
     void sessionRestoreChanged();
     void unresolvedRestoresChanged();
-    // A tab became active: its Grid scroll to show again.
+    // scroll: the tab's Grid scroll to show again.
     void tabShown(int scroll);
-    // A session finished loading with `unresolved` entries left.
     void sessionRestored(int unresolved);
-    // A write of the Document finished written (PU1-disk-change-bar: a Save
-    // As ends the bar only then).
     void documentWritten(qulonglong document);
-    // A write of a Document that published nothing (failed or cancelled).
+    // Also when cancelled: the write published nothing.
     void documentWriteFailed(qulonglong document);
-    // WS5: a later start handed files over, about to open (PU1-startup-cards:
-    // they end the startup offer).
+    // A later start handed files over, about to open.
     void filesForwarded();
 
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
-    // The log's message for a file that could not be staged (KA6: with the
-    // line at fault in a lyrics file).
     static QString openProblem(const QString &path, const application::StageFailure &failure);
-    // SH2: an open stamps the last-opened time; a save keeps the file's time
-    // (a file first saved there, as by Save As, is stamped then).
     void rememberRecent(const std::string &path, bool opened = true);
     void storeRecent();
-    // The editing target's subtitles over the video (its draft, the visual
-    // tool's preview); whether the Document
-    // changed since the video last showed it (V6).
+    // MUST KILL: returns whether the Document changed since the video last showed it.
     bool showVideoSubtitles();
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;
-    // The Lines "some actions" walk: the shown ones of `session`, or every
-    // Line with "Ignore filtering in some actions" (legacy ignoreFiltered).
     application::LineVisible actionLines(const application::EditSession &session) const;
     void rememberColumns(bool paste, int columns);
-    // R2-reference-tray: the reference's session refuses every write while it
-    // is the reference (a reloaded session starts unprotected).
     void protectReference();
     void refreshViews();
-    // The Video panel follows the editing target: its association when the
-    // target changes, its committed content and its active Line.
     void refreshVideo();
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
     void newDocument();
-    // P9
     void setupTabMenu(const Options &options);
     std::function<void(const QString &)> m_revealInFolder;
     QString m_legacyAutosaveDir;
-    bool m_tabsSwapped = false; // legacy tabsWasSwapped
+    bool m_tabsSwapped = false;
     struct PendingOffer {
         application::AssociationOffer offer;
-        std::uint64_t batch = 0; // the opening it belongs to (legacy ResetPrompt)
+        std::uint64_t batch = 0;
     };
-    std::map<std::uint64_t, PendingOffer> m_offers; // by Document
+    std::map<std::uint64_t, PendingOffer> m_offers;
     std::uint64_t m_openBatch = 0;
     void offerAssociations(application::DocumentId document);
     void showAssociationOffer();
@@ -1275,16 +875,16 @@ private:
     application::TabMediaPaths tabMediaPaths(application::DocumentId document) const;
     QString tabVideo(application::DocumentId document) const;
     std::optional<application::DocumentId> documentOf(qulonglong id) const;
-    QString m_videoAfterOpen; // reviewOpenWithVideo: the video once the subtitles loaded
-    bool m_videoAfterOpenFullscreen = false; // V5: and fullscreen once shown
-    bool m_openFromVideo = false; // the open is a video's same-named subtitles: no question
+    QString m_videoAfterOpen;
+    bool m_videoAfterOpenFullscreen = false;
+    bool m_openFromVideo = false;
     void closeAllTabs();
     struct PendingFiles {
         std::vector<application::StagedOpen> subtitles;
         QStringList subtitlePaths;
         QStringList videos;
-        int count = -1; // the tabs to make (legacy maxx, cut at a file that failed)
-        bool reuseFirst = false; // the first goes into the editing target
+        int count = -1;
+        bool reuseFirst = false;
     };
     std::optional<PendingFiles> m_pendingFiles;
     void applyFiles(PendingFiles files, bool skipFirst);
@@ -1293,7 +893,7 @@ private:
     bool targetUntouched() const;
     application::GridSelection gridSelection() const;
     bool applySelection(application::Selection next);
-    void selectFoldedRunsWhole(); // KP1
+    void selectFoldedRunsWhole();
 
     std::unique_ptr<application::FileReadPort> m_reader;
     std::unique_ptr<backends::PlatformFilePort> m_port;
@@ -1304,75 +904,58 @@ private:
     std::unique_ptr<ui::LineEditorController> m_editor;
     std::optional<application::DocumentId> m_editorDocument;
     std::unique_ptr<backends::FfmsIndexedSource> m_mediaSource;
-    // V3: the Video panel's source: dummy videos, else the media helper
     std::unique_ptr<application::DummyVideoSource> m_videoSource;
-    // W2: libass, or a CSRI renderer (VSFilterMod) on Windows, by video.subtitleProvider.
     backends::SubtitleRendererSelection m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
 #ifdef _WIN32
     std::unique_ptr<backends::DirectShowPlayer> m_directShow; // W1, made when chosen
 #endif
-    application::GeneralPlayerPort *m_activePlayer = nullptr; // W1
+    application::GeneralPlayerPort *m_activePlayer = nullptr;
     void choosePlayer();
-    // O1: declared before everything that keeps a reference to it.
+    // MUST KILL: destruction order: members declared after it may keep a reference to it.
     std::unique_ptr<ui::SettingsStore> m_settings;
-    // O3: the legacy settings importer's generations (none without a file).
     std::unique_ptr<SettingsImportStore> m_importStore;
     std::unique_ptr<SettingsImportController> m_settingsImport;
     void settingChanged(const QString &id);
-    // R6-dictionary-location: the settings folder's Dictionary (user
-    // dictionaries), then the program folder's (bundled ones).
     QStringList m_dictionaryDirs;
-    bool m_resettingSettings = false; // "Set default" is resetting the registry
-    bool m_selectLinesOpened = false; // legacy SelectLines exists
-    application::OptionsLists m_optionsLists; // what the open Options dialog lists
+    bool m_resettingSettings = false;
+    bool m_selectLinesOpened = false;
+    application::OptionsLists m_optionsLists;
     std::unique_ptr<AutomationShell> m_automation;
-    // KE2: the Template editor panel; the video shows its preview.
     std::unique_ptr<ui::TemplateEditorController> m_templateEditor;
     bool m_videoShowsTemplate = false;
-    std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow; // the span it was drawn for
+    std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
-    std::unique_ptr<HotkeysController> m_hotkeys; // O2: after the automation hotkeys it shares
+    // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
+    std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<UpdateChecker> m_updates;
-    std::unique_ptr<Analytics> m_analytics; // AN1
-    std::unique_ptr<CrashReports> m_crashReports; // CR1
-    // AN1: how long the video and audio opens take (video_opened, audio_opened).
+    std::unique_ptr<Analytics> m_analytics;
+    std::unique_ptr<CrashReports> m_crashReports;
     application::VideoSession::State m_videoUsageState = application::VideoSession::State::Closed;
     application::AudioBox::State m_audioUsageState = application::AudioBox::State::Closed;
     QElapsedTimer m_videoOpenClock;
     QElapsedTimer m_audioOpenClock;
-    // AN1: automation_error's script: a bundled script's file name, "" for the user's.
     QString bundledScriptName(const QString &path) const;
     std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
-    std::unique_ptr<FontCollectorController> m_fontCollector; // Y8
-    std::unique_ptr<KanjiTimerController> m_kanjiTimer; // KA3
-    std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;         // Y6: without a settings file
-    std::unique_ptr<FontCatalogsController> m_fontCatalogs;   // Y6
-    std::unique_ptr<MatroskaController> m_matroska; // Y9
-    // Y9: OnMkvSubs' SubsPath for a loaded track, and KA6: the imported
-    // lyrics' name with ".ass"; the Save dialog's name until the Document
-    // has a destination.
+    std::unique_ptr<FontCollectorController> m_fontCollector;
+    std::unique_ptr<KanjiTimerController> m_kanjiTimer;
+    std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
+    std::unique_ptr<FontCatalogsController> m_fontCatalogs;
+    std::unique_ptr<MatroskaController> m_matroska;
     std::map<std::uint64_t, QString> m_importPaths;
-    // KA6: the imported lyrics among them, whose name stands in for the
-    // destination when the same-named video is looked for (offerAssociations).
     std::set<std::uint64_t> m_lyricsImports;
-    bool m_keepVideoOnEnter = false; // replaceTarget(keepMedia) until the tab is entered
-    // PU1-mkv-notices: the editing target and its revision when a load
-    // began; a load that would replace a Document changed (or left) since
-    // then opens in a new tab instead.
+    bool m_keepVideoOnEnter = false;
     std::optional<application::DocumentId> m_matroskaTarget;
     std::uint64_t m_matroskaRevision = 0;
-    QString m_matroskaVideo; // the tab's video when the read started
-    QString m_matroskaRequested; // and the video last asked for then
-    // The draft being typed when the read started (the question covered it).
+    QString m_matroskaVideo;
+    QString m_matroskaRequested;
     std::optional<core::LineId> m_matroskaDraftLine;
     std::optional<std::u8string> m_matroskaDraft;
-    std::uint64_t m_matroskaReloads = 0; // m_reloads when the read started
-    std::uint64_t m_reloads = 0;         // Reload subtitles done (a session replaced in place)
-    bool m_matroskaFromHome = false; // started with no editing target
-    // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
+    std::uint64_t m_matroskaReloads = 0;
+    std::uint64_t m_reloads = 0;
+    bool m_matroskaFromHome = false;
     void applyMatroska(application::MatroskaLoaded loaded, bool newTab);
     QString targetVideoPath() const;
     std::unique_ptr<ui::LogController> m_log;
@@ -1385,47 +968,39 @@ private:
         std::uint64_t document = 0;
         std::uint64_t revision = 0;
         QVariantMap options;
-        float frameMs = 0.f; // the video's frame duration it was made with, 0 without one
+        float frameMs = 0.f;
         core::Document converted;
     };
     std::unique_ptr<ConversionPlan> m_conversionPlan;
-    std::set<std::uint64_t> m_formatChanged; // converted since opened or saved: Save asks for a file
-    QString m_resolutionCheckedVideo; // the video whose size was compared
+    std::set<std::uint64_t> m_formatChanged;
+    QString m_resolutionCheckedVideo;
     void checkResolution();
     QStringList m_selectRecent;
-    // F4: the rules once read, and the last search's finds per Document.
     std::optional<std::vector<application::ReplacerRule>> m_misspellRules;
     std::vector<std::pair<application::DocumentId, application::ReplacerFind>> m_misspellFinds;
     bool m_misspellResultsShown = false;
     std::vector<application::ReplacerRule> &misspellRuleList();
     void saveMisspellRules();
-    std::shared_ptr<ui::ListFile> m_rulesFile; // CF2: rules.toml, none without a settings file
+    std::shared_ptr<ui::ListFile> m_rulesFile;
     void destroyDialogs();
-    // ResetDefault's reset of the store and of what reads it at once, at OK
-    // or Apply after "Reset all settings…" (PF1-staged-reset).
     void resetAllSettings();
-    // F1
     class FindHost;
     friend class FindHost;
     std::unique_ptr<FindHost> m_findHost;
     std::unique_ptr<application::FindReplace> m_find;
-    bool m_findOpened = false; // legacy FR exists
+    bool m_findOpened = false;
     void createFindReplace();
     QString m_replaceBackup;
     std::function<int(int, const QString &)> m_findQuestionHandler;
     int m_findQuestionId = 0;
-    std::map<int, std::function<void(application::FindAnswer)>> m_findAnswers; // questions shown, by id
-    // A file result waiting for the close review of its open (true: opened).
+    std::map<int, std::function<void(application::FindAnswer)>> m_findAnswers;
     std::function<void(bool)> m_findOpenDone;
     int m_findProcessors = 0;
     void endFindOpen(bool opened);
     void saveFindRecent(application::FindReplaceSettings::Tab tab);
     void findFinished();
-    QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
+    QString m_pendingKeyframes;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
-    // R1: legacy's comparison statics and each grid's table, the revision
-    // each compared Document had when its table was last made, and whether a
-    // +/- mark or a group is being opened or closed (legacy FilterPartial).
     application::SubtitleComparison m_comparison;
     std::map<std::uint64_t, std::uint64_t> m_comparedRevisions;
     bool m_partialFilter = false;
@@ -1433,11 +1008,10 @@ private:
     bool comparePair(application::DocumentId first, application::DocumentId second);
     void recompare();
     void refreshComparison();
-    // R2
     bool m_referenceLinked = false;
     application::LinkedMatch m_linkedMatch;
-    std::optional<std::pair<std::uint64_t, std::uint64_t>> m_linkedFrom; // (target, active Line) followed last
-    std::optional<std::uint64_t> m_linkedReference;                      // the reference it was followed in
+    std::optional<std::pair<std::uint64_t, std::uint64_t>> m_linkedFrom;
+    std::optional<std::uint64_t> m_linkedReference;
     std::vector<std::pair<application::DocumentId, application::Occurrence>> m_occurrenceMenu;
     void followEditingLine(bool force = false);
     void seekLinkedReference();
@@ -1447,23 +1021,19 @@ private:
     application::GridSelection referenceGridSelection() const;
     void applyReferenceSelection(application::Selection next);
     std::unique_ptr<ui::VisualToolsController> m_visualTools;
-    std::unique_ptr<ui::VideoViewController> m_videoView; // V4
-    std::unique_ptr<ui::VideoFullscreenController> m_videoFullscreen; // V5
-    // E5: each Document's legacy SubsGrid::showOriginal, with the file
-    // generation it was set up for (a reload is a new LoadSubtitles).
+    std::unique_ptr<ui::VideoViewController> m_videoView;
+    std::unique_ptr<ui::VideoFullscreenController> m_videoFullscreen;
     struct OriginalColumnsEntry {
         std::uint64_t generation = 0;
         application::OriginalColumns columns;
     };
     std::map<std::uint64_t, OriginalColumnsEntry> m_originalColumns;
-    std::set<std::uint64_t> m_translationDeclined; // TM1: Documents answered Not now
+    std::set<std::uint64_t> m_translationDeclined;
     application::OriginalColumns &originalColumns(application::DocumentId document);
     bool showOriginal(application::DocumentId document);
     void setUpTranslationControls();
     std::vector<std::byte> rendererScript(const core::Document &document) const;
-    // 38c: each Document's [Fonts] as font leases, decoded once for its file
-    // generation; the same leases (the same bytes) while the fonts stay, so
-    // the renderers keep the fonts they added.
+    // The same leases while the fonts stay: the renderers keep the fonts they added.
     struct AttachedFontsEntry {
         std::uint64_t generation = 0;
         core::AttachedFontsKey key;
@@ -1471,20 +1041,14 @@ private:
     };
     std::map<std::uint64_t, AttachedFontsEntry> m_attachedFonts;
     std::vector<application::FontLease> attachedFontLeases(std::optional<application::DocumentId> document);
-    // The fonts the renderers take with a Document's subtitles: its attached
-    // fonts, then the external fonts (Y6).
     std::vector<application::FontLease> subtitleFonts(std::optional<application::DocumentId> document);
-    // Gives the video session the subtitle fonts of `document`; true when
-    // they changed.
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<application::FontLease> m_videoFonts;
-    // VT3: the names read from m_videoFonts' leases, by their bytes.
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
-    std::unique_ptr<ui::StatusBarController> m_statusBar; // P10
+    std::unique_ptr<ui::StatusBarController> m_statusBar;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
     std::uint64_t m_seenGroupBreaks = 0;
-    // P3
     std::unique_ptr<application::RecoveryStore> m_recovery;
     std::unique_ptr<QLockFile> m_sessionLock;
     QString m_recoveryDir;
@@ -1496,24 +1060,18 @@ private:
     std::string recoveryKey(application::DocumentId document) const;
     void reportGroupBreak();
     std::optional<application::DocumentId> m_videoDocument;
-    std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
-    bool m_videoShowsDraft = false;               // E4: the overlay shows the editor's draft
-    std::vector<std::byte> m_videoScript;         // E4: the script the overlay was given last
-    QString m_editorTimebaseVideo;                // E4: the video the editor's frames come from
+    std::optional<std::uint64_t> m_videoRevision;
+    bool m_videoShowsDraft = false;
+    std::vector<std::byte> m_videoScript;
+    QString m_editorTimebaseVideo;
     std::optional<core::LineId> m_videoLine;
-    // V6: how the video follows the active Line (application_video_timing.cpp).
-    // The next active-Line change comes from a Grid click (legacy
-    // SetLine(..., nochangeline = true, autoPlay)) or SubsGrid::NextLine.
     struct LineChangeOrigin {
         bool gridClick = false;
         bool autoPlay = false;
     };
     std::optional<LineChangeOrigin> m_lineChangeOrigin;
-    // V6 with E4: Enter's send and move refresh the video once, together.
     bool m_holdVideoRefresh = false;
-    // Q2: the editor's changes refresh the video once per event-loop turn.
     QTimer *m_editRefresh = nullptr;
-    // The Line whose draft the editor committed on leaving it, until the next refreshVideo.
     std::optional<core::LineId> m_leftEditedLine;
     void trackVideoFollow();
     void followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left);
@@ -1528,89 +1086,75 @@ private:
     struct Closing {
         application::DocumentId document;
         bool save = false;
-        std::uint64_t revision = 0; // the content the choice covers
+        std::uint64_t revision = 0;
         std::optional<application::PermitId> permit;
     };
     QString m_closeThen;
     std::vector<Closing> m_closing;
-    int m_quitReviews = 0; // WS5
+    int m_quitReviews = 0;
     bool m_quitApproved = false;
-    // P2: the subtitles waiting for the review to replace the editing target.
     std::optional<application::StagedOpen> m_pendingOpen;
     QString m_pendingOpenPath;
     application::RecentFiles m_recent;
     QString m_settingsFile;
-    QString m_userFolder; // UD1
-    // UD1: the notice of the move into the user folder and the seeding's Log lines.
+    QString m_userFolder;
     void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
     void reportSettingsFiles();
-    // CF2 (#489): the user's lists converted from their legacy files at the
-    // start (a Log line, or a notice for one that did not read).
     void convertRules();
     void convertListFiles();
-    // Modification time of each Document's file when last read or written,
-    // and the Documents whose removal was already noticed.
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;
-    // The last column choices (legacy default: none).
     int m_copyColumns = 0;
     int m_pasteColumns = 0;
-    // F3: spelling. The checker exists when there is a Dictionary folder;
-    // m_spellingStarted is legacy's SpellChecker::SC (created on first use,
-    // initialized then only when spelling is on; Destroy clears it).
     application::SpellChecker *spellChecker();
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
     QVariantMap spellCheckState(bool changed, const QString &problem = {});
-    // Commits the editor's draft (commit on leave) and, when that or anything
-    // else left the window's word stale, starts the walk again: its state.
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);
     void showSpellCheckWord();
     std::unique_ptr<application::SpellChecker> m_spellChecker;
+    // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
     bool m_spellingStarted = false;
     application::SpellingText m_spellingText;
-    // FR1: Getting started's examples: the spelling loader, a checker for
-    // the dictionary the Editing page shows, a renderer for the sample frame.
     application::SpellingBackendLoader m_spellingLoader;
     std::unique_ptr<application::SpellChecker> m_sampleChecker;
     QString m_sampleCheckerLanguage;
     bool m_sampleCheckerReady = false;
     std::unique_ptr<backends::SubtitleRendererSelection> m_sampleRenderer;
-    int m_testSounds = 0; // FR1: the last Test sound's number (its stream closes after it)
-    bool m_spellingOn = true; // the Line editor's switch (TextEditor::SpellCheckerOnOff)
+    int m_testSounds = 0;
+    // MUST KILL: the Line editor's own switch, apart from the editor.spellchecker setting.
+    bool m_spellingOn = true;
     QString m_dictionaryDir;
     QString m_bundledDictionaryDir;
     std::unique_ptr<application::SpellCheckWalk> m_spellWalk;
     std::optional<application::DocumentId> m_spellWalkDocument;
-    // GR1 (#364): grammar check (application_grammar.cpp).
     struct GrammarCheck {
-        std::u16string raw;              // the field's text that was checked
-        core::grammar::CheckedText text; // what harper-ls was given
+        std::u16string raw;
+        core::grammar::CheckedText text;
         QList<backends::GrammarFinding> findings;
-        core::SubtitleFormat format = core::SubtitleFormat::Ass; // how `text` was read
+        core::SubtitleFormat format = core::SubtitleFormat::Ass;
     };
     struct GrammarWalk {
         struct Finding {
-            std::size_t line; // the index in lines
+            std::size_t line;
             backends::GrammarFinding finding;
-            bool handled = false; // replaced or ignored
+            bool handled = false;
         };
         application::DocumentId document;
         bool translation = false;
-        std::vector<core::LineId> lines; // from the active Line to the end, then from the start
+        std::vector<core::LineId> lines;
         std::map<std::size_t, GrammarCheck> checks;
-        // The Document's Lines by id, read again when its revision moves.
         std::unordered_map<std::uint64_t, const core::LineRecord *> rows;
         const core::Document *rowsOf = nullptr;
         std::uint64_t rowsRevision = 0;
         bool pumpQueued = false;
-        std::deque<std::size_t> queue;           // the Lines still to send
-        std::map<quint64, std::size_t> pending;  // a ticket's Line
-        std::map<std::size_t, QList<backends::GrammarFinding>> arrived; // after a Line still pending
-        std::size_t checked = 0;                 // Lines whose findings are in `findings`
-        std::vector<Finding> findings;           // in walk order
-        std::optional<std::size_t> current;      // the finding shown
+        std::deque<std::size_t> queue;
+        std::map<quint64, std::size_t> pending;
+        std::map<std::size_t, QList<backends::GrammarFinding>> arrived;
+        std::size_t checked = 0;
+        std::vector<Finding> findings;
+        std::optional<std::size_t> current;
         bool cancelled = false;
         QString problem;
     };
@@ -1640,150 +1184,111 @@ private:
     std::unique_ptr<QTemporaryDir> m_grammarTemp;
     std::unique_ptr<backends::HarperClient> m_harper;
     QTimer *m_grammarDelay = nullptr;
-    quint64 m_grammarTicket = 0; // the Line editor's check in flight
+    quint64 m_grammarTicket = 0;
     int m_grammarRole = 0;
     GrammarCheck m_grammarPending;
-    std::optional<GrammarCheck> m_grammarEditor; // the field's last findings
+    std::optional<GrammarCheck> m_grammarEditor;
     int m_grammarEditorRole = 0;
-    bool m_grammarFailed = false; // a failure was reported; the next success clears it
+    bool m_grammarFailed = false;
     bool m_grammarApplyPending = false;
-    QString m_grammarWords;       // what harper-ls's user dictionary holds
-    QStringList m_grammarOwnWords; // added without a spell checker (no Dictionary folder)
+    QString m_grammarWords;
+    QStringList m_grammarOwnWords;
     std::unique_ptr<GrammarWalk> m_grammarWalk;
-    // A1: the audio box, with its own media helper; the Lines and marks it
-    // shows follow the editing target and the video.
     std::unique_ptr<backends::FfmsIndexedSource> m_audioSource;
     std::unique_ptr<ui::AudioController> m_audio;
-    QList<QMetaObject::Connection> m_audioConnections; // dropped first on destruction
+    QList<QMetaObject::Connection> m_audioConnections;
     application::RecentFiles m_recentAudio;
-    QString m_audioFollowedVideo; // the video whose audio the box last followed
-    // A1: the video's index handed over in a temporary file, until the box
-    // has opened from it (then the video's source removes it)
+    QString m_audioFollowedVideo;
     std::string m_pendingIndexHandoff;
     void releaseReadIndexHandoff();
-    std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine; // target, active Line, revision
-    // the video's keyframes as the box marks them, worked out once per video
+    std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine;
     std::optional<application::LegacyTimebase> m_audioTimebase;
     std::string m_audioTimebasePath;
     std::vector<int> m_audioKeyframes;
     std::function<application::AudioCacheSettings()> m_audioSettings;
-    QString m_indexDir; // legacy Indices; empty: no index files
-    // A4: the box's player and the editor output it plays through (PortAudio,
-    // made at the first play; without playbackAudio an output with no device)
+    QString m_indexDir;
     std::unique_ptr<application::AudioOutputPort> m_audioOutput;
-    std::string m_audioOutputHostApi; // the host API m_audioOutput was made for
+    std::string m_audioOutputHostApi;
     std::unique_ptr<backends::AudioBoxPlayer> m_audioPlayer;
-    // H2: the system's output devices and the route both audio paths follow
-    // (audio.outputDevice, else the default).
     std::unique_ptr<application::AudioDevicesPort> m_audioDevices;
     std::unique_ptr<application::AudioOutputRouting> m_audioRouting;
     void routeAudio(const application::OutputRoute &route, bool move);
-    // AV1: the status bar says so when the chosen device went away and the
-    // system default plays (application_audio.cpp).
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
-    void noticeOnsets(); // #384: the status bar while vocal onsets are found
+    void noticeOnsets();
     application::OutputRoute m_noticedRoute;
-    QString m_audioRouteNotice; // the unplugged device's notice while it shows
+    QString m_audioRouteNotice;
     int m_audioRouteNoticeSerial = 0;
-    // AV2 (#239, application_audio.cpp): with the sync toggle on, the audio
-    // cursor follows the playing video, and the paused video shows the frame
-    // the playing audio box is at: one frame asked for at a time, the newest
-    // wanted one once it arrived.
     void syncAudioWithVideo();
-    // AV3 (#240): a dummy video's own silent audio (its AudioBox name), empty
-    // for another video; and whether `audio` is the video's own (the video's
-    // file, or a dummy video's silence), which a tab does not keep as its own.
     static QString dummyVideoAudio(const QString &videoPath);
     static bool isVideoAudio(const QString &audio, const QString &videoPath);
     void showVideoAtAudio(int ms);
     std::optional<int> m_audioWantsFrame;
     void refreshAudio();
     void followVideoInAudio();
-    // V3 (application_video.cpp)
     void trackVideoSources();
     void logVideoFailure();
     void rememberRecentVideo(const QString &path);
     void rememberRecentKeyframes(const QString &path);
     QVariantList recentRows(application::RecentFiles &list, const char *setting);
-    // keyframes opened with the audio box and no video, at 23.976 fps
     bool keyframesWithoutVideo(const QString &path, QString &problem);
     application::RecentFiles m_recentVideo;
     application::RecentFiles m_recentKeyframes;
-    // the previous / next file in natural name order, letters lowered as
-    // Unicode does (V3-next-file-natural-order)
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};
-    // VideoBox::NextFile's step from the current video with `walker`
-    // (nullopt: no video and no recent one).
     std::optional<application::NextFileStep> nextVideoStep(application::NextFileWalker &walker, bool next) const;
-    QString m_recentVideoSeen; // the ready video last added to the list
+    QString m_recentVideoSeen;
     void rememberRecentAudio(const QString &path);
     void trimAudioCache();
-    // Legacy's index file for `path` and an audio track (-1: none).
     QString indexFile(const QString &path, int track) const;
-    // A3: the box's commits reach the editing target here (legacy
-    // CommitChanges through the edit box and grid); while one runs the box
-    // keeps its selection for the same Line (no SetDialogue).
     bool m_audioCommitting = false;
     bool commitAudioTimes(const application::AudioCommitRequest &request);
-    // K2: the Options dialog's Appearance page settings.
     void addAppearance(QVariantMap &values) const;
     void setAudioActive(int key);
     void seekVideoFromAudio(int ms);
-    // P6
     struct TabMedia {
-        QString video;      // legacy VideoPath (native separators)
-        int position = 0;   // ms, kept while another tab is shown
-        QString audio;      // legacy AudioPath: an audio file of the tab's own ("" from the video, or none)
-        QString keyframes;  // legacy KeyframesPath
-        int scroll = 0;     // the Grid's first row
-        bool audioFromVideo = false; // P9: GLOBAL_AUDIO_FROM_VIDEO (legacy AudioPath = VideoPath)
+        QString video;
+        int position = 0;
+        QString audio;
+        QString keyframes;
+        int scroll = 0;
+        bool audioFromVideo = false;
     };
     struct UnresolvedRestore {
         application::DocumentId document;
         QString kind;
         QString path;
-        int active = 0;   // subtitles: the session's active row
-        int position = 0; // video: the session's position
-        bool layout = false; // subtitles: the session gave the tab its arrangement (WS2)
+        int active = 0;
+        int position = 0;
+        bool layout = false;
     };
     struct PendingSession {
         std::vector<application::SessionTab> tabs;
-        std::optional<std::size_t> activeTab; // CF3: the tab to show
+        std::optional<std::size_t> activeTab;
         std::vector<std::optional<application::StagedOpen>> staged;
-        // Each staged file as it was read (L58-staged-replacement: a file
-        // changed or gone by the time the review allows the load is read again).
         std::vector<std::pair<QDateTime, qint64>> stamps;
     };
     std::map<std::uint64_t, TabMedia> m_tabMedia;
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;
-    std::optional<application::DocumentId> m_closingTab; // reviewCloseTab's
-    // PU1: the editing target a review was asked for; the command acts on it.
+    std::optional<application::DocumentId> m_closingTab;
     std::optional<application::DocumentId> m_closeTarget;
-    QString m_keepTabAudio;  // a restored video whose audio must not replace the tab's own
-    std::optional<std::pair<QString, int>> m_pendingTabSeek; // video path, ms; until the seek has landed
+    QString m_keepTabAudio;
+    std::optional<std::pair<QString, int>> m_pendingTabSeek;
     bool m_tabSeekQueued = false;
     bool m_scrollRestoring = false;
     bool m_startedWithPaths = false;
-    // PU1-startup-cards: the last session as it was when this program started.
     std::optional<application::Session> m_startSession;
-    // CF3: false while last-session.json could not be read and stays in its
-    // place (CF1's owned-file rule: it is not written over).
     bool m_lastSessionWritable = true;
     void rememberStartSession();
-    // CF3: LastSession.txt into last-session.json, once.
     void convertLastSession();
-    // last-session.json; a broken one is kept as .broken and gives nothing.
     std::optional<application::Session> loadLastSession();
     static QStringList sessionNames(const std::optional<application::Session> &session);
     QVariantMap reviewSessionRead(std::optional<application::Session> session, const QString &problem = {});
-    mutable bool m_startupSessionPending = false; // WS5: startupSession() asked, not yet carried out
-    int m_tabTextMax = 40; // legacy maxCharPerTab, read once at start
+    // MUST KILL: mutable so the const startupSession() can mark itself pending.
+    mutable bool m_startupSessionPending = false;
+    int m_tabTextMax = 40;
     void leaveTabMedia(std::optional<application::DocumentId> document);
     void enterTabMedia(std::optional<application::DocumentId> previous, std::optional<application::DocumentId> document);
     void closeDocument(application::DocumentId document);
-    // keepMedia (Y9): the tab keeps its video, audio and keyframes, as
-    // legacy's SubsGrid::Clearing does.
     void replaceTarget(application::DocumentId replacement, bool keepMedia = false);
     void applySession();
     void forgetTab(application::DocumentId document);
@@ -1791,43 +1296,24 @@ private:
     bool keepTabAudio(const QString &videoPath);
     void trackTabMedia();
     int targetVideoPosition() const;
-    // WS1: the tab whose panel arrangement the shell shows, and how a tab
-    // starts its own (the Translation preset for a TLMode file).
     std::optional<application::DocumentId> m_layoutDocument;
     void showTabArrangement();
-    void registerTabArrangements(); // each tab opened takes its start now
-    // A tab's Document replaced (opened into it, a retried restore): the
-    // tab keeps its arrangement under the new Document's id.
+    void registerTabArrangements();
     void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
                                ui::WorkspaceLayoutController::TabStart start);
     ui::WorkspaceLayoutController::TabStart tabStart(application::DocumentId document) const;
-    // WS2: each ASS file keeps its tab's arrangement in a [Hikari] section
-    // ("Save panel layout in subtitle files", subtitles.layoutInFile). A
-    // save writes the tab's; an opened file's tab takes the file's, the
-    // Session's taking precedence when a Session is restored.
     void setUpFileArrangements();
-    // The arrangement the Document's file holds, when the setting is on and
-    // it validates; `report`: one that does not is named in the log.
     std::optional<QByteArray> fileArrangement(application::DocumentId document, bool report = false);
-    // A tab made from a file's bytes (opened, or recovered from an autosave)
-    // starts with the arrangement the file holds; one that does not
-    // validate is named in the log.
     void takeFileArrangement(application::DocumentId document);
-    // A file opened into the tab of `old`: the arrangement its file holds,
-    // else WS1's start.
     void openIntoTabArrangement(application::DocumentId old, application::DocumentId replacement);
 
-    // O5 (application_language.cpp): the language from PROGRAM_LANGUAGE at
-    // start and whenever the setting changes; the strings the application
-    // and its controllers keep are rebuilt after a switch. The program font
-    // (PROGRAM_FONT, PROGRAM_FONT_SIZE) is the application's font, live.
     std::unique_ptr<Localisation> m_localisation;
-    QString m_untitledTitle; // tr("Untitled") in the language the tabs were named in
-    QFont m_startFont;       // the application's font before the program font
+    QString m_untitledTitle;
+    QFont m_startFont;
     void startLocalisation();
     void switchLanguage();
     void languageSwitched();
     void applyProgramFont();
 };
 
-} // namespace hikari::app
+}

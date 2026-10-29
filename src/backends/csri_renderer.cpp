@@ -20,8 +20,7 @@ namespace {
 constexpr int kMaxDimension = 16384;
 
 #ifdef _WIN32
-// A private, in-memory font for GDI in this process (not enumerable, gone with
-// the handle): what VSFilter's CreateFontIndirect finds by family name.
+// AddFontMemResourceEx fonts are private and not enumerable; VSFilter finds them by family name.
 std::shared_ptr<void> addPrivateFont(const application::FontLease &font)
 {
     if (!font.bytes || font.bytes->empty())
@@ -35,7 +34,7 @@ std::shared_ptr<void> addPrivateFont(const application::FontLease &font)
 }
 #endif
 
-} // namespace
+}
 
 CsriRenderers::CsriRenderers(std::vector<csri::Renderer> renderers, std::vector<std::shared_ptr<void>> libraries)
     : m_renderers(std::move(renderers)), m_libraries(std::move(libraries))
@@ -54,9 +53,8 @@ CsriRenderers::~CsriRenderers() = default;
 
 std::vector<std::string> CsriRenderers::names() const
 {
-    // SubtitlesVSFilter::GetProviders (SubtitlesVSFilter.cpp:252-279): none
-    // when the default renderer has no info, then each one that has.
     std::vector<std::string> names;
+    // MUST KILL: no names at all when the default renderer has no info.
     if (m_renderers.empty() || !m_renderers.front().info)
         return names;
     for (const auto &r : m_renderers)
@@ -67,15 +65,12 @@ std::vector<std::string> CsriRenderers::names() const
 
 const csri::Renderer *CsriRenderers::select(std::string_view name) const
 {
-    // GetVSFilter (SubtitlesVSFilter.cpp:227-250): the default, unless a name
-    // is set; then the walk stops at the renderer with that name, or at one
-    // without info (which is then used), and falls back to the default when
-    // the list ends.
     if (m_renderers.empty())
         return nullptr;
     if (name.empty() || !m_renderers.front().info)
         return &m_renderers.front();
     for (const auto &r : m_renderers) {
+        // MUST KILL: a renderer without info is taken before any later name match.
         if (!r.info)
             return &r;
         if (r.info->name && name == r.info->name)
@@ -120,10 +115,7 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
         return std::unexpected(RenderError::BackendFailure);
     }
     std::lock_guard lock(m_renderers->mutex());
-    closeInstance(); // Open: the previous instance is no longer shown
-    // A fonts reload since the previous context's fonts were added: none of
-    // them is kept, each lease is added to the process again (legacy's watcher
-    // removed the external fonts and added the folder's anew).
+    closeInstance();
     const std::uint64_t reloads = application::subtitleFontsReloads();
     const bool reloaded = reloads != m_fontReloads;
     m_fontReloads = reloads;
@@ -136,10 +128,6 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
         return std::unexpected(RenderError::BackendFailure);
     }
     m_renderer = renderer;
-    // The new context's fonts are added before the previous context's go,
-    // so a font both use stays available; a lease the previous context
-    // already added (the same bytes, as every edit's snapshot carries) is
-    // kept, not added again, unless the fonts were reloaded since.
     std::vector<AddedFont> fonts;
     for (const auto &font : snapshot.fonts) {
         if (!font.bytes)
@@ -150,12 +138,9 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
         else if (auto handle = m_renderers->loadFont(font))
             fonts.push_back({font.bytes, std::move(handle)});
     }
+    // MUST KILL: new leases must be added before this drops the old, or shared fonts vanish.
     m_fonts = std::move(fonts);
-    // ParseInstance: csri_open_mem(mb_str(wxConvUTF8), strlen), so the script
-    // ends at its first NUL. GetVisible (SubsGridBase.cpp:1804-1805) starts
-    // the text with a byte order mark, which the renderers read as UTF-8;
-    // without it VSFilter reads the bytes in the ANSI code page, and
-    // VSFilterMod fails to open some scripts at all.
+    // Without a UTF-8 BOM VSFilter reads the ANSI code page and VSFilterMod rejects some scripts.
     const auto *bytes = reinterpret_cast<const char *>(snapshot.script.data());
     const std::size_t length = snapshot.script.empty() ? 0 : strnlen(bytes, snapshot.script.size());
     constexpr std::string_view bom = "\xEF\xBB\xBF";
@@ -168,8 +153,7 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
     try {
         m_instance = renderer->openMem(renderer->rend, script.data(), script.size(), nullptr);
     } catch (...) {
-        // A renderer's own exception (VSFilterMod's MFC ones) is a script
-        // it cannot open, not the end of the program.
+        // VSFilterMod throws MFC exceptions on scripts it cannot open.
         m_instance = nullptr;
     }
     if (!m_instance) {
@@ -191,11 +175,7 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     if (!m_instance)
         return std::unexpected(RenderError::NoSnapshot);
     if (width != m_width || height != m_height) {
-        // SetVideoParameters with ARGB32: BGRA, else BGR_. VSFilterMod too:
-        // the pinned altqx r5.3.1-hikari.2 draws BGRA with straight alpha
-        // (255 opaque) over the frame's, one drawing where BGR_ needs two
-        // (r5.2.6 refused BGRA and gets BGR_; r5.3.1 and hikari.1 drew BGRA
-        // premultiplied with inverted alpha, invisible on a cleared frame).
+        // VSFilterMod r5.2.6 refuses BGRA; r5.3.1-hikari.2 draws it with straight alpha.
         csri::Fmt fmt{csri::BGRA, static_cast<unsigned>(width), static_cast<unsigned>(height)};
         m_pixfmt = fmt.pixfmt;
         bool accepted = m_renderer->requestFmt(m_instance, &fmt) == 0;
@@ -217,8 +197,6 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     frame.height = height;
     frame.stride = width * 4;
     frame.generation = m_generation;
-    // DrawOverlay: a cleared overlay, drawn whole every time. A reused buffer
-    // is cleared where it was drawn last.
     const bool resized = m_buffers.setSize(width, height);
     if (resized)
         m_bounds = {};
@@ -227,17 +205,11 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     target.pixfmt = m_pixfmt;
     target.planes[0] = buffer.bytes->data();
     target.strides[0] = frame.stride;
-    // Draw: csri_render(instance, frame, double(time / 1000.0)) with the
-    // frame's time in integer milliseconds.
     const auto ms = static_cast<int>(time.microseconds() / 1000);
     m_renderer->render(m_instance, &target, double(ms / 1000.0));
     PixelRect bounds;
     if (m_pixfmt == csri::BGR_) {
-        // BGR_ (a renderer that refuses BGRA, as r5.2.6 did) blends into the
-        // frame and leaves no alpha. Legacy drew it onto the RGB32 video frame
-        // (RendererFFMS2::GetFrameWithSubs without the overlay); the same
-        // instant drawn again onto white gives each pixel's coverage, so the
-        // overlay composites over any frame as that drawing did.
+        // BGR_ blends with no alpha: the same instant drawn onto black and white gives coverage.
         std::vector<std::uint8_t> &white = m_white;
         white.resize(buffer.bytes->size());
         for (std::size_t i = 0; i < white.size(); i += 4) {
@@ -253,7 +225,7 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
             for (int x = 0; x < width; ++x) {
                 std::uint8_t *p = row + 4 * x;
                 const std::uint8_t *w = whiteRow + 4 * x;
-                int through = 0; // what the frame shows through, summed over the channels
+                int through = 0;
                 for (int c = 0; c < 3; ++c)
                     through += (std::max)(0, int(w[c]) - int(p[c]));
                 const int a = 255 - (through + 1) / 3;
@@ -279,7 +251,7 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     frame.pixels = application::OverlayPixels(buffer.bytes);
     frame.empty = bounds.width <= 0;
     if (!frame.empty)
-        frame.bounds = bounds; // the visible pixels' (premultiplyStraightAlpha or the BGR_ pass)
+        frame.bounds = bounds;
     if (resized) {
         frame.changed.push_back({0, 0, width, height});
     } else {
@@ -292,4 +264,4 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     return frame;
 }
 
-} // namespace hikari::backends
+}
