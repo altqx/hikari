@@ -1,7 +1,7 @@
 #pragma once
 
 // KE2: the template editor's preview of the karaoke templater on one Line
-// (docs/qt/karaoke-templater.md, "The template editor"). The templater runs
+// (docs/karaoke-templater.md, "The template editor"). The templater runs
 // on a reduced snapshot, the template and code Lines plus that Line, through
 // "Apply karaoke template to selected lines"; its result is read, never
 // applied. The video then draws the Document with that Line's generated Lines

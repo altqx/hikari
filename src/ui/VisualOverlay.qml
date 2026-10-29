@@ -4,7 +4,7 @@ import Hikari.Ui
 
 // T1: the visual tools over the Video canvas. The pointer goes to the active
 // tool (legacy VideoBox::OnMouseEvent hands it to the Visuals) and what the
-// tool draws is painted here, apart from the frame (docs/qt/media.md: tool
+// tool draws is painted here, apart from the frame (docs/media.md: tool
 // handles stay separate from the decoded textures). The crosshair hides the
 // pointer over the video; the other tools show legacy's resize shapes over
 // their handles and during their drags. The Line warning of the other tools
@@ -192,7 +192,7 @@ Item {
     // (DRAWOUTTEXT). Direct3D centred it in {0, 0, VideoSize.width,
     // VideoSize.height}, the window's corner to the video's right and bottom
     // edges (RendererVideo.cpp:321), off-centre with a bar. Approved
-    // departure T1-warning-centre (docs/qt/compatibility-decisions.md): it is
+    // departure T1-warning-centre (docs/compatibility-decisions.md): it is
     // centred on the video rectangle, as legacy's wx path did
     // (DrawWarningWx, Visuals.cpp:479-493).
     Label {

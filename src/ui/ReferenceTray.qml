@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// R2: the reference tray (docs/qt/ux/translation-comparison.md), standing in
+// R2: the reference tray (docs/ux/translation-comparison.md), standing in
 // for legacy's in-Grid subtitles preview (SubsGridPreview at 20d647c4). It
 // shows the protected reference's Lines, navigated on their own: clicks and
 // keys move the reference's selection, never its content. "Follow the

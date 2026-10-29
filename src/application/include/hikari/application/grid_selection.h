@@ -1,6 +1,6 @@
 #pragma once
 
-// Grid selection gestures (G1; docs/qt/ux/grid-operations.md, legacy
+// Grid selection gestures (G1; docs/ux/grid-operations.md, legacy
 // SubsGridWindow OnMouseEvent/OnKeyPress at 20d647c4). Destinations follow the
 // displayed order; range membership is the inclusive Document-order interval
 // between anchor and destination, hidden Lines included. Identities are

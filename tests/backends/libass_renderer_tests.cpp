@@ -630,7 +630,7 @@ TEST(LibassRenderer, DrawsTheScriptsAttachedFonts)
     EXPECT_LT(with.bottom - with.top, 80);
 }
 
-// The event-index contract of the altqx libass fork (docs/qt/backends.md):
+// The event-index contract of the altqx libass fork (docs/backends.md):
 // once a track has been rendered, an event whose Start is written in place
 // shows at its new time only after ass_track_events_modified. Hikari's
 // adapters never write ASS_Event today; this pins the rule any in-place edit
@@ -684,7 +684,7 @@ std::shared_ptr<const std::vector<std::byte>> forkFixture(const char *name)
 
 } // namespace
 
-// LF-libass-cmap (docs/qt/compatibility-decisions.md): the fork draws text in
+// LF-libass-cmap (docs/compatibility-decisions.md): the fork draws text in
 // symbol-cmap fonts at any base code and in legacy Arabic (charset 178) fonts
 // with a Unicode cmap, where libass 0.17.5, which legacy pins, draws nothing.
 // The cases are the fork's compare/fork-test/cmap.ass, one per second.

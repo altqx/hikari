@@ -36,7 +36,7 @@ QString translated(const char *text)
     return QCoreApplication::translate("HikariSub.TemplateEditor", text);
 }
 
-// KE3: the built-in karaoke effect presets (docs/qt/karaoke-presets.md), in
+// KE3: the built-in karaoke effect presets (docs/karaoke-presets.md), in
 // list order, with their files' Title and Description for the translators.
 struct PresetEntry {
     const char *file, *title, *description;

@@ -1,4 +1,4 @@
-# Module boundary enforcement (docs/qt/architecture.md). Each module declares
+# Module boundary enforcement (docs/architecture.md). Each module declares
 # the targets it may link; the check runs at configure time and fails on any
 # other hikari_*, Hikari::* or Qt6::* dependency. Entries may end in '*'.
 include_guard(GLOBAL)
@@ -52,7 +52,7 @@ function(hikari_check_module_dependencies)
         hikari_module_violations("${links};${iface}" "${allowed}" bad)
         list(REMOVE_DUPLICATES bad)
         if(bad)
-            message(FATAL_ERROR "Module ${target} must not depend on: ${bad} (see docs/qt/architecture.md)")
+            message(FATAL_ERROR "Module ${target} must not depend on: ${bad} (see docs/architecture.md)")
         endif()
     endforeach()
 endfunction()

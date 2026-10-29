@@ -1,4 +1,4 @@
-# O4: the PO-to-TS migration (docs/qt/localisation.md) as a library the tests
+# O4: the PO-to-TS migration (docs/localisation.md) as a library the tests
 # exercise and the developer-invoked hikari_i18n_migrate tool (i18n/CMakeLists.txt);
 # O6: the semantic contexts' lint and the record of their move.
 add_library(hikari_i18n STATIC po.cpp ts.cpp migration.cpp contexts.cpp

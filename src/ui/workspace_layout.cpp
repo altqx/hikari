@@ -154,7 +154,7 @@ WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QString
             checkModal();
         });
         // A screen that goes away or shrinks can leave a floating panel
-        // where no screen shows it: bring it back (docs/qt/docking.md).
+        // where no screen shows it: bring it back (docs/docking.md).
         m_screenCheck.setSingleShot(true);
         m_screenCheck.setInterval(250); // after the platform has moved its windows
         connect(&m_screenCheck, &QTimer::timeout, this, &WorkspaceLayoutController::keepFloatingPanelsOnScreen);
@@ -826,7 +826,7 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
         return true;
     }
     // The Editing arrangement with the panels the preset leaves closed
-    // (docs/qt/ux/workspaces.md): Timing without Video, Translation (and
+    // (docs/ux/workspaces.md): Timing without Video, Translation (and
     // Typesetting without a shell to build its own) without Audio.
     QString closed;
     if (name == QLatin1String("Timing"))

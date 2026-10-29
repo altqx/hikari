@@ -33,7 +33,7 @@
 --
 -- HikariSub's copy of Karaoke Templater 2.1.7 as Aegisub 3.2.2 shipped it: templates
 -- give the same output as there, byte for byte (tests/backends/karaoke-corpus).
--- HikariSub's changes (KE1, docs/qt/karaoke-templater.md):
+-- HikariSub's changes (KE1, docs/karaoke-templater.md):
 -- * the macro is offered when any Line is a template, not only one of the first 50
 -- * every problem with a template or code Line names that Line (its number in the
 --   Grid), and the macro selects the Lines that had problems
@@ -1112,7 +1112,7 @@ local function json_number(x)
 	return (string.format("%.6f", x):gsub("0+$", ""):gsub("%.$", ""))
 end
 
--- Attaches the run's report (docs/qt/karaoke-templater.md): what it did and
+-- Attaches the run's report (docs/karaoke-templater.md): what it did and
 -- what each template cost, the template Lines numbered as they are after the
 -- run (`number_of` maps a template's `where`).
 local function report_run(mode, templates, generated, number_of)

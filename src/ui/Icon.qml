@@ -1,4 +1,4 @@
-// K1: a UI icon of the in-house set (docs/qt/ux/icons.md, roles in
+// K1: a UI icon of the in-house set (docs/ux/icons.md, roles in
 // icons/manifest.json). The icon takes the current appearance's icon colours
 // from IconTheme: normal with its accent layer, the disabled colour while not
 // enabled (an item is disabled with its parent). Hover and press keep these

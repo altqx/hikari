@@ -1,4 +1,4 @@
-# Owned overlay of the vcpkg kddockwidgets port (docs/qt/docking.md, ADR 0017):
+# Owned overlay of the vcpkg kddockwidgets port (docs/docking.md, ADR 0017):
 # release v2.4.1 at commit c1d28d25ef5ba077915bcb2b6fa9e14df2a361f8, the QtQuick
 # frontend only, built against the provisioned official Qt (HIKARI_QT_PREFIX,
 # passed through by the Hikari triplets and part of the package ABI). Used under

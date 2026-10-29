@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Records a Linux performance host's inventory (H3 #126; docs/qt/performance.md,
+# Records a Linux performance host's inventory (H3 #126; docs/performance.md,
 # "Reference class and binding"): CPU, cores/threads, RAM, storage, GPU and
 # driver, displays, OS/kernel, compositor and session type, graphics/audio
 # backend and devices, power profile/governor, and the pinned software build
@@ -8,14 +8,14 @@
 #   tools/perf/host-inventory.sh [--build-dir DIR] [--out-dir DIR]
 #
 # Writes <out-dir>/<hostname>.json and <hostname>.md (default out-dir:
-# docs/qt/perf/hosts). Read-only: it changes nothing on the host. Fields it
+# docs/perf/hosts). Read-only: it changes nothing on the host. Fields it
 # cannot read (no tool, needs root) are recorded as null, never guessed.
 # A recorded inventory binds a host; it does not calibrate it.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BUILD_DIR="$ROOT/out/build/ubuntu-x64-release"
-OUT_DIR="$ROOT/docs/qt/perf/hosts"
+OUT_DIR="$ROOT/docs/perf/hosts"
 while [[ $# -gt 0 ]]; do
     case "$1" in
     --build-dir) BUILD_DIR="$2"; shift ;;
@@ -291,7 +291,7 @@ def yn: if . then "yes" else "**no**" end;
 "",
 "## Against the reference class",
 "",
-"The accepted class is four physical cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display (docs/qt/performance.md).",
+"The accepted class is four physical cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display (docs/performance.md).",
 "",
 "| Item | Class | This host | Matches |",
 "| --- | --- | --- | --- |",

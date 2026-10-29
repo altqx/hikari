@@ -1,6 +1,6 @@
 #pragma once
 
-// The update check and its choice (docs/qt/distribution.md, ADR 0019). It
+// The update check and its choice (docs/distribution.md, ADR 0019). It
 // reads the GitHub release list and each candidate's update manifest, or a
 // release's own asset digests when it has no manifest; keeps the releases
 // offered to this codebase; and chooses, by the install's package kind,

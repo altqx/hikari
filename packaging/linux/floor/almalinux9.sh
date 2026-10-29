@@ -1,5 +1,5 @@
 #!/bin/sh
-# The Qt rewrite's Linux build floor (installers spec 5.1): AlmaLinux 9
+# HikariSub's Linux build floor (installers spec 5.1): AlmaLinux 9
 # (glibc 2.34) with gcc-toolset-14. gcc-toolset links the C++ runtime parts
 # newer than the system libstdc++ statically, so the binaries need only the
 # system GLIBCXX_3.4.29, the same as the Qt SDK, and no libstdc++ is bundled.
@@ -15,7 +15,7 @@ dnf -y -q install dnf-plugins-core epel-release >/dev/null
 dnf config-manager --set-enabled crb
 dnf -y -q makecache >/dev/null
 
-# Build tools (docs/qt/build.md), the compiler, and what vcpkg's ports need:
+# Build tools (docs/build.md), the compiler, and what vcpkg's ports need:
 # OpenSSL's Configure wants the perl modules, autotools ports want
 # autoconf-archive, FFmpeg wants nasm. (curl-minimal, already present,
 # provides curl.)

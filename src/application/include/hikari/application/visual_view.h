@@ -1,7 +1,7 @@
 #pragma once
 
 // T1: the Video panel's geometry and the shared script-to-source-to-view
-// transform (docs/qt/visual-tools.md). Every number follows the legacy
+// transform (docs/visual-tools.md). Every number follows the legacy
 // arithmetic at 20d647c4, its float steps and int truncations included, so
 // a pointer maps to the coordinate legacy wrote and a script point is drawn
 // where legacy drew it:

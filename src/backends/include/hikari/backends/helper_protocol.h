@@ -1,6 +1,6 @@
 #pragma once
 
-// Framing for helper processes (H1; docs/qt/backends.md, docs/qt/automation.md).
+// Framing for helper processes (H1; docs/backends.md, docs/automation.md).
 // Shared by the host and the helpers; plain C++ so helpers need no Qt.
 //
 // Frame: "HKRI" | u32 payload length | u16 kind | u16 code | u64 session |

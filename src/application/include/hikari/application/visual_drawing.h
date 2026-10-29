@@ -2,7 +2,7 @@
 
 // T5: the drawing tool (legacy Shapes over DrawingAndClip as VECTORDRAW,
 // HikariSub/VisualDrawingShapes.cpp and VisualClips.cpp at 20d647c4;
-// docs/qt/visual-tools.md, "Drawing and shape presets"). With the toolbar's
+// docs/visual-tools.md, "Drawing and shape presets"). With the toolbar's
 // shape list on "Choose" the tool edits the Line's \p drawing with T4's
 // vector point editor (visual_vector.h): the drawing's position, \p scale,
 // \fscx / \fscy and \frz place its points. With a shape chosen a drag draws

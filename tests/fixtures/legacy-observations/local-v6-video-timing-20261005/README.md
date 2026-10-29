@@ -25,7 +25,7 @@ cmake --build <dir> --target legacy_video_timing_capture
 
 ## Compared with the rewrite
 
-`VideoTimingCapture.ReplaysTheLegacyObservations` (`hikari_application_video_timing_tests`) replays every op through `hikari/application/video_timing.h` and compares the times, selections and the video and audio calls (`VideoFollow`). All are the same apart from the ops of four approved departures ([compatibility decisions](../../../../docs/qt/compatibility-decisions.md), user 2026-10-05), where the replay needs legacy's result with exactly that change and the legacy observation stays as the old evidence:
+`VideoTimingCapture.ReplaysTheLegacyObservations` (`hikari_application_video_timing_tests`) replays every op through `hikari/application/video_timing.h` and compares the times, selections and the video and audio calls (`VideoFollow`). All are the same apart from the ops of four approved departures ([compatibility decisions](../../../../docs/compatibility-decisions.md), user 2026-10-05), where the replay needs legacy's result with exactly that change and the legacy observation stays as the old evidence:
 
 - V6-snap-next-line: `snap-first-line-mode-1` `snap end 1` snaps to the next Line's Start 950;
 - V6-snap-both-boundaries: `snap-end-blocked-start` `snap end 1` snaps to the other Line's End 1990;

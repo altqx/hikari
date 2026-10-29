@@ -1,6 +1,6 @@
 #pragma once
 
-// The application side of one loaded Lua script (N8; docs/qt/automation.md):
+// The application side of one loaded Lua script (N8; docs/automation.md):
 // one helper process and its persistent Lua state. Load registers the
 // script's macros; Run executes one macro while the event loop keeps going.
 // A dialog the script shows arrives through the dialog handler and is

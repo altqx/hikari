@@ -1,6 +1,6 @@
 #pragma once
 
-// The automation manager (L1; docs/qt/automation.md, ADR 0006): one Lua
+// The automation manager (L1; docs/automation.md, ADR 0006): one Lua
 // helper process and state per loaded script, loads and reloads that run the
 // script's top level visibly, macro identity through AutomationRegistry, and
 // one active macro application-wide. A helper crash marks only its script

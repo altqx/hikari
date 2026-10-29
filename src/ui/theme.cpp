@@ -48,7 +48,7 @@ bool isDarkColour(const QColor &colour)
 // The accent presets (K2): seven hues per mode drawn for the Compact Studio
 // palette. Light accents carry white text and meet 4.5:1 on every light
 // surface; dark accents carry a dark tint of their hue and meet 4.5:1 on
-// every dark surface (measured in docs/qt/ux/visual-language.md). Each
+// every dark surface (measured in docs/ux/visual-language.md). Each
 // preset's selected background is its hue at the spec green's selected
 // lightness and saturation.
 const std::array<Accent, 7> kLightAccents{{

@@ -177,7 +177,7 @@ QJsonObject state(const AudioKaraoke &k, int curStart)
 
 namespace {
 
-// The approved departures the capture shows (docs/qt/compatibility-decisions.md):
+// The approved departures the capture shows (docs/compatibility-decisions.md):
 // where the rewrite's state or answer is not legacy's, the outcome approved.
 struct Departure {
     const char *name;

@@ -1,6 +1,6 @@
 #pragma once
 
-// Native write owner for Windows (F2-W; docs/qt/proposals/application-lifecycle.md).
+// Native write owner for Windows (F2-W; docs/proposals/application-lifecycle.md).
 // Same contract as the Linux owner: write a temporary file beside the
 // destination, flush it, then publish it with one atomic rename
 // (MoveFileExW, replace + write-through). The original is never opened for

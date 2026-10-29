@@ -328,7 +328,7 @@ private:
         if (!m_window->isVisible() || (screen != m_window->screen() && screen != m_screen))
             return;
         if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
-            return; // the compositor places windows (docs/qt/docking.md)
+            return; // the compositor places windows (docs/docking.md)
         qCDebug(lcDocking) << "screen removed:" << m_window->title() << "was on" << screen->name()
                            << m_window->frameGeometry();
         m_lost.setRemainingTime(dockchrome::kScreenLossWatchMs);
@@ -444,7 +444,7 @@ private:
 // the header moves the window through the window system (startSystemMove,
 // DockSystemMoveArea.qml), so its snapping and tiling apply there; a system
 // move hands the pointer to the window system, so that part does not dock
-// (the user's choice of 2026-10-12, docs/qt/docking.md). On Windows the
+// (the user's choice of 2026-10-12, docs/docking.md). On Windows the
 // whole header is the engine's drag (the owner's choice of 2026-10-15):
 // Snap never takes the borderless tool window, so the split only cost
 // docking there (Docking::platformUsesSystemMove). The engine's

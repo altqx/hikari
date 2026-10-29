@@ -28,8 +28,8 @@ Each case runs a fresh copy of the app with Autoload emptied, the scripts of [`a
 
 `AutomationDocumentScriptsTests::replaysTheLegacyCapture` (`hikari_ui_automation_document_scripts_tests`) runs every case through the application with real Lua helpers and the same scripts, and compares each press with legacy's: the scripts loaded (as a set: each loads in its own helper), then every validation and run in order with the Document it saw, the box (title and text; validation-error's text is the one `HikariSubFrame.cpp:924` gives a validation that answers false, since the log window covers the box in its screenshot and a raising validation answers false, `Automation.cpp:952-956`), the log entry, the editor picker, and the modified state. Equal, with these differences, each named:
 
-- Legacy's menu-build validations are left out: the rewrite validates when it runs, and does not validate on the menu's build or on the hotkey (an open item in [S4](../../../../docs/qt/coverage.md)).
-- "YCbCr Matrix" (C03-ycbcr-on-load) and "PlayResX"/"PlayResY" are not in the rewrite's Script Info. The PlayRes keys have no approved row: the rewrite reads the resolution without writing it, an open item in [Y4](../../../../docs/qt/coverage.md) awaiting a decision.
+- Legacy's menu-build validations are left out: the rewrite validates when it runs, and does not validate on the menu's build or on the hotkey (an open item in [S4](../../../../docs/coverage.md)).
+- "YCbCr Matrix" (C03-ycbcr-on-load) and "PlayResX"/"PlayResY" are not in the rewrite's Script Info. The PlayRes keys have no approved row: the rewrite reads the resolution without writing it, an open item in [Y4](../../../../docs/coverage.md) awaiting a decision.
 - The validation function's edits are dropped (S4-validation-edits): in validation-false the rewrite's validations see "Gate" and no "Validated" key.
 
 These keys and edits are taken off legacy's records only (each of the three keys once; "Validated" and the edited text only in validation-false); the rewrite's records are compared whole, so a key it adds or drops on its own fails the comparison.

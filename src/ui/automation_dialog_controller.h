@@ -1,6 +1,6 @@
 #pragma once
 
-// Presents a script's dialog (N8; docs/qt/automation.md) with fixed QML
+// Presents a script's dialog (N8; docs/automation.md) with fixed QML
 // controls built from plain data, and returns typed values. Nothing the
 // script supplies becomes QML. Each presentation is answered exactly once:
 // by a button, by closing the window, or not at all when withdrawn (the run

@@ -1,6 +1,6 @@
 #pragma once
 
-// Hidden-tag projection of a Line's raw ASS text (docs/qt/ux/ass-editor.md).
+// Hidden-tag projection of a Line's raw ASS text (docs/ux/ass-editor.md).
 // Raw text stays authoritative: the projection maps every visible UTF-16
 // span back to its source span, and an edit in the projection rewrites only
 // the selected visible source spans. It never strips tags and rebuilds ASS.

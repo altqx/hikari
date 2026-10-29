@@ -1,6 +1,6 @@
 #pragma once
 
-// Typed time (docs/qt/time-semantics.md): signed 64-bit microseconds for
+// Typed time (docs/time-semantics.md): signed 64-bit microseconds for
 // Document time and deltas, distinct integral frame and sample indices, exact
 // rationals for rates and media timebases. Nothing wraps; nothing is a sentinel.
 

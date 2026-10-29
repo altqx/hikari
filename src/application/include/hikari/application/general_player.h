@@ -1,7 +1,7 @@
 #pragma once
 
-// General (unindexed) playback port (N5; docs/qt/backends.md GeneralPlayer,
-// docs/qt/media.md). While general playback is active its player owns audio
+// General (unindexed) playback port (N5; docs/backends.md GeneralPlayer,
+// docs/media.md). While general playback is active its player owns audio
 // output and A/V scheduling; editor PortAudio output is stopped. A time seek
 // is acknowledged only by a delivered video frame, never by a position
 // notification, and its result reports both positions and the accuracy.
