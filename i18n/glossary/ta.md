@@ -20,6 +20,8 @@ which Automation scripts read, keeps legacy's text).
   imperative: திற, சேமி, மூடு, நீக்கு, இயக்கு. **Descriptions, tooltips and
   questions** use full sentences, with the polite imperative (சேமிக்கவும்)
   where they ask the user to do something.
+- **Hotkey command names** (`HikariSub.Hotkeys`) use the short imperative
+  and the same words as the matching menu item or tool name.
 - **Accelerators:** `&` stays on a letter of the source: the translation
   ends with ` (&x)`, the source's accelerated letter in lower case, as
   legacy does (`&Save` → `சேமி (&s)`).
@@ -137,6 +139,42 @@ which Automation scripts read, keeps legacy's text).
 | Log levels: fatal, error, warning, hint, debug, trace | கடும் பிழை, பிழை, எச்சரிக்கை, குறிப்பு, பிழைத்திருத்தம், தடம் | |
 | Auto (a setting's value) | தானாக | |
 | On / Off (a setting's state) | இயக்கத்தில் / முடக்கம் | |
+| Start (a time, a column) / Start (command) | தொடக்கம் / தொடங்கு | |
+| Editor (Line editor, Template editor) | திருத்தி | எடிட்டர், ஆசிரியர் |
+| Template editor / Karaoke templater | வார்ப்புரு திருத்தி / கரோக்கி வார்ப்புருவாக்கி | |
+| Template line / Code line / Karaoke line | வார்ப்புரு வரி / குறியீட்டு வரி / கரோக்கி வரி | |
+| Generated line | உருவாக்கப்பட்ட வரி | |
+| Pre-line template | வரிக்கு முந்தைய வார்ப்புரு | முன்-வரி |
+| Variable / Modifier (templates) | மாறி / மாற்றி | |
+| Override tags | மேலெழுதும் குறிச்சொற்கள் | |
+| Problem | சிக்கல் | |
+| Run (of a macro) / Repeat last run | இயக்கம் / கடைசி இயக்கத்தை மீண்டும் செய் | |
+| Run (a tag run in translation mode) / Place run | தொகுதி / தொகுதியை வை | பகுதி |
+| Getting started / Setup | தொடங்குதல் / அமைவு | |
+| Dialog | உரையாடல் | |
+| Title bar | தலைப்புப் பட்டி | |
+| User folder | பயனர் கோப்புறை | |
+| Tap to time / Tapping | தட்டி நேரமிடு / தட்டல் | |
+| Latency / Calibrate | தாமதம் / அளவுதிருத்து | |
+| Kanji timer | காஞ்சி நேரமிடுபவர் | காஞ்சி நேரமிடல் |
+| Marker (audio) | குறிப்பான் | மார்க்கர் |
+| Post processor | பின்செயலாக்கி | போச்ட் செயலி |
+| Filter (noun / command) | வடிப்பி / வடிகட்டு | |
+| Scroll | உருட்டு | ச்க்ரோல் |
+| Column | நெடுவரிசை | |
+| Occurrence (a search match) | நிகழ்வு | |
+| Cache | தற்காலிகச் சேமிப்பு | |
+| Colour picker | வண்ணத் தேர்வாளர் | |
+| Alt (a hotkey's second command, "Commit alt") | (மாற்று வழி) | |
+| Perspective (visual tool) | பார்வைக்கோணம் | |
+| Position pointer / Position shifter | நிலைச் சுட்டி / நிலை நகர்த்தி | |
+| Vector / Quad | திசையன் / நாற்கரம் | |
+| Rotation axes | X / Y / Z (Latin letters) | ஃச் / ஒய் / சட் |
+| Shear / Blur / Glow | சரிவு / மங்கல் / ஒளிவீச்சு | |
+| Fade in / Fade out | உள்மங்கல் / வெளிமங்கல் | |
+| Gradient | சாய்வு | |
+| Animation | அசைவூட்டம் | அனிமேசன் |
+| Offset | இடப்பெயர்ச்சி | ஆஃப்செட் |
 
 Units (ms, cs, s, min, px, fps) stay in Latin letters. `QT_LAYOUT_DIRECTION`
 is `LTR`.
