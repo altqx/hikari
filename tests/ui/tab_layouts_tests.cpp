@@ -84,7 +84,7 @@ class TabLayoutsTest : public QObject {
     void start()
     {
         app::Application::Options options;
-        options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         options.playbackAudio = false;
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
@@ -158,7 +158,7 @@ private slots:
         engine.reset();
         application.reset();
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
-                                 "LastSession.txt", "hikari.ini"})
+                                 "LastSession.txt", "settings.toml", "hotkeys.toml", "state.json"})
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 

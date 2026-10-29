@@ -91,7 +91,7 @@ private slots:
     {
         QVERIFY(home.isValid());
         app::Application::Options o;
-        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.spellingBackend = {};
         application = new app::Application(o);

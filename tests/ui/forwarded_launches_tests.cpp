@@ -61,7 +61,7 @@ class ForwardedLaunchesTests : public QObject {
     void start(int restore = 0)
     {
         app::Application::Options o;
-        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.spellingBackend = {}; // no spell checker, so no notice over the window
         application = new app::Application(o);
@@ -123,7 +123,8 @@ private slots:
         forwarded = nullptr;
         delete application;
         application = nullptr;
-        QFile::remove(home.filePath(QStringLiteral("hikari.ini")));
+        for (const char *name : {"settings.toml", "hotkeys.toml", "state.json"})
+            QFile::remove(home.filePath(QLatin1String(name)));
         QFile::remove(home.filePath(QStringLiteral("LastSession.txt")));
     }
 
@@ -184,7 +185,7 @@ private slots:
     {
         {
             app::Application::Options o;
-            o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+            o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
             o.playbackAudio = false;
             app::Application before(o);
             QVERIFY(before.openFile(writeAss(dir.filePath(QStringLiteral("m/gone.ass")), "g")));
@@ -293,7 +294,7 @@ private slots:
     {
         {
             app::Application::Options o;
-            o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+            o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
             o.playbackAudio = false;
             app::Application before(o);
             QVERIFY(before.openFile(writeAss(dir.filePath(QStringLiteral("s/last.ass")), "l")));
@@ -314,13 +315,13 @@ private slots:
     {
         {
             app::Application::Options o;
-            o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+            o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
             o.playbackAudio = false;
             app::Application before(o);
             QVERIFY(before.openFile(writeAss(dir.filePath(QStringLiteral("b/last.ass")), "l")));
         }
         app::Application::Options o;
-        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.spellingBackend = {};
         application = new app::Application(o);
@@ -355,13 +356,13 @@ private slots:
     {
         {
             app::Application::Options o;
-            o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+            o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
             o.playbackAudio = false;
             app::Application before(o);
             QVERIFY(before.openFile(writeAss(dir.filePath(QStringLiteral("s/last.ass")), "l")));
         }
         app::Application::Options o;
-        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.spellingBackend = {};
         application = new app::Application(o);

@@ -307,8 +307,8 @@ UserFolder::OldFolders UserFolder::OldFolders::of(const Environment &env)
 UserFolder::MoveReport UserFolder::moveIn(const OldFolders &oldFolders, bool portable) const
 {
     MoveReport report;
-    // Once per user folder, recorded in it: deleting hikari.ini to reset the
-    // settings brings nothing back (#397). A user folder with hikari.ini and
+    // Once per user folder, recorded in it: deleting the settings files to reset the
+    // settings brings nothing back (#397). A user folder with settings and
     // no record was moved into by a start before the record.
     const QString record = m_root + QLatin1Char('/') + kMoveRecord;
     if (QFileInfo::exists(record))
@@ -320,7 +320,9 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &oldFolders, bool por
             file.close();
         return report;
     };
-    if (QFileInfo::exists(settingsFile()))
+    // CF1: hikari.ini is the settings of a folder from before settings.toml.
+    if (QFileInfo::exists(settingsFile()) || QFileInfo::exists(m_root + QStringLiteral("/hikari.ini")) ||
+        QFileInfo::exists(m_root + QStringLiteral("/hikari.ini.old")))
         return recordDone();
     // A portable copy takes nothing from the system folders, which other
     // copies may still use; the notice says where the old settings are.

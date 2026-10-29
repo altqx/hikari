@@ -142,7 +142,7 @@ private slots:
     {
         QVERIFY(dir.isValid());
         app::Application::Options options;
-        options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         options.playbackAudio = false;
         if (QTest::currentTestFunction() == QByteArrayLiteral("aTemplateTypedBeforeATabChangeIsAutosaved"))
             options.recoveryDir = dir.filePath(QStringLiteral("Recovery"));

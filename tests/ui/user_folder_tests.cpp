@@ -76,7 +76,7 @@ private slots:
         UserFolder f = UserFolder::locate(env);
         QCOMPARE(f.root(), QStringLiteral("/home/a/.config/hikarisub"));
         QCOMPARE(f.cache(), QStringLiteral("/home/a/.cache/hikarisub"));
-        QCOMPARE(f.settingsFile(), QStringLiteral("/home/a/.config/hikarisub/hikari.ini"));
+        QCOMPARE(f.settingsFile(), QStringLiteral("/home/a/.config/hikarisub/settings.toml"));
         QCOMPARE(f.dictionaries(), QStringLiteral("/home/a/.config/hikarisub/dictionaries"));
         QCOMPARE(f.catalogs(), QStringLiteral("/home/a/.config/hikarisub/catalogs"));
         QCOMPARE(f.presets(), QStringLiteral("/home/a/.config/hikarisub/presets"));
@@ -321,7 +321,8 @@ private slots:
                               "recovery", "recovery/sessions", "recovery/sessions/s.json"}));
         QCOMPARE(entries(folder.cache()), (QStringList{"AudioCache", "AudioCache/x.w64", "HandedOn-0123.txt", "Indices",
                                                        "Indices/y.ffindex"}));
-        QCOMPARE(read(folder.settingsFile()), (config + QStringLiteral("/hikari.ini")).toUtf8());
+        // CF1: the store converts it at the start.
+        QCOMPARE(read(folder.root() + QStringLiteral("/hikari.ini")), (config + QStringLiteral("/hikari.ini")).toUtf8());
         // The old folders are gone, the organisation folder only when empty
         // (where names ignore case it is the user folder, as on Windows,
         // %APPDATA%\HikariSub around the old HikariSub\HikariSub).
@@ -336,10 +337,10 @@ private slots:
         QVERIFY(write(config + QStringLiteral("/hikari.ini"), "older"));
         QVERIFY(folder.moveIn({config, data}).from.isEmpty());
         QCOMPARE(read(config + QStringLiteral("/hikari.ini")), QByteArray("older"));
-        QVERIFY(QFile::remove(folder.settingsFile()));
+        QVERIFY(QFile::remove(folder.root() + QStringLiteral("/hikari.ini")));
         QVERIFY(folder.moveIn({config, data}).from.isEmpty());
         QCOMPARE(read(config + QStringLiteral("/hikari.ini")), QByteArray("older"));
-        QVERIFY(!QFileInfo::exists(folder.settingsFile()));
+        QVERIFY(!QFileInfo::exists(folder.root() + QStringLiteral("/hikari.ini")));
     }
 
     // #397: a user folder a start before the record moved into (it has
@@ -382,7 +383,7 @@ private slots:
         QCOMPARE(read(r.keptBack.first()), QByteArray("0.8.1"));
         QVERIFY(!QFileInfo::exists(old.data));
         QCOMPARE(read(folder.recovery() + QStringLiteral("/sessions/s.json")), QByteArray("session"));
-        QCOMPARE(read(folder.settingsFile()), QByteArray("settings"));
+        QCOMPARE(read(folder.root() + QStringLiteral("/hikari.ini")), QByteArray("settings"));
         // Moved entirely, nothing of it stays.
         QTemporaryDir other;
         env.appData = QDir::toNativeSeparators(other.filePath(QStringLiteral("Roaming")));
@@ -500,7 +501,7 @@ private slots:
         QCOMPARE(read(folder.root() + QStringLiteral("/Rules.txt")), QByteArray("new rules"));
         QCOMPARE(read(folder.root() + QStringLiteral("/automation/autoload/a.lua")), QByteArray("new a"));
         QCOMPARE(read(folder.root() + QStringLiteral("/automation/autoload/b.lua")), QByteArray("old b"));
-        QCOMPARE(read(folder.settingsFile()), QByteArray("settings"));
+        QCOMPARE(read(folder.root() + QStringLiteral("/hikari.ini")), QByteArray("settings"));
         QCOMPARE(read(config + QStringLiteral("/Rules.txt")), QByteArray("old rules"));
     }
 };

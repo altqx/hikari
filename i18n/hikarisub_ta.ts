@@ -5024,7 +5024,7 @@ Failed to copy %2 fonts.</source>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub and copy hikari.ini from there.</source>
-        <translation>இந்தக் கையடக்கப் பிரதி தன் அமைப்புகளை %1 இல் வைத்திருக்கிறது. முந்தைய பதிப்பின் அமைப்புகள் இன்னும் %2 இல் உள்ளன: அவற்றைப் பயன்படுத்த, HikariSub ஐ மூடிவிட்டு அங்கிருந்து hikari.ini ஐ நகலெடுக்கவும்.</translation>
+        <translation type="vanished">இந்தக் கையடக்கப் பிரதி தன் அமைப்புகளை %1 இல் வைத்திருக்கிறது. முந்தைய பதிப்பின் அமைப்புகள் இன்னும் %2 இல் உள்ளன: அவற்றைப் பயன்படுத்த, HikariSub ஐ மூடிவிட்டு அங்கிருந்து hikari.ini ஐ நகலெடுக்கவும்.</translation>
     </message>
     <message>
         <source>%1 - HikariSub</source>
@@ -6455,6 +6455,26 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Help</source>
         <translation>உதவி</translation>
+    </message>
+    <message>
+        <source>This portable copy keeps its settings in %1. An earlier version&apos;s settings are still in %2: to use them, quit HikariSub, copy hikari.ini from there and delete settings.toml here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your settings moved from hikari.ini to settings.toml, hotkeys.toml and state.json. The old file is kept as hikari.ini.old.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are at their defaults for now. HikariSub will not write over it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings are back at their defaults. The file is kept as %2: fix it while HikariSub is closed and give it its name back to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hotkeys.toml: %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

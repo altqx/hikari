@@ -38,7 +38,7 @@ class WorkspaceLayoutTest : public QObject {
     void start()
     {
         app::Application::Options options;
-        options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
@@ -327,7 +327,7 @@ private slots:
         f.close();
 
         app::Application::Options options;
-        options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));

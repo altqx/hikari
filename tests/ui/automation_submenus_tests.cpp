@@ -72,7 +72,7 @@ class AutomationSubmenusTests : public QObject {
     app::Application::Options options()
     {
         app::Application::Options o;
-        o.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        o.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         return o;
     }

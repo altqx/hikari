@@ -75,7 +75,7 @@ class AnalyticsSessionTest : public QObject {
     void start(const app::Analytics::Config &analytics)
     {
         app::Application::Options options;
-        options.settingsFile = folder + QStringLiteral("/hikari.ini");
+        options.settingsFile = folder + QStringLiteral("/settings.toml");
         options.playbackAudio = false;
         options.analytics = analytics;
         application = std::make_unique<app::Application>(options);

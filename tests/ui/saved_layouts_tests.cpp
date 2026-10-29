@@ -77,7 +77,7 @@ class SavedLayoutsTest : public QObject {
     std::unique_ptr<app::Application> application;
     std::unique_ptr<QQmlApplicationEngine> engine;
 
-    QString settingsFile() const { return dir.filePath(QStringLiteral("hikari.ini")); }
+    QString settingsFile() const { return dir.filePath(QStringLiteral("settings.toml")); }
     QString layoutsFile() const { return dir.filePath(QStringLiteral("layouts.json")); }
     // The saved layout file's envelope (layout.json, beside layouts.json).
     QJsonObject layoutEnvelope() const
@@ -189,7 +189,7 @@ private slots:
         engine.reset();
         application.reset();
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
-                                 "layouts.json", "layouts.json.unrestored", "LastSession.txt", "hikari.ini"}) {
+                                 "layouts.json", "layouts.json.unrestored", "LastSession.txt", "settings.toml", "hotkeys.toml", "state.json"}) {
             QFile::remove(dir.filePath(QLatin1String(name)));
             QDir().rmdir(dir.filePath(QLatin1String(name))); // a test's folder in a file's place
         }
