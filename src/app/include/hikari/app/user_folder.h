@@ -15,6 +15,7 @@
 //   catalogs/       style catalogs (.sty) and the font catalogs: fonts.toml
 //                   and fonts.autosave-0..2.toml (FontCatalogs.txt,
 //                   FontCatalogsAutosave0..2.txt)
+//   last-session.json   the last session (CF3; LastSession.txt.old once converted)
 //   presets/        saved workspace layouts and other presets
 //   recovery/
 //

@@ -3,6 +3,7 @@
 # test hook in the executable.
 add_library(hikari_composition STATIC composition.cpp application.cpp include/hikari/app/application.h
     application_tabs.cpp # P6: tabs and session restore
+    session_json.cpp include/hikari/app/session_json.h # CF3: last-session.json and .hksession
     application_comparison.cpp # R1: subtitle comparison
     application_video.cpp # V3: video sources, tracks and chapters
     application_reference.cpp # R2: reference navigation and the subtitles preview

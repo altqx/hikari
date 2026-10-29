@@ -21,11 +21,16 @@ Item {
 
     // GLOBAL_LOAD_LAST_SESSION (no file) or GLOBAL_LOAD_EXTERNAL_SESSION.
     function load(file) {
-        windows.go(windows.app.reviewSession(file === undefined ? "" : file))
+        const chosen = file === undefined ? "" : file
+        windows.go(windows.app.reviewSession(chosen), chosen)
     }
     // The startup offer's Restore: the session as it was at the start.
     function restoreStart() { windows.go(windows.app.reviewStartupSession()) }
-    function go(result) {
+    function go(result, file) {
+        if (result.network && result.network.length > 0) {
+            windows.askNetwork(file, result.network)
+            return
+        }
         if (!result.ok)
             return
         if (result.rows.length === 0)
@@ -67,7 +72,7 @@ Item {
         id: loadDialog
         objectName: "sessionLoadDialog"
         title: qsTr("Load session")
-        nameFilters: [qsTr("Sessions (*.kls)"), qsTr("All files (*)")]
+        nameFilters: [qsTr("Sessions (*.hksession *.kls)"), qsTr("All files (*)")]
         fileMode: FileDialog.OpenFile
         onAccepted: {
             windows.rememberPickerFolder("sessions", selectedFile)
@@ -78,14 +83,59 @@ Item {
         id: saveDialog
         objectName: "sessionSaveDialog"
         title: qsTr("Save session")
-        nameFilters: [qsTr("Sessions (*.kls)")]
-        defaultSuffix: "kls"
+        nameFilters: [qsTr("Sessions (*.hksession)")]
+        defaultSuffix: "hksession"
         fileMode: FileDialog.SaveFile
         onAccepted: {
             windows.rememberPickerFolder("sessions", selectedFile)
-            if (windows.app.saveSessionTo(selectedFile) === "readonly")
-                windows.warnReadOnly(selectedFile)
+            windows.save(selectedFile, false)
         }
+    }
+    function save(file, replace) {
+        const result = windows.app.saveSessionTo(file, replace)
+        if (result === "readonly")
+            windows.warnReadOnly(file)
+        else if (result === "exists")
+            windows.askReplace(file)
+    }
+    function fileName(file) {
+        return windows.app.localPath(file).replace(/^.*[\\/]/, "")
+    }
+    // CF3: a name typed with .kls is saved as a .hksession; one already
+    // there is replaced only when the user says so.
+    function askReplace(file) {
+        const name = windows.fileName(file).replace(/\.kls$/i, ".hksession")
+        readOnlyMessages.ask({
+            title: qsTr("Save session"),
+            text: qsTr("“%1” already exists.").arg(name),
+            detail: qsTr("Sessions are saved as .hksession files. Replace the one there?"),
+            severity: "warning",
+            choices: [
+                { id: "replace", text: qsTr("Replace"), role: "accept" },
+                { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }
+            ]
+        }, id => {
+            if (id === "replace")
+                windows.save(file, true)
+        })
+    }
+    // CF3: a session file naming files on other computers; looking them up
+    // connects to those computers, so it waits for the user.
+    function askNetwork(file, hosts) {
+        readOnlyMessages.ask({
+            title: qsTr("Load session"),
+            text: qsTr("This session opens files on another computer."),
+            detail: qsTr("“%1” names files on %2. Opening it connects to them.")
+                .arg(windows.fileName(file)).arg(hosts.join(", ")),
+            severity: "warning",
+            choices: [
+                { id: "open", text: qsTr("Open"), role: "accept" },
+                { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }
+            ]
+        }, id => {
+            if (id === "open")
+                windows.go(windows.app.reviewSession(file, hosts), file)
+        })
     }
     // PU1-message-boxes on NT1's host: Save session onto a read-only file
     // (legacy's OK-only "Warning", whose OK opened the dialog again): Save
@@ -93,7 +143,7 @@ Item {
     function warnReadOnly(file) {
         readOnlyMessages.ask({
             title: qsTr("Save session"),
-            text: qsTr("“%1” is read-only.").arg(windows.app.localPath(file).replace(/^.*[\\/]/, "")),
+            text: qsTr("“%1” is read-only.").arg(windows.fileName(file)),
             detail: qsTr("Save the session under another name, or make the file writable and save again."),
             severity: "warning",
             choices: [

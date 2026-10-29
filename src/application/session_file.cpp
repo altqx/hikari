@@ -196,10 +196,6 @@ std::optional<Session> parseSession(std::string_view text)
             tab.active = atoi(rest);
         else if (startsWith(token, "Scroll: ", &rest))
             tab.scroll = atoi(rest);
-        else if (startsWith(token, "FFMS2: ", &rest))
-            tab.ffms2 = atoi(rest) != 0;
-        else if (startsWith(token, "Editor: ", &rest))
-            tab.editor = atoi(rest) != 0;
         else if (startsWith(token, "Audio: ", &rest))
             tab.audio = rest;
         else if (startsWith(token, "Keyframes: ", &rest))
@@ -236,31 +232,6 @@ bool sessionClosed(std::string_view text)
         }
     }
     return normalized.find("]\n[Close session]\n") != std::string::npos;
-}
-
-std::string writeSession(std::string_view program, bool closed, const std::vector<SessionTab> &tabs)
-{
-    std::string out = "\xEF\xBB\xBF"; // FileWrite(utf = true): a BOM, then UTF-8
-    out += "[";
-    out += program;
-    out += "]\r\n";
-    if (closed)
-        out += "[Close session]\r\n";
-    int number = 0;
-    for (const auto &tab : tabs) {
-        out += "Tab: " + std::to_string(number) + "\r\nVideo: " + tab.video + "\r\nPosition: " +
-               std::to_string(tab.position) + "\r\nFFMS2: " + (tab.ffms2 ? "1" : "0") + "\r\nSubtitles: " + tab.subtitles +
-               "\r\nActive: " + std::to_string(tab.active) + "\r\nScroll: " + std::to_string(tab.scroll) +
-               "\r\nEditor: " + (tab.editor ? "1" : "0") + "\r\n";
-        if (!tab.audio.empty() && tab.audio != tab.video)
-            out += "Audio: " + tab.audio + "\r\n";
-        if (!tab.keyframes.empty())
-            out += "Keyframes: " + tab.keyframes + "\r\n";
-        if (!tab.layout.empty())
-            out += "Layout: " + tab.layout + "\r\n";
-        ++number;
-    }
-    return out;
 }
 
 } // namespace hikari::application

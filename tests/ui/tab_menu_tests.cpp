@@ -7,6 +7,7 @@
 // the mouse.
 
 #include "hikari/app/application.h"
+#include "hikari/app/session_json.h"
 #include "hikari/app/settings_import_store.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
@@ -74,7 +75,7 @@ void touch(const QString &path)
 class TabMenuTests : public QObject {
     Q_OBJECT
 
-    QTemporaryDir home; // the settings folder (LastSession.txt, Subs)
+    QTemporaryDir home; // the settings folder (last-session.json, Subs)
     QTemporaryDir dir;  // subtitles and media
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
@@ -172,8 +173,7 @@ class TabMenuTests : public QObject {
     application::Session lastSession() const
     {
         const QByteArray bytes = readAll(application->lastSessionPath());
-        auto text = application::decodeSessionBytes(std::string_view(bytes.constData(), bytes.size()));
-        return application::parseSession(text.value_or(std::string())).value_or(application::Session{});
+        return app::readSession(std::string_view(bytes.constData(), bytes.size())).value_or(application::Session{});
     }
     QStringList sessionSubtitles() const
     {
@@ -227,7 +227,7 @@ private slots:
     void init()
     {
         revealed.clear();
-        QFile::remove(home.filePath(QStringLiteral("LastSession.txt")));
+        QFile::remove(home.filePath(QStringLiteral("last-session.json")));
         start();
     }
     void cleanup()

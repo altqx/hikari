@@ -2,10 +2,11 @@
 
 // P6: legacy session files, LastSession.txt and the .kls files of "Save
 // session to file" (Notebook::SaveLastSession, LoadLastSession and
-// CheckLastSession at 20d647c4). The rewrite reads and writes this grammar
-// unchanged; it is not a recovery format.
+// CheckLastSession at 20d647c4). CF3 (#490): sessions are JSON now
+// (app/session_json.h); this grammar is only read, for a .kls the user opens
+// and for the one conversion of LastSession.txt. Nothing writes it.
 //
-// The file is UTF-8 with a BOM (OpenWrite::FileWrite) and CRLF line ends:
+// Legacy wrote UTF-8 with a BOM (OpenWrite::FileWrite) and CRLF line ends:
 //
 //   [HikariSub v0.0.1]
 //   [Close session]            <- only when written as the program closed
@@ -30,9 +31,10 @@
 // other than "Tab: 0" or by the last line, so a session with no tab lines
 // still gives one empty tab, and lines the reader does not know are skipped.
 //
-// "Layout: " is the rewrite's own field (WS1-session-layout): each Document
+// "Layout: " was the rewrite's own field (WS1-session-layout): each Document
 // tab's panel arrangement (ui::WorkspaceArrangement, its compact envelope).
-// Legacy skips the line as it skips every line it does not know.
+// "FFMS2: " and "Editor: " are skipped: DirectShow and the player layout are
+// gone.
 //
 // Departures (approved, docs/compatibility-decisions.md):
 // - C05-audio-association: legacy never reset the Audio field between tabs,
@@ -43,6 +45,7 @@
 //   as an empty first tab ("Tab: 0\r") with every path ending in '\r'. Here
 //   CRLF is folded on both platforms.
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -53,14 +56,12 @@ namespace hikari::application {
 struct SessionTab {
     std::string video;     // "Video: "
     int position = 0;      // "Position: ", the video time in ms
-    bool ffms2 = true;     // "FFMS2: " (0: DirectShow)
     std::string subtitles; // "Subtitles: "
     int active = 0;        // "Active: ", the active Line's row among all Lines
     int scroll = 0;        // "Scroll: ", the Grid's first row
-    bool editor = true;    // "Editor: " (0: the video player layout)
     std::string audio;     // "Audio: "; written only when not "" and not the video
     std::string keyframes; // "Keyframes: "
-    std::string layout;    // "Layout: " (WS1), written only when not ""
+    std::string layout;    // "Layout: " (WS1), the arrangement's compact JSON
     bool operator==(const SessionTab &) const = default;
 };
 
@@ -68,6 +69,9 @@ struct Session {
     std::string header; // the first line as read, e.g. "[HikariSub v0.0.1]"
     bool closed = false; // "[Close session]": written as the program closed
     std::vector<SessionTab> tabs;
+    // CF3: the active Document tab, which only the JSON file marks; without
+    // one the last tab is (legacy's AddPage made each loaded tab active).
+    std::optional<std::size_t> activeTab;
 };
 
 // OpenWrite::FileOpen(path, &text, false): wxFFile::ReadAll through
@@ -86,9 +90,5 @@ std::optional<Session> parseSession(std::string_view text);
 // CheckLastSession on a file that could be read: whether "]\n[Close
 // session]\n" follows the header (CRLF and CR read as LF).
 bool sessionClosed(std::string_view text);
-
-// SaveLastSession: the file's bytes, with the "[Close session]" line when
-// `closed`. `program` is legacy Options.progname ("HikariSub v<version>").
-std::string writeSession(std::string_view program, bool closed, const std::vector<SessionTab> &tabs);
 
 } // namespace hikari::application

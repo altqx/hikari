@@ -25427,10 +25427,13 @@ private slots:
         // VisualCross.cpp:80-92, and the tools' zoom, 94-97) truncated as
         // its label is, computed here, not with copyCoordinatesText. Legacy
         // OnCopyCoords (VideoBox.cpp:1395-1412) scaled by the whole client
-        // less one pixel, which a bar puts off.
+        // less one pixel, which a bar puts off: by about the bar's width
+        // near the picture's edges, so the pointer is near its top left (at
+        // the centre the two meet or are a truncation apart, as on Fedora
+        // CI, #504).
         QGuiApplication::clipboard()->clear();
         item("videoPanel")->forceActiveFocus();
-        const QPoint k = p + QPoint(7, 5);
+        const QPoint k = videoPoint(tools.videoRect().topLeft() + QPointF(6, 6));
         QTest::mouseMove(window, k);
         QTRY_VERIFY(!tools.overlay().isEmpty());
         press(Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier);
@@ -25460,7 +25463,10 @@ private slots:
         QCOMPARE(visualItem("visualValue_x")->property("text").toString(), QString::number(sx));
         const float legacyX = float(view.scriptWidth()) / float(view.clientWidth() - 1);
         const float legacyY = float(view.scriptHeight()) / float(view.clientHeight() - view.panelHeight() - 1);
-        QVERIFY(copied != QStringLiteral("%1,%2").arg(int(float(devX) * legacyX)).arg(int(float(devY) * legacyY)));
+        const QString legacy = QStringLiteral("%1,%2").arg(int(float(devX) * legacyX)).arg(int(float(devY) * legacyY));
+        // A bar of a pixel or two keeps legacy's text: there is no departure.
+        if (std::max(r.left, r.top) >= 8)
+            QVERIFY2(copied != legacy, qPrintable(QStringLiteral("%1 bar %2,%3").arg(copied).arg(r.left).arg(r.top)));
 
         // Ctrl+click: \pos at the pointer into the active Line, one step.
         auto *session = application->files().session(*application->workspace().editingTarget());
