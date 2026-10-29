@@ -3210,13 +3210,12 @@
   {
    "role": "dictionary",
    "file": "dictionary.svg",
-   "label": "Installed languages",
+   "label": "Primary language",
    "accent": true,
    "mirror": false,
    "legacy": [],
    "surfaces": [
     "kanji-timer",
-    "text-field-menu",
     "settings-dialog"
    ]
   },

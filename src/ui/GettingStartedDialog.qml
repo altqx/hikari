@@ -872,7 +872,7 @@ DialogWindow {
                             model: setup.dictionaries
                             enabled: setup.values["editor.spellchecker"] === true
                             Layout.preferredWidth: 240
-                            Accessible.name: qsTr("Dictionary")
+                            Accessible.name: qsTr("Primary language")
                         }
                     }
                     // GR1 (#364): grammar check with Harper, Off or its four Englishes.

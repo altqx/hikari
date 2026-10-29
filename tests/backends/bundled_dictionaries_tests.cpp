@@ -46,7 +46,7 @@ std::vector<Word> fixtureWords()
 
 } // namespace
 
-// Settings › Spelling lists these (Application::dictionaries).
+// Settings › Spelling lists these for the Primary language.
 TEST(BundledDictionaries, TheFolderListsEveryLanguage)
 {
     auto symbols = application::availableDictionaries(kDictionaries);
@@ -70,4 +70,31 @@ TEST(BundledDictionaries, EachKnowsItsWordsAndRejectsMisspellings)
             << word.dictionary << ": " << QString::fromStdU16String(word.text).toStdString();
     }
     EXPECT_EQ(loaded.size(), 5u);
+}
+
+// SP1 (#474): all five check together, each the words of its script, the
+// primary English; a mixed Line marks only the real misspellings.
+TEST(BundledDictionaries, MixedLinesMarkOnlyRealMisspellings)
+{
+    application::SpellChecker checker(kDictionaries, backends::hunspellSpellingLoader());
+    ASSERT_EQ(checker.initialize(u"en_US"), application::SpellChecker::Status::Ready);
+    const auto spelling = backends::legacySpellingText();
+    auto marked = [&](std::u16string_view text) {
+        std::vector<std::u16string> out;
+        for (const auto &m : application::editorMarks(text, core::SubtitleFormat::Ass, checker, spelling, true).misspells)
+            out.push_back(m.word);
+        return out;
+    };
+    using Words = std::vector<std::u16string>;
+    EXPECT_EQ(marked(u"Hello spelling, 안녕하세요 학교!"), Words{});
+    EXPECT_EQ(marked(u"Hello speling, 안녕하세여 학교!"), (Words{u"speling", u"안녕하세여"}));
+    EXPECT_EQ(marked(u"{\\i1}The źdźbło{\\i0} spelling"), Words{});
+    EXPECT_EQ(marked(u"The źdźbłoo"), Words{u"źdźbłoo"});
+    EXPECT_EQ(marked(u"வணக்கம் தமிழ் spelling"), Words{});
+    EXPECT_EQ(marked(u"வணக்கமம தமிழ் speling"), (Words{u"வணக்கமம", u"speling"}));
+    EXPECT_EQ(marked(u"ภาษา spelling"), Words{});
+    EXPECT_EQ(marked(u"привет speling"), Words{u"speling"}); // no Cyrillic dictionary
+    // A Polish primary marks the same words.
+    ASSERT_EQ(checker.initialize(u"pl"), application::SpellChecker::Status::Ready);
+    EXPECT_EQ(marked(u"Hello speling, 안녕하세여 학교!"), (Words{u"speling", u"안녕하세여"}));
 }
