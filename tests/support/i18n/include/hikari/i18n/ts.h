@@ -1,8 +1,7 @@
 #pragma once
-// O4: Qt Linguist TS catalogs, read and written in the layout lupdate and
-// lconvert write (Qt 6.11.2 translator/ts.cpp), so a migrated catalog is
-// already what the developer-invoked lupdate would leave: running it over the
-// same sources changes nothing.
+// Qt Linguist TS catalogs, read and written in the layout lupdate and
+// lconvert write (Qt 6.11.2 translator/ts.cpp), for the i18n tests and the
+// contexts lint.
 
 #include <QByteArray>
 #include <QList>
@@ -47,7 +46,7 @@ struct TsCatalog {
 std::expected<TsCatalog, QString> readTs(const QByteArray &bytes);
 QByteArray writeTs(const TsCatalog &catalog);
 
-// Qt's numerus form count for the languages the migration handles, as lupdate
+// Qt's numerus form count for the catalog languages, as lupdate
 // 6.11.2 creates them (pl 3, ko_KR 1, th_TH 1, ta 2, en 2); -1 otherwise.
 int qtNumerusForms(const QString &language);
 
