@@ -10,7 +10,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
     spelling_text.cpp spelling_text.h editor_highlighter.cpp editor_highlighter.h
-    settings_store.cpp settings_store.h dialog_placement.cpp dialog_placement.h
+    settings_store.cpp settings_store.h settings_files.cpp settings_files.h toml_file.cpp toml_file.h dialog_placement.cpp dialog_placement.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
     visual_tools_controller.cpp visual_tools_controller.h shape_editor.cpp shape_editor.h
     tag_list_controller.cpp tag_list_controller.h
@@ -46,7 +46,9 @@ target_link_libraries(hikari_ui PRIVATE Qt6::GuiPrivate)
 # Some engine headers include their siblings relative to the kddockwidgets directory.
 get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
-hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*")
+# CF1 (#488): toml++ for the settings files (settings_files.h, toml_file.h).
+target_link_libraries(hikari_ui PUBLIC Hikari::tomlplusplus)
+hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*" Hikari::tomlplusplus)
 # O2: the "Hotkey mapping" window and its questions.
 # S4: the automation shell's message boxes and script editor picker.
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
