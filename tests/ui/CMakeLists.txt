@@ -16,6 +16,7 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           video=videoRecentListsAndDialogFolders
     PART_TIMEOUT 600)
 hikari_add_qttest(hikari_ui_log_controller_tests SOURCES log_controller_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_command_names_tests SOURCES command_names_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_tag_buttons_tests SOURCES tag_buttons_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_line_measures_tests SOURCES line_measures_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_status_bar_tests SOURCES status_bar_tests.cpp LIBRARIES hikari_ui)

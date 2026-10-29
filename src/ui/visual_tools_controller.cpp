@@ -2,6 +2,7 @@
 
 #include "hikari/application/visual_all_tags.h"
 
+#include "command_names.h"
 #include "list_files.h"
 #include "video_controller.h"
 
@@ -97,7 +98,7 @@ QVariantList VisualToolsController::families() const
 {
     QVariantList out;
     for (const FamilyInfo &f : application::visual::families())
-        out.append(QVariantMap{{QStringLiteral("name"), QString::fromLatin1(f.tooltip.data(), f.tooltip.size())},
+        out.append(QVariantMap{{QStringLiteral("name"), visualToolName(f.tooltip)},
                                {QStringLiteral("icon"), QString::fromLatin1(f.icon.data(), f.icon.size())},
                                {QStringLiteral("hotkey"), QString::fromLatin1(f.hotkey.data(), f.hotkey.size())},
                                {QStringLiteral("available"),
@@ -567,7 +568,7 @@ QString VisualToolsController::toolName() const
 {
     for (const FamilyInfo &f : application::visual::families())
         if (f.family == m_family)
-            return QString::fromLatin1(f.tooltip.data(), f.tooltip.size());
+            return visualToolName(f.tooltip);
     return {};
 }
 

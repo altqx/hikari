@@ -3,6 +3,8 @@
 #include "hikari/app/automation_hotkeys_controller.h"
 #include "hikari/application/settings.h"
 
+#include "command_names.h"
+
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QKeyEvent>
@@ -179,7 +181,18 @@ QString commandName(int id)
     if (id == application::kGlobalQuit)
         return QCoreApplication::translate("HikariSub.Hotkeys", "Exit");
     const std::string name = application::hotkeyName(id);
-    return qs(name.empty() ? symbolOf(id) : name);
+    return name.empty() ? qs(symbolOf(id)) : ui::hotkeyCommandName(name);
+}
+
+QString shownName(const application::HotkeyList::Row &r)
+{
+    return r.key.id < application::kFirstScriptHotkey ? ui::hotkeyCommandName(r.name) : qs(r.name);
+}
+
+QString shownText(const application::HotkeyList::Row &r)
+{
+    return r.key.id < application::kFirstScriptHotkey ? ui::hotkeyWindowName(r.key.type) + QLatin1Char(' ') + shownName(r)
+                                                      : qs(r.text);
 }
 
 // MUST KILL: raw command ids, and the default branch stands for GLOBAL_VIDEO_INDEXING alone.
@@ -523,9 +536,9 @@ QVariantList HotkeysController::rows() const
     for (const int i : m_list->shown()) {
         const auto &r = m_list->row(i);
         QVariantMap row{{QStringLiteral("row"), i},
-                        {QStringLiteral("text"), qs(r.text)},
+                        {QStringLiteral("text"), shownText(r)},
                         {QStringLiteral("context"), r.key.type},
-                        {QStringLiteral("name"), qs(r.name)},
+                        {QStringLiteral("name"), shownName(r)},
                         {QStringLiteral("accel"), qs(r.accel)},
                         {QStringLiteral("textModified"), r.textModified},
                         {QStringLiteral("keyModified"), r.keyModified},
@@ -542,7 +555,7 @@ QVariantList HotkeysController::rows() const
                     if (((other.key.type == application::GlobalHotkey && other.key.id < application::kFirstScriptHotkey) ||
                          playsEverywhere(other.key)) &&
                         sameChord(other.accel, r.accel)) {
-                        note = QCoreApplication::translate("HikariSub.Hotkeys", "%1 takes it").arg(qs(other.name));
+                        note = QCoreApplication::translate("HikariSub.Hotkeys", "%1 takes it").arg(shownName(other));
                         break;
                     }
                 }
@@ -614,12 +627,13 @@ void HotkeysController::search(const QString &text)
 {
     if (!m_list)
         return;
-    m_list->search(text.toStdString(), [this](const application::HotkeyList::Row &r) {
+    m_list->search(text.toLower().toStdString(), [this](const application::HotkeyList::Row &r) {
         if (r.key.id < application::kFirstScriptHotkey)
-            return std::string();
+            return shownText(r).toLower().toStdString();
         const QVariantMap macro = m_scripts.describe(r.name);
         return (macro.value(QStringLiteral("script")).toString() + QLatin1Char(' ') +
                 macro.value(QStringLiteral("macro")).toString())
+            .toLower()
             .toStdString();
     });
     emit rowsChanged();
@@ -638,7 +652,7 @@ QVariantMap HotkeysController::mapTarget() const
     if (!m_list || m_list->selection() < 0)
         return {};
     const int row = m_list->selection();
-    return {{QStringLiteral("name"), qs(m_list->mapName(row))},
+    return {{QStringLiteral("name"), shownName(m_list->row(row))},
             {QStringLiteral("windows"), m_list->mapOffersWindows(row)},
             {QStringLiteral("type"), m_list->row(row).key.type}};
 }
@@ -816,7 +830,9 @@ QVariantMap HotkeysController::gestureTarget(const QString &symbolOrScript, bool
         return {{QStringLiteral("id"), id}, {QStringLiteral("name"), symbolOrScript}};
     }
     const int id = application::hotkeyIdOf(s) - (second ? 10 : 0);
-    return {{QStringLiteral("id"), id}, {QStringLiteral("name"), qs(application::hotkeyName(id))}};
+    return {{QStringLiteral("id"), id},
+            {QStringLiteral("name"), qs(application::hotkeyName(id))},
+            {QStringLiteral("label"), commandName(id)}};
 }
 
 QVariantMap HotkeysController::gestureConflict(int id, const QString &accel, int type) const
@@ -856,7 +872,7 @@ QStringList HotkeysController::holdersOf(const QString &accel, int id) const
             const QString shown = commandName(key.id);
             out << (key.type == application::GlobalHotkey
                         ? shown
-                        : QStringLiteral("%1 (%2)").arg(shown, qs(std::string(application::hotkeyWindowName(key.type)))));
+                        : QStringLiteral("%1 (%2)").arg(shown, ui::hotkeyWindowName(key.type)));
         }
     }
     return out;
