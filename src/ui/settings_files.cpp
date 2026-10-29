@@ -600,10 +600,19 @@ std::string formatHotkeys(const toml::table &file)
 {
     std::ostringstream out;
     out << "version = " << SettingsFiles::kVersion << "\n";
-    toml::table rest = file;
+    // Unknown keys stay: those at the root go before the first table header,
+    // where they still read as root keys.
+    toml::table root;
+    toml::table rest;
+    for (const auto &[key, node] : file) {
+        if (key.str() == kAutomationTable || std::ranges::find(kWindowTables, key.str()) != std::end(kWindowTables))
+            continue;
+        (node.is_table() ? rest : root).insert(key, node);
+    }
+    if (!root.empty())
+        out << formatToml(root) << "\n";
     for (int window = 0; window < application::kHotkeyWindows; ++window) {
         const auto *table = file[kWindowTables[window]].as_table();
-        rest.erase(kWindowTables[window]);
         if (!table)
             continue;
         out << "\n[" << kWindowTables[window] << "]\n";
@@ -616,7 +625,6 @@ std::string formatHotkeys(const toml::table &file)
         }
     }
     if (const auto *table = file[kAutomationTable].as_table()) {
-        rest.erase(kAutomationTable);
         out << "\n[" << kAutomationTable << "]\n";
         for (const auto &[key, node] : *table) {
             out << tomlKey(key.str()) << " = ";
@@ -896,12 +904,13 @@ bool SettingsFiles::convertIni()
 // is done.
 bool SettingsFiles::writeConversion()
 {
-    for (const File file : {Hotkeys, State, Settings}) {
+    m_converting = true;
+    const bool written = std::ranges::all_of(std::array{Hotkeys, State, Settings}, [this](File file) {
         m_dirty[file] = true;
-        if (!writeFile(file))
-            return false;
-    }
-    return true;
+        return writeFile(file);
+    });
+    m_converting = false;
+    return written;
 }
 
 std::optional<SettingValue> SettingsFiles::read(const SettingDefinition &setting) const
@@ -1176,7 +1185,8 @@ bool SettingsFiles::writeFile(File file)
         break;
     }
     // Kept dirty when the write fails, so a later flush tries again.
-    if (!application::writeFileAtomically(pathOf(path(file)), text))
+    // Converted files are as private as hikari.ini was.
+    if (!application::writeFileAtomically(pathOf(path(file)), text, m_converting ? pathOf(legacyIni()) : fs::path()))
         return false;
     m_dirty[file] = false;
     m_changed[file].clear();

@@ -293,7 +293,7 @@ private slots:
         QTemporaryDir dir;
         const QString file = dir.filePath(QStringLiteral("settings.toml"));
         writeAll(dir.filePath(QStringLiteral("hotkeys.toml")),
-                 "version = 1\n[global]\nGLOBAL_SAVE_SUBS = [\"Ctrl+Shift+W\", \"F2\"]\nGLOBAL_UNDO = [\"F3\"]\n"
+                 "version = 1\nfutureOption = \"keep\"\n[global]\nGLOBAL_SAVE_SUBS = [\"Ctrl+Shift+W\", \"F2\"]\nGLOBAL_UNDO = [\"F3\"]\n"
                  "LATER_COMMAND = \"F4\"  # a later version's\n");
         SettingsStore store(file);
         application::HotkeyMap read;
@@ -303,13 +303,14 @@ private slots:
         QCOMPARE(read.at({application::hotkeyIdOf("GLOBAL_UNDO"), application::GlobalHotkey}).accel, std::string("F3"));
         QVERIFY(store.ignored() == std::vector<std::string>{"global.GLOBAL_SAVE_SUBS: only the first shortcut is used"});
         // Written again (with one more change): one key each, the later
-        // version's entry kept.
+        // version's entries kept where they were.
         read[{application::hotkeyIdOf("GLOBAL_REDO"), application::GlobalHotkey}].accel = "F6";
         store.set(application::kHotkeysSetting.data(), qLines(application::hotkeyLines(read, false)));
         store.sync();
         const toml::table hotkeys = tomlOf(dir.filePath(QStringLiteral("hotkeys.toml")));
         QCOMPARE(hotkeys["global"]["GLOBAL_SAVE_SUBS"].value_or(std::string()), std::string("Ctrl+Shift+W"));
         QCOMPARE(hotkeys["global"]["LATER_COMMAND"].value_or(std::string()), std::string("F4"));
+        QCOMPARE(hotkeys["futureOption"].value_or(std::string()), std::string("keep"));
     }
 
     // Collections and rows as TOML and JSON structures, not tab-joined text.
@@ -788,6 +789,24 @@ private slots:
         store.sync();
         QVERIFY(readAll(state).contains("/v.mkv"));
         QCOMPARE(QFile::permissions(state) & ~(QFileDevice::ReadUser | QFileDevice::WriteUser), owner);
+    }
+
+    void aConvertedFileIsAsPrivateAsHikariIni()
+    {
+#ifdef Q_OS_WIN
+        QSKIP("no POSIX permissions");
+#endif
+        QTemporaryDir dir;
+        const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
+        writeAll(ini, "[profile]\naudio.volume=70\n");
+        const auto owner = QFileDevice::ReadOwner | QFileDevice::WriteOwner;
+        QVERIFY(QFile::setPermissions(ini, owner));
+        SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
+        QVERIFY(store.converted());
+        for (const auto *name : {"settings.toml", "hotkeys.toml", "state.json"})
+            QVERIFY2((QFile::permissions(dir.filePath(QLatin1String(name))) &
+                      ~(QFileDevice::ReadUser | QFileDevice::WriteUser)) == owner,
+                     name);
     }
 
     void aFolderInAFilesPlaceIsNotRead()

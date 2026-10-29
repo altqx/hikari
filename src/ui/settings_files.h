@@ -94,6 +94,7 @@ private:
     bool m_flushQueued = false;
     // hikari.ini was converted but the files could not all be written.
     bool m_conversionPending = false;
+    bool m_converting = false;
     std::vector<application::FileProblem> m_problems;
     std::vector<std::string> m_ignored;
     bool m_converted = false;

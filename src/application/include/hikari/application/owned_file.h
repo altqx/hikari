@@ -62,8 +62,10 @@ Conversion convertOnce(const std::filesystem::path &target, const std::filesyste
 // The file's bytes, nothing when it cannot be read (or is not a file).
 std::optional<std::string> readOwnedFile(const std::filesystem::path &path);
 // Writes `bytes` to a temporary file beside `path` and renames it over `path`;
-// an existing file's permissions carry over.
-bool writeFileAtomically(const std::filesystem::path &path, std::string_view bytes);
+// an existing file's permissions carry over, and a new file takes those of
+// `permissionsOf` when given (the file it is converted from).
+bool writeFileAtomically(const std::filesystem::path &path, std::string_view bytes,
+                         const std::filesystem::path &permissionsOf = {});
 
 // A path's text for messages (UTF-8, native separators).
 std::string displayPath(const std::filesystem::path &path);

@@ -79,13 +79,15 @@ std::optional<std::string> readOwnedFile(const fs::path &path)
     }
 }
 
-bool writeFileAtomically(const fs::path &path, std::string_view bytes)
+bool writeFileAtomically(const fs::path &path, std::string_view bytes, const fs::path &permissionsOf)
 {
     std::error_code ec;
     if (path.has_parent_path())
         fs::create_directories(path.parent_path(), ec);
     const fs::path temporary = withSuffix(path, ".writing");
-    const fs::file_status existing = fs::status(path, ec);
+    fs::file_status existing = fs::status(path, ec);
+    if (!fs::is_regular_file(existing) && !permissionsOf.empty())
+        existing = fs::status(permissionsOf, ec);
     {
         std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
         if (!out)
