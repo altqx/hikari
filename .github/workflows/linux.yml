@@ -1,4 +1,4 @@
-name: Qt rewrite — Ubuntu
+name: Ubuntu
 
 # B2-U: reconstruct the pinned build on a fresh Ubuntu runner through the root
 # presets. Only the provisioning step receives the Qt installer secret; the
@@ -31,14 +31,14 @@ on:
       - tests/ui/**
       - tests/fixtures/**
       - docs/fixtures/**
-      - .github/workflows/qt-linux.yml
+      - .github/workflows/linux.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: qt-linux-${{ github.ref }}
+  group: linux-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -121,7 +121,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: qt-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          name: linux-${{ github.run_id }}-${{ github.run_attempt }}
           path: out/evidence/
           if-no-files-found: warn
           retention-days: 14

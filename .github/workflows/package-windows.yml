@@ -1,11 +1,11 @@
-name: Qt rewrite — Windows packages
+name: Windows packages
 
 # Installers SPEC 6 and 7: the Windows payload is built on windows-2025 (no
 # tests), then the NSIS installer and the portable zip are made on Ubuntu with
 # makensis 3.13 built from source (packaging/windows/build-makensis.sh),
 # because windows-2025 images carry no NSIS and Ubuntu's 3.09 has CVE-2025-43715. The artifact
 # hikarisub-windows-installer holds HikariSub-<V>-windows-x64-setup.exe and
-# HikariSub-<V>-windows-x64.zip under their release names. qt-release.yml
+# HikariSub-<V>-windows-x64.zip under their release names. release.yml
 # calls this workflow with the release version.
 on:
   push:
@@ -15,7 +15,7 @@ on:
       - src/app/CMakeLists.txt
       - src/app/windows/**
       - packaging/windows/**
-      - .github/workflows/qt-package-windows.yml
+      - .github/workflows/package-windows.yml
   workflow_dispatch:
     inputs:
       version:
@@ -46,7 +46,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: qt-package-windows-${{ github.ref }}-${{ inputs.version }}
+  group: package-windows-${{ github.ref }}-${{ inputs.version }}
   cancel-in-progress: true
 
 jobs:
@@ -208,7 +208,7 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: hikarisub-qt-windows-payload
+          name: hikarisub-windows-payload
           path: |
             out/build/windows-x64-package/payload/HikariSub/
           if-no-files-found: error
@@ -217,7 +217,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: qt-package-windows-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          name: package-windows-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             out/build/windows-x64-package/payload/payload-manifest.txt
             out/build/windows-x64-package/payload/windeployqt.log
@@ -239,7 +239,7 @@ jobs:
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: hikarisub-qt-windows-payload
+          name: hikarisub-windows-payload
           path: payload/HikariSub
 
       # makensis itself is built by build-installer.sh (build-makensis.sh,

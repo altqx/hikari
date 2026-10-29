@@ -1,4 +1,4 @@
-name: Qt rewrite — Fedora
+name: Fedora
 
 # B2-F: reconstruct the pinned build on Fedora from an empty cache, in a
 # digest-pinned Fedora 44 container. Only the provisioning step receives the
@@ -31,14 +31,14 @@ on:
       - tests/ui/**
       - tests/fixtures/**
       - docs/fixtures/**
-      - .github/workflows/qt-fedora.yml
+      - .github/workflows/fedora.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: qt-fedora-${{ github.ref }}
+  group: fedora-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -102,7 +102,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: qt-fedora-${{ github.run_id }}-${{ github.run_attempt }}
+          name: fedora-${{ github.run_id }}-${{ github.run_attempt }}
           path: out/evidence/
           if-no-files-found: warn
           retention-days: 14

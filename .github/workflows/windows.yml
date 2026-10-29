@@ -1,4 +1,4 @@
-name: Qt rewrite — Windows
+name: Windows
 
 # B2-W: reconstruct the pinned build on a GitHub-hosted Windows runner with
 # the latest MSVC, from an empty cache, using the same presets as Linux.
@@ -30,14 +30,14 @@ on:
       - tests/ui/**
       - tests/fixtures/**
       - docs/fixtures/**
-      - .github/workflows/qt-windows.yml
+      - .github/workflows/windows.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: qt-windows-${{ github.ref }}
+  group: windows-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: out/sdk
-          key: qt-windows-sdk-${{ github.run_id }}-${{ github.run_attempt }}
+          key: windows-sdk-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Reject a corrupted mirror object, then repair it
         run: |
@@ -134,7 +134,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: qt-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          name: windows-${{ github.run_id }}-${{ github.run_attempt }}
           path: out/evidence/
           if-no-files-found: warn
           retention-days: 14
@@ -165,7 +165,7 @@ jobs:
       - uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: out/sdk
-          key: qt-windows-sdk-${{ github.run_id }}-${{ github.run_attempt }}
+          key: windows-sdk-${{ github.run_id }}-${{ github.run_attempt }}
           fail-on-cache-miss: true
 
       # No secret in this job: the stamped Qt installation and the built
@@ -191,7 +191,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: qt-windows-warm-${{ github.run_id }}-${{ github.run_attempt }}
+          name: windows-warm-${{ github.run_id }}-${{ github.run_attempt }}
           path: out/evidence/
           if-no-files-found: warn
           retention-days: 14

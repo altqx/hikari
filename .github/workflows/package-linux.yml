@@ -1,9 +1,9 @@
-name: Qt rewrite — Linux packages
+name: Linux packages
 
-# Installers spec 5 and 8: build the Qt rewrite on the Linux floor
+# Installers spec 5 and 8: build HikariSub on the Linux floor
 # (AlmaLinux 9 + gcc-toolset-14, glibc 2.34), make the tar.gz, AppImage, deb
 # and rpm, then test them in the distro containers of spec 8.1 and render,
-# build and install the AUR package (8.2). qt-release.yml calls this
+# build and install the AUR package (8.2). release.yml calls this
 # workflow and publishes the artifact hikarisub-linux-packages.
 #
 # Only the provisioning step receives the Qt installer secret. The vcpkg
@@ -25,7 +25,7 @@ on:
       - packaging/linux/**
       - tools/release/host-sonames.sh
       - tests/packaging/linux/**
-      - .github/workflows/qt-package-linux.yml
+      - .github/workflows/package-linux.yml
   workflow_dispatch:
     inputs:
       version_suffix:
@@ -60,7 +60,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: qt-package-linux-${{ github.ref }}-${{ inputs.release && 'release' || 'test' }}
+  group: package-linux-${{ github.ref }}-${{ inputs.release && 'release' || 'test' }}
   cancel-in-progress: true
 
 env:
@@ -261,7 +261,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: qt-package-linux-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          name: package-linux-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: out/evidence/
           if-no-files-found: warn
           retention-days: 14

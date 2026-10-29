@@ -1,7 +1,7 @@
-name: Qt rewrite — Release
+name: Release
 
 # Installers spec 7: a v* tag of main (0.1.0 or higher) builds the packages
-# with qt-package-linux.yml and qt-package-windows.yml, publishes the
+# with package-linux.yml and package-windows.yml, publishes the
 # release, then its update manifest, then the AUR packages that follow 0.1.0
 # and up (release-aur.sh).
 #
@@ -47,7 +47,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: qt-release-${{ github.ref }}
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -96,7 +96,7 @@ jobs:
             exit 1
           fi
           if [[ "${BASH_REMATCH[1]}" == 0 && "${BASH_REMATCH[2]}" == 0 ]]; then
-            echo "::error::$version is 0.0.x, which is legacy's; the Qt rewrite starts at 0.1.0."
+            echo "::error::$version is 0.0.x, which is legacy's; HikariSub starts at 0.1.0."
             exit 1
           fi
           core="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
@@ -179,7 +179,7 @@ jobs:
     name: Linux packages
     needs: release-version
     if: ${{ !inputs.dry_run }}
-    uses: ./.github/workflows/qt-package-linux.yml
+    uses: ./.github/workflows/package-linux.yml
     with:
       version_suffix: ${{ needs.release-version.outputs.suffix }}
       release: true
@@ -191,7 +191,7 @@ jobs:
     name: Windows packages
     needs: release-version
     if: ${{ !inputs.dry_run }}
-    uses: ./.github/workflows/qt-package-windows.yml
+    uses: ./.github/workflows/package-windows.yml
     with:
       version: ${{ needs.release-version.outputs.version }}
       release: true
