@@ -6,6 +6,7 @@
 // comes forward.
 
 #include "hikari/app/application.h"
+#include "hikari/app/session_json.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
@@ -50,7 +51,7 @@ QString media(const char *name)
 class ForwardedLaunchesTests : public QObject {
     Q_OBJECT
 
-    QTemporaryDir home; // the settings folder (LastSession.txt)
+    QTemporaryDir home; // the settings folder (last-session.json)
     QTemporaryDir dir;  // subtitles and media
     app::Application *application = nullptr;
     app::ForwardedLaunches *forwarded = nullptr;
@@ -125,7 +126,7 @@ private slots:
         application = nullptr;
         for (const char *name : {"settings.toml", "hotkeys.toml", "state.json"})
             QFile::remove(home.filePath(QLatin1String(name)));
-        QFile::remove(home.filePath(QStringLiteral("LastSession.txt")));
+        QFile::remove(home.filePath(QStringLiteral("last-session.json")));
     }
 
     // With no tab the file opens as the only one; an untouched empty tab
@@ -141,6 +142,54 @@ private slots:
         take({writeAss(dir.filePath(QStringLiteral("b.ass")), "b")});
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass")}));
         QCOMPARE(application->currentTab(), 1);
+    }
+
+    // CF3: a session file handed over alone (a file manager's open of a
+    // .hksession or .kls) loads as Load session from file does, its marked
+    // tab active; among other files it is refused.
+    void aSessionFileLoadsAsASession()
+    {
+        start();
+        application::SessionTab first, second;
+        first.subtitles = writeAss(dir.filePath(QStringLiteral("s1.ass")), "s1").toStdString();
+        second.subtitles = writeAss(dir.filePath(QStringLiteral("s2.ass")), "s2").toStdString();
+        const QString file = dir.filePath(QStringLiteral("two.hksession"));
+        {
+            QFile f(file);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(app::writeSessionJson(application::Session{"HikariSub", true, {first, second}, 0}));
+        }
+        take({file});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("s1.ass"), QStringLiteral("s2.ass")}));
+        QCOMPARE(application->currentTab(), 0);
+        take({writeAss(dir.filePath(QStringLiteral("s3.ass")), "s3"), file});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("s1.ass"), QStringLiteral("s2.ass"), QStringLiteral("s3.ass")}));
+    }
+
+    // CF3: a session naming files on another computer asks before anything
+    // is looked up; Cancel leaves the tabs, Open loads it.
+    void aSessionOnAnotherComputerAsksFirst()
+    {
+        start();
+        application::SessionTab share;
+        share.subtitles = "\\\\nas\\subs\\x.ass";
+        const QString file = dir.filePath(QStringLiteral("shared.hksession"));
+        {
+            QFile f(file);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(app::writeSessionJson(application::Session{"HikariSub", true, {share}, {}}));
+        }
+        take({file});
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = qvariant_cast<QQuickWindow *>(named("sessionMessages")->property("box"))) && box->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QVERIFY(titles().isEmpty());
+        take({file});
+        QTRY_VERIFY(box->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("open"))));
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("Untitled")});
+        QCOMPARE(application->unresolvedRestores().size(), qsizetype(1));
     }
 
     // A tab with work keeps it: the subtitles open in a new tab after the
@@ -340,8 +389,19 @@ private slots:
         QObject *bar = named("startupBar");
         QVERIFY(bar);
         QTRY_VERIFY(bar->property("visible").toBool());
-        // A file that doesn't open leaves it.
+        // A file that doesn't open leaves it, and so does a session file
+        // that cannot be read (CF3: the offer ends once one is restored).
         take({dir.filePath(QStringLiteral("b/missing.ass"))});
+        QTRY_VERIFY(!forwarded->pending());
+        QTest::qWait(300);
+        QVERIFY(bar->property("visible").toBool());
+        const QString broken = dir.filePath(QStringLiteral("b/broken.hksession"));
+        {
+            QFile f(broken);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("{ not json");
+        }
+        take({broken});
         QTRY_VERIFY(!forwarded->pending());
         QTest::qWait(300);
         QVERIFY(bar->property("visible").toBool());

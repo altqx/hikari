@@ -1,7 +1,10 @@
 // P6: legacy session files (Notebook::SaveLastSession, LoadLastSession and
-// CheckLastSession at 20d647c4) against fixtures in the legacy format.
+// CheckLastSession at 20d647c4) against fixtures in the legacy format. CF3:
+// the program only reads them; legacy_session.h writes the fixtures.
 
 #include "hikari/application/session_file.h"
+
+#include "legacy_session.h"
 
 #include <gtest/gtest.h>
 
@@ -9,6 +12,7 @@
 #include <iterator>
 
 using namespace hikari::application;
+using hikari::testing::writeLegacySession;
 
 namespace {
 
@@ -38,11 +42,9 @@ TEST(SessionFile, ReadsALegacyFileOnWindows)
     const SessionTab &first = s.tabs[0];
     EXPECT_EQ(first.video, "C:\\Video\\episode 1.mkv");
     EXPECT_EQ(first.position, 1001);
-    EXPECT_TRUE(first.ffms2);
     EXPECT_EQ(first.subtitles, "C:\\Subs\\episode 1.ass");
     EXPECT_EQ(first.active, 3);
     EXPECT_EQ(first.scroll, 1);
-    EXPECT_TRUE(first.editor);
     EXPECT_EQ(first.audio, "C:\\Audio\\episode 1.flac");
     EXPECT_EQ(first.keyframes, "C:\\Video\\episode 1_keyframes.txt");
     EXPECT_EQ(s.tabs[1].subtitles, "C:\\Subs\\\xC5\xBC\xC3\xB3\xC5\x82w.srt"); // UTF-8 kept
@@ -75,8 +77,8 @@ TEST(SessionFile, ExplicitAudioStaysWithItsOwnTab)
 
 // P6-session-crlf (approved): legacy Linux read without folding CRLF, so
 // "Tab: 0\r" finished an empty first tab and every value kept its '\r'. Here
-// CRLF folds on every platform: the file the program writes itself (CRLF)
-// reads back as written.
+// CRLF folds on every platform: a file legacy Windows wrote (CRLF) reads
+// back as written.
 TEST(SessionFile, CrlfFoldsOnEveryPlatform)
 {
     SessionTab tab;
@@ -86,7 +88,7 @@ TEST(SessionFile, CrlfFoldsOnEveryPlatform)
     tab.audio = "/home/u/episode 1.flac";
     SessionTab second;
     second.subtitles = "/home/u/second.ass";
-    const std::string written = writeSession("HikariSub v0.1.0", true, {tab, second});
+    const std::string written = writeLegacySession("HikariSub v0.1.0", true, {tab, second});
     ASSERT_NE(written.find("\r\n"), std::string::npos);
     const Session s = parse(written);
     EXPECT_EQ(s.header, "[HikariSub v0.1.0]");
@@ -94,34 +96,8 @@ TEST(SessionFile, CrlfFoldsOnEveryPlatform)
     EXPECT_EQ(s.tabs, (std::vector<SessionTab>{tab, second}));
 }
 
-TEST(SessionFile, WritesTheLegacyBytes)
-{
-    const std::string original = fixture("legacy-two-tabs.txt");
-    Session s = parse(original);
-    // The second tab's audio was never written, so writing it back gives the same file.
-    EXPECT_EQ(writeSession("HikariSub v0.0.1", true, s.tabs), original);
-    EXPECT_EQ(writeSession("HikariSub v0.0.1", false, parse(fixture("legacy-crash.txt")).tabs),
-              fixture("legacy-crash.txt"));
-}
-
-TEST(SessionFile, AudioIsWrittenOnlyWhenItIsNotTheVideo)
-{
-    SessionTab tab;
-    tab.video = "v.mkv";
-    tab.audio = "v.mkv";
-    EXPECT_EQ(writeSession("HikariSub v1", false, {tab}).find("Audio:"), std::string::npos);
-    tab.audio = "a.wav";
-    tab.keyframes = "k.txt";
-    tab.ffms2 = false;
-    tab.editor = false;
-    EXPECT_EQ(writeSession("HikariSub v1", false, {tab}),
-              "\xEF\xBB\xBF[HikariSub v1]\r\nTab: 0\r\nVideo: v.mkv\r\nPosition: 0\r\nFFMS2: 0\r\nSubtitles: "
-              "\r\nActive: 0\r\nScroll: 0\r\nEditor: 0\r\nAudio: a.wav\r\nKeyframes: k.txt\r\n");
-}
-
 // WS1-session-layout: each tab's panel arrangement on a "Layout: " line of
-// its own, last in the tab, and read back into the same tab; a tab without
-// one writes none, so a session without arrangements keeps legacy's bytes.
+// its own, last in the tab, read back into the same tab.
 TEST(SessionFile, EachTabKeepsItsLayoutLine)
 {
     SessionTab first;
@@ -129,10 +105,7 @@ TEST(SessionFile, EachTabKeepsItsLayoutLine)
     first.layout = R"({"schema":1,"preset":"Translation"})";
     SessionTab second;
     second.subtitles = "b.ass";
-    const std::string bytes = writeSession("HikariSub v1", false, {first, second});
-    EXPECT_NE(bytes.find("Editor: 1\r\nLayout: {\"schema\":1,\"preset\":\"Translation\"}\r\nTab: 1\r\n"),
-              std::string::npos);
-    EXPECT_EQ(bytes.find("Layout:", bytes.find("Tab: 1")), std::string::npos);
+    const std::string bytes = writeLegacySession("HikariSub v1", false, {first, second});
     const auto s = parseSession(*decodeSessionBytes(bytes));
     ASSERT_TRUE(s);
     EXPECT_EQ(s->tabs, (std::vector<SessionTab>{first, second}));
@@ -159,9 +132,10 @@ TEST(SessionFile, TheTokenizerQuirksAreKept)
     auto s = parseSession("[HikariSub v0.0.1]");
     ASSERT_TRUE(s);
     EXPECT_EQ(s->tabs, std::vector<SessionTab>{SessionTab{}});
-    // Blank lines are skipped, unknown lines ignored, a repeated field's
-    // last value wins, numbers read as wxAtoi does, and a trailing "Tab: "
-    // line with nothing after it only finishes the tab before it.
+    // Blank lines are skipped, unknown lines (FFMS2 and Editor now too)
+    // ignored, a repeated field's last value wins, numbers read as wxAtoi
+    // does, and a trailing "Tab: " line with nothing after it only finishes
+    // the tab before it.
     s = parseSession("[HikariSub x]\n\n\nTab: 0\nSubtitles: a.ass\nSubtitles: b.ass\nColour: red\nActive: 12abc\n"
                      "Scroll: x\nFFMS2: 0\nEditor: 0\nPosition: -5\nTab: 7\n");
     ASSERT_TRUE(s);
@@ -169,8 +143,6 @@ TEST(SessionFile, TheTokenizerQuirksAreKept)
     EXPECT_EQ(s->tabs[0].subtitles, "b.ass");
     EXPECT_EQ(s->tabs[0].active, 12);
     EXPECT_EQ(s->tabs[0].scroll, 0);
-    EXPECT_FALSE(s->tabs[0].ffms2);
-    EXPECT_FALSE(s->tabs[0].editor);
     EXPECT_EQ(s->tabs[0].position, -5);
     // Tab numbers only matter as "0" or not: fields before the first
     // "Tab: 1" belong to the first tab, whatever its number.

@@ -136,6 +136,15 @@ TEST(OpenKind, FollowsTheLegacyExtensions)
     }
 }
 
+// CF3: one session file loads as a session; among several it is refused.
+TEST(OpenKind, ASessionFileOpensAloneAsASession)
+{
+    for (const char *s : {"a.hksession", "a.HKSession", "a.kls"}) {
+        EXPECT_EQ(openKindOf(s, true), OpenKind::Session) << s;
+        EXPECT_EQ(openKindOf(s, false), OpenKind::Refused) << s;
+    }
+}
+
 TEST(OpenKind, KeyframesOnlyWhenOpeningOneFile)
 {
     for (const char *s : {"a.pass", "a.stats", "a.log", "a_keyframes.txt"})
