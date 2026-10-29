@@ -7,11 +7,12 @@
 #
 # Checks: the packages of a stable release and of a prerelease, the pkgver
 # mapping and its vercmp ordering, both rendered packages, the downgrade
-# refusal per package, the newest-release check, and publish-aur.sh's paths:
-# no key, first push, an idempotent second run, dry run, a refused clone.
+# refusal per package, the newest-release check, the codebase each package
+# follows, and publish-aur.sh's paths: no key, first push, an idempotent
+# second run, dry run, a refused clone.
 # Needs python3, git, and makepkg and vercmp as a non-root user, or docker.
 #
-# This file has the same bytes on the legacy (main) and Qt (qt) branches.
+# This file has the same bytes on the main and legacy branches.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -183,13 +184,13 @@ git init -q --bare "$remotes/hikarisub-stable-bin.git"
 cat > "$work/releases.json" <<'EOF'
 [{"tag_name": "v0.0.1", "draft": false, "prerelease": false},
  {"tag_name": "v0.0.2-rc.1", "draft": false, "prerelease": true},
- {"tag_name": "v0.1.0-beta.1", "draft": false, "prerelease": true}]
+ {"tag_name": "v0.1.0-alpha.1", "draft": false, "prerelease": true}]
 EOF
 "$aur/release-aur.sh" --no-build --releases "$work/releases.json" --remote-base "$remotes" \
     0.0.2-rc.1 "$tar_rc" "$work/rel1" > "$work/rel1.txt" 2>&1 || { cat "$work/rel1.txt"; fail "release 0.0.2-rc.1"; }
 [ "$(commits hikarisub-beta-bin)" = 1 ] && [ "$(commits hikarisub-stable-bin)" = 0 ] ||
     fail "0.0.2-rc.1 did not go to beta only"
-pass "release-aur.sh 0.0.2-rc.1: hikarisub-beta-bin only (a newer Qt prerelease does not count against legacy)"
+pass "release-aur.sh 0.0.2-rc.1: hikarisub-beta-bin only (a newer 0.1.0 alpha does not count against legacy)"
 "$aur/release-aur.sh" --no-build --releases "$work/releases.json" --remote-base "$remotes" \
     0.0.2-rc.1 "$tar_rc" "$work/rel1" > /dev/null 2>&1
 [ "$(commits hikarisub-beta-bin)" = 1 ] || fail "re-running the release made a commit"
@@ -226,5 +227,49 @@ rc=0
     fail "--strict let a run that refused every package pass (exit $rc)"
 [ "$(git --git-dir="$remotes/old/hikarisub-beta-bin.git" rev-list --count --all)" = 0 ] || fail "0.0.2-rc.1 reached beta"
 pass "an older tag is refused for a channel with a newer release, even on an empty package (--strict: an error when nothing is left)"
+
+# --- release-aur.sh: each package follows its own codebase (ADR-0021).
+move=$remotes/move
+git init -q --bare "$move/hikarisub-beta-bin.git"
+git init -q --bare "$move/hikarisub-stable-bin.git"
+mcommits() { git --git-dir="$move/$1.git" rev-list --count --all; }
+release() { # <version> [--strict]: publishes to $move against $work/releases.json, output in $work/move.txt
+    rc=0
+    "$aur/release-aur.sh" ${2:-} --no-build --releases "$work/releases.json" --remote-base "$move" \
+        "$1" "$(make_tarball "$1")" "$work/move-$1" > "$work/move.txt" 2>&1 || rc=$?
+}
+list() { # <tag[:pre]>...: the release list, published
+    { echo '['; sep=; for entry; do
+        pre=false; [ "${entry#*:}" = pre ] && pre=true
+        printf '%s{"tag_name": "%s", "draft": false, "prerelease": %s}\n' "$sep" "${entry%:pre}" "$pre"; sep=,
+    done; echo ']'; } > "$work/releases.json"
+}
+list v0.0.2 v0.1.0-alpha.1:pre
+release 0.1.0-alpha.1 --strict
+[ $rc = 1 ] && grep -q '^::warning::hikarisub-beta-bin follows legacy until v0.1.0-beta.1, so v0.1.0-alpha.1 is not published' "$work/move.txt" ||
+    { cat "$work/move.txt"; fail "an alpha before 0.1.0-beta.1 was not refused for hikarisub-beta-bin (exit $rc)"; }
+list v0.0.2 v0.1.0-alpha.1:pre
+release 0.1.0-beta.1 --strict
+[ $rc = 0 ] && [ "$(mcommits hikarisub-beta-bin)" = 1 ] && [ "$(mcommits hikarisub-stable-bin)" = 0 ] ||
+    { cat "$work/move.txt"; fail "0.1.0-beta.1 did not go to hikarisub-beta-bin (exit $rc)"; }
+pass "hikarisub-beta-bin follows legacy until 0.1.0-beta.1, which it takes before the release list has it"
+list v0.0.2 v0.1.0-alpha.1:pre v0.1.0-beta.1:pre v0.0.3-rc.1:pre
+release 0.0.3-rc.1 --strict
+[ $rc = 1 ] && grep -q '^::warning::hikarisub-beta-bin follows 0.1.0 and up since v0.1.0-beta.1, so legacy v0.0.3-rc.1 is not published' "$work/move.txt" &&
+    [ "$(mcommits hikarisub-beta-bin)" = 1 ] || { cat "$work/move.txt"; fail "legacy 0.0.3-rc.1 reached hikarisub-beta-bin (exit $rc)"; }
+list v0.0.2 v0.1.0-beta.1:pre v0.0.3-rc.1:pre v0.0.3
+release 0.0.3 --strict
+[ $rc = 0 ] && [ "$(mcommits hikarisub-stable-bin)" = 1 ] && [ "$(mcommits hikarisub-beta-bin)" = 1 ] ||
+    { cat "$work/move.txt"; fail "legacy 0.0.3 did not go to hikarisub-stable-bin only (exit $rc)"; }
+pass "after 0.1.0-beta.1, legacy goes to hikarisub-stable-bin only"
+list v0.0.3 v0.1.0-beta.1:pre v0.1.0
+release 0.1.0 --strict
+[ $rc = 0 ] && [ "$(mcommits hikarisub-stable-bin)" = 2 ] && [ "$(mcommits hikarisub-beta-bin)" = 2 ] ||
+    { cat "$work/move.txt"; fail "0.1.0 did not go to both packages (exit $rc)"; }
+list v0.0.3 v0.1.0-beta.1:pre v0.1.0 v0.0.4
+release 0.0.4 --strict
+[ $rc = 1 ] && grep -q '^::warning::hikarisub-stable-bin follows 0.1.0 and up since v0.1.0, so legacy v0.0.4 is not published' "$work/move.txt" &&
+    [ "$(mcommits hikarisub-stable-bin)" = 2 ] || { cat "$work/move.txt"; fail "legacy 0.0.4 reached hikarisub-stable-bin (exit $rc)"; }
+pass "the first stable 0.1.0 moves hikarisub-stable-bin; legacy then reaches no AUR package (--strict: an error)"
 
 echo "all AUR script checks passed"
