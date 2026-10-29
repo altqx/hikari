@@ -25131,6 +25131,9 @@ private slots:
         // The rail: legacy VideoToolbar's eleven families and VT3's
         // Perspective, the crosshair on (tall enough for all of them).
         window->resize(1600, 1400);
+        // Under X the real pointer can rest over the video as it opens, and
+        // the crosshair keeps the position it had: out of the way first.
+        QTest::mouseMove(window, kOverNoPanel);
         QTRY_VERIFY(!visualItem("visualToolRail")->property("overflows").toBool());
         for (int i = 0; i < application::visual::kFamilyCount; ++i) {
             auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(i)));
