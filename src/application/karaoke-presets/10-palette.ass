@@ -1,7 +1,7 @@
 [Script Info]
 ; A HikariSub karaoke effect preset (KE3, docs/karaoke-presets.md): original
 ; work under HikariSub's licence. Give the Comment Lines the karaoke Lines' Style.
-Title: Colour per Line
+Title: Colour per line
 Description: Lines take turns through a short palette of fill colours, by their place in the file.
 ScriptType: v4.00+
 WrapStyle: 0

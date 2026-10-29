@@ -2794,7 +2794,7 @@ private slots:
         QCOMPARE(object(QStringLiteral("templatePreviewTitle"))->property("title").toString(),
                  QStringLiteral("Preview on line %1").arg(editor->sourceNumber()));
         QVERIFY(textOf(QStringLiteral("templatePreviewSummary"))
-                    .startsWith(n == 1 ? QStringLiteral("1 Line · ") : QStringLiteral("%1 Lines · ").arg(n)));
+                    .startsWith(n == 1 ? QStringLiteral("1 line · ") : QStringLiteral("%1 lines · ").arg(n)));
         QVERIFY(item(QStringLiteral("templatePreviewList"))->isVisible());
         QVERIFY(!item(QStringLiteral("templatePreviewKept"))->isVisible());
     }
