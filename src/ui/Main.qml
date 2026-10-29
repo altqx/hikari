@@ -1174,6 +1174,11 @@ ApplicationWindow {
         else
             closeReview.review(result.rows)
     }
+    // CF3: a session file opened alone (dropped, or handed over by a start)
+    // loads as Load session from file does.
+    function openSessionFile(path) {
+        sessionWindows.load(root.app.fileUrl(path))
+    }
     // V5: OpenFiles with one file, a video: OpenFile(files[0], videos.size()
     // == 1 && VIDEO_FULL_SCREEN_ON_START) (HikariSubFrame.cpp:1856-1858).
     function openSingleVideo(path) {
@@ -3251,6 +3256,8 @@ ApplicationWindow {
                 root.openSubtitles(result.path)
             else if (result.kind === "video")
                 root.openSingleVideo(result.path)
+            else if (result.kind === "session")
+                root.openSessionFile(result.path)
             else if (result.kind === "files" && result.rows.length > 0)
                 closeReview.review(result.rows)
         }

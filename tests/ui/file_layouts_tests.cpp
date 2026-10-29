@@ -9,9 +9,11 @@
 // Other formats keep the arrangement only in the Session.
 
 #include "hikari/app/application.h"
+#include "hikari/app/session_json.h"
 #include "hikari/application/session_file.h"
 
 #include "docking.h"
+#include "legacy_session.h"
 #include "log_controller.h"
 #include "qtest_parts.h"
 #include "settings_store.h"
@@ -80,8 +82,7 @@ QJsonObject payloadOf(const QByteArray &layout)
 application::Session readSession(const QString &path)
 {
     const QByteArray bytes = readAll(path);
-    auto text = application::decodeSessionBytes(std::string_view(bytes.constData(), bytes.size()));
-    return application::parseSession(text.value_or(std::string())).value_or(application::Session{});
+    return app::readSession(std::string_view(bytes.constData(), bytes.size())).value_or(application::Session{});
 }
 
 int floatingWindows()
@@ -219,7 +220,7 @@ private slots:
         engine.reset();
         application.reset();
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
-                                 "layouts.json", "LastSession.txt", "settings.toml", "hotkeys.toml", "state.json"})
+                                 "layouts.json", "last-session.json", "settings.toml", "hotkeys.toml", "state.json"})
             QFile::remove(path(name));
     }
 
@@ -392,7 +393,7 @@ private slots:
         first.layout = ui::WorkspaceArrangement{QStringLiteral("Timing"), {}}.serialise().toStdString();
         second.subtitles = QDir::toNativeSeparators(legacy).toStdString(); // no Layout line, as legacy writes
         const QString kls = write(path("both.kls"), QByteArray::fromStdString(
-                                                        application::writeSession("HikariSub v1", false, {first, second})));
+                                                        testing::writeLegacySession("HikariSub v1", false, {first, second})));
         loadSession(kls);
         QCOMPARE(application->currentTab(), 1);
         QTRY_VERIFY(!isOpen("videoDock"));
@@ -419,7 +420,7 @@ private slots:
         second.subtitles = QDir::toNativeSeparators(path("moved.ass")).toStdString();
         second.layout = ui::WorkspaceArrangement{QStringLiteral("Timing"), {}}.serialise().toStdString();
         const QString kls = write(path("missing.kls"), QByteArray::fromStdString(
-                                                           application::writeSession("HikariSub v1", false, {first, second})));
+                                                           testing::writeLegacySession("HikariSub v1", false, {first, second})));
         loadSession(kls);
         QCOMPARE(application->unresolvedRestores().size(), qsizetype(2));
         application->selectTab(0);

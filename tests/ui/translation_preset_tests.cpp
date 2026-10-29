@@ -132,7 +132,7 @@ private slots:
     {
         engine.reset();
         application.reset();
-        for (const char *name : {"layout.json", "layout.json.bak", "layouts.json", "LastSession.txt", "settings.toml", "hotkeys.toml", "state.json"})
+        for (const char *name : {"layout.json", "layout.json.bak", "layouts.json", "last-session.json", "settings.toml", "hotkeys.toml", "state.json"})
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 

@@ -308,6 +308,7 @@ hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_tab_layouts_tests hikari_media_fixtures hikari_media_helper)
+target_include_directories(hikari_ui_tab_layouts_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # WS2: the tab's arrangement in an ASS file's [Hikari] section. Seven parts,
 # each its own process under the default timeout, 120 s (60 s in decision 38g): a refusal row
 # starts the application as the other functions do, and in one process the
@@ -404,6 +405,7 @@ target_compile_definitions(hikari_ui_session_tabs_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_SESSION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/sessions")
 add_dependencies(hikari_ui_session_tabs_tests hikari_media_fixtures hikari_media_helper)
+target_include_directories(hikari_ui_session_tabs_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # V2 playback follow-ups (user decisions 2026-10-14): the seek bar's drag pace,
 # the player's frame for the features while playing, the end of the video.
 hikari_add_qttest(hikari_ui_playing_frame_tests SOURCES playing_frame_tests.cpp LIBRARIES hikari_composition)

@@ -58,8 +58,10 @@ bool isMissingLocalFile(const std::string &path, const std::function<bool(const 
 // What opening a file does, by its extension (legacy OpenFile for one file,
 // OpenFiles for several): subtitles replace the editing target's content,
 // scripts load into Automation, keyframes go to the video, archives and
-// programs are refused, anything else opens as video.
-enum class OpenKind { Subtitles, Script, Keyframes, Video, Refused };
+// programs are refused, anything else opens as video. CF3: one session file
+// (.hksession, legacy .kls) loads as Load session does; among several it is
+// refused.
+enum class OpenKind { Subtitles, Script, Keyframes, Video, Session, Refused };
 OpenKind openKindOf(std::string_view path, bool single);
 
 } // namespace hikari::application
