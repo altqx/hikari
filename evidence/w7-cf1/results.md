@@ -1,0 +1,15 @@
+# CF1 #488 local results
+
+Lines from out/logs/RESULTS.md (keep-log). Head 8829f4cf3 = d5c9cfb40 + 0961e94a6 + origin/main 2a322d26d merged.
+
+- 2026-10-29T01:27:16Z head 0961e94a6 cf1-xvfb-fns: exit 0.   Log: /home/altq/.t3/worktrees/hikari/w7-cf1/out/logs/20261029T0126Z-cf1-xvfb-fns.log
+- 2026-10-29T01:36:49Z head 8829f4cf3 cf1-build6: exit 0.   Log: /home/altq/.t3/worktrees/hikari/w7-cf1/out/logs/20261029T0127Z-cf1-build6.log
+- 2026-10-29T01:40:32Z head 8829f4cf3 cf1-ctest-nonui2: exit 8. 99% tests passed, 1 tests failed out of 2081 Failed: 	2027 - hikari_backends_video_frame_bgra_tests.xvfb (Failed) qttest xvfb; Log: /home/altq/.t3/worktrees/hikari/w7-cf1/out/logs/20261029T0136Z-cf1-ctest-nonui2.log
+- 2026-10-29T02:11:44Z head 8829f4cf3 cf1-ui4: exit 8. 97% tests passed, 7 tests failed out of 218 Failed: 	2048 - hikari_ui_shell_tests.documents.xvfb (Failed)     qttest xvfb;	2050 - hikari_ui_shell_tests.panels.xvfb (Failed)        qttest xvfb;	2052 - hikari_ui_shell_tests.translation.xvfb (Failed)   qttest xvfb;	2054 - hikari_ui_shell_tests.hotkeys.xvfb (Failed)       qttest xvfb;	2056 - hikari_ui_shell_tests.visual.xvfb (Failed)        qttest xvfb;	2058 - hikari_ui_shell_tests.video.xvfb (Failed)         qttest xvfb;	2206 - hikari_ui_playing_frame_tests.xvfb (Failed)       qttest xvfb; Log: /home/altq/.t3/worktrees/hikari/w7-cf1/out/logs/20261029T0144Z-cf1-ui4.log
+- 2026-10-29T02:25:36Z head 8829f4cf3 cf1-ui5-xvfb: exit 8. 13% tests passed, 7 tests failed out of 8 Failed: 	2048 - hikari_ui_shell_tests.documents.xvfb (Failed)     qttest xvfb;	2050 - hikari_ui_shell_tests.panels.xvfb (Failed)        qttest xvfb;	2052 - hikari_ui_shell_tests.translation.xvfb (Failed)   qttest xvfb;	2054 - hikari_ui_shell_tests.hotkeys.xvfb (Failed)       qttest xvfb;	2056 - hikari_ui_shell_tests.visual.xvfb (Failed)        qttest xvfb;	2058 - hikari_ui_shell_tests.video.xvfb (Failed)         qttest xvfb;	2206 - hikari_ui_playing_frame_tests.xvfb (Failed)       qttest xvfb; Log: /home/altq/.t3/worktrees/hikari/w7-cf1/out/logs/20261029T0212Z-cf1-ui5-xvfb.log
+- 2026-10-29T02:26:15Z head 8829f4cf3 cf1-xvfb-fns2: exit 0.   Log: /home/altq/.t3/worktrees/hikari/w7-cf1/out/logs/20261029T0225Z-cf1-xvfb-fns2.log
+
+## Notes
+- cf1-ctest-nonui2: the one failure, video_frame_bgra_tests.xvfb, logged Totals 69 passed, 0 failed (xvfb-run teardown race); it passed in cf1-ui5-xvfb.
+- cf1-ui4 ran at host load ~8 (qWaitForWindowExposed timeouts); cf1-ui5-xvfb reran the xvfb suites at load ~2.
+- Remaining .xvfb failures, all with passing .offscreen variants: chaptersAndStreamsOfTheVideo, styleEditorColoursUseThePopover, audioPanelCustomiseShowsTheFoldedControls, seekBarDragSeeksAtMostEvery50Ms (local-xvfb baseline); styleEditorFitsTheScreen, titleBarHoldsMenusSwitcherTitleAndWindowButtons, visualAllTagsThroughThePanel (w7-as1 base-xvfb-fns on main); audioTapToTime (w7-mn1 xvfb-main, w7-sp1 xvfb7-main); tagListCompletesTagsInTheRawText, gridMenuInsertsDuplicatesAndDeletes, tagsFromOriginalRunsArePlacedOnTheTranslation pass 3/3 alone (cf1-xvfb-fns, cf1-xvfb-fns2). panels.xvfb: Totals 92 passed, 0 failed (teardown race).
