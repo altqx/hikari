@@ -817,9 +817,12 @@ DialogWindow {
                         title: qsTr("Spelling")
                         ruled: false
                         SettingCheck { setting: "editor.spellchecker"; text: qsTr("Check spelling") }
+                        // SP1 (#474): the primary language; every other
+                        // installed dictionary checks the words of its script.
                         SettingsRow {
                             iconRole: "dictionary"
-                            text: qsTr("Dictionary")
+                            text: qsTr("Primary language")
+                            note: qsTr("Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.")
                             SettingChoice {
                                 setting: "editor.dictionaryLanguage"
                                 model: dialog.dictionaries
@@ -829,7 +832,7 @@ DialogWindow {
                                 enabled: count > 0
                                 displayText: currentIndex >= 0 ? currentText
                                            : count > 0 ? qsTr("None chosen") : qsTr("No dictionaries found")
-                                Accessible.name: qsTr("Dictionary")
+                                Accessible.name: qsTr("Primary language")
                             }
                         }
                         SettingCheck { setting: "editor.suggestionsOnDoubleClick"; text: qsTr("Show suggestions on double-click") }

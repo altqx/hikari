@@ -27,3 +27,15 @@ set_tests_properties(perf.subtitles PROPERTIES LABELS perf TIMEOUT 600 RUN_SERIA
 # Ordinary (non-perf) self-checks for the harness itself.
 hikari_add_gtest(hikari_perf_harness_tests SOURCES harness_tests.cpp
     LIBRARIES hikari_perf_harness LABELS control)
+
+# SP1 (#474): spell checking a 5,000-Line mixed-language file as the Grid
+# does. The test uses the fixture dictionaries; give the binary a folder of
+# real ones as a third argument for numbers worth comparing.
+add_executable(hikari_spelling_perf spelling_perf.cpp)
+target_link_libraries(hikari_spelling_perf PRIVATE hikari_perf_harness hikari_backends)
+target_compile_definitions(hikari_spelling_perf PRIVATE
+    HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling")
+add_test(NAME perf.spelling
+    COMMAND hikari_spelling_perf "${CMAKE_BINARY_DIR}/perf-report-spelling.json"
+            "${CMAKE_CURRENT_SOURCE_DIR}/reference-hosts.json")
+set_tests_properties(perf.spelling PROPERTIES LABELS perf TIMEOUT 600 RUN_SERIAL TRUE)
