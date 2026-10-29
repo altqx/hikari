@@ -57,7 +57,7 @@ std::vector<PlayerTrack> tracksOf(const QList<QMediaMetaData> &list, bool video)
     return out;
 }
 
-} // namespace
+}
 
 QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject(parent), m_useAudioOutput(useAudioOutput)
 {
@@ -65,7 +65,7 @@ QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject
     setOutputDevice({});
     connect(&m_player, &QMediaPlayer::mediaStatusChanged, this, &QtGeneralPlayer::onStatus);
     connect(&m_player, &QMediaPlayer::playbackStateChanged, this, [this] {
-        ++m_epoch; // a stop, pause or start re-anchors the clock
+        ++m_epoch;
         m_clock.valid = false;
         emit stateChanged();
     });
@@ -77,8 +77,6 @@ QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject
         if (m_pendingOpen)
             failOpen(errorOf(e));
     });
-    // Taken where the sink renders it (direct): only the newest waits for
-    // this thread.
     connect(&m_sink, &QVideoSink::videoFrameChanged, this, [this, slot = m_slot](const QVideoFrame &frame) {
         if (!frame.isValid())
             return;
@@ -95,8 +93,6 @@ QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject
     connect(&m_sink, &QVideoSink::subtitleTextChanged, this, &QtGeneralPlayer::subtitleTextChanged);
 }
 
-// The device with the requested id, else the default. The output is made
-// once a device exists (none at start on a host without sound).
 void QtGeneralPlayer::setOutputDevice(const std::string &id)
 {
     m_outputRequest = id;
@@ -132,7 +128,7 @@ QtGeneralPlayer::~QtGeneralPlayer()
 {
     {
         std::lock_guard lock(m_slot->mutex);
-        m_slot->alive = false; // no frame is handed over from now on
+        m_slot->alive = false;
         m_slot->frame = {};
     }
     m_player.stop();
@@ -181,7 +177,7 @@ void QtGeneralPlayer::open(const std::string &path, Opened done)
     if (auto seek = std::exchange(m_pendingSeek, std::nullopt))
         seek->done(std::unexpected(PlayerError::Stale));
     m_pendingOpen = std::move(done);
-    dropWaitingFrame(); // the previous file's
+    dropWaitingFrame();
     m_player.setSource(QUrl::fromLocalFile(QString::fromStdString(path)));
 }
 
@@ -239,11 +235,10 @@ void QtGeneralPlayer::seek(std::int64_t us, Seeked done)
     ++m_epoch;
     m_clock.valid = false;
     m_pendingSeek = PendingSeek{m_generation, us, std::move(done)};
-    dropWaitingFrame(); // from before the seek: it must not acknowledge it
+    dropWaitingFrame();
     const bool stopped = m_player.playbackState() == QMediaPlayer::StoppedState;
     m_player.setPosition(us / 1000); // QMediaPlayer positions are milliseconds
-    // A stopped player delivers no frame for a seek: pause at the target, so
-    // the first delivered frame is the seek's (no frame from before it).
+    // A stopped QMediaPlayer delivers no frame for a seek.
     if (stopped)
         m_player.pause();
 }
@@ -353,4 +348,4 @@ void QtGeneralPlayer::setVolume(double linear)
         m_audio->setVolume(static_cast<float>(linear)); // QAudioOutput's volume is linear
 }
 
-} // namespace hikari::backends
+}

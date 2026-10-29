@@ -1,12 +1,5 @@
 #pragma once
 
-// O3: the "Import legacy settings" window's state. Lists the legacy roots
-// found (or one the user names), snapshots the chosen one, shows the review
-// plan (source, value, destination, current value, disposition and why),
-// lets the user choose which changes to import, activates the import for
-// the next start and rolls back to the previous generation
-// (docs/proposals/settings-import.md; SettingsImportStore).
-
 #include "hikari/app/settings_import_store.h"
 
 #include <QObject>
@@ -28,11 +21,9 @@ class SettingsImportController : public QObject {
     // {path, files} per legacy root found.
     Q_PROPERTY(QVariantList roots READ roots NOTIFY rootsChanged)
     Q_PROPERTY(QString root READ root NOTIFY planChanged)
-    // {id, kind, source, key, raw, destination, value, current, disposition,
-    //  reason, selectable, paths}: changes only with the plan, so choosing
-    //  rows keeps the review list (and where it is scrolled) as it is.
+    // Rows {id, kind, source, key, raw, destination, value, current, disposition, reason,
+    // selectable, paths}.
     Q_PROPERTY(QVariantList rows READ rows NOTIFY planChanged)
-    // The ids of the rows chosen for import.
     Q_PROPERTY(QStringList chosenIds READ chosenIds NOTIFY chosenChanged)
     Q_PROPERTY(QString summary READ summary NOTIFY chosenChanged)
     Q_PROPERTY(bool ambiguousEncoding READ ambiguousEncoding NOTIFY planChanged)
@@ -43,7 +34,7 @@ class SettingsImportController : public QObject {
     Q_PROPERTY(bool pending READ pending NOTIFY stateChanged)
     Q_PROPERTY(bool canRollBack READ canRollBack NOTIFY stateChanged)
 public:
-    // No store (settings kept in memory only): nothing can be imported.
+    // A null store (settings in memory only) imports nothing.
     explicit SettingsImportController(SettingsImportStore *store, QObject *parent = nullptr);
 
     QVariantList roots() const;
@@ -59,19 +50,14 @@ public:
     bool pending() const { return m_store && m_store->pending(); }
     bool canRollBack() const { return m_store && m_store->canRollBack(); }
 
-    // Lists the legacy roots beside the program (and the usual places).
     Q_INVOKABLE void discover(const QStringList &candidates = {});
-    // A folder the user names (a path or a file: URL); false when it holds no
-    // legacy settings.
+    // A path or a file: URL; false when it holds no legacy settings.
     Q_INVOKABLE bool addRoot(const QString &folder);
-    // Snapshots the root and builds its plan.
     Q_INVOKABLE bool choose(const QString &root);
     Q_INVOKABLE void setChosen(const QString &id, bool chosen);
-    // Every selectable row of `disposition` ("change", "missing"), or the
-    // proposal again ("proposed").
+    // which: a disposition ("change", "missing") for its selectable rows, or "proposed".
     Q_INVOKABLE void chooseAll(const QString &which, bool chosen);
-    // Stages and activates the chosen rows; the import takes effect at the
-    // next start. Returns false and says why in `status` otherwise.
+    // Takes effect at the next start; false with the reason in status.
     Q_INVOKABLE bool importChosen();
     // What a rollback would replace (changed since the active import).
     Q_INVOKABLE QStringList rollbackEdits() const;
@@ -81,11 +67,9 @@ public:
 
     const application::settings_import::Plan *plan() const { return m_plan ? &*m_plan : nullptr; }
     const std::set<std::string, std::less<>> &chosen() const { return m_chosen; }
-    // FR1: the settings as importing the chosen rows would leave them, by
-    // id (the profile's own where no row changes them); nothing is written.
+    // The settings by id as importing the chosen rows would leave them; nothing is written.
     std::map<std::string, application::SettingValue, std::less<>> chosenValues() const;
-    // FR1: imports the chosen rows but those whose setting is in `skip`,
-    // over the settings as they are now. True when it is staged or nothing
+    // Imports the chosen rows except those whose setting is in skip. True when staged or nothing
     // is left to import; false keeps the choices (status says why).
     bool importChosenBut(const std::set<std::string, std::less<>> &skip);
 
@@ -98,7 +82,6 @@ signals:
 
 private:
     void rebuild();
-    // A new plan with its proposed rows chosen.
     void propose();
     void setStatus(const QString &status);
 
@@ -113,4 +96,4 @@ private:
     QString m_status;
 };
 
-} // namespace hikari::app
+}

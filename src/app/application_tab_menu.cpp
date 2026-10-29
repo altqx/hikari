@@ -1,12 +1,3 @@
-// P9: the tab menu (legacy Notebook::ContextMenu, Notebook.cpp:882-969, and
-// OnTabSel, 971-1040), tab reordering by drag (Notebook::OnMouseEvent,
-// 397-400 and 537-556), "show in folder" (SelectInFolder, config.cpp:
-// 1048-1062), a Ctrl+click on a recent file (HikariSubFrame::OnRecent,
-// 1593-1626), several dropped files opening as tabs (OpenFiles, 1831-1916),
-// OPEN_SUBS_IN_NEW_TAB and associated-file discovery on open (OpenFile,
-// FindFile and Notebook::LoadVideo, HikariSubFrame.cpp:1323-1442 and
-// 1704-1729, Notebook.cpp:1155-1290), all at 20d647c4.
-
 #include "hikari/app/application.h"
 
 #include "hikari/application/associated_files.h"
@@ -39,19 +30,17 @@ constexpr bool kWindows = true;
 constexpr bool kWindows = false;
 #endif
 
-} // namespace
+}
 
 void Application::setupTabMenu(const Options &options)
 {
     m_revealInFolder = options.revealInFolder ? options.revealInFolder
                                               : [](const QString &path) { backends::desktop::selectInFolder(path); };
-    // Legacy Options.dataPath/Subs; unset, legacyAutosaves() looks in the
-    // legacy roots the settings importer finds (#387).
     m_legacyAutosaveDir = options.legacyAutosaveDir;
     connect(m_video.get(), &ui::VideoController::offerAnswered, this, &Application::answerAssociation);
     connect(m_video.get(), &ui::VideoController::offerWithdrawn, this, [this] {
         if (const auto target = m_workspace.editingTarget())
-            m_offers.erase(target->value); // a video opened on request instead
+            m_offers.erase(target->value);
     });
 }
 
@@ -77,14 +66,10 @@ QString Application::tabVideo(application::DocumentId document) const
     return it == m_tabMedia.end() ? QString() : it->second.video;
 }
 
-// --- the tab menu -------------------------------------------------------------
-
 QVariantMap Application::tabMenu(int index)
 {
     const auto tabs = m_workspace.tabs();
     const auto target = m_workspace.editingTarget();
-    // MENU_CHOOSE + g: every tab by its subtitles' name, the active one a
-    // radio item (Notebook.cpp:886-889).
     QVariantList rows;
     for (const auto id : tabs) {
         const std::string *title = m_workspace.title(id);
@@ -95,11 +80,8 @@ QVariantMap Application::tabMenu(int index)
     QVariantList folders;
     if (index >= 0 && index < static_cast<int>(tabs.size())) {
         const auto id = tabs[static_cast<std::size_t>(index)];
-        // MENU_SAVE + i: enabled while that tab is modified (891).
         if (auto *session = m_files->session(id))
             save = session->isDirty();
-        // MENU_OPEN_*_FOLDER for the tab under the pointer: each of its
-        // SubsPath, VideoPath, AudioPath and KeyframesPath that is set (895-910).
         const auto media = m_tabMedia.find(id.value);
         const TabMedia none;
         const TabMedia &m = media == m_tabMedia.end() ? none : media->second;
@@ -119,10 +101,6 @@ QVariantMap Application::tabMenu(int index)
 
 void Application::chooseTab(int index, int firstVisible)
 {
-    // Notebook::OnTabSel (Notebook.cpp:1019-1039): the chosen tab and the
-    // first visible one trade places, and the chosen one becomes active
-    // there (iter = firstVisibleTab), even when it was active already.
-    // Legacy wrote no session here.
     const auto tabs = m_workspace.tabs();
     const int size = static_cast<int>(tabs.size());
     if (index < 0 || index >= size)
@@ -131,14 +109,11 @@ void Application::chooseTab(int index, int firstVisible)
     const int first = std::clamp(firstVisible, 0, size - 1);
     m_workspace.swapTabs(static_cast<std::size_t>(index), static_cast<std::size_t>(first));
     m_workspace.setEditingTarget(chosen);
-    refreshViews(); // also emits tabsChanged for the new order
+    refreshViews();
 }
 
 bool Application::dragTab(int from, int to)
 {
-    // Notebook::OnMouseEvent (537-556): with the left button down over
-    // another tab, the pressed tab and that one swap; the pressed tab, which
-    // the press made active (ChangePage), stays active (iter = i).
     const auto tabs = m_workspace.tabs();
     const int size = static_cast<int>(tabs.size());
     if (from < 0 || from >= size || to < 0 || to >= size || from == to)
@@ -150,14 +125,13 @@ bool Application::dragTab(int from, int to)
         m_workspace.setEditingTarget(dragged);
         refreshViews();
     } else {
-        emit tabsChanged(); // only the order changed
+        emit tabsChanged();
     }
     return true;
 }
 
 void Application::endTabDrag()
 {
-    // "if (tabsWasSwapped && event.ButtonUp()) SaveLastSession()" (397-400).
     if (std::exchange(m_tabsSwapped, false))
         saveLastSession();
 }
@@ -169,22 +143,16 @@ QVariantList Application::reviewCloseAll()
 
 void Application::closeAllTabs()
 {
-    // OnTabSel's MENU_CHOOSE - 1 (Notebook.cpp:978-1018): every tab goes,
-    // each removing the comparison. Legacy wrote no session here.
     m_comparison.remove();
     for (const auto id : m_workspace.tabs()) {
         m_comparison.forget(id);
-        discardRecovery(id); // reviewed: saved or explicitly discarded
+        discardRecovery(id);
         m_files->close(id);
         m_workspace.remove(id);
         forgetTab(id);
     }
-    // SH2-last-tab-home: the Home page shows, where legacy left one new
-    // Untitled tab.
     refreshViews();
 }
-
-// --- show in folder -----------------------------------------------------------
 
 void Application::showInFolder(const QString &path)
 {
@@ -199,15 +167,11 @@ void Application::copyText(const QString &text)
 
 bool Application::revealRecent(const QString &path)
 {
-    // OnRecent: "if (Modif == wxMOD_CONTROL) { SelectInFolder(filename); return; }"
-    // — Ctrl alone, not with Shift or Alt.
     if (QGuiApplication::keyboardModifiers() != Qt::ControlModifier)
         return false;
     showInFolder(path);
     return true;
 }
-
-// --- associated files ---------------------------------------------------------
 
 application::TabMediaPaths Application::tabMediaPaths(application::DocumentId document) const
 {
@@ -221,15 +185,10 @@ application::TabMediaPaths Application::tabMediaPaths(application::DocumentId do
 
 void Application::offerAssociations(application::DocumentId document)
 {
-    // OpenFile on subtitles: FindFile looks for a video of the same name
-    // beside them, then LoadVideo(tab, that video or "", loadPrompt) asks
-    // about it and the Script Info associations (Notebook.cpp:1155-1222).
     m_offers.erase(document.value);
     auto *session = m_files->session(document);
     const auto destination = m_files->destination(document);
     std::string path = destination ? destination->value : std::string();
-    // KA6: imported lyrics have no destination yet; their ASS name beside
-    // the lyrics file finds the same-named video, as for any subtitles.
     if (const auto import = m_importPaths.find(document.value);
         path.empty() && import != m_importPaths.end() && m_lyricsImports.contains(document.value))
         path = import->second.toStdString();
@@ -238,7 +197,6 @@ void Application::offerAssociations(application::DocumentId document)
     auto associations = application::resolveMediaAssociations(
         session->document(), path,
         [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); }, kWindows);
-    // Paths are shown and compared in the platform's form (legacy wxString paths).
     for (auto *reference : {&associations.video, &associations.audio, &associations.keyframes})
         if (*reference && (*reference)->resolved)
             (*reference)->resolved = QDir::toNativeSeparators(qs(*(*reference)->resolved)).toStdString();
@@ -259,7 +217,6 @@ void Application::showAssociationOffer()
         m_video->withdrawOffer();
         return;
     }
-    // The question as Notebook::LoadVideo builds it (1194-1216).
     const auto &offer = it->second.offer;
     QString prompt;
     if (offer.associated()) {
@@ -277,8 +234,6 @@ void Application::showAssociationOffer()
         prompt += QCoreApplication::translate("HikariSub.Documents",
                                               "Video from directory:\n") + QFileInfo(qs(offer.directoryVideo)).fileName();
     }
-    // wxOK and wxYES: "Load associated" and "Load from directory" together,
-    // "Yes" alone (SetOkLabel(_("Yes")), or the plain Yes button).
     const bool both = offer.associated() && !offer.directoryVideo.empty();
     const QString yes = QCoreApplication::translate("HikariSub.Documents", "Yes");
     const QString associated = !offer.associated() ? QString()
@@ -292,9 +247,6 @@ void Application::showAssociationOffer()
 
 void Application::loadAssociations(application::DocumentId document, const application::AssociationLoad &load)
 {
-    // Notebook.cpp:1262-1281: the video (with its own audio unless an
-    // associated audio file opens), then the audio, then the keyframes. A
-    // tab that is not shown gets them when it is shown (P6's tab media).
     const bool shown = m_workspace.editingTarget() == document;
     TabMedia &media = m_tabMedia[document.value];
     if (!load.video.empty()) {
@@ -302,7 +254,7 @@ void Application::loadAssociations(application::DocumentId document, const appli
         media.position = 0;
         if (shown) {
             if (!load.videoAudio)
-                m_keepTabAudio = media.video; // LoadVideo(..., loadAudio = false)
+                m_keepTabAudio = media.video;
             m_video->openVideo(media.video);
         }
     }
@@ -312,7 +264,7 @@ void Application::loadAssociations(application::DocumentId document, const appli
         media.audio = path;
         media.audioFromVideo = false;
         if (shown)
-            m_audio->openAudio(path); // OpenAudioInTab(tab, 30040, audiopath)
+            m_audio->openAudio(path);
     }
     if (!load.keyframes.empty()) {
         const QString keyframes = QDir::toNativeSeparators(qs(load.keyframes));
@@ -339,9 +291,6 @@ void Application::answerAssociation(int answer, bool applyToAll)
     m_offers.erase(it);
     loadAssociations(*target, load);
     bool loaded = !load.video.empty() || !load.audio.empty() || !load.keyframes.empty();
-    // "Apply to All" (ASK_ONCE, promptResult): the rest of the same opening
-    // takes the same answer without asking (legacy ResetPrompt starts each
-    // opening afresh).
     if (applyToAll)
         for (auto other = m_offers.begin(); other != m_offers.end();) {
             if (other->second.batch != batch) {
@@ -355,22 +304,17 @@ void Application::answerAssociation(int answer, bool applyToAll)
             loaded = loaded || !otherLoad.video.empty() || !otherLoad.audio.empty() || !otherLoad.keyframes.empty();
         }
     if (loaded)
-        saveLastSession(); // OpenFile ends with SaveLastSession once LoadVideo is done
+        saveLastSession();
     emit tabsChanged();
 }
 
-// --- opening ------------------------------------------------------------------
-
 bool Application::openInNewTab(application::StagedOpen staged, const QString &path)
 {
-    // OPEN_SUBS_IN_NEW_TAB (OpenFile, HikariSubFrame.cpp:1360-1365):
-    // AddPage(true), so the subtitles open in a new tab after the last one
-    // without asking about the current tab's work (nonewtab = false).
     ++m_openBatch;
     const auto id = publish(std::move(staged), path, false);
     if (!id)
         return false;
-    m_tabMedia[id->value]; // a new tab: no media of its own yet
+    m_tabMedia[id->value];
     m_workspace.setEditingTarget(*id);
     offerAssociations(*id);
     refreshViews();
@@ -382,15 +326,13 @@ bool Application::openInNewTab(application::StagedOpen staged, const QString &pa
 
 QVariantMap Application::openVideoFile(const QString &path)
 {
-    // OpenFile on a video (1342-1355): FindFile looks for subtitles named as
-    // the video; "Load subtitles named ...?" unless the tab has them already.
     QString subtitles;
     if (const auto found = application::findSameNamedFile(std::filesystem::path(path.toStdU16String()), false)) {
         subtitles = QDir::toNativeSeparators(QString::fromStdU16String(found->u16string()));
         const auto target = m_workspace.editingTarget();
         const auto destination = target ? m_files->destination(*target) : std::nullopt;
         if (destination && QDir::toNativeSeparators(qs(destination->value)) == subtitles)
-            subtitles.clear(); // tab->SubsPath == secondFileName
+            subtitles.clear();
     }
     return {{QStringLiteral("subtitles"), subtitles}};
 }
@@ -402,10 +344,6 @@ void Application::openVideo(const QString &path)
 
 QVariantMap Application::reviewOpenWithVideo(const QString &subtitles, const QString &video, bool fullscreen)
 {
-    // "Yes": the subtitles load into the tab (SavePrompt(2) first), without
-    // the association question (LoadVideo's loadPrompt is false for a
-    // video), and the video opens after them; a cancelled review or a failed
-    // load opens nothing (OpenFile returns before LoadVideo).
     m_openFromVideo = true;
     QVariantMap result = reviewOpen(subtitles);
     if (result.value(QStringLiteral("ok")).toBool()) {
@@ -418,7 +356,6 @@ QVariantMap Application::reviewOpenWithVideo(const QString &subtitles, const QSt
 
 namespace {
 
-// Legacy OpenFiles sorts by the locale's collation.
 QStringList sortedFiles(QStringList files)
 {
     QCollator collator;
@@ -431,7 +368,7 @@ QVariantMap openResult(const QString &kind, const QString &path = {}, const QVar
     return QVariantMap{{QStringLiteral("kind"), kind}, {QStringLiteral("path"), path}, {QStringLiteral("rows"), rows}};
 }
 
-} // namespace
+}
 
 QVariantMap Application::openDropped(const QList<QUrl> &urls)
 {
@@ -441,25 +378,17 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
             dropped << url.toLocalFile();
     const QStringList files = sortedFiles(dropped);
     if (files.isEmpty()) {
-        trimAudioCache(); // OpenFiles over nothing still ends with DeleteAudioCache
+        trimAudioCache();
         return openResult(QString());
     }
     if (files.size() == 1) {
-        // OpenFiles with one file: OpenFile(files[0]) and return, without
-        // OpenFiles' own DeleteAudioCache (HikariSubFrame.cpp:1856-1859).
-        // OpenFile's (1407-1426) acts only with a video open after its
-        // LoadVideo: here when the video it opens is ready
-        // (followVideoInAudio). Subtitles leave the tab without a video
-        // until their associated one opens (P6's replaceTarget). A script,
-        // keyframes or a refused file return before it (1327-1341).
         const QString &file = files.front();
         switch (application::openKindOf(file.toStdString(), true)) {
         case application::OpenKind::Subtitles: return openResult(QStringLiteral("subtitles"), file);
         case application::OpenKind::Video: return openResult(QStringLiteral("video"), file);
-        case application::OpenKind::Session: return openResult(QStringLiteral("session"), file); // CF3
+        case application::OpenKind::Session: return openResult(QStringLiteral("session"), file);
         case application::OpenKind::Script: m_automation->loadScript(QUrl::fromLocalFile(file)); break;
         case application::OpenKind::Keyframes:
-            // KeyframesPath = filename; OpenKeyframes; SetRecent(3).
             if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); !problem.isEmpty())
                 m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
             break;
@@ -468,15 +397,10 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
         return openResult(QString());
     }
     PendingFiles pending = stageFiles(files);
-    // The first goes into the editing target when it has neither subtitles
-    // of a file nor a video (1872-1875); the others into new tabs after the
-    // last one.
     const auto target = m_workspace.editingTarget();
     pending.reuseFirst = target && targetUntitled() && tabVideo(*target).isEmpty();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
     if (pending.count > 0 && pending.reuseFirst && targetSession && targetSession->isDirty()) {
-        // The target's unsaved work is reviewed first, as OpenFile's
-        // SavePrompt(2) did for subtitles alone.
         const QVariantList rows = reviewClose(QStringLiteral("files"));
         m_pendingFiles = std::move(pending);
         return openResult(QStringLiteral("files"), QString(), rows);
@@ -487,8 +411,6 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
 
 Application::PendingFiles Application::stageFiles(const QStringList &files)
 {
-    // Several (OpenFiles, 1835-1852): subtitles, scripts (loaded at once) and
-    // everything else but archives and programs as videos.
     PendingFiles pending;
     for (const QString &file : files) {
         switch (application::openKindOf(file.toStdString(), false)) {
@@ -496,12 +418,10 @@ Application::PendingFiles Application::stageFiles(const QStringList &files)
         case application::OpenKind::Script: m_automation->loadScript(QUrl::fromLocalFile(file)); break;
         case application::OpenKind::Video:
         case application::OpenKind::Keyframes: pending.videos << QDir::toNativeSeparators(file); break;
-        case application::OpenKind::Session: // only alone (openKindOf)
+        case application::OpenKind::Session:
         case application::OpenKind::Refused: break;
         }
     }
-    // Staged first (L58-staged-replacement); a file that cannot be read ends
-    // the opening there, as legacy's "if (!LoadSubtitles) break".
     for (int i = 0; i < pending.subtitlePaths.size(); ++i) {
         const QString &path = pending.subtitlePaths[i];
         auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
@@ -520,9 +440,6 @@ Application::PendingFiles Application::stageFiles(const QStringList &files)
 
 bool Application::targetUntouched() const
 {
-    // P6's untouched empty tab (openFile), without media of its own (a
-    // video, audio, keyframes) and not a restored tab whose files are
-    // missing: its Retry / Relink entry would go with it (forgetTab).
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
     if (!session || !targetUntitled() || session->isDirty() || session->historySize() != 1 || m_audio->hasAudio())
@@ -536,16 +453,9 @@ bool Application::targetUntouched() const
 
 QVariantMap Application::openForwarded(const QStringList &paths)
 {
-    // WS5: what a later start hands over opens as legacy OpenFiles opened
-    // it (hikarisubApp::OnOpen), except that nothing goes into a tab with
-    // work in it: subtitles open as File > Open opens them with "Open
-    // subtitles in a new tab" (OPEN_SUBS_IN_NEW_TAB), a video in a new tab,
-    // and several files in new tabs. An untouched empty tab takes the first.
     const QStringList files = sortedFiles(paths);
     if (files.isEmpty())
         return openResult(QString());
-    // PU1-startup-cards: files that opened end the startup offer; files that
-    // all failed to open leave it.
     const auto before = m_workspace.documents();
     bool accepted = false;
     auto ended = qScopeGuard([&] {
@@ -558,7 +468,7 @@ QVariantMap Application::openForwarded(const QStringList &paths)
         switch (application::openKindOf(file.toStdString(), true)) {
         case application::OpenKind::Subtitles:
             if (untouched) {
-                openFile(file); // the empty tab takes it, as at a start
+                openFile(file);
             } else if (auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()})) {
                 openInNewTab(std::move(*staged), file);
             } else {
@@ -567,18 +477,13 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             }
             return openResult(QString());
         case application::OpenKind::Session:
-            // CF3: loaded by the shell as Load session loads it, after its
-            // review; the startup offer ends only once it is restored
-            // (sessionRestored), not for a file that fails or is cancelled.
             return openResult(QStringLiteral("session"), file);
         case application::OpenKind::Video:
-            // Opened by the shell as OpenFile opens one video (openSingleVideo).
             accepted = true;
             if (!untouched)
                 addPage();
             return openResult(QStringLiteral("video"), file);
         case application::OpenKind::Keyframes:
-            // The tab's own, as a video is: a tab's keyframes stay.
             if (!untouched)
                 addPage();
             if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); problem.isEmpty())
@@ -586,7 +491,7 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             else
                 m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
             return openResult(QString());
-        default: // a script (the Automation manager's, no tab's) or a refused file: as when dropped
+        default:
             return openDropped({QUrl::fromLocalFile(file)});
         }
     }
@@ -598,14 +503,14 @@ QVariantMap Application::openForwarded(const QStringList &paths)
 
 void Application::applyFiles(PendingFiles files, bool skipFirst)
 {
-    ++m_openBatch; // ResetPrompt: one "Apply to All" for the whole opening
+    ++m_openBatch;
     const auto original = m_workspace.editingTarget();
     std::optional<application::DocumentId> last;
     const int subtitles = static_cast<int>(files.subtitles.size());
     const int videos = static_cast<int>(files.videos.size());
     for (int i = 0; i < files.count; ++i) {
         if (i == 0 && skipFirst)
-            continue; // the review was cancelled: OpenFile returned without loading
+            continue;
         std::optional<application::DocumentId> id;
         if (i < subtitles) {
             id = publish(std::move(files.subtitles[static_cast<std::size_t>(i)]),
@@ -613,14 +518,10 @@ void Application::applyFiles(PendingFiles files, bool skipFirst)
             if (!id)
                 break;
         } else {
-            // A video beyond the subtitles opens in a new tab of its own
-            // (InsertTab, OpenFile(videos[i])).
             id = m_files->createNew();
             m_workspace.add(*id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
         }
         if (i == 0 && files.reuseFirst && original && *original != *id) {
-            // Into the same tab (LoadSubtitles on the current page), whose
-            // audio and keyframes stay, as replaceTarget keeps them.
             TabMedia media;
             if (const auto it = m_tabMedia.find(original->value); it != m_tabMedia.end())
                 media = it->second;
@@ -630,19 +531,18 @@ void Application::applyFiles(PendingFiles files, bool skipFirst)
             discardRecovery(*original);
             m_files->close(*original);
             m_workspace.replace(*original, *id);
-            openIntoTabArrangement(*original, *id); // WS1, WS2: as replaceTarget
+            openIntoTabArrangement(*original, *id);
             m_comparison.replaced(*original, *id);
             forgetTab(*original);
             m_tabMedia[id->value] = media;
         } else {
-            m_tabMedia[id->value]; // a new tab: no media of its own yet
+            m_tabMedia[id->value];
         }
         if (i < videos) {
-            // LoadVideo(tab, videos[i], -1, false, true): no question.
             m_tabMedia[id->value].video = files.videos[i];
             m_tabMedia[id->value].position = 0;
         } else if (i < subtitles) {
-            offerAssociations(*id); // OpenFile(subs[i]): the folder's video and the associations
+            offerAssociations(*id);
         }
         last = id;
     }
@@ -650,8 +550,8 @@ void Application::applyFiles(PendingFiles files, bool skipFirst)
         m_workspace.setEditingTarget(*last);
     refreshViews();
     QTimer::singleShot(0, this, [this] { checkResolution(); });
-    trimAudioCache(); // DeleteAudioCache
+    trimAudioCache();
     saveLastSession();
 }
 
-} // namespace hikari::app
+}

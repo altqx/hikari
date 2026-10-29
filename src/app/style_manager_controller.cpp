@@ -45,7 +45,6 @@ core::Colour colourOf(const QVariant &v)
             m.value(QStringLiteral("a")).toInt()};
 }
 
-// SY1: the style_field flags of valuesOf's keys.
 int fieldsOf(const QStringList &keys)
 {
     namespace f = application::style_field;
@@ -155,7 +154,6 @@ QVariantList listOf(const std::vector<std::size_t> &rows)
     return out;
 }
 
-// The clash review's answers ([{name, occurrence, action, newName}]).
 application::ClashChoices choicesOf(const QVariantList &choices)
 {
     application::ClashChoices out;
@@ -174,13 +172,6 @@ application::ClashChoices choicesOf(const QVariantList &choices)
     return out;
 }
 
-// The clashes a transfer has, for the clash review: each name already present
-// (or added earlier in the same transfer), which clash of that name it is,
-// the fields that differ from the Style of that name, whether none does, and
-// a free name to rename it to (the rows of one name are offered different
-// ones).
-// Lookups, not scans: a file can list thousands of Styles of one name
-// (Codex security review).
 QVariantList clashesOf(const StyleList &into, const StyleList &styles)
 {
     QVariantList out;
@@ -190,9 +181,6 @@ QVariantList clashesOf(const StyleList &into, const StyleList &styles)
     application::StyleNames all = application::namesOf(into);
     for (const auto &s : styles)
         all.insert(s.name);
-    // Per name: the incoming rows so far (a clash is known by its source
-    // row, as transferStyles reads it), and the next suffix to try (the
-    // ones below it are taken or offered already).
     std::unordered_map<std::u8string, int> seen, next;
     for (const auto &s : styles) {
         const int occurrence = seen[s.name]++;
@@ -217,7 +205,6 @@ QVariantList clashesOf(const StyleList &into, const StyleList &styles)
     return out;
 }
 
-// LoadStylesS: the "Style: " lines between the first "\nStyle: " and [Events].
 StyleList stylesInFile(const QUrl &url)
 {
     QFile f(url.toLocalFile());
@@ -231,8 +218,6 @@ StyleList stylesInFile(const QUrl &url)
     return application::readCatalog(text.substr(start, end - start));
 }
 
-// The file's Styles of the names chosen, by a lookup per row (Codex security
-// review: a file can hold a great many).
 StyleList chosenInFile(const QUrl &url, const QStringList &names)
 {
     const QSet<QString> wanted(names.begin(), names.end());
@@ -243,12 +228,11 @@ StyleList chosenInFile(const QUrl &url, const QStringList &names)
     return chosen;
 }
 
-} // namespace
+}
 
 StyleManagerController::StyleManagerController(std::filesystem::path catalogDir, Hooks hooks, QObject *parent)
     : QObject(parent), m_catalogs(std::move(catalogDir)), m_hooks(std::move(hooks))
 {
-    // SY1: the catalog chosen last, when it is still there.
     if (m_hooks.lastCatalog)
         if (const QString last = m_hooks.lastCatalog(); !last.isEmpty())
             m_catalogs.choose(u8(last));
@@ -325,8 +309,6 @@ void StyleManagerController::documentEdited()
         m_available = now;
         emit changed();
     }
-    // By the Document's id, as targetRefreshed: a session loaded in place
-    // of the last may take its address.
     const auto target = m_hooks.targetDocument ? m_hooks.targetDocument() : std::nullopt;
     const bool retargeted = target != m_notifiedTarget;
     m_notifiedTarget = target;
@@ -336,8 +318,7 @@ void StyleManagerController::documentEdited()
 QString StyleManagerController::followedCatalog() const
 {
     if (auto *session = m_hooks.target ? m_hooks.target() : nullptr) {
-        // SY1: "Default", which every new file names, leaves the catalog
-        // chosen last as it is.
+        // Every new file names "Default", so it leaves the catalog chosen last as it is.
         const auto last = session->document().scriptInfo(u8"Last Style Storage");
         const auto names = m_catalogs.names();
         if (last && !last->empty() && *last != u8"Default" && std::ranges::find(names, *last) != names.end())
@@ -444,8 +425,6 @@ void StyleManagerController::saveCatalog()
 
 void StyleManagerController::targetRefreshed()
 {
-    // By the Document's id: a session loaded in place of the last may take
-    // its address.
     const auto now = m_hooks.targetDocument ? m_hooks.targetDocument() : std::nullopt;
     const bool switched = now != m_lastTarget;
     m_lastTarget = now;
@@ -536,8 +515,6 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     auto *styles = m_edit->store ? list(true, doc) : doc ? &*doc : nullptr;
     if (!styles)
         return QCoreApplication::translate("HikariSub.Styles", "The document has no styles to edit.");
-    // SY1: the catalog the edit opened in, for the commit; the one shown
-    // comes back after it (choose saves the edited one).
     const std::u8string shown = m_catalogs.current();
     const bool away = m_edit->store && m_edit->catalog != shown;
     if (away && !m_catalogs.choose(m_edit->catalog))
@@ -555,14 +532,14 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
             m_catalogs.choose(shown);
         return QCoreApplication::translate("HikariSub.Styles", "Style named \"%1\" already exists.").arg(qs(row.error()));
     }
-    // The editor stays on the committed Style (Apply keeps it open), set
-    // before the lists are told: whoever follows them may end the edit.
     const bool store = m_edit->store;
     const bool renames = renameLines && m_edit->row && edit.oldName != edit.style.name;
+    // MUST KILL: must be set before the lists are told, as a listener may end the edit.
     m_edit->row = *row;
     m_edit->opened = edit.style;
     if (store) {
         m_catalogs.markChanged();
+        // MUST KILL: choosing the shown catalog back is what saves the edited one.
         if (away)
             m_catalogs.choose(shown);
         emit changed();
@@ -607,7 +584,7 @@ QString StyleManagerController::listsKey() const
         std::optional<StyleList> doc;
         const auto *styles = list(store, doc);
         key += u8'\n';
-        key += number(styles ? styles->size() : 0); // the count first: no name runs into the next list
+        key += number(styles ? styles->size() : 0);
         if (styles)
             for (const auto &style : *styles) {
                 key += u8'\n';
@@ -628,8 +605,6 @@ void StyleManagerController::pin(Edit edit)
 
 application::EditSession *StyleManagerController::editSession() const
 {
-    // The Document may have closed since the editor opened (by any path:
-    // a tab, Close all, a session loaded).
     if (!m_edit || !m_edit->document || !m_hooks.session)
         return nullptr;
     return m_hooks.session(*m_edit->document);
@@ -691,8 +666,6 @@ void StyleManagerController::addToAllDocuments(const QVariantList &rows, const Q
     for (const auto r : rowsOf(rows))
         if (r < m_catalogs.styles().size())
             chosen.push_back(m_catalogs.styles()[r]);
-    // The active Document's review stands for every ASS Document (legacy
-    // keeps its prompt across tabs); a name it did not list is left out.
     const auto shared = choicesOf(choices);
     for (auto *session : m_hooks.documents ? m_hooks.documents() : std::vector<application::EditSession *>{}) {
         auto styles = application::documentStyles(*session);
@@ -792,7 +765,6 @@ void StyleManagerController::sortStyles(bool store)
     auto styles = session ? application::documentStyles(*session) : std::nullopt;
     if (!styles)
         return;
-    // Track where each Style came from so unchanged ones keep their bytes.
     std::vector<std::pair<core::StyleValues, std::size_t>> tagged;
     for (std::size_t i = 0; i < styles->size(); ++i)
         tagged.emplace_back((*styles)[i], i);
@@ -820,7 +792,6 @@ QVariantList StyleManagerController::moveStyles(bool store, const QVariantList &
     auto styles = session ? application::documentStyles(*session) : std::nullopt;
     if (!styles)
         return {};
-    // Move the original rows the same way to know where each Style came from.
     StyleList indices;
     for (std::size_t i = 0; i < styles->size(); ++i) {
         core::StyleValues tag;
@@ -883,7 +854,6 @@ void StyleManagerController::renderPreview(const QVariantMap &values, int width,
 QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues style, int width, int height,
                           const QString &text, std::vector<application::FontLease> fonts, qreal scale, bool wrap)
 {
-    // StylePreview::SubsText: the Style at alignment 5 on a script the preview's size.
     style.alignment = u8"5";
     const auto fields = core::legacy::styleRawFields(style);
     std::u8string line = u8"Style: ";
@@ -900,11 +870,9 @@ QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues 
     application::RenderSnapshot snapshot;
     snapshot.script.resize(script.size());
     std::memcpy(snapshot.script.data(), script.data(), script.size());
-    snapshot.fonts = std::move(fonts); // Y6: the external fonts
-    // SV1: the pixels drawn, `scale` per unit of the preview's size.
+    snapshot.fonts = std::move(fonts);
     const qreal s = scale > 1 ? scale : 1;
     const int pixelWidth = std::max(1, qRound(width * s)), pixelHeight = std::max(1, qRound(height * s));
-    // The checkered background: 10-unit squares of the two preview colours.
     QImage image(pixelWidth, pixelHeight, QImage::Format_ARGB32_Premultiplied);
     const QRgb one = qRgb(0x43, 0x43, 0x43), two = qRgb(0x62, 0x62, 0x62);
     const auto square = [s](int pixel) { return static_cast<int>(pixel / s) / 10; };
@@ -914,7 +882,7 @@ QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues 
         for (int x = 0; x < pixelWidth; ++x)
             rowPixels[x] = (square(x) % 2 == 0) == rowPhase ? one : two;
     }
-    // Premultiplied BGRA over the opaque background (ARGB32's bytes are B, G, R, A).
+    // Format_ARGB32's bytes are B, G, R, A on little-endian.
     static_assert(Q_BYTE_ORDER == Q_LITTLE_ENDIAN);
     if (renderer.prepare(std::move(snapshot)))
         if (const auto frame = application::renderOverlay(renderer, core::DocumentTime(1'000'000),
@@ -944,11 +912,11 @@ private:
     StyleManagerController &m_controller;
 };
 
-} // namespace
+}
 
 void attachStylePreview(QQmlEngine &engine, StyleManagerController &controller)
 {
     engine.addImageProvider(QStringLiteral("stylepreview"), new StylePreviewProvider(controller));
 }
 
-} // namespace hikari::app
+}

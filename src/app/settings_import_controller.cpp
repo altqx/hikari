@@ -55,7 +55,7 @@ QString kindName(si::RowKind kind)
     return {};
 }
 
-} // namespace
+}
 
 SettingsImportController::SettingsImportController(SettingsImportStore *store, QObject *parent)
     : QObject(parent), m_store(store)
@@ -296,7 +296,6 @@ bool SettingsImportController::importChosenBut(const std::set<std::string, std::
     emit chosenChanged();
     if (m_chosen.empty() || importChosen())
         return true;
-    // Not staged: the review shows the user's choices again.
     for (const auto &id : chosen)
         if (const si::PlanRow *row = m_plan ? m_plan->row(id) : nullptr; row && row->selectable)
             m_chosen.insert(row->id);
@@ -332,4 +331,4 @@ bool SettingsImportController::rollback()
     return true;
 }
 
-} // namespace hikari::app
+}

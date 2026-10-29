@@ -46,11 +46,10 @@ void le32(QByteArray &out, quint32 v)
     le16(out, v >> 16);
 }
 
-} // namespace
+}
 
 bool FolderCollectorOutput::open()
 {
-    // MakeDirectory (FontCollector.cpp:1000-1015).
     if (!QDir(m_folder).exists() && !QDir().mkpath(m_folder)) {
         m_folderFailed = true;
         return false;
@@ -60,7 +59,6 @@ bool FolderCollectorOutput::open()
 
 bool FolderCollectorOutput::put(const std::u16string &name, const std::vector<std::byte> &bytes)
 {
-    // wxCopyFile overwrites a file of the same name.
     QFile file(QDir(m_folder).filePath(qs(name)));
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         return false;
@@ -90,7 +88,6 @@ ZipCollectorOutput::~ZipCollectorOutput()
 
 bool ZipCollectorOutput::open()
 {
-    // MakeDirectory(isZip) and CreateZip (FontCollector.cpp:1000-1029).
     const QString folder = QFileInfo(m_archive).absolutePath();
     if (!QDir(folder).exists() && !QDir().mkpath(folder)) {
         m_folderFailed = true;
@@ -113,8 +110,7 @@ bool ZipCollectorOutput::add(const QByteArray &utf8Name, const QByteArray &data)
 {
     if (!m_file)
         return false;
-    // Deflate at level 9: qCompress's zlib stream without its 4-byte size
-    // prefix, 2-byte header and 4-byte Adler-32 trailer.
+    // qCompress output is a 4-byte size, a 2-byte zlib header, raw deflate, a 4-byte Adler-32.
     const QByteArray z = qCompress(data, 9);
     if (z.size() < 10)
         return false;
@@ -128,7 +124,7 @@ bool ZipCollectorOutput::add(const QByteArray &utf8Name, const QByteArray &data)
     QByteArray header;
     le32(header, 0x04034b50);
     le16(header, 20);     // version needed
-    le16(header, 0x0800); // UTF-8 names (Utf8ZipEntry)
+    le16(header, 0x0800); // UTF-8 names
     le16(header, 8);      // deflate
     le16(header, m_time);
     le16(header, m_date);
@@ -201,4 +197,4 @@ void ZipCollectorOutput::discard()
     m_file.reset();
 }
 
-} // namespace hikari::backends
+}

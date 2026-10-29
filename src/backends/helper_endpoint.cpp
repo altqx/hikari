@@ -35,7 +35,7 @@ void writeAll(const std::vector<std::byte> &bytes)
         const auto n = ::write(g_protocolFd, bytes.data() + done, bytes.size() - done);
 #endif
         if (n <= 0)
-            return; // the host is gone; the reader sees stdin close
+            return;
         done += static_cast<std::size_t>(n);
     }
 }
@@ -47,7 +47,6 @@ void write(const Frame &frame)
     writeAll(bytes);
 }
 
-// Moves the protocol to a private descriptor and sends fd 1 to stderr.
 void protectProtocolChannel()
 {
     std::fflush(stdout);
@@ -67,9 +66,9 @@ struct Inbox {
     std::mutex mutex;
     std::condition_variable ready;
     std::deque<Frame> frames;
-    std::map<std::uint64_t, Frame> serviceReplies; // by call ID
+    std::map<std::uint64_t, Frame> serviceReplies;
     bool closed = false;
-    std::uint64_t cancelRequest = 0; // the request a Cancel named
+    std::uint64_t cancelRequest = 0;
 };
 
 std::uint64_t callIdOf(const Frame &frame)
@@ -142,7 +141,7 @@ private:
     bool m_ended = false;
 };
 
-} // namespace
+}
 
 void sendUncheckedFrame(const Frame &frame)
 {
@@ -168,8 +167,7 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
             if (n <= 0)
                 break;
             decoder.feed(buffer, static_cast<std::size_t>(n));
-            // Every frame of a read is taken in before the handler wakes, so
-            // a Cancel that arrived with its request is seen from the start.
+            // MUST KILL: a read's frames all go in before the wake (a Cancel beside its request).
             std::lock_guard lock(inbox.mutex);
             bool arrived = false;
             while (auto frame = decoder.next()) {
@@ -206,7 +204,7 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
     int exitCode = 0;
     std::uint64_t session = 0;
     if (auto first = take(); !first || first->kind != Kind::Welcome) {
-        exitCode = 3; // refused, or the host went away before welcoming us
+        exitCode = 3;
     } else {
         session = first->session;
         while (auto frame = take()) {
@@ -217,12 +215,12 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
             if (!responder.ended())
                 responder.terminal(Outcome::Failed, bytesOf("handler returned without a result"));
             std::lock_guard lock(inbox.mutex);
-            inbox.serviceReplies.clear(); // answers that arrived after their call gave up
+            inbox.serviceReplies.clear();
         }
     }
-    // stdin is closed or ignored from here; the reader ends with the process.
+    // MUST KILL: the detached reader still holds &inbox; the process must exit right after.
     reader.detach();
     return exitCode;
 }
 
-} // namespace hikari::backends::helper
+}
