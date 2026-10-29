@@ -49,6 +49,9 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
   returns (`ConfigView`), which scripts written for 0.6 compare against; and
   an installed package updates only from its own feeds, and a missing one
   that names its feed takes another feed's build only when the user agrees.
+  `FileCache` (marked `HikariSub (#500)`) names entries by the full SHA-1 of
+  their key instead of a 7-hex prefix and returns an index only when the key
+  stored in it matches, so one feed URL can't pose as another's cache entry.
 - `automation/include/moonscript.lua` is MoonScript 0.5.0, from
   `TypesettingTools/Aegisub` `3c5b61429a49` (what arch1t3cht's Aegisub ships).
   The released package's 0.3.0 cannot compile DependencyControl 0.9's

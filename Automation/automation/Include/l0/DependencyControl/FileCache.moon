@@ -16,9 +16,11 @@ sanitizeLabel = (label) ->
   safe = tostring(label or "entry")\gsub "[^%w%._-]", "_"
   #safe > 0 and safe\sub(1, 64) or "entry"
 
--- The 7-hex-char SHA-1 slug of a cache key. Deterministic per key (sensitive to its exact bytes), matching
--- the DepCtrl Browser's feed-URL slug convention.
-keySlug = (key) -> Hash.getDigest(Hash.HashType.Sha1, key)\sub 1, 7
+-- HikariSub (#500): the complete SHA-1 digest of a cache key, not upstream's 7-hex prefix, so an
+-- attacker-controlled key can't cheaply alias another entry's index; getMeta still checks the stored key.
+KEY_SLUG_LENGTH = 40
+KEY_SLUG_PATTERN = ("%x")\rep KEY_SLUG_LENGTH
+keySlug = (key) -> Hash.getDigest Hash.HashType.Sha1, key
 
 -- The embedded UTC timestamp of a snapshot file name, for chronological ordering ("" when absent).
 snapshotStamp = (fileName) -> fileName\match "(%d+T%d+Z)" or ""
@@ -107,7 +109,11 @@ class FileCache
   ---Reads the cache index entry for a key.
   ---@param key string
   ---@return FileCacheMeta? meta nil when the key isn't cached.
-  getMeta: (key) => @__readMeta @__metaPath key
+  getMeta: (key) =>
+    meta = @__readMeta @__metaPath key
+    -- HikariSub (#500): the filename is only an index; never let a digest collision or a tampered index
+    -- stand in for the entry of a different key.
+    meta and meta.key == key and meta or nil
 
   ---Whether a cache entry is still fresh, i.e. its expiry (fixed when it was written) hasn't passed
   ---and it hasn't been invalidated by expireAll. The expiry is intrinsic to the entry, so freshness is the
@@ -179,10 +185,12 @@ class FileCache
       expiredSlugs[keySlug meta.key] = true
       @__l1[meta.key] = nil
 
-    -- every file (snapshot or index) is named with its key's 7-hex slug prefix, so one pass removes both
+    -- every file (snapshot or index) is named with its key's full-digest prefix, so one pass removes both;
+    -- files named with the 7-hex slug from before #500 are never read again, so a purge removes them too
     for file in *files
-      slug = file\match "^(%x%x%x%x%x%x%x)"
-      fileOps.remove fileOps.joinPath @cacheDir, file if slug and expiredSlugs[slug]
+      slug = file\match "^(#{KEY_SLUG_PATTERN})"
+      legacy = not slug and file\match "^%x%x%x%x%x%x%x[%.%-]"
+      fileOps.remove fileOps.joinPath @cacheDir, file if legacy or slug and expiredSlugs[slug]
 
   ---Stores a blob under a readable, timestamped snapshot and repoints the index at it, then trims old
   ---snapshots. The snapshot name is `<slug>-<label>-<utcTimestamp>-<rand>.json` (slug first so a key's
