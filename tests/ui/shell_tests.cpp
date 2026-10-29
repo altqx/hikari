@@ -23932,7 +23932,7 @@ private slots:
         QCOMPARE(shown(), QStringLiteral("Free drawing"));
         QCOMPARE(QAccessible::queryAccessibleInterface(list())->role(), QAccessible::ComboBox);
         QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Name),
-                 QStringLiteral("List of ASS drawings with edit option."));
+                 QStringLiteral("List of ASS drawings with an edit option."));
         QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Description),
                  QStringLiteral("Free drawing"));
         QVERIFY(!list()->property("checked").toBool());
