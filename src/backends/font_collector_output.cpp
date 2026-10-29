@@ -46,7 +46,7 @@ void le32(QByteArray &out, quint32 v)
     le16(out, v >> 16);
 }
 
-} // namespace
+}
 
 bool FolderCollectorOutput::open()
 {
@@ -197,4 +197,4 @@ void ZipCollectorOutput::discard()
     m_file.reset();
 }
 
-} // namespace hikari::backends
+}

@@ -173,4 +173,4 @@ QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues 
 // "image://stylepreview/<key>": the controller's latest preview.
 void attachStylePreview(QQmlEngine &engine, StyleManagerController &controller);
 
-} // namespace hikari::app
+}

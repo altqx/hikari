@@ -54,4 +54,4 @@ private:
     bool m_folderFailed = false;
 };
 
-} // namespace hikari::backends
+}

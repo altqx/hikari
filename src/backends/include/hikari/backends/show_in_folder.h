@@ -23,4 +23,4 @@ QString containingFolder(const QString &path);
 void selectInFolder(const QString &path, const QDBusConnection &bus, std::function<void(const QString &folder)> fallback);
 #endif
 
-} // namespace hikari::backends
+}

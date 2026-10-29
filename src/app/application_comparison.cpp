@@ -23,7 +23,7 @@ std::u8string u8(const QString &s)
 constexpr const char *kType = "comparison.type";
 constexpr const char *kStyles = "comparison.styles";
 
-} // namespace
+}
 
 application::ComparedDocument Application::comparedDocument(application::DocumentId id) const
 {
@@ -164,4 +164,4 @@ void Application::turnOffComparison()
     refreshViews();
 }
 
-} // namespace hikari::app
+}

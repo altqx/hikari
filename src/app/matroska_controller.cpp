@@ -16,7 +16,7 @@ QString elapsedText(qint64 ms)
         .arg(QString::fromUtf8(reinterpret_cast<const char *>(raw.data()), qsizetype(raw.size())));
 }
 
-} // namespace
+}
 
 MatroskaController::MatroskaController(std::unique_ptr<application::MatroskaPort> port, Hooks hooks, QObject *parent)
     : QObject(parent), m_port(std::move(port)), m_hooks(std::move(hooks)), m_elapsedText(elapsedText(0))
@@ -144,4 +144,4 @@ void MatroskaController::cancel()
     emit stateChanged();
 }
 
-} // namespace hikari::app
+}

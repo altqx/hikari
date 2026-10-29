@@ -111,4 +111,4 @@ struct Issue {
     static Issue fromReport(const Report &report, const QString &note);
 };
 
-} // namespace hikari::app::report
+}

@@ -23,4 +23,4 @@ application::SpellingText legacySpellingText(bool everyLetter = false);
 // and \\?\ or \\.\ paths stay. Takes an absolute, normalized path with backslashes.
 std::string windowsLongPath(std::string_view path);
 
-} // namespace hikari::backends
+}

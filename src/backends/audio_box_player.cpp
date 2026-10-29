@@ -19,7 +19,7 @@ double steadySeconds()
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-} // namespace
+}
 
 AudioBoxPlayer::SharedAudio shareRaw(AudioBoxPlayer::Audio audio)
 {
@@ -612,4 +612,4 @@ std::int64_t AudioBoxPlayer::heardLocked() const
     return m_base + sourceFrames(frames);
 }
 
-} // namespace hikari::backends
+}

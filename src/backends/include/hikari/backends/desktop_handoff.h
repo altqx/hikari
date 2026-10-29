@@ -23,4 +23,4 @@ struct Routes {
 // For tests. A null route falls back to the desktop; returns the routes replaced.
 Routes replaceRoutes(Routes routes);
 
-} // namespace hikari::backends::desktop
+}

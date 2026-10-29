@@ -104,4 +104,4 @@ enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 
                                  OpenDisplayAudio = 8, Probe = 9, DisplayRead = 11, SubtitleTracks = 12, Subtitles = 13,
                                  Attachments = 14, InputMatrix = 15, Close = 16 };
 
-} // namespace hikari::backends::media
+}

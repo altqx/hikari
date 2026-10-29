@@ -34,7 +34,7 @@ std::shared_ptr<void> addPrivateFont(const application::FontLease &font)
 }
 #endif
 
-} // namespace
+}
 
 CsriRenderers::CsriRenderers(std::vector<csri::Renderer> renderers, std::vector<std::shared_ptr<void>> libraries)
     : m_renderers(std::move(renderers)), m_libraries(std::move(libraries))
@@ -264,4 +264,4 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     return frame;
 }
 
-} // namespace hikari::backends
+}

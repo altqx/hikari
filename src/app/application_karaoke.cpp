@@ -28,7 +28,7 @@ QString syllables(const core::KaraokeProblem &problem)
     return label.arg(list.join(QStringLiteral(", ")));
 }
 
-} // namespace
+}
 
 QVariantMap Application::checkKaraoke() const
 {
@@ -95,4 +95,4 @@ bool Application::showKaraokeLine(qulonglong document, qulonglong line)
     return applySelection(gridSelection().plain(session->selection(), core::LineId{line}));
 }
 
-} // namespace hikari::app
+}

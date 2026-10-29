@@ -81,4 +81,4 @@ private:
     bool m_shuttingDown = false;
 };
 
-} // namespace hikari::backends
+}

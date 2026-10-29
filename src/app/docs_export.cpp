@@ -321,7 +321,7 @@ QJsonObject meta()
                                                  QStringLiteral("guide-links.json")}}};
 }
 
-} // namespace
+}
 
 bool exportDocs(const QString &dir, QString *error)
 {
@@ -371,4 +371,4 @@ bool exportDocs(const QString &dir, QString *error)
            write(dir, QStringLiteral("meta.json"), meta(), error);
 }
 
-} // namespace hikari::app
+}

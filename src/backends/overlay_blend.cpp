@@ -185,7 +185,7 @@ BlendPath detect()
 #endif
 }
 
-} // namespace
+}
 
 BlendPath blendPath()
 {
@@ -339,4 +339,4 @@ PixelRect premultiplyStraightAlpha(std::uint8_t *pixels, int width, int height, 
     return {x0, y0, x1 - x0, y1 - y0};
 }
 
-} // namespace hikari::backends
+}

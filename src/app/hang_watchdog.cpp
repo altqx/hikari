@@ -51,7 +51,7 @@ void onStackSignal(int)
 
 #endif
 
-} // namespace
+}
 
 #ifdef _WIN32
 
@@ -227,4 +227,4 @@ QList<crash::Frame> HangWatchdog::captureStack()
 
 #endif
 
-} // namespace hikari::app
+}

@@ -274,4 +274,4 @@ private:
     int m_problems = 0;
 };
 
-} // namespace hikari::app
+}

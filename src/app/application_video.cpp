@@ -32,7 +32,7 @@ bool missingLocalFile(const std::string &path)
         });
 }
 
-} // namespace
+}
 
 void Application::trackVideoSources()
 {
@@ -288,4 +288,4 @@ std::optional<application::NextFileStep> Application::nextVideoStep(application:
     return walker.step(std::move(files), path.toStdString(), next);
 }
 
-} // namespace hikari::app
+}

@@ -15,7 +15,7 @@ namespace {
 constexpr application::yuv::Matrix kBt601{298, 409, -100, -208, 516, 16, 8};
 constexpr application::yuv::Matrix kBt709{298, 459, -55, -136, 541, 16, 8};
 
-} // namespace
+}
 
 std::size_t sampleBytes(const SampleFormat &f)
 {
@@ -165,4 +165,4 @@ bool toYcbcr(const SampleFormat &f, const std::uint8_t *data, std::size_t size, 
     return true;
 }
 
-} // namespace hikari::backends::dshow
+}

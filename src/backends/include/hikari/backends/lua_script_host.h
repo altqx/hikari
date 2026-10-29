@@ -122,4 +122,4 @@ private:
     std::optional<application::MacroResult> m_lastResult;
 };
 
-} // namespace hikari::backends
+}

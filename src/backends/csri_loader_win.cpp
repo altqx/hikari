@@ -116,7 +116,7 @@ struct Loader {
     }
 };
 
-} // namespace
+}
 
 std::shared_ptr<CsriRenderers> CsriRenderers::load(const std::filesystem::path &folder, const Log &log)
 {
@@ -125,4 +125,4 @@ std::shared_ptr<CsriRenderers> CsriRenderers::load(const std::filesystem::path &
     return std::make_shared<CsriRenderers>(std::move(loader.renderers), std::move(loader.libraries));
 }
 
-} // namespace hikari::backends
+}

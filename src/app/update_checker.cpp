@@ -136,7 +136,7 @@ QString origin(const QUrl &url)
     return url.adjusted(QUrl::RemovePath | QUrl::RemoveQuery | QUrl::RemoveFragment | QUrl::RemoveUserInfo).toString();
 }
 
-} // namespace
+}
 
 struct UpdateChecker::Run {
     bool interactive = false;
@@ -584,4 +584,4 @@ void UpdateChecker::end(const QString &outcome)
         emit finished(outcome, {}, true);
 }
 
-} // namespace hikari::app
+}

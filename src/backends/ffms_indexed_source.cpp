@@ -76,7 +76,7 @@ application::AudioFailure hostFailure(SourceError error)
     return {error, application::AudioStage::Host, {}};
 }
 
-} // namespace
+}
 
 FfmsIndexedSource::FfmsIndexedSource(QString helperProgram, QObject *parent)
     : QObject(parent), m_program(std::move(helperProgram))
@@ -758,4 +758,4 @@ void FfmsIndexedSource::cancelReads()
     }
 }
 
-} // namespace hikari::backends
+}

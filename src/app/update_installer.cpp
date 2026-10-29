@@ -81,7 +81,7 @@ bool replaceFile(const QString &from, const QString &to)
 }
 #endif
 
-} // namespace
+}
 
 UpdateEnvironment UpdateEnvironment::current()
 {
@@ -907,4 +907,4 @@ void UpdateInstaller::reportHealthy(const QString &healthFile)
         QFile::remove(m_env.package.appImage + QStringLiteral(".old"));
 }
 
-} // namespace hikari::app
+}

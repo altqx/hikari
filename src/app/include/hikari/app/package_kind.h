@@ -28,4 +28,4 @@ QString packageKindToken(application::PackageKind kind);
 // or "portable".
 QString packageKindLabel(application::PackageKind kind);
 
-} // namespace hikari::app
+}

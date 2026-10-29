@@ -228,7 +228,7 @@ StyleList chosenInFile(const QUrl &url, const QStringList &names)
     return chosen;
 }
 
-} // namespace
+}
 
 StyleManagerController::StyleManagerController(std::filesystem::path catalogDir, Hooks hooks, QObject *parent)
     : QObject(parent), m_catalogs(std::move(catalogDir)), m_hooks(std::move(hooks))
@@ -912,11 +912,11 @@ private:
     StyleManagerController &m_controller;
 };
 
-} // namespace
+}
 
 void attachStylePreview(QQmlEngine &engine, StyleManagerController &controller)
 {
     engine.addImageProvider(QStringLiteral("stylepreview"), new StylePreviewProvider(controller));
 }
 
-} // namespace hikari::app
+}

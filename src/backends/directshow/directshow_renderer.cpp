@@ -10,7 +10,7 @@ namespace {
 
 const GUID kRendererClsid = {0x269ba141, 0x1fde, 0x494b, {0x91, 0x24, 0x45, 0x3a, 0x17, 0x83, 0x8b, 0x9f}};
 
-} // namespace
+}
 
 VideoRenderer::VideoRenderer(std::shared_ptr<Bridge> bridge, HRESULT *phr)
     : CBaseVideoRenderer(kRendererClsid, L"video Renderer", nullptr, phr), m_bridge(std::move(bridge))
@@ -172,4 +172,4 @@ HRESULT VideoRenderer::EndFlush()
     return CBaseVideoRenderer::EndFlush();
 }
 
-} // namespace hikari::backends::dshow
+}

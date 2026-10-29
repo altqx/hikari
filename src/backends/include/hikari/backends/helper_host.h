@@ -104,4 +104,4 @@ private:
     static inline std::uint64_t s_nextSession = 1;
 };
 
-} // namespace hikari::backends::helper
+}

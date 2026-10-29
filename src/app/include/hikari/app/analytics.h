@@ -151,4 +151,4 @@ private:
     std::array<std::atomic<qint64>, kFrameBuckets.size()> m_frames{};
 };
 
-} // namespace hikari::app
+}

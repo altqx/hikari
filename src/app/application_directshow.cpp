@@ -46,7 +46,7 @@ QString openMessage(const std::string &message)
     return QString::fromStdString(message);
 }
 
-} // namespace
+}
 #endif
 
 bool Application::directShowPlayback() const
@@ -134,4 +134,4 @@ bool Application::showPlayerFilterProperties(const QString &name, QObject *item,
 #endif
 }
 
-} // namespace hikari::app
+}

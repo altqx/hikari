@@ -78,4 +78,4 @@ private:
     int m_more = 0;
 };
 
-} // namespace hikari::app
+}

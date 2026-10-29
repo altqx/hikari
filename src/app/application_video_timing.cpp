@@ -21,7 +21,7 @@ int msOf(core::DocumentTime t)
     return static_cast<int>(t.microseconds() / 1000);
 }
 
-} // namespace
+}
 
 application::VideoState Application::videoState() const
 {
@@ -263,7 +263,7 @@ bool Application::commitAndAdvance()
     return done;
 }
 
-} // namespace hikari::app
+}
 
 namespace hikari::app {
 
@@ -286,4 +286,4 @@ bool Application::openEditorFromFullScreen()
     return m_videoFullscreen->leave();
 }
 
-} // namespace hikari::app
+}

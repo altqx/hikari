@@ -434,7 +434,7 @@ void linkUrls(QTextDocument &doc)
     }
 }
 
-} // namespace
+}
 
 WhatsNew::WhatsNew(UpdateChecker &updates, QString cacheFile, QObject *parent)
     : QObject(parent), m_updates(updates), m_cacheFile(std::move(cacheFile))
@@ -733,4 +733,4 @@ QString WhatsNew::cacheFileIn(const UpdateEnvironment &environment)
     return environment.cacheDir + QStringLiteral("/whats-new-%1.json").arg(qs(key));
 }
 
-} // namespace hikari::app
+}

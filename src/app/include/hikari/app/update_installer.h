@@ -149,4 +149,4 @@ private:
     QTimer m_connectTimer, m_deadline;
 };
 
-} // namespace hikari::app
+}

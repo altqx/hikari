@@ -38,4 +38,4 @@ bool write(const QString &path, const Record &record);
 // Names modules as the crash handler does (any other is "other"); needs install() first.
 QList<Frame> framesOf(const quintptr *addresses, int count);
 
-} // namespace hikari::app::crash
+}

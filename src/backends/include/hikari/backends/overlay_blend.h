@@ -60,4 +60,4 @@ application::PixelRect unite(const application::PixelRect &a, const application:
 // In place; returns the bounds of the pixels with nonzero alpha (empty when none).
 application::PixelRect premultiplyStraightAlpha(std::uint8_t *pixels, int width, int height, std::ptrdiff_t stride);
 
-} // namespace hikari::backends
+}

@@ -46,4 +46,4 @@ private:
     QTimer m_timer;
 };
 
-} // namespace hikari::app
+}

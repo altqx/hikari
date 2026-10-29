@@ -39,7 +39,7 @@ ScriptStatus::State stateOf(LuaScriptHost::State s)
     }
 }
 
-} // namespace
+}
 
 AutomationManager::AutomationManager(QString helperPath, QString sharedInclude, QObject *parent)
     : QObject(parent), m_helperPath(std::move(helperPath)), m_sharedInclude(std::move(sharedInclude))
@@ -283,4 +283,4 @@ void AutomationManager::cancel()
             e.host->cancel();
 }
 
-} // namespace hikari::backends
+}

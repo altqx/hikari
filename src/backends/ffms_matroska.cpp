@@ -37,7 +37,7 @@ template <typename R> std::function<void(R)> once(std::function<void(R)> done)
     };
 }
 
-} // namespace
+}
 
 FfmsMatroska::FfmsMatroska(QString helperProgram, QObject *parent) : QObject(parent), m_program(std::move(helperProgram))
 {
@@ -209,4 +209,4 @@ void FfmsMatroska::attachments(const std::string &path, Attachments done)
          [finish](MatroskaError error) { finish(std::unexpected(std::move(error))); });
 }
 
-} // namespace hikari::backends
+}

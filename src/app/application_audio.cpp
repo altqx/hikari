@@ -141,4 +141,4 @@ void Application::showVideoAtAudio(int ms)
     video.showFrame(frame);
 }
 
-} // namespace hikari::app
+}

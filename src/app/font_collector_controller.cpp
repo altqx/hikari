@@ -158,7 +158,7 @@ std::shared_ptr<const std::vector<std::byte>> readFontFile(const std::u16string 
     return out;
 }
 
-} // namespace
+}
 
 FontCollectorController::FontCollectorController(ui::SettingsStore &settings, Hooks hooks, QObject *parent)
     : QObject(parent), m_settings(settings), m_hooks(std::move(hooks)),
@@ -717,7 +717,7 @@ public:
     void discard() override {}
 };
 
-} // namespace
+}
 
 void FontCollectorController::runMkvPrepare()
 {
@@ -1020,4 +1020,4 @@ void FontCollectorController::logDoubleClicked(int position)
     }
 }
 
-} // namespace hikari::app
+}

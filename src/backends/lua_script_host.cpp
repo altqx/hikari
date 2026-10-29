@@ -352,4 +352,4 @@ void LuaScriptHost::endRun(RunOutcome outcome, const QString &message)
     emit finished(outcome, message);
 }
 
-} // namespace hikari::backends
+}

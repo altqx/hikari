@@ -142,4 +142,4 @@ void SubtitleRendererSelection::observeCost(std::function<void(double millisecon
     m_costObserver = std::move(observer);
 }
 
-} // namespace hikari::backends
+}

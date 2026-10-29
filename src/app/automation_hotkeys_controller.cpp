@@ -51,7 +51,7 @@ QString problemText(application::AliasProblem problem)
     return QCoreApplication::translate("HikariSub.Automation", "Not a macro shortcut");
 }
 
-} // namespace
+}
 
 AutomationHotkeysController::AutomationHotkeysController(AutomationShell &automation, ui::SettingsStore &settings,
                                                          QObject *parent)
@@ -327,4 +327,4 @@ QString AutomationHotkeysController::keysOf(int key, int modifiers) const
     return QKeySequence(QKeyCombination(mods, Qt::Key(key))).toString(QKeySequence::PortableText);
 }
 
-} // namespace hikari::app
+}

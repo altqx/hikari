@@ -207,7 +207,7 @@ ui::ListFile::Report listFileReport(ui::LogController &logController)
     return report;
 }
 
-} // namespace
+}
 
 class Application::FindHost : public application::FindReplaceHost {
 public:
@@ -1678,7 +1678,7 @@ void selectLegacyActiveLine(application::EditSession &session)
     session.setSelection(application::Selection{line, {line}, line, {}});
 }
 
-} // namespace
+}
 
 std::optional<application::DocumentId> Application::open(const QString &path, bool asReference)
 {
@@ -2059,7 +2059,7 @@ QString fileTitle(const std::string &path)
     return QFileInfo(QString::fromStdString(path)).fileName();
 }
 
-} // namespace
+}
 
 void Application::newDocument()
 {
@@ -2133,7 +2133,7 @@ QVariantList Application::reviewClose(const QString &then)
 
 namespace {
 QString extensionFor(core::SubtitleFormat format);
-} // namespace
+}
 
 void Application::resolveClose(const QVariantList &choices)
 {
@@ -2381,7 +2381,7 @@ bool readOnly(const QString &path)
     return info.exists() && !info.isWritable();
 }
 
-} // namespace
+}
 
 QString Application::saveRoute() const
 {
@@ -2600,7 +2600,7 @@ bool recentMissing(const std::string &path)
         });
 }
 
-} // namespace
+}
 
 void Application::rememberRecent(const std::string &path, bool opened)
 {
@@ -2938,7 +2938,7 @@ void setClipboardText(const std::u8string &text)
         QString::fromUtf8(reinterpret_cast<const char *>(text.data()), static_cast<qsizetype>(text.size())));
 }
 
-} // namespace
+}
 
 bool Application::copyLines()
 {
@@ -3266,7 +3266,7 @@ bool sessionEnded(const QString &dir, const std::string &session)
     return true;
 }
 
-} // namespace
+}
 
 QVariantList Application::recoveryBundles() const
 {
@@ -3724,7 +3724,7 @@ application::SelectLinesSettings selectSettings(const QVariantMap &m, int option
 QString regexMatchError(const std::u16string &error);
 QString fromUtf16(const std::u16string &s);
 
-} // namespace
+}
 
 QVariantMap Application::selectLinesSettings() const
 {
@@ -3953,7 +3953,7 @@ void findFirstEntries(application::FindReplaceSettings &s, const application::Fi
     s.folder = first(recent.paths);
 }
 
-} // namespace
+}
 
 namespace {
 
@@ -3989,7 +3989,7 @@ application::SpellCheckWalk::Options walkOptions(const QVariantMap &options)
             options.value(QStringLiteral("ignoreUpperCase")).toBool()};
 }
 
-} // namespace
+}
 
 std::vector<application::ReplacerRule> &Application::misspellRuleList()
 {
@@ -4556,7 +4556,7 @@ QVariantMap unchangedState()
     return {{QStringLiteral("unchanged"), true}};
 }
 
-} // namespace
+}
 
 QVariantMap Application::spellCheckerReplace(const QString &replacement, const QVariantMap &options)
 {
@@ -4964,7 +4964,7 @@ std::optional<core::SubtitleFormat> formatNamed(const QString &name)
     return std::nullopt;
 }
 
-} // namespace
+}
 
 QVariantMap Application::conversionOptions() const
 {
@@ -5536,7 +5536,7 @@ QString languageName(const QString &tag)
     return name.isEmpty() ? tag : name;
 }
 
-} // namespace
+}
 
 namespace {
 
@@ -5602,7 +5602,7 @@ application::OptionsState fromVariant(const QVariantMap &values)
     return out;
 }
 
-} // namespace
+}
 
 bool Application::includesCsri()
 {
@@ -5749,7 +5749,7 @@ bool validAppearance(std::string_view id, const QVariant &value)
     }
     return application::parseSettingColour(value.toString().toStdString()).has_value();
 }
-} // namespace
+}
 
 void Application::addAppearance(QVariantMap &values) const
 {
@@ -6097,4 +6097,4 @@ QString Application::settingsFolderPath(const QUrl &url) const
     return QDir::toNativeSeparators(url.toLocalFile());
 }
 
-} // namespace hikari::app
+}

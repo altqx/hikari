@@ -235,4 +235,4 @@ private:
 // Registers the "fontcatalogpreview" image provider.
 void attachFontCatalogPreview(QQmlEngine &engine, FontCatalogsController &controller);
 
-} // namespace hikari::app
+}

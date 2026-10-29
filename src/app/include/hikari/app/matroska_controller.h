@@ -77,4 +77,4 @@ private:
     QString m_source;
 };
 
-} // namespace hikari::app
+}

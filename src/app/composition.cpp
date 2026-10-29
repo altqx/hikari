@@ -368,7 +368,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     return code;
 }
 
-} // namespace
+}
 
 int run(int argc, char **argv, StartupMode mode)
 {
@@ -437,4 +437,4 @@ int run(int argc, char **argv, StartupMode mode)
     return code;
 }
 
-} // namespace hikari::app
+}

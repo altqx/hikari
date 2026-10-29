@@ -9,4 +9,4 @@ namespace hikari::app {
 inline constexpr int kDocsSchema = 1;
 bool exportDocs(const QString &dir, QString *error = nullptr);
 
-} // namespace hikari::app
+}

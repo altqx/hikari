@@ -49,7 +49,7 @@ struct Renderer {
     const Info *info = nullptr;
 };
 
-} // namespace csri
+}
 
 class CsriRenderers {
 public:
@@ -117,4 +117,4 @@ private:
     application::PixelRect m_bounds;
 };
 
-} // namespace hikari::backends
+}

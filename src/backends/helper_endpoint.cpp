@@ -141,7 +141,7 @@ private:
     bool m_ended = false;
 };
 
-} // namespace
+}
 
 void sendUncheckedFrame(const Frame &frame)
 {
@@ -223,4 +223,4 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
     return exitCode;
 }
 
-} // namespace hikari::backends::helper
+}

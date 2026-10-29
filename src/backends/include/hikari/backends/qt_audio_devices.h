@@ -20,4 +20,4 @@ private:
     std::function<void()> m_changed;
 };
 
-} // namespace hikari::backends
+}

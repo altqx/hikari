@@ -34,7 +34,7 @@ std::u16string utf16(std::string_view utf8)
     return QString::fromUtf8(utf8.data(), qsizetype(utf8.size())).toStdU16String();
 }
 
-} // namespace
+}
 
 struct MecabReadings::State {
     std::unique_ptr<MeCab::Model> model;
@@ -92,4 +92,4 @@ application::ReadingAnalyzer MecabReadings::analyzer(std::shared_ptr<const Mecab
     return [readings = std::move(readings)](std::u16string_view text) { return readings->words(text); };
 }
 
-} // namespace hikari::backends
+}

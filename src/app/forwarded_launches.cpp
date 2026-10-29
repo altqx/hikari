@@ -38,7 +38,7 @@ bool modalPopupOpen(QWindow *window)
     return window && (open(window) || (quick && open(quick->contentItem())));
 }
 
-} // namespace
+}
 
 ForwardedLaunches::ForwardedLaunches(Application &application, QObject *parent)
     : QObject(parent)
@@ -144,4 +144,4 @@ void ForwardedLaunches::activate(QWindow *window, const QString &activationToken
 #endif
 }
 
-} // namespace hikari::app
+}

@@ -210,7 +210,7 @@ bool isReleaseHostUrl(const std::string &url)
     return application::isAllowedDownloadHost(host);
 }
 
-} // namespace
+}
 
 std::wstring commandLine(const application::ApplyRequest &request)
 {
@@ -657,6 +657,6 @@ int runFromCommandLine(const std::string &installedVersion, bool allUsersInstall
     return apply(*request, environment);
 }
 
-} // namespace hikari::app::update_apply
+}
 
 #endif

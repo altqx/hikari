@@ -71,7 +71,7 @@ bool isSubtitleType(const GUID &major)
     return major == kMediaTypeSubtitle || major == MEDIATYPE_Text;
 }
 
-} // namespace
+}
 
 struct DirectShowPlayer::Impl {
     enum class State { None, Stopped, Playing, Paused }; // legacy m_state
@@ -735,4 +735,4 @@ long DirectShowPlayer::appliedVolume() const
     return d->volumeApplied ? d->appliedVolume : 0;
 }
 
-} // namespace hikari::backends
+}

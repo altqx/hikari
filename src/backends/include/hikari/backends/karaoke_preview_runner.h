@@ -53,4 +53,4 @@ private:
     bool m_busy = false;
 };
 
-} // namespace hikari::backends
+}

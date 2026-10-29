@@ -317,7 +317,7 @@ void addExternalFonts(ASS_Library *library, const application::FontEnvironment &
     }
 }
 
-} // namespace
+}
 
 std::expected<FontReport, FontError> LibassFontService::resolve(const application::FontEnvironment &environment,
                                                                 const std::vector<application::FontRequest> &requests)
@@ -410,7 +410,7 @@ std::wstring onDiskPath(const std::wstring &path)
         return out.substr(4);
     return out;
 }
-} // namespace
+}
 #endif
 
 std::vector<SystemFace> LibassFontService::systemFaces()
@@ -643,7 +643,7 @@ std::expected<Rendering, FontError> renderDocument(ASS_Library *library, const s
     return out;
 }
 
-} // namespace
+}
 
 std::expected<application::FontCollection, FontError>
 LibassFontService::collect(const std::vector<std::byte> &script, const application::FontEnvironment &environment,
@@ -808,7 +808,7 @@ bool charsetCovers(const FcCharSet *set, const std::u32string &characters)
 }
 #endif
 
-} // namespace
+}
 
 std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
 {
@@ -985,4 +985,4 @@ std::vector<std::string> LibassFontService::fontDirectories()
     return out;
 }
 
-} // namespace hikari::backends
+}

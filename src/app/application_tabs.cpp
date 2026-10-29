@@ -95,7 +95,7 @@ std::optional<QByteArray> readSessionBytes(const QString &path)
     return QByteArray(bytes->data(), static_cast<qsizetype>(bytes->size()));
 }
 
-} // namespace
+}
 
 QVariantList Application::tabs() const
 {
@@ -271,7 +271,7 @@ void Application::registerTabArrangements()
 
 namespace {
 constexpr const char *kLayoutInFile = "subtitles.layoutInFile";
-} // namespace
+}
 
 void Application::setUpFileArrangements()
 {
@@ -639,7 +639,7 @@ std::optional<application::Session> readSessionAt(const QString &path, applicati
     return readSession(std::string_view(bytes->constData(), static_cast<std::size_t>(bytes->size())), failure);
 }
 
-} // namespace
+}
 
 bool Application::lastSessionCrashed() const
 {
@@ -975,4 +975,4 @@ void Application::removeRestore(int row)
     emit unresolvedRestoresChanged();
 }
 
-} // namespace hikari::app
+}

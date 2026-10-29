@@ -128,4 +128,4 @@ WriteOutcome WinFilePort::writeFile(PermitId permit, const std::string &path, co
     return WriteOutcome::Written;
 }
 
-} // namespace hikari::backends
+}

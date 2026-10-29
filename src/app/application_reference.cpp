@@ -21,7 +21,7 @@ std::optional<std::size_t> rowOf(const core::Document &document, core::LineId id
     return std::nullopt;
 }
 
-} // namespace
+}
 
 std::optional<application::DocumentId> Application::comparedPartner() const
 {
@@ -339,4 +339,4 @@ int Application::comparedReferenceRow(int row) const
     return matched ? static_cast<int>(*matched) : -1;
 }
 
-} // namespace hikari::app
+}

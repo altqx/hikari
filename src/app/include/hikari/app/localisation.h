@@ -78,4 +78,4 @@ private:
     std::unique_ptr<QTranslator> m_qt, m_app, m_pseudoTranslator, m_gettext, m_english;
 };
 
-} // namespace hikari::app
+}

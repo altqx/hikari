@@ -13,7 +13,7 @@ double steadySeconds()
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-} // namespace
+}
 
 SimulatedOutput::SimulatedOutput() = default;
 
@@ -115,4 +115,4 @@ void SimulatedOutput::simulateDeviceLoss()
         m_engine->injectLoss();
 }
 
-} // namespace hikari::backends
+}

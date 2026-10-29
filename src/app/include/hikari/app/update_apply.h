@@ -68,6 +68,6 @@ bool isProtectedFromUser(const std::wstring &installDir);
 // Returns the exit code.
 int runFromCommandLine(const std::string &installedVersion, bool allUsersInstall, const std::string &testFeed);
 
-} // namespace hikari::app::update_apply
+}
 
 #endif

@@ -13,7 +13,7 @@
 namespace hikari::ui {
 class LogController;
 class SettingsStore;
-} // namespace hikari::ui
+}
 
 namespace hikari::app {
 
@@ -140,4 +140,4 @@ private:
     bool m_sendingAuto = false;
 };
 
-} // namespace hikari::app
+}

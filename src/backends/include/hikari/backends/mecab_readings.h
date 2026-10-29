@@ -30,4 +30,4 @@ private:
     std::unique_ptr<State> m_state;
 };
 
-} // namespace hikari::backends
+}

@@ -29,4 +29,4 @@ bool toYcbcr(const SampleFormat &format, const std::uint8_t *data, std::size_t s
              application::IndexedFrame &out);
 const char *subtypeName(Subtype subtype);
 
-} // namespace hikari::backends::dshow
+}

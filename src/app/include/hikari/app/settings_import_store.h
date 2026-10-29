@@ -133,4 +133,4 @@ private:
     QString m_profileName;
 };
 
-} // namespace hikari::app
+}

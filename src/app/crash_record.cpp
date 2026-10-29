@@ -306,7 +306,7 @@ void onSignal(int signal, siginfo_t *, void *)
 
 #endif
 
-} // namespace
+}
 
 void install(const QString &recordPath, const QString &programFolder, const QString &version)
 {
@@ -448,4 +448,4 @@ QList<Frame> framesOf(const quintptr *addresses, int count)
     return frames;
 }
 
-} // namespace hikari::app::crash
+}

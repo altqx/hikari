@@ -100,7 +100,7 @@ bool hasKanji(std::u16string_view text)
     return std::ranges::any_of(text, [](char16_t c) { return !application::isKana(c) && c > 0x2E80; });
 }
 
-} // namespace
+}
 
 KanjiTimerController::KanjiTimerController(ui::SettingsStore &settings, Hooks hooks, QObject *parent)
     : QObject(parent), m_settings(settings), m_hooks(std::move(hooks))
@@ -564,7 +564,7 @@ auto writePending(const application::KanjiTimer &timer, application::EditSession
                                             }});
 }
 
-} // namespace
+}
 
 bool KanjiTimerController::apply()
 {
@@ -657,4 +657,4 @@ void KanjiTimerController::forget(std::uint64_t document)
     emit changed();
 }
 
-} // namespace hikari::app
+}

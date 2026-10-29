@@ -110,7 +110,7 @@ void finished(void *user)
     static_cast<OutputEngine *>(user)->streamFinished();
 }
 
-} // namespace
+}
 
 struct PortAudioOutput::Impl {
     Options options;
@@ -315,4 +315,4 @@ void PortAudioOutput::simulateDeviceLoss()
         d->engine->injectLoss();
 }
 
-} // namespace hikari::backends
+}

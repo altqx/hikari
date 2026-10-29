@@ -88,7 +88,7 @@ QString defaultPreviewText()
     return QString::fromStdString(std::get<std::string>(application::findSetting("styles.previewText")->defaultValue));
 }
 
-} // namespace
+}
 
 FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std::filesystem::path catalogDir, Hooks hooks,
                                                QObject *parent)
@@ -796,11 +796,11 @@ private:
     FontCatalogsController &m_controller;
 };
 
-} // namespace
+}
 
 void attachFontCatalogPreview(QQmlEngine &engine, FontCatalogsController &controller)
 {
     engine.addImageProvider(QStringLiteral("fontcatalogpreview"), new FontCatalogPreviewProvider(controller));
 }
 
-} // namespace hikari::app
+}

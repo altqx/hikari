@@ -32,7 +32,7 @@ std::optional<application::AurChannel> channelOf(const QByteArray &content)
     return application::parseAurChannel(std::string_view(content.constData(), std::size_t(content.size())));
 }
 
-} // namespace
+}
 
 bool onWindows()
 {
@@ -98,4 +98,4 @@ QString packageKindLabel(PackageKind kind)
     return QCoreApplication::translate("HikariSub.MainWindow", "portable");
 }
 
-} // namespace hikari::app
+}

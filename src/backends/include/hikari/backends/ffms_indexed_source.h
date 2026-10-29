@@ -100,4 +100,4 @@ private:
                           const std::function<void(std::expected<application::DisplayAudioOpened, application::AudioFailure>)> &done);
 };
 
-} // namespace hikari::backends
+}

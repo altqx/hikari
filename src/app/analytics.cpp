@@ -284,7 +284,7 @@ QString arch()
     return cpu == QLatin1String("arm64") ? cpu : QStringLiteral("other");
 }
 
-} // namespace
+}
 
 bool Analytics::doNotTrack(const QByteArray &value)
 {
@@ -787,4 +787,4 @@ int Analytics::frameBucket(double ms)
     return 5;
 }
 
-} // namespace hikari::app
+}

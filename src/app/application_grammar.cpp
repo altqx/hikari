@@ -94,7 +94,7 @@ bool blank(const core::grammar::CheckedText &text)
     return std::ranges::all_of(text.text, [](char16_t c) { return c == u' '; });
 }
 
-} // namespace
+}
 
 void Application::setUpGrammar(const Options &options)
 {
@@ -887,4 +887,4 @@ QVariantMap Application::grammarWalkAddWord()
     return grammarWalkState();
 }
 
-} // namespace hikari::app
+}

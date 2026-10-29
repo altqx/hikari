@@ -57,7 +57,7 @@ std::vector<PlayerTrack> tracksOf(const QList<QMediaMetaData> &list, bool video)
     return out;
 }
 
-} // namespace
+}
 
 QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject(parent), m_useAudioOutput(useAudioOutput)
 {
@@ -348,4 +348,4 @@ void QtGeneralPlayer::setVolume(double linear)
         m_audio->setVolume(static_cast<float>(linear)); // QAudioOutput's volume is linear
 }
 
-} // namespace hikari::backends
+}

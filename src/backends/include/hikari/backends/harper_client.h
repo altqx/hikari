@@ -81,6 +81,6 @@ private:
     std::map<qint64, std::pair<quint64, int>> m_requests;
 };
 
-} // namespace hikari::backends
+}
 
 Q_DECLARE_METATYPE(hikari::backends::GrammarFinding)

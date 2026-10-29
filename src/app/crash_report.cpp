@@ -53,7 +53,7 @@ QString padded(const QString &text, int width)
     return text.leftJustified(width, u' ');
 }
 
-} // namespace
+}
 
 QString Scrubber::placeholder(const QString &fileName)
 {
@@ -438,4 +438,4 @@ Issue Issue::fromReport(const Report &report, const QString &note)
     return issue;
 }
 
-} // namespace hikari::app::report
+}

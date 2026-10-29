@@ -306,7 +306,7 @@ QString profileHash(const si::Profile &p)
     return QString::fromLatin1(h.result().toHex());
 }
 
-} // namespace
+}
 
 application::ReplacerRules readLegacyRules(const QByteArray &bytes)
 {
@@ -791,4 +791,4 @@ bool SettingsImportStore::recover()
     return true;
 }
 
-} // namespace hikari::app
+}

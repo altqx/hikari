@@ -41,7 +41,7 @@ std::pair<int, int> rangeOf(const QString &text, const QJsonObject &range)
             offsetOf(text, range.value(QStringLiteral("end")).toObject())};
 }
 
-} // namespace
+}
 
 HarperClient::HarperClient(QString program, QString workingDirectory, QObject *parent)
     : QObject(parent), m_program(std::move(program)), m_workingDirectory(std::move(workingDirectory))
@@ -338,4 +338,4 @@ void HarperClient::lost(const QString &message)
     emit failed(message);
 }
 
-} // namespace hikari::backends
+}

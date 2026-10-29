@@ -34,4 +34,4 @@ QByteArray writeSessionJson(const application::Session &session, std::optional<b
 // JSON or a legacy .kls; nullopt for empty bytes, or with `failure` set for a broken file.
 std::optional<application::Session> readSession(std::string_view bytes, application::ParseFailure *failure = nullptr);
 
-} // namespace hikari::app
+}

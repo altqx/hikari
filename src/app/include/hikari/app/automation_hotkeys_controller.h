@@ -81,4 +81,4 @@ private:
     std::map<std::string, application::MacroBinding> m_installed;
 };
 
-} // namespace hikari::app
+}

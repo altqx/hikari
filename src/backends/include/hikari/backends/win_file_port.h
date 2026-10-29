@@ -51,4 +51,4 @@ private:
     std::map<application::PermitId, std::unique_ptr<Job>> m_jobs;
 };
 
-} // namespace hikari::backends
+}

@@ -1316,4 +1316,4 @@ private:
     void applyProgramFont();
 };
 
-} // namespace hikari::app
+}

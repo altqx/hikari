@@ -55,7 +55,7 @@ QString kindName(si::RowKind kind)
     return {};
 }
 
-} // namespace
+}
 
 SettingsImportController::SettingsImportController(SettingsImportStore *store, QObject *parent)
     : QObject(parent), m_store(store)
@@ -331,4 +331,4 @@ bool SettingsImportController::rollback()
     return true;
 }
 
-} // namespace hikari::app
+}

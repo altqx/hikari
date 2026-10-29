@@ -207,7 +207,7 @@ QString retiredNotice(int id)
     }
 }
 
-} // namespace
+}
 
 HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
                                      std::function<void(const QString &, bool warning)> log, QObject *parent)
@@ -373,7 +373,7 @@ bool playsEverywhere(const application::HotkeyId &key)
     return key.type == application::VideoHotkey && key.id == application::hotkeyIdOf("VIDEO_PLAY_PAUSE");
 }
 
-} // namespace
+}
 
 QStringList HotkeysController::macroTakenSequences() const
 {
@@ -883,4 +883,4 @@ bool HotkeysController::ignoreFilteringFromOption() const
     return !m_settings.boolean("grid.ignoreFiltering");
 }
 
-} // namespace hikari::app
+}

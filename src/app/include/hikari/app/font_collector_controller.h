@@ -175,4 +175,4 @@ private:
     std::uint64_t m_mkvRun = 0;
 };
 
-} // namespace hikari::app
+}

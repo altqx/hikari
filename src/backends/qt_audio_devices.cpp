@@ -27,4 +27,4 @@ void QtAudioDevices::setChangedCallback(std::function<void()> changed)
     m_changed = std::move(changed);
 }
 
-} // namespace hikari::backends
+}

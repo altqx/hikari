@@ -158,4 +158,4 @@ private:
     QString m_lastCheckedId;
 };
 
-} // namespace hikari::app
+}

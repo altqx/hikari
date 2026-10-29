@@ -75,7 +75,7 @@ std::uint64_t scriptHash(const std::byte *data, std::size_t size)
     return h ^ (h >> 32);
 }
 
-} // namespace
+}
 
 struct LibassRenderer::Engine {
     struct Fonts {
@@ -289,7 +289,7 @@ void count(application::RenderCost &cost, const ASS_Track &track, long long ms, 
     }
 }
 
-} // namespace
+}
 
 std::expected<OverlayFrame, RenderError> LibassRenderer::render(core::DocumentTime time, int width, int height)
 {
@@ -383,4 +383,4 @@ std::expected<OverlayFrame, RenderError> LibassRenderer::draw(core::DocumentTime
     return frame;
 }
 
-} // namespace hikari::backends
+}

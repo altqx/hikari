@@ -97,7 +97,7 @@ bool inPrivateFolder(const QString &path)
     return privateFolder(QFileInfo(path).absolutePath());
 }
 
-} // namespace
+}
 
 CrashReports::CrashReports(ui::SettingsStore &settings, Analytics &analytics, ui::LogController &log, Config config,
                            QObject *parent)
@@ -539,4 +539,4 @@ void CrashReports::discardAttachments()
         QDir(m_config.attachments).removeRecursively();
 }
 
-} // namespace hikari::app
+}

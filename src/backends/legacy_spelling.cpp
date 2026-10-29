@@ -221,7 +221,7 @@ std::vector<core::legacy::WordSegment> segmentWords(std::u16string_view text)
     return out;
 }
 
-} // namespace
+}
 
 application::SpellingBackendLoader hunspellSpellingLoader()
 {
@@ -253,4 +253,4 @@ application::SpellingText legacySpellingText(bool everyLetter)
     return text;
 }
 
-} // namespace hikari::backends
+}

@@ -30,7 +30,7 @@ constexpr bool kWindows = true;
 constexpr bool kWindows = false;
 #endif
 
-} // namespace
+}
 
 void Application::setupTabMenu(const Options &options)
 {
@@ -368,7 +368,7 @@ QVariantMap openResult(const QString &kind, const QString &path = {}, const QVar
     return QVariantMap{{QStringLiteral("kind"), kind}, {QStringLiteral("path"), path}, {QStringLiteral("rows"), rows}};
 }
 
-} // namespace
+}
 
 QVariantMap Application::openDropped(const QList<QUrl> &urls)
 {
@@ -554,4 +554,4 @@ void Application::applyFiles(PendingFiles files, bool skipFirst)
     saveLastSession();
 }
 
-} // namespace hikari::app
+}

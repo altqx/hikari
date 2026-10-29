@@ -204,4 +204,4 @@ void HelperHost::fail()
         emit lost();
 }
 
-} // namespace hikari::backends::helper
+}

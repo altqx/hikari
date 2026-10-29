@@ -160,7 +160,7 @@ int dumpGraph(const char *path)
     return 0;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

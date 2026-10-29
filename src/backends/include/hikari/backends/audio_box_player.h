@@ -159,4 +159,4 @@ private:
     Pumping m_pumping = Pumping::Thread;
 };
 
-} // namespace hikari::backends
+}

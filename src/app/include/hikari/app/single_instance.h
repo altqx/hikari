@@ -80,6 +80,6 @@ private:
 #endif
 };
 
-} // namespace hikari::app
+}
 
 Q_DECLARE_METATYPE(hikari::app::SingleInstance::Request)

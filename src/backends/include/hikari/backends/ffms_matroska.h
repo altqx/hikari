@@ -42,4 +42,4 @@ private:
     std::function<void()> m_cancel;
 };
 
-} // namespace hikari::backends
+}

@@ -71,4 +71,4 @@ private:
     REFERENCE_TIME m_shownFirstStart = 0;
 };
 
-} // namespace hikari::backends::dshow
+}

@@ -8,7 +8,7 @@ namespace {
 // names are translated, their order is not.
 constexpr int kSelectedLinesMacro = 1;
 
-} // namespace
+}
 
 KaraokePreviewRunner::KaraokePreviewRunner(QString helperPath, QString sharedInclude, QObject *parent)
     : QObject(parent), m_helper(std::move(helperPath)), m_include(std::move(sharedInclude))
@@ -134,4 +134,4 @@ void KaraokePreviewRunner::finished(LuaScriptHost::RunOutcome outcome, const QSt
         startNext();
 }
 
-} // namespace hikari::backends
+}

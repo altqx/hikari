@@ -38,7 +38,7 @@ bool writeAll(int fd, const std::byte *data, std::size_t size)
     return true;
 }
 
-} // namespace
+}
 
 PosixFilePort::PosixFilePort(Completion completion) : PosixFilePort(std::move(completion), Options{}) {}
 
@@ -142,4 +142,4 @@ WriteOutcome PosixFilePort::writeFile(PermitId permit, const std::string &path, 
     return synced ? WriteOutcome::Written : WriteOutcome::DurabilityUncertain;
 }
 
-} // namespace hikari::backends
+}

@@ -25,7 +25,7 @@ std::optional<std::size_t> count(Reader &r, std::size_t payloadSize)
     return static_cast<std::size_t>(n);
 }
 
-} // namespace
+}
 
 std::vector<std::byte> encodeInfo(const ScriptInfo &info)
 {
@@ -251,7 +251,7 @@ bool readLists(Reader &r, std::size_t size, std::vector<application::MacroInfoLi
     return r.ok();
 }
 
-} // namespace
+}
 
 std::vector<std::byte> encodeSnapshot(const application::MacroSnapshot &snapshot)
 {
@@ -366,7 +366,7 @@ bool readStrings(Reader &r, const std::vector<std::byte> &payload, std::vector<s
     return r.ok();
 }
 
-} // namespace
+}
 
 std::vector<std::byte> encodeHostRequest(const HostServiceRequest &request)
 {
@@ -428,4 +428,4 @@ std::optional<HostServiceReply> decodeHostReply(const std::vector<std::byte> &pa
     return reply;
 }
 
-} // namespace hikari::backends::lua
+}

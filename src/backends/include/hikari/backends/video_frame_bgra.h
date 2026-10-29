@@ -20,4 +20,4 @@ bool videoFrameToBgra(const QVideoFrame &frame, application::IndexedFrame &out,
 bool videoFrameToYcbcr(const QVideoFrame &frame, application::IndexedFrame &out,
                        std::optional<application::LegacyColourMatrix::Input> colour = std::nullopt);
 
-} // namespace hikari::backends
+}

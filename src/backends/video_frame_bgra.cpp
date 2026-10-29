@@ -106,7 +106,7 @@ bool viaImage(const QVideoFrame &frame, application::IndexedFrame &out)
     return true;
 }
 
-} // namespace
+}
 
 bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out,
                       std::optional<application::LegacyColourMatrix::Input> colour)
@@ -293,4 +293,4 @@ bool videoFrameToYcbcr(const QVideoFrame &source, application::IndexedFrame &out
     return true;
 }
 
-} // namespace hikari::backends
+}

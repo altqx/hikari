@@ -273,7 +273,7 @@ QByteArray foldCrlf(const QByteArray &bytes)
     return out;
 }
 
-} // namespace
+}
 
 bool legacyIsUtf8WithoutBom(const QByteArray &bytes)
 {
@@ -364,4 +364,4 @@ std::optional<std::u16string> readLegacyTextFile(const QString &path)
     return decodeLegacyText(file.readAll());
 }
 
-} // namespace hikari::backends
+}

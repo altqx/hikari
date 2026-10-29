@@ -81,4 +81,4 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-} // namespace hikari::backends
+}

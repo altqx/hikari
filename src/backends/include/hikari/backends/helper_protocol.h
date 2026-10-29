@@ -98,4 +98,4 @@ private:
 std::vector<std::byte> bytesOf(const std::string &text);
 std::string textOf(const std::vector<std::byte> &bytes);
 
-} // namespace hikari::backends::helper
+}

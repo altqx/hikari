@@ -242,7 +242,7 @@ QString refusalText(const application::MacroApplyFailure &failure)
     }
 }
 
-} // namespace
+}
 
 AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files, application::Workspace &workspace,
                                  ui::LineEditorController &editor, ui::VideoController &video,
@@ -524,7 +524,7 @@ QString prettyName(const std::string &path)
     return QFileInfo(QString::fromStdString(path)).fileName();
 }
 
-} // namespace
+}
 
 void AutomationShell::loadDocumentScript(const std::string &path)
 {
@@ -1137,4 +1137,4 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     emit runCompleted(ok, text);
 }
 
-} // namespace hikari::app
+}

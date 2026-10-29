@@ -43,4 +43,4 @@ private:
     application::PixelRect m_bounds;
 };
 
-} // namespace hikari::backends
+}

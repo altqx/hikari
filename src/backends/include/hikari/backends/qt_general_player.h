@@ -92,4 +92,4 @@ private:
     std::shared_ptr<Slot> m_slot = std::make_shared<Slot>();
 };
 
-} // namespace hikari::backends
+}

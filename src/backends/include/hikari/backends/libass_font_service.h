@@ -30,4 +30,4 @@ public:
 // names, of every face of a collection.
 std::vector<std::string> fontNames(const std::vector<std::byte> &bytes);
 
-} // namespace hikari::backends
+}

@@ -134,4 +134,4 @@ private:
     mutable std::optional<application::ReadingAnalyzer> m_dictionary;
 };
 
-} // namespace hikari::app
+}

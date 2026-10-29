@@ -123,7 +123,7 @@ private:
     bool m_rightToLeft;
 };
 
-} // namespace
+}
 
 Localisation::Localisation(QString catalogDir, QObject *parent)
     : QObject(parent), m_dir(std::move(catalogDir)), m_qtDir(QLibraryInfo::path(QLibraryInfo::TranslationsPath))
@@ -327,4 +327,4 @@ std::string Localisation::gettext(const std::string &source) const
     return text.isEmpty() ? source : text.toStdString();
 }
 
-} // namespace hikari::app
+}

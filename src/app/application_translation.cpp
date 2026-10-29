@@ -13,7 +13,7 @@ constexpr const char *kShowOriginal = "translation.showOriginal";
 constexpr const char *kHideOriginal = "translation.hideOriginalOnVideo";
 constexpr const char *kMoveTags = "translation.autoMoveTagsFromOriginal";
 
-} // namespace
+}
 
 void Application::setUpTranslationControls()
 {
@@ -110,4 +110,4 @@ void Application::setMoveTags(bool on)
     m_settings->set(kMoveTags, on);
 }
 
-} // namespace hikari::app
+}

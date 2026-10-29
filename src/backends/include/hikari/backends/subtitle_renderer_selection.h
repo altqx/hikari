@@ -70,4 +70,4 @@ private:
 #endif
 };
 
-} // namespace hikari::backends
+}

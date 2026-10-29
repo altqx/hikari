@@ -61,4 +61,4 @@ private:
     AuditionReport m_report;
 };
 
-} // namespace hikari::backends
+}

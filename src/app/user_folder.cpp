@@ -138,7 +138,7 @@ void removeEmpty(const QString &folder)
     QDir().rmdir(folder);
 }
 
-} // namespace
+}
 
 UserFolder::Environment UserFolder::Environment::current(bool portable)
 {
@@ -400,4 +400,4 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &oldFolders, bool por
     return recordDone();
 }
 
-} // namespace hikari::app
+}

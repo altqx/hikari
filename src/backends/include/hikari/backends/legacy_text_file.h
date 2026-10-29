@@ -28,4 +28,4 @@ std::optional<std::u16string> decodeLegacyText(const QByteArray &bytes,
 // nullopt when the file cannot be read or decoded, or is empty.
 std::optional<std::u16string> readLegacyTextFile(const QString &path);
 
-} // namespace hikari::backends
+}

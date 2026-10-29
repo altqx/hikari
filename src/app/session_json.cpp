@@ -123,7 +123,7 @@ std::optional<application::Session> readJson(std::string_view bytes, application
     return session;
 }
 
-} // namespace
+}
 
 QByteArray writeSessionJson(const application::Session &session, std::optional<bool> closed)
 {
@@ -161,4 +161,4 @@ std::optional<application::Session> readSession(std::string_view bytes, applicat
     return isJson(bytes) ? readJson(bytes, failure) : readLegacy(bytes, failure);
 }
 
-} // namespace hikari::app
+}

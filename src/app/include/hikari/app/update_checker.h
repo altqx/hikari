@@ -142,4 +142,4 @@ private:
     std::vector<application::ReleaseEntry> m_releases;
 };
 
-} // namespace hikari::app
+}

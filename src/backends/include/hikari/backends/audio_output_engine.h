@@ -90,4 +90,4 @@ private:
     static_assert(std::atomic<std::uint32_t>::is_always_lock_free);
 };
 
-} // namespace hikari::backends
+}

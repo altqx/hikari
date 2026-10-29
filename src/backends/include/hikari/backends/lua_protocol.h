@@ -63,4 +63,4 @@ std::vector<std::byte> encodeDialogResult(const application::DialogResult &resul
 std::optional<application::DialogResult> decodeDialogResult(const std::vector<std::byte> &payload,
                                                             const application::DialogRequest &request);
 
-} // namespace hikari::backends::lua
+}

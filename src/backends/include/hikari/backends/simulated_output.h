@@ -42,4 +42,4 @@ private:
     mutable std::vector<float> m_buffer;
 };
 
-} // namespace hikari::backends
+}

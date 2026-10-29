@@ -23,4 +23,4 @@ void preferPulseAudioBackend();
 bool openStartFile(Application &application, const QString &path);
 void openStartVideo(QObject *mainWindow, const QString &path);
 
-} // namespace hikari::app
+}

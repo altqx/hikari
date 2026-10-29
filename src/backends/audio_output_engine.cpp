@@ -15,7 +15,7 @@ std::size_t queueSamples(const application::OutputFormat &format, double seconds
     return static_cast<std::size_t>(frames) * static_cast<std::size_t>(format.channels);
 }
 
-} // namespace
+}
 
 OutputEngine::OutputEngine(application::OutputFormat format, double outputLatency, double queueSeconds)
     : m_format(format), m_outputLatency(outputLatency), m_ring(queueSamples(format, queueSeconds))
@@ -207,4 +207,4 @@ application::ClockEstimate OutputEngine::clock(double now) const
     return {};
 }
 
-} // namespace hikari::backends
+}

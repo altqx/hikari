@@ -226,7 +226,7 @@ bool fitsSocket(const QString &path)
 }
 #endif
 
-} // namespace
+}
 
 QStringList launchFiles(const QStringList &arguments, const QString &workingDirectory)
 {
@@ -266,7 +266,7 @@ QStringList readHandedOn(const QString &path, qint64 maxAgeSeconds)
     return in.status() == QDataStream::Ok && age >= 0 && age <= maxAgeSeconds ? files : QStringList();
 }
 
-} // namespace
+}
 
 bool saveHandedOn(const QString &path, const QStringList &files)
 {
@@ -599,4 +599,4 @@ void SingleInstance::read(QLocalSocket *socket)
     socket->flush();
 }
 
-} // namespace hikari::app
+}

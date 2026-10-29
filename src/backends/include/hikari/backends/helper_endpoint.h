@@ -32,4 +32,4 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
 // For tests only: writes a frame without any responder checks.
 void sendUncheckedFrame(const Frame &frame);
 
-} // namespace hikari::backends::helper
+}

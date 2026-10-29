@@ -89,7 +89,7 @@ void giveFont(QObject *o, const QFont &font)
             giveFont(child, font);
 }
 
-} // namespace
+}
 
 void Application::applyProgramFont()
 {
@@ -108,4 +108,4 @@ void Application::applyProgramFont()
             giveFont(inheritsFonts(quick) ? static_cast<QObject *>(quick) : quick->contentItem(), font);
 }
 
-} // namespace hikari::app
+}

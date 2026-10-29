@@ -80,4 +80,4 @@ private:
     QString m_cache;
 };
 
-} // namespace hikari::app
+}

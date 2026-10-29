@@ -96,4 +96,4 @@ private:
     QString m_status;
 };
 
-} // namespace hikari::app
+}

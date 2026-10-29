@@ -10,4 +10,4 @@ public:
     read(const application::DestinationKey &destination) override;
 };
 
-} // namespace hikari::backends
+}

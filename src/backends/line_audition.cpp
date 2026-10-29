@@ -14,7 +14,7 @@ double monotonicSeconds()
 constexpr double kAheadSeconds = 0.25;
 constexpr double kChunkSeconds = 0.05;
 
-} // namespace
+}
 
 LineAudition::LineAudition(application::IndexedSourcePort &source, application::AudioOutputPort &output,
                            QObject *parent)
@@ -153,4 +153,4 @@ void LineAudition::finish(bool drained)
     emit finished(m_report);
 }
 
-} // namespace hikari::backends
+}

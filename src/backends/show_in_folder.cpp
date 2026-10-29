@@ -79,4 +79,4 @@ void selectInFolder(const QString &path)
 
 #endif
 
-} // namespace hikari::backends
+}
