@@ -150,7 +150,10 @@ jobs:
           cp "$B"/dist/* out/dist/
           # An older test version of the same payload, and stand-in legacy and wrong-name packages.
           core=${VERSION%%-*}
-          set -- --build-dir "$B" --version "$core-0" --out out/dist-old --tools "$B/packaging-tools" --formats native
+          before=$core-0
+          # rpm sorts a numeric segment above a letter one, so 0.1.0~0 would be newer than 0.1.0~beta.1.
+          case $VERSION in *-[A-Za-z]*) before=$core-a ;; esac
+          set -- --build-dir "$B" --version "$before" --out out/dist-old --tools "$B/packaging-tools" --formats native
           [ $allow = OFF ] || set -- "$@" --allow-missing-update-helper
           packaging/linux/make-packages.sh "$@"
           tests/packaging/linux/make-test-packages.sh --tools "$B/packaging-tools" --out out/dist-old --version "$VERSION"
