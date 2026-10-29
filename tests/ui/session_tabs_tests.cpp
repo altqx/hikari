@@ -438,13 +438,13 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(a->video().session().shownFrame().value_or(-1), 12, 10000);
         a.reset();
 
-        // The next program run loads it: the tab active at the end is again
-        // (CF3's marker), the first shows its video at the position again.
+        // The next program run loads it: the tab active at the end (CF3's
+        // marker), the first, shows its video at the position again.
         app::Application b(options(home));
         QCOMPARE(b.startupSession(), QString()); // closed cleanly, not asked for
         QVERIFY(loadSession(b));
         QCOMPARE(b.tabs().size(), qsizetype(2));
-        QCOMPARE(b.currentTab(), 1);
+        QCOMPARE(b.currentTab(), 0);
         QVERIFY(b.unresolvedRestores().isEmpty());
         b.selectTab(0);
         QTRY_VERIFY_WITH_TIMEOUT(b.video().hasVideo(), 30000);
@@ -717,6 +717,13 @@ private slots:
         QCOMPARE(activeRow(a), 1);
         QCOMPARE(hash(kls), before);
         QVERIFY(readAll(a.lastSessionPath()).startsWith("{"));
+        // Dropped alone it is a session for the shell's Load session; among
+        // other files it is refused.
+        const QVariantMap dropped = a.openDropped({QUrl::fromLocalFile(kls)});
+        QCOMPARE(dropped.value(QStringLiteral("kind")).toString(), QStringLiteral("session"));
+        QCOMPARE(dropped.value(QStringLiteral("path")).toString(), kls);
+        a.openDropped({QUrl::fromLocalFile(kls), QUrl::fromLocalFile(dir.filePath(QStringLiteral("l1.ass")))});
+        QCOMPARE(titles(a), (QStringList{"l1.ass", "l2.ass", "l1.ass"}));
     }
 
     // CF3: the first start without last-session.json converts LastSession.txt

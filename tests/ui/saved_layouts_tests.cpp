@@ -955,7 +955,10 @@ private slots:
         QVERIFY(application->saveLastSession());
         const QByteArray written = readAll(application->lastSessionPath());
         QVERIFY2(written.startsWith("{"), written.constData());
-        QVERIFY(!written.contains("ditor"));
+        const QJsonObject writtenTab =
+            QJsonDocument::fromJson(written).object().value(QStringLiteral("tabs")).toArray().at(0).toObject();
+        QVERIFY(writtenTab.contains(QStringLiteral("subtitles")));
+        QVERIFY(!writtenTab.contains(QStringLiteral("editor")));
         stop();
     }
 
