@@ -159,7 +159,7 @@ RowLayout {
         IconToolButton {
             objectName: "pasteSelectionToTranslation"
             iconRole: "paste-selection-translation"
-            text: qsTr("Paste the selected")
+            text: qsTr("Paste the selected text")
             tip: strip.shellRoot.mappedTip(text, "EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
             focusPolicy: Qt.NoFocus
             enabled: strip.editor.editable
@@ -404,7 +404,7 @@ RowLayout {
             objectName: "foldedPasteSelection"
             visible: moreMenu.translation
             iconRole: "paste-selection-translation"
-            text: qsTr("Paste the selected")
+            text: qsTr("Paste the selected text")
             shortcutText: strip.shellRoot.boundKeys("EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
             enabled: strip.editor.editable
             onTriggered: strip.editor.pasteSelectionToTranslation(strip.original.selectionStart, strip.original.selectionEnd,

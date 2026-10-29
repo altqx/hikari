@@ -265,7 +265,7 @@ DialogWindow {
                 ComboBox {
                     objectName: "settingsImportInterpretation"
                     Layout.preferredWidth: 200
-                    model: [qsTr("Choose..."), qsTr("Latin-1 (ISO 8859-1)"), qsTr("Windows-1252")]
+                    model: [qsTr("Choose…"), qsTr("Latin-1 (ISO 8859-1)"), qsTr("Windows-1252")]
                     currentIndex: dialog.importer.interpretation
                     onActivated: index => dialog.importer.interpretation = index
                 }

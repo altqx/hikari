@@ -79,9 +79,7 @@ QString fileName(const std::filesystem::path &path)
 
 QString sessionProblem(const QString &file, const application::ParseFailure &failure)
 {
-    QString why = QString::fromStdString(failure.message);
-    if (!why.isEmpty() && !why.endsWith(QLatin1Char('.')))
-        why += QLatin1Char('.'); // QJsonParseError's text has no full stop
+    const QString why = QString::fromStdString(failure.message);
     return failure.line > 0
                ? QCoreApplication::translate("HikariSub.Session", "%1, line %2: %3").arg(file).arg(failure.line).arg(why)
                : QCoreApplication::translate("HikariSub.Session", "%1: %2").arg(file, why);

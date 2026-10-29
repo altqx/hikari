@@ -885,7 +885,7 @@ TEST_F(Find, ReplaceCheckedAppliesTheCheckedMatchesAsOneStepPerDocument)
     EXPECT_EQ(session->history().back().name, "Replace all");
     EXPECT_EQ(session->historySize(), 3u);
     ASSERT_EQ(host.logs.size(), 1u);
-    EXPECT_EQ(host.logs[0], "Line 4 cannot be replaced,\ncause it was edited.");
+    EXPECT_EQ(host.logs[0], "Line 4 cannot be replaced,\nbecause it was edited.");
     session->undo();
     window.find = u8"l";
     fr.findAllInCurrent(window);
@@ -1066,7 +1066,7 @@ TEST_F(Files, ReplaceCheckedInFilesKeepsAnEditedLineAndTheRest)
                                           "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,cat 2  \r\n"
                                           "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,three dog\r\n");
     ASSERT_EQ(host.logs.size(), 1u);
-    EXPECT_EQ(host.logs[0], "Line 2 cannot be replaced,\ncause it was edited.");
+    EXPECT_EQ(host.logs[0], "Line 2 cannot be replaced,\nbecause it was edited.");
 }
 
 TEST_F(Files, AFileThatCannotBeWrittenIsStillCountedAsLegacyCountedIt)

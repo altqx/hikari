@@ -559,7 +559,7 @@ DialogWindow {
                     ComboBox {
                         objectName: "gettingStartedInterpretation"
                         Layout.preferredWidth: 200
-                        model: [qsTranslate("HikariSub.SettingsImport", "Choose..."),
+                        model: [qsTranslate("HikariSub.SettingsImport", "Choose…"),
                                 qsTranslate("HikariSub.SettingsImport", "Latin-1 (ISO 8859-1)"),
                                 qsTranslate("HikariSub.SettingsImport", "Windows-1252")]
                         currentIndex: setup.importer.interpretation

@@ -917,7 +917,7 @@ TEST(VisualPositionOptions, RectangleGreysXAndYAndOneStaysOn)
     EXPECT_EQ(option("x").iconRole, "scale-x");
     EXPECT_EQ(option("y").iconRole, "scale-y");
     EXPECT_EQ(option("alignment").choices.size(), 21u);
-    EXPECT_EQ(option("alignment").tooltip, u"Text placing works similar like in styles");
+    EXPECT_EQ(option("alignment").tooltip, u"Text alignment works the same as in styles");
     EXPECT_FALSE(tool.setOption("x", 0, host));
     EXPECT_TRUE(tool.setOption("byRectangle", 1, host));
     EXPECT_TRUE(option("x").enabled);

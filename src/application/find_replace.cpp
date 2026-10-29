@@ -1613,7 +1613,7 @@ int FindReplace::replaceCheckedInFile(const std::vector<const FindResult *> &res
         int replacementDiff = 0;
         if (dialtxt != seek->text) {
             m_host.logLine({FindLog::Kind::LineEdited,
-                            u8"Line " + u8(number(seek->idLine)) + u8" cannot be replaced,\ncause it was edited.",
+                            u8"Line " + u8(number(seek->idLine)) + u8" cannot be replaced,\nbecause it was edited.",
                             u8(number(seek->idLine)), {}});
             unchanged(piece);
             skipLine();
@@ -1712,7 +1712,7 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
             replacementDiff = 0;
             if (lineText != r.text) {
                 m_host.logLine({FindLog::Kind::LineEdited,
-                                u8"Line " + u8(number(r.idLine)) + u8" cannot be replaced,\ncause it was edited.",
+                                u8"Line " + u8(number(r.idLine)) + u8" cannot be replaced,\nbecause it was edited.",
                                 u8(number(r.idLine)), {}});
                 skipLine = true;
                 continue;

@@ -48,13 +48,9 @@
         <translation>சுருதி மாறாது.</translation>
     </message>
     <message>
-        <source>and</source>
-        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
-        <translation>மற்றும்</translation>
-    </message>
-    <message>
-        <source>change the speed.</source>
-        <translation>வேகத்தை மாற்றும்.</translation>
+        <source>%1 and %2 change the speed.</source>
+        <extracomment>%1 the key that slows the audio down, %2 the key that speeds it up</extracomment>
+        <translation>%1 மற்றும் %2 வேகத்தை மாற்றும்.</translation>
     </message>
     <message>
         <source>Output device</source>
@@ -105,28 +101,8 @@
         <translation>இயக்கத்தை நிறுத்து</translation>
     </message>
     <message>
-        <source>Play before the tag</source>
-        <translation>குறிச்சொல்லுக்கு முன் இயக்கு</translation>
-    </message>
-    <message>
-        <source>Play after the tag</source>
-        <translation>குறிச்சொல்லுக்குப் பின் இயக்கு</translation>
-    </message>
-    <message>
-        <source>Play 500ms before the start time</source>
-        <translation>தொடக்க நேரத்திற்கு முன் 500 ms இயக்கவும்</translation>
-    </message>
-    <message>
         <source>Play 500 ms after the start time</source>
         <translation>தொடக்க நேரத்திற்குப் பிறகு 500 ms இயக்கவும்</translation>
-    </message>
-    <message>
-        <source>Play 500ms before the end time</source>
-        <translation>இறுதி நேரத்திற்கு முன் 500 ms இயக்கவும்</translation>
-    </message>
-    <message>
-        <source>Play 500ms after the end time</source>
-        <translation>இறுதி நேரத்திற்குப் பிறகு 500 ms இயக்கவும்</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -214,12 +190,24 @@
         <translation>தொடக்கத்துக்கு 500 ms முன் இயக்கு</translation>
     </message>
     <message>
+        <source>Play 500 ms before the start time</source>
+        <translation>தொடக்க நேரத்திற்கு முன் 500 ms இயக்கவும்</translation>
+    </message>
+    <message>
         <source>Play the first 500 ms</source>
         <translation>முதல் 500 ms ஐ இயக்கு</translation>
     </message>
     <message>
+        <source>Play 500 ms before the end time</source>
+        <translation>இறுதி நேரத்திற்கு முன் 500 ms இயக்கவும்</translation>
+    </message>
+    <message>
         <source>Play the last 500 ms</source>
         <translation>கடைசி 500 ms ஐ இயக்கு</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end time</source>
+        <translation>இறுதி நேரத்திற்குப் பிறகு 500 ms இயக்கவும்</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -299,7 +287,7 @@
     </message>
     <message>
         <source>Speed</source>
-        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
+        <extracomment>The Tap menu&apos;s Speed submenu; the current speed follows it</extracomment>
         <translation>வேகம்</translation>
     </message>
     <message>
@@ -309,7 +297,7 @@
     </message>
     <message>
         <source>Calibrate latency…</source>
-        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
+        <extracomment>The Tap menu&apos;s item; the tap latency follows it</extracomment>
         <translation>தாமதத்தை அளவுதிருத்து…</translation>
     </message>
     <message>
@@ -543,12 +531,9 @@ Output device: %2</source>
         <translation>தட்டல் தாமதத்தை அளவுதிருத்து</translation>
     </message>
     <message>
-        <source>Press</source>
-        <translation>அழுத்தவும்</translation>
-    </message>
-    <message>
-        <source>on each beep.</source>
-        <translation>ஒவ்வொரு பீப் ஒலிக்கும்போதும்.</translation>
+        <source>Press %1 on each beep.</source>
+        <extracomment>%1 the Space key</extracomment>
+        <translation>ஒவ்வொரு பீப் ஒலிக்கும்போதும் %1 ஐ அழுத்தவும்.</translation>
     </message>
     <message>
         <source>16 beeps at 100 BPM; the first four are practice.</source>
@@ -2517,6 +2502,10 @@ Should not exceed 15 characters per second</source>
         <translation>நிழல் வண்ணம்</translation>
     </message>
     <message>
+        <source>Paste the selected text</source>
+        <translation>தேர்ந்தெடுக்கப்பட்ட உரையை ஒட்டவும்</translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
         <translation>குறிச்சொல் பொத்தானைச் சேர்</translation>
     </message>
@@ -2551,10 +2540,6 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>Paste all</source>
         <translation>அனைத்தையும் ஒட்டவும்</translation>
-    </message>
-    <message>
-        <source>Paste the selected</source>
-        <translation>தேர்ந்தெடுக்கப்பட்டதை ஒட்டவும்</translation>
     </message>
     <message>
         <source>Comment out original</source>
@@ -4197,16 +4182,8 @@ Failed to copy %2 fonts.</source>
         <translation>வரிகளைச் சேர்க்கவும்</translation>
     </message>
     <message>
-        <source>Copy tree</source>
-        <translation>மரத்தை நகலெடுக்கவும்</translation>
-    </message>
-    <message>
         <source>Change description</source>
         <translation>விளக்கத்தை மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Select tree lines</source>
-        <translation>மர வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -4261,14 +4238,6 @@ Failed to copy %2 fonts.</source>
         <translation>வரிகளை இணைத்து கடைசி வரியை வைத்திரு</translation>
     </message>
     <message>
-        <source>Set times as a continuous (previous line)</source>
-        <translation>நேரங்களை தொடர்ச்சியான (முந்தைய வரி) என அமைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Set times as a continuous (next line)</source>
-        <translation>நேரங்களை தொடர்ச்சியான (அடுத்த வரி) என அமைக்கவும்</translation>
-    </message>
-    <message>
         <source>Split lines</source>
         <translation>வரிகளைப் பிரிக்கவும்</translation>
     </message>
@@ -4295,10 +4264,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Select all lines visible on video</source>
         <translation>வீடியோவில் தெரியும் அனைத்து வரிகளையும் தேர்ந்தெடுக்கவும்</translation>
-    </message>
-    <message>
-        <source>Make tree</source>
-        <translation>மரத்தை உருவாக்குங்கள்</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
@@ -4487,6 +4452,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Line group</source>
         <translation>வரிக் குழு</translation>
+    </message>
+    <message>
+        <source>Copy line group</source>
+        <translation>வரிக் குழுவை நகலெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Select the group&apos;s lines</source>
+        <translation>குழுவின் வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Make times continuous with the previous line</source>
+        <translation>முந்தைய வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
+    </message>
+    <message>
+        <source>Make times continuous with the next line</source>
+        <translation>அடுத்த வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கவும்</translation>
+    </message>
+    <message>
+        <source>Make line group</source>
+        <translation>வரிக் குழுவை உருவாக்கவும்</translation>
     </message>
     <message>
         <source>Remove group</source>
@@ -5033,22 +5018,6 @@ What would you like to do?</source>
         <translation>குறிப்பானுக்குப் பின் இயக்கு</translation>
     </message>
     <message>
-        <source>Play first 500ms</source>
-        <translation>முதல் 500ms இயக்கு</translation>
-    </message>
-    <message>
-        <source>Play last 500ms</source>
-        <translation>கடைசி 500ms இயக்கு</translation>
-    </message>
-    <message>
-        <source>Play 500ms before</source>
-        <translation>முன் 500ms இயக்கு</translation>
-    </message>
-    <message>
-        <source>Play 500ms after</source>
-        <translation>பின் 500ms இயக்கு</translation>
-    </message>
-    <message>
         <source>Play to the end</source>
         <translation>இறுதிவரை இயக்கு</translation>
     </message>
@@ -5119,10 +5088,6 @@ What would you like to do?</source>
     <message>
         <source>Paste all</source>
         <translation>அனைத்தையும் ஒட்டு</translation>
-    </message>
-    <message>
-        <source>Paste the selected</source>
-        <translation>தேர்ந்தெடுத்ததை ஒட்டு</translation>
     </message>
     <message>
         <source>Insert difference to the end</source>
@@ -5219,14 +5184,6 @@ What would you like to do?</source>
     <message>
         <source>20th tag button</source>
         <translation>20வது குறிச்சொல் பொத்தான்</translation>
-    </message>
-    <message>
-        <source>Set times as a continuous (next line)</source>
-        <translation>நேரங்களைத் தொடர்ச்சியாக அமை (அடுத்த வரி)</translation>
-    </message>
-    <message>
-        <source>Set times as a continuous (previous line)</source>
-        <translation>நேரங்களைத் தொடர்ச்சியாக அமை (முந்தைய வரி)</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -5327,10 +5284,6 @@ What would you like to do?</source>
     <message>
         <source>Hide line wraps</source>
         <translation>வரி மடக்குகளை மறை</translation>
-    </message>
-    <message>
-        <source>Make tree</source>
-        <translation>மரமாக்கு</translation>
     </message>
     <message>
         <source>Select all lines visible on video</source>
@@ -5569,10 +5522,6 @@ What would you like to do?</source>
         <translation>தேர்ந்தெடுத்த வரிகளை அடுக்குப்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
-        <source>Shift times / run time post processor</source>
-        <translation>நேரங்களை நகர்த்து / நேரப் பின்செயலாக்கியை இயக்கு</translation>
-    </message>
-    <message>
         <source>Go to previous keyframe</source>
         <translation>முந்தைய கீஃப்ரேமுக்குச் செல்லவும்</translation>
     </message>
@@ -5685,10 +5634,6 @@ What would you like to do?</source>
         <translation>சேமி</translation>
     </message>
     <message>
-        <source>Save as...</source>
-        <translation>எனச் சேமி...</translation>
-    </message>
-    <message>
         <source>Save translation</source>
         <translation>மொழிபெயர்ப்பைச் சேமிக்கவும்</translation>
     </message>
@@ -5729,8 +5674,52 @@ What would you like to do?</source>
         <translation>அமைப்புகள்</translation>
     </message>
     <message>
-        <source>Go to start time</source>
-        <translation>தொடக்க நேரத்திற்குச் செல்லுங்கள்</translation>
+        <source>Play first 500 ms</source>
+        <translation>முதல் 500 ms இயக்கு</translation>
+    </message>
+    <message>
+        <source>Play last 500 ms</source>
+        <translation>கடைசி 500 ms இயக்கு</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before</source>
+        <translation>முன் 500 ms இயக்கு</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after</source>
+        <translation>பின் 500 ms இயக்கு</translation>
+    </message>
+    <message>
+        <source>Paste the selected text</source>
+        <translation>தேர்ந்தெடுத்த உரையை ஒட்டு</translation>
+    </message>
+    <message>
+        <source>Make times continuous with the next line</source>
+        <translation>அடுத்த வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கு</translation>
+    </message>
+    <message>
+        <source>Make times continuous with the previous line</source>
+        <translation>முந்தைய வரியுடன் நேரங்களைத் தொடர்ச்சியாக்கு</translation>
+    </message>
+    <message>
+        <source>Filtering: hide selected lines</source>
+        <translation>வடிப்பி: தேர்ந்தெடுத்த வரிகளை மறை</translation>
+    </message>
+    <message>
+        <source>Make line group</source>
+        <translation>வரிக் குழுவை உருவாக்கு</translation>
+    </message>
+    <message>
+        <source>Shift times / run timing postprocessor</source>
+        <translation>நேரங்களை நகர்த்து / நேரப் பின்செயலாக்கியை இயக்கு</translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation>எனச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Go to start time of line</source>
+        <translation>வரியின் தொடக்க நேரத்திற்குச் செல்லுங்கள்</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -6541,6 +6530,10 @@ What would you like to do?</source>
         <translation>வரலாறு (&amp;h)</translation>
     </message>
     <message>
+        <source>Shows or hides the Fix minor errors panel</source>
+        <translation>சிறு பிழைகளைச் சரிசெய் பலகத்தைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
         <source>Fix minor errors (experimental)</source>
         <translation>சிறு பிழைகளைச் சரிசெய் (சோதனை)</translation>
     </message>
@@ -6559,6 +6552,14 @@ What would you like to do?</source>
     <message>
         <source>Find next</source>
         <translation>அடுத்ததை தேடு</translation>
+    </message>
+    <message>
+        <source>Shift times / run timing postprocessor</source>
+        <translation>நேரங்களை நகர்த்தவும் / நேரப் பின்செயலாக்கியை இயக்கவும்</translation>
+    </message>
+    <message>
+        <source>Go to start time of line</source>
+        <translation>வரியின் தொடக்க நேரத்திற்குச் செல்லுங்கள்</translation>
     </message>
     <message>
         <source>&amp;Automation</source>
@@ -6591,10 +6592,6 @@ What would you like to do?</source>
     <message>
         <source>Next frame</source>
         <translation>அடுத்த சட்டகம்</translation>
-    </message>
-    <message>
-        <source>Go to start time</source>
-        <translation>தொடக்க நேரத்திற்குச் செல்லுங்கள்</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -6749,10 +6746,6 @@ What would you like to do?</source>
         <translation>நேரங்களை நகர்த்து... (&amp;t)</translation>
     </message>
     <message>
-        <source>Shift times / run time post processor</source>
-        <translation>நேரங்களை நகர்த்தவும் / நேரப் பின்செயலாக்கியை இயக்கவும்</translation>
-    </message>
-    <message>
         <source>Style &amp;manager</source>
         <translation>பாணி மேலாளர் (&amp;m)</translation>
     </message>
@@ -6820,9 +6813,12 @@ What would you like to do?</source>
         <source>1 step. Steps after the current one can be redone.</source>
         <translation>1 படி. நடப்புப் படிக்குப் பின் உள்ள படிகளை மீண்டும் செய்யலாம்.</translation>
     </message>
-    <message>
-        <source>%1 steps. Steps after the current one can be redone.</source>
-        <translation>%1 படிகள். நடப்புப் படிக்குப் பின் உள்ள படிகளை மீண்டும் செய்யலாம்.</translation>
+    <message numerus="yes">
+        <source>%n steps. Steps after the current one can be redone.</source>
+        <translation>
+            <numerusform>%n படி. நடப்புப் படிக்குப் பின் உள்ள படிகளை மீண்டும் செய்யலாம்.</numerusform>
+            <numerusform>%n படிகள். நடப்புப் படிக்குப் பின் உள்ள படிகளை மீண்டும் செய்யலாம்.</numerusform>
+        </translation>
     </message>
     <message>
         <source>%1, current</source>
@@ -6979,10 +6975,6 @@ What would you like to do?</source>
     <message>
         <source>History</source>
         <translation>வரலாறு</translation>
-    </message>
-    <message>
-        <source>Turns on multireplacer</source>
-        <translation>சிறு பிழைகளைச் சரிசெய்யும் கருவியை இயக்குகிறது</translation>
     </message>
     <message>
         <source>Selects lines by expressions</source>
@@ -7774,6 +7766,22 @@ What would you like to do?</source>
         <translation>சிறு பிழைகளைச் சரிசெய்</translation>
     </message>
     <message>
+        <source>Cannot change rules
+when the find results window is open</source>
+        <translation>தேடல் முடிவுகள் சாளரம் திறந்திருக்கும்போது
+விதிகளை மாற்ற முடியாது</translation>
+    </message>
+    <message>
+        <source>Line %1 cannot be replaced,
+because it was edited.</source>
+        <translation>வரி %1 ஐ மாற்ற முடியாது,
+ஏனெனில் அது திருத்தப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>Cannot replace &quot;%1&quot; with &quot;%2&quot; using rule &quot;%3&quot; in line %4.</source>
+        <translation>வரி %4 இல், &quot;%3&quot; விதியைக் கொண்டு &quot;%1&quot; ஐ &quot;%2&quot; ஆக மாற்ற முடியாது.</translation>
+    </message>
+    <message>
         <source>Rule description</source>
         <translation>விதி விளக்கம்</translation>
     </message>
@@ -7844,10 +7852,6 @@ What would you like to do?</source>
     <message>
         <source>Update rule</source>
         <translation>விதியைப் புதுப்பி</translation>
-    </message>
-    <message>
-        <source>%1 of %2 rules on</source>
-        <translation>%2 விதிகளில் %1 இயக்கத்தில்</translation>
     </message>
     <message>
         <source>Rule</source>
@@ -7929,17 +7933,16 @@ What would you like to do?</source>
         <source>1 error</source>
         <translation>1 பிழை</translation>
     </message>
-    <message>
-        <source>%1 errors</source>
-        <translation>%1 பிழைகள்</translation>
+    <message numerus="yes">
+        <source>%n checked</source>
+        <translation>
+            <numerusform>%n தேர்வுசெய்யப்பட்டது</numerusform>
+            <numerusform>%n தேர்வுசெய்யப்பட்டன</numerusform>
+        </translation>
     </message>
     <message>
         <source>in 1 file</source>
         <translation>1 கோப்பில்</translation>
-    </message>
-    <message>
-        <source>in %1 files</source>
-        <translation>%1 கோப்புகளில்</translation>
     </message>
     <message>
         <source>All</source>
@@ -7966,10 +7969,6 @@ What would you like to do?</source>
         <translation>கண்டறிந்தவற்றை மறை</translation>
     </message>
     <message>
-        <source>%1 checked</source>
-        <translation>%1 தேர்வுசெய்யப்பட்டன</translation>
-    </message>
-    <message>
         <source>Replace checked</source>
         <translation>தேர்வுசெய்தவற்றை மாற்று</translation>
     </message>
@@ -7985,6 +7984,28 @@ What would you like to do?</source>
         <source>Delete rule</source>
         <translation>விதியை நீக்கு</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n rules on</source>
+        <extracomment>%1 the rules turned on, %n all the rules</extracomment>
+        <translation>
+            <numerusform>%n விதியில் %1 இயக்கத்தில்</numerusform>
+            <numerusform>%n விதிகளில் %1 இயக்கத்தில்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n errors</source>
+        <translation>
+            <numerusform>%n பிழை</numerusform>
+            <numerusform>%n பிழைகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n files</source>
+        <translation>
+            <numerusform>%n கோப்பில்</numerusform>
+            <numerusform>%n கோப்புகளில்</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Search results</source>
         <translation>தேடல் முடிவுகள்</translation>
@@ -7998,24 +8019,8 @@ What would you like to do?</source>
         <translation>மாற்று</translation>
     </message>
     <message>
-        <source>Line %1 cannot be replaced,
-cause it was edited.</source>
-        <translation>வரி %1 ஐ மாற்ற முடியாது,
-ஏனெனில் அது திருத்தப்பட்டுள்ளது.</translation>
-    </message>
-    <message>
         <source>Rule &quot;%1&quot; is invalid.</source>
         <translation>விதி &quot;%1&quot; செல்லாது.</translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when find results window is open</source>
-        <translation>தேடல் முடிவுகள் சாளரம் திறந்திருக்கும்போது
-விதிகளை மாற்ற முடியாது</translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; to &quot;%2&quot;, with rule &quot;%3&quot; in line %4.</source>
-        <translation>வரி %4 இல், &quot;%3&quot; விதியைக் கொண்டு &quot;%1&quot; ஐ &quot;%2&quot; ஆக மாற்ற முடியாது.</translation>
     </message>
 </context>
 <context>
@@ -8349,6 +8354,10 @@ removing audio cache files.</source>
     <message>
         <source>Updates and privacy</source>
         <translation>புதுப்பிப்புகளும் தனியுரிமையும்</translation>
+    </message>
+    <message>
+        <source>Audio shortcuts</source>
+        <translation>ஆடியோ குறுக்குவிசைகள்</translation>
     </message>
     <message>
         <source>Privacy</source>
@@ -8912,10 +8921,6 @@ removing audio cache files.</source>
     <message>
         <source>Video shortcuts</source>
         <translation>வீடியோ குறுக்குவிசைகள்</translation>
-    </message>
-    <message>
-        <source>Audio Shortcuts</source>
-        <translation>ஆடியோ குறுக்குவிசைகள்</translation>
     </message>
     <message>
         <source>Automation shortcuts</source>
@@ -9788,6 +9793,12 @@ and will be changed to the default</source>
         <translation>தேடல் கோப்புறை “%1” இல்லை.</translation>
     </message>
     <message>
+        <source>Line %1 cannot be replaced,
+because it was edited.</source>
+        <translation>வரி %1 ஐ மாற்ற முடியாது,
+ஏனெனில் அது திருத்தப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
         <source>In files</source>
         <translation>கோப்புகளில்</translation>
     </message>
@@ -9990,12 +10001,6 @@ and will be changed to the default</source>
     <message>
         <source>Failed to find match for regular expression: %1</source>
         <translation>வழக்கமான வெளிப்பாட்டுக்குப் பொருத்தம் கிடைக்கவில்லை: %1</translation>
-    </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-cause it was edited.</source>
-        <translation>வரி %1 ஐ மாற்ற முடியாது,
-ஏனெனில் அது திருத்தப்பட்டுள்ளது.</translation>
     </message>
     <message>
         <source>Cannot back up %1.</source>
@@ -10575,6 +10580,10 @@ cause it was edited.</source>
         <translation>அமர்வுக் கோப்பு சிதைந்துள்ளது.</translation>
     </message>
     <message>
+        <source>It is not valid JSON: %1.</source>
+        <translation>இது செல்லுபடியான JSON அல்ல: %1.</translation>
+    </message>
+    <message>
         <source>It is not a session file.</source>
         <translation>இது அமர்வுக் கோப்பு அல்ல.</translation>
     </message>
@@ -10658,10 +10667,6 @@ cause it was edited.</source>
         <translation>கோப்புறையைத் தேர்வுசெய்…</translation>
     </message>
     <message>
-        <source>Choose...</source>
-        <translation>தேர்வுசெய்...</translation>
-    </message>
-    <message>
         <source>Latin-1 (ISO 8859-1)</source>
         <translation>Latin-1 (ISO 8859-1)</translation>
     </message>
@@ -10716,6 +10721,10 @@ cause it was edited.</source>
     <message>
         <source>Files that are not UTF-8 are read as</source>
         <translation>UTF-8 அல்லாத கோப்புகள் இவ்வாறு படிக்கப்படும்</translation>
+    </message>
+    <message>
+        <source>Choose…</source>
+        <translation>தேர்வுசெய்…</translation>
     </message>
     <message>
         <source>An import waits for the next start. These settings changed since it was made keep your change: %1.</source>
@@ -11425,6 +11434,10 @@ Spell checking will be disabled</source>
         <translation>நீக்கு</translation>
     </message>
     <message>
+        <source>ASS subtitle files</source>
+        <translation>ASS வசனக் கோப்புகள்</translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation>ஏற்று</translation>
     </message>
@@ -11965,10 +11978,6 @@ Spell checking will be disabled</source>
     <message>
         <source>Choose ASS file</source>
         <translation>ASS கோப்பைத் தேர்வுசெய்க</translation>
-    </message>
-    <message>
-        <source>ASS subtitle files(*.ass)</source>
-        <translation>ASS வசனக் கோப்புகள் (*.ass)</translation>
     </message>
     <message>
         <source>Copy of </source>
@@ -12518,8 +12527,8 @@ Styles deleted:
         <translation>எல்லா குறிச்சொற்களையும் காட்டு</translation>
     </message>
     <message>
-        <source>Show VSFiltermod tags</source>
-        <translation>VSFiltermod குறிச்சொற்களைக் காட்டு</translation>
+        <source>Show VSFilterMod tags</source>
+        <translation>VSFilterMod குறிச்சொற்களைக் காட்டு</translation>
     </message>
     <message>
         <source>%1, %2, %3 of %4</source>
@@ -12619,6 +12628,10 @@ Styles deleted:
         <translation>இன்னும் வார்ப்புருக்கள் இல்லை. இங்கே முன்னோட்டமிட, புதிய என்பதைக் கொண்டு ஒன்றைச் சேர்க்கவும்.</translation>
     </message>
     <message>
+        <source>These templates made the active line without a karaoke line. Apply them to the whole file to preview it.</source>
+        <translation>இந்த வார்ப்புருக்கள் செயலில் உள்ள வரியை எந்தக் கரோக்கி வரியும் இல்லாமல் உருவாக்கின. அதை முன்னோட்டமிட, அவற்றை முழுக் கோப்புக்கும் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
         <source>L</source>
         <extracomment>The preview&apos;s column: the Line&apos;s layer</extracomment>
         <translation>அ</translation>
@@ -12638,6 +12651,22 @@ Styles deleted:
     <message>
         <source>Apply is off while a template has a problem.</source>
         <translation>ஒரு வார்ப்புருவில் சிக்கல் இருக்கும்போது பயன்படுத்து முடக்கப்பட்டிருக்கும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied with problems: %n lines from %1; the log lists the problems. Undo removes them in one step.</source>
+        <extracomment>After an Apply with problems: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;)</extracomment>
+        <translation>
+            <numerusform>சிக்கல்களுடன் பயன்படுத்தப்பட்டது: %1 இலிருந்து %n வரி; சிக்கல்களைப் பதிவு பட்டியலிடுகிறது. செயல்தவிர் அதை ஒரே படியில் நீக்கும்.</numerusform>
+            <numerusform>சிக்கல்களுடன் பயன்படுத்தப்பட்டது: %1 இலிருந்து %n வரிகள்; சிக்கல்களைப் பதிவு பட்டியலிடுகிறது. செயல்தவிர் அவற்றை ஒரே படியில் நீக்கும்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2 s. Undo removes them in one step.</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from (&quot;1 karaoke line&quot;, &quot;%n karaoke lines&quot;), %2 the run&apos;s time</extracomment>
+        <translation>
+            <numerusform>பயன்படுத்தப்பட்டது: %2 s இல் %1 இலிருந்து %n வரி. செயல்தவிர் அதை ஒரே படியில் நீக்கும்.</numerusform>
+            <numerusform>பயன்படுத்தப்பட்டது: %2 s இல் %1 இலிருந்து %n வரிகள். செயல்தவிர் அவற்றை ஒரே படியில் நீக்கும்.</numerusform>
+        </translation>
     </message>
     <message>
         <source>Changed since Apply</source>
@@ -12749,10 +12778,6 @@ Styles deleted:
         <translation>வரி %1 இல் முன்னோட்டம்</translation>
     </message>
     <message>
-        <source>These templates give the active line from no karaoke line. Apply them to the whole file to preview it.</source>
-        <translation>இந்த வார்ப்புருக்கள் செயலில் உள்ள வரியை எந்தக் கரோக்கி வரியிலிருந்தும் உருவாக்குவதில்லை. அதை முன்னோட்டமிட, அவற்றை முழுக் கோப்புக்கும் பயன்படுத்தவும்.</translation>
-    </message>
-    <message>
         <source>Select a karaoke line to preview the templates on it.</source>
         <translation>வார்ப்புருக்களை முன்னோட்டமிட ஒரு கரோக்கி வரியைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
@@ -12763,16 +12788,6 @@ Styles deleted:
     <message>
         <source>No preview of line %1: the templates stopped with a problem.</source>
         <translation>வரி %1 க்கு முன்னோட்டம் இல்லை: வார்ப்புருக்கள் ஒரு சிக்கலுடன் நின்றுவிட்டன.</translation>
-    </message>
-    <message>
-        <source>Applied with problems: %1 lines from %2 karaoke lines; the log lists the problems. Undo removes them in one step.</source>
-        <extracomment>After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from</extracomment>
-        <translation>சிக்கல்களுடன் பயன்படுத்தப்பட்டது: %2 கரோக்கி வரிகளிலிருந்து %1 வரிகள்; சிக்கல்களைப் பதிவு பட்டியலிடுகிறது. செயல்தவிர் அவற்றை ஒரே படியில் நீக்கும்.</translation>
-    </message>
-    <message>
-        <source>Applied: %1 lines from %2 karaoke lines in %3 s. Undo removes them in one step.</source>
-        <extracomment>After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run&apos;s time</extracomment>
-        <translation>பயன்படுத்தப்பட்டது: %3 s இல் %2 கரோக்கி வரிகளிலிருந்து %1 வரிகள். செயல்தவிர் அவற்றை ஒரே படியில் நீக்கும்.</translation>
     </message>
     <message>
         <source>Line %1 changed since the last Apply; the generated lines are older.</source>
@@ -12858,6 +12873,10 @@ Styles deleted:
         <translation>வரியின் மேலெழுதும் குறிச்சொற்களை வைத்திரு</translation>
     </message>
     <message>
+        <source>The Effect text keeps the standard template syntax; this picker only writes it for you.</source>
+        <translation>விளைவு உரை நிலையான வார்ப்புருத் தொடரியலிலேயே இருக்கும்; இந்தத் தேர்வி உங்களுக்காக அதை எழுத மட்டுமே செய்கிறது.</translation>
+    </message>
+    <message>
         <source>Syllable variables · values for line %1, syllable 1</source>
         <extracomment>The variables list&apos;s title: their values on the current Line&apos;s first syllable</extracomment>
         <translation>அசை மாறிகள் · வரி %1, அசை 1 க்கான மதிப்புகள்</translation>
@@ -12877,10 +12896,6 @@ Styles deleted:
     <message>
         <source>Modifiers</source>
         <translation>மாற்றிகள்</translation>
-    </message>
-    <message>
-        <source>The Effect text stays stock syntax; this picker only writes it.</source>
-        <translation>விளைவு உரை நிலையான தொடரியலிலேயே இருக்கும்; இந்தத் தேர்வி அதை எழுத மட்டுமே செய்கிறது.</translation>
     </message>
     <message>
         <source>Template functions</source>
@@ -12926,10 +12941,6 @@ Styles deleted:
     <message>
         <source>Classic fill</source>
         <translation>பாரம்பரிய நிரப்பல்</translation>
-    </message>
-    <message>
-        <source>The karaoke fill from left to right, fading in with the line and out after it.</source>
-        <translation>இடமிருந்து வலமாகக் கரோக்கி நிரப்பல்; வரியுடன் மங்கித் தோன்றி, அதன் பின் மங்கி மறையும்.</translation>
     </message>
     <message>
         <source>Staggered fade</source>
@@ -13103,6 +13114,10 @@ Styles deleted:
     <message>
         <source>Lines take turns through a short palette of fill colours, by their place in the file.</source>
         <translation>கோப்பில் உள்ள இடத்தின்படி, வரிகள் ஒரு சிறிய நிரப்பு வண்ணத் தட்டிலிருந்து மாறி மாறி வண்ணம் பெறும்.</translation>
+    </message>
+    <message>
+        <source>The karaoke fills from left to right, fading in with the line and out after it.</source>
+        <translation>கரோக்கி இடமிருந்து வலமாக நிரம்புகிறது; வரியுடன் மங்கித் தோன்றி, அதன் பின் மங்கி மறையும்.</translation>
     </message>
     <message>
         <source>syllable duration (ms)</source>
@@ -13348,12 +13363,28 @@ Styles deleted:
         <translation>குறிச்சொல் நேரங்கள்</translation>
     </message>
     <message>
+        <source>Move according to the following styles (separated by a comma)</source>
+        <translation>பின்வரும் பாணிகளின்படி நகர்த்து (காற்புள்ளியால் பிரிக்கவும்)</translation>
+    </message>
+    <message>
+        <source>End time correction</source>
+        <translation>முடிவு நேரத் திருத்தம்</translation>
+    </message>
+    <message>
+        <source>Corrects end times that are improper or overlap each other</source>
+        <translation>முறையற்ற அல்லது ஒன்றுடன் ஒன்று மேற்பொருந்தும் முடிவு நேரங்களைத் திருத்தும்</translation>
+    </message>
+    <message>
         <source>Shift by video / audio</source>
         <translation>வீடியோ / ஆடியோ மூலம் நகர்த்து</translation>
     </message>
     <message>
         <source>Beginning</source>
         <translation>தொடக்கம்</translation>
+    </message>
+    <message>
+        <source>Moves the start time to the video/audio time</source>
+        <translation>தொடக்க நேரத்தை வீடியோ/ஆடியோ நேரத்துக்கு நகர்த்தும்</translation>
     </message>
     <message>
         <source>Move the marker to video time</source>
@@ -13366,6 +13397,10 @@ Styles deleted:
     <message>
         <source>Which lines</source>
         <translation>எந்த வரிகள்</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor</source>
+        <translation>நேரப் பின்செயலாக்கி</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -13436,8 +13471,8 @@ so their positions on video do not change
         <translation>காற்புள்ளிகளால் பிரிக்கப்பட்ட பாணிகள்</translation>
     </message>
     <message>
-        <source>Move according to the following styles (separated by a coma)</source>
-        <translation>பின்வரும் பாணிகளின்படி நகர்த்து (காற்புள்ளியால் பிரிக்கவும்)</translation>
+        <source>Run timing postprocessor</source>
+        <translation>நேரப் பின்செயலாக்கியை இயக்கவும்</translation>
     </message>
     <message>
         <source>A method of time shift</source>
@@ -13452,14 +13487,6 @@ so their positions on video do not change
         <translation>இரு நேரங்களும்</translation>
     </message>
     <message>
-        <source>Correction end times</source>
-        <translation>முடிவு நேரத் திருத்தம்</translation>
-    </message>
-    <message>
-        <source>Correction end times, when they are improper or overlap each other</source>
-        <translation>முடிவு நேரங்கள் முறையற்றதாக இருக்கும்போது அல்லது ஒன்றுடன் ஒன்று மேற்பொருந்தும்போது அவற்றைத் திருத்தும்</translation>
-    </message>
-    <message>
         <source>Leave unchanged</source>
         <translation>மாறாமல் விடுங்கள்</translation>
     </message>
@@ -13470,10 +13497,6 @@ so their positions on video do not change
     <message>
         <source>New times</source>
         <translation>புதிய நேரங்கள்</translation>
-    </message>
-    <message>
-        <source>Move the start time to the time video / audio</source>
-        <translation>தொடக்க நேரத்தை வீடியோ / ஆடியோ நேரத்துக்கு நகர்த்தும்</translation>
     </message>
     <message>
         <source>Moves the end time to the video/audio time</source>
@@ -13496,10 +13519,6 @@ so their positions on video do not change
         <translation>முடிவு நேரத்துக்குப் பின் லீட்-அவுட் சேர்க்கும் (fad பயன்படுத்தும்போது பயனுள்ளது)</translation>
     </message>
     <message>
-        <source>End time in milliseconds</source>
-        <translation>லீட்-அவுட் நேரம் (மில்லிவிநாடிகளில்)</translation>
-    </message>
-    <message>
         <source>Enable</source>
         <translation>இயக்கு</translation>
     </message>
@@ -13510,6 +13529,10 @@ so their positions on video do not change
     <message>
         <source>End time extension threshold</source>
         <translation>முடிவு நேர நீட்டிப்பு வரம்பு</translation>
+    </message>
+    <message>
+        <source>Before the start time</source>
+        <translation>தொடக்க நேரத்திற்கு முன்</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
@@ -13536,20 +13559,16 @@ after the end time in milliseconds</source>
 அதிகபட்ச நகர்வு (மில்லிவிநாடிகளில்)</translation>
     </message>
     <message>
-        <source>Run post processor</source>
-        <translation>பின்செயலாக்கியை இயக்கவும்</translation>
-    </message>
-    <message>
-        <source>Post processor</source>
-        <translation>பின்செயலாக்கி</translation>
-    </message>
-    <message>
         <source>Lead-in</source>
         <translation>லீட்-இன்</translation>
     </message>
     <message>
         <source>Lead-out</source>
         <translation>லீட்-அவுட்</translation>
+    </message>
+    <message>
+        <source>Lead-out time in milliseconds</source>
+        <translation>லீட்-அவுட் நேரம் (மில்லிவிநாடிகளில்)</translation>
     </message>
     <message>
         <source>Set times as continuous</source>
@@ -13566,10 +13585,6 @@ after the end time in milliseconds</source>
     <message>
         <source>Snap to keyframes</source>
         <translation>கீஃப்ரேம்களுடன் ஒட்டிப் பொருத்து</translation>
-    </message>
-    <message>
-        <source>Before the start of time</source>
-        <translation>நேரம் தொடங்குவதற்கு முன்</translation>
     </message>
     <message>
         <source>After the start time</source>
@@ -15270,8 +15285,42 @@ or codecs or a splitter may be missing</source>
         <translation>புள்ளியை நீக்கு</translation>
     </message>
     <message>
-        <source>Double &quot;m&quot; was blocked because of Vsfilter bug</source>
+        <source>A double &quot;m&quot; was blocked because of a VSFilter bug</source>
         <translation>VSFilter பிழையால் இரட்டை &quot;m&quot; தடுக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>List of ASS drawings with an edit option.
+After choosing a drawing from the list, put the cursor
+where the drawing should start, then hold the left mouse button and drag.</source>
+        <translation>திருத்தும் விருப்பத்துடன் ASS வரைபடங்களின் பட்டியல்.
+பட்டியலிலிருந்து வரைபடத்தைத் தேர்ந்தெடுத்த பிறகு, வரைபடம் தொடங்க வேண்டிய இடத்தில்
+கர்சரை வைத்து, இடது சுட்டி பொத்தானை அழுத்திப் பிடித்தபடி இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>List of tags the visual tool can edit</source>
+        <translation>காட்சிக் கருவி திருத்தக்கூடிய குறிச்சொற்களின் பட்டியல்</translation>
+    </message>
+    <message>
+        <source>Tag change options:
+Set - inserts the tag at the cursor position for one line,
+or at the start for multiple lines.
+Add - changes all tags by adding the slider value.
+Multiply - multiplies the slider value by the selected line number;
+the first line is not changed.
+Gradient - inserts a tag at each character or in each selected line,
+increasing or decreasing the value.</source>
+        <translation>குறிச்சொல் மாற்ற விருப்பங்கள்:
+அமை - ஒரு வரிக்கு கர்சர் நிலையிலும்,
+பல வரிகளுக்குத் தொடக்கத்திலும் குறிச்சொல்லைச் செருகுகிறது.
+கூட்டு - ச்லைடர் மதிப்பைக் கூட்டி அனைத்து குறிச்சொற்களையும் மாற்றுகிறது.
+பெருக்கு - ச்லைடர் மதிப்பைத் தேர்ந்தெடுத்த வரியின் எண்ணால் பெருக்குகிறது;
+முதல் வரி மாற்றப்படாது.
+சாய்வு - ஒவ்வொரு எழுத்திலும் அல்லது தேர்ந்தெடுத்த ஒவ்வொரு வரியிலும் குறிச்சொல்லைச் செருகி,
+மதிப்பை அதிகரிக்கிறது அல்லது குறைக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Text alignment works the same as in styles</source>
+        <translation>பாணிகளில் உள்ளதைப் போலவே உரைச் சீரமைப்பு செயல்படுகிறது</translation>
     </message>
     <message>
         <source>Edit</source>
@@ -15298,18 +15347,6 @@ or codecs or a splitter may be missing</source>
 or has zero duration</source>
         <translation>வீடியோவில் வரி தெரியவில்லை
 அல்லது அதன் கால அளவு சுழியம்</translation>
-    </message>
-    <message>
-        <source>List of ASS drawings with edit option.
-After choose drawing from list just set cursor i n place
-of start of drawing and click left mouse button and drag.</source>
-        <translation>திருத்தும் விருப்பத்துடன் ASS வரைபடங்களின் பட்டியல்.
-பட்டியலிலிருந்து வரைபடத்தைத் தேர்ந்தெடுத்த பிறகு, வரைபடம் தொடங்கும் இடத்தில்
-கர்சரை வைத்து இடது சுட்டி பொத்தானைச் சொடுக்கி இழுக்கவும்.</translation>
-    </message>
-    <message>
-        <source>List of tags that can edit visual tool</source>
-        <translation>காட்சிக் கருவி திருத்தக்கூடிய குறிச்சொற்களின் பட்டியல்</translation>
     </message>
     <message>
         <source>Lock outer quad
@@ -15456,32 +15493,6 @@ in two or one axis.</source>
 A rectangle of the text&apos;s plane: match it to one in the shot, then place the text inside it</source>
         <translation>சுற்றியுள்ள தளத்தைக் காட்டு
 உரையின் தளத்தின் ஒரு செவ்வகம்: காட்சியில் உள்ள ஒன்றுடன் அதைப் பொருத்தி, பின் உரையை அதனுள் வைக்கவும்</translation>
-    </message>
-    <message>
-        <source>Tag change options:
-Add - changes all tags by adding the slider value.
-Insert - inserts the tag at the cursor position for one line,
-or at the start for multiple lines.
-Multiply - multiplies the slider value by the selected line number;
-the first line is not changed.
-Gradient text increasing - inserts a tag at each character, increasing the value.
-Gradient text decreasing - inserts a tag at each character, decreasing the value.
-Gradient line increasing - inserts a tag in selected lines, increasing the value.
-Gradient line decreasing - inserts a tag in selected lines, decreasing the value.</source>
-        <translation>குறிச்சொல் மாற்ற விருப்பங்கள்:
-கூட்டு - ச்லைடர் மதிப்பைக் கூட்டி அனைத்து குறிச்சொற்களையும் மாற்றுகிறது.
-செருகு - ஒரு வரிக்கு கர்சர் நிலையிலும்,
-பல வரிகளுக்குத் தொடக்கத்திலும் குறிச்சொல்லைச் செருகுகிறது.
-பெருக்கு - ச்லைடர் மதிப்பைத் தேர்ந்தெடுத்த வரியின் எண்ணால் பெருக்குகிறது;
-முதல் வரி மாற்றப்படாது.
-உரை சாய்வு, அதிகரிக்கும் - ஒவ்வொரு எழுத்திலும் குறிச்சொல்லைச் செருகி, மதிப்பை அதிகரிக்கிறது.
-உரை சாய்வு, குறையும் - ஒவ்வொரு எழுத்திலும் குறிச்சொல்லைச் செருகி, மதிப்பைக் குறைக்கிறது.
-வரி சாய்வு, அதிகரிக்கும் - தேர்ந்தெடுத்த வரிகளில் குறிச்சொல்லைச் செருகி, மதிப்பை அதிகரிக்கிறது.
-வரி சாய்வு, குறையும் - தேர்ந்தெடுத்த வரிகளில் குறிச்சொல்லைச் செருகி, மதிப்பைக் குறைக்கிறது.</translation>
-    </message>
-    <message>
-        <source>Text placing works similar like in styles</source>
-        <translation>பாணிகளில் உள்ளதைப் போலவே உரை இருப்பிடம் செயல்படுகிறது</translation>
     </message>
     <message>
         <source>Top-center</source>

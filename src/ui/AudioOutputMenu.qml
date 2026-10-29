@@ -130,22 +130,13 @@ ShellMenu {
             Hint {
                 text: qsTr("Pitch is kept.")
             }
-            Keycap {
+            KeycapSentence {
                 visible: hint.parent.keys
-                text: menu.slowerKey
-            }
-            Hint {
-                visible: hint.parent.keys
-                //: Between the two keys of "[ and ] change the speed."
-                text: qsTr("and")
-            }
-            Keycap {
-                visible: hint.parent.keys
-                text: menu.fasterKey
-            }
-            Hint {
-                visible: hint.parent.keys
-                text: qsTr("change the speed.")
+                //: %1 the key that slows the audio down, %2 the key that speeds it up
+                text: qsTr("%1 and %2 change the speed.")
+                keys: [menu.slowerKey, menu.fasterKey]
+                color: Theme.muted
+                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
             }
         }
     }

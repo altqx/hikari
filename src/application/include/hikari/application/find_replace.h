@@ -94,7 +94,7 @@ struct FindLog {
     enum class Kind {
         InvalidRegex,      // "Invalid regular expression '%s': %s" (pattern, message)
         MatchError,        // "Failed to find match for regular expression: %s" (message)
-        LineEdited,        // "Line %i cannot be replaced,\ncause it was edited." (the line number)
+        LineEdited,        // "Line %i cannot be replaced,\nbecause it was edited." (the line number)
         CannotBackUp,      // "Cannot back up %s." (the path)
         OutsideReplaceTab,
     };

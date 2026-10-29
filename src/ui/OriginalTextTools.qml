@@ -49,7 +49,7 @@ Item {
         IconToolButton {
             objectName: "originalPasteSelection"
             iconRole: "paste-selection-translation"
-            text: qsTranslate("HikariSub.Editor", "Paste the selected")
+            text: qsTranslate("HikariSub.Editor", "Paste the selected text")
             tip: tools.shellRoot.mappedTip(text, "EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
             focusPolicy: Qt.NoFocus
             enabled: tools.editor.editable
@@ -124,7 +124,7 @@ Item {
         ShellMenuItem {
             objectName: "originalPasteSelectionItem"
             iconRole: "paste-selection-translation"
-            text: qsTranslate("HikariSub.Editor", "Paste the selected")
+            text: qsTranslate("HikariSub.Editor", "Paste the selected text")
             enabled: tools.editor.editable
             onTriggered: tools.pasteSelection()
         }

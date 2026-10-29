@@ -33,6 +33,9 @@ Pane {
     function counted(n, one, many) {
         return n === 1 ? one : many
     }
+    function karaokeLineCount(n) {
+        return counted(n, qsTr("1 karaoke line"), qsTr("%n karaoke lines", "", n))
+    }
     function rowStatus(row) {
         if (row.seconds < 0)
             return ""
@@ -181,8 +184,7 @@ Pane {
                                                   qsTr("%n template lines", "", root.controller.templateCount)),
                                      root.counted(root.controller.codeCount, qsTr("1 code line"),
                                                   qsTr("%n code lines", "", root.controller.codeCount)),
-                                     root.counted(root.controller.karaokeCount, qsTr("1 karaoke line"),
-                                                  qsTr("%n karaoke lines", "", root.controller.karaokeCount))].join(" · ")
+                                     root.karaokeLineCount(root.controller.karaokeCount)].join(" · ")
                         }
                         Button {
                             id: newButton
@@ -716,7 +718,7 @@ Pane {
                         text: root.controller.templateCount === 0
                               ? qsTr("No templates yet. Add one with New to preview it here.")
                               : root.controller.sourceUnknown
-                              ? qsTr("These templates give the active line from no karaoke line. Apply them to the whole file to preview it.")
+                              ? qsTr("These templates made the active line without a karaoke line. Apply them to the whole file to preview it.")
                               : root.controller.source === 0
                               ? qsTr("Select a karaoke line to preview the templates on it.")
                               : root.controller.previewPending
@@ -852,13 +854,13 @@ Pane {
                     if (c.hasProblems)
                         return qsTr("Apply is off while a template has a problem.")
                     if (applied.lines !== undefined && applied.problems > 0)
-                        //: After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from
-                        return qsTr("Applied with problems: %1 lines from %2 karaoke lines; the log lists the problems. Undo removes them in one step.")
-                               .arg(applied.lines).arg(applied.karaokeLines)
+                        //: After an Apply with problems: %n the Lines written, %1 the karaoke Lines they came from ("1 karaoke line", "%n karaoke lines")
+                        return qsTr("Applied with problems: %n lines from %1; the log lists the problems. Undo removes them in one step.",
+                                    "", applied.lines).arg(root.karaokeLineCount(applied.karaokeLines))
                     if (applied.lines !== undefined)
-                        //: After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run's time
-                        return qsTr("Applied: %1 lines from %2 karaoke lines in %3 s. Undo removes them in one step.")
-                               .arg(applied.lines).arg(applied.karaokeLines).arg(applied.seconds.toFixed(2))
+                        //: After Apply: %n the Lines written, %1 the karaoke Lines they came from ("1 karaoke line", "%n karaoke lines"), %2 the run's time
+                        return qsTr("Applied: %n lines from %1 in %2 s. Undo removes them in one step.", "", applied.lines)
+                               .arg(root.karaokeLineCount(applied.karaokeLines)).arg(applied.seconds.toFixed(2))
                     if (c.changedCount === 0)
                         return ""
                     if (root.narrow)
@@ -1119,7 +1121,7 @@ Pane {
                 rightPadding: 10
                 topPadding: 6
                 wrapMode: Text.Wrap
-                text: qsTr("The Effect text stays stock syntax; this picker only writes it.")
+                text: qsTr("The Effect text keeps the standard template syntax; this picker only writes it for you.")
                 color: Theme.muted
                 font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
             }

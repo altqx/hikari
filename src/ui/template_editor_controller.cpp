@@ -42,7 +42,7 @@ struct PresetEntry {
 constexpr PresetEntry kPresets[] = {
     {"01-classic-fill.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Classic fill"),
      QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
-                       "The karaoke fill from left to right, fading in with the line and out after it.")},
+                       "The karaoke fills from left to right, fading in with the line and out after it.")},
     {"02-staggered-fade.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Staggered fade"),
      QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
                        "Syllables fade in one after another, light up as they are sung and fade out together.")},

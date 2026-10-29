@@ -11864,7 +11864,7 @@ private slots:
         QVERIFY(!item("shiftAmountSection")->isVisible());
         QVERIFY(!item("shiftVideoAudioSection")->isVisible());
         QVERIFY(!item("shiftProfile")->isVisible());
-        QCOMPARE(apply->property("text").toString(), QStringLiteral("Run post processor"));
+        QCOMPARE(apply->property("text").toString(), QStringLiteral("Run timing postprocessor"));
         QVERIFY(visualItem("shiftModePostprocessor")->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(item("ppLeadIn"), "click"));
         QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 16 | 1);
@@ -16497,7 +16497,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(after, "triggered"));
         QCOMPARE(settings.text("audio.playAround"), QStringLiteral("AUDIO_PLAY_500MS_AFTER"));
         QCOMPARE(face->property("iconRole").toString(), QStringLiteral("play-after-end"));
-        QCOMPARE(face->property("tip").toString(), QStringLiteral("Play 500ms after the end time"));
+        QCOMPARE(face->property("tip").toString(), QStringLiteral("Play 500 ms after the end time"));
         QVERIFY(after->property("checked").toBool());
         QVERIFY(!item<QObject>("audioPlay500Before")->property("checked").toBool());
         audio.play500After();
@@ -23772,7 +23772,7 @@ private slots:
         const int warnings = application->log().warningCount();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, b);
         QQuickItem *notice = nullptr;
-        QTRY_VERIFY((notice = toastWith(QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"))));
+        QTRY_VERIFY((notice = toastWith(QStringLiteral("A double \"m\" was blocked because of a VSFilter bug"))));
         QCOMPARE(partNamed(notice, "toastTitle")->property("text").toString(), tools.toolName());
         QVERIFY(!tools.toolName().isEmpty());
         QCOMPARE(application->log().warningCount(), warnings + 1);
@@ -23932,7 +23932,7 @@ private slots:
         QCOMPARE(shown(), QStringLiteral("Free drawing"));
         QCOMPARE(QAccessible::queryAccessibleInterface(list())->role(), QAccessible::ComboBox);
         QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Name),
-                 QStringLiteral("List of ASS drawings with edit option."));
+                 QStringLiteral("List of ASS drawings with an edit option."));
         QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Description),
                  QStringLiteral("Free drawing"));
         QVERIFY(!list()->property("checked").toBool());
@@ -24614,7 +24614,7 @@ private slots:
         QVERIFY(!visualItem("visualOption_edit"));
         QCOMPARE(must("visualOption_tag_text")->property("text").toString(), QStringLiteral("blur"));
         QCOMPARE(QAccessible::queryAccessibleInterface(option("tag"))->text(QAccessible::Name),
-                 QStringLiteral("List of tags that can edit visual tool"));
+                 QStringLiteral("List of tags the visual tool can edit"));
         QCOMPARE(QAccessible::queryAccessibleInterface(option("tag"))->text(QAccessible::Description),
                  QStringLiteral("blur"));
         QTRY_VERIFY(visualItem("visualOption_change_0"));
@@ -25756,7 +25756,7 @@ private slots:
         };
         for (const Expected &e : {Expected{"audioPrevious", "audio-previous-line", "Play the previous line"},
                                   Expected{"audioCommit", "commit", "Apply changes"},
-                                  Expected{"audioPlayAround", "play-before-start", "Play 500ms before the start time"},
+                                  Expected{"audioPlayAround", "play-before-start", "Play 500 ms before the start time"},
                                   Expected{"audioKaraoke", "karaoke", "Enable / disable karaoke creation"},
                                   Expected{"audioSpectrumNonLinear", "spectrum-nonlinear", "Enhance speech frequencies in the spectrum"}}) {
             auto *button = visualItem(e.object);

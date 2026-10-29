@@ -380,7 +380,7 @@ std::vector<ToolOption> AllTagsTool::options(const VisualHost &host) const
     list.name = "tag";
     list.kind = ToolOption::Kind::Choice;
     list.iconRole = "tag-list";
-    list.tooltip = u"List of tags that can edit visual tool";
+    list.tooltip = u"List of tags the visual tool can edit";
     const auto &definitions = tags(host);
     list.choices = allTagsNames(definitions);
     for (const AllTagsSetting &tag : definitions)
