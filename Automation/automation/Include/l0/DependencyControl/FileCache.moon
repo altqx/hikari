@@ -16,8 +16,8 @@ sanitizeLabel = (label) ->
   safe = tostring(label or "entry")\gsub "[^%w%._-]", "_"
   #safe > 0 and safe\sub(1, 64) or "entry"
 
--- The complete SHA-1 digest of a cache key. The full digest keeps attacker-controlled keys from cheaply
--- aliasing another entry's index, while the key stored in that index is still verified on every read.
+-- HikariSub (#500): the complete SHA-1 digest of a cache key, not upstream's 7-hex prefix, so an
+-- attacker-controlled key can't cheaply alias another entry's index; getMeta still checks the stored key.
 KEY_SLUG_LENGTH = 40
 KEY_SLUG_PATTERN = ("%x")\rep KEY_SLUG_LENGTH
 keySlug = (key) -> Hash.getDigest Hash.HashType.Sha1, key
@@ -111,8 +111,8 @@ class FileCache
   ---@return FileCacheMeta? meta nil when the key isn't cached.
   getMeta: (key) =>
     meta = @__readMeta @__metaPath key
-    -- The filename is only an index: never allow a digest collision or a tampered index to substitute the
-    -- entry belonging to a different key.
+    -- HikariSub (#500): the filename is only an index; never let a digest collision or a tampered index
+    -- stand in for the entry of a different key.
     meta and meta.key == key and meta or nil
 
   ---Whether a cache entry is still fresh, i.e. its expiry (fixed when it was written) hasn't passed
@@ -185,10 +185,12 @@ class FileCache
       expiredSlugs[keySlug meta.key] = true
       @__l1[meta.key] = nil
 
-    -- every file (snapshot or index) is named with its key's full-digest prefix, so one pass removes both
+    -- every file (snapshot or index) is named with its key's full-digest prefix, so one pass removes both;
+    -- files named with the 7-hex slug from before #500 are never read again, so a purge removes them too
     for file in *files
       slug = file\match "^(#{KEY_SLUG_PATTERN})"
-      fileOps.remove fileOps.joinPath @cacheDir, file if slug and expiredSlugs[slug]
+      legacy = not slug and file\match "^%x%x%x%x%x%x%x[%.%-]"
+      fileOps.remove fileOps.joinPath @cacheDir, file if legacy or slug and expiredSlugs[slug]
 
   ---Stores a blob under a readable, timestamped snapshot and repoints the index at it, then trims old
   ---snapshots. The snapshot name is `<slug>-<label>-<utcTimestamp>-<rand>.json` (slug first so a key's
