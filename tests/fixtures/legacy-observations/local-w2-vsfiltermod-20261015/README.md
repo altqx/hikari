@@ -1,6 +1,6 @@
 # Legacy observations: W2 VSFilterMod frames (Winix VM, 2026-10-15)
 
-The legacy app's own frames with VSFilterMod drawing the fixture scripts in [`scripts/`](scripts/), taken in the Winix VM (Windows 11 build 26200) by [`probe/run.ps1`](probe/run.ps1). `VsfilterMod.MatchesTheLegacyAppsCaptures` (`hikari_backends_vsfiltermod_tests`, Windows) compares the rewrite's VSFilterMod overlay with them.
+The legacy app's own frames with VSFilterMod drawing the fixture scripts in [`scripts/`](scripts/), taken in the Winix VM (Windows 11 build 26200) by [`probe/run.ps1`](probe/run.ps1). `VsfilterMod.MatchesTheLegacyAppsCaptures` (`hikari_backends_vsfiltermod_tests`, Windows) compares HikariSub's VSFilterMod overlay with them.
 
 ## What ran
 
@@ -20,6 +20,6 @@ The legacy app's own frames with VSFilterMod drawing the fixture scripts in [`sc
 - `frames/<fixture>-<ms>.png`: "Save frame with subtitles as PNG", the legacy files unchanged.
 - `observations.jsonl`: one line per capture, with legacy's file names and the SHA-256 of both files.
 
-## Compared with the rewrite
+## Compared with HikariSub
 
 For each capture the test loads the script as the application does: `loadAss`, then `encodeAss` in renderer mode, which keeps `[Graphics]`. It draws the frame time through the CSRI adapter with the pinned VSFilterMod, lays the overlay over `background.png` (`o + bg * (255 - a) / 255`, rounded) and compares the result with legacy's subtitled frame. Every channel must be within 2 levels. That is the rounding allowed between the adapter's overlay and VSFilterMod drawing onto the frame itself (`OverlayMatchesDrawingOnTheFrame`). It was run with the hikari.1 pin asked for BGR_ (onto black and onto white) and with the hikari.2 pin asked for BGRA, the qt head this change sits on. Both pass; the W2 row of `docs/coverage.md` has the jobs.
