@@ -1,8 +1,3 @@
-// AV1 (#238): the audio panel's output device menu. It lists what Settings >
-// Audio's device choice lists (H2, decision 60), marks the stored choice and
-// stores a new one the way the dialog's OK does, so the two never disagree;
-// the routing then moves both audio paths. When the chosen device goes away
-// and the system default plays instead, the status bar says so.
 #include "hikari/app/application.h"
 #include "hikari/application/audio_box.h"
 
@@ -29,11 +24,9 @@ QVariantList Application::audioOutputMenu() const
     return rows;
 }
 
-// By the entry's id, not its row: a device plugged in or out while the menu
-// is open moves the rows under it.
 void Application::chooseAudioOutput(const QString &id, const QString &name)
 {
-    // The name first: the id's change moves the outputs (settingChanged).
+    // MUST KILL: the name must be set before the id; the id's change reads it.
     m_settings->set("audio.outputDeviceName", name);
     m_settings->set("audio.outputDevice", id);
 }
@@ -49,10 +42,8 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
     if (before == after)
         return;
     emit audioOutputChanged();
-    // A notice of a device that is back (or replaced) no longer holds.
     if (!m_audioRouteNotice.isEmpty() && m_shell->statusText() == std::exchange(m_audioRouteNotice, QString()))
         m_shell->setStatusText(QString());
-    // The chosen device went away (the choice is still stored): the default plays.
     if (before.systemDefault || !after.systemDefault || m_settings->settings().text("audio.outputDevice").empty())
         return;
     const QString name = QString::fromStdString(m_settings->settings().text("audio.outputDeviceName"));
@@ -66,8 +57,6 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
                    .arg(name, QString::fromStdString(after.name));
     m_shell->setStatusText(text);
     m_audioRouteNotice = text;
-    // As legacy's status messages, it goes after 5 s unless something replaced
-    // it (a later notice of the same words too: it has its own 5 s).
     QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, text, serial = ++m_audioRouteNoticeSerial] {
         if (serial != m_audioRouteNoticeSerial)
             return;
@@ -77,9 +66,6 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
     });
 }
 
-// #384: Snap to vocal onsets reads the whole audio before anything snaps;
-// the status bar says so while it reads, and when it is done (for 5 s, as
-// legacy's status messages).
 void Application::noticeOnsets()
 {
     //: Status bar while Snap to vocal onsets (the audio panel's Tap menu, Karaoke mode) reads the audio
@@ -89,9 +75,9 @@ void Application::noticeOnsets()
         return;
     }
     if (m_shell->statusText() != finding)
-        return; // replaced by another message
+        return;
     if (!m_audio->onsetsFound()) {
-        m_shell->setStatusText(QString()); // stopped before the end
+        m_shell->setStatusText(QString());
         return;
     }
     //: Status bar once Snap to vocal onsets has read the audio and boundaries snap
@@ -120,16 +106,11 @@ bool Application::isVideoAudio(const QString &audio, const QString &videoPath)
     return QDir::toNativeSeparators(audio) == QDir::toNativeSeparators(videoPath) || audio == dummyVideoAudio(videoPath);
 }
 
-// AV2 (#239): the video's side of the sync toggle, on each change of the
-// video. While it plays, the audio cursor is at its time (legacy Tell(): the
-// last delivered frame's); a frame the playing box wanted while another was
-// on its way is asked for once that one arrived.
 void Application::syncAudioWithVideo()
 {
     const auto &video = m_video->session();
     const bool ready = video.state() == application::VideoSession::State::Ready;
     m_audio->setPlayingVideoTime(ready && video.playing() ? std::optional(video.tellMs()) : std::nullopt);
-    // Off, the box's playback asks for no frame (a queued one is dropped).
     if (!ready || video.playing() || !m_audio->playing() || !m_audio->syncVideo()) {
         m_audioWantsFrame.reset();
         return;
@@ -141,13 +122,9 @@ void Application::syncAudioWithVideo()
     }
 }
 
-// AV2: the playing box's time on each tick: the paused video shows the frame
-// there (legacy FrameShownAt). A playing video keeps its own clock; the box
-// paused it when it started anyway (AudioDisplay::Play).
 void Application::showVideoAtAudio(int ms)
 {
     auto &video = m_video->session();
-    // the box's timebase over this video (followVideoInAudio keeps it)
     if (video.state() != application::VideoSession::State::Ready || video.playing() || video.frameCount() <= 0
         || !m_audioTimebase || m_audioTimebasePath != video.path())
         return;
@@ -157,7 +134,7 @@ void Application::showVideoAtAudio(int ms)
         return;
     }
     if (video.requestedFrame() != video.shownFrame()) {
-        m_audioWantsFrame = frame; // one decode at a time; the newest waits
+        m_audioWantsFrame = frame;
         return;
     }
     m_audioWantsFrame.reset();

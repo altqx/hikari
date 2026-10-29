@@ -29,13 +29,10 @@ qint64 nowMs()
         .count();
 }
 
-// A freeze record is rewritten at most this often while the thread stays stuck.
 constexpr qint64 kRewriteMs = 5000;
 
 #ifndef _WIN32
 
-// The watched thread answers this signal with its stack (backtrace() was
-// warmed up when the handler was set, so it loads nothing then).
 int stackSignal()
 {
     return SIGRTMIN + 7;
@@ -58,10 +55,8 @@ void onStackSignal(int)
 
 #ifdef _WIN32
 
-// The window's thread, its stack's top (StackBase) and room to copy its
-// stack into: the copy is unwound once the thread runs again, because the
-// unwinder may take locks the suspended thread holds (the dynamic function
-// tables of the QML JIT).
+// The stack is copied and unwound after the thread resumes: the unwinder may take locks
+// the suspended thread holds (the QML JIT's dynamic function tables).
 struct HangWatchdog::Target {
     HANDLE thread = nullptr;
     quintptr stackBase = 0;
@@ -91,6 +86,7 @@ HangWatchdog::HangWatchdog(Config config, QObject *parent)
     m_target->stackBase = reinterpret_cast<quintptr>(reinterpret_cast<NT_TIB *>(NtCurrentTeb())->StackBase);
 #else
     m_target->thread = pthread_self();
+    // glibc's first backtrace() call loads libgcc, which a signal handler must not do.
     void *warm[1];
     backtrace(warm, 1);
     struct sigaction action {};
@@ -128,8 +124,7 @@ void HangWatchdog::watch()
     std::unique_lock lock(m_mutex);
     while (!m_wake.wait_for(lock, std::chrono::milliseconds(m_config.tickMs), [this] { return m_stop; })) {
         const qint64 now = nowMs();
-        // This thread slept far past its tick: the system was asleep, and
-        // the window's thread with it.
+        // Slept far past the tick: the system was suspended, not the window's thread stuck.
         if (now - last > 5 * qint64(m_config.tickMs) && !frozen)
             m_beat.store(now);
         last = now;
@@ -176,8 +171,6 @@ QList<crash::Frame> HangWatchdog::captureStack()
     ResumeThread(t.thread);
     if (!ok || size < 8)
         return {};
-    // Pointers into the stack, in the copy and in the registers, now point
-    // into the copy.
     const quintptr copyAt = reinterpret_cast<quintptr>(t.copy.data());
     const auto rebase = [&](DWORD64 &value) {
         if (value >= top && value < top + size)

@@ -1,14 +1,5 @@
 #pragma once
 
-// P8: GLOBAL_CHECK_FOR_UPDATES and the automatic check at start (legacy
-// UpdateChecker at 20d647c4); ADR 0019: the check reads the release list a
-// page at a time, the candidates' update manifests, and offers what the
-// install's package kind takes: a download that installs at the next quit
-// (NSIS, AppImage, deb, rpm), the AUR notice, or the release page. The
-// options (legacy UPDATER_AUTO_CHECK, UPDATER_CHECK_FOR_STABLE and
-// UPDATER_NEXT_CHECK, and "Install updates automatically") live in the
-// settings registry (updater.*).
-
 #include "hikari/app/update_installer.h"
 #include "settings_store.h"
 
@@ -25,16 +16,13 @@
 
 namespace hikari::app {
 
-// Where releases are listed and downloaded from.
 struct UpdateFeed {
     QUrl releases;        // the list's first page
     QString downloadBase; // + "v<V>/<asset>"
     QString pageBase;     // + "v<V>": the release page
     bool paginate = false;
-    // GitHub's release list, assets and pages.
     static UpdateFeed github();
-    // A local feed (tests, HIKARISUB_UPDATE_FEED in a test build): <base>releases.json,
-    // <base>download/v<V>/<asset>, <base>releases/tag/v<V>.
+    // <base>releases.json, <base>download/v<V>/<asset>, <base>releases/tag/v<V>.
     static UpdateFeed local(const QUrl &base);
 };
 
@@ -45,26 +33,20 @@ class UpdateChecker : public QObject {
     Q_PROPERTY(bool autoInstall READ autoInstall WRITE setAutoInstall NOTIFY optionsChanged)
     Q_PROPERTY(bool checking READ checking NOTIFY checkingChanged)
     Q_PROPERTY(QString version READ version CONSTANT)
-    // "0.1.0 (AppImage)": About names the kind for bug reports.
+    // e.g. "0.1.0 (AppImage)".
     Q_PROPERTY(QString versionLabel READ versionLabel CONSTANT)
-    // Whether this kind installs updates ("Install updates automatically" shows).
     Q_PROPERTY(bool installsUpdates READ installsUpdates CONSTANT)
-    // Whether "Stable versions only" shows: not for an AUR install with a
-    // channel (aur-channel.txt), whose package decides.
+    // False for an AUR install with a channel (aur-channel.txt), whose package decides.
     Q_PROPERTY(bool stableOnlyOption READ stableOnlyOption CONSTANT)
     Q_PROPERTY(QObject *installer READ installerObject CONSTANT)
-    // PU7 (#309): the version "Skip this version" hid (no "v"), "" for none.
+    // Without "v"; empty for none.
     Q_PROPERTY(QString skippedVersion READ skippedVersion WRITE skipVersion NOTIFY optionsChanged)
-    // PU7: the command an AUR install is offered to copy (aurUpdateCommand).
     Q_PROPERTY(QString aurCommand READ aurCommand CONSTANT)
-    // PU7: an AUR install (Settings > Updates says its package manager updates it).
     Q_PROPERTY(bool aur READ aur CONSTANT)
 public:
-    // The GitHub release list.
     static QUrl defaultFeed() { return UpdateFeed::github().releases; }
 
-    // Options in the INI file `settingsFile` (in memory when empty), or in
-    // the application's store. Without an environment: portable, no cache.
+    // Empty `settingsFile`: options in memory. A default environment: portable, no cache.
     UpdateChecker(QString settingsFile, UpdateFeed feed, QString version, UpdateEnvironment environment = {},
                   QObject *parent = nullptr);
     UpdateChecker(ui::SettingsStore &settings, UpdateFeed feed, QString version, UpdateEnvironment environment = {},
@@ -83,9 +65,7 @@ public:
     bool installsUpdates() const;
     bool stableOnlyOption() const;
     QString skippedVersion() const { return m_skippedVersion; }
-    // "Skip this version": the automatic check stays quiet about `version`
-    // (nothing shown, nothing downloaded) until a newer release is found;
-    // the menu's check still shows it. "" offers it again.
+    // The automatic check stays quiet about `version` until a newer release is found; "" clears it.
     Q_INVOKABLE void skipVersion(const QString &version);
     QString aurCommand() const;
     bool aur() const;
@@ -94,32 +74,25 @@ public:
     UpdateInstaller &installer() { return *m_installer; }
     QObject *installerObject() { return m_installer.get(); }
 
-    // The menu entry: always checks and reports every outcome.
+    // Always checks and reports every outcome.
     Q_INVOKABLE void checkNow();
-    // At start: only with the automatic check on and its time reached;
-    // silent unless a newer release is found. An installable one is
-    // downloaded without asking when "Install updates automatically" is on.
+    // Only when the automatic check is on and due; silent unless a newer release is found, which
+    // downloads without asking when autoInstall is on.
     Q_INVOKABLE bool checkOnStartup();
-    // At start, before the check: what an earlier update left (notice()).
+    // Call before the check: reports what an earlier update left through notice().
     void startUp();
-    // "Remind me later" (legacy's "Remind me in a week", PU7-remind-later).
     Q_INVOKABLE void remindInAWeek();
-    // Opens a release page this checker built.
+    // Ignores any URL outside the feed's pageBase.
     Q_INVOKABLE void openReleasePage(const QString &url);
-    // The release page of `version` (no "v").
+    // `version` without "v".
     Q_INVOKABLE QString releasePageOf(const QString &version) const { return pageUrl(QStringLiteral("v") + version); }
-    // "Download and install" for the offer last reported.
+    // Downloads the offer last reported.
     Q_INVOKABLE void downloadOffer();
-    // Reads the options again (after "Set default").
     void reload();
-    // SH3: reads the release list alone, for What's new: no update check,
-    // nothing reported but releasesRead, the next check's time unchanged. A
-    // check started meanwhile takes the read over; while one runs, its list
-    // is the one read (at once when the check is past it).
+    // Reports only releasesRead and leaves the next check's time; a running check's list serves it.
     void readReleases();
-    // The list as last read (releasesRead(true)).
     const std::vector<application::ReleaseEntry> &releases() const { return m_releases; }
-    // "Stable versions only" as a check applies it (an AUR install's channel).
+    // stableOnly as a check applies it, with an AUR install's channel.
     bool stableOnlyApplied() const;
     const UpdateFeed &feed() const { return m_feed; }
 
@@ -131,10 +104,8 @@ signals:
     // `interactive` only "available" is reported. `offer` is "install",
     // "notify", "requirement" or "aur".
     void finished(const QString &outcome, const QVariantMap &release, bool interactive);
-    // A message for the user: a download's failure, or (`atStart`) the last
-    // update's, which the installer left (NT1: titled "Install update").
+    // `atStart`: the last update's failure, which the installer left; else a download's failure.
     void notice(const QString &message, bool atStart);
-    // SH3: the release list was read (by a check or readReleases()), or not.
     void releasesRead(bool ok);
 
 private:
@@ -165,7 +136,6 @@ private:
     QNetworkAccessManager m_network;
     std::unique_ptr<Run> m_run;
     std::unique_ptr<UpdateInstaller> m_installer;
-    // The offer last reported, for downloadOffer().
     QString m_offerVersion;
     application::UpdatePackage m_offerPackage;
     bool m_offerInstallable = false;

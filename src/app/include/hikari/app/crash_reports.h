@@ -1,25 +1,5 @@
 #pragma once
 
-// CR1 (#452): the crash, freeze and issue reports (crash_report.h), and what
-// the windows do with them. Nothing leaves the machine but by the user's
-// Send report (Analytics::sendReport, usage data on or off) or Open on
-// GitHub (a prefilled issue in the browser); with usage data on, the
-// record alone goes as $exception at the start after it, as AN1 sent it.
-// * The start after a crash or a freeze the app was closed in: the record
-//   it left (crash-record.txt, hang-record.txt) and that run's Log lines
-//   become the pending report, kept (crash-report.json) until it is sent,
-//   taken to GitHub or dismissed. "Always send crash reports" sends it at
-//   once instead (autoSent).
-// * A freeze the window came back from (HangWatchdog::recovered): a report
-//   in memory, offered by a notice (freezeRecovered). While Send report
-//   sends it, it is kept in crash-report-sending.json, so a run that ends
-//   before the answer offers it again at the next start.
-// * The Log tail: every Log entry, scrubbed as it comes, the last
-//   report::kLogLines lines kept in log-tail.txt, so the next start has
-//   the Log of a run that crashed.
-// Each method that acts on a report takes its source: "start" (the
-// pending one) or "freeze".
-
 #include "hikari/app/crash_report.h"
 
 #include <QObject>
@@ -41,25 +21,23 @@ class Analytics;
 
 class CrashReports : public QObject {
     Q_OBJECT
-    // The pending report's kind: "", "crash" or "freeze".
+    // "", "crash" or "freeze".
     Q_PROPERTY(QString pending READ pending NOTIFY changed)
-    // A freeze the window came back from is offered.
     Q_PROPERTY(bool freezeOffered READ freezeOffered NOTIFY changed)
-    // A build with a PostHog key can send; any build can go to GitHub.
+    // True when the build has a PostHog key.
     Q_PROPERTY(bool canSend READ canSend CONSTANT)
     Q_PROPERTY(bool sending READ sending NOTIFY sendingChanged)
-    // The note's length a report takes.
+    // In characters.
     Q_PROPERTY(int noteLimit READ noteLimit CONSTANT)
 public:
     struct Config {
-        QString crashRecord;  // AN1's crash-record.txt
-        QString freezeRecord; // HangWatchdog's hang-record.txt
-        QString pendingFile;  // crash-report.json
-        QString logTail;      // log-tail.txt
-        QString attachments;  // the issue's screenshot and zip, until Done
+        QString crashRecord;
+        QString freezeRecord;
+        QString pendingFile;
+        QString logTail;
+        // A folder for the issue's screenshot and zip, until discardAttachments.
+        QString attachments;
         QString version;
-        // Opens a link in the browser and puts text on the clipboard
-        // (tests: fakes).
         std::function<bool(const QUrl &)> openUrl;
         std::function<void(const QString &)> copy;
     };
@@ -68,15 +46,12 @@ public:
     CrashReports(ui::SettingsStore &settings, Analytics &analytics, ui::LogController &log, Config config,
                  QObject *parent = nullptr);
 
-    // The names of the files open now and their Lines' texts (the scrubber's).
+    // Callbacks giving the open files' names and their Lines' texts, which reports scrub.
     void setKnown(std::function<QStringList()> names, std::function<QStringList()> texts);
-    // The editing target's subtitle file, "" without one (beginIssue).
+    // The callback returns "" without an editing target file.
     void setCurrentFile(std::function<QString()> file) { m_currentFile = std::move(file); }
-    // Once the window shows: this system. A pending report is completed,
-    // its $exception queued while usage data is on, and with "Always send"
-    // it is sent.
+    // Call once the window shows: completes a pending report and, with "Always send", sends it.
     void started(const QString &package, int screens, qreal scale, const QString &layout);
-    // HangWatchdog::recovered.
     void freezeRecovered(const crash::Record &record);
 
     QString pending() const;
@@ -85,28 +60,20 @@ public:
     bool sending() const { return m_sending; }
     static int noteLimit() { return report::kNoteChars; }
 
-    // When it crashed or froze, and for a freeze how long (s).
+    // `source`: "start" (the pending report) or "freeze". seconds() is a freeze's length in s.
     Q_INVOKABLE QDateTime when(const QString &source) const;
     Q_INVOKABLE int seconds(const QString &source) const;
-    // The whole report as it goes, with the note; its one-line summary.
     Q_INVOKABLE QString text(const QString &source, const QString &note) const;
-    // Send report: false when it could not start (no key, already sending).
+    // False when it could not start (no key, already sending).
     Q_INVOKABLE bool send(const QString &source, const QString &note);
-    // Open GitHub issue: a Bug issue with the same content. Returns
-    // {complete, opened}: complete false when it was too long for a link and
-    // went to the clipboard, the blank form opening instead; opened false
-    // when no browser opened, the issue on the clipboard. Once opened, the
-    // report is done.
+    // Returns {complete, opened}: complete false when too long for a link (the issue is copied,
+    // the blank form opens); opened false when no browser opened.
     Q_INVOKABLE QVariantMap openOnGitHub(const QString &source, const QString &note);
-    // Don't send: the report goes, nothing is sent.
     Q_INVOKABLE void dismiss(const QString &source);
-    // The last report sent, as it went ("Always send"'s Show report).
     Q_INVOKABLE QString sentText() const { return m_sentText; }
 
-    // Help › Report an issue. `kind`: bug, feature or question; `fields`
-    // the form's by id. System and settings always go; the Log's lines
-    // when `withLog`. beginIssue, as the form opens, takes the Log's lines
-    // and the editing target's file the form shows and sends.
+    // `kind`: "bug", "feature" or "question"; `fields` maps the form's field ids to values.
+    // beginIssue, called as the form opens, snapshots the Log and the editing target's file.
     Q_INVOKABLE void beginIssue();
     Q_INVOKABLE QString issueSystemText() const;
     Q_INVOKABLE QString issueLogText() const;
@@ -115,32 +82,25 @@ public:
     Q_INVOKABLE QVariantMap openIssue(const QString &kind, const QString &title, const QVariantMap &fields,
                                       bool withLog);
     Q_INVOKABLE void copyIssue(const QString &kind, const QString &title, const QVariantMap &fields, bool withLog);
-    // The one-line summary of the system ("HikariSub V · package · os V").
+    // "HikariSub V · package · os V".
     Q_INVOKABLE QString systemSummary() const;
-    // The attachments a link cannot carry, made only when the user ticks
-    // them and kept in the cache folder until discardAttachments (Done or
-    // Cancel): the window as a PNG (before the form opens over it), the
-    // editing target's file in a .zip. Each returns its path, "" when it
-    // could not be made.
+    // takeScreenshot and zipSubtitleFile return the file's path, "" on failure; the files stay
+    // until discardAttachments.
     Q_INVOKABLE QString subtitleFileName() const;
     Q_INVOKABLE QString takeScreenshot(QObject *window);
     Q_INVOKABLE QString zipSubtitleFile();
     Q_INVOKABLE void copyImage(const QString &path);
     Q_INVOKABLE void discardAttachments();
 
-    // The current run's Log lines, scrubbed (tests).
     QStringList logTail() const { return m_tail; }
 
 signals:
     void changed();
     void sendingChanged();
-    // A Send report finished; a report that failed is kept in `source`
-    // ("" when a newer freeze took its place).
+    // On failure the report stays in `source`, "" when a newer freeze took its place.
     void sent(const QString &source, bool ok);
-    // A freeze the window came back from, offered (the notice).
     void freezeNoticed(int seconds);
-    // "Always send" sent the start's report (or a freeze's) by itself;
-    // `source` as sent's.
+    // `source` as in sent().
     void autoSent(const QString &kind, bool ok, const QString &source);
 
 private:
@@ -171,12 +131,12 @@ private:
     std::function<QString()> m_currentFile;
     QString m_issueLog;
     QString m_issueFile;
-    std::optional<std::pair<quint64, quint64>> m_issueFileId; // device, inode (Unix)
+    std::optional<std::pair<quint64, quint64>> m_issueFileId;
     QTimer m_tailTimer;
     bool m_started = false;
     bool m_sending = false;
     QString m_sendingSource;
-    std::optional<report::Report> m_inFlight; // the report Send report sent
+    std::optional<report::Report> m_inFlight;
     bool m_sendingAuto = false;
 };
 

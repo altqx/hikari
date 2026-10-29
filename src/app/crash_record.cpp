@@ -25,8 +25,7 @@ namespace hikari::app::crash {
 
 namespace {
 
-// Everything the handler needs, set up before any crash: it allocates
-// nothing and calls nothing that could take a lock it might hold.
+// A signal handler may not allocate or take a lock, so all its state is set up beforehand.
 constexpr std::size_t kPathRoom = 4096;
 constexpr std::size_t kTextRoom = 64;
 constexpr std::size_t kRecordRoom = 8192;
@@ -45,7 +44,6 @@ SignalHandler g_previousAbort = SIG_DFL;
 #else
 char g_path[kPathRoom] = {};
 char g_program[kPathRoom] = {};
-// The executable (this code is linked into it): its load address and file name.
 const void *g_executableBase = nullptr;
 char g_executable[256] = {};
 struct sigaction g_previous[5];
@@ -53,7 +51,6 @@ constexpr int kSignals[5] = {SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL};
 char g_altStack[64 * 1024];
 #endif
 
-// `value` as "0x…" in `out` (room for 19).
 void hex(char *out, quint64 value)
 {
     char reversed[16];
@@ -69,7 +66,6 @@ void hex(char *out, quint64 value)
     out[2 + n] = 0;
 }
 
-// A record being written in g_record.
 struct Writer {
     std::size_t at = 0;
     void put(const char *text)
@@ -96,7 +92,7 @@ struct Writer {
     void frame(const char *module, quint64 offset)
     {
         put("frame ");
-        // Only the characters the reader takes; a space would split the line.
+        // MUST KILL: the same character set is repeated in framesOf and read()'s module pattern.
         for (const char *p = module; *p && at + 1 < kRecordRoom; ++p) {
             const char c = *p;
             const bool plain = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' ||
@@ -109,7 +105,6 @@ struct Writer {
     }
 };
 
-// Copies `text` into `out` (room `room`) as a C string, cut to fit.
 template <typename Char>
 void copyInto(Char *out, std::size_t room, const Char *text, std::size_t length)
 {
@@ -145,8 +140,6 @@ bool startsWith(const wchar_t *path, const wchar_t *folder)
     return n > 0 && _wcsnicmp(path, folder, n) == 0 && (path[n] == L'\\' || path[n] == L'/');
 }
 
-// The module holding `address` by file name (own or system), else "other";
-// its base in `base`.
 void moduleOf(const void *address, char *name, std::size_t room, quint64 &base)
 {
     copyInto(name, room, "other", 5);
@@ -203,8 +196,6 @@ LONG WINAPI onException(EXCEPTION_POINTERS *info)
         w.begin(name, "seh");
 #if defined(_M_X64)
         int frames = 0;
-        // Unwinds from the faulting frame (the record's context), not the
-        // filter's own stack.
         CONTEXT context = *info->ContextRecord;
         while (frames < kMaxFrames && context.Rip) {
             addFrame(w, context.Rip);
@@ -265,8 +256,6 @@ bool startsWith(const char *path, const char *folder)
     return n > 0 && std::strncmp(path, folder, n) == 0 && path[n] == '/';
 }
 
-// The module holding `address` by file name (own or system), else "other";
-// the offset into it in `offset`.
 const char *moduleOf(const void *address, quint64 &offset)
 {
     Dl_info info{};
@@ -275,7 +264,7 @@ const char *moduleOf(const void *address, quint64 &offset)
         return "other";
     offset = reinterpret_cast<quint64>(address) - reinterpret_cast<quint64>(info.dli_fbase);
     const char *path = info.dli_fname ? info.dli_fname : "";
-    // The executable comes back as argv[0], which may be relative.
+    // dladdr names the executable as argv[0], which may be relative.
     if (info.dli_fbase == g_executableBase)
         return g_executable;
     if (!(startsWith(path, g_program) || startsWith(path, "/usr") || startsWith(path, "/lib") ||
@@ -307,7 +296,7 @@ void onSignal(int signal, siginfo_t *, void *)
             close(fd);
         }
     }
-    // The default action now: the core dump, the exit status.
+    // Re-raised with the default action, for the core dump and exit status.
     struct sigaction plain {};
     plain.sa_handler = SIG_DFL;
     sigemptyset(&plain.sa_mask);
@@ -417,7 +406,6 @@ std::optional<Record> read(const QString &path)
     }
     if (record.type.isEmpty() || record.mechanism.isEmpty() || record.version.isEmpty())
         return std::nullopt;
-    // A freeze is APP_HANG and only a freeze is; only a freeze has seconds.
     if (record.freeze() != (record.type == QLatin1String(kFreezeType)) || (!record.freeze() && record.seconds))
         return std::nullopt;
     return record;
@@ -452,7 +440,6 @@ QList<Frame> framesOf(const quintptr *addresses, int count)
         const char *module = moduleOf(reinterpret_cast<const void *>(addresses[i]), offset);
         Frame frame{QString::fromLatin1(module), offset};
 #endif
-        // As Writer::frame keeps it, so read() takes what write() wrote.
         for (QChar &c : frame.module)
             if (!(c.isLetterOrNumber() && c.unicode() < 128) && c != u'_' && c != u'.' && c != u'+' && c != u'-')
                 c = u'_';

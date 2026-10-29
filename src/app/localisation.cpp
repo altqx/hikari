@@ -26,11 +26,6 @@ QString languagePart(const QString &tag)
     return tag.section(u'_', 0, 0).section(u'-', 0, 0);
 }
 
-// The pseudolocales' text. Placeholders (%1, %L1, %n), accelerators (&x,
-// &&), markup (<b>, &amp;) and file patterns ("(*.ass)") stay as they are,
-// so formatting, mnemonics and filters keep working; letters take accented
-// forms and the text grows by about a third, inside brackets that show
-// where a label is cut.
 QString accented(const QString &source)
 {
     static const QString lower = QStringLiteral("åƀçđéƒĝĥîĵķļɱñöþǫŕšţûṽŵẋýž");
@@ -63,10 +58,10 @@ QString accented(const QString &source)
                 return true;
             };
             if (end > i && entity()) {
-                out += source.mid(i, end - i + 1); // an entity
+                out += source.mid(i, end - i + 1);
                 i = end;
             } else {
-                out += source.mid(i, 2); // the accelerator and its letter
+                out += source.mid(i, 2);
                 ++i;
             }
             continue;
@@ -103,7 +98,7 @@ QString accented(const QString &source)
         }
     }
     if (letters == 0)
-        return source; // numbers, symbols: nothing to translate
+        return source;
     return QStringLiteral("[") + out + QString((letters + 2) / 3, u'~') + QStringLiteral("]");
 }
 
@@ -120,8 +115,7 @@ public:
         const QString text = accented(QString::fromUtf8(source));
         if (!m_rightToLeft)
             return text;
-        // Right-to-left marks around a right-to-left override: the text runs
-        // and aligns as a right-to-left language's would.
+        // Bidi marks around a right-to-left override make the text run and align right to left.
         return QStringLiteral("‏‮") + text + QStringLiteral("‬‏");
     }
 
@@ -135,8 +129,7 @@ Localisation::Localisation(QString catalogDir, QObject *parent)
     : QObject(parent), m_dir(std::move(catalogDir)), m_qtDir(QLibraryInfo::path(QLibraryInfo::TranslationsPath))
 {
     QCoreApplication::instance()->installEventFilter(this);
-    // #385: the English numerus forms, installed first so every other
-    // catalog is searched before them.
+    // Installed first, so every other catalog is searched before it.
     m_english = std::make_unique<QTranslator>();
     if (m_english->load(QStringLiteral("hikarisub_en"), m_dir))
         QCoreApplication::installTranslator(m_english.get());
@@ -158,11 +151,12 @@ QStringList Localisation::catalogLanguages() const
     QStringList out;
     const QDir dir(m_dir);
     for (const QString &file : dir.entryList({QStringLiteral("hikarisub_*.qm")}, QDir::Files)) {
-        const QString tag = file.mid(10, file.size() - 13); // hikarisub_<tag>.qm
+        // MUST KILL: 10 and 13 cut "hikarisub_" and ".qm" off the file name.
+        const QString tag = file.mid(10, file.size() - 13);
         if (!tag.startsWith(QLatin1String("gettext_")) && tag != u"en")
             out << tag;
     }
-    out.sort(); // wxArrayString::Sort: by code unit
+    out.sort();
     return out;
 }
 
@@ -195,14 +189,12 @@ QString Localisation::resolve(const QString &tag, const QStringList &available, 
         if (languagePart(candidate) == language)
             return candidate;
     if (found)
-        *found = language == u"en"; // en_US, en_GB: the source language
+        *found = language == u"en";
     return {};
 }
 
 QString Localisation::firstStartLanguage(const QStringList &uiLanguages)
 {
-    // GetSystemDefaultUILanguage() == 0x415 (Windows), wxLocale::GetSystemLanguage()
-    // == wxLANGUAGE_POLISH elsewhere (platform.h:478).
     return !uiLanguages.isEmpty() && languagePart(uiLanguages.first()) == u"pl" ? QStringLiteral("pl") : QString();
 }
 
@@ -236,8 +228,6 @@ void Localisation::setPseudo(Pseudo pseudo)
 
 void Localisation::install()
 {
-    // The new catalogs load before the old ones go. Every lookup, also
-    // aegisub.gettext's, runs on the GUI thread, so none sees half a switch.
     std::unique_ptr<QTranslator> qt, app, gettext, pseudo;
     if (!m_language.isEmpty()) {
         app = std::make_unique<QTranslator>();
@@ -246,8 +236,6 @@ void Localisation::install()
         gettext = std::make_unique<QTranslator>();
         if (!gettext->load(QStringLiteral("hikarisub_gettext_") + m_language, m_dir))
             gettext.reset();
-        // Qt's own strings (dialog buttons, text field menus), when the Qt
-        // installation has them.
         qt = std::make_unique<QTranslator>();
         if (!qt->load(QLocale(m_language), QStringLiteral("qt"), QStringLiteral("_"), m_qtDir))
             qt.reset();
@@ -265,7 +253,7 @@ void Localisation::install()
     m_app = std::move(app);
     m_gettext = std::move(gettext);
     m_pseudoTranslator = std::move(pseudo);
-    // The direction the catalogs give, as QGuiApplication reads it.
+    // QGuiApplication takes the layout direction from this translation.
     m_rightToLeft = QCoreApplication::translate("QGuiApplication", "QT_LAYOUT_DIRECTION") == QLatin1String("RTL");
     QGuiApplication::setLayoutDirection(m_rightToLeft ? Qt::RightToLeft : Qt::LeftToRight);
     refreshWindows();
@@ -284,9 +272,7 @@ void Localisation::refreshWindows()
     }
     for (QQmlEngine *engine : std::as_const(engines))
         engine->retranslate();
-    // Qt gives a dialog's standard buttons their text in the language of the
-    // moment (QPlatformTheme::defaultStandardButtonText) and never again:
-    // they are made anew.
+    // Qt sets standard button texts once, in the language of the moment, so they are set anew.
     QSet<QObject *> seen;
     for (QWindow *w : QGuiApplication::allWindows()) {
         for (QObject *o : w->findChildren<QObject *>()) {
@@ -303,9 +289,7 @@ void Localisation::refreshWindows()
     }
 }
 
-// LayoutMirroring on the window's root item, inherited by the menu bar, the
-// content and the overlay with its popups. Attached properties resolve
-// through a QML context of the window.
+// QQmlProperty resolves an attached property only through a QML context.
 void Localisation::mirror(QQuickWindow *window) const
 {
     QQmlContext *context = qmlContext(window);
@@ -325,7 +309,6 @@ void Localisation::mirror(QQuickWindow *window) const
 
 bool Localisation::eventFilter(QObject *watched, QEvent *event)
 {
-    // A window shown later (a floating panel, a tool window) takes the direction too.
     if (m_rightToLeft && event->type() == QEvent::Show)
         if (auto *window = qobject_cast<QQuickWindow *>(watched))
             mirror(window);
@@ -334,9 +317,6 @@ bool Localisation::eventFilter(QObject *watched, QEvent *event)
 
 std::string Localisation::gettext(const std::string &source) const
 {
-    // wxString(str, wxConvUTF8, len): wxMBConvStrictUTF8; a failed
-    // conversion is the empty string, which wxGetTranslation never
-    // translates (translation.cpp:1567 at wxWidgets 670835ae).
     QStringDecoder utf8(QStringDecoder::Utf8, QStringDecoder::Flag::Stateless);
     [[maybe_unused]] const QString decoded = utf8.decode(QByteArrayView(source.data(), qsizetype(source.size())));
     if (utf8.hasError())

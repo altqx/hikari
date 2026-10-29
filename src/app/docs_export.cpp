@@ -43,8 +43,7 @@ QString text(const QObject *o, const char *property)
     return o->property(property).toString();
 }
 
-// A QML value as plain variants (a `var` property or a function's result
-// can come as a QJSValue).
+// A QML `var` property or function result can arrive as a QJSValue.
 QVariant plain(const QVariant &value)
 {
     return value.metaType() == QMetaType::fromType<QJSValue>() ? value.value<QJSValue>().toVariant() : value;
@@ -62,7 +61,6 @@ bool write(const QString &dir, const QString &name, const QJsonObject &object, Q
     return true;
 }
 
-// commands.json: the Hotkeys page's commands (named, not retired) by id.
 QJsonObject commands(const QVariantMap &menus)
 {
     std::map<int, QJsonArray> defaults;
@@ -99,7 +97,7 @@ QQuickItem *ancestorWith(QQuickItem *item, const char *property)
     return nullptr;
 }
 
-// Its Accessible.name (the attached object is the item's child).
+// Qt makes the Accessible attached object the item's child.
 QString accessibleName(const QQuickItem *item)
 {
     for (QObject *child : item->children())
@@ -108,8 +106,6 @@ QString accessibleName(const QQuickItem *item)
     return {};
 }
 
-// The muted line under a control in a column (SettingNote, the Appearance
-// page's hints): the label right after it.
 QString noteAfter(QQuickItem *item)
 {
     QQuickItem *parent = item->parentItem();
@@ -149,8 +145,6 @@ QString typeName(application::SettingType type)
     return {};
 }
 
-// A choice's entries, when they are the program's own (not what this
-// machine has: dictionaries, catalogs, styles, renderers, devices, fonts).
 struct Languages {
     QStringList tags, names;
 };
@@ -186,7 +180,7 @@ QJsonArray entriesOf(QQuickItem *item, const application::OptionsBinding *bindin
 struct SettingsWalk {
     ui::SettingsStore *store;
     Languages languages;
-    QVariantMap shown; // the values the window opens with
+    QVariantMap shown;
     QString page;
     QJsonArray settings;
 
@@ -196,8 +190,9 @@ struct SettingsWalk {
         if (!definition)
             return;
         const application::OptionsBinding *binding = application::findOptionsBinding(definition->id);
-        QQuickItem *row = ancestorWith(item, "labelWidth"); // SettingsRow
-        QQuickItem *section = ancestorWith(item, "ruled");  // SettingsSection
+        // MUST KILL: SettingsRow/SettingsSection are found by their labelWidth/ruled properties.
+        QQuickItem *row = ancestorWith(item, "labelWidth");
+        QQuickItem *section = ancestorWith(item, "ruled");
         QString label = has(item, "docsLabel") ? text(item, "docsLabel") : QString();
         if (label.isEmpty() && has(item, "checked"))
             label = text(item, "text");
@@ -222,8 +217,6 @@ struct SettingsWalk {
             {QStringLiteral("type"), typeName(definition->type)},
             {QStringLiteral("default"), QJsonValue::fromVariant(store->value(key))},
         };
-        // A number the window maps on opening (Tab name length: 0 shows 40)
-        // defaults to what it shows (#391).
         if (control == QLatin1String("number") && shown.contains(key) &&
             shown.value(key).toString() != store->value(key).toString())
             o.insert(QStringLiteral("default"), QJsonValue::fromVariant(shown.value(key)));
@@ -242,10 +235,6 @@ struct SettingsWalk {
 
     void walk(QQuickItem *item)
     {
-        // A control for each theme's setting, only one of them shown at a
-        // time (the accents, the high contrast colors), or one only a
-        // platform's window makes (Windows' player and audio API): every
-        // one, named.
         if (has(item, "docsEntries")) {
             for (const QVariant &v : plain(item->property("docsEntries")).toList()) {
                 const QVariantMap entry = v.toMap();
@@ -280,7 +269,6 @@ struct SettingsWalk {
     }
 };
 
-// settings.json: the Settings window's pages and bound controls.
 QJsonObject settings(Application &application, QObject *dialog)
 {
     const QVariantMap opened = application.openSettingsDialog();
@@ -342,7 +330,6 @@ bool exportDocs(const QString &dir, QString *error)
             *error = message;
         return false;
     };
-    // #391: the site names the commit its pages come from.
     if (QStringLiteral(HIKARI_COMMIT).isEmpty())
         return fail(QStringLiteral("This build does not know its commit"));
     if (!QDir().mkpath(dir))

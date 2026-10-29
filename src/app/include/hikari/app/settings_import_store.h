@@ -1,28 +1,5 @@
 #pragma once
 
-// O3: the importer's transaction over the settings folder (S44-import,
-// docs/proposals/settings-import.md "Import transaction"): legacy roots
-// listed, never combined; the chosen root's files copied to a preserved
-// snapshot with their hashes and encoding evidence; staged generations of
-// the complete destination profile (registry values and the authored
-// collections beside settings.toml) under <settings folder>/Import; activation
-// through one manifest switch; rollback to the previous complete generation.
-//
-// A generation activates at the next start (recover(), before anything
-// reads the profile): settings are read once by many windows, so a running
-// session keeps what it has. The import's changes go in where the live
-// profile still holds what it held at staging; a value edited since is
-// kept, also where the import changes it (step 5: never overwrite later
-// user edits automatically). A rollback restores the previous generation
-// whole and reports what it replaces. Legacy files are only read.
-//
-// Layout under Import/:
-//   manifest.json                {active, previous, pending, rollback}: the switch
-//   snapshots/<id>/<path>        the legacy bytes as read, and snapshot.json
-//   generations/<n>/profile.json the profile, its base and the receipt
-//   generations/<n>/complete     written last when staging succeeded
-//   live                         the generation the live profile holds
-
 #include "hikari/application/misspell_replacer.h"
 #include "hikari/application/settings_import.h"
 
@@ -42,114 +19,83 @@ class SettingsStore;
 
 namespace hikari::app {
 
-// F4: Rules.txt's bytes as FillRulesList read them through
-// OpenWrite::FileOpen (R4-uchardet: UTF-8, else uchardet's charset, else
-// wxConvLocal; R5-per-platform line ends): text that does not decode was
-// read as none, which gave the shipped rules.
+// Bytes that do not decode give the shipped rules.
 application::ReplacerRules readLegacyRules(const QByteArray &bytes);
-// The same from a file; nothing when it cannot be read.
+// nullopt when the file cannot be read.
 std::optional<application::ReplacerRules> readLegacyRulesFile(const std::filesystem::path &path);
-// CF2 (#489): those rules as rules.toml's text.
 std::string legacyRulesToml(const QByteArray &bytes);
 
+// An activated import takes effect at the next start (recover()); values edited since staging
+// are kept over it.
 class SettingsImportStore {
 public:
-    // `settings` is the live registry; `folder` the settings folder (beside
-    // settings.toml: rules.toml, Dictionary/).
     SettingsImportStore(ui::SettingsStore &settings, QString folder, QString profileName = QStringLiteral("default"));
-    // UD1: the user's dictionaries are elsewhere (the user folder's
-    // dictionaries); a profile still names them Dictionary/<name>. The
-    // start's untouched copies of the dictionaries in `bundled` (empty: the
-    // program folder's Dictionary) are no profile's.
+    // Empty `folder`: the settings folder's Dictionary; empty `bundled`: the program folder's.
     void setDictionaryFolder(QString folder, QString bundled = {})
     {
         m_dictionaryFolder = std::move(folder);
         m_bundledDictionaryFolder = std::move(bundled);
     }
 
-    // ---- Discovery
-
     struct Root {
         QString path;
-        QStringList files;  // known sources found, relative ("Config/Config.txt")
-        QStringList themes; // Themes/*.txt (excluded, named in the plan)
+        QStringList files;  // relative, e.g. "Config/Config.txt"
+        QStringList themes; // Themes/*.txt, never imported
     };
-    // A legacy installation's folder (legacy pathfull, the executable's): a
-    // root when it holds any known source. Folders are never combined.
+    // nullopt unless the folder holds a known source.
     static std::optional<Root> inspectRoot(const QString &path);
-    // The candidates that are roots, each once, in the order given.
+    // Each root once, in the order given.
     static QList<Root> discoverRoots(const QStringList &candidates);
-    // Executable-adjacent places to look: the program folder and, on
-    // Windows, the usual installation folders.
     static QStringList defaultCandidates();
 
-    // ---- Snapshot
-
     struct Snapshot {
-        QString id; // over the sources' paths and hashes
+        QString id;
         QString dir;
         QString root;
         std::vector<application::settings_import::SourceFile> sources;
         QStringList themeFiles;
     };
-    // Copies the root's sources (bytes as read) into a snapshot; the same
-    // bytes again reuse it. nullopt with `error` when a file cannot be read.
+    // The same bytes again reuse the snapshot. nullopt with `error` when a file cannot be read.
     std::optional<Snapshot> snapshot(const Root &root, QString *error = nullptr);
-    // Whether the root's files still have the snapshot's hashes.
     static bool sourcesUnchanged(const Snapshot &snapshot);
 
-    // ---- The destination
-
-    // What a plan compares with: the pending generation's profile when one
-    // waits for the next start, else the live one.
+    // The pending generation's profile when one waits for the next start, else the live one.
     application::settings_import::Destination destination() const;
     application::settings_import::Profile liveProfile() const;
-    // The destination's revision (a hash of its profile).
     QString revision() const;
     std::optional<application::settings_import::Receipt> activeReceipt() const;
 
-    // ---- Generations
-
     int activeGeneration() const;   // 0: none
     int previousGeneration() const; // 0: none
-    bool pending() const;           // activated, waiting for the next start
+    bool pending() const;           // waiting for the next start
     bool canRollBack() const { return previousGeneration() > 0; }
-    // Staging directories left without their "complete" marker.
     QStringList incompleteStaging() const;
 
     enum class Result {
         Activated,
-        NoChange,          // the same accepted plan again: nothing staged
-        StaleSources,      // the legacy files changed since the snapshot
-        StaleDestination,  // the destination changed since the plan
-        StagingFailed,     // before the switch: the previous generation stays active
+        NoChange,          // nothing staged
+        StaleSources,
+        StaleDestination,
+        StagingFailed,     // the previous generation stays active
         NothingToRollBack,
     };
     Result activate(const application::settings_import::Plan &plan,
                     const std::set<std::string, std::less<>> &chosen, const Snapshot &snapshot,
                     const QString &planRevision);
 
-    // What a rollback would replace: settings and files changed since the
-    // active generation (setting ids, file paths).
+    // Setting ids and file paths changed since the active generation.
     QStringList editsSinceActivation() const;
-    // What the next start keeps against a waiting import: settings and files
-    // the import changes that were edited since it was staged.
+    // Setting ids and file paths the waiting import changes that were edited since staging.
     QStringList editsKeptOverImport() const;
     Result rollback();
 
-    // At start, before the profile is read: brings the live profile to the
-    // active generation when it does not hold it yet. Returns whether it
-    // changed anything.
+    // Call at start before the profile is read. Returns whether it changed anything.
     bool recover();
 
-    // An imported macro binding's problem with the scripts loaded now
-    // (Destination::macroProblem).
     std::function<std::string(std::string_view alias)> macroProblem;
-    // W2: whether a subtitle renderer is installed here
-    // (Destination::rendererInstalled).
     std::function<bool(std::string_view name)> rendererInstalled;
 
-    // Tests: a step that fails (returning true makes it fail).
+    // Tests: returning true fails that step.
     enum class Step { Backup, Profile, Files, Complete, Manifest };
     std::function<bool(Step)> failAt;
 
@@ -178,14 +124,11 @@ private:
     application::settings_import::Destination destinationOf(const application::settings_import::Profile &profile) const;
 
     ui::SettingsStore &m_settings;
-    // A profile path's file on disk (Dictionary/<name> in the dictionary folder).
     QString diskPath(const QString &path) const;
-    // With a dictionary folder: the seeded copies of the bundled
-    // dictionaries there still as bundled, which no profile holds.
     QStringList seededDictionaries() const;
 
     QString m_folder;
-    QString m_dictionaryFolder; // empty: the settings folder's Dictionary
+    QString m_dictionaryFolder;
     QString m_bundledDictionaryFolder;
     QString m_profileName;
 };

@@ -23,7 +23,6 @@ QString xdgDir(const QString &value, const QString &home, const char *fallback)
     return home + QLatin1Char('/') + QLatin1String(fallback);
 }
 
-// A Windows folder from the environment, with forward slashes on any host.
 QString windowsFolder(const QString &value)
 {
     return QDir::cleanPath(QString(value).replace(QLatin1Char('\\'), QLatin1Char('/')));
@@ -40,9 +39,6 @@ QByteArray sha256Of(const QString &path)
     return hash.result().toHex();
 }
 
-// Writes `source` over `target` through a temporary file beside it, so a
-// failed copy leaves the target as it was. The copy is the user's to edit,
-// whatever the program folder's permissions.
 bool copyOver(const QString &source, const QString &target)
 {
     QDir().mkpath(QFileInfo(target).absolutePath());
@@ -50,6 +46,7 @@ bool copyOver(const QString &source, const QString &target)
     QFile::remove(part);
     if (!QFile::copy(source, part))
         return false;
+    // QFile::copy keeps the source's permissions, which may be read-only.
     QFile::setPermissions(part, QFile::permissions(part) | QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     if (QFileInfo::exists(target) && !QFile::remove(target)) {
         QFile::remove(part);
@@ -59,14 +56,12 @@ bool copyOver(const QString &source, const QString &target)
 }
 
 const QString kSeedRecord = QStringLiteral(".bundled-files");
-// The old folders were dealt with (moved in, or named to a portable copy).
 const QString kMoveRecord = QStringLiteral(".old-folders");
-// What stays of an old data folder inside the user folder (Windows).
 const QString kLeftBehind = QStringLiteral("old-HikariSub");
 
 struct SeedRecord {
-    QByteArray manifest;                // the manifest's digest at the last seeding
-    QHash<QString, QByteArray> version; // user path -> the bundled version's digest
+    QByteArray manifest;
+    QHash<QString, QByteArray> version;
 };
 
 SeedRecord readSeedRecord(const QString &file)
@@ -103,9 +98,6 @@ bool writeSeedRecord(const QString &file, const SeedRecord &record)
     return out.commit();
 }
 
-// Moves `source` to `target`; a folder whose target exists is merged entry
-// by entry. What cannot go because the target has it stays, in `leftOver`;
-// the paths in `stay` stay too, in `keptBack`.
 void moveEntry(const QString &source, const QString &target, QStringList &leftOver, const QStringList &stay,
                QStringList &keptBack)
 {
@@ -138,8 +130,6 @@ void moveEntry(const QString &source, const QString &target, QStringList &leftOv
     QDir().rmdir(source);
 }
 
-// Removes `folder` and the empty folders in it, and then its parent when
-// that is empty too (the HikariSub organisation folder above the old ones).
 void removeEmpty(const QString &folder)
 {
     const QDir dir(folder);
@@ -217,7 +207,6 @@ UserFolder::SeedReport UserFolder::seed(const QString &programFolder) const
     const QByteArray listingDigest = QCryptographicHash::hash(listing, QCryptographicHash::Sha256).toHex();
     const QString recordFile = m_root + QLatin1Char('/') + kSeedRecord;
     SeedRecord record = readSeedRecord(recordFile);
-    // The same bundled files as at the last start: only missing ones come in.
     const bool sameBundle = record.manifest == listingDigest;
     bool changed = !sameBundle;
     QSet<QString> listed;
@@ -259,8 +248,6 @@ UserFolder::SeedReport UserFolder::seed(const QString &programFolder) const
             report.kept << user;
         }
     }
-    // A file the bundle no longer has goes while it is as bundled; a changed
-    // one is the user's from now on.
     if (!sameBundle) {
         const QStringList recorded = record.version.keys();
         for (const QString &user : recorded) {
@@ -278,8 +265,6 @@ UserFolder::SeedReport UserFolder::seed(const QString &programFolder) const
             changed = true;
         }
     }
-    // A file that could not be written is tried again at the next start:
-    // the bundle counts as seeded only once every file is.
     if (report.failed.isEmpty())
         record.manifest = listingDigest;
     if (changed) {
@@ -307,9 +292,6 @@ UserFolder::OldFolders UserFolder::OldFolders::of(const Environment &env)
 UserFolder::MoveReport UserFolder::moveIn(const OldFolders &oldFolders, bool portable) const
 {
     MoveReport report;
-    // Once per user folder, recorded in it: deleting the settings files to reset the
-    // settings brings nothing back (#397). A user folder with settings and
-    // no record was moved into by a start before the record.
     const QString record = m_root + QLatin1Char('/') + kMoveRecord;
     if (QFileInfo::exists(record))
         return report;
@@ -320,20 +302,14 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &oldFolders, bool por
             file.close();
         return report;
     };
-    // CF1: hikari.ini is the settings of a folder from before settings.toml.
     if (QFileInfo::exists(settingsFile()) || QFileInfo::exists(m_root + QStringLiteral("/hikari.ini")) ||
         QFileInfo::exists(m_root + QStringLiteral("/hikari.ini.old")))
         return recordDone();
-    // A portable copy takes nothing from the system folders, which other
-    // copies may still use; the notice says where the old settings are.
     if (portable) {
         if (!oldFolders.config.isEmpty() && QFileInfo::exists(oldFolders.config + QStringLiteral("/hikari.ini")))
             report.earlierSettings = QDir::toNativeSeparators(oldFolders.config);
         return recordDone();
     }
-    // On Windows the old data folder (%APPDATA%\HikariSub\HikariSub) is in
-    // the user folder: it takes a name of its own first, so what stays
-    // behind is not taken for the user's (#397).
     OldFolders old = oldFolders;
     if (old.data.startsWith(m_root + QLatin1Char('/')) && QFileInfo(old.data).isDir()) {
         const QString renamed = m_root + QLatin1Char('/') + kLeftBehind;
@@ -342,7 +318,6 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &oldFolders, bool por
     }
     const auto into = [this](const QString &path) { return m_root + QLatin1Char('/') + path; };
     const auto cached = [this](const QString &path) { return m_cache + QLatin1Char('/') + path; };
-    // hikari.ini's folder: the settings and what was kept beside them.
     const auto configTarget = [&](const QString &name) {
         if (name == QLatin1String("Dictionary"))
             return into(QStringLiteral("dictionaries"));
@@ -356,12 +331,6 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &oldFolders, bool por
             return cached(name);
         return into(name);
     };
-    // The data folder: Recovery, the installed copy's Automation folder (its
-    // automation/Autoload and Include become automation/autoload and
-    // include), the files a quit left for the next start.
-    // DependencyControl's own files stay in the old folder: they are the old
-    // package's 0.6.4 or its self-update, and in the user folder they would
-    // shadow the release the program brings (DC1-depctrl-release).
     QStringList stay;
     const auto dataTargets = [&](const QString &folder) {
         QList<std::pair<QString, QString>> out;
@@ -380,13 +349,9 @@ UserFolder::MoveReport UserFolder::moveIn(const OldFolders &oldFolders, bool por
                         out.append({automation.filePath(sub), into(sub)});
                         continue;
                     }
-                    // Autoload and autoload, Include and include become
-                    // one folder each; the copy the old search used goes
-                    // first, so it is the one kept: a later autoload folder
-                    // replaced a script of the same name, an earlier include
-                    // folder shadowed a module (automationFolders).
                     const QDir scripts(automation.filePath(sub));
                     QStringList parts = scripts.entryList(entries);
+                    // MUST KILL: rank order mirrors the old script search, so the copy it used wins.
                     const auto rank = [](const QString &part) {
                         return part == QLatin1String("autoload") ? 0 : part == QLatin1String("Autoload") ? 1
                                : part == QLatin1String("Include")  ? 2 : part == QLatin1String("include") ? 3 : 4;

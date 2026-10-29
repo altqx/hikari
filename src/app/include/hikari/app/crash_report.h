@@ -1,19 +1,5 @@
 #pragma once
 
-// CR1 (#452): what a crash, freeze or issue report holds, built on this
-// machine and shown in full before anything leaves it.
-// * Scrubber: takes out of a Log line what could name the user's files or
-//   hold their subtitles: a path, a file name (fileN.ext in order of first
-//   use, the extension kept), a Line's text and any quoted text (‹text›, or
-//   ‹font› after "font"), and any other folder (‹folder›).
-// * Report: the crash or freeze record, the system, the settings as ids and
-//   values from a closed list, and the Log's last lines (scrubbed when they
-//   were written); as the text the window shows, as PostHog's events and as
-//   the GitHub issue's fields. A note the user types goes as typed.
-// * Issue: Help › Report an issue's draft, as a prefilled new-issue link
-//   that matches .github/ISSUE_TEMPLATE, or the Markdown when the link would
-//   be too long.
-
 #include "hikari/app/crash_record.h"
 
 #include <QDateTime>
@@ -35,8 +21,7 @@ namespace hikari::app::report {
 
 class Scrubber {
 public:
-    // The names of the files open now (documents, video, audio, keyframes)
-    // and the texts of their Lines; asked for at each scrub().
+    // Called at each scrub(): the open files' names and their Lines' texts.
     void setKnownNames(std::function<QStringList()> names) { m_names = std::move(names); }
     void setKnownTexts(std::function<QStringList()> texts) { m_texts = std::move(texts); }
 
@@ -47,10 +32,9 @@ private:
 
     std::function<QStringList()> m_names;
     std::function<QStringList()> m_texts;
-    QHash<QString, QString> m_files; // file name, case folded => fileN.ext
+    QHash<QString, QString> m_files;
 };
 
-// This system, as app_started describes it (ids only).
 struct System {
     QString version;
     QString channel;  // stable, prerelease
@@ -71,18 +55,14 @@ struct Setting {
     QString id;
     QString value;
 };
-// The settings a report names: ids and values from a closed list (a value
-// that is not one becomes "custom"), never a folder, a font or a name.
+// Ids and values from a closed list; any other value is "custom".
 QList<Setting> settingsSummary(const ui::SettingsStore &settings);
 
-// The Log's last lines a report holds, within kLogChars in all (the
-// crash_report event's log field), each cut at kLogLineChars.
 constexpr int kLogLines = 200;
 constexpr int kLogChars = 64 * 1024;
 constexpr int kLogLineChars = 1000;
-// The note's length (the crash_report event's note field).
 constexpr int kNoteChars = 4000;
-// The last of `lines` within those bounds.
+// The last kLogLines of lines, within kLogChars in all, each cut at kLogLineChars.
 QStringList boundLog(QStringList lines);
 
 struct Report {
@@ -96,39 +76,30 @@ struct Report {
     bool recovered = false;             // a freeze the window came back from
 
     QString kind() const; // crash, freeze or issue
-    // What the window shows and what goes: the note first when there is one.
     QString text(const QString &note) const;
-    // The crash record's own section, the system's and the settings' (text).
     QString recordText() const;
     QString systemText() const;
     QString settingsText() const;
     QString logText() const;
 
-    // PostHog: $exception (the record, as AN1 sends it) and crash_report.
+    // PostHog's $exception and crash_report event properties.
     QJsonObject exceptionProperties() const;
     QJsonObject reportProperties(const QString &note) const;
 
-    // The report kept on disk until it is sent or dismissed.
     QJsonObject toJson() const;
     static std::optional<Report> fromJson(const QJsonObject &json);
 };
 
-// Help › Report an issue, and a crash or freeze report taken to GitHub.
 struct Issue {
     enum Kind { Bug, Feature, Question };
     Kind kind = Bug;
     QString title;
-    // The form's fields by id (bug.yml: what-happened, steps, expected,
-    // crash-report, system, log; feature.yml: wanted, why, system;
-    // question.yml: question, system).
+    // By form field id (.github/ISSUE_TEMPLATE: bug.yml, feature.yml, question.yml).
     QList<std::pair<QString, QString>> fields;
 
     static QString templateFile(Kind kind);
-    // The fields under their headings, as Copy writes them.
     QString markdown() const;
-    // The prefilled new-issue link; when it would be longer than
-    // `maxLength`, the template's form with the title only (the rest goes to
-    // the clipboard).
+    // Over maxLength the link holds the title only and complete is false.
     struct Link {
         QUrl url;
         bool complete = true;
@@ -137,7 +108,6 @@ struct Issue {
     static constexpr int kMaxLinkLength = 8000;
     static QUrl newIssueBase();
 
-    // A crash or freeze report as a Bug issue.
     static Issue fromReport(const Report &report, const QString &note);
 };
 

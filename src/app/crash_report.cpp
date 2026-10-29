@@ -16,17 +16,12 @@ namespace hikari::app::report {
 
 namespace {
 
-// The extensions a file name is known by: subtitles, video, audio,
-// keyframes, scripts, fonts, images, archives and the app's own files.
 const QString kExtensions = QStringLiteral(
     "ass|ssa|srt|sub|idx|sup|vtt|sbv|smi|ttml|txt|mkv|mp4|m4v|avi|mov|webm|wmv|m2ts|mts|ts|flv|ogm|ogv|mpg|mpeg|vob|"
     "y4m|avs|vpy|wav|mp3|flac|aac|m4a|ogg|oga|opus|ac3|eac3|dts|mka|wma|w64|lua|moon|ttf|otf|ttc|pfb|woff2?|png|"
     "jpe?g|bmp|gif|webp|zip|7z|rar|json|ini|log|xml|pdf|md|cfg|hikarisub|aegisub|kf|wwxd|xvid|qp");
-// An absolute path: C:\ or C:/, \\server\, / or ~/ (not inside a word or a
-// fraction such as 1/2).
 const QString kPathStart = QStringLiteral(R"((?:(?<![\w.\\/])[A-Za-z]:[\\/]|\\\\[^\\\s]+\\|(?<![\w.:/~\\])~?/)(?=\S))");
 
-// What opens and closes a quotation.
 const QList<std::pair<QChar, QChar>> kQuotes{{u'\u201C', u'\u201D'}, {u'"', u'"'},   {u'\u2018', u'\u2019'},
                                               {u'\u00AB', u'\u00BB'}, {u'\u300C', u'\u300D'}, {u'\u300E', u'\u300F'},
                                               {u'\'', u'\''}};
@@ -37,8 +32,6 @@ QString fileNameOf(const QString &path)
     return path.mid(slash + 1);
 }
 
-// `value` as a report may hold it: a word of letters, digits and . _ + -,
-// else "custom".
 QString plain(const QString &value)
 {
     static const QRegularExpression ok(QStringLiteral("^[A-Za-z0-9_.+-]{1,32}$"));
@@ -55,7 +48,6 @@ QString severityName(int level)
     return level == 2 ? QStringLiteral("Error") : level == 1 ? QStringLiteral("Warning") : QStringLiteral("Info");
 }
 
-// Text left-aligned in `width` columns.
 QString padded(const QString &text, int width)
 {
     return text.leftJustified(width, u' ');
@@ -81,8 +73,6 @@ QString Scrubber::placeholder(const QString &fileName)
 QString Scrubber::scrub(const QString &input)
 {
     QString text = input;
-    // A Line's text, wherever it is (longest first, so a Line that holds a
-    // shorter one goes whole).
     if (m_texts) {
         QStringList texts = m_texts();
         texts.removeIf([](const QString &t) { return t.trimmed().size() < 4; });
@@ -90,7 +80,6 @@ QString Scrubber::scrub(const QString &input)
         for (const QString &t : std::as_const(texts))
             text.replace(t, QStringLiteral("\u2039text\u203A"));
     }
-    // A path with a file name: the name's placeholder; any other path: ‹folder›.
     static const QRegularExpression fileUrl(QStringLiteral("file:/*(?=[A-Za-z]:|/)"), QRegularExpression::CaseInsensitiveOption);
     text.replace(fileUrl, QStringLiteral("/"));
     static const QRegularExpression pathToFile(kPathStart + QStringLiteral(R"([^\n\t"“”«»<>|]*?\.(?:)") + kExtensions +
@@ -100,11 +89,8 @@ QString Scrubber::scrub(const QString &input)
         const QString name = placeholder(fileNameOf(m.captured()));
         text.replace(m.capturedStart(), m.capturedLength(), name);
     }
-    // A folder name may hold spaces: the path goes on past one while the
-    // next word holds a separator too (/home/Alice Smith/.local).
     static const QRegularExpression folder(kPathStart + QStringLiteral(R"([^\s"“”«»<>|]+(?:[ \t]+[^\s"“”«»<>|/\\]*[/\\][^\s"“”«»<>|]*)*)"));
     text.replace(folder, QStringLiteral("\u2039folder\u203A"));
-    // The names of the files open now, then any other word that is a file name.
     if (m_names) {
         QStringList names = m_names();
         for (QString &n : names)
@@ -119,8 +105,7 @@ QString Scrubber::scrub(const QString &input)
                 at += name.size();
             }
     }
-    // Start only at the beginning of a non-file-name token. This keeps a failed
-    // extension from retrying every suffix of a token (quadratic for "----.q").
+    // MUST KILL: the lookbehind is for speed; without it "----.q" backtracks quadratically.
     static const QRegularExpression bareFile(QStringLiteral(R"((?<![^\s"“”«»<>|/\\])(?!file\d+\.)[^\s"“”«»<>|/\\]+\.(?:)") +
                                                  kExtensions + QStringLiteral(R"()(?![A-Za-z0-9]))"),
                                              QRegularExpression::CaseInsensitiveOption);
@@ -128,12 +113,10 @@ QString Scrubber::scrub(const QString &input)
         const QString name = placeholder(m.captured());
         text.replace(m.capturedStart(), m.capturedLength(), name);
     }
-    // Quoted text: ‹font› after "font", else ‹text›; a quoted placeholder stays.
     static const QRegularExpression placeholderOnly(QStringLiteral("^(file\\d+(\\.[a-z0-9]+)?|\u2039[a-z]+\u203A)$"));
     for (const auto &[open, close] : kQuotes) {
         qsizetype at = 0;
         while ((at = text.indexOf(open, at)) >= 0) {
-            // An apostrophe inside a word (don't) opens nothing.
             if (open == u'\'' && at > 0 && text.at(at - 1).isLetterOrNumber()) {
                 ++at;
                 continue;

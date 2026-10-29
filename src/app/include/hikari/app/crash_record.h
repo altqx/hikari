@@ -1,16 +1,5 @@
 #pragma once
 
-// AN1 (#404): a native crash leaves a small record that the next start sends
-// as $exception (Analytics). A signal handler on Linux and an unhandled
-// exception filter (SEH) on Windows write it: the signal or exception code,
-// the version, and up to 32 frames as module and offset. A module is named
-// only when it is the program's own (in its folder) or the system's (/usr,
-// /lib; the Windows folder), by file name; any other is "other", so no path
-// and no name of the user's own files is written.
-// CR1 (#452): a freeze the hang watchdog saw is a record of the same form,
-// type APP_HANG, mechanism "watchdog", with how long the window did not
-// answer (`seconds`).
-
 #include <QList>
 #include <QString>
 
@@ -26,32 +15,27 @@ struct Frame {
 };
 
 struct Record {
-    QString type;      // SIGSEGV, …, or the SEH code's name (EXCEPTION_ACCESS_VIOLATION) or 0x… code, or APP_HANG
+    QString type;      // a signal name, an SEH code's name or 0x… code, or kFreezeType
     QString mechanism; // "signal", "seh" or "watchdog"
     QString version;
     QList<Frame> frames;
-    int seconds = 0;   // a freeze: how long the window did not answer (so far)
+    int seconds = 0;   // a freeze only: how long the window has not answered
     bool freeze() const { return mechanism == QLatin1String("watchdog"); }
 };
 
 inline constexpr char kFreezeType[] = "APP_HANG";
 
-// Installs the handlers, which write `recordPath` when the process crashes.
-// `programFolder` names the program's own modules. Once per process; a
-// second call changes nothing.
+// Writes recordPath when the process crashes; programFolder marks the program's own modules.
+// A second call does nothing.
 void install(const QString &recordPath, const QString &programFolder, const QString &version);
-// Removes them (sending turned off).
 void uninstall();
 bool installed();
 
-// The record at `path`, when it is one. Anything that does not read as one
-// (a field outside its set, a module name that could be a path) is none.
+// nullopt for anything that is not a valid record (a field outside its set, a module path).
 std::optional<Record> read(const QString &path);
-// Writes `record` to `path` in the form read() takes (outside a handler).
+// Not for use inside a signal handler.
 bool write(const QString &path, const Record &record);
-// The frames of return addresses taken outside a handler (the hang
-// watchdog's), named as the handler names them: the program's own and the
-// system's modules by file name, any other "other". install() first.
+// Names modules as the crash handler does (any other is "other"); needs install() first.
 QList<Frame> framesOf(const quintptr *addresses, int count);
 
 } // namespace hikari::app::crash

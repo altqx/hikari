@@ -1,9 +1,3 @@
-// V3: video sources, tracks and chapters in the shell (legacy HikariSubFrame's
-// Video menu, VideoBox's file walk and Remove video, DummyVideo and
-// VideoBox::OpenKeyframes at 20d647c4). The stream and chapter lists and
-// Unload video live on the VideoController; this file keeps what needs the
-// recent lists, the log and the tab's media.
-
 #include "hikari/app/application.h"
 
 #include "hikari/application/keyframe_files.h"
@@ -42,10 +36,8 @@ bool missingLocalFile(const std::string &path)
 
 void Application::trackVideoSources()
 {
-    m_recentVideo.set(m_settings->settings().list("recent.video"));         // VIDEO_RECENT_FILES
-    m_recentKeyframes.set(m_settings->settings().list("recent.keyframes")); // KEYFRAMES_RECENT
-    // VideoBox::LoadVideo's SetRecent(1) (VideoBox.cpp:405) after each
-    // successful load, a dummy video's text included.
+    m_recentVideo.set(m_settings->settings().list("recent.video"));
+    m_recentKeyframes.set(m_settings->settings().list("recent.keyframes"));
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
         if (video.state() != application::VideoSession::State::Ready) {
@@ -58,8 +50,6 @@ void Application::trackVideoSources()
             rememberRecentVideo(path);
         }
     });
-    // V3-unload-video: the tab no longer has a video (legacy VideoPath), so
-    // neither a tab switch nor the session brings it back.
     connect(m_video.get(), &ui::VideoController::unloaded, this, [this] {
         m_pendingTabSeek.reset();
         m_tabSeekQueued = false;
@@ -72,12 +62,6 @@ void Application::trackVideoSources()
     });
 }
 
-// A failed open is logged once, with legacy ProviderFFMS2::Init's message for
-// the stage it failed at (ProviderFFMS2.cpp:165-357): "Indexing error
-// occurred: %s" for indexing (FFMS2's text; nothing when cancelled), "Cannot
-// create VideoSource.", "Cannot convert video to RGBA". Where legacy gave no
-// message (the indexer could not be made: a debug message only) the panel's
-// status is logged, as before.
 void Application::logVideoFailure()
 {
     const auto &session = m_video->session();
@@ -98,7 +82,7 @@ void Application::logVideoFailure()
         else {
             if (failure && failure->stage == OpenStage::Indexer)
                 qDebug().noquote() << QCoreApplication::translate("HikariSub.Video", "Indexing error occurred: %1")
-                                          .arg(text); // HikariLogDebug
+                                          .arg(text);
             notice(m_video->status());
         }
     }
@@ -117,8 +101,6 @@ void Application::rememberRecentKeyframes(const QString &path)
     m_settings->settings().set("recent.keyframes", m_recentKeyframes.entries());
 }
 
-// HikariSubFrame::AppendRecent (HikariSubFrame.cpp:1549-1591): missing local
-// files leave the list (and the list is written), each row "<n> <name>".
 QVariantList Application::recentRows(application::RecentFiles &list, const char *setting)
 {
     if (list.prune(missingLocalFile))
@@ -143,9 +125,6 @@ QVariantList Application::recentKeyframes()
     return recentRows(m_recentKeyframes, "recent.keyframes");
 }
 
-// GLOBAL_OPEN_KEYFRAMES' dialog and OnRecent's keyframes (HikariSubFrame.cpp:
-// 1061-1065, 1631-1635): KeyframesPath, OpenKeyframes, SetRecent(3), the
-// list taking the file whether or not it held keyframes.
 QString Application::openKeyframesFile(const QString &path)
 {
     const QString local = QUrl(path).isLocalFile() ? QUrl(path).toLocalFile() : path;
@@ -154,8 +133,6 @@ QString Application::openKeyframesFile(const QString &path)
     return problem;
 }
 
-// The video dialog: the subtitles' folder, else the latest recent video's
-// (HikariSubFrame.cpp:1039-1042).
 QUrl Application::videoDialogFolder() const
 {
     QString from;
@@ -169,13 +146,11 @@ QUrl Application::videoDialogFolder() const
     return QUrl::fromLocalFile(QFileInfo(from).absolutePath());
 }
 
-// The keyframes dialog: the video's folder, else the latest recent
-// keyframes' (HikariSubFrame.cpp:1055-1058).
 QUrl Application::keyframesDialogFolder() const
 {
     QString from = QString::fromStdString(m_video->session().path());
     if (application::isDummyVideo(from.toStdString()))
-        from.clear(); // HikariPathDir of the dummy's text: no folder
+        from.clear();
     if (from.isEmpty() && !m_recentKeyframes.entries().empty())
         from = QString::fromStdString(m_recentKeyframes.entries().front());
     if (from.isEmpty())
@@ -183,15 +158,11 @@ QUrl Application::keyframesDialogFolder() const
     return QUrl::fromLocalFile(QFileInfo(from).absolutePath());
 }
 
-// VideoBox::OpenKeyframes with the audio box loaded and no video
-// (VideoBox.cpp:1722-1741): the frames at 23.976 fps go to the box, which
-// snaps half a frame earlier (AudioDisplay.cpp:2506-2509). False when it does
-// not apply (no audio): the file then waits for a video.
 bool Application::keyframesWithoutVideo(const QString &path, QString &problem)
 {
     if (!m_audio || !m_audio->hasAudio())
         return false;
-    m_pendingKeyframes.clear(); // legacy clears m_KeyframesFileName
+    m_pendingKeyframes.clear();
     QFile f(path);
     QByteArray bytes;
     if (f.open(QIODevice::ReadOnly))
@@ -214,7 +185,6 @@ bool Application::keyframesWithoutVideo(const QString &path, QString &problem)
 
 QVariantMap Application::dummyVideoDefaults() const
 {
-    // DummyVideo's controls (DummyVideo.cpp:23-99)
     return {{QStringLiteral("resolutions"),
              QStringList{QStringLiteral("640x480 (SD fullscreen)"), QStringLiteral("704x480 (SD anamorphic)"),
                          QStringLiteral("640x360 (SD widescreen)"), QStringLiteral("704x396 (SD widescreen)"),
@@ -232,9 +202,6 @@ QVariantMap Application::dummyVideoDefaults() const
             {QStringLiteral("frames"), *application::dummyVideoFrames("23.976", 1500000)}};
 }
 
-// GLOBAL_OPEN_DUMMY_VIDEO's OK (HikariSubFrame.cpp:1069-1075): GetDummyText,
-// then the video loads as any other (Notebook::LoadVideo, the audio left as
-// it is). {fps (text), durationMs, width, height, red, green, blue, pattern}.
 QString Application::openDummyVideo(const QVariantMap &values)
 {
     const auto text = application::dummyVideoText(
@@ -250,25 +217,15 @@ QString Application::openDummyVideo(const QVariantMap &values)
     return {};
 }
 
-// VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE (VideoBox::NextFile): the folder of
-// the video (legacy VideoPath, kept by a failed open), else of the oldest
-// recent video (legacy videorec[size - 1]), listed as wxDir::GetAllFiles
-// lists it (application::legacy_dir, R5-per-platform): every entry that is
-// not a folder, hidden ones left out ('.' names on Linux, the hidden or
-// system attribute on Windows). The walker goes through it in natural name
-// order (V3-next-file-natural-order), not the file system's own order that
-// legacy walked
-// (tests/fixtures/legacy-observations/local-v3-next-file-20261013).
 bool Application::nextVideoFile(bool next)
 {
     const auto step = nextVideoStep(m_nextFile, next);
     if (!step)
-        return false; // legacy indexes an empty list (V3-next-file-no-recent)
+        return false;
     if (step->kind == application::NextFileStep::Kind::Open) {
         m_video->openVideo(QString::fromStdString(step->path));
         return true;
     }
-    // Seek(0); Pause(false): back to the start, and the play state toggled
     auto &session = m_video->session();
     const bool done = session.restartToggled();
     emit m_video->changed();
@@ -282,7 +239,6 @@ QString Application::nextVideoFileName(bool next) const
 
 QString Application::nextVideoFilePath(bool next) const
 {
-    // A copy walks, so the question leaves the walk where it is.
     application::NextFileWalker walker = m_nextFile;
     const auto step = nextVideoStep(walker, next);
     if (!step || step->kind != application::NextFileStep::Kind::Open)
@@ -312,8 +268,6 @@ std::optional<application::NextFileStep> Application::nextVideoStep(application:
             return std::nullopt;
         path = QString::fromStdString(m_recentVideo.entries().back());
     }
-    // a folder that cannot be opened (a dummy video's text has none) walks
-    // the last listing again (legacy's `files` member)
     std::optional<std::vector<std::string>> files;
     if (!application::isDummyVideo(path.toStdString())) {
 #ifdef _WIN32
@@ -321,9 +275,7 @@ std::optional<application::NextFileStep> Application::nextVideoStep(application:
 #else
         constexpr auto format = application::PathFormat::Unix;
 #endif
-        // the folder as `path` writes it and each file as that folder, a
-        // separator and the name (wxDir::GetAllFiles), so that `path` is
-        // found when written so ("..", "." or a relative path kept)
+        // MUST KILL: entries must spell the folder as path does, or the walker never finds path.
         const QString folder = QString::fromStdString(application::nextFileFolder(path.toStdString(), format));
         if (const auto listed = application::legacy_dir::entries(QFileInfo(folder).filesystemFilePath(), {},
                                                                  application::legacy_dir::Files)) {

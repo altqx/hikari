@@ -1,8 +1,3 @@
-// KA7: the Karaoke check window's rows. The checks themselves are
-// core::checkKaraoke; here each problem becomes a row the window lists, and
-// choosing one selects its Line as a click in the Grid does, while the
-// Document checked is still the editing target.
-
 #include "hikari/app/application.h"
 
 #include "hikari/core/karaoke_checks.h"
@@ -16,20 +11,18 @@ namespace hikari::app {
 
 namespace {
 
-// Milliseconds as seconds: "2.50", or "2.505" for a fractional centisecond.
 QString seconds(std::int64_t ms)
 {
     return QString::number(static_cast<double>(ms) / 1000.0, 'f', ms % 10 != 0 ? 3 : 2);
 }
 
-// The syllables a problem lists, and "…" when it has more than it lists.
 QString syllables(const core::KaraokeProblem &problem)
 {
     QStringList list;
     for (std::size_t n : problem.syllables)
         list << QString::number(n);
     if (problem.syllableCount > problem.syllables.size())
-        list << QString(QChar(0x2026)); // "…"
+        list << QString(QChar(0x2026));
     const QString label = problem.syllableCount == 1 ? QCoreApplication::translate("HikariSub.Karaoke", "Syllable %1")
                                                      : QCoreApplication::translate("HikariSub.Karaoke", "Syllables %1");
     return label.arg(list.join(QStringLiteral(", ")));
@@ -45,8 +38,6 @@ QVariantMap Application::checkKaraoke() const
     if (!session)
         return {{QStringLiteral("rows"), rows}, {QStringLiteral("unlisted"), 0}};
     using Kind = core::KaraokeProblem::Kind;
-    // The editor's pending draft counts, as it shows on the video: the
-    // Document with the draft applied (a draft is not committed for this).
     const auto draft = m_editorDocument == target ? m_editor->draftDocument() : std::nullopt;
     const core::KaraokeCheck checked = core::checkKaraoke(draft ? *draft : session->document());
     for (const core::KaraokeProblem &problem : checked.problems) {
@@ -101,7 +92,6 @@ bool Application::showKaraokeLine(qulonglong document, qulonglong line)
     const auto lines = session->document().lines();
     if (std::ranges::none_of(lines, [line](const core::LineRecord *record) { return record->id.value == line; }))
         return false;
-    // Refused when the editor cannot leave its Line (a draft it cannot commit).
     return applySelection(gridSelection().plain(session->selection(), core::LineId{line}));
 }
 

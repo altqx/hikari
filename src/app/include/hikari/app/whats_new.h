@@ -1,17 +1,5 @@
 #pragma once
 
-// SH3 (#223, owner-approved 2026-10-21): What's new from the GitHub release
-// notes, for the Home page's card and Help > What's new (no popup after an
-// update). Its cache file, one per copy of the program, keeps the version
-// that ran last and the one its notes start after; at each start the
-// version that ran before this one comes from there. While "Check for
-// updates automatically" is on it reads the release list once per installed
-// version (UpdateChecker::readReleases, or the list the start's own check
-// reads), and keeps the notes after that version up to the installed one in
-// the cache; offline, or with checks off later, the cached notes still show. What
-// shows follows the update checker's channel (whatsNewShown). The notes are
-// Markdown, rendered as plain rich text by render().
-
 #include "hikari/app/update_checker.h"
 #include "hikari/application/update_check.h"
 
@@ -29,10 +17,9 @@ namespace hikari::app {
 
 class WhatsNew : public QObject {
     Q_OBJECT
-    // The releases shown, highest first: {version, name, date (QDate, or
-    // invalid), prerelease, notes (Markdown)}.
+    // Highest first: {version, name, date (QDate, or invalid), prerelease, notes (Markdown)}.
     Q_PROPERTY(QVariantList releases READ releases NOTIFY changed)
-    // How many more the at-most-ten leave out.
+    // How many releases past the ten shown are left out.
     Q_PROPERTY(int more READ more NOTIFY changed)
     // The version run before this one; empty on a first start.
     Q_PROPERTY(QString since READ since NOTIFY changed)
@@ -40,12 +27,10 @@ class WhatsNew : public QObject {
     // "failed" (not read, none cached) or "off" (checks off, none cached).
     Q_PROPERTY(QString state READ state NOTIFY changed)
 public:
-    // The notes and the version run last are kept in `cacheFile`; empty:
-    // in memory only (every start is a first one).
+    // cacheFile empty: in memory only, so every start is a first one.
     WhatsNew(UpdateChecker &updates, QString cacheFile, QObject *parent = nullptr);
 
-    // At start, after the update check's: records the version, takes the
-    // cache, reads the list when it is due.
+    // Called once, after the update check has started.
     void start();
 
     QVariantList releases() const { return m_shown; }
@@ -53,30 +38,21 @@ public:
     QString since() const { return m_since; }
     QString state() const;
 
-    // Help > What's new: reads the list when nothing is cached and update
-    // checks are on.
+    // Reads the list only when nothing is cached and update checks are on.
     Q_INVOKABLE void fetchIfNeeded();
-    // Release notes as rich text: GitHub-flavoured Markdown without raw
-    // HTML; headings as section labels in `muted`; links in `link`, only
-    // http(s) ones; an image as its alt text, never loaded; code on `code`.
-    // The text takes the font of the view it is shown in.
+    // GitHub-flavoured Markdown, no raw HTML: headings in muted, http(s) links in link, images as
+    // their alt text (never loaded), code on code. The view's font applies.
     Q_INVOKABLE QString render(const QString &markdown, const QColor &muted, const QColor &link,
                                const QColor &code) const;
-    // Opens a link from the notes in the browser: http(s) only.
+    // http(s) links only.
     Q_INVOKABLE bool openLink(const QString &url);
-    // "All release notes": the feed's releases page.
     Q_INVOKABLE void openAllReleaseNotes();
     static QUrl allReleaseNotesUrl(const UpdateFeed &feed);
-    // The cache file's name in the update cache, per copy (the update
-    // installer's copy key).
+    // One cache file per copy, named by the update installer's copy key.
     static QString cacheFileIn(const UpdateEnvironment &environment);
-    // The most of a cache file the reader takes.
     static constexpr qint64 kMaxCacheBytes = 4 * 1024 * 1024;
-    // The cache file's content for `releases` (highest first) between
-    // `since` and `installed`, at most `limit` (the list's pages are capped
-    // one by one, so a range can be larger): past it the lowest versions'
-    // notes go, first those neither channel shows among its ten, then the
-    // lowest versions; empty when not even none fit.
+    // At most limit bytes: past it the lowest versions' notes go, first those neither channel
+    // shows among its ten, then the lowest versions; empty when nothing fits.
     static QByteArray cacheContent(const QString &installed, const QString &since,
                                    const std::vector<application::ReleaseEntry> &releases, qint64 limit);
 
@@ -94,12 +70,10 @@ private:
     UpdateChecker &m_updates;
     QString m_cacheFile;
     QString m_since;
-    // The releases between m_since and the installed version, every
-    // channel's, once read or taken from the cache.
     std::vector<application::ReleaseEntry> m_between;
     bool m_known = false;
     bool m_waiting = false;
-    bool m_started = false; // start() ran: the range is known
+    bool m_started = false;
     QVariantList m_shown;
     int m_more = 0;
 };

@@ -1,9 +1,3 @@
-// O5: the interface language and the program font, applied live
-// (docs/localisation.md). Legacy reads both when it starts
-// (hikarisubApp.cpp:327-369; the frame's font from Options.GetFont()) and
-// applies the program font live (OptionsDialog.cpp:1105-1112); the card asks
-// for the language to switch live as well.
-
 #include "hikari/app/application.h"
 
 #include <QCoreApplication>
@@ -17,18 +11,16 @@ namespace hikari::app {
 void Application::startLocalisation()
 {
     m_localisation = std::make_unique<Localisation>();
-    // WS3: no saved layout takes a preset's name in any shipped language.
     m_workspaceLayout->reservePresetNames(m_localisation->translationsOf(
         "HikariSub.Workspace", ui::WorkspaceLayoutController::presets()));
-    // Legacy turns the old "0" and "1" values into English (hikarisubApp.cpp:329-334).
+    // "0" and "1" are old stored values for English.
     if (const QString stored = m_settings->text("program.language"); stored == u"0" || stored == u"1")
         m_settings->set("program.language", QString());
-    m_untitledTitle = QCoreApplication::translate("HikariSub.Documents", "Untitled"); // the tabs made so far are named in English
+    // MUST KILL: set before switchLanguage() so it holds the English title.
+    m_untitledTitle = QCoreApplication::translate("HikariSub.Documents", "Untitled");
     connect(m_localisation.get(), &Localisation::languageChanged, this, &Application::languageSwitched);
-    // A pseudolocale for layout checks (accents, rtl), never stored.
     m_localisation->setPseudo(Localisation::pseudoNamed(qEnvironmentVariable("HIKARI_PSEUDOLOCALE")));
     switchLanguage();
-    // aegisub.gettext: answered on this thread, between switches.
     m_automation->setTranslation([localisation = QPointer<Localisation>(m_localisation.get())](const std::string &source) {
         return localisation ? localisation->gettext(source) : source;
     });
@@ -40,23 +32,13 @@ void Application::switchLanguage()
 {
     if (!m_localisation)
         return;
-    // A language without a catalog leaves English (legacy: wxLocale's
-    // "Cannot find language" or "Cannot find translation, language change
-    // failed" message boxes, hikarisubApp.cpp:347,365; here in the log, on
-    // every platform).
     if (!m_localisation->setLanguage(m_settings->text("program.language")))
         m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Options", "Language"),
                       QCoreApplication::translate("HikariSub.Options", "Cannot find translation, language change failed"));
 }
 
-// Retranslation refreshes what QML binds with qsTr; the strings the
-// application and its controllers made with tr() and keep are made again
-// here. Messages already shown (the log, a finished operation's result)
-// stay as they were, as strings a script already got do.
 void Application::languageSwitched()
 {
-    // Untitled tabs (legacy TabPanel's SubsName = _("Untitled")) take the
-    // new name; a tab that has a file or another name keeps it.
     const QString untitled = QCoreApplication::translate("HikariSub.Documents", "Untitled");
     if (untitled != m_untitledTitle) {
         for (const auto id : m_workspace.documents()) {
@@ -73,7 +55,6 @@ void Application::languageSwitched()
     m_statusBar->retranslate();
     m_workspaceLayout->retranslate();
     emit tabsChanged();
-    // The Options dialog's dictionary choice names its empty case.
     if (m_optionsLists.dictionarySymbols.empty() && !m_optionsLists.dictionaryNames.empty()) {
         m_optionsLists.dictionaryNames = {
             QCoreApplication::translate("HikariSub.Options", "Put files .dic and .aff to \"Dictionary\" folder").toStdString()};
@@ -83,8 +64,6 @@ void Application::languageSwitched()
 
 namespace {
 
-// Whether `o` takes part in Qt Quick Controls' font inheritance: controls,
-// popups' items, labels, text fields and areas, an ApplicationWindow.
 bool inheritsFonts(const QObject *o)
 {
     for (const QMetaObject *m = o->metaObject(); m; m = m->superClass())
@@ -95,10 +74,7 @@ bool inheritsFonts(const QObject *o)
     return false;
 }
 
-// Controls resolve their font when they are made (QGuiApplication::font())
-// and afterwards follow only their parents, so the program font goes to each
-// window's outermost ones (an ApplicationWindow itself), which hand it down.
-// Their other font attributes (a bold title) stay.
+// Qt Quick controls read QGuiApplication::font() only when made, then follow their parent.
 void giveFont(QObject *o, const QFont &font)
 {
     if (inheritsFonts(o)) {
@@ -115,15 +91,10 @@ void giveFont(QObject *o, const QFont &font)
 
 } // namespace
 
-// Options.GetFont() (config.cpp:946-971): PROGRAM_FONT at PROGRAM_FONT_SIZE
-// points, 10 when the size is 0 and Tahoma when the face is empty; the
-// platform substitutes a face it does not have. Every control follows, also
-// in windows made before the change (legacy: the frame, and the dialogs
-// DestroyDialogs makes again).
 void Application::applyProgramFont()
 {
     if (!m_localisation)
-        return; // not started yet
+        return;
     QFont font = m_startFont;
     const QString family = m_settings->text("program.font");
     const int size = m_settings->integer("program.fontSize");

@@ -15,16 +15,12 @@ namespace hikari::app {
 
 namespace {
 
-// KA3: the groups the strip shows at once, and the syllables and kanji
-// after them.
 constexpr std::size_t kShownGroups = 60;
 
 constexpr const char *kSuggest = "audio.kanjiTimerSuggest";
 constexpr const char *kMulti = "audio.kanjiTimerMulti";
 constexpr const char *kFurigana = "audio.kanjiTimerFurigana";
 
-// The Lines of the two styles in Document order: Lines with text, a romaji
-// Line with \k tags, no fx Line of the templater.
 std::pair<std::vector<application::KanjiTimer::Line>, std::vector<application::KanjiTimer::Line>>
 styleLines(application::EditSession &session, const QString &romajiStyle, const QString &kanjiStyle)
 {
@@ -64,7 +60,6 @@ application::KaraokeCharClass charClasses()
     return classes;
 }
 
-// h:mm:ss.cc, as the Grid shows ASS times.
 QString assTime(int ms)
 {
     const int cs = std::max(ms, 0) / 10;
@@ -75,7 +70,6 @@ QString assTime(int ms)
         .arg(cs % 100, 2, 10, QLatin1Char('0'));
 }
 
-// A Line's text as the list shows it: no override blocks, \N \n \h as spaces.
 QString shown(std::u16string_view text)
 {
     QString out;
@@ -208,7 +202,7 @@ void KanjiTimerController::setStyles(const QString &romaji, const QString &kanji
         return;
     m_romajiStyle = romaji;
     m_kanjiStyle = kanji;
-    m_timer.reset(); // other Lines: the grouping starts over
+    m_timer.reset();
     readLines();
     emit changed();
 }
@@ -243,7 +237,6 @@ void KanjiTimerController::guessStyles()
             m_kanjiStyle = style;
             return;
         }
-    // the next style with Lines after the romaji one, then any
     const auto at = m_styles.indexOf(m_romajiStyle);
     for (qsizetype i = 1; i <= m_styles.size(); ++i) {
         const QString &style = m_styles[(at + i) % m_styles.size()];
@@ -264,9 +257,6 @@ void KanjiTimerController::readLines()
     auto *session = target();
     const std::uint64_t document = session && m_hooks.targetId ? m_hooks.targetId() : 0;
     if (document != m_document) {
-        // Another Document: this one's timer is kept for when it is the
-        // target again (its done pairs, groupings and undo), the other's
-        // taken back or started.
         if (m_document != 0)
             m_kept[m_document] = Kept{std::move(m_timer), m_romajiStyle, m_kanjiStyle};
         m_document = document;
@@ -278,13 +268,10 @@ void KanjiTimerController::readLines()
             m_romajiStyle = kept->second.romajiStyle;
             m_kanjiStyle = kept->second.kanjiStyle;
             m_kept.erase(kept);
-            // Suggest groupings as it is now (changed on another Document)
             if (m_timer && m_timer->suggest() != suggest())
                 m_timer->setSuggest(suggest());
         }
     }
-    // The styles as the Document has them now (one added or renamed since);
-    // a chosen style it no longer has is guessed again.
     m_styles.clear();
     if (session)
         if (const auto styles = application::documentStyles(*session))
@@ -353,8 +340,6 @@ QVariantMap KanjiTimerController::pair() const
     if (!v)
         return {};
     const auto &p = m_timer->pairs()[static_cast<std::size_t>(m_timer->current())];
-    // A window of groups around the current one, and of what follows them:
-    // a Line of thousands of syllables must not make thousands of items.
     const std::size_t groupCount = v->linked.size() + (v->selection.syllables || v->selection.characters ? 1 : 0) + v->rest.size();
     const std::size_t shownFrom = v->linked.size() > kShownGroups / 2 ? v->linked.size() - kShownGroups / 2 : 0;
     const std::size_t shownTo = std::min(groupCount, shownFrom + kShownGroups);
@@ -376,7 +361,6 @@ QVariantMap KanjiTimerController::pair() const
         return out;
     };
     QVariantMap detail;
-    // KA4-furigana: each group's kanji runs
     std::vector<std::vector<const application::KanjiReading *>> runsOf(groupCount);
     for (const auto &r : v->readings)
         if (r.group < groupCount)
@@ -423,7 +407,6 @@ QVariantMap KanjiTimerController::pair() const
                       {QStringLiteral("cs"), cs},
                       {QStringLiteral("blank"), g.characters == 0}};
             if (!runs.empty()) {
-                // the dictionary's word, when it reads the group otherwise
                 QString dictionary;
                 for (const auto *r : runs)
                     if (r->differs && dictionary.isEmpty())
@@ -452,7 +435,6 @@ QVariantMap KanjiTimerController::pair() const
     for (std::size_t c = character; c < v->kanji.units.size() && c < character + kShownGroups; ++c)
         restKanji << QVariantMap{{QStringLiteral("text"), qs(v->kanji.units[c].text)},
                                  {QStringLiteral("index"), static_cast<int>(c)}};
-    // the current group has syllables and no character left for them
     QString noKanjiLeft;
     if (selection && v->selection.characters == 0) {
         std::size_t used = 0, from = 0;
@@ -478,7 +460,7 @@ QVariantMap KanjiTimerController::pair() const
             const bool tag = text[i] == QLatin1Char('{');
             const qsizetype end = tag ? (text.indexOf(QLatin1Char('}'), i) < 0 ? text.size() : text.indexOf(QLatin1Char('}'), i) + 1)
                                       : (text.indexOf(QLatin1Char('{'), i) < 0 ? text.size() : text.indexOf(QLatin1Char('{'), i));
-            if (result.size() >= qsizetype(4 * kShownGroups)) { // (the field shows the start)
+            if (result.size() >= qsizetype(4 * kShownGroups)) {
                 result << QVariantMap{{QStringLiteral("tag"), false}, {QStringLiteral("text"), QStringLiteral("…")}};
                 break;
             }
@@ -568,7 +550,6 @@ int KanjiTimerController::acceptAll()
 
 namespace {
 
-// The done pairs' kanji Lines written as one undo step.
 auto writePending(const application::KanjiTimer &timer, application::EditSession &session)
 {
     const auto pending = timer.pending();
@@ -594,9 +575,7 @@ bool KanjiTimerController::apply()
     if (m_timer->pending().empty())
         return true;
     auto ran = run();
-    // A Line editor draft on one of the Lines was committed first, a step of
-    // its own: the Lines are read again, so a pair whose kanji Line the
-    // draft changed is Changed and left out rather than written over it.
+    // MUST KILL: a Line editor draft committed first makes the run stale; the retry rereads.
     if (!ran && ran.error() == application::CommandRefusal::StaleRevision) {
         readLines();
         if (!m_timer)
@@ -611,7 +590,7 @@ bool KanjiTimerController::apply()
         return false;
     m_timer->applied();
     if (m_hooks.refresh)
-        m_hooks.refresh(); // documentEdited reads the Lines again
+        m_hooks.refresh();
     emit changed();
     return true;
 }
@@ -640,16 +619,13 @@ int KanjiTimerController::pendingFor(std::uint64_t document) const
 
 bool KanjiTimerController::applyTo(std::uint64_t document, application::EditSession &session)
 {
-    // The Lines as the Document has them now (edited while the window was
-    // closed or on another tab): a pair whose Lines changed since it was done
-    // is Changed and not written over them.
     if (document == m_document && target() == &session && m_hooks.targetId && m_hooks.targetId() == document) {
         readLines();
         if (!m_timer || m_timer->pending().empty()) {
             emit changed();
             return true;
         }
-        return apply(); // as the window's Apply (a Line editor draft first)
+        return apply();
     }
     auto *timer = timerFor(document);
     if (!timer)
@@ -659,7 +635,7 @@ bool KanjiTimerController::applyTo(std::uint64_t document, application::EditSess
     auto [romaji, kanji] = styleLines(session, own ? m_romajiStyle : kept->second.romajiStyle,
                                       own ? m_kanjiStyle : kept->second.kanjiStyle);
     timer->setLines(std::move(romaji), std::move(kanji));
-    configure(*timer); // as the options are now (changed on another Document)
+    configure(*timer);
     if (timer->pending().empty())
         return true;
     if (!writePending(*timer, session))

@@ -1,24 +1,5 @@
 #pragma once
 
-// O5: the interface language (docs/localisation.md, ADR-0002). Legacy
-// reads PROGRAM_LANGUAGE once at start (hikarisubApp.cpp:327-369: a wxLocale
-// with the hikarisub catalog; "Language (program restart required)"); the
-// rewrite switches live, as the card asks (so the Options label is
-// "Language", O5-language-label): the catalogs are replaced with a
-// defined precedence, every QML engine retranslates, the layout direction
-// follows the language and languageChanged() tells the owners of cached
-// strings to rebuild them.
-//
-// Catalogs are the QM the build embeds under :/i18n (hikari_translations):
-// hikarisub_<tag>.qm for the interface, hikarisub_gettext_<tag>.qm for
-// aegisub.gettext, kept out of the translators the interface reads.
-//
-// Precedence, from the first searched: a pseudolocale (tests and
-// developers), the HikariSub catalog, Qt's own catalog (qt_<language> from
-// the Qt installation; O5-qt-catalog), then English. English, the source
-// language, has a catalog of numerus forms only (hikarisub_en.qm, #385), so
-// a count reads "1 word", "2 words" where no other catalog answers.
-
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -35,47 +16,34 @@ class Localisation : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString language READ language NOTIFY languageChanged)
 public:
-    // The context of the aegisub.gettext entries (i18n/hikarisub_gettext_*.ts).
     static constexpr char kGettextContext[] = "HikariSub.Automation.Gettext";
 
-    // Pseudolocales for layout checks: accented and longer text, or the
-    // same mirrored right to left. They translate every string, also ones
-    // no catalog holds, so an untranslated string stands out.
+    // Pseudolocales for layout checks; they translate every string, also ones no catalog holds.
     enum class Pseudo { None, Accents, RightToLeft };
 
-    // `catalogDir` holds the QM files (the embedded :/i18n by default).
     explicit Localisation(QString catalogDir = QStringLiteral(":/i18n"), QObject *parent = nullptr);
-    ~Localisation() override; // its translators go; the layout is left to right again
+    ~Localisation() override; // the layout goes back to left to right
 
-    // The languages with an interface catalog ("ko_KR", "pl", "ta", "th_TH"),
-    // sorted as legacy sorts wxTranslations::GetAvailableTranslations.
+    // The languages with an interface catalog ("ko_KR", "pl"), sorted by code unit.
     QStringList catalogLanguages() const;
     // What each catalog makes of `sources` in `context`: every translation
     // that differs from its source, once.
     QStringList translationsOf(const char *context, const QStringList &sources) const;
 
-    // The catalog a PROGRAM_LANGUAGE value selects among `available`: none
-    // (English) for "", "en" and legacy's "0" and "1"; the tag itself; else
-    // a catalog of the same language ("ko" or "ko_KP" -> "ko_KR", "pl_PL" ->
-    // "pl"), which is where wxLocale's canonical names led for the shipped
-    // catalogs. A tag with no catalog of its language gives `found` false.
+    // The catalog a PROGRAM_LANGUAGE value selects among available: "" (English) for "", "en",
+    // "0" and "1"; the tag itself; else one of the same language ("ko" -> "ko_KR"). found is
+    // false when no catalog has the tag's language.
     static QString resolve(const QString &tag, const QStringList &available, bool *found = nullptr);
 
-    // Legacy's first start (hikarisubApp.cpp:319-325): with no settings yet
-    // and a Polish system interface language, PROGRAM_LANGUAGE and
-    // DICTIONARY_LANGUAGE become "pl". `uiLanguages` is the system's
-    // (QLocale::system().uiLanguages()), first preferred.
+    // "pl" when the first of the system's uiLanguages is Polish, else "".
     static QString firstStartLanguage(const QStringList &uiLanguages);
 
-    // Installs the catalogs `tag` selects (resolve()) in place of the
-    // current ones and refreshes the interface. False when the tag names a
-    // language without a catalog (English is used).
+    // False when tag names a language without a catalog (English is used).
     bool setLanguage(const QString &tag);
     // The catalog language in use; empty for English.
     QString language() const { return m_language; }
 
-    // Where Qt's own catalogs (qt_<language>.qm) are looked for: the Qt
-    // installation's translations by default. Read at the next switch.
+    // Where qt_<language>.qm is looked for; read at the next switch.
     void setQtCatalogDir(const QString &dir) { m_qtDir = dir; }
 
     void setPseudo(Pseudo pseudo);
@@ -83,19 +51,13 @@ public:
     // "accents" or "rtl" (HIKARI_PSEUDOLOCALE), anything else none.
     static Pseudo pseudoNamed(const QString &name);
 
-    // Whether the interface lays out right to left (the catalogs'
-    // QT_LAYOUT_DIRECTION, as QGuiApplication reads it).
+    // From the catalogs' QT_LAYOUT_DIRECTION, as QGuiApplication reads it.
     bool rightToLeft() const { return m_rightToLeft; }
 
-    // Legacy get_translation: wxGetTranslation(wxString(str, wxConvUTF8, len))
-    // over the hikarisub catalog. Bytes that are not strict UTF-8 convert to
-    // the empty string, which is never translated; the source comes back
-    // when the catalog has no finished translation; a source with a NUL
-    // never matches an entry. UTF-8 out.
+    // Invalid UTF-8 gives ""; a source with a NUL or no finished translation comes back as is.
+    // UTF-8 in and out.
     std::string gettext(const std::string &source) const;
 
-    // QQmlEngine::retranslate for every engine with a window, and the
-    // layout direction on every window.
     void refreshWindows();
 
 signals:

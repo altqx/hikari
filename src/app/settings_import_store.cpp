@@ -77,7 +77,7 @@ QJsonValue toJson(const SettingValue &v)
             if constexpr (std::is_same_v<T, bool>) {
                 o[QStringLiteral("bool")] = x;
             } else if constexpr (std::is_same_v<T, std::int64_t>) {
-                o[QStringLiteral("int")] = QString::number(x); // 64 bits, exactly
+                o[QStringLiteral("int")] = QString::number(x); // JSON numbers are doubles
             } else if constexpr (std::is_same_v<T, std::string>) {
                 o[QStringLiteral("string")] = qs(x);
             } else {
@@ -145,7 +145,6 @@ si::Receipt receiptFrom(const QJsonObject &o)
     return r;
 }
 
-// A profile's values in JSON; its files are written beside it.
 QJsonObject valuesJson(const si::Profile &p)
 {
     QJsonObject values;
@@ -182,12 +181,6 @@ std::optional<si::Profile> readProfile(const QString &dir, const QJsonObject &fr
     return p;
 }
 
-// The import's changes over what the live profile holds now, three ways:
-// where the generation differs from its base (the live profile when it was
-// staged) and the live value is still the base's, the generation's value
-// goes in; a value edited since staging is kept, whatever the import
-// changes there (settings-import.md step 5: never overwrite later user
-// edits automatically); elsewhere the live value stays.
 template <class Map>
 void mergeInto(Map &out, const Map &base, const Map &target)
 {
@@ -200,9 +193,9 @@ void mergeInto(Map &out, const Map &base, const Map &target)
         const auto l = out.find(k);
         const bool inBase = b != base.end(), inTarget = t != target.end(), inLive = l != out.end();
         if (inBase == inTarget && (!inBase || b->second == t->second))
-            continue; // the import leaves it as it was
+            continue;
         if (inBase != inLive || (inBase && b->second != l->second))
-            continue; // edited since staging: kept
+            continue;
         if (inTarget)
             out[k] = t->second;
         else
@@ -210,11 +203,6 @@ void mergeInto(Map &out, const Map &base, const Map &target)
     }
 }
 
-// A setting at its default is the same as one not set: the settings files
-// hold no defaults (CF1), so a base staged from hikari.ini, which could,
-// compares equal to the converted live profile. The main and audio
-// shortcuts are at their default when they hold the default bindings: an
-// empty list there is every default taken away.
 bool defaultShortcuts(const SettingValue &value, bool audio)
 {
     const auto *lines = std::get_if<std::vector<std::string>>(&value);
@@ -246,8 +234,6 @@ si::Profile merged(const si::Profile &base, const si::Profile &target, const si:
     return out;
 }
 
-// What merged() keeps against the import: the settings and files the
-// generation changes that were edited since it was staged to another value.
 QStringList keptAgainst(const si::Profile &base, const si::Profile &target, const si::Profile &live)
 {
     QStringList out;
@@ -270,10 +256,6 @@ QStringList keptAgainst(const si::Profile &base, const si::Profile &target, cons
     return out;
 }
 
-// The authored collections the profile holds, by path in the settings
-// folder: rules.toml, Dictionary/UserDic.udic and Dictionary/*.dic / *.aff
-// (the dictionaries from `dictionaryFolder`, without the copies of bundled
-// ones named in `bundled`).
 QStringList collectionPaths(const QString &folder, const QString &dictionaryFolder, const QStringList &bundled = {})
 {
     QStringList out;
@@ -287,9 +269,6 @@ QStringList collectionPaths(const QString &folder, const QString &dictionaryFold
     return out;
 }
 
-// UD1: the dictionaries in `folder` that are still the start's copies of
-// the bundled ones, byte for byte; they are the program's, not the
-// profile's. A changed copy is the user's and stays in the profile.
 QStringList seededCopiesIn(const QString &folder, const QString &bundledFolder)
 {
     QStringList out;
@@ -356,8 +335,6 @@ SettingsImportStore::SettingsImportStore(ui::SettingsStore &settings, QString fo
 {
 }
 
-// ---- Discovery
-
 std::optional<SettingsImportStore::Root> SettingsImportStore::inspectRoot(const QString &path)
 {
     if (path.isEmpty() || !QFileInfo(path).isDir())
@@ -371,7 +348,6 @@ std::optional<SettingsImportStore::Root> SettingsImportStore::inspectRoot(const 
     for (const QString &name : dictionary.entryList({QStringLiteral("*.dic"), QStringLiteral("*.aff")}, QDir::Files,
                                                     QDir::Name))
         root.files << QStringLiteral("Dictionary/") + name;
-    // Themes/<name>.txt (config.cpp:612, 924).
     const QDir themes(root.path + QStringLiteral("/Themes"));
     for (const QString &name : themes.entryList({QStringLiteral("*.txt")}, QDir::Files, QDir::Name))
         root.themes << QStringLiteral("Themes/") + name;
@@ -405,11 +381,11 @@ QStringList SettingsImportStore::defaultCandidates()
         out << base + QStringLiteral("/HikariSub") << base + QStringLiteral("/Programs/HikariSub")
             << base + QStringLiteral("/Kainote");
     }
-    // ADR 0019: an installed legacy (0.0.2 on) keeps its settings here.
+    // An installed HikariSub legacy (0.0.2 on) keeps its settings here.
     if (const QString local = qEnvironmentVariable("LOCALAPPDATA"); !local.isEmpty())
         out << QDir::fromNativeSeparators(local) + QStringLiteral("/HikariSub/Legacy");
 #else
-    // ADR 0019: an installed legacy (0.0.2 on): ${XDG_DATA_HOME:-~/.local/share}/HikariSub/Legacy.
+    // An installed HikariSub legacy (0.0.2 on) keeps its settings here.
     QString data = qEnvironmentVariable("XDG_DATA_HOME");
     if (data.isEmpty() || QDir::isRelativePath(data))
         data = QDir::homePath() + QStringLiteral("/.local/share");
@@ -417,8 +393,6 @@ QStringList SettingsImportStore::defaultCandidates()
 #endif
     return out;
 }
-
-// ---- Snapshot
 
 std::optional<SettingsImportStore::Snapshot> SettingsImportStore::snapshot(const Root &root, QString *error)
 {
@@ -447,7 +421,7 @@ std::optional<SettingsImportStore::Snapshot> SettingsImportStore::snapshot(const
     snap.id = sha256(ids.join(QLatin1Char('\n')).toUtf8()).left(16);
     snap.dir = importDir() + QStringLiteral("/snapshots/") + snap.id;
     if (QFileInfo::exists(snap.dir + QStringLiteral("/snapshot.json")))
-        return snap; // the same bytes again
+        return snap;
     QJsonArray files;
     for (const auto &s : snap.sources) {
         if (!writeAll(snap.dir + QLatin1Char('/') + qs(s.path), bytesOf(s.bytes))) {
@@ -486,12 +460,9 @@ bool SettingsImportStore::sourcesUnchanged(const Snapshot &snapshot)
         if (!bytes || ss(sha256(*bytes)) != s.sha256)
             return false;
     }
-    // A known file added since is a change too.
     const auto now = inspectRoot(snapshot.root);
     return now && now->files.size() == qsizetype(snapshot.sources.size());
 }
-
-// ---- The destination
 
 si::Profile SettingsImportStore::liveProfile() const
 {
@@ -551,8 +522,6 @@ std::optional<si::Receipt> SettingsImportStore::activeReceipt() const
     return g ? g->receipt : std::nullopt;
 }
 
-// ---- Generations
-
 SettingsImportStore::Manifest SettingsImportStore::readManifest() const
 {
     Manifest m;
@@ -575,7 +544,6 @@ bool SettingsImportStore::writeManifest(const Manifest &m)
     o[QStringLiteral("previous")] = m.previous;
     o[QStringLiteral("rollback")] = m.rollback;
     o[QStringLiteral("profile")] = m_profileName;
-    // QSaveFile: written aside, then renamed over the old one at once.
     return writeAll(importDir() + QStringLiteral("/manifest.json"), QJsonDocument(o).toJson());
 }
 
@@ -622,8 +590,7 @@ std::optional<SettingsImportStore::Generation> SettingsImportStore::readGenerati
         return std::nullopt;
     g.profile = std::move(*profile);
     g.base = std::move(*base);
-    // CF2: a generation from before rules.toml holds legacy's Rules.txt,
-    // which is the live rules.toml's conversion now.
+    // Generations staged before rules.toml existed hold Rules.txt.
     for (si::Profile *p : {&g.profile, &g.base})
         if (auto rules = p->files.extract("Rules.txt"); !rules.empty() && !p->files.contains("rules.toml"))
             p->files.emplace("rules.toml", legacyRulesToml(QByteArray::fromStdString(rules.mapped())));
@@ -676,8 +643,6 @@ SettingsImportStore::Result SettingsImportStore::activate(const si::Plan &plan,
                                                           const std::set<std::string, std::less<>> &chosen,
                                                           const Snapshot &snapshot, const QString &planRevision)
 {
-    // Recheck before committing: the legacy files and the destination are
-    // still what the plan was made from.
     if (!sourcesUnchanged(snapshot))
         return Result::StaleSources;
     if (revision() != planRevision)
@@ -690,8 +655,6 @@ SettingsImportStore::Result SettingsImportStore::activate(const si::Plan &plan,
 
     const Manifest before = readManifest();
     int number = nextGenerationNumber();
-    // The current destination is the previous generation: the active one
-    // when nothing changed since, else a backup of it.
     int previous = before.active;
     std::optional<Generation> active = before.active ? readGeneration(before.active) : std::nullopt;
     const bool activeIsCurrent = active && active->profile == current;
@@ -708,9 +671,7 @@ SettingsImportStore::Result SettingsImportStore::activate(const si::Plan &plan,
     }
     Generation g;
     g.profile = imported;
-    // The base is what the live profile holds now, not the destination: an
-    // earlier import still waiting for the next start is in `imported` and
-    // goes in with this one, and what is edited from here on is kept.
+    // MUST KILL: base is the live profile, not destination(), so a pending import merges in
     g.base = liveProfile();
     g.receipt = si::receiptOf(plan, chosen, ss(m_profileName));
     g.receipt->root = ss(snapshot.root);
@@ -762,7 +723,6 @@ SettingsImportStore::Result SettingsImportStore::rollback()
     const Manifest m = readManifest();
     if (m.previous == 0 || !readGeneration(m.previous))
         return Result::NothingToRollBack;
-    // The generation before the previous one, as its own activation recorded.
     Manifest back;
     back.active = m.previous;
     back.rollback = true;

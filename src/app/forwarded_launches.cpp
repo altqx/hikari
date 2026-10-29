@@ -22,12 +22,9 @@ namespace hikari::app {
 
 namespace {
 
-// Legacy: QueueOpenPaths' openTimer.Start(400), restarted by every request;
-// OnOpen tried again every 100 ms while busy.
 constexpr int kGatherMs = 400;
 constexpr int kBusyRetryMs = 100;
 
-// An open modal popup (a Dialog over the window) declared in `window`.
 bool modalPopupOpen(QWindow *window)
 {
     auto open = [](const QObject *root) {
@@ -49,8 +46,6 @@ ForwardedLaunches::ForwardedLaunches(Application &application, QObject *parent)
 {
     m_timer.setSingleShot(true);
     connect(&m_timer, &QTimer::timeout, this, &ForwardedLaunches::open);
-    // A quit that does not go ahead: the window stays, and comes forward
-    // with the token kept for the start after the quit.
     connect(&m_application, &Application::quitCancelled, this, [this] {
         if (m_quitToken.isEmpty() || m_quitTokenReview != m_application.quitReviews())
             return;
@@ -73,9 +68,6 @@ void ForwardedLaunches::setWindow(QWindow *window)
 void ForwardedLaunches::take(const SingleInstance::Request &request)
 {
     m_files += request.files;
-    // During a quit the start's activation token is kept for the start made
-    // after it (startAfterQuit, or the files the quit leaves): the window
-    // it would bring forward is closing.
     QString token = request.activationToken;
     if (m_application.quitting() && !token.isEmpty()) {
         m_quitToken = std::exchange(token, QString());
@@ -126,7 +118,7 @@ void ForwardedLaunches::open()
     const QString kind = result.value(QStringLiteral("kind")).toString();
     if (kind == QLatin1String("video"))
         openStartVideo(m_window, result.value(QStringLiteral("path")).toString());
-    else if (kind == QLatin1String("session")) // CF3: as Load session, with its review
+    else if (kind == QLatin1String("session"))
         QMetaObject::invokeMethod(m_window, "openSessionFile", Q_ARG(QVariant, result.value(QStringLiteral("path"))));
 }
 
@@ -139,8 +131,7 @@ void ForwardedLaunches::activate(QWindow *window, const QString &activationToken
     if (!window->isVisible())
         window->show();
     QWindow *target = QGuiApplication::modalWindow() ? QGuiApplication::modalWindow() : window;
-    // Qt's xdg-shell integration activates with the token in
-    // XDG_ACTIVATION_TOKEN (and takes it out); it is not left for children.
+    // Qt's xdg-shell activation reads XDG_ACTIVATION_TOKEN; unset it so children don't inherit it.
     const bool wayland = QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
     if (wayland && !activationToken.isEmpty())
         qputenv("XDG_ACTIVATION_TOKEN", activationToken.toUtf8());

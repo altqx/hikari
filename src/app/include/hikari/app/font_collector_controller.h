@@ -1,18 +1,5 @@
 #pragma once
 
-// Y8: the "Font collector" dialog's state (legacy FontCollectorDialog and
-// FontCollector, FontCollector.cpp at 20d647c4): the Options radio box,
-// the path with "Select a folder", "Save to video / subtitles folder.",
-// Start and "Start on tabs", the found / not found log, "Save folder" and
-// the FONT_COLLECTOR_* settings. The work runs on a thread as legacy's
-// FontCollectorThread did. The copy modes use the staged review (routing
-// #60): Start prepares and logs what would be written, Apply writes it; an
-// incomplete review is written only after acknowledgment and then labelled
-// (routing #54). Y9: "Demux fonts from loaded MKV file" (FontCollector::
-// CopyMKVFonts, FontCollector.cpp:181-183, 440-541, 913-982) reads every
-// tab's font attachments through the media helper; Start shows them and
-// Apply writes them into the folder or archive.
-
 #include "hikari/application/font_collector.h"
 #include "hikari/application/matroska.h"
 
@@ -39,18 +26,16 @@ namespace hikari::app {
 
 class FontCollectorController : public QObject {
     Q_OBJECT
-    Q_PROPERTY(int action READ action NOTIFY settingsChanged)              // FONT_COLLECTOR_ACTION
-    Q_PROPERTY(QString directory READ directory NOTIFY settingsChanged)    // FONT_COLLECTOR_DIRECTORY
+    Q_PROPERTY(int action READ action NOTIFY settingsChanged)
+    Q_PROPERTY(QString directory READ directory NOTIFY settingsChanged)
     Q_PROPERTY(bool useSubsDirectory READ useSubsDirectory NOTIFY settingsChanged)
-    // The log as {text, kind} segments: kind 0 normal, 1 warning, 2 success
-    // (legacy fcd->normal, fcd->warning and "#008000").
+    // {text, kind} segments; kind 0 normal, 1 warning, 2 success.
     Q_PROPERTY(QVariantList log READ log NOTIFY logChanged)
     Q_PROPERTY(QString logText READ logText NOTIFY logChanged)
     Q_PROPERTY(int stage READ stage NOTIFY stageChanged)
     Q_PROPERTY(bool reviewIncomplete READ reviewIncomplete NOTIFY stageChanged)
     Q_PROPERTY(bool canSaveFolder READ canSaveFolder NOTIFY stageChanged)
     Q_PROPERTY(QString copyPath READ copyPath NOTIFY stageChanged)
-    // Y9: "Demux fonts from loaded MKV file" and whether it can be checked.
     Q_PROPERTY(bool fromMkv READ fromMkv NOTIFY settingsChanged)
     Q_PROPERTY(bool fromMkvEnabled READ fromMkvEnabled NOTIFY settingsChanged)
 public:
@@ -58,18 +43,18 @@ public:
     Q_ENUM(Stage)
 
     struct Tab {
-        std::shared_ptr<const core::Document> document; // a copy for the run
-        QString path;                                  // SubsPath; empty when unsaved
-        QString video;                                 // VideoPath (Y9); empty without a video
+        std::shared_ptr<const core::Document> document;
+        // Empty when unsaved.
+        QString path;
+        // Empty without a video.
+        QString video;
     };
     struct Hooks {
-        std::function<std::vector<Tab>()> tabs; // every tab, in order
+        std::function<std::vector<Tab>()> tabs;
         std::function<int()> currentTab;
-        // FontCollectorDialog::SetLine and OpenStyle: the tab, then the Line
-        // (the first Line of the Style), as ChangeActiveLine does.
         std::function<void(int tab, int line)> goToLine;
         std::function<void(int tab, const QString &style)> goToStyle;
-        // SelectInFolder; null: the platform's file manager.
+        // Null: the platform's file manager.
         std::function<void(const QString &path)> reveal;
     };
 
@@ -88,57 +73,43 @@ public:
     bool fromMkv() const { return m_fromMkv; }
     bool fromMkvEnabled() const { return m_fromMkvEnabled; }
 
-    // ShowDialog: a new dialog with the settings' values, an empty log and
-    // "Save folder" disabled.
     Q_INVOKABLE void open();
-    // OnChangeOpt: the Options choice and the checkbox are saved.
     Q_INVOKABLE void changeOptions(int action, bool useSubsDirectory);
-    // Y9: the checkbox. Legacy reads FONT_COLLECTOR_FROM_MKV when the window
-    // opens and never writes it, so a click lasts until the window closes.
     Q_INVOKABLE void setFromMkv(bool on);
-    // OnButtonPath: where the folder or archive chooser starts ({folder,
-    // name}), then what it returned. A cancelled chooser's empty answer
-    // keeps the previous path (FC-chooser-cancel; legacy stored it).
+    // Returns {folder, name} for the chooser's start.
     Q_INVOKABLE QVariantMap chooserStart(const QString &path) const;
+    // An empty path keeps the previous one.
     Q_INVOKABLE void chooseDirectory(const QString &path);
-    // OnButtonStart. Returns {message} when legacy refused with a message
-    // box, {question, archive} for "The zip file already exists, delete
-    // it?" (answer with confirmReplace), else {} and the run started. A Yes
-    // removes the archive only when Apply starts, not before the review.
+    // Returns {message} when refused, {question, title, archive} when the archive exists
+    // (answer with confirmReplace), else {} and the run started. A Yes removes the archive
+    // only when Apply starts.
     Q_INVOKABLE QVariantMap start(const QString &path, bool allTabs);
     Q_INVOKABLE bool confirmReplace(bool remove);
-    // The staged review's Apply; `acknowledged` is the incomplete-output
-    // acknowledgment.
+    // `acknowledged`: the user accepted an incomplete review.
     Q_INVOKABLE void apply(bool acknowledged);
     Q_INVOKABLE void cancel();
-    // Close: a review not applied is dropped, a running job cancelled.
+    // Drops a review not applied and cancels a running job.
     Q_INVOKABLE void close();
-    // "Save folder": SelectInFolder(copypath).
     Q_INVOKABLE void saveFolder();
     Q_INVOKABLE QUrl fileUrl(const QString &path) const { return QUrl::fromLocalFile(path); }
     Q_INVOKABLE QString localPath(const QUrl &url) const { return QDir::toNativeSeparators(url.toLocalFile()); }
-    // OnConsoleDoubleClick at a position of logText.
+    // `position` is an offset into logText.
     Q_INVOKABLE void logDoubleClicked(int position);
 
-    // W2: the renderer the video's subtitles go through ("libass", or a
-    // CSRI renderer's name on Windows). The check verifies libass only
-    // (fonts.md: CSRI/VSFilter output needs its own agreement evidence), so
-    // with another renderer the log says its output was not verified.
+    // "libass" or a CSRI renderer's name; anything but libass is logged as unverified.
     void setDisplayRenderer(const QString &name) { m_displayRenderer = name; }
     QString displayRenderer() const { return m_displayRenderer; }
 
-    // Tests: another font service, and waiting for the worker.
     void setFontService(std::unique_ptr<application::FontServicePort> service);
-    // Y9: the media helper that reads the MKV attachments.
     void setMatroskaPort(std::unique_ptr<application::MatroskaPort> port) { m_matroska = std::move(port); }
     bool waitIdle(int ms = 30000);
-    void setCloseWait(int ms) { m_closeWaitMs = ms; } // how long close() waits for a running job
+    void setCloseWait(int ms) { m_closeWaitMs = ms; }
 
 signals:
     void settingsChanged();
     void logChanged();
     void stageChanged();
-    void styleRequested(const QString &style); // StyleStore::ShowStyleEdit
+    void styleRequested(const QString &style);
 
 private:
     struct Segment {
@@ -162,7 +133,6 @@ private:
     void applied(application::CollectorResult result);
     void join();
     void setStage(Stage stage);
-    // Y9: the MKV fonts run.
     QString currentVideo() const;
     void runMkvPrepare();
     void mkvNext(std::uint64_t run);
@@ -178,14 +148,14 @@ private:
     int m_action = 0;
     QString m_directory;
     bool m_useSubsDirectory = false;
-    QString m_displayRenderer = QStringLiteral("libass"); // W2
+    QString m_displayRenderer = QStringLiteral("libass");
     std::vector<Segment> m_log;
     std::vector<Area> m_areas;
     int m_stage = Options;
     bool m_canSaveFolder = false;
     QString m_copyPath;
     QString m_pendingArchive;
-    QString m_removeArchive; // answered Yes; removed when Apply starts
+    QString m_removeArchive;
     std::vector<application::CollectorDocument> m_documents;
     application::CollectorAction m_runAction = application::CollectorAction::Check;
     std::optional<application::CollectorReview> m_review;
@@ -194,13 +164,12 @@ private:
     QElapsedTimer m_clock;
     qint64 m_elapsed = 0;
     int m_closeWaitMs = 30000;
-    // Y9
     std::unique_ptr<application::MatroskaPort> m_matroska;
     bool m_fromMkv = false;
     bool m_fromMkvEnabled = false;
-    bool m_runMkv = false;       // this run is COPY_MKV_FONTS
-    bool m_runAllTabs = false;   // ON_ALL_TABS
-    bool m_runZip = false;       // AS_ZIP
+    bool m_runMkv = false;
+    bool m_runAllTabs = false;
+    bool m_runZip = false;
     std::vector<QString> m_mkvVideos;
     std::vector<application::MatroskaFontTab> m_mkvTabs;
     std::uint64_t m_mkvRun = 0;

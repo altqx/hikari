@@ -48,7 +48,6 @@ PackageInfo detectPackageKind(const QString &exeDir, const QString &appImageEnv)
     QFile marker(exeDir + QStringLiteral("/package-kind.txt"));
     if (!marker.open(QIODevice::ReadOnly))
         return {};
-    // One token and a newline; a longer file is no marker.
     const QByteArray bytes = marker.read(64);
     PackageInfo info = fromMarker(bytes, appImageEnv);
     if (info.kind == PackageKind::Arch) {

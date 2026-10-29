@@ -1,8 +1,3 @@
-// W1: the optional DirectShow playback adapter in the composition. The
-// settings choose it (video.playbackPlayer, Windows only); it then plays the
-// video in place of the general player behind the same port, and its graph
-// fills legacy's Filters menu. Other platforms have no adapter and ignore the
-// setting.
 #include "hikari/app/application.h"
 
 #include <QCoreApplication>
@@ -16,10 +11,7 @@ namespace hikari::app {
 #ifdef _WIN32
 namespace {
 
-// Legacy's HR messages in DShowPlayer::OpenFile / InitializeGraph, marked
-// for the catalogs: the adapter reports these texts (directshow_player.cpp's
-// W1_HR and error assignments; CheckedIn.DirectShowOpenMessagesAreMarked
-// checks every one is here), and openMessage looks them up in this table.
+// MUST KILL: repeats every message DirectShowPlayer reports; a test keeps the two in step.
 constexpr const char *kOpenMessages[] = {
     QT_TRANSLATE_NOOP("HikariSub.Video", "Failed to initialize DirectShow"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create filters interface"),
@@ -46,8 +38,6 @@ constexpr const char *kOpenMessages[] = {
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot connect source pin to video2 renderer"),
 };
 
-// The failed step as the log shows it: translated through the table, and a
-// message the table does not hold as it came.
 QString openMessage(const std::string &message)
 {
     for (const char *known : kOpenMessages)
@@ -77,19 +67,11 @@ void Application::choosePlayer()
             m_directShow = std::make_unique<backends::DirectShowPlayer>([this](std::function<void()> task) {
                 QMetaObject::invokeMethod(this, std::move(task), Qt::QueuedConnection);
             });
-            // Its frames are shown as the general player's are (their
-            // overlay rendered on the session's worker).
             m_directShow->setFrameSink([this](std::shared_ptr<application::IndexedFrame> frame, std::int64_t startUs) {
-                // V1: the next samples as Y'CbCr planes while the presenter
-                // converts them on the GPU (a frame the presenter cannot
-                // convert there it converts on the CPU).
                 m_directShow->setYcbcrFrames(m_video->session().presenterConvertsYcbcr());
                 m_video->session().submitGeneralFrame(startUs, std::nullopt,
                                                       [frame = std::move(frame)](application::FramePool &) { return frame; });
             });
-            // Legacy: HR's HikariLogSilent for the failed step, then
-            // VideoBox::LoadVideo's warning box (NT1: a warning toast, the
-            // failed step its Details).
             m_directShow->setOpenFailed([this](const std::string &message) {
                 m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Video", "Open video"),
                               QCoreApplication::translate("HikariSub.Video",
@@ -109,8 +91,6 @@ void Application::choosePlayer()
     m_video->session().setGeneralPlayer(player);
     m_videoView->setPlayer(player);
 #ifdef _WIN32
-    // Legacy deleted the renderer when the player changed (DeleteRenderer):
-    // the graph and its file go with it.
     if (player != m_directShow.get())
         m_directShow.reset();
     else
@@ -123,8 +103,6 @@ QVariantList Application::playerFilters() const
 {
     QVariantList out;
 #ifdef _WIN32
-    // Legacy: only while the DirectShow renderer has the video
-    // (GetState() != None && m_IsDirectShow).
     if (directShowPlayback() && m_video->loaded() && m_video->session().playerHasVideo())
         for (const auto &f : m_directShow->filters())
             out.push_back(QVariantMap{{QStringLiteral("name"), QString::fromStdString(f.name)},

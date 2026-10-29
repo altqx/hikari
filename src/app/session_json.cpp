@@ -14,7 +14,7 @@ constexpr std::int64_t kVersion = 1;
 
 QString qs(const std::string &s) { return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size())); }
 
-// `text` is marked where it is written (QT_TRANSLATE_NOOP), for lupdate.
+// Callers mark `text` with QT_TRANSLATE_NOOP so lupdate finds it.
 std::string message(const char *text, const QStringList &args = {})
 {
     QString m = QCoreApplication::translate("HikariSub.Session", text);
@@ -23,8 +23,6 @@ std::string message(const char *text, const QStringList &args = {})
     return m.toStdString();
 }
 
-// After a UTF-8 BOM and blanks, a JSON file starts with "{"; a legacy file
-// with "[HikariSub" (or another encoding's BOM).
 bool isJson(std::string_view bytes)
 {
     if (bytes.starts_with("\xEF\xBB\xBF"))
@@ -42,7 +40,7 @@ std::optional<application::Session> readLegacy(std::string_view bytes, applicati
     if (!session && failure)
         *failure = {0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "Session file is corrupt."))};
     if (session && !session->tabs.empty())
-        session->activeTab = session->tabs.size() - 1; // AddPage made each loaded tab active
+        session->activeTab = session->tabs.size() - 1;
     return session;
 }
 
@@ -85,7 +83,6 @@ std::optional<application::Session> readJson(std::string_view bytes, application
             return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "Tab %1 is not an object."), {where})});
         const QJsonObject t = tabs[i].toObject();
         application::SessionTab tab;
-        // A field of the wrong type makes the file broken; a missing one is empty.
         std::string wrong;
         auto text = [&](const char *key, std::string &out) {
             const QJsonValue v = t.value(QLatin1String(key));
@@ -150,7 +147,6 @@ QByteArray writeSessionJson(const application::Session &session, std::optional<b
             t.insert(QStringLiteral("keyframes"), qs(tab.keyframes));
         t.insert(QStringLiteral("activeLine"), tab.active);
         t.insert(QStringLiteral("scroll"), tab.scroll);
-        // A layout that is not an object (a .kls's damaged line) has nothing to restore.
         if (const QJsonDocument layout = QJsonDocument::fromJson(QByteArray::fromStdString(tab.layout));
             layout.isObject())
             t.insert(QStringLiteral("layout"), layout.object());
