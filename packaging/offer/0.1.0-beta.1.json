@@ -1,0 +1,13 @@
+{
+  "en": {
+    "title": "Try the new HikariSub 0.1 beta",
+    "highlights": [
+      "Dockable panels with Editing, Timing, Translation, Typesetting and Karaoke layouts, each tab with its own.",
+      "Visual typesetting on the video, including a perspective tool, and a fullscreen player.",
+      "Karaoke: split and time syllables on the waveform, tap to time, and preview templates live on the video.",
+      "Translation mode keeps the original text beside yours, with spelling and grammar checks.",
+      "Light, Dark and high-contrast themes, a Home page with your recent files, and autosave with crash recovery."
+    ],
+    "note": "This is a beta. It installs over 0.0.x and only reads its settings, so you can go back by reinstalling 0.0.x at any time."
+  }
+}
