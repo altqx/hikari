@@ -389,7 +389,7 @@ private slots:
         QCOMPARE(tabTitle(0), QStringLiteral("episode.ass"));
         QCOMPARE(tabTitle(1), QStringLiteral("Bez nazwy"));
         QCOMPARE(settingsDialog()->property("dictionaries").toStringList().value(0),
-                 QStringLiteral("Umieść pliki .dic i .aff do folderu \"Dictionary\""));
+                 QStringLiteral("Umieść pliki .dic i .aff w folderze \"Dictionary\""));
         choose("setting_program.language", 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!settingsDialog()->property("visible").toBool());
