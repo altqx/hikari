@@ -70,7 +70,7 @@
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
-        <translation>เชื่อมแถบเลื่อนระดับเสียงกับแถบเลื่อนการยืดเสียง</translation>
+        <translation>เชื่อมแถบเลื่อนระดับเสียงกับแถบเลื่อนการยืด</translation>
     </message>
     <message>
         <source> or </source>
@@ -2638,7 +2638,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Left margin</source>
-        <translation>ขอบซ้าย</translation>
+        <translation>ระยะขอบซ้าย</translation>
     </message>
     <message>
         <source>Line left margin</source>
@@ -3049,7 +3049,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Allows managing font catalogs</source>
-        <translation>จัดการแบบอักษรในแคตตาล็อก</translation>
+        <translation>จัดการแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -3065,7 +3065,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Manage font catalogs</source>
-        <translation>จัดการแบบอักษรในแคตตาล็อก</translation>
+        <translation>จัดการแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
         <source>Catalogs:</source>
@@ -3427,7 +3427,7 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Puts each font file the subtitles use into a zip archive.</source>
-        <translation>ใส่ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ลงในไฟล์บีบอัด zip</translation>
+        <translation>ใส่ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ลงในไฟล์บีบอัด</translation>
     </message>
     <message>
         <source>Writing the new archive replaces it.</source>
@@ -3447,7 +3447,7 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Zip archive</source>
-        <translation>ไฟล์บีบอัด zip</translation>
+        <translation>ไฟล์บีบอัด</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -3848,7 +3848,7 @@ Will not be copied.</source>
     </message>
     <message>
         <source>The zip file already exists, delete it?</source>
-        <translation>มีไฟล์ ZIP อยู่แล้ว ต้องการลบหรือไม่?</translation>
+        <translation>มีไฟล์บีบอัดอยู่แล้ว ต้องการลบหรือไม่?</translation>
     </message>
     <message>
         <source>Confirmation</source>
@@ -4938,7 +4938,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Left margin</source>
-        <translation>ขอบซ้าย</translation>
+        <translation>ระยะขอบซ้าย</translation>
     </message>
     <message>
         <source>Right margin</source>
@@ -4958,15 +4958,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Text without tags</source>
-        <translation>เปลี่ยนเป็นข้อความที่ไม่มีแท็ก</translation>
+        <translation>ข้อความที่ไม่มีแท็ก</translation>
     </message>
     <message>
         <source>Text into original</source>
-        <translation>เปลี่ยนเป็นข้อความต้นฉบับ</translation>
+        <translation>ข้อความลงในต้นฉบับ</translation>
     </message>
     <message>
         <source>Text into translation</source>
-        <translation>เปลี่ยนเป็นข้อความแปล</translation>
+        <translation>ข้อความลงในคำแปล</translation>
     </message>
     <message>
         <source>changed</source>
@@ -7016,7 +7016,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
-        <translation>รีเฟรชสคริปต์อัตโนมัติ</translation>
+        <translation>รีเฟรชสคริปต์ที่โหลดอัตโนมัติ</translation>
     </message>
     <message>
         <source>Rerun last macro</source>
@@ -7044,7 +7044,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Go to end time of line</source>
-        <translation>ไปยังเวลาสิ้นสุด</translation>
+        <translation>ไปยังเวลาสิ้นสุดของบรรทัด</translation>
     </message>
     <message>
         <source>Play / Pause</source>
@@ -7064,11 +7064,11 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Import legacy settings...</source>
-        <translation>นำเข้าการตั้งค่าเดิม...</translation>
+        <translation>นำเข้าการตั้งค่ารุ่นเดิม...</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
-        <translation>เรียกใช้สคริปต์ล่าสุด</translation>
+        <translation>เรียกใช้สคริปต์ที่โหลดล่าสุด</translation>
     </message>
     <message>
         <source>Recently opened videos</source>
@@ -7180,7 +7180,7 @@ What would you like to do?</source>
     </message>
     <message>
         <source>Translation</source>
-        <translation>ข้อความแปล</translation>
+        <translation>การแปล</translation>
     </message>
     <message>
         <source>Korean, Polish, Tamil and Thai</source>
@@ -7940,7 +7940,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>The downloaded update does not match its checksum, so it was deleted.</source>
-        <translation>อัปเดตที่ดาวน์โหลดมาไม่ตรงกับค่าตรวจสอบ (checksum) จึงถูกลบแล้ว</translation>
+        <translation>อัปเดตที่ดาวน์โหลดมาไม่ตรงกับค่าตรวจสอบ จึงถูกลบแล้ว</translation>
     </message>
     <message>
         <source>The download of HikariSub %1 changed or went missing, so it was not installed. It is downloaded again at the next check.</source>
@@ -9651,7 +9651,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Choose an English above to switch them.</source>
-        <translation>เลือกรูปแบบภาษาอังกฤษด้านบนเพื่อเปิดใช้กลุ่มกฎ</translation>
+        <translation>เลือกรูปแบบภาษาอังกฤษด้านบนเพื่อเปิดหรือปิดกลุ่มกฎ</translation>
     </message>
     <message numerus="yes">
         <source>%n rules</source>
@@ -10302,7 +10302,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.</source>
-        <translation>หลังจากขัดข้องหรือค้าง รายงานจะถูกส่งโดยไม่ถาม: สิ่งที่ขัดข้อง ระบบ การตั้งค่า และบรรทัดล่าสุดของบันทึก ไม่รวมคำบรรยาย ไฟล์ หรือชื่อไฟล์ของคุณ</translation>
+        <translation>หลังจากขัดข้องหรือค้าง รายงานจะถูกส่งโดยไม่ถาม: สิ่งที่ขัดข้อง ระบบ การตั้งค่า และบรรทัดล่าสุดของล็อก ไม่รวมคำบรรยาย ไฟล์ หรือชื่อไฟล์ของคุณ</translation>
     </message>
     <message>
         <source>Primary language</source>
@@ -10372,7 +10372,7 @@ and will be changed to the default</source>
     <name>HikariSub.Reports</name>
     <message>
         <source>%1, as a .zip to drag into the issue</source>
-        <translation>%1 เป็นไฟล์ .zip สำหรับลากไปใส่ใน issue</translation>
+        <translation>%1 เป็นไฟล์ .zip สำหรับลากไปใส่ในรายงานปัญหา</translation>
     </message>
     <message>
         <source>A crash report was sent.</source>
@@ -10544,7 +10544,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Log excerpt</source>
-        <translation>ส่วนของบันทึก</translation>
+        <translation>ส่วนของล็อก</translation>
     </message>
     <message>
         <source>Note</source>
@@ -10556,7 +10556,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Open GitHub issue</source>
-        <translation>เปิด issue บน GitHub</translation>
+        <translation>เปิดรายงานปัญหาบน GitHub</translation>
     </message>
     <message>
         <source>Open on GitHub</source>
@@ -10696,11 +10696,11 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>crash record, system, settings, last 200 log lines</source>
-        <translation>บันทึกการขัดข้อง ระบบ การตั้งค่า บันทึก 200 บรรทัดล่าสุด</translation>
+        <translation>บันทึกการขัดข้อง ระบบ การตั้งค่า ล็อก 200 บรรทัดล่าสุด</translation>
     </message>
     <message>
         <source>freeze record, system, settings, last 200 log lines</source>
-        <translation>บันทึกการค้าง ระบบ การตั้งค่า บันทึก 200 บรรทัดล่าสุด</translation>
+        <translation>บันทึกการค้าง ระบบ การตั้งค่า ล็อก 200 บรรทัดล่าสุด</translation>
     </message>
     <message>
         <source>last 200 lines, file names replaced</source>
@@ -13898,7 +13898,7 @@ Styles deleted:
     </message>
     <message>
         <source>Text alignment (SSA)</source>
-        <translation>การจัดวางแนวข้อความ (เค้าโครง SSA)</translation>
+        <translation>การจัดวางแนวข้อความ (SSA)</translation>
     </message>
     <message>
         <source>Transparency</source>
@@ -14002,7 +14002,7 @@ Styles deleted:
     </message>
     <message>
         <source>Reverse vector clip or rectangle clip</source>
-        <translation>กลับด้านการตัดเวกเตอร์หรือสี่เหลี่ยม</translation>
+        <translation>กลับด้านคลิปเวกเตอร์หรือคลิปสี่เหลี่ยม</translation>
     </message>
     <message>
         <source>Text jitter</source>
@@ -15613,7 +15613,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Failed to initialize DirectShow</source>
-        <translation>เกิดข้อผิดพลาดในการเริ่มต้น Direct Show</translation>
+        <translation>เกิดข้อผิดพลาดในการเริ่มต้น DirectShow</translation>
     </message>
     <message>
         <source>Cannot create filters interface</source>
@@ -15689,7 +15689,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Cannot find connected source pin</source>
-        <translation>ไม่พบพินที่เชื่อมโยงแหล่งที่มา</translation>
+        <translation>ไม่พบพินต้นทางที่เชื่อมต่ออยู่</translation>
     </message>
     <message>
         <source>Cannot get splitter pin info</source>
@@ -15929,7 +15929,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Show / hide render cost</source>
-        <translation>แสดงหรือซ่อนภาระการเรนเดอร์</translation>
+        <translation>แสดง / ซ่อนต้นทุนการเรนเดอร์</translation>
     </message>
     <message>
         <source>Change aspect ratio</source>
@@ -15953,7 +15953,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Unload video</source>
-        <translation>ยกเลิกการโหลดวิดีโอ</translation>
+        <translation>นำวิดีโอออก</translation>
     </message>
     <message>
         <source>Filters</source>
@@ -16009,7 +16009,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Nothing</source>
-        <translation>ไม่มีเลย</translation>
+        <translation>ไม่มี</translation>
     </message>
     <message>
         <source>Audio to the line end time</source>
@@ -16076,11 +16076,11 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Always</source>
-        <translation>เสมอ</translation>
+        <translation>แสดงเสมอ</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation>ไม่เลย</translation>
+        <translation>ไม่แสดง</translation>
     </message>
     <message>
         <source>Show on pointer movement, hide when idle</source>
@@ -17525,7 +17525,7 @@ do not work on comments</source>
     </message>
     <message>
         <source>it holds no Classic arrangement</source>
-        <translation>ไฟล์นี้ไม่มีการจัดวางแบบ Classic</translation>
+        <translation>ไฟล์นี้ไม่มีการจัดวางแบบคลาสสิก</translation>
     </message>
     <message>
         <source>it holds more windows or panels than HikariSub has</source>
