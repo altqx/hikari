@@ -1,8 +1,3 @@
-// P1 workflow through the real UI (Spix): with unsaved work, Ctrl+W shows the
-// close review; Cancel keeps the Document, Discard all closes it unsaved.
-// Then closing the window with another unsaved Document reviews the quit, and
-// Save all writes it before the application ends.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -34,7 +29,6 @@ public:
     hikari::app::Application *application = nullptr;
 
 protected:
-    // The window title names the editing target ("<name> - HikariSub").
     std::string targets() { return getStringProperty("mainWindow", "title"); }
     void typeAndCommit(const std::string &text)
     {
@@ -53,29 +47,27 @@ protected:
         if (waitForItem("mainWindow/editingGrid", 5s)) {
             typeAndCommit(" edited");
             enterKey("mainWindow/lineText", Qt::Key_W, spix::KeyModifiers::Control);
-            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review"); // 0
+            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review");
             mouseClick("closeQuestion/messageBoxChoice_cancel");
             wait(300ms);
-            observed.push_back(targets()); // 1: still open
+            observed.push_back(targets());
             enterKey("mainWindow/lineText", Qt::Key_W, spix::KeyModifiers::Control);
             wait(500ms);
             mouseClick("closeQuestion/messageBoxChoice_discard");
             wait(500ms);
-            observed.push_back(targets()); // 2: closed
-            // Another Document, edited, then the window is closed.
+            observed.push_back(targets());
             QMetaObject::invokeMethod(application, [this] { application->openFile(g_second); }, Qt::BlockingQueuedConnection);
             wait(300ms);
             typeAndCommit(" saved");
             invokeMethod("mainWindow", "close", {});
-            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_save", 5s) ? "quit review" : "no quit review"); // 3
+            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_save", 5s) ? "quit review" : "no quit review");
             mouseClick("closeQuestion/messageBoxChoice_save");
-            // The window hides once the write is acknowledged and the quit approved.
             std::string visible = "true";
             for (int i = 0; i < 50 && visible != "false"; ++i) {
                 wait(200ms);
                 visible = getStringProperty("mainWindow", "visible");
             }
-            observed.push_back(visible); // 4
+            observed.push_back(visible);
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -99,7 +91,7 @@ void write(const QString &path, const char *text)
                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,") + text + "\n");
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -132,7 +124,7 @@ int main(int argc, char **argv)
     test.application = &application;
     spix::QtQmlBot bot;
     bot.runTestServer(test);
-    QGuiApplication::setQuitOnLastWindowClosed(false); // the test ends it after observing
+    QGuiApplication::setQuitOnLastWindowClosed(false);
     app.exec();
     application.waitForWrites();
     const auto &o = test.observed;
@@ -142,8 +134,6 @@ int main(int argc, char **argv)
     if (o.size() == 5) {
         expect(o[0] == "review", "Ctrl+W with unsaved work shows the review");
         expect(o[1].rfind("first.ass - ", 0) == 0, "Cancel keeps the Document open");
-        // SH2-last-tab-home: no Document is left (legacy DeletePage made a
-        // new empty tab), and the Home page shows.
         expect(o[2] == "HikariSub", "Discard all closes it (no Document left)");
         expect(o[3] == "quit review", "closing the window reviews the quit");
         expect(o[4] == "false", "the window closes after Save all");

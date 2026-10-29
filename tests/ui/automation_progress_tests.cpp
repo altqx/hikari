@@ -1,9 +1,3 @@
-// AD3 (#312): a macro run's progress card and log with real Lua helpers.
-// A short run shows only the notice; about a second of the macro itself (not
-// of its dialog) or its first output opens the card; when the run ends, the
-// card says how and the run's log is kept in AutomationRuns, after Cancel
-// and errors too, with the level each line was given.
-
 #include "hikari/app/application.h"
 
 #include <QDeadlineTimer>
@@ -43,7 +37,7 @@ QList<int> levels(const AutomationRunLines &lines)
     return out;
 }
 
-} // namespace
+}
 
 class AutomationProgressTests : public QObject {
     Q_OBJECT
@@ -100,7 +94,6 @@ private slots:
     }
     void cleanupTestCase() { application.reset(); }
 
-    // A test that failed midway leaves no run behind for the next ones.
     void cleanup()
     {
         if (!automation().running())
@@ -112,7 +105,6 @@ private slots:
         automation().dismissCard();
     }
 
-    // A run that ends at once and logs nothing: the notice, then nothing.
     void aShortRunShowsOnlyTheNotice()
     {
         automation().setCardDelay(1000);
@@ -124,8 +116,6 @@ private slots:
         QCOMPARE(automation().runs()->run(automation().runId())->lines.size(), std::size_t{0});
     }
 
-    // The card after the delay of the macro's own time; Cancel keeps the
-    // log and says how it ended.
     void theMacrosOwnSecondOpensTheCard()
     {
         automation().setCardDelay(300);
@@ -148,13 +138,11 @@ private slots:
         lines.setRun(automation().runId());
         QCOMPARE(shown(lines), QStringList{QStringLiteral("The macro was cancelled; nothing was changed.")});
         QCOMPARE(levels(lines), QList<int>{AutomationRuns::kHostInfo});
-        // × closes it; the run stays in Runs.
         automation().dismissCard();
         QCOMPARE(automation().cardState(), QString());
         QVERIFY(automation().runs()->run(automation().runId()));
     }
 
-    // Output opens the card at once.
     void outputOpensTheCardAtOnce()
     {
         automation().setCardDelay(60'000);
@@ -168,20 +156,15 @@ private slots:
         automation().cancelRun();
         QVERIFY(ended());
         QCOMPARE(automation().cardState(), QStringLiteral("cancelled"));
-        // The log is kept after Cancel: the script's line and how it ended.
         QCOMPARE(shown(lines), (QStringList{QStringLiteral("started"),
                                             QStringLiteral("The macro was cancelled; nothing was changed.")}));
     }
 
-    // Each line keeps its level (those above the trace level, 3, never
-    // arrive); the threshold hides the levels above it, never the lines
-    // without one; output without a newline continues on the same line.
     void theLevelFilterIsAThreshold()
     {
         automation().setCardDelay(60'000);
         QVERIFY(start("Levels"));
         QVERIFY(ended());
-        // It applied and logged: the card stays.
         QCOMPARE(automation().cardState(), QStringLiteral("applied"));
         AutomationRunLines lines;
         lines.setRuns(automation().runs());
@@ -204,8 +187,6 @@ private slots:
         automation().dismissCard();
     }
 
-    // An error: the card says it failed with the error; the run's log keeps
-    // the script's lines and the error.
     void anErrorKeepsTheLog()
     {
         automation().setCardDelay(60'000);
@@ -221,19 +202,14 @@ private slots:
         QVERIFY(texts.size() >= 2);
         QCOMPARE(texts.first(), QStringLiteral("about to fail"));
         QCOMPARE(levels(lines).first(), 1);
-        // Then the error, HikariSub's own line; its traceback's lines follow
-        // without a level.
         QCOMPARE(levels(lines)[1], AutomationRuns::kHostError);
         QVERIFY2(texts.mid(1).join(QLatin1Char('|')).contains(QStringLiteral("boom")), qPrintable(texts.join(QLatin1Char('|'))));
         QCOMPARE(lines.countAt(AutomationRuns::kHostError), 1);
-        // The level filter never hides HikariSub's own lines.
         lines.setLevelLimit(0);
         QVERIFY(shown(lines).join(QLatin1Char('|')).contains(QStringLiteral("boom")));
         automation().dismissCard();
     }
 
-    // Clear runs takes an ended run's card with its run; a running one
-    // stays, card and all.
     void clearingTheRunsTakesItsCard()
     {
         automation().setCardDelay(60'000);
@@ -251,7 +227,6 @@ private slots:
         automation().dismissCard();
     }
 
-    // Validation that says no: failed, in a sentence.
     void aMacroThatIsNotValidFails()
     {
         QVERIFY(start("Never"));
@@ -261,7 +236,6 @@ private slots:
         automation().dismissCard();
     }
 
-    // Time spent in the script's dialog does not count toward the second.
     void dialogTimeDoesNotCount()
     {
         automation().setCardDelay(300);
@@ -272,13 +246,9 @@ private slots:
         QCOMPARE(automation().cardState(), QStringLiteral("notice"));
         dialogs->finish(0, {});
         QVERIFY(ended());
-        // It ended within its second, logging nothing: no card.
         QCOMPARE(automation().cardState(), QString());
     }
 
-    // Time in a dialog pauses the second, it does not restart it: 1.5 s of
-    // a 4 s second before the dialog (its work is CPU time, longer on a busy
-    // machine), the card at most 2.5 s after it, not the 4 s of a restart.
     void theSecondResumesAfterADialog()
     {
         automation().setCardDelay(4000);
@@ -297,7 +267,6 @@ private slots:
         automation().dismissCard();
     }
 
-    // Writing nothing is not logging: no card after it applied.
     void anEmptyWriteLeavesNoCard()
     {
         automation().setCardDelay(60'000);
@@ -307,8 +276,6 @@ private slots:
         QCOMPARE(automation().cardState(), QString());
     }
 
-    // The macro's validation function does not count toward the second: the
-    // card opens about a second after the macro itself began.
     void validationTimeDoesNotCount()
     {
         automation().setCardDelay(1000);
@@ -322,8 +289,6 @@ private slots:
         automation().dismissCard();
     }
 
-    // Cancel during the validation opens the card: Cancelling…, and Force
-    // stop if it does not stop, are in the card.
     void cancellingDuringValidationOpensTheCard()
     {
         automation().setCardDelay(60'000);
@@ -337,7 +302,6 @@ private slots:
         automation().dismissCard();
     }
 
-    // A first progress of 0 is a known progress (the bar, at its start).
     void aFirstProgressOfZeroIsKnown()
     {
         QVERIFY(start("Set zero"));
@@ -346,7 +310,6 @@ private slots:
         QCOMPARE(automation().progress(), 0.0);
     }
 
-    // A script's task is kept up to kMaxText characters.
     void aTaskIsBounded()
     {
         QVERIFY(start("Long task"));
@@ -356,7 +319,6 @@ private slots:
         QCOMPARE(automation().task().size(), AutomationRuns::kMaxText);
     }
 
-    // The session keeps the last 20 runs, newest first.
     void runsKeepTheLastTwenty()
     {
         automation().setCardDelay(60'000);
@@ -371,8 +333,7 @@ private slots:
         QCOMPARE(runs->count(), 0);
     }
 
-    // The Document closed under a run (last: it closes the test's
-    // Document): failed, saying why nothing was applied.
+    // MUST KILL: must stay the last slot, it closes the Document every other test uses
     void aClosedDocumentSaysWhy()
     {
         automation().setCardDelay(60'000);

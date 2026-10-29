@@ -1,11 +1,3 @@
-// A3 workflow through the real UI (Spix): three Lines timed by keyboard in
-// the audio box over blank audio, as legacy AudioBox's accelerators do it
-// with AUDIO_AUTO_COMMIT on (the default): AUDIO_LEAD_IN (C) and
-// AUDIO_LEAD_OUT (V) each commit one "Changing time on audio spectrum" step,
-// AUDIO_COMMIT (Enter) goes to the next Line, and on the last Line appends
-// one ("Adding a new line"). AUDIO_PREVIOUS_ALT (Z) and AUDIO_NEXT (Right)
-// move between Lines; AUDIO_GOTO (B) only shows the selection.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 #include "log_controller.h"
@@ -53,9 +45,9 @@ protected:
                 key(Qt::Key_V);
                 key(Qt::Key_Return);
             }
-            key(Qt::Key_Z);     // back to the third Line
-            key(Qt::Key_Z);     // the second
-            key(Qt::Key_Right); // the third again
+            key(Qt::Key_Z);
+            key(Qt::Key_Z);
+            key(Qt::Key_Right);
             key(Qt::Key_B);
             ran = true;
         }
@@ -63,8 +55,6 @@ protected:
             std::printf("spix error: %s\n", e.c_str());
         if (!getErrors().empty())
             ran = false;
-        // the Document has unsaved changes, so quit() would wait for the close
-        // review; main checks the result instead
         done = true;
     }
 };
@@ -80,7 +70,6 @@ QString nameOf(const QObject *o)
     return QString::fromLatin1(o->metaObject()->className());
 }
 
-// Each key a window receives, with the item it goes to.
 class KeyLog : public QObject {
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override
@@ -98,7 +87,7 @@ std::int64_t ms(hikari::core::DocumentTime t)
     return t.microseconds() / 1000;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -127,8 +116,6 @@ int main(int argc, char **argv)
     if (engine.rootObjects().isEmpty())
         return 2;
     auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
-    // Where the keys go: Spix posts plain key presses to the window, so they
-    // reach the focused item.
     QObject::connect(window, &QQuickWindow::activeFocusItemChanged, window,
                      [window] { std::printf("focus %s\n", qPrintable(nameOf(window->activeFocusItem()))); });
     QObject::connect(&app, &QGuiApplication::focusWindowChanged, &app, [](QWindow *w) {
@@ -138,7 +125,6 @@ int main(int argc, char **argv)
                 shown.append(nameOf(t));
         std::printf("focus window %s (shown: %s)\n", qPrintable(nameOf(w)), qPrintable(shown.join(QStringLiteral(", "))));
     });
-    // A message that is not silent is a toast (NT1), which takes no keyboard.
     QObject::connect(&application.log(), &hikari::ui::LogController::noticed, &app,
                      [](int, hikari::ui::LogController::Severity, const QString &title, const QString &text,
                         const QString &) { std::printf("notice: %s: %s\n", qPrintable(title), qPrintable(text)); });
@@ -150,7 +136,6 @@ int main(int argc, char **argv)
     QDeadlineTimer deadline(10'000);
     while (!(window->isExposed() && window->isActive()) && !deadline.hasExpired())
         QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-    // GLOBAL_OPEN_DUMMY_AUDIO: blank audio, ready at once (nothing plays)
     application.audio().openDummy();
     expect(application.audio().ready(), "blank audio");
     Workflow test;
@@ -185,7 +170,6 @@ int main(int argc, char **argv)
         expect(ms(lines[3]->start.value) == 6300 && ms(lines[3]->end.value) == 11300 && lines[3]->text.empty(),
                "the appended Line starts at the third's end");
     }
-    // the opened file, then two steps a Line and the append
     expect(history.size() == 8, "one step per lead and the append");
     if (history.size() == 8) {
         expect(history[1] == QStringLiteral("Changing time on audio spectrum, active line 1"), "lead-in, Line 1");

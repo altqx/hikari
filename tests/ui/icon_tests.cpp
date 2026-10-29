@@ -1,16 +1,3 @@
-// K1: the in-house vector icon set (docs/ux/icons.md). The icon manifest
-// test (every role the QML names resolves to an SVG of the set; each SVG is
-// valid, single-colour with at most one accent layer, on the 16-unit grid and
-// without raster), the tint, the theme colours' contrast, the Icon item
-// following the theme layer live (K2), the menu items, tab buttons, dialog
-// titles and window icons that draw the set through the image provider, the
-// right-to-left mirroring (the manifest's flags against icons.md's rule, and
-// the flip painted), and the rendering fixtures: the whole set drawn by the
-// Icon item at the process's scale (100% here; 150% and 200% in the
-// .scale150 / .scale200 runs) in the four themes of the theme layer (K2),
-// equal to the SVG files drawn at the device's pixels. With HIKARI_ICON_SHEET_DIR set the contact sheets are
-// written there (k1-<theme>-<percent>.png).
-
 #include "controls_style.h"
 #include "icon_theme.h"
 #include "settings_store.h"
@@ -65,19 +52,13 @@ QJsonObject readManifest()
     return QJsonDocument::fromJson(file.readAll()).object();
 }
 
-// The rows of cells one contact sheet holds. On a desktop the window system
-// keeps a window inside its monitor (the windows platform cuts what is below
-// the available height), so a sheet holds what fits under a window frame;
-// offscreen nothing cuts a window and one sheet holds every role. The frame
-// allowance (title bar and the default cascade offset) is a guess: a taller
-// frame or a lower start fails the sheet's height check, not a pixel read.
+// A desktop window system cuts a window below its monitor's available height; offscreen nothing does.
 int contactSheetRows(bool desktop, int availableHeight, int cellHeight)
 {
     constexpr int frame = 80;
     return desktop ? std::max(1, (availableHeight - frame) / cellHeight) : 1000;
 }
 
-// Every number in an attribute value (path data, coordinates).
 QList<double> numbers(const QString &text)
 {
     static const QRegularExpression number(QStringLiteral(R"([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)"));
@@ -92,8 +73,7 @@ bool onGrid(double v)
     return std::abs(v * 4 - std::round(v * 4)) < 1e-9;
 }
 
-// Messages Qt prints while a block runs (QSvgRenderer reports what it cannot
-// draw as warnings).
+// QSvgRenderer reports what it cannot draw as warnings.
 struct MessageCapture {
     static inline QStringList captured;
     QtMessageHandler previous;
@@ -113,12 +93,7 @@ QColor composite(QRgb premultiplied, const QColor &background)
                             float(qBlue(premultiplied) / 255.0 + background.blueF() * (1 - a)));
 }
 
-// The icon as the SVG file in the source tree draws it, recoloured apart
-// from the item's tint (icons::tint's text substitution): the colours are
-// given as SVG's own color property, the root's in the icon colour and the
-// accent group's in the accent colour, and the file's currentColor paints
-// resolve to them. (QtSvg resolves an inherited stroke="currentColor" with
-// the root's color, so the accent group names its stroke again.)
+// QtSvg resolves an inherited stroke="currentColor" with the root's color: the accent group names its stroke again.
 QImage drawnFromSource(const QString &role, int side, const QColor &colour, const QColor &accent)
 {
     QImage image(side, side, QImage::Format_ARGB32_Premultiplied);
@@ -136,8 +111,6 @@ QImage drawnFromSource(const QString &role, int side, const QColor &colour, cons
     return image;
 }
 
-// Shows `code` (K2): the theme layer's preview of that theme, not following
-// the system; `extra` adds other appearance values (an accent, a pick).
 void useTheme(Code code, const QVariantMap &extra = {})
 {
     QVariantMap values{{QStringLiteral("appearance.theme"), ui::theme::codeName(code)},
@@ -151,7 +124,7 @@ const ui::theme::Roles &themeRoles()
     return ui::theme::current().roles;
 }
 
-} // namespace
+}
 
 class IconTests : public QObject {
     Q_OBJECT
@@ -166,7 +139,6 @@ class IconTests : public QObject {
         return out;
     }
 
-    // A window showing `qml` (a component of the Hikari.Ui module's types).
     struct Shown {
         std::unique_ptr<QQmlEngine> engine;
         std::unique_ptr<QQuickWindow> window;
@@ -199,14 +171,12 @@ private slots:
         ui::theme::useSettings(nullptr);
     }
 
-    // The manifest lists every SVG of the set once, with its label and the
-    // surfaces using it.
     void manifestAccountsForTheSet()
     {
         QCOMPARE(manifest.value(QLatin1String("grid")).toInt(), 16);
         const QStringList roles = manifestRoles();
         QCOMPARE(QSet<QString>(roles.begin(), roles.end()).size(), roles.size());
-        QCOMPARE(ui::icons::roles(), roles); // the resources carry the same manifest
+        QCOMPARE(ui::icons::roles(), roles);
         QStringList files = QDir(QStringLiteral(HIKARI_ICON_DIR)).entryList({QStringLiteral("*.svg")}, QDir::Files, QDir::Name);
         QStringList expected;
         for (const auto &role : roles)
@@ -223,12 +193,6 @@ private slots:
         }
     }
 
-    // Every role the QML names (the iconRole bindings of Icon, IconButton,
-    // IconToolButton, ShellMenuItem, ShellMenu, IconTabButton and the dialog
-    // titles, and IconTheme.setWindowIcon's) resolves to an SVG of the set;
-    // every role of the set is named by the QML, or the manifest marks it
-    // "pending" with the later card whose surface places it (and then the
-    // QML does not name it yet).
     void everyRoleTheQmlReferencesResolves()
     {
         static const QRegularExpression binding(QStringLiteral(R"re(\biconRole:\s*([^\n;}]*))re"));
@@ -246,23 +210,18 @@ private slots:
                     for (auto l = literal.globalMatch(expression); l.hasNext();) {
                         const QString role = l.next().captured(1);
                         if (role.isEmpty())
-                            continue; // a component's default: no icon
+                            continue;
                         referenced.insert(role);
                         QVERIFY2(ui::icons::exists(role), qPrintable(QFileInfo(file).fileName() + QStringLiteral(": ") + role));
                     }
                 }
         }
-        // The surfaces wired so far: among them the video transport, the
-        // menus, the audio box, the Line editor, the document tabs, the
-        // Search tool, the windows' and dialogs' icons.
         for (const char *role : {"media-play", "media-pause", "play-line", "media-stop", "frame-previous", "frame-next",
                                  "open-subtitles", "undo", "recent-subtitles", "convert-srt", "audio-previous-line", "link",
                                  "commit", "tag-bold", "colour-shadow", "tag-font", "tab-close", "tab-new",
                                  "document-modified", "search", "find-replace", "history", "styles", "settings",
                                  "select-lines", "automation", "tool-crosshair", "tool-all-tags", "font-collector",
                                  "vector-line", "clip-invert",
-                                 // the UI polish's roles: the batch picker, the list and edit
-                                 // commands, the folders, the menus and the Options pages
                                  "pick-lines", "clear", "move-to-top", "move-up", "move-down", "move-to-bottom",
                                  "panel-menu", "add", "remove", "edit", "duplicate", "delete", "import", "refresh",
                                  "filter", "edit-copy", "edit-cut", "edit-paste", "folder-open", "find-in-files",
@@ -270,11 +229,8 @@ private slots:
                                  "close-video", "frame-snapshot", "zoom-reset", "volume", "match-previous",
                                  "match-next", "unload", "run-script", "settings-video", "settings-audio",
                                  "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass",
-                                 // T6's position shifter and all-tags roles
                                  "shift-position", "shift-origins", "tag-list", "tag-change-option", "tag-edit",
-                                 // SH1's window buttons
                                  "window-minimize", "window-maximize", "window-restore", "window-close",
-                                 // PF1's Settings pages and primary options
                                  "settings-grid", "notices", "language", "audio-device", "restore-default"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
         static const QRegularExpression card(QStringLiteral(R"(^[A-Z]+\d+ #\d+(, [A-Z]+\d+ #\d+)*$)"));
@@ -290,23 +246,15 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        // Every card that placed roles has landed (PF1 #225 placed the
-        // Options icons IC1 drew, the last; PU5 #307 placed restore-default
-        // in Edit shapes' and Edit tags' menus too).
         QCOMPARE(pending, 0);
     }
 
-    // The glyphs that stood in for icons, alone or as a prefix before words.
     static bool isStandInGlyph(const QString &literal)
     {
         static const QRegularExpression alone(QStringLiteral(R"re(^\s*(\+|-|−|\.\.\.|…|⇈|⇊|↑|↓|←|→|↗|×|✕|▶|■)\s*$)re"));
         static const QRegularExpression prefix(QStringLiteral(R"re(^\s*(\+|…|⇈|⇊|↑|↓|←|→|↗|×|✕|▶|■)\s+\S)re"));
         return alone.match(literal).hasMatch() || prefix.match(literal).hasMatch();
     }
-    // Every button-like object in `qml` (its whole block, children
-    // included) whose text, a string or a qsTr() string, plain or followed
-    // by a concatenation, is or starts with a stand-in glyph. Every hit,
-    // not the first one.
     static QStringList glyphButtons(const QString &qml)
     {
         static const QRegularExpression button(QStringLiteral(
@@ -316,8 +264,6 @@ private slots:
         auto it = button.globalMatch(qml);
         while (it.hasNext()) {
             const auto m = it.next();
-            // The block, to its matching brace (braces in strings are rare
-            // enough in the shell's QML to ignore).
             qsizetype at = m.capturedEnd(), depth = 1;
             while (at < qml.size() && depth > 0) {
                 if (qml[at] == QLatin1Char('{'))
@@ -337,16 +283,6 @@ private slots:
         return out;
     }
 
-    // An icon button draws an icon of the set, never a glyph standing in
-    // for one: no button, tool button, menu item or check whose text is
-    // "+", "-", "...", an arrow, a cross or a transport glyph, or starts
-    // with one before its words (the Style manager's "⇈ ↑ ↓ ⇊", the "+"
-    // choosers and profile buttons, Find in subtitles' " ... "), whether a
-    // plain string, a qsTr() string or the first part of a concatenation;
-    // every button of every file is read. A Label's "×" between a width and
-    // a height is text, not a button. A script's own dialog
-    // (AutomationDialog.qml, defined by the script) is left as its script
-    // made it. The checker is first shown to catch the regressions it is for.
     void noGlyphStandsInForAnIcon()
     {
         const QString caught = QStringLiteral(
@@ -416,7 +352,7 @@ private slots:
             if (token != QXmlStreamReader::StartElement)
                 continue;
             const QString name = xml.name().toString();
-            QVERIFY2(elements.contains(name), qPrintable(name)); // no image, text, style, use, gradients
+            QVERIFY2(elements.contains(name), qPrintable(name));
             const auto attributes = xml.attributes();
             if (!sawRoot) {
                 QCOMPARE(name, QStringLiteral("svg"));
@@ -433,7 +369,6 @@ private slots:
                 continue;
             }
             if (name == QLatin1String("g")) {
-                // the one accent layer, not nested
                 QCOMPARE(attributes.value(QLatin1String("id")).toString(), QStringLiteral("accent"));
                 QCOMPARE(attributes.size(), 1);
                 QCOMPARE(accentDepth, -1);
@@ -446,7 +381,7 @@ private slots:
                 const QString key = attribute.qualifiedName().toString();
                 const QString value = attribute.value().toString();
                 QVERIFY2(geometry.contains(key) || (allowed.contains(key) && key != QLatin1String("viewBox")),
-                         qPrintable(name + QStringLiteral(" ") + key)); // no style, class, opacity, transform, href
+                         qPrintable(name + QStringLiteral(" ") + key));
                 if (key == QLatin1String("fill") || key == QLatin1String("stroke"))
                     QVERIFY2(value == QLatin1String("currentColor") || value == QLatin1String("none"), qPrintable(value));
                 if (key == QLatin1String("fill-rule"))
@@ -455,7 +390,6 @@ private slots:
                     for (const double v : numbers(value))
                         QVERIFY2(onGrid(v), qPrintable(key + QStringLiteral("=") + value));
             }
-            // Shapes stay inside the 16-unit box, stroke included.
             if (name == QLatin1String("rect")) {
                 const double x = attributes.value(QLatin1String("x")).toDouble(), y = attributes.value(QLatin1String("y")).toDouble();
                 const double w = attributes.value(QLatin1String("width")).toDouble(), h = attributes.value(QLatin1String("height")).toDouble();
@@ -470,11 +404,9 @@ private slots:
         }
         QVERIFY2(!xml.hasError(), qPrintable(xml.errorString()));
         QVERIFY(accentGroups <= 1);
-        // The manifest says whether the icon has its accent layer.
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray())
             if (value.toObject().value(QLatin1String("role")).toString() == role)
                 QCOMPARE(value.toObject().value(QLatin1String("accent")).toBool(), accentGroups == 1);
-        // Qt SVG draws all of it (it warns about what it cannot).
         MessageCapture capture;
         QSvgRenderer renderer(svg);
         QVERIFY(renderer.isValid());
@@ -486,8 +418,6 @@ private slots:
             renderer.render(&painter);
         }
         QVERIFY2(MessageCapture::captured.isEmpty(), qPrintable(MessageCapture::captured.join(QLatin1Char('\n'))));
-        // Nothing crosses the box: drawn at 64 px with 16 px around it, no
-        // ink outside.
         QImage room(96, 96, QImage::Format_ARGB32_Premultiplied);
         room.fill(Qt::transparent);
         {
@@ -501,8 +431,6 @@ private slots:
                     QVERIFY2(qAlpha(room.pixel(x, y)) <= 8, qPrintable(QStringLiteral("ink at %1,%2").arg(x).arg(y)));
     }
 
-    // Tinted, an icon is drawn in its colour and its accent layer in the
-    // accent colour, and in nothing else.
     void tintPaintsTwoColoursOnly_data() { svgsAreMonochromeOnTheGrid_data(); }
     void tintPaintsTwoColoursOnly()
     {
@@ -519,17 +447,10 @@ private slots:
             }
         const bool accent = ui::icons::source(role).contains("<g id=\"accent\">");
         QCOMPARE(blue, accent);
-        QVERIFY(red || (accent && role == QLatin1String("document-modified"))); // the dot is its accent alone
+        QVERIFY(red || (accent && role == QLatin1String("document-modified")));
     }
 
-    // tools/icons/contact_sheet.py, the set's HTML contact sheet for review,
-    // shows the icons in the theme layer's colours: it reads each theme's
-    // background, text, accent (Light and Dark with the default preset) and
-    // disabled colours from theme.cpp, as IconTheme takes them. (It read
-    // K1's icon colour settings, which K2 withdrew, and exited.) Skipped
-    // without a Python 3 interpreter. Windows without Python has python.exe
-    // and python3.exe as App Installer aliases on the PATH, which only say
-    // "Python was not found" and fail: a candidate counts once it runs.
+    // Windows' App Installer aliases python.exe and python3.exe only say "Python was not found": a candidate counts once it runs.
     void contactSheetToolTakesTheThemeColours()
     {
         QString python;
@@ -567,14 +488,9 @@ private slots:
                                     .arg(id, hex(r.background), hex(r.text), hex(r.accent), hex(r.disabled));
             QVERIFY2(html.contains(css), qPrintable(id + QStringLiteral(": expected ") + css));
         }
-        QVERIFY(!html.contains(QStringLiteral(".hover"))); // K1-hover-one-colour: hover keeps the colours
+        QVERIFY(!html.contains(QStringLiteral(".hover")));
     }
 
-    // The icon colours are the theme's (K2): its text, accent (the accent
-    // layer) and disabled colours. In every theme, with every accent preset, they meet WCAG
-    // 1.4.11's 3:1 against the theme's surfaces (visual-language.md's bg,
-    // panel, raised and field), and a disabled icon looks unlike an enabled
-    // one. There are no icon colour settings any more.
     void themeIconColoursMeetContrast()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
@@ -607,9 +523,6 @@ private slots:
             QVERIFY2(!application::findSetting(id), id);
     }
 
-    // The Icon item and IconButton take the theme layer's colours live (its
-    // text, accent and disabled colours): a theme change, an accent preset
-    // and a high-contrast pick repaint them at once.
     void iconsFollowTheThemeLive()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
@@ -635,28 +548,22 @@ Row {
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#145c4c"));
         QCOMPARE(colour("off"), QStringLiteral("#74808b"));
         QCOMPARE(colour("off", "accentColor"), QStringLiteral("#74808b"));
-        // directional icons mirror in right-to-left layouts, media symbols do not
         QVERIFY(item("mirrored")->property("mirrored").toBool());
         QVERIFY(!item("media")->property("mirrored").toBool());
-        // an icon-only button keeps its name and tooltip
         auto *button = item("button");
-        QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
+        QCOMPARE(button->property("display").toInt(), 0);
         QCOMPARE(button->property("tip").toString(), QStringLiteral("Stop"));
         QCOMPARE(QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name), QStringLiteral("Stop"));
         auto *buttonIcon = button->property("contentItem").value<QQuickItem *>();
         QCOMPARE(buttonIcon->property("iconRole").toString(), QStringLiteral("media-stop"));
-        // Another accent preset: the accent layer follows.
         useTheme(Code::Light, {{QStringLiteral("appearance.lightAccent"), QStringLiteral("blue")}});
         QCOMPARE(colour("plain"), QStringLiteral("#202832"));
         QCOMPARE(colour("plain", "accentColor"), ui::theme::accent(false, QStringLiteral("blue")).accent.name());
-        // Dark.
         useTheme(Code::Dark);
         QCOMPARE(colour("plain"), QStringLiteral("#e8edf2"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#9cdbc9"));
         QCOMPARE(colour("off"), QStringLiteral("#75818d"));
         QCOMPARE(buttonIcon->property("color").value<QColor>().name(), QStringLiteral("#e8edf2"));
-        // High contrast black, then its "Text and icons" and accent picks,
-        // live and painted.
         useTheme(Code::HighContrastBlack);
         QCOMPARE(colour("plain"), QStringLiteral("#ffffff"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#ffff00"));
@@ -670,18 +577,13 @@ Row {
             for (int y = 0; y < image.height(); ++y)
                 for (int x = 0; x < 16 * shown.window->effectiveDevicePixelRatio(); ++x)
                     if (const QRgb p = image.pixel(x, y); qRed(p) > 160 && qBlue(p) > 160 && qGreen(p) < 100)
-                        return true; // the accent layer (diagonal: no pixel is wholly covered)
+                        return true;
             return false;
         }());
-        // An unknown role draws nothing.
         item("plain")->setProperty("iconRole", QStringLiteral("no-such-icon"));
         QVERIFY(!item("plain")->property("valid").toBool());
     }
 
-    // K1-hover-one-colour: hover and press leave an icon-only button's icon in its
-    // colours, accent layer included; the style's panel (Fusion's
-    // ButtonPanel) shows them, as legacy MappedButton showed them only in its
-    // background and border (MappedButton.cpp:374-383).
     void hoverAndPressShadeThePanelOnly()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
@@ -709,15 +611,11 @@ Row {
             };
             const std::pair normal{QColor(QStringLiteral("#202832")), QColor(QStringLiteral("#145c4c"))};
             QCOMPARE(colours(), normal);
-            // The button as drawn (its panel under the icon, whose colours
-            // are checked to stay): hover and press must change it.
             const QRectF area = button->mapRectToScene(QRectF(0, 0, button->width(), button->height()));
             const auto drawn = [&] {
                 const qreal ratio = window->effectiveDevicePixelRatio();
                 return window->grabWindow().copy(QRectF(area.topLeft() * ratio, area.size() * ratio).toAlignedRect());
             };
-            // At rest: the pointer away from the button (it may be over it
-            // from an earlier step, and the button then shows hovered).
             QTest::mouseMove(window, QPoint(195, 55));
             QTRY_VERIFY(!button->property("hovered").toBool());
             const QImage atRest = drawn();
@@ -728,28 +626,22 @@ Row {
             QVERIFY(panel->isVisible());
             QCOMPARE(colours(), normal);
             QImage hovered;
-            QTRY_VERIFY2((hovered = drawn()) != atRest, name); // the panel shades on hover
+            QTRY_VERIFY2((hovered = drawn()) != atRest, name);
             QTest::mousePress(window, Qt::LeftButton, {}, centre);
             QTRY_VERIFY(button->property("down").toBool());
             QVERIFY(panel->isVisible());
             QCOMPARE(colours(), normal);
-            QTRY_VERIFY2(drawn() != hovered && drawn() != atRest, name); // and again on press
+            QTRY_VERIFY2(drawn() != hovered && drawn() != atRest, name);
             QTest::mouseRelease(window, Qt::LeftButton, {}, centre);
             QTest::mouseMove(window, QPoint(195, 55));
             QTRY_VERIFY(!button->property("hovered").toBool());
-            QTRY_VERIFY2(drawn() == atRest, name); // and back at rest
+            QTRY_VERIFY2(drawn() == atRest, name);
         }
         QVERIFY(!QQmlProperty(shown.root->findChild<QQuickItem *>(QStringLiteral("button"))->property("contentItem")
                                   .value<QQuickItem *>(), QStringLiteral("hovered"))
-                     .isValid()); // the Icon item has no hover state any more
+                     .isValid());
     }
 
-    // The controls that draw an image source (menu items, submenus, tab
-    // buttons) show the set through IconTheme's image provider: the icon's
-    // URL carries its colours and mirroring, retinted live, and the image is
-    // the SVG drawn at the device's pixels (crisp at 150% and 200%, not
-    // scaled up). A dialog in the overlay shows its icon before its title,
-    // and a window takes the icon as its own (legacy SetIcon).
     void imageSourcedControlsDrawTheSet()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
@@ -798,7 +690,7 @@ Rectangle {
         QVERIFY(menu);
         QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, shown.root), Q_ARG(QPointF, QPointF(0, 0))));
         QTRY_VERIFY(menu->property("opened").toBool());
-        // The icon's source, read through QML (icon is a value type).
+        // icon is a QML value type: read its source through QML.
         const auto url = [&](QObject *item) {
             QQmlExpression expression(qmlContext(item), item, QStringLiteral("icon.source.toString()"));
             return expression.evaluate().toString();
@@ -807,13 +699,9 @@ Rectangle {
         QVERIFY(undo);
         QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/202832/145c4c/0"));
         QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("offItem"))), QStringLiteral("image://hikari-icon/save/74808b/74808b/0"));
-        // directional icons mirror in right-to-left layouts, media symbols do not
         QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("rtlItem"))), QStringLiteral("image://hikari-icon/undo/202832/145c4c/1"));
         QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("mediaRtlItem"))),
                  QStringLiteral("image://hikari-icon/media-play/202832/145c4c/0"));
-        // a highlighted item: the whole icon in the highlighted text colour;
-        // the Windows style keeps the item's text colour under its faint
-        // tint, so there the icon keeps its normal colours (ShellMenuItem.qml)
         undo->setProperty("highlighted", true);
         const QString highlighted = QGuiApplication::palette().color(QPalette::HighlightedText).name().mid(1);
         if (ui::ControlsStyle::name() == QLatin1String("Windows"))
@@ -821,7 +709,6 @@ Rectangle {
         else
             QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/%1/%1/0").arg(highlighted));
         undo->setProperty("highlighted", false);
-        // the submenu's item in the parent menu shows the submenu's icon
         auto *recent = menu->findChild<QObject *>(QStringLiteral("recent"));
         QVERIFY(recent);
         QCOMPARE(url(recent), QStringLiteral("image://hikari-icon/recent-subtitles/202832/145c4c/0"));
@@ -837,8 +724,6 @@ Rectangle {
             return nullptr;
         }());
         QCOMPARE(url(recentItem), url(recent));
-        // The image is the SVG drawn at the device's pixels: compare the
-        // menu item's icon on screen with the icon rendered at that size.
         auto *undoItem = qobject_cast<QQuickItem *>(undo);
         QQuickItem *image = nullptr;
         QTRY_VERIFY(image = [&]() -> QQuickItem * {
@@ -865,18 +750,15 @@ Rectangle {
                                   std::abs(want.blue() - got.blue())});
             }
         QVERIFY2(worst <= 8, qPrintable(QString::number(worst)));
-        // The theme turns dark: the URLs follow at once.
         useTheme(Code::Dark);
         QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/e8edf2/9cdbc9/0"));
         QCOMPARE(url(recent), QStringLiteral("image://hikari-icon/recent-subtitles/e8edf2/9cdbc9/0"));
         useTheme(Code::Light);
         QMetaObject::invokeMethod(menu, "close");
-        // the tab button
         auto *tab = shown.root->property("tab").value<QQuickItem *>();
         QVERIFY(tab);
         QCOMPARE(url(tab), QStringLiteral("image://hikari-icon/search/202832/145c4c/0"));
-        QCOMPARE(tab->property("text").toString(), QStringLiteral("Find")); // drawn beside the icon
-        // the dialog's title with its icon
+        QCOMPARE(tab->property("text").toString(), QStringLiteral("Find"));
         auto *dialog = shown.root->property("dialog").value<QObject *>();
         QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
         QTRY_VERIFY(dialog->property("opened").toBool());
@@ -888,7 +770,6 @@ Rectangle {
         QCOMPARE(dialogIcon->property("iconRole").toString(), QStringLiteral("settings"));
         QVERIFY(dialogIcon->x() + dialogIcon->width() <= header->property("leftPadding").toReal());
         QMetaObject::invokeMethod(dialog, "close");
-        // the window's icon, retinted with the theme
         auto *history = shown.root->property("window").value<QWindow *>();
         QVERIFY(history);
         const auto iconPixel = [&] {
@@ -906,37 +787,23 @@ Rectangle {
         QTRY_VERIFY(iconPixel() == QLatin1String("#e8edf2") || iconPixel() == QLatin1String("#9cdbc9"));
     }
 
-    // icons.md, "Mirroring": icons that show navigation or reading order
-    // mirror in right-to-left layouts (undo, redo, list and text-line icons,
-    // the session and search arrows); media transport, time, frame and data
-    // symbols do not. The manifest's mirror flags are that set, and the
-    // Icon item reads them.
     void mirrorFlagsFollowTheRule()
     {
         const QSet<QString> expected{
-            // undo and redo
             QStringLiteral("undo"), QStringLiteral("redo"), QStringLiteral("undo-to-last-save"),
-            // list icons (the polish's batch picker and Fix minor errors among them)
             QStringLiteral("sort"), QStringLiteral("sort-selected"), QStringLiteral("select-lines"),
             QStringLiteral("pick-lines"), QStringLiteral("multireplace"), QStringLiteral("edit-paste"),
-            // text-line icons
             QStringLiteral("editor"), QStringLiteral("script-properties"), QStringLiteral("spellchecker"),
-            // the session and search arrows
             QStringLiteral("last-session"), QStringLiteral("find-replace"),
-            // IC1's list and text-line icons, and its undo-like arrows
             QStringLiteral("log"), QStringLiteral("make-tree"), QStringLiteral("tree-add-lines"),
             QStringLiteral("tree-select"), QStringLiteral("insert-before"), QStringLiteral("insert-after"),
             QStringLiteral("swap-lines"), QStringLiteral("join-lines"), QStringLiteral("join-keep-first"),
             QStringLiteral("join-keep-last"), QStringLiteral("split-words"), QStringLiteral("split-wraps"),
             QStringLiteral("select-visible"), QStringLiteral("translation-shift"), QStringLiteral("ui-colours"),
             QStringLiteral("layout-restore"), QStringLiteral("restore-default"),
-            // TM1's text-line icon and its moving arrow
             QStringLiteral("translation-mode"), QStringLiteral("comment-original"), QStringLiteral("moving-tags"),
-            // TP1's text lines under a swatch
             QStringLiteral("style-apply"),
-            // PK1's arrows: the date picker's previous and next month, the Details disclosure
             QStringLiteral("chevron-left"), QStringLiteral("chevron-right"),
-            // PF1's grid and notice icons (a list's column, text lines)
             QStringLiteral("settings-grid"), QStringLiteral("notices")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
@@ -946,8 +813,6 @@ Rectangle {
             QCOMPARE(ui::icons::mirrors(role), mirror);
             if (mirror)
                 mirrored.insert(role);
-            // no media transport, time or frame symbol mirrors: nothing on
-            // the video transport, the full-screen controls or the audio box
             for (const auto &surface : icon.value(QLatin1String("surfaces")).toArray())
                 if (const QString name = surface.toString(); name == QLatin1String("video-transport")
                                                              || name == QLatin1String("video-fullscreen")
@@ -960,11 +825,8 @@ Rectangle {
         QCOMPARE(mirrored, expected);
     }
 
-    // A mirrored icon is painted flipped left to right; an icon that does
-    // not mirror paints the same in a right-to-left layout.
     void mirroredIconsPaintFlipped()
     {
-        // (the Light theme's dark icons on white)
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
         useTheme(Code::Light);
         auto shown = show(R"(
@@ -999,7 +861,7 @@ Rectangle {
             return worst;
         };
         const QImage undo = cell(0), undoRtl = cell(40), play = cell(80), playRtl = cell(120);
-        QVERIFY(difference(undo, undo.flipped(Qt::Horizontal)) > 100); // the drawing is not symmetric
+        QVERIFY(difference(undo, undo.flipped(Qt::Horizontal)) > 100);
         QVERIFY(difference(undo, undoRtl) > 100);
         QVERIFY2(difference(undoRtl, undo.flipped(Qt::Horizontal)) <= 8,
                  qPrintable(QString::number(difference(undoRtl, undo.flipped(Qt::Horizontal)))));
@@ -1007,10 +869,6 @@ Rectangle {
         QCOMPARE(difference(playRtl, play), 0);
     }
 
-    // A contact sheet on a desktop holds the rows that fit the screen's
-    // available height under a window frame (a 1024 x 768 desktop with its
-    // taskbar takes 14 rows of 44, not the whole set), and at least one;
-    // offscreen it holds every role.
     void contactSheetsFitTheScreen()
     {
         QCOMPARE(contactSheetRows(true, 728, 44), 14);
@@ -1018,27 +876,13 @@ Rectangle {
         QCOMPARE(contactSheetRows(true, 100, 44), 1);
         QCOMPARE(contactSheetRows(true, 0, 44), 1);
         const int all = int((ui::icons::roles().size() + 7) / 8);
-        QVERIFY(all > 14); // the whole set is taller than that desktop
+        QVERIFY(all > 14);
         QVERIFY(contactSheetRows(false, 728, 44) >= all);
     }
 
-    // The rendering check and contact sheets: the whole set drawn by the
-    // Icon item on each theme's background at this process's scale,
-    // every icon equal to its SVG file drawn at the device's pixels (crisp,
-    // not scaled up from 16 px) in the appearance's colour, its accent layer
-    // in the accent colour. The expected icon is drawn from the source
-    // tree's file, recoloured through SVG's color property rather than the
-    // item's tint (drawnFromSource), so a wrong drawing, a wrong tint or
-    // colours in the wrong layer fail here; whether the drawings look right
-    // rests on the user's review of the contact sheets written here. Each
-    // sheet is drawn whole (its height is checked), on as many pages as the
-    // screen needs.
     void contactSheets()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
-        // HIKARI_ICON_SHEET_ROLES (comma-separated) draws a sheet of those
-        // roles only, for reviewing new icons; HIKARI_ICON_SHEET_PREFIX names
-        // the files (default "k1").
         QStringList roles = ui::icons::roles();
         if (const QString only = qEnvironmentVariable("HIKARI_ICON_SHEET_ROLES"); !only.isEmpty()) {
             const QStringList wanted = only.split(QLatin1Char(','), Qt::SkipEmptyParts);
@@ -1048,16 +892,12 @@ Rectangle {
         }
         const QString prefix = qEnvironmentVariable("HIKARI_ICON_SHEET_PREFIX", QStringLiteral("k1"));
         constexpr int columns = 8, cellWidth = 168, cellHeight = 44;
-        // A sheet taller than the screen is cut by a desktop's window system,
-        // so the roles go on pages that fit it (files named -pageN);
-        // HIKARI_ICON_SHEET_PAGE_ROWS sets the rows of a page instead.
         const QScreen *screen = QGuiApplication::primaryScreen();
         int fitRows = contactSheetRows(screen && QGuiApplication::platformName() != QLatin1String("offscreen"),
                                        screen ? screen->availableGeometry().height() : 0, cellHeight);
         if (const int rowsWanted = qEnvironmentVariableIntValue("HIKARI_ICON_SHEET_PAGE_ROWS"); rowsWanted > 0)
             fitRows = rowsWanted;
         const QStringList allRoles = roles;
-        // No roles would make no pages, and the test would pass drawing nothing.
         QVERIFY(!allRoles.isEmpty());
         const int pageRoles = fitRows * columns;
         const int pages = int((allRoles.size() + pageRoles - 1) / pageRoles);
@@ -1105,13 +945,12 @@ Rectangle {
                 QTRY_VERIFY((sheet = shown.window->grabWindow(), !sheet.isNull() && sheet.width() > 0));
                 const qreal dpr = shown.window->effectiveDevicePixelRatio();
                 QCOMPARE(sheet.width(), qRound(columns * cellWidth * dpr));
-                QCOMPARE(sheet.height(), qRound(rows * cellHeight * dpr)); // not cut by the screen
+                QCOMPARE(sheet.height(), qRound(rows * cellHeight * dpr));
                 const QColor colour = themeRoles().text;
                 const QColor accent = themeRoles().accent;
                 int worst = 0;
                 QString worstRole;
                 for (int i = 0; i < roles.size(); ++i) {
-                    // the 16-unit icon at (8, 6) of its cell, in device pixels
                     const int px = qRound((i % columns * cellWidth + 8) * dpr), py = qRound((i / columns * cellHeight + 6) * dpr);
                     const int side = qRound(16 * dpr);
                     const QImage expected = drawnFromSource(roles[i], side, colour, accent);

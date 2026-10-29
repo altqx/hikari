@@ -1,7 +1,3 @@
-// F3: the Qt side of the spell checker: the Grid's marks role (legacy
-// SubsGridWindow at 20d647c4). Word segmentation (boost::locale over ICU)
-// is pinned in the backends' tests.
-
 #include "line_table_model.h"
 #include "spelling/fake_spelling.h"
 
@@ -24,14 +20,11 @@ core::Document load(std::string_view text)
     return core::loadAss(b).document;
 }
 
-} // namespace
+}
 
 class SpellingUiTests : public QObject {
     Q_OBJECT
 private slots:
-    // The Grid's marks (TextData::Init): comments have none. Legacy draws
-    // marks on the last column only, which in translation mode is the
-    // translation column (not built yet), so the Text column has none there.
     void gridMarksRole()
     {
         ui::LineTableModel model;

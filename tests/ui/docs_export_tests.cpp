@@ -1,9 +1,3 @@
-// DX1 (#367): `HikariSub --export-docs <dir>` against the live registries:
-// every command the Hotkeys page lists and every setting the Settings window
-// binds is there once, with the defaults a new profile has; the menu places
-// come from the real menus; two exports give the same bytes; the program's
-// own switch writes the files without a display and exits.
-
 #include "hikari/app/application.h"
 #include "hikari/app/docs_export.h"
 #include "hikari/application/guide_links.h"
@@ -43,7 +37,6 @@ QJsonObject json(const QTemporaryDir &dir, const QString &name)
     return QJsonDocument::fromJson(read(dir.filePath(name))).object();
 }
 
-// The first line where two exports differ, for the failure message.
 QByteArray difference(const QString &name, const QByteArray &a, const QByteArray &b)
 {
     const QList<QByteArray> x = a.split('\n'), y = b.split('\n');
@@ -58,7 +51,7 @@ QString qs(std::string_view s)
     return QString::fromUtf8(s.data(), qsizetype(s.size()));
 }
 
-} // namespace
+}
 
 class DocsExportTests : public QObject {
     Q_OBJECT
@@ -92,14 +85,12 @@ private slots:
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), 1);
         QCOMPARE(meta.value(QStringLiteral("version")).toString(), QStringLiteral(HIKARI_VERSION));
         QCOMPARE(meta.value(QStringLiteral("site")).toString(), QStringLiteral("https://hikarisub.altqx.com"));
-        // #391: never empty; the hash the build was configured at.
         QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{40}$"))
                     .match(meta.value(QStringLiteral("commit")).toString())
                     .hasMatch());
         QCOMPARE(meta.value(QStringLiteral("files")).toArray().size(), 3);
     }
 
-    // Every listed command once, by id, with its name, window and defaults.
     void everyCommandIsThere()
     {
         const QJsonArray commands = json(first, QStringLiteral("commands.json")).value(QStringLiteral("commands")).toArray();
@@ -109,7 +100,7 @@ private slots:
             const QJsonObject c = v.toObject();
             const int id = c.value(QStringLiteral("id")).toInt();
             QVERIFY2(!byId.contains(id), qPrintable(QString::number(id)));
-            QVERIFY(id > previous); // by id
+            QVERIFY(id > previous);
             previous = id;
             byId.insert(id, c);
         }
@@ -129,7 +120,6 @@ private slots:
                      qs(application::hotkeyWindowName(application::hotkeyType(action.id))));
         }
         QCOMPARE(byId.size(), listed);
-        // The defaults, per window, as a new profile has them.
         int bound = 0;
         for (const auto &[key, hotkey] : application::defaultHotkeys()) {
             if (hotkey.accel.empty() || !byId.contains(key.id))
@@ -145,7 +135,6 @@ private slots:
             exported += c.value(QStringLiteral("defaultKeys")).toArray().size();
         QCOMPARE(exported, bound);
 
-        // User guide (DX1): GLOBAL_HELP, F1, Help > User guide.
         const QJsonObject help = byId.value(application::hotkeyIdOf("GLOBAL_HELP"));
         QCOMPARE(help.value(QStringLiteral("id")).toInt(), 5112);
         QCOMPARE(help.value(QStringLiteral("name")).toString(), QStringLiteral("User guide"));
@@ -155,7 +144,6 @@ private slots:
         QCOMPARE(help.value(QStringLiteral("menus")).toArray(), QJsonArray{QStringLiteral("Help > User guide")});
     }
 
-    // The places come from the menus as built: the menu bar's and the Grid's.
     void menusAreTheRealOnes()
     {
         const QJsonArray commands = json(first, QStringLiteral("commands.json")).value(QStringLiteral("commands")).toArray();
@@ -166,7 +154,6 @@ private slots:
         QCOMPARE(menus.value(QStringLiteral("GLOBAL_SAVE_SUBS")), QStringList{QStringLiteral("File > Save")});
         QVERIFY(menus.value(QStringLiteral("GLOBAL_CONVERT_TO_SRT")).contains(QStringLiteral("Subtitles > Conversion > Convert to SRT")));
         QVERIFY(menus.value(QStringLiteral("GRID_INSERT_BEFORE")).contains(QStringLiteral("Grid menu > Insert > Insert before")));
-        // A text with its keys after a tab is shown without them.
         for (const QStringList &places : menus)
             for (const QString &place : places) {
                 QVERIFY2(!place.contains(QLatin1Char('\t')) && !place.contains(QLatin1Char('&')), qPrintable(place));
@@ -174,8 +161,6 @@ private slots:
             }
     }
 
-    // Every bound control's setting once, on a known page, labelled, with
-    // the value a new profile has.
     void everySettingIsThere()
     {
         const QJsonObject doc = json(first, QStringLiteral("settings.json"));
@@ -202,12 +187,9 @@ private slots:
             QVERIFY2(pages.contains(s.value(QStringLiteral("page")).toString()), qPrintable(key));
             QVERIFY2(!s.value(QStringLiteral("label")).toString().isEmpty(), qPrintable(key));
             QVERIFY2(!s.value(QStringLiteral("section")).toString().isEmpty(), qPrintable(key));
-            // The stored default, but what the window shows where it maps the
-            // value on opening (Tab name length, checked below).
             if (key != QLatin1String("program.tabTextMaxChars"))
                 QCOMPARE(s.value(QStringLiteral("default")), QJsonValue::fromVariant(fresh.settingsStore()->value(key)));
         }
-        // #383: those nothing reads are not in the window, so not exported.
         for (const application::OptionsBinding &binding : application::optionsBindings()) {
             const bool shown = application::optionsBindingShown(binding.setting);
             QVERIFY2(byKey.contains(qs(binding.setting)) == shown, binding.setting.data());
@@ -217,14 +199,12 @@ private slots:
         for (const char *key : {"appearance.theme", "appearance.followSystem", "appearance.titleBar", "program.font",
                                 "program.fontSize"})
             QVERIFY2(byKey.contains(QLatin1String(key)), key);
-        // AN1 (#404): the usage data switch, on, with its hint.
         const QJsonObject usage = byKey.value(QStringLiteral("privacy.usageData"));
         QCOMPARE(usage.value(QStringLiteral("label")).toString(), QStringLiteral("Send anonymous usage data"));
         QCOMPARE(usage.value(QStringLiteral("page")).toString(), QStringLiteral("updates"));
         QCOMPARE(usage.value(QStringLiteral("section")).toString(), QStringLiteral("Privacy"));
         QCOMPARE(usage.value(QStringLiteral("default")), QJsonValue(true));
         QVERIFY(usage.value(QStringLiteral("hint")).toString().startsWith(QStringLiteral("Which features are used")));
-        // Every theme's settings, not only those of the theme shown.
         for (const application::SettingDefinition &definition : application::settingDefinitions())
             if (definition.id.starts_with("appearance."))
                 QVERIFY2(byKey.contains(qs(definition.id)), definition.id.data());
@@ -235,7 +215,6 @@ private slots:
         QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("section")).toString(),
                  QStringLiteral("UI colors"));
         QVERIFY(!byKey.value(QStringLiteral("appearance.darkAccent")).value(QStringLiteral("values")).toArray().isEmpty());
-        // Windows' own rows, on every platform, marked.
         const QJsonObject player = byKey.value(QStringLiteral("video.playbackPlayer"));
         QCOMPARE(player.value(QStringLiteral("platform")).toString(), QStringLiteral("windows"));
         QCOMPARE(player.value(QStringLiteral("page")).toString(), QStringLiteral("video"));
@@ -253,7 +232,7 @@ private slots:
         QCOMPARE(tabs.value(QStringLiteral("control")).toString(), QStringLiteral("number"));
         QCOMPARE(tabs.value(QStringLiteral("min")).toInt(), 20);
         QCOMPARE(tabs.value(QStringLiteral("max")).toInt(), 150);
-        QCOMPARE(tabs.value(QStringLiteral("default")).toInt(), 40); // #391: what the window shows, not the stored 0
+        QCOMPARE(tabs.value(QStringLiteral("default")).toInt(), 40);
         QCOMPARE(tabs.value(QStringLiteral("hint")).toString(),
                  QStringLiteral("Number of tab name characters. Range from 20 to 150"));
         const QJsonObject language = byKey.value(QStringLiteral("program.language"));
@@ -280,8 +259,6 @@ private slots:
         }
     }
 
-    // The program's switch: no display needed, the files written, exit 0,
-    // the same bytes twice; a missing folder is refused.
     void theSwitchWritesTheFiles()
     {
         QTemporaryDir out;
@@ -304,8 +281,6 @@ private slots:
             const QByteArray a = read(out.filePath(QStringLiteral("docs/") + name));
             const QByteArray again = read(out.filePath(QStringLiteral("again/") + name));
             QVERIFY2(a == again, difference(name, a, again).constData());
-            // The Interface language's entries are the catalogs beside the
-            // program, which this test's folder has not: the keys are the same.
             const QByteArray b = read(first.filePath(name));
             if (name != QLatin1String("settings.json"))
                 QVERIFY2(a == b, difference(name, a, b).constData());
@@ -317,7 +292,6 @@ private slots:
             return list;
         };
         QCOMPARE(keys(read(out.filePath(QStringLiteral("docs/settings.json")))), keys(read(first.filePath(QStringLiteral("settings.json")))));
-        // Nothing of the user's: the profile was a temporary one.
         QVERIFY(!QFile::exists(out.filePath(QStringLiteral("home/config/HikariSub/settings.toml"))));
 
         program.start(QStringLiteral(HIKARI_PROGRAM), {QStringLiteral("--export-docs")});

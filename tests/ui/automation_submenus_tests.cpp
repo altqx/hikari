@@ -1,9 +1,3 @@
-// AS1 (#471): a "/" in a macro's registered name opens submenus of the
-// Automation menu, by Aegisub's rules (src/menu.cpp AutomationMenu), with the
-// real Lua helper (lua-fixtures/nested-macros.lua). The nested items run
-// their macro, a hotkey on a nested macro runs it, and the Automation panel
-// and Settings → Hotkeys keep the full name.
-
 #include "hikari/app/application.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "docking.h"
@@ -31,7 +25,7 @@ using namespace hikari;
 namespace {
 
 const QString kScript = QStringLiteral(HIKARI_LUA_FIXTURES "/nested-macros.lua");
-constexpr auto kDeep = "Script nested-macros.lua-1"; // "Group/Sub/Deep"
+constexpr auto kDeep = "Script nested-macros.lua-1";
 
 QQuickItem *itemAt(QObject *menu, int index)
 {
@@ -40,8 +34,6 @@ QQuickItem *itemAt(QObject *menu, int index)
     return entry;
 }
 
-// A menu's entries from `from` on, one per line, a submenu's under it two
-// spaces in: `menu "Title"` or `item "Text" (objectName)`.
 void describe(QObject *menu, int from, int depth, QStringList &out)
 {
     const QString indent(depth * 2, QLatin1Char(' '));
@@ -58,7 +50,7 @@ void describe(QObject *menu, int from, int depth, QStringList &out)
     }
 }
 
-} // namespace
+}
 
 class AutomationSubmenusTests : public QObject {
     Q_OBJECT
@@ -82,7 +74,6 @@ class AutomationSubmenusTests : public QObject {
         const auto &text = app->files().session(*app->workspace().editingTarget())->document().lines().front()->text;
         return QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size()));
     }
-    // The Automation menu's macros: what follows its separator.
     QStringList macroMenu() const
     {
         QObject *menu = named("automationMenu");
@@ -127,8 +118,7 @@ private slots:
         window->resize(1280, 800);
         window->requestActivate();
         QVERIFY(QTest::qWaitForWindowExposed(window));
-        // An earlier case's session left open: No to the crash prompt, a
-        // modal that keeps the macros' shortcuts off.
+        // MUST KILL: rejects a crash-session prompt an earlier case left open
         if (auto *prompt = named("crashSessionPrompt"); prompt && prompt->property("visible").toBool())
             QVERIFY(QMetaObject::invokeMethod(prompt, "reject"));
         QTRY_VERIFY(!root->property("workspaceLayout").value<QObject *>()->property("modalOpen").toBool());
@@ -141,10 +131,6 @@ private slots:
         app.reset();
     }
 
-    // Each piece of a name but the last is a submenu; names sharing a prefix
-    // share its submenus, in the order the first of them registered; empty
-    // pieces stay (a submenu with no title, an item with no text); a macro
-    // and a submenu of the same name both show, in either order.
     void nestedNamesMakeSubmenus()
     {
         const QStringList expected{
@@ -170,7 +156,6 @@ private slots:
         };
         QTRY_COMPARE(macroMenu(), expected);
 
-        // A nested item runs its macro.
         QSignalSpy done(&app->automation(), &app::AutomationShell::runCompleted);
         auto *deep = named("macro_Group/Sub/Deep");
         QVERIFY(deep);
@@ -179,7 +164,6 @@ private slots:
         QVERIFY(done.first().at(0).toBool());
         QCOMPARE(firstLine(), QStringLiteral("Gate Group/Sub/Deep"));
 
-        // Reloading the script builds the tree again, once.
         app->automation().reload(kScript.toStdString());
         QTRY_VERIFY_WITH_TIMEOUT(std::ranges::any_of(app->automation().scripts(), [](const auto &s) {
             return s.path == kScript.toStdString() && s.state == application::ScriptStatus::State::Ready;
@@ -187,9 +171,6 @@ private slots:
         QTRY_COMPARE(macroMenu(), expected);
     }
 
-    // A hotkey addresses a nested macro by its full name and runs it from
-    // the window; Settings → Hotkeys and the Automation panel show that
-    // name whole.
     void aHotkeyRunsANestedMacro()
     {
         auto &h = app->hotkeys();
@@ -232,7 +213,6 @@ private slots:
         QTRY_VERIFY(panelRow());
     }
 
-    // Evidence for the card: the menu open on Group ▸ Sub, light and dark.
     void screenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -249,7 +229,6 @@ private slots:
             QTRY_VERIFY(entry->isVisible() && entry->width() > 0);
             QTest::mouseMove(entry->window(), centre(entry));
         };
-        // A click on a submenu's item opens it (hovering waits on a delay).
         const auto open = [&](QQuickItem *entry) {
             hover(entry);
             QTest::mouseClick(entry->window(), Qt::LeftButton, Qt::NoModifier, centre(entry));

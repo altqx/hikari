@@ -1,8 +1,3 @@
-// ADR 0019: the Windows installing side of an update (update_apply.h), with
-// the release's SHA256SUMS and the installer's start stubbed. It checks the
-// file against the release before it runs anything, from a private copy
-// for an all-users install, and takes no digest from its caller.
-
 #include <QCryptographicHash>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -67,7 +62,6 @@ struct Ran {
 };
 
 
-// A made-up disk: each path's rights for the user, and each folder's entries.
 struct FakeDisk {
     std::map<std::wstring, unsigned long> rights;
     std::map<std::wstring, std::vector<update_apply::Entry>> folders;
@@ -87,8 +81,7 @@ struct FakeDisk {
     }
 };
 
-// Program Files as Windows sets it up: users read and run; C:\ lets them
-// make folders in it.
+// Program Files' rights as Windows sets them up.
 FakeDisk programFiles()
 {
     const unsigned long read = FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
@@ -106,7 +99,7 @@ FakeDisk programFiles()
     return disk;
 }
 
-} // namespace
+}
 #endif
 
 class UpdateApplyTest : public QObject {
@@ -210,9 +203,7 @@ private slots:
 #endif
     }
 
-    // Not _WIN32: moc sees no compiler-predefined macros under MSVC, so slots
-    // behind _WIN32 were never registered and never ran. CMake defines this
-    // for the compiler and moc alike.
+    // Not _WIN32: moc under MSVC sees no compiler-predefined macros, so those slots never ran.
 #if HIKARI_UPDATE_APPLY_WINDOWS_TESTS
     void theCommandLineReadsBack()
     {
@@ -333,8 +324,6 @@ private slots:
         const std::wstring dir = L"C:\\Program Files\\HikariSub";
         QVERIFY(programFiles().isProtected(dir));
         QVERIFY(programFiles().isProtected(dir + L"\\"));
-        // A DLL or plugin the user may write, or a folder it may add to:
-        // an elevation could run the user's code.
         const unsigned long changes[] = {FILE_WRITE_DATA, FILE_APPEND_DATA, DELETE, WRITE_DAC, WRITE_OWNER};
         for (unsigned long change : changes) {
             FakeDisk dll = programFiles();
@@ -347,7 +336,6 @@ private slots:
             folder.rights[dir + L"\\platforms"] |= change;
             QVERIFY(!folder.isProtected(dir));
         }
-        // A folder on the way that the user can empty or re-permission.
         const unsigned long replaces[] = {FILE_DELETE_CHILD, DELETE, WRITE_DAC, WRITE_OWNER};
         for (unsigned long replace : replaces) {
             FakeDisk way = programFiles();
@@ -357,7 +345,6 @@ private slots:
             root.rights[L"C:\\"] |= replace;
             QVERIFY(!root.isProtected(dir));
         }
-        // What cannot be told counts as changeable.
         FakeDisk unknown = programFiles();
         unknown.rights.erase(dir + L"\\Qt6Core.dll");
         QVERIFY(!unknown.isProtected(dir));
@@ -367,7 +354,6 @@ private slots:
         FakeDisk link = programFiles();
         link.folders[dir].push_back({L"qml", true, true});
         QVERIFY(!link.isProtected(dir));
-        // Only a plain local path.
         const FakeDisk disk = programFiles();
         QVERIFY(!disk.isProtected(L"\\\\server\\share\\HikariSub"));
         QVERIFY(!disk.isProtected(L"\\\\?\\C:\\Program Files\\HikariSub"));
@@ -376,9 +362,7 @@ private slots:
         QVERIFY(!disk.isProtected(L""));
     }
 
-    // The real fetch, against a published release (HIKARI_TEST_NETWORK=1):
-    // GitHub redirects to its asset host, every hop must be allowed, and
-    // every server's certificate must chain to a root the machine trusts.
+    // GitHub redirects release downloads to its asset hosts.
     void theRealFetchFollowsOnlyAllowedHosts()
     {
         if (qEnvironmentVariable("HIKARI_TEST_NETWORK") != QLatin1String("1"))
@@ -394,10 +378,8 @@ private slots:
         const auto sums = update_apply::fetchHttps(url, anyGitHub, 65536);
         QVERIFY(sums);
         QVERIFY(QByteArray::fromStdString(*sums).contains("HikariSub-0.0.1-windows-x64.zip"));
-        // A redirect to a host that is not allowed is not followed.
         const auto githubOnly = [](const std::string &u) { return u.rfind("https://github.com/", 0) == 0; };
         QVERIFY(!update_apply::fetchHttps(url, githubOnly, 65536));
-        // Nor is a URL that is not allowed fetched at all.
         QVERIFY(!update_apply::fetchHttps(url, [](const std::string &) { return false; }, 65536));
     }
 
@@ -411,8 +393,6 @@ private slots:
         QVERIFY(!update_apply::isProtectedFromUser(native(dir.path())));
     }
 
-    // A start while an update's setup runs leaves and asks for a start after
-    // it; the handoff returns only once the setup holds its mutex.
     void aStartDuringTheSetupWaitsForIt()
     {
         QVERIFY(!update_apply::setupRunning());
@@ -423,7 +403,6 @@ private slots:
         CloseHandle(held);
         QVERIFY(!update_apply::setupRunning());
 
-        // The start request sets the setup's event; with no setup, nothing.
         QVERIFY(!update_apply::askStartAfterSetup());
         HANDLE request = CreateEventW(nullptr, TRUE, FALSE, update_apply::kStartAfterSetup);
         QVERIFY(request != nullptr);
@@ -432,10 +411,6 @@ private slots:
         QCOMPARE(WaitForSingleObject(request, 0), DWORD(WAIT_OBJECT_0));
         CloseHandle(request);
 
-        // A stand-in setup that takes the mutex 1 s after it starts, then
-        // holds it 8 s: launch returns while it is held, not at once. Not
-        // PowerShell: on a loaded runner its start took longer than launch's
-        // 10 s wait.
         const std::wstring helper = native(QStringLiteral(HIKARI_SETUP_MUTEX_HELPER));
         QVERIFY(update_apply::launch(helper, std::wstring(update_apply::kSetupMutex) + L" 1000 8000"));
         QVERIFY(update_apply::setupRunning());

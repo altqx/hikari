@@ -1,10 +1,3 @@
-// CR1 (#452): crash, freeze and issue reports, against a fake PostHog
-// endpoint on the loopback; nothing leaves the machine. A forced crash and a
-// forced freeze each leave a report the next start offers; Send works with
-// usage data off and Don't send sends nothing; no subtitle text, path or
-// file name is in a report; the GitHub links match the repository's issue
-// forms and a long one goes to the clipboard.
-
 #include "analytics_endpoint.h"
 
 #include "hikari/app/analytics.h"
@@ -47,13 +40,11 @@ const QString kProbeModule = QStringLiteral("hikari_crash_probe.exe");
 const QString kProbeModule = QStringLiteral("hikari_crash_probe");
 #endif
 
-// The probe, started by a relative path as from a shell.
 void startProbe(QProcess &probe, const QString &record, const QString &how)
 {
     const QFileInfo program(QStringLiteral(HIKARI_CRASH_PROBE));
     probe.setWorkingDirectory(program.absolutePath());
-    // Windows resolves a relative program against this process's folder,
-    // not the child's working directory (#454).
+    // Windows resolves a relative program against this process's folder, not the child's working directory.
     const QString here = QDir::currentPath();
     QDir::setCurrent(program.absolutePath());
     probe.start(QStringLiteral("./") + program.fileName(), {record, how});
@@ -68,8 +59,7 @@ QStringList modulesOf(const crash::Record &record)
     return modules;
 }
 
-// What the app posted to the endpoint: another program on the machine may
-// knock on the loopback port too (a GET /), which is not the app's.
+// Other programs on the machine may knock on the loopback port too (a GET /): count the POSTs only.
 qsizetype posts(const AnalyticsEndpoint &endpoint)
 {
     return std::count_if(endpoint.requests.begin(), endpoint.requests.end(),
@@ -84,7 +74,7 @@ QJsonObject propertiesOf(const QJsonArray &events, const QString &name)
     return {};
 }
 
-} // namespace
+}
 
 class CrashReportTest : public QObject {
     Q_OBJECT
@@ -101,7 +91,7 @@ class CrashReportTest : public QObject {
         c.endpoint = endpoint;
         c.queueFile = path("analytics-queue.json");
         c.version = QStringLiteral("0.1.0-beta.1");
-        c.firstFlushMs = 60 * 60 * 1000; // the tests send
+        c.firstFlushMs = 60 * 60 * 1000;
         return c;
     }
     CrashReports::Config config()
@@ -130,15 +120,12 @@ class CrashReportTest : public QObject {
         return "hikari-crash 1\nversion 0.1.0-beta.1\ntype SIGSEGV\nmechanism signal\n"
                "frame hikarisub 0x1f3a2c\nframe libQt6Core.so.6 0x2c41b8\nframe other 0x4d2a0\n";
     }
-    // The fixture's private words: none may be in what goes.
     static QStringList secrets()
     {
         return {QStringLiteral("Secret Show"), QStringLiteral("Episode 03"), QStringLiteral("altq"),
                 QStringLiteral("meet again at the station"), QStringLiteral("Kenta"), QStringLiteral("Signs"),
                 QStringLiteral("Comic Hand"), QStringLiteral("/home/"), QStringLiteral("C:\\")};
     }
-    // A Log as a session could leave it: paths, the open files' names, a
-    // Line's text, a quoted font and quoted text.
     static void fillLog(hikari::ui::LogController &log)
     {
         log.log(QStringLiteral("Opened /home/altq/Secret Show/Episode 03.ass (412 lines)"));
@@ -174,8 +161,6 @@ private slots:
         copied.clear();
     }
 
-    // A forced crash leaves a record of module + offset frames; the next
-    // start offers it with the system, the settings and the last run's Log.
     void crashLeadsToReportAtNextStart_data()
     {
         QTest::addColumn<QString>("how");
@@ -218,7 +203,6 @@ private slots:
         QVERIFY(text.contains(QStringLiteral("System\n  HikariSub 0.1.0-beta.1 (prerelease) · appimage")));
         QVERIFY(text.contains(QStringLiteral("Settings\n  theme")));
         QVERIFY(text.contains(QStringLiteral("14:32:07 Info    Visual tool: Perspective")));
-        // Usage data is on: the record alone is queued at start, as AN1 sent it.
         const QJsonObject exception = propertiesOf(analytics.queued(), QStringLiteral("$exception"));
         QCOMPARE(exception.value(QStringLiteral("crashed_version")).toString(), QStringLiteral("0.1.0-test.1"));
         QCOMPARE(exception.value(QStringLiteral("$exception_level")).toString(), QStringLiteral("fatal"));
@@ -227,13 +211,10 @@ private slots:
         const QByteArray payload = QJsonDocument(analytics.queued()).toJson();
         QVERIFY(!payload.contains(QFileInfo(QStringLiteral(HIKARI_CRASH_PROBE)).absolutePath().toUtf8()));
 
-        // The window shows again until it is answered.
         CrashReports again(settings, analytics, log, config());
         QCOMPARE(again.pending(), QStringLiteral("crash"));
     }
 
-    // A forced freeze: the watchdog records the window thread's stack
-    // after its threshold and drops the record when the thread answers.
     void freezeIsRecordedAndRecovered()
     {
         QProcess probe;
@@ -249,15 +230,14 @@ private slots:
         QVERIFY(!QFile::exists(path("hang-record.txt")));
     }
 
-    // A freeze the app is closed in leaves its record; the next start
-    // offers it as a freeze.
     void freezeKilledLeadsToReportAtNextStart()
     {
         QProcess probe;
         startProbe(probe, path("hang-record.txt"), QStringLiteral("hang-kill"));
         QVERIFY(probe.waitForStarted(30000));
         QTRY_VERIFY_WITH_TIMEOUT(QFile::exists(path("hang-record.txt")), 20000);
-        QTest::qWait(300); // the record is written whole (QSaveFile)
+        // MUST KILL: a fixed 300 ms wait after the record appears, before killing the probe
+        QTest::qWait(300);
         probe.kill();
         QVERIFY(probe.waitForFinished(10000));
         const auto record = crash::read(path("hang-record.txt"));
@@ -276,11 +256,9 @@ private slots:
         QCOMPARE(reports.pending(), QStringLiteral("freeze"));
         reports.started(QStringLiteral("deb"), 1, 1, QStringLiteral("editing"));
         QVERIFY(reports.text(kStart, {}).startsWith(QStringLiteral("Freeze\n  The window did not respond for ")));
-        QVERIFY(analytics.queued().isEmpty()); // usage data off: nothing at start
+        QVERIFY(analytics.queued().isEmpty());
     }
 
-    // Send report with usage data off: the record and the report go once,
-    // under an id kept nowhere, holding what the window showed.
     void sendWorksWithUsageDataOff()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -310,7 +288,6 @@ private slots:
         QCOMPARE(crashReport.value(QStringLiteral("report_id")), exception.value(QStringLiteral("report_id")));
         QCOMPARE(crashReport.value(QStringLiteral("package")).toString(), QStringLiteral("installer"));
         QCOMPARE(crashReport.value(QStringLiteral("$process_person_profile")).toBool(true), false);
-        // No id is kept, and nothing else is queued.
         QVERIFY(settings.text("privacy.usageDataId").isEmpty());
         QVERIFY(analytics.queued().isEmpty());
         QCOMPARE(reports.pending(), QString());
@@ -324,7 +301,6 @@ private slots:
         }
     }
 
-    // Usage data on: the $exception went at start, so Send adds only crash_report.
     void sendAfterExceptionAddsOnlyTheReport()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -345,7 +321,6 @@ private slots:
         QVERIFY(!propertiesOf(events, QStringLiteral("crash_report")).contains(QStringLiteral("note")));
     }
 
-    // Don't send: nothing goes, with usage data off, and the report is gone.
     void dontSendSendsNothing()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -368,7 +343,6 @@ private slots:
         QVERIFY(opened.isEmpty());
     }
 
-    // A send that fails keeps the report for the next start; nothing tries again.
     void failedSendKeepsTheReport()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -376,7 +350,7 @@ private slots:
         settings.set("privacy.usageData", false);
         quint16 port = 0;
         {
-            AnalyticsEndpoint closed; // a port nothing listens on any more
+            AnalyticsEndpoint closed;
             port = closed.port();
         }
         Analytics analytics(settings, analyticsConfig(QUrl(QStringLiteral("http://127.0.0.1:%1/batch/").arg(port))));
@@ -391,9 +365,6 @@ private slots:
         QVERIFY(QFile::exists(path("crash-report.json")));
     }
 
-    // A note or a Log longer than the event's fields take still sends: the
-    // note cut at 4,000 characters, the Log at its last lines within 64 KB,
-    // a long line cut. The window shows what goes.
     void longNoteAndLogStillSend()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -421,8 +392,6 @@ private slots:
         QVERIFY(!reports.sentText().contains(QString(report::kNoteChars + 1, u'n')));
     }
 
-    // A freeze recovered while an earlier one's report is on its way is
-    // kept: the answer is the earlier one's.
     void newerFreezeOutlivesASend()
     {
         AnalyticsEndpoint endpoint;
@@ -448,8 +417,6 @@ private slots:
         QCOMPARE(propertiesOf(endpoint.events(), QStringLiteral("$exception")).value(QStringLiteral("freeze_seconds")).toInt(), 12);
     }
 
-    // Usage data turned off drops the $exception it had queued: Send report
-    // then sends the record again.
     void usageDataOffResendsTheRecord()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -470,8 +437,6 @@ private slots:
         QVERIFY(!propertiesOf(endpoint.events(), QStringLiteral("$exception")).isEmpty());
     }
 
-    // The report's files go in a folder of the user's alone, whatever the
-    // umask, and never through a link.
     void reportFilesAreTheUsersAlone()
     {
 #ifndef Q_OS_UNIX
@@ -485,7 +450,6 @@ private slots:
         QTemporaryDir elsewhere;
         QVERIFY(QFile::link(elsewhere.path(), path("linked")));
         writeRecord("Episode 03.ass", "[Script Info]\n");
-        // A cache folder others can write to is closed to them.
         QVERIFY(QFile::setPermissions(dir.path(), QFile::permissions(dir.path()) | QFileDevice::WriteGroup | QFileDevice::WriteOther));
         const mode_t was = ::umask(0);
         hikari::ui::SettingsStore settings;
@@ -511,8 +475,6 @@ private slots:
 #endif
     }
 
-    // A Log tail or a kept report that is a link is not read: another
-    // account's file never goes into a report.
     void linkedReportFilesAreNotRead()
     {
 #ifndef Q_OS_UNIX
@@ -541,8 +503,6 @@ private slots:
 #endif
     }
 
-    // A freeze report that fails while the start's report still waits is
-    // kept for this run, and the failure names it.
     void failedFreezeSendIsKept()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -569,7 +529,6 @@ private slots:
         QCOMPARE(reports.pending(), QStringLiteral("crash"));
     }
 
-    // "Always send" with a send still on its way: the newer freeze gets the notice.
     void alwaysSendBusyOffersTheFreeze()
     {
         AnalyticsEndpoint endpoint;
@@ -597,8 +556,6 @@ private slots:
         QCOMPARE(reports.seconds(QStringLiteral("freeze")), 30);
     }
 
-    // Report an issue shows and sends the Log and the file as the form
-    // opened, whatever comes after.
     void issueTakesWhatTheFormShowed()
     {
         writeRecord("first.ass", "[Script Info]\n");
@@ -627,8 +584,6 @@ private slots:
         QFile::remove(path("second.ass"));
     }
 
-    // Quoted text and a Line's text that span lines are scrubbed whole;
-    // a Log that never stops still reaches the disk.
     void multilineEntriesAndBusyLogs()
     {
         hikari::ui::SettingsStore settings;
@@ -653,8 +608,6 @@ private slots:
         QVERIFY(QFile::exists(path("log-tail.txt")));
     }
 
-    // The .zip takes the file the form named: a path swapped for a link to
-    // another file gives no .zip.
     void zipTakesOnlyTheNamedFile()
     {
 #ifndef Q_OS_UNIX
@@ -678,7 +631,6 @@ private slots:
         QVERIFY(QFile::link(other.fileName(), path("named.ass")));
         QVERIFY(reports.zipSubtitleFile().isEmpty());
         QFile::remove(path("named.ass"));
-        // Unchanged, it goes.
         writeRecord("named.ass", "[Script Info]\n");
         reports.beginIssue();
         QCOMPARE(QFileInfo(reports.zipSubtitleFile()).fileName(), QStringLiteral("named.zip"));
@@ -687,8 +639,6 @@ private slots:
 #endif
     }
 
-    // A freeze report on its way when the run ends is offered at the next
-    // start; once answered, nothing of it is left on disk.
     void freezeSendingAtQuitIsKept()
     {
         AnalyticsEndpoint endpoint;
@@ -704,7 +654,7 @@ private slots:
             reports.freezeRecovered(freeze);
             QVERIFY(reports.send(QStringLiteral("freeze"), {}));
             QVERIFY(QFile::exists(path("crash-report-sending.json")));
-        } // the run ends before the answer
+        }
         {
             CrashReports next(settings, analytics, log, config());
             QCOMPARE(next.pending(), QStringLiteral("freeze"));
@@ -723,7 +673,6 @@ private slots:
         QCOMPARE(reports.pending(), QString());
     }
 
-    // A build without a key can't send; Send report does nothing.
     void noKeyNoSend()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -738,7 +687,6 @@ private slots:
         QCOMPARE(posts(endpoint), 0);
     }
 
-    // "Always send crash reports": the start's report goes by itself, without a note.
     void alwaysSendSendsAtStart()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -759,8 +707,6 @@ private slots:
         QCOMPARE(reports.pending(), QString());
     }
 
-    // A freeze the window came back from is offered (the notice), and with
-    // usage data on its record is queued as an error.
     void recoveredFreezeIsOffered()
     {
         AnalyticsEndpoint endpoint;
@@ -785,9 +731,6 @@ private slots:
         QVERIFY(!reports.freezeOffered());
     }
 
-    // No subtitle text, path or file name is in a report: not in the text
-    // the window shows, not in what Send sends, not in the GitHub issue, and
-    // not in the Log tail kept on disk.
     void noSubtitleTextPathOrFileName()
     {
         AnalyticsEndpoint endpoint;
@@ -803,14 +746,13 @@ private slots:
         QVERIFY2(tail.contains(QStringLiteral("Opened file2.mkv")), qPrintable(tail));
         QVERIFY2(tail.contains(QStringLiteral("Font \u201C\u2039font\u203A\u201D is not installed")), qPrintable(tail));
         QVERIFY2(tail.contains(QStringLiteral("Autosaved file3.ass into \u2039folder\u203A")), qPrintable(tail));
-        QVERIFY2(tail.contains(QStringLiteral("1/2 of the frames")), qPrintable(tail)); // a fraction is no path
+        QVERIFY2(tail.contains(QStringLiteral("1/2 of the frames")), qPrintable(tail));
         QTRY_VERIFY(QFile::exists(path("log-tail.txt")));
         QFile kept(path("log-tail.txt"));
         QVERIFY(kept.open(QIODevice::ReadOnly));
         const QString onDisk = QString::fromUtf8(kept.readAll());
         kept.close();
 
-        // The next start's report holds that Log.
         writeRecord("crash-record.txt", crashRecordText());
         CrashReports next(settings, analytics, log, config());
         next.started(QStringLiteral("appimage"), 1, 1, QStringLiteral("editing"));
@@ -831,7 +773,6 @@ private slots:
                          qPrintable(QStringLiteral("\u201C%1\u201D in:\n%2").arg(secret, where)));
     }
 
-    // The scrubber's rules one by one.
     void scrubberRules_data()
     {
         QTest::addColumn<QString>("in");
@@ -866,8 +807,6 @@ private slots:
         QCOMPARE(scrubber.scrub(in), out);
     }
 
-    // Open GitHub issue: a Bug issue with the report; too long for a link,
-    // the text goes to the clipboard and the blank form opens.
     void githubIssueFromReport()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -890,12 +829,11 @@ private slots:
         QVERIFY(copied.first().contains(QStringLiteral("### What happened\nIt closed.")));
         QVERIFY(copied.first().contains(QStringLiteral("### Crash or freeze report\n```\nCrash\n  SIGSEGV")));
         QVERIFY(copied.first().contains(QStringLiteral("a line of the Log")));
-        QCOMPARE(reports.pending(), QString()); // taken to GitHub: done
+        QCOMPARE(reports.pending(), QString());
         QTest::qWait(200);
         QCOMPARE(posts(endpoint), 0);
     }
 
-    // No browser opened: the issue is on the clipboard and the report kept.
     void githubWithoutBrowserKeepsTheReport()
     {
         writeRecord("crash-record.txt", crashRecordText());
@@ -919,8 +857,6 @@ private slots:
         QVERIFY(QFile::exists(path("crash-report.json")));
     }
 
-    // Help › Report an issue: each kind's link fills the matching issue
-    // form, its field ids being the form's own; Copy gives the Markdown.
     void issueLinksMatchIssueForms_data()
     {
         QTest::addColumn<QString>("kind");
@@ -981,8 +917,6 @@ private slots:
         QVERIFY(copied.first().startsWith(QStringLiteral("## A title\n\n### ")));
     }
 
-    // A record that could carry a path or text is no record; a freeze's
-    // seconds go only with a freeze.
     void recordReadsOnlyItsForm()
     {
         const auto check = [&](const QByteArray &text) {
@@ -997,7 +931,6 @@ private slots:
         QVERIFY(!check("hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism signal\nseconds 12\n"));
         QVERIFY(!check("hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism watchdog\n"));
         QVERIFY(!check("hikari-crash 1\nversion 0.1.0\ntype APP_HANG\nmechanism watchdog\nseconds twelve\n"));
-        // What write() writes, read() takes.
         const crash::Record freeze{QStringLiteral("APP_HANG"), QStringLiteral("watchdog"), QStringLiteral("0.1.0"),
                                    {{QStringLiteral("hikarisub"), 0x31c0a8}, {QStringLiteral("other"), 0}}, 40};
         QVERIFY(crash::write(path("hang-record.txt"), freeze));

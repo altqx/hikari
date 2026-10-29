@@ -1,18 +1,3 @@
-// R2: reference navigation, linked matching and GRID_SHOW_PREVIEW through the
-// composition and the real shell (legacy SubsGridPreview, SubsGrid::
-// OnShowPreview, ShowPreviewWindow and ShowSecondComparedLine at 20d647c4).
-// The matching itself is pinned in tests/application/reference_navigation_tests.cpp.
-//
-// Fixtures (times in s): the editing tab edit.ass, the tab after it ref.ass
-// and a third tab third.ass.
-//   edit.ass   e1 1-2   e2 2-3   e3 8-9
-//   ref.ass    0: 1-2   1: 5-6   2: 1.5-2.5   3: 2.5-3.5   4: 10-11
-//   third.ass  0: 1-2
-// e1 overlaps ref rows 0 and 2, which row 1 separates: two candidates. e2
-// overlaps rows 2 and 3: one run. e3 overlaps nothing; legacy's nearest Line
-// is row 4 (start 10 is 2 s after e3's 8, end 11 is 2 s after 9; the start's
-// row on the tie).
-
 #include "hikari/app/application.h"
 #include "docking.h"
 #include "line_grid.h"
@@ -61,7 +46,7 @@ QByteArray hash(const QString &path)
     return f.open(QIODevice::ReadOnly) ? QCryptographicHash::hash(f.readAll(), QCryptographicHash::Sha256) : QByteArray();
 }
 
-} // namespace
+}
 
 class ReferenceTest : public QObject {
     Q_OBJECT
@@ -99,7 +84,6 @@ class ReferenceTest : public QObject {
     }
     application::DocumentId tab(int index) const { return application->workspace().tabs()[std::size_t(index)]; }
     application::EditSession &session(application::DocumentId id) const { return *application->files().session(id); }
-    // The Document row of a session's active Line, or -1.
     static int activeRow(const application::EditSession &s)
     {
         const auto lines = s.document().lines();
@@ -118,7 +102,6 @@ class ReferenceTest : public QObject {
         return session(id).document().lines()[std::size_t(row)]->id.value;
     }
     const ui::ShellController &shell() const { return application->shell(); }
-    // A Grid's rows by comparison state: '=' matched, 'x' differing, '.' none.
     QString states(const char *grid) const
     {
         QString out;
@@ -142,7 +125,6 @@ class ReferenceTest : public QObject {
         const QPoint at = item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
         QTest::mouseClick(item->window(), button, mods, at);
     }
-    // The scene point a few pixels into row `row` of a Grid (its rowAt).
     QPoint rowPoint(const char *grid, int row) const
     {
         QQuickItem *g = item(grid);
@@ -159,7 +141,7 @@ class ReferenceTest : public QObject {
     }
     void clickRow(const char *grid, int row, Qt::KeyboardModifiers mods = Qt::NoModifier)
     {
-        // A second click soon after the first would be a double click.
+        // Qt reads a second click within the double-click interval as a double click.
         QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
         QTest::mouseClick(window, Qt::LeftButton, mods, rowPoint(grid, row));
         QCoreApplication::processEvents();
@@ -172,11 +154,9 @@ class ReferenceTest : public QObject {
     void showPreviewByKey()
     {
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Q, Qt::ControlModifier); // GRID_SHOW_PREVIEW's default Ctrl-Q
+        press(Qt::Key_Q, Qt::ControlModifier);
     }
 
-    // Every all-tabs writer runs with the reference shown; it keeps its
-    // Lines, history, saved state and file while third.ass is written.
     void allTabsLeaveTheReference(const QString &path, bool searched)
     {
         const auto refId = *application->workspace().reference();
@@ -204,8 +184,6 @@ class ReferenceTest : public QObject {
         const auto thirdId = tab(2);
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session(thirdId).document().lines()[0]->text.data())),
                  QStringLiteral("tX"));
-        // Find in all open subtitles (its groups headed by the tabs' names),
-        // then Replace checked.
         application->runFindReplace(QStringLiteral("findAllTabs"),
                                     {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("r")}});
         bool listed = false;
@@ -215,7 +193,6 @@ class ReferenceTest : public QObject {
         QCOMPARE(listed, searched);
         application->replaceFindResults(QStringLiteral("Y"));
         unchanged();
-        // Select lines in all tabs with Delete.
         application->selectLines({{QStringLiteral("find"), QStringLiteral("r")},
                                   {QStringLiteral("field"), 0},
                                   {QStringLiteral("mode"), 0},
@@ -244,7 +221,7 @@ private slots:
     void init()
     {
         application = new app::Application;
-        // O2: CheckLastKeyEvent ignores a repeated action within 100 ms.
+        // MUST KILL: a fake key clock steps 1 s per read so repeated hotkeys are never dropped
         auto t = std::make_shared<qint64>(0);
         application->hotkeys().setKeyClock([t] { return *t += 1000; });
         engine = new QQmlApplicationEngine;
@@ -261,7 +238,7 @@ private slots:
         QVERIFY(application->openFile(third));
         application->selectTab(0);
         QCOMPARE(application->currentTab(), 0);
-        QCOMPARE(activeRow(session(tab(0))), 0); // e1
+        QCOMPARE(activeRow(session(tab(0))), 0);
     }
     void cleanup()
     {
@@ -269,13 +246,10 @@ private slots:
         delete application;
     }
 
-    // GR4: the reference tray's Grid paints a Comment row on the theme's
-    // comment background as the editing Grid does, the selection blended
-    // over it when the row is selected.
     void theReferenceHighlightsCommentRows()
     {
         application->selectTab(1);
-        QVERIFY(application->editor().setComment(true)); // r0, before it is protected
+        QVERIFY(application->editor().setComment(true));
         application->selectTab(0);
         QVERIFY(application->showPreview());
         auto *grid = qobject_cast<ui::LineGrid *>(item("referenceGrid"));
@@ -298,8 +272,6 @@ private slots:
         QVERIFY(image.pixelColor(int(dialogue.right()) - 3, int(dialogue.center().y())) != content.gridComment);
     }
 
-    // SubsGrid.cpp:277 and 884-887: "Show subtitles preview" with more than
-    // one tab and no preview; the menu item shows its binding.
     void previewNeedsAnotherTabAndNoReference()
     {
         QVERIFY(application->canShowPreview());
@@ -310,7 +282,7 @@ private slots:
         QCOMPARE(named("showPreview")->property("text").toString(), QStringLiteral("Show subtitles preview\tCtrl-Q"));
         QMetaObject::invokeMethod(menu, "close");
         QVERIFY(application->showPreview());
-        QVERIFY(!application->canShowPreview()); // a reference is shown
+        QVERIFY(!application->canShowPreview());
         QVERIFY(!application->showPreview());
         QTRY_VERIFY(!menu->property("visible").toBool());
         QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
@@ -318,7 +290,6 @@ private slots:
         QTRY_VERIFY(menu->property("visible").toBool());
         QVERIFY(!named("showPreview")->property("enabled").toBool());
         QMetaObject::invokeMethod(menu, "close");
-        // One tab: nothing to preview.
         delete engine;
         engine = nullptr;
         delete application;
@@ -327,13 +298,10 @@ private slots:
         QVERIFY(!application->canShowPreview());
         QVERIFY(!application->showPreview());
         QVERIFY(!application->workspace().reference());
-        engine = new QQmlApplicationEngine; // cleanup() deletes one
+        // MUST KILL: an unused engine is created only so cleanup() has one to delete
+        engine = new QQmlApplicationEngine;
     }
 
-    // Ctrl+Q: legacy drew the first other tab's grid in the editing Grid
-    // (NewSeeking(false), SubsGridPreview.cpp:917-924). Here that tab's
-    // Document is the protected reference in the tray, still a tab, linked,
-    // at the first candidate of the editing Line; nothing is written.
     void ctrlQShowsTheNextTabAsTheLinkedReference()
     {
         const QByteArray before = hash(ref);
@@ -342,7 +310,7 @@ private slots:
         showPreviewByKey();
         QCOMPARE(application->workspace().reference(), refId);
         QVERIFY(application->workspace().referenceIsTab());
-        QCOMPARE(application->workspace().tabs().size(), std::size_t(3)); // it stays a tab
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(3));
         QCOMPARE(application->workspace().editingTarget(), tab(0));
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
         QVERIFY(shell().referenceLinked());
@@ -351,7 +319,6 @@ private slots:
         QCOMPARE(referenceRow(), 0);
         QCOMPARE(status(), QStringLiteral("Match 1 of 2"));
         QVERIFY(item("referenceLinked")->property("checked").toBool());
-        // The tab is marked for assistive technology.
         auto *tabItem = item("documentTab1");
         QVERIFY(tabItem);
         QCOMPARE(QAccessible::queryAccessibleInterface(tabItem)->text(QAccessible::Description),
@@ -362,49 +329,41 @@ private slots:
         QCOMPARE(hash(ref), before);
     }
 
-    // NewSeeking from every line change of the editing Grid: a click, the
-    // arrows (SubsGridWindow.cpp:1638-1639, 1872-1873) and NextLine
-    // (SubsGridBase.cpp:1415-1416). A Line overlapping nothing shows the
-    // empty no-match state; legacy's nearest Line only on request.
     void theLinkedReferenceFollowsTheEditingLine()
     {
         showPreviewByKey();
         QCOMPARE(referenceRow(), 0);
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Down); // e2
+        press(Qt::Key_Down);
         QCOMPARE(activeRow(session(tab(0))), 1);
         QCOMPARE(referenceRow(), 2);
         QCOMPARE(shell().referenceMatchCount(), 1);
         QCOMPARE(status(), QStringLiteral("Match 1 of 1"));
-        clickRow("editingGrid", 2); // e3
+        clickRow("editingGrid", 2);
         QCOMPARE(activeRow(session(tab(0))), 2);
         QVERIFY(shell().referenceNoMatch());
-        QCOMPARE(referenceRow(), 2); // left where it was, no substitute
+        QCOMPARE(referenceRow(), 2);
         QCOMPARE(status(), QStringLiteral("No matching line"));
         QVERIFY(shell().referenceHasNearest());
         QTRY_VERIFY(item("referenceNearest")->isVisible());
         click(item("referenceNearest"));
         QCOMPARE(referenceRow(), 4);
-        QVERIFY(shell().referenceNoMatch()); // still no match: it was asked for
-        clickRow("editingGrid", 0); // e1
+        QVERIFY(shell().referenceNoMatch());
+        clickRow("editingGrid", 0);
         QCOMPARE(referenceRow(), 0);
         QVERIFY(!item("referenceNearest")->isVisible());
-        // An edit of the same Line seeks nothing (only line changes do).
         application->selectReferenceLine(lineId(tab(1), 3));
         QCOMPARE(referenceRow(), 3);
         application->editor().textEdited(QStringLiteral("e1 edited"), 9);
         QVERIFY(application->editor().commit());
         QVERIFY(session(tab(0)).document().lines()[0]->text == std::u8string(u8"e1 edited"));
         QCOMPARE(referenceRow(), 3);
-        // The editor's commit and next Line (NextLine) seeks.
         application->editor().textEdited(QStringLiteral("e1 again"), 8);
         QVERIFY(application->editor().commitAndAdvance());
         QCOMPARE(activeRow(session(tab(0))), 1);
         QCOMPARE(referenceRow(), 2);
     }
 
-    // The candidates of a linked Line: counted, Previous/Next match, ends
-    // disabled; the buttons are named for assistive technology.
     void candidatesAreCountedAndStepped()
     {
         showPreviewByKey();
@@ -427,12 +386,9 @@ private slots:
         QCOMPARE(accessibleName("referenceGrid"), QStringLiteral("Reference lines (protected, read-only)"));
     }
 
-    // translation-comparison.md: navigation starts independent; linking is
-    // explicit and one way. The tray's clicks and keys move the reference's
-    // selection only, never the editing target's.
     void navigationIsIndependentUntilLinked()
     {
-        QVERIFY(application->openReference(ref)); // opened as a reference: not linked
+        QVERIFY(application->openReference(ref));
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
         QVERIFY(!shell().referenceLinked());
         QCOMPARE(status(), QStringLiteral("Independent navigation"));
@@ -440,27 +396,24 @@ private slots:
         const auto target = *application->workspace().editingTarget();
         clickRow("editingGrid", 1);
         QCOMPARE(activeRow(session(target)), 1);
-        QCOMPARE(referenceRow(), 0); // not followed
+        QCOMPARE(referenceRow(), 0);
         clickRow("referenceGrid", 1);
         QCOMPARE(referenceRow(), 1);
-        QCOMPARE(activeRow(session(target)), 1); // the editing Line stays
+        QCOMPARE(activeRow(session(target)), 1);
         item("referenceGrid")->forceActiveFocus();
         press(Qt::Key_Down);
         QCOMPARE(referenceRow(), 2);
         press(Qt::Key_Up, Qt::ShiftModifier);
         QCOMPARE(session(*application->workspace().reference()).selection().selected.size(), std::size_t(2));
         QCOMPARE(activeRow(session(target)), 1);
-        // Ctrl+A selects every reference Line and leaves the editing target's
-        // selection as it was.
         press(Qt::Key_A, Qt::ControlModifier);
         QCOMPARE(session(*application->workspace().reference()).selection().selected.size(), std::size_t(5));
         QCOMPARE(session(target).selection().selected.size(), std::size_t(1));
         QCOMPARE(activeRow(session(target)), 1);
         QCOMPARE(application->workspace().editingTarget(), target);
-        // Linking is explicit, and follows from then on.
         click(item("referenceLinked"));
         QVERIFY(shell().referenceLinked());
-        QCOMPARE(referenceRow(), 2); // e2's run
+        QCOMPARE(referenceRow(), 2);
         QCOMPARE(shell().referenceMatchCount(), 1);
         clickRow("editingGrid", 0);
         QCOMPARE(referenceRow(), 0);
@@ -470,11 +423,6 @@ private slots:
         QCOMPARE(referenceRow(), 0);
     }
 
-    // A reference never becomes writable because it has focus: Ctrl+V
-    // (legacy pasted into the previewed grid) is refused, and the Grid's
-    // editing keys pressed in the tray (Ctrl+D, Ctrl+X, Shift+Delete) still
-    // go to the editing target; Ctrl+C copies the reference's Lines
-    // (PREVIEW_COPY).
     void focusNeverMakesTheReferenceWritable()
     {
         showPreviewByKey();
@@ -492,17 +440,10 @@ private slots:
         QCOMPARE(session(target).document().lines().size(), std::size_t(3));
         press(Qt::Key_C, Qt::ControlModifier);
         QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral(",r0")));
-        // The Grid's other keys pressed in the tray act on the editing target,
-        // as legacy's did: the preview was a child of the grid it was drawn
-        // on (SubsGridPreview.cpp:33-35) whose own table held only Ctrl+C and
-        // Ctrl+V (61-65), so the rest reached that grid's accelerators
-        // (TabPanel::SetAccels, TabPanel.cpp:100-193) and the frame's.
-        // GRID_DUPLICATE_LINES (Ctrl-D, Hotkeys.cpp:173) through runGridHotkey:
         press(Qt::Key_D, Qt::ControlModifier);
         QVERIFY(item("referenceGrid")->hasActiveFocus());
         QCOMPARE(session(target).document().lines().size(), std::size_t(4));
         QCOMPARE(session(refId).document().lines().size(), lines);
-        // GRID_CUT (Ctrl+X, TabPanel.cpp:104) cuts the editing target's Lines:
         QGuiApplication::clipboard()->clear();
         press(Qt::Key_X, Qt::ControlModifier);
         QVERIFY(item("referenceGrid")->hasActiveFocus());
@@ -510,7 +451,6 @@ private slots:
         QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral(",e1")));
         QVERIFY(!QGuiApplication::clipboard()->text().contains(QStringLiteral(",r")));
         QCOMPARE(session(refId).document().lines().size(), lines);
-        // GLOBAL_REMOVE_LINES (Shift-Delete, Hotkeys.cpp:156), the frame's:
         press(Qt::Key_Delete, Qt::ShiftModifier);
         QVERIFY(item("referenceGrid")->hasActiveFocus());
         QCOMPARE(session(target).document().lines().size(), std::size_t(2));
@@ -522,19 +462,12 @@ private slots:
         QCOMPARE(hash(ref), before);
     }
 
-    // R2-reference-tray: Find and Replace's "Replace in all open subtitles",
-    // Replace checked after "Find in all open subtitles" and Select lines in
-    // all tabs never write the protected reference. Legacy replaced in every
-    // tab, the previewed one too (findreplace.cpp:1140-1141), but its preview
-    // was not protected. A tab shown as the reference is still searched, as
-    // legacy searched every tab.
     void allTabsReplaceNeverWritesATabReference()
     {
         showPreviewByKey();
         QCOMPARE(application->workspace().reference(), std::optional(tab(1)));
         allTabsLeaveTheReference(ref, true);
     }
-    // A reference that is not a tab is not an open subtitle: not searched either.
     void allTabsReplaceNeverWritesAnOpenedReference()
     {
         const QString opened = write(dir, "opened.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,r0\n");
@@ -546,16 +479,13 @@ private slots:
         allTabsLeaveTheReference(opened, false);
     }
 
-    // Close reference, the tray header menu's Close (legacy's close mark,
-    // DestroyPreview; D3): the tab stays; a later reference starts
-    // independent again. The header has no close button of its own.
     void closingTheReferenceKeepsItsTab()
     {
         showPreviewByKey();
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
         QVERIFY(!item("referenceClose"));
         QObject *menu = named("panelOptionsMenu");
-        click(item("referenceMatchStatus"), Qt::RightButton); // the header's menu, from its toolbar
+        click(item("referenceMatchStatus"), Qt::RightButton);
         QTRY_VERIFY(menu->property("visible").toBool());
         QObject *close = named("panelOptionsClose");
         QCOMPARE(close->property("text").toString(), QStringLiteral("Close reference"));
@@ -569,8 +499,6 @@ private slots:
         QVERIFY(!shell().referenceLinked());
     }
 
-    // Choosing the reference's tab makes it the editing target: it is no
-    // longer the reference (the explicit operation of workspaces.md).
     void choosingThePreviewedTabEndsTheReference()
     {
         showPreviewByKey();
@@ -582,11 +510,6 @@ private slots:
         QTRY_VERIFY(!item("referenceDock")->property("isOpen").toBool());
     }
 
-    // R2-reference-tray: legacy's preview belonged to the grid it was drawn
-    // on, so changing tabs left it behind (and it was editable there). The
-    // tray is workspace-wide: switching the editing target to another tab
-    // keeps the same Protected reference open, linked to the new target's
-    // active Line, and switching back follows the first tab's Line again.
     void theTrayStaysAcrossTabSwitches()
     {
         const QByteArray before = hash(ref);
@@ -594,20 +517,20 @@ private slots:
         showPreviewByKey();
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Down); // e2
+        press(Qt::Key_Down);
         QCOMPARE(referenceRow(), 2);
         QCOMPARE(shell().referenceMatchCount(), 1);
-        application->selectTab(2); // third.ass: t0, 1-2 s
+        application->selectTab(2);
         QCOMPARE(application->workspace().editingTarget(), tab(2));
         QCOMPARE(application->workspace().reference(), refId);
         QVERIFY(application->workspace().referenceIsTab());
         QVERIFY(shell().referenceLinked());
         QVERIFY(item("referenceDock")->property("isOpen").toBool());
-        QCOMPARE(shell().referenceMatchCount(), 2); // r0, then r2
+        QCOMPARE(shell().referenceMatchCount(), 2);
         QCOMPARE(referenceRow(), 0);
         QCOMPARE(status(), QStringLiteral("Match 1 of 2"));
         QVERIFY(!application->workspace().checkContentCommand(refId));
-        application->selectTab(0); // back to edit.ass, still at e2
+        application->selectTab(0);
         QCOMPARE(application->workspace().reference(), refId);
         QVERIFY(item("referenceDock")->property("isOpen").toBool());
         QCOMPARE(referenceRow(), 2);
@@ -616,9 +539,6 @@ private slots:
         QCOMPARE(hash(ref), before);
     }
 
-    // SubsGridPreview::ContextMenu: every occurrence of the editing Line in
-    // the other tabs, "SubsName (lineRangeStart lineRangeLen)", the shown one
-    // checked; choosing one shows that tab and Line.
     void theMenuListsTheOccurrencesInEveryOtherTab()
     {
         showPreviewByKey();
@@ -631,7 +551,6 @@ private slots:
         };
         QCOMPARE(texts(application->referenceOccurrences()),
                  (QStringList{"ref.ass (0 1)*", "ref.ass (2 1)", "third.ass (0 1)"}));
-        // Through the real menu: a right click on the tray's Grid.
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
         QTest::mouseClick(window, Qt::RightButton, {}, rowPoint("referenceGrid", 0));
         QTRY_VERIFY(named("referenceOccurrenceMenu")->property("visible").toBool());
@@ -643,10 +562,9 @@ private slots:
         QVERIFY(application->workspace().referenceIsTab());
         QCOMPARE(referenceRow(), 0);
         QCOMPARE(shell().referenceMatchCount(), 1);
-        QCOMPARE(application->workspace().tabs().size(), std::size_t(3)); // ref.ass is an ordinary tab again
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(3));
         QVERIFY(application->workspace().checkContentCommand(tab(1)).error() ==
                 application::TargetRefusal::NotEditingTarget);
-        // A Line overlapping nothing: legacy's nearest Line of each tab, length 0.
         clickRow("editingGrid", 2);
         QCOMPARE(texts(application->referenceOccurrences()), (QStringList{"ref.ass (4 0)", "third.ass (0 0)*"}));
         QVERIFY(application->chooseReferenceOccurrence(0));
@@ -654,22 +572,18 @@ private slots:
         QCOMPARE(referenceRow(), 4);
     }
 
-    // OnShowPreview on a compared grid (SubsGrid.cpp:1416-1420):
-    // ShowSecondComparedLine shows the compared partner at the paired Line,
-    // and nothing for an unpaired Line; a linked partner follows the pairs,
-    // and its first row the editing Grid's (setViaScroll).
     void aComparedGridPreviewsItsPartner()
     {
-        QVERIFY(application->compareWithTab(2)); // third: e1 pairs with t0 (in order, no criteria)
-        clickRow("editingGrid", 1); // e2: unpaired
+        QVERIFY(application->compareWithTab(2));
+        clickRow("editingGrid", 1);
         showPreviewByKey();
-        QVERIFY(!application->workspace().reference()); // legacy returned before showing
-        clickRow("editingGrid", 0); // e1
+        QVERIFY(!application->workspace().reference());
+        clickRow("editingGrid", 0);
         showPreviewByKey();
-        QCOMPARE(application->workspace().reference(), tab(2)); // the partner, not the next tab
+        QCOMPARE(application->workspace().reference(), tab(2));
         QCOMPARE(referenceRow(), 0);
         QCOMPARE(shell().referenceMatchCount(), 1);
-        clickRow("editingGrid", 1); // unpaired: nothing moves
+        clickRow("editingGrid", 1);
         QVERIFY(shell().referenceNoMatch());
         QVERIFY(!shell().referenceHasNearest());
         QCOMPARE(referenceRow(), 0);
@@ -679,11 +593,6 @@ private slots:
         QCOMPARE(application->comparedReferenceRow(0), -1);
     }
 
-    // R1-compare-reference: Compare pairs two tabs, as legacy did; the tray
-    // header menu's "Compare with reference" pairs the editing target (CG1)
-    // with the Protected reference (CG2), also one opened as no tab, which
-    // the tab menu cannot reach. The tray paints the reference's side, which
-    // stays protected and unwritten.
     void compareWithAReferenceThatIsNoTab()
     {
         const QString other = write(dir, "other.ass",
@@ -694,11 +603,11 @@ private slots:
         QVERIFY(application->openReference(other));
         const auto reference = application->workspace().reference();
         QVERIFY(reference);
-        QCOMPARE(application->workspace().tabs().size(), std::size_t(3)); // no tab
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(3));
         const auto history = session(*reference).historySize();
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
         QObject *menu = named("panelOptionsMenu");
-        click(item("referenceMatchStatus"), Qt::RightButton); // the header's menu
+        click(item("referenceMatchStatus"), Qt::RightButton);
         QTRY_VERIFY(menu->property("opened").toBool());
         auto *compare = item("panelOptions_compareWithReference");
         QVERIFY(compare);
@@ -720,13 +629,6 @@ private slots:
         QCOMPARE(states("referenceGrid"), QStringLiteral("..."));
     }
 
-    // R1-compare-reference: closing a reference closes no Document, and
-    // legacy removed the comparison only when a compared tab went
-    // (Notebook::DeletePage, Notebook.cpp:241-242; DestroyPreview,
-    // SubsGridPreview.cpp:91-107, left it). A reference opened as no tab
-    // stays open as a tab when it stops being the reference, closed or
-    // replaced, so the pair goes on as two tabs, as legacy's did, until it
-    // is turned off or either tab closes.
     void closingANoTabReferenceKeepsItsComparisonAsATab()
     {
         const QString other = write(dir, "other.ass",
@@ -745,7 +647,6 @@ private slots:
         QCOMPARE(application->comparison().first(), tab(0));
         QCOMPARE(application->comparison().second(), reference);
         QCOMPARE(states("editingGrid"), QStringLiteral("=x="));
-        // Another reference takes the tray; the pair stays with the tab.
         QVERIFY(application->openReference(write(dir, "next.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,e1\n")));
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
         QCOMPARE(states("referenceGrid"), QStringLiteral("."));
@@ -754,18 +655,12 @@ private slots:
         application->selectTab(3);
         QCOMPARE(application->workspace().editingTarget(), reference);
         QCOMPARE(states("editingGrid"), QStringLiteral("=x="));
-        // Closing that tab removes the comparison and both tables.
         QVERIFY(application->closeEditingTarget());
         QVERIFY(!application->comparison().active());
         application->selectTab(0);
         QCOMPARE(states("editingGrid"), QStringLiteral("..."));
     }
 
-    // The compared grid's scroll (SubsGridWindow.cpp:1462-1465, 1719-1729):
-    // ShowSecondComparedLine(scrollPosition, ..., true) gives the linked
-    // partner the paired Line as its first row. Compared by times
-    // (SubsGridBase.cpp:1757-1790), long.ass row i pairs with partner row
-    // i + 5: the partner's first five Lines have times no Line of long.ass has.
     void aLinkedPartnerScrollsWithTheComparedGrid()
     {
         auto at = [](int s) {
@@ -784,7 +679,7 @@ private slots:
         QVERIFY(application->openFile(write(dir, "long.ass", longLines)));
         QVERIFY(application->openFile(write(dir, "partner.ass", partnerLines)));
         application->selectTab(3);
-        application->settingsStore()->set("comparison.type", 1); // by times
+        application->settingsStore()->set("comparison.type", 1);
         QVERIFY(application->compareWithTab(4));
         showPreviewByKey();
         QCOMPARE(application->workspace().reference(), tab(4));
@@ -795,16 +690,13 @@ private slots:
         const qreal rh = editing->property("rowHeight").toReal();
         QVERIFY(rh > 0);
         QCOMPARE(reference->property("rowHeight").toReal(), rh);
-        // The editing Grid scrolled (its scroll bar writes contentY) to row 30:
-        // the partner's first row is 35, the selection untouched.
         const int active = referenceRow();
         editing->setProperty("contentY", 30 * rh);
         QCOMPARE(editing->property("contentY").toReal(), 30 * rh);
         QCOMPARE(reference->property("contentY").toReal(), 35 * rh);
         QCOMPARE(referenceRow(), active);
-        editing->setProperty("contentY", 31.5 * rh); // part way into row 31
+        editing->setProperty("contentY", 31.5 * rh);
         QCOMPARE(reference->property("contentY").toReal(), 36 * rh);
-        // Unlinked, the partner keeps its own scroll.
         application->setReferenceLinked(false);
         editing->setProperty("contentY", 60 * rh);
         QCOMPARE(reference->property("contentY").toReal(), 36 * rh);

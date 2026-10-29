@@ -1,9 +1,3 @@
-// SY3: FontFaces, how a font list draws each family in its own face: a text
-// family with its name's letters in its own face; a symbol font with its
-// name in the interface font and a sample in its pictures; a face with
-// neither the name's letters nor a sample, and a family the font database
-// lacks, in the interface font alone; each family looked up once.
-
 #include "font_faces.h"
 
 #include <QFontDatabase>
@@ -17,7 +11,6 @@ class FontFacesTest : public QObject {
 private slots:
     void eachFamilyInItsOwnFace()
     {
-        // A text family of the system's (any with Latin and its name's letters).
         QString text;
         for (const QString &family : QFontDatabase::families()) {
             if (QFontDatabase::isPrivateFamily(family) || !QFontDatabase::writingSystems(family).contains(QFontDatabase::Latin))
@@ -34,10 +27,8 @@ private slots:
             const int id = QFontDatabase::addApplicationFont(QString::fromUtf8(file));
             return id >= 0 ? QFontDatabase::applicationFontFamilies(id).value(0) : QString();
         };
-        // A Windows symbol cmap (3, 0), its pictures at U+F020-F07E.
         const QString symbol = family(HIKARI_SYMBOL_FONT);
         QVERIFY(!symbol.isEmpty());
-        // Glyphs only at U+F120-F17E: no letters at all.
         const QString noLetters = family(HIKARI_NO_LETTERS_FONT);
         QVERIFY(!noLetters.isEmpty());
 
@@ -52,18 +43,14 @@ private slots:
         const QVariantMap neither = faces.face(noLetters);
         QCOMPARE(neither.value(QStringLiteral("family")).toString(), QString());
         QCOMPARE(neither.value(QStringLiteral("sample")).toString(), QString());
-        // An external font only the renderer leases, or a name no font has.
         const QVariantMap missing = faces.face(QStringLiteral("External extra.ttf"));
         QCOMPARE(missing.value(QStringLiteral("family")).toString(), QString());
         QCOMPARE(missing.value(QStringLiteral("sample")).toString(), QString());
         QCOMPARE(faces.face(QString()).value(QStringLiteral("family")).toString(), QString());
-        // Kept: asking again looks nothing up.
         QCOMPARE(faces.lookups(), 5);
         QCOMPARE(faces.face(text), own);
         QCOMPARE(faces.lookups(), 5);
 
-        // The fonts change (Qt's database, or a catalog refresh calling
-        // forget()): the answers go and the rows ask again.
         QSignalSpy revision(&faces, &ui::FontFaces::revisionChanged);
         const int before = faces.revision();
         faces.forget();

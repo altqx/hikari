@@ -1,13 +1,3 @@
-// WS2 (#216): an ASS file keeps its Document tab's panel arrangement in a
-// [Hikari] section. A save or an autosave writes the tab's (a layout change
-// alone marks nothing modified); opening the file, or recovering it, gives
-// its tab that arrangement, the floating panels placed from the main
-// window; a restored Session's own arrangement takes precedence; a file
-// without one, or one that does not validate, follows WS1's new-tab rule.
-// "Save panel layout in subtitle files" off, the section is neither read
-// nor written and stays as it is.
-// Other formats keep the arrangement only in the Session.
-
 #include "hikari/app/application.h"
 #include "hikari/app/session_json.h"
 #include "hikari/application/session_file.h"
@@ -61,7 +51,6 @@ QString write(const QString &path, const QByteArray &bytes)
     return path;
 }
 
-// The "Layout=" value of a file's [Hikari] section; empty without one.
 QByteArray layoutLine(const QByteArray &file)
 {
     const qsizetype section = file.indexOf("[Hikari]");
@@ -97,22 +86,17 @@ QPoint topLeft(const QJsonObject &window)
     return {geometry.value(QStringLiteral("x")).toInt(), geometry.value(QStringLiteral("y")).toInt()};
 }
 
-// The first floating window's top-left from the main window's in an engine
-// payload.
 QPoint floatingOffset(const QJsonObject &payload)
 {
     return topLeft(payload.value(QStringLiteral("floatingWindows")).toArray().first().toObject()) -
            topLeft(payload.value(QStringLiteral("mainWindows")).toArray().first().toObject());
 }
 
-// The same in the arrangement shown.
 QPoint shownFloatingOffset()
 {
     return floatingOffset(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
 }
 
-// Whether the shown arrangement has settled: the first floating window has
-// its size and the main window's normal geometry has followed its moves.
 bool settled()
 {
     const QJsonObject payload = QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object();
@@ -122,7 +106,7 @@ bool settled()
            topLeft(main) == topLeft(QJsonObject{{QStringLiteral("geometry"), main.value(QStringLiteral("normalGeometry"))}});
 }
 
-} // namespace
+}
 
 class FileLayoutsTest : public QObject {
     Q_OBJECT
@@ -156,7 +140,6 @@ class FileLayoutsTest : public QObject {
         application->endSession();
         engine.reset();
         application.reset();
-        // The next start shows the default arrangement, not this one.
         for (const char *name : {"layout.json", "layout.json.bak"})
             QFile::remove(path(name));
     }
@@ -185,7 +168,7 @@ class FileLayoutsTest : public QObject {
         auto *session = target ? application->files().session(*target) : nullptr;
         return session && session->isDirty();
     }
-    // Saves the editing target in place and waits for the write.
+    // MUST KILL: save ignores its file argument and saves the editing target
     void save(const QString &file)
     {
         Q_UNUSED(file);
@@ -203,8 +186,6 @@ class FileLayoutsTest : public QObject {
         QVERIFY(review.value(QStringLiteral("rows")).toList().isEmpty());
         application->finishClose();
     }
-    // An arrangement with the Video panel closed and the Audio panel
-    // floating, as a file keeps it (made in a running shell, then closed).
     QByteArray fileLayout()
     {
         start();
@@ -216,18 +197,13 @@ class FileLayoutsTest : public QObject {
         stop();
         return layout;
     }
-    // fileLayout(), made once for the refusal tests, which each change a copy.
     QByteArray refusalBase()
     {
         if (madeLayout.isEmpty())
             madeLayout = fileLayout();
         return madeLayout;
     }
-    // A refused file opens as a copy of the tab as it was, and the log names
-    // it. Every row of a refusal test checks the parse; the app opens the file
-    // for the function's first row only, as every refusal takes this one
-    // fallback (TP1 #462; anUnusableFileArrangementFollowsTheNewTabRule
-    // covers it in full).
+    // MUST KILL: opensAsACopyOfTheTab opens the file in the app only on each test function's first row
     void opensAsACopyOfTheTab(const char *name, const QByteArray &layout)
     {
         if (opened.contains(QTest::currentTestFunction()))
@@ -253,10 +229,6 @@ private slots:
             QFile::remove(path(name));
     }
 
-    // The file form: base64 (no ':'), no screens, each window's screen left
-    // out, the main window at 0,0 with its size, floating windows and the
-    // places closed panels float again at from its top-left; read back,
-    // they are placed from the main window's top-left given.
     void theFileFormHasNoScreenPositions()
     {
         const QByteArray payload = R"({"serializationVersion":3,
@@ -290,7 +262,7 @@ private slots:
         };
         QCOMPARE(lastFloating(docks.at(0)).value(QStringLiteral("x")).toInt(), 20);
         QCOMPARE(lastFloating(docks.at(0)).value(QStringLiteral("y")).toInt(), 10);
-        QCOMPARE(lastFloating(docks.at(1)).value(QStringLiteral("x")).toInt(), 0); // never floated: as it was
+        QCOMPARE(lastFloating(docks.at(1)).value(QStringLiteral("x")).toInt(), 0);
 
         QString problem;
         const auto read = ui::WorkspaceArrangement::parseFromFile(text, QPoint(10, 20), &problem);
@@ -300,8 +272,6 @@ private slots:
         QCOMPARE(topLeft(placed.value(QStringLiteral("mainWindows")).toArray().first().toObject()), QPoint(10, 20));
         QCOMPARE(topLeft(placed.value(QStringLiteral("floatingWindows")).toArray().first().toObject()), QPoint(210, 80));
         QCOMPARE(lastFloating(placed.value(QStringLiteral("allDockWidgets")).toArray().at(0)).value(QStringLiteral("x")).toInt(), 30);
-        // A maximized main window: its normal place is a screen position too,
-        // kept at the main window's top-left and read back from the origin.
         QJsonObject maximized = QJsonDocument::fromJson(arrangement.payload).object();
         QJsonArray mains = maximized.value(QStringLiteral("mainWindows")).toArray();
         QJsonObject full = mains.first().toObject();
@@ -321,21 +291,17 @@ private slots:
         QCOMPARE(QJsonDocument::fromJson(maximizedRead->payload).object().value(QStringLiteral("mainWindows")).toArray()
                      .first().toObject().value(QStringLiteral("normalGeometry")).toObject(),
                  QJsonObject({{"x", 10}, {"y", 20}, {"width", 1200}, {"height", 800}}));
-        // A preset alone, and text that is not one.
         const auto alone = ui::WorkspaceArrangement::parseFromFile(ui::WorkspaceArrangement{QStringLiteral("Translation"), {}}.serialiseForFile(), {});
         QVERIFY(alone && alone->payload.isEmpty() && alone->preset == QStringLiteral("Translation"));
         QVERIFY(!ui::WorkspaceArrangement::parseFromFile("eyJ:", {}, &problem));
         QVERIFY(!ui::WorkspaceArrangement::parseFromFile("", {}, &problem));
     }
 
-    // A layout change marks nothing modified; Save writes the tab's
-    // arrangement at the end of the file, without screen positions, and the
-    // file reopened in a new start brings it back.
     void aSavedFileKeepsItsTabsArrangement()
     {
         const QString file = write(path("a.ass"), kAss);
         start();
-        window()->setPosition(60, 40); // positions apart from offsets
+        window()->setPosition(60, 40);
         QTRY_COMPARE(window()->position(), QPoint(60, 40));
         QVERIFY(application->openFile(file));
         close("videoDock");
@@ -344,13 +310,11 @@ private slots:
         QVERIFY(!targetDirty());
         save(file);
         const QByteArray saved = readAll(file);
-        // At the end, after the Events (Script Info has the active Line, S4).
         QVERIFY2(saved.contains(kAss.mid(kAss.indexOf("[Events]")) + "\n[Hikari]\nLayout="), saved.constData());
         QVERIFY(saved.endsWith("\n"));
         QCOMPARE(saved.count("[Hikari]"), 1);
         const QByteArray layout = layoutLine(saved);
         QVERIFY(!layout.contains(':'));
-        // tests/fixtures/hikari-section/layout.txt is captured here.
         if (const QString out = qEnvironmentVariable("HIKARI_WS2_LAYOUT_OUT"); !out.isEmpty())
             write(out, layout + '\n');
         const QJsonObject payload = payloadOf(layout);
@@ -365,10 +329,8 @@ private slots:
         QCOMPARE(topLeft(main), QPoint(0, 0));
         QVERIFY(main.value(QStringLiteral("geometry")).toObject().value(QStringLiteral("width")).toInt() > 0);
         QCOMPARE(payload.value(QStringLiteral("floatingWindows")).toArray().size(), 1);
-        // The floating panel's place from the main window's top-left.
         const QPoint offset = shownFloatingOffset();
         QCOMPARE(floatingOffset(payload), offset);
-        // The Document took the value: the next save without a change writes the same bytes.
         save(file);
         QCOMPARE(readAll(file), saved);
         stop();
@@ -376,7 +338,7 @@ private slots:
         start();
         QVERIFY(isOpen("videoDock"));
         QVERIFY(!isFloating("audioDock"));
-        window()->setPosition(140, 90); // elsewhere: the panel follows the main window
+        window()->setPosition(140, 90);
         QTRY_COMPARE(window()->position(), QPoint(140, 90));
         QVERIFY(application->openFile(file));
         QTRY_VERIFY(!isOpen("videoDock"));
@@ -387,8 +349,6 @@ private slots:
         stop();
     }
 
-    // Opened beside the current tab, the file's tab takes its arrangement
-    // when it is shown; the current tab keeps its own.
     void aFileOpenedInANewTabTakesItsArrangement()
     {
         const QByteArray layout = fileLayout();
@@ -409,8 +369,6 @@ private slots:
         stop();
     }
 
-    // A restored Session's own arrangement wins over the file's; a Session
-    // tab without one takes the file's.
     void theSessionsArrangementTakesPrecedence()
     {
         const QByteArray layout = fileLayout();
@@ -420,7 +378,7 @@ private slots:
         application::SessionTab first, second;
         first.subtitles = QDir::toNativeSeparators(withLayout).toStdString();
         first.layout = ui::WorkspaceArrangement{QStringLiteral("Timing"), {}}.serialise().toStdString();
-        second.subtitles = QDir::toNativeSeparators(legacy).toStdString(); // no Layout line, as legacy writes
+        second.subtitles = QDir::toNativeSeparators(legacy).toStdString();
         const QString kls = write(path("both.kls"), QByteArray::fromStdString(
                                                         testing::writeLegacySession("HikariSub v1", false, {first, second})));
         loadSession(kls);
@@ -435,17 +393,13 @@ private slots:
         stop();
     }
 
-    // A Session's file that was missing, retried or relinked once it is
-    // there: without the Session's arrangement the tab takes the file's (as
-    // the Session's restore would have), and a save writes that one; with
-    // it, the Session's stays.
     void aRetriedSessionFileTakesItsArrangement()
     {
         const QByteArray layout = fileLayout();
         const QString later = path("later.ass");
         start();
         application::SessionTab first, second;
-        first.subtitles = QDir::toNativeSeparators(later).toStdString(); // no Layout line
+        first.subtitles = QDir::toNativeSeparators(later).toStdString();
         second.subtitles = QDir::toNativeSeparators(path("moved.ass")).toStdString();
         second.layout = ui::WorkspaceArrangement{QStringLiteral("Timing"), {}}.serialise().toStdString();
         const QString kls = write(path("missing.kls"), QByteArray::fromStdString(
@@ -471,7 +425,6 @@ private slots:
         stop();
     }
 
-    // A file opened into the untouched tab brings its arrangement there too.
     void aFileOpenedIntoTheCurrentTabTakesItsArrangement()
     {
         const QByteArray layout = fileLayout();
@@ -485,15 +438,11 @@ private slots:
         stop();
     }
 
-    // A file opened before the window's first arrangement (from the command
-    // line, before the window exists) places its floating panels from where
-    // the main window then comes, not from the screen's corner.
     void aFileOpenedBeforeTheWindowPlacesItsPanelsFromIt()
     {
         const QByteArray layout = fileLayout();
         const QPoint offset = floatingOffset(payloadOf(layout));
         const QString file = write(path("early.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
-        // A layout file with the main window away from the corner.
         start();
         window()->setPosition(140, 90);
         QTRY_COMPARE(window()->position(), QPoint(140, 90));
@@ -506,7 +455,7 @@ private slots:
         options.settingsFile = path("settings.toml");
         options.playbackAudio = false;
         application = std::make_unique<app::Application>(options);
-        QVERIFY(application->openFile(file)); // as composition.cpp does, before attachDocking
+        QVERIFY(application->openFile(file));
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
         engine->setInitialProperties(application->qmlProperties());
@@ -521,8 +470,6 @@ private slots:
         stop();
     }
 
-    // A file opened as the reference keeps its arrangement for when it
-    // becomes a tab, which then shows it (and a save writes it back).
     void aFileOpenedAsTheReferenceKeepsItsArrangement()
     {
         const QByteArray layout = fileLayout();
@@ -532,7 +479,7 @@ private slots:
         QVERIFY(application->openReference(file));
         QVERIFY(isOpen("videoDock"));
         QVERIFY(!isFloating("audioDock"));
-        application->closeReference(); // the reference stays as a tab
+        application->closeReference();
         QCOMPARE(application->tabs().size(), qsizetype(2));
         application->selectTab(1);
         QTRY_VERIFY(!isOpen("videoDock"));
@@ -543,8 +490,6 @@ private slots:
         stop();
     }
 
-    // Off, a file's arrangement is not used, and a save leaves an existing
-    // section exactly as it was (and adds none to a file without one).
     void theSettingOffNeitherReadsNorWrites()
     {
         const QByteArray layout = fileLayout();
@@ -554,7 +499,7 @@ private slots:
         start();
         setLayoutInFile(false);
         QVERIFY(application->openFile(file));
-        QVERIFY(isOpen("videoDock")); // the new-tab rule: a copy of the tab as it was
+        QVERIFY(isOpen("videoDock"));
         QVERIFY(!isFloating("audioDock"));
         applyPreset("Timing");
         QTRY_VERIFY(!isOpen("videoDock"));
@@ -571,9 +516,6 @@ private slots:
         stop();
     }
 
-    // An arrangement that does not validate is named in the log and not
-    // used: the tab follows the new-tab rule (here a TLMode file, so the
-    // Translation preset); the section stays until the next save replaces it.
     void anUnusableFileArrangementFollowsTheNewTabRule_data()
     {
         QTest::addColumn<QByteArray>("layout");
@@ -584,8 +526,6 @@ private slots:
         newer.insert(QStringLiteral("schema"), 7);
         QTest::newRow("newer") << QJsonDocument(newer).toJson(QJsonDocument::Compact).toBase64()
                                << QStringLiteral("newer version");
-        // Longer than any layout within the limit encodes to: refused by its
-        // length, before it is decoded.
         constexpr qsizetype longest = (ui::WorkspaceLayoutController::kMaximumBytes + 2) / 3 * 4;
         QTest::newRow("too long") << QByteArray(longest + 1, '!') << QStringLiteral("larger than");
     }
@@ -614,10 +554,6 @@ private slots:
         stop();
     }
 
-    // The engine takes a floating panel's window by index without a check:
-    // a file naming one Hikari does not have is refused before the engine
-    // sees it (the tab follows the new-tab rule) instead of ending the
-    // program.
     void aFloatingPanelInAMissingWindowIsRefused_data()
     {
         QTest::addColumn<QJsonValue>("parent");
@@ -633,7 +569,7 @@ private slots:
         QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
         QJsonArray floating = payload.value(QStringLiteral("floatingWindows")).toArray();
         QJsonObject window = floating.first().toObject();
-        QCOMPARE(window.value(QStringLiteral("parentIndex")).toInt(-5), 0); // as Hikari writes it
+        QCOMPARE(window.value(QStringLiteral("parentIndex")).toInt(-5), 0);
         window.insert(QStringLiteral("parentIndex"), parent);
         floating.replace(0, window);
         payload.insert(QStringLiteral("floatingWindows"), floating);
@@ -646,9 +582,6 @@ private slots:
         opensAsACopyOfTheTab("parent.ass", layout);
     }
 
-    // The engine takes a docked panel's place in a main window by name and
-    // uses what it finds without a check: a place in a main window Hikari
-    // does not have, or one it cannot read (read as such), is refused.
     void aPanelPlacedInAMissingMainWindowIsRefused_data()
     {
         QTest::addColumn<QJsonValue>("placeholder");
@@ -682,7 +615,7 @@ private slots:
                 replaced = true;
             }
         }
-        QVERIFY(replaced); // a docked panel's place, as Hikari writes it
+        QVERIFY(replaced);
         payload.insert(QStringLiteral("allDockWidgets"), docks);
         envelope.insert(QStringLiteral("payload"), payload);
         const QByteArray layout = QJsonDocument(envelope).toJson(QJsonDocument::Compact).toBase64();
@@ -693,9 +626,6 @@ private slots:
         opensAsACopyOfTheTab("place.ass", layout);
     }
 
-    // The engine makes a window, a group or a layout item for every entry a
-    // file gives it: a file asking for more than Hikari's panels can fill is
-    // refused before the engine sees it.
     void aLayoutLargerThanThePanelsIsRefused_data()
     {
         QTest::addColumn<QString>("change");
@@ -737,15 +667,11 @@ private slots:
             QJsonObject layout = splitter.value(QStringLiteral("layout")).toObject();
             QJsonArray children = layout.value(QStringLiteral("children")).toArray();
             QVERIFY(!children.isEmpty());
-            // Far more items than the panels fill: empty places (copies of
-            // a child would repeat its panels' ids, or pass the 4 MiB cap).
             layout.insert(QStringLiteral("children"), many(QJsonObject{{QStringLiteral("isContainer"), false}}, 2000));
             splitter.insert(QStringLiteral("layout"), layout);
         } else if (change == QStringLiteral("dock")) {
             docks.append(docks.first());
         } else if (change == QStringLiteral("placeholders")) {
-            // The first panel that has a place (NT1's Log has none until it
-            // first opens).
             qsizetype at = 0;
             const auto placesOf = [&](qsizetype i) {
                 return docks.at(i).toObject().value(QStringLiteral("lastPosition")).toObject().value(QStringLiteral("placeholders")).toArray();
@@ -775,10 +701,6 @@ private slots:
         opensAsACopyOfTheTab("large.ass", layout);
     }
 
-    // The engine reads a window's layout tree outside its own catch: a value
-    // of another type throws out of the restore and ends the program. A file
-    // with one, or whose groups and layout items do not match, is refused
-    // before the engine sees it.
     void aLayoutTheEngineCannotReadIsRefused_data()
     {
         QTest::addColumn<QString>("change");
@@ -801,7 +723,7 @@ private slots:
         QJsonObject layout = splitter.value(QStringLiteral("layout")).toObject();
         QJsonArray children = layout.value(QStringLiteral("children")).toArray();
         QJsonObject frames = splitter.value(QStringLiteral("frames")).toObject();
-        QVERIFY(!children.isEmpty() && !frames.isEmpty()); // as Hikari writes it
+        QVERIFY(!children.isEmpty() && !frames.isEmpty());
         QJsonObject frame = frames.begin().value().toObject();
         QCOMPARE(frame.value(QStringLiteral("id")).toString(), frames.begin().key());
         if (change == QStringLiteral("child")) {
@@ -842,11 +764,6 @@ private slots:
         opensAsACopyOfTheTab("tree.ass", text);
     }
 
-    // A panel's place by index: the engine takes a floating place's window
-    // from the file's floating windows by index, and inserts a panel going
-    // back to its group at its tab index when it is not -1. Each is read
-    // into an int; a window the file does not have, a tab below -1 or a
-    // number no int holds is refused.
     void aPanelPositionTheEngineCannotReadIsRefused_data()
     {
         QTest::addColumn<QString>("key");
@@ -872,7 +789,7 @@ private slots:
         QFETCH(QString, reason);
         QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(refusalBase())).object();
         QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
-        QCOMPARE(payload.value(QStringLiteral("floatingWindows")).toArray().size(), 1); // Audio's
+        QCOMPARE(payload.value(QStringLiteral("floatingWindows")).toArray().size(), 1);
         QJsonArray docks = payload.value(QStringLiteral("allDockWidgets")).toArray();
         bool changed = false;
         for (qsizetype i = 0; i < docks.size() && !changed; ++i) {
@@ -885,7 +802,7 @@ private slots:
                 QJsonObject place = places.at(j).toObject();
                 if (!place.value(QStringLiteral("isFloatingWindow")).toBool())
                     continue;
-                QCOMPARE(place.value(QStringLiteral("indexOfFloatingWindow")).toInt(-5), 0); // as Hikari writes it
+                QCOMPARE(place.value(QStringLiteral("indexOfFloatingWindow")).toInt(-5), 0);
                 if (key == QStringLiteral("tabIndex"))
                     position.insert(key, value);
                 else if (value.isUndefined())
@@ -899,7 +816,7 @@ private slots:
                 changed = true;
             }
         }
-        QVERIFY(changed); // the floating Audio panel's place
+        QVERIFY(changed);
         payload.insert(QStringLiteral("allDockWidgets"), docks);
         envelope.insert(QStringLiteral("payload"), payload);
         const QByteArray text = QJsonDocument(envelope).toJson(QJsonDocument::Compact).toBase64();
@@ -910,10 +827,6 @@ private slots:
         opensAsACopyOfTheTab("position.ass", text);
     }
 
-    // A window's place: a file's is moved by the main window's place when
-    // it is read, so a number no window can have (past the int a move adds
-    // to) is refused, in a main or a floating window and where a closed
-    // panel floats again.
     void aWindowPlaceNoWindowCanHaveIsRefused_data()
     {
         QTest::addColumn<QString>("windows");
@@ -970,9 +883,6 @@ private slots:
         opensAsACopyOfTheTab("place.ass", text);
     }
 
-    // An autosave writes the tab's arrangement as a save does, and the open
-    // Document takes it (still as modified as it was); the copy recovered
-    // after a crash starts with it.
     void aRecoveredCopyKeepsItsArrangement()
     {
         const QString file = write(path("r.ass"), kAss);
@@ -995,12 +905,8 @@ private slots:
         while (layout.isEmpty() && files.hasNext())
             layout = layoutLine(readAll(files.next()));
         QCOMPARE(layout, application->workspaceLayout().fileArrangement(target.value));
-        QVERIFY(!readAll(file).contains("[Hikari]")); // the file itself only on Save
-        // The autosave's copy is the recovery file's alone: the open
-        // Document keeps the file's section (none), so a Save with the
-        // setting off writes none.
+        QVERIFY(!readAll(file).contains("[Hikari]"));
         QVERIFY(!session->document().hikariProperty(application::kLayoutKey));
-        // As a crash leaves it: the work kept, the session's lock gone.
         for (QDirIterator it(recovery, QDir::Files, QDirIterator::Subdirectories); it.hasNext();) {
             const QString from = it.next();
             const QString to = kept + from.mid(recovery.size());
@@ -1026,8 +932,6 @@ private slots:
         stop();
     }
 
-    // An autosave with the setting on, then the setting off: the Save
-    // writes no section, as the file had none.
     void anAutosaveLeavesNoSectionForASaveWithTheSettingOff()
     {
         const QString file = write(path("off.ass"), kAss);
@@ -1049,8 +953,6 @@ private slots:
         stop();
     }
 
-    // A file opened from the legacy autosave folder is a new tab made from
-    // a file: it starts with the arrangement the file holds.
     void aLegacyAutosaveOpensWithItsArrangement()
     {
         const QString file = write(path("legacy.ass"), kAss + "\n[Hikari]\nLayout=" + fileLayout() + "\n");
@@ -1062,7 +964,6 @@ private slots:
         stop();
     }
 
-    // SRT and the other formats keep the arrangement only in the Session.
     void otherFormatsKeepItOnlyInTheSession()
     {
         const QByteArray srt = "1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n";
@@ -1079,10 +980,6 @@ private slots:
         stop();
     }
 
-    // WS3: the section keeps the saved layout the arrangement started from,
-    // as the Session does: a file opened where that layout is saved starts
-    // from it (Reset this layout returns to it); where it is not, from its
-    // preset alone.
     void aFileKeepsTheSavedLayoutItStartedFrom()
     {
         const QString file = write(path("saved.ass"), kAss);
@@ -1106,7 +1003,6 @@ private slots:
         QCOMPARE(application->workspaceLayout().layout(), QStringLiteral("Review"));
         QCOMPARE(preset(), QStringLiteral("Timing"));
 
-        // Deleted here: the next file opened has the arrangement and preset only.
         QVERIFY(application->workspaceLayout().deleteSavedLayout(QStringLiteral("Review")));
         QVERIFY(application->openFile(write(path("elsewhere.ass"), readAll(file))));
         QCOMPARE(application->tabs().size(), qsizetype(3));
@@ -1114,7 +1010,6 @@ private slots:
         QTRY_VERIFY(isFloating("audioDock"));
         QVERIFY(application->workspaceLayout().layout().isEmpty());
         QCOMPARE(preset(), QStringLiteral("Timing"));
-        // One saved again under that name is not the earlier tabs' origin.
         QVERIFY(application->workspaceLayout().saveLayoutAs(QStringLiteral("Review")));
         application->selectTab(1);
         QTRY_VERIFY(application->workspaceLayout().layout().isEmpty());

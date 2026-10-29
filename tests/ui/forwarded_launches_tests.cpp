@@ -1,10 +1,3 @@
-// WS5: what a later start hands over, on the instance's holder, through the
-// composition and the real QML (ForwardedLaunches, Application::openForwarded):
-// files open in new Document tabs and never replace a tab's work; they wait
-// while a review, a modal dialog or the startup session question has the
-// next word (legacy hikarisubApp::OnOpen waited while IsBusy); the window
-// comes forward.
-
 #include "hikari/app/application.h"
 #include "hikari/app/session_json.h"
 #include "hikari/app/forwarded_launches.h"
@@ -46,25 +39,24 @@ QString media(const char *name)
     return QStringLiteral(HIKARI_MEDIA_FIXTURES "/") + QLatin1String(name);
 }
 
-} // namespace
+}
 
 class ForwardedLaunchesTests : public QObject {
     Q_OBJECT
 
-    QTemporaryDir home; // the settings folder (last-session.json)
-    QTemporaryDir dir;  // subtitles and media
+    QTemporaryDir home;
+    QTemporaryDir dir;
     app::Application *application = nullptr;
     app::ForwardedLaunches *forwarded = nullptr;
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
 
-    // `restore`: the session setting before the window starts (P6).
     void start(int restore = 0)
     {
         app::Application::Options o;
         o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
-        o.spellingBackend = {}; // no spell checker, so no notice over the window
+        o.spellingBackend = {};
         application = new app::Application(o);
         application->setSessionRestore(restore);
         forwarded = new app::ForwardedLaunches(*application);
@@ -106,7 +98,6 @@ class ForwardedLaunchesTests : public QObject {
         QVERIFY(s->isDirty());
     }
     void take(const QStringList &files) { forwarded->take({files, {}}); }
-    // Nothing opens for a while (the gathering time and more).
     void staysWaiting(const QStringList &before)
     {
         QTest::qWait(1000);
@@ -129,8 +120,6 @@ private slots:
         QFile::remove(home.filePath(QStringLiteral("last-session.json")));
     }
 
-    // With no tab the file opens as the only one; an untouched empty tab
-    // (a new tab, P6) takes the file, as at a start.
     void theUntouchedEmptyTabTakesTheFile()
     {
         start();
@@ -144,9 +133,6 @@ private slots:
         QCOMPARE(application->currentTab(), 1);
     }
 
-    // CF3: a session file handed over alone (a file manager's open of a
-    // .hksession or .kls) loads as Load session from file does, its marked
-    // tab active; among other files it is refused.
     void aSessionFileLoadsAsASession()
     {
         start();
@@ -166,8 +152,6 @@ private slots:
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("s1.ass"), QStringLiteral("s2.ass"), QStringLiteral("s3.ass")}));
     }
 
-    // CF3: a session naming files on another computer asks before anything
-    // is looked up; Cancel leaves the tabs, Open loads it.
     void aSessionOnAnotherComputerAsksFirst()
     {
         start();
@@ -192,16 +176,13 @@ private slots:
         QCOMPARE(application->unresolvedRestores().size(), qsizetype(1));
     }
 
-    // A tab with work keeps it: the subtitles open in a new tab after the
-    // last, shown, with nothing asked (File > Open with "Open subtitles in a
-    // new tab"). The new tab is in the session.
     void aTabWithWorkKeepsIt()
     {
         start();
         take({writeAss(dir.filePath(QStringLiteral("a.ass")), "a")});
         QTRY_COMPARE(titles(), QStringList{QStringLiteral("a.ass")});
         edit(0, "mine");
-        application->addPage(); // an Untitled tab with work too
+        application->addPage();
         edit(1, "draft");
         take({writeAss(dir.filePath(QStringLiteral("b.ass")), "b")});
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("Untitled"), QStringLiteral("b.ass")}));
@@ -214,8 +195,6 @@ private slots:
         QVERIFY(last.contains("b.ass"));
     }
 
-    // Starts that come one after the other (a file manager's %f, one start
-    // per file) open together, each in its own tab, sorted (OpenFiles).
     void startsInARowOpenTogether()
     {
         start();
@@ -227,9 +206,6 @@ private slots:
         QVERIFY(session(0)->isDirty());
     }
 
-    // A tab restored without its missing subtitles (Untitled, with Retry
-    // and Relink) and a tab with only keyframes are not empty: the file
-    // opens beside them, and the restore's entry stays.
     void tabsWithSomethingOfTheirOwnKeepIt()
     {
         {
@@ -260,8 +236,6 @@ private slots:
                                             QStringLiteral("c.ass")}));
     }
 
-    // A video opens in a new tab as a start's video does (openSingleVideo):
-    // subtitles named as it are offered for that tab.
     void aVideoOpensInANewTab()
     {
         start();
@@ -281,8 +255,6 @@ private slots:
         QMetaObject::invokeMethod(prompt, "reject");
     }
 
-    // A keyframes file is a tab's own too: it opens in a new tab, and the
-    // tab with work keeps what it had.
     void aKeyframesFileOpensInANewTab()
     {
         start();
@@ -306,7 +278,6 @@ private slots:
         QVERIFY(kinds(1).contains(QStringLiteral("keyframes")));
     }
 
-    // A review waits for its answer, and the files wait with it.
     void filesWaitForAReview()
     {
         start();
@@ -320,7 +291,6 @@ private slots:
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("Untitled"), QStringLiteral("e.ass")}));
     }
 
-    // A modal dialog over the window holds them too.
     void filesWaitForAModalDialog()
     {
         start();
@@ -336,9 +306,6 @@ private slots:
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("Untitled"), QStringLiteral("f.ass")}));
     }
 
-    // PU1-startup-cards: "Load last session?" (P6) no longer holds files
-    // back: it is an offer on Home, and a file another start hands over
-    // opens at once and ends it.
     void filesDoNotWaitForTheStartupOffer()
     {
         {
@@ -358,8 +325,6 @@ private slots:
         QVERIFY(!named("startupBar")->property("visible").toBool());
     }
 
-    // Started with files, the offer is a bar over them (PU1-startup-cards):
-    // files handed over later end it too.
     void forwardedFilesEndTheStartupBar()
     {
         {
@@ -389,8 +354,6 @@ private slots:
         QObject *bar = named("startupBar");
         QVERIFY(bar);
         QTRY_VERIFY(bar->property("visible").toBool());
-        // A file that doesn't open leaves it, and so does a session file
-        // that cannot be read (CF3: the offer ends once one is restored).
         take({dir.filePath(QStringLiteral("b/missing.ass"))});
         QTRY_VERIFY(!forwarded->pending());
         QTest::qWait(300);
@@ -410,8 +373,6 @@ private slots:
         QTRY_VERIFY(!bar->property("visible").toBool());
     }
 
-    // A session loaded at the start (P6, "Always") comes first, and the
-    // files open after its tabs.
     void filesOpenAfterTheStartupSession()
     {
         {
@@ -428,8 +389,6 @@ private slots:
         application = new app::Application(o);
         application->setSessionRestore(2);
         forwarded = new app::ForwardedLaunches(*application);
-        // Handed over before the window is up: it waits for the window, then
-        // for the session.
         forwarded->take({{writeAss(dir.filePath(QStringLiteral("s/h.ass")), "h")}, {}});
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
@@ -441,9 +400,6 @@ private slots:
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("last.ass"), QStringLiteral("h.ass")}));
     }
 
-    // Files handed over while the quit is reviewed are not opened in the
-    // closing window: once the quit goes ahead they are left for the next
-    // start (composition hands them on).
     void filesTheQuitLeavesGoToTheNextStart()
     {
         start();
@@ -466,10 +422,6 @@ private slots:
         QVERIFY(!forwarded->pending());
     }
 
-    // A start without files while the quit is reviewed still asks for the
-    // program: once that quit goes ahead the next start is made for it. A
-    // cancelled quit keeps the window, which came forward, and a later quit
-    // is the user's own, at once too (before any timer of this one runs).
     void aStartWithoutFilesDuringTheQuitOutlivesIt()
     {
         start();
@@ -483,13 +435,13 @@ private slots:
                                        {QStringLiteral("save"), false}};
             return discard;
         };
-        forwarded->take({{}, QStringLiteral("before")}); // no quit: the window's own
+        forwarded->take({{}, QStringLiteral("before")});
         QVariantList discard = quit();
         QCOMPARE(discard.size(), 1);
         forwarded->take({{}, QStringLiteral("cancelled")});
-        QVERIFY(!forwarded->startAfterQuit()); // not yet: the quit may be cancelled
+        QVERIFY(!forwarded->startAfterQuit());
         QSignalSpy cancelled(application, &app::Application::quitCancelled);
-        application->cancelClose(); // the window stays and comes forward with the token
+        application->cancelClose();
         QCOMPARE(cancelled.size(), 1);
         discard = quit();
         application->resolveClose(discard);
@@ -506,7 +458,6 @@ private slots:
         edit(0, "work");
         const QVariantList rows = application->reviewClose(QStringLiteral("quit"));
         QCOMPARE(rows.size(), 1);
-        // Its activation token goes to the start made after the quit.
         forwarded->take({{}, QStringLiteral("token")});
         application->resolveClose({QVariantMap{{QStringLiteral("id"), rows.first().toMap().value(QStringLiteral("id"))},
                                                {QStringLiteral("save"), false}}});
@@ -516,8 +467,6 @@ private slots:
         QVERIFY(forwarded->takeUnopened().isEmpty());
     }
 
-    // The window comes forward: a minimized one is restored. A start without
-    // files does nothing else.
     void theWindowComesForward()
     {
         start();
@@ -529,7 +478,7 @@ private slots:
         QVERIFY(titles().isEmpty());
         window->setWindowStates(Qt::WindowMaximized | Qt::WindowMinimized);
         take({});
-        QCOMPARE(window->windowStates(), Qt::WindowStates(Qt::WindowMaximized)); // as it was
+        QCOMPARE(window->windowStates(), Qt::WindowStates(Qt::WindowMaximized));
     }
 };
 

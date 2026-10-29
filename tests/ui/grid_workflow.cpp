@@ -1,7 +1,3 @@
-// G1 workflow through the real UI (Spix): range selection in the Grid with
-// Shift and the keyboard, Select all, and back to one Line, read from the
-// footer's selection status.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -43,15 +39,15 @@ protected:
             mouseClick("mainWindow/editingGrid");
             invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
             key(Qt::Key_Home);
-            observed.push_back(status()); // 0
+            observed.push_back(status());
             key(Qt::Key_Down, spix::KeyModifiers::Shift);
             key(Qt::Key_Down, spix::KeyModifiers::Shift);
-            observed.push_back(status()); // 1
-            observed.push_back(getStringProperty("mainWindow/lineText", "text")); // 2: the active Line moved
+            observed.push_back(status());
+            observed.push_back(getStringProperty("mainWindow/lineText", "text"));
             key(Qt::Key_A, spix::KeyModifiers::Control);
-            observed.push_back(status()); // 3
+            observed.push_back(status());
             key(Qt::Key_Down);
-            observed.push_back(status()); // 4
+            observed.push_back(status());
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -61,7 +57,7 @@ protected:
     }
 };
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

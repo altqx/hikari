@@ -1,11 +1,3 @@
-// WS1 (ADR 0020): each Document tab keeps its own panel arrangement in the
-// shell. Switching tabs swaps it with the content (docked, floating, sizes),
-// and leaves the panels alone between tabs that look the same; a new tab is
-// a copy of the current one, a TLMode file's tab starts with the Translation
-// preset; a preset changes the current tab only; the Session keeps each
-// tab's arrangement, also as the window closes; a tab whose arrangement is
-// invalid or restores only in part shows the Editing layout with a notice.
-
 #include "hikari/app/application.h"
 #include "hikari/app/session_json.h"
 #include "hikari/application/session_file.h"
@@ -34,7 +26,6 @@ using namespace hikari;
 
 namespace {
 
-// An ASS file of three Lines, with TLMode: Yes when `translation`.
 QString writeSubtitles(const QString &path, bool translation = false)
 {
     QFile f(path);
@@ -61,7 +52,6 @@ application::Session readSession(const QString &path)
     return app::readSession(std::string_view(bytes.constData(), bytes.size())).value_or(application::Session{});
 }
 
-// A Session tab's arrangement as written ("Layout: ").
 ui::WorkspaceArrangement layoutOf(const application::SessionTab &tab)
 {
     const auto arrangement = ui::WorkspaceArrangement::parse(QByteArray::fromStdString(tab.layout));
@@ -73,7 +63,7 @@ int floatingWindows()
     return static_cast<int>(KDDockWidgets::DockRegistry::self()->floatingWindows().size());
 }
 
-} // namespace
+}
 
 class TabLayoutsTest : public QObject {
     Q_OBJECT
@@ -95,14 +85,13 @@ class TabLayoutsTest : public QObject {
         QVERIFY(!engine->rootObjects().isEmpty());
         QVERIFY(QTest::qWaitForWindowExposed(window()));
         QTRY_VERIFY(window()->property("arrangementSettled").toBool());
-        // The first tab, which takes the arrangement the window shows.
         application->addPage();
         QCOMPARE(application->currentTab(), 0);
     }
     void stop()
     {
         application->workspaceLayout().save();
-        application->endSession(); // a closed session: the next start asks nothing
+        application->endSession();
         engine.reset();
         application.reset();
     }
@@ -131,8 +120,6 @@ class TabLayoutsTest : public QObject {
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         dismissMismatch();
     }
-    // The resolution question a video opened may ask a moment later (a
-    // message box since PU6), kept as it is.
     void dismissMismatch()
     {
         auto *host = window()->findChild<QObject *>(QStringLiteral("messages"));
@@ -163,24 +150,18 @@ private slots:
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 
-    // The tab shown gets its own arrangement back: which panels are open,
-    // docked or floating, and a docked panel's size; every panel is still
-    // there, each floating panel in a window of its own.
     void switchingTabsSwapsTheirArrangements()
     {
         start();
         auto &layout = application->workspaceLayout();
         float_("audioDock", true);
-        // A narrow Video panel beside the Line editor.
         QVERIFY(layout.resizePanel(dock("videoDock"), 470, layout.panelSize(dock("videoDock")).height()));
         QTRY_VERIFY(qAbs(layout.panelSize(dock("videoDock")).width() - 470) <= 2);
 
-        // A new tab is a copy of the current tab's arrangement.
         application->addPage();
         QCOMPARE(application->currentTab(), 1);
         QVERIFY(isFloating("audioDock"));
         QCOMPARE(layout.panelSize(dock("videoDock")).width(), 470);
-        // ...and then its own.
         float_("audioDock", false);
         float_("editorDock", true);
         close("gridDock");
@@ -209,8 +190,6 @@ private slots:
         stop();
     }
 
-    // No flicker between tabs that look the same: their arrangement is not
-    // restored, so the floating panel keeps its window.
     void tabsThatLookTheSameLeaveThePanelsAlone()
     {
         start();
@@ -225,14 +204,11 @@ private slots:
         stop();
     }
 
-    // A tab whose file has TLMode: Yes starts with the Translation preset:
-    // opened into a new tab, or into a background tab first shown later.
-    // Other files' tabs copy the current tab.
     void aTranslationFileStartsWithTheTranslationPreset()
     {
         start();
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("a.ass")))));
-        QCOMPARE(application->currentTab(), 0); // into the untouched tab
+        QCOMPARE(application->currentTab(), 0);
         float_("audioDock", true);
         application->addPage();
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("tl.ass")), true)));
@@ -246,7 +222,7 @@ private slots:
         application->addPage();
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("plain.ass")))));
         QCOMPARE(application->currentTab(), 2);
-        QCOMPARE(preset(), QStringLiteral("Translation")); // a copy of the Translation tab
+        QCOMPARE(preset(), QStringLiteral("Translation"));
         QVERIFY(!isOpen("audioDock"));
 
         application->selectTab(0);
@@ -254,7 +230,6 @@ private slots:
         QVERIFY(isOpen("audioDock"));
         QVERIFY(isFloating("audioDock"));
 
-        // Opened beside the current tab, shown later.
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("tl2.ass")), true)));
         QCOMPARE(application->tabs().size(), qsizetype(4));
         QCOMPARE(application->currentTab(), 0);
@@ -265,9 +240,6 @@ private slots:
         stop();
     }
 
-    // A file opened beside the current tab (it has a file) starts as the
-    // current tab was then, in the Session written at once as well, however
-    // the current tab changes before it is first shown.
     void aBackgroundTabCopiesTheArrangementItOpenedWith()
     {
         start();
@@ -290,9 +262,6 @@ private slots:
         stop();
     }
 
-    // Several files dropped at once: the first goes into the untouched tab,
-    // which keeps its arrangement, also in the Session written meanwhile;
-    // the last, a TLMode file in a new tab, is shown with Translation.
     void aMultiFileOpenKeepsTheReusedTabsArrangement()
     {
         start();
@@ -316,7 +285,6 @@ private slots:
         stop();
     }
 
-    // A preset, Reset layout included, changes the current tab only.
     void presetsChangeTheCurrentTabOnly()
     {
         start();
@@ -328,7 +296,7 @@ private slots:
         QCOMPARE(preset(), QStringLiteral("Editing"));
         QVERIFY(isOpen("videoDock"));
         close("audioDock");
-        applyPreset("Editing"); // Reset layout
+        applyPreset("Editing");
         QTRY_VERIFY(isOpen("audioDock"));
         application->selectTab(1);
         QCOMPARE(preset(), QStringLiteral("Timing"));
@@ -337,8 +305,6 @@ private slots:
         stop();
     }
 
-    // The Session writes each tab's arrangement and brings it back; a start
-    // without a Session shows the arrangement shown last.
     void theSessionKeepsEachTabsArrangement()
     {
         start();
@@ -360,7 +326,7 @@ private slots:
         stop();
 
         start();
-        QCOMPARE(preset(), QStringLiteral("Timing")); // the layout file: the tab shown last
+        QCOMPARE(preset(), QStringLiteral("Timing"));
         QVERIFY(!isOpen("videoDock"));
         loadSession(kls);
         QCOMPARE(application->tabs().size(), qsizetype(2));
@@ -376,17 +342,12 @@ private slots:
         stop();
     }
 
-    // The docking engine closes every panel when the main window's close
-    // goes ahead; the Session written then names the arrangement shown.
+    // KDDockWidgets closes every panel when the main window's close goes ahead.
     void theClosingSessionNamesTheArrangementShown()
     {
         start();
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("c.ass")))));
         float_("audioDock", true);
-        // The arrangement shown: the panels it leaves closed (AM1's
-        // Automation, NT1's Log, PU6's Spellchecker, TP1's Styles, PU2's Fix
-        // minor errors, KE2's Template editor and, outside Translation mode,
-        // TM1's Original text among them), not every panel.
         int closedShown = 0;
         for (const char *dock : {"videoDock", "audioDock", "editorDock", "gridDock", "referenceDock", "timingDock",
                                  "searchDock", "automationDock", "originalDock", "logDock", "spellDock", "stylesDock",
@@ -405,9 +366,6 @@ private slots:
         application.reset();
     }
 
-    // A tab whose Session arrangement does not validate, or that the engine
-    // restores only in part, shows the Editing layout; the notice names the
-    // tab and why, and the rejected text is kept. The other tabs keep theirs.
     void anUnusableTabArrangementShowsEditing_data()
     {
         QTest::addColumn<QByteArray>("layout");
@@ -459,11 +417,9 @@ private slots:
         QCOMPARE(preset(), QStringLiteral("Editing"));
         for (const char *name : {"videoDock", "audioDock", "editorDock", "gridDock"})
             QVERIFY2(isOpen(name) && !isFloating(name), name);
-        // The Session now names the Editing layout for that tab.
         const auto written = readSession(application->lastSessionPath());
         QCOMPARE(written.tabs.size(), std::size_t(2));
         QCOMPARE(layoutOf(written.tabs[1]).preset, QStringLiteral("Editing"));
-        // The other tab keeps its own.
         application->selectTab(0);
         QVERIFY(!isOpen("videoDock"));
         QVERIFY(isFloating("audioDock"));

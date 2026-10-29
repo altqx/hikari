@@ -1,14 +1,3 @@
-// PK1 (#301): the popup kit (docs/ux/visual-language.md "Popups"): the
-// message box (MessageBox.qml), the popover (Popover.qml), the toasts
-// (ToastStack.qml), the inline bar (InlineBar.qml), and the forms built on
-// them: the clash review, Choose styles, the hotkey capture, the list
-// chooser and the date picker. Each answers its keys and presses as the
-// kit says: a popover keeps on Enter and a press outside and reverts on
-// Esc; a message box's buttons are named for what they do, a destructive
-// one never the default; a fourth toast drops the oldest information or
-// folds the oldest warning; the message host (NT1) asks one question at a
-// time.
-
 #include "log_controller.h"
 #include "settings_store.h"
 #include "theme.h"
@@ -132,7 +121,7 @@ QQuickItem *findIn(QQuickWindow *window, const char *name)
     return window ? findItem(window->contentItem(), QLatin1String(name)) : nullptr;
 }
 
-// QTest::keyClicks is for widgets.
+// QTest::keyClicks takes a QWidget only.
 void typeText(QWindow *window, const QString &text)
 {
     for (const QChar c : text)
@@ -144,14 +133,13 @@ QPoint centreOf(QQuickItem *item)
     return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
 }
 
-// After the layouts have placed it (a row just shown moves the ones after).
+// Qt Quick layouts move items only at the next polish.
 void click(QQuickItem *item)
 {
     QVERIFY(QQuickTest::qWaitForPolish(item->window()));
     QTest::mouseClick(item->window(), Qt::LeftButton, {}, centreOf(item));
 }
 
-// The date picker's format: the short one with the whole year.
 QString shortDate(const QDate &d)
 {
     QString f = QLocale().dateFormat(QLocale::ShortFormat);
@@ -167,7 +155,7 @@ QVariant plain(const QVariant &v)
                : v;
 }
 
-} // namespace
+}
 
 class PopupKitTests : public QObject {
     Q_OBJECT
@@ -177,7 +165,6 @@ class PopupKitTests : public QObject {
     std::unique_ptr<QQmlEngine> engine;
     std::unique_ptr<QQuickWindow> root;
 
-    // Runs `code` in the test window's scope (its ids).
     QVariant run(const QString &code)
     {
         QQmlExpression expression(qmlContext(root.get()), root.get(), code);
@@ -231,9 +218,7 @@ private slots:
         QQuickItem *keep = findIn(box, "messageBoxChoice_keep");
         QVERIFY(destroy && keep);
         QVERIFY(QString::fromLatin1(destroy->metaObject()->className()).startsWith(QLatin1String("DangerButton")));
-        // The destructive choice is never the default: the safe one is.
         QCOMPARE(box->property("defaultButton").value<QQuickItem *>(), keep);
-        // Details stay folded until asked for.
         QVERIFY(!findIn(box, "messageBoxDetails")->isVisible());
         click(findIn(box, "messageBoxDisclosure"));
         QTRY_VERIFY(findIn(box, "messageBoxDetails")->isVisible());
@@ -242,7 +227,6 @@ private slots:
         QTRY_VERIFY(!box->isVisible());
         QCOMPARE(notes(), QStringList{QStringLiteral("keep:true")});
 
-        // Esc answers the reject choice; without one, "".
         run(QStringLiteral("box.ask({ title: 'Export', text: 'Export failed', severity: 'error',"
                            " choices: [{ id: 'retry', text: 'Try again', role: 'accept', isDefault: true },"
                            "           { id: 'stop', text: 'Stop', role: 'reject' }] },"
@@ -259,7 +243,6 @@ private slots:
         QTest::keyClick(box, Qt::Key_Return);
         QTRY_COMPARE(notes().last(), QStringLiteral("ok:ok"));
 
-        // Long details (a stack trace) scroll: the answers stay in the window.
         run(QStringLiteral("box.ask({ title: 'Crash', text: 'It stopped', severity: 'error',"
                            " details: Array.from({ length: 300 }, (_, i) => 'frame ' + i).join('\\n') }, null)"));
         QVERIFY(QTest::qWaitForWindowFocused(box));
@@ -274,8 +257,6 @@ private slots:
         QTRY_VERIFY(!box->isVisible());
     }
 
-    // NT1: the host asks one question at a time. An answer that asks again
-    // while another waits shows the waiting one; the new one comes after.
     void messageHostAsksOneAtATime()
     {
         run(QStringLiteral(
@@ -287,7 +268,7 @@ private slots:
             QTRY_VERIFY(box->isVisible());
             QVERIFY(QTest::qWaitForWindowFocused(box));
             QCOMPARE(box->title(), title);
-            QTest::qWait(50); // a stray advance would have replaced it by now
+            QTest::qWait(50);
             QCOMPARE(box->title(), title);
             QTest::keyClick(box, Qt::Key_Return);
             QTRY_COMPARE(notes().size(), title == QLatin1String("A") ? 1 : title == QLatin1String("B") ? 2 : 3);
@@ -300,13 +281,11 @@ private slots:
         QQuickItem *anchor = findIn(root.get(), "anchorButton");
         QVERIFY(run(QStringLiteral("popover.openAt(anchorButton)")).toBool());
         QTRY_VERIFY(run(QStringLiteral("popover.opened")).toBool());
-        // Under its anchor, at its left edge.
         const QPointF at = run(QStringLiteral("popover.contentItem.mapToItem(null, 0, 0)")).toPointF();
         QVERIFY(at.y() > anchor->mapToScene(QPointF(0, anchor->height())).y());
         QTest::keyClick(root.get(), Qt::Key_Return);
         QTRY_VERIFY(!run(QStringLiteral("popover.visible")).toBool());
         QCOMPARE(notes(), QStringList{QStringLiteral("kept")});
-        // The keyboard goes back to where it was.
         QTRY_VERIFY(anchor->hasActiveFocus());
 
         run(QStringLiteral("popover.openAt(anchorButton)"));
@@ -322,13 +301,11 @@ private slots:
         QCOMPARE(notes().last(), QStringLiteral("kept"));
         QCOMPARE(notes().size(), 3);
 
-        // Opened again while open: the edit before is kept first.
         run(QStringLiteral("popover.openAt(anchorButton)"));
         run(QStringLiteral("popover.openAt(elsewhere)"));
         QCOMPARE(notes().last(), QStringLiteral("kept"));
         QCOMPARE(notes().size(), 4);
         run(QStringLiteral("popover.revert()"));
-        // Without an anchor, centred in the window.
         run(QStringLiteral("popover.openAt(null, root.contentItem)"));
         QTRY_VERIFY(run(QStringLiteral("popover.opened")).toBool());
         const double x = run(QStringLiteral("popover.x")).toDouble();
@@ -345,7 +322,6 @@ private slots:
         QVERIFY(run(QStringLiteral("date.popover.y")).toDouble() < 0);
         QTest::keyClick(root.get(), Qt::Key_Escape);
         QTRY_VERIFY(!run(QStringLiteral("date.popover.visible")).toBool());
-        // In a host smaller than the popover: a window of its own.
         root->resize(200, 160);
         QTRY_COMPARE(root->height(), 160);
         run(QStringLiteral("date.x = 0; date.y = 0"));
@@ -366,12 +342,10 @@ private slots:
         post("warning", "Two");
         post("info", "Three");
         QCOMPARE(run(QStringLiteral("toasts.entries.length")).toInt(), 3);
-        // A fourth: the oldest information toast goes.
         post("warning", "Four");
         QCOMPARE(run(QStringLiteral("toasts.entries.map(e => e.title).join(',')")).toString(),
                  QStringLiteral("Four,Three,Two"));
         QVERIFY(!findIn(root.get(), QStringLiteral("toast_%1").arg(first).toLatin1().constData()));
-        // Three warnings: the oldest folds into the "more" line.
         post("error", "Five");
         QCOMPARE(run(QStringLiteral("toasts.entries.map(e => e.title).join(',')")).toString(),
                  QStringLiteral("Five,Four,Two"));
@@ -383,18 +357,14 @@ private slots:
         click(findIn(root.get(), "toastMoreOpenLog"));
         QCOMPARE(notes(), QStringList{QStringLiteral("log 0")});
         QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 0);
-        // NT1: every notice is an entry of the Log, with its severity and title.
         QVERIFY(logger->history().contains(QLatin1String("One: text of One")));
         QCOMPARE(logger->warningCount(), 3);
         QCOMPARE(logger->errorCount(), 1);
-        // × dismisses.
         const int six = run(QStringLiteral("toasts.entries[0].id")).toInt();
         QQuickItem *toast = findIn(root.get(), QStringLiteral("toast_%1").arg(six).toLatin1().constData());
         QVERIFY(toast);
         click(findItem(toast, QStringLiteral("toastDismiss")));
         QCOMPARE(run(QStringLiteral("toasts.entries.length")).toInt(), 2);
-        // A folded notice stays counted when the ones showing are
-        // dismissed (Codex review): only the Log or clear() lets it go.
         run(QStringLiteral("toasts.clear()"));
         for (const char *title : {"W1", "W2", "W3", "W4"})
             post("warning", title);
@@ -403,8 +373,6 @@ private slots:
         QCOMPARE(run(QStringLiteral("toasts.entries.length")).toInt(), 0);
         QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 1);
         QTRY_VERIFY(findIn(root.get(), "toastMore")->isVisible());
-        // Details opens the Log at its entry, and a notice C++ gives the Log
-        // shows as a toast too.
         run(QStringLiteral("toasts.clear()"));
         logger->notice(ui::LogController::Warning, QStringLiteral("Audio"), QStringLiteral("from C++"));
         QCOMPARE(run(QStringLiteral("toasts.entries[0].text")).toString(), QStringLiteral("from C++"));
@@ -426,7 +394,6 @@ private slots:
                      QStringLiteral("Read-only"));
         QTest::qWait(200);
         QCOMPARE(run(QStringLiteral("toasts.entries.length")).toInt(), 1);
-        // Toasts off: the Log only, and the ones showing go.
         store->setValue(QStringLiteral("notices.toasts"), false);
         QCOMPARE(run(QStringLiteral("toasts.entries.length")).toInt(), 0);
         QCOMPARE(run(QStringLiteral("toasts.post('warning', 'Quiet', 'only logged')")).toInt(), 0);
@@ -457,22 +424,17 @@ private slots:
             "     : results.map(r => r.name + '=' + r.action + ':' + r.newName).join(';')))"));
         QQuickWindow *review = windowOf("clashes");
         QVERIFY(QTest::qWaitForWindowExposed(review));
-        // Replace by default: every row written, and the one added.
         QCOMPARE(run(QStringLiteral("clashes.written")).toInt(), 3);
         click(findIn(review, "clashReviewAll_skip"));
         QCOMPARE(run(QStringLiteral("clashes.written")).toInt(), 1);
         click(findIn(review, "clashAction1_rename"));
         QTRY_VERIFY(findIn(review, "clashName1")->isVisible());
         QCOMPARE(findIn(review, "clashName1")->property("text").toString(), QStringLiteral("Sign (2)"));
-        // A rename needs a name.
         run(QStringLiteral("clashes.setName(1, ' ')"));
         QVERIFY(!run(QStringLiteral("clashes.complete")).toBool());
         QVERIFY(!findIn(review, "clashReviewApply")->isEnabled());
         run(QStringLiteral("clashes.setName(1, 'Sign alt')"));
         QVERIFY(findIn(review, "clashReviewApply")->isEnabled());
-        // Enter in the name field writes, as the window's default (the field
-        // takes Enter itself).
-        // A comma is refused, as in the style editor's name (Codex review).
         findIn(review, "clashName1")->forceActiveFocus();
         QTest::keyClick(review, Qt::Key_End);
         typeText(review, QStringLiteral(",2"));
@@ -480,14 +442,12 @@ private slots:
         QTest::keyClick(review, Qt::Key_Return);
         QTRY_VERIFY(!review->isVisible());
         QCOMPARE(notes(), QStringList{QStringLiteral("Default=skip:Default (2);Sign=rename:Sign alt2")});
-        // Cancel writes nothing.
         run(QStringLiteral("clashes.review({ title: 'Copy', rows: [{ name: 'A' }] },"
                            " results => root.note(results === null ? 'cancel' : 'written'))"));
         QVERIFY(QTest::qWaitForWindowFocused(review));
         QTest::keyClick(review, Qt::Key_Escape);
         QTRY_VERIFY(!review->isVisible());
         QCOMPARE(notes().last(), QStringLiteral("cancel"));
-        // Without Rename, two actions.
         run(QStringLiteral("clashes.review({ title: 'Copy', canRename: false, rows: [{ name: 'A' }] }, null)"));
         QVERIFY(QTest::qWaitForWindowExposed(review));
         QVERIFY(!findIn(review, "clashReviewAll_rename"));
@@ -502,7 +462,6 @@ private slots:
         QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
         QQuickItem *count = findIn(root.get(), "chooseStylesCount");
         QCOMPARE(count->property("text").toString(), QStringLiteral("1 of 3 selected"));
-        // The search field has the keyboard; it filters.
         QTRY_VERIFY(findIn(root.get(), "chooseStylesSearch")->hasActiveFocus());
         typeText(root.get(), QStringLiteral("to"));
         QCOMPARE(run(QStringLiteral("styles.shown.join(',')")).toString(), QStringLiteral("Top"));
@@ -513,18 +472,15 @@ private slots:
         click(findIn(root.get(), "chooseStylesRow_Default"));
         QCOMPARE(notes().last(), QStringLiteral("changed:Default,Sign,Top"));
         QCOMPARE(count->property("text").toString(), QStringLiteral("3 of 3 selected"));
-        // Esc: the ticks it opened with.
         QTest::keyClick(root.get(), Qt::Key_Escape);
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         QCOMPARE(notes().last(), QStringLiteral("changed:Sign"));
 
-        // Enter in the search field keeps the ticks, as the popover's Enter.
         run(QStringLiteral("styles.openFor(anchorButton, ['Default', 'Sign'], ['Sign'])"));
         QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
         QTRY_VERIFY(findIn(root.get(), "chooseStylesSearch")->hasActiveFocus());
         QTest::keyClick(root.get(), Qt::Key_Return);
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
-        // With an action: nothing until it is pressed.
         root->setProperty("log", QVariantList());
         run(QStringLiteral("styles.openFor(anchorButton, ['Default', 'Sign'], [], { actionText: 'Load' })"));
         QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
@@ -536,14 +492,12 @@ private slots:
         click(act);
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         QCOMPARE(notes(), QStringList{QStringLiteral("acted:Sign")});
-        // There Enter in the search presses it.
         run(QStringLiteral("styles.openFor(anchorButton, ['Default', 'Sign'], ['Default'], { actionText: 'Load' })"));
         QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
         QTRY_VERIFY(findIn(root.get(), "chooseStylesSearch")->hasActiveFocus());
         QTest::keyClick(root.get(), Qt::Key_Return);
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         QCOMPARE(notes().last(), QStringLiteral("acted:Default"));
-        // And in the list, after Down and Space (Codex review).
         run(QStringLiteral("styles.openFor(anchorButton, ['Default', 'Sign'], [], { actionText: 'Load' })"));
         QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
         QTRY_VERIFY(findIn(root.get(), "chooseStylesSearch")->hasActiveFocus());
@@ -552,8 +506,6 @@ private slots:
         QTest::keyClick(root.get(), Qt::Key_Return);
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         QCOMPARE(notes().last(), QStringLiteral("acted:Default"));
-        // A great many styles (a hostile file): Select all and None are
-        // lookups, not a scan of the ticks per style (Codex security review).
         run(QStringLiteral("styles.openFor(anchorButton, Array.from({ length: 50000 }, (_, i) => 'S' + i),"
                            " Array.from({ length: 50000 }, (_, i) => 'S' + i))"));
         QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
@@ -566,8 +518,6 @@ private slots:
         QVERIFY2(many.elapsed() < 5000, QByteArray::number(many.elapsed()).constData());
         run(QStringLiteral("styles.revert()"));
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
-        // A popover's anchor with no `pressed` (a text field) keeps the
-        // record of the press that closed it, so that press opens nothing.
         run(QStringLiteral("styles.pressedAnchor = date.field; styles.keepPressedAnchor()"));
         QVERIFY(run(QStringLiteral("styles.pressedAnchor === date.field")).toBool());
         run(QStringLiteral("styles.pressedAnchor = anchorButton; styles.keepPressedAnchor()"));
@@ -576,14 +526,12 @@ private slots:
 
     void hotkeyCaptureSaysWhyAndAsksOnTheForm()
     {
-        // "+" joins the caps and is a key too.
         QCOMPARE(run(QStringLiteral("capture.keyParts('Ctrl++')")).toStringList(), (QStringList{"Ctrl", "+"}));
         QCOMPARE(run(QStringLiteral("capture.keyParts('Num++')")).toStringList(), (QStringList{"Num", "+"}));
         QCOMPARE(run(QStringLiteral("capture.keyParts('Ctrl+Shift+Num++')")).toStringList(),
                  (QStringList{"Ctrl", "Shift", "Num", "+"}));
         QCOMPARE(run(QStringLiteral("capture.keyParts('Ctrl+Shift+J')")).toStringList(), (QStringList{"Ctrl", "Shift", "J"}));
         QCOMPARE(run(QStringLiteral("capture.keyParts('+')")).toStringList(), QStringList{"+"});
-        // At a control: a popover; refused keys say why and it keeps waiting.
         run(QStringLiteral("capture.capture('Save', 0, true, (accel, window) => {"
                            "    root.note(accel + '@' + window);"
                            "    capture.ask({ message: 'taken', canSwitch: true, canSetAnyway: true, commands: ['Open'] },"
@@ -595,7 +543,6 @@ private slots:
         QTRY_VERIFY(findIn(root.get(), "hotkeyRefusalText")->isVisible());
         QCOMPARE(findIn(root.get(), "hotkeyRefusalText")->property("text").toString(), QStringLiteral("F1 is Help"));
         QVERIFY(notes().isEmpty());
-        // Taken keys: the question on the form, its buttons named for it.
         QTest::keyClick(root.get(), Qt::Key_K, Qt::ControlModifier);
         QCOMPARE(notes(), QStringList{QStringLiteral("Ctrl-K@0")});
         QVERIFY(run(QStringLiteral("capture.opened")).toBool());
@@ -605,7 +552,6 @@ private slots:
         QCOMPARE(findIn(root.get(), "hotkeySwitch")->property("text").toString(), QStringLiteral("Swap with Open"));
         QCOMPARE(findIn(root.get(), "hotkeyDelete")->property("text").toString(), QStringLiteral("Take it from Open"));
         QCOMPARE(findIn(root.get(), "hotkeySetAnyway")->property("text").toString(), QStringLiteral("Keep both"));
-        // While the question shows, Tab moves to its buttons.
         QTest::keyClick(root.get(), Qt::Key_Tab);
         QTRY_VERIFY(!findIn(root.get(), "hotkeyMappingKeys")->hasActiveFocus());
         QVERIFY(run(QStringLiteral("capture.conflict !== null")).toBool());
@@ -613,7 +559,6 @@ private slots:
         QCOMPARE(notes().last(), QStringLiteral("answer:switch"));
         QTRY_VERIFY(!run(QStringLiteral("capture.opened")).toBool());
 
-        // From a menu: a compact window; plain Esc cancels, never a hotkey.
         root->setProperty("log", QVariantList());
         run(QStringLiteral("capture.capture('Save', 2, false, (accel, window) => root.note(accel + '@' + window))"));
         QQuickWindow *compact = nullptr;
@@ -629,7 +574,6 @@ private slots:
         QTest::keyClick(compact, Qt::Key_K, Qt::ControlModifier);
         QTRY_VERIFY(!compact->isVisible());
         QCOMPARE(notes(), QStringList{QStringLiteral("Ctrl-K@2")});
-        // Tab is a hotkey like any other (Codex review).
         run(QStringLiteral("capture.capture('Save', 2, false, (accel, window) => root.note(accel + '@' + window))"));
         QVERIFY(QTest::qWaitForWindowFocused(compact));
         QTest::keyClick(compact, Qt::Key_Tab);
@@ -639,7 +583,6 @@ private slots:
 
     void listChooserTakesARowOrNone()
     {
-        // At a control: a click takes the row.
         run(QStringLiteral("chooser.choose({ title: 'Suggestions', rows: ['their', 'there', 'they\\'re'],"
                            " anchor: anchorButton }, row => root.note('row:' + row))"));
         QTRY_VERIFY(run(QStringLiteral("chooser.inPopover")).toBool());
@@ -648,7 +591,6 @@ private slots:
         click(second);
         QCOMPARE(notes(), QStringList{QStringLiteral("row:1")});
         QTRY_VERIFY(!run(QStringLiteral("chooser.opened")).toBool());
-        // The arrows choose and Enter takes; Esc takes none.
         run(QStringLiteral("chooser.choose({ title: 'Suggestions', rows: ['a', 'b', 'c'], anchor: anchorButton },"
                            " row => root.note('row:' + row))"));
         QTRY_VERIFY(run(QStringLiteral("chooser.inPopover")).toBool());
@@ -663,7 +605,6 @@ private slots:
         QCOMPARE(notes().last(), QStringLiteral("row:-1"));
         QTRY_VERIFY(!run(QStringLiteral("chooser.opened")).toBool());
 
-        // From a menu: a compact window, its button named for the action.
         root->setProperty("log", QVariantList());
         run(QStringLiteral("chooser.choose({ title: 'Choose the audio track', text: 'The file has 2 audio tracks',"
                            " rows: [{ text: 'Track 1', detail: 'Japanese' }, { text: 'Track 2', detail: 'English' }],"
@@ -674,7 +615,6 @@ private slots:
         QVERIFY(QTest::qWaitForWindowFocused(compact));
         QCOMPARE(findIn(compact, "listChooserTake")->property("text").toString(), QStringLiteral("Open"));
         QCOMPARE(findIn(compact, "listChooserText")->property("text").toString(), QStringLiteral("The file has 2 audio tracks"));
-        // Two rows fit: the whole list shows, with no scroll bar over the details.
         QVERIFY(QQuickTest::qWaitForPolish(compact));
         auto *list = findIn(compact, "listChooserList");
         QVERIFY(list->height() >= list->property("contentHeight").toReal());
@@ -685,7 +625,6 @@ private slots:
         QTest::keyClick(compact, Qt::Key_Return);
         QTRY_VERIFY(!compact->isVisible());
         QCOMPARE(notes(), QStringList{QStringLiteral("row:1")});
-        // More than eight rows scroll, the bar beside the rows.
         run(QStringLiteral("chooser.choose({ title: 'Choose', rows: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'] },"
                            " row => root.note('row:' + row))"));
         QVERIFY(QTest::qWaitForWindowFocused(compact));
@@ -708,8 +647,6 @@ private slots:
         run(QStringLiteral("date.setDate(new Date(2026, 9, 21))"));
         QCOMPARE(field->property("text").toString(),
                  shortDate(QDate(2026, 10, 21)));
-        // Alt+Down opens the month; the arrows move the day, Page Down the
-        // month; Enter takes it.
         field->forceActiveFocus();
         QTest::keyClick(root.get(), Qt::Key_Down, Qt::AltModifier);
         QTRY_VERIFY(run(QStringLiteral("date.popover.opened")).toBool());
@@ -721,14 +658,12 @@ private slots:
         QTest::keyClick(root.get(), Qt::Key_Return);
         QTRY_VERIFY(!run(QStringLiteral("date.popover.visible")).toBool());
         QCOMPARE(run(QStringLiteral("date.date.getMonth() + '/' + date.date.getDate()")).toString(), QStringLiteral("10/29"));
-        // Esc leaves the date as it was.
         run(QStringLiteral("date.openCalendar()"));
         QTRY_VERIFY(run(QStringLiteral("date.popover.opened")).toBool());
         QTest::keyClick(root.get(), Qt::Key_Left);
         QTest::keyClick(root.get(), Qt::Key_Escape);
         QTRY_VERIFY(!run(QStringLiteral("date.popover.visible")).toBool());
         QCOMPARE(run(QStringLiteral("date.date.getDate()")).toInt(), 29);
-        // The shortcuts count back from today.
         run(QStringLiteral("date.openCalendar()"));
         QTRY_VERIFY(run(QStringLiteral("date.popover.opened")).toBool());
         QQuickItem *week = nullptr;
@@ -738,7 +673,6 @@ private slots:
         QTRY_VERIFY(!run(QStringLiteral("date.popover.visible")).toBool());
         QCOMPARE(run(QStringLiteral("date.date.getTime()")).toDouble(),
                  run(QStringLiteral("date.back({ days: 7 }).getTime()")).toDouble());
-        // A typed date is read in the short format; a wrong one is put back.
         field->forceActiveFocus();
         QTest::keyClick(root.get(), Qt::Key_A, Qt::ControlModifier);
         typeText(root.get(), shortDate(QDate(2025, 3, 4)));
@@ -750,8 +684,6 @@ private slots:
         typeText(root.get(), QStringLiteral("not a date"));
         QTest::keyClick(root.get(), Qt::Key_Return);
         QCOMPARE(field->property("text").toString(), shortDate(QDate(2025, 3, 4)));
-        // A typed date not yet committed is where the calendar opens, and
-        // Esc keeps it (Codex review).
         QTest::keyClick(root.get(), Qt::Key_A, Qt::ControlModifier);
         typeText(root.get(), shortDate(QDate(2024, 6, 10)));
         QTest::keyClick(root.get(), Qt::Key_Down, Qt::AltModifier);
@@ -762,7 +694,6 @@ private slots:
         QCOMPARE(run(QStringLiteral("date.date.getFullYear() * 10000 + (date.date.getMonth() + 1) * 100 + date.date.getDate()"))
                      .toInt(),
                  20240610);
-        // A month back from the 31st is the last day of a shorter month.
         const auto ymd = [&](const char *expression) { return run(QString::fromLatin1(expression)).toInt(); };
         QCOMPARE(ymd("(d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate())"
                      "(date.back({ months: 1 }, new Date(2026, 2, 31)))"),
@@ -770,8 +701,6 @@ private slots:
         QCOMPARE(ymd("(d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate())"
                      "(date.back({ months: 1 }, new Date(2026, 4, 15)))"),
                  20260415);
-        // The heading names the month the grid shows (QML's Locale counts
-        // months from 0, as Date does): January in January.
         run(QStringLiteral("date.openCalendar(); date.show(new Date(2026, 0, 15))"));
         QTRY_VERIFY(findIn(root.get(), "datePickerMonth"));
         QCOMPARE(findIn(root.get(), "datePickerMonth")->property("text").toString(),
@@ -779,23 +708,17 @@ private slots:
         QTest::keyClick(root.get(), Qt::Key_Escape);
     }
 
-    // The kit in the four themes, for review: written to
-    // HIKARI_SURFACE_SHOT_DIR when it is set (popup-<part>-<theme>.png).
     void kitScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
         if (out.isEmpty())
             QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
         QVERIFY(QDir().mkpath(out));
-        // With a profile, as in the application: the controls draw with the
-        // theme's palette.
         ui::theme::useSettings(store.get());
         auto restore = qScopeGuard([] {
             ui::theme::endPreview();
             ui::theme::useSettings(nullptr);
         });
-        // The window's part around `item` (its popup's frame and shadow
-        // too), once laid out.
         const auto around = [](QQuickItem *item, int margin = 24) {
             QQuickTest::qWaitForPolish(item->window());
             const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
@@ -813,7 +736,6 @@ private slots:
                 const QImage image = window->grabWindow();
                 return part.isNull() ? image : image.copy(part);
             };
-            // The message box: a destructive question with its details open.
             run(QStringLiteral(
                 "box.ask({ title: 'Delete styles', text: 'Delete the 3 selected styles?',"
                 " detail: '12 lines use them; they keep the names.', severity: 'warning', dontAsk: true,"
@@ -825,14 +747,12 @@ private slots:
             save(QStringLiteral("message-box"), shotOf(box));
             run(QStringLiteral("box.answer('keep')"));
             QTRY_VERIFY(!box->isVisible());
-            // Choose styles under its button.
             run(QStringLiteral("styles.openFor(anchorButton, ['Default', 'Sign', 'Top', 'Karaoke'], ['Sign'],"
                                " { counts: { Default: 412, Sign: 23, Top: 4, Karaoke: 0 } })"));
             QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
             save(QStringLiteral("choose-styles"),
                  shotOf(root.get(), around(run(QStringLiteral("styles.contentItem")).value<QQuickItem *>(), 40)));
             run(QStringLiteral("styles.keep()"));
-            // The hotkey capture asking.
             run(QStringLiteral("capture.capture('Save', 0, true, (a, w) => capture.ask({ canSwitch: true, canSetAnyway: false,"
                                " commands: ['Open subtitles'] }, null), { anchor: anchorButton })"));
             QTRY_VERIFY(run(QStringLiteral("capture.opened")).toBool());
@@ -841,7 +761,6 @@ private slots:
             save(QStringLiteral("hotkey-capture"),
                  shotOf(root.get(), around(findIn(root.get(), "hotkeyMappingKeys")->parentItem(), 40)));
             run(QStringLiteral("capture.cancel(false)"));
-            // The list chooser at a word, and in its compact window.
             run(QStringLiteral("chooser.choose({ title: 'Suggestions', rows: ['their', 'there', 'they\\'re'],"
                                " anchor: anchorButton }, null)"));
             QTRY_VERIFY(run(QStringLiteral("chooser.inPopover")).toBool());
@@ -855,13 +774,11 @@ private slots:
             save(QStringLiteral("list-window"), shotOf(compact));
             run(QStringLiteral("chooser.none(false)"));
             QTRY_VERIFY(!compact->isVisible());
-            // The date picker's calendar.
             run(QStringLiteral("date.setDate(new Date(2026, 9, 21)); date.openCalendar()"));
             QTRY_VERIFY(run(QStringLiteral("date.popover.opened")).toBool());
             save(QStringLiteral("date-picker"),
                  shotOf(root.get(), around(run(QStringLiteral("date.popover.contentItem")).value<QQuickItem *>(), 40)));
             run(QStringLiteral("date.popover.revert()"));
-            // The clash review.
             run(QStringLiteral(
                 "clashes.review({ title: 'Copy styles to the file', text: '3 styles are already in the file',"
                 " detail: '1 more is the same in both and is left out.',"
@@ -875,7 +792,6 @@ private slots:
             save(QStringLiteral("clash-review"), shotOf(review));
             run(QStringLiteral("clashes.finish(false)"));
             QTRY_VERIFY(!review->isVisible());
-            // The toasts and the inline bar.
             run(QStringLiteral("toasts.fadeAfter = 600000; toasts.clear()"));
             run(QStringLiteral("toasts.post('info', 'Saved', 'episode 01.ass')"));
             run(QStringLiteral("toasts.post('warning', 'The video has no keyframes', 'Timing snaps to frames only.')"));
