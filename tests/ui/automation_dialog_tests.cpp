@@ -1609,11 +1609,10 @@ private slots:
         QVERIFY(!controller->isOpen());
     }
 
-    // S3/L2: the legacy capture probe's dialog cases (tools/legacy-capture
-    // plan.json "automation") run through this dialog with the plan's keys,
-    // as drive.py/drive_windows.py send them to the legacy app. Each case's
-    // JSON line is the rewrite side of the legacy comparison
-    // (artifacts/automation-capture-dialogs.json). The legacy baseline hangs
+    // S3/L2: the legacy capture probe's dialog cases (the legacy plan.json's
+    // "automation") run through this dialog with the plan's keys, as they
+    // were sent to the legacy app. Each case's JSON line is kept in
+    // artifacts/automation-capture-dialogs.json. The legacy baseline hangs
     // on all of them, so what is asserted comes from the legacy sources and
     // AD1: the Enter button has the focus when the dialog shows; Return
     // presses it, Escape ends the dialog with no button (false); Up on a
@@ -1624,7 +1623,7 @@ private slots:
     // (AD1-button-ids).
     void captureProbeDialogCasesAnswer()
     {
-        QFile planFile(QStringLiteral(HIKARI_LEGACY_CAPTURE_PLAN));
+        QFile planFile(QStringLiteral(HIKARI_LEGACY_PLAN));
         QVERIFY(planFile.open(QIODevice::ReadOnly));
         const QJsonArray steps =
             QJsonDocument::fromJson(planFile.readAll()).object().value(QStringLiteral("automation")).toObject().value(

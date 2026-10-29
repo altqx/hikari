@@ -1,7 +1,6 @@
 // V6: timing and selecting Lines from the video, and how the video follows
 // the active Line. ReplaysTheLegacyObservations runs every case of the legacy
-// probe (tools/legacy-capture/video_timing_capture.cpp over
-// inputs/video-timing-cases.txt; tests/fixtures/legacy-observations/
+// probe (tests/fixtures/legacy-cases/inputs/video-timing-cases.txt; tests/fixtures/legacy-observations/
 // local-v6-video-timing-20261005) through the rewrite and needs legacy's
 // times, selections and video calls exactly, on the CFR and VFR timelines,
 // apart from the ops of the four approved V6 departures (kDepartures), which

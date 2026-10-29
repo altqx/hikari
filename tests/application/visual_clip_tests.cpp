@@ -1,6 +1,6 @@
 // T4: the rectangle and vector clips and the vector point editor T5 shares.
-// The clips replay the legacy probe's captures (tools/legacy-capture/
-// clip_capture.cpp over inputs/clip-cases.txt; tests/fixtures/
+// The clips replay the legacy probe's captures (tests/fixtures/
+// legacy-cases/inputs/clip-cases.txt; tests/fixtures/
 // legacy-observations/local-t4-clip-20261005), which ran the legacy
 // VisualClipRect.cpp and VisualClips.cpp unchanged: every committed text,
 // the editor's text during a gesture, the corners, points, selection, mode,

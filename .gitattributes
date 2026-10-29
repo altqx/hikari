@@ -12,3 +12,6 @@
 
 # KE3: the preset fixture and its goldens are compared byte for byte.
 /tests/backends/karaoke-presets/** -text
+
+# DK1: the fixed Tamil affix file is pinned by SHA-256 (CRLF, as upstream's).
+/packaging/dictionaries/** -text

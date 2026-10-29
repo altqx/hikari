@@ -1524,9 +1524,9 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     }
 }
 
-// S3/L6: the legacy capture probe (tools/legacy-capture/automation) run in
-// this host over the same corpus; its JSON line is the rewrite side of the
-// legacy comparison (artifacts/automation-capture-corpus.json).
+// S3/L6: the legacy capture probe (tests/fixtures/legacy-cases/automation)
+// run in this host over the same corpus; its JSON line is kept in
+// artifacts/automation-capture-corpus.json.
 // L6: the host's load-time environment (aegisub API, decode_path answered
 // during the load, include path, native modules) is enough for
 // DependencyControl, as in legacy, where the capture probe required it from

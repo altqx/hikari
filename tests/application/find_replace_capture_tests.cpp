@@ -1,12 +1,11 @@
 // F1: the legacy captures of the Find and replace dialog replayed through
-// FindReplace. tools/legacy-capture/plan.json's "ui" cases (card F1) drive
-// the legacy app (ui_capture.py) with semantic steps; this test runs the
+// FindReplace. tests/fixtures/legacy-cases/plan.json's "ui" cases (card F1)
+// drove the legacy app with semantic steps; this test runs the
 // same steps here and compares every state dump with what the legacy app
 // recorded (tests/fixtures/legacy-observations/...): the Lines' texts, the
 // selected rows, the active row and the Line editor's selection, and the
 // title of every message box answered. The rewrite's run is written to
-// <build>/tests/application/artifacts/find-replace-capture.json for
-// tools/legacy-capture/compare_ui.py.
+// <build>/tests/application/artifacts/find-replace-capture.json.
 //
 // The legacy editor selection is aegisub.gui.get_selection over
 // EditBox::GetEditor (TextEdit, 1-based, end exclusive). The test host keeps
@@ -179,7 +178,7 @@ std::vector<std::byte> fileBytes(const QString &path)
 
 TEST(FindReplaceCapture, ReplaysTheLegacyCaptures)
 {
-    const QJsonObject plan = readJson(QStringLiteral(HIKARI_LEGACY_CAPTURE_PLAN));
+    const QJsonObject plan = readJson(QStringLiteral(HIKARI_LEGACY_PLAN));
     const QJsonObject observed = readJson(QStringLiteral(HIKARI_F1F3_OBSERVATIONS));
     ASSERT_FALSE(plan.isEmpty());
     ASSERT_FALSE(observed.isEmpty());

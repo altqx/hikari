@@ -1,6 +1,6 @@
 # Legacy observations: S4 Document scripts (local capture, 2026-10-13)
 
-Captured by [`document_scripts_capture.py`](../../../../tools/legacy-capture/document_scripts_capture.py) (the plan's `document_scripts` section) in the `hikari-legacy-env` container (Ubuntu 24.04, Xvfb 1280x800, openbox), from the legacy Linux app built at `20d647c4` by [legacy-capture](../../../../.github/workflows/legacy-capture.yml) run 38309025775 (its `legacy-app` artifact: package sha256 `d42fcffa…1dbad`, its wx libraries on `LD_LIBRARY_PATH`):
+Captured by [`document_scripts_capture.py`](https://github.com/altqx/hikari/blob/350c1152a3560230913ce89d163ebd52766cc5ce/tools/legacy-capture/document_scripts_capture.py) (the plan's `document_scripts` section) in the `hikari-legacy-env` container (Ubuntu 24.04, Xvfb 1280x800, openbox), from the legacy Linux app built at `20d647c4` by [legacy-capture](https://github.com/altqx/hikari/blob/350c1152a3560230913ce89d163ebd52766cc5ce/.github/workflows/legacy-capture.yml) run 38309025775 (its `legacy-app` artifact: package sha256 `d42fcffa…1dbad`, its wx libraries on `LD_LIBRARY_PATH`):
 
 ```
 Xvfb :99 -screen 0 1280x800x24 -nolisten tcp &
@@ -12,7 +12,7 @@ python3 tools/legacy-capture/document_scripts_capture.py --plan tools/legacy-cap
 
 Without a window manager (a bare Xvfb) legacy does not open the document it is given and gets no keys, so the route needs one, as the other routes do.
 
-Each case runs a fresh copy of the app with Autoload emptied, the scripts of [`automation/document-scripts`](../../../../tools/legacy-capture/automation/document-scripts) written out in a folder outside the app (`{abs}`) and in the app's folder (`s4/`, relative to its working directory), and a document (two Lines, "Gate" and "Second") whose Script Info names them in "Automation Scripts". "Run the last loaded script" is bound to Ctrl+Shift+F12 in `Config/Hotkeys.txt` and pressed after a click on the Line editor's Effect field. Each script records its load, its validation and its macro, with the Document as it sees it (the first Line's text, the Line count, the Script Info keys). `s4.json` is the complete record; `screens/` keeps the boxes, the log window, the editor picker and the grid after the second failed validation.
+Each case runs a fresh copy of the app with Autoload emptied, the scripts of [`automation/document-scripts`](../../legacy-cases/automation/document-scripts) written out in a folder outside the app (`{abs}`) and in the app's folder (`s4/`, relative to its working directory), and a document (two Lines, "Gate" and "Second") whose Script Info names them in "Automation Scripts". "Run the last loaded script" is bound to Ctrl+Shift+F12 in `Config/Hotkeys.txt` and pressed after a click on the Line editor's Effect field. Each script records its load, its validation and its macro, with the Document as it sees it (the first Line's text, the Line count, the Script Info keys). `s4.json` is the complete record; `screens/` keeps the boxes, the log window, the editor picker and the grid after the second failed validation.
 
 ## What legacy did
 

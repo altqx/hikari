@@ -3,7 +3,7 @@
 // the Notebook tab menu's handlers (Notebook.cpp) at 20d647c4. Expected
 // values are worked through the legacy code by hand; each case names the
 // lines it follows. LegacyComparisonCapture replays the legacy probe's
-// observations (tools/legacy-capture/comparison_capture.cpp).
+// observations (tests/fixtures/legacy-observations/local-r1-comparison-20261005).
 
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/core/ass_load.h"

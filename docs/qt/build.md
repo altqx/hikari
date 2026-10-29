@@ -130,7 +130,7 @@ The Lua helper preloads the legacy native modules. lpeg 0.10 (`HikariSub/Automat
 
 ## Spell checker (F3, R2-hunspell, 2026-10-04)
 
-**Hunspell** 1.7.3 comes from vcpkg's port at the baseline (static, `HUNSPELL_STATIC`). The port ships pkg-config metadata only, so `cmake/HikariDependencies.cmake` finds it as `Hikari::hunspell`, linked privately into `hikari_backends`. The spell checker's word segmentation is legacy's Boost.Locale `boundary::word` over ICU, so `boost-locale[icu]` and `icu` (the Lua helper's packages) now also link statically into the application through `hikari_backends`; dictionary encodings are converted with ICU's converters. Dictionaries are not packaged yet: the application reads `<settings dir>/Dictionary`, then `<executable dir>/Dictionary`.
+**Hunspell** 1.7.3 comes from vcpkg's port at the baseline (static, `HUNSPELL_STATIC`). The port ships pkg-config metadata only, so `cmake/HikariDependencies.cmake` finds it as `Hikari::hunspell`, linked privately into `hikari_backends`. The spell checker's word segmentation is legacy's Boost.Locale `boundary::word` over ICU, so `boost-locale[icu]` and `icu` (the Lua helper's packages) now also link statically into the application through `hikari_backends`; dictionary encodings are converted with ICU's converters. The application reads the user folder's `dictionaries`, then `<executable dir>/Dictionary`, and no system dictionaries. Since DK1 (#473) every package bundles the same dictionaries, pinned in `cmake/HikariDictionaries.cmake` by commit and SHA-256: en_US from Aegisub's dictionary repository, and pl, th_TH, ko_KR (built from spellcheck-ko's hunspell-dict-ko, GPL-3.0-or-later) and ta_IN (ThamiZha! Solthiruthi, MPL-1.1) from LibreOffice's. LibreOffice's `ta_IN.aff` declares one entry too few for its SFX D and SFX v tables, so Hunspell stopped parsing it at SFX D and lost every later suffix table; `packaging/dictionaries/ta_IN.aff` is that file with the two counts fixed and a comment saying so, pinned by its own hash (owner, 2026-10-29). Configure fetches them, with each one's notice, into `<build>/dictionary-downloads` (the cache path `HIKARI_DICTIONARY_DOWNLOADS` names another; a seeded folder works offline). The install tree puts them in `Dictionary/` and the notices in `licenses/dictionaries/<name>/`, the Windows payload stages the same tree, and `hikari_backends_bundled_dictionaries_tests` checks a word in each and a misspelling each rejects.
 
 ## Grammar check (GR1, 2026-10-27)
 
@@ -154,7 +154,7 @@ Three gates keep a distribution's or upstream's libass out:
 
 The macros, not the version, prove the fork: upstream also bumps the version's low byte between releases.
 
-The legacy wx reference build (`cmake/linux-compat/LegacyWxLinux.CMakeLists.txt`, `build.yml`, `legacy-capture.yml`) is the legacy app's and still links the distribution's libass; legacy's own move to the fork is separate.
+The legacy wx reference build (`cmake/linux-compat/LegacyWxLinux.CMakeLists.txt`, `build.yml`) is the legacy app's and still links the distribution's libass; legacy's own move to the fork is separate.
 
 ### Font diagnostics (N4, 2026-10-03)
 
