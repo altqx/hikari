@@ -700,7 +700,8 @@ private slots:
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete); // standard buttons made anew
         // Text legacy never translates either: the OK buttons' literal label
         // (OptionsDialog.cpp:1016, MappedButton(this, wxID_OK, L"OK")).
-        const QSet<QString> allowed{QStringLiteral("OK")};
+        // A Style's name ("Default", the document's data) that is also a key.
+        const QSet<QString> allowed{QStringLiteral("OK"), QStringLiteral("Default")};
         // The History list shows the edits' own names (edit_session.cpp's
         // "Open" for the opening state), never catalog strings, though "Open"
         // is also a key.

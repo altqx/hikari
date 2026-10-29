@@ -19,14 +19,16 @@ Popup {
     property int index: -1
     signal saved(int index, var button)
 
+    // qsTr on every evaluation: a language switch re-evaluates only the
+    // bindings that called it, and the controller's texts follow with it.
     readonly property string problem: {
+        const noName = qsTr("Enter a name or choose an icon")
         if (!tagButtons)
             return ""
         const p = tagButtons.problem(tagText.text, tagType.currentIndex)
         if (p.length > 0)
             return p
-        return tagName.text.trim().length === 0 && icons.chosen.length === 0
-            ? qsTr("Enter a name or choose an icon") : ""
+        return tagName.text.trim().length === 0 && icons.chosen.length === 0 ? noName : ""
     }
     readonly property var button: ({ name: tagName.text, tag: tagText.text, type: tagType.currentIndex, icon: icons.chosen })
 
