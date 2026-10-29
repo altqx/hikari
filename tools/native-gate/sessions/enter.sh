@@ -1,6 +1,5 @@
 #!/bin/bash
-# enter.sh SESSION CMD...: run CMD inside a running session's environment
-# (its private HOME/XDG tree, session bus and display).
+# enter.sh SESSION CMD...: run CMD inside a running session's environment.
 export GATE_SESSION="$1"; shift
 . "$(cd "$(dirname "$0")/.." && pwd)/env.sh"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"

@@ -1,20 +1,14 @@
-# D1 native gate on Windows (winix task gate-win-uia): what `winix ui` does
-# not report. Everything else (windows, trees, focus, clicks) goes through
-# `winix ui`. One output line: UIA_JSON_B64 <base64 of UTF-8 JSON>.
+# winix task gate-win-uia: what `winix ui` does not report. One output line: UIA_JSON_B64 <base64 of UTF-8 JSON>.
 #   GATE_UIA_DO   (optional, JSON list) actions on named elements of the
 #                 HikariSub under test, through UI Automation patterns only
-#                 (`winix ui click` falls back to a mouse click, so it cannot
-#                 show that a screen reader can press a control):
+#                 (`winix ui click` falls back to a mouse click):
 #                 {"action": "invoke", "name": "...", "type": "Button", "window": "<title>", "all": true, "repeat": 3}
 #                 invoke uses Invoke, else Toggle, else SelectionItem and reports which;
 #                 focus uses SetFocus (where `winix ui setfocus` matches by name only).
 #                 Elements off screen do not match; "all" acts on every match (else the first);
 #                 "after" waits that many milliseconds before the next action (a menu opening).
 #   GATE_UIA_SETTLE_MS  wait after the actions (default 1000)
-# It also reports GetDpiForWindow, the window styles (GWL_STYLE, GWL_EXSTYLE)
-# and whether the title bar is dark (DwmGetWindowAttribute
-# DWMWA_USE_IMMERSIVE_DARK_MODE: 1 dark, 0 light, null unreadable) for each
-# window of the app.
+# Also per window: GetDpiForWindow, GWL_STYLE/GWL_EXSTYLE, DWMWA_USE_IMMERSIVE_DARK_MODE (1 dark, 0 light, null unreadable).
 $ErrorActionPreference = 'Stop'
 trap { Write-Output "UIA_ERROR $($_.Exception.Message) (line $($_.InvocationInfo.ScriptLineNumber): $($_.InvocationInfo.Line.Trim()))"; exit 1 }
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
@@ -41,8 +35,7 @@ $appPids = @(Get-Process hikarisub -ErrorAction SilentlyContinue | Where-Object 
 $tops = @($A::RootElement.FindAll([System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition) |
         Where-Object { $appPids -contains $_.Current.ProcessId })
 
-# Floating panels and dialogs are owned by the main window, so UI Automation
-# nests them under it: windows are looked for below the top-level ones too.
+# UI Automation nests owned windows (floating panels, dialogs) under the main window.
 function Windows {
     $cond = New-Object System.Windows.Automation.PropertyCondition($A::ControlTypeProperty, [System.Windows.Automation.ControlType]::Window)
     @($tops) + @($tops | ForEach-Object { $_.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond) })

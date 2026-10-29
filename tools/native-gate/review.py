@@ -1,17 +1,11 @@
 #!/usr/bin/env python3
-"""Adds the screenshot reviews to results.json (items gate.py cannot judge by
-itself) and writes out/native-gate-evidence/summary.txt, one line per gate
-item and session.
-
-  review.py EVIDENCE_DIR
-"""
+"""Usage: review.py EVIDENCE_DIR; adds the screenshot reviews to results.json and writes summary.txt."""
 import json
 import os
 import sys
 
 EVID = sys.argv[1]
 
-# (session, item): (status, detail, evidence) from looking at the screenshots.
 REVIEWS = {
     ("sway", "fullscreen-visible"): ("observed",
         "main window fullscreen (sway): the floating Line editor stays visible above it", ["fullscreen-0-main-fullscreen.png"]),
@@ -46,13 +40,11 @@ REVIEWS = {
 ITEMS = ["default-arrangement", "keyboard-float", "keyboard-float-move-panel", "draft-kept-across-float", "keyboard-dock",
          "draft-kept-across-dock", "keyboard-move-panel", "move-panel-defaults", "focus-after-float",
          "f6-from-floating-panel", "f6-into-floating-panel", "shortcut-from-floating-panel",
-         # D3: the "⋯" menu instead of float and close buttons, double-click, the drop highlight
          "pointer-menu-undock", "pointer-dblclick-float-redock", "drop-highlight", "pointer-drag-dock",
          "video-float-redock", "layout-persistence",
          "fullscreen-coexistence", "fullscreen-visible", "mixed-dpi", "mixed-dpi-rendering", "monitor-removal",
          "monitor-removal-reviewed", "monitor-removal-show-focus", "orca", "menu-mnemonic-from-text-field",
          "test-executables", "grid-accessible", "header-controls-accessible", "tabs-accessible",
-         # D3: the floating window and the header from the keyboard
          "floating-borderless", "floating-header", "floating-shadow", "floating-no-compositor-frame",
          "floating-header-composited", "floating-system-move", "floating-move", "free-part-dblclick-docks",
          "floating-resize",

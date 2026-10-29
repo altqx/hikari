@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# H2 (#125) guided listening session on a Linux desktop (PipeWire/PulseAudio).
+# Guided listening session on a Linux desktop (PipeWire/PulseAudio).
 #
 # A person listens to Line audition through the real PortAudio editor output
-# (I3/N6, via hikari_h2_audition) and to general playback in the real
-# application (N5/V1), including device switch and device loss, and answers
+# (via hikari_h2_audition) and to general playback in the real
+# application, including device switch and device loss, and answers
 # what they heard. Everything is recorded under ~/hikari-h2-results/<date>/:
 # results.json, results.md, the driver's event log, the application's log,
 # device lists before and after, and the fixture with its hashes.
@@ -29,6 +29,7 @@ SKIP_APP=0
 SKIP_AUDITION=0
 
 usage() {
+    # MUST KILL: usage prints this file's header lines 2-17 as its help text
     sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
     cat <<EOF
 Options:
@@ -65,8 +66,6 @@ APP_BIN="${APP_BIN:-$BUILD_DIR/src/app/hikarisub}"
 HELPER_BIN="${HELPER_BIN:-$BUILD_DIR/src/helpers/media/hikari-media-helper}"
 AUDITION_BIN="${AUDITION_BIN:-$BUILD_DIR/tools/human/h2-listening/hikari_h2_audition}"
 
-# ---------------------------------------------------------------- terminal
-
 if [[ -t 1 ]]; then
     B=$'\e[1m' R=$'\e[31m' G=$'\e[32m' Y=$'\e[33m' C=$'\e[36m' N=$'\e[0m'
 else
@@ -83,8 +82,6 @@ pause_enter() {
     if ((DRY_RUN)); then return 0; fi
     read -r -p "${B}${1:-Press Enter to continue.}${N} " _ </dev/tty
 }
-
-# ---------------------------------------------------------------- preflight
 
 for tool in jq python3; do
     command -v "$tool" >/dev/null || die "$tool is required"
@@ -120,9 +117,6 @@ ACTIONS="$OUT/actions.log"
 : >"$ACTIONS"
 SESSION_STARTED="$(now_iso)"
 
-# ---------------------------------------------------------------- desktop audio actions
-
-# Desktop changes go through act(): logged, skipped in a dry run, undone on exit.
 act() {
     printf '%s %s %s\n' "$(now_iso)" "$( ((DRY_RUN)) && echo would-run || echo run)" "$*" >>"$ACTIONS"
     if ((DRY_RUN)); then
@@ -153,8 +147,6 @@ restore_desktop() {
 sinks_json() { ((HAVE_PACTL)) && pactl -f json list sinks 2>/dev/null || echo '[]'; }
 cards_json() { ((HAVE_PACTL)) && pactl -f json list cards 2>/dev/null || echo '[]'; }
 
-# ---------------------------------------------------------------- the PortAudio driver
-
 DRIVER_LOG="$OUT/driver.jsonl"
 DRIVER_PID=""
 DRIVER_HOME=""
@@ -167,7 +159,6 @@ driver_start() {
     rm -f "$fifo"
     mkfifo "$fifo"
     if ((DRY_RUN)); then
-        # A private ALSA configuration whose null PCM swallows everything.
         DRIVER_HOME="$(mktemp -d)"
         printf 'pcm.hikari_null {\n    type null\n}\n' >"$DRIVER_HOME/.asoundrc"
         HOME="$DRIVER_HOME" "$AUDITION_BIN" --helper "$HELPER_BIN" <"$fifo" >"$DRIVER_LOG" 2>"$OUT/driver.stderr.log" &
@@ -183,7 +174,7 @@ driver_start() {
 drv() { printf '%s\n' "$*" >&7; }
 drv_lines() { wc -l <"$DRIVER_LOG"; }
 
-# driver_wait <event regex> <from line> <timeout s>: prints the first matching event after the line.
+# driver_wait <event regex> <from line> <timeout s>
 driver_wait() {
     local pattern="$1" from="$2" timeout="$3" deadline line
     deadline=$(($(date +%s%N) + timeout * 1000000000))
@@ -198,7 +189,6 @@ driver_wait() {
     return 1
 }
 
-# Events after a line, as a JSON array (glitch floods are summarized by count).
 driver_events() {
     local from="$1" to="${2:-}"
     if [[ -z "$to" ]]; then to="$(drv_lines)"; fi
@@ -228,7 +218,6 @@ driver_stop() {
     DRIVER_HOME=""
 }
 
-# Keeps the whole fixture playing (it is 20 s long) until loop_stop.
 loop_start() {
     loop_stop
     local from
@@ -265,8 +254,6 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT TERM
 
-# ---------------------------------------------------------------- answers
-
 # record <id> <part> <title> <expected> <answer> <note> <started> <events json> [extra json]
 record() {
     local extra="${9:-}"
@@ -283,7 +270,7 @@ record() {
     esac
 }
 
-# ask <question>: sets ANSWER (yes|no|skipped|replay|not-observed) and NOTE.
+# ask <question>: sets ANSWER and NOTE.
 ask() {
     ANSWER="" NOTE=""
     if ((DRY_RUN)); then
@@ -303,7 +290,7 @@ ask() {
     read -r -p "Note (what you heard; Enter for none): " NOTE </dev/tty
 }
 
-# choose <prompt> <options...>: sets CHOICE to the chosen option ("" when skipped).
+# choose <prompt> <options...>: sets CHOICE.
 choose() {
     local prompt="$1"
     shift
@@ -349,13 +336,10 @@ audition_step() {
     done
 }
 
-# ---------------------------------------------------------------- session
-
 heading "H2 listening session ($( ((DRY_RUN)) && echo "DRY RUN, no sound" || echo live))"
 say "Results: $OUT"
 say "Build:   $BUILD_DIR ($(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown))"
 
-# Environment and device lists before anything plays.
 {
     echo "session: $SESSION_STARTED"
     echo "git: $(git -C "$ROOT" rev-parse HEAD 2>/dev/null) $(git -C "$ROOT" status --porcelain 2>/dev/null | wc -l) changed files"
@@ -411,8 +395,6 @@ else
         "default output $(wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null || echo "volume unknown")" "$SESSION_STARTED"
 fi
 
-# ---------------------------------------------------------------- part A: Line audition (PortAudio)
-
 if ((!SKIP_AUDITION)); then
     heading "Part A: Line audition through the PortAudio editor output"
     say "The application does not offer Line audition yet (it arrives with the Audio"
@@ -425,7 +407,6 @@ if ((!SKIP_AUDITION)); then
     say "  1 s after the Line    EIGHT FAST TICKS"
     say "The file starts with three short beeps; everything else is silence."
 
-    # A1: the output device. The desktop route (ALSA 'pipewire', 'pulse' or 'default') follows the desktop volume.
     route_ids=()
     if ((DRY_RUN)); then
         route_ids=("$(jq -r '.devices[] | select(.name == "hikari_null") | .id' <<<"$DEVICES")")
@@ -498,7 +479,6 @@ if ((!SKIP_AUDITION)); then
             break
         done
 
-        # A9: the desktop's default output changes while the desktop route plays.
         heading "A9  Default output changed while playing"
         if [[ "$DEVICE" == *"(hw:"* ]] && ((!DRY_RUN)); then
             say "A9 needs a desktop route (pipewire/pulse/default); the chosen device is a raw hardware device."
@@ -535,7 +515,6 @@ if ((!SKIP_AUDITION)); then
             fi
         fi
 
-        # A10: an explicitly chosen other output.
         heading "A10  Choose another output"
         say "Reopen the output on a different PortAudio device (another sink, or a raw hardware"
         say "device; raw devices play 12 dB quieter and bypass the desktop volume)."
@@ -555,7 +534,6 @@ if ((!SKIP_AUDITION)); then
             audition_step A10.choose "Play Line 1 on $ALT" "the whoop from that device (and not from the previous one)" 3000 5000
         fi
 
-        # A11: the device disappears while playing, then comes back.
         heading "A11  Device lost while playing, then reconnected"
         say "Pick how the device goes away:"
         say "  unplug        you unplug a USB/Bluetooth output yourself"
@@ -592,8 +570,7 @@ if ((!SKIP_AUDITION)); then
                 pause_enter "Press Enter to start playing (then wait until you hear it)."
                 started="$(now_iso)"
                 if [[ "$how" == simulate ]]; then
-                    # The null device is unpaced: let one play drain, then fail
-                    # the stream while its callbacks run on silence.
+                    # ALSA's null PCM is unpaced: let one play drain before failing the stream.
                     drv play 0 20000
                     driver_wait finished "$from" 10 >/dev/null
                 else
@@ -646,8 +623,6 @@ if ((!SKIP_AUDITION)); then
     driver_stop
 fi
 
-# ---------------------------------------------------------------- part B: the application
-
 if ((!SKIP_APP)); then
     heading "Part B: General playback in the application"
     APPDIR="$OUT/app"
@@ -658,7 +633,6 @@ if ((!SKIP_APP)); then
         QT_MESSAGE_PATTERN='%{time yyyy-MM-ddTHH:mm:ss.zzz} %{type} %{category}: %{message}'
         QT_LOGGING_RULES='qt.multimedia.pipewire.audiosink=true;qt.multimedia.pipewire.devicemonitor=true;qt.multimedia.pulseaudio.output=true;qt.multimedia.pulseaudio.engine=true;qt.multimedia.ffmpeg.audiorenderer=true')
     if ((DRY_RUN)); then
-        # No window and no reachable audio server: the player has no output device.
         mkdir -p -m 700 "$APPDIR/runtime"
         APP_ENV+=(QT_QPA_PLATFORM=offscreen PULSE_SERVER=unix:/nonexistent PIPEWIRE_REMOTE=/nonexistent
             XDG_RUNTIME_DIR="$APPDIR/runtime" HOME="$APPDIR")
@@ -669,7 +643,6 @@ if ((!SKIP_APP)); then
     sleep 3
     if kill -0 "$APP_PID" 2>/dev/null; then app_up=running; else app_up="exited early (see app/app.log)"; fi
     if ((DRY_RUN)); then
-        # Offscreen: the process starting is all a dry run can show.
         record B0.launch app "Application starts on the fixture script" "the process starts (offscreen)" \
             "$( [[ "$app_up" == running ]] && echo yes || echo no)" "dry run, offscreen: $app_up" "$started"
     else
@@ -779,8 +752,6 @@ if ((!SKIP_APP)); then
     record B8.close app "Application closed" "closes cleanly" "$ANSWER" "$NOTE" "$(now_iso)" '[]' \
         "$(jq -n --argjson c "$app_exit" '{exitStatus: $c}')"
 fi
-
-# ---------------------------------------------------------------- results
 
 restore_desktop
 sinks_json >"$OUT/env/sinks-after.json"

@@ -1,6 +1,4 @@
 #!/bin/bash
-# sway session: headless wlroots backend with two outputs (the right one at
-# scale 2), a virtual pointer fed through a FIFO, a private session bus.
 export GATE_SESSION=sway
 "$(dirname "$0")/stop.sh" sway
 . "$(cd "$(dirname "$0")/.." && pwd)/env.sh"
@@ -14,8 +12,7 @@ echo "export WAYLAND_DISPLAY=wayland-1 QT_QPA_PLATFORM=wayland" > $XDG_RUNTIME_D
 [ -p $XDG_RUNTIME_DIR/vpointer.in ] || mkfifo $XDG_RUNTIME_DIR/vpointer.in
 (sleep infinity > $XDG_RUNTIME_DIR/vpointer.in &)
 /tmp/vpointer < $XDG_RUNTIME_DIR/vpointer.in > /tmp/vpointer.log 2>&1 &
-# A keyboard that stays: every wtype run adds and removes its own virtual
-# keyboard, and a seat without any keyboard drops the clients' keyboard focus.
+# Every wtype run adds and removes its own keyboard; a seat without one drops the clients' keyboard focus.
 nohup wtype -s 2147483647 > /dev/null 2>&1 &
 swaymsg 'workspace 1; move workspace to output HEADLESS-1; focus output HEADLESS-1' >/dev/null
 echo "extent 2400 1000" > $XDG_RUNTIME_DIR/vpointer.in

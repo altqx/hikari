@@ -1,4 +1,3 @@
-# Probe: float the Line editor, then make the main window fullscreen through the window manager.
 import os
 import sys
 import time

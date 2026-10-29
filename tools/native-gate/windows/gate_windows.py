@@ -1,28 +1,9 @@
 #!/usr/bin/env python3
-"""D1 native gate on Windows: HikariSub on the Winix VM desktop.
+"""Windows native gate: HikariSub on the Winix VM desktop through `winix ui`.
 
-  WINIX_OWNER=<lease owner> gate_windows.py [--dpi] [--config winix.yaml] [--vm dev] [STEP...]
+WINIX_OWNER=<lease owner> gate_windows.py [--dpi] [--config winix.yaml] [--vm dev] [STEP...]
 
-The Windows half of tools/native-gate/gate.py, with the same step names and
-the same evidence layout under out/native-gate-evidence/windows/: one PNG and
-one TXT (the app's windows and its UI Automation view as JSON) per
-observation, steps.log, and results.json with a verdict per gate item:
-observed, failed or not-observable (with the reason).
-
-Everything goes through `winix ui` (winix 0.2.0):
-  keys      `ui keys` (SendInput with scan codes, the extended flag on navigation keys)
-  text      `ui text` (Unicode input)
-  pointer   `ui pointer` / `ui calibrate` (the VM's USB HID tablet, host-side QMP)
-  view      one `ui batch`: `windows --pid`, `state` (focus, its ancestors, the
-            cursor) and `tree --pid --window N` for every window of the app
-  focus     `ui focus --pid --window hwnd:N`
-  app       `ui launch --exe --arg --env --cwd --no-console`, `ui kill`
-  monitors  `ui monitors`, `ui screenshot [--monitor N]`
-Guest tasks (gate.ps1, uia.ps1, display.ps1, nvda.ps1) remain for what winix
-does not do: the profile (Qt ignores the APPDATA variables `--fresh-profile`
-sets), pressing controls through UIA patterns only, GetDpiForWindow, the
-borderless fullscreen and display changes, NVDA, the test executables. Task
-parameters go through `run TASK --env K=V`. The VM definition is never changed.
+Guest tasks (gate.ps1, uia.ps1, display.ps1, nvda.ps1) do what winix does not; Qt ignores the APPDATA variables `--fresh-profile` sets.
 """
 import argparse
 import base64
@@ -34,18 +15,15 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-# GATE_EVIDENCE_WIN: another evidence directory (a card's own run).
 EVID = Path(os.environ.get("GATE_EVIDENCE_WIN") or ROOT / "out" / "native-gate-evidence" / "windows")
 PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Search"]
 MAIN = "HikariSub"
-# Windows maps the absolute HID tablet to the primary monitor only (step
-# pointer measures it), so pointer coordinates map over the primary.
+# Windows maps the absolute HID tablet to the primary monitor only.
 POINTER_MAP = "primary"
 
-W = None        # Winix
-LAYOUT = {}     # gate-win-prepare's GATE_LAYOUT
+W = None
+LAYOUT = {}
 APP = {"pid": None, "log": None}
-# The profile the first fresh() set aside: put back when the run ends.
 PROFILE = {"original": None}
 results = {}
 LOG = None
@@ -65,10 +43,7 @@ def verdict(item, status, detail, evidence=()):
     log(f"== {item}: {status} - {detail}")
 
 
-# ---------------------------------------------------------------- Winix
 class Winix:
-    """`winix --json`; the lease owner comes from WINIX_OWNER."""
-
     def __init__(self, config, vm):
         self.config = Path(config).resolve()
         self.vm = vm
@@ -100,7 +75,6 @@ class Winix:
         return self.call("ui", "screenshot", "--output", str(path), *(["--monitor", str(monitor)] if monitor is not None else []))
 
     def task(self, name, env=None, timeout=3600):
-        """Runs a winix.yaml task to its end; returns (job record, output lines)."""
         args = ["run", name, "--wait"]
         for k, v in (env or {}).items():
             args += ["--env", f"{k}={v}"]
@@ -121,7 +95,6 @@ def line_value(lines, prefix):
 
 
 def sections(lines):
-    """"== name" sections of a task's output."""
     out, current = {}, None
     for line in lines:
         if line.startswith("== "):
@@ -132,10 +105,7 @@ def sections(lines):
     return out
 
 
-# ---------------------------------------------------------------- input
 def keys(*seq, delay=0.35):
-    """Chords ("alt+w", "down") and pauses (seconds): each run of chords is
-    one `ui keys` call, DELAY seconds between chords."""
     run = []
 
     def flush():
@@ -163,8 +133,6 @@ def type_text(text):
 
 
 def pointer(path, **kw):
-    """The tablet along PATH ([(x, y), ...]): pressed at the first point and
-    released at the last (button "none": moves only); hold=True keeps it down."""
     r = W.ui("pointer", path=";".join(f"{x},{y}" for x, y in path), map=POINTER_MAP, **kw)
     if isinstance(r, dict) and r.get("error"):
         log("pointer", path, kw, "->", r)
@@ -172,10 +140,7 @@ def pointer(path, **kw):
 
 
 def park_pointer():
-    """The tablet cursor to the primary monitor's bottom-right corner (the
-    taskbar's clock): a menu that opens under the cursor takes its current item
-    from the hover, which would turn the keyboard's Down and Right into other
-    moves (Right then goes to the next menu of the bar)."""
+    """Park the cursor: a menu that opens under it takes its current item from the hover."""
     m = next((x for x in monitors() if x["primary"]), None)
     if m:
         W.ui("pointer", path=f"{m['x'] + m['w'] - 30},{m['y'] + m['h'] - 20}", button="none", map="primary")
@@ -186,10 +151,7 @@ def release():
 
 
 def double_click(x, y):
-    """Two tablet clicks, one `ui pointer` call each (winix has no double-click
-    at a point): a double-click only when the second press comes within the
-    double-click time (500 ms) of the first; a call takes about 0.3 s, more
-    when the VM is busy. Returns the seconds between the two calls' ends."""
+    """winix has no double-click at a point: two clicks must land within the 500 ms double-click time."""
     pointer([(x, y)])
     t1 = time.monotonic()
     pointer([(x, y)])
@@ -197,10 +159,6 @@ def double_click(x, y):
 
 
 def double_click_until(x, y, done, title=None):
-    """A tablet double-click at X,Y, again (up to three times) while DONE(view)
-    is false; then, as a last resort, `ui doubleclick` on the UIA title bar
-    TITLE ((automationId, name, window): SendInput mouse, not the tablet).
-    Returns (view, how, gaps)."""
     gaps = []
     for _ in range(3):
         gaps.append(double_click(x, y))
@@ -227,8 +185,6 @@ def monitors():
 
 
 def displays(mode=None, scale2=None, second=None):
-    """The guest's monitors (display.ps1): unchanged, or extended / detached
-    (SECOND: the second monitor's (w, h)), and the second monitor's scale."""
     env = {"GATE_DISPLAY": mode or "status"}
     if second:
         env["GATE_WIDTH2"], env["GATE_HEIGHT2"] = second
@@ -239,9 +195,7 @@ def displays(mode=None, scale2=None, second=None):
     return json.loads(raw) if raw else {"error": lines[-10:]}
 
 
-# ---------------------------------------------------------------- UI Automation
 def frame_id(name):
-    """The main window is titled "<document> - HikariSub" once a Document is open."""
     return MAIN if name == MAIN or name.endswith(" - " + MAIN) else name
 
 
@@ -266,7 +220,6 @@ def ancestors(els, e):
 
 
 def guest_uia(do=None, settle_ms=None):
-    """uia.ps1: controls pressed through UIA patterns, and GetDpiForWindow."""
     env = {}
     if do:
         env["GATE_UIA_DO"] = json.dumps(do)
@@ -276,13 +229,11 @@ def guest_uia(do=None, settle_ms=None):
         _, lines = W.task("gate-win-uia", env=env, timeout=600)
         raw = line_value(lines, "UIA_JSON_B64 ")
         return json.loads(base64.b64decode(raw).decode("utf-8")) if raw else {"error": lines[-10:]}
-    except Exception as e:  # keep the step going; the result says why it is empty
+    except Exception as e:
         return {"error": repr(e)}
 
 
 def flatten(node, parent, depth, win, els):
-    """A `ui tree` node into the element list; owned windows (walked on their
-    own) are skipped where they appear under their owner."""
     if node.get("separateWindow"):
         return
     e = node["element"]
@@ -300,10 +251,6 @@ def flatten(node, parent, depth, win, els):
 
 
 def uia(do=None, settle_ms=None, dpi=False):
-    """The app's UI Automation view, shaped like atspi_tool.py json (frames,
-    panels, focus, focusPath, texts, labels) plus the raw elements: one
-    `ui batch` (windows, state, a tree per window). DO presses controls first
-    (uia.ps1); DPI adds GetDpiForWindow per window (uia.ps1)."""
     pressed = guest_uia(do, settle_ms) if do or dpi else {}
     st = {"frames": [], "windows": [], "elements": [], "panels": [], "focus": None, "focusPath": None,
           "texts": {}, "labels": [], "popupMenuItems": [], "videoLabels": [], "combos": {},
@@ -318,7 +265,7 @@ def uia(do=None, settle_ms=None, dpi=False):
     for attempt in range(3):
         r = W.batch(steps)
         res = r.get("steps") or []
-        # A window changing under the walk (a menu opening) can fail a step: once more.
+        # winix: a window changing under the walk (a menu opening) can fail a step.
         if len(res) > 2 and res[1].get("ok") and res[2].get("ok"):
             break
         log("ui batch incomplete, again:", json.dumps([t.get("error") for t in res[:3]])[:300])
@@ -341,8 +288,6 @@ def uia(do=None, settle_ms=None, dpi=False):
             node = t["result"]
             flatten(node, -1, 0, node["element"].get("name") or "", els)
     st["elements"] = els
-    # Every titled window: the main window and the windows it owns (floating
-    # panels, the placement window, dialogs). Nameless windows are popups.
     st["frames"] = [{"name": w["title"], "type": "Window", "x": w["bounds"]["x"], "y": w["bounds"]["y"],
                      "w": w["bounds"]["width"], "h": w["bounds"]["height"], "hwnd": w["hwnd"], "dpi": dpis.get(w["hwnd"]),
                      "active": w["hwnd"] == fg, "id": frame_id(w["title"])}
@@ -408,7 +353,6 @@ def wait_for(pred, timeout=8.0, step=0.4):
 
 
 def panel_of(path):
-    """The innermost panel on a focus path."""
     found = None
     for part in (path or "").split(" > "):
         m = re.match(r"(\w+):'(.*)'$", part)
@@ -429,7 +373,6 @@ def snap(name, extra=None, monitor=None):
     return [f"{name}.png", f"{name}.txt"], st
 
 
-# ---------------------------------------------------------------- app control
 def prepare():
     job, lines = W.task("gate-win-prepare")
     raw = line_value(lines, "GATE_LAYOUT ")
@@ -452,8 +395,6 @@ def main_window():
 
 
 def app_start(doc=None):
-    """HikariSub from the VM's build with the Qt SDK it links on PATH; its
-    output goes to the winix launch log."""
     r = W.ui("launch", exe=LAYOUT["app"], arguments=[doc] if doc else [], cwd=LAYOUT["docs"], noConsole=True,
              env={"PATH": LAYOUT["qt_bin"] + ";" + LAYOUT["path"], "QT_FORCE_STDERR_LOGGING": "1"})
     APP["pid"], APP["log"] = r.get("pid"), r.get("log")
@@ -509,7 +450,6 @@ def fresh(doc=None):
 
 
 def dismiss_notices():
-    """Opening a Document may raise the spelling notice; press its OK."""
     st = uia(do=[{"action": "invoke", "name": "OK", "type": "Button", "all": True}], settle_ms=500)
     others = [f["id"] for f in st["frames"] if f["id"] != MAIN]
     if others:
@@ -517,7 +457,6 @@ def dismiss_notices():
 
 
 def set_focus(name):
-    """The keyboard focus onto the app's element NAME (`ui setfocus`, UIA SetFocus)."""
     r = W.ui("setfocus", pid=APP["pid"], name=name)
     if r.get("error"):
         log("setfocus", name, "->", r)
@@ -526,7 +465,6 @@ def set_focus(name):
 
 
 def focus_main_compositor():
-    """The main window in the foreground (`ui focus`)."""
     main = main_window()
     if not main:
         return False
@@ -536,8 +474,6 @@ def focus_main_compositor():
 
 
 def focus_main():
-    """F6 until a panel of the main window has the focus (the shell activates
-    the window of the panel it moves to); else `ui focus`."""
     for _ in range(6):
         st = uia()
         main = frames(st).get(MAIN)
@@ -552,8 +488,6 @@ def focus_main():
 
 
 def open_view():
-    """Alt+W opens the View menu ("Vie&w": Alt+V stays with legacy's &Video).
-    Retried until the View menu (its "Move panel…" item) shows."""
     park_pointer()
     for _ in range(3):
         keys("alt+w", 0.6)
@@ -565,16 +499,11 @@ def open_view():
     return False
 
 
-# The key that opens a submenu: Right, as on Linux. Should Right not open
-# View > Panels, float_panel() records that once and switches to Return.
 SUBMENU = {"key": "right", "checked": False}
 
 
 def menu_to(name, opener=None):
-    """Open a menu (the View menu by default) and press Down until the
-    highlight is on the item NAME. Down skips disabled items (items enabled
-    by what is open, Manage layouts… with nothing saved), so the Downs are
-    counted among the enabled popup menu items UI Automation lists."""
+    """Down skips disabled items: count Downs among the enabled items UI Automation lists."""
     if opener is None:
         if not open_view():
             return False
@@ -598,7 +527,6 @@ def view_to(name):
 
 
 def panel_menu(name, item):
-    """View > Panels > NAME > ITEM (Show, Hide, Float, Dock) from the keyboard."""
     view_to("Panels")
     k = SUBMENU["key"]
     seq = [k, 0.3] + ["down"] * PANELS.index(name) + [k, 0.3]
@@ -613,7 +541,6 @@ def close_window(title):
 
 
 def float_panel(name, tag):
-    """View > Panels > NAME > Float, or View > Move panel… with Place: Float."""
     panel_menu(name, "Float")
     st = wait_for(lambda s: name in frames(s), timeout=4)
     if name in frames(st):
@@ -670,7 +597,6 @@ def image_diff(a, b):
         return r.stderr.strip()
 
 
-# ---------------------------------------------------------------- steps
 def step_default():
     fresh()
     ev, st = snap("default-arrangement")
@@ -776,8 +702,6 @@ def step_f6_floating():
 
 
 def window_combos(st, frame):
-    """The combo boxes of one window (the Line editor's Style, Actor and
-    Effect, empty, are in the main window)."""
     els = st.get("elements") or []
     return {e["n"]: e["val"] or next((c["val"] or c["n"] for c in els if c["p"] == e["i"] and c["t"] in ("Text", "Edit")), None)
             for e in els if e["t"] == "ComboBox" and not e["off"] and frame_id(e["win"]) == frame}
@@ -795,15 +719,12 @@ def step_move_panel():
         return
     verdict("move-panel-defaults", "observed" if combos_open and all(v for v in combos_open.values()) else "failed",
             f"placement window on open (Grid focused): {combos_open}", ev0)
-    # Panel: Grid -> Audio (Up x2); Place: Left of (Down); Next to: Grid (Up x6, Down x3); Move.
     keys("up", "up", "tab", "down", "tab", *(["up"] * 6), *(["down"] * 3), 0.3)
     combos_set = window_combos(uia(), "Move panel")
     keys("tab", "space", 1.5)
     ev1, st = snap("move-panel-1-left-of-grid", extra="# combo boxes before Move\n" + json.dumps(combos_set, ensure_ascii=False))
     pos = {p["id"]: p for p in st["panels"]}
     a, g = pos.get("Audio"), pos.get("Grid")
-    # D3: side by side their headers share a row (Audio's a title bar, the
-    # Grid's a tab bar, whose content starts 8 lower), as in the Linux gate.
     ah = next((t for t in find(st, "TitleBar", "Audio") if frame_id(t["win"]) == MAIN), None)
     gh = next((t for t in find(st, "TabItem", "Grid") if frame_id(t["win"]) == MAIN), None)
     ok = a and g and a["frame"] == g["frame"] == MAIN and a["x"] < g["x"] and ah and gh and abs(ah["y"] - gh["y"]) < 3
@@ -815,9 +736,6 @@ def step_move_panel():
 
 
 def title_point(st, pid, frame_name, dx=120):
-    """A point on PID's title bar, DX px in from its left edge: the UIA
-    TitleBar KDDockWidgets exposes (named after the panel), else the row of
-    its Float/Dock button, else (neither found) the window's native caption."""
     tb = next((t for t in st.get("elements") or [] if t["t"] == "TitleBar" and not t["off"]
                and panel_id(t["n"]) == pid and frame_id(t["win"]) == frame_name), None)
     if tb:
@@ -834,7 +752,6 @@ def title_point(st, pid, frame_name, dx=120):
 
 
 def title_ref(st, pid, frame_name):
-    """(automationId, name, window hwnd) of PID's UIA title bar in FRAME_NAME, for `ui doubleclick`."""
     tb = next((t for t in st.get("elements") or [] if t["t"] == "TitleBar" and not t["off"]
                and panel_id(t["n"]) == pid and frame_id(t["win"]) == frame_name), None)
     f = frames(st).get(frame_name)
@@ -842,9 +759,6 @@ def title_ref(st, pid, frame_name):
 
 
 def calibrate_pointer():
-    """Where the guest cursor lands (`ui calibrate`) on two targets per
-    monitor, with the tablet mapped over the whole desktop (virtual) and over
-    the primary monitor: the mapping that hits the targets is used."""
     global POINTER_MAP
     mons = monitors()
     points = []
@@ -866,11 +780,8 @@ def calibrate_pointer():
 
 
 def step_pointer():
-    """With real pointer input (the VM's HID tablet): the header's ⋯ menu, double-click on headers (a title
-    bar, a tab), drag-to-dock with the drop highlight, and a floating window's move and resize."""
     fresh()
-    # The main window opens 1280x800, larger than the 1024x768 primary, and
-    # the tablet reaches the primary only: maximized, its title bars are there.
+    # The 1280x800 main window is larger than the 1024x768 primary, and the tablet reaches the primary only.
     focus_main_compositor()
     keys("win+up", 1.0)
     mons, points, reachable, unreachable = calibrate_pointer()
@@ -901,7 +812,6 @@ def step_pointer():
     verdict("pointer-menu-undock", "observed" if undock and "Audio" in frames(st) else "failed",
             f"tablet click on the Audio header's ⋯ ('Audio options' at {tx},{ty}) opened {items}; a click on "
             f"Undock: own window={'Audio' in frames(st)}", ev0 + ev + ["pointer-calibration.json"])
-    # Double-click the docked Video title bar: floats; double-click its floating title bar: docks.
     pt = title_point(st, "Video", MAIN)
     dfloat, redock, ev1, ev2, how1, how2, gaps = False, False, [], [], None, None, []
     if pt:
@@ -923,9 +833,6 @@ def step_pointer():
             f"double-click on the docked Video title at {pt}: floated={dfloat} (by {how1}); double-click its "
             f"floating title: redocked={redock} (by {how2}); tablet attempts, seconds between the two clicks' "
             f"calls: {gaps}", ev1 + ev2)
-    # Drag the floating Audio panel by its title onto the Grid's centre (on
-    # Windows the whole header is the engine's drag since 2026-10-15; the part
-    # right of the title is pointer_floating_move_resize's).
     st = uia()
     src = title_point(st, "Audio", "Audio", dx=30)
     grid = panel(st, "Grid")
@@ -935,13 +842,11 @@ def step_pointer():
     sx, sy, where = src
     gx, gy = grid["x"] + grid["w"] // 2, grid["y"] + grid["h"] // 2 - 15
     try:
-        # Pressed on the title, along to the Grid's centre in 30 steps, a small
-        # wiggle there, and held while the drop indicators are captured.
         pointer([(sx, sy)], hold=True)
         time.sleep(0.25)
         pointer([(sx, sy), (gx + 3, gy + 3), (gx, gy)], button="none", steps=30, delayMs=40)
         time.sleep(0.7)
-        ev3, _ = snap("ptr-4-drag-over-grid")  # the drop indicators, button still held
+        ev3, _ = snap("ptr-4-drag-over-grid")
     finally:
         release()
         time.sleep(1.5)
@@ -956,7 +861,6 @@ def step_pointer():
 
 
 def menu_items(st):
-    """The open menu's items with their enabled state ("Undock", "Close (disabled)", ...)."""
     out = []
     for e in st.get("elements") or []:
         if e["t"] == "MenuItem" and not e["off"] and e["n"] in st["popupMenuItems"]:
@@ -965,7 +869,6 @@ def menu_items(st):
 
 
 def pointer_tab_dblclick():
-    """D3: a double-click on a tab (the Grid's one-tab bar) floats the panel and one on its floating tab docks it."""
     st = uia()
     tab = next((t for t in find(st, "TabItem", "Grid") if frame_id(t["win"]) == MAIN), None)
     if not tab:
@@ -988,10 +891,6 @@ def pointer_tab_dblclick():
 
 
 def shadow_check(png, f, mons):
-    """The drawn shadow on screen: around the floating window's frame (its
-    window rectangle less 8 px), the outermost ring is the background
-    showing through (the window is transparent there), not black, and the
-    ring next to the frame is a little darker than the background."""
     from PIL import Image
     ox = min(m["x"] for m in mons)
     oy = min(m["y"] for m in mons)
@@ -1014,13 +913,6 @@ def shadow_check(png, f, mons):
 
 
 def pointer_floating_move_resize():
-    """D3: a floating panel is a borderless tool window (no caption or system
-    frame) with a drawn shadow; dragging its header's title moves it (the
-    engine's drag), dragging the header right of its title shows the drop
-    highlight and docks it as the title does (on Windows the whole header is
-    the engine's drag: the owner's choice of 2026-10-15, as Snap never takes
-    the tool window; until then that part was the window system's move),
-    dragging the shadow resizes it (startSystemResize)."""
     placed = narrow_main()
     log("main window on the left:", placed)
     try:
@@ -1045,8 +937,6 @@ def pointer_floating_move_resize():
         verdict("floating-borderless", "observed" if not caption and not thick and tool and not system_bar else "failed",
                 f"floating Audio window style {style:#x} (WS_CAPTION {caption}, WS_THICKFRAME {thick}), ex style "
                 f"{ex:#x} (WS_EX_TOOLWINDOW {tool}); system title bars in UIA: {system_bar}", ev0)
-        # Move: the header's title (the engine's drag; the free part starts
-        # 48 px in, logical) dragged over bare desktop, right of the main window.
         src = title_point(st, "Audio", "Audio", dx=30)
         main = frames(st).get(MAIN)
         prim = next(m for m in mons if m["primary"])
@@ -1078,18 +968,10 @@ def pointer_floating_move_resize():
         if not fb:
             verdict("floating-resize", "not-observable", "the floating Audio window is gone after the move")
             return
-        # The header right of its title, just left of its ⋯: the engine's drag
-        # as from the title (the whole header since 2026-10-15; until then the
-        # window system's move, which never docked, and the owner's first drag
-        # to dock on real hardware started there). Dragged onto the Grid's
-        # centre and held for the drop highlight, then released: it docks.
-        # Floated again for the items below.
         btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
         grid = panel(st, "Grid")
         if btn and grid and grid["frame"] == MAIN:
             sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
-            # The centre of the Grid's visible part (before decision 63 the
-            # Grid ran on past the narrowed main window's right edge, cut off).
             mw = frames(st).get(MAIN) or {"x": grid["x"], "w": grid["w"]}
             vx0, vx1 = max(grid["x"], mw["x"]), min(grid["x"] + grid["w"], mw["x"] + mw["w"])
             gx, gy = (vx0 + vx1) // 2, grid["y"] + grid["h"] // 2 - 15
@@ -1098,7 +980,7 @@ def pointer_floating_move_resize():
                 time.sleep(0.25)
                 pointer([(sx, sy), (gx + 3, gy + 3), (gx, gy)], button="none", steps=30, delayMs=40)
                 time.sleep(0.7)
-                evh, _ = snap("ptr-9-free-part-over-grid")  # the drop highlight, button still held
+                evh, _ = snap("ptr-9-free-part-over-grid")
             finally:
                 release()
                 time.sleep(1.5)
@@ -1117,8 +999,6 @@ def pointer_floating_move_resize():
         else:
             verdict("floating-free-part-docks", "not-observable",
                     f"the floating Audio header's ⋯ ({bool(btn)}) or the docked Grid ({grid}) is not in UIA")
-        # The floating header's ⋯ by the tablet: its menu (Main.qml's, in the
-        # main window) opens under the button, in the floating panel's place.
         btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
         dock_item, ev2 = None, []
         if btn:
@@ -1133,7 +1013,6 @@ def pointer_floating_move_resize():
                 f"tablet click on the floating Audio's ⋯ {btn and (btn['x'], btn['y'], btn['w'], btn['h'])}: its "
                 f"menu's Dock item at {dock_item and (dock_item['x'], dock_item['y'])} (expected just below the "
                 f"button); menu {menu_items(st) if btn else None}", ev2)
-        # Resize: the left edge (in the shadow) 90 px out, then the top edge 30 px up.
         shots, out = [], []
         top_x = max(fb["x"] + 30, min(fb["x"] + fb["w"] // 2, prim["x"] + prim["w"] - 20))
         for edge, (px, py), (dx, dy) in (("left", (fb["x"] + 4, fb["y"] + fb["h"] // 2), (-90, 0)),
@@ -1179,7 +1058,6 @@ def step_video():
         return ev, " | ".join(f"{n!r} {t!r}" for n, t in st["videoLabels"])
 
     def step_frames():
-        # The panel's own Next frame button, pressed through UI Automation.
         uia(do=[{"action": "invoke", "name": "Next frame", "type": "Button", "all": True, "repeat": 3}], settle_ms=1500)
 
     ev0, l0 = state("0-docked")
@@ -1223,8 +1101,6 @@ def step_persistence():
     fresh()
     float_panel("Audio", "persist")
     ev0, st = snap("persist-0-before-exit")
-    # Close the main window the way a user does: its title bar, then Alt+F4
-    # (WM_CLOSE reaches onClosing, which saves the layout).
     focus_main_compositor()
     keys("alt+f4")
     time.sleep(2.5)
@@ -1240,8 +1116,6 @@ def step_persistence():
     st = wait_for(lambda s: "Audio" in frames(s))
     ev1, st = snap("persist-1-after-restart", extra="# layout files\n" + cfg)
     floating = "Audio" in frames(st)
-    # The panels left docked come back docked too (the layout saved at the
-    # close had them closed until 2026-10-12: an empty main window).
     docked = {p["id"]: p["frame"] for p in st["panels"] if p["id"] in ("Video", "Line editor", "Grid")}
     in_main = len(docked) == 3 and all(v == MAIN for v in docked.values())
     ok = floating and in_main
@@ -1260,12 +1134,6 @@ def fullscreen(mode, width=None):
 
 
 def narrow_main(hidden=("Video", "Line editor")):
-    """The main window on the left at 480 pixels, with bare desktop right of
-    it on the 1024-pixel primary. Since decision 63 (2026-10-16) the main
-    window is at least as large as its docked layout's minimum (1005 x 720
-    with Video, the Line editor and the Grid docked), so the panels in
-    `hidden` are hidden first (View > Panels > NAME > Hide); wide_main() shows
-    them again."""
     for name in hidden:
         panel_menu(name, "Hide")
     return fullscreen("left", width=480)
@@ -1281,10 +1149,7 @@ def step_fullscreen():
     fresh(LAYOUT["episode"])
     dismiss_notices()
     float_panel("Line editor", "fullscreen")
-    # Windows has no compositor fullscreen request for another application's
-    # window and HikariSub has no fullscreen command: the main window is made
-    # borderless over the whole monitor (taskbar included), as a borderless
-    # fullscreen tool does. Windows treats such a window as fullscreen.
+    # Windows has no fullscreen request for another app's window: a borderless window over the monitor counts.
     fs = fullscreen("on")
     try:
         time.sleep(1.5)
@@ -1323,7 +1188,7 @@ def step_menu_from_text():
 
 
 def step_test_executables():
-    app_kill()  # the tests' windows need the desktop to themselves
+    app_kill()
     job, lines = W.task("gate-win-tests", timeout=3000)
     text = "\n".join(lines)
     (EVID / "test-executables.txt").write_text(f"# winix job {job.get('id')} ({job.get('state')})\n{text}\n")
@@ -1331,19 +1196,10 @@ def step_test_executables():
     ok = len(exits) == 6 and all(code == "0" for _, code in exits)
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", text))
     skips = re.findall(r"SKIP\s*:.*", text)
-    # Skips declared as platform limits, each observed for real by another
-    # item (as in the Linux gate): a synthetic drag between windows needs the
-    # offscreen platform (pointer); the window follows the pointer itself only
-    # where the platform declines a system move, and Windows makes none (its
-    # whole header is the engine's drag, floating-free-part-docks); the X11
-    # system move is the Linux gate's. WS3's
-    # screenshots run only with HIKARI_SURFACE_SHOT_DIR.
     known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
              "the window follows a declined system move only where the platform declines it",
              "X11 only (the .xvfb run)", "HIKARI_SURFACE_SHOT_DIR is not set",
-             # the floating panel across a real scale change is the dpi step's
              "the screen's scale changes through the offscreen platform",
-             # and across a real monitor removal the outputs step's
              "screens come and go through the offscreen platform's configuration")
     unexpected = [k for k in skips if not any(reason in k for reason in known)]
     log("tests", exits, summary, skips)
@@ -1352,8 +1208,6 @@ def step_test_executables():
 
 
 def step_nvda():
-    """NVDA (portable, "No speech" synthesizer, io log level) while F6 moves
-    through the panels and a panel is floated from the View menu."""
     if not LAYOUT.get("nvda_exe"):
         job, lines = W.task("nvda-setup", timeout=1500)
         raw = line_value(lines, "NVDA_LAYOUT ")
@@ -1378,8 +1232,6 @@ def step_nvda():
         keys(k, 0.6, "down", 0.6, "down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, "return", 2.0)
         f6_walk(3)
         ev, st = snap("nvda-0-after-float")
-        # D3: the Grid's tab, Right to its ⋯ button, Space opens the menu,
-        # Down reaches its first item (as the Linux gate's Orca step does).
         focus_main_compositor()
         header_how, _ = focus_header_control("TabItem", "Grid", "Grid")
         keys("right", 0.8, "space", 1.2, "down", 0.8)
@@ -1413,22 +1265,18 @@ def step_nvda():
 
 
 def inside(f, m):
-    """Whether window F's centre lies on monitor M."""
     cx, cy = f["x"] + f["w"] // 2, f["y"] + f["h"] // 2
     return m["x"] <= cx < m["x"] + m["w"] and m["y"] <= cy < m["y"] + m["h"]
 
 
 def head_shot(name, monitor):
-    """One monitor's pixels (`ui screenshot --monitor N`; the worker is per-monitor DPI aware)."""
+    """One monitor's pixels; the winix worker is per-monitor DPI aware."""
     out = EVID / f"{name}.png"
     W.screenshot(out, monitor)
     return [out.name] if out.exists() else []
 
 
 def step_outputs():
-    """Mixed DPI and monitor removal on the VM's two QXL monitors: a floating
-    panel (Audio) dragged with the real pointer onto the second monitor at
-    150 % (primary 100 %), then that monitor removed from the desktop."""
     d = displays("extend")
     mons = d.get("monitors") or []
     if len(mons) < 2:
@@ -1453,7 +1301,6 @@ def step_outputs():
         if src and before:
             sx, sy, _ = src
             tx, ty = sec["x"] + sec["w"] // 3, sec["y"] + 120
-            # Can the tablet reach the second monitor (`ui calibrate` over the whole desktop)?
             cal = W.ui("calibrate", point=f"{tx},{ty}", map="virtual")
             off = cal.get("offset") or {}
             if abs(off.get("x", 9999)) + abs(off.get("y", 9999)) <= 4:
@@ -1467,12 +1314,7 @@ def step_outputs():
                     time.sleep(1.5)
                 moved_by = f"tablet drag of its title bar from {sx},{sy} to {tx},{ty}"
             else:
-                # Windows maps the tablet to the primary only, and a borderless
-                # tool window (D3) takes no Win+Shift+Right. With the main
-                # window on the monitor's left (bare desktop to drop on), the
-                # header's title is dragged (the engine's drag) to the
-                # primary's right edge: the window's centre goes onto the
-                # second monitor.
+                # The tablet reaches the primary only, and a borderless tool window takes no Win+Shift+Right.
                 placed = fullscreen("left", width=480)
                 time.sleep(1)
                 st = uia()
@@ -1505,7 +1347,6 @@ def step_outputs():
                 f"GetDpiForWindow {fa and fa.get('dpi')} (96 would mean bitmap-scaled by Windows), width x{ratio} of "
                 f"its 100 % width {before and before['w']}; second monitor {sec['w']}x{sec['h']}, scale call {d2.get('scale2')} "
                 "(outputs-0-monitor2.png: that monitor's pixels)", ev0)
-        # Monitor removal with the panel on the second monitor.
         d3 = displays("detach")
         left = d3.get("monitors") or []
         st = wait_for(lambda s: "Audio" in frames(s) and len(left) == 1 and inside(frames(s)["Audio"], left[0]), timeout=8)
@@ -1526,7 +1367,7 @@ def step_outputs():
                 f"then View > Panels > Audio > Show gives the focus to {focused_in!r} (active windows "
                 f"{active_frames(st)}; focus {st['focusPath']})", ev2)
     finally:
-        fullscreen("off")  # the main window back where it was, if step moved it
+        fullscreen("off")
         r = displays("extend", scale2=100)
         ok = len(r.get("monitors") or []) == 2 and all(m["dpi"] == 96 and m["w"] == 1024 and m["h"] == 768
                                                       for m in r["monitors"])
@@ -1543,10 +1384,7 @@ def dpi_set(percent):
 
 
 def step_dpi():
-    """The one monitor's display scale changed to 150 % live (a guest setting)
-    with a floating panel, then restored to 100 %. Windows offers 150 % only
-    from about 1920x1200 and stops a 1024x768 monitor at 125 %: the step then
-    observes the live change at the scale the guest took and says so."""
+    """Windows offers 150 % only from about 1920x1200 and stops a 1024x768 monitor at 125 %."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     how = float_panel("Line editor", "dpi")
@@ -1588,15 +1426,7 @@ def step_dpi():
 
 
 def floating_kept(st0, st1, name, ratio):
-    """A floating panel's window across a scale change: its pixel size grew
-    by the scale's ratio (its size in device-independent pixels kept, within
-    3 px), and its panel fits whole inside it (not cut off): the panel's
-    header and pane together, as wide and as high as UI Automation reports
-    them, within the window's size. Sizes, not places: after a live scale
-    change on the VM's two monitors Qt's UI Automation places some elements
-    of the window by the other monitor's origin (siblings 52 px apart at
-    100 % came out 322 px apart at 125 %, the header left of the window),
-    while their sizes scale as drawn. The places are recorded too."""
+    """Sizes, not places: after a live scale change Qt's UI Automation places some elements by the other monitor's origin."""
     f0, f1 = frames(st0).get(name), frames(st1).get(name)
     if not f0 or not f1:
         return False, f"window {name!r} at 100 %: {bool(f0)}, after: {bool(f1)}"
@@ -1621,8 +1451,6 @@ def floating_kept(st0, st1, name, ratio):
 
 
 def title_bar_shade(png, f, mons):
-    """The mean grey of the window's title bar on screen: a strip of its top
-    20 px, away from the icon and the caption buttons."""
     from PIL import Image
     ox = min(m["x"] for m in mons)
     oy = min(m["y"] for m in mons)
@@ -1635,19 +1463,11 @@ def title_bar_shade(png, f, mons):
 
 
 def system_theme(light):
-    """The system's app colour scheme (gate.ps1 systemtheme); returns (before, now)."""
     _, lines = W.task("gate-win-system-theme", env={"GATE_APPS_LIGHT": light})
     return line_value(lines, "APPS_LIGHT="), line_value(lines, "APPS_LIGHT_NOW=")
 
 
 def step_dark():
-    """K2 on Windows: the title bar of every framed window follows the theme
-    (src/ui/title_bars.h). With the system's apps light: Dark chosen in a
-    fresh profile, then Light chosen; then following the system, its scheme
-    switched dark and light again while HikariSub runs. Each: the title bar
-    as DWM has it (uia.ps1 darkTitleBar) for every window with a caption,
-    and the main window's title bar on screen. The system's scheme is put
-    back at the end."""
     original, _ = system_theme("status")
     mons = monitors()
     WS_CAPTION = 0x00C00000
@@ -1702,8 +1522,6 @@ def step_dark():
 
 
 def step_a11y():
-    """What a screen reader finds of the docking controls and the Grid through
-    UI Automation; the buttons pressed through UIA float and dock a panel."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     st = uia()
@@ -1718,13 +1536,10 @@ def step_a11y():
     in_grid = bool(table) and panel_of(table[0]["path"]) == "Grid"
     verdict("grid-accessible", "observed" if in_grid and grid_panel else "failed",
             f"table 'Subtitle lines': {[t['path'] for t in table[:1]]}; Grid panel: {grid_panel[:1]}", ["a11y-tree.txt"])
-    # D3: one header per group. A lone panel's is a title bar named after it,
-    # tabs sit in a tab list ("Panels"), and the ⋯ button is "<panel> options".
     headers = {n: [e["path"] for e in find(st, "TitleBar", n)] for n in ("Video", "Audio", "Line editor")}
     grid_tab = [e["path"] for e in find(st, "TabItem", "Grid")]
     buttons = {n: bool(find(st, "Button", f"{n} options")) for n in ("Video", "Audio", "Line editor", "Grid")}
     old = [n for n in ("Float Audio", "Close Audio", "Float Grid", "Close Grid") if find(st, "Button", n)]
-    # The header's title is its name only once: no Text repeats it inside the header.
     repeats = [el_path(els, e) for e in els if e["t"] == "Text" and e["n"] in ("Video", "Audio", "Line editor", "Grid")
                and any(a["t"] in ("TitleBar", "Tab", "TabItem") for a in ancestors(els, e))]
     (EVID / "a11y-headers.txt").write_text(json.dumps({"title bars": headers, "grid tab": grid_tab, "menu buttons": buttons,
@@ -1735,7 +1550,6 @@ def step_a11y():
             else "failed",
             f"title bars { {n: bool(v) for n, v in headers.items()} }; Grid tab {grid_tab[:1]}; ⋯ buttons {buttons}; "
             f"float/close buttons left over: {old}; titles repeated as text: {repeats}", ["a11y-headers.txt", "a11y-tree.txt"])
-    # The ⋯ button and the menu's items pressed through the Invoke pattern.
     st = uia(do=[{"action": "invoke", "name": "Audio options", "type": "Button", "after": 1000}])
     by_invoke = bool(st["actions"]) and st["actions"][0].get("done") == ["Invoke"]
     items = menu_items(st)
@@ -1760,7 +1574,6 @@ def step_a11y():
     panel_menu("Timing", "Show")
     time.sleep(1)
     st = uia()
-    # Timing is titled Shift times (its tab, its "⋯" and its window).
     tabs = {n: find(st, "TabItem", n) for n in ("Line editor", "Shift times")}
     lists = [el_path(st["elements"], e) for e in st["elements"] if e["t"] == "Tab" and e["n"] == "Panels" and not e["off"]]
     tab_button = bool(find(st, "Button", "Shift times options"))
@@ -1781,10 +1594,6 @@ def step_a11y():
 
 
 def focus_header_control(ctype, name, panel_name, tries=12):
-    """The keyboard focus onto a header control the way a keyboard user gets
-    there: F6 to the panel, then Shift+Tab (the header is the panel's first
-    stop). Returns how it got there (or UI Automation's SetFocus as a last
-    resort) and the focus path."""
     for _ in range(6):
         if panel_of(uia()["focusPath"]) == panel_name:
             break
@@ -1803,9 +1612,6 @@ def focus_header_control(ctype, name, panel_name, tries=12):
 
 
 def step_header():
-    """D3 from the keyboard: the ⋯ menu from a tab (Right, then Space), from
-    Shift+F10 on a tab and from a title bar's button (Return); Undock and Dock
-    from the menu."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     park_pointer()
@@ -1828,7 +1634,6 @@ def step_header():
             "observed" if how and on_button and [i.split(" (")[0] for i in items] == want and items_f10 else "failed",
             f"the Grid tab focused by {how} ({path}); Right -> on 'Grid options'={on_button}; Space opened {items}; "
             f"Escape left the focus at {back}; Left, Shift+F10 opened {items_f10}", ev0 + ev1)
-    # A lone panel: its title bar's ⋯ button, Return, Down to Undock, Return.
     how2, path2 = focus_header_control("Button", "Audio options", "Audio")
     keys("return", 0.8)
     items_audio = menu_items(uia())
@@ -1849,37 +1654,29 @@ def step_header():
             f"docked={docked}; focus {st['focusPath']}", ev2 + ev3)
 
 
-# ---------------------------------------------------------------- WS3 (#217)
 CORE = ("Video", "Audio", "Line editor", "Grid")
-# View > Layout's presets and the items WS3 retired. As gate.py.
 PRESETS = ("Editing", "Timing", "Translation", "Typesetting")
 RETIRED_VIEW_ITEMS = ("All", "Video and subs", "Audio and subs", "Only video", "Only subtitles")
 RETIRED_EDITOR_ITEM = "Enable / Disable editor"
 
 
 def core_panels(st):
-    """The core panels shown docked in the main window, with their places."""
     return {p["id"]: (p["x"], p["y"], p["w"], p["h"]) for p in st["panels"] if p["id"] in CORE and p["frame"] == MAIN}
 
 
 def popup_items(st):
-    """The menu items showing in popup menus (not the menu bar's)."""
     els = st.get("elements") or []
     return [e for e in els if e["t"] == "MenuItem" and not e["off"]
             and not any(a["t"] in ("MenuBar", "TitleBar") for a in ancestors(els, e))]
 
 
 def layout_menu(st):
-    """The View > Layout submenu's items, when it shows: the items beside its presets."""
     items = popup_items(st)
     parent = next((e["p"] for e in items if e["n"] in PRESETS), None)
     return [e for e in items if parent is not None and e["p"] == parent]
 
 
 def layout_to(name):
-    """View > Layout > NAME from the keyboard: the submenu key opens it with
-    its first item highlighted; the Downs are counted among its enabled
-    items (Down skips Manage layouts… while nothing is saved)."""
     if not menu_to("Layout"):
         return False
     keys(SUBMENU["key"], 0.6)
@@ -1894,7 +1691,6 @@ def layout_to(name):
 
 
 def layout_items():
-    """View > Layout's items, {name: enabled}, then the menus closed."""
     items = {}
     if menu_to("Layout"):
         keys(SUBMENU["key"], 0.6)
@@ -1904,7 +1700,6 @@ def layout_items():
 
 
 def menu_names(opener):
-    """Every item name of the popup menus a key opens, then the menus closed."""
     if opener == "view":
         open_view()
     else:
@@ -1916,18 +1711,12 @@ def menu_names(opener):
 
 
 def switcher_label(st=None):
-    """The layout switcher's accessible name ("Layout: NAME"), in the title bar since SH1."""
     st = st or uia()
     return next((e["n"] for e in st.get("elements") or [] if not e["off"] and (e["n"] or "").startswith("Layout: ")),
                 None)
 
 
 def step_layouts():
-    """WS3 (#217): as gate.py's step_layouts, through SendInput and UI
-    Automation: the View arrangements and the editor switch gone (menus and
-    Ctrl+E); View > Layout > Save layout as…, a preset, the saved layout
-    back; the saved layout after a restart; Manage layouts… renames (F2) and
-    deletes (Delete)."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     focus_main()
@@ -1939,7 +1728,7 @@ def step_layouts():
     first = layout_items()
     switch0 = switcher_label()
     focus_main()
-    keys("ctrl+e", 1.5)  # legacy's editor switch: bound to nothing now
+    keys("ctrl+e", 1.5)
     after_e = core_panels(uia())
     gone = not set(RETIRED_VIEW_ITEMS) & set(view) and RETIRED_EDITOR_ITEM not in subtitles
     listed = all(first.get(p) for p in PRESETS) and first.get("Save layout as…") and first.get("Manage layouts…") is False
@@ -1950,8 +1739,6 @@ def step_layouts():
     verdict("layouts-editor-key-retired", "observed" if base and set(after_e) == set(base) else "failed",
             f"Ctrl+E: panels before {sorted(base)}, after {sorted(after_e)}", evidence)
 
-    # Audio hidden, saved as "no audio"; Timing; the saved layout back. The
-    # names are lowercase, as on Linux (a typed capital lost its Shift there).
     panel_menu("Audio", "Hide")
     st = wait_for(lambda s: "Audio" not in core_panels(s), timeout=5)
     saved = set(core_panels(st))
@@ -1981,7 +1768,6 @@ def step_layouts():
             and back == saved and switch1 == switch3 == "Layout: no audio" and switch2 == "Layout: Timing"
             else "failed", "from the keyboard: " + "; ".join(rows), evidence)
 
-    # A restart: the saved layout is still listed (layouts.json).
     focus_main_compositor()
     keys("alt+f4")
     time.sleep(2.5)
@@ -2024,10 +1810,7 @@ def step_layouts():
             f"renamed: {renamed} ({switch4!r}); deleted: {deleted} ({switch5!r})", evidence)
 
 
-# ---------------------------------------------------------------- WS1 (#215)
 def tab_arrangement(st):
-    """Each shown panel's window (the main window or its floating one), its
-    rectangle in that window, and each floating window's rectangle."""
     fr = frames(st)
     out = {}
     for p in st["panels"]:
@@ -2059,12 +1842,6 @@ def tab_differences(before, after, tolerance=2):
 
 
 def step_tabs():
-    """WS1 (ADR 0020): each Document tab keeps its own panel arrangement.
-    Audio floats in the first tab; Ctrl+T opens a tab that copies it; there
-    Audio docks again and the Line editor floats. Ctrl+PgUp and Ctrl+PgDn
-    (SendInput) switch back and forth: each time the tab's panels come back
-    in the same windows with the same rectangles, and the floating windows
-    at the same place and size (within 2 px)."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     float_panel("Audio", "tabs")
@@ -2104,10 +1881,7 @@ def step_tabs():
             f"{not to_second}" + (f" {to_second}" if to_second else ""), ev0 + ev2 + ev3 + ev4)
 
 
-# ---------------------------------------------------------------- V5 (#184)
 def fs_frames(st, mons):
-    """(fullscreen, main): the fullscreen video window carries the main
-    window's title; it is the one covering a whole monitor."""
     full = main = None
     for f in st["frames"]:
         if f["id"] != MAIN:
@@ -2129,12 +1903,6 @@ def fs_has(st, ctype, name):
 
 
 def step_video_fullscreen():
-    """V5 (#184): F in the Video panel shows the video fullscreen on the main
-    window's monitor; Space and Left work there; Esc leaves with the main
-    window's geometry and the keyboard focus as they were; the context menu's
-    "Open in full screen on monitor 2" puts it on the second monitor, at 100 %
-    and at 150 % (mixed DPI: GetDpiForWindow), and Esc brings the docked video
-    back. Real keys (SendInput); the menu items through UI Automation."""
     if not LAYOUT.get("ep1_ass"):
         verdict("videofs-enter-leave", "error", "no cfr.mkv media fixture in the VM's build tree (run the test task once)")
         return
@@ -2166,13 +1934,10 @@ def step_video_fullscreen():
     keys("space")
     sts = wait_for(lambda s: fs_has(s, "Button", "Play"), timeout=5)
     paused = fs_has(sts, "Button", "Play")
-    # UI Automation shows no slider value or label text of Qt Quick's here:
-    # the monitor's pixels before and after Right (cfr.mkv's block moves).
+    # UI Automation shows no slider value or label text of Qt Quick's here: compare the monitor's pixels.
     time.sleep(1.0)
     shot_a = head_shot("videofs-1b-paused", m0)
-    # Left (GLOBAL_PREVIOUS_FRAME): a slow guest can play the two-second
-    # clip to its last frame before the second Space, where Right has no
-    # frame to go to.
+    # Left: a slow guest can play the two-second clip to its last frame, where Right has nowhere to go.
     keys("left")
     time.sleep(1.5)
     shot_b = head_shot("videofs-1c-stepped", m0)
@@ -2244,7 +2009,7 @@ def step_video_fullscreen():
                 f"Video panel {focus4}", ev3 + ev4)
 
     second_monitor("", 100)
-    # Mixed DPI: the second monitor at 150 % (Windows offers it from about 1920x1200).
+    # Windows offers 150 % only from about 1920x1200.
     d2 = displays("extend", scale2=150, second=(1920, 1200))
     log("displays at 150 %:", json.dumps(d2)[:600])
     second_monitor("-150", 150)
@@ -2252,10 +2017,7 @@ def step_video_fullscreen():
     displays("extend", scale2=100)
 
 
-# ---------------------------------------------------------------- wave-5 sweep steps
 def nvda_start():
-    """The portable NVDA (nvda-setup the first time), silent, logging speech;
-    returns its log's guest path (nvda_stop reads it back)."""
     if not LAYOUT.get("nvda_exe"):
         job, lines = W.task("nvda-setup", timeout=1500)
         raw = line_value(lines, "NVDA_LAYOUT ")
@@ -2272,8 +2034,6 @@ def nvda_start():
 
 
 def nvda_stop(nvda_log, tag):
-    """Quits NVDA; its speech lines (TAG-nvda-speech.txt) and whether the
-    silent synthesizer spoke them."""
     job, lines = W.task("nvda-output", env={"GATE_NVDA_LOG": nvda_log})
     s = sections(lines)
     speech = [l.strip() for l in s.get("speech", []) if l.strip()]
@@ -2285,15 +2045,6 @@ def nvda_stop(nvda_log, tag):
 
 
 def step_snap():
-    """D3 (#207): the floating tool window's header right of its title
-    (just left of its "⋯") dragged to the primary monitor's left edge and to
-    its top edge, the pointer held at the edge 1.5 s. Since 2026-10-15 the
-    whole floating header is the engine's drag on Windows (no window-system
-    move, startSystemMove, from any part of it), so Snap is not offered by
-    design: the window follows the pointer as the engine moves it, Snap does
-    not take it (no half or maximized size) and it stays a floating panel.
-    Until then this step dragged the free part's system move and recorded
-    whether Snap took it (it never did: D3-windows-snap)."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     placed = narrow_main()
@@ -2309,9 +2060,7 @@ def step_snap():
             verdict("floating-snap", "not-observable", "Audio did not float")
             return
         out, shots = [], []
-        # Top first: the left drag leaves the window mostly off the monitor
-        # (x -403), where the tablet cannot press its header for a second
-        # drag; after the top one the window comes back to y 0.
+        # Top first: after the left drag the window is mostly off the monitor, where the tablet cannot press it.
         for edge, target in (("top", (prim["x"] + prim["w"] // 2, prim["y"] + 1)),
                              ("left", (prim["x"] + 1, prim["y"] + prim["h"] // 2))):
             st = uia()
@@ -2320,12 +2069,8 @@ def step_snap():
             if not before or not btn:
                 out.append({"edge": edge, "error": "no floating Audio or its ⋯ in UIA"})
                 continue
-            # Right of the title, just left of the "⋯"; the tablet reaches the
-            # primary monitor only, so no further right than its edge (the
-            # floating window placed at 649 reached into the second monitor,
-            # and a press at 1223 landed at 1023).
+            # The tablet reaches the primary monitor only: no further right than its edge.
             sx, sy = min(btn["x"] - 24, prim["x"] + prim["w"] - 8), btn["y"] + btn["h"] // 2
-            # Over bare desktop first (the drag distance starts the engine's drag), then to the edge.
             mid = (max(prim["x"] + 520, sx - 60), min(prim["y"] + prim["h"] - 200, sy + 60))
             try:
                 pointer([(sx, sy)], hold=True)
@@ -2333,7 +2078,7 @@ def step_snap():
                 pointer([(sx, sy), mid], button="none", steps=20, delayMs=40)
                 pointer([mid, target], button="none", steps=30, delayMs=40)
                 time.sleep(1.5)  # Snap would show its preview while the pointer rests at the edge
-                held = frames(uia()).get("Audio")  # the engine moves the window under the held pointer
+                held = frames(uia()).get("Audio")
                 ev, _ = snap(f"snap-{edge}-held")
                 shots += ev
             finally:
@@ -2346,8 +2091,6 @@ def step_snap():
             half = bool(after) and abs(after["x"] - prim["x"]) <= 12 and abs(after["w"] - prim["w"] // 2) <= 24 \
                 and after["h"] >= prim["h"] - 90
             full = bool(after) and after["w"] >= prim["w"] - 24 and after["h"] >= prim["h"] - 90
-            # The engine's drag keeps the pressed point under the pointer, so the
-            # window follows it by the pointer's travel; its size does not change.
             want = (before["x"] + target[0] - sx, before["y"] + target[1] - sy)
             follows = bool(held) and abs(held["x"] - want[0]) <= 24 and abs(held["y"] - want[1]) <= 24
             out.append({"edge": edge, "pressed": [sx, sy], "to": list(target),
@@ -2358,7 +2101,7 @@ def step_snap():
                         "snapped": "left half" if edge == "left" and half else "maximized" if edge == "top" and full
                         else "no", "still floating": bool(after),
                         "size kept": bool(after) and (after["w"], after["h"]) == (before["w"], before["h"])})
-            if after:  # back to the middle of the free desktop for the next edge
+            if after:
                 fullscreen("left", width=480)
         (EVID / "snap.json").write_text(json.dumps({"monitors": mons, "drags": out}, indent=1))
         floating = all(o.get("still floating") for o in out)
@@ -2377,10 +2120,6 @@ def step_snap():
 
 
 def step_tags():
-    """E6 (#188): NVDA reads the Line text's tag list: with tags shown (the
-    Line editor's "Hide tags" switch off), `{\\` opens the list under the
-    caret, the focus stays in the text field, and Down announces the selected
-    tag ("\be, Edge blur, 2 of 20": Accessible.announce, a UIA notification)."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     nvda_log = nvda_start()
@@ -2390,7 +2129,6 @@ def step_tags():
     ev, st, typed = [], {"texts": {}}, None
     try:
         focus_main_compositor()
-        # "Hide tags" is a check box (UIA Toggle), on in a fresh profile.
         st0 = uia(do=[{"action": "invoke", "name": "Hide tags", "type": "CheckBox"}], settle_ms=800)
         set_focus("Line text")
         keys("home", 0.5)
@@ -2406,12 +2144,8 @@ def step_tags():
     finally:
         speech, silent, nev = nvda_stop(nvda_log, "tags")
     rows = [e for e in st.get("elements") or [] if e["t"] in ("ListItem", "DataItem") and not e["off"]]
-    # The switch was really pressed, and the list really opened: its rows
-    # are the tag names (alpha, be, blur, ...), not the grid's cells.
     toggled = any(a.get("matches") and a.get("done") and not a.get("errors") for a in st0.get("actions") or [])
     list_open = {"alpha", "be", "blur"} <= {e["n"] for e in rows if e["t"] == "ListItem"}
-    # A tag's announcement: "\be, Edge blur, 2 of 20" (the name, its
-    # description and its place in the list).
     announced = [l for l in speech if re.search(r"\\+[a-z0-9]+, [^,']+(?:, [^,']+)*, \d+ of \d+", l)]
     focus_kept = "Line text" in (st1.get("focus") or "")
     (EVID / "tags.json").write_text(json.dumps({"hide-tags pressed": st0.get("actions"), "text after typing": typed,
@@ -2430,9 +2164,6 @@ def step_tags():
 
 
 def step_statusbar():
-    """P10 (#200): the status bar as a screen reader finds it: UIA's
-    StatusBar element and its fields, and NVDA's "read status bar" command
-    (NVDA+End, the desktop layout) with the main window in the foreground."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     nvda_log = nvda_start()
@@ -2474,10 +2205,6 @@ def new_elements(before, st, frame=None):
 
 
 def step_dialogs():
-    """K1 (#204): the names UI Automation gives the controls of windows and
-    dialogs outside the main window's own surfaces (the Style manager with
-    its move and transfer arrows, the time shift window, Find and replace,
-    Settings): every button, check box and menu button has a name."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     named = ("Button", "CheckBox", "RadioButton", "SplitButton", "ComboBox", "Edit", "Slider", "Spinner", "TabItem",
@@ -2486,15 +2213,11 @@ def step_dialogs():
     for title, opener in (("Style manager", ("ctrl+m",)), ("Time shift", ("ctrl+i",)),
                           ("Find and replace", ("ctrl+h",)), ("Settings", None)):
         focus_main_compositor()
-        # From the Grid: in the Line text Ctrl+I is italic (legacy's edit box
-        # context), not the time shift.
         set_focus("Subtitle lines")
         before = uia()
         if opener:
             keys(*opener, 2.0)
         else:
-            # File > &Settings (Main.qml); one try, as a failed menu_to leaves
-            # the File menu open and a second Alt+F would close it.
             ok = menu_to("Settings", opener="alt+f")
             if ok:
                 keys("return", 2.0)
@@ -2519,10 +2242,6 @@ def step_dialogs():
 
 
 def step_reference():
-    """R2 (#194): the reference tray through UI Automation and NVDA: a second
-    tab (Ctrl+T), back to the first (Ctrl+PgUp), Ctrl+Q in the Grid shows the
-    next tab as the linked reference; the tray's controls and its status are
-    named, and NVDA speaks them when F6 and Tab reach the tray."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     nvda_log = nvda_start()
@@ -2536,7 +2255,6 @@ def step_reference():
         set_focus("Subtitle lines")
         keys("home", 0.5, "ctrl+q", 2.0)
         ev, st = snap("reference-0-tray")
-        # The tray's table, then back through its header's controls.
         set_focus("Reference lines (protected, read-only)")
         time.sleep(1.0)
         for _ in range(4):
@@ -2548,7 +2266,6 @@ def step_reference():
             "Reference lines (protected, read-only)")
     els = st.get("elements") or []
     status = [e["n"] for e in els if re.match(r"(Match \d+ of \d+|No matching line|Independent navigation)$", e["n"] or "")]
-    # "Show nearest line" is shown only when no reference line matches.
     present = {n: bool([e for e in els if e["n"] == n and not e["off"]]) for n in want
                if n != "Show nearest line" or "No matching line" in status}
     spoken = [n for n in want + tuple(status) if any(n in l for l in speech)]
@@ -2561,14 +2278,11 @@ def step_reference():
             ["reference.json"] + nev + ev)
 
 
-# ---------------------------------------------------------------- SH1 title bar
 THEME_PANEL = {"light": "#F9FAFB", "dark": "#20262D", "highContrastWhite": "#FFFFFF", "highContrastBlack": "#080808"}
 TITLE_CONTROLS = ("Window menu", "Application menu", "Minimise", "Maximise", "Restore", "Close", "More menus")
 
 
 def title_bar_start(choice="auto", theme="dark"):
-    """A fresh profile with SH1's title bar setting (appearance.titleBar) and
-    the theme, then HikariSub with no Document."""
     app_kill()
     job, lines = W.task("gate-win-fresh")
     for l in lines:
@@ -2585,8 +2299,6 @@ def title_bar_start(choice="auto", theme="dark"):
 
 
 def title_bar_controls(st=None):
-    """The main window's title bar controls by accessible name, and the
-    layout switcher as "switcher" (its "Layout: NAME")."""
     st = st or uia()
     out = {}
     els = st.get("elements") or []
@@ -2604,20 +2316,16 @@ def title_bar_controls(st=None):
 
 
 def place_on_primary():
-    """The main window on the left 960 pixels of the primary's work area:
-    a fresh window (1280x800) reaches past the 1024-pixel primary, where
-    the tablet does not reach."""
+    """A fresh 1280x800 window reaches past the 1024-pixel primary, where the tablet does not reach."""
     return fullscreen("left", width=960)
 
 
 def covers(r, m):
-    """Window rectangle R maximised over monitor M: Windows puts a maximised
-    window's frame outside the monitor, so R covers M's width."""
+    """Windows puts a maximised window's frame outside the monitor, so R covers M's width."""
     return r is not None and r[0] <= m["x"] and r[0] + r[2] >= m["x"] + m["w"]
 
 
 def free_point(ctl):
-    """A point of the title bar's free part, just left of Minimise."""
     m = ctl.get("Minimise") or ctl.get("Maximise") or ctl.get("Restore")
     return (m["x"] - 16, m["y"] + m["h"] // 2) if m else None
 
@@ -2628,7 +2336,6 @@ def main_rect(st=None):
 
 
 def colour_at(png, x, y, mons):
-    """The "#RRGGBB" at screen point X,Y of a whole-desktop screenshot."""
     from PIL import Image
     ox, oy = min(m["x"] for m in mons), min(m["y"] for m in mons)
     img = Image.open(EVID / png).convert("RGB")
@@ -2639,7 +2346,6 @@ def colour_at(png, x, y, mons):
 
 
 def changed_pixels(a, b, box, mons):
-    """Pixels differing by more than 5 % in BOX (screen x0, y0, x1, y1) between two screenshots."""
     from PIL import Image, ImageChops
     ox, oy = min(m["x"] for m in mons), min(m["y"] for m in mons)
     crop = (box[0] - ox, box[1] - oy, box[2] - ox, box[3] - oy)
@@ -2653,19 +2359,9 @@ def centre(e):
 
 
 def step_title_bar():
-    """SH1 (#220) on Windows 11: HikariSub's own title bar by default; every
-    control named; no caption of Windows' above it; moved by its free part;
-    a double click and Maximise maximise and Restore restores; the snap
-    layouts over Maximise; Aero Snap by dragging to the top edge and by
-    Win+Left; resized from the edge; the system menu on a right click and on
-    the icon, Escape closing it and nothing else (Alt+Space recorded); Alt
-    and F10 to the menus (the system's menu mode never takes them);
-    Minimise and Close; the system's title bar chosen; the four themes,
-    Close's hover with no red; the window on a second monitor at 150 %."""
     mons = monitors()
     prim = next(m for m in mons if m["primary"])
 
-    # The default: HikariSub's own.
     title_bar_start("auto")
     st = uia(dpi=True)
     ctl = title_bar_controls(st)
@@ -2688,7 +2384,6 @@ def step_title_bar():
     verdict("titlebar-names", "observed" if not unnamed and all(names.values()) else "failed",
             f"UI Automation names in the title bar: {named}; controls with no name {unnamed}", ev0)
 
-    # Move by the free part.
     log("placed on the primary:", place_on_primary())
     time.sleep(1.0)
     focus_main_compositor()
@@ -2714,7 +2409,6 @@ def step_title_bar():
     else:
         verdict("titlebar-move", "failed", f"no main window or free part ({r0}, {fp})")
 
-    # Double click: maximised, then restored.
     st = uia()
     ctl = title_bar_controls(st)
     r0 = main_rect(st)
@@ -2731,7 +2425,7 @@ def step_title_bar():
             f"double click on the free part ({how}, gaps {gaps}): window {r0} -> {rmax} (the primary's width "
             f"{prim['w']}, covered: {work_ok}); again ({how2}): {rback}", ev)
 
-    # Maximise and Restore buttons (HTMAXBUTTON: Windows' own press, handed to the QML button).
+    # HTMAXBUTTON: Windows' own press, handed to the QML button.
     ctl = title_bar_controls(st2)
     mb = ctl.get("Maximise")
     if mb:
@@ -2749,7 +2443,6 @@ def step_title_bar():
     else:
         verdict("titlebar-maximise-button", "failed", f"no Maximise ({sorted(ctl)})")
 
-    # Snap layouts: the pointer resting on Maximise.
     park_pointer()
     time.sleep(0.8)
     ctl = title_bar_controls()
@@ -2773,7 +2466,6 @@ def step_title_bar():
     else:
         verdict("titlebar-snap-layouts", "failed", f"no Maximise ({sorted(ctl)})")
 
-    # Aero Snap: dragged to the top edge (maximised), Win+Left (the left half).
     st = uia()
     r0 = main_rect(st)
     fp = free_point(title_bar_controls(st))
@@ -2790,7 +2482,7 @@ def step_title_bar():
     ev_t, _ = snap("titlebar-5-aero-snap-top")
     top_max = "Restore" in title_bar_controls(st)
     focus_main_compositor()
-    combo("win", "down")  # restore from maximised
+    combo("win", "down")
     time.sleep(1.2)
     rrest = main_rect()
     combo("win", "left")
@@ -2799,8 +2491,6 @@ def step_title_bar():
     st = uia()
     rleft = main_rect(st)
     ev_l, _ = snap("titlebar-5-aero-snap-left")
-    # Snapped into the top-left corner at the work area's height; half the
-    # width, or as narrow as its minimum allows (821 is more than half of 1024).
     half = rleft is not None and rrest is not None and abs(rleft[0] - prim["x"]) <= 10 \
         and abs(rleft[1] - prim["y"]) <= 10 and rleft[3] >= prim["h"] - 60 \
         and (abs(rleft[2] - prim["w"] // 2) <= 24 or prim["w"] // 2 < rleft[2] < rrest[2])
@@ -2812,8 +2502,6 @@ def step_title_bar():
     time.sleep(1.2)
     keys("escape", 0.5)
 
-    # Resize: the placed window's bottom-right corner, inwards (the window
-    # fills the primary's work area's height: no room to grow).
     title_bar_start("custom")
     log("placed on the primary:", place_on_primary())
     time.sleep(1.0)
@@ -2838,7 +2526,6 @@ def step_title_bar():
     else:
         verdict("titlebar-resize", "failed", "no main window")
 
-    # The system menu: a right click on the free part, a click on the icon, Alt+Space.
     def system_menu(open_it, tag):
         open_it()
         time.sleep(1.0)
@@ -2866,7 +2553,6 @@ def step_title_bar():
             f"Alt+Space is HikariSub's own (legacy's Play binding), so it opens the menu only where unbound "
             f"({shown['alt-space']})", shots)
 
-    # Alt alone and F10 to the menus; Windows' menu mode does not take the keys.
     focus_main_compositor()
     park_pointer()
     keys("alt", 0.6, "down", 1.0)
@@ -2886,7 +2572,6 @@ def step_title_bar():
             f"Alt, Down: {file_items[:4]} (File); F10, Right, Down: {edit_items[:4]} (Edit); Alt+E: {alt_e[:4]}",
             ev7 + ev8)
 
-    # Minimise, then (a new start) Close.
     ctl = title_bar_controls()
     mn = ctl.get("Minimise")
     if mn:
@@ -2911,7 +2596,6 @@ def step_title_bar():
     else:
         verdict("titlebar-close", "failed", "no Close")
 
-    # The system's title bar chosen: the menus and the switcher in a row under Windows' caption.
     title_bar_start("system")
     st = uia(dpi=True)
     ctl = title_bar_controls(st)
@@ -2925,7 +2609,6 @@ def step_title_bar():
             f"menus {bool(menus)}, switcher {ctl.get('switcher', {}).get('n')!r}, HikariSub's window buttons {buttons}; "
             f"the menus {gap} px below the window's top (Windows' caption above them)", ev)
 
-    # The four themes: the bar in the panel colour; Close's hover is the theme's, not red.
     shots, wrong = [], []
     for theme, colour in THEME_PANEL.items():
         title_bar_start("custom", theme)
@@ -2950,7 +2633,6 @@ def step_title_bar():
             "the title bar in each theme's panel colour, Close's hover in the theme's (no red)"
             + (f": {wrong}" if wrong else ""), shots)
 
-    # Mixed DPI: the main window moved (Win+Shift+Right) onto a second monitor at 150 %.
     d = displays("extend", scale2=150, second=(1920, 1200))
     mons2 = d.get("monitors") or []
     try:
@@ -2983,14 +2665,11 @@ def step_title_bar():
         log("displays restored:", [(m["device"], m["w"], m["h"], m["dpi"]) for m in r.get("monitors") or []])
 
 
-# DG1 (#222): the dialog frame on Windows.
 WS_CAPTION, WS_SYSMENU, WS_THICKFRAME, WS_MINIMIZEBOX, WS_MAXIMIZEBOX = 0xC00000, 0x80000, 0x40000, 0x20000, 0x10000
 DIALOG_TITLES = {"About": "About HikariSub", "Credits": "Credits"}
 
 
 def help_item(name):
-    """Help > NAME from the keyboard (Alt+H, Down to the item, Return); the
-    dialog's window, or None."""
     focus_main_compositor()
     park_pointer()
     keys("alt+h", 0.8)
@@ -3009,14 +2688,12 @@ def help_item(name):
 
 
 def dialog_controls(st, title):
-    """The dialog's controls by accessible name (Windows' own caption buttons left out)."""
     els = st.get("elements") or []
     return {e["n"]: e for e in els if e["win"] == title and not e["off"] and e["n"]
             and not any(a["t"] == "TitleBar" and a["id"] == "TitleBar" for a in ancestors(els, e))}
 
 
 def caption_buttons(st, title):
-    """Windows' own caption buttons of the dialog (with the system's title bar)."""
     els = st.get("elements") or []
     return sorted({e["n"] for e in els if e["win"] == title and not e["off"] and e["t"] == "Button"
                    and any(a["t"] == "TitleBar" and a["id"] == "TitleBar" for a in ancestors(els, e))})
@@ -3032,15 +2709,6 @@ def rect(f):
 
 
 def step_dialog_frame():
-    """DG1 (#222) on Windows 11: About and Credits are windows of their own
-    on HikariSub's frame, transient for the main window: the title, Close
-    and no Minimise or Maximise on a fixed-size dialog, in the window style
-    too (caption and system menu kept, no minimise box, maximise box or
-    sizing frame), so the system menu offers Move and Close and Win+Up
-    leaves the dialog its size; centred on the main window 20 lower on the
-    first open; moved by its title bar and opened there again; both open at
-    once (modeless); Esc closes; Windows' title bar with "Use system title
-    bar"; the four themes."""
     mons = monitors()
     title_bar_start("auto")
     place_on_primary()
@@ -3067,13 +2735,11 @@ def step_dialog_frame():
             f"fixed-size dialog), Close {top_gap} px below the window's top (no caption of Windows' above the bar); "
             f"window style {hex(style)} (WS_CAPTION and WS_SYSMENU kept, no WS_MINIMIZEBOX, WS_MAXIMIZEBOX or "
             f"WS_THICKFRAME: {style_ok})", ev0)
-    # Centred on the main window, 20 lower (the frame's margins aside: a few pixels).
     cx = main["x"] + main["w"] // 2 - (about["x"] + about["w"] // 2)
     cy = main["y"] + main["h"] // 2 + 20 - (about["y"] + about["h"] // 2)
     verdict("dialog-frame-centred", "observed" if abs(cx) <= 10 and abs(cy) <= 10 else "failed",
             f"About's centre off the main window's centre + (0, 20) by ({cx}, {cy})", ev0)
 
-    # The system menu: a right click on the title bar's free part.
     fp = (ctl["Close"]["x"] - 40, ctl["Close"]["y"] + ctl["Close"]["h"] // 2) if ctl.get("Close") else None
     items, enabled = [], set()
     if fp:
@@ -3081,8 +2747,7 @@ def step_dialog_frame():
         time.sleep(1.0)
         ev1, st = snap("dialogs-1-system-menu")
         items = [i.replace("&", "") for i in st["popupMenuItems"]]
-        # Windows greys what the window's style rules out (no sizing frame, no
-        # minimise or maximise box); the items stay listed.
+        # Windows greys what the window's style rules out; the items stay listed.
         enabled = {e["n"].replace("&", "") for e in st.get("elements") or []
                    if e["t"] == "MenuItem" and not e["off"] and e["en"] and e["n"].replace("&", "") in items}
         keys("escape", 0.6)
@@ -3094,7 +2759,6 @@ def step_dialog_frame():
             f"Windows' system menu from a right click on the title bar: {items}, enabled {sorted(enabled)} (Move and "
             f"Close; Restore, Size, Minimize and Maximize greyed on a fixed-size dialog)", ev1)
 
-    # Win+Up does not maximise a fixed-size dialog.
     W.ui("focus", pid=APP["pid"], window=f"hwnd:{about['hwnd']}")
     time.sleep(0.6)
     r0 = rect(frames(uia()).get(DIALOG_TITLES["About"]))
@@ -3106,7 +2770,6 @@ def step_dialog_frame():
     verdict("dialog-frame-no-maximise", "observed" if r0 and r1 and r1[2:] == r0[2:] else "failed",
             f"Win+Up on About: {r0} -> {r1} (its size kept)", ev2)
 
-    # Moved by its title bar, then opened there again.
     st = uia()
     about = frames(st).get(DIALOG_TITLES["About"])
     ctl = dialog_controls(st, DIALOG_TITLES["About"])
@@ -3125,7 +2788,6 @@ def step_dialog_frame():
         keys("escape", 1.0)
         after = uia()
         gone = DIALOG_TITLES["About"] not in frames(after)
-        # The keyboard back on the main window, which comes forward again.
         fg = (after.get("foreground") or {}).get("title") or ""
         back = active_frames(after)
         verdict("dialog-frame-focus-back",
@@ -3143,7 +2805,6 @@ def step_dialog_frame():
     else:
         verdict("dialog-frame-move-remembered", "failed", "no About or no Close")
 
-    # Credits beside About: modeless.
     credits = help_item("Credits")
     st = uia()
     both = DIALOG_TITLES["About"] in frames(st) and DIALOG_TITLES["Credits"] in frames(st)
@@ -3154,7 +2815,6 @@ def step_dialog_frame():
         if t in frames(uia()):
             close_window(t)
 
-    # Windows' title bar with "Use system title bar".
     title_bar_start("system")
     place_on_primary()
     time.sleep(1.0)
@@ -3169,7 +2829,6 @@ def step_dialog_frame():
             f"About with the system's title bar: Windows' caption buttons {caps}, HikariSub's drawn buttons "
             f"{[n for n in ('Close', 'Maximise', 'Minimise') if n in ctl]}", ev5)
 
-    # The four themes.
     shots, wrong = [], []
     for theme, colour in THEME_PANEL.items():
         title_bar_start("custom", theme)
@@ -3228,12 +2887,12 @@ def main():
             log(f"--- windows: {name}")
             try:
                 STEPS[name]()
-            except Exception as e:  # keep going: one broken step must not hide the others
+            except Exception as e:
                 import traceback
                 traceback.print_exc()
                 verdict(name, "error", f"harness error: {e!r}")
     finally:
-        release()  # never leave the left button held
+        release()
         app_kill()
         if PROFILE["original"]:
             _, lines = W.task("gate-win-restore", env={"GATE_PROFILE_FROM": PROFILE["original"]})

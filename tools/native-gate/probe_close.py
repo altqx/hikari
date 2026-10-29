@@ -1,4 +1,3 @@
-# Probe: close the main window (compositor close request) with a panel floating.
 import os
 import sys
 import time

@@ -1,23 +1,19 @@
-# D1 native gate on Windows: the guest side of gate_windows.py (winix.yaml
-# tasks gate-win-*), for what `winix ui` does not do. Runs in the VM
-# workspace ($PWD); everything it writes stays under out\native-gate-win.
+# Guest side of gate_windows.py (winix.yaml tasks gate-win-*); writes only under out\native-gate-win.
 #   -Action prepare     scratch documents, the media fixture, paths (GATE_LAYOUT line)
 #   -Action fresh       set the profile aside (never deleted); a HikariSub left over from
 #                       an earlier run is ended first (the harness ends its own with `winix ui kill`)
 #   -Action restore     GATE_PROFILE_FROM: put a set-aside profile back (the current one is set aside)
-#   -Action status      ALIVE yes|no, the layout files (layout.json*, WS3's layouts.json*)
+#   -Action status      ALIVE yes|no, the layout files (layout.json*, layouts.json*)
 #   -Action fullscreen  GATE_FULLSCREEN=on|left|off: the main window borderless over the whole monitor,
 #                       on the left GATE_LEFT_WIDTH pixels of its work area (frame kept), or back
 #   -Action dpi         GATE_DPI_PERCENT: the display scale of the primary monitor, live (DPI_RESULT line)
 #   -Action theme       GATE_THEME (light|dark|highContrastWhite|highContrastBlack), GATE_FOLLOW (true|false),
-#                       GATE_TITLE_BAR (auto|system|custom, SH1; unset: none written):
+#                       GATE_TITLE_BAR (auto|system|custom; unset: none written):
 #                       the appearance in the profile's hikari.ini, before HikariSub starts (THEME_RESULT line)
 #   -Action systemtheme GATE_APPS_LIGHT=1|0|status: the system's app colour scheme (Settings > Personalization >
 #                       Colors, AppsUseLightTheme), announced as Settings does (WM_SETTINGCHANGE
 #                       "ImmersiveColorSet"); prints APPS_LIGHT=<value before> and APPS_LIGHT_NOW=<value>
-# The app's profile: Qt finds %LOCALAPPDATA% and %APPDATA% through the shell's
-# known folders, not the environment, so `winix ui launch --fresh-profile`
-# does not reach it (its APPDATA/LOCALAPPDATA variables are ignored).
+# Qt finds %LOCALAPPDATA% and %APPDATA% through the shell's known folders, so `winix ui launch --fresh-profile` misses the profile.
 param([Parameter(Mandatory)][ValidateSet('prepare', 'fresh', 'restore', 'status', 'fullscreen', 'dpi', 'theme', 'systemtheme')][string]$Action)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -34,7 +30,7 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 New-Item -ItemType Directory -Force $scratch | Out-Null
 
 function AppProcesses {
-    # Only the build under test (the legacy release is also HikariSub.exe).
+    # The legacy release is also HikariSub.exe.
     @(Get-Process hikarisub -ErrorAction SilentlyContinue | Where-Object {
             $_.Path -and $_.Path.StartsWith($build, [StringComparison]::OrdinalIgnoreCase) })
 }
@@ -98,8 +94,7 @@ public static class GateWin {
 
 switch ($Action) {
     'prepare' {
-        # A setup or uninstaller another session left open would cover the
-        # app's windows and take their focus: ended first.
+        # A setup or uninstaller left open would cover the app's windows and take their focus.
         $ended = & (Join-Path $root 'tools\winix\end-setups.ps1')
         $ended | ForEach-Object { Write-Output "end-setups: $_" }
         if ($LASTEXITCODE) { throw 'a setup or uninstaller is still running (end-setups.ps1)' }
@@ -110,7 +105,6 @@ switch ($Action) {
         $head = "[Script Info]`r`nScriptType: v4.00+`r`n"
         $styles = "[V4+ Styles]`r`nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding`r`n"
         $events = "[Events]`r`nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`r`n"
-        # The same documents as the Linux gate (gate.py episode() and step_video()).
         $episode = Join-Path $docs 'episode.ass'
         [IO.File]::WriteAllText($episode, "$head`r`n$styles" +
             "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1`r`n`r`n$events" +
@@ -189,8 +183,6 @@ switch ($Action) {
             [void][GateWin]::GetWindowRect($h, [ref]$r)
             @{ style = $style; x = $r.Left; y = $r.Top; w = $r.Right - $r.Left; h = $r.Bottom - $r.Top } |
                 ConvertTo-Json -Compress | Set-Content -Encoding UTF8 $stateFile
-            # What a "borderless fullscreen" tool (or a game) does: no caption or
-            # frame, the whole monitor including the taskbar's area.
             $mi = New-Object GateWin+MONITORINFO
             $mi.cbSize = [Runtime.InteropServices.Marshal]::SizeOf($mi)
             [void][GateWin]::GetMonitorInfo([GateWin]::MonitorFromWindow($h, 2), [ref]$mi)
@@ -198,8 +190,6 @@ switch ($Action) {
             $m = $mi.rcMonitor
             [void][GateWin]::SetWindowPos($h, [IntPtr]::Zero, $m.Left, $m.Top, $m.Right - $m.Left, $m.Bottom - $m.Top, $SWP_FRAMECHANGED -bor $SWP_SHOWWINDOW)
         } elseif ($env:GATE_FULLSCREEN -eq 'left') {
-            # The main window on the left of the monitor's work area, so a
-            # floating panel can be moved over bare desktop (D3's move).
             $style = [GateWin]::GetWindowLongPtr($h, $GWL_STYLE).ToInt64()
             $r = New-Object GateWin+RECT
             [void][GateWin]::GetWindowRect($h, [ref]$r)
@@ -212,7 +202,7 @@ switch ($Action) {
             [void][GateWin]::GetMonitorInfo([GateWin]::MonitorFromWindow($h, 2), [ref]$mi)
             $m = $mi.rcWork
             $width = if ($env:GATE_LEFT_WIDTH) { [int]$env:GATE_LEFT_WIDTH } else { [int](($m.Right - $m.Left) / 2) }
-            [void][GateWin]::ShowWindow($h, 9) # SW_RESTORE: out of maximized first
+            [void][GateWin]::ShowWindow($h, 9) # SW_RESTORE
             [void][GateWin]::SetWindowPos($h, [IntPtr]::Zero, $m.Left, $m.Top, $width, $m.Bottom - $m.Top, $SWP_SHOWWINDOW -bor $SWP_NOZORDER)
         } elseif (Test-Path $stateFile) {
             $s = Get-Content -Raw $stateFile | ConvertFrom-Json
@@ -228,9 +218,7 @@ switch ($Action) {
                     caption = [bool]($now -band $WS_CAPTION) } | ConvertTo-Json -Compress))
     }
     'dpi' {
-        # SPI_GETLOGICALDPIOVERRIDE / SPI_SETLOGICALDPIOVERRIDE (what Settings >
-        # Display > Scale uses for the primary monitor): the value is a step
-        # relative to the recommended scale and applies without signing out.
+        # SPI_SETLOGICALDPIOVERRIDE takes a step relative to the recommended scale and applies without signing out.
         Add-Type -TypeDefinition $win32
         $scales = 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500
         $target = [int]$env:GATE_DPI_PERCENT
@@ -256,7 +244,7 @@ switch ($Action) {
         Write-Output ('DPI_RESULT ' + ($result | ConvertTo-Json -Compress))
     }
     'theme' {
-        # The rewrite's settings file (src/ui/settings_store.cpp): [profile] values, the registry schema.
+        # HikariSub's settings file format: src/ui/settings_store.cpp.
         $theme = if ($env:GATE_THEME) { $env:GATE_THEME } else { 'dark' }
         $follow = if ($env:GATE_FOLLOW) { $env:GATE_FOLLOW } else { 'false' }
         $ini = Join-Path $profileDirs.local 'hikari.ini'

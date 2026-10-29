@@ -1,6 +1,4 @@
 #!/bin/bash
-# KWin session: kwin_wayland on its virtual backend with a private session bus.
-# Input comes through KWin's EIS (libei) remote-desktop D-Bus entry point.
 export GATE_SESSION=kwin
 "$(dirname "$0")/stop.sh" kwin
 . "$(cd "$(dirname "$0")/.." && pwd)/env.sh"
@@ -11,10 +9,7 @@ export KWIN_WAYLAND_NO_PERMISSION_CHECKS=1
 mkdir -p "$XDG_DATA_HOME/applications"
 printf '[Desktop Entry]\nType=Application\nName=gate shot\nExec=%s\nX-KDE-DBUS-Restricted-Interfaces=org.kde.KWin.ScreenShot2\nNoDisplay=true\n' \
     "$(readlink -f /usr/bin/python3)" > "$XDG_DATA_HOME/applications/gate-shot.desktop"
-# KWin's own Qt Quick windows (the colour picker's prompt for the screenshot
-# portal's PickColor) on Qt Quick's software backend: with OpenGL they fail
-# to create a context here and KWin aborts (QSGRenderLoop::
-# handleContextCreationFailure).
+# KWin's own Qt Quick windows fail to create an OpenGL context here and KWin aborts.
 QT_QUICK_BACKEND=software kwin_wayland --virtual --width ${KWIN_WIDTH:-1600} --height ${KWIN_HEIGHT:-1000} \
     --output-count ${KWIN_OUTPUTS:-1} --scale ${KWIN_SCALE:-1} --no-lockscreen --no-global-shortcuts \
     --socket wayland-gate > /tmp/kwin.log 2>&1 &

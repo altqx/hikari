@@ -1,15 +1,6 @@
 #!/bin/bash
-# Hyprland session (D3): Hyprland has no headless backend, so it runs as a
-# client of a KWin on its virtual backend (sway offers xdg_wm_base 5 and
-# Hyprland's Wayland backend binds 6), filling KWin's one 1600x1000 output.
-# Hyprland's Wayland backend allocates GBM buffers on the render node: with
-# an NVIDIA GPU that needs the host's NVIDIA user-space driver in the image
-# (Dockerfile.hyprland) and the /dev/nvidia* devices (run.sh hyprland).
-# Input goes to Hyprland itself: the virtual pointer
-# (zwlr_virtual_pointer_v1) and wtype connect to Hyprland's socket, grim
-# captures Hyprland's output.
-# "hypr", not "hyprland": Hyprland's IPC socket path under the runtime
-# directory must stay within the 107 bytes of a Unix socket address.
+# Hyprland has no headless backend and binds xdg_wm_base 6 (sway offers 5): nested in KWin's virtual backend.
+# "hypr": Hyprland's IPC socket path must fit the 107 bytes of a Unix socket address.
 export GATE_SESSION=hypr
 "$(dirname "$0")/stop.sh" hypr
 . "$(cd "$(dirname "$0")/.." && pwd)/env.sh"

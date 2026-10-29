@@ -1,4 +1,3 @@
-# Probe: does the third-level submenu (View > Panels > Audio) open from the keyboard?
 import os
 import sys
 import time

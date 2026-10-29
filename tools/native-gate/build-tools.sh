@@ -1,5 +1,4 @@
 #!/bin/bash
-# Builds the two small input injectors into /tmp (inside the container).
 set -e
 cd "$(dirname "$0")"
 gcc -O1 -Wall -o /tmp/eiinject eiinject.c $(pkg-config --cflags --libs libei-1.0)

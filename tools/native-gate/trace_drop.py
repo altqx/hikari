@@ -1,8 +1,4 @@
-# gdb script (gdb -x trace_drop.py --args hikarisub): during a drag, logs what
-# KDDockWidgets' DragController finds under the cursor: the top-level view
-# (qtTopLevelUnderCursor, a std::shared_ptr returned through memory) and the
-# drop area (dropAreaUnderCursor, a pointer). Release build, no debug info:
-# values are read from registers at the callers' return.
+# gdb -x trace_drop.py --args hikarisub. Release build, no debug info: values are read from registers at the callers' return.
 import gdb
 
 gdb.execute("set pagination off")
@@ -43,8 +39,6 @@ class Entry(gdb.Breakpoint):
 Entry("KDDockWidgets::Core::DragController::qtTopLevelUnderCursor", "top")
 Entry("KDDockWidgets::Core::DragController::dropAreaUnderCursor", "area")
 gdb.execute("run")
-# Stopped by SIGINT (kill -INT): optionally hide the shell's file DropArea
-# (objectName "dropArea") first, then let the app run on.
 import os
 if os.environ.get("HIDE_DROPAREA") == "1":
     w = int(gdb.parse_and_eval("((void*(*)(void))_ZN15QGuiApplication11focusWindowEv)()"))

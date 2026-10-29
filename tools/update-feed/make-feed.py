@@ -1,22 +1,5 @@
 #!/usr/bin/env python3
-# A local update feed for test builds (installers spec, 8.4). It turns a
-# folder of packages under their release asset names (2.1) into what a test
-# build reads in place of GitHub, and serves it on 127.0.0.1, logging every
-# request. The same file on the legacy and Qt branches.
-#
-#   make-feed.py <dir of packages> <out dir> [--port 8765] [--no-serve]
-#
-# The out dir gets:
-#   releases.json                    one page shaped like GitHub's release list
-#   download/v<V>/<asset name>       each package, and hikarisub-update.json
-#   releases/tag/v<V>                a release page
-#   requests.log                     every request served, one per line
-#
-# Then a test build runs with HIKARISUB_UPDATE_FEED=http://127.0.0.1:<port>/
-# (HIKARI_UPDATE_FEED for Qt). Options change a release to test the other
-# paths: --no-manifest V drops a manifest so the client falls back to the
-# digests, --bad-sha256 NAME gives a package a wrong hash in its manifest,
-# --offer-to V=legacy,qt sets offer_to, --draft V marks a release a draft.
+# Serves a GitHub-shaped release feed for test builds that read HIKARISUB_UPDATE_FEED.
 
 import argparse
 import hashlib

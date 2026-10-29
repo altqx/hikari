@@ -1,5 +1,4 @@
-# D1 native gate on Windows: NVDA for the `nvda` step (winix tasks nvda-setup
-# and nvda-output). Approved by the user for the Winix VM guest.
+# NVDA for the `nvda` step (winix tasks nvda-setup and nvda-output).
 #   -Action setup   download the pinned NVDA release, check its published
 #                   SHA-256, create a portable copy under out\native-gate-win\nvda
 #                   (nothing is installed) and write its configuration: the
@@ -9,13 +8,11 @@
 #                   portable copy), copy the log named by GATE_NVDA_LOG to
 #                   nvda\nvda-last.log (the task's artifact) and print its
 #                   speech lines.
-# gate_windows.py starts the portable copy itself through `winix ui launch`
-# (a winix task ends every process it started).
+# gate_windows.py starts NVDA through `winix ui launch`: a winix task ends every process it started.
 param([Parameter(Mandatory)][ValidateSet('setup', 'output')][string]$Action)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
-# NVDA 2026.2: https://www.nvaccess.org/post/nvda-2026-2/ publishes this
-# SHA-256 (the update API's launcherHash, SHA-1, is a5b01592f4e2355432848d3ad82f5bd214f25947).
+# The SHA-256 published at https://www.nvaccess.org/post/nvda-2026-2/
 $version = '2026.2'
 $sha256 = 'f3f8d29974a88d687b3c4809be192219ec579c5bdabcda5aaf53635288bca824'
 $url = "https://download.nvaccess.org/releases/$version/nvda_$version.exe"
@@ -47,8 +44,7 @@ switch ($Action) {
             }
             if (-not (Test-Path (Join-Path $portable 'nvda.exe'))) { throw "no portable copy at $portable (launcher exit $($p.ExitCode))" }
         }
-        # NVDA's configuration (ConfigObj). Speech goes to the "No speech"
-        # synthesizer; the io log level still records every "Speaking [...]".
+        # With the "No speech" synthesizer the io log level still records every "Speaking [...]".
         $ini = @(
             '[general]', "`tlanguage = Windows", "`tshowWelcomeDialogAtStartup = False", "`tplayStartAndExitSounds = False",
             "`tsaveConfigurationOnExit = False", "`taskToExit = False",

@@ -1,9 +1,4 @@
-"""Y7 probe (X11): does the simple colour picker hold the pointer once the
-window manager has mapped it? Opens the picker from the Line editor's
-Border color button with a real right click, then moves the real pointer
-over a colour patch and reads the picker's hex field (AT-SPI) and the X
-server's pointer grab (xdotool cannot read it: a second client's
-XGrabPointer answers AlreadyGrabbed while the app holds it)."""
+"""xdotool cannot read the pointer grab: a second client's XGrabPointer answers AlreadyGrabbed while the app holds it."""
 import os
 import sys
 import time

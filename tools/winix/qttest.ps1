@@ -1,14 +1,4 @@
-# One QtTest executable with its output in a file, printed whole (ctest keeps
-# none on Windows), on the platform QT_QPA_PLATFORM names (winix tasks
-# qttest-window and vsfilter-shell-all).
-#   TEST          the executable's name without .exe
-#   ARGS          QtTest arguments (test functions, -v2, ...)
-#   TEST_TIMEOUT  seconds (300)
-#   FORMAT        QtTest's output format (txt; junitxml adds each function's time)
-#   BUILD         the build tree under out/build (windows-x64-release)
-#   OUT           a folder the output file is also copied to (workspace-relative, optional)
-#   REQUIRE_RUN   1: a skipped function fails the run (a desktop-only check that did not reach the desktop)
-# Any other variable (HIKARI_*_SHOT_DIR, ...) reaches the test as it is.
+# Env: TEST, ARGS, TEST_TIMEOUT (300 s), FORMAT (txt), BUILD, OUT, REQUIRE_RUN=1 (a skip fails); the rest reaches the test.
 $ErrorActionPreference = 'Stop'
 $root = $PWD.Path
 $build = Join-Path $root "out/build/$(if ($env:BUILD) { $env:BUILD } else { 'windows-x64-release' })"

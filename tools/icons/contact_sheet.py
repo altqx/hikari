@@ -1,22 +1,5 @@
 #!/usr/bin/env python3
-"""K1: the HTML contact sheet of the HikariSub icon set, for review.
-
-Writes one self-contained page (default out/k1/index.html) showing every
-icon of src/ui/icons/manifest.json in the four themes (Light, Dark, High
-contrast white and High contrast black) at 16 and 32 px, with its disabled colour,
-its label, the surfaces using it and whether it mirrors in right-to-left
-layouts. The page links the PNG sheets hikari_ui_icon_tests writes into the
-same folder (k1-<theme>-<percent>.png, rendered by the app's Icon item).
-
-The colours are the theme layer's (K2, src/ui/theme.cpp), as IconTheme
-takes them: the icon in the theme's text colour, the accent layer in its
-accent (Light and Dark with the default accent preset), the disabled state
-in its disabled colour. Hover and press keep these colours (the button's
-panel shows them), so the sheet has no hover column. The inline SVGs take
-them through CSS `color`, as currentColor does in the app.
-
-Run:  python3 tools/icons/contact_sheet.py [output.html]
-"""
+"""HTML contact sheet of the icon set: contact_sheet.py [output.html]."""
 
 import html
 import json
@@ -30,7 +13,7 @@ THEME = os.path.join(ROOT, "src", "ui", "theme.cpp")
 THEME_H = os.path.join(ROOT, "src", "ui", "theme.h")
 
 APPEARANCES = [
-    # id (theme::codeName, the icon tests' sheet names), name, theme::Code
+    # theme::codeName, name, theme::Code
     ("light", "Light", "Light"),
     ("dark", "Dark", "Dark"),
     ("highContrastWhite", "High contrast white", "HighContrastWhite"),
@@ -41,9 +24,7 @@ RGB = r'rgb\(0x([0-9A-Fa-f]{6})\)'
 
 
 def theme_colours():
-    """Each theme's background, text and icon colours, read from the theme
-    layer's tables in theme.cpp (baseRoles, and the default accent preset of
-    kLightAccents / kDarkAccents for Light and Dark)."""
+    """Each theme's background, text and icon colours, parsed from theme.cpp."""
     source = open(THEME, encoding="utf-8").read()
     header = open(THEME_H, encoding="utf-8").read()
     names = re.search(r'kRoleNames\{([^}]*)\}', header)

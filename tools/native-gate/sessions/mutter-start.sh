@@ -1,9 +1,5 @@
 #!/bin/bash
-# GNOME compositor session: mutter 50 (GNOME's compositor; gnome-shell itself
-# needs systemd-logind, which a container has not) headless on Wayland with
-# virtual monitors and a private session bus. Input comes through mutter's
-# RemoteDesktop + EIS (eidaemon.py mutter); screenshots through its
-# ScreenCast API and PipeWire (mutter_shot.py).
+# gnome-shell needs systemd-logind, which a container has not: mutter alone.
 export GATE_SESSION=mutter
 "$(dirname "$0")/stop.sh" mutter
 . "$(cd "$(dirname "$0")/.." && pwd)/env.sh"

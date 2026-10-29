@@ -1,4 +1,3 @@
-# Probe: Line editor floating, main window focused by the compositor, then F6.
 import os
 import sys
 import time

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""mutter_shot.py OUT.png [CONNECTOR]: one frame of a mutter monitor
-(default: every monitor, side by side) through org.gnome.Mutter.ScreenCast
-and PipeWire (gst-launch pipewiresrc)."""
+"""mutter_shot.py OUT.png [CONNECTOR]: one frame of mutter's monitors (default all, side by side) through ScreenCast and PipeWire."""
 import os
 import subprocess
 import sys
@@ -23,8 +21,7 @@ def connectors():
     res = bus.call_sync("org.gnome.Mutter.DisplayConfig", "/org/gnome/Mutter/DisplayConfig",
                         "org.gnome.Mutter.DisplayConfig", "GetCurrentState", None, None,
                         Gio.DBusCallFlags.NONE, 10000, None).unpack()
-    # the monitors in the current layout (a monitor taken out of it, as step
-    # outputs does, has no picture), left to right
+    # a monitor taken out of the layout has no picture
     logical = sorted(res[2], key=lambda lm: (lm[0], lm[1]))
     return [m[0] for lm in logical for m in lm[5]]
 
