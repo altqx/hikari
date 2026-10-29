@@ -10,7 +10,7 @@ MessageBox {
     title: qsTr("Translation mode")
     severity: "info"
     text: qsTr("Turn on Translation mode for this file?")
-    detail: qsTr("Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.")
+    detail: qsTr("Each line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.")
     choices: [{ id: "turnOn", text: qsTr("Turn on"), role: "accept", isDefault: true },
               { id: "notNow", text: qsTr("Not now"), role: "reject" }]
     property var askedFor: null

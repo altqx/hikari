@@ -535,38 +535,38 @@
 <context>
     <name>HikariSub.TemplateEditor</name>
     <message numerus="yes">
-        <source>%n Lines</source>
+        <source>%n lines</source>
         <translation>
-            <numerusform>%n Line</numerusform>
-            <numerusform>%n Lines</numerusform>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n template Lines</source>
+        <source>%n template lines</source>
         <translation>
-            <numerusform>%n template Line</numerusform>
-            <numerusform>%n template Lines</numerusform>
+            <numerusform>%n template line</numerusform>
+            <numerusform>%n template lines</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n code Lines</source>
+        <source>%n code lines</source>
         <translation>
-            <numerusform>%n code Line</numerusform>
-            <numerusform>%n code Lines</numerusform>
+            <numerusform>%n code line</numerusform>
+            <numerusform>%n code lines</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n karaoke Lines</source>
+        <source>%n karaoke lines</source>
         <translation>
-            <numerusform>%n karaoke Line</numerusform>
-            <numerusform>%n karaoke Lines</numerusform>
+            <numerusform>%n karaoke line</numerusform>
+            <numerusform>%n karaoke lines</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n template Lines changed since the last Apply; the generated Lines are older.</source>
+        <source>%n template lines changed since the last Apply; the generated lines are older.</source>
         <translation>
-            <numerusform>%n template Line changed since the last Apply; the generated Lines are older.</numerusform>
-            <numerusform>%n template Lines changed since the last Apply; the generated Lines are older.</numerusform>
+            <numerusform>%n template line changed since the last Apply; the generated lines are older.</numerusform>
+            <numerusform>%n template lines changed since the last Apply; the generated lines are older.</numerusform>
         </translation>
     </message>
 </context>

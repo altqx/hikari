@@ -169,7 +169,7 @@ Rectangle {
                 Label {
                     objectName: "audioTapMessage"
                     visible: text.length > 0
-                    text: bar.needsSplit ? qsTr("This Line is one syllable. Split it first, then tap.") : bar.audio.tapMessage
+                    text: bar.needsSplit ? qsTr("This line is one syllable. Split it first, then tap.") : bar.audio.tapMessage
                     font.bold: true
                     leftPadding: 6
                     Accessible.role: Accessible.StaticText
@@ -198,7 +198,7 @@ Rectangle {
         BarButton {
             objectName: "audioTapRevert"
             visible: bar.stopped
-            text: qsTr("Revert Line")
+            text: qsTr("Revert line")
             onClicked: bar.audio.tapRevert()
         }
         BarButton {

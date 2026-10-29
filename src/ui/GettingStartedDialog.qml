@@ -710,7 +710,7 @@ DialogWindow {
                             text: ({Translation: qsTr("Translate"), Timing: qsTr("Time"),
                                     Typesetting: qsTr("Typeset"), Karaoke: qsTr("Karaoke")})[modelData] ?? modelData
                             description: ({Translation: qsTr("The original text above your translation, with Translation mode on."),
-                                           Timing: qsTr("Audio across the top for timing Lines by ear."),
+                                           Timing: qsTr("Audio across the top for timing lines by ear."),
                                            Typesetting: qsTr("A large video with the visual tools and the Styles panel."),
                                            Karaoke: qsTr("The Template editor beside the video, the audio in Karaoke mode.")})[modelData] ?? ""
                             checked: setup.layout === modelData
@@ -785,7 +785,7 @@ DialogWindow {
             SetupPage {
                 objectName: "gettingStartedEditing"
                 title: qsTr("Editing")
-                explanation: qsTr("Backups while you work, and the checks on the Line editor’s text.")
+                explanation: qsTr("Backups while you work, and the checks on the line editor’s text.")
                 later: qsTr("Later: Settings › General › Saving and Settings › Spelling & grammar")
                 GridLayout {
                     columns: 2

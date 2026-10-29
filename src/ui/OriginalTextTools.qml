@@ -71,7 +71,7 @@ Item {
             objectName: "originalNotConfirmed"
             iconRole: "unconfirmed"
             text: qsTr("Not confirmed")
-            tip: qsTr("Not confirmed: marks the selected Lines for review")
+            tip: qsTr("Not confirmed: marks the selected lines for review")
             checkable: true
             focusPolicy: Qt.NoFocus
             enabled: tools.editor.editable

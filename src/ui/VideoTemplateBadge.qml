@@ -33,7 +33,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             textFormat: Text.StyledText
             //: Over the video: the Template editor's preview of Line %1, %2 "not applied" or "last run that worked"
-            text: qsTr("<b>Preview</b> · Line %1 · %2").arg(badge.controller.sourceNumber)
+            text: qsTr("<b>Preview</b> · line %1 · %2").arg(badge.controller.sourceNumber)
                   .arg(badge.controller.previewKept ? qsTr("last run that worked") : qsTr("not applied"))
         }
     }
