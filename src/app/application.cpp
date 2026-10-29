@@ -4726,7 +4726,8 @@ QVariantMap Application::editorMisspellAt(int role, int position)
     if (!raw || !checker)
         return {};
     const auto format = targetSession()->document().format();
-    const auto marks = application::editorMarks(*raw, format, *checker, m_spellingText);
+    // SP1: asked once (the menu, the double-click popup): waits for the loads.
+    const auto marks = application::editorMarks(*raw, format, *checker, m_spellingText, true);
     int at = position;
     if (!m_editor->showTags())
         at = static_cast<int>(core::rawOffset(core::project(*raw), static_cast<std::size_t>(std::max(position, 0)), true));

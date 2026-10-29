@@ -107,6 +107,8 @@
 #include <memory>
 #include <optional>
 #include <future>
+#include <chrono>
+#include <thread>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -10843,7 +10845,8 @@ private slots:
 private:
     // F3: a session with a Dictionary folder beside its settings and the
     // production Hunspell backend (R2-hunspell), or no backend at all.
-    void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {}, bool gettingStarted = false)
+    void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {}, bool gettingStarted = false,
+                             application::SpellingBackendLoader loader = {})
     {
         delete engine;
         delete application;
@@ -10853,6 +10856,8 @@ private:
         options.gettingStarted = gettingStarted; // FR1
         if (!backend)
             options.spellingBackend = {};
+        else if (loader)
+            options.spellingBackend = std::move(loader);
         options.bundledDictionaryDir = bundled;
         application = new app::Application(options);
         engine = new QQmlApplicationEngine;
@@ -12620,6 +12625,20 @@ private slots:
         const QVariantMap found = application->editorMisspellAt(0, int(line.indexOf(QStringLiteral("세게"))) + 1);
         QCOMPARE(found.value(QStringLiteral("word")).toString(), QStringLiteral("세게계"));
         QVERIFY(found.value(QStringLiteral("suggestions")).toStringList().contains(QStringLiteral("세계")));
+        // The menu and the double-click popup ask once: they wait for a
+        // dictionary still loading (here a slow ko_KR).
+        application->editor().discard();
+        restartWithSpelling(home.path(), true, {}, false,
+                            [hunspell = app::Application::Options().spellingBackend](const std::filesystem::path &aff,
+                                                                                      const std::filesystem::path &dic) {
+                                if (dic.stem() == "ko_KR")
+                                    std::this_thread::sleep_for(std::chrono::seconds(2));
+                                return hunspell(aff, dic);
+                            });
+        QVERIFY(application->openFile(path));
+        const QVariantMap loading = application->editorMisspellAt(0, int(line.indexOf(QStringLiteral("세게"))) + 1);
+        QCOMPARE(loading.value(QStringLiteral("word")).toString(), QStringLiteral("세게계"));
+        QVERIFY(loading.value(QStringLiteral("suggestions")).toStringList().contains(QStringLiteral("세계")));
 
         if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
             QVERIFY(QDir().mkpath(out));
