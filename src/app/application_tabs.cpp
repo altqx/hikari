@@ -832,7 +832,7 @@ bool Application::forwardedOpenWaits() const
     return m_startupSessionPending || !m_closeThen.isEmpty() || m_quitApproved;
 }
 
-QVariantMap Application::reviewSession(const QUrl &file, bool networkAllowed)
+QVariantMap Application::reviewSession(const QUrl &file, const QStringList &allowedHosts)
 {
     if (file.isEmpty())
         return reviewSessionRead(loadLastSession());
@@ -848,8 +848,10 @@ QVariantMap Application::reviewSession(const QUrl &file, bool networkAllowed)
     }
     // CF3: a session file from elsewhere may name files on other computers;
     // looking one up connects there (Windows signs in to an SMB share), so
-    // nothing is looked up until the user allows it.
-    if (const QStringList hosts = session ? networkHosts(*session) : QStringList(); !hosts.isEmpty() && !networkAllowed) {
+    // nothing is looked up until the user allows it. The file is read again
+    // after the question, so each computer must be one the user was asked about.
+    const QStringList hosts = session ? networkHosts(*session) : QStringList();
+    if (!std::ranges::all_of(hosts, [&](const QString &host) { return allowedHosts.contains(host, Qt::CaseInsensitive); })) {
         QVariantMap result = reviewSessionRead(std::nullopt);
         result.insert(QStringLiteral("network"), hosts);
         return result;

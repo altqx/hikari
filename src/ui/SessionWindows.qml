@@ -134,7 +134,7 @@ Item {
             ]
         }, id => {
             if (id === "open")
-                windows.go(windows.app.reviewSession(file, true), file)
+                windows.go(windows.app.reviewSession(file, hosts), file)
         })
     }
     // PU1-message-boxes on NT1's host: Save session onto a read-only file

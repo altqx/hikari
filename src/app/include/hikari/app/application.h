@@ -1074,8 +1074,10 @@ public:
     // reviewed as for Quit (P6-session-review). Returns {ok, problem, rows}; with ok and no rows,
     // finishClose() replaces the open tabs with the session's. CF3: a file
     // naming files on other computers (UNC paths) is not looked into until
-    // `networkAllowed`: until then {ok: false, network: [the computers]}.
-    Q_INVOKABLE QVariantMap reviewSession(const QUrl &file = {}, bool networkAllowed = false);
+    // the user allows them: until every one is in `allowedHosts` (the list
+    // the prompt named, so a file changed meanwhile asks again), {ok: false,
+    // network: [the computers]}.
+    Q_INVOKABLE QVariantMap reviewSession(const QUrl &file = {}, const QStringList &allowedHosts = {});
     // GLOBAL_SAVE_EXTERNAL_SESSION: "readonly" (legacy asks again), "failed" or "".
     // CF3: written as a .hksession; a name ending in .kls takes that suffix,
     // and "exists" when that file is there and not `replace`.

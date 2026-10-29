@@ -739,7 +739,20 @@ private slots:
         QCOMPARE(review.value(QStringLiteral("network")).toStringList(),
                  (QStringList{"nas", "media-box", "far", QString::fromStdString(device.audio), QString::fromStdString(device.keyframes)}));
         QCOMPARE(titles(a), (QStringList{"here.ass"}));
-        review = a.reviewSession(QUrl::fromLocalFile(file), true);
+        const QStringList asked = review.value(QStringLiteral("network")).toStringList();
+        // Only the computers the user was asked about: a file changed while
+        // the question was open asks again.
+        QVERIFY(!a.reviewSession(QUrl::fromLocalFile(file), {QStringLiteral("nas")}).value(QStringLiteral("ok")).toBool());
+        const QByteArray original = readAll(file);
+        application::SessionTab other;
+        other.subtitles = "\\\\elsewhere\\s\\x.ass";
+        writeSession(file, app::writeSessionJson(application::Session{"HikariSub", true, {share, other}, {}}));
+        review = a.reviewSession(QUrl::fromLocalFile(file), asked);
+        QVERIFY(!review.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(review.value(QStringLiteral("network")).toStringList(), (QStringList{"nas", "elsewhere"}));
+        QCOMPARE(titles(a), (QStringList{"here.ass"}));
+        writeSession(file, original);
+        review = a.reviewSession(QUrl::fromLocalFile(file), asked);
         QVERIFY(review.value(QStringLiteral("ok")).toBool());
         QVERIFY(review.value(QStringLiteral("rows")).toList().isEmpty());
         a.finishClose();
