@@ -1,24 +1,13 @@
 #!/bin/sh
-# Turns the host libraries a package tree needs into package dependencies.
+# Turns the host libraries a package tree needs into package dependencies, one "<kind><TAB><dependency>" per line.
 #
 #   packaging/linux/resolve-deps.sh <deb|rpm|arch> <map file> <min glibc> <app tree>
 #
-# Prints one dependency per line, prefixed by its kind and a tab:
-#   depends<TAB>libgtk-3-0t64 | libgtk-3-0
-#   recommends<TAB>gstreamer1.0-plugins-bad      (deb, rpm)
-#   optdepends<TAB>gst-plugins-bad               (arch)
+# The map (packaging/linux/deps-<family>.map) has "<soname> <dependency>" lines, then after "# runtime" the
+# run-time-only "<kind> <dependency>" lines; "@glibc" is the glibc floor. For rpm an unmapped soname becomes
+# "<soname>()(64bit)"; for deb and arch it is an error.
 #
-# The sonames come from tools/release/host-sonames.sh. The map file
-# (packaging/linux/deps-<family>.map) has one "<soname> <dependency>" line per
-# soname, and then, after a line that reads "# runtime", the run-time-only
-# dependencies as "<kind> <dependency>" lines. The dependency "@glibc" stands
-# for the glibc floor: deb "libc6 (>= <min glibc>)", rpm
-# "glibc >= <min glibc>", arch "glibc". For rpm a soname without a map line
-# becomes its own capability, "<soname>()(64bit)"; for deb and arch an
-# unmapped soname is an error, so a new host library cannot slip through
-# undeclared.
-#
-# This file has the same bytes on the legacy (main) and Qt (qt) branches.
+# Same bytes on the main and legacy branches.
 set -eu
 
 if [ $# -ne 4 ]; then
@@ -46,7 +35,6 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT INT TERM
 "$host_sonames" "$tree" > "$work/sonames"
 
-# The soname part of the map, and the runtime part.
 awk '/^# runtime[[:space:]]*$/ { exit } !/^[[:space:]]*(#|$)/' "$map" > "$work/sonames.map"
 awk 'found && !/^[[:space:]]*(#|$)/ { print } /^# runtime[[:space:]]*$/ { found = 1 }' "$map" > "$work/runtime.map"
 
@@ -72,8 +60,7 @@ if [ -s "$work/unmapped" ]; then
     exit 1
 fi
 
-# The glibc floor always, and for rpm the newest libstdc++ symbol version the
-# tree uses (the deb and arch maps carry their own libstdc++ floor).
+# The deb and arch maps carry their own libstdc++ floor.
 printf 'depends\t%s\n' "$(glibc_dep)" >> "$work/deps"
 if [ "$family" = rpm ] && grep -qx 'libstdc++.so.6' "$work/sonames"; then
     glibcxx=$(find "$tree" -type f -exec sh -c 'readelf -h "$1" >/dev/null 2>&1 && objdump -T "$1"' sh {} \; 2>/dev/null |
@@ -88,5 +75,4 @@ while read -r kind dep; do
     esac
 done < "$work/runtime.map"
 
-# Unique, first occurrence kept, so the output is stable.
 awk '!seen[$0]++' "$work/deps"

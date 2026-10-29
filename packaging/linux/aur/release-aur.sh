@@ -1,47 +1,18 @@
 #!/bin/sh
-# Publishes one release to the AUR packages it belongs to (installers spec,
-# 5.5): a stable X.Y.Z to hikarisub-stable-bin and hikarisub-beta-bin, a
-# prerelease to hikarisub-beta-bin only.
+# Publishes one release to its AUR packages: a stable X.Y.Z to hikarisub-stable-bin and hikarisub-beta-bin,
+# a prerelease to hikarisub-beta-bin only. A package follows legacy (0.0.x) until its channel's first release
+# of 0.1.0 or higher (ADR-0021); a release of the other codebase, or older than one published, is skipped.
 #
 #   packaging/linux/aur/release-aur.sh [options] <version> <tar.gz> <out dir>
 #
-# <tar.gz> is the release's hikarisub-<version>-linux-x86_64.tar.gz, already
-# checked against the release's SHA256SUMS. For each package:
-#
-# 1. Each package follows one codebase (0.0.x legacy, 0.1.0 and up the app;
-#    ADR-0021), read from the release list and <version>: hikarisub-beta-bin
-#    the app once 0.1.0-beta.1 or higher is out, hikarisub-stable-bin once a
-#    stable 0.1.0 or higher is out, legacy until then. A release of the other
-#    codebase is skipped for it. With --releases, a package is also skipped
-#    when the release list has a newer release of its codebase for its
-#    channel: any release for hikarisub-beta-bin, a stable one for
-#    hikarisub-stable-bin. So an older tag never replaces a newer one, even
-#    on a package the AUR does not have yet.
-# 2. render-pkgbuild.sh renders <out dir>/<package>/PKGBUILD and .SRCINFO.
-#    A version lower than the package's on the AUR is skipped.
-# 3. The package is built with makepkg as a non-root user in the archlinux
-#    container pinned in packaging/linux/tools.lock, from the release's
-#    published URL (or, with --local-source, from <tar.gz> placed beside the
-#    PKGBUILD), installed with pacman, and checked: hikarisub --version
-#    prints "<version> (arch)", and the markers say "arch" and the channel.
-# 4. publish-aur.sh pushes it.
-#
-# Options:
-#   --releases <file>    GitHub's release list, a JSON array of objects with
-#                        tag_name, draft and prerelease (gh api's pages, merged)
-#   --deps-map <file>    for render-pkgbuild.sh (the tag's own deps-arch.map)
+#   --releases <file>    GitHub's release list (gh api pages merged: tag_name, draft, prerelease)
+#   --deps-map <file>    for render-pkgbuild.sh
 #   --offline            no AUR RPC check in render-pkgbuild.sh (tests)
-#   --no-build           skip step 3 (tests)
-#   --local-source       see step 3
-#   --dry-run, --strict  for publish-aur.sh
+#   --no-build           skip the archlinux container build and install check (tests)
+#   --local-source       build from <tar.gz> instead of the published URL
+#   --dry-run, --strict  for publish-aur.sh; --strict also fails a run that published nothing
 #   --remote-base <url>  publish to <url>/<package>.git instead of the AUR
-#
-# A package refused in step 1 or 2 is a ::warning::, and so are a missing key
-# and a refused push (publish-aur.sh). A failed render or build is an error.
-# With --strict, a missing key or a refused push is an error too, and so is a
-# run that refused every package.
-#
-# This file has the same bytes on the main and legacy branches.
+# Same bytes on the main and legacy branches.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -77,9 +48,7 @@ skip() { # <message>
     echo "::warning::$1"
 }
 
-# For a channel: the codebase its package follows, the release it has
-# followed it since (or will from), and the newest release of that codebase
-# newer than <version>, or "-".
+# Prints the codebase the channel's package follows, since which release, and the newest newer release of it or "-".
 plan() { # <stable|beta>
     python3 - "$releases" "$version" "$1" <<'EOF'
 import json, re, sys

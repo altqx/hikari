@@ -1,10 +1,6 @@
 #!/bin/sh
-# Registers this HikariSub directory with the desktop: menu entry, file
-# associations and icons, all under $XDG_DATA_HOME. No root needed, and
-# nothing outside that directory is touched.
-#
-# The tarball is a portable tree, so Exec= has to name this copy's absolute
-# path rather than expecting hikarisub on PATH.
+# Registers this HikariSub directory with the desktop under $XDG_DATA_HOME; no root needed.
+# Exec= names this copy's absolute path: the portable tree is not on PATH.
 
 set -eu
 
@@ -56,8 +52,7 @@ fi
 mkdir -p "$data_home/applications" "$data_home/metainfo" \
 	"$data_home/mime/packages" "$data_home/icons"
 
-# Desktop entry Exec= splits unquoted spaces into arguments. Quote the path and
-# escape characters that are special inside its quoted argument.
+# Desktop entry Exec= splits unquoted spaces into arguments, so the path is quoted and escaped.
 exec_path=$(printf '%s' "$here/hikarisub" |
 	sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g' -e 's/`/\\`/g')
 while IFS= read -r line || [ -n "$line" ]; do

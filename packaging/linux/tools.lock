@@ -1,13 +1,11 @@
-# Packaging tools and test images, pinned. Same bytes on the legacy (main) and
-# Qt (qt) branches. packaging/linux/fetch-tool.sh downloads a tool and checks
-# its SHA-256; the workflows and tests/packaging/linux read the image digests.
+# Packaging tools and test images, pinned. Same bytes on the main and legacy branches.
 #
 # Tools: name  version  sha256  url
 appimagetool   1.9.1     ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
 type2-runtime  20251108  2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d  https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64
 nfpm           2.47.0    0660ca602b2d2d2ae4781a06c692b3eeb9d437ffea05b831d76e41f4a3188783  https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_Linux_x86_64.tar.gz
 #
-# Test images (installers spec, section 8.1): image  name  reference
+# Test images: image  name  reference
 image  ubuntu-22.04  docker.io/library/ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
 image  ubuntu-24.04  docker.io/library/ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
 image  debian-12     docker.io/library/debian:12@sha256:2c037a04925515fdd6ea85ea14a682d0e79931f5e9f5d07b6dbfc6ba12f9e858

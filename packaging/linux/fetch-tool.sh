@@ -1,11 +1,9 @@
 #!/bin/sh
-# Downloads a packaging tool pinned in packaging/linux/tools.lock into a
-# directory and checks its SHA-256. Prints the path of the usable tool.
+# Downloads a tool pinned in packaging/linux/tools.lock into <dir> (reusing a file with the pinned hash), checks its
+# SHA-256 and prints its path.
 #
 #   packaging/linux/fetch-tool.sh <appimagetool|type2-runtime|nfpm> <dir>
 #   packaging/linux/fetch-tool.sh --image <name>     (prints the image reference)
-#
-# A file already in <dir> with the pinned hash is reused.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
