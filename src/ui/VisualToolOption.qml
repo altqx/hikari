@@ -30,11 +30,13 @@ Loader {
     required property VisualToolsController tools
     // VT1: an unseen copy the bar measures (no names, no focus).
     property bool measuring: false
+    // VB1: named, unless unseen (measured, or folded off the bar's line).
+    property bool named: !measuring
     // What changes while the option stays (checked, enabled, the entries
     // and the chosen one): the bar gives the tool's current state by name,
     // so a toggle does not make the bar's items again.
     property var live: modelData
-    readonly property string nameOf: measuring ? "" : "visualOption_" + modelData.name
+    readonly property string nameOf: named ? "visualOption_" + modelData.name : ""
     readonly property bool grouped: modelData.group.length > 0
     // The tools' help texts are legacy's; the bar's own action (VT1's Copy
     // video position) is named in the catalog.
@@ -235,6 +237,7 @@ Loader {
             live: option.live
             tools: option.tools
             measuring: option.measuring
+            named: option.named
         }
     }
     Component {

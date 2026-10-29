@@ -6,9 +6,8 @@ import Hikari.Ui
 
 // VT1 (#269): the visual tool inspector bar below the canvas, in the Video
 // panel and in fullscreen's bar (FS1's inspector row, while a tool other
-// than the crosshair is on). It replaces T1-T6's options row,
-// values row and the readout beside the video times. The active tool's icon
-// and name lead; then its options (VisualToolOption: legacy VideoToolbar's
+// than the crosshair is on). It replaces T1-T6's options row and values
+// row. The active tool's options (VisualToolOption: legacy VideoToolbar's
 // second row) and its values (VisualValueField), each group after its
 // short label (Scale's Rectangle and Tags, Move's Start and End, the
 // rotations' Origin) and a thin rule; at the trailing end the batch picker
@@ -17,13 +16,14 @@ import Hikari.Ui
 // none picked a tool edits the active Line. The picker is checked while
 // Lines are picked, their number beside it, and Clear shows then.
 //
-// The bar is there for every tool, the crosshair included (its position
-// under the pointer and Copy video position), so the video does not resize
-// as the tool changes or the pointer moves. On a narrow panel the groups
-// wrap onto another line (a group stays whole; the rule before the first
-// group of a line is not drawn) and the picker keeps its slot; the bar keeps
-// the height of the family that needs the most lines at its width, laid out
-// unseen, so a tool switch does not resize the video either.
+// VB1 (#481): the bar is one line. The groups that do not fit its width
+// fold, whole and last first, under More options at its trailing end (the
+// Line editor strip's pattern), which opens the popup kit's popover with
+// them, one group a line; a wider bar unfolds them. So the video keeps its
+// size across every tool with options. The tool's name is the rail's (its
+// checked button, the name on hover), not repeated here. The crosshair has
+// no bar: its position and Copy video position are on the video times line
+// (VisualPointerReadout).
 //
 // HY1 (#271): Hydra's change option comes after its values (Tag, the
 // values, Change), and its picker slot says which Lines a value changes
@@ -107,7 +107,7 @@ Control {
                       groupsOf(values, "values", measuring))
             .concat(groupsOf(options.filter(o => o.afterValues), "options", measuring))
     }
-    // A family's groups for its unseen copy (its values carried whole).
+    // The groups for the unseen copy (its values carried whole).
     function measuredSegments(layout) {
         const values = (layout.values ?? []).map(v => ({ name: v.name, group: v.group, value: v }))
         return ordered(layout.options ?? [], values, true)
@@ -148,7 +148,10 @@ Control {
                 return o
         return fallback
     }
-    readonly property var segments: ordered(JSON.parse(optionShape), valueItems, false)
+    // The crosshair's are on the times line (VisualPointerReadout).
+    readonly property bool pointer: family === 0
+    readonly property var segments: pointer ? []
+        : ordered(JSON.parse(optionShape), valueItems, false).map((g, i) => Object.assign(g, { at: i }))
     // HY1: Hydra's picker slot names the Lines a value changes.
     readonly property bool hydra: family === 10 // Family::Hydra
     // A picked Line is named as one line: it need not be the active one.
@@ -164,58 +167,55 @@ Control {
                + (tools.batchCount > 0 ? (hy ? 0 : picked.implicitWidth + 4) + clear.implicitWidth + 4 : 0)
     }
     readonly property real pickerWidth: pickerWidthOf(family)
-    function batchFamily(f) {
-        return f > 0 && (tools.families[f]?.available ?? false)
-    }
-    // Every family's layout without what does not size it (checked,
+    // The tool's groups without what does not size them (checked,
     // enabled, the chosen entry, the values' numbers): the unseen copies are
-    // made again only when a family's groups change, not on each toggle.
-    readonly property string layoutShape: JSON.stringify(tools.familyLayouts.map(l => l.options === undefined ? {} : {
-        options: l.options.map(o => ({ name: o.name, kind: o.kind, iconRole: o.iconRole, tooltip: o.tooltip,
-                                       group: o.group, choices: o.choices, listEnds: o.listEnds,
-                                       searchable: o.searchable, afterValues: o.afterValues,
-                                       notes: o.notes, sections: o.sections, sectionNames: o.sectionNames,
-                                       checked: false, enabled: false, index: 0 })),
-        values: l.values.map(v => ({ name: v.name, label: v.label, text: "", editable: v.editable,
-                                     group: v.group, unit: v.unit, step: v.step,
-                                     swatch: v.swatch ? "#000000" : "", marked: v.marked === undefined ? undefined : false }))
-    }))
-    readonly property var measuredLayouts: JSON.parse(layoutShape)
-    // The height the panel can spare above its minimum (which counts only
-    // the tool's own lines): the bar holds the tallest family's height as
-    // far as that goes, so in a small window the panel's minimum still fits
-    // the screen and only then does a tool switch resize the video.
-    property real room: Infinity
-    // What the bar holds below its own lines.
-    readonly property real held: Math.max(0, Math.min(reservedHeight - flow.implicitHeight, room))
-    // The tallest family's groups at the width each would have.
-    readonly property real reservedHeight: {
-        let h = 0
+    // made again only when the groups change, not on each toggle or sample.
+    readonly property string measureShape: pointer ? "" : JSON.stringify({
+        options: tools.options.map(o => ({ name: o.name, kind: o.kind, iconRole: o.iconRole, tooltip: o.tooltip,
+                                           group: o.group, choices: o.choices, listEnds: o.listEnds,
+                                           searchable: o.searchable, afterValues: o.afterValues,
+                                           notes: o.notes, sections: o.sections, sectionNames: o.sectionNames,
+                                           checked: false, enabled: false, index: 0 })),
+        values: tools.values.map(v => ({ name: v.name, label: v.label, text: "", editable: v.editable,
+                                         group: v.group, unit: v.unit, step: v.step,
+                                         swatch: v.swatch ? "#000000" : "", marked: v.marked === undefined ? undefined : false }))
+    })
+    // VB1: the groups that fit the line (measured unseen, so what is shown
+    // does not decide what fits), the rest under More options.
+    readonly property real groupsRoom: availableWidth - (batchTool ? pickerWidth : 0)
+    readonly property int fitCount: {
+        const n = segments.length
+        // A bar not laid out yet (hidden for the crosshair until now) folds
+        // nothing: its width comes with its first layout.
+        if (!(availableWidth > 0))
+            return n
+        // Until the unseen copies are the shown groups and laid out, every
+        // group shows (a tool's items are there as soon as it is chosen).
+        const widths = []
+        void measuredItems // the copies are made again with the same count
         for (let i = 0; i < measures.count; ++i) {
             const m = measures.itemAt(i)
-            if (m)
-                h = Math.max(h, m.implicitHeight)
+            if (!m || !(m.implicitWidth > 0))
+                return n
+            widths.push(m.implicitWidth)
         }
-        return h
+        const right = k => widths.slice(0, k).reduce((sum, w) => sum + w, 0) + Math.max(0, k - 1) * groupSpacing
+        if (widths.length !== n || right(n) <= groupsRoom)
+            return n
+        let k = 0
+        while (k < n && right(k + 1) <= groupsRoom - more.implicitWidth - 4)
+            ++k
+        return k
     }
-
-    // The tool, as the rail names it.
-    component ToolName: RowLayout {
-        property int family
-        property string name
-        height: 26
-        spacing: 6
-        Icon {
-            Layout.alignment: Qt.AlignVCenter
-            // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
-            iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][family] ?? ""
-        }
-        Label {
-            Layout.alignment: Qt.AlignVCenter
-            text: name
-            font.bold: true
-        }
-    }
+    readonly property int groupSpacing: 6
+    // Bumped as the unseen copies are made: itemAt() is not a binding's.
+    property int measuredItems: 0
+    readonly property var foldedSegments: segments.slice(fitCount)
+    // The line's height, and whether the tool has one.
+    readonly property real lineHeight: topPadding + 26 + bottomPadding
+    readonly property bool shown: !pointer && (segments.length > 0 || batchTool)
+    implicitHeight: shown ? lineHeight : 0
+    visible: shown
 
     // A group: the rule, its label, its options or values.
     Component {
@@ -224,8 +224,13 @@ Control {
             id: segment
             required property var modelData
             required property int index
-            objectName: modelData.measuring ? ""
-                        : modelData.kind === "options" ? "visualOptionGroup" + index : "visualValueGroup" + index
+            // VB1: a group of the line folded under More options is hidden
+            // there, unnamed (its live copy is in the popover).
+            readonly property bool folded: !modelData.measuring && !(modelData.popover ?? false) && index >= bar.fitCount
+            readonly property bool named: !modelData.measuring && !folded
+            visible: !folded
+            objectName: !named ? ""
+                        : modelData.kind === "options" ? "visualOptionGroup" + modelData.at : "visualValueGroup" + modelData.at
             height: 26
             spacing: 3
             // The rule before a group; none at the start of a line.
@@ -249,6 +254,7 @@ Control {
                 delegate: VisualToolOption {
                     tools: bar.tools
                     measuring: segment.modelData.measuring
+                    named: segment.named
                     live: measuring ? modelData : bar.optionNamed(modelData.name, modelData)
                 }
             }
@@ -259,6 +265,7 @@ Control {
                     Layout.alignment: Qt.AlignVCenter
                     tools: bar.tools
                     measuring: segment.modelData.measuring
+                    named: segment.named
                     name: modelData.name
                     value: segment.modelData.measuring ? modelData.value : bar.valueNamed(modelData.name)
                     accessibleName: [bar.familyInfo.name ?? "", bar.groupName(segment.modelData.group),
@@ -270,25 +277,33 @@ Control {
 
     contentItem: RowLayout {
         spacing: 4
-        Flow {
-            id: flow
+        Row {
+            id: groupsRow
             objectName: "visualToolGroups"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             Layout.preferredWidth: 0
-            Layout.preferredHeight: implicitHeight + bar.held
             Layout.alignment: Qt.AlignTop
-            spacing: 6
-            ToolName {
-                objectName: "visualToolName"
-                family: bar.family
-                name: bar.familyInfo.name ?? ""
-            }
+            clip: true
+            spacing: bar.groupSpacing
             Repeater {
                 id: groups
                 model: bar.segments
                 delegate: segmentDelegate
             }
+        }
+        // VB1: the groups that do not fit, in the popover.
+        IconToolButton {
+            id: more
+            objectName: "visualToolMore"
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 1
+            visible: bar.foldedSegments.length > 0
+            iconRole: "menu-more"
+            text: qsTr("More options")
+            checked: morePopover.visible
+            focusPolicy: Qt.TabFocus
+            onClicked: morePopover.openAt(more)
         }
         // The batch picker: checked while Lines are picked, their number
         // beside it; Clear only while there is a batch.
@@ -348,37 +363,40 @@ Control {
     background: Rectangle {
         color: Theme.panel
     }
-    // Every family's groups, unseen, at the width the bar gives each (less
-    // the picker's slot for a batch tool): reservedHeight is the tallest.
+    // The tool's groups, unseen, each measured whole: fitCount
+    // takes as many as the line has room for.
     Item {
         objectName: "visualToolMeasure"
-        x: bar.leftPadding
-        width: bar.availableWidth
+        width: 0
         height: 0
         clip: true
         opacity: 0
         enabled: false
         Accessible.ignored: true
-        Repeater {
-            id: measures
-            model: bar.measuredLayouts
-            delegate: Flow {
-                required property var modelData
-                required property int index
-                width: Math.max(0, parent.width - (bar.batchFamily(index) ? bar.pickerWidthOf(index) : 0))
-                spacing: 6
-                ToolName {
-                    visible: modelData.options !== undefined
-                    family: index
-                    name: bar.tools.families[index]?.name ?? ""
-                }
-                Repeater {
-                    model: modelData.options !== undefined ? bar.measuredSegments(modelData) : []
-                    delegate: segmentDelegate
-                }
+        Row {
+            Repeater {
+                id: measures
+                model: bar.measureShape.length > 0 ? bar.measuredSegments(JSON.parse(bar.measureShape)) : []
+                delegate: segmentDelegate
+                onItemAdded: ++bar.measuredItems
+                onItemRemoved: ++bar.measuredItems
             }
         }
     }
+    // More options: the folded groups, live, one a line.
+    Popover {
+        id: morePopover
+        objectName: "visualToolMorePopover"
+        title: qsTr("More options")
+        Repeater {
+            model: morePopover.visible ? bar.foldedSegments.map(g => Object.assign({}, g, { popover: true })) : []
+            delegate: segmentDelegate
+        }
+    }
+    // It goes with the tool, and when every group fits again.
+    onFamilyChanged: morePopover.close()
+    onFoldedSegmentsChanged: if (foldedSegments.length === 0) morePopover.close()
+
     // The dialogs a tool opens (its notice, the shape and tag editors), in
     // the window showing them: the Video panel's bar and fullscreen's share
     // one controller, so one bar's at a time (Codex on #293).

@@ -25,6 +25,8 @@ RowLayout {
     required property var value
     // VT1: an unseen copy the bar measures (no names).
     property bool measuring: false
+    // VB1: named, unless unseen (measured, or folded off the bar's line).
+    property bool named: !measuring
     // Assistive technology's name: the tool, the group and the label.
     property string accessibleName: value.label
     readonly property bool editable: value.editable
@@ -46,7 +48,7 @@ RowLayout {
     }
 
     Rectangle {
-        objectName: field.measuring ? "" : "visualValueSwatch_" + field.name
+        objectName: !field.named ? "" : "visualValueSwatch_" + field.name
         visible: (field.value.swatch ?? "").length > 0
         Layout.preferredWidth: 22
         Layout.preferredHeight: 22
@@ -58,7 +60,7 @@ RowLayout {
         Accessible.ignored: true
     }
     Label {
-        objectName: field.measuring ? "" : "visualValueMark_" + field.name
+        objectName: !field.named ? "" : "visualValueMark_" + field.name
         // Its place stays for every value of a tool that marks one, so the
         // mark moving does not move the bar.
         visible: field.value.marked !== undefined && field.editable
@@ -71,7 +73,7 @@ RowLayout {
     }
     Label {
         id: label
-        objectName: field.measuring ? "" : "visualValueLabel_" + field.name
+        objectName: !field.named ? "" : "visualValueLabel_" + field.name
         text: field.value.label
         opacity: field.shown ? 1 : 0
         Accessible.ignored: !field.shown
@@ -94,7 +96,7 @@ RowLayout {
         }
         MouseArea {
             id: scrub
-            objectName: field.measuring ? "" : "visualValueScrub_" + field.name
+            objectName: !field.named ? "" : "visualValueScrub_" + field.name
             anchors.fill: parent
             anchors.margins: -3
             enabled: field.editable && input.enabled
@@ -161,7 +163,7 @@ RowLayout {
     }
     TextField {
         id: input
-        objectName: field.editable && !field.measuring ? "visualValue_" + field.name : ""
+        objectName: field.editable && field.named ? "visualValue_" + field.name : ""
         visible: field.editable
         enabled: field.tools.railEnabled
         // Typed text stays until Enter or Esc: the tool's refreshes (the
@@ -230,7 +232,7 @@ RowLayout {
     // A read-only value keeps a whole coordinate's width, right-aligned, so
     // the groups after it do not move as the pointer crosses the video.
     Label {
-        objectName: field.editable || field.measuring ? "" : "visualValue_" + field.name
+        objectName: field.editable || !field.named ? "" : "visualValue_" + field.name
         visible: !field.editable
         text: field.value.text
         font.features: { "tnum": 1 }
