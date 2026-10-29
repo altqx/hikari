@@ -1,4 +1,4 @@
-# Module skeleton (B3). Target boundaries follow docs/qt/architecture.md; the
+# Module skeleton (B3). Target boundaries follow docs/architecture.md; the
 # allowed dependency directions are enforced by cmake/HikariModules.cmake.
 include("${PROJECT_SOURCE_DIR}/cmake/HikariModules.cmake")
 add_subdirectory(core)

@@ -3,7 +3,7 @@
 // CF1 (#488): an owned TOML file's text (owned_file.h): `version = N` at the
 // top, then its tables. toml++ (MIT) parses and writes it; comments are not
 // kept when HikariSub writes a file. An adapter: the application layer
-// depends on core only (docs/qt/architecture.md).
+// depends on core only (docs/architecture.md).
 
 #include "hikari/application/owned_file.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-// KE2: the Template editor panel (docs/qt/karaoke-templater.md, "The
+// KE2: the Template editor panel (docs/karaoke-templater.md, "The
 // template editor"). It lists the Document's template and code Lines and
 // edits one of them; each edit re-runs the karaoke templater on the current
 // karaoke Line through the templater port, without applying it, and the

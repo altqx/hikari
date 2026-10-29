@@ -1,6 +1,6 @@
 # HikariSub
 
-HikariSub edits subtitle documents and coordinates their text, timing, styles and media context. This glossary records the shared language of the rewrite.
+HikariSub edits subtitle documents and coordinates their text, timing, styles and media context. This glossary records the shared language of the app.
 
 ## Language
 

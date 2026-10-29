@@ -1,6 +1,6 @@
 #pragma once
 
-// SubtitleRenderer port (N3; docs/qt/backends.md). Value records only: the
+// SubtitleRenderer port (N3; docs/backends.md). Value records only: the
 // application prepares an explicit snapshot (script bytes, font-byte leases,
 // configuration) and asks for an overlay at a time and size. The adapter owns
 // the native renderer, serializes it, and returns pixels it no longer writes.

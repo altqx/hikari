@@ -443,7 +443,7 @@ buttons) and `DockTabBar.qml` (Float ↗ and Close × on every tab). Each dock b
    - Unlike MuseScore, also add **Move…** for our keyboard placement dialog, and **disable** Close or
      Float when a panel's flags forbid them. MuseScore shows them anyway.
    - Keep double-click on a header to float or dock.
-   - Name the button "*Panel* options" rather than MuseScore's bare "Menu". docs/qt/docking.md asks
+   - Name the button "*Panel* options" rather than MuseScore's bare "Menu". docs/docking.md asks
      tabs to expose close and float, and named menu items do that.
    - Keep `View → Panels → Show/Hide/Float/Dock` (`Main.qml` 1034–1060). MuseScore has no menu path to
      floating, and ours is better for keyboard users.
@@ -471,7 +471,7 @@ buttons) and `DockTabBar.qml` (Float ↗ and Close × on every tab). Each dock b
    `DropController`. The choice is `ViewFactory::s_dropIndicatorType` (`Classic`, `Segmented` or
    `None`; [KDDW 2.4.1 KDDockWidgets.h] 262–267). The native gate should check `Segmented` with
    `accent` styling first. MuseScore's group restriction (only same-group panels tab together) is
-   optional for us: docs/qt/docking.md allows core panels and tools to tab freely.
+   optional for us: docs/docking.md allows core panels and tools to tab freely.
 8. **Floating groups.**
    - Floating panels keep the same header, so the title bar or tab row is the drag handle.
    - The frameless `Qt::Tool` window with an 8 px drawn shadow depends on a compositor that supports

@@ -34,7 +34,7 @@ if(HIKARI_GLIBCXX_ASSERTIONS)
 endif()
 # CR1 (#452): the package workflows build with debug info, which they split
 # off (Linux .debug files, Windows PDBs) and keep as the release's symbol
-# archives; the packages carry none (docs/qt/crash-reports.md).
+# archives; the packages carry none (docs/crash-reports.md).
 option(HIKARI_DEBUG_SYMBOLS "Build with debug info kept apart from the packages (package CI)" OFF)
 if(HIKARI_DEBUG_SYMBOLS)
     if(MSVC)

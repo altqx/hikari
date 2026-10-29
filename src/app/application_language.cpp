@@ -1,5 +1,5 @@
 // O5: the interface language and the program font, applied live
-// (docs/qt/localisation.md). Legacy reads both when it starts
+// (docs/localisation.md). Legacy reads both when it starts
 // (hikarisubApp.cpp:327-369; the frame's font from Options.GetFont()) and
 // applies the program font live (OptionsDialog.cpp:1105-1112); the card asks
 // for the language to switch live as well.

@@ -1,6 +1,6 @@
 #pragma once
 
-// Open, save and reopen (A2; docs/qt/proposals/application-lifecycle.md).
+// Open, save and reopen (A2; docs/proposals/application-lifecycle.md).
 // Composes staged loading with acknowledged writing:
 // - Opening and reloading stage a replacement first; a failed, cancelled or
 //   stale replacement never touches existing work (L58-staged-replacement).

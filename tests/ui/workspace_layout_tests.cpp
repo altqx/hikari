@@ -243,7 +243,7 @@ private slots:
     void aFloatingPanelSavedOffScreenComesBackOnScreen()
     {
         if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
-            QSKIP("On Wayland the compositor places windows (docs/qt/docking.md)");
+            QSKIP("On Wayland the compositor places windows (docs/docking.md)");
         start();
         QVERIFY(dock("editorDock")->setProperty("isFloating", true));
         QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());

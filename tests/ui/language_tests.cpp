@@ -1,4 +1,4 @@
-// O5 (#197): the interface language over the O4 catalogs (docs/qt/localisation.md).
+// O5 (#197): the interface language over the O4 catalogs (docs/localisation.md).
 // Settings lists English and the embedded catalogs as legacy OptionsDialog
 // does (OptionsDialog.cpp:322-341); the choice is stored in PROGRAM_LANGUAGE
 // and read at start as hikarisubApp.cpp:327-369 reads it, and it switches

@@ -1,4 +1,4 @@
-# K2: the Qt Quick Controls style the theme layer drives (docs/qt/ux/visual-language.md,
+# K2: the Qt Quick Controls style the theme layer drives (docs/ux/visual-language.md,
 # "Hikari theme layer"): Fusion, with every control outline in the theme's
 # boundary colour (the palette's Mid, the `line` role; the high-contrast
 # border pick) instead of Fusion's window colour darkened, which all but

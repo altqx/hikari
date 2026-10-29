@@ -599,11 +599,11 @@ system title bar. Its dialogs are mostly in-window `Dialog` overlays (Settings, 
 notices); a few are separate `Window`s (Style Manager, Automation, Hotkey mapping). Some of the shell's
 pieces already exist:
 
-- the Compact Studio roles and metrics ([visual-language.md](../qt/ux/visual-language.md));
+- the Compact Studio roles and metrics ([visual-language.md](../ux/visual-language.md));
 - dark system title bars that follow the theme on Windows (`title_bars.cpp`);
 - an xdg-decoration client, Hyprland detection, system move and resize, and frameless windows with a
   drawn shadow, all built for floating panels in D3 (`window_decorations.cpp`,
-  [docking.md](../qt/docking.md#chrome)).
+  [docking.md](../docking.md#chrome)).
 
 The mapping below names what to take, and where HikariSub should **deliberately differ** from the
 reference.

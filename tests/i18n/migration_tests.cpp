@@ -1,4 +1,4 @@
-// O4: the PO-to-TS migration (docs/qt/localisation.md, "Keys and migration")
+// O4: the PO-to-TS migration (docs/localisation.md, "Keys and migration")
 // over small fixtures and over the checked-in inputs: Locale/*.po at the
 // recorded commit, i18n/migration/keys.ts and the reviewed keymap.tsv.
 

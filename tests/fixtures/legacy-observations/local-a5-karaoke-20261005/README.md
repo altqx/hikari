@@ -14,7 +14,7 @@ cmake --build <dir> --target legacy_karaoke_capture
 
 ## Compared with the rewrite
 
-`AudioKaraokeCapture.ReplaysTheLegacyObservations` (`hikari_application_audio_karaoke_tests`) replays every case through `AudioKaraoke` and compares every state and answer. All are the same except the approved departures (docs/qt/compatibility-decisions.md, user 2026-10-05), which the capture confirms and the test checks against their outcome:
+`AudioKaraokeCapture.ReplaysTheLegacyObservations` (`hikari_application_audio_karaoke_tests`) replays every case through `AudioKaraoke` and compares every state and answer. All are the same except the approved departures (docs/compatibility-decisions.md, user 2026-10-05), which the capture confirms and the test checks against their outcome:
 
 | Case | Legacy | Rewrite |
 | --- | --- | --- |

@@ -6,7 +6,7 @@
 // GetAssFonts, CheckPathAndGlyphs and CheckOrCopyFonts. What legacy decided
 // through GDI (EnumFontFamiliesEx names, GetFontData bytes matched by size
 // against the Fonts folders, CheckGlyphsExists) is answered by the renderer
-// instead (docs/qt/fonts.md, ADR 0007): the pinned libass resolves each
+// instead (docs/fonts.md, ADR 0007): the pinned libass resolves each
 // family and variant, renders the Documents and reports the bytes, faces,
 // fallbacks and missing glyphs it actually used, and the collected set is
 // re-rendered in a clean environment. A collection the renderer cannot

@@ -1,6 +1,6 @@
 #pragma once
 
-// Source-preserving subtitle document (docs/qt/document-model.md). Sections and
+// Source-preserving subtitle document (docs/document-model.md). Sections and
 // records keep authored order; every record links to its exact source bytes.
 // Records are semantic views over that source, never a competing copy of it.
 

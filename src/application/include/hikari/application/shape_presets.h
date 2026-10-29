@@ -2,7 +2,7 @@
 
 // T5: the drawing tool's shape presets (legacy ShapesSetting, LoadSettings,
 // SaveSettings and the ShapesEdition dialog, HikariSub/VisualDrawingShapes.h
-// and .cpp at 20d647c4; docs/qt/visual-tools.md, "Drawing and shape
+// and .cpp at 20d647c4; docs/visual-tools.md, "Drawing and shape
 // presets"). The presets live in Config/ShapesSettings.txt beside the
 // settings, one "Shape: <name>; <shape>; <mode>; <scaling mode>" line each;
 // without the file legacy's five defaults are used.

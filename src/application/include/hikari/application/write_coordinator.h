@@ -1,6 +1,6 @@
 #pragma once
 
-// Destination and write coordination (F1; docs/qt/proposals/application-lifecycle.md).
+// Destination and write coordination (F1; docs/proposals/application-lifecycle.md).
 // Owns write permits, destination associations and terminal results. It never
 // touches the filesystem itself: a FilePort adapter performs writes (F2), and
 // it never mutates Document content or decides to commit drafts.

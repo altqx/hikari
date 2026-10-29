@@ -1,4 +1,4 @@
-# deb dependencies of the Qt rewrite's host libraries (installers spec 5.4).
+# deb dependencies of HikariSub's host libraries (installers spec 5.4).
 # "<soname> <dependency>"; read by resolve-deps.sh. Every soname the app tree
 # needs from the host must have a line, or the package build fails. The
 # alternatives cover the 64-bit time_t renames (t64) of Ubuntu 24.04 and

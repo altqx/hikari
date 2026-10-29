@@ -1,6 +1,6 @@
 // R2: reference navigation and the subtitles preview (legacy SubsGridPreview,
 // SubsGrid::OnShowPreview, ShowPreviewWindow and ShowSecondComparedLine at
-// 20d647c4; docs/qt/ux/translation-comparison.md).
+// 20d647c4; docs/ux/translation-comparison.md).
 //
 // Legacy drew another tab's grid inside the editing Grid (SubsGridPreview);
 // the rewrite shows that Document in the reference tray as the protected

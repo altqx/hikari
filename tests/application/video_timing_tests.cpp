@@ -266,7 +266,7 @@ std::string describe(const VideoFollow &f)
     return out.str();
 }
 
-// The approved V6 departures (docs/qt/compatibility-decisions.md, user
+// The approved V6 departures (docs/compatibility-decisions.md, user
 // 2026-10-05): each op expects legacy's result with exactly this change, and
 // its legacy observation, kept as the old evidence, must still differ.
 struct Departure {

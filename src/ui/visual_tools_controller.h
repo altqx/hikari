@@ -1,6 +1,6 @@
 #pragma once
 
-// T1: the Video panel's visual tools (docs/qt/visual-tools.md). The tool
+// T1: the Video panel's visual tools (docs/visual-tools.md). The tool
 // rail (accepted layout A on #55) lists legacy VideoToolbar's eleven
 // families and VT3's Perspective; the active tool gets the pointer over the video and the panel's
 // keys, and draws through the overlay. This controller is the tools'

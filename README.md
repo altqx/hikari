@@ -15,7 +15,7 @@
 </picture>
 <p align="center"><sub>Subtitles: Jibrill</sub></p>
 
-This is the Qt rewrite, version 0.1, on the `main` branch. The wxWidgets app it replaces, [HikariSub legacy](https://github.com/altqx/hikari/tree/legacy) (0.0.x), is still maintained.
+This is HikariSub 0.1, on the `main` branch. The wxWidgets app it replaces, [HikariSub legacy](https://github.com/altqx/hikari/tree/legacy) (0.0.x), is still maintained.
 
 ## Features
 
@@ -166,13 +166,13 @@ There is no Qt release yet; the first will be 0.1.0-beta.1. Each release will pu
 | Windows 10 (1809) or 11, x64 | `HikariSub-<version>-windows-x64-setup.exe` installer or `.zip` portable |
 | Linux x86_64, glibc 2.34 or later | `.AppImage`, `.deb`, `.rpm` or `.tar.gz` portable |
 
-Nothing is code-signed; each release lists SHA-256 sums in `SHA256SUMS`. HikariSub legacy users will be offered the update once it is out. [docs/qt/distribution.md](docs/qt/distribution.md) covers each package.
+Nothing is code-signed; each release lists SHA-256 sums in `SHA256SUMS`. HikariSub legacy users will be offered the update once it is out. [docs/distribution.md](docs/distribution.md) covers each package.
 
 ## Updates and privacy
 
-HikariSub sends **anonymous usage data** to PostHog Cloud EU: which features and panels are used, errors and crashes, and how fast things open. It never sends your files, their names or paths, subtitle or script text, Style or font names, or anything you typed. Events go under a random install id, with no person profile and no location lookup, and the PostHog project discards IP addresses. Only release packages send. Turn it off in **Settings > Updates and privacy > Send anonymous usage data** or in Getting started; `DO_NOT_TRACK=1` turns it off for one run. [docs/qt/analytics.md](docs/qt/analytics.md) lists every event and property.
+HikariSub sends **anonymous usage data** to PostHog Cloud EU: which features and panels are used, errors and crashes, and how fast things open. It never sends your files, their names or paths, subtitle or script text, Style or font names, or anything you typed. Events go under a random install id, with no person profile and no location lookup, and the PostHog project discards IP addresses. Only release packages send. Turn it off in **Settings > Updates and privacy > Send anonymous usage data** or in Getting started; `DO_NOT_TRACK=1` turns it off for one run. [docs/analytics.md](docs/analytics.md) lists every event and property.
 
-After a crash or a freeze, HikariSub shows the whole report it built: what crashed, your system, a settings summary and the last Log lines, with file names replaced. It is sent only when you press **Send report** (with usage data off too), or taken to a GitHub issue with **Open GitHub issue**; **Settings > Updates and privacy > Always send crash reports** sends it without asking. **Help > Report an issue** fills in a GitHub issue form for a bug, a feature request or a question. [docs/qt/crash-reports.md](docs/qt/crash-reports.md) has the details.
+After a crash or a freeze, HikariSub shows the whole report it built: what crashed, your system, a settings summary and the last Log lines, with file names replaced. It is sent only when you press **Send report** (with usage data off too), or taken to a GitHub issue with **Open GitHub issue**; **Settings > Updates and privacy > Always send crash reports** sends it without asking. **Help > Report an issue** fills in a GitHub issue form for a bug, a feature request or a question. [docs/crash-reports.md](docs/crash-reports.md) has the details.
 
 HikariSub looks for updates only when you choose **Help > Check for updates**, or once a day at most after you turn on **Settings > Updates and privacy > Check for updates automatically** (settings imported from legacy keep legacy's choice). The installer, AppImage, deb and rpm download the update, check its SHA-256 and install it when you choose Restart now or quit.
 
@@ -199,7 +199,7 @@ cd hikari
 cmake --workflow --preset ubuntu-x64-release   # or fedora-x64-release, windows-x64-release
 ```
 
-You need Git, CMake 3.28, Ninja, GCC or the latest MSVC, and a Qt Account login (or `QT_INSTALLER_JWT_TOKEN`) for the Qt installer. [docs/qt/build.md](docs/qt/build.md) lists the Linux packages and the other presets.
+You need Git, CMake 3.28, Ninja, GCC or the latest MSVC, and a Qt Account login (or `QT_INSTALLER_JWT_TOKEN`) for the Qt installer. [docs/build.md](docs/build.md) lists the Linux packages and the other presets.
 
 ## License
 

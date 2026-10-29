@@ -1,5 +1,5 @@
 // F1: find and replace as the persistent Search tool
-// (docs/qt/ux/reviewed-surface-layouts.md, Search: "B — Scope rail"): the
+// (docs/ux/reviewed-surface-layouts.md, Search: "B — Scope rail"): the
 // scope and query controls of legacy FindReplaceDialog's Find, Find and
 // replace and Find in subtitles tabs on the left, the results of
 // FindReplaceResultsDialog and their change review (checks, Replace) on the

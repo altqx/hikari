@@ -619,7 +619,7 @@ def dismiss_notices():
 
 
 # ---------------------------------------------------------------- D3 chrome
-# docs/qt/docking.md "Chrome": one 35-pixel header per group (a lone panel's
+# docs/docking.md "Chrome": one 35-pixel header per group (a lone panel's
 # title bar, or tabs), its "⋯" button named "<panel> options" opening the
 # panel's menu (Move panel…, Undock or Dock, Close); floating panels are
 # borderless with a drawn 8-pixel shadow, resized from it through the window
@@ -1828,7 +1828,7 @@ def shift_tab_to(role, name, tries=3):
 
 
 def step_header_keys():
-    """The header from the keyboard (docs/qt/docking.md, Keyboard and
+    """The header from the keyboard (docs/docking.md, Keyboard and
     names): Shift+Tab from inside the Grid reaches its selected tab, Right
     its "⋯" button, Space opens the menu, Escape closes it; the menu's
     Undock floats the Grid and, from the floating Grid, Dock docks it. A
@@ -1874,7 +1874,7 @@ def step_header_keys():
             f"Space, Down, Down, Return on 'Grid options' -> own window={floated}; in the floating Grid Shift+Tab "
             f"x{n2 or 'never'}, Right -> {f2}; its menu {m2}; Down, Down, Return -> docked={docked}", ev1 + ev2)
     # A title bar: Shift+Tab from the Video panel's first control reaches
-    # its button (docs/qt/docking.md). F6 focuses the panel itself, whose
+    # its button (docs/docking.md). F6 focuses the panel itself, whose
     # place in the Tab chain is not its content's (pre-D3 already: Tab from
     # there leaves the panel), so where Shift+Tab goes from there is noted.
     focus_main()

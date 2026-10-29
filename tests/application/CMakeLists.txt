@@ -113,7 +113,7 @@ hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cp
 hikari_add_gtest(hikari_application_hotkeys_tests SOURCES hotkeys_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
-    HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map/actions.csv")
+    HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/proposals/settings-migration-map/actions.csv")
 # A3: the audio box's timing.
 hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -174,7 +174,7 @@ target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
 hikari_add_gtest(hikari_application_settings_import_tests SOURCES settings_import_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_settings_import_tests PRIVATE
-    HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map")
+    HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/proposals/settings-migration-map")
 # Y6: Font catalogs (FontCatalogs.txt grammar, operations), the picker's
 # family lists and filter, and the external fonts folder.
 hikari_add_gtest(hikari_application_font_catalogs_tests SOURCES font_catalogs_tests.cpp

@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 // PK1 (#301): a popover, one of the kit's four kinds of popup
-// (docs/qt/ux/visual-language.md "Popups"): anchored to the control that
+// (docs/ux/visual-language.md "Popups"): anchored to the control that
 // opened it, below it, or above it where there is no room below; centred
 // in the window without one. The colour popover's surface
 // (PopoverBackground) with its padding of 12.

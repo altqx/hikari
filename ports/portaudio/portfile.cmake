@@ -19,7 +19,7 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
 )
 
 vcpkg_list(SET options)
-# Hikari pins the host APIs (docs/qt/media.md): WASAPI, plus DirectSound,
+# Hikari pins the host APIs (docs/media.md): WASAPI, plus DirectSound,
 # which the legacy app used, on Windows; ALSA on Linux, which PipeWire and
 # PulseAudio desktops serve through their ALSA plugins. No JACK, ASIO, WDM-KS
 # or MME, and no PulseAudio host API.

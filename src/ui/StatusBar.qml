@@ -7,7 +7,7 @@ import Hikari.Ui
 
 // P10 (#200): legacy's status bar (HikariStatusBar; its nine fields set up at
 // HikariSubFrame.cpp:150-155), in the accepted Classic shell's status strip
-// (docs/qt/ux/visual-language.md: padding 7 / 12, gap 14, the status text
+// (docs/ux/visual-language.md: padding 7 / 12, gap 14, the status text
 // role). Legacy's order and widths: the first field, help and progress text,
 // takes 12 parts of the width the others leave, the last, the video file
 // name, 22 parts (HikariStatusBar::CalcWidths with widths {-12, 0, ..., -22});

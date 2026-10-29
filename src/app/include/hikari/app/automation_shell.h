@@ -1,6 +1,6 @@
 #pragma once
 
-// Automation composed into the shell (S1; docs/qt/automation.md). The
+// Automation composed into the shell (S1; docs/automation.md). The
 // automation manager runs one macro at a time on the editing target: the
 // target is snapshotted (a pending draft committed first), read-only while the
 // macro runs, and the macro's staged result applies as one undo step (L4).

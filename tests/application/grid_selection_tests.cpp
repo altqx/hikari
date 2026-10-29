@@ -1,4 +1,4 @@
-// G1: Grid selection gestures over stable LineIds (docs/qt/ux/grid-operations.md;
+// G1: Grid selection gestures over stable LineIds (docs/ux/grid-operations.md;
 // legacy SubsGridWindow at 20d647c4). Destinations follow the displayed order;
 // range membership is the Document-order interval, hidden Lines included.
 

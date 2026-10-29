@@ -483,7 +483,7 @@ void setUpView(TestHost &host, const ProbeCase &c)
     }
 }
 
-// Approved departures (docs/qt/compatibility-decisions.md) where a dump's
+// Approved departures (docs/compatibility-decisions.md) where a dump's
 // legacy value is kept as the old evidence and the rewrite expects another.
 struct Departure {
     std::string caseName;

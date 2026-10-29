@@ -1,6 +1,6 @@
 # D1/D3 native gate harness (Linux)
 
-Observes the native gate in [docs/qt/docking.md](../../docs/qt/docking.md)
+Observes the native gate in [docs/docking.md](../../docs/docking.md)
 ("Required native gate and review") for card D1 (#152) on real Linux
 compositors without touching the developer's desktop: every compositor runs
 headless inside a container and HikariSub runs as a client of it.

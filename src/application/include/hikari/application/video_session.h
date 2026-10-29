@@ -1,6 +1,6 @@
 #pragma once
 
-// Indexed video for the editing target (I1; docs/qt/media.md). Opening
+// Indexed video for the editing target (I1; docs/media.md). Opening
 // indexes the source; showing a frame decodes it, renders the subtitle
 // overlay at that frame's start time and submits both to the presenter.
 // Seeking to a Line shows the first frame at or after its start (the first

@@ -1,4 +1,4 @@
-// K2: the Hikari theme layer (src/ui/theme.h, docs/qt/ux/visual-language.md,
+// K2: the Hikari theme layer (src/ui/theme.h, docs/ux/visual-language.md,
 // the user's 2026-10-05 decision after MuseScore 4's appearance model,
 // docs/research/musescore-appearance.md). The four themes' role tables (Light
 // and Dark the spec's tokens, High contrast black the spec's high-contrast

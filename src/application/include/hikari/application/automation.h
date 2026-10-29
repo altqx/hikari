@@ -1,6 +1,6 @@
 #pragma once
 
-// Plain data crossing the automation boundary (N8; docs/qt/automation.md).
+// Plain data crossing the automation boundary (N8; docs/automation.md).
 // A script dialog is decoded from Lua by the helper (the compatibility
 // adapter, which applies the legacy coercions) into this description; the
 // application renders it with fixed QML controls and answers with typed
@@ -159,7 +159,7 @@ struct MacroResult {
     std::string report;
 };
 
-// A host service a running macro asks for (L3; docs/qt/automation.md). The
+// A host service a running macro asks for (L3; docs/automation.md). The
 // helper decodes the Lua arguments with the legacy rules and the application
 // answers asynchronously, once; the GUI keeps running while the script waits.
 // Per service (positions are 0-based UTF-16 offsets in the Line editor):

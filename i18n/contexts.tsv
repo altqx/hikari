@@ -1,4 +1,4 @@
-# O6: the translation contexts of the interface (docs/qt/localisation.md, "Keys and migration").
+# O6: the translation contexts of the interface (docs/localisation.md, "Keys and migration").
 # A string is keyed by the surface it belongs to, not by the QML file or C++ class that holds it, so moving
 # code keeps its translations. QML: a file of one surface sets `pragma Translator: "<context>"` and calls qsTr;
 # a string of another surface in it calls qsTranslate("<context>", ...). C++: QCoreApplication::translate

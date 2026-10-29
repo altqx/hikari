@@ -1,5 +1,5 @@
 # W1: the deployment manifest of the optional DirectShow playback adapter
-# (docs/qt/proposals/backend-interfaces.md: manifests enumerate dynamically
+# (docs/proposals/backend-interfaces.md: manifests enumerate dynamically
 # loaded native libraries). Read from hikari_directshow_probe, the adapter
 # alone in an executable:
 # - static: the DirectShow base classes it compiles in (Thirdparty/BaseClasses,
