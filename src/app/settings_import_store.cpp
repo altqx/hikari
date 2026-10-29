@@ -208,10 +208,14 @@ void mergeInto(Map &out, const Map &base, const Map &target)
 
 // A setting at its default is the same as one not set: the settings files
 // hold no defaults (CF1), so a base staged from hikari.ini, which could,
-// compares equal to the converted live profile.
+// compares equal to the converted live profile. Not the main and audio
+// shortcuts: an empty list there is every default taken away, and not set
+// is the defaults.
 si::Profile withoutDefaults(si::Profile profile)
 {
     std::erase_if(profile.values, [](const auto &entry) {
+        if (entry.first == application::kHotkeysSetting || entry.first == application::kAudioHotkeysSetting)
+            return false;
         const auto *def = application::findSetting(entry.first);
         return def && application::convertSetting(entry.second, def->type) == def->defaultValue;
     });

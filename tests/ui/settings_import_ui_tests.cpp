@@ -293,6 +293,28 @@ private slots:
         QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial"));
     }
 
+    // Every audio shortcut taken away is an empty list, not the defaults: an
+    // import that leaves the audio shortcuts keeps it.
+    void noAudioShortcutsStayThroughAnImport()
+    {
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        {
+            Session s(folder.path());
+            s.settings->set(application::kAudioHotkeysSetting.data(), QStringList());
+            QVERIFY(s.settings->isSet(QString::fromLatin1(application::kAudioHotkeysSetting.data())));
+            const Review r = review(*s.store, legacy.dir.path());
+            QCOMPARE(SettingsImportStore::Result(s.store->activate(r.plan, si::proposedRows(r.plan), r.snapshot,
+                                                                   r.revision)),
+                     SettingsImportStore::Result::Activated);
+        }
+        Session next(folder.path());
+        QVERIFY(next.store->recover());
+        QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial"));
+        QVERIFY(next.settings->isSet(QString::fromLatin1(application::kAudioHotkeysSetting.data())));
+        QVERIFY(next.settings->list(application::kAudioHotkeysSetting.data()).isEmpty());
+    }
+
     void repeatedImportIsANoOp()
     {
         LegacyRoot legacy;
