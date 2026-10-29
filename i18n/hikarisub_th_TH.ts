@@ -8662,13 +8662,21 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>1: End-of-line wrapping, only N breaks</source>
-        <translation>1: แบ่งที่ท้ายบรรทัด ขึ้นบรรทัดใหม่เฉพาะ N</translation>
+        <translation type="vanished">1: แบ่งที่ท้ายบรรทัด ขึ้นบรรทัดใหม่เฉพาะ N</translation>
     </message>
     <message>
         <source>2: No wrapping, both 
  and N break</source>
-        <translation>2: ไม่แบ่งบรรทัด ขึ้นบรรทัดใหม่ทั้ง 
+        <translation type="vanished">2: ไม่แบ่งบรรทัด ขึ้นบรรทัดใหม่ทั้ง 
  และ N</translation>
+    </message>
+    <message>
+        <source>1: End-of-line wrapping, only %1 breaks</source>
+        <translation>1: แบ่งที่ท้ายบรรทัด ขึ้นบรรทัดใหม่เฉพาะ %1</translation>
+    </message>
+    <message>
+        <source>2: No wrapping, both %1 and %2 break</source>
+        <translation>2: ไม่แบ่งบรรทัด ขึ้นบรรทัดใหม่ทั้ง %1 และ %2</translation>
     </message>
     <message>
         <source>3: Auto, bottom line wider</source>

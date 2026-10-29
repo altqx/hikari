@@ -8708,13 +8708,21 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>1: End-of-line wrapping, only N breaks</source>
-        <translation>1: வரி இறுதியில் மடக்குதல், N மட்டுமே முறிக்கும்</translation>
+        <translation type="vanished">1: வரி இறுதியில் மடக்குதல், N மட்டுமே முறிக்கும்</translation>
     </message>
     <message>
         <source>2: No wrapping, both 
  and N break</source>
-        <translation>2: மடக்குதல் இல்லை, 
+        <translation type="vanished">2: மடக்குதல் இல்லை, 
  மற்றும் N இரண்டும் முறிக்கும்</translation>
+    </message>
+    <message>
+        <source>1: End-of-line wrapping, only %1 breaks</source>
+        <translation>1: வரி இறுதியில் மடக்குதல், %1 மட்டுமே முறிக்கும்</translation>
+    </message>
+    <message>
+        <source>2: No wrapping, both %1 and %2 break</source>
+        <translation>2: மடக்குதல் இல்லை, %1 மற்றும் %2 இரண்டும் முறிக்கும்</translation>
     </message>
     <message>
         <source>3: Auto, bottom line wider</source>

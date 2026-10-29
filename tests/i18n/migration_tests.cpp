@@ -547,8 +547,11 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
                     std::ranges::all_of(m.translations, [](const QString &t) { return t.isEmpty(); }))
                     continue;
                 ASSERT_NE(now, nullptr) << language.toStdString() << " " << m.source.toStdString();
-                // A translator finished it since (TR1 #475).
-                if (m.state == TsState::Unfinished && now->state == TsState::Finished)
+                // A translator finished it since (TR1 #475), and the sources
+                // may have dropped its key after that: lupdate keeps a
+                // finished entry's text as vanished (#477, the wrap styles'
+                // escaped keys).
+                if (m.state == TsState::Unfinished && (now->state == TsState::Finished || now->state == TsState::Vanished))
                     continue;
                 // A translator may revise a finished one (TR1 #475): the key
                 // and its state stay, its text is theirs.
