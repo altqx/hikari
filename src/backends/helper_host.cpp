@@ -74,7 +74,7 @@ void HelperHost::readOutput()
 {
     const QByteArray data = m_process.readAllStandardOutput();
     if (m_stopping)
-        return; // a deliberate stop: replies racing it are dropped
+        return;
     m_decoder.feed(reinterpret_cast<const std::byte *>(data.constData()), static_cast<std::size_t>(data.size()));
     while (auto frame = m_decoder.next()) {
         if (m_state == State::Starting) {
@@ -84,7 +84,6 @@ void HelperHost::readOutput()
             }
             m_name = QString::fromStdString(textOf(frame->payload));
             if (frame->code != m_version) {
-                // Refuse before any work: the helper exits on Refuse.
                 write(Frame{Kind::Refuse, static_cast<std::uint16_t>(m_version), 0, 0, 0, {}});
                 m_state = State::Refused;
                 flush();
@@ -105,14 +104,14 @@ void HelperHost::readOutput()
                            (frame->kind == Kind::Reply || frame->kind == Kind::Progress ||
                             frame->kind == Kind::Service || frame->kind == Kind::Terminal);
         if (!known || (frame->kind == Kind::Service && frame->payload.size() < 8)) {
-            ++m_rejected; // late, duplicated, foreign-session, unknown or malformed
+            ++m_rejected;
             continue;
         }
         if (frame->kind == Kind::Service) {
             Reader r(frame->payload);
             const auto call = static_cast<std::uint64_t>(r.i64());
             if (!it->second.calls.insert(call).second) {
-                ++m_rejected; // a call ID reused while unanswered
+                ++m_rejected;
                 continue;
             }
             frame->payload.erase(frame->payload.begin(), frame->payload.begin() + 8);
@@ -129,7 +128,7 @@ void HelperHost::readOutput()
         }
     }
     if (m_decoder.failed())
-        stop(); // a broken stream ends the session
+        stop();
 }
 
 std::expected<std::uint64_t, HostError> HelperHost::request(std::uint64_t run, std::vector<std::byte> payload,
@@ -179,10 +178,9 @@ void HelperHost::readDiagnostics()
 
 void HelperHost::stop()
 {
-    // Requests pending now resolve HelperLost, even if their replies are
-    // already in the pipe (waitForFinished reads output while it waits).
+    // waitForFinished reads output while it waits; m_stopping drops those replies.
     m_stopping = true;
-    m_outgoing.clear(); // the helper is killed; nothing more reaches it
+    m_outgoing.clear();
     if (m_process.state() != QProcess::NotRunning) {
         m_process.kill();
         m_process.waitForFinished(2000);
@@ -193,11 +191,10 @@ void HelperHost::stop()
 
 void HelperHost::fail()
 {
-    readDiagnostics(); // keep the last words of a helper that died
+    readDiagnostics();
     const bool wasLive = m_state == State::Ready || m_state == State::Starting;
     if (m_state != State::Refused)
         m_state = State::Lost;
-    // Resolve every pending request once, then forget them.
     auto pending = std::move(m_pending);
     m_pending.clear();
     m_pendingBytes = 0;
@@ -207,4 +204,4 @@ void HelperHost::fail()
         emit lost();
 }
 
-} // namespace hikari::backends::helper
+}

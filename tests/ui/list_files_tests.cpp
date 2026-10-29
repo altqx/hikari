@@ -1,11 +1,3 @@
-// CF2 (#489): the user's lists as TOML files (list_files.h). Each legacy
-// file converts once into its TOML file and reads back the values legacy
-// read; an edit is saved and read back, keeping what this version does not
-// know; a file that does not read is kept as <name>.broken and the list
-// takes its defaults, also when it is found at writing; a folder in the
-// file's place, an unreadable legacy file and another HikariSub holding the
-// folder's lock (also at the conversion) are no harm.
-
 #include "hikari/app/settings_import_store.h"
 #include "list_files.h"
 #include "toml_file.h"
@@ -49,8 +41,6 @@ QString fixture(const char *name)
     return QStringLiteral(HIKARI_LIST_FIXTURES "/") + QLatin1String(name);
 }
 
-// The four lists: their files, the legacy fixture, and the legacy reader
-// the app converts with.
 enum class Kind { Rules, Shapes, Tags, FontCatalogs };
 
 struct List {
@@ -96,9 +86,8 @@ List listOf(Kind kind)
             }};
 }
 
-// What a ListFile reported.
 struct Reports {
-    QStringList converted; // "<legacy> -> <file>"
+    QStringList converted;
     std::vector<application::FileProblem> problems;
     std::vector<application::FileProblem> replaced;
     ListFile::Report report()
@@ -118,8 +107,6 @@ std::shared_ptr<ListFile> open(const QTemporaryDir &dir, const List &list, Repor
                           list.convert, reports ? reports->report() : ListFile::Report{});
 }
 
-// The values legacy read from the fixture, and what the TOML items read
-// as, in one form to compare: each item's fields.
 template <class Item, class From> std::vector<Item> valuesOf(const toml::array &items, From from)
 {
     auto read = from(items);
@@ -148,7 +135,6 @@ bool sameAsLegacy(Kind kind, const QString &legacyFile, const toml::array &items
     });
 }
 
-// An edit of each list: its first item changed, an item added.
 toml::array edited(Kind kind, const toml::array &items)
 {
     switch (kind) {
@@ -184,7 +170,7 @@ toml::array edited(Kind kind, const toml::array &items)
     return ui::fontCatalogsToToml(catalogs);
 }
 
-} // namespace
+}
 
 class ListFilesTests : public QObject {
     Q_OBJECT
@@ -199,8 +185,6 @@ private slots:
         QTest::newRow("font catalogs") << int(Kind::FontCatalogs);
     }
 
-    // The legacy file converts once: the new file holds what legacy read,
-    // the old one is kept as <name>.old byte for byte and never written.
     void legacyFileConvertsOnce_data() { eachList_data(); }
     void legacyFileConvertsOnce()
     {
@@ -212,7 +196,6 @@ private slots:
         const QByteArray bytes = readAll(list.fixture);
         QVERIFY(!bytes.isEmpty());
         QVERIFY(writeAll(legacy, bytes));
-        // The values legacy read from it, before it is moved.
         QVERIFY(QFile::copy(legacy, dir.filePath(QStringLiteral("expected"))));
 
         Reports reports;
@@ -227,8 +210,6 @@ private slots:
         QCOMPARE(readAll(legacy + QStringLiteral(".old")), bytes);
         QVERIFY(readAll(dir.filePath(QLatin1String(list.file))).startsWith("version = 1\n"));
 
-        // The next start reads the TOML file, and a legacy file put back is
-        // left alone.
         QVERIFY(writeAll(legacy, "stale"));
         Reports again;
         auto next = open(dir, list, &again);
@@ -239,9 +220,6 @@ private slots:
         QCOMPARE(readAll(legacy), QByteArray("stale"));
     }
 
-    // An edit written and read back; the keys this version does not know
-    // stay (the file's own above the list, an item's on the item of its
-    // name), and a known option turned off stays off.
     void editsRoundTripKeepingUnknownKeys_data() { eachList_data(); }
     void editsRoundTripKeepingUnknownKeys()
     {
@@ -254,7 +232,6 @@ private slots:
         auto items = file->read();
         QVERIFY(items);
 
-        // A later version's keys, put in by hand.
         const QString path = dir.filePath(QLatin1String(list.file));
         auto parsed = ui::parseTomlFile(readAll(path).toStdString(), ListFile::kVersion);
         auto table = std::get<toml::table>(parsed);
@@ -270,16 +247,12 @@ private slots:
         QVERIFY(QByteArray::fromStdString(ui::listFileText(list.format, *back)).contains("colour = \"red\""));
         const QByteArray text = readAll(path);
         QVERIFY2(text.startsWith("version = 1\n\nlater = \"kept\"\n\n["), text.constData());
-        // The written list is the edit: its items with the unknown key aside.
         auto withoutColour = *back;
         withoutColour.get(0)->as_table()->erase("colour");
         QCOMPARE(QByteArray::fromStdString(ui::listFileText(list.format, withoutColour)),
                  QByteArray::fromStdString(ui::listFileText(list.format, changed)));
     }
 
-    // A file that does not read is kept as <name>.broken (then
-    // <name>.broken-2), reported where it fails, and the list takes its
-    // defaults until it is written again.
     void brokenFileIsKeptAside_data()
     {
         QTest::addColumn<int>("kind");
@@ -326,15 +299,12 @@ private slots:
         QCOMPARE(readAll(path + QStringLiteral(".broken-2")), text);
         QCOMPARE(readAll(path + QStringLiteral(".broken")), QByteArray("an earlier one"));
         QVERIFY(!QFileInfo::exists(path));
-        // The next save writes a good file.
         QCOMPARE(file->write(toml::array()), ListFile::Write::Written);
         QCOMPARE(readAll(path), QByteArray("version = 1\n\n" + QByteArray(list.format.array.data(),
                                                                         qsizetype(list.format.array.size())) +
                                            " = []\n"));
     }
 
-    // A folder where the file should be cannot be read or moved: the
-    // defaults, said once, and nothing is written over it.
     void folderInTheFilesPlace_data() { eachList_data(); }
     void folderInTheFilesPlace()
     {
@@ -354,8 +324,6 @@ private slots:
         QVERIFY(QFileInfo(path).isDir());
     }
 
-    // A legacy file that cannot be read is not converted or renamed, and
-    // the list is not written this session: the next start tries again.
     void unreadableLegacyFileIsLeft_data() { eachList_data(); }
     void unreadableLegacyFileIsLeft()
     {
@@ -365,7 +333,6 @@ private slots:
         QVERIFY(dir.isValid());
         const QString legacy = dir.filePath(QLatin1String(list.legacy));
         QVERIFY(QFile::copy(list.fixture, legacy));
-        // Windows and root keep read access whatever setPermissions asks.
         if (QFile probe(legacy); !QFile::setPermissions(legacy, {}) || probe.open(QIODevice::ReadOnly)) {
             QFile::setPermissions(legacy, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
             QSKIP("the file reads without permissions (Windows, root, or a file system without them)");
@@ -385,8 +352,6 @@ private slots:
         QVERIFY(QFileInfo::exists(legacy + QStringLiteral(".old")));
     }
 
-    // The converted file is as private as the legacy one; a rewrite keeps
-    // the file's permissions.
     void permissionsCarryOver()
     {
 #ifdef _WIN32
@@ -398,8 +363,7 @@ private slots:
         const QString legacy = dir.filePath(QLatin1String(list.legacy));
         QVERIFY(QFile::copy(list.fixture, legacy));
         const auto owner = QFileDevice::ReadOwner | QFileDevice::WriteOwner;
-        // The owner's, the group's and the others' (not the user's, which
-        // repeat the owner's here).
+        // Qt's user bits repeat the owner's on Unix: compare owner, group and others.
         const auto mode = [](QFileDevice::Permissions p) { return p.toInt() & 0x7077; };
         QVERIFY(QFile::setPermissions(legacy, owner));
         auto file = open(dir, list);
@@ -413,8 +377,6 @@ private slots:
 #endif
     }
 
-    // While another HikariSub holds the folder's lock the list waits, and
-    // is written once the lock is free.
     void lockedFolderIsWrittenLater()
     {
         const List list = listOf(Kind::Shapes);
@@ -434,7 +396,6 @@ private slots:
         QCOMPARE(open(dir, list)->read()->size(), shapes.size());
     }
 
-    // What this HikariSub wrote while waiting for the lock is what it reads.
     void listWaitingForTheLockIsRead()
     {
         const List list = listOf(Kind::Tags);
@@ -454,10 +415,6 @@ private slots:
         QCOMPARE(*open(dir, list)->read(), one);
     }
 
-    // The conversion is under the folder's lock, so two HikariSubs starting
-    // at once convert once: while another holds it, nothing moves and the
-    // legacy file's items are read; the next read converts, and a list
-    // written meanwhile goes over the conversion.
     void conversionWaitsForTheLock_data() { eachList_data(); }
     void conversionWaitsForTheLock()
     {
@@ -485,7 +442,6 @@ private slots:
         QCOMPARE(reports.converted.size(), 1);
         QVERIFY(reports.problems.empty());
 
-        // Written while the conversion waits: converted first, then this list.
         QTemporaryDir later;
         QVERIFY(later.isValid());
         const QString laterLegacy = later.filePath(QLatin1String(list.legacy));
@@ -502,8 +458,6 @@ private slots:
         QCOMPARE(*open(later, list)->read(), one);
     }
 
-    // A file found broken when it is written (an autosave is never read) is
-    // kept aside and said, and the list is written in its place.
     void brokenFileFoundAtWritingIsKeptAside()
     {
         const List list = listOf(Kind::FontCatalogs);
@@ -522,8 +476,6 @@ private slots:
         QCOMPARE(*open(dir, list)->read(), catalogs);
     }
 
-    // The fields as they are written: named choices, a choice legacy could
-    // hold without a name as its number, floats in their shortest form.
     void fieldsAreNamed()
     {
         const List shapes = listOf(Kind::Shapes);
@@ -559,8 +511,6 @@ private slots:
                  rulesText.constData());
     }
 
-    // The font catalog window's Load reads a fonts.toml (or an autosave)
-    // as one; other text is legacy's.
     void fontCatalogsFromText()
     {
         const auto toml = ui::fontCatalogsFromText("version = 1\n[[catalog]]\nname = \"A\"\nfonts = [\"Arial\", \"Arial\", \"Ż\"]\n");

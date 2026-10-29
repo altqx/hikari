@@ -40,4 +40,4 @@ std::int64_t processResidentBytes(std::int64_t pid)
 #endif
 }
 
-} // namespace hikari::backends
+}

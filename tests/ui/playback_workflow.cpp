@@ -1,14 +1,3 @@
-// V1 workflow through the real UI (Spix): load the associated video, Play
-// through the general player (its frames are shown, with the overlay), then
-// Pause: the indexed frame shown is the one whose interval holds the last
-// delivered frame (the accepted I4 handoff), read from the barcode each
-// fixture frame carries. Stop returns to the first frame. While playing
-// there is one change notification per frame shown, and the texts update at
-// about 10 Hz (V1); the status, the times and the seek bar follow the
-// player's frame, and a click on the seek bar seeks the player, which goes
-// on from there without ever stepping back (the bar's following never
-// seeks). The GUI thread's CPU time while playing is reported.
-
 #include "hikari/app/application.h"
 #include "hikari/application/ycbcr_frame.h"
 #include "docking.h"
@@ -55,8 +44,6 @@ namespace {
 
 int barcode(const hikari::application::IndexedFrame &shown)
 {
-    // A player frame may be kept as Y'CbCr planes for the presenter's shader:
-    // read it as the CPU conversion shows it.
     hikari::application::IndexedFrame converted;
     const auto &f = shown.ycbcr && hikari::application::ycbcrToBgra(shown, converted) ? converted : shown;
     const QImage image =
@@ -72,10 +59,10 @@ int barcode(const hikari::application::IndexedFrame &shown)
     return value;
 }
 
-// The GUI thread's CPU time, read from the test server's thread.
 class GuiThreadClock {
 public:
-    GuiThreadClock() // on the GUI thread
+    // MUST KILL: the constructor captures the calling thread, so it must be built on the GUI thread
+    GuiThreadClock()
     {
 #ifdef _WIN32
         DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &m_thread,
@@ -120,20 +107,19 @@ private:
 
 GuiThreadClock *g_guiClock = nullptr;
 
-// What the Video panel last presented, recorded on the GUI thread.
 struct Shown {
     int frame = -1;
     int barcode = -1;
     bool overlay = false;
     bool accepted = false;
-    int generalFrames = 0;   // player frames shown so far
+    int generalFrames = 0;
     int lastGeneralBarcode = -1;
-    int changes = 0; // V1: the panel's change notifications
-    int texts = 0;   // and its texts' (times, status)
-    int tools = 0;   // the visual tools' change notifications
-    int statusBar = 0; // the status bar's
-    std::vector<int> generalBarcodes; // each player frame shown, in order
-    // Held, so a later frame can never reuse its address and pass as it.
+    int changes = 0;
+    int texts = 0;
+    int tools = 0;
+    int statusBar = 0;
+    std::vector<int> generalBarcodes;
+    // MUST KILL: frames are told apart by address; lastGeneral is held only so that address is never reused
     std::shared_ptr<const hikari::application::IndexedFrame> lastGeneral;
 };
 
@@ -146,7 +132,6 @@ Shown shown()
     return g_shown;
 }
 
-// No player frame shows an earlier frame than the one before it.
 bool forward(const std::vector<int> &barcodes, std::size_t from = 0)
 {
     for (std::size_t i = from + 1; i < barcodes.size(); ++i)
@@ -160,8 +145,8 @@ public:
     std::vector<std::string> observed;
     bool rate = false;
     double guiCpuMs = -1, playingMs = 0;
-    std::string follows; // the panel's frame while playing
-    std::string seekBar;  // a click on the seek bar while playing
+    std::string follows;
+    std::string seekBar;
 
 protected:
     std::string status() { return getStringProperty("mainWindow/videoStatus", "text"); }
@@ -169,7 +154,6 @@ protected:
     {
         return static_cast<int>(std::lround(std::atof(getStringProperty("mainWindow/videoSlider", "value").c_str())));
     }
-    // The status's, the times field's and the seek bar's frames; -1 when unreadable.
     std::vector<int> panelFrames()
     {
         int label = -1, of = 0, times = -1;
@@ -192,18 +176,18 @@ protected:
     {
         if (waitForItem("mainWindow/loadAssociated", 5s)) {
             mouseClick("mainWindow/loadAssociated");
-            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0"); // 0
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0");
             mouseClick("mainWindow/playPause");
             std::string label;
             for (int i = 0; i < 50 && label != "Pause"; ++i) {
                 wait(100ms);
                 label = getStringProperty("mainWindow/playPause", "text");
             }
-            observed.push_back(label); // 1: Pause while playing
+            observed.push_back(label);
             const Shown before = shown();
             const auto from = std::chrono::steady_clock::now();
             const double cpuFrom = g_guiClock->ms();
-            observed.push_back(waitFor([](const Shown &s) { return s.generalFrames >= 5; }) ? "playing" : "no frames"); // 2
+            observed.push_back(waitFor([](const Shown &s) { return s.generalFrames >= 5; }) ? "playing" : "no frames");
             wait(500ms);
             status();
             const Shown after = shown();
@@ -213,28 +197,19 @@ protected:
                 guiCpuMs = cpuTo - cpuFrom;
                 playingMs = ms;
             }
-            // V1: one notification per frame shown, the texts at about 10 Hz.
             const int frames = after.generalFrames - before.generalFrames, changes = after.changes - before.changes,
                       texts = after.texts - before.texts, tools = after.tools - before.tools,
                       bar = after.statusBar - before.statusBar;
             std::printf("while playing: %d frames, %d notifications, %d text updates, %d visual tools and %d status "
                         "bar notifications in %.0f ms\n",
                         frames, changes, texts, tools, bar, ms);
-            // The visual tools and the status bar notify only when what they
-            // show changes (the shown frame's warning, the fields), not per frame.
             rate = frames > 0 && changes <= frames + 1 && texts >= 2 && texts <= static_cast<int>(ms / 100) + 2 &&
                    tools <= 1 && bar <= texts;
-            // The status, the times and the seek bar show the player's frame
-            // (legacy VideoBox::RefreshTime), at most 100 ms behind it. Each
-            // read lies between the player frames shown just before and just
-            // after it, so the reads' own latency does not count; the bound is
-            // 250 ms of this 24 fps video: the 100 ms pace, a frame's own
-            // duration and timer slack (Windows' clock steps 15.6 ms).
             {
                 static constexpr int kLagFrames = 6;
                 struct Read {
                     std::vector<int> panel;
-                    int from = -1, to = -1; // the player's frame around the read
+                    int from = -1, to = -1;
                 };
                 auto read = [&] {
                     Read r;
@@ -250,7 +225,6 @@ protected:
                     return true;
                 };
                 const Read first = read();
-                // Far enough on that the bar must have moved, whatever its lag.
                 const int target = first.to + kLagFrames + 2;
                 waitFor([target](const Shown &s) { return s.lastGeneralBarcode >= target; });
                 const Read second = read();
@@ -262,9 +236,6 @@ protected:
                               second.panel[0], second.panel[1], second.panel[2], second.from, second.to);
                 follows = ok ? "follows" : text;
             }
-            // A click at 90% of the seek bar while playing: the player jumps
-            // there (about frame 42; playing on it would come a frame or two
-            // at a time) and goes on from it, never stepping back.
             {
                 const std::size_t clickedAt = shown().generalBarcodes.size();
                 mouseClick("mainWindow/videoSlider", spix::Point(0.9, 0.5));
@@ -279,7 +250,6 @@ protected:
                 wait(200ms);
                 const int bar = sliderFrame();
                 const Shown s = shown();
-                // Forward up to the click, and from the jump on.
                 const std::vector<int> beforeClick(s.generalBarcodes.begin(),
                                                    s.generalBarcodes.begin() + static_cast<std::ptrdiff_t>(clickedAt));
                 const bool steady = forward(beforeClick) && forward(s.generalBarcodes, jumpIn(s.generalBarcodes));
@@ -287,30 +257,27 @@ protected:
                           : !steady ? "stepped back" : "sought";
             }
             mouseClick("mainWindow/playPause");
-            // Once paused, late player frames are ignored: the last one is final.
             label.clear();
             for (int i = 0; i < 50 && label != "Play"; ++i) {
                 wait(100ms);
                 label = getStringProperty("mainWindow/playPause", "text");
             }
             const int expected = shown().lastGeneralBarcode;
-            // The paused indexed frame: its index and barcode match the last player frame.
             const bool identity = waitFor([expected](const Shown &s) {
                 return s.frame >= 0 && s.accepted && s.frame == expected && s.barcode == expected;
             });
             observed.push_back(identity ? "identity" : "frame " + std::to_string(shown().frame) + " expected " +
-                                                           std::to_string(expected)); // 3
-            observed.push_back(label); // 4: Play again
-            observed.push_back(expected > 0 ? "moved" : "did not move"); // 5
+                                                           std::to_string(expected));
+            observed.push_back(label);
+            observed.push_back(expected > 0 ? "moved" : "did not move");
             mouseClick("mainWindow/stopVideo");
-            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0"); // 6
-            // V2: L is 5 s forward (past this 2 s video: its last frame), ; 5 s back.
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0");
             invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
             enterKey("mainWindow/videoPanel", Qt::Key_L, spix::KeyModifiers::None);
-            observed.push_back(waitFor([](const Shown &s) { return s.frame == 47 && s.accepted; }) ? "frame 47" : "no frame 47"); // 7
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 47 && s.accepted; }) ? "frame 47" : "no frame 47");
             enterKey("mainWindow/videoPanel", Qt::Key_Semicolon, spix::KeyModifiers::None);
-            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0"); // 8
-            observed.push_back(getStringProperty("mainWindow/videoTimes", "text")); // 9
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0");
+            observed.push_back(getStringProperty("mainWindow/videoTimes", "text"));
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -337,7 +304,7 @@ constexpr char kSubtitles[] =
     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
     "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,{\\an1\\pos(0,240)\\p1}m 0 0 l 320 0 320 20 0 20{\\p0}\r\n";
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -357,7 +324,7 @@ int main(int argc, char **argv)
     }
     hikari::app::Application::Options options;
     options.mediaHelper = QStringLiteral(HIKARI_MEDIA_HELPER);
-    options.playbackAudio = false; // never a desktop's speakers in tests
+    options.playbackAudio = false;
     hikari::app::Application application(options);
     auto &video = application.video();
     QObject::connect(&video, &hikari::ui::VideoController::textsChanged, [] {

@@ -32,12 +32,9 @@ QColor colourOf(std::uint32_t argb)
     return QColor::fromRgba(argb);
 }
 
-// Direct3D 9 puts pixel centres at integers, Qt at half pixels.
+// AudioShape puts pixel centres at integers (Direct3D 9), Qt at half pixels.
 constexpr float kPixelCentre = 0.5f;
 
-// The shapes as triangles of one colour each and laid out texts, in draw
-// order; the scene graph draws them as geometry (RHI) or a painted image
-// (the software adaptation, which has no custom geometry).
 struct Drawing {
     struct Triangles {
         std::uint32_t colour = 0;
@@ -49,7 +46,6 @@ struct Drawing {
         QColor colour;
         bool outlined = false;
     };
-    // A2: the spectrum, pixel for pixel
     struct Picture {
         QImage image;
         QPointF at;
@@ -71,7 +67,6 @@ public:
         triangle(a, QPointF(b.x(), a.y()), b);
         triangle(a, b, QPointF(a.x(), b.y()));
     }
-    // A D3DXLine: `width` wide, centred on the segment, no caps.
     void line(float x1, float y1, float x2, float y2, float width)
     {
         const float dx = x2 - x1, dy = y2 - y1;
@@ -107,7 +102,7 @@ Drawing describe(const std::vector<AudioShape> &shapes, const std::function<QFon
                 batch.flush(*colour);
             colour.reset();
             if (s.image && s.image->width > 0 && s.image->height > 0) {
-                // BGRA bytes are QImage's RGB32 on little-endian machines
+                // BGRA bytes are QImage's RGB32 on little-endian machines.
                 const QImage view(s.image->bgra.data(), s.image->width, s.image->height, s.image->width * 4,
                                   QImage::Format_RGB32);
                 out.items.emplace_back(Drawing::Picture{view.copy(), QPointF(s.x1, s.y1)});
@@ -127,8 +122,6 @@ Drawing describe(const std::vector<AudioShape> &shapes, const std::function<QFon
             qreal x = s.x1, y = s.y1;
             if (s.align != AudioShape::Align::TopLeft)
                 x = s.x1 + (s.x2 - s.x1 - w) / 2;
-            // The ruler's first time label starts at the display's edge
-            // rather than half outside it (legacy centred it on x = 0).
             if (s.font == AudioShape::Font::Scale && s.align == AudioShape::Align::TopCenter)
                 x = std::max<qreal>(x, 0);
             if (s.align == AudioShape::Align::Center)
@@ -155,8 +148,6 @@ Drawing describe(const std::vector<AudioShape> &shapes, const std::function<QFon
     return out;
 }
 
-// Legacy DRAWOUTTEXT: the text eight times in black one pixel around, then
-// in its colour.
 template <typename Draw> void outlined(const Drawing::Text &text, Draw draw)
 {
     if (text.outlined)
@@ -167,7 +158,6 @@ template <typename Draw> void outlined(const Drawing::Text &text, Draw draw)
     draw(text.at, text.colour);
 }
 
-// The RHI path: geometry nodes and text nodes.
 void buildNodes(QSGNode *parent, const Drawing &drawing, QQuickWindow *window)
 {
     for (const auto &item : drawing.items) {
@@ -207,8 +197,6 @@ void buildNodes(QSGNode *parent, const Drawing &drawing, QQuickWindow *window)
     }
 }
 
-// The software path: the same triangles filled where they cover a pixel's
-// centre (no antialiasing, as the geometry is rasterized) and the same texts.
 QImage paintImage(const Drawing &drawing, QSize size, qreal dpr)
 {
     QImage image((QSizeF(size) * dpr).toSize(), QImage::Format_ARGB32_Premultiplied);
@@ -242,7 +230,6 @@ QImage paintImage(const Drawing &drawing, QSize size, qreal dpr)
     return image;
 }
 
-// The image and the cursor, each rebuilt on its own.
 class DisplayNode : public QSGNode {
 public:
     QSGNode *image = new QSGNode;
@@ -268,17 +255,12 @@ bool softwareScene(QQuickWindow *window)
            window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software;
 }
 
-// The RHI path: `shapes` as geometry and text nodes under `parent`.
 void build(QSGNode *parent, const std::vector<AudioShape> &shapes, QQuickWindow *window,
            const std::function<QFont(AudioShape::Font)> &fontOf)
 {
     buildNodes(parent, describe(shapes, fontOf), window);
 }
 
-// A5: legacy iswctype(ch, _SPACE) and (ch, _SPACE | _PUNCT) as the Windows
-// CRT answers them: ASCII by the C tables; past it GetStringTypeW's C1_SPACE
-// and C1_PUNCT, Unicode's spaces and its punctuation and symbol categories.
-// Lower case by Unicode (U1-unicode-case).
 application::KaraokeCharClass karaokeCharClass()
 {
     const auto ascii = application::KaraokeCharClass::ascii();
@@ -290,12 +272,11 @@ application::KaraokeCharClass karaokeCharClass()
         return QChar::isPunct(c) || QChar::isSymbol(c);
     };
     classes.symbol = [ascii](char32_t c) { return c < 128 ? ascii.symbol(c) : QChar::isSymbol(c); };
-    // U1-unicode-case: Unicode's lower case (one unit to one, as wx's Lower)
     classes.lower = [](char16_t c) { return static_cast<char16_t>(QChar(c).toLower().unicode()); };
     return classes;
 }
 
-} // namespace
+}
 
 AudioDisplayItem::AudioDisplayItem(QQuickItem *parent) : QQuickItem(parent)
 {
@@ -309,7 +290,6 @@ AudioDisplayItem::AudioDisplayItem(QQuickItem *parent) : QQuickItem(parent)
     m_scale.setPointSizeF(size - 1);
     m_cursor.setPointSizeF(size + 3);
     m_label.setPointSizeF(size + 1);
-    // legacy D3DXCreateFontW: tahoma13 and verdana11 are FW_BOLD, tahoma8 FW_NORMAL
     m_cursor.setBold(true);
     m_label.setBold(true);
 }
@@ -330,9 +310,7 @@ void AudioDisplayItem::setController(QObject *object)
     if (m_controller) {
         connect(m_controller, &AudioController::displayChanged, this, &QQuickItem::update);
         connect(m_controller, &AudioController::cursorChanged, this, &QQuickItem::update);
-        m_controller->setMarkTextHeight(QFontMetrics(m_label).height()); // A3
-        // A5: legacy GetTextExtentPixel's font (verdana11, the label font):
-        // D3DX measured without the leading and trailing spaces
+        m_controller->setMarkTextHeight(QFontMetrics(m_label).height());
         m_controller->setKaraokeMeasure(application::karaokeLabelMeasure(
             [label = m_label](AudioShape::Font, std::string_view text) {
                 return QFontMetrics(label).horizontalAdvance(
@@ -355,7 +333,6 @@ QFont AudioDisplayItem::font(int role) const
     return m_scale;
 }
 
-// Legacy: the height of "#TWFfGH" in the ruler's font, plus 8.
 int AudioDisplayItem::timelineHeight() const
 {
     return QFontMetrics(m_scale).height() + 8;
@@ -365,7 +342,6 @@ void AudioDisplayItem::pushSize()
 {
     if (!m_controller)
         return;
-    // legacy HikariScrollbar::CalculateThickness: the program font's height + 1
     const int scrollbar = QFontMetrics(QGuiApplication::font()).height() + 1;
     m_controller->resize(static_cast<int>(width()), static_cast<int>(height()), timelineHeight(), scrollbar);
 }
@@ -377,10 +353,6 @@ void AudioDisplayItem::geometryChange(const QRectF &newGeometry, const QRectF &o
         pushSize();
 }
 
-// Legacy OnMouseEvent's cursor drawing: over the waveform the cursor follows
-// the mouse; over the ruler it is not drawn. KB1: the display no longer takes
-// the focus under the pointer (AUDIO_AUTO_FOCUS); its hotkeys follow the
-// pointer instead (KeyRouter).
 void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
 {
     if (!m_controller)
@@ -390,8 +362,6 @@ void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
     const bool over = p.x() >= 0 && p.y() >= 0 && p.x() < width() && p.y() < h;
     m_controller->setPointerOver(over);
     const auto result = timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
-    // A5: in karaoke mode legacy can return before the cursor is drawn, and
-    // draws none over the syllables' letters
     if (result.keepCursor)
         return;
     if (over && !result.hideCursor)
@@ -408,7 +378,6 @@ void AudioDisplayItem::hoverLeaveEvent(QHoverEvent *)
     }
 }
 
-// Any button takes focus and hides the cursor (timing clicks are A3's).
 void AudioDisplayItem::mousePressEvent(QMouseEvent *event)
 {
     forceActiveFocus(Qt::MouseFocusReason);
@@ -418,8 +387,6 @@ void AudioDisplayItem::mousePressEvent(QMouseEvent *event)
     event->accept();
 }
 
-// A3: the buttons' timing (legacy OnMouseEvent: the display has the mouse
-// captured while a button is down).
 void AudioDisplayItem::mouseMoveEvent(QMouseEvent *event)
 {
     timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
@@ -470,23 +437,18 @@ application::AudioMouseResult AudioDisplayItem::timingEvent(const QSinglePointEv
     mouse.alt = modifiers & Qt::AltModifier;
     m_controller->setMarkTextHeight(QFontMetrics(m_label).height());
     const auto result = m_controller->mouse(mouse);
-    if (result.focus && !hasActiveFocus()) // legacy SetFocus on a button (and the middle double click)
+    if (result.focus && !hasActiveFocus())
         forceActiveFocus(Qt::MouseFocusReason);
     if (result.sizeCursor) {
         if (*result.sizeCursor)
-            setCursor(Qt::SizeHorCursor); // wxCURSOR_SIZEWE
+            setCursor(Qt::SizeHorCursor);
         else
             unsetCursor();
     }
     return result;
 }
 
-// Legacy OnMouseEvent's wheel: Ctrl alone zooms vertically, Shift
-// horizontally around the mouse (A2), otherwise it scrolls. Legacy read
-// GetWheelRotation() without GetWheelAxis(), so a horizontal wheel acts as
-// the vertical one with its rotation; on Windows (the normative build) that
-// rotation is positive for a tilt to the right, which Qt reports as a
-// negative x (QWindowsMouseHandler reverses WM_MOUSEHWHEEL's delta).
+// A horizontal wheel acts as the vertical one; Qt reports a right tilt as a negative x.
 void AudioDisplayItem::wheelEvent(QWheelEvent *event)
 {
     const QPoint delta = event->angleDelta();
@@ -528,8 +490,7 @@ QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
                    : std::vector<AudioShape>{};
     };
     if (softwareScene(window())) {
-        // The software adaptation: one image node, the scene painted once per
-        // revision and the cursor painted over a copy of it.
+        // Qt Quick's software adaptation has no custom geometry, so the shapes are painted into an image.
         auto *node = static_cast<QSGImageNode *>(oldNode);
         if (!node) {
             node = window()->createImageNode();
@@ -580,4 +541,4 @@ QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     return node;
 }
 
-} // namespace hikari::ui
+}

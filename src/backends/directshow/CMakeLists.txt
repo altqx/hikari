@@ -1,9 +1,3 @@
-# W1: the optional DirectShow playback adapter behind the general player port
-# (legacy dshowplayer.cpp, DshowRenderer.cpp). Windows only.
-
-# The DirectShow base classes legacy linked (Thirdparty/BaseClasses, built as
-# Thirdparty/Build/BaseClasses/BaseClasses.vcxproj built them: Unicode, the
-# dynamic CRT). Third-party code: its own language level, no warnings.
 set(_hikari_baseclasses "${PROJECT_SOURCE_DIR}/Thirdparty/BaseClasses")
 set(_hikari_baseclasses_sources "")
 foreach(name amextra amfilter amvideo arithutil combase cprop ctlutil ddmm dllentry dllsetup mtype outputq perflog
@@ -26,9 +20,6 @@ target_include_directories(hikari_directshow PUBLIC include)
 target_link_libraries(hikari_directshow PUBLIC hikari_application PRIVATE hikari_dshow_baseclasses)
 hikari_module(hikari_directshow ALLOW hikari_application hikari_core hikari_dshow_baseclasses)
 
-# The adapter alone in an executable: its deployment manifest is read from this
-# (tests/backends: directshow-manifest), and it plays a file from the command
-# line for diagnosis on a Windows machine.
 add_executable(hikari_directshow_probe directshow_probe.cpp)
 target_link_libraries(hikari_directshow_probe PRIVATE hikari_directshow)
 hikari_module(hikari_directshow_probe ALLOW hikari_directshow)

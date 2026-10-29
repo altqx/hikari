@@ -1,11 +1,3 @@
-// P9: the tab menu, tab reordering, "show in folder", several dropped files,
-// OPEN_SUBS_IN_NEW_TAB, associated-file discovery and the legacy Subs/
-// autosaves through the composition and the real QML (legacy Notebook::
-// ContextMenu, OnTabSel and OnMouseEvent, HikariSubFrame::OpenFile,
-// OpenFiles, FindFile, SaveAll, OnRecent and AutoSaveOpen, Notebook::LoadVideo,
-// at 20d647c4). Menu items are triggered as a click would; the tab drag uses
-// the mouse.
-
 #include "hikari/app/application.h"
 #include "hikari/app/session_json.h"
 #include "hikari/app/settings_import_store.h"
@@ -70,18 +62,18 @@ void touch(const QString &path)
         f.write("x");
 }
 
-} // namespace
+}
 
 class TabMenuTests : public QObject {
     Q_OBJECT
 
-    QTemporaryDir home; // the settings folder (last-session.json, Subs)
-    QTemporaryDir dir;  // subtitles and media
+    QTemporaryDir home;
+    QTemporaryDir dir;
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
-    QStringList revealed; // SelectInFolder calls
-    bool legacyRoots = false; // the legacy autosave folder from the legacy roots, not home/Subs
+    QStringList revealed;
+    bool legacyRoots = false;
 
     void start()
     {
@@ -89,7 +81,8 @@ class TabMenuTests : public QObject {
         o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.revealInFolder = [this](const QString &path) { revealed << path; };
-        o.spellingBackend = {}; // no spell checker, so no notice over the window
+        // MUST KILL: no spell checker so its notice does not cover the window
+        o.spellingBackend = {};
         if (!legacyRoots)
             o.legacyAutosaveDir = home.filePath(QStringLiteral("Subs"));
         application = new app::Application(o);
@@ -110,7 +103,7 @@ class TabMenuTests : public QObject {
         for (QObject *o : root->findChildren<QObject *>())
             if (o->objectName() == QLatin1String(name))
                 return o;
-        // A view's delegates are items only (the Autosaves rows).
+        // findChild misses a view's delegates: they are visual children only.
         for (QWindow *w : QGuiApplication::allWindows())
             if (auto *quick = qobject_cast<QQuickWindow *>(w))
                 if (QQuickItem *found = findItem(quick->contentItem(), QLatin1String(name)))
@@ -127,7 +120,6 @@ class TabMenuTests : public QObject {
         return nullptr;
     }
     QQuickItem *visualItem(const QString &name) const { return findItem(window->contentItem(), name); }
-    // The tab menu opened on tab `index` (-1: not on a tab), as a right click does.
     QObject *openTabMenu(int index)
     {
         auto *bar = named("documentTabBar");
@@ -160,7 +152,6 @@ class TabMenuTests : public QObject {
     {
         return application->files().session(application->workspace().tabs()[std::size_t(tab)]);
     }
-    // Changes the first Line of tab `tab` (one committed step).
     void edit(int tab, const char *text)
     {
         auto *s = session(tab);
@@ -182,9 +173,6 @@ class TabMenuTests : public QObject {
             out << QFileInfo(QString::fromStdString(tab.subtitles)).fileName();
         return out;
     }
-    // A session with tabs a.ass, b.ass and c.ass, the last one shown (legacy
-    // LoadLastSession); tab `mediaTab` has its own video, audio and keyframes
-    // (placeholder files: not shown while another tab is active).
     void restoreThreeTabs(int mediaTab = 0)
     {
         writeAss(dir.filePath(QStringLiteral("tabs/a.ass")), {}, "a");
@@ -241,9 +229,6 @@ private slots:
             QFile::remove(home.filePath(QLatin1String(name)));
     }
 
-    // Notebook.cpp:886-911: every tab by name with the active one checked,
-    // Save only on a modified tab, the folder items of the tab's own files
-    // (SelectInFolder on the file), none off a tab.
     void menuListsTabsSaveAndFolders()
     {
         restoreThreeTabs();
@@ -253,7 +238,7 @@ private slots:
         QCOMPARE(named("tabMenuTab2")->property("text").toString(), QStringLiteral("c.ass"));
         QVERIFY(!named("tabMenuTab0")->property("checked").toBool());
         QVERIFY(named("tabMenuTab2")->property("checked").toBool());
-        QVERIFY(!named("tabMenuSave")->property("enabled").toBool()); // not modified
+        QVERIFY(!named("tabMenuSave")->property("enabled").toBool());
         QVERIFY(named("tabMenuSaveAll")->property("enabled").toBool());
         QCOMPARE(named("tabMenuSave")->property("text").toString(), QStringLiteral("Save"));
         QCOMPARE(named("tabMenuCloseAll")->property("text").toString(), QStringLiteral("Close all tabs"));
@@ -263,8 +248,6 @@ private slots:
         QCOMPARE(named("tabMenuFolder_audio")->property("text").toString(), QStringLiteral("Open audio containing folder"));
         QCOMPARE(named("tabMenuFolder_keyframes")->property("text").toString(),
                  QStringLiteral("Open keyframes containing folder"));
-        // The legacy order: tabs, separator, Save, Save all, Close all tabs,
-        // the folders, Subtitle comparison.
         QStringList order;
         const int count = menu->property("count").toInt();
         for (int i = 0; i < count; ++i) {
@@ -278,13 +261,12 @@ private slots:
                                               QStringLiteral("tabMenuCloseAll"), QStringLiteral("tabMenuFolder_subtitles"),
                                               QStringLiteral("tabMenuFolder_video"), QStringLiteral("tabMenuFolder_audio"),
                                               QStringLiteral("tabMenuFolder_keyframes")}));
-        QCOMPARE(order.size(), 12); // and the comparison submenu's item last
+        QCOMPARE(order.size(), 12);
         trigger("tabMenuFolder_video");
         trigger("tabMenuFolder_subtitles");
         QCOMPARE(revealed, (QStringList{QDir::toNativeSeparators(dir.filePath(QStringLiteral("media/a video.mkv"))),
                                         QDir::toNativeSeparators(dir.filePath(QStringLiteral("tabs/a.ass")))}));
         closeTabMenu();
-        // b.ass modified: Save on it; it has only its subtitles' folder.
         edit(1, "b2");
         openTabMenu(1);
         QVERIFY(named("tabMenuSave")->property("enabled").toBool());
@@ -292,17 +274,12 @@ private slots:
         QVERIFY(!named("tabMenuFolder_video"));
         QVERIFY(!named("tabMenuFolder_keyframes"));
         closeTabMenu();
-        // Off a tab: no Save, no folders.
         openTabMenu(-1);
         QVERIFY(!named("tabMenuSave")->property("enabled").toBool());
         QVERIFY(!named("tabMenuFolder_subtitles"));
         QCOMPARE(named("tabMenuTab1")->property("text").toString(), QStringLiteral("b.ass"));
     }
 
-    // OnTabSel (Notebook.cpp:1019-1039): the chosen tab trades places with
-    // the first visible one and becomes active there; no session is written.
-    // P9-choose-refresh: the window shows the chosen tab at once (legacy
-    // sent no page-changed event, so the title and the rest stayed).
     void choosingATabMovesItToTheFirstVisiblePlace()
     {
         restoreThreeTabs();
@@ -314,7 +291,7 @@ private slots:
         QCOMPARE(window->title(), QStringLiteral("c.ass - HikariSub"));
         QCOMPARE(gridText(), QStringLiteral("c"));
         openTabMenu(-1);
-        trigger("tabMenuTab0"); // the first visible tab itself: shown, not moved
+        trigger("tabMenuTab0");
         QCOMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.ass")}));
         QCOMPARE(application->currentTab(), 0);
         QCOMPARE(window->title(), QStringLiteral("a.ass - HikariSub"));
@@ -327,20 +304,14 @@ private slots:
         QCOMPARE(application->workspace().title(*application->workspace().editingTarget())->c_str(), std::string("c.ass"));
         QCOMPARE(window->title(), QStringLiteral("c.ass - HikariSub"));
         QCOMPARE(gridText(), QStringLiteral("c"));
-        // With the bar scrolled so that the second tab is the first visible.
         application->chooseTab(0, 1);
         QCOMPARE(titles(), (QStringList{QStringLiteral("b.ass"), QStringLiteral("c.ass"), QStringLiteral("a.ass")}));
         QCOMPARE(application->currentTab(), 1);
         QCOMPARE(readAll(application->lastSessionPath()), before);
     }
 
-    // OnMouseEvent (537-556, 397-400): a tab dragged over others swaps with
-    // each in turn and stays active; the session is written once the button
-    // is released, with the new order, and a restore keeps it.
     void draggingATabReordersAndKeepsTheOrderInTheSession()
     {
-        // c has the media; a, dragged, has none (showing a placeholder video
-        // would report a failure in the log while the pointer is down).
         restoreThreeTabs(2);
         application->selectTab(0);
         QCoreApplication::processEvents();
@@ -355,19 +326,16 @@ private slots:
             QTest::mouseMove(window, from + (over1 - from) * step / 10);
         QCOMPARE(titles(), (QStringList{QStringLiteral("b.ass"), QStringLiteral("a.ass"), QStringLiteral("c.ass")}));
         QCOMPARE(application->currentTab(), 1);
-        // Written only when the button comes up.
         QCOMPARE(sessionSubtitles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.ass")}));
         for (int step = 1; step <= 10; ++step)
             QTest::mouseMove(window, over1 + (over2 - over1) * step / 10);
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("b.ass"), QStringLiteral("c.ass"), QStringLiteral("a.ass")}));
-        QCOMPARE(application->currentTab(), 2); // the dragged tab stays active
+        QCOMPARE(application->currentTab(), 2);
         QTest::mouseRelease(window, Qt::LeftButton, {}, over2);
         QTRY_COMPARE(sessionSubtitles(), (QStringList{QStringLiteral("b.ass"), QStringLiteral("c.ass"), QStringLiteral("a.ass")}));
-        // Each tab kept its own media (c's moved with it).
         const auto tabs = lastSession().tabs;
         QCOMPARE(QFileInfo(QString::fromStdString(tabs[1].video)).fileName(), QStringLiteral("a video.mkv"));
         QCOMPARE(QString::fromStdString(tabs[2].video), QString());
-        // The order survives a restore.
         delete engine;
         engine = nullptr;
         delete application;
@@ -379,26 +347,22 @@ private slots:
         QCOMPARE(titles(), (QStringList{QStringLiteral("b.ass"), QStringLiteral("c.ass"), QStringLiteral("a.ass")}));
     }
 
-    // MENU_SAVE + i is Save(false, i) for that tab; Save all (SaveAll) runs
-    // Save for every modified tab in order, the dialog for each Untitled one.
     void saveAndSaveAllFromTheTabMenu()
     {
         restoreThreeTabs();
         edit(1, "b saved");
-        application->addPage(); // an Untitled tab, modified
+        application->addPage();
         edit(3, "untitled one");
-        application->addPage(); // another, modified
+        application->addPage();
         edit(4, "untitled two");
-        application->addPage(); // a third, untouched
+        application->addPage();
         application->selectTab(0);
-        // Save on b (not the editing target) writes it in place.
         openTabMenu(1);
         trigger("tabMenuSave");
         QTRY_VERIFY(!session(1)->isDirty());
         QVERIFY(readAll(dir.filePath(QStringLiteral("tabs/b.ass"))).contains("b saved"));
-        QCOMPARE(application->currentTab(), 0); // the tab shown stays
+        QCOMPARE(application->currentTab(), 0);
         closeTabMenu();
-        // Save on the Untitled tab asks for its file.
         const auto untitled = application->tabDocument(3);
         QCOMPARE(application->saveRouteFor(untitled), QStringLiteral("dialog"));
         openTabMenu(3);
@@ -410,8 +374,6 @@ private slots:
         QMetaObject::invokeMethod(dialog, "reject");
         QTRY_VERIFY(!dialog->property("visible").toBool());
         closeTabMenu();
-        // Save all: c (unmodified) and the untouched tab are left; the two
-        // Untitled ones wait for the dialog, in tab order.
         edit(0, "a saved");
         const QVariantList queue = application->saveAll();
         QCOMPARE(queue.size(), 2);
@@ -419,16 +381,14 @@ private slots:
         QCOMPARE(queue[1].toMap().value(QStringLiteral("id")).toULongLong(), application->tabDocument(4));
         QTRY_VERIFY(!session(0)->isDirty());
         QVERIFY(readAll(dir.filePath(QStringLiteral("tabs/a.ass"))).contains("a saved"));
-        // Through the menu: the dialogs follow one another.
         openTabMenu(0);
         trigger("tabMenuSaveAll");
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(dialog->property("document").toULongLong(), untitled);
-        QMetaObject::invokeMethod(dialog, "reject"); // legacy SaveAll goes on with the next tab
+        QMetaObject::invokeMethod(dialog, "reject");
         QTRY_COMPARE(dialog->property("document").toULongLong(), application->tabDocument(4));
         QTRY_VERIFY(dialog->property("visible").toBool());
         QMetaObject::invokeMethod(dialog, "reject");
-        // The dialog's file for an Untitled tab that is not shown.
         const QString chosen = dir.filePath(QStringLiteral("saved/untitled"));
         QDir().mkpath(dir.filePath(QStringLiteral("saved")));
         QCOMPARE(application->saveChosenFor(untitled, QUrl::fromLocalFile(chosen)), QString());
@@ -438,10 +398,6 @@ private slots:
         QCOMPARE(application->currentTab(), 0);
     }
 
-    // MENU_CHOOSE - 1: "All tabs will be closed, continue?" (No keeps
-    // everything), then every tab's work is reviewed and no tab is left
-    // (SH2-last-tab-home: legacy left one new Untitled tab); no session is
-    // written.
     void closeAllTabsAsksThenReviews()
     {
         restoreThreeTabs();
@@ -449,7 +405,6 @@ private slots:
         const QByteArray before = readAll(application->lastSessionPath());
         openTabMenu(1);
         trigger("tabMenuCloseAll");
-        // PU1-message-boxes: the kit's message box, made when first asked.
         QTRY_VERIFY(named("closeAllPrompt"));
         QObject *prompt = named("closeAllPrompt");
         QTRY_VERIFY(prompt->property("visible").toBool());
@@ -464,7 +419,7 @@ private slots:
         QObject *review = named("unsavedChanges");
         QTRY_VERIFY(review->property("opened").toBool());
         const QVariantList rows = review->property("rows").toList();
-        QCOMPARE(rows.size(), 1); // only c has unsaved work
+        QCOMPARE(rows.size(), 1);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("c.ass"));
         QSignalSpy finished(application, &app::Application::closeFinished);
         application->resolveClose({QVariantMap{{QStringLiteral("id"), rows[0].toMap().value(QStringLiteral("id"))},
@@ -477,9 +432,6 @@ private slots:
         QMetaObject::invokeMethod(review, "close");
     }
 
-    // P9-close-all-review: one review lists every tab's unsaved work, and its
-    // Cancel closes nothing (legacy SavePrompt'ed tab by tab from the last,
-    // Notebook.cpp:984-996, so a Cancel left the later tabs closed).
     void closeAllTabsReviewsOnceAndCancelClosesNothing()
     {
         restoreThreeTabs();
@@ -495,7 +447,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(prompt, "answer", Q_ARG(QVariant, QStringLiteral("close"))));
         QTRY_VERIFY(review->property("opened").toBool());
         QVariantList rows = review->property("rows").toList();
-        QCOMPARE(rows.size(), 2); // both, in one review
+        QCOMPARE(rows.size(), 2);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("a.ass"));
         QCOMPARE(rows[1].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("c.ass"));
         QObject *cancel = named("closeCancel");
@@ -506,8 +458,6 @@ private slots:
         QVERIFY(session(0)->isDirty());
         QVERIFY(session(2)->isDirty());
         QCOMPARE(application->currentTab(), 2);
-        // Discard all closes every tab; no Document is left and the Home page
-        // shows (SH2-last-tab-home; legacy left one Untitled tab).
         openTabMenu(1);
         trigger("tabMenuCloseAll");
         QTRY_VERIFY(prompt->property("visible").toBool());
@@ -524,8 +474,6 @@ private slots:
         QMetaObject::invokeMethod(review, "close");
     }
 
-    // OnRecent: Ctrl+click on a recent file shows it in its folder and opens
-    // nothing; a plain click opens it.
     void controlClickOnARecentFileShowsItInItsFolder()
     {
         const QString file = writeAss(dir.filePath(QStringLiteral("recent/r.ass")), {}, "r");
@@ -542,7 +490,6 @@ private slots:
         QCOMPARE(revealed, QStringList{QDir::toNativeSeparators(QFileInfo(file).absoluteFilePath())});
         QCOMPARE(titles().size(), tabs);
         QCOMPARE(titles().last(), QStringLiteral("Untitled"));
-        // Ctrl with Shift is not wxMOD_CONTROL: it opens.
         QTest::keyPress(window, Qt::Key_Shift, Qt::ControlModifier | Qt::ShiftModifier);
         QVERIFY(!application->revealRecent(file));
         QTest::keyRelease(window, Qt::Key_Shift, Qt::NoModifier);
@@ -551,9 +498,6 @@ private slots:
         QCOMPARE(revealed.size(), 1);
     }
 
-    // OPEN_SUBS_IN_NEW_TAB (OpenFile): with a file in the tab, other
-    // subtitles open in a new tab after the last one, unasked; without one,
-    // into the tab after the review.
     void openSubtitlesInANewTab()
     {
         const QString one = writeAss(dir.filePath(QStringLiteral("new/one.ass")), {}, "one");
@@ -561,15 +505,14 @@ private slots:
         const QString three = writeAss(dir.filePath(QStringLiteral("new/three.ass")), {}, "three");
         application->settingsStore()->set("subtitles.openInNewTab", true);
         QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openSubtitles", Q_ARG(QVariant, one)));
-        QTRY_COMPARE(titles(), QStringList{QStringLiteral("one.ass")}); // the untouched Untitled tab took it
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("one.ass")});
         edit(0, "one changed");
         QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openSubtitles", Q_ARG(QVariant, two)));
         QCOMPARE(titles(), (QStringList{QStringLiteral("one.ass"), QStringLiteral("two.ass")}));
         QCOMPARE(application->currentTab(), 1);
-        QVERIFY(session(0)->isDirty()); // not reviewed, not touched
+        QVERIFY(session(0)->isDirty());
         QVERIFY(!named("unsavedChanges")->property("opened").toBool());
         QVERIFY(lastSession().tabs.size() == 2);
-        // Off: into the tab, after the review of its work.
         application->settingsStore()->set("subtitles.openInNewTab", false);
         application->selectTab(0);
         const QVariantMap result = application->reviewOpen(three);
@@ -578,10 +521,6 @@ private slots:
         QCOMPARE(titles(), (QStringList{QStringLiteral("one.ass"), QStringLiteral("two.ass")}));
     }
 
-    // OpenFiles (1831-1916): several dropped files, sorted; the i-th
-    // subtitles with the i-th video in one tab, the first into the untouched
-    // tab, the others into new tabs; the last one shown; a dirty Untitled
-    // target is reviewed first and a Cancel skips only the first file.
     void severalDroppedFilesOpenAsTabs()
     {
         const QString b = writeAss(dir.filePath(QStringLiteral("drop/b.ass")), {}, "b");
@@ -596,19 +535,17 @@ private slots:
         QVERIFY(result.value(QStringLiteral("rows")).toList().isEmpty());
         QCOMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.srt")}));
         QCOMPARE(application->currentTab(), 2);
-        // a.ass has the video (no question), the others only their subtitles.
         const QVariantList folders = application->tabMenu(0).value(QStringLiteral("folders")).toList();
         QCOMPARE(folders.size(), 2);
         QCOMPARE(folders[1].toMap().value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(video));
         QCOMPARE(application->tabMenu(1).value(QStringLiteral("folders")).toList().size(), 1);
         QCOMPARE(sessionSubtitles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.srt")}));
-        // A dirty Untitled tab: the review comes first.
         application->addPage();
         edit(3, "mine");
         result = application->openDropped({QUrl::fromLocalFile(a), QUrl::fromLocalFile(b)});
         QCOMPARE(result.value(QStringLiteral("rows")).toList().size(), 1);
-        QCOMPARE(titles().size(), 4); // nothing yet
-        application->cancelClose(); // the first is skipped, the second opens
+        QCOMPARE(titles().size(), 4);
+        application->cancelClose();
         QCOMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.srt"),
                                         QStringLiteral("Untitled"), QStringLiteral("b.ass")}));
         QVERIFY(session(3)->isDirty());
@@ -626,10 +563,6 @@ private slots:
         QCOMPARE(application->currentTab(), 5);
     }
 
-    // P9-drop-review: subtitles dropped with a video into a dirty Untitled
-    // tab review its work first (legacy OpenFiles' LoadSubtitles replaced it
-    // unasked, HikariSubFrame.cpp:1889-1892); Cancel leaves it, Discard
-    // loads the pair into it.
     void droppedSubtitlesWithAVideoReviewADirtyUntitledTab()
     {
         const QString a = writeAss(dir.filePath(QStringLiteral("pair/a.ass")), {}, "a");
@@ -637,19 +570,18 @@ private slots:
         const QString video = dir.filePath(QStringLiteral("pair/v.mkv"));
         QFile::remove(video);
         QVERIFY(QFile::copy(media("cfr.mkv"), video));
-        application->addPage(); // a new Untitled tab, the editing target
+        application->addPage();
         const QStringList before = titles();
         const int mine = before.size() - 1;
         edit(mine, "mine");
         QVERIFY(application->targetUntitled());
-        // a.ass with v.mkv (one pair), b.ass alone after it.
         const QList<QUrl> drop{QUrl::fromLocalFile(b), QUrl::fromLocalFile(video), QUrl::fromLocalFile(a)};
         QVariantMap result = application->openDropped(drop);
         QVariantList rows = result.value(QStringLiteral("rows")).toList();
         QCOMPARE(rows.size(), 1);
-        QCOMPARE(titles(), before); // nothing yet
+        QCOMPARE(titles(), before);
         QVERIFY(session(mine)->isDirty());
-        application->cancelClose(); // the pair is skipped, b.ass opens in a new tab
+        application->cancelClose();
         QCOMPARE(titles(), before + QStringList{QStringLiteral("b.ass")});
         QVERIFY(session(mine)->isDirty());
         QCOMPARE(application->tabMenu(mine).value(QStringLiteral("folders")).toList().size(), 0);
@@ -667,14 +599,10 @@ private slots:
         expected << QStringLiteral("b.ass") << QStringLiteral("b.ass");
         QCOMPARE(titles(), expected);
         const QVariantList folders = application->tabMenu(mine).value(QStringLiteral("folders")).toList();
-        QCOMPARE(folders.size(), 2); // a.ass took the tab with the video
+        QCOMPARE(folders.size(), 2);
         QCOMPARE(folders[1].toMap().value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(video));
     }
 
-    // Notebook::LoadVideo's question when subtitles open: the Script Info
-    // video, audio ("Audio File", C05: the Document's own) and keyframes,
-    // and the folder's same-named video; Load associated opens the video
-    // without its audio, the associated audio and the keyframes.
     void associatedFilesAreOfferedAndLoaded()
     {
         const QString folder = dir.filePath(QStringLiteral("assoc"));
@@ -715,15 +643,11 @@ private slots:
         QCOMPARE(kinds, (QStringList{QStringLiteral("subtitles"), QStringLiteral("video"), QStringLiteral("audio"),
                                      QStringLiteral("keyframes")}));
         QTRY_COMPARE(QFileInfo(QString::fromStdString(lastSession().tabs[0].audio)).fileName(), QStringLiteral("ep.mka"));
-        // Asked once: the tab shown again asks nothing.
         application->addPage();
         application->selectTab(0);
         QVERIFY(!application->video().offering());
     }
 
-    // Only the folder's video: "Video from directory" with Yes; No loads
-    // nothing and is not asked again; "Apply to All" answers the rest of
-    // the same opening.
     void theFoldersVideoAndApplyToAll()
     {
         const QString folder = dir.filePath(QStringLiteral("dirvideo"));
@@ -740,16 +664,14 @@ private slots:
         QCOMPARE(application->video().offer(), QStringLiteral("Video from directory:\ntwo.mkv"));
         QCOMPARE(application->video().offerAssociatedLabel(), QString());
         QCOMPARE(application->video().offerDirectoryLabel(), QStringLiteral("Yes"));
-        // "Apply to All" with No: the first tab's question goes too.
         application->video().setOfferApplyToAll(true);
         application->video().dismissOffer();
         QVERIFY(!application->video().offering());
         application->selectTab(0);
         QVERIFY(!application->video().offering());
         QVERIFY(!application->video().hasVideo());
-        // A new opening asks again; Yes loads the folder's video.
         application->selectTab(1);
-        result = application->reviewOpen(one); // into two.ass's tab
+        result = application->reviewOpen(one);
         QVERIFY(result.value(QStringLiteral("rows")).toList().isEmpty());
         application->finishClose();
         QVERIFY(application->video().offering());
@@ -759,8 +681,6 @@ private slots:
         QCOMPARE(QFileInfo(QString::fromStdString(application->video().session().path())).fileName(), QStringLiteral("one.mkv"));
     }
 
-    // KA6: imported lyrics are offered the video of the same name beside
-    // them, as subtitles are, though they have no file of their own yet.
     void lyricsAreOfferedTheFoldersVideo()
     {
         const QString folder = dir.filePath(QStringLiteral("lyricsvideo"));
@@ -779,9 +699,6 @@ private slots:
         QVERIFY(!application->video().offering());
     }
 
-    // Legacy's question was modal and Escape (its escape id) answered No.
-    // The inline question does not take the focus from the Document; with
-    // the focus in it (Tab, or "Apply to All" clicked) Escape answers No.
     void escapeInTheQuestionAnswersNo()
     {
         const QString folder = dir.filePath(QStringLiteral("escape"));
@@ -800,12 +717,9 @@ private slots:
         QTest::keyClick(window, Qt::Key_Escape);
         QVERIFY(!application->video().offering());
         QTest::qWait(200);
-        QVERIFY(!application->video().hasVideo()); // No: nothing loads
+        QVERIFY(!application->video().hasVideo());
     }
 
-    // The question sits over the Video panel beside the tool rail, on the
-    // panel colour: the style's Frame drew only its outline, so the rail's
-    // icons showed through "Associated files:" (evidence sweep, P9 / T1).
     void theQuestionIsOpaqueBesideTheToolRail()
     {
         const QString folder = dir.filePath(QStringLiteral("opaque"));
@@ -824,13 +738,11 @@ private slots:
         const QRectF railRect = rail->mapRectToScene(QRectF(0, 0, rail->width(), rail->height()));
         QVERIFY2(!offerRect.intersects(railRect), "the question covers the tool rail");
         QCOMPARE(offerRect.left(), railRect.right());
-        // An opaque fill in the panel colour, drawn: inside its outline the
-        // grabbed window is that colour, not the panel body's below it.
         auto *fill = findItem(offer, QStringLiteral("associationOfferBackground"));
         QVERIFY(fill);
         const QColor panel = fill->property("color").value<QColor>();
         QCOMPARE(panel.alpha(), 255);
-        QCOMPARE(panel, QGuiApplication::palette().color(QPalette::Window)); // the theme's panel
+        QCOMPARE(panel, QGuiApplication::palette().color(QPalette::Window));
         const QImage shot = window->grabWindow();
         const qreal dpr = shot.devicePixelRatio();
         for (const QPointF at : {offerRect.topLeft() + QPointF(3, 3), offerRect.bottomLeft() + QPointF(3, -3)})
@@ -839,9 +751,6 @@ private slots:
         QVERIFY(!offer->isVisible());
     }
 
-    // OpenFile on a video: subtitles of the same name beside it are offered
-    // ("Load subtitles named ...?"); Yes loads them into the tab, without the
-    // association question, then the video.
     void aVideoOffersItsSubtitles()
     {
         const QString folder = dir.filePath(QStringLiteral("withsubs"));
@@ -855,21 +764,16 @@ private slots:
         QTRY_VERIFY(named("subtitlesFromVideoPrompt"));
         QObject *prompt = named("subtitlesFromVideoPrompt");
         QTRY_VERIFY(prompt->property("visible").toBool());
-        // PU1-message-boxes: the kit's message box, its verbs the command's.
         QCOMPARE(prompt->property("text").toString(), QStringLiteral("Open “show.ass” with the video?"));
         QVERIFY(QMetaObject::invokeMethod(prompt, "answer", Q_ARG(QVariant, QStringLiteral("both"))));
         QTRY_COMPARE(titles(), QStringList{QStringLiteral("show.ass")});
         QVERIFY(!application->video().offering());
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         QCOMPARE(QFileInfo(QString::fromStdString(application->video().session().path())).fileName(), QStringLiteral("show.mkv"));
-        // The tab has those subtitles now: opening the video asks nothing.
         QCOMPARE(application->openVideoFile(folder + QStringLiteral("/show.mkv")).value(QStringLiteral("subtitles")).toString(),
                  QString());
     }
 
-    // AutoSaveOpen over the legacy Subs folder: files grouped by name,
-    // versions newest first, the filter, and Open as a new unsaved copy
-    // (L58-recovery-copy) with the autosave left untouched.
     void legacyAutosavesOpenAsCopies()
     {
         const QString subs = home.filePath(QStringLiteral("Subs"));
@@ -894,24 +798,20 @@ private slots:
         const QVariantList versions = episode.value(QStringLiteral("versions")).toList();
         QCOMPARE(versions.size(), 2);
         QCOMPARE(QFileInfo(versions[0].toMap().value(QStringLiteral("file")).toString()).fileName(),
-                 QStringLiteral("episode_0_2.ass")); // newest first
+                 QStringLiteral("episode_0_2.ass"));
         const QDateTime written = QFileInfo(newer).lastModified();
         QCOMPARE(versions[0].toMap().value(QStringLiteral("written")).toString(),
                  written.toString(QStringLiteral("MM/dd/yyyy   HH:mm:ss")));
-        // FindFiles: words in the lowered name, all of them or any.
         QCOMPARE(application->filterLegacyAutosaves(files, QStringLiteral("EPI ass"), true).size(), 1);
         QCOMPARE(application->filterLegacyAutosaves(files, QStringLiteral("epi zzz"), true).size(), 0);
         QCOMPARE(application->filterLegacyAutosaves(files, QStringLiteral("epi zzz"), false).size(), 1);
         QCOMPARE(application->filterLegacyAutosaves(files, QString(), true).size(), 2);
-        // Through Open auto save (PU1-autosaves-window): a row for the name,
-        // its versions newest first, read only.
         QVERIFY(QMetaObject::invokeMethod(named("autosaves"), "show", Q_ARG(QVariant, false)));
         QTRY_VERIFY(named("autosavesWindow"));
         QObject *recovery = named("autosavesWindow");
         QTRY_VERIFY(recovery->property("visible").toBool());
         named("autosavesSearch")->setProperty("text", QStringLiteral("episode"));
         QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 1);
-        // The search finds a previous version by its files' path too.
         named("autosavesSearch")->setProperty("text", QStringLiteral("subs"));
         QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 2);
         named("autosavesSearch")->setProperty("text", QStringLiteral("subs episode"));
@@ -920,7 +820,7 @@ private slots:
         QObject *versionList = named("autosaveVersion0");
         QTRY_COMPARE(versionList->property("count").toInt(), 2);
         QVERIFY(!named("autosaveDelete0")->property("enabled").toBool());
-        versionList->setProperty("currentIndex", 1); // the older one
+        versionList->setProperty("currentIndex", 1);
         QVERIFY(QMetaObject::invokeMethod(named("autosaveOpen0"), "clicked"));
         QTRY_VERIFY(!recovery->property("visible").toBool());
         QCOMPARE(titles().last(), QStringLiteral("episode_0_1.ass (recovered)"));
@@ -936,9 +836,6 @@ private slots:
         QCOMPARE(QDir(subs).entryList(QDir::Files).size(), 3);
     }
 
-    // #387: unset, the folder is Subs in a legacy root the settings importer
-    // finds (an installed legacy's HikariSub/Legacy, ADR 0019), not Subs
-    // beside 0.1's own settings file.
     void legacyAutosavesComeFromTheLegacyRoot()
     {
         QTemporaryDir data;
@@ -976,9 +873,6 @@ private slots:
         QCOMPARE(QFileInfo(file).absolutePath(), QFileInfo(legacy + QStringLiteral("/Subs")).absoluteFilePath());
     }
 
-    // #401: and Subs in the root the active import came from, which the
-    // user may have picked by hand in Import legacy settings (here no legacy
-    // root is found on its own).
     void legacyAutosavesComeFromTheImportedRoot()
     {
         QTemporaryDir data;
@@ -1029,10 +923,6 @@ private slots:
         QCOMPARE(files.first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("picked.ass"));
     }
 
-    // P9-no-legacy-folder-log: without a legacy Subs folder Open auto save
-    // logs nothing (legacy's FindFirstFileW failed and logged "Cannot open
-    // auto save folder", AutoSaveOpen.cpp:125-134); an existing empty folder
-    // still logs as legacy did.
     void noLegacySubsFolderLogsNothing()
     {
         const QString subs = home.filePath(QStringLiteral("Subs"));

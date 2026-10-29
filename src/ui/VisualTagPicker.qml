@@ -5,21 +5,12 @@ import QtQuick.Controls.impl
 import QtQuick.Layouts
 import Hikari.Ui
 
-// HY1 (#271): Hydra's tag list in the inspector bar (legacy AllTagsItem's
-// HikariChoice, VideoToolbar.cpp:737-799). The button shows the chosen
-// definition and its tag; its list opens with a search field on top and the
-// definitions under their sections (Common, More folded with its count, the
-// user's own), each with its tag beside it, and "Edit tags…" at the end (the
-// Edit button's "Tag editing" dialog). Typing filters every definition at
-// once by its name or its tag; Up and Down move through the matches, Enter
-// takes the highlighted one (the first), Esc closes the list.
 AbstractButton {
     id: picker
     required property var modelData
     required property var live
     required property VisualToolsController tools
     property bool measuring: false
-    // VB1: named, unless unseen (measured, or folded off the bar's line).
     property bool named: !measuring
     readonly property var model: live.choices
     readonly property var notes: live.notes ?? []
@@ -45,14 +36,12 @@ AbstractButton {
     ToolTip.text: modelData.tooltip
     Layout.alignment: Qt.AlignVCenter
 
-    // The section titles the tool gives (marked: the bar's words).
     readonly property var sectionTitles: ({
         "Common": qsTr("Common"),
         "More": qsTr("More"),
         "Your tags": qsTr("Your tags")
     })
 
-    // The longest name and tag, so the bar does not move as the tag changes.
     FontMetrics {
         id: metrics
         font: picker.font
@@ -116,8 +105,6 @@ AbstractButton {
     }
     onClicked: list.visible ? list.keep() : list.openAt(picker, null)
 
-    // The kit's popover (PK1): Esc, a press outside or the button again
-    // closes it with the tag as it was; a row or Enter takes one.
     Popover {
         id: list
         objectName: picker.objectName.length > 0 ? picker.objectName + "_menu" : ""
@@ -126,10 +113,8 @@ AbstractButton {
         initialFocus: search
         property bool moreOpen: false
         property int highlighted: -1
-        // The rows: section titles and definitions (their index), filtered
-        // by the search, then the action.
         readonly property var rows: {
-            const q = search.text.trim().replace(/^\\/, "").toLowerCase() // \blur as shown
+            const q = search.text.trim().replace(/^\\/, "").toLowerCase()
             const out = []
             if (q.length > 0) {
                 for (let i = 0; i < picker.model.length; ++i) {
@@ -146,7 +131,6 @@ AbstractButton {
                         members.push(i)
                 if (members.length === 0)
                     continue
-                // More folds unless the chosen tag is in it.
                 const folds = picker.sectionNames[s] === "More"
                 const open = !folds || moreOpen || members.includes(picker.currentIndex)
                 out.push({ kind: "section", section: s, open: open, count: members.length, folds: folds })
@@ -158,8 +142,7 @@ AbstractButton {
         }
         readonly property var entries: rows.filter(r => r.kind === "entry").map(r => r.index)
         readonly property int entryCount: entries.length
-        // The choice is taken after the click: another tag can change the
-        // bar's options, which makes this picker (and its list) again.
+        // MUST KILL: choose defers setOption because the new tag can rebuild this picker under the click
         function choose(index) {
             keep()
             if (index < 0)
@@ -173,7 +156,6 @@ AbstractButton {
                 return
             const at = entries.indexOf(highlighted)
             highlighted = entries[Math.max(0, Math.min(entries.length - 1, (at < 0 ? (by > 0 ? -1 : 0) : at) + by))]
-            // The highlighted row kept in view.
             const y = rows.findIndex(r => r.kind === "entry" && r.index === highlighted) * 24
             if (y < rowList.contentY)
                 rowList.contentY = y
@@ -210,8 +192,6 @@ AbstractButton {
                 Layout.preferredHeight: 1
                 color: Theme.line
             }
-            // A few dozen rows at most: all made at once (a ListView makes
-            // them as it lays out).
             Flickable {
                 id: rowList
                 objectName: list.objectName.length > 0 ? list.objectName + "_rows" : ""
@@ -300,7 +280,6 @@ AbstractButton {
                 Layout.preferredHeight: 1
                 color: Theme.line
             }
-            // The Edit button's dialog, as the list's last row.
             AbstractButton {
                 id: editTags
                 objectName: list.objectName.length > 0 ? list.objectName + "_edit" : ""

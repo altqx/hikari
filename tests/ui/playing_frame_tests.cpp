@@ -1,20 +1,3 @@
-// V2 playback follow-ups through the composition and the real QML (user
-// decisions 2026-10-14, items 30-32 and 35-37):
-// - the docked and the fullscreen seek bar dragged seek at most every 50 ms
-//   and once more where they are let go (V2-seek-bar-drag-throttle);
-// - while playing, the features that read the video's frame read the
-//   player's (legacy FrameShownAt(VideoBox::Tell())): the Line editor's time
-//   difference, inserting Lines at the video's time, the visual tools' time
-//   and warning, Set FPS from video, splitting at the video time, Shift
-//   times to the video, the audio mark from the video and a tab's video
-//   position;
-// - a player time past the last frame's start is the last frame;
-// - while playing, the jumps (L, ;, Up, Down, the keyframes) go from the
-//   player's frame and play on, next frame does nothing, and the seek bar
-//   shows a seek or a release at once.
-// A fake general player plays: each of its frames is put at a chosen time,
-// so the frame the features must read is known.
-
 #include "hikari/app/application.h"
 #include "hikari/application/general_player.h"
 #include "audio_controller.h"
@@ -46,7 +29,6 @@ using namespace hikari;
 
 namespace {
 
-// Opens and seeks when told to, as the session test's player does.
 struct FakePlayer : application::GeneralPlayerPort {
     std::vector<std::string> calls;
     Opened pendingOpen;
@@ -112,7 +94,7 @@ QQuickItem *findItem(QQuickItem *from, const QString &name)
     return nullptr;
 }
 
-} // namespace
+}
 
 class PlayingFrameTests : public QObject {
     Q_OBJECT
@@ -133,7 +115,6 @@ class PlayingFrameTests : public QObject {
     static std::int64_t ms(core::DocumentTime t) { return t.microseconds() / 1000; }
     std::int64_t startMs(int frame) { return ms(*session().frameStart(frame)); }
 
-    // Two Lines (0-1 s, 1-2 s) beside the 48-frame 24 fps fixture, open.
     bool open()
     {
         const QString video = dir.filePath(QStringLiteral("clip.mkv"));
@@ -153,7 +134,6 @@ class PlayingFrameTests : public QObject {
         application->video().openVideo(video);
         return QTest::qWaitFor([&] { return session().shownFrame().value_or(-1) >= 0; }, 20000);
     }
-    // Plays through the fake player from the shown frame.
     bool play()
     {
         session().setGeneralPlayer(player);
@@ -163,8 +143,6 @@ class PlayingFrameTests : public QObject {
         player->delivered();
         return session().playing();
     }
-    // The player's frame at `frame`'s start plus 1 ms; the requested frame
-    // stays where playback started.
     void playerAt(int frame) { session().generalFrame(playerFrame(), (startMs(frame) + 1) * 1000); }
     void undo()
     {
@@ -176,10 +154,6 @@ class PlayingFrameTests : public QObject {
         application->clickLine(id, static_cast<int>(modifiers.toInt()));
     }
 
-    // Drags `bar` from `from` to `to` (fractions of its width) in `steps`
-    // moves `pauseMs` apart; returns the moves the bar reported, and in
-    // `held` its frame just before it was let go (where it is let go: the
-    // release is at the last move's point).
     int drag(QQuickWindow *w, QQuickItem *bar, qreal from, qreal to, int steps, int pauseMs, int &held)
     {
         QSignalSpy moved(bar, SIGNAL(moved()));
@@ -195,8 +169,6 @@ class PlayingFrameTests : public QObject {
         QTest::mouseRelease(w, Qt::LeftButton, Qt::NoModifier, at(to));
         return static_cast<int>(moved.count());
     }
-    // A fast drag over the bar: many moves, at most a seek per 50 ms, and
-    // the last seek exactly where it was let go.
     void checkDrag(QQuickWindow *w, QQuickItem *bar, qreal from, qreal to)
     {
         auto &video = application->video();
@@ -209,13 +181,12 @@ class PlayingFrameTests : public QObject {
         qInfo("%d moves, %lld seeks in %lld ms", moves, static_cast<long long>(sought.count()),
               static_cast<long long>(elapsed));
         QVERIFY2(moves >= 30, "the bar followed the pointer");
-        QVERIFY(sought.count() >= 2); // during the drag, not only on release
+        QVERIFY(sought.count() >= 2);
         QVERIFY(sought.count() <= elapsed / 50 + 3);
         QVERIFY(sought.count() < moves / 3);
         QCOMPARE(sought.last().first().toInt(), released);
         QCOMPARE(session().requestedFrame().value_or(-1), released);
         QVERIFY(std::abs(released - qRound(to * (session().frameCount() - 1))) <= 4);
-        // Nothing waits once let go, and the bar follows the frame again.
         const auto count = sought.count();
         QTest::qWait(120);
         QCOMPARE(sought.count(), count);
@@ -227,7 +198,7 @@ private slots:
     {
         QVERIFY(dir.isValid());
         app::Application::Options options;
-        options.playbackAudio = false; // never a desktop's speakers in tests
+        options.playbackAudio = false;
         application = new app::Application(options);
         player = new FakePlayer;
         engine = new QQmlApplicationEngine;
@@ -253,7 +224,6 @@ private slots:
         player = nullptr;
     }
 
-    // Item 30: the docked seek bar, paused and playing.
     void seekBarDragSeeksAtMostEvery50Ms()
     {
         auto *bar = findItem(window->contentItem(), QStringLiteral("videoSlider"));
@@ -261,11 +231,8 @@ private slots:
         QTRY_VERIFY(bar->isVisible() && bar->isEnabled());
         QVERIFY(bar->width() >= 120);
         checkDrag(window, bar, 0.1, 0.8);
-        // The frame let go on is the one shown.
         const int released = session().requestedFrame().value_or(-1);
         QTRY_COMPARE_WITH_TIMEOUT(session().shownFrame().value_or(-1), released, 10000);
-        // Playing: the player is sought as often, and goes on from the frame
-        // let go on.
         QVERIFY(play());
         playerAt(5);
         const int before = player->seeks();
@@ -275,11 +242,10 @@ private slots:
         QCOMPARE(player->calls.back(), "seek " + std::to_string(startMs(*session().requestedFrame()) * 1000));
     }
 
-    // Item 30: the fullscreen seek bar the same way.
     void fullscreenSeekBarDragSeeksAtMostEvery50Ms()
     {
         auto &fs = application->videoFullscreen();
-        fs.setBarMode(1); // Always: the bar stays while the drag plays (FS1-bar-mode)
+        fs.setBarMode(1);
         QVERIFY(fs.toggle(0));
         auto *fsWindow = qobject_cast<QQuickWindow *>(
             engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("videoFullscreen")));
@@ -294,11 +260,6 @@ private slots:
         fs.setBarMode(0);
     }
 
-    // Items 35-37 (user decisions 2026-10-14): while playing, a jump goes
-    // from the player's frame and plays on, and the seek bar shows it at
-    // once, as it shows the frame a drag lets go on at once; next frame does
-    // nothing. Before, the bar kept the last texts' frame for up to 100 ms
-    // (a jump from where playback started was not shown at all).
     void theBarShowsASeekWhilePlayingAtOnce()
     {
         auto &video = application->video();
@@ -310,28 +271,24 @@ private slots:
         QVERIFY(play());
         playerAt(10);
         QTRY_COMPARE(value(), 10);
-        // L: 5 s on from frame 10 is past the end (2 s): the last frame.
         const int last = session().frameCount() - 1;
         QVERIFY(video.seekBy(5000));
         QVERIFY(video.playing());
         QCOMPARE(session().requestedFrame(), std::optional(last));
         QCOMPARE(player->calls.back(), "seek " + std::to_string(startMs(last) * 1000));
-        QCOMPARE(value(), last); // at once
+        QCOMPARE(value(), last);
         player->delivered();
         playerAt(last);
-        // ; from there: 5 s back is the first frame.
         QVERIFY(video.seekBy(-5000));
         QCOMPARE(player->calls.back(), std::string("seek 0"));
         QCOMPARE(value(), 0);
         player->delivered();
         playerAt(20);
         QTRY_COMPARE(value(), 20);
-        // Next frame does nothing while playing.
         const auto calls = player->calls.size();
         QVERIFY(!video.stepFrames(1));
         QCOMPARE(session().requestedFrame(), std::optional(0));
         QCOMPARE(player->calls.size(), calls);
-        // A drag let go: the bar shows the frame let go on at once.
         int released = -1;
         drag(window, bar, 0.85, 0.35, 30, 4, released);
         QCOMPARE(session().requestedFrame(), std::optional(released));
@@ -339,9 +296,6 @@ private slots:
         QVERIFY(session().playing());
     }
 
-    // Item 31: while playing, every reader of the video's frame reads the
-    // player's frame (30 here, playback having started from 2), where they
-    // read -1 (none) before.
     void featuresReadThePlayersFrameWhilePlaying()
     {
         auto &video = application->video();
@@ -351,13 +305,10 @@ private slots:
         QVERIFY(video.showFrameAt(2));
         QTRY_COMPARE(session().shownFrame().value_or(-1), 2);
         QVERIFY(play());
-        // The visual tools: their time, and the warning outside the active
-        // Line (1-2 s) at frame 10, none inside it at frame 30. (Within one
-        // play, a player frame older than the one shown is dropped.)
         auto &tools = application->visualTools();
-        tools.selectFamily(1); // Position
+        tools.selectFamily(1);
         playerAt(10);
-        QCOMPARE(session().shownFrame(), std::optional(-1)); // a player frame is shown
+        QCOMPARE(session().shownFrame(), std::optional(-1));
         QCOMPARE(session().reportedFrame(), std::optional(10));
         QCOMPARE(tools.videoTimeMs(), startMs(10));
         QVERIFY(!tools.warning().isEmpty());
@@ -368,14 +319,12 @@ private slots:
         QCOMPARE(tools.videoTimeMs(), at);
         QVERIFY(tools.warning().isEmpty());
 
-        // The Line editor's time from video (EDITBOX_START_DIFFERENCE).
         auto &editor = application->editor();
         QVERIFY(editor.insertTimeDifference(false, 0, 0));
         QCOMPARE(editor.text(), QStringLiteral("%1second").arg(at - 1000));
         editor.discard();
         QCOMPARE(editor.text(), QStringLiteral("second"));
 
-        // The audio mark from the video (GLOBAL_SET_AUDIO_MARK_FROM_VIDEO).
         auto &audio = application->audio();
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
@@ -384,8 +333,6 @@ private slots:
         QVERIFY(audio.hasMark());
         QCOMPARE(audio.markMs(), timebase.msAt(30));
 
-        // Shift times to the video (the active Line's start to frame 30's
-        // start time).
         auto map = application->shiftTimesSettings().settingsMap();
         map[QStringLiteral("moveToVideoTime")] = true;
         map[QStringLiteral("fromStartTime")] = true;
@@ -401,8 +348,6 @@ private slots:
         QCOMPARE(ms(lines()[1]->start.value), 1000 + added);
         undo();
 
-        // Set FPS from video: the second selected Line's start moves to the
-        // video's time, the first stays.
         click(first.value);
         click(second.value, Qt::ShiftModifier);
         playerAt(30);
@@ -411,7 +356,6 @@ private slots:
         QCOMPARE(ms(lines()[1]->start.value), at);
         undo();
 
-        // Split at the video time.
         click(second.value);
         playerAt(30);
         const auto count = lines().size();
@@ -420,13 +364,11 @@ private slots:
         QCOMPARE(ms(lines()[1]->end.value), timebase.endTimeFor(timebase.frameAt(static_cast<int>(at))) / 10 * 10);
         undo();
 
-        // Insert Lines timed to the video: "frame" (frame 30 to frame 31)
-        // and "video" (frame 30, 4 s).
         click(second.value);
         playerAt(30);
         QVERIFY(application->insertLine(false, QStringLiteral("frame")));
         QCOMPARE(lines().size(), count + 1);
-        QCOMPARE(ms(lines()[2]->start.value), at / 10 * 10); // ZEROIT
+        QCOMPARE(ms(lines()[2]->start.value), at / 10 * 10);
         QCOMPARE(ms(lines()[2]->end.value), startMs(31) / 10 * 10);
         playerAt(30);
         QVERIFY(application->insertLine(false, QStringLiteral("video")));
@@ -435,7 +377,6 @@ private slots:
             found = found || (ms(l->start.value) == at / 10 * 10 && ms(l->end.value) == (at + 4000) / 10 * 10);
         QVERIFY(found);
 
-        // The tab's video position: a new tab, then back, shows frame 30.
         playerAt(30);
         application->addPage();
         QVERIFY(!video.hasVideo());
@@ -444,9 +385,6 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(session().shownFrame().value_or(-1), 30, 10000);
     }
 
-    // Item 32: a player time past the last frame's start is the last frame:
-    // the panel's status, the times field and the bar show it, and Pause
-    // shows it; before, they fell back to the frame playback started from.
     void thePanelReportsTheLastFrameAtTheEnd()
     {
         auto &video = application->video();

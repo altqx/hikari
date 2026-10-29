@@ -4,19 +4,6 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// DG1 (#222): a dialog's title bar (DialogWindow.qml) in SH1's style: one
-// 32-pixel row on `panel`, the title at the leading edge (the owner's
-// answer of 2026-10-21) and the window buttons at the trailing one: Close,
-// and Maximise (or Restore) only while the dialog can be resized; no
-// Minimise and no application icon. DX1 (#367): before them, "?" (Help)
-// opens the window's page of the user guide, on windows that have one;
-// User guide's key (F1) opens it from the keyboard. Its free parts move the
-// window, a double-click maximises a resizable one, a right click opens the window
-// system's window menu (TitleBarMoveArea). While the window is not active
-// the title and the glyphs take the disabled role. In the high-contrast
-// themes a 1-pixel `line` parts the row from the body. Drawn only while the
-// dialog has HikariSub's frame (DialogFrame.custom); with "Use system title
-// bar" the window system's frame stays and there is no row.
 Rectangle {
     id: bar
     objectName: "dialogTitleBar"
@@ -26,10 +13,7 @@ Rectangle {
     readonly property bool maximized: window !== null
         && (window.visibility === Window.Maximized || window.visibility === Window.FullScreen)
     property string title: window ? window.title : ""
-    // PU7 (#309): false for a window the user cannot close (Install update).
     property bool closable: true
-    // DX1 (#367): the window's page of the user guide (DialogWindow.guideId);
-    // with one, a "?" button before the window buttons opens it.
     property string guideId
     visible: frame.custom
     implicitHeight: visible ? 32 : 0
@@ -60,7 +44,7 @@ Rectangle {
         anchors.rightMargin: 12
         height: parent.height
         text: bar.title
-        textFormat: Text.PlainText // as a system title bar shows it
+        textFormat: Text.PlainText
         elide: Text.ElideRight
         maximumLineCount: 1
         verticalAlignment: Text.AlignVCenter
@@ -69,8 +53,6 @@ Rectangle {
         Accessible.name: text
     }
 
-    // On Windows the maximise button is the frame's (WM_NCHITTEST's
-    // HTMAXBUTTON, the snap layouts), as on the main window's bar.
     Row {
         id: buttons
         objectName: "dialogTitleBarButtons"
@@ -84,6 +66,7 @@ Rectangle {
             text: qsTr("Help")
             onClicked: UserGuide.open("window", bar.guideId)
         }
+        // Windows snap layouts need HTMAXBUTTON from WM_NCHITTEST, so the frame reports hover and press.
         TitleBarButton {
             id: maximizeButton
             objectName: "dialogTitleBarMaximize"

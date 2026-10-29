@@ -1,11 +1,5 @@
 #pragma once
 
-// The real-time half of the editor audio output (N6), free of any audio API so
-// its callback constraints are testable everywhere. render() runs on the
-// device callback: it takes ready samples from the SPSC ring, fills silence,
-// and publishes counters and a clock snapshot through atomics and a seqlock.
-// It never allocates, locks, blocks, logs or calls Qt.
-
 #include "hikari/application/audio_output.h"
 #include "hikari/backends/audio_ring.h"
 
@@ -25,17 +19,14 @@ struct CallbackTiming {
 
 class OutputEngine {
 public:
-    // outputLatency is the stream's reported latency, used when a callback has
-    // no DAC time. queueSeconds sizes the ready queue.
+    // outputLatency stands in when a callback has no DAC time.
     OutputEngine(application::OutputFormat format, double outputLatency, double queueSeconds);
 
-    // Real-time side. Returns false when the stream should abort (fault
-    // injection for device-loss evidence).
+    // Device callback: never allocates, locks, blocks, logs or calls Qt. False aborts the stream.
     bool render(std::span<float> out, const CallbackTiming &timing) noexcept;
     // Called when the stream ends, on whatever thread the host uses.
     void streamFinished() noexcept;
 
-    // Owner side.
     std::size_t write(std::span<const float> interleaved);
     void started();          // a new epoch; callback state is reset
     void stopRequested();    // the next streamFinished() is expected
@@ -43,8 +34,7 @@ public:
     void injectLoss();       // the next callback aborts the stream
 
     application::OutputStatus status() const;
-    // `now` is steady_clock seconds; a snapshot older than the stall limit is
-    // invalid.
+    // `now` is steady_clock seconds; a snapshot older than stallLimit() is invalid.
     application::ClockEstimate clock(double now) const;
     double stallLimit() const;
 
@@ -58,13 +48,12 @@ private:
     double m_outputLatency;
     AudioRing m_ring;
 
-    // Callback-only state; reset by started() while no callback runs.
     bool m_flowing = false;
     bool m_hasPrevious = false;
     double m_previousStreamTime = 0;
     std::size_t m_previousFrames = 0;
     std::uint64_t m_consumed = 0;
-    double m_longestBuffer = 0; // seconds, for the stall limit
+    double m_longestBuffer = 0;
     double m_readyEndDac = 0, m_readyStream = 0, m_readyMonotonic = 0;
     std::uint64_t m_readyConsumed = 0;
 
@@ -80,7 +69,6 @@ private:
     std::atomic<std::uint64_t> m_discontinuities{0};
     std::atomic<double> m_bufferSeconds{0};
 
-    // Clock snapshot, written by the callback under a sequence counter.
     std::atomic<std::uint64_t> m_seq{0};
     std::atomic<bool> m_snapValid{false};
     std::atomic<std::uint64_t> m_snapEpoch{0};
@@ -102,4 +90,4 @@ private:
     static_assert(std::atomic<std::uint32_t>::is_always_lock_free);
 };
 
-} // namespace hikari::backends
+}

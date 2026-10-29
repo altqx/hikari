@@ -1,8 +1,3 @@
-// P6 workflow through the real UI (Spix): tab traversal with Ctrl+PgDown /
-// Ctrl+PgUp (wrapping), a click on a tab, Ctrl+T for a new tab, and closing
-// a modified tab from its close mark and with Ctrl+W through the close
-// review (Cancel keeps it; Discard all closes it and the next tab shows).
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -31,7 +26,6 @@ public:
     std::vector<std::string> observed;
 
 protected:
-    // The window title names the editing target ("<name> - HikariSub").
     std::string targets() { return getStringProperty("mainWindow", "title"); }
     void key(int key)
     {
@@ -54,42 +48,37 @@ protected:
     {
         if (waitForItem("mainWindow/documentTab2", 5s)) {
             invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
-            observed.push_back(targets()); // 0: one.ass
+            observed.push_back(targets());
             key(Qt::Key_PageDown);
-            observed.push_back(targets()); // 1: two.ass
+            observed.push_back(targets());
             key(Qt::Key_PageDown);
             key(Qt::Key_PageDown);
-            observed.push_back(targets()); // 2: wrapped to one.ass
+            observed.push_back(targets());
             key(Qt::Key_PageUp);
-            observed.push_back(targets()); // 3: wrapped to three.ass
+            observed.push_back(targets());
             mouseClick("mainWindow/documentTab1");
             wait(300ms);
-            observed.push_back(targets()); // 4: two.ass
+            observed.push_back(targets());
             typeAndCommit(" edited");
-            observed.push_back(getStringProperty("mainWindow/documentTab1", "text")); // 5: "1*two.ass"
-            // The active tab's close mark reviews it; Cancel keeps it. Pressed,
-            // not clicked: spix's mouse events carry the pointer's screen
-            // position, and under Xvfb the close question (centred) opened
-            // under it and took the same click on Don't save.
+            observed.push_back(getStringProperty("mainWindow/documentTab1", "text"));
+            // Not mouseClick: under Xvfb the close question opens under spix's pointer and takes the same click.
             invokeMethod("mainWindow/documentTabClose1", "clicked", {});
-            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review"); // 6
+            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review");
             mouseClick("closeQuestion/messageBoxChoice_cancel");
             wait(300ms);
-            observed.push_back(targets()); // 7: two.ass
-            // Ctrl+W and Discard all: the tab after it shows.
+            observed.push_back(targets());
             enterKey("mainWindow/lineText", Qt::Key_W, spix::KeyModifiers::Control);
             waitForItem("closeQuestion/messageBoxChoice_discard", 5s);
             mouseClick("closeQuestion/messageBoxChoice_discard");
             wait(500ms);
-            observed.push_back(targets()); // 8: three.ass
-            observed.push_back(existsAndVisible("mainWindow/documentTab2") ? "3 tabs" : "2 tabs"); // 9
-            // Ctrl+T: a new Untitled tab after the last (the main window
-            // active again after the review window, as a window manager does).
+            observed.push_back(targets());
+            observed.push_back(existsAndVisible("mainWindow/documentTab2") ? "3 tabs" : "2 tabs");
+            // Under Xvfb no window manager reactivates the main window after the review window.
             invokeMethod("mainWindow", "requestActivate", {});
             wait(300ms);
             key(Qt::Key_T);
-            observed.push_back(targets()); // 10: Untitled
-            observed.push_back(getStringProperty("mainWindow/documentTab2", "text")); // 11: Untitled
+            observed.push_back(targets());
+            observed.push_back(getStringProperty("mainWindow/documentTab2", "text"));
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -108,7 +97,7 @@ void write(const QString &path, const char *text)
                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,") + text + "\n");
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

@@ -1,25 +1,5 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.MainWindow"
-// PK1 (#301): the message box, one of the kit's four kinds of popup, for
-// every question, and every notice that needs an answer (an error that
-// stopped an action, a choice that can lose data); a notice with OK alone
-// is a toast instead (ToastStack). A window on DG1's frame, modal to the
-// window it opened from only, fixed size:
-// * the title names the command it comes from (never "Prompt",
-//   "Confirmation" or "Info");
-// * a severity icon ("info", "warning", "error"; a question takes the
-//   severity of what it leads to), one main line, an optional detail, and
-//   the technical text under a Details disclosure with a copy button;
-// * buttons named for what they do, in the platform's order: the default
-//   one filled in the accent, a destructive one outlined in the danger
-//   colour and never the default;
-// * "Don't ask again" where the question can be hidden (`dontAsk`).
-//
-// ask(options, done): title, text, detail, details, severity, plainText, choices
-// ([{id, text, role: "accept" | "reject" | "destructive" | "action",
-// isDefault}]), dontAsk, from (the window it opens over; else the one with
-// the keyboard); done(id, dontAskAgain). Closing it (Esc, its Close)
-// answers the "reject" choice, or "" without one.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -33,7 +13,6 @@ DialogWindow {
     property string text: ""
     property string detail: ""
     property string details: ""
-    // The text and detail as given, for text holding a user's own names.
     property bool plainText: false
     property bool offerDontAsk: false
     property var choices: []
@@ -85,7 +64,6 @@ DialogWindow {
         const i = choices.findIndex(c => c.isDefault === true && c.role !== "destructive")
         return i >= 0 ? i : choices.findIndex(c => c.role === "reject")
     }
-    // Closed by Esc or its Close: the "reject" answer.
     onRejected: {
         if (done !== null) {
             const callback = done
@@ -139,7 +117,6 @@ DialogWindow {
             }
         }
     }
-    // The technical text: collapsed until asked for, with a copy button.
     ColumnLayout {
         visible: box.details.length > 0
         spacing: 6
@@ -162,7 +139,6 @@ DialogWindow {
             visible: box.showDetails
             color: Theme.field
             border.color: Theme.line
-            // Long details (a stack trace) scroll: the answers stay on screen.
             implicitHeight: Math.min(detailsText.implicitHeight + 16, 220)
             Layout.fillWidth: true
             ScrollView {
@@ -196,9 +172,6 @@ DialogWindow {
         }
     }
 
-    // The choices' buttons, made again when the choices change: the
-    // default one filled in the accent, a destructive one outlined in the
-    // danger colour, the others plain; DialogButtonBox orders them by role.
     property var made: []
     onChoicesChanged: makeButtons()
     function makeButtons() {
@@ -245,7 +218,7 @@ DialogWindow {
             onClicked: box.answer(choiceId)
         }
     }
-    // Copies the technical text (no clipboard object in QML).
+    // QML has no clipboard API; a hidden TextEdit copies.
     TextEdit { id: copier; visible: false }
     function copyDetails() {
         copier.text = details

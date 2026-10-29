@@ -4,12 +4,11 @@ namespace hikari::backends {
 
 namespace {
 
-// The script's second macro: "Apply karaoke template to selected lines"
-// (kara-templater.lua registers it after "Apply karaoke template"; the names
-// are translated, the order is not).
+// kara-templater.lua's second macro, "Apply karaoke template to selected lines"; the macro
+// names are translated, their order is not.
 constexpr int kSelectedLinesMacro = 1;
 
-} // namespace
+}
 
 KaraokePreviewRunner::KaraokePreviewRunner(QString helperPath, QString sharedInclude, QObject *parent)
     : QObject(parent), m_helper(std::move(helperPath)), m_include(std::move(sharedInclude))
@@ -63,8 +62,6 @@ void KaraokePreviewRunner::setScript(const QString &path)
         connect(m_host.get(), &LuaScriptHost::loadFailed, this, &KaraokePreviewRunner::readyChanged);
         connect(m_host.get(), &LuaScriptHost::unavailable, this, &KaraokePreviewRunner::readyChanged);
         connect(m_host.get(), &LuaScriptHost::finished, this, &KaraokePreviewRunner::finished);
-        // A run that does not stop when the next one replaces it (a template
-        // in an endless loop) loses its helper; the script is loaded again.
         connect(m_host.get(), &LuaScriptHost::forceStopOffered, this, [this] { m_host->forceStop(); });
         m_host->load();
     }
@@ -122,7 +119,6 @@ void KaraokePreviewRunner::finished(LuaScriptHost::RunOutcome outcome, const QSt
     const bool lost =
         outcome == LuaScriptHost::RunOutcome::ForceStopped || outcome == LuaScriptHost::RunOutcome::HelperLost;
     if (lost) {
-        // Loading again ends in loaded(), which starts the next run.
         QMetaObject::invokeMethod(
             this, [this] { if (m_host) m_host->restart(); }, Qt::QueuedConnection);
     }
@@ -138,4 +134,4 @@ void KaraokePreviewRunner::finished(LuaScriptHost::RunOutcome outcome, const QSt
         startNext();
 }
 
-} // namespace hikari::backends
+}

@@ -1,16 +1,4 @@
-# K2: the Qt Quick Controls style the theme layer drives (docs/ux/visual-language.md,
-# "Hikari theme layer"): Fusion, with every control outline in the theme's
-# boundary colour (the palette's Mid, the `line` role; the high-contrast
-# border pick) instead of Fusion's window colour darkened, which all but
-# vanishes on the Dark and High contrast black panels (the controls a user
-# operates draw theirs, enabled, in the `control` role, at least 3:1:
-# K2-control-boundary, StyleColours.control); keyboard focus drawn
-# as a ring 1 wide, drawn tight, in the theme's `focus` role, the text colour (FocusFrame,
-# from StyleColours, set by the theme layer), apart from the accent, which
-# keeps the default button's and a focused field's outline. Geometry and
-# fills stay Fusion's; any other control is
-# Fusion's own (theme::chooseControlsStyle sets Fusion as the fallback style:
-# Qt Quick Controls does not read a fallback from a static style's qmldir).
+# Qt Quick Controls ignores a static style's qmldir fallback; theme::chooseControlsStyle sets Fusion.
 qt_add_library(hikari_ui_style STATIC)
 qt_add_qml_module(hikari_ui_style
     URI HikariStyle

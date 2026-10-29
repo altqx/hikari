@@ -1,14 +1,3 @@
-// T2 workflow through the real UI (Spix): the numeric and keyboard
-// alternatives of Position and Move. Open a Document and its video, choose
-// Position on the rail, type a new X in the values row (the active Line's
-// \pos), nudge it with the keys (legacy A/D/W/S, one step per held key);
-// then Move: type the end point (\move written with the Line's frame times)
-// and nudge the end with K (J/L/I/K; L is VIDEO_5_SECONDS_FORWARD's by
-// default, a Video binding that comes first, as legacy's accelerator
-// did); the two-point option toggles from its
-// icon button. The texts are compared with legacy's arithmetic for the same
-// values.
-
 #include "hikari/app/application.h"
 #include "hikari/application/grid_split.h"
 #include "hikari/application/visual_view.h"
@@ -43,8 +32,6 @@ class Workflow : public spix::TestServer {
 public:
     std::vector<std::string> observed;
     std::atomic<bool> finished{false};
-    // The Line's text in the Document, read on the GUI thread (the Line
-    // editor hides the tags).
     std::function<std::string()> documentText;
 
 protected:
@@ -56,11 +43,9 @@ protected:
         return text;
     }
 
-    // The Line's text once it is no longer `before` (the commands run on
-    // the GUI thread after Spix queues them; a loaded machine is slow).
     std::string changedFrom(const std::string &before)
     {
-        // A property read runs after every command queued before it.
+        // A Spix property read runs after every command queued before it.
         (void)prop("mainWindow/videoPanel", "visible");
         std::string now = lineText();
         for (int i = 0; i < 100 && now == before; ++i) {
@@ -85,48 +70,40 @@ protected:
             if (!shown)
                 wait(100ms);
         }
-        observed.push_back(shown ? "video shown" : "no video"); // 0
-        // Position on the rail: its options row and the active Line's point.
+        observed.push_back(shown ? "video shown" : "no video");
         mouseClick("mainWindow/visualTool1");
         wait(200ms);
-        observed.push_back(prop("mainWindow/visualTool1", "checked"));             // 1
-        observed.push_back(prop("mainWindow/visualOption_byRectangle", "iconRole")); // 2
-        observed.push_back(prop("mainWindow/visualValue_x", "text"));                // 3
-        // The numeric alternative: a typed X.
+        observed.push_back(prop("mainWindow/visualTool1", "checked"));
+        observed.push_back(prop("mainWindow/visualOption_byRectangle", "iconRole"));
+        observed.push_back(prop("mainWindow/visualValue_x", "text"));
         const std::string initial = lineText();
         type("mainWindow/visualValue_x", "150");
-        observed.push_back(changedFrom(initial)); // 4
-        // The keyboard alternative: Right, then Shift+Down (VT2-arrow-nudge,
-        // legacy's D and Shift+S), with the video focused.
+        observed.push_back(changedFrom(initial));
         invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
         enterKey("mainWindow/videoPanel", Qt::Key_Right, spix::KeyModifiers::None);
-        observed.push_back(changedFrom(observed[4])); // 5
+        observed.push_back(changedFrom(observed[4]));
         enterKey("mainWindow/videoPanel", Qt::Key_Down, spix::KeyModifiers::Shift);
-        observed.push_back(changedFrom(observed[5])); // 6
-        // Move: the typed end point, then Alt+Down (legacy's K) nudges the end down.
+        observed.push_back(changedFrom(observed[5]));
         mouseClick("mainWindow/visualTool2");
         wait(200ms);
-        observed.push_back(prop("mainWindow/visualTool2", "checked")); // 7
-        // VB1: in a small window the End group folds under More options,
-        // whose popover holds it; a press outside closes the popover.
+        observed.push_back(prop("mainWindow/visualTool2", "checked"));
         const bool folded = prop("mainWindow/visualToolMore", "visible") == "true";
         if (folded) {
             mouseClick("mainWindow/visualToolMore");
             wait(300ms);
         }
         type("mainWindow/visualValue_x2", "200");
-        observed.push_back(changedFrom(observed[6])); // 8
+        observed.push_back(changedFrom(observed[6]));
         if (folded) {
             mouseClick("mainWindow/visualToolMore");
             wait(300ms);
         }
         invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
         enterKey("mainWindow/videoPanel", Qt::Key_Down, spix::KeyModifiers::Alt);
-        observed.push_back(changedFrom(observed[8])); // 9
-        // The two-point option toggles from its icon button.
+        observed.push_back(changedFrom(observed[8]));
         mouseClick("mainWindow/visualOption_twoPoints");
         wait(200ms);
-        observed.push_back(prop("mainWindow/visualOption_twoPoints", "checked")); // 10
+        observed.push_back(prop("mainWindow/visualOption_twoPoints", "checked"));
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
         if (!getErrors().empty())
@@ -137,7 +114,6 @@ protected:
     }
 };
 
-// The video's own size, so its 320x240 frame maps one to one.
 constexpr char kSubtitles[] = "[Script Info]\r\n"
                               "ScriptType: v4.00+\r\n"
                               "PlayResX: 320\r\n"
@@ -147,7 +123,7 @@ constexpr char kSubtitles[] = "[Script Info]\r\n"
                               "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
                               "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\an5\\pos(100,80)}sign\r\n";
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -208,10 +184,6 @@ int main(int argc, char **argv)
     expect(o[1] == "true", "Position is the rail's tool");
     expect(o[2] == "frame-to-scale", "the rectangle option shows its icon of the set");
     expect(o[3] == "100", "the values row shows the active Line's X");
-    // Legacy's arithmetic: each step moves the point in the view and writes
-    // it back (Position's GetCalculatedIn/OutPos, getfloat), and the commit
-    // reads the text back (SetCurVisual): the typed X through the view, then
-    // the nudges, a script pixel and a tenth (VisualPosition.cpp:523-558).
     const auto &view = application.visualTools().videoView();
     using hikari::application::visual::PointF;
     auto ft = [](float v) {
@@ -238,9 +210,6 @@ int main(int argc, char **argv)
     std::printf("expected %s\n", afterS.c_str());
     expect(o[6] == afterS, "Shift+S nudges it a tenth of a pixel down");
     expect(o[7] == "true", "Move is the rail's tool");
-    // Move: the \move's times are the Line's first and last frames' relative
-    // to its start (GetMoveTimes, Visuals.cpp:607-622), from the media's
-    // legacy Timebase; the start is the \pos, the end the typed X2.
     const auto timebase = application.video().session().legacyTimebase();
     const int startRel = std::abs(timebase.msAt(timebase.frameAt(0)) - 0);
     const int endRel = 1000 - std::abs(1000 - timebase.msAt(timebase.frameAt(1000) - 1));
@@ -249,7 +218,6 @@ int main(int argc, char **argv)
     const std::string typedEnd = head + "200," + ft(y) + times;
     std::printf("expected %s\n", typedEnd.c_str());
     expect(o[8] == typedEnd, "a typed X2 writes \\move with the Line's frame times");
-    // K: the end a script pixel down (Move::OnKeyPress, VisualMove.cpp:420-458).
     PointF end = view.scriptToView({200, y});
     end.y += 1.f / view.coeffH();
     end = view.viewToScript(end);

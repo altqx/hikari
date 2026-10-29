@@ -1,14 +1,3 @@
-// O3: the importer's transaction over a settings folder (S44-import): the
-// legacy roots listed, the snapshot with its hashes and the legacy files
-// left as they were, staged generations activated through the manifest at
-// the next start, an interrupted activation keeping the previous
-// generation (none, or an earlier import live or waiting), a repeated
-// import as a no-op, edits made after staging kept (also over the import's
-// own changes), two imports waiting for one start,
-// rollback to the previous complete generation with the edits it replaces,
-// stale sources and destinations refused; and the window's controller. The
-// readers and the plan are hikari_application_settings_import_tests.
-
 #include "hikari/app/settings_import_controller.h"
 #include "hikari/app/settings_import_store.h"
 #include "hikari/application/hotkeys.h"
@@ -49,7 +38,6 @@ QByteArray readFile(const QString &path)
     return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
 }
 
-// CF2 (#489): legacy's Rules.txt, imported as rules.toml.
 constexpr char kLegacyRules[] = "#HikariSub rules file\r\n1\r\nTypo\fteh\fthe\f0\r\n";
 
 QByteArray rulesToml(const QByteArray &legacy)
@@ -57,9 +45,6 @@ QByteArray rulesToml(const QByteArray &legacy)
     return QByteArray::fromStdString(app::legacyRulesToml(legacy));
 }
 
-// The import generations as the version before wrote them: each
-// rules.toml as legacy's Rules.txt it converts from (one of `legacy`).
-// The number rewritten, -1 when one is not a conversion of them.
 int rewriteGenerationsWithRulesTxt(const QString &folder, const QList<QByteArray> &legacy)
 {
     const QDir generations(folder + QStringLiteral("/Import/generations"));
@@ -92,7 +77,6 @@ QString hashOf(const QByteArray &bytes)
     return QString::fromLatin1(QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex());
 }
 
-// Eleven records: more than SetRawOptions' ten (config.cpp:150).
 QByteArray configText(const QByteArray &extra)
 {
     QByteArray out = "[HikariSub v0.0.1-rc.1]\r\n";
@@ -101,9 +85,6 @@ QByteArray configText(const QByteArray &extra)
     return out + extra;
 }
 
-// A legacy installation: Config/, Dictionary/, Themes/, written with CRLF.
-// The brace table closes on every platform (O3-linux-crlf-blocks;
-// settings_import_tests CrlfIsAcceptedOnEveryPlatform).
 struct LegacyRoot {
     QTemporaryDir dir;
     LegacyRoot()
@@ -127,7 +108,6 @@ struct LegacyRoot {
     }
 };
 
-// One session over the settings folder: its registry and the import store.
 struct Session {
     std::unique_ptr<SettingsStore> settings;
     std::unique_ptr<SettingsImportStore> store;
@@ -166,15 +146,12 @@ Review review(SettingsImportStore &store, const QString &rootPath)
     return r;
 }
 
-} // namespace
+}
 
 class SettingsImportTests : public QObject {
     Q_OBJECT
 
 private slots:
-    // UD1: with the user folder's dictionaries, the start's untouched copy
-    // of a bundled dictionary is no profile's; once changed it is the
-    // user's, and the profile holds it under its Dictionary/ name.
     void seededDictionaryCopiesStayOutOfTheProfileUntilChanged()
     {
         QTemporaryDir dir;
@@ -232,15 +209,12 @@ private slots:
             QCOMPARE(copied, before.at(path));
             QCOMPARE(QString::fromStdString(src.sha256), hashOf(before.at(path)));
         }
-        // The evidence: path, hash, encoding and header.
         const QJsonObject json = QJsonDocument::fromJson(readFile(snap->dir + QStringLiteral("/snapshot.json"))).object();
         const QJsonArray files = json.value(QStringLiteral("files")).toArray();
         QCOMPARE(files.size(), 4);
-        // CRLF reads as LF on every platform (O3-linux-crlf-blocks).
         QCOMPARE(files[0].toObject().value(QStringLiteral("header")).toString(), QStringLiteral("[HikariSub v0.0.1-rc.1]"));
         QCOMPARE(files[3].toObject().value(QStringLiteral("encoding")).toString(), QStringLiteral("UTF-8"));
         QVERIFY(files[3].toObject().value(QStringLiteral("bom")).toBool());
-        // The same bytes again: the same snapshot.
         QCOMPARE(s.store->snapshot(*root)->dir, snap->dir);
         QVERIFY(SettingsImportStore::sourcesUnchanged(*snap));
         QCOMPARE(legacy.bytes(), before);
@@ -263,10 +237,8 @@ private slots:
                                                                    r.revision)),
                      SettingsImportStore::Result::Activated);
             QVERIFY(s.store->pending());
-            // Nothing read yet changes in this session.
             QVERIFY(!s.settings->isSet(QStringLiteral("grid.font")));
             QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("rules.toml"))));
-            // A plan made now compares with the pending generation.
             QCOMPARE(std::get<std::string>(s.store->destination().values.at("grid.font")), std::string("Arial"));
         }
         Session next(folder.path());
@@ -276,16 +248,13 @@ private slots:
         QCOMPARE(next.settings->integer("grid.fontSize"), 12);
         QVERIFY(!next.settings->isSet(QStringLiteral("program.theme")));
         QVERIFY(!next.settings->isSet(QStringLiteral("toolbar.alignment")));
-        // The foreign path is kept in the list, unresolved, not repaired.
         QCOMPARE(next.settings->list("recent.subtitles"), QStringList{QStringLiteral("D:\\media\\a.ass")});
         QVERIFY(next.settings->list(application::kHotkeysSetting.data()).contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
-        // CF1: written to the user folder's three files.
         next.settings->sync();
         const QString settings = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("settings.toml"))));
         QVERIFY2(settings.contains(QStringLiteral("font = \"Arial\"")) && settings.contains(QStringLiteral("fontSize = 12")),
                  qPrintable(settings));
         const QString hotkeys = QString::fromUtf8(readFile(folder.filePath(QStringLiteral("hotkeys.toml"))));
-        // Not in legacy's modifier order (Alt-Ctrl-Shift), so kept as written.
         QVERIFY2(hotkeys.contains(QStringLiteral("GLOBAL_SAVE_SUBS = \"Ctrl-Alt-S\"")), qPrintable(hotkeys));
         const QJsonObject state = QJsonDocument::fromJson(readFile(folder.filePath(QStringLiteral("state.json")))).object();
         QCOMPARE(state.value(QStringLiteral("recent")).toObject().value(QStringLiteral("subtitles")).toArray().size(), 1);
@@ -294,17 +263,12 @@ private slots:
         QVERIFY(readFile(folder.filePath(QStringLiteral("rules.toml"))).contains("description = \"Typo\"\nenabled = true\nfind = \"teh\"\nreplace = \"the\"\n"));
         QCOMPARE(readFile(folder.filePath(QStringLiteral("Dictionary/UserDic.udic"))),
                  QByteArray("\xEF\xBB\xBFs\xC5\x82owo\r\n"));
-        QVERIFY(!next.store->recover()); // once
-        // The receipt names the root it came from (#401: its autosaves).
+        QVERIFY(!next.store->recover());
         QCOMPARE(QString::fromStdString(next.store->activeReceipt()->root),
                  SettingsImportStore::inspectRoot(legacy.dir.path())->path);
-        // The legacy files are never written.
         QCOMPARE(legacy.bytes(), before);
     }
 
-    // CF1: a base staged from hikari.ini could hold a setting at its default
-    // (here grid.font and the main shortcuts);
-    // the settings files never do, and that is not an edit since staging.
     void aDefaultInTheStagedBaseIsNotAnEdit()
     {
         LegacyRoot legacy;
@@ -320,7 +284,7 @@ private slots:
             importDir = s.store->importDir();
         }
         QDir generations(importDir + QStringLiteral("/generations"));
-        int staged = 0; // the newest generation
+        int staged = 0;
         for (const QString &name : generations.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
             staged = std::max(staged, name.toInt());
         const QString profile = generations.filePath(QString::number(staged) + QStringLiteral("/profile.json"));
@@ -328,7 +292,6 @@ private slots:
         QJsonObject base = o.value(QStringLiteral("baseValues")).toObject();
         const auto font = std::get<std::string>(application::findSetting("grid.font")->defaultValue);
         base.insert(QStringLiteral("grid.font"), QJsonObject{{QStringLiteral("string"), QString::fromStdString(font)}});
-        // and the main shortcuts with every default binding, as SaveHkeys wrote them
         application::HotkeyMap defaults;
         application::loadDefaultHotkeys(defaults, false);
         QJsonArray lines;
@@ -343,8 +306,6 @@ private slots:
         QVERIFY(next.settings->list(application::kHotkeysSetting.data()).contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
     }
 
-    // Every audio shortcut taken away is an empty list, not the defaults: an
-    // import that leaves the audio shortcuts keeps it.
     void noAudioShortcutsStayThroughAnImport()
     {
         LegacyRoot legacy;
@@ -387,7 +348,6 @@ private slots:
         QCOMPARE(next.store->activeGeneration(), active);
         QCOMPARE(QDir(next.store->importDir() + QStringLiteral("/generations")).entryList(QDir::Dirs | QDir::NoDotAndDotDot),
                  generations);
-        // The recents are not doubled.
         QCOMPARE(next.settings->list("recent.subtitles").size(), 1);
     }
 
@@ -416,7 +376,7 @@ private slots:
             QCOMPARE(s.store->activeGeneration(), 0);
             QVERIFY(!s.store->pending());
             if (step != int(SettingsImportStore::Step::Backup) && step != int(SettingsImportStore::Step::Manifest))
-                QVERIFY(!s.store->incompleteStaging().isEmpty()); // reported for cleanup
+                QVERIFY(!s.store->incompleteStaging().isEmpty());
         }
         {
             Session next(folder.path());
@@ -424,21 +384,18 @@ private slots:
             QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Mine"));
             QVERIFY(!next.settings->isSet(QStringLiteral("grid.fontSize")));
             QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("rules.toml"))));
-            // Retrying works and skips the broken staging.
             const Review r = review(*next.store, legacy.dir.path());
             QCOMPARE(next.store->activate(r.plan, si::proposedRows(r.plan), r.snapshot, r.revision),
                      SettingsImportStore::Result::Activated);
         }
         Session last(folder.path());
         QVERIFY(last.store->recover());
-        QCOMPARE(last.settings->text("grid.font"), QStringLiteral("Mine")); // kept: not chosen this time
+        QCOMPARE(last.settings->text("grid.font"), QStringLiteral("Mine"));
         QCOMPARE(last.settings->integer("grid.fontSize"), 12);
     }
 
     void interruptedStartFinishesTheActivation()
     {
-        // The switch happened; the start that applied it stopped before it
-        // recorded so: the next start applies it again, to the same result.
         LegacyRoot legacy;
         QTemporaryDir folder;
         {
@@ -462,9 +419,6 @@ private slots:
         QCOMPARE(again.settings->text("grid.font"), QStringLiteral("Arial"));
     }
 
-    // settings-import.md step 5: never overwrite later user edits
-    // automatically. An edit made after the import was staged is kept at the
-    // next start, also where the import changes the same setting.
     void editsAfterStagingAreKept()
     {
         LegacyRoot legacy;
@@ -476,27 +430,22 @@ private slots:
             QCOMPARE(s.store->activate(r.plan, si::proposedRows(r.plan), r.snapshot, r.revision),
                      SettingsImportStore::Result::Activated);
             QVERIFY(s.store->editsKeptOverImport().isEmpty());
-            // Changed in the same session, after the import was staged.
             s.settings->set("grid.hideColumns", 6);
             s.settings->set("grid.font", QStringLiteral("Later"));
             writeFile(folder.filePath(QStringLiteral("rules.toml")), rulesToml("#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n"));
             QCOMPARE(s.store->editsKeptOverImport(), (QStringList{"grid.font", "rules.toml"}));
-            // A plan made now compares with what the next start will hold.
             QCOMPARE(std::get<std::string>(s.store->destination().values.at("grid.font")), std::string("Later"));
         }
         Session next(folder.path());
         QVERIFY(next.store->recover());
-        QCOMPARE(next.settings->integer("grid.hideColumns"), 6); // not touched by the import: kept
-        QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Later")); // the import changes it: kept too
+        QCOMPARE(next.settings->integer("grid.hideColumns"), 6);
+        QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Later"));
         QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml("#HikariSub rules file\r\n1\r\nMine\fmine\fours\f0\r\n"));
-        QCOMPARE(next.settings->integer("grid.fontSize"), 12); // the import's other changes go in
+        QCOMPARE(next.settings->integer("grid.fontSize"), 12);
         QVERIFY(next.store->editsKeptOverImport().isEmpty());
-        // A rollback would replace them: they are not the import's.
         QCOMPARE(next.store->editsSinceActivation(), (QStringList{"grid.font", "grid.hideColumns", "rules.toml"}));
     }
 
-    // Two imports before a start: the second one's base is the live
-    // profile, so the first one's changes go in with it.
     void importsWaitingTogetherBothTakeEffect()
     {
         LegacyRoot legacy;
@@ -526,7 +475,6 @@ private slots:
                         .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
             QCOMPARE(next.store->rollback(), SettingsImportStore::Result::Activated);
         }
-        // Rolled back to the first import, whole.
         Session back(folder.path());
         QVERIFY(back.store->recover());
         QCOMPARE(back.store->activeGeneration(), first);
@@ -535,9 +483,6 @@ private slots:
         QVERIFY(QFileInfo::exists(folder.filePath(QStringLiteral("rules.toml"))));
     }
 
-    // An activation interrupted while an earlier import is active, live or
-    // waiting for the next start: that import stays active, with the same
-    // previous generation, and the next start holds it.
     void interruptedActivationKeepsTheActiveImport_data()
     {
         QTest::addColumn<int>("step");
@@ -559,8 +504,6 @@ private slots:
         QTemporaryDir folder;
         int first = 0, previous = 0;
         const auto importAgain = [&](Session &s) {
-            // An edit since the first import: the second one backs up the
-            // current profile before staging (the Backup step).
             s.settings->set("grid.hideColumns", 4);
             const Review r = review(*s.store, legacy.dir.path());
             auto chosen = si::proposedRows(r.plan);
@@ -596,12 +539,10 @@ private slots:
             QCOMPARE(next.store->recover(), waiting);
             QCOMPARE(next.store->activeGeneration(), first);
             QCOMPARE(next.store->previousGeneration(), previous);
-            // The first import, and the edit made since; not the second import.
             QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Mine"));
             QCOMPARE(readFile(folder.filePath(QStringLiteral("rules.toml"))), rulesToml(kLegacyRules));
             QCOMPARE(next.settings->integer("grid.hideColumns"), 4);
             QVERIFY(!next.settings->isSet(QStringLiteral("grid.fontSize")));
-            // Its rollback is still the one it had.
             QCOMPARE(next.store->rollback(), SettingsImportStore::Result::Activated);
         }
         Session back(folder.path());
@@ -631,7 +572,6 @@ private slots:
             Session s(folder.path());
             s.store->recover();
             QCOMPARE(s.settings->text("grid.font"), QStringLiteral("Arial"));
-            // Edited after the import: a rollback says it replaces them.
             s.settings->set("grid.fontSize", 20);
             writeFile(folder.filePath(QStringLiteral("Dictionary/UserDic.udic")), "inne\r\n");
             const QStringList edits = s.store->editsSinceActivation();
@@ -651,14 +591,10 @@ private slots:
         QVERIFY(!back.store->canRollBack());
         QCOMPARE(back.store->rollback(), SettingsImportStore::Result::NothingToRollBack);
         QCOMPARE(legacy.bytes(), before);
-        // Importing again after the rollback proposes the import again.
         const Review again = review(*back.store, legacy.dir.path());
         QVERIFY(again.plan.row("setting:grid.fontSize")->proposedImport);
     }
 
-    // CF2: a generation staged before rules.toml holds legacy's Rules.txt.
-    // It reads as the rules.toml it converts to: the live rules are no edit
-    // since, and a rollback to it restores them.
     void generationsFromBeforeRulesTomlReadAsRulesToml()
     {
         LegacyRoot legacy;
@@ -690,10 +626,6 @@ private slots:
         QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
     }
 
-    // CF2: an import staged by the version before and not taken effect yet,
-    // over the live Rules.txt. The start converts the rules before the
-    // import takes effect (Application::convertRules), so the import's
-    // rules are not taken for an edit since and lost.
     void importStagedBeforeRulesTomlTakesEffectOverRulesTxt()
     {
         LegacyRoot legacy;
@@ -754,7 +686,7 @@ private slots:
         QVERIFY(!c.addRoot(folder.path() + QStringLiteral("/none")));
         QVERIFY(c.status().contains(QStringLiteral("holds no legacy settings")));
         QVERIFY(c.addRoot(QUrl::fromLocalFile(legacy.dir.path()).toString()));
-        QCOMPARE(c.roots().size(), 1); // the same root once
+        QCOMPARE(c.roots().size(), 1);
         QVERIFY(c.choose(c.roots().first().toMap().value(QStringLiteral("path")).toString()));
         QVERIFY(plan.count() > 0);
         QVariantMap font;
@@ -765,7 +697,6 @@ private slots:
         QCOMPARE(font.value(QStringLiteral("current")).toString(), QStringLiteral("Tahoma"));
         QCOMPARE(font.value(QStringLiteral("disposition")).toString(), QStringLiteral("change"));
         QVERIFY(c.chosenIds().contains(QStringLiteral("setting:grid.font")));
-        // Choosing rows leaves the plan (the window's list) as it is.
         const int plans = plan.count();
         QSignalSpy chosenSpy(&c, &app::SettingsImportController::chosenChanged);
         const qsizetype proposed = c.chosenIds().size();
@@ -773,16 +704,15 @@ private slots:
         QVERIFY(!c.chosen().contains("setting:grid.font"));
         QVERIFY(!c.chosenIds().contains(QStringLiteral("setting:grid.font")));
         QCOMPARE(chosenSpy.count(), 1);
-        c.setChosen(QStringLiteral("setting:grid.font"), false); // no change, no signal
+        c.setChosen(QStringLiteral("setting:grid.font"), false);
         QCOMPARE(chosenSpy.count(), 1);
-        c.setChosen(QStringLiteral("setting:PROGRAM_THEME"), true); // excluded: not selectable
+        c.setChosen(QStringLiteral("setting:PROGRAM_THEME"), true);
         QVERIFY(!c.chosen().contains("setting:PROGRAM_THEME"));
         QCOMPARE(chosenSpy.count(), 1);
         c.chooseAll(QStringLiteral("proposed"), true);
         QCOMPARE(c.chosenIds().size(), proposed);
         c.setChosen(QStringLiteral("setting:grid.font"), false);
         QCOMPARE(plan.count(), plans);
-        // The theme setting and the theme file are the excluded rows.
         QStringList excluded;
         for (const auto &row : c.rows())
             if (row.toMap().value(QStringLiteral("disposition")) == QStringLiteral("excluded"))

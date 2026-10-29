@@ -1,15 +1,3 @@
-// K2: the Hikari theme layer (src/ui/theme.h, docs/ux/visual-language.md,
-// the user's 2026-10-05 decision after MuseScore 4's appearance model,
-// docs/research/musescore-appearance.md). The four themes' role tables (Light
-// and Dark the spec's tokens, High contrast black the spec's high-contrast
-// column), the seven accent presets per mode and their measured WCAG
-// contrast, following the system's light or dark scheme (never high
-// contrast), the high-contrast pickers, the content colours fixed per theme
-// (Dark keeps legacy's dark theme, config.cpp:405-472), the live preview and
-// the application palette, and the Theme singleton QML reads. With
-// HIKARI_THEME_SHEET_DIR set the swatch sheet for the user's review is
-// written there (k2-accents.png) with the measured ratios (k2-contrast.txt).
-
 #include "settings_store.h"
 #include "theme.h"
 
@@ -92,8 +80,7 @@ QString name(const QColor &c)
 
 
 #ifdef HIKARI_COLOUR_SCHEME_PORTAL
-// The XDG settings portal, as xdg-desktop-portal answers on the session bus:
-// ReadOne (interface version 2) and the SettingChanged signal.
+// xdg-desktop-portal's Settings: ReadOne (interface version 2) and SettingChanged.
 class FakeSettingsPortal : public QObject {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.freedesktop.portal.Settings")
@@ -135,8 +122,6 @@ public slots:
     }
 };
 
-// A portal slower than the first read waits (one still starting): each
-// answer comes 1.5 s late.
 class FakeSlowSettingsPortal : public QObject, protected QDBusContext {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.freedesktop.portal.Settings")
@@ -151,8 +136,7 @@ public slots:
     }
 };
 
-// A private session bus (no service directories, so no real portal starts)
-// with a server and a client connection.
+// No service directories, so dbus-daemon never starts a real portal.
 struct PrivateBus {
     QTemporaryDir dir;
     QProcess daemon;
@@ -189,7 +173,7 @@ struct PrivateBus {
 };
 #endif
 
-} // namespace
+}
 
 class ThemeTests : public QObject {
     Q_OBJECT
@@ -197,8 +181,7 @@ class ThemeTests : public QObject {
 private slots:
     void initTestCase()
     {
-        // The application's controls style, chosen before any engine loads
-        // the controls (src/app/composition.cpp does the same).
+        // Qt Quick Controls take a style only before any engine loads them.
         ui::theme::chooseControlsStyle();
     }
 
@@ -209,9 +192,6 @@ private slots:
         ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
     }
 
-    // visual-language.md, "Semantic appearance tokens": Light and Dark with
-    // the default (green) accent are the spec's columns; High contrast black
-    // is the spec's high-contrast column.
     void rolesAreTheSpecTokens()
     {
         const auto dark = roles(Code::Dark);
@@ -222,7 +202,7 @@ private slots:
         QCOMPARE(dark.accent, hex(0x9CDBC9));
         QCOMPARE(dark.onAccent, hex(0x102C24));
         QCOMPARE(dark.select, hex(0x304C47));
-        QCOMPARE(dark.focus, dark.text); // K2 focus: the text colour, not the spec's #F9D784
+        QCOMPARE(dark.focus, dark.text);
         QCOMPARE(dark.danger, hex(0xFFADAD));
         const auto light = roles(Code::Light);
         QCOMPARE(surfaces(light), (std::array{hex(0xE5E9EC), hex(0xF9FAFB), hex(0xEDF0F3), hex(0xFFFFFF)}));
@@ -232,7 +212,7 @@ private slots:
         QCOMPARE(light.accent, hex(0x145C4C));
         QCOMPARE(light.onAccent, hex(0xFFFFFF));
         QCOMPARE(light.select, hex(0xD6EBE4));
-        QCOMPARE(light.focus, light.text); // not the spec's #8D4200
+        QCOMPARE(light.focus, light.text);
         QCOMPARE(light.danger, hex(0xA51F31));
         const auto black = roles(Code::HighContrastBlack, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
         QCOMPARE(surfaces(black), (std::array{hex(0x000000), hex(0x080808), hex(0x151515), hex(0x000000)}));
@@ -242,20 +222,13 @@ private slots:
         QCOMPARE(black.accent, hex(0xFFFF00));
         QCOMPARE(black.onAccent, hex(0x000000));
         QCOMPARE(black.select, hex(0x253F60));
-        QCOMPARE(black.focus, black.text); // not the spec's #00FFFF
+        QCOMPARE(black.focus, black.text);
         QCOMPARE(black.danger, hex(0xFFADAD));
-        // The success text is legacy FontCollector's "#008000" in Light
-        // (FontCollector.cpp:872, 978: the same in every legacy theme); on
-        // Dark it measured 2.56:1, so Dark has a readable green of the same
-        // hue (K2-dark-success, the user's 2026-10-15 decision).
         QCOMPARE(light.success, hex(0x008000));
         QCOMPARE(dark.success, hex(0x4DBA4D));
-        // The controls' boundary (K2-control-boundary): `line` measured 1.71:1
-        // and 1.49:1, below WCAG 1.4.11's 3:1; the border pick in high contrast.
         QCOMPARE(light.control, hex(0x76828D));
         QCOMPARE(dark.control, hex(0x7A8691));
         QCOMPARE(black.control, black.line);
-        // Every role is set in every theme.
         for (const auto code : ui::theme::kCodes) {
             const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
             for (std::size_t i = 0; i < ui::theme::kRoleNames.size(); ++i)
@@ -263,12 +236,6 @@ private slots:
         }
     }
 
-    // The roles' measured contrast (WCAG 2.x) on the theme's four surfaces:
-    // text, secondary text, danger and warning text at least 4.5:1; the
-    // accent, focus, icons and disabled at least 3:1 (WCAG 1.4.11); text on
-    // the accent and on the selected background at least 4.5:1. High
-    // contrast holds every text role to 7:1 apart from disabled. The one
-    // exception is legacy's success green in Light and Dark (above).
     void rolesMeetContrast()
     {
         const auto defaults = ui::theme::choiceFrom([](const char *) { return QVariant(); });
@@ -283,29 +250,19 @@ private slots:
             QVERIFY2(lowest(r.accent, r) >= (hc ? 7.0 : 4.5), qPrintable(theme));
             QVERIFY2(lowest(r.focus, r) >= 3.0, qPrintable(theme));
             QVERIFY2(lowest(r.disabled, r) >= 3.0, qPrintable(theme));
-            // An enabled control's boundary (WCAG 1.4.11; K2-control-boundary).
             QVERIFY2(lowest(r.control, r) >= 3.0, qPrintable(theme + QStringLiteral(" control")));
-            // Success text where it is not legacy's fixed green (K2-dark-success:
-            // Light keeps #008000).
             if (code != Code::Light)
                 QVERIFY2(lowest(r.success, r) >= textMinimum, qPrintable(theme + QStringLiteral(" success")));
             QVERIFY2(contrastRatio(r.onAccent, r.accent) >= textMinimum, qPrintable(theme));
             QVERIFY2(contrastRatio(r.text, r.select) >= textMinimum, qPrintable(theme));
-            QVERIFY2(contrastRatio(r.disabled, r.text) >= 2.0, qPrintable(theme)); // disabled looks unlike enabled
+            QVERIFY2(contrastRatio(r.disabled, r.text) >= 2.0, qPrintable(theme));
             if (hc) {
                 QVERIFY2(lowest(r.success, r) >= 7.0, qPrintable(theme));
-                QVERIFY2(lowest(r.line, r) >= 7.0, qPrintable(theme)); // boundaries survive without shadows
+                QVERIFY2(lowest(r.line, r) >= 7.0, qPrintable(theme));
             }
         }
     }
 
-    // K2 focus (visual-language.md, "Keyboard focus"; the user's 2026-10-05
-    // decision after MuseScore 4, whose real focus ring is
-    // NavigationFocusBorder in fontPrimaryColor): the focus role is the
-    // theme's text colour in every theme and with every accent preset or
-    // high-contrast text pick, so it reads on every surface as text does,
-    // and it is never the colour of selection (the accent, the selected
-    // background), on which it reads as text does.
     void focusIsTheTextColour()
     {
         const auto check = [](const ui::theme::Roles &r, const QString &what) {
@@ -325,7 +282,6 @@ private slots:
                 check(roles(dark ? Code::Dark : Code::Light, choice),
                       QLatin1String(dark ? "dark " : "light ") + QLatin1String(a.key));
             }
-        // A high-contrast text pick moves keyboard focus with it.
         const QVariantMap picks{{QStringLiteral("appearance.highContrastBlack.text"), QStringLiteral("#FFD000")},
                                 {QStringLiteral("appearance.highContrastWhite.text"), QStringLiteral("#300060")}};
         const auto picked = ui::theme::choiceFrom([&](const char *id) { return picks.value(QLatin1String(id)); });
@@ -333,10 +289,6 @@ private slots:
         QCOMPARE(roles(Code::HighContrastWhite, picked).focus, hex(0x300060));
     }
 
-    // Seven presets per mode, by hue, in the same order and keys in Light and
-    // Dark; the default (the fourth) is the spec's green. Each meets 4.5:1
-    // against every surface of its mode, carries readable text (4.5:1) and a
-    // readable selected background.
     void accentPresetsMeetContrast()
     {
         const QStringList keys{"red", "orange", "gold", "green", "blue", "purple", "pink"};
@@ -359,22 +311,16 @@ private slots:
                 QVERIFY2(lowest(a.accent, r) >= 4.5, qPrintable(what));
                 QVERIFY2(contrastRatio(a.onAccent, a.accent) >= 4.5, qPrintable(what));
                 QVERIFY2(contrastRatio(r.text, a.select) >= 4.5, qPrintable(what));
-                // the selected background stays a quiet tint (the spec green's)
                 QVERIFY2(contrastRatio(a.select, r.panel) < 2.0, qPrintable(what));
-                // the other mode's roles and the theme's own roles stay put
                 QCOMPARE(r.text, roles(code).text);
                 QCOMPARE(surfaces(r), surfaces(roles(code)));
             }
         }
-        // the spec's green
         QCOMPARE(ui::theme::accent(false, QStringLiteral("green")).accent, hex(0x145C4C));
         QCOMPARE(ui::theme::accent(true, QStringLiteral("green")).accent, hex(0x9CDBC9));
-        // an unknown key is the default
         QCOMPARE(QLatin1String(ui::theme::accent(true, QStringLiteral("teal")).key), QLatin1String("green"));
     }
 
-    // Light and Dark each remember their own accent; high contrast ignores
-    // them (its accent is the picker's).
     void eachModeKeepsItsAccent()
     {
         ui::theme::Choice choice;
@@ -388,10 +334,6 @@ private slots:
         QCOMPARE(roles(Code::HighContrastWhite, choice).accent, hex(0x0037B3));
     }
 
-    // Follow system theme (MuseScore's doSetIsDarkMode): Light or Dark from
-    // the platform's colour scheme, keeping high contrast on its matching
-    // side; never turning high contrast on or off. Off, or with no scheme
-    // known, the chosen theme shows.
     void followingTheSystemSwitchesLightAndDarkOnly()
     {
         using S = Qt::ColorScheme;
@@ -409,34 +351,24 @@ private slots:
         QCOMPARE(shown(Code::Dark, true, S::Unknown), Code::Dark);
         QCOMPARE(shown(Code::Dark, false, S::Light), Code::Dark);
         QCOMPARE(shown(Code::HighContrastBlack, false, S::Light), Code::HighContrastBlack);
-        // Live: the platform's scheme changes, the theme follows at once.
         ui::SettingsStore store;
         ui::theme::useSettings(&store);
         int changes = 0;
         QObject context;
         ui::theme::onChanged(&context, [&] { ++changes; });
-        QCOMPARE(ui::theme::current().code, Code::Dark); // the default, following, scheme unknown
+        QCOMPARE(ui::theme::current().code, Code::Dark);
         ui::theme::forceSystemScheme(S::Light);
         QCOMPARE(ui::theme::current().code, Code::Light);
         QCOMPARE(changes, 1);
         ui::theme::forceSystemScheme(S::Dark);
         QCOMPARE(ui::theme::current().code, Code::Dark);
         QCOMPARE(changes, 2);
-        // following off: the platform's scheme no longer matters
         store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), false);
         ui::theme::forceSystemScheme(S::Light);
         QCOMPARE(ui::theme::current().code, Code::Dark);
         ui::theme::useSettings(nullptr);
     }
 
-    // Follow system theme on Linux desktops whose Qt platform theme reports
-    // no scheme (the generic theme: sway, Hyprland, i3): the XDG settings
-    // portal's color-scheme, read at the start and followed live; 1 dark,
-    // 2 light, 0 (no preference) the chosen theme. A scheme Qt reports wins
-    // (QStyleHints, forced here); following off, the portal no longer
-    // matters. A portal older than ReadOne answers Read; one too slow for
-    // the first read is followed once it answers; no portal on the bus
-    // leaves the scheme unknown until one takes the name.
     void followingTheSystemReadsTheSettingsPortal()
     {
 #ifndef HIKARI_COLOUR_SCHEME_PORTAL
@@ -461,14 +393,11 @@ private slots:
         const QString service = QStringLiteral("org.freedesktop.portal.Desktop");
 
         {
-            // No portal on the bus: unknown (the bus answers ServiceUnknown;
-            // no bound on the time, which a loaded host stretches).
             PortalColourScheme none(client);
             QCOMPARE(none.scheme(), S::Unknown);
         }
 
-        // The portal answers on its own thread, as the real one does in its
-        // own process, while the reader blocks this one.
+        // The fake answers on its own thread: the reader's blocking call holds this one.
         QThread portalThread;
         portalThread.start();
         QList<QObject *> fakes;
@@ -479,19 +408,17 @@ private slots:
             portalThread.quit();
             portalThread.wait();
         });
-        auto *fake = new FakeSettingsPortal; // prefer dark
+        auto *fake = new FakeSettingsPortal;
         fake->moveToThread(&portalThread);
         fakes << fake;
         FakeSettingsPortal &portal = *fake;
-        // Registered on its thread: the signal relay is made as its child.
+        // QtDBus makes the signal relay a child of the object, so register it on the object's thread.
         const auto registerOnItsThread = [&](QObject *object, QDBusConnection::RegisterOptions options) {
             bool registered = false;
             QMetaObject::invokeMethod(
                 object, [&] { registered = server.registerObject(path, object, options); }, Qt::BlockingQueuedConnection);
             return registered;
         };
-        // A reader made before the portal takes its name (one still
-        // starting): unknown, then read once the name is taken.
         PortalColourScheme early(client);
         QCOMPARE(early.scheme(), S::Unknown);
         QVERIFY(registerOnItsThread(&portal, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals));
@@ -502,8 +429,7 @@ private slots:
         QCOMPARE(portal.reads.load(), 2);
         QCOMPARE(scheme.scheme(), S::Dark);
 
-        // The theme follows it while Qt reports no scheme (the offscreen
-        // platform's theme, like the generic one, reports none).
+        // The offscreen platform theme, like the generic one, reports no colour scheme.
         ui::theme::forceSystemScheme(std::nullopt);
         if (QGuiApplication::styleHints()->colorScheme() != S::Unknown)
             QSKIP("this platform's theme reports a colour scheme of its own");
@@ -522,7 +448,7 @@ private slots:
         QObject context;
         ui::theme::onChanged(&context, [&] { ++changes; });
 
-        // gsettings color-scheme prefer-light, prefer-dark, prefer-light, live
+        // The portal's color-scheme: 1 prefer-dark, 2 prefer-light, 0 no preference.
         portal.change(2);
         QTRY_COMPARE(ui::theme::current().code, Code::Light);
         QCOMPARE(changes, 1);
@@ -531,19 +457,15 @@ private slots:
         portal.change(2);
         QTRY_COMPARE(ui::theme::current().code, Code::Light);
         QCOMPARE(changes, 3);
-        // Another setting changing leaves it.
         portal.change(1, QStringLiteral("org.gnome.desktop.interface"), QStringLiteral("color-scheme"));
         portal.change(1, QStringLiteral("org.freedesktop.appearance"), QStringLiteral("accent-color"));
         QTest::qWait(100);
         QCOMPARE(ui::theme::current().code, Code::Light);
-        // No preference: the chosen theme (Dark, the default).
         portal.change(0);
         QTRY_COMPARE(ui::theme::current().code, Code::Dark);
         portal.change(2);
         QTRY_COMPARE(ui::theme::current().code, Code::Light);
 
-        // A scheme Qt's platform theme reports comes first (GNOME, KDE,
-        // xdgdesktopportal); Unknown from it leaves the portal's.
         ui::theme::forcePlatformScheme(S::Dark);
         QCOMPARE(ui::theme::systemScheme(), S::Dark);
         QCOMPARE(ui::theme::current().code, Code::Dark);
@@ -552,13 +474,11 @@ private slots:
         ui::theme::forcePlatformScheme(std::nullopt);
         QCOMPARE(ui::theme::current().code, Code::Light);
 
-        // High contrast keeps its side's pair; never turned on or off.
         store.setValue(QLatin1String(ui::theme::kThemeSetting), ui::theme::codeName(Code::HighContrastBlack));
         QCOMPARE(ui::theme::current().code, Code::HighContrastWhite);
         store.setValue(QLatin1String(ui::theme::kThemeSetting), ui::theme::codeName(Code::Dark));
         QCOMPARE(ui::theme::current().code, Code::Light);
 
-        // Following off: the portal no longer matters.
         store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), false);
         QCOMPARE(ui::theme::current().code, Code::Dark);
         portal.change(1);
@@ -568,11 +488,9 @@ private slots:
         store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), true);
         QCOMPARE(ui::theme::current().code, Code::Light);
 
-        // The portal gone (its object destroyed): the chosen theme.
         ui::theme::followPortal(nullptr);
         QCOMPARE(ui::theme::current().code, Code::Dark);
 
-        // A portal older than ReadOne: Read, its value in one more variant.
         server.unregisterObject(path);
         auto *old = new FakeOldSettingsPortal;
         old->moveToThread(&portalThread);
@@ -581,8 +499,6 @@ private slots:
         QDBusConnection client2 = QDBusConnection::connectToBus(bus.address, QStringLiteral("k2-portal-client2"));
         QCOMPARE(PortalColourScheme(client2).scheme(), S::Light);
 
-        // A portal too slow for the first read: unknown at first, then its
-        // late answer, followed by the theme.
         server.unregisterObject(path);
         auto *slow = new FakeSlowSettingsPortal;
         slow->moveToThread(&portalThread);
@@ -598,10 +514,6 @@ private slots:
 #endif
     }
 
-    // The high-contrast pickers: accent, text-and-icons and border, freely
-    // chosen, each high-contrast theme its own; every other role fixed; text
-    // on a picked accent turns black or white to stay readable. An
-    // unreadable value is the default. Light and Dark ignore them.
     void highContrastPickersSetThreeRoles()
     {
         QVariantMap values{{QStringLiteral("appearance.highContrastBlack.accent"), QStringLiteral("#000080")},
@@ -614,25 +526,20 @@ private slots:
         QCOMPARE(black.accent, hex(0x000080));
         QCOMPARE(black.text, hex(0xFFD000));
         QCOMPARE(black.line, hex(0x00FF00));
-        QCOMPARE(black.onAccent, hex(0xFFFFFF)); // black on navy would not read
+        QCOMPARE(black.onAccent, hex(0xFFFFFF));
         QCOMPARE(black.background, base.background);
         QCOMPARE(black.select, base.select);
-        QCOMPARE(black.focus, hex(0xFFD000)); // keyboard focus follows the text pick
+        QCOMPARE(black.focus, hex(0xFFD000));
         QCOMPARE(black.disabled, base.disabled);
-        // High contrast white keeps its own (the unreadable one: its default)
         QCOMPARE(roles(Code::HighContrastWhite, choice).accent, hex(0x0037B3));
         QCOMPARE(roles(Code::HighContrastWhite, choice).text, hex(0x000000));
-        // Light and Dark ignore the pickers
         QCOMPARE(roles(Code::Dark, choice), roles(Code::Dark));
-        // The pickers' settings and defaults.
         QCOMPARE(QLatin1String(ui::theme::pickSetting(Code::HighContrastWhite, ui::theme::Pick::Border)),
                  QLatin1String("appearance.highContrastWhite.border"));
         QCOMPARE(ui::theme::pickDefault(Code::HighContrastBlack, ui::theme::Pick::Accent), hex(0xFFFF00));
         QCOMPARE(ui::theme::pickDefault(Code::HighContrastWhite, ui::theme::Pick::Text), hex(0x000000));
     }
 
-    // Unknown or missing values are the defaults: the Dark theme (legacy's
-    // default theme), following the system, the green accents.
     void choiceDefaults()
     {
         const auto choice = ui::theme::choiceFrom([](const char *id) {
@@ -648,14 +555,6 @@ private slots:
         QVERIFY(!ui::theme::codeFromName(QStringLiteral("highContrast")));
     }
 
-    // Content colours are fixed per theme; Dark keeps legacy's dark theme
-    // (config.cpp:405-472, LoadDefaultColors(true)): the audio display's
-    // (the AudioDisplayOptions defaults, the spectrum's AUDIO_SPECTRUM_*
-    // among them), the Grid's GRID_COMPARISON_* and GRID_SPELLCHECKER; Light
-    // keeps legacy's light comparison and spelling colours. The
-    // selection-type marks take the accent: AUDIO_SELECTION_BACKGROUND (and
-    // _MODIFIED) at legacy's 0x37 alpha, AUDIO_WAVEFORM_SELECTED, and
-    // GRID_SELECTION's blend at legacy's alpha 75 (config.cpp:422).
     void contentColoursAreFixedPerTheme()
     {
         const application::AudioDisplayOptions legacy;
@@ -665,7 +564,7 @@ private slots:
         expected.waveformSelected = 0xFF9CDBC9;
         auto actual = legacy;
         ui::theme::applyAudioColours(actual, dark.audio);
-        QCOMPARE(actual.background, 0xFF36393Eu); // AUDIO_BACKGROUND
+        QCOMPARE(actual.background, 0xFF36393Eu);
         QCOMPARE(actual.spectrumEcho, 0xFF674FD7u);
         using O = application::AudioDisplayOptions;
         for (const auto member : {&O::background, &O::lineStart, &O::lineEnd, &O::inactiveBoundary, &O::cursor,
@@ -680,8 +579,6 @@ private slots:
         const auto light = ui::theme::content(Code::Light, roles(Code::Light));
         QCOMPARE(light.comparison, (std::array{hex(0xFFFFFF), hex(0xFF000C), hex(0xB7AC00), hex(0x9C0000), hex(0x817900)}));
         QCOMPARE(light.spellcheck, hex(0xFF6968));
-        // GR1: Harper's wavy underline, blue (yellow on high contrast black),
-        // reading on each theme's field at 3:1 as a non-text mark.
         QCOMPARE(dark.grammar, hex(0x6EA8FE));
         QCOMPARE(light.grammar, hex(0x1A56DB));
         for (const auto code : {Code::Dark, Code::Light, Code::HighContrastWhite, Code::HighContrastBlack}) {
@@ -692,15 +589,12 @@ private slots:
         }
         QCOMPARE(ui::theme::content(Code::HighContrastWhite, roles(Code::HighContrastWhite)).grammar, hex(0x0000C8));
         QCOMPARE(ui::theme::content(Code::HighContrastBlack, roles(Code::HighContrastBlack)).grammar, hex(0xFFFF00));
-        // E4: the Line editor's text colours, legacy's EDITOR_* defaults
-        // (config.cpp:432-442) in Dark and Light; EDITOR_TEXT is the text role.
         QCOMPARE(dark.syntax, (std::array{roles(Code::Dark).text, hex(0x8791FD), hex(0x00C3FF), hex(0x00C3FF),
                                           hex(0x0076FF), hex(0xADABAB), hex(0xBDB76B), hex(0xFB4544), hex(0x00C3FF),
                                           hex(0x8D80D3), hex(0x11A243)}));
         QCOMPARE(light.syntax, (std::array{roles(Code::Light).text, hex(0x7E3B00), hex(0x787600), hex(0x787600),
                                            hex(0x34C200), hex(0x817F7F), hex(0xBDB76B), hex(0xFB4544), hex(0x00C3FF),
                                            hex(0x8D80D3), hex(0x11A243)}));
-        // The high-contrast themes' text colours read on their field at 4.5:1.
         for (const auto code : {Code::HighContrastWhite, Code::HighContrastBlack}) {
             const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
             const auto c = ui::theme::content(code, r);
@@ -709,7 +603,6 @@ private slots:
                 QVERIFY2(contrastRatio(colour, r.field) >= 4.5,
                          qPrintable(ui::theme::codeName(code) + QLatin1Char(' ') + colour.name()));
         }
-        // The accent moves the selection marks only.
         ui::theme::Choice choice;
         choice.darkAccent = QStringLiteral("blue");
         const auto blue = ui::theme::content(Code::Dark, roles(Code::Dark, choice));
@@ -720,8 +613,6 @@ private slots:
         QCOMPARE(blue.audio.background, dark.audio.background);
         QCOMPARE(blue.audio.cursor, dark.audio.cursor);
         QCOMPARE(blue.comparison, dark.comparison);
-        // Each theme's display reads: the waveform and the timescale text on
-        // their backgrounds (3:1), the high-contrast ones at 4.5:1.
         for (const auto code : {Code::Light, Code::HighContrastWhite, Code::HighContrastBlack}) {
             const auto c = ui::theme::content(code, roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); })));
             const double minimum = ui::theme::isHighContrast(code) ? 4.5 : 3.0;
@@ -735,10 +626,6 @@ private slots:
         }
     }
 
-    // With a profile the theme follows it live: the application palette the
-    // controls draw with is the theme's, a change of an appearance setting
-    // retints at once (others do not count), and the Options dialog's
-    // preview shows staged values until it ends.
     void profilePreviewAndPalette()
     {
         ui::SettingsStore store;
@@ -752,7 +639,7 @@ private slots:
         int changes = 0;
         ui::theme::onChanged(&context, [&] { ++changes; });
         const auto window = [] { return QGuiApplication::palette().color(QPalette::Window); };
-        QCOMPARE(window(), hex(0x20262D)); // Dark's panel
+        QCOMPARE(window(), hex(0x20262D));
         QCOMPARE(QGuiApplication::palette().color(QPalette::Highlight), hex(0x9CDBC9));
         QCOMPARE(QGuiApplication::palette().color(QPalette::Disabled, QPalette::WindowText), hex(0x75818D));
         store.setValue(QStringLiteral("audio.spectrumOn"), true);
@@ -760,7 +647,6 @@ private slots:
         store.setValue(QStringLiteral("appearance.darkAccent"), QStringLiteral("gold"));
         QCOMPARE(changes, 1);
         QCOMPARE(QGuiApplication::palette().color(QPalette::Accent), ui::theme::accent(true, QStringLiteral("gold")).accent);
-        // The preview: staged values over the profile's, nothing saved.
         ui::theme::preview({{QStringLiteral("appearance.theme"), QStringLiteral("light")},
                             {QStringLiteral("appearance.followSystem"), false}});
         QCOMPARE(ui::theme::current().code, Code::Light);
@@ -770,14 +656,10 @@ private slots:
         QCOMPARE(ui::theme::current().code, Code::Dark);
         QCOMPARE(window(), hex(0x20262D));
         QCOMPARE(ui::theme::current().roles.accent, ui::theme::accent(true, QStringLiteral("gold")).accent);
-        // The profile goes: the defaults again.
         ui::theme::useSettings(nullptr);
         QCOMPARE(ui::theme::current().roles.accent, hex(0x9CDBC9));
     }
 
-    // The Theme singleton QML reads: the roles, the theme's state, the
-    // Appearance page's lists (the themes, a mode's accents with their
-    // lowest contrast, the pickers, the roles a theme resolves to), live.
     void themeSingletonExposesTheRoles()
     {
         QQmlEngine engine;
@@ -816,7 +698,6 @@ QtObject {
         QCOMPARE(picks[0].toMap().value(QStringLiteral("defaultColour")).toString(), QStringLiteral("#0037B3"));
         QCOMPARE(object->property("lightRoles").toMap().value(QStringLiteral("accent")).value<QColor>(),
                  ui::theme::accent(false, QStringLiteral("purple")).accent);
-        // live
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
         ui::theme::preview({{QStringLiteral("appearance.theme"), QStringLiteral("highContrastBlack")},
                             {QStringLiteral("appearance.followSystem"), false}});
@@ -825,15 +706,6 @@ QtObject {
         QVERIFY(object->property("highContrast").toBool());
     }
 
-    // The controls style (src/ui/style): every control outline in the
-    // theme's colours, live; Fusion's own, its window colour darkened 140%,
-    // measures about 1.1:1 against the Dark and High contrast black panels.
-    // The controls a user operates (buttons, fields, boxes, sliders) draw it
-    // in the control boundary, at least 3:1 (K2-control-boundary; `line`
-    // was 1.71:1 and 1.49:1 in Light and Dark), disabled in `line`; frames,
-    // group boxes, menus and tab bars in `line`. In high contrast both are
-    // the border pick. A focused field's outline stays Fusion's
-    // accent-derived one.
     void controlsOutlineInTheBoundaryColour()
     {
         QCOMPARE(QQuickStyle::name(), QStringLiteral("HikariStyle"));
@@ -888,13 +760,9 @@ Window {
         for (const Code code : ui::theme::kCodes) {
             store.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
             const ui::theme::Roles &r = ui::theme::current().roles;
-            // The controls take the new application palette an event loop
-            // pass later; a closed menu when it opens (as the shell's do).
+            // The controls take a new application palette an event loop pass later; a closed menu only when it opens.
             QMetaObject::invokeMethod(window->findChild<QObject *>(QStringLiteral("menu")), "open");
-            // Operable and enabled: button, tool button, field, area, spin
-            // box, combo box, check box, radio button, the slider's groove
-            // and handle. The rest: group, frame, menu, tab, tab bar, and
-            // the disabled button and field.
+            // MUST KILL: expected picks the operable controls by their index in outlines (0-7, 13, 14)
             const auto expected = [&](qsizetype i) { return (i < 8 || i == 13 || i == 14) ? r.control : r.line; };
             const auto drawn = [&] {
                 const auto outlines = window->property("outlines").toList();
@@ -912,26 +780,20 @@ Window {
                                         .arg(name(outlines[i].value<QColor>()), name(expected(i)))));
             QVERIFY2(lowest(r.control, r) >= 3, qPrintable(ui::theme::codeName(code)));
             if (!ui::theme::isHighContrast(code))
-                QVERIFY(r.control != r.line); // the separators stay light
-            // Fusion's outline: what the controls drew before.
+                QVERIFY(r.control != r.line);
+            // Fusion's own outline is the window colour darkened 140%.
             const QColor fusion = r.panel.darker(140);
             if (code == Code::Dark || code == Code::HighContrastBlack)
                 QVERIFY(contrastRatio(fusion, r.panel) < 1.2);
             if (ui::theme::isHighContrast(code))
                 QVERIFY(lowest(r.line, r) >= 7);
         }
-        // The high-contrast border pick reaches the controls.
         store.setValue(QStringLiteral("appearance.theme"), QStringLiteral("highContrastBlack"));
         store.setValue(QString::fromLatin1(ui::theme::pickSetting(Code::HighContrastBlack, ui::theme::Pick::Border)),
                        QStringLiteral("#00FF00"));
         QTRY_COMPARE(window->property("outlines").toList().front().value<QColor>(), hex(0x00FF00));
     }
 
-    // The controls style's combo box: Fusion's text field inside it, read-only
-    // unless the box is editable, is an Edit under the ComboBox to assistive
-    // technology (UI Automation reads it). It carries the box's name, live,
-    // as a native combo box's edit does; it had none (Windows native gate,
-    // dialogs: nine unnamed Edits, one per ComboBox).
     void comboBoxFieldCarriesTheBoxName()
     {
         QCOMPARE(QQuickStyle::name(), QStringLiteral("HikariStyle"));
@@ -966,30 +828,15 @@ Window {
             QVERIFY2(edit, box);
             QCOMPARE(edit->role(), QAccessible::EditableText);
             QCOMPARE(edit->text(QAccessible::Name), QString::fromLatin1(name));
-            // The box itself keeps its name, and the field stays its child.
             QAccessibleInterface *combo = edit->parent();
             QVERIFY(combo);
             QCOMPARE(combo->role(), QAccessible::ComboBox);
             QCOMPARE(combo->text(QAccessible::Name), QString::fromLatin1(name));
         }
-        // Live: a new name (a language switch) reaches the field.
         window->setProperty("choiceName", QStringLiteral("Lines"));
         QCOMPARE(field("choice")->text(QAccessible::Name), QStringLiteral("Lines"));
     }
 
-    // K2 focus (visual-language.md, "Keyboard focus"; the user's 2026-10-05
-    // decision after MuseScore 4's NavigationFocusBorder, made 1 wide and
-    // tight by the user's 2026-10-13 decision): every focusable control of
-    // the style draws keyboard focus (Tab, Backtab, a shortcut) as a ring 1
-    // wide in the focus role, the theme's text colour: just outside a
-    // button, tool button, combo box, check box, radio button, field, text
-    // area, spin box or a slider's handle, touching its edge, and 1 inside a
-    // tab. The accent
-    // stays for selection, the default button and a focused field's border,
-    // and the control's own outline stays the boundary colour, so keyboard
-    // focus and selection are told apart. A click's focus draws no ring.
-    // Live, in every theme, with a high-contrast text pick; without a
-    // profile the ring is the palette's text colour.
     void keyboardFocusRingInTheTextColour()
     {
         ui::SettingsStore store;
@@ -1054,7 +901,8 @@ Window {
         };
         auto *primary = object->property("primary").value<QQuickItem *>();
         const auto tabTo = [&](QQuickItem *control) {
-            primary->forceActiveFocus(Qt::MouseFocusReason); // (a focus change, with its reason)
+            // MUST KILL: tabTo first gives primary mouse focus so each Tab focus is a fresh focus change
+            primary->forceActiveFocus(Qt::MouseFocusReason);
             control->forceActiveFocus(Qt::TabFocusReason);
         };
         const auto check = [&](const ui::theme::Roles &r, const QString &what) {
@@ -1065,15 +913,12 @@ Window {
                 for (qsizetype j = 0; j < controls.size(); ++j)
                     if (j != i)
                         QTRY_VERIFY2(!ring(j)->isVisible(), qPrintable(where + QStringLiteral(" and %1").arg(j)));
-                // (the palette reaches the controls an event loop pass later)
+                // The palette reaches the controls an event loop pass later.
                 QTRY_VERIFY2(ringColour(i) == r.text,
                              qPrintable(where + QStringLiteral(" ring %1, text %2").arg(name(ringColour(i)), name(r.text))));
                 QCOMPARE(ringColour(i), r.focus);
                 QVERIFY2(ringColour(i) != r.accent && ringColour(i) != r.select, qPrintable(where));
                 QCOMPARE(ring(i)->property("border").value<QObject *>()->property("width").toInt(), 1);
-                // Where it is: just outside the control (the slider's
-                // handle), touching it; 1 inside a tab's background, which
-                // the tab bar would clip.
                 const QRectF at = sceneRect(ring(i));
                 if (i == Tab) {
                     auto *background = controls[i]->property("background").value<QQuickItem *>();
@@ -1083,8 +928,6 @@ Window {
                     QCOMPARE(at, sceneRect(i == Slider ? controls[i]->property("handle").value<QQuickItem *>()
                                                        : controls[i]).adjusted(-1, -1, 1, 1));
                 }
-                // and drawn: its left side in the text colour, 1 wide (the
-                // pixel inside it is not the ring's)
                 const QImage shot = window->grabWindow();
                 const qreal dpr = window->effectiveDevicePixelRatio();
                 const auto pixelAt = [&](qreal x) {
@@ -1092,21 +935,17 @@ Window {
                 };
                 QVERIFY2(shot.pixelColor(pixelAt(0.5)) == r.text,
                          qPrintable(where + QStringLiteral(" drawn %1").arg(name(shot.pixelColor(pixelAt(0.5))))));
-                if (i == Tab || i == Field || i == 6 /* the text area */)
+                // MUST KILL: the text area is the bare index 6 beside the Field, Tab and Slider enum
+                if (i == Tab || i == Field || i == 6)
                     QVERIFY2(shot.pixelColor(pixelAt(1.5)) != r.text,
                              qPrintable(where + QStringLiteral(" 2 wide: %1").arg(name(shot.pixelColor(pixelAt(1.5))))));
-                // The control's own outline stays the boundary colour.
                 if (i < 5)
                     QTRY_VERIFY2(outline(i) == r.control, qPrintable(where));
             }
-            // The default button keeps the accent's outline; a focused
-            // field's border is the accent's outline too, with the ring
-            // beside it only for keyboard focus.
             QVERIFY2(colour("defaultOutline") != r.control, qPrintable(what));
             controls[Field]->forceActiveFocus(Qt::MouseFocusReason);
             QTRY_COMPARE(colour("fieldOutline"), colour("defaultOutline"));
             QVERIFY(!ring(Field)->isVisible());
-            // A click's focus draws no ring.
             controls[0]->forceActiveFocus(Qt::MouseFocusReason);
             QTRY_VERIFY(controls[0]->hasActiveFocus());
             QVERIFY2(!ring(0)->isVisible(), qPrintable(what));
@@ -1117,28 +956,16 @@ Window {
             if (QTest::currentTestFailed())
                 return;
         }
-        // A high-contrast text pick reaches the ring.
         store.setValue(QString::fromLatin1(ui::theme::pickSetting(Code::HighContrastBlack, ui::theme::Pick::Text)),
                        QStringLiteral("#FFD000"));
         tabTo(controls[0]);
         QTRY_COMPARE(ringColour(0), hex(0xFFD000));
-        // Without a profile: the palette's text colour.
         ui::theme::useSettings(nullptr);
         tabTo(controls[0]);
         QTRY_VERIFY(ring(0)->isVisible());
         QTRY_COMPARE(ringColour(0), colour("paletteText"));
     }
 
-    // K2 focus (the user's 2026-10-13 decision): the panel holding the focus
-    // shows a small triangle in the accent at its header's top trailing
-    // corner (PanelFocusMark.qml), where the header is `field` (a lone
-    // panel's title bar, a selected tab; also the panel body, the palette's
-    // base) or `raised` (the tab strip). The accent meets 3:1 on those and on
-    // the `panel` and `background` surfaces around a panel in every theme
-    // with every preset, the high contrast themes' default accent pick
-    // included. With
-    // HIKARI_THEME_SHEET_DIR set the ratios are written to
-    // k2-focus-mark-contrast.txt for the review.
     void panelFocusMarkContrast()
     {
         QString report;
@@ -1178,10 +1005,6 @@ Window {
         }
     }
 
-    // The swatch sheet for the user's review: per mode, the seven accents as
-    // primary buttons and selection samples on the mode's four surfaces, each
-    // with its lowest measured contrast, and the four themes' role tables
-    // with their measured contrast as text.
     void swatchSheet()
     {
         constexpr int cell = 150, rowHeight = 112, label = 120;
@@ -1221,20 +1044,17 @@ Window {
                     (dark ? choice.darkAccent : choice.lightAccent) = QLatin1String(a.key);
                     const auto r = roles(code, choice);
                     const int x = label + int(i) * cell;
-                    // a primary button
                     const QRect button(x + 8, y + 8, cell - 16, 30);
                     p.setPen(Qt::NoPen);
                     p.setBrush(a.accent);
                     p.drawRoundedRect(button, 1, 1);
                     p.setPen(a.onAccent);
                     p.drawText(button, Qt::AlignCenter, QString::fromLatin1(a.name));
-                    // a selected row with its leading accent marker
                     const QRect row(x + 8, y + 44, cell - 16, 22);
                     p.fillRect(row, a.select);
                     p.fillRect(QRect(row.x(), row.y(), 3, row.height()), a.accent);
                     p.setPen(r.text);
                     p.drawText(row.adjusted(8, 0, 0, 0), Qt::AlignVCenter, QStringLiteral("Selected line"));
-                    // the ratios
                     p.setPen(base.text);
                     p.drawText(QRect(x + 8, y + 70, cell - 16, 40), Qt::AlignLeft | Qt::AlignTop,
                                QStringLiteral("%1 %2:1\non it %3:1")

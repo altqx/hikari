@@ -9,13 +9,11 @@ namespace hikari::ui::style {
 
 namespace {
 
-// One per engine (the singleton), all showing the same colours; the GUI
-// thread's only.
 QColor g_focus;
 QColor g_control;
 std::vector<StyleColours *> g_instances;
 
-} // namespace
+}
 
 StyleColours::StyleColours(QObject *parent) : QObject(parent)
 {
@@ -65,4 +63,4 @@ void StyleColours::setFocus(const QColor &focus)
         emit instance->changed();
 }
 
-} // namespace hikari::ui::style
+}

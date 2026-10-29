@@ -1,10 +1,3 @@
-// AD3 (#312): the runs kept for the Automation panel and their lines.
-// Output is kept as Aegisub shows it (text without a newline continues on
-// the same line); a run's lines show by a level threshold and a text filter,
-// HikariSub's own lines whatever the level; the session keeps 20 runs, never
-// dropping the one running; Copy and Save take the lines shown; a run keeps
-// a bounded amount of output.
-
 #include "automation_runs.h"
 
 #include <QFile>
@@ -41,7 +34,6 @@ private slots:
         runs.append(id, QStringLiteral(" two\nthree\n"));
         runs.append(id, QStringLiteral("\n"));
         QCOMPARE(texts(lines), (QStringList{QStringLiteral("one two"), QStringLiteral("three"), QString()}));
-        // The level and time are the line's first part's.
         QCOMPARE(lines.data(lines.index(0), AutomationRunLines::LevelRole).toInt(), 2);
         QCOMPARE(lines.data(lines.index(0), AutomationRunLines::TimeRole).toString(), QStringLiteral("0:00.000"));
         QCOMPARE(lines.data(lines.index(1), AutomationRunLines::TimeRole).toString(), QStringLiteral("0:01.208"));
@@ -85,7 +77,6 @@ private slots:
                                             QStringLiteral("stack traceback:")}));
         QCOMPARE(lines.countAt(4), 1);
         QCOMPARE(lines.countAt(AutomationRuns::kHostError), 1);
-        // Copy takes the lines shown, levels named; times when on.
         QCOMPARE(lines.shownText(), QStringLiteral("[fatal] l0\n[error] l1\n[warning] l2\nplain\na.lua:3: boom\nstack traceback:\n"));
         lines.setFilterText(QStringLiteral("L1"));
         lines.setTimes(true);
@@ -115,8 +106,6 @@ private slots:
         QVERIFY(!lines.saveShown(QUrl::fromLocalFile(dir.filePath(QStringLiteral("missing/x.log")))).isEmpty());
     }
 
-    // A script writing without end: kMaxLines lines kept, then one line
-    // saying the rest is not; a single endless line stops at kMaxChars.
     void aFloodIsBounded()
     {
         AutomationRuns runs;
@@ -129,15 +118,12 @@ private slots:
         QCOMPARE(run->lines.size(), std::size_t(AutomationRuns::kMaxLines) + 1);
         const int wide = runs.begin(QStringLiteral("Wide"), QStringLiteral("a.lua"), {});
         runs.append(wide, QString(AutomationRuns::kMaxChars + 10, QLatin1Char('y')));
-        // Said at once, not at the next output.
         QCOMPARE(runs.run(wide)->lines.size(), std::size_t(2));
         runs.append(wide, QStringLiteral("z\n"));
         const auto *line = runs.run(wide);
         QCOMPARE(line->lines.size(), std::size_t(2));
         QCOMPARE(line->lines.front().text.size(), AutomationRuns::kMaxChars);
         QCOMPARE(line->lines.back().level, AutomationRuns::kHostInfo);
-        // An endless error keeps its first kMaxNoteLines lines, and says
-        // the rest is not kept.
         const int failed = runs.begin(QStringLiteral("Fail"), QStringLiteral("a.lua"), {});
         runs.note(failed, QStringLiteral("boom\n").repeated(100'000), AutomationRuns::kHostError);
         const auto *cut = runs.run(failed);
@@ -145,12 +131,10 @@ private slots:
         QCOMPARE(cut->lines.front().level, AutomationRuns::kHostError);
         QCOMPARE(cut->lines.back().level, AutomationRuns::kHostInfo);
         QCOMPARE(cut->lines.back().text, QStringLiteral("The rest of this message is not kept."));
-        // A note of exactly kMaxNoteLines lines is whole.
         const int whole = runs.begin(QStringLiteral("Whole"), QStringLiteral("a.lua"), {});
         runs.note(whole, QStringLiteral("line\n").repeated(AutomationRuns::kMaxNoteLines), AutomationRuns::kHostInfo);
         QCOMPARE(runs.run(whole)->lines.size(), std::size_t(AutomationRuns::kMaxNoteLines));
         QCOMPARE(runs.run(whole)->lines.back().text, QStringLiteral("line"));
-        // One cut at kMaxChars says so too.
         const int wideNote = runs.begin(QStringLiteral("Wide note"), QStringLiteral("a.lua"), {});
         runs.note(wideNote, QString(AutomationRuns::kMaxChars + 1, QLatin1Char('n')), AutomationRuns::kHostError);
         QCOMPARE(runs.run(wideNote)->lines.size(), std::size_t(2));
@@ -167,11 +151,9 @@ private slots:
             runs.finish(id, QStringLiteral("applied"), {});
         }
         QCOMPARE(runs.count(), AutomationRuns::kKept);
-        // The first run still runs: kept, the oldest finished ones went.
         QVERIFY(runs.run(first));
         QCOMPARE(removed.size(), 4);
         QCOMPARE(runs.data(runs.index(0), AutomationRuns::MacroRole).toString(), QStringLiteral("Short"));
-        // Clear leaves only the running run.
         AutomationRunLines lines;
         lines.setRuns(&runs);
         lines.setRun(runs.idAt(0));

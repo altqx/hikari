@@ -1,26 +1,13 @@
-// NT1 (#302): the application's message box (PK1's MessageBox.qml), made
-// at the first question rather than at the start (a window made at Main's
-// start costs Windows CI dearly, PK1). It opens over the window that has
-// the keyboard, modal to it; a question asked while another shows waits
-// for it. A QtObject, not an Item: in a Controls Dialog an Item would be
-// another child of its content and change its size.
-//
-// ask(options, done): MessageBox.ask's options (title, text, detail,
-// details, severity, choices, dontAsk, and PU4's `from`, the window it opens
-// over instead) and done(id, dontAskAgain); it gives the question back,
-// for withdraw(question) when what it asks about changes (PU4): out of the
-// queue, or answered with its reject choice if shown.
 import QtQuick
 import Hikari.Ui
 
+// A QtObject, not an Item: in a Controls Dialog an Item would be another child of its content and change its size.
 QtObject {
     id: host
     property SettingsStore settings: null
-    // The box once made (tests).
     property MessageBox box: null
     property var queue: []
     property bool asking: false
-    // The question shown.
     property var current: null
 
     function ask(options, done) {
@@ -51,8 +38,6 @@ QtObject {
         current = question
         if (!box)
             box = boxComponent.createObject(null, { settings: host.settings })
-        // A window to open over that has closed while the question waited
-        // (the fullscreen video window left): the window with the keyboard.
         const from = question.options.from
         const options = from && !from.visible ? Object.assign({}, question.options, { from: null }) : question.options
         box.ask(options, (id, again) => {

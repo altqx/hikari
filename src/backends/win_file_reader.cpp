@@ -39,4 +39,4 @@ WinFileReader::read(const application::DestinationKey &destination)
     return bytes;
 }
 
-} // namespace hikari::backends
+}

@@ -1,11 +1,3 @@
-// P6: tabs over the shared Workspace (GLOBAL_ADD_PAGE, GLOBAL_CLOSE_PAGE,
-// GLOBAL_NEXT_TAB / GLOBAL_PREVIOUS_TAB) and session restore
-// (GLOBAL_LOAD_LAST_SESSION, the .hksession and legacy .kls files) through
-// the composition, against legacy Notebook, HikariSubFrame and hikarisubApp
-// at 20d647c4: partial restore from fixtures with missing files,
-// C05-audio-association, each tab's own media, and the startup choices.
-// CF3: last-session.json, converted once from LastSession.txt.
-
 #include "hikari/app/application.h"
 #include "hikari/app/session_json.h"
 #include "hikari/application/session_file.h"
@@ -31,7 +23,6 @@ using namespace hikari;
 
 namespace {
 
-// An ASS file with `lines` Dialogue Lines whose text is `text` and the row.
 QString writeSubtitles(const QString &path, const char *text, int lines = 3)
 {
     QFile f(path);
@@ -59,8 +50,6 @@ QByteArray hash(const QString &path)
     return QCryptographicHash::hash(readAll(path), QCryptographicHash::Sha256);
 }
 
-// A session file's bytes: a legacy one (CRLF, read the same on every
-// platform under P6-session-crlf) or JSON.
 void writeSession(const QString &path, const QByteArray &text)
 {
     QFile f(path);
@@ -68,7 +57,6 @@ void writeSession(const QString &path, const QByteArray &text)
     f.write(text);
 }
 
-// A legacy LastSession.txt with one closed tab.
 QByteArray legacySession()
 {
     application::SessionTab tab;
@@ -105,7 +93,7 @@ QVariantList choose(const QVariantList &rows, bool save)
     return out;
 }
 
-} // namespace
+}
 
 class SessionTabsTests : public QObject {
     Q_OBJECT
@@ -142,7 +130,7 @@ class SessionTabsTests : public QObject {
         QVERIFY(s->run(application::Command{"Set text", s->revision(), {line},
                                             [&](core::Document &d) { return d.setLineText(line, text); }}));
     }
-    // reviewSession, then the review answered with Discard when it asks.
+    // MUST KILL: loadSession discards every unsaved change the review asks about
     bool loadSession(app::Application &a, const QUrl &file = {})
     {
         const QVariantMap review = a.reviewSession(file);
@@ -157,9 +145,6 @@ class SessionTabsTests : public QObject {
     }
 
 private slots:
-    // GLOBAL_NEXT_TAB / GLOBAL_PREVIOUS_TAB (HikariSubFrame::OnPageChange):
-    // nothing with one tab, wrapping past either end, the protected
-    // reference never a tab; a tab keeps its own selection.
     void tabTraversalWrapsAndSkipsTheReference()
     {
         app::Application a;
@@ -178,23 +163,21 @@ private slots:
         a.selectLine(target(a)->document().lines()[2]->id.value);
         a.changeTab(1);
         QCOMPARE(a.currentTab(), 2);
-        a.changeTab(1); // wraps to the first
+        a.changeTab(1);
         QCOMPARE(a.currentTab(), 0);
-        a.changeTab(-1); // wraps to the last
+        a.changeTab(-1);
         QCOMPARE(a.currentTab(), 2);
         a.changeTab(-1);
         QCOMPARE(a.currentTab(), 1);
-        QCOMPARE(activeRow(a), 2); // its selection stayed with it
+        QCOMPARE(activeRow(a), 2);
         QCOMPARE(shown.size(), 5);
-        QVERIFY(a.workspace().reference()); // never shown as a tab, never the target
+        QVERIFY(a.workspace().reference());
         a.selectTab(0);
         QCOMPARE(a.currentTab(), 0);
         a.selectTab(7);
         QCOMPARE(a.currentTab(), 0);
     }
 
-    // Tab labels (HikariSubFrame::Label, Notebook::CalcSizes): "<step>*name"
-    // while modified, at most 40 characters by default.
     void tabLabelsFollowLegacy()
     {
         app::Application a;
@@ -205,14 +188,11 @@ private slots:
         QVERIFY(row.value(QStringLiteral("current")).toBool());
         QCOMPARE(row.value(QStringLiteral("tip")).toString(), longName + QLatin1Char('\n'));
         edit(a, u8"changed");
-        a.selectLine(target(a)->document().lines()[1]->id.value); // views refresh
+        a.selectLine(target(a)->document().lines()[1]->id.value);
         row = a.tabs().first().toMap();
         QCOMPARE(row.value(QStringLiteral("label")).toString(), (QStringLiteral("1*") + longName).left(40));
     }
 
-    // GLOBAL_ADD_PAGE (Ctrl+T, InsertTab): an Untitled tab after the last,
-    // shown, without writing the session; the tab bar's "+" (AddPage(true,
-    // true)) writes it.
     void addPageAppendsAnUntitledTab()
     {
         QTemporaryDir home;
@@ -231,9 +211,6 @@ private slots:
         QCOMPARE(readSession(last).tabs.size(), std::size_t(4));
     }
 
-    // GLOBAL_CLOSE_PAGE (Notebook::DeletePage): the review first; the tab
-    // taking the closed one's place becomes active, or the last one; the
-    // session is written. A middle-clicked tab is reviewed and closed alone.
     void closingATabShowsTheNextOrTheLast()
     {
         QTemporaryDir home;
@@ -248,8 +225,7 @@ private slots:
         QCOMPARE(readSession(a.lastSessionPath()).tabs.size(), std::size_t(3));
         a.selectTab(2);
         QVERIFY(a.closeEditingTarget());
-        QCOMPARE(a.shell().editingTitle(), QStringLiteral("c.ass")); // the last tab
-        // A middle click on an inactive, modified tab reviews only that one.
+        QCOMPARE(a.shell().editingTitle(), QStringLiteral("c.ass"));
         a.selectTab(0);
         edit(a, u8"unsaved");
         a.selectTab(1);
@@ -263,16 +239,12 @@ private slots:
         QCOMPARE(a.shell().editingTitle(), QStringLiteral("c.ass"));
         QVERIFY(a.reviewCloseTab(0).isEmpty());
         a.finishClose();
-        // SH2-last-tab-home: with no tab left the Home page shows, where
-        // legacy Notebook::DeletePage made a new empty one. The session
-        // written has no Document to offer.
         QVERIFY(titles(a).isEmpty());
         QVERIFY(!a.workspace().editingTarget());
         QVERIFY(a.tabs().isEmpty());
         QVERIFY(a.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty());
     }
 
-    // Opening subtitles into the active tab (P2 review) keeps its place.
     void openingIntoATabKeepsItsPlace()
     {
         app::Application a;
@@ -287,12 +259,6 @@ private slots:
         QCOMPARE(a.currentTab(), 1);
     }
 
-    // Session fixture with missing files (tests/fixtures/sessions/
-    // partial-restore.kls): the complete tabs restore, a tab whose
-    // subtitles are missing stays as an Untitled tab, and every missing file
-    // stays visible as an unresolved entry, written back to the session
-    // until it is resolved or removed. The last tab is active (legacy
-    // AddPage(false) made each loaded tab the active one).
     void partialRestoreKeepsMissingEntriesVisible()
     {
         QTemporaryDir home;
@@ -316,7 +282,7 @@ private slots:
         QCOMPARE(restored.first().first().toInt(), 4);
         QCOMPARE(titles(a), (QStringList{"first.ass", "Untitled", "second.ass", "Untitled"}));
         QCOMPARE(a.currentTab(), 3);
-        QVERIFY(!a.audio().hasAudio()); // the active tab has no audio of its own
+        QVERIFY(!a.audio().hasAudio());
         const QVariantList unresolved = a.unresolvedRestores();
         QCOMPARE(unresolved.size(), qsizetype(4));
         auto entry = [&](int i) { return unresolved[i].toMap(); };
@@ -328,8 +294,6 @@ private slots:
         QCOMPARE(entry(3).value(QStringLiteral("kind")).toString(), QStringLiteral("keyframes"));
         QCOMPARE(entry(3).value(QStringLiteral("tab")).toInt(), 2);
 
-        // The session as written after loading (legacy SaveLastSession)
-        // keeps the unresolved files; the .kls and the subtitles are unchanged.
         auto written = readSession(a.lastSessionPath());
         QCOMPARE(written.tabs.size(), std::size_t(4));
         QCOMPARE(QDir::fromNativeSeparators(QString::fromStdString(written.tabs[1].subtitles)), d + "/missing.ass");
@@ -343,36 +307,30 @@ private slots:
         QCOMPARE(hash(kls), klsBefore);
         QCOMPARE(hash(files.filePath(QStringLiteral("first.ass"))), firstBefore);
 
-        // Retry: the subtitles now exist and load into their tab, at its place.
-        QVERIFY(!a.retryRestore(1)); // the video is still missing
+        QVERIFY(!a.retryRestore(1));
         writeSubtitles(files.filePath(QStringLiteral("missing.ass")), "found");
         QVERIFY(a.retryRestore(0));
         QCOMPARE(titles(a), (QStringList{"first.ass", "missing.ass", "second.ass", "Untitled"}));
         QCOMPARE(a.currentTab(), 3);
         a.selectTab(1);
-        QCOMPARE(activeRow(a), 2); // the session's Active
-        // Remove forgets an entry; the session no longer names it.
+        QCOMPARE(activeRow(a), 2);
         QCOMPARE(a.unresolvedRestores().size(), qsizetype(3));
-        a.removeRestore(1); // the audio (rows renumber after the subtitles left)
+        a.removeRestore(1);
         QCOMPARE(a.unresolvedRestores().size(), qsizetype(2));
         written = readSession(a.lastSessionPath());
         QCOMPARE(written.tabs[1].audio, std::string());
         QCOMPARE(QDir::fromNativeSeparators(QString::fromStdString(written.tabs[1].subtitles)), d + "/missing.ass");
-        // Relink: another file for the keyframes entry.
         QFile k(files.filePath(QStringLiteral("other_keyframes.txt")));
         QVERIFY(k.open(QIODevice::WriteOnly));
         k.write("# keyframe format v1\nfps 0\n0\n24\n");
         k.close();
         QVERIFY(a.relinkRestore(1, QUrl::fromLocalFile(k.fileName())));
-        QCOMPARE(a.unresolvedRestores().size(), qsizetype(1)); // the video stays
+        QCOMPARE(a.unresolvedRestores().size(), qsizetype(1));
         written = readSession(a.lastSessionPath());
         QCOMPARE(QDir::fromNativeSeparators(QString::fromStdString(written.tabs[2].keyframes)),
                  QDir::fromNativeSeparators(k.fileName()));
     }
 
-    // C05-audio-association: two tabs with Audio only on the first; the
-    // second never shows the first's audio. An explicit association of a
-    // later tab is its own; a missing audio file opens nothing.
     void aLaterTabNeverInheritsAudio()
     {
         QTemporaryDir home;
@@ -394,18 +352,18 @@ private slots:
             "Audio: %1/three.mka\r\n"
             "Tab: 3\r\nVideo: \r\nPosition: 0\r\nFFMS2: 1\r\nSubtitles: %1/four.ass\r\nActive: 0\r\nScroll: 0\r\nEditor: 1\r\n"
             "Audio: %1/gone.mka\r\n").arg(d).toUtf8();
-        writeSession(home.filePath(QStringLiteral("LastSession.txt")), text); // CF3: converted at the start
+        writeSession(home.filePath(QStringLiteral("LastSession.txt")), text);
         app::Application a(options(home));
         QVERIFY(loadSession(a));
         QCOMPARE(titles(a), (QStringList{"one.ass", "two.ass", "three.ass", "four.ass"}));
         QCOMPARE(a.currentTab(), 3);
-        QVERIFY(!a.audio().hasAudio()); // its audio file is missing
+        QVERIFY(!a.audio().hasAudio());
         QCOMPARE(a.unresolvedRestores().size(), qsizetype(1));
         a.selectTab(0);
         QVERIFY(a.audio().hasAudio());
         QCOMPARE(QDir::fromNativeSeparators(a.audio().path()), d + "/one.mka");
         QTRY_VERIFY_WITH_TIMEOUT(a.audio().ready(), 20000);
-        a.selectTab(1); // legacy: one.mka again; here none
+        a.selectTab(1);
         QVERIFY(!a.audio().hasAudio());
         a.selectTab(2);
         QCOMPARE(QDir::fromNativeSeparators(a.audio().path()), d + "/three.mka");
@@ -418,9 +376,6 @@ private slots:
         QCOMPARE(hash(files.filePath(QStringLiteral("one.mka"))), before);
     }
 
-    // Each tab keeps its own video and the position reached (legacy each
-    // TabPanel had its VideoBox); the session writes them, and a restored
-    // tab shows its video at the session's position.
     void eachTabKeepsItsVideoAndPosition()
     {
         QTemporaryDir home;
@@ -433,7 +388,7 @@ private slots:
         QTRY_COMPARE(a->video().session().shownFrame().value_or(-1), 12);
         const int ms = a->video().session().legacyTimebase().msAt(12);
         a->addPage();
-        QVERIFY(!a->video().hasVideo()); // the new tab has none
+        QVERIFY(!a->video().hasVideo());
         auto written = readSession(a->lastSessionPath());
         a->endSession();
         written = readSession(a->lastSessionPath());
@@ -447,10 +402,8 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(a->video().session().shownFrame().value_or(-1), 12, 10000);
         a.reset();
 
-        // The next program run loads it: the tab active at the end (CF3's
-        // marker), the first, shows its video at the position again.
         app::Application b(options(home));
-        QCOMPARE(b.startupSession(), QString()); // closed cleanly, not asked for
+        QCOMPARE(b.startupSession(), QString());
         QVERIFY(loadSession(b));
         QCOMPARE(b.tabs().size(), qsizetype(2));
         QCOMPARE(b.currentTab(), 0);
@@ -460,11 +413,6 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(b.video().session().shownFrame().value_or(-1), 12, 10000);
     }
 
-    // AV3 (#240): a dummy video brings its own silent audio, as long as the
-    // video. The session keeps the video alone (the silence is the video's,
-    // as a file's own track is), and restoring it brings both back; a tab
-    // switch leaves the silence with its tab. An older session's blank
-    // 2 h 30 min audio still restores.
     void aDummyVideoRestoresWithItsSilence()
     {
         QTemporaryDir home;
@@ -498,7 +446,6 @@ private slots:
         QTRY_VERIFY(b.audio().ready());
         QCOMPARE(b.audio().path(), silence);
 
-        // An older session's "Open blank 2h30m audio".
         QTemporaryDir older;
         const QString d = QDir::fromNativeSeparators(older.path());
         writeSubtitles(older.filePath(QStringLiteral("old.ass")), "old");
@@ -515,7 +462,6 @@ private slots:
         QTRY_VERIFY(c.audio().ready());
         QCOMPARE(c.audio().box().audio()->sampleCount(), 396'900'000);
 
-        // A dummy entry that does not open is unresolved, as a missing file is.
         QTemporaryDir broken;
         writeSubtitles(broken.filePath(QStringLiteral("broken.ass")), "broken");
         writeSession(broken.filePath(QStringLiteral("LastSession.txt")),
@@ -532,9 +478,6 @@ private slots:
         QCOMPARE(unresolved[0].toMap().value(QStringLiteral("path")).toString(), QStringLiteral("?garbage"));
     }
 
-    // Loading replaces every open tab only after their unsaved work is
-    // reviewed as for Quit (approved P6-session-review; legacy destroyed the
-    // tabs without asking). Cancel keeps everything.
     void loadingReviewsUnsavedWorkFirst()
     {
         QTemporaryDir home;
@@ -552,13 +495,10 @@ private slots:
         QCOMPARE(review.value(QStringLiteral("rows")).toList().size(), qsizetype(1));
         a.cancelClose();
         QCOMPARE(titles(a), (QStringList{"work.ass", "Untitled"}));
-        QVERIFY(loadSession(a, QUrl::fromLocalFile(kls))); // Discard
+        QVERIFY(loadSession(a, QUrl::fromLocalFile(kls)));
         QCOMPARE(titles(a), (QStringList{"session.ass"}));
     }
 
-    // L58-staged-replacement: subtitles staged before the review are read
-    // again when the review has let the load go on and the file changed
-    // meanwhile; a file gone meanwhile becomes an unresolved entry.
     void staleStagedFilesAreReadAgain()
     {
         QTemporaryDir home;
@@ -574,7 +514,6 @@ private slots:
         edit(a, u8"unsaved");
         const QVariantMap review = a.reviewSession(QUrl::fromLocalFile(kls));
         QCOMPARE(review.value(QStringLiteral("rows")).toList().size(), qsizetype(1));
-        // While the review waits: s1 changes, s2 goes.
         writeSubtitles(s1, "new and longer", 2);
         QVERIFY(QFile::remove(s2));
         a.resolveClose(choose(review.value(QStringLiteral("rows")).toList(), false));
@@ -588,23 +527,19 @@ private slots:
         QCOMPARE(a.unresolvedRestores().first().toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("subtitles"));
     }
 
-    // The session written right after loading (legacy SaveLastSession at the
-    // end of LoadLastSession) keeps the restored position while the video
-    // opens and its seek has not landed; afterwards it is the shown frame's.
     void theSavedPositionWaitsForTheRestoredSeek()
     {
         QTemporaryDir home;
         QTemporaryDir files;
-        const QString subs = writeSubtitles(files.filePath(QStringLiteral("pos.ass")), "pos"); // starts at 1.00
+        const QString subs = writeSubtitles(files.filePath(QStringLiteral("pos.ass")), "pos");
         const QString kls = files.filePath(QStringLiteral("pos.kls"));
         writeSession(kls, QStringLiteral("[HikariSub v0.0.1]\r\nTab: 0\r\nVideo: %1\r\nPosition: 2002\r\nSubtitles: %2\r\n")
                               .arg(media("cfr.mkv"), subs)
                               .toUtf8());
         app::Application a(options(home));
         QVERIFY(loadSession(a, QUrl::fromLocalFile(kls)));
-        QCOMPARE(readSession(a.lastSessionPath()).tabs.at(0).position, 2002); // not 0 while opening
+        QCOMPARE(readSession(a.lastSessionPath()).tabs.at(0).position, 2002);
         const auto &video = a.video().session();
-        // While the video indexes (its path set, not Ready): still the session's.
         QDeadlineTimer deadline(30000);
         while (video.state() == application::VideoSession::State::Closed && !deadline.hasExpired())
             QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
@@ -621,9 +556,6 @@ private slots:
         QCOMPARE(readSession(a.lastSessionPath()).tabs.at(0).position, video.legacyTimebase().msAt(*video.shownFrame()));
     }
 
-    // The Grid's scroll reports are ignored from a tab change until the Grid
-    // has restored that tab's scroll, so a model reset's transient 0 never
-    // replaces it.
     void aTabsScrollSurvivesTheGridsReset()
     {
         QTemporaryDir home;
@@ -639,7 +571,7 @@ private slots:
         a.setTargetScroll(5);
         a.selectTab(1);
         QCOMPARE(shown.last().first().toInt(), 2);
-        a.setTargetScroll(0); // the reset model's contentY, before the restore
+        a.setTargetScroll(0);
         a.scrollRestored();
         a.selectTab(0);
         QCOMPARE(shown.last().first().toInt(), 5);
@@ -651,13 +583,11 @@ private slots:
         QCOMPARE(written.tabs.at(1).scroll, 2);
     }
 
-    // A session file whose first line is not "[HikariSub..." is corrupt
-    // (logged, nothing changes); no file or an empty one does nothing.
     void corruptAndMissingSessionsChangeNothing()
     {
         QTemporaryDir home;
         app::Application a(options(home));
-        QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool()); // no last-session.json yet
+        QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
         QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("keep.ass")), "k")));
         const QVariantMap corrupt =
             a.reviewSession(QUrl::fromLocalFile(QStringLiteral(HIKARI_SESSION_FIXTURES "/corrupt.txt")));
@@ -666,10 +596,6 @@ private slots:
         QCOMPARE(titles(a), (QStringList{"keep.ass"}));
     }
 
-    // GLOBAL_SAVE_EXTERNAL_SESSION and GLOBAL_LOAD_EXTERNAL_SESSION (CF3):
-    // a .hksession, JSON; loading it writes last-session.json, not the file.
-    // A name ending in .kls is saved as a .hksession: a legacy file is never
-    // written.
     void externalSessionsRoundTrip()
     {
         QTemporaryDir home;
@@ -683,7 +609,7 @@ private slots:
         QVERIFY(readAll(file).startsWith("{"));
         const QJsonObject json = QJsonDocument::fromJson(readAll(file)).object();
         QCOMPARE(json.value(QStringLiteral("version")).toInt(), 1);
-        QVERIFY(!json.contains(QStringLiteral("closed"))); // only last-session.json says it
+        QVERIFY(!json.contains(QStringLiteral("closed")));
         const auto saved = readSession(file);
         QCOMPARE(saved.tabs.size(), std::size_t(2));
         QCOMPARE(saved.activeTab, std::optional<std::size_t>(current));
@@ -704,8 +630,6 @@ private slots:
         QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(kls)), QString());
         QVERIFY(!QFile::exists(kls));
         QCOMPARE(readSession(home.filePath(QStringLiteral("typed.hksession"))).tabs.size(), std::size_t(2));
-        // The dialog asked about typed.kls: typed.hksession is replaced only
-        // when the user says so.
         a.addPage();
         const QByteArray typed = hash(home.filePath(QStringLiteral("typed.hksession")));
         QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(kls)), QStringLiteral("exists"));
@@ -714,9 +638,6 @@ private slots:
         QCOMPARE(readSession(home.filePath(QStringLiteral("typed.hksession"))).tabs.size(), std::size_t(3));
     }
 
-    // CF3: a session file naming files on other computers is not looked into
-    // (Windows would sign in to the share) until the user allows it; this
-    // computer's own \\?\ paths do not count.
     void filesOnOtherComputersWaitForTheUser()
     {
         QTemporaryDir home;
@@ -728,7 +649,6 @@ private slots:
         media.subtitles = "\\\\NAS\\subs\\y.ass";
         local.subtitles = "\\\\?\\C:\\subs\\z.ass";
         local.video = "\\\\.\\d:\\v.mkv";
-        // Device paths that reach the network redirector count too.
         device.subtitles = "\\\\?\\UNC\\far\\s\\a.ass";
         device.audio = "\\\\.\\GLOBALROOT\\Device\\Mup\\mup\\s\\b.wav";
         device.keyframes = "\\\\\\odd\\k.txt";
@@ -740,8 +660,6 @@ private slots:
                  (QStringList{"nas", "media-box", "far", QString::fromStdString(device.audio), QString::fromStdString(device.keyframes)}));
         QCOMPARE(titles(a), (QStringList{"here.ass"}));
         const QStringList asked = review.value(QStringLiteral("network")).toStringList();
-        // Only the computers the user was asked about: a file changed while
-        // the question was open asks again.
         QVERIFY(!a.reviewSession(QUrl::fromLocalFile(file), {QStringLiteral("nas")}).value(QStringLiteral("ok")).toBool());
         const QByteArray original = readAll(file);
         application::SessionTab other;
@@ -757,12 +675,9 @@ private slots:
         QVERIFY(review.value(QStringLiteral("rows")).toList().isEmpty());
         a.finishClose();
         QCOMPARE(a.tabs().size(), qsizetype(4));
-        // The program's own last session is not asked about.
         QVERIFY(a.reviewSession({}).value(QStringLiteral("ok")).toBool());
     }
 
-    // CF3: a legacy .kls still loads, as legacy wrote it (CRLF, a BOM): the
-    // last tab is the active one, and the file is never written.
     void aLegacyKlsStillLoads()
     {
         QTemporaryDir home;
@@ -781,8 +696,6 @@ private slots:
         QCOMPARE(activeRow(a), 1);
         QCOMPARE(hash(kls), before);
         QVERIFY(readAll(a.lastSessionPath()).startsWith("{"));
-        // Dropped alone it is a session for the shell's Load session; among
-        // other files it is refused.
         const QVariantMap dropped = a.openDropped({QUrl::fromLocalFile(kls)});
         QCOMPARE(dropped.value(QStringLiteral("kind")).toString(), QStringLiteral("session"));
         QCOMPARE(dropped.value(QStringLiteral("path")).toString(), kls);
@@ -790,10 +703,6 @@ private slots:
         QCOMPARE(titles(a), (QStringList{"l1.ass", "l2.ass", "l1.ass"}));
     }
 
-    // CF3: the first start without last-session.json converts LastSession.txt
-    // into it once and keeps it as LastSession.txt.old; whether the program
-    // closed comes along, so a crash is still offered. A corrupt one is kept
-    // as .old too, with a notice, and restores nothing.
     void lastSessionTxtConvertsOnce()
     {
         QTemporaryDir home;
@@ -814,12 +723,11 @@ private slots:
             QCOMPARE(a.startupSession(), QStringLiteral("crash"));
             QCOMPARE(a.startupOfferNames(), QStringList{QStringLiteral("c1.ass")});
         }
-        // Once: a LastSession.txt that turns up again is left alone.
         writeSession(home.filePath(QStringLiteral("LastSession.txt")), legacy);
         {
             app::Application b(options(home));
             QVERIFY(QFile::exists(home.filePath(QStringLiteral("LastSession.txt"))));
-            QVERIFY(readSession(b.lastSessionPath()).closed); // the last run's orderly end
+            QVERIFY(readSession(b.lastSessionPath()).closed);
         }
 
         QTemporaryDir corrupt;
@@ -831,10 +739,6 @@ private slots:
         QCOMPARE(c.startupSession(), QString());
     }
 
-    // CF3: a last-session.json that cannot be read is never overwritten: it
-    // is kept as last-session.json.broken, the Log names the file and line,
-    // and nothing is restored or offered. The next session written is a new
-    // file.
     void aBrokenLastSessionIsKept()
     {
         QTemporaryDir home;
@@ -852,11 +756,8 @@ private slots:
         QCOMPARE(readSession(a.lastSessionPath()).tabs.size(), std::size_t(1));
         QCOMPARE(readAll(a.lastSessionPath() + QStringLiteral(".broken")), broken);
 
-        // A newer version's file, or a field of the wrong type, is broken too;
-        // an older .broken stays.
         writeSession(a.lastSessionPath(), R"({"version": 2, "tabs": []})");
         QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
-        // The numbering is the shared helper's (owned_file.h): .broken-N.
         QCOMPARE(QDir(home.path()).entryList({QStringLiteral("last-session.json.broken-*")}).size(), qsizetype(1));
         QVERIFY(a.log().history().contains(
             QStringLiteral("last-session.json: It is version 2, newer than this HikariSub reads (1). It was kept as "
@@ -864,15 +765,11 @@ private slots:
         writeSession(a.lastSessionPath(), R"({"version": 1, "tabs": [{"position": "soon"}]})");
         QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
         QVERIFY(a.log().history().contains(QStringLiteral("Tab 1: \"position\" has the wrong type.")));
-        // A crash must not pass for an orderly end.
         writeSession(a.lastSessionPath(), R"({"version": 1, "closed": "false", "tabs": []})");
         QVERIFY(!a.reviewSession({}).value(QStringLiteral("ok")).toBool());
         QVERIFY(a.log().history().contains(QStringLiteral("\"closed\" is not true or false")));
     }
 
-    // CF3, CF1's owned-file rules: a folder where last-session.json should be,
-    // or a file that cannot be read, stays as it is and is not written over;
-    // a LastSession.txt that cannot be read is not converted.
     void anUnreadableLastSessionStaysAsItIs()
     {
         QTemporaryDir folder;
@@ -892,7 +789,6 @@ private slots:
         const QString legacy = home.filePath(QStringLiteral("LastSession.txt"));
         writeSession(file, R"({"version": 1, "tabs": []})");
         writeSession(legacy, legacySession());
-        // Windows keeps read access whatever setPermissions asks.
         for (const QString &path : {file, legacy})
             if (QFile probe(path); !QFile::setPermissions(path, {}) || probe.open(QIODevice::ReadOnly))
                 QSKIP("the file reads without permissions (Windows, root, or a file system without them)");
@@ -905,8 +801,6 @@ private slots:
         QVERIFY(QFile::setPermissions(file, QFileDevice::ReadOwner | QFileDevice::WriteOwner));
         QCOMPARE(readAll(file), QByteArray(R"({"version": 1, "tabs": []})"));
 
-        // With last-session.json gone, an unreadable LastSession.txt is not
-        // converted; the session written as the program ends takes its place.
         QVERIFY(QFile::remove(file));
         {
             app::Application a(options(home));
@@ -918,8 +812,6 @@ private slots:
         QCOMPARE(readAll(legacy), legacySession());
     }
 
-    // CF3: last-session.json keeps its permissions when it is written again,
-    // and the converted one takes LastSession.txt's.
     void lastSessionKeepsItsPermissions()
     {
 #ifdef Q_OS_WIN
@@ -942,9 +834,6 @@ private slots:
         QVERIFY(ownerOnly(a.lastSessionPath()));
     }
 
-    // CF3: two HikariSubs on one folder: while one holds the conversion's
-    // lock the other leaves LastSession.txt to it, and both
-    // writing last-session.json leave one whole session.
     void twoProgramsShareTheLastSession()
     {
         QTemporaryDir home;
@@ -969,8 +858,6 @@ private slots:
         QVERIFY(QDir(home.path()).entryList({QStringLiteral("last-session.json?*")}).isEmpty());
     }
 
-    // CF3: a broken .hksession the user opens is named in the Log with its
-    // line, and stays as it is.
     void aBrokenSessionFileIsLeftAlone()
     {
         QTemporaryDir home;
@@ -987,10 +874,6 @@ private slots:
         QCOMPARE(titles(a), (QStringList{"stay.ass"}));
     }
 
-    // WS1 without the shell: each tab's arrangement is a value the Session
-    // carries. A TLMode file's tab is the Translation preset, a tab with no
-    // arrangement yet writes no "layout", and a loaded .kls tab's "Layout: "
-    // line is written back as it came (a valid one) or as the Editing preset.
     void eachTabsArrangementGoesWithTheSession()
     {
         QTemporaryDir home;
@@ -1007,7 +890,7 @@ private slots:
         QVERIFY(a.openFile(tl));
         auto saved = readSession(a.lastSessionPath());
         QCOMPARE(saved.tabs.size(), std::size_t(2));
-        QCOMPARE(saved.tabs[0].layout, std::string()); // never shown by a shell
+        QCOMPARE(saved.tabs[0].layout, std::string());
         const auto translation = ui::WorkspaceArrangement::parse(QByteArray::fromStdString(saved.tabs[1].layout));
         QVERIFY(translation);
         QCOMPARE(translation->preset, QStringLiteral("Translation"));
@@ -1028,17 +911,14 @@ private slots:
         QCOMPARE(fallback->preset, QStringLiteral("Editing"));
     }
 
-    // hikarisubApp::OnInit: LAST_SESSION_CONFIG 2 loads, 1 asks, otherwise a
-    // session not written as the program closed asks about the crash; never
-    // when paths were given.
     void startupChoicesFollowLegacy()
     {
         QTemporaryDir home;
         {
             app::Application a(options(home));
-            QCOMPARE(a.startupSession(), QString()); // no session yet
+            QCOMPARE(a.startupSession(), QString());
             QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("crash.ass")), "c")));
-            QVERIFY(a.lastSessionCrashed()); // written while running, without the marker
+            QVERIFY(a.lastSessionCrashed());
             QCOMPARE(a.startupSession(), QStringLiteral("crash"));
             a.setSessionRestore(1);
             QCOMPARE(a.startupSession(), QStringLiteral("ask"));
@@ -1047,40 +927,34 @@ private slots:
             a.setStartedWithPaths(true);
             QCOMPARE(a.startupSession(), QString());
             a.setSessionRestore(0);
-        } // an orderly end writes "closed"
+        }
         app::Application b(options(home));
         QVERIFY(!b.lastSessionCrashed());
         QCOMPARE(b.startupSession(), QString());
         QCOMPARE(b.sessionRestore(), 0);
     }
 
-    // SH2: the Home page offers the last session when it has a Document with
-    // a file, named by its files (a video's for a tab without subtitles).
     void theLastSessionIsSummarisedForTheHomePage()
     {
         QTemporaryDir home;
         {
             app::Application a(options(home));
-            QVERIFY(a.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty()); // none yet
+            QVERIFY(a.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty());
             QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("s1.ass")), "s1")));
             a.addPage();
             a.video().openVideo(media("cfr.mkv"));
             QTRY_VERIFY_WITH_TIMEOUT(a.video().hasVideo(), 30000);
-            a.addPage(); // an Untitled tab without media: not named
+            a.addPage();
         }
         app::Application b(options(home));
         QCOMPARE(b.lastSessionSummary().value(QStringLiteral("names")).toStringList(),
                  (QStringList{QStringLiteral("s1.ass"), QStringLiteral("cfr.mkv")}));
-        // Close all writes no session (legacy OnTabSel), so Home still
-        // offers the closed tabs back.
         QVERIFY(loadSession(b));
         QVERIFY(b.reviewCloseAll().isEmpty());
         b.finishClose();
         QVERIFY(b.tabs().isEmpty());
         QCOMPARE(b.lastSessionSummary().value(QStringLiteral("names")).toStringList(),
                  (QStringList{QStringLiteral("s1.ass"), QStringLiteral("cfr.mkv")}));
-        // A tab with only a dummy video is not offered: restoring reopens no
-        // file for it.
         application::SessionTab dummy;
         dummy.video = "?dummy:23.976000:40000:1280:720:47:163:254:";
         QFile file(b.lastSessionPath());
@@ -1090,9 +964,6 @@ private slots:
         QVERIFY(b.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty());
     }
 
-    // SH2-recent-opened-and-missing: the recent subtitles remember when each
-    // was last opened, across runs; a missing file stays in the list for the
-    // Home page (File > Recent leaves it out) until it is removed there.
     void recentFilesKeepTheirTimesAndMissingEntries()
     {
         QTemporaryDir home;
@@ -1117,12 +988,10 @@ private slots:
         QVERIFY(first.value(QStringLiteral("opened")).toDateTime() <= QDateTime::currentDateTime());
         QVERIFY(second.value(QStringLiteral("missing")).toBool());
         QVERIFY(second.value(QStringLiteral("opened")).toDateTime().isValid());
-        // The menu leaves the missing file out without dropping it.
         const QVariantList menu = b.recentSubtitles();
         QCOMPARE(menu.size(), qsizetype(1));
         QCOMPARE(menu[0].toMap().value(QStringLiteral("label")).toString(), QStringLiteral("1 recent-kept.ass"));
         QCOMPARE(b.homeRecent().size(), qsizetype(2));
-        // Remove missing files drops it; Remove drops any one entry.
         QSignalSpy changed(&b, &app::Application::recentChanged);
         b.removeMissingRecent();
         QCOMPARE(changed.size(), 1);
@@ -1132,9 +1001,6 @@ private slots:
         QCOMPARE(changed.size(), 2);
     }
 
-    // SH2: saving keeps the time the file was last opened (legacy SetRecent
-    // after a save moves it to the top); a file first saved, as by Save As,
-    // is stamped then.
     void savingKeepsTheRecentOpenedTime()
     {
         QTemporaryDir home;
@@ -1159,9 +1025,6 @@ private slots:
         QCOMPARE(a.homeRecent()[1].toMap().value(QStringLiteral("opened")).toDateTime(), opened);
     }
 
-    // SH2: media opened while no Document is open (the Home page's Open
-    // video…, File > Open video, Open audio) opens in a new Untitled
-    // Document, as legacy's always-present tab held it.
     void mediaOpenedWithoutADocumentGetsOne()
     {
         QTemporaryDir home;
@@ -1170,9 +1033,9 @@ private slots:
         a.video().openVideo(media("cfr.mkv"));
         QCOMPARE(a.tabs().size(), qsizetype(1));
         QVERIFY(a.targetUntitled());
-        QTRY_VERIFY_WITH_TIMEOUT(a.video().hasVideo(), 30000); // the new tab keeps it
+        QTRY_VERIFY_WITH_TIMEOUT(a.video().hasVideo(), 30000);
         a.video().openVideo(media("cfr.mkv"));
-        QCOMPARE(a.tabs().size(), qsizetype(1)); // with a Document open, none is added
+        QCOMPARE(a.tabs().size(), qsizetype(1));
 
         app::Application b(options(home));
         QVERIFY(b.tabs().isEmpty());
@@ -1180,8 +1043,6 @@ private slots:
         QCOMPARE(b.tabs().size(), qsizetype(1));
         QVERIFY(b.targetUntitled());
 
-        // A protected reference opened as no tab is a Document: no Home, and
-        // media opens as before SH2, without an editing target.
         app::Application c(options(home));
         QVERIFY(c.home());
         QVERIFY(c.openReference(writeSubtitles(dir.filePath(QStringLiteral("media-reference.ass")), "r")));

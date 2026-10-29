@@ -1,13 +1,3 @@
-// N7: the scene-graph presenter. A presented frame with its libass overlay
-// must match the CPU reference (the frame with the premultiplied overlay
-// composited source-over), in the software renderer (offscreen) and the RHI
-// renderer of a real window (xvfb). Also: superseded and stale submissions,
-// resize placement, and invalid input. The start of M50-present.
-//
-// V1, the GPU path: a player frame kept as Y'CbCr planes shows as the BGRA
-// the CPU conversion makes of it, with its overlay, scaled and zoomed, in
-// the shader where the backend has one (the RHI renderer) and converted on
-// the CPU where it has not (the software renderer).
 #include "hikari/application/ycbcr_frame.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/libass_renderer.h"
@@ -37,7 +27,6 @@ namespace {
 
 constexpr int kW = 96, kH = 64;
 
-// Four flat quadrants: placement checks survive texture filtering.
 std::shared_ptr<application::IndexedFrame> quadrants(int w = kW, int h = kH)
 {
     auto f = std::make_shared<application::IndexedFrame>();
@@ -84,7 +73,6 @@ std::shared_ptr<const OverlayFrame> libassOverlay(int width = kW, int height = k
     return std::make_shared<OverlayFrame>(std::move(*frame));
 }
 
-// The CPU reference: frame, then the premultiplied overlay source-over.
 QImage cpuReference(const application::IndexedFrame &f, const OverlayFrame *o)
 {
     QImage out(f.width, f.height, QImage::Format_RGB32);
@@ -104,7 +92,6 @@ QImage cpuReference(const application::IndexedFrame &f, const OverlayFrame *o)
     return out;
 }
 
-// A premultiplied half-transparent grey box over `rect`, nothing elsewhere.
 std::shared_ptr<const OverlayFrame> box(const QRect &rect, int w = kW, int h = kH)
 {
     auto o = std::make_shared<OverlayFrame>();
@@ -120,11 +107,8 @@ std::shared_ptr<const OverlayFrame> box(const QRect &rect, int w = kW, int h = k
     return o;
 }
 
-// The Y'CbCr layouts a player hands over.
 enum class Planes { Nv12, Yuv420p, Yuv422p };
 
-// A frame kept as Y'CbCr planes of random samples (every byte, the rows'
-// padding too) with `matrix`.
 std::shared_ptr<application::IndexedFrame> planar(Planes kind, int w, int h, const application::yuv::Matrix &matrix,
                                                   unsigned seed = 1)
 {
@@ -140,7 +124,6 @@ std::shared_ptr<application::IndexedFrame> planar(Planes kind, int w, int h, con
     return f;
 }
 
-// The BGRA the CPU makes of a planar frame.
 std::shared_ptr<application::IndexedFrame> converted(const application::IndexedFrame &f)
 {
     auto out = std::make_shared<application::IndexedFrame>();
@@ -159,7 +142,7 @@ Presentation withBounds(std::uint64_t generation, std::shared_ptr<const applicat
     return p;
 }
 
-} // namespace
+}
 
 class PresenterTests : public QObject {
     Q_OBJECT
@@ -180,7 +163,7 @@ private slots:
     void init()
     {
         window = std::make_unique<QQuickWindow>();
-        window->setColor(Qt::magenta); // anything not drawn by the presenter shows up
+        window->setColor(Qt::magenta);
         window->resize(160, 120); // above the smallest window Windows decorates
         presenter = new VideoPresenter(window->contentItem());
         presenter->setSize(QSizeF(kW, kH));
@@ -217,8 +200,6 @@ private slots:
         QVERIFY2(match, "the presented frame and overlay differ from the CPU reference");
     }
 
-    // I2 (M50-present): a decoded BT.709 frame from the media helper with a
-    // semi-transparent libass overlay presents as the CPU composite.
     void decodedColourFrameWithOverlayMatchesTheCpuReference()
     {
         backends::FfmsIndexedSource source(QStringLiteral(HIKARI_MEDIA_HELPER));
@@ -242,7 +223,7 @@ private slots:
                                 5'000));
         const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32);
         const auto comparison = testing::compareImages(grabbed, cpuReference(*frame, overlay.get()), {2, 0});
-        if (!comparison.withinTolerance) { // keep the evidence
+        if (!comparison.withinTolerance) {
             QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
             grabbed.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/decoded-composite-actual.png"));
             comparison.diff.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/decoded-composite-diff.png"));
@@ -272,7 +253,7 @@ private slots:
         presenter->present({2, quadrants(), nullptr, {}}, [&](PresentResult r) { stale = r; });
         QQuickWindow other;
         other.resize(160, 120);
-        presenter->setParentItem(other.contentItem()); // a window change before the upload
+        presenter->setParentItem(other.contentItem());
         other.show();
         QVERIFY(QTest::qWaitForWindowExposed(&other));
         QVERIFY(QTest::qWaitFor([&] { return stale.has_value(); }, 10'000));
@@ -291,19 +272,16 @@ private slots:
         window->resize(192, 96);
         presenter->setSize(QSizeF(192, 96));
         QVERIFY(QTest::qWaitFor([&] { return window->grabWindow().size() == QSize(192, 96); }, 10'000));
-        QTRY_COMPARE(presenter->frameRect(), QRectF(24, 0, 144, 96)); // 3:2 fitted to the height
+        QTRY_COMPARE(presenter->frameRect(), QRectF(24, 0, 144, 96));
         const QImage grabbed = window->grabWindow();
-        QCOMPARE(QColor(grabbed.pixel(10, 48)), QColor(Qt::black)); // letterbox
+        QCOMPARE(QColor(grabbed.pixel(10, 48)), QColor(Qt::black));
         QCOMPARE(QColor(grabbed.pixel(181, 48)), QColor(Qt::black));
         const QColor topLeft(grabbed.pixel(24 + 36, 24)), bottomRight(grabbed.pixel(24 + 108, 72));
         QVERIFY2(std::abs(topLeft.red() - 200) <= 2 && std::abs(topLeft.green() - 40) <= 2, qPrintable(topLeft.name()));
         QVERIFY2(std::abs(bottomRight.red() - 220) <= 2, qPrintable(bottomRight.name()));
-        QCOMPARE(presenter->presentedGeneration(), 4u); // placement presents nothing new
+        QCOMPARE(presenter->presentedGeneration(), 4u);
     }
 
-    // V1: a frame shown again under new subtitles keeps its texture, and an
-    // overlay uploads only the part that changed (the new subtitles' visible
-    // pixels and where the last ones were).
     void onlyTheChangedOverlayRegionIsUploaded()
     {
         const auto frame = quadrants();
@@ -314,32 +292,29 @@ private slots:
         QCOMPARE(first.overlayUploads, 1);
         QVERIFY(presentAndWait(withBounds(2, frame, box(b), b)));
         const auto second = presenter->uploadStats();
-        QCOMPARE(second.frameUploads, 1); // the same frame: not uploaded again
+        QCOMPARE(second.frameUploads, 1);
         QCOMPARE(second.overlayUploads, 2);
         const QRect region = second.lastOverlayUpload;
         QVERIFY2(region.contains(b), qPrintable(QStringLiteral("%1,%2 %3x%4").arg(region.x()).arg(region.y())
                                                     .arg(region.width()).arg(region.height())));
-        if (window->rhi()) // the persistent texture: the old box is cleared in the same upload
+        if (window->rhi())
             QCOMPARE(region, a.united(b));
-        else // a texture of the visible part only
+        else
             QCOMPARE(region, b.adjusted(-2, -2, 2, 2));
-        // The composite is the frame with the second box alone.
         const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
         QVERIFY(testing::compareImages(grabbed, cpuReference(*frame, box(b).get()), {2, 0}).withinTolerance);
-        // Bounds the renderer did not report are measured.
         QVERIFY(presentAndWait({3, frame, box(a), {}}));
         QCOMPARE(presenter->uploadStats().overlayUploads, 3);
         const QImage again = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
         QVERIFY(testing::compareImages(again, cpuReference(*frame, box(a).get()), {2, 0}).withinTolerance);
     }
 
-    // V1: an overlay with nothing visible draws nothing and uploads nothing.
     void anEmptyOverlayIsNotDrawn()
     {
         const auto frame = quadrants();
         QVERIFY(presentAndWait(withBounds(1, frame, box(QRect(10, 10, 8, 6)), QRect(10, 10, 8, 6))));
         const int uploads = presenter->uploadStats().overlayUploads;
-        QVERIFY(presentAndWait(withBounds(2, frame, box(QRect()), std::nullopt))); // all transparent
+        QVERIFY(presentAndWait(withBounds(2, frame, box(QRect()), std::nullopt)));
         QVERIFY(presentAndWait({3, frame, nullptr, {}}));
         auto empty = std::make_shared<OverlayFrame>(*box(QRect()));
         empty->empty = true;
@@ -348,14 +323,10 @@ private slots:
         QCOMPARE(presenter->uploadStats().frameUploads, 1);
         const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
         QVERIFY(testing::compareImages(grabbed, cpuReference(*frame, nullptr), {2, 0}).withinTolerance);
-        // A new frame is uploaded.
         QVERIFY(presentAndWait({5, quadrants(), nullptr, {}}));
         QCOMPARE(presenter->uploadStats().frameUploads, 2);
     }
 
-    // V1: a texture the backend cannot make (here, wider than its largest)
-    // fails the present instead of reporting a frame it never drew; the
-    // next frame is shown as usual.
     void aTextureThatCannotBeMadeFailsThePresent()
     {
         QVERIFY(presentAndWait({1, quadrants(), nullptr, {}}));
@@ -376,17 +347,13 @@ private slots:
         QVERIFY(testing::compareImages(grabbed, cpuReference(*quadrants(), nullptr), {2, 0}).withinTolerance);
     }
 
-    // SV1-screen-size-subtitles: an overlay drawn at twice the frame's size
-    // covers the frame where its pixels fall, whole or by its bounds, and
-    // the presenter reports the picture's size on screen.
     void anOverlayAtScreenSizeIsPlacedOnTheFrame()
     {
-        const QRect topRight(kW, 0, kW, kH); // the frame's top-right quadrant, at 2x
+        const QRect topRight(kW, 0, kW, kH);
         const auto overlay = box(topRight, kW * 2, kH * 2);
         const auto shows = [&] {
             const QImage grabbed = window->grabWindow();
             const QColor covered(grabbed.pixel(72, 16)), left(grabbed.pixel(24, 16)), below(grabbed.pixel(72, 48));
-            // Half-transparent grey (premultiplied 128) over (40, 200, 40).
             return std::abs(covered.red() - 148) <= 3 && std::abs(covered.green() - 228) <= 3 &&
                    std::abs(left.red() - 200) <= 2 && std::abs(below.red() - 220) <= 2;
         };
@@ -396,7 +363,6 @@ private slots:
         QVERIFY(QTest::qWaitFor(shows, 10'000));
         const double dpr = window->effectiveDevicePixelRatio();
         QCOMPARE(presenter->screenSize(), QSize(qRound(kW * dpr), qRound(kH * dpr)));
-        // The zoomed part's rectangle widens to the whole frame's.
         QSignalSpy changed(presenter, &VideoPresenter::screenSizeChanged);
         presenter->setSourceRect(QRectF(0, 0, kW / 2.0, kH / 2.0));
         QCOMPARE(changed.count(), 1);
@@ -418,17 +384,15 @@ private slots:
     void pixelAspectWidensTheFrame()
     {
         QVERIFY(presentAndWait({5, quadrants(), nullptr, {2.0}}));
-        QCOMPARE(presenter->frameRect(), QRectF(0, 16, 96, 32)); // 192:64 display fitted into 96:64
+        QCOMPARE(presenter->frameRect(), QRectF(0, 16, 96, 32));
     }
 
     void sharedVideoRectPlacesTheFrame()
     {
-        // T1: the visual tools' view gives the rectangle (legacy
-        // m_BackBufferRect, integer pixels) and the zoomed part of the frame.
         QVERIFY(presentAndWait({7, quadrants(), nullptr, {}}));
         presenter->setVideoRect(QRectF(10, 4, 60, 40));
         QCOMPARE(presenter->frameRect(), QRectF(10, 4, 60, 40));
-        presenter->setSourceRect(QRectF(0, 0, 48, 32)); // the top-left quadrant only
+        presenter->setSourceRect(QRectF(0, 0, 48, 32));
         const auto placed = [&] {
             const QImage grabbed = window->grabWindow();
             const QColor inside(grabbed.pixel(40, 24)), outside(grabbed.pixel(5, 24));
@@ -441,10 +405,6 @@ private slots:
         QCOMPARE(presenter->frameRect().isEmpty(), false);
     }
 
-    // V1: a planar frame shows as its CPU conversion does, with the overlay
-    // over it: every layout, the 13-bit matrices and DirectShow's 8-bit one,
-    // even and odd sizes. The reference is the same presenter showing the
-    // CPU's BGRA, so only the frame's path differs.
     void ycbcrFramesShowAsTheirCpuConversion_data()
     {
         QTest::addColumn<int>("kind");
@@ -483,11 +443,11 @@ private slots:
         QCOMPARE(result->outcome, PresentOutcome::Accepted);
         QCOMPARE(result->stage, PresentStage::Rendered);
         const auto after = presenter->uploadStats();
-        if (presenter->convertsYcbcr()) { // the planes went to the GPU
+        if (presenter->convertsYcbcr()) {
             QCOMPARE(after.planarFrameUploads, before.planarFrameUploads + 1);
             QCOMPARE(after.lastFrameBytes, application::ycbcrBytes(*frame->ycbcr));
             QCOMPARE(after.cpuConvertedFrames, before.cpuConvertedFrames);
-        } else { // converted on the CPU, uploaded as BGRA
+        } else {
             QCOMPARE(after.cpuConvertedFrames, before.cpuConvertedFrames + 1);
             QCOMPARE(after.planarFrameUploads, before.planarFrameUploads);
         }
@@ -502,14 +462,9 @@ private slots:
                                                             .arg(comparison.differingPixels)
                                                             .arg(comparison.maxChannelDelta)
                                                             .arg(presenter->convertsYcbcr() ? "GPU" : "CPU")));
-        // At one frame pixel per window pixel the GPU's texels are the CPU's bytes.
         QVERIFY2(comparison.maxChannelDelta <= 1, qPrintable(QString::number(comparison.maxChannelDelta)));
     }
 
-    // V1: scaled into the visual tools' view and zoomed into part of the frame
-    // (T1's videoRect and sourceRect), at odd sizes and offsets, the planar
-    // frame and its overlay still show as the CPU's BGRA does: no offset, no
-    // colour shift, the same sampling between pixels.
     void ycbcrFramesFollowZoomAndPlacement()
     {
         const int w = 95, h = 63;
@@ -525,9 +480,9 @@ private slots:
             QRectF video, source;
         };
         const Placement placements[] = {
-            {QRectF(7, 5, 181, 121), QRectF()},              // scaled up by an odd factor
-            {QRectF(3, 9, 150, 100), QRectF(13, 7, 50, 31)}, // zoomed into an odd part
-            {QRectF(11, 2, 60, 41), QRectF(1, 3, 90, 59)},   // scaled down
+            {QRectF(7, 5, 181, 121), QRectF()},
+            {QRectF(3, 9, 150, 100), QRectF(13, 7, 50, 31)},
+            {QRectF(11, 2, 60, 41), QRectF(1, 3, 90, 59)},
         };
         for (const Placement &place : placements) {
             presenter->setVideoRect(place.video);
@@ -554,8 +509,6 @@ private slots:
         presenter->setSourceRect({});
     }
 
-    // V1: new subtitles over the same planar frame (paused, or an edit)
-    // upload only the overlay; a new frame uploads its planes.
     void aPlanarFrameShownAgainIsNotUploadedAgain()
     {
         const auto frame = planar(Planes::Nv12, kW, kH, application::yuv::matrix(application::yuv::Space::Bt709, false));
@@ -572,7 +525,6 @@ private slots:
         QCOMPARE(second.overlayUploads, first.overlayUploads + 1);
         const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
         QVERIFY(testing::compareImages(grabbed, cpuReference(*converted(*frame), box(b).get()), {2, 0}).withinTolerance);
-        // Back to a BGRA frame and to planes again: each shows.
         QVERIFY(presentAndWait({3, quadrants(), nullptr, {}}));
         const QImage bgra = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
         QVERIFY(testing::compareImages(bgra, cpuReference(*quadrants(), nullptr), {2, 0}).withinTolerance);
@@ -582,9 +534,6 @@ private slots:
         QVERIFY(testing::compareImages(again, cpuReference(*converted(*next), nullptr), {2, 0}).withinTolerance);
     }
 
-    // V1: the presenter says whether it converts planes on the GPU: with an
-    // RHI backend that has R8 and RG8 textures, and never in the software
-    // renderer.
     void theGpuPathIsChosenByTheBackend()
     {
         QVERIFY(presentAndWait({1, quadrants(), nullptr, {}}));
@@ -596,7 +545,6 @@ private slots:
         QCOMPARE(presenter->convertsYcbcr(), expected);
     }
 
-    // V1: a plane texture the backend cannot make fails the present.
     void aPlaneThatCannotBeMadeFailsThePresent()
     {
         QVERIFY(presentAndWait({1, quadrants(), nullptr, {}}));
@@ -623,7 +571,6 @@ private slots:
         QVERIFY(result);
         QCOMPARE(result->outcome, PresentOutcome::Error);
         QCOMPARE(result->stage, PresentStage::Submitted);
-        // SV1: an overlay may be of any size, but its buffer must hold it.
         const auto wrongOverlay = std::make_shared<OverlayFrame>();
         wrongOverlay->width = 10;
         wrongOverlay->height = 10;
@@ -633,7 +580,6 @@ private slots:
         const auto mismatched = presentAndWait({6, quadrants(), wrongOverlay, {}});
         QVERIFY(mismatched);
         QCOMPARE(mismatched->outcome, PresentOutcome::Error);
-        // V1: planes that do not fit their buffer.
         auto shortPlanes = planar(Planes::Nv12, kW, kH, application::yuv::matrix(application::yuv::Space::Bt709, false));
         shortPlanes->bgra.resize(shortPlanes->bgra.size() - 1);
         const auto planesResult = presentAndWait({6, shortPlanes, nullptr, {}});

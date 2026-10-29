@@ -31,7 +31,7 @@ QString knownIcon(const QString &icon)
     return TagButtonsController::iconRoles().contains(icon) ? icon : QString();
 }
 
-} // namespace
+}
 
 TagButtonsController::TagButtonsController(QString settingsFile, QObject *parent)
     : QObject(parent), m_ownedSettings(std::make_unique<SettingsStore>(std::move(settingsFile))),
@@ -69,9 +69,6 @@ QVariantList TagButtonsController::buttons() const
 
 QStringList TagButtonsController::iconRoles()
 {
-    // The set's icons of override tags (docs/ux/icons.md: one icon, one
-    // meaning): \b \i \u \s, \fn, \1c-\4c, \an1-9, \fscx \fscy, \frz
-    // \frx/\fry, \pos, \move, \clip (rectangle, vector), \p, \k.
     static const QStringList roles{
         QStringLiteral("tag-bold"), QStringLiteral("tag-italic"), QStringLiteral("tag-underline"),
         QStringLiteral("tag-strikeout"), QStringLiteral("tag-font"), QStringLiteral("colour-primary"),
@@ -100,7 +97,6 @@ bool TagButtonsController::add(const QString &name, const QString &tag, int type
 {
     if (m_count >= kMaximum)
         return false;
-    // As "Change number of buttons" one more, then that button's Save tag.
     m_buttons[static_cast<std::size_t>(m_count)] = Button{tag, std::clamp(type, 0, 2), name, knownIcon(icon)};
     store(m_count);
     ++m_count;
@@ -118,7 +114,6 @@ void TagButtonsController::remove(int index)
         store(i);
     }
     --m_count;
-    // The freed place starts empty, as a button never defined.
     m_buttons[static_cast<std::size_t>(m_count)] = fromLegacy({}, m_count);
     m_settings->reset(key(m_count));
     storeCount();
@@ -172,7 +167,6 @@ QString TagButtonsController::problem(const QString &tag, int type) const
     if (tag.contains(QLatin1Char('{')) || tag.contains(QLatin1Char('}')))
         return QCoreApplication::translate("HikariSub.Editor",
                                            "Leave out the braces: the button puts the tag in an override block");
-    // One or more override tags: each a backslash and a letter or digit.
     static const QRegularExpression tags(QStringLiteral("^(\\\\[A-Za-z0-9][^\\\\]*)+$"));
     if (!tags.match(tag).hasMatch())
         return QCoreApplication::translate("HikariSub.Editor", "A tag starts with a backslash, for example \\blur2");
@@ -181,9 +175,6 @@ QString TagButtonsController::problem(const QString &tag, int type) const
 
 void TagButtonsController::setCount(int count)
 {
-    // NumTagButtons OK: Options.SetInt, then SetTagButtons adds the buttons
-    // past the shown ones from their options or removes the last ones; the
-    // shown ones stay as they are.
     count = std::clamp(count, 0, kMaximum);
     m_settings->set("editor.tagButtons", count);
     for (int i = m_count; i < count; ++i)
@@ -203,14 +194,13 @@ QVariantMap TagButtonsController::pressed(int index) const
 {
     if (index < 0 || index >= kMaximum)
         return {};
-    // config::GetTable with wxTOKEN_STRTOK (empty entries dropped).
     const QString value = m_settings->value(key(index)).toString();
     QStringList table;
     if (value.size() > 4)
         for (const QString &entry : value.mid(2, value.size() - 4).split(QLatin1Char('\n'), Qt::SkipEmptyParts))
             table << entry.mid(1);
     if (table.size() < 2)
-        return {}; // wxBell
+        return {};
     const int type = table[1] == QLatin1String("2") ? 2 : table[1] == QLatin1String("1") ? 1 : 0;
     return {{QStringLiteral("tag"), table[0]}, {QStringLiteral("type"), type}};
 }
@@ -220,7 +210,6 @@ void TagButtonsController::edit(int index, const QString &name, const QString &t
     if (index < 0 || index >= kMaximum)
         return;
     m_buttons[static_cast<std::size_t>(index)] = Button{tag, std::clamp(type, 0, 2), name, knownIcon(icon)};
-    // OnEditTag writes this button's option only.
     store(index);
     emit changed();
 }
@@ -228,15 +217,14 @@ void TagButtonsController::edit(int index, const QString &name, const QString &t
 TagButtonsController::Button TagButtonsController::fromLegacy(const QString &value, int index)
 {
     QStringList table;
-    // Remove "{\n" and "\n}", split on "\n" keeping empty entries, drop each tab.
     if (value.size() > 4)
         for (const QString &entry : value.mid(2, value.size() - 4).split(QLatin1Char('\n')))
             table << entry.mid(1);
     Button b;
     b.name = table.size() > 2 ? table[2] : QStringLiteral("T%1").arg(index + 1);
-    b.type = table.size() > 1 ? table[1].toInt() : 0; // wxAtoi: 0 when it is not a number
+    b.type = table.size() > 1 ? table[1].toInt() : 0;
     b.tag = table.isEmpty() ? QString() : table[0];
-    b.icon = table.size() > 3 ? knownIcon(table[3]) : QString(); // LE5
+    b.icon = table.size() > 3 ? knownIcon(table[3]) : QString();
     return b;
 }
 
@@ -245,8 +233,8 @@ QString TagButtonsController::toLegacy(const Button &button)
     QString text = QStringLiteral("{\n\t") + button.tag + QStringLiteral("\n\t") + QString::number(button.type) +
                    QStringLiteral("\n\t") + button.name;
     if (!button.icon.isEmpty())
-        text += QStringLiteral("\n\t") + button.icon; // LE5: only with an icon, so legacy's text stays as it was
+        text += QStringLiteral("\n\t") + button.icon;
     return text + QStringLiteral("\n}");
 }
 
-} // namespace hikari::ui
+}

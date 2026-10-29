@@ -1,10 +1,4 @@
 pragma ComponentBehavior: Bound
-// F2: legacy SelectLines "Select" (GLOBAL_OPEN_SELECT_LINES): what to find
-// and where, Dialogue/Comments, the selection operation and the action on
-// the selected Lines. PU2 (#304): a modeless window on DG1's frame (it can
-// leave the main window), short labelled rows instead of group boxes, the
-// styles button PK1's Choose styles popover, and each run's count a toast
-// while the window stays open (PU2-select-lines).
 pragma Translator: "HikariSub.SelectLines"
 import QtQuick
 import QtQuick.Controls
@@ -15,13 +9,10 @@ DialogWindow {
     id: dialog
     objectName: "selectLinesDialog"
     required property var app
-    // DG1: the title bar choice and the remembered place (Codex review).
     settings: app.settings
-    // NT1 (#302): where the count goes ("%1 lines selected.", an info
-    // toast titled with the command).
     property ToastStack notices: null
     dialogId: "selectLines"
-    title: qsTr("Select lines") // the menu command's name (legacy titled it "Select")
+    title: qsTr("Select lines")
     defaultButton: runButton
     initialFocus: findText
     property var recent: []
@@ -88,8 +79,7 @@ DialogWindow {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 214
                 Accessible.name: qsTr("Search text:")
-                // The editable ComboBox takes Enter before the window's
-                // default button sees it.
+                // An editable ComboBox takes Enter before the window's default button sees it.
                 Keys.onReturnPressed: dialog.run(false)
                 Keys.onEnterPressed: dialog.run(false)
             }
@@ -135,7 +125,7 @@ DialogWindow {
             choices: [{ text: qsTr("Select"), name: "selectMode0" }, { text: qsTr("Add to selection"), name: "selectMode1" },
                       { text: qsTr("Deselect"), name: "selectMode2" }]
             Accessible.name: qsTr("Selection")
-            Layout.fillWidth: true // as wide as the In row: no choice elided
+            Layout.fillWidth: true
             onActivated: index => currentIndex = index
         }
 
@@ -173,11 +163,6 @@ DialogWindow {
         }
     ]
 
-    // Legacy Stylelistbox "Choose styles", now PK1's Choose styles popover:
-    // the ticks make the checked styles a Styles regular expression at once
-    // (no ticks: "^$", as legacy's empty choice); Esc puts the search as it
-    // was (approved F2-style-cancel, 2026-10-04: cancelling changes
-    // nothing; legacy filled in "^$").
     ChooseStyles {
         id: stylesChooser
         objectName: "selectStylesChooser"

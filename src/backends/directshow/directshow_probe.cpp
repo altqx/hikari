@@ -1,16 +1,3 @@
-// W1: the DirectShow adapter alone, for diagnosis on a Windows machine and
-// for its deployment manifest (dumpbin /dependents of this executable).
-//
-//   hikari_directshow_probe <media file> [seek ms]...
-//   hikari_directshow_probe --graph <media file>
-//
-// Opens the file through the adapter, prints the graph's filters (legacy's
-// Filters menu), the renderer's format and the description, then for each
-// position the frame the seek delivered (its start and, for the test
-// fixtures, the index its barcode carries), and finally plays one second.
-// --graph prints what DirectShow itself makes of the file: the source filter
-// AddSourceFilter picks with its pins and media types, and the graph
-// RenderFile builds with its seeking capabilities.
 #include "hikari/backends/directshow_player.h"
 
 #include <windows.h>
@@ -37,7 +24,6 @@ void post(std::function<void()> task)
     g_tasks.push_back(std::move(task));
 }
 
-// Runs posted tasks and pumps window messages until `done` or the timeout.
 bool runUntil(const std::function<bool()> &done, int ms)
 {
     const auto end = std::chrono::steady_clock::now() + std::chrono::milliseconds(ms);
@@ -62,7 +48,7 @@ bool runUntil(const std::function<bool()> &done, int ms)
     return true;
 }
 
-// The fixtures' 4x4 barcode (tests/support/media/media_fixture.cpp).
+// MUST KILL: decodes the barcode tests/support/media/media_fixture.cpp draws.
 int barcode(const hikari::application::IndexedFrame &f)
 {
     if (f.width <= 0 || f.height <= 0)
@@ -174,7 +160,7 @@ int dumpGraph(const char *path)
     return 0;
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

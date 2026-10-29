@@ -5,11 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// The column choice for Copy columns / Paste columns (legacy Stylelistbox),
-// checked as last chosen. PU2 (#304): opened from the Grid menu or its
-// hotkeys (GRID_COPY_COLUMNS, GRID_PASTE_COLUMNS), so a compact window on
-// DG1's frame by the small forms rule; the verb (Copy, Paste) replaces OK,
-// with Select all and None (PU2-columns).
 DialogWindow {
     id: columns
     objectName: "columnsWindow"
@@ -28,9 +23,6 @@ DialogWindow {
         askedFor = editingTarget()
         open()
     }
-    // The choice is for the tab it was opened in: with the Grid floating
-    // the main window's tabs stay usable, and another editing target closes
-    // it unchosen (Codex review), as Translation mode's questions.
     property var askedFor: null
     function editingTarget() {
         const tab = app.tabs[app.currentTab]

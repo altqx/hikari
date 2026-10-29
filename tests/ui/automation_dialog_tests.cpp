@@ -1,7 +1,3 @@
-// N8: a script dialog rendered by fixed QML controls from plain data. The
-// round trip runs the real Lua helper: the script asks, the QML window shows
-// the controls, the test edits them and presses a button, and the script
-// sees typed values (false kept, the label's nil absent).
 #include "automation_dialog_controller.h"
 #include "colour_picker_controller.h"
 #include "settings_store.h"
@@ -57,7 +53,7 @@ QObject *findNamed(QQuickItem *root, const QString &name)
     return nullptr;
 }
 
-} // namespace
+}
 
 class AutomationDialogTests : public QObject {
     Q_OBJECT
@@ -84,7 +80,6 @@ class AutomationDialogTests : public QObject {
         return qobject_cast<QQuickItem *>(findNamed(window->contentItem(), name));
     }
     QQuickItem *controlItem(int index) { return qobject_cast<QQuickItem *>(control(index)); }
-    // The control or button that has the focus, by its name.
     QString focusName()
     {
         for (QQuickItem *item = window->activeFocusItem(); item; item = item->parentItem())
@@ -96,7 +91,6 @@ class AutomationDialogTests : public QObject {
     {
         showDialogOn(request, result, QStringLiteral("dialogButton0"));
     }
-    // Shows the dialog and waits for the Enter button, named, to have the keyboard.
     void showDialogOn(const DialogRequest &request, std::optional<DialogResult> &result, const QString &enter,
                       AutomationDialogController::Shown shown = {})
     {
@@ -111,7 +105,7 @@ class AutomationDialogTests : public QObject {
         QTRY_VERIFY(QGuiApplication::focusWindow() == window);
         QTRY_COMPARE(focusName(), enter);
     }
-    // Types ASCII text with real key events (QTest::keyClicks takes widgets only).
+    // QTest::keyClicks takes widgets only.
     static void type(QWindow *into, const QString &text)
     {
         for (const QChar c : text)
@@ -190,7 +184,7 @@ private slots:
         QCOMPARE(control(5)->property("currentText").toString(), QStringLiteral("b"));
 
         control(1)->setProperty("text", QStringLiteral("typed"));
-        control(2)->setProperty("text", QStringLiteral("99")); // clamped to the range
+        control(2)->setProperty("text", QStringLiteral("99"));
         control(3)->setProperty("text", QStringLiteral("2.5"));
         control(4)->setProperty("checked", false);
         control(5)->setProperty("currentIndex", 0);
@@ -216,11 +210,9 @@ private slots:
         window->close();
         QVERIFY(result);
         QCOMPARE(result->pressed, -1);
-        QCOMPARE(std::get<std::string>(result->values[1]), std::string("t")); // values are still read back
+        QCOMPARE(std::get<std::string>(result->values[1]), std::string("t"));
     }
 
-    // L2: colour pickers show the legacy colour (AA is ASS transparency) and
-    // return legacy hex; number fields take a comma as the decimal point.
     void coloursAndNumbersFollowTheLegacyControls()
     {
         DialogRequest request;
@@ -232,9 +224,9 @@ private slots:
         controller->present(QStringLiteral("Controls"), request, [&](DialogResult r) { result = r; });
         QTRY_VERIFY(window->isVisible());
         const QColor shown = control(0)->property("value").value<QColor>();
-        QCOMPARE(shown, QColor(0, 0, 255, 255 - 0x80)); // transparency 0x80
+        QCOMPARE(shown, QColor(0, 0, 255, 255 - 0x80));
         control(0)->setProperty("value", QColor(0, 0, 255, 128));
-        control(1)->setProperty("value", QColor(255, 0, 0)); // a picked opaque colour
+        control(1)->setProperty("value", QColor(255, 0, 0));
         control(2)->setProperty("text", QStringLiteral("2,5"));
         press(0);
         QVERIFY(result);
@@ -243,10 +235,6 @@ private slots:
         QCOMPARE(std::get<double>(result->values[2]), 2.5);
     }
 
-    // SY2: a colour control's button opens the colour popover at the colour,
-    // with Alpha (the ASS transparency) only for coloralpha; each change
-    // sets the value at once, Esc puts it back, Enter keeps it, and the
-    // dialog reads the kept colour as legacy hex.
     void colourControlsOpenThePopover()
     {
         DialogRequest request;
@@ -255,11 +243,9 @@ private slots:
         request.buttons = {"OK"};
         std::optional<DialogResult> result;
         showDialog(request, result);
-        // At the screen's top: on xvfb-run's 640 x 480 screen a centred
-        // dialog leaves the popover room neither below nor above its anchor,
-        // so it would cover the anchor the presses below aim at.
+        // On xvfb-run's 640 x 480 screen a centred dialog leaves the popover no room beside its anchor.
         window->setPosition(window->x(), window->screen()->availableGeometry().top());
-        QTRY_VERIFY(window->y() < window->screen()->availableGeometry().top() + 40); // (the frame may add its margin)
+        QTRY_VERIFY(window->y() < window->screen()->availableGeometry().top() + 40);
         auto *popover = window->findChild<QObject *>(QStringLiteral("automationColourPopover"));
         QVERIFY(popover);
         auto *content = popover->property("contentItem").value<QQuickItem *>();
@@ -269,8 +255,6 @@ private slots:
         auto *pick = findNamed(controlItem(0), QStringLiteral("colorPick"));
         QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
         QTRY_VERIFY(popover->property("visible").toBool());
-        // A dialog this small cannot hold the popover with More… open: it
-        // opens in a window of its own (Popup.Window), the keys go there.
         QCOMPARE(popover->property("popupType").toInt(), 1);
         QQuickWindow *own = content->window();
         QVERIFY(own && own != window);
@@ -283,7 +267,7 @@ private slots:
         QTRY_COMPARE(control(0)->property("value").value<QColor>(), QColor(255, 0, 0, 255 - 0x80));
         QTest::keyClick(content->window(), Qt::Key_Escape);
         QTRY_VERIFY(!popover->property("visible").toBool());
-        QVERIFY(window->isVisible()); // Esc was the popover's, not the dialog's
+        QVERIFY(window->isVisible());
         QCOMPARE(control(0)->property("value").value<QColor>(), QColor(0, 0, 255, 255 - 0x80));
 
         pick = findNamed(controlItem(1), QStringLiteral("colorPick"));
@@ -296,8 +280,6 @@ private slots:
         QTRY_VERIFY(!popover->property("visible").toBool());
         QVERIFY(window->isVisible());
         QTRY_COMPARE(control(1)->property("value").value<QColor>(), QColor(0, 0, 255));
-        // A press on the anchor back in the dialog keeps the colour and
-        // closes the popover, without the button opening it again.
         auto *anchor = qobject_cast<QQuickItem *>(pick);
         QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
         QTRY_VERIFY(popover->property("visible").toBool());
@@ -308,11 +290,8 @@ private slots:
         QTest::qWait(100);
         QVERIFY(!popover->property("visible").toBool());
         QTRY_COMPARE(control(1)->property("value").value<QColor>(), QColor(0, 128, 0));
-        // A press elsewhere closes it too; a click on the anchor straight
-        // after opens it again.
         QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
         QTRY_VERIFY(popover->property("visible").toBool());
-        // (In the body's bottom margin, away from the popover: the window's edge is its frame's, for resizing.)
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(14, window->height() - 10));
         QTRY_VERIFY(!popover->property("visible").toBool());
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
@@ -327,9 +306,6 @@ private slots:
         QCOMPARE(std::get<std::string>(result->values[1]), std::string("#0000FF"));
     }
 
-    // The enter button has the keyboard when the dialog shows (legacy
-    // HikariDialog::Show, DG1), so typing reaches no field and Enter presses
-    // it; shown again, it has the keyboard again.
     void enterButtonHasTheFocusOnShow()
     {
         std::optional<DialogResult> result;
@@ -361,10 +337,6 @@ private slots:
         QCOMPARE(result->pressed, -1);
     }
 
-    // AD1-button-ids: the Enter button is Aegisub's affirmative one (an ok,
-    // yes or save id, the last such), else the first; it is filled in the
-    // accent and has the keyboard. The buttons keep the script's order at
-    // the footer's trailing edge.
     void enterButtonFollowsTheButtonIds()
     {
         DialogRequest request;
@@ -387,7 +359,7 @@ private slots:
             QCOMPARE(QString::fromLatin1(b->metaObject()->className()).contains(QLatin1String("PrimaryButton")), i == 1);
         }
         QQuickItem *last = named(QStringLiteral("dialogButton3"));
-        QVERIFY(last->mapToScene(QPointF(last->width(), 0)).x() > window->width() - 40); // at the trailing edge
+        QVERIFY(last->mapToScene(QPointF(last->width(), 0)).x() > window->width() - 40);
         QTest::keyClick(window, Qt::Key_Return);
         QTRY_VERIFY(result.has_value());
         QCOMPARE(result->pressed, 1);
@@ -405,11 +377,6 @@ private slots:
         QTRY_VERIFY(!window->isVisible());
     }
 
-    // AD1-keyboard, one rule set on every platform: Enter (and keypad Enter)
-    // presses the focused button, else the Enter button, from a single-line
-    // field too; a textbox takes Enter as a new line and presses the Enter
-    // button on Ctrl+Enter; Esc ends with no button from anywhere, text
-    // fields included; Space ticks a check box and presses a button.
     void keysFollowOneRuleSet()
     {
         DialogRequest request;
@@ -473,9 +440,6 @@ private slots:
         QCOMPARE(result->pressed, 2);
     }
 
-    // AD1-keyboard: Tab goes through the grid row by row, left to right
-    // (a colour's swatch, then its field), then the buttons in order;
-    // Shift+Tab goes back. The script lists its controls in another order.
     void tabFollowsTheGrid()
     {
         DialogRequest request;
@@ -503,7 +467,7 @@ private slots:
         QTest::keyClick(window, Qt::Key_Backtab);
         QCOMPARE(focusName(), QStringLiteral("dialogButton1"));
         controlItem(3)->forceActiveFocus(Qt::TabFocusReason);
-        QTest::keyClick(window, Qt::Key_Tab); // the textbox passes Tab on
+        QTest::keyClick(window, Qt::Key_Tab);
         QCOMPARE(focusName(), QStringLiteral("control_0"));
         QTest::keyClick(window, Qt::Key_Backtab);
         QCOMPARE(focusName(), QStringLiteral("control_3"));
@@ -512,13 +476,6 @@ private slots:
         QTRY_VERIFY(result.has_value());
     }
 
-    // AD1-number-commit and AD1-float-step: typing is never blocked; out of
-    // range shows in the danger colour and the strip says what it becomes;
-    // committing clamps. The arrows, Up / Down, Page Up / Page Down and the
-    // wheel step by 1 / 10 steps (an intedit by 1, a floatedit by its step);
-    // a floatedit without a step has no arrows and does not step. An
-    // emptied field shows the range and keeps its value. An intedit keeps
-    // legacy's right-button drag.
     void numbersClampOnCommit()
     {
         DialogRequest request;
@@ -543,7 +500,7 @@ private slots:
         QTRY_VERIFY(hint().contains(QStringLiteral("10 to 500")));
         QVERIFY2(hint().contains(QStringLiteral("5 becomes 10")), qPrintable(hint()));
         QTest::keyClick(window, Qt::Key_0);
-        QVERIFY(!i->property("outOfRange").toBool()); // "50" on the way
+        QVERIFY(!i->property("outOfRange").toBool());
         QTest::keyClick(window, Qt::Key_0);
         QTest::keyClick(window, Qt::Key_0);
         QCOMPARE(i->property("text").toString(), QStringLiteral("5000"));
@@ -564,10 +521,10 @@ private slots:
         QTest::keyClick(window, Qt::Key_Backspace);
         QCOMPARE(i->property("placeholderText").toString(), QStringLiteral("10 – 500"));
         QTest::keyClick(window, Qt::Key_Tab);
-        QCOMPARE(i->property("text").toString(), QStringLiteral("497")); // emptied: the value stays
+        QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
         i->forceActiveFocus(Qt::TabFocusReason);
         QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
-        type(window, QStringLiteral("4x")); // never blocked; no number: back to the value
+        type(window, QStringLiteral("4x"));
         QCOMPARE(i->property("text").toString(), QStringLiteral("4x"));
         QVERIFY(i->property("bad").toBool());
         QTRY_VERIFY2(hint().contains(QStringLiteral("4x becomes 497")), qPrintable(hint()));
@@ -575,7 +532,7 @@ private slots:
         QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
         i->forceActiveFocus(Qt::TabFocusReason);
         QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
-        type(window, QStringLiteral("45,9")); // a decimal is cut toward zero (legacy)
+        type(window, QStringLiteral("45,9"));
         QVERIFY(!i->property("bad").toBool());
         QTRY_VERIFY2(hint().contains(QStringLiteral("45,9 becomes 45")), qPrintable(hint()));
         QTest::keyClick(window, Qt::Key_Tab);
@@ -584,7 +541,7 @@ private slots:
         QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
         type(window, QStringLiteral("497"));
         QTest::keyClick(window, Qt::Key_Tab);
-        wheelBy(i, 60); // half notches add up
+        wheelBy(i, 60);
         QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
         wheelBy(i, 60);
         QCOMPARE(i->property("text").toString(), QStringLiteral("498"));
@@ -606,22 +563,22 @@ private slots:
         QCOMPARE(f->property("text").toString(), QStringLiteral("0.1"));
 
         QQuickItem *g = controlItem(2);
-        QCOMPARE(controlItem(4)->property("text").toString(), QStringLiteral("1.23456789012345")); // every digit
-        QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2)); // off f's arrows
+        QCOMPARE(controlItem(4)->property("text").toString(), QStringLiteral("1.23456789012345"));
+        QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2));
         controlItem(5)->forceActiveFocus(Qt::TabFocusReason);
         QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
-        type(window, QStringLiteral("4x")); // no range: the strip still says what happens
+        type(window, QStringLiteral("4x"));
         QTRY_VERIFY2(hint().contains(QStringLiteral("4x becomes 7")), qPrintable(hint()));
         QTest::keyClick(window, Qt::Key_Tab);
         QCOMPARE(controlItem(5)->property("text").toString(), QStringLiteral("7"));
         controlItem(5)->forceActiveFocus(Qt::TabFocusReason);
         QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
-        type(window, QStringLiteral("0x10")); // decimal only, as the controller reads it
+        type(window, QStringLiteral("0x10"));
         QVERIFY(controlItem(5)->property("bad").toBool());
         QTest::keyClick(window, Qt::Key_Tab);
         QCOMPARE(controlItem(5)->property("text").toString(), QStringLiteral("7"));
         controlItem(6)->forceActiveFocus(Qt::TabFocusReason);
-        QTest::keyClick(window, Qt::Key_Up); // one step, every digit kept
+        QTest::keyClick(window, Qt::Key_Up);
         QCOMPARE(controlItem(6)->property("text").toString(), QStringLiteral("1234567890123457"));
         QVERIFY(!qobject_cast<QQuickItem *>(findNamed(g, QStringLiteral("numberUp")))->isVisible());
         g->forceActiveFocus(Qt::TabFocusReason);
@@ -630,12 +587,12 @@ private slots:
         QCOMPARE(g->property("text").toString(), QStringLiteral("0.6"));
         QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
         type(window, QStringLiteral("25"));
-        QTest::keyClick(window, Qt::Key_Return); // commits, then presses the Enter button
+        QTest::keyClick(window, Qt::Key_Return);
         QTRY_VERIFY(result.has_value());
         QCOMPARE(std::get<int>(result->values[0]), 497);
         QCOMPARE(std::get<double>(result->values[1]), 0.1);
         QCOMPARE(std::get<double>(result->values[2]), 20.0);
-        QCOMPARE(std::get<double>(result->values[4]), 1.23456789012345); // opened and accepted: unchanged
+        QCOMPARE(std::get<double>(result->values[4]), 1.23456789012345);
 
         showDialog(request, result);
         QQuickItem *j = controlItem(3);
@@ -646,17 +603,13 @@ private slots:
         QTest::mouseMove(window, at - QPoint(-11, 9));
         QCOMPARE(j->property("text").toString(), QStringLiteral("16"));
         QTest::mouseRelease(window, Qt::RightButton, Qt::NoModifier, at - QPoint(-11, 9));
-        controlItem(0)->setProperty("text", QStringLiteral("7")); // typed, never committed
+        controlItem(0)->setProperty("text", QStringLiteral("7"));
         press(0);
         QVERIFY(result.has_value());
-        QCOMPARE(std::get<int>(result->values[0]), 10); // a button commits it, clamped
+        QCOMPARE(std::get<int>(result->values[0]), 10);
         QCOMPARE(std::get<int>(result->values[3]), 16);
     }
 
-    // The hint strip shows the hovered control's hint, else the focused
-    // one's; the hint is the tooltip and the accessible description too. It
-    // keeps one height while focus moves. A dialog with no hint and no
-    // range has no strip.
     void hintStripShowsTheHoveredElseTheFocusedHint()
     {
         DialogRequest request;
@@ -694,11 +647,6 @@ private slots:
         QTRY_VERIFY(result.has_value());
     }
 
-    // A colour's field takes #RRGGBB, RRGGBB or ASS &HBBGGRR& (and the ASS
-    // transparency for coloralpha: #RRGGBBAA, &HAABBGGRR&); the swatch
-    // follows as you type; committed, it shows #RRGGBB[AA]; text that is
-    // no colour shows in the danger colour and goes back when left. The
-    // script gets the legacy hex as before.
     void colourFieldsTakeHtmlAndAss()
     {
         DialogRequest request;
@@ -733,10 +681,6 @@ private slots:
         QCOMPARE(std::get<std::string>(result->values[1]), std::string("#400000FF"));
     }
 
-    // Above 10 items, typing on a dropdown opens its list with a filter
-    // field: the matches keep the script's order, the first is current,
-    // Enter picks it and Esc closes the list only. Ten or fewer: no filter.
-    // A value that is none of the items shows blank and comes back as given.
     void dropdownsFilterAboveTenItems()
     {
         const std::vector<std::string> masks = {"square", "rounded square", "circle", "triangle 1", "triangle 2",
@@ -751,16 +695,15 @@ private slots:
         QQuickItem *m = controlItem(0);
         m->forceActiveFocus(Qt::TabFocusReason);
         auto *popup = m->property("popup").value<QObject *>();
-        QTest::keyClick(window, 'f'); // opens the list with "f"
+        QTest::keyClick(window, 'f');
         QTRY_VERIFY(popup->property("opened").toBool());
-        // In the dialog, as tall as the room it has (it scrolls).
         auto *listItem = popup->property("contentItem").value<QQuickItem *>();
         QCOMPARE(listItem->window(), static_cast<QQuickWindow *>(window));
         const QRectF at = listItem->mapRectToScene(QRectF(0, 0, listItem->width(), listItem->height()));
         QVERIFY2(at.top() >= 0 && at.bottom() <= window->height(), qPrintable(QString::number(at.bottom())));
         QVERIFY2(at.right() <= window->width(), qPrintable(QString::number(at.right())));
         auto *filterField = qobject_cast<QQuickItem *>(findNamed(listItem, QStringLiteral("dropdownFilter")));
-        QVERIFY(filterField && filterField->hasActiveFocus()); // the filter takes the keys
+        QVERIFY(filterField && filterField->hasActiveFocus());
         QCOMPARE(filterField->property("text").toString(), QStringLiteral("f"));
         type(window, QStringLiteral("ad"));
         QCOMPARE(m->property("filter").toString(), QStringLiteral("fad"));
@@ -777,18 +720,17 @@ private slots:
         QCOMPARE(m->property("matches").toList().size(), 1);
         QTest::keyClick(window, Qt::Key_Escape);
         QTRY_VERIFY(!popup->property("visible").toBool());
-        QVERIFY(window->isVisible()); // the list's Esc
+        QVERIFY(window->isVisible());
         QVERIFY(!result.has_value());
         QCOMPARE(m->property("currentText").toString(), QStringLiteral("fade right"));
         QVERIFY(m->hasActiveFocus());
-        // Space opens it unfiltered; an input method's text filters it.
         QTest::keyClick(window, Qt::Key_Space);
         QTRY_VERIFY(popup->property("opened").toBool());
         QCOMPARE(m->property("filter").toString(), QString());
         QTRY_VERIFY(filterField->hasActiveFocus());
         QInputMethodEvent composing(QStringLiteral("ri"), {});
         QCoreApplication::sendEvent(filterField, &composing);
-        QCOMPARE(m->property("filter").toString(), QString()); // still composing
+        QCOMPARE(m->property("filter").toString(), QString());
         QInputMethodEvent committed;
         committed.setCommitString(QStringLiteral("ring"));
         QCoreApplication::sendEvent(filterField, &committed);
@@ -798,7 +740,6 @@ private slots:
         QTRY_VERIFY(!popup->property("visible").toBool());
         QCOMPARE(m->property("currentText").toString(), QStringLiteral("ring"));
         QVERIFY(m->hasActiveFocus());
-        // Tab from the filter closes the list and moves on.
         QTest::keyClick(window, 'd');
         QTRY_VERIFY(popup->property("opened").toBool());
         QTest::keyClick(window, Qt::Key_Tab);
@@ -810,10 +751,10 @@ private slots:
         QVERIFY(!s->property("filters").toBool());
         s->forceActiveFocus(Qt::TabFocusReason);
         auto *shortList = s->property("popup").value<QObject *>();
-        QTest::keyClick(window, Qt::Key_Space); // opens the short list
+        QTest::keyClick(window, Qt::Key_Space);
         QTRY_VERIFY(shortList->property("opened").toBool());
-        QTest::keyClick(window, Qt::Key_B); // its type-ahead moves the highlight
-        QTest::keyClick(window, Qt::Key_Return); // and Enter picks that row
+        QTest::keyClick(window, Qt::Key_B);
+        QTest::keyClick(window, Qt::Key_Return);
         QTRY_VERIFY(!shortList->property("visible").toBool());
         QCOMPARE(s->property("currentText").toString(), QStringLiteral("b"));
         QCOMPARE(controlItem(2)->property("currentIndex").toInt(), -1);
@@ -824,10 +765,6 @@ private slots:
         QCOMPARE(std::get<std::string>(result->values[2]), std::string("zzz"));
     }
 
-    // `&` mnemonics: Alt with the letter presses a button, ticks a check box
-    // or moves to the control after a label; the letters are underlined
-    // while Alt is held; the `&` is never shown and the label returned
-    // keeps it; `&&` is one `&`.
     void mnemonicsWork()
     {
         DialogRequest request;
@@ -856,9 +793,6 @@ private slots:
         QCOMPARE(std::get<bool>(result->values[2]), true);
     }
 
-    // A label keeps its line breaks, as legacy's wxStaticText did:
-    // DependencyControl's trust prompt (its text, the feed, the question on
-    // their own lines) is narrower than a 1280 px screen (#392).
     void labelsKeepTheirLineBreaks()
     {
         DialogRequest request;
@@ -879,10 +813,6 @@ private slots:
         QTRY_VERIFY(result.has_value());
     }
 
-    // The window is resizable: the columns of an edit grow, a label's do
-    // not; a textbox's row takes the extra height. Taller than the screen's
-    // free area, it is capped: the grid scrolls (the focused control comes
-    // into view) and the buttons stay on screen.
     void sizeGrowsTheFieldsAndIsCappedToTheScreen()
     {
         DialogRequest request;
@@ -899,7 +829,7 @@ private slots:
                     number = controlItem(5)->width();
         window->resize(window->width() + 200, window->height() + 150);
         QTRY_VERIFY(controlItem(3)->width() > edit + 50);
-        QTRY_VERIFY(controlItem(5)->width() > number + 50); // a number's own column grows too
+        QTRY_VERIFY(controlItem(5)->width() > number + 50);
         QCOMPARE(controlItem(0)->width(), label);
         QTRY_VERIFY(controlItem(1)->height() > box + 100);
         window->close();
@@ -922,7 +852,7 @@ private slots:
         window->close();
         QTRY_VERIFY(result.has_value());
 
-        DialogRequest wide; // wider than the screen: the focused field comes into view across too
+        DialogRequest wide;
         for (int x = 0; x < 40; ++x)
             wide.controls.push_back(DialogControl{.kind = "edit", .name = "w" + std::to_string(x), .x = x, .text = ""});
         showDialog(wide, result);
@@ -935,7 +865,7 @@ private slots:
         window->close();
         QTRY_VERIFY(result.has_value());
 
-        DialogRequest huge; // a span of 2^31 - 1: bounded to the grid's 256 cells, shown at once
+        DialogRequest huge;
         huge.controls = {DialogControl{.kind = "edit", .name = "e", .x = 2147483646, .y = 2147483646,
                                        .width = 2147483647, .height = 2147483647, .text = ""}};
         showDialog(huge, result);
@@ -948,8 +878,6 @@ private slots:
         QTRY_VERIFY(result.has_value());
     }
 
-    // The size and place are kept per script file, macro and set of
-    // controls (their classes and names).
     void sizeIsKeptPerScriptAndDialog()
     {
         DialogRequest a;
@@ -975,9 +903,6 @@ private slots:
         QTRY_VERIFY(!window->isVisible());
     }
 
-    // AD2 (#311): last answers and presets are kept per script file and
-    // dialog (its controls' classes and names), shared by the script's
-    // macros, apart for another script or dialog, and survive a restart.
     void presetsAreKeptPerScriptAndDialog()
     {
         QTemporaryDir dir;
@@ -986,7 +911,7 @@ private slots:
         ScriptDialogMemory memory(&store);
         const DialogRequest dialog = sampleRequest();
         const QString key = ScriptDialogMemory::keyOf(QStringLiteral("/s/gradient.moon"), dialog);
-        DialogRequest moved = dialog; // other values and places, the same controls
+        DialogRequest moved = dialog;
         moved.controls[1].text = "other";
         moved.controls[1].x = 3;
         QCOMPARE(ScriptDialogMemory::keyOf(QStringLiteral("/s/gradient.moon"), moved), key);
@@ -1002,7 +927,6 @@ private slots:
         QCOMPARE(memory.presets(key), (QStringList{QStringLiteral("Soft"), QStringLiteral("Hard")}));
         QCOMPARE(memory.presets(otherScript), QStringList{QStringLiteral("Blur")});
         QVERIFY(memory.presets(otherDialog).isEmpty());
-        // Saving a name in use replaces it in place.
         memory.savePreset(key, QStringLiteral("Soft"), {{"flag", false}});
         QCOMPARE(memory.presets(key), (QStringList{QStringLiteral("Soft"), QStringLiteral("Hard")}));
         QCOMPARE(memory.preset(key, QStringLiteral("Soft")), (NamedDialogValues{{"flag", false}}));
@@ -1023,7 +947,6 @@ private slots:
         const auto last = again.lastAnswer(key);
         QVERIFY(last);
         QCOMPARE(last->pressed, 0);
-        // Numbers come back as numbers; the control takes them as its type.
         QCOMPARE(hikari::application::dialogValueOf(dialog.controls[2], last->answered.at("n")),
                  std::optional<hikari::application::DialogValue>(33));
         QCOMPARE(hikari::application::dialogValueOf(dialog.controls[3], last->sent.at("f")),
@@ -1031,7 +954,6 @@ private slots:
         QVERIFY(!again.lastAnswer(otherScript));
     }
 
-    // The 200 keys used longest ago are dropped first.
     void lastAnswersKeepTheNewestTwoHundred()
     {
         QTemporaryDir dir;
@@ -1046,16 +968,12 @@ private slots:
         for (int i = 0; i < 5; ++i)
             QVERIFY(!memory.lastAnswer(key(i)));
         QVERIFY(memory.lastAnswer(key(5)));
-        memory.remember(key(5), answer); // used again: the newest
+        memory.remember(key(5), answer);
         memory.remember(key(300), answer);
         QVERIFY(memory.lastAnswer(key(5)));
         QVERIFY(!memory.lastAnswer(key(6)));
     }
 
-    // The ⋯ menu: Last used and a preset fill the controls they name, Reset
-    // puts the script's values back; a changed control has its marker,
-    // which says the script's value and puts it back on a click. What the
-    // script gets is the values shown when a button is pressed.
     void moreMenuFillsAndMarkersPutBack()
     {
         QTemporaryDir dir;
@@ -1066,7 +984,6 @@ private slots:
         const DialogRequest dialog = sampleRequest();
         const QString key = ScriptDialogMemory::keyOf(QStringLiteral("/s/x.lua"), dialog);
 
-        // Without a key (no script), no ⋯.
         std::optional<DialogResult> result;
         controller->present(QStringLiteral("Plain"), dialog, [&](DialogResult r) { result = r; });
         QTRY_VERIFY(window->isVisible());
@@ -1103,21 +1020,18 @@ private slots:
         QCOMPARE(control(5)->property("currentText").toString(), QStringLiteral("a"));
         for (int i : {1, 2, 4, 5})
             QTRY_VERIFY(named(QStringLiteral("marker_%1").arg(i))->isVisible());
-        QVERIFY(!named(QStringLiteral("marker_3"))->isVisible()); // f: the script's 1.5
+        QVERIFY(!named(QStringLiteral("marker_3"))->isVisible());
         QVERIFY(accessible(controlItem(2), QAccessible::Description).contains(QStringLiteral("Changed from the script’s 12.")));
 
-        // A click on the bar puts that control back.
         QQuickItem *bar = named(QStringLiteral("marker_2"));
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centre(bar));
         QTRY_COMPARE(control(2)->property("text").toString(), QStringLiteral("12"));
         QTRY_VERIFY(!bar->isVisible());
 
-        // A preset fills what it names and the controls take (not "missing").
         QVERIFY(QMetaObject::invokeMethod(window, "fill", Q_ARG(QVariant, controller->presetValues(QStringLiteral("Twenty")))));
         QCOMPARE(control(2)->property("text").toString(), QStringLiteral("20"));
         QCOMPARE(control(5)->property("currentText").toString(), QStringLiteral("a"));
 
-        // Save as preset… with a name in use offers Replace.
         auto *popover = window->findChild<QObject *>(QStringLiteral("savePresetPopover"));
         QVERIFY(popover);
         QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
@@ -1130,13 +1044,11 @@ private slots:
         name->setProperty("text", QStringLiteral("Mine"));
         QVERIFY(QMetaObject::invokeMethod(popover, "save"));
         QTRY_COMPARE(controller->presets(), (QStringList{QStringLiteral("Twenty"), QStringLiteral("Mine")}));
-        QCOMPARE(memory.preset(key, QStringLiteral("Mine"))->at("n"), hikari::application::DialogValue(20.0)); // kept as a JSON number
-        // Esc closes it without saving.
+        QCOMPARE(memory.preset(key, QStringLiteral("Mine"))->at("n"), hikari::application::DialogValue(20.0));
         QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
         name->setProperty("text", QStringLiteral("Dropped"));
         QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
         QCOMPARE(controller->presets().size(), 2);
-        // Delete preset (no question without a message host here).
         QVERIFY(QMetaObject::invokeMethod(window, "askDelete", Q_ARG(QVariant, QStringLiteral("Twenty"))));
         QCOMPARE(controller->presets(), QStringList{QStringLiteral("Mine")});
 
@@ -1155,8 +1067,6 @@ private slots:
         QCOMPARE(std::get<std::string>(result->values[1]), std::string("sent"));
     }
 
-    // A preset name is the user's own text: the delete question and the
-    // name-in-use note show it as typed, never as markup.
     void presetNamesShowAsTyped()
     {
         QTemporaryDir dir;
@@ -1201,8 +1111,6 @@ private slots:
         QTRY_VERIFY(result);
     }
 
-    // A filled-in dialog (Repeat, or the setting) shows the filled values
-    // with their markers, and the inline bar says why.
     void filledDialogShowsItsValuesAndNotice()
     {
         const DialogRequest dialog = sampleRequest();
@@ -1225,15 +1133,12 @@ private slots:
         press(0);
         QVERIFY(result);
         QCOMPARE(std::get<int>(result->values[2]), 40);
-        // A dialog shown as usual has no bar.
         controller->present(QStringLiteral("Plain"), dialog, [](DialogResult) {});
         QTRY_VERIFY(window->isVisible());
         QVERIFY(!named(QStringLiteral("automationDialogNotice"))->isVisible());
         controller->withdraw();
     }
 
-    // Shown again with the same three buttons and the ⋯, the buttons stay in
-    // the window (the footer's list kept a part-way width).
     void buttonsStayInTheWindowShownAgain()
     {
         QTemporaryDir dir;
@@ -1261,8 +1166,6 @@ private slots:
         }
     }
 
-    // The dialog in the four themes, for review: written to
-    // HIKARI_SURFACE_SHOT_DIR when it is set (script-dialog-<part>-<theme>.png).
     void screenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -1278,7 +1181,7 @@ private slots:
             hikari::ui::theme::useSettings(nullptr);
         });
 
-        DialogRequest gradient; // a typesetting script's dialog
+        DialogRequest gradient;
         gradient.controls = {
             DialogControl{.kind = "label", .name = "l0", .label = "&Tags"},
             DialogControl{.kind = "edit", .name = "tags", .hint = "Override tags to gradient, e.g. \\1c\\3c.", .x = 1,
@@ -1302,7 +1205,6 @@ private slots:
         };
         gradient.buttons = {"&Apply", "&Load preset", "Cancel"};
         gradient.buttonIds = {"ok", "", "cancel"};
-        // AD2: the dialog's kept answers and presets.
         ScriptDialogMemory memory(&store);
         controller->setMemory(&memory);
         auto unset = qScopeGuard([this] { controller->setMemory(nullptr); });
@@ -1315,7 +1217,6 @@ private slots:
         lastAnswer.values[9] = 1.6;
         lastAnswer.values[12] = true;
         memory.remember(key, hikari::application::lastDialogAnswer(gradient, lastAnswer));
-        // A repeated run whose script added a control since.
         DialogRequest grown = gradient;
         grown.controls.push_back(DialogControl{.kind = "checkbox", .name = "clip", .hint = "Follow the line's clip.",
                                                .x = 1, .y = 5, .width = 3, .label = "Follow the &clip"});
@@ -1327,13 +1228,11 @@ private slots:
         std::unique_ptr<QObject> messages(hostComponent.create());
         QVERIFY2(messages, qPrintable(hostComponent.errorString()));
         window->setProperty("messages", QVariant::fromValue(messages.get()));
-        // A menu or tooltip may be a window of its own: the screen round the
-        // dialog where the platform can grab it.
+        // A menu or tooltip may be a window of its own, so on xcb grab the screen around the dialog.
         const auto saveAround = [&](const QString &part, const QString &theme) {
             QTest::qWait(400);
             QImage image;
             if (QGuiApplication::platformName() == QLatin1String("xcb")) {
-                // The dialog and whatever it has open (menus, tooltips).
                 QRect area = window->frameGeometry();
                 for (QWindow *w : QGuiApplication::topLevelWindows())
                     if (w->isVisible() && w->screen() == window->screen())
@@ -1357,7 +1256,7 @@ private slots:
         numbers.buttons = {"Go", "Cancel"};
         numbers.buttonIds = {"ok", "cancel"};
 
-        DialogRequest tall; // a HYDRA-sized dialog on a 1280 x 800 screen
+        DialogRequest tall;
         for (int y = 0; y < 40; ++y) {
             tall.controls.push_back(DialogControl{.kind = "checkbox", .name = "t" + std::to_string(y), .y = y,
                                                   .label = "\\tag" + std::to_string(y)});
@@ -1427,7 +1326,6 @@ private slots:
             window->close();
             QTRY_VERIFY(result.has_value());
 
-            // AD2: the ⋯ menu with Presets open.
             showDialogOn(gradient, result, QStringLiteral("dialogButton0"), {std::nullopt, key, QString()});
             auto *more = named(QStringLiteral("automationDialogMore"));
             QVERIFY(more && more->isVisible());
@@ -1437,8 +1335,7 @@ private slots:
             QQuickItem *presetsEntry = nullptr;
             QVERIFY(QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, presetsEntry), Q_ARG(int, 1)));
             QVERIFY(presetsEntry);
-            // Opened as Enter on the entry opens it: a synthetic hover does not
-            // open a submenu on the offscreen platform (#391).
+            // A synthetic hover does not open a submenu on the offscreen platform (#391).
             QVERIFY(QMetaObject::invokeMethod(presetsEntry, "triggered"));
             auto *presets = window->findChild<QObject *>(QStringLiteral("dialogPresetsMenu"));
             QTRY_VERIFY(presets->property("opened").toBool());
@@ -1447,14 +1344,12 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(menu, "close"));
             QTRY_VERIFY(!menu->property("visible").toBool());
 
-            // Last used: the markers, the Tags marker hovered.
             QVERIFY(QMetaObject::invokeMethod(window->findChild<QObject *>(QStringLiteral("dialogLastUsed")), "triggered"));
             auto *marker = named(QStringLiteral("marker_1"));
             QTRY_VERIFY(marker->isVisible());
             QTest::mouseMove(window, centre(marker));
             saveAround(QStringLiteral("markers"), theme);
 
-            // Save as preset… with a name in use.
             auto *popover = window->findChild<QObject *>(QStringLiteral("savePresetPopover"));
             QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
             QTRY_VERIFY(popover->property("opened").toBool());
@@ -1463,7 +1358,6 @@ private slots:
             saveAround(QStringLiteral("save-preset"), theme);
             QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
 
-            // Delete preset asks first.
             QVERIFY(QMetaObject::invokeMethod(window, "askDelete", Q_ARG(QVariant, QStringLiteral("Blue to clear"))));
             QQuickWindow *box = nullptr;
             QTRY_VERIFY((box = messages->property("box").value<QQuickWindow *>()) && box->isVisible());
@@ -1477,7 +1371,6 @@ private slots:
             window->close();
             QTRY_VERIFY(result.has_value());
 
-            // A repeated run's changed dialog, filled in and saying why.
             showDialogOn(grown, result, QStringLiteral("dialogButton0"),
                          {grownShown, key,
                           QStringLiteral("This dialog has changed since the last run, so it is shown with your last "
@@ -1510,7 +1403,7 @@ private slots:
                 [&](LuaScriptHost::RunOutcome o, const QString &) { outcome = o; });
         host.load();
         QTRY_COMPARE(host.state(), LuaScriptHost::State::Ready);
-        QVERIFY(host.run(0)); // "Dialog"
+        QVERIFY(host.run(0));
         QTRY_VERIFY(window->isVisible());
         QCOMPARE(window->title(), QStringLiteral("Host fixture"));
 
@@ -1519,7 +1412,7 @@ private slots:
         control(3)->setProperty("text", QStringLiteral("2.5"));
         control(4)->setProperty("checked", false);
         control(5)->setProperty("currentIndex", 0);
-        press(1); // "Stop", the cancel id: false, as in Aegisub (AD1-button-ids)
+        press(1);
 
         QTRY_VERIFY(outcome.has_value());
         QCOMPARE(*outcome, LuaScriptHost::RunOutcome::Ok);
@@ -1528,10 +1421,6 @@ private slots:
                           "text=string:typed")});
     }
 
-    // AD1-button-ids: dialogs from real scripts (lua-fixtures/
-    // script-dialogs.lua) answered with the keyboard through this window
-    // return what Aegisub returns: Return presses the ok id's button, a
-    // cancel-id button and Esc give false.
     void realScriptDialogsAnswerAsInAegisub()
     {
         LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_LUA_FIXTURES "/script-dialogs.lua"),
@@ -1559,28 +1448,28 @@ private slots:
             QCOMPARE(*outcome, LuaScriptHost::RunOutcome::Ok);
             QTRY_VERIFY(!window->isVisible());
         };
-        run(0, QStringLiteral("dialogButton0"), [&] { // GitSigns Configure: Cancel
+        run(0, QStringLiteral("dialogButton0"), [&] {
             QTest::keyClick(window, Qt::Key_Tab);
             QCOMPARE(focusName(), QStringLiteral("dialogButton1"));
             QTest::keyClick(window, Qt::Key_Space);
         });
         QCOMPARE(log, QStringList{QStringLiteral("not saved button=boolean:false git_path=string:git")});
-        run(0, QStringLiteral("dialogButton0"), [&] { // typed, then Return in the field saves
+        run(0, QStringLiteral("dialogButton0"), [&] {
             controlItem(1)->forceActiveFocus(Qt::TabFocusReason);
             QTest::keyClick(window, Qt::Key_End);
             type(window, QStringLiteral("-2"));
             QTest::keyClick(window, Qt::Key_Return);
         });
         QCOMPARE(log, QStringList{QStringLiteral("saved button=string:Save git_path=string:git-2")});
-        run(1, QStringLiteral("dialogButton0"), [&] { // SemiColorCalc: Esc
+        run(1, QStringLiteral("dialogButton0"), [&] {
             QTest::keyClick(window, Qt::Key_Escape);
         });
         QCOMPARE(log.value(0).section(QLatin1Char(' '), 0, 1), QStringLiteral("calculated button=boolean:false"));
-        run(4, QStringLiteral("dialogButton1"), [&] { // Toolbox feed trust: Return
+        run(4, QStringLiteral("dialogButton1"), [&] {
             QTest::keyClick(window, Qt::Key_Return);
         });
         QCOMPARE(log, QStringList{QStringLiteral("feed button=string:Fetch once")});
-        run(2, QStringLiteral("dialogButton0"), [&] { // Toolbox install: no buttons, OK
+        run(2, QStringLiteral("dialogButton0"), [&] {
             QCOMPARE(controller->buttons(), (QStringList{QStringLiteral("OK"), QStringLiteral("Cancel")}));
             QTest::keyClick(window, Qt::Key_Return);
         });
@@ -1600,7 +1489,7 @@ private slots:
                 [&](LuaScriptHost::RunOutcome o, const QString &) { outcome = o; });
         host.load();
         QTRY_COMPARE(host.state(), LuaScriptHost::State::Ready);
-        QVERIFY(host.run(1)); // "Default buttons"
+        QVERIFY(host.run(1));
         QTRY_VERIFY(window->isVisible());
         host.cancel();
         QTRY_VERIFY(outcome.has_value());
@@ -1609,18 +1498,6 @@ private slots:
         QVERIFY(!controller->isOpen());
     }
 
-    // S3/L2: the legacy capture probe's dialog cases (the legacy plan.json's
-    // "automation") run through this dialog with the plan's keys, as they
-    // were sent to the legacy app. Each case's JSON line is kept in
-    // artifacts/automation-capture-dialogs.json. The legacy baseline hangs
-    // on all of them, so what is asserted comes from the legacy sources and
-    // AD1: the Enter button has the focus when the dialog shows; Return
-    // presses it, Escape ends the dialog with no button (false); Up on a
-    // button does nothing (AD1-keyboard: legacy moved the focus to the field
-    // above, where Return did nothing), so float-step-up and int-step-up
-    // answer unchanged (f=1, i=1); typed text reaches no field (e=""); an id
-    // naming no button is an error before any dialog shows, as in Aegisub
-    // (AD1-button-ids).
     void captureProbeDialogCasesAnswer()
     {
         QFile planFile(QStringLiteral(HIKARI_LEGACY_PLAN));
@@ -1632,7 +1509,6 @@ private slots:
         QTemporaryDir work;
         QVERIFY(work.isValid());
         const QString output = work.filePath(QStringLiteral("capture.jsonl"));
-        // The helper process inherits the environment, as the legacy app's Lua does.
         qputenv("HIKARI_CAPTURE_OUT", output.toLocal8Bit());
         LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_CAPTURE_PROBE),
                            QStringLiteral(HIKARI_LUA_INCLUDE));
@@ -1663,7 +1539,7 @@ private slots:
         for (const auto &value : steps) {
             const QJsonObject step = value.toObject();
             if (step.value(QStringLiteral("case")).toString() == QStringLiteral("corpus"))
-                continue; // L6: the corpus has its own capture (LuaHelper.CaptureProbeCorpusRunsInThisHost)
+                continue;
             const QString name = step.value(QStringLiteral("case")).toString();
             QJsonObject record{{QStringLiteral("case"), name},
                                {QStringLiteral("macro"), step.value(QStringLiteral("macro"))},
@@ -1700,21 +1576,16 @@ private slots:
             if (!QTest::qWaitFor([&] { return outcome.has_value(); }, 1000)) {
                 record.insert(QStringLiteral("dialog_open_after_keys"), window->isVisible());
                 if (window->isVisible() && !step.value(QStringLiteral("keys")).toArray().isEmpty()) {
-                    // The keys left it open: only a click closes it (legacy
-                    // takes no other key there), on its first button.
                     record.insert(QStringLiteral("focus_after_keys"), focusName());
                     record.insert(QStringLiteral("closed_by"), QStringLiteral("click dialogButton0"));
                     QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
                                       centre(named(QStringLiteral("dialogButton0"))));
                 } else {
-                    // No keys answer it (the plan sends none): withdraw it,
-                    // as a user cancelling the run would.
                     host.cancel();
                 }
                 QTRY_VERIFY(outcome.has_value());
             }
             record.insert(QStringLiteral("outcome"), static_cast<int>(*outcome));
-            // An Ok run's message is its binary result payload, not text.
             if (*outcome != LuaScriptHost::RunOutcome::Ok && !message.trimmed().remove(QChar(0)).isEmpty())
                 record.insert(QStringLiteral("message"), message.section(QLatin1Char('\n'), 0, 2));
             const QList<QByteArray> got = lines();

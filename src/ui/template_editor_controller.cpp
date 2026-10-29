@@ -36,8 +36,6 @@ QString translated(const char *text)
     return QCoreApplication::translate("HikariSub.TemplateEditor", text);
 }
 
-// KE3: the built-in karaoke effect presets (docs/karaoke-presets.md), in
-// list order, with their files' Title and Description for the translators.
 struct PresetEntry {
     const char *file, *title, *description;
 };
@@ -70,7 +68,6 @@ constexpr PresetEntry kPresets[] = {
                        "Lines take turns through a short palette of fill colours, by their place in the file.")},
 };
 
-// The time a Line's text shows, without its override blocks.
 QString withoutTags(const std::u8string &text)
 {
     QString out;
@@ -97,8 +94,6 @@ QJsonObject reportOf(const std::string &report)
     return o.value(QLatin1String("report")).toString() == QLatin1String("karaoke-templater") ? o : QJsonObject{};
 }
 
-// The stock variables (kara-templater.lua apply_line and set_ctx_syl), in
-// the order the completion list shows them.
 struct Variable {
     const char *name;
     const char *help;
@@ -168,7 +163,6 @@ const std::vector<Variable> &variables()
     return list;
 }
 
-// The template environment (kara-templater.lua apply_templates), for `!`.
 struct Function {
     const char *name;
     const char *insert;
@@ -219,7 +213,6 @@ const QStringList &codeClasses()
     return list;
 }
 
-// Modifiers that take the word after them.
 bool takesArgument(const QString &word)
 {
     const QString w = word.toLower();
@@ -227,8 +220,7 @@ bool takesArgument(const QString &word)
            w == QLatin1String("fxgroup");
 }
 
-// One modifier by either of its words: the templater reads `repeat` as
-// `loop`.
+// The templater reads `repeat` as `loop`.
 bool sameModifier(const QString &a, const QString &b)
 {
     const auto word = [](const QString &w) {
@@ -245,12 +237,10 @@ const QStringList &modifierWords()
     return list;
 }
 
-// The Effect split into its kind, class (with a line template's name) and
-// modifiers.
 struct EffectWords {
     QString kind;
-    QStringList classWords; // the class, and a named line template's name
-    QStringList otherClasses; // combined with it
+    QStringList classWords;
+    QStringList otherClasses;
     QStringList modifiers;
 };
 
@@ -263,10 +253,6 @@ EffectWords splitEffect(const QString &effect)
     out.kind = words.takeFirst();
     const QString kind = out.kind.toLower();
     const QStringList &classes = kind == QLatin1String("code") ? codeClasses() : templateClasses();
-    // The first class word wherever it is, as the stock parser reads the
-    // words in turn; a modifier's argument is none. The others it combines
-    // with it (`syl furi`, `line syl`) go with it: the picker's class is one
-    // choice.
     for (qsizetype i = 0; i < words.size(); ++i) {
         const QString word = words[i].toLower();
         if (!out.classWords.isEmpty() && classes.contains(word)) {
@@ -293,7 +279,7 @@ QString joinEffect(const EffectWords &w)
     return all.join(QLatin1Char(' '));
 }
 
-} // namespace
+}
 
 TemplateEditorController::TemplateEditorController(QObject *parent) : QObject(parent)
 {
@@ -369,15 +355,13 @@ const core::Document *TemplateEditorController::document() const
 }
 
 namespace {
-// The Lines as a run reads them: Apply commits the Line editor's draft
-// before it runs, so the draft stands in for its Line.
 template <class F> void forEachRunLine(const application::EditSession &s, F &&f, bool withDraft = true)
 {
     const auto draft = withDraft ? s.draftRecord() : std::nullopt;
     for (const auto *l : s.document().lines())
         f(draft && draft->id == l->id ? *draft : *l);
 }
-} // namespace
+}
 
 core::Document TemplateEditorController::runDocument() const
 {
@@ -416,7 +400,6 @@ std::optional<core::LineRecord> TemplateEditorController::currentRecord() const
     const auto *l = m_current ? line(*m_current) : nullptr;
     if (!l)
         return std::nullopt;
-    // The Line editor's draft of it, as the preview runs it (runDocument).
     core::LineRecord out = *l;
     if (const auto *s = session())
         if (auto draft = s->draftRecord(); draft && draft->id == l->id)
@@ -428,8 +411,6 @@ std::optional<core::LineRecord> TemplateEditorController::currentRecord() const
 
 core::LineRecord TemplateEditorController::edited(core::LineRecord line, const Pending &pending)
 {
-    // In TLMode the templater reads the translation (macroLineOf): the panel
-    // edits that.
     if (pending.text)
         (line.translation.empty() ? line.text : line.translation) = *pending.text;
     if (pending.effect)
@@ -471,7 +452,7 @@ void TemplateEditorController::refresh()
 {
     const auto *s = session();
     if (s != m_seenSession) {
-        commit(); // to the Document it was typed for, while that is open
+        commit();
         m_seenSession = s;
         m_pending.reset();
         m_commitTimer.stop();
@@ -485,7 +466,7 @@ void TemplateEditorController::refresh()
         m_stats.clear();
         m_replaced.clear();
         m_matched.clear();
-        m_owners.clear(); // another Document's Line ids
+        m_owners.clear();
         m_ownersRevision.reset();
         m_values.clear();
         m_lastApply.clear();
@@ -499,15 +480,13 @@ void TemplateEditorController::refresh()
         return;
     }
     if (!m_baselines.contains(documentKey()))
-        takeBaseline(); // first seen, or reloaded
+        takeBaseline();
     if (const auto it = m_appliedElsewhere.find(documentKey()); it != m_appliedElsewhere.end()) {
-        // Its Apply finished while another tab was shown.
         const std::string report = std::move(it->second);
         m_appliedElsewhere.erase(it);
         applied(report);
     }
     const auto &doc = s->document();
-    // The current template follows the active Line when that is one.
     const auto active = s->selection().active;
     if (const auto *l = active ? line(*active) : nullptr; l && application::templateKindOf(*l) && active != m_current)
         setCurrent(active->value);
@@ -524,19 +503,14 @@ void TemplateEditorController::refresh()
     for (auto it = m_replaced.begin(); it != m_replaced.end();)
         it = line(it->first) ? std::next(it) : m_replaced.erase(it);
     updateSource();
-    // The templater's helper loaded after the panel showed: the preview
-    // skipped then runs now.
     const bool ready = available();
     const bool becameReady = ready && !m_wasAvailable;
     const bool unloaded = !ready && m_wasAvailable;
     m_wasAvailable = ready;
     if (becameReady)
-        m_previewSnapshotKey.clear(); // a reloaded script may write otherwise
-    // Made before trust went, or by a script no longer loaded: not this
-    // file's result, nor are its problems.
+        m_previewSnapshotKey.clear();
     if ((!trusted() || unloaded) && (m_preview || m_previewing || !m_issues.empty() || !m_runError.isEmpty()))
         clearPreview();
-    // The Line editor's draft is what Apply runs on too.
     const auto draft = s->draftRecord();
     const std::string drafted =
         draft ? std::to_string(draft->id.value) + '\n' + application::macroLineOf(*draft).raw + '\x1f' +
@@ -546,29 +520,24 @@ void TemplateEditorController::refresh()
         m_seenDraft = drafted;
         m_seenRevision = s->revision();
         if (s->revision() != m_applyRevision)
-            m_lastApply.clear(); // an Undo or an edit since Apply
+            m_lastApply.clear();
         schedulePreview();
     }
-    hostChanged(); // e.g. the audio selection, the active Line's times
+    hostChanged();
     emit changed();
 }
 
 void TemplateEditorController::updateSource()
 {
     const auto *s = session();
-    // The active Line as Apply runs on it: with the Line editor's draft and
-    // an Effect still pending (one that makes a template a karaoke Line).
     std::optional<core::Document> drafted;
     if (s && (s->draftRecord() || (m_pending && m_pending->document == documentKey())))
         drafted = pendingDocument();
     const core::Document *doc = drafted ? &*drafted : s ? &s->document() : nullptr;
     std::optional<core::LineId> source =
         doc ? application::templatePreviewSource(*doc, s->selection().active, m_lastSource) : std::nullopt;
-    // A generated Line of a file opened without marks: its karaoke Line is
-    // found first; the preview stays until then. One no karaoke Line gives
-    // has none, and no other Line stands in for it.
     const auto active = s ? s->selection().active : std::nullopt;
-    const core::LineRecord *activeLine = nullptr; // as the draft has it
+    const core::LineRecord *activeLine = nullptr;
     if (active && doc)
         for (const auto *l : doc->lines())
             if (l->id == *active)
@@ -593,10 +562,10 @@ void TemplateEditorController::updateSource()
     m_source = source;
     if (source)
         m_lastSource = source;
-    stopRuns(); // their answers are another Line's
+    stopRuns();
     m_preview.reset();
     m_own.clear();
-    m_issues.clear(); // that Line's run's; the next one's replace them
+    m_issues.clear();
     m_runError.clear();
     m_previewKept = false;
     m_previewSeconds = 0;
@@ -633,8 +602,6 @@ void TemplateEditorController::stopRuns()
 
 bool TemplateEditorController::askOwners()
 {
-    // It runs the templates as the file holds them: the Line editor's draft
-    // aside, that state has to be one the user chose too.
     auto *s = session();
     if (!s || !m_shown || !available() || !trusted() || !trustedIn(*s, documentKey(), false))
         return false;
@@ -644,10 +611,10 @@ bool TemplateEditorController::askOwners()
         m_ownersRevision = s->revision();
         return false;
     }
-    stopRuns(); // one run at a time: this one first
+    stopRuns();
     const std::uint64_t revision = s->revision();
     m_ownersAsked = revision;
-    emit changed(); // canApply waits for the preview it leads to
+    emit changed();
     QPointer<TemplateEditorController> self = this;
     const std::uint64_t generation = m_generation;
     const DocumentKey key = documentKey();
@@ -765,7 +732,7 @@ void TemplateEditorController::setCurrent(qulonglong id)
         return;
     commit();
     if (m_pending)
-        return; // an edit that can't go in yet (a macro holds the Document) stays with its template
+        return;
     m_current = next;
     emit changed();
     emit previewChanged();
@@ -808,7 +775,6 @@ int TemplateEditorController::layer() const
 
 QString TemplateEditorController::text() const
 {
-    // The text the templater reads: the translation in TLMode.
     const auto r = currentRecord();
     return r ? qs(r->translation.empty() ? r->text : r->translation) : QString();
 }
@@ -871,14 +837,11 @@ QString TemplateEditorController::sourceStyle() const
 QString TemplateEditorController::sourceText() const
 {
     const auto l = sourceRecord();
-    // In TLMode the run reads the translation (macroLineOf).
     return l ? withoutTags(l->translation.empty() ? l->text : l->translation) : QString();
 }
 
 std::optional<core::LineRecord> TemplateEditorController::sourceRecord() const
 {
-    // The preview ran on the Line editor's draft (runDocument) and the
-    // panel's pending edit (a `template line karaoke` source's own).
     std::optional<core::LineRecord> out;
     if (const auto *s = m_source ? session() : nullptr)
         if (const auto draft = s->draftRecord(); draft && draft->id == *m_source)
@@ -914,7 +877,6 @@ QVariantList TemplateEditorController::previewLines() const
             {QStringLiteral("start"), qs(core::legacy::assTimeText(msOf(l.start)))},
             {QStringLiteral("end"), qs(core::legacy::assTimeText(msOf(l.end)))},
             {QStringLiteral("style"), qs(l.style)},
-            // In TLMode the run wrote the translation (lineOfMacro).
             {QStringLiteral("text"), qs(l.translation.empty() ? l.text : l.translation)},
             {QStringLiteral("own"), k < m_own.size() && m_own[k]},
         });
@@ -991,26 +953,17 @@ TemplateEditorController::DocumentKey TemplateEditorController::documentKey() co
 
 std::string TemplateEditorController::formOf(const core::LineRecord &line)
 {
-    // The Style too: it picks the karaoke Lines the template runs on, and so
-    // whose Actor goes into its `$actor`.
     const auto m = application::macroLineOf(line);
     return std::to_string(m.style.size()) + ':' + m.style + m.effect + '\n' + m.text;
 }
 
 std::string TemplateEditorController::fieldOf(const core::LineRecord &line, bool whole)
 {
-    // The pairing: the Style picks the templates the Actor goes into
-    // ($actor), so a trusted Actor under another Style, or a Style's name as
-    // an Actor, is new.
     const auto m = application::macroLineOf(line);
     std::string field = std::to_string(m.style.size()) + ':' + m.style + m.actor;
-    // A `!` in either can make an expression of what the templates write;
-    // whether it runs hangs on the rest of the Line (a blank one `noblank`
-    // passes over, its Effect, its times), so the whole Line is the choice.
+    // The templater substitutes $actor and $style before running !expressions!, so a `!` there is Lua.
     if (field.find('!') != std::string::npos)
         field += '\n' + m.raw + '\x1f' + m.text + '\x1f' + m.translation;
-    // Lua reading the Lines (`orgline.text`) takes their strings; times are
-    // only numbers to it.
     else if (whole)
         field += '\n' + m.effect + '\x1f' + m.text + '\x1f' + m.translation;
     return field;
@@ -1059,11 +1012,6 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
                                                                        bool withDraft)
 {
     TrustState out;
-    // Lua in the templates (a code Line, or a template's `!` expression) can
-    // read every karaoke Line (`orgline.text`, `$actor` in `!$actor!`): then
-    // each one is trusted with its text, translation and Effect too. A `!`
-    // in a karaoke Line's Style or Actor is Lua as well once a template puts
-    // it in (`$actor`).
     bool whole = false;
     forEachRunLine(s, [&](const core::LineRecord &l) {
         if (const auto kind = application::templateKindOf(l)) {
@@ -1078,11 +1026,10 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
         }
     }, withDraft);
     forEachRunLine(s, [&](const core::LineRecord &l) {
-        if (application::isKaraokeLine(l)) // a `template line karaoke` too
+        if (application::isKaraokeLine(l))
             out.fields.insert(fieldOf(l, whole));
     }, withDraft);
-    // Lua reads the Styles (`orgline.styleref`) and Script Info (`meta`) as
-    // well.
+    // Templater Lua reads the Styles (orgline.styleref) and Script Info (meta) too.
     if (whole)
         out.head = headOf(s.document());
     return out;
@@ -1091,11 +1038,6 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
 bool TemplateEditorController::trustedIn(const application::EditSession &s, const DocumentKey &document,
                                          bool withDraft) const
 {
-    // A template or code Line come or changed since another way (a paste,
-    // an import, a translation pasted over it, a sort) is Lua the user has
-    // not chosen to run; so is a new Actor or Style the templates put into
-    // theirs. Lines deleted or copied with a pairing there leave a state
-    // chosen.
     const auto it = m_trusted.find(document);
     if (it == m_trusted.end())
         return false;
@@ -1136,7 +1078,7 @@ void TemplateEditorController::trustDocument()
     trust();
     m_previewSnapshotKey.clear();
     emit changed();
-    updateSource(); // an unmarked generated Line's karaoke Line can be found now
+    updateSource();
     schedulePreview();
 }
 
@@ -1163,7 +1105,7 @@ void TemplateEditorController::edit(const Pending &change)
     if (m_pending && (m_pending->line != *m_current || m_pending->document != documentKey())) {
         commit();
         if (m_pending)
-            return; // another Line's edit that can't go in yet is not dropped
+            return;
     }
     if (!m_pending)
         m_pending = Pending{*m_current, {}, {}, {}, {}, documentKey()};
@@ -1178,7 +1120,7 @@ void TemplateEditorController::edit(const Pending &change)
     m_lastApply.clear();
     m_commitTimer.start();
     if (change.effect)
-        updateSource(); // it may make the template a karaoke Line, or not
+        updateSource();
     emit changed();
     schedulePreview();
 }
@@ -1230,22 +1172,17 @@ void TemplateEditorController::commit()
     };
     const core::LineRecord *was = s ? lineOf() : nullptr;
     if (!was)
-        return drop(); // its Document closed
-    // A Line editor draft of this Line goes in first, as its own step (the
-    // run would, and then find the revision moved); the panel's edit goes
-    // over it, one that ends at the committed text too.
+        return drop();
     if (s->draftLine() == change.line) {
-        // false also for a draft that changed nothing, gone now.
         if (!s->commitDraft() && s->draftLine() == change.line) {
-            m_commitTimer.start(); // a draft that can't go in yet
+            m_commitTimer.start();
             return;
         }
         was = lineOf();
     }
     if (!was || keyOf(edited(*was, change)) == keyOf(*was))
-        return drop(); // typing that ended where it began: no step
-    // The user's edit of a state they chose to run is theirs to run too; a
-    // draft that went in with it is not, so the state is read after it.
+        return drop();
+    // MUST KILL: chosen must be read after the draft commit above
     const bool chosen = was && application::templateKindOf(*was) && trustedIn(*s, change.document);
     application::Command command;
     command.name = "Edit template";
@@ -1255,20 +1192,17 @@ void TemplateEditorController::commit()
         return doc.editLine(change.line, [&](core::LineRecord &l) { l = edited(l, change); });
     };
     if (!s->run(command)) {
-        // A macro owns the Document: try again after it.
         m_commitTimer.start();
         return;
     }
     m_pending.reset();
     m_commitTimer.stop();
-    if (chosen) // with what it changed: an Effect, a `template line karaoke`'s pairing
+    if (chosen)
         trust(*s, change.document);
     if (s == session()) {
         m_seenRevision = s->revision();
         emit documentEdited();
     } else {
-        // Another tab's, while the views change to this one: they show it
-        // after, and it waits for its autosave.
         emit otherDocumentEdited(change.document);
         QMetaObject::invokeMethod(this, &TemplateEditorController::documentEdited, Qt::QueuedConnection);
     }
@@ -1280,8 +1214,6 @@ bool TemplateEditorController::canApplySelected() const
     const auto *s = session();
     if (!canApply() || !s)
         return false;
-    // macro_apply_templates_to_selection: a karaoke Line, or a generated
-    // Line whose mark names one (a file's unmarked Lines name none).
     const core::Document doc = runDocument();
     std::set<core::LineId> karaoke;
     for (const auto *l : doc.lines())
@@ -1296,8 +1228,6 @@ bool TemplateEditorController::canApplySelected() const
 bool TemplateEditorController::apply(bool selectedOnly)
 {
     commit();
-    // The edit's preview runs now rather than after the pause; Apply waits
-    // for it unless the last one already ran on this text.
     if (m_previewTimer.isActive()) {
         m_previewTimer.stop();
         runPreview();
@@ -1310,7 +1240,7 @@ bool TemplateEditorController::apply(bool selectedOnly)
 void TemplateEditorController::applied(const std::string &report, std::optional<DocumentKey> ranOn)
 {
     if (ranOn && *ranOn != documentKey()) {
-        m_appliedElsewhere[*ranOn] = report; // taken when it is current again
+        m_appliedElsewhere[*ranOn] = report;
         return;
     }
     const QJsonObject o = reportOf(report);
@@ -1330,15 +1260,11 @@ void TemplateEditorController::applied(const std::string &report, std::optional<
                    {QStringLiteral("karaokeLines"), o.value(QLatin1String("karaoke_lines")).toInt()},
                    {QStringLiteral("seconds"), o.value(QLatin1String("seconds")).toDouble()},
                    {QStringLiteral("problems"), o.value(QLatin1String("problems")).toInt()}};
-    // A selected-Lines run leaves the other Lines' output from the templates
-    // as they were: what changed since the last whole Apply stays marked.
     if (o.value(QLatin1String("mode")).toString() != QLatin1String("selected"))
         takeBaseline();
-    trust(); // the user ran them
+    trust();
     if (const auto *ss = session())
         m_applyRevision = ss->revision();
-    // A file's unmarked Lines are marked now; an Undo that brings them back
-    // matches again.
     m_replaced.clear();
     m_matched.clear();
     m_previewSnapshotKey.clear();
@@ -1390,15 +1316,12 @@ bool TemplateEditorController::insertLines(const char *commandName, std::vector<
     auto *s = session();
     if (!s || !m_editable || made.empty())
         return false;
-    // A `template line karaoke` too: the templater runs it as one.
     const auto firstOf = [](const auto &lines) {
         return std::ranges::find_if(lines, [](const core::LineRecord *l) { return application::isKaraokeLine(*l); });
     };
-    // A Line editor draft of the Line they go above goes in first, as the
-    // run would (and then find the revision moved); the Line is read after.
     if (const auto lines = s->document().lines(); firstOf(lines) != lines.end() && s->draftLine() == (*firstOf(lines))->id)
         if (!s->commitDraft() && s->draftLine())
-            return false; // a draft that can't go in yet
+            return false;
     const auto all = s->document().lines();
     const auto first = firstOf(all);
     std::string style;
@@ -1432,7 +1355,7 @@ bool TemplateEditorController::insertLines(const char *commandName, std::vector<
     if (!s->run(command) || !added)
         return false;
     if (chosen)
-        trust(); // with the user's own templates
+        trust();
     m_seenRevision = s->revision();
     m_current = *added;
     emit documentEdited();
@@ -1456,40 +1379,33 @@ void TemplateEditorController::schedulePreview()
     const bool was = previewPending();
     m_previewTimer.start();
     if (!was)
-        emit changed(); // canApply
+        emit changed();
 }
 
 void TemplateEditorController::runPreview()
 {
     if (m_ownersAsked)
-        return; // its answer previews
+        return;
     if (!m_shown || !available() || !m_source || !trusted()) {
         m_running = false;
         m_previewing = false;
-        emit changed(); // canApply
+        emit changed();
         return;
     }
-    // The Line editor's draft, and the pending Effect, Style and Layer on it.
     core::Document seen = pendingDocument();
-    // A template made by an Effect still pending counts.
     if (std::ranges::none_of(seen.lines(), [](const core::LineRecord *l) {
             return application::templateKindOf(*l) == application::TemplateKind::Template;
         })) {
-        // The last template went: its preview too, a run still going (its
-        // answer is no template's now) and its problems.
         if (m_preview || m_running || m_previewing || !m_issues.empty() || !m_runError.isEmpty())
             clearPreview();
         m_running = false;
         m_previewing = false;
-        emit changed(); // canApply
+        emit changed();
         return;
     }
     auto snapshot = application::templatePreviewSnapshot(seen, *m_source, pendingTexts());
     if (!snapshot)
         return;
-    // What the run reads: Script Info (meta, karaskel's resolution), the
-    // styles, the Lines and the host; and the current template, whose own
-    // Lines the chain marks.
     std::string key = std::to_string(m_current ? m_current->value : 0) + '\n';
     m_hostSeen = m_hostState ? m_hostState() : std::string();
     key += m_hostSeen + '\n';
@@ -1500,10 +1416,9 @@ void TemplateEditorController::runPreview()
     for (const auto &st : snapshot->styles)
         for (const auto &f : st.fields)
             key += f + ',';
-    // And the file's unmarked generated Lines, which the matching run reads.
     key += '\n' + generatedKey(*document());
     if (key == m_previewSnapshotKey && !m_running) {
-        emit changed(); // canApply: the preview is this text's
+        emit changed();
         return;
     }
     m_previewSnapshotKey = key;
@@ -1528,31 +1443,19 @@ void TemplateEditorController::runChain(std::uint64_t generation)
     QPointer<TemplateEditorController> self = this;
     const auto matched = m_matched.find(source);
     std::string generated = unmarked.empty() ? std::string() : generatedKey(*document());
-    // It runs the templates as the file holds them, not the Line editor's
-    // draft: only once the user chose that state too (a draft not yet in
-    // previews without matching).
     const auto *s = session();
     const bool fileChosen = s && trustedIn(*s, documentKey(), false);
     if (!marked && !unmarked.empty() && fileChosen &&
         (matched == m_matched.end() || matched->second != generated)) {
-        // A file opened without KE1's marks: the selected-Lines run over the
-        // whole Document finds which generated Lines are the source's. It
-        // runs without the pending edit (the templates as they made the
-        // file's Lines; KE1 refuses others), and counts once it answers: a
-        // newer edit cancels it unanswered.
         application::Selection selection;
         selection.active = source;
         selection.selected = {source};
         const auto whole = application::macroSnapshotOf(*document(), selection);
         m_templater->preview(whole, [self, generation, whole, source,
                                      generated](application::KaraokeTemplaterPort::Preview p) {
-            // Another tab or a newer chain since: its Line ids are not ours.
             if (!self || generation != self->m_generation)
                 return;
             if (!p.result) {
-                // The templates no longer give the file's Lines: Apply would
-                // refuse as this run did. Nothing is matched, so the next
-                // run asks again.
                 self->m_previewSnapshotKey.clear();
                 self->previewed(generation, std::move(p), *self->m_previewSnapshot);
                 return;
@@ -1570,9 +1473,6 @@ void TemplateEditorController::runChain(std::uint64_t generation)
         });
         return;
     }
-    // The source's first Lines in such a file stand before those of the
-    // karaoke Lines after it (templatePreviewDocument): which those are is
-    // found first. The preview runs again once they are.
     const auto replaced = m_replaced.find(source);
     if (!marked && !unmarked.empty() && (replaced == m_replaced.end() || replaced->second.empty()) && s &&
         m_ownersRevision != s->revision() && askOwners())
@@ -1598,8 +1498,6 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
                                                      "The templater stopped before it finished.");
     } else {
         const QJsonObject report = reportOf(p.result->report);
-        // Every template this run reports; one it doesn't (now a part of a
-        // named template) has no counts of its own.
         m_stats.clear();
         for (const QJsonValue v : report.value(QLatin1String("templates")).toArray()) {
             const QJsonObject t = v.toObject();
@@ -1622,7 +1520,7 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
         }
     }
     m_previewKept = !worked && m_preview.has_value();
-    m_previewing = false; // the edit's problems are known
+    m_previewing = false;
     emit changed();
     emit previewChanged();
     emit videoChanged();
@@ -1630,15 +1528,12 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
         finishChain(generation);
         return;
     }
-    // The current template's own Lines: those a run without it lacks.
     application::MacroSnapshot without = snapshot;
     const auto at = std::ranges::find_if(without.dialogues, [&](const auto &d) { return d.id == m_current->value; });
     if (at == without.dialogues.end()) {
         finishChain(generation);
         return;
     }
-    // The source keeps its index; a `template line karaoke` source stays
-    // the karaoke Line, only its template goes.
     if (m_source && *m_source == *m_current)
         at->effect = "karaoke";
     else
@@ -1653,7 +1548,6 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
 void TemplateEditorController::markOwn(std::uint64_t generation, application::KaraokeTemplaterPort::Preview without)
 {
     if (without.result && m_preview && m_source) {
-        // A TLMode Line's are told apart by their translations.
         const auto keyOf = [](const core::LineRecord &l) {
             return core::legacy::assLineText(l) + u8'\x1f' + l.translation;
         };
@@ -1677,7 +1571,7 @@ void TemplateEditorController::finishChain(std::uint64_t generation)
 {
     m_running = false;
     m_previewing = false;
-    emit changed(); // canApply
+    emit changed();
     if (m_wantValues)
         runValues(generation);
 }
@@ -1691,12 +1585,8 @@ void TemplateEditorController::requestValues()
 
 void TemplateEditorController::runValues(std::uint64_t generation)
 {
-    // m_wantValues stays until the answer comes: a preview that replaces
-    // this run asks again when its chain ends.
     if (!session() || !m_source || !available() || !trusted() || m_ownersAsked)
         return;
-    // As the preview reads it: the draft, the pending fields and text (a
-    // `template line karaoke` source's own).
     const core::Document doc = pendingDocument();
     auto snapshot = application::templatePreviewSnapshot(doc, *m_source, pendingTexts());
     const core::LineRecord *source = nullptr;
@@ -1705,7 +1595,6 @@ void TemplateEditorController::runValues(std::uint64_t generation)
             source = l;
     if (!snapshot || !source)
         return;
-    // One syllable template that writes every variable, on the source alone.
     application::MacroDialogueLine probe;
     probe.comment = true;
     probe.effect = "template syl noblank notext";
@@ -1715,9 +1604,6 @@ void TemplateEditorController::runValues(std::uint64_t generation)
             probe.text += kValueSeparator;
         probe.text += std::string("$") + v.name;
     }
-    // The templates' places stay, so the source keeps its index ($li); a
-    // `template line karaoke` source is only a karaoke Line here, so its
-    // own template writes nothing before the probe's Line.
     for (auto &d : snapshot->dialogues)
         if (d.id != m_source->value)
             d = application::templatePlaceholder();
@@ -1728,8 +1614,6 @@ void TemplateEditorController::runValues(std::uint64_t generation)
     const core::LineId id = *m_source;
     m_running = true;
     m_templater->preview(*snapshot, [self, generation, id](application::KaraokeTemplaterPort::Preview p) {
-        // Another tab or a newer run since: the same Line id may be
-        // another Document's.
         if (!self || generation != self->m_generation)
             return;
         self->m_running = false;
@@ -1739,7 +1623,6 @@ void TemplateEditorController::runValues(std::uint64_t generation)
         const auto lines = application::templatePreviewLines(*p.result, id);
         if (lines.empty())
             return;
-        // A TLMode Line's are written into its translation.
         const auto &written = lines.front().translation.empty() ? lines.front().text : lines.front().translation;
         const QStringList values = qs(written).split(QLatin1Char(kValueSeparator));
         self->m_values.clear();
@@ -1770,7 +1653,6 @@ QVariantList TemplateEditorController::completions(const QString &text, int curs
         }
         return out;
     }
-    // Inside an expression: an odd number of `!` before the word.
     if (text.left(from).count(QLatin1Char('!')) % 2 == 1) {
         for (const auto &f : functions()) {
             const QString name = QString::fromLatin1(f.name);
@@ -1827,8 +1709,6 @@ QString TemplateEditorController::effectWithModifier(const QString &effect, cons
     const QStringList given = word.split(QLatin1Char(' '), Qt::SkipEmptyParts);
     if (given.isEmpty())
         return effect;
-    // Remove the modifier (with its argument) wherever it is; another
-    // modifier's argument (`fx loop`) is not one.
     QStringList kept;
     for (qsizetype k = 0; k < w.modifiers.size(); ++k) {
         const bool argument = takesArgument(w.modifiers[k]) && k + 1 < w.modifiers.size();
@@ -1854,9 +1734,9 @@ bool TemplateEditorController::hasModifier(const QString &effect, const QString 
         if (sameModifier(modifiers[k], given.front()))
             return true;
         if (takesArgument(modifiers[k]))
-            ++k; // its argument, not a modifier
+            ++k;
     }
     return false;
 }
 
-} // namespace hikari::ui
+}

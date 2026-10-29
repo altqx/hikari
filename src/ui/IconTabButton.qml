@@ -1,6 +1,3 @@
-// K1: a tab button with an icon of the set beside its text, in the
-// appearance's colours (disabled while disabled; hover and press leave the
-// icon as it is). Directional icons mirror in right-to-left layouts.
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui

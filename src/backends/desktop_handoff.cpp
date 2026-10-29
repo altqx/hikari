@@ -31,7 +31,7 @@ Routes current()
     return installed();
 }
 
-} // namespace
+}
 
 bool openUrl(const QUrl &url)
 {
@@ -60,4 +60,4 @@ Routes replaceRoutes(Routes routes)
     return std::exchange(installed(), std::move(routes));
 }
 
-} // namespace hikari::backends::desktop
+}

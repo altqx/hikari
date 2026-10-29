@@ -1,11 +1,3 @@
-// Y4, PU6 (#308): legacy SubsResampleDialog ("Change resolution") as
-// Subtitles > Resample subtitles, on DG1's frame, fixed, modal to the main
-// window. Both rows get From subtitles and From video (legacy one button a
-// row), each off while its values are already there, From video also
-// without a video (its tooltip says so); the hint under the target says the
-// scale. "Aspect ratio" (legacy "Resample options", No stretch / Stretch)
-// shows only when the aspect ratio changes; Resample is off while both
-// resolutions match (legacy OK did nothing).
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Conversion"
 import QtQuick
@@ -17,16 +9,13 @@ DialogWindow {
     id: dialog
     objectName: "resampleDialog"
     required property var app
-    title: qsTr("Resample subtitles") // the menu command's name (legacy: "Change resolution")
+    title: qsTr("Resample subtitles")
     dialogId: "resample"
     modal: true
     defaultButton: resampleButton
     initialFocus: targetWidth
     property var initial: ({})
-    // Stretch chosen (legacy's "Stretch" radio).
     property bool stretch: false
-    // The Document it opened for; another editing target closes it (as
-    // ScriptPropertiesDialog).
     property var document: 0
     Connections {
         target: dialog.app
@@ -35,8 +24,6 @@ DialogWindow {
                 dialog.reject()
         }
     }
-    // The open video; From video follows another one opened while this is
-    // open (the main window stays usable beside a floating panel).
     property var video: null
     Connections {
         target: dialog.video
@@ -63,11 +50,9 @@ DialogWindow {
         document = app.editingDocument()
         open()
     }
-    // The stretch choice only means something when the aspect ratio changes.
     readonly property bool aspectChanges: targetWidth.value / subsWidth.value !== targetHeight.value / subsHeight.value
     readonly property bool same: subsWidth.value === targetWidth.value && subsHeight.value === targetHeight.value
     function scale(v) { return String(Math.round(v * 1000) / 1000) }
-    // 16:9 for 1920 × 1080; 1.78:1 when the reduced terms are large.
     function ratio(w, h) {
         let a = w, b = h
         while (b) [a, b] = [b, a % b]
@@ -76,9 +61,6 @@ DialogWindow {
     function resample() {
         if (same || app.editingDocument() !== document)
             return
-        // The subtitles' resolution can change while this is open (the main
-        // window stays usable beside a floating panel): source sizes left as
-        // they opened follow it and are shown before anything is resampled.
         const v = app.resampleValues()
         if (v.subsWidth !== initial.subsWidth || v.subsHeight !== initial.subsHeight) {
             const untouched = subsWidth.value === initial.subsWidth && subsHeight.value === initial.subsHeight
@@ -100,9 +82,7 @@ DialogWindow {
         color: Theme.muted
         font: dialog.fontAt(12)
     }
-    // From subtitles / From video: sets the row to `w` × `h`. `why` turns
-    // it off and says why on hover, over the wrapper (a disabled button gets
-    // no hover).
+    // A disabled Button gets no hover, so the wrapper shows the tooltip.
     component FromButton: Item {
         id: from
         required property SpinBox widthBox

@@ -1,7 +1,3 @@
-// PK1 (#301): a choice that loses work or deletes something ("Delete",
-// "Don't save"), outlined with its text in the theme's danger role. It is
-// never the default: the safe answer is (PrimaryButton). Hover and press
-// tint the fill; keyboard focus is the 1-wide ring (FocusRing).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Templates as T

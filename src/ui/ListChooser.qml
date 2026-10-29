@@ -1,19 +1,5 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.MainWindow"
-// PK1 (#301): the list chooser, one for the three 220 x 160 list dialogs
-// (legacy HikariListBox: the audio track, the MKV subtitle track and the
-// spelling suggestions). By the small forms rule a popover at the control
-// or text that asked for it (a misspelled word), else a compact window on
-// DG1's frame (a file with several tracks, opened from a menu or a drop).
-// The first row is chosen at the start; the arrows choose, Enter takes
-// the row, and so does a click in the popover or a double click in the
-// window; Esc, Cancel or a press outside
-// the popover take none.
-//
-// choose(options, done): title, text (the window's main line), rows
-// (strings, or {text, detail}), current, acceptText (the window's button),
-// anchor (an item: the popover under it), at (a rectangle in the
-// anchor: the popover under that part of it, a word); done(row), done(-1) when none was taken.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -30,9 +16,6 @@ Item {
     property var done: null
     readonly property bool opened: popover.visible || (compactWindow !== null && compactWindow.visible)
     readonly property bool inPopover: popover.visible
-    // The compact window, made at its first opening (null till then): the
-    // program holds a chooser for each use, and every window made at the
-    // start costs it (on Windows a native event filter apiece).
     readonly property DialogWindow compactWindow: compactLoader.item
     visible: false
 
@@ -82,7 +65,6 @@ Item {
         title: chooser.title
         padding: 4
         onReverted: chooser.none()
-        // A press outside takes nothing.
         onKept: if (chooser.done !== null) chooser.none()
         ChoiceList { id: popoverList; host: chooser; Layout.preferredWidth: 200 }
     }
@@ -136,9 +118,7 @@ Item {
         id: frame
         required property Item host
         property bool framed: false
-        // Eight rows show; more scroll, with the bar beside the rows (not
-        // over their details). The rows' count decides, not the heights,
-        // which settle a frame apart and flashed the bar at the opening.
+        // ListView's contentHeight settles a frame late, so the row count decides whether it scrolls.
         readonly property bool scrolls: list.count > 8
         color: framed ? Theme.field : "transparent"
         border.width: framed ? 1 : 0
@@ -174,7 +154,6 @@ Item {
                 Accessible.role: Accessible.ListItem
                 Accessible.name: frame.host.textOf(modelData)
                 Accessible.description: frame.host.detailOf(modelData)
-                // In the popover a click takes the row; in the window it chooses it.
                 onClicked: {
                     if (frame.host.inPopover)
                         frame.host.take(index)

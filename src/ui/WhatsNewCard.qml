@@ -5,14 +5,10 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// SH3 (#223): the Home page's What's new (SH2's right-hand column, under the
-// list in a narrow window): "What's new" and the version the notes start
-// after, the release notes (ReleaseNotesView), and All release notes, which
-// opens GitHub's releases page. The page shows it only while there are notes.
 Rectangle {
     id: card
     objectName: "whatsNewCard"
-    required property var whatsNew // WhatsNew
+    required property var whatsNew
     property font smallFont: Qt.font({})
     color: Theme.panel
     border.color: Theme.line

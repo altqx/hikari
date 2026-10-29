@@ -2,17 +2,6 @@ pragma Translator: "HikariSub.Tabs"
 import QtQuick
 import Hikari.Ui
 
-// P9: two legacy questions around tabs and opening, on the kit's message box
-// (PU1-message-boxes):
-//  - "Close all tabs" asks first, Cancel being the default (legacy "All tabs
-//    will be closed, continue?" with No the default, Notebook::OnTabSel,
-//    Notebook.cpp:978-980); Close all tabs goes on to the close review of
-//    every tab (closeAllConfirmed).
-//  - Opening a video looks for subtitles named as the video beside it and
-//    asks (legacy "Load subtitles named "<name>"?", HikariSubFrame::OpenFile,
-//    HikariSubFrame.cpp:1342-1355): Open both loads them into the tab, then
-//    the video (subtitlesWithVideo); Video only, Esc or Close opens only the
-//    video.
 Item {
     id: commands
     required property var app
@@ -23,7 +12,7 @@ Item {
         const count = commands.app.tabs.length
         closeAllPrompt.ask({
             title: qsTr("Close all tabs"),
-            // English has no plural catalog: one says "the tab".
+            // English has no plural catalog, so the singular is its own string.
             text: count === 1 ? qsTr("Close the tab?") : qsTr("Close all %n tabs?", "", count),
             detail: qsTr("You are asked about unsaved changes next."),
             choices: [

@@ -1,7 +1,3 @@
-// E5: the translation-mode toggle buttons (legacy EditBox DoubtfulTL "Not
-// confirmed" and AutoMoveTags "Moving tags", EditBox.cpp:248-258, shown with
-// translation mode by SetTlMode, EditBox.cpp:1142-1144). TM1: Moving tags is
-// "Tags from original" (line_editor_controller.h moveTags).
 pragma Translator: "HikariSub.Translation"
 import QtQuick
 import QtQuick.Controls
@@ -18,10 +14,9 @@ RowLayout {
         checkable: true
         focusPolicy: Qt.NoFocus
         enabled: toggles.editor.editable
-        // SetLine: DoubtfulTL->SetValue(line->IsDoubtful()).
         checked: toggles.editor.unconfirmed
         onClicked: {
-            toggles.editor.toggleUnconfirmed() // OnDoubtfulTl: the selected Lines
+            toggles.editor.toggleUnconfirmed()
             checked = Qt.binding(() => toggles.editor.unconfirmed)
         }
     }
@@ -33,7 +28,7 @@ RowLayout {
         focusPolicy: Qt.NoFocus
         checked: toggles.editor.moveTags
         onClicked: {
-            toggles.app.setMoveTags(checked) // OnAutoMoveTags: the option, saved at once
+            toggles.app.setMoveTags(checked)
             checked = Qt.binding(() => toggles.editor.moveTags)
         }
     }

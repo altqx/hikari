@@ -1,12 +1,3 @@
-// P10 workflow through the real UI (Spix): the status bar's fields without
-// and with media. A subtitle Document (PlayRes 640 x 480) whose Script Info
-// names its video opens: only its resolution shows, as legacy's
-// SetSubsResolution left it. Accepting the "Associated files" offer opens the
-// video: its scale, zoom, duration, FPS, resolution, aspect ratio and file
-// name show (VideoBox::OpenVideo, SetScaleAndZoom, SetVideoResolution), and
-// the two resolutions, which differ, show in the warning colour. The first
-// field never names the editing target.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -40,7 +31,6 @@ const char *const kFields[] = {"statusText",          "statusVideoScale",      "
 
 class Workflow : public spix::TestServer {
 public:
-    // Each field's text before and after the video opened ("-" when hidden).
     std::map<std::string, std::string> before, after;
     std::string resolutionColour, subtitlesColour, fpsColour, warningColour;
     std::atomic<bool> finished{false};
@@ -66,8 +56,7 @@ protected:
             mouseClick("mainWindow/loadAssociated");
             for (int i = 0; i < 200 && field("statusVideoResolution") == "-"; ++i)
                 wait(100ms);
-            // (Y4's resolution question, a message box of its own since PU6,
-            // comes a moment after the video and changes none of the fields)
+            // MUST KILL: fixed 300 ms wait for the resolution question that follows the video
             wait(300ms);
             readFields(after);
             resolutionColour = getStringProperty("mainWindow/statusVideoResolution", "color");
@@ -103,7 +92,7 @@ constexpr char kSubtitles[] =
     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
     "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\r\n";
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

@@ -29,14 +29,12 @@ namespace {
 constexpr char kEnabled[] = "privacy.usageData";
 constexpr char kId[] = "privacy.usageDataId";
 
-// The table docs/analytics.md lists: each event's properties and what
-// each may hold. A string property is one of a closed list or matches a
-// pattern that leaves no room for text; nothing else is sent.
 struct Rule {
     enum Kind { OneOf, Pattern, Bool, Count, ListOf, Exceptions, Text, Settings } kind;
-    QStringList values;     // OneOf, ListOf
-    QString pattern;        // Pattern
-    int max = 0;            // Text: its length; Settings: each value's
+    QStringList values;
+    QString pattern;
+    // MUST KILL: max is Text's length cap but Settings' entry-count cap.
+    int max = 0;
 };
 
 Rule oneOf(QStringList values)
@@ -56,7 +54,6 @@ const QStringList kSessionBuckets{QStringLiteral("<1m"),    QStringLiteral("1-5m
                                   QStringLiteral("15-60m"), QStringLiteral("1-3h"), QStringLiteral("3h+")};
 const QStringList kLayouts{QStringLiteral("editing"),     QStringLiteral("timing"), QStringLiteral("translation"),
                            QStringLiteral("typesetting"), QStringLiteral("karaoke"), QStringLiteral("saved")};
-// The docks' uniqueNames (WorkspaceLayoutController::panelIds) and the ids sent.
 const std::map<QString, QString> kPanels{
     {QStringLiteral("Video"), QStringLiteral("video")},
     {QStringLiteral("Audio"), QStringLiteral("audio")},
@@ -73,7 +70,6 @@ const std::map<QString, QString> kPanels{
     {QStringLiteral("Template"), QStringLiteral("template")},
     {QStringLiteral("Spellchecker"), QStringLiteral("spellchecker")},
 };
-// DialogWindow's dialogIds; a script's dialog is automation_script.
 const QStringList kDialogs{
     QStringLiteral("about"),          QStringLiteral("allTagsEdition"), QStringLiteral("aspectRatio"),
     QStringLiteral("autosaves"),      QStringLiteral("columns"),        QStringLiteral("conversion"),
@@ -154,11 +150,8 @@ const Table &table()
             {QStringLiteral("outcome"), oneOf({QStringLiteral("ready"), QStringLiteral("failed")})},
             {QStringLiteral("kind"), oneOf({QStringLiteral("file"), QStringLiteral("dummy")})}};
         t.emplace(QStringLiteral("video_opened"), media);
-        // Only audio comes from a video.
         media[QStringLiteral("kind")] = oneOf({QStringLiteral("file"), QStringLiteral("from_video"), QStringLiteral("dummy")});
         t.emplace(QStringLiteral("audio_opened"), media);
-        // CR1 (#452): a freeze is error when the window came back, else
-        // fatal; report_id ties it to the crash_report sent with it.
         t.emplace(QStringLiteral("$exception"),
                   std::map<QString, Rule>{{QStringLiteral("$exception_list"), {Rule::Exceptions, {}, {}}},
                                           {QStringLiteral("$exception_level"),
@@ -166,9 +159,6 @@ const Table &table()
                                           {QStringLiteral("crashed_version"), pattern(kVersion)},
                                           {QStringLiteral("report_id"), pattern(kUuid)},
                                           {QStringLiteral("freeze_seconds"), {Rule::Count, {}, {}}}});
-        // CR1: only ever sent by the user's Send report, after the window
-        // showed all of it: the note as typed, the Log's scrubbed lines and
-        // the settings summary (crash_report.h).
         std::map<QString, Rule> report{
             {QStringLiteral("report_id"), pattern(kUuid)},
             {QStringLiteral("kind"), oneOf({QStringLiteral("crash"), QStringLiteral("freeze")})},
@@ -189,7 +179,6 @@ bool matches(const QString &value, const QString &p)
     return QRegularExpression(p).match(value).hasMatch();
 }
 
-// $exception_list as appStarted() builds it from a crash record.
 bool exceptionsConform(const QJsonValue &value)
 {
     static const QString type = QStringLiteral("^(SIG[A-Z]{2,6}|[A-Z_]{4,40}|0x[0-9a-f]{1,8})$");
@@ -253,7 +242,6 @@ bool conformsTo(const Rule &rule, const QJsonValue &value)
     case Rule::Text:
         return value.isString() && value.toString().size() <= rule.max;
     case Rule::Settings: {
-        // crash_report.h's summary: short ids, each a short plain value.
         static const QRegularExpression id(QStringLiteral("^[a-z ]{1,32}$"));
         static const QRegularExpression plain(QStringLiteral("^[A-Za-z0-9_.+, -]{1,64}$"));
         const QJsonObject o = value.toObject();
@@ -296,7 +284,7 @@ QString arch()
     return cpu == QLatin1String("arm64") ? cpu : QStringLiteral("other");
 }
 
-} // namespace
+}
 
 bool Analytics::doNotTrack(const QByteArray &value)
 {
@@ -312,7 +300,6 @@ Analytics::Analytics(ui::SettingsStore &settings, Config config, QObject *parent
     m_counting = active();
     m_flushTimer.setInterval(m_config.flushIntervalMs);
     connect(&m_flushTimer, &QTimer::timeout, this, &Analytics::flush);
-    // The queue's file is written a little after it changes, not per event.
     m_saveTimer.setSingleShot(true);
     m_saveTimer.setInterval(5000);
     connect(&m_saveTimer, &QTimer::timeout, this, &Analytics::save);
@@ -322,7 +309,7 @@ Analytics::Analytics(ui::SettingsStore &settings, Config config, QObject *parent
         QTimer::singleShot(m_config.firstFlushMs, this, &Analytics::flush);
         m_flushTimer.start();
     } else {
-        clear(); // a queue a run with sending on left
+        clear();
     }
 }
 
@@ -350,7 +337,6 @@ void Analytics::settingChanged(const QString &id)
     const bool was = active();
     m_enabled = m_settings.boolean(kEnabled);
     if (!m_enabled) {
-        // Off: nothing more is sent, what was queued goes, and so does the id.
         clear();
         m_settings.set(kId, QString());
     }
@@ -358,7 +344,6 @@ void Analytics::settingChanged(const QString &id)
         return;
     m_counting = active();
     if (active()) {
-        // app_closed counts from here: nothing of the time it was off.
         m_session.start();
         m_flushTimer.start();
     } else {
@@ -445,7 +430,6 @@ void Analytics::enqueue(QJsonObject event)
 
 void Analytics::trim()
 {
-    // Events in flight stay at the front; the oldest after them go first.
     while (m_queue.size() > kMaxEvents ||
            (m_queue.size() > 1 && QJsonDocument(m_queue).toJson(QJsonDocument::Compact).size() > kMaxBytes)) {
         if (m_inFlight < m_queue.size()) {
@@ -466,7 +450,6 @@ void Analytics::load()
         return;
     const QJsonArray saved = QJsonDocument::fromJson(file.readAll()).array();
     QJsonArray kept;
-    // What the file holds goes again only as it would have been queued.
     for (const QJsonValue &v : saved) {
         const QJsonObject e = v.toObject();
         QJsonObject own = e.value(QStringLiteral("properties")).toObject();
@@ -527,8 +510,7 @@ void Analytics::sendFinished()
         return;
     reply->deleteLater();
     const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    // Sent, or refused for good (a bad key, a batch it will never take):
-    // either way those events go. Anything else waits for the next send.
+    // A 4xx other than 408/429 is permanent: drop the batch as if sent.
     const bool done = (status >= 200 && status < 300) || (status >= 400 && status < 500 && status != 408 && status != 429);
     const int count = done ? m_inFlight : 0;
     for (int i = 0; i < count && !m_queue.isEmpty(); ++i)
@@ -543,7 +525,6 @@ void Analytics::sendFinished()
 
 void Analytics::commandUsed(const QString &symbol, const QString &via)
 {
-    // Only the hotkey table's commands, never a script's macro.
     if (application::hotkeyIdOf(symbol.toStdString()) == 0)
         return;
     if (via != QLatin1String("key") && via != QLatin1String("pointer"))
@@ -572,7 +553,6 @@ void Analytics::panelOpened(const QString &dock)
 
 void Analytics::dialogOpened(const QString &id)
 {
-    // A script's dialog is kept by a hash of the script and dialog (AutomationDialogController).
     const QString dialogId = id.startsWith(QLatin1String("automation.")) ? QStringLiteral("automation_script") : id;
     if (!kDialogs.contains(dialogId) || !active() || m_once.contains(QStringLiteral("dialog:") + dialogId))
         return;
@@ -605,7 +585,6 @@ void Analytics::gettingStartedSkipped()
 
 void Analytics::automationError(const QString &kind, const QString &bundledScript)
 {
-    // A bundled name's spaces become _ ("skew gradient.lua").
     capture(QStringLiteral("automation_error"),
             {{QStringLiteral("kind"), kind},
              {QStringLiteral("script"), bundledScript.isEmpty() ? QStringLiteral("user script")
@@ -644,7 +623,7 @@ void Analytics::mediaOpened(bool video, qint64 milliseconds, bool ready, const Q
 void Analytics::frameRendered(double milliseconds)
 {
     if (!m_counting.load(std::memory_order_relaxed))
-        return; // not while sending is off
+        return;
     m_frames[std::size_t(frameBucket(milliseconds))].fetch_add(1, std::memory_order_relaxed);
 }
 
@@ -687,7 +666,6 @@ bool Analytics::sendReport(const QList<std::pair<QString, QJsonObject>> &events)
             qWarning("Analytics: %s does not conform; not sent", qPrintable(event));
             return false;
         }
-    // With usage data off, an id for this report only, kept nowhere.
     QJsonObject base = active() ? common()
                                 : QJsonObject{{QStringLiteral("distinct_id"), QUuid::createUuid().toString(QUuid::WithoutBraces)},
                                               {QStringLiteral("$process_person_profile"), false},
@@ -739,7 +717,6 @@ void Analytics::quit(int timeoutMs)
     if (!m_reply)
         flush();
     if (m_reply) {
-        // The window is gone: wait a little for the last send, no more.
         QEventLoop loop;
         QTimer::singleShot(timeoutMs, &loop, &QEventLoop::quit);
         connect(m_reply, &QNetworkReply::finished, &loop, &QEventLoop::quit, Qt::QueuedConnection);
@@ -810,4 +787,4 @@ int Analytics::frameBucket(double ms)
     return 5;
 }
 
-} // namespace hikari::app
+}

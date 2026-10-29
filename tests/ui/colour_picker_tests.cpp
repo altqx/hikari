@@ -1,7 +1,3 @@
-// Y7: the colour picker's option, conversions, simple-picker recent colour
-// and screen sampler against legacy ColorPicker.cpp, colorspace.cpp and
-// EditBox.cpp at 20d647c4.
-
 #include "colour_picker_controller.h"
 #include "screen_sampler.h"
 #include "settings_store.h"
@@ -25,8 +21,6 @@ QVariantMap rgba(int r, int g, int b, int a = 0)
     return {{QStringLiteral("r"), r}, {QStringLiteral("g"), g}, {QStringLiteral("b"), b}, {QStringLiteral("a"), a}};
 }
 
-// A window whose every pixel encodes its own position: red the column,
-// green the row, blue 77.
 class PositionWindow : public QRasterWindow {
 protected:
     void paintEvent(QPaintEvent *) override
@@ -46,15 +40,12 @@ QPoint sentPosition(QWindow &window, QPoint local, QEvent::Type type, Qt::MouseB
     return window.mapToGlobal(local);
 }
 
-} // namespace
+}
 
 class ColourPickerTest : public QObject {
     Q_OBJECT
 
 private slots:
-    // COLORPICKER_SWITCH_CLICKS (config.h:129, a Bool unset by default):
-    // the box writes the option at each click (ColorPicker.cpp:568-570) and
-    // a later run reads it (EditBox.cpp:865).
     void switchClicksIsAPersistedOption()
     {
         QTemporaryDir dir;
@@ -72,18 +63,12 @@ private slots:
         ui::SettingsStore again(ini);
         ui::ColourPickerController picker(again);
         QVERIFY(picker.switchClicks());
-        // "Set default" puts the option back and the box follows.
         QSignalSpy changed(&picker, &ui::ColourPickerController::switchClicksChanged);
         again.resetAll();
         QVERIFY(!picker.switchClicks());
         QVERIFY(changed.count() >= 1);
     }
 
-    // DialogColorPicker::AddRecent without a created picker
-    // (ColorPicker.cpp:755-766): the option text is edited, not the list.
-    // Y7-recent-option-text (approved departure): the text stays the
-    // colours one space apart, and a colour that comes again moves to the
-    // front without costing a full option its last colour.
     void simplePickerRecentEditsTheOptionText()
     {
         ui::SettingsStore store;
@@ -92,37 +77,28 @@ private slots:
         picker.addRecentFromSimplePicker(rgba(0, 255, 0));
         QCOMPARE(store.text("colourPicker.recentColours"), QStringLiteral("&H0000FF00& &H000000FF& &H00FF0000&"));
         QCOMPARE(picker.recent().first().toMap().value(QStringLiteral("g")).toInt(), 255);
-        // The last colour coming again: no trailing space left behind.
         picker.addRecentFromSimplePicker(rgba(0, 0, 255));
         QCOMPARE(store.text("colourPicker.recentColours"), QStringLiteral("&H00FF0000& &H0000FF00& &H000000FF&"));
-        // From an empty option: the one colour, no trailing space (legacy
-        // wrote "&H04030201& ").
         store.set("colourPicker.recentColours", QString());
         picker.addRecentFromSimplePicker(rgba(1, 2, 3, 4));
         QCOMPARE(store.text("colourPicker.recentColours"), QStringLiteral("&H04030201&"));
-        // An option text with runs of spaces is read as its colours.
         store.set("colourPicker.recentColours", QStringLiteral("  &H000000FF&   &H04030201&  "));
         picker.addRecentFromSimplePicker(rgba(1, 2, 3, 4));
         QCOMPARE(store.text("colourPicker.recentColours"), QStringLiteral("&H04030201& &H000000FF&"));
 
-        // A full option whose first colour comes again keeps all 32 colours
-        // (legacy left "&H00000000&  &H00000001&", reached 32 spaces and
-        // lost &H0000001F&).
         QStringList full;
         for (int i = 0; i < 32; ++i)
             full << QStringLiteral("&H000000%1&").arg(i, 2, 16, QLatin1Char('0')).toUpper();
         store.set("colourPicker.recentColours", full.join(QLatin1Char(' ')));
-        picker.addRecentFromSimplePicker(rgba(0, 0, 0)); // "&H00000000&", the first one
+        picker.addRecentFromSimplePicker(rgba(0, 0, 0));
         QString text = store.text("colourPicker.recentColours");
         QCOMPARE(text, full.join(QLatin1Char(' ')));
         QCOMPARE(picker.recent().at(31).toMap().value(QStringLiteral("r")).toInt(), 0x1f);
-        // A middle colour comes again: moved to the front, the rest in order.
         picker.addRecentFromSimplePicker(rgba(0x10, 0, 0));
         text = store.text("colourPicker.recentColours");
         QStringList moved = full;
         moved.move(16, 0);
         QCOMPARE(text, moved.join(QLatin1Char(' ')));
-        // A new colour on a full option: the 32 newest kept.
         picker.addRecentFromSimplePicker(rgba(0, 0, 0x7f));
         text = store.text("colourPicker.recentColours");
         QCOMPARE(text.count(QLatin1Char(' ')), 31);
@@ -130,16 +106,12 @@ private slots:
         QVERIFY(!text.contains(QStringLiteral("&H0000001F&")));
         QVERIFY(!text.contains(QStringLiteral("  ")));
 
-        // With a created picker (opened for a window) the list takes it, as
-        // AddColor does, and the option is the list's text.
         picker.opened(QStringLiteral("1"));
         picker.addRecentFromSimplePicker(rgba(0, 0, 0x1e));
         QCOMPARE(picker.recent().first().toMap().value(QStringLiteral("b")).toInt(), 0x1e);
         QCOMPARE(store.text("colourPicker.recentColours"), picker.storeToString());
     }
 
-    // The picker's fields through colorspace.cpp (the full fixtures are in
-    // hikari_core_colour_space_tests).
     void conversionsAreTheLegacyOnes()
     {
         ui::SettingsStore store;
@@ -154,16 +126,12 @@ private slots:
         QCOMPARE(picker.assText(rgba(255, 128, 0, 0x80), false), QStringLiteral("&H0080FF&"));
     }
 
-    // Wayland clients cannot read the screen: the sampler goes through the
-    // desktop's Screenshot portal, or reports itself unavailable without one
-    // (the #175 working assumption) and samples nothing.
     void routesFollowThePlatform()
     {
         QCOMPARE(ui::ScreenSampler::routeFor(QStringLiteral("xcb"), false, false).name, QStringLiteral("grab"));
         QCOMPARE(ui::ScreenSampler::routeFor(QStringLiteral("windows"), false, false).name, QStringLiteral("grab"));
         QCOMPARE(ui::ScreenSampler::routeFor(QStringLiteral("offscreen"), true, false).name, QStringLiteral("grab"));
         QCOMPARE(ui::ScreenSampler::routeFor(QStringLiteral("wayland"), true, true).name, QStringLiteral("portal"));
-        // X11 on XWayland: its root window shows no Wayland client.
         QCOMPARE(ui::ScreenSampler::routeFor(QStringLiteral("xcb"), true, true).name, QStringLiteral("portal"));
         QVERIFY(ui::ScreenSampler::routeFor(QStringLiteral("xcb"), true, false).name.isEmpty());
         const auto none = ui::ScreenSampler::routeFor(QStringLiteral("wayland-egl"), true, false);
@@ -184,9 +152,6 @@ private slots:
         QVERIFY(!sampler.available());
         QVERIFY(!sampler.unavailableReason().isEmpty());
         QVERIFY(sampler.sample(0, 0).isEmpty());
-        // Without the portal route, asking the portal answers with the reason
-        // (here Wayland's without the portal), or, on the grab route, that
-        // the portal is not in use.
         QSignalSpy failed(&sampler, &ui::ScreenSampler::portalFailed);
         sampler.pickFromPortal();
         QCOMPARE(failed.count(), 1);
@@ -200,11 +165,6 @@ private slots:
         QVERIFY(!sampler.portalBusy());
     }
 
-    // A portal request: busy until the desktop answers; the answer (a pick,
-    // a failure or the call's own error) comes while portalBusy is still
-    // true and portalBusy falls after it, so a listener that stops at the
-    // fall still hears it; a cancel only lets it fall. Each channel is the
-    // portal's 0-1 double rounded to 0-255, the alpha 0.
     void portalAnswersBeforeTheRequestIsOver()
     {
         ui::ScreenSampler sampler;
@@ -229,18 +189,18 @@ private slots:
         sampler.pickFromPortal();
         QCOMPARE(asked, 1);
         QVERIFY(sampler.portalBusy());
-        sampler.pickFromPortal(); // one request at a time
+        sampler.pickFromPortal();
         QCOMPARE(asked, 1);
         sampler.answerPortal(0, 1.0, 0.5, 0.0);
         QCOMPARE(order, (QStringList{QStringLiteral("busy"), QStringLiteral("picked"), QStringLiteral("over")}));
         QCOMPARE(picked, (QVariantMap{{"r", 255}, {"g", 128}, {"b", 0}, {"a", 0}}));
         QVERIFY(!sampler.portalBusy());
-        sampler.answerPortal(0, 0, 0, 0); // no request: nothing
+        sampler.answerPortal(0, 0, 0, 0);
         QCOMPARE(order.size(), 3);
 
         order.clear();
         sampler.pickFromPortal();
-        sampler.answerPortal(1); // cancelled
+        sampler.answerPortal(1);
         QCOMPARE(order, (QStringList{QStringLiteral("busy"), QStringLiteral("over")}));
 
         order.clear();
@@ -257,9 +217,6 @@ private slots:
         QCOMPARE(asked, 4);
     }
 
-    // The route this session resolves: on Wayland the desktop's Screenshot
-    // portal when it offers PickColor, otherwise unavailable with a reason;
-    // elsewhere the screen grab.
     void theRouteOfThisSession()
     {
         ui::ScreenSampler sampler;
@@ -273,9 +230,6 @@ private slots:
             QCOMPARE(sampler.route(), QStringLiteral("grab"));
     }
 
-    // DropFromScreenXY (ColorPicker.cpp:427-445): the 7x7 screen pixels
-    // centred on the point, row by row, read from the screen itself (here a
-    // window painting its own coordinates).
     void theScreenRouteReadsThePixelsAroundThePoint()
     {
         ui::ScreenSampler sampler;
@@ -301,10 +255,6 @@ private slots:
             }
     }
 
-    // MoveToMousePosition (config.cpp:1379-1400) with the frame included, as
-    // wxWindow::GetSize and Move take it: centred under the pointer and 15
-    // pixels below, kept inside the area; 30 pixels above the pointer when
-    // the bottom would leave it, at its bottom when the top then would.
     void moveToPointerFollowsLegacy()
     {
         PositionWindow window;
@@ -318,17 +268,13 @@ private slots:
 
         sampler.moveToPointer(&window, area.x() + 200, area.y() + 100);
         QTRY_COMPARE(window.frameGeometry().topLeft(), QPoint(area.x() + 200 - frame.width() / 2, area.y() + 115));
-        // Near the left edge: MID keeps it inside.
         sampler.moveToPointer(&window, area.x() + 3, area.y() + 100);
         QTRY_COMPARE(window.frameGeometry().x(), area.x());
-        // Near the right edge.
         sampler.moveToPointer(&window, area.right() - 2, area.y() + 100);
         QTRY_COMPARE(window.frameGeometry().x(), area.x() + area.width() - frame.width());
-        // Near the bottom: above the pointer.
         const int py = area.y() + area.height() - 20;
         sampler.moveToPointer(&window, area.x() + 200, py);
         QTRY_COMPARE(window.frameGeometry().y(), py + 15 - frame.height() - 30);
-        // A window taller than the area's room above: at the area's bottom.
         window.resize(120, area.height() - 40);
         QTRY_VERIFY(window.frameGeometry().height() > area.height() - 60);
         const QSize tall = window.frameGeometry().size();
@@ -336,9 +282,6 @@ private slots:
         QTRY_COMPARE(window.frameGeometry().y(), area.y() + area.height() - tall.height());
     }
 
-    // CaptureMouse: every mouse event of the window comes with its global
-    // position; the dropper keeps them, the simple picker lets those over
-    // itself through (OnLeaveWindow releases the capture there).
     void trackingReportsThePointer()
     {
         if (ui::ScreenSampler().route() != QLatin1String("grab"))
@@ -378,13 +321,6 @@ private slots:
         QCOMPARE(events.count(), 4);
     }
 
-    // Y7 on X11 under a window manager (openbox): the simple picker asked
-    // for the grab at show(), before the manager had mapped it; X refused
-    // it (GrabNotViewable) while Qt's XInput 2 grab reported it held, so
-    // the dropper never tracked the pointer outside the picker. The grab
-    // waits for the window's expose, is asked again when the window is
-    // exposed or activated and when the pointer leaves it (legacy
-    // OnLeaveWindow captures again), and on a timer while refused.
     void theGrabWaitsForTheWindowToBeExposed()
     {
         QList<bool> asked;
@@ -397,14 +333,12 @@ private slots:
             return !grab || granted;
         });
 
-        // Not yet exposed (the window manager has not mapped it): no ask.
         PositionWindow window;
         window.setGeometry(QRect(50, 60, 120, 90));
         QVERIFY(sampler.startTracking(&window, true));
         QVERIFY(sampler.tracking());
         QVERIFY(asked.isEmpty());
         QVERIFY(!sampler.holdsPointer());
-        // Mapped: its expose asks, and the grab holds.
         window.show();
         QVERIFY(QTest::qWaitForWindowExposed(&window));
         QTRY_VERIFY(sampler.holdsPointer());
@@ -412,9 +346,6 @@ private slots:
         QVERIFY(!asked.isEmpty());
         QVERIFY(!asked.contains(false));
 
-        // Held, as Qt reports it: no timer asks, but an expose, an
-        // activation and the pointer leaving for outside ask again; leaving
-        // for a spot inside (a child, a popup) and entering do not.
         QVERIFY(!sampler.regrabbing());
         qsizetype count = asked.size();
         QExposeEvent expose(QRegion(QRect(QPoint(), window.size())));
@@ -443,8 +374,6 @@ private slots:
         QCOMPARE(asked.size(), count + 1);
         QCOMPARE(asked.last(), false);
 
-        // Refused at first (the platform said no): the timer asks again
-        // until it holds.
         asked.clear();
         granted = false;
         QVERIFY(sampler.startTracking(&window, true));
@@ -458,15 +387,12 @@ private slots:
         QVERIFY(!sampler.regrabbing());
         sampler.stopTracking();
 
-        // A platform that never grants a grab (offscreen, Wayland): the
-        // timer gives up, and the events over the window still come.
         asked.clear();
         granted = false;
         QSignalSpy events(&sampler, &ui::ScreenSampler::pointerEvent);
         QVERIFY(sampler.startTracking(&window, false));
         QVERIFY(sampler.regrabbing());
-        // Timers are coarse on Windows (about 16 ms): wait for the timer to
-        // stop, not for a fixed time.
+        // Windows timers are coarse (about 16 ms): wait for the timer to stop, not a fixed time.
         QTRY_VERIFY_WITH_TIMEOUT(!sampler.regrabbing(),
                                  4 * ui::ScreenSampler::kRegrabTries * ui::ScreenSampler::kRegrabInterval);
         const qsizetype tries = asked.count(true);

@@ -1,6 +1,3 @@
-// E2 / LE5 (#230): a custom tag button as the Line editor's strip shows it:
-// its icon when it has one (the name is then its accessible name and
-// tooltip), else its name.
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
@@ -9,7 +6,6 @@ ToolButton {
     id: button
     property string iconRole
     property string tip: text
-    // An icon-only button (no name) is named by its icon.
     Accessible.name: text.length > 0 ? text : IconTheme.label(iconRole)
     ToolTip.visible: hovered && tip.length > 0
     ToolTip.text: tip

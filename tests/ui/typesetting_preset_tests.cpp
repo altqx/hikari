@@ -1,10 +1,3 @@
-// TP1 (#274): the Typesetting preset is an arrangement of its own (the
-// owner-approved mockup, 2026-10-22): Video leading the upper row with Styles
-// on its right, the Line editor beside a short Grid below, Audio closed, on a
-// fresh profile and after Reset this layout. The Styles panel lists the
-// editing target's Styles, applies one to the selected Lines with Enter or a
-// double click, filters as you type, and selects the Lines using a Style.
-
 #include "hikari/app/application.h"
 #include "hikari/application/edit_session.h"
 
@@ -36,7 +29,6 @@ using namespace hikari;
 
 namespace {
 
-// An ASS file with four Styles; "Sign" is used by two Lines, "Unused" by none.
 QString writeSubtitles(const QString &path)
 {
     QFile f(path);
@@ -60,7 +52,7 @@ QString writeSubtitles(const QString &path)
     return path;
 }
 
-} // namespace
+}
 
 class TypesettingPresetTest : public QObject {
     Q_OBJECT
@@ -92,7 +84,7 @@ class TypesettingPresetTest : public QObject {
     QQuickWindow *window() const { return qobject_cast<QQuickWindow *>(engine->rootObjects().first()); }
     template <typename T = QQuickItem> T *item(const QString &name) const { return window()->findChild<T *>(name); }
     template <typename T = QQuickItem> T *item(const char *name) const { return item<T>(QLatin1String(name)); }
-    // A list row's item: delegates are in the visual tree only.
+    // ListView delegates are in the visual tree only, not in findChild's object tree.
     static QQuickItem *findVisual(QQuickItem *from, const QString &name)
     {
         if (from->objectName() == name)
@@ -121,7 +113,6 @@ class TypesettingPresetTest : public QObject {
         const auto &style = session()->document().lines()[std::size_t(row)]->style;
         return QString::fromUtf8(reinterpret_cast<const char *>(style.data()), qsizetype(style.size()));
     }
-    // `rows` selected, the first active, as the Grid would leave them.
     void select(std::initializer_list<int> rows)
     {
         std::set<core::LineId> ids;
@@ -147,9 +138,6 @@ class TypesettingPresetTest : public QObject {
                 out << QLatin1String(name);
         return out;
     }
-    // The Typesetting arrangement: its panels, where they are and their
-    // proportions (the approved mockup's A: Styles right of the video, the
-    // Line editor beside the Grid below, the upper row the larger).
     void verifyTypesettingArrangement()
     {
         QTRY_COMPARE(openPanels(), (QStringList{"videoDock", "editorDock", "gridDock", "stylesDock"}));
@@ -159,29 +147,22 @@ class TypesettingPresetTest : public QObject {
         const QRectF styles = sceneRect("stylesPanel");
         const QRectF editor = sceneRect("editorPanel");
         const QRectF grid = sceneRect("gridPanel");
-        // Styles on the video's right, in the same row, narrower.
         QVERIFY2(styles.left() > video.right() - 1, qPrintable(QStringLiteral("%1 %2").arg(styles.left()).arg(video.right())));
-        // (The bodies: the Styles header holds its tools and is the taller.)
         QVERIFY(qAbs(styles.bottom() - video.bottom()) < 2);
         QVERIFY(styles.width() < video.width() / 2);
         QVERIFY(styles.width() > 150);
-        // The Line editor on the Grid's left, both under the upper row.
         QVERIFY(editor.right() < grid.left() + 1);
         QVERIFY(qAbs(editor.bottom() - grid.bottom()) < 2);
         QVERIFY(editor.top() > video.bottom() - 1);
         QVERIFY(editor.top() > styles.bottom() - 1);
-        // The upper row is the larger, the lower one keeps the Line editor's rows.
         QVERIFY2(video.height() > 1.3 * editor.height(),
                  qPrintable(QStringLiteral("%1 vs %2").arg(video.height()).arg(editor.height())));
-        QTRY_VERIFY(!item("editorScroll")->property("overflows").toBool()); // its rows whole
-        QVERIFY2(item("lineInspector")->property("wide").toBool(), // LE1: its fields in two rows
+        QTRY_VERIFY(!item("editorScroll")->property("overflows").toBool());
+        QVERIFY2(item("lineInspector")->property("wide").toBool(),
                  qPrintable(QStringLiteral("%1 < %2").arg(item("lineInspector")->parentItem()->width())
                                 .arg(item("lineInspector")->property("wideMinimum").toReal())));
     }
 
-    // The default (Editing) arrangement, untouched by building Typesetting's:
-    // Video on the left of the upper row, Audio above the Line editor on its
-    // right, the Grid below.
     void verifyEditingArrangement()
     {
         const QRectF video = sceneRect("videoPanel");
@@ -207,23 +188,19 @@ private slots:
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 
-    // Choosing Typesetting on a fresh profile gives its own arrangement;
-    // Reset this layout and a restart give it back.
     void typesettingIsAnArrangementOfItsOwn()
     {
         start();
-        QCOMPARE(openPanels(), (QStringList{"videoDock", "audioDock", "editorDock", "gridDock"})); // Editing
+        QCOMPARE(openPanels(), (QStringList{"videoDock", "audioDock", "editorDock", "gridDock"}));
         verifyEditingArrangement();
         applyPreset("Typesetting");
         QCOMPARE(application->workspaceLayout().preset(), QStringLiteral("Typesetting"));
         verifyTypesettingArrangement();
-        // Changed by hand, then reset.
         QVERIFY(QMetaObject::invokeMethod(dock("stylesDock"), "close"));
         QVERIFY(QMetaObject::invokeMethod(window(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock("timingDock")))));
         QTRY_VERIFY(isOpen("timingDock"));
         QVERIFY(application->workspaceLayout().resetCurrentLayout());
         verifyTypesettingArrangement();
-        // Editing is unchanged, and Typesetting comes back after it.
         applyPreset("Editing");
         QTRY_COMPARE(openPanels(), (QStringList{"videoDock", "audioDock", "editorDock", "gridDock"}));
         applyPreset("Typesetting");
@@ -235,9 +212,6 @@ private slots:
         stop();
     }
 
-    // Audio, opened in Typesetting, comes above the Line editor (its place
-    // in Editing); the Styles panel opened in Editing tabs with the Line
-    // editor, docked.
     void closedPanelsKeepTheirPlaces()
     {
         start();
@@ -245,8 +219,9 @@ private slots:
         QTRY_VERIFY(isOpen("stylesDock"));
         QVERIFY(!isFloating("stylesDock"));
         QTRY_VERIFY(item("stylesPanel")->isVisible());
-        QCOMPARE(sceneRect("stylesPanel").left(), sceneRect("stylesPanel").left()); // laid out
-        QVERIFY(!item("editorPanel")->isVisible()); // the tab behind it
+        // MUST KILL: the panel compared with itself only to force its layout
+        QCOMPARE(sceneRect("stylesPanel").left(), sceneRect("stylesPanel").left());
+        QVERIFY(!item("editorPanel")->isVisible());
         applyPreset("Typesetting");
         verifyTypesettingArrangement();
         QVERIFY(QMetaObject::invokeMethod(window(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock("audioDock")))));
@@ -257,8 +232,6 @@ private slots:
         stop();
     }
 
-    // An arrangement saved before the Styles panel existed has no place for
-    // it; opening it then tabs it with the Line editor, as the default does.
     void stylesOpenWithTheEditorFromAnOlderArrangement()
     {
         start();
@@ -279,15 +252,12 @@ private slots:
         QTRY_VERIFY(isOpen("stylesDock"));
         QVERIFY(!isFloating("stylesDock"));
         QTRY_VERIFY(item("stylesPanel")->isVisible());
-        QVERIFY(!item("editorPanel")->isVisible()); // the tab behind it
+        QVERIFY(!item("editorPanel")->isVisible());
         QCOMPARE(docking()->tabCount(QStringLiteral("Styles")), docking()->tabCount(QStringLiteral("Editor")));
         QVERIFY(docking()->tabCount(QStringLiteral("Styles")) > 1);
         stop();
     }
 
-    // A preset is the window's arrangement at the window's size now:
-    // chosen after a resize, Typesetting (built before, or not) and Timing
-    // leave the main window as it is.
     void presetsKeepTheWindowsSize()
     {
         start();
@@ -310,8 +280,6 @@ private slots:
         stop();
     }
 
-    // A combo box over an array of objects with a text role (the Move
-    // panel window's Panel and Next to) shows each entry's text in its popup.
     void arrayChoicesShowTheirTextRole()
     {
         start();
@@ -335,23 +303,18 @@ private slots:
         stop();
     }
 
-    // The panel follows the editing target: with no Document left (its
-    // last tab closed) New is off and the empty state says why.
     void noDocumentTurnsNewOff()
     {
         start();
         openEpisode();
         applyPreset("Typesetting");
         QTRY_VERIFY(item<QObject>("stylesNew")->property("enabled").toBool());
-        // The last tab closed: no editing target, so no ASS Styles.
         QVERIFY(application->closeEditingTarget());
         QTRY_VERIFY(!item<QObject>("stylesNew")->property("enabled").toBool());
         QTRY_VERIFY(item("stylesEmpty")->property("text").toString().startsWith(QStringLiteral("No styles: the file")));
         stop();
     }
 
-    // Another tab whose Styles lack the chosen one: the panel chooses the
-    // active Line's Style there, not the first.
     void anotherTabChoosesItsActiveLinesStyle()
     {
         start();
@@ -373,7 +336,6 @@ private slots:
                 "Dialogue: 0,0:00:01.00,0:00:02.00,Song,,0,0,0,,la la\n");
         f.close();
         QVERIFY(application->openFile(path));
-        // It opens in a tab of its own, behind; shown, it is the editing target.
         const int last = int(application->workspace().tabs().size()) - 1;
         QCOMPARE(application->tabDocument(last), application->workspace().tabs().back().value);
         application->selectTab(last);
@@ -382,8 +344,6 @@ private slots:
         stop();
     }
 
-    // The chosen Style renamed in the Style manager stays chosen under its
-    // new name, whatever Style the current line uses.
     void aRenamedStyleStaysChosen()
     {
         start();
@@ -404,8 +364,6 @@ private slots:
         stop();
     }
 
-    // A Style named "" is listed, but neither the panel nor the Line
-    // editor's Style choice applies it.
     void anEmptyNamedStyleIsNotApplied()
     {
         start();
@@ -433,8 +391,6 @@ private slots:
         stop();
     }
 
-    // Two Styles of one name (a file may hold them): the commands act on the
-    // row chosen, not the first of that name.
     void aDuplicateNameActsOnTheRowChosen()
     {
         start();
@@ -463,13 +419,11 @@ private slots:
         QTRY_COMPARE(panel->property("rows").toList().size(), 2);
         const auto rows = panel->property("rows").toList();
         QCOMPARE(rows.at(0).toMap().value("name").toString(), QStringLiteral("Sign"));
-        QCOMPARE(rows.at(0).toMap().value("font").toString(), QStringLiteral("Arial")); // the first one stays
+        QCOMPARE(rows.at(0).toMap().value("font").toString(), QStringLiteral("Arial"));
         QCOMPARE(rows.at(1).toMap().value("name").toString(), QStringLiteral("Other"));
         stop();
     }
 
-    // The rows: the editing target's Styles in order, with their font, size,
-    // colours and how many Lines use each; the current line's style marked.
     void theStylesPanelListsTheDocumentsStyles()
     {
         start();
@@ -492,23 +446,18 @@ private slots:
         QCOMPARE(rows[0].toMap().value(QStringLiteral("lines")).toInt(), 2);
         QCOMPARE(rows[3].toMap().value(QStringLiteral("lines")).toInt(), 0);
         QVERIFY(rows[1].toMap().value(QStringLiteral("italic")).toBool());
-        QCOMPARE(rows[3].toMap().value(QStringLiteral("primary")).value<QColor>().alpha(), 0x7F); // &H80: half transparent
-        // The current Line (the first, Default) marks its Style, and the
-        // mark follows the active Line.
+        QCOMPARE(rows[3].toMap().value(QStringLiteral("primary")).value<QColor>().alpha(), 0x7F);
         const auto marked = [this](const char *mark) { return rowItem(mark) && rowItem(mark)->isVisible(); };
         QTRY_VERIFY(marked("stylesLineMark0"));
         select({2});
-        QTRY_VERIFY(marked("stylesLineMark1")); // Italic
+        QTRY_VERIFY(marked("stylesLineMark1"));
         QVERIFY(!marked("stylesLineMark0"));
-        // The rows follow the Document: a Line's Style changed elsewhere.
-        QVERIFY(application->editor().chooseStyle(QStringLiteral("Unused"))); // the active Line, Italic
+        QVERIFY(application->editor().chooseStyle(QStringLiteral("Unused")));
         QTRY_COMPARE(panel->property("rows").toList()[3].toMap().value(QStringLiteral("lines")).toInt(), 1);
         QCOMPARE(panel->property("rows").toList()[1].toMap().value(QStringLiteral("lines")).toInt(), 0);
         stop();
     }
 
-    // PV1 (#398): each row's sample draws the preview text (styles.previewText,
-    // its characters without override tags) and follows a change at once.
     void theStylesPanelSamplesDrawThePreviewText()
     {
         start();
@@ -516,7 +465,6 @@ private slots:
         applyPreset("Typesetting");
         verifyTypesettingArrangement();
         QTRY_COMPARE(item<QObject>("stylesTool")->property("rows").toList().size(), 4);
-        // A row made again while the list is read again: asked each time.
         const auto sample = [this](const char *name) {
             QQuickItem *text = rowItem(name);
             return text ? text->property("text").toString() : QString();
@@ -529,8 +477,6 @@ private slots:
         stop();
     }
 
-    // Enter or a double click applies the chosen Style to the selected Lines
-    // as one undo step; the row menu selects the Lines using a Style.
     void aStyleIsAppliedToTheSelectedLines()
     {
         start();
@@ -539,34 +485,29 @@ private slots:
         verifyTypesettingArrangement();
         auto *panel = item<QObject>("stylesTool");
         QTRY_COMPARE(panel->property("rows").toList().size(), 4);
-        // Lines 1 and 3 (Default, Italic) selected.
         select({0, 2});
         auto *list = item("stylesList");
         list->forceActiveFocus(Qt::TabFocusReason);
         QTRY_VERIFY(list->hasActiveFocus());
-        list->setProperty("currentIndex", 2); // Sign
+        list->setProperty("currentIndex", 2);
         QCOMPARE(panel->property("chosen").toString(), QStringLiteral("Sign"));
         QTest::keyClick(window(), Qt::Key_Return);
         QTRY_COMPARE(lineStyle(0), QStringLiteral("Sign"));
         QCOMPARE(lineStyle(2), QStringLiteral("Sign"));
-        QCOMPARE(lineStyle(4), QStringLiteral("Default")); // not selected
+        QCOMPARE(lineStyle(4), QStringLiteral("Default"));
         QTRY_COMPARE(panel->property("rows").toList()[2].toMap().value(QStringLiteral("lines")).toInt(), 4);
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(lineStyle(0), QStringLiteral("Default"));
         QCOMPARE(lineStyle(2), QStringLiteral("Italic"));
-        // A double click on Unused.
         select({4});
         auto *row = rowItem("stylesRow3");
         QVERIFY(row);
         QTest::mouseDClick(window(), Qt::LeftButton, {}, row->mapToScene(QPointF(row->width() / 2, row->height() / 2)).toPoint());
         QTRY_COMPARE(lineStyle(4), QStringLiteral("Unused"));
-        // Select lines with this style.
         QVERIFY(application->selectLinesWithStyle(QStringLiteral("Sign")));
         QCOMPARE(selected(), (std::set<core::LineId>{lineId(1), lineId(3)}));
-        // A new range: Shift extends from the active Line, not an older anchor.
         QCOMPARE(session()->selection().anchor, session()->selection().active);
         QVERIFY(!session()->selection().extent);
-        // The active Line kept when it uses the Style, its old range dropped.
         select({3, 4});
         auto withRange = session()->selection();
         withRange.anchor = lineId(4);
@@ -576,16 +517,12 @@ private slots:
         QCOMPARE(session()->selection().active, std::optional<core::LineId>(lineId(3)));
         QCOMPARE(session()->selection().anchor, std::optional<core::LineId>(lineId(3)));
         QVERIFY(!session()->selection().extent);
-        // No Line uses it: as Select mode, the old selection goes and the
-        // active Line stays.
         QVERIFY(!application->selectLinesWithStyle(QStringLiteral("Italic") + QStringLiteral("x")));
         QVERIFY(selected().empty());
         QCOMPARE(session()->selection().active, std::optional<core::LineId>(lineId(3)));
         stop();
     }
 
-    // A Style's name and font are the file's text, never markup: an <img>
-    // in them is shown as typed and fetches nothing (Codex security review).
     void stylesAreShownAsPlainText()
     {
         start();
@@ -609,11 +546,9 @@ private slots:
         QCOMPARE(rowItem("stylesName0")->property("text").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));
         QVERIFY(plain(rowItem("stylesFont0")));
         QCOMPARE(rowItem("stylesFont0")->property("text").toString(), QStringLiteral("<b>Arial</b> · 48"));
-        // The Line editor's Style choice (its popup's items) too.
         auto *choice = item<QObject>("styleChoice");
         QVERIFY(choice);
         QTRY_COMPARE(choice->property("currentText").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));
-        // Its popup's items show the names (a list of strings, no textRole).
         auto *popup = choice->property("popup").value<QObject *>();
         QVERIFY(QMetaObject::invokeMethod(popup, "open"));
         QTRY_VERIFY(popup->property("opened").toBool());
@@ -627,7 +562,6 @@ private slots:
         QCOMPARE(firstText->property("text").toString(), first->property("text").toString());
         QVERIFY(QMetaObject::invokeMethod(popup, "close"));
         QTRY_VERIFY(!popup->property("visible").toBool());
-        // The Grid's Hide lines with styles menu: its items plain too.
         auto *grid = item("editingGrid");
         auto *gridMenu = item<QObject>("gridMenu");
         QTest::mouseClick(window(), Qt::RightButton, Qt::NoModifier, grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint());
@@ -646,7 +580,6 @@ private slots:
         QCOMPARE(shown->property("text").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));
         QVERIFY(QMetaObject::invokeMethod(gridMenu, "dismiss"));
         QTRY_VERIFY(!gridMenu->property("visible").toBool());
-        // The panels' headers too: their titles carry the file's name.
         const auto titles = window()->findChildren<QQuickItem *>(QStringLiteral("dockTitleText"));
         QVERIFY(!titles.isEmpty());
         for (QQuickItem *title : titles)
@@ -654,7 +587,6 @@ private slots:
         stop();
     }
 
-    // Typing in the list filters it; Esc in the filter clears it.
     void typingFiltersTheStyles()
     {
         start();
@@ -669,9 +601,7 @@ private slots:
         QTest::keyClick(window(), Qt::Key_T, Qt::NoModifier);
         QTRY_COMPARE(item("stylesFilter")->property("text").toString(), QStringLiteral("it"));
         QVERIFY(item("stylesFilter")->hasActiveFocus());
-        QCOMPARE(panel->property("shownRows").toList().size(), 1); // Italic
-        // A chosen Style the filter hides is not acted on: the commands wait
-        // for one that is shown.
+        QCOMPARE(panel->property("shownRows").toList().size(), 1);
         QVERIFY(item<QObject>("stylesDelete")->property("enabled").toBool());
         panel->setProperty("chosen", QStringLiteral("Unused"));
         QVERIFY(!item<QObject>("stylesApply")->property("enabled").toBool());
@@ -683,14 +613,10 @@ private slots:
         stop();
     }
 
-    // The header's buttons: icon-only, named on hover; Delete removes the
-    // chosen Style, Edit opens the Style manager on it.
     void theHeaderHoldsTheStyleCommands()
     {
         start();
         openEpisode();
-        // The default window's size, whatever the screen (a small one folds
-        // the header, checked below).
         window()->resize(1280, 800);
         QTRY_COMPARE(window()->width(), 1280);
         applyPreset("Typesetting");
@@ -703,14 +629,13 @@ private slots:
             auto *button = item<QObject>(name);
             QVERIFY2(button, name);
             QVERIFY2(!button->property("text").toString().isEmpty(), name);
-            QCOMPARE(button->property("display").toInt(), 0); // icon only (AbstractButton.IconOnly)
+            QCOMPARE(button->property("display").toInt(), 0);
         }
-        // A narrow panel folds them into More, which holds the same six.
         QVERIFY(docking()->resizeInLayout(QStringLiteral("Styles"), -(int(item("stylesPanel")->width()) - 150), 0, 0, 0));
         QTRY_VERIFY(item("stylesMore")->isVisible());
         QVERIFY(!buttons->isVisible());
         auto *more = item<QObject>("stylesMoreMenu");
-        QCOMPARE(more->property("count").toInt(), 8); // and two separators
+        QCOMPARE(more->property("count").toInt(), 8);
         QVERIFY(docking()->resizeInLayout(QStringLiteral("Styles"), 200, 0, 0, 0));
         QTRY_VERIFY(buttons->isVisible());
         panel->setProperty("chosen", QStringLiteral("Unused"));
@@ -724,7 +649,6 @@ private slots:
         QVERIFY(manager);
         QTRY_VERIFY(manager->property("visible").toBool());
         QVERIFY(manager->property("editing").toBool());
-        // Bringing the manager forward keeps the edit's selections.
         const auto list = [manager](const char *name) {
             const QVariant v = manager->property(name);
             return v.metaType() == QMetaType::fromType<QJSValue>() ? v.value<QJSValue>().toVariant().toList() : v.toList();
@@ -735,16 +659,12 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item<QObject>("stylesManager"), "clicked"));
         QCOMPARE(list("storeSelected"), (QVariantList{2, 5}));
         QCOMPARE(list("assSelected"), ass);
-        // The edit in progress is not replaced or changed under it from here.
         for (const char *name : {"stylesNew", "stylesEdit", "stylesDuplicate", "stylesDelete"})
             QVERIFY2(!item<QObject>(name)->property("enabled").toBool(), name);
         QVERIFY(!item<QObject>("stylesMenuDelete")->property("enabled").toBool());
         stop();
     }
 
-    // The Typesetting arrangement and the Styles panel (its header tools and
-    // the current Line's mark) in the four themes, for review: written to
-    // HIKARI_SURFACE_SHOT_DIR when it is set (typesetting-<part>-<theme>.png).
     void typesettingScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -757,7 +677,7 @@ private slots:
         openEpisode();
         applyPreset("Typesetting");
         verifyTypesettingArrangement();
-        QVERIFY(application->selectLinesWithStyle(QStringLiteral("Sign"))); // the two signs
+        QVERIFY(application->selectLinesWithStyle(QStringLiteral("Sign")));
         QTRY_VERIFY(rowItem("stylesLineMark2") && rowItem("stylesLineMark2")->isVisible());
         for (const auto code : ui::theme::kCodes) {
             const QString theme = ui::theme::codeName(code);
@@ -771,7 +691,6 @@ private slots:
                                   + QStringLiteral(".png")));
             };
             save(QStringLiteral("arrangement"), image);
-            // The panel with its header, a little around it.
             const QRectF styles = sceneRect("stylesPanel");
             const qreal dpr = image.devicePixelRatio();
             const QRect part = QRectF(styles.left() - 8, styles.top() - 40, styles.width() + 16, styles.height() + 48)

@@ -1,10 +1,3 @@
-// AN1 (#404): a program that installs the crash handler and crashes, for
-// crash_report_tests: `hikari_crash_probe <record> <segv|abort>`.
-// CR1 (#452): and one that freezes under the hang watchdog (300 ms):
-// `hikari_crash_probe <record> hang` freezes 1.5 s and exits 0 once the
-// watchdog saw it come back (printing the record's seconds and frames);
-// `hang-kill` freezes until it is killed.
-
 #include "hikari/app/crash_record.h"
 #include "hikari/app/hang_watchdog.h"
 
@@ -26,7 +19,6 @@
 
 namespace {
 
-// Out of line, so the crash has a frame of this program's own.
 #if defined(_MSC_VER)
 __declspec(noinline)
 #else
@@ -50,14 +42,13 @@ void freezeHere(unsigned long ms)
     g_after = 1; // no tail call: this frame stays on the stack
 }
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
     if (argc < 3)
         return 2;
 #ifdef _WIN32
-    // No Windows Error Reporting window on a CI runner.
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
 #else

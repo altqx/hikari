@@ -1,10 +1,3 @@
-// S1 workflow through the real UI (Spix): macros run from the shell on the
-// editing target. The bundled edgeblur applies as one undo step; a macro's
-// dialog is answered in the fixed QML window while the macro reads the open
-// video through host services; Cancel in the Automation panel's run status
-// (AM1: it opens with the run) and a lost helper leave the Document
-// unchanged and editable.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -46,7 +39,6 @@ QQuickWindow *g_window = nullptr;
 std::mutex g_mutex;
 std::vector<std::pair<bool, std::string>> g_completed;
 
-// Runs on the GUI thread and waits for it.
 template <typename F> void onGui(F f)
 {
     QMetaObject::invokeMethod(g_app, f, Qt::BlockingQueuedConnection);
@@ -81,7 +73,6 @@ protected:
         }
         return completions() >= count;
     }
-    // The progress card's Cancel shows.
     bool waitForCard()
     {
         for (int i = 0; i < 100; ++i) {
@@ -115,30 +106,24 @@ protected:
             invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
             enterKey("mainWindow/editingGrid", Qt::Key_Home, spix::KeyModifiers::None);
             wait(300ms);
-            // 1. The bundled edgeblur on the selected first Line, as one step.
             runMacro(edgeblur, 0);
-            observed.push_back(waitForCompletion(1) ? firstText() : "edgeblur did not finish"); // 0
-            // 2. A dialog macro: the fixed window, answered with OK.
+            observed.push_back(waitForCompletion(1) ? firstText() : "edgeblur did not finish");
             runMacro(fixture, 0);
             if (waitForItem("automationDialog/dialogButton0", 10s)) {
-                wait(500ms); // let the dialog's layout settle
+                // MUST KILL: fixed 500 ms wait for the dialog's layout
+                wait(500ms);
                 mouseClick("automationDialog/dialogButton0");
-                observed.push_back(waitForCompletion(2) ? firstText() : "dialog macro did not finish"); // 1
+                observed.push_back(waitForCompletion(2) ? firstText() : "dialog macro did not finish");
                 std::string log;
                 onGui([&] { log = g_app->automation().log().toStdString(); });
-                observed.push_back(log); // 2
+                observed.push_back(log);
             }
-            // 3. Cancel on the progress card, which opens after the macro's
-            // first second (AD3).
-            // The card is in the window's overlay, where Spix's paths do not
-            // reach: a press and release at its Cancel's centre. It opens at
-            // once: offscreen, the one-second timer was seen not to fire
-            // while the notice showed (it does under X11, and in
-            // automation_progress_tests, which have no window).
+            // MUST KILL: card delay forced to 0, the one-second timer did not fire offscreen
             onGui([] { g_app->automation().setCardDelay(0); });
             runMacro(fixture, 1);
             if (waitForCard()) {
                 wait(300ms);
+                // Spix paths don't reach the window's overlay, so the click is sent by hand.
                 onGui([] {
                     auto *cancel = g_window->findChild<QQuickItem *>(QStringLiteral("automationCancel"));
                     const QPointF at = cancel->mapToScene(QPointF(cancel->width() / 2, cancel->height() / 2));
@@ -148,9 +133,8 @@ protected:
                         QCoreApplication::sendEvent(g_window, &e);
                     }
                 });
-                observed.push_back(waitForCompletion(3) ? "cancelled" : "cancel did not finish"); // 3
+                observed.push_back(waitForCompletion(3) ? "cancelled" : "cancel did not finish");
             }
-            // 4. The helper is lost while the macro runs.
             runMacro(fixture, 1);
             wait(500ms);
             qint64 pid = 0;
@@ -163,14 +147,12 @@ protected:
 #else
             ::kill(static_cast<pid_t>(pid), SIGKILL);
 #endif
-            observed.push_back(waitForCompletion(4) ? "lost" : "loss did not finish"); // 4
+            observed.push_back(waitForCompletion(4) ? "lost" : "loss did not finish");
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
         if (!getErrors().empty())
             observed.clear();
-        // The macros left unsaved work: approve the quit by discarding it
-        // through the review (quit() closes the window, which reviews first).
         onGui([] {
             QVariantList choices;
             for (const QVariant &row : g_app->reviewClose(QStringLiteral("quit")))
@@ -182,7 +164,7 @@ protected:
     }
 };
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {

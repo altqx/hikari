@@ -1,13 +1,5 @@
 #pragma once
 
-// Plays a Line's half-open source range through the editor output (I3,
-// M50-audio): a resampled PCM stream from the media helper at the output's
-// format, kept a little ahead of the device. The report keeps three moments
-// apart: the logical stop (the last frame handed to the output queue), the
-// callback that took the last frame, and the estimated audible end (that
-// frame's DAC time). The callback itself keeps running on silence; its
-// cessation is not the end of the sound.
-
 #include "hikari/application/audio_output.h"
 #include "hikari/application/indexed_source.h"
 
@@ -61,12 +53,12 @@ private:
     bool m_requestInFlight = false;
     bool m_streamEnded = false;
     bool m_started = false;
-    std::uint64_t m_generation = 0; // ignores answers from an earlier audition
+    std::uint64_t m_generation = 0;
     std::uint64_t m_baseConsumed = 0;
     std::uint64_t m_baseUnderruns = 0;
-    std::int64_t m_written = 0;      // frames accepted by the output
-    std::vector<float> m_pending;    // a chunk the output had no room for yet
+    std::int64_t m_written = 0;
+    std::vector<float> m_pending;
     AuditionReport m_report;
 };
 
-} // namespace hikari::backends
+}

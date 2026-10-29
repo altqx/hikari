@@ -26,7 +26,7 @@ QVariantList listOf(const core::legacy::Channels &c)
     return {c.a, c.b, c.c};
 }
 
-} // namespace
+}
 
 ColourPickerController::ColourPickerController(QString settingsFile, QObject *parent)
     : QObject(parent), m_ownedSettings(std::make_unique<SettingsStore>(std::move(settingsFile))),
@@ -56,8 +56,6 @@ bool ColourPickerController::switchClicks() const
 
 void ColourPickerController::setSwitchClicks(bool on)
 {
-    // Options.SetBool at each click of the box; the store's change signal
-    // notifies.
     m_settings->set(kSwitchClicks, on);
 }
 
@@ -67,10 +65,6 @@ void ColourPickerController::addRecentFromSimplePicker(const QVariantMap &colour
         addRecent(colour);
         return;
     }
-    // Y7-recent-option-text (approved departure from ColorPicker.cpp:755-766,
-    // which edited the text in place and left double spaces that cost a full
-    // option its last colour): the option is read as its colours, the colour
-    // moves to the front and the 32 newest are written one space apart.
     const QString stringColor = assText(colour, true);
     QStringList colours{stringColor};
     for (const QString &token : m_settings->text(kKey).split(QLatin1Char(' '), Qt::SkipEmptyParts))
@@ -78,7 +72,6 @@ void ColourPickerController::addRecentFromSimplePicker(const QVariantMap &colour
             colours.append(token);
     const QString recentString = colours.join(QLatin1Char(' '));
     m_settings->set(kKey, recentString);
-    // Without a picker the list is the option (the next one reads it).
     loadFromString(recentString);
 }
 
@@ -131,8 +124,6 @@ void ColourPickerController::loadFromString(const QString &text)
 
 void ColourPickerController::opened(const QString &owner)
 {
-    // DialogColorPicker::Get: a picker kept for another window is destroyed,
-    // and the new one reads COLORPICKER_RECENT_COLORS.
     if (!m_owner || *m_owner != owner)
         loadFromString(m_settings->text(kKey));
     m_owner = owner;
@@ -140,8 +131,6 @@ void ColourPickerController::opened(const QString &owner)
 
 void ColourPickerController::settingsReset()
 {
-    // Without a DialogColorPicker the option is the list (AddRecent edits
-    // it); a created picker keeps its recent_box.
     if (!m_owner)
         loadFromString(m_settings->text(kKey));
 }
@@ -183,7 +172,6 @@ QVariantMap ColourPickerController::parse(const QString &text) const
 
 QString ColourPickerController::htmlText(const QVariantMap &colour) const
 {
-    // color_to_html (colorspace.cpp:370-373)
     const auto c = colourOf(colour);
     return QString::fromStdU16String(core::legacy::colourToHtml(c.r, c.g, c.b));
 }
@@ -193,4 +181,4 @@ void ColourPickerController::save() const
     m_settings->set(kKey, storeToString());
 }
 
-} // namespace hikari::ui
+}

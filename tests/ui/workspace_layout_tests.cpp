@@ -1,8 +1,3 @@
-// D1: the WorkspaceLayout service in the shell: a floated panel is saved in
-// Hikari's envelope and restored in the next session; a corrupt, newer or
-// foreign-engine layout is refused, kept for diagnosis and named in a
-// notice while the Editing layout is shown; Reset layout and the backup.
-
 #include "hikari/app/application.h"
 
 #include "docking.h"
@@ -47,9 +42,7 @@ class WorkspaceLayoutTest : public QObject {
         QVERIFY(!engine->rootObjects().isEmpty());
         auto *window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
         QVERIFY(QTest::qWaitForWindowExposed(window));
-        // The saved layout is restored once the arrangement settles (its
-        // first frame, D3), which on a real platform's render thread comes
-        // after the window is exposed.
+        // On a real platform's render thread the first frame comes after the window is exposed.
         QTRY_VERIFY(window->property("arrangementSettled").toBool());
     }
     void stop()
@@ -107,12 +100,6 @@ private slots:
                                                           &problem));
     }
 
-    // Closing the main window saves the arrangement it showed, and nothing
-    // after that does. The docking engine closes every panel when the window
-    // receives the close, before the window's closing handler ran, so that
-    // handler saved the docked panels closed (the next start showed an
-    // empty main window), and a save during the teardown (the periodic one,
-    // on the Windows gate at 22a2a452) wrote the window hidden as well.
     void theArrangementTheWindowClosedWithIsTheLastSaved()
     {
         start();
@@ -121,7 +108,7 @@ private slots:
         QTRY_VERIFY(dock("audioDock")->property("isFloating").toBool());
         window->close();
         QTRY_VERIFY(!window->isVisible());
-        // What the teardown does after the close, then a save.
+        // KDDockWidgets closes every panel when the window receives the close.
         for (const char *name : {"videoDock", "audioDock", "editorDock", "gridDock"})
             QVERIFY(QMetaObject::invokeMethod(dock(name), "close"));
         QTRY_VERIFY(!dock("gridDock")->property("isOpen").toBool());
@@ -148,7 +135,6 @@ private slots:
         QVERIFY(dock("audioDock")->property("isOpen").toBool());
         QVERIFY(QMetaObject::invokeMethod(dock("audioDock"), "close"));
         stop();
-        // Hikari's envelope around the engine's layout.
         QFile f(layoutFile());
         QVERIFY(f.open(QIODevice::ReadOnly));
         const QJsonObject saved = QJsonDocument::fromJson(f.readAll()).object();
@@ -160,7 +146,6 @@ private slots:
         QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());
         QVERIFY(!dock("audioDock")->property("isOpen").toBool());
         QVERIFY(application->workspaceLayout().notice().isEmpty());
-        // Reset layout returns to the Editing arrangement; the previous file is the backup.
         QVERIFY(application->workspaceLayout().resetLayout());
         QTRY_VERIFY(!dock("editorDock")->property("isFloating").toBool());
         QVERIFY(dock("audioDock")->property("isOpen").toBool());
@@ -170,19 +155,7 @@ private slots:
         stop();
     }
 
-    // D1 native gate (persist, sway, KWin and mutter): the floating Audio
-    // window came back at its size, but the panel in it 35 pixels (the
-    // header's height) shorter, an empty band below it. The engine rebuilds
-    // a floating window's layout at its layout area's size with the
-    // window's own title bar shown, hides the title bar once the layout has
-    // its lone group (whose tab bar is the header), and ignores the area's
-    // resizes while a restore runs, so the layout kept the area's height
-    // under the title bar. X11 (and this offscreen platform) resize the
-    // restored window's contents after the restore has ended, which fits
-    // the layout again; a Wayland window has its restored size at once and
-    // nothing follows. So the layout has to fill its area when the restore
-    // returns, before any later resize could mend it. With the drawn
-    // shadow, as on Wayland.
+    // KDDockWidgets ignores its area's resizes while a restore runs; X11 resizes afterwards, Wayland does not.
     void aFloatingPanelComesBackFillingItsWindow()
     {
         ui::dockchrome::overrideCompositing(true);
@@ -190,7 +163,6 @@ private slots:
         auto audio = [this] {
             return engine->rootObjects().first()->findChild<QQuickItem *>(QStringLiteral("audioPanel"));
         };
-        // The panel's bottom edge against its window's: the frame's inset.
         auto bottomGap = [](QQuickItem *panel) {
             return panel->window()->height() - qRound(panel->mapToScene(QPointF(0, panel->height())).y());
         };
@@ -224,8 +196,6 @@ private slots:
         QTRY_COMPARE(audio()->size(), panelBefore);
         QCOMPARE(bottomGap(audio()), ui::dockchrome::floatingShadow() + 1);
 
-        // The same restore within the session (Reset layout, then Restore
-        // the previous layout), checked as it returns.
         QVERIFY(application->workspaceLayout().resetLayout());
         QTRY_VERIFY(!dock("audioDock")->property("isFloating").toBool());
         QVERIFY(application->workspaceLayout().restoreBackup());
@@ -237,9 +207,6 @@ private slots:
         stop();
     }
 
-    // D1 native gate (monitor removal): a layout saved with a floating panel
-    // on a screen that is gone comes back with that panel's title bar on an
-    // available screen.
     void aFloatingPanelSavedOffScreenComesBackOnScreen()
     {
         if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
@@ -255,9 +222,7 @@ private slots:
         QJsonObject payload = saved.value(QStringLiteral("payload")).toObject();
         QJsonArray floating = payload.value(QStringLiteral("floatingWindows")).toArray();
         QCOMPARE(floating.size(), 1);
-        // Mostly where a second monitor right of the first used to be: a
-        // sliver of the window stays on this screen, which the engine's own
-        // restore accepts, but not enough of its title bar to take hold of.
+        // KDDockWidgets' restore accepts a window with only a sliver left on screen.
         const QRect screen = QGuiApplication::primaryScreen()->availableGeometry();
         QJsonObject window = floating.at(0).toObject();
         for (const char *key : {"geometry", "normalGeometry"}) {
@@ -298,7 +263,6 @@ private slots:
         QTRY_VERIFY(!dock("videoDock")->property("isOpen").toBool());
         for (const char *name : {"audioDock", "editorDock", "gridDock"})
             QVERIFY2(dock(name)->property("isOpen").toBool(), name);
-        // Reset layout returns to the chosen preset, not to Editing.
         QVERIFY(QMetaObject::invokeMethod(dock("videoDock"), "open"));
         QVERIFY(QMetaObject::invokeMethod(root, "applyPreset", Q_ARG(QVariant, application->workspaceLayout().preset())));
         QTRY_VERIFY(!dock("videoDock")->property("isOpen").toBool());
@@ -312,9 +276,6 @@ private slots:
         stop();
     }
 
-    // Native gate (X11, D3): the saved layout is restored at the first
-    // frame, so a save before then (the window closed at once) must not
-    // replace it with the default arrangement.
     void aSaveBeforeTheSavedLayoutIsRestoredKeepsIt()
     {
         start();
@@ -350,7 +311,6 @@ private slots:
         QTest::addColumn<QByteArray>("file");
         QTest::addColumn<QString>("reason");
         QTest::newRow("corrupt") << QByteArray("{\"schema\": 1, \"payl") << QStringLiteral("not a layout file");
-        // Valid for Hikari, but in a serialization format the engine refuses.
         const QByteArray good = ui::WorkspaceLayoutController::envelope(
             R"({"serializationVersion":1,"mainWindows":[{"uniqueName":"Classic"}],"allDockWidgets":[]})");
         QJsonObject newer = QJsonDocument::fromJson(good).object();
@@ -370,17 +330,13 @@ private slots:
         const QString notice = application->workspaceLayout().notice();
         QVERIFY2(notice.contains(reason), qPrintable(notice));
         QVERIFY(notice.contains(QStringLiteral("layout.json.unrestored")));
-        // The Editing layout is shown; the file is untouched and its copy kept.
         for (const char *name : {"videoDock", "audioDock", "editorDock", "gridDock"})
             QVERIFY2(dock(name)->property("isOpen").toBool(), name);
         QVERIFY(!dock("editorDock")->property("isFloating").toBool());
         QFile kept(layoutFile() + QStringLiteral(".unrestored"));
         QVERIFY(kept.open(QIODevice::ReadOnly));
         QCOMPARE(kept.readAll(), file);
-        // Saving resumes once the layout changes and replaces the file with a
-        // valid layout; the copy stays. The change is the user's (closing a
-        // panel): the notice's own re-layout of the window may not have
-        // happened yet when the session ends (it had not on Windows).
+        // On Windows the notice's own re-layout may not have happened when the session ends.
         QVERIFY(QMetaObject::invokeMethod(dock("audioDock"), "close"));
         QTRY_VERIFY(!dock("audioDock")->property("isOpen").toBool());
         stop();

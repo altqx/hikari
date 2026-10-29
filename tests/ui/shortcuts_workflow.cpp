@@ -1,8 +1,3 @@
-// O2 workflow through the real UI (Spix): File > Settings, the Hotkeys page,
-// Map hotkey on the first (selected) row, "Global Close current tab"
-// (GLOBAL_CLOSE_PAGE, Ctrl+W), the capture popover takes Ctrl+Shift+J, OK
-// installs it: Ctrl+W no longer closes the tab, Ctrl+Shift+J does.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -35,35 +30,34 @@ protected:
     void executeTest() override
     {
         if (waitForItem("mainWindow/editingGrid", 5s)) {
-            observed.push_back(title()); // 0: the opened file
+            observed.push_back(title());
             mouseClick("mainWindow/fileMenuBarItem");
             wait(300ms);
             mouseClick("mainWindow/settingsMenuItem");
             if (waitForItem("settingsDialog/settingsPages", 5s)) {
-                setStringProperty("settingsDialog/settingsPages", "currentIndex", "10"); // Hotkeys (PF1), after GR1's Spelling & grammar
+                // MUST KILL: magic page index 10 is the Hotkeys page
+                setStringProperty("settingsDialog/settingsPages", "currentIndex", "10");
                 wait(300ms);
-                observed.push_back(getStringProperty("settingsDialog/hotkeyList", "selectedRow")); // 1: the first row
+                observed.push_back(getStringProperty("settingsDialog/hotkeyList", "selectedRow"));
                 mouseClick("settingsDialog/hotkeyMap");
-                // PK1 (#301): the capture opens as a popover at Map hotkey,
-                // in the Settings window (PF1); wait until it is shown.
                 for (int i = 0; i < 100 && getStringProperty("settingsDialog/settingsHotkeyMapping", "opened") != "true"; ++i)
                     wait(100ms);
                 if (waitForItem("settingsDialog/hotkeyMappingText", 5s)) {
-                    observed.push_back(getStringProperty("settingsDialog/settingsHotkeyMapping", "title")); // 2
+                    observed.push_back(getStringProperty("settingsDialog/settingsHotkeyMapping", "title"));
                     enterKey("settingsDialog/hotkeyMappingKeys", Qt::Key_J,
                              spix::KeyModifiers::Control | spix::KeyModifiers::Shift);
                     wait(300ms);
-                    observed.push_back(getStringProperty("settingsDialog/settingsHotkeyMapping", "opened")); // 3: closed
+                    observed.push_back(getStringProperty("settingsDialog/settingsHotkeyMapping", "opened"));
                     mouseClick("settingsDialog/settingsOk");
                     wait(500ms);
                     mouseClick("mainWindow/editingGrid");
                     enterKey("mainWindow/editingGrid", Qt::Key_W, spix::KeyModifiers::Control);
                     wait(500ms);
-                    observed.push_back(title()); // 4: still open
+                    observed.push_back(title());
                     enterKey("mainWindow/editingGrid", Qt::Key_J, spix::KeyModifiers::Control | spix::KeyModifiers::Shift);
                     for (int i = 0; i < 50 && title() != "HikariSub"; ++i)
                         wait(100ms);
-                    observed.push_back(title()); // 5: closed
+                    observed.push_back(title());
                 }
             }
         }
@@ -75,7 +69,7 @@ protected:
     }
 };
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
@@ -121,7 +115,6 @@ int main(int argc, char **argv)
         expect(o[2] == "Keys for \"Close current tab\"", "the capture names the action");
         expect(o[3] == "false", "a key with modifiers closes the capture");
         expect(o[4] == "shortcuts.ass - HikariSub", "the old keys no longer close the tab");
-        // Closing the last tab leaves no Document (SH2-last-tab-home).
         expect(o[5] == "HikariSub", "the new keys close it");
     }
     expect(application.hotkeys().accelOf(QStringLiteral("GLOBAL_CLOSE_PAGE"), 0) == QStringLiteral("Ctrl-Shift-J"),

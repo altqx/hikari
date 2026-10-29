@@ -5,44 +5,21 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// V4: VIDEO_ASPECT_RATIO's AspectRatioDialog (VideoBox.cpp:96-125): titled
-// with the command (legacy had none, TI1-popup-titles), "Aspect ratio: %5.3f" (width / height) over a 400-pixel slider from
-// 100000 to 1000000, inverted (a taller picture to the left). Dragging, a
-// click beside the thumb or the arrow keys set the video's aspect ratio at
-// once (wxEVT_SCROLL_THUMBTRACK); the wheel does not (the slider's wheel
-// sends wxEVT_SCROLL_CHANGED, which the dialog does not take). The ratio
-// lasts until the next video opens.
-// PU4 (#306, PU4-aspect-ratio), by PK1's small forms rule: a popover at the
-// pointer from the Video context menu (legacy MoveToMousePosition), a compact
-// window on DG1's frame from the hotkey. Esc (and the window's Cancel or
-// Close) puts back the ratio it opened with; Enter, a press outside the
-// popover or the window's OK keep it (legacy kept it on any closing). The
-// slider's ends are named, and Reset gives the video's own ratio back.
-// Another video opened meanwhile, or the same one again (the main window
-// stays in use under the fullscreen video window's), ends the edit: the ratio it opened with was
-// the other video's.
 Item {
     id: host
     objectName: "aspectRatioDialog"
     required property VideoViewController view
     property VideoController video: null
     property SettingsStore settings: null
-    // The video opening the edit began on (VideoController.opening).
     property var editedOpening: 0
-    // The ratio it opened with (Esc, Cancel), the slider's value and its label.
     property double before: 0
     property int sliderValue: 0
     property string label: ""
     readonly property bool opened: popover.visible || (compactWindow !== null && compactWindow.visible)
     readonly property alias popover: popover
-    // The compact window, made at its first opening (null till then): every
-    // window made at the start costs the program (PK1).
     readonly property DialogWindow compactWindow: windowLoader.item
     visible: false
 
-    // One editor at a time (from the fullscreen video window the main
-    // window stays in use): the open one ends, keeping its ratio, before
-    // the other starts from it.
     function start() {
         close()
         editedOpening = video ? video.opening() : 0
@@ -50,15 +27,11 @@ Item {
         sliderValue = Math.max(100000, Math.min(1000000, view.aspectSliderValue()))
         label = view.aspectLabel(-1)
     }
-    // The context menu's Change aspect ratio: the popover at the pointer in
-    // `area` (the content of the window the menu was in).
     function openAtCursor(area) {
         start()
         const at = view.cursorIn(area)
         popover.openAt(area, null, Qt.rect(at.x, at.y, 1, 1))
     }
-    // VIDEO_ASPECT_RATIO: the compact window, opened from `from` (null: the
-    // window with the keyboard).
     function openWindow(from) {
         start()
         windowLoader.active = true
@@ -77,7 +50,6 @@ Item {
     function putBack() {
         view.setAspectRatio(before)
     }
-    // Ends the edit, keeping the ratio.
     function close() {
         if (popover.visible)
             popover.keep()
@@ -153,7 +125,6 @@ Item {
         }
     }
 
-    // The label over the slider, and the slider's ends named under it.
     component AspectForm: ColumnLayout {
         id: form
         required property string prefix

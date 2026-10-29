@@ -1,8 +1,3 @@
-// E2: tag button definitions against legacy EditBox::SetTagButtons and
-// config::GetTable at 20d647c4: the legacy option text, defaults, the
-// 0-20 count and persistence. LE5 (#230): the icon, adding, removing, moving
-// and the Settings list's replace, and the tag text check.
-
 #include "tag_buttons_controller.h"
 
 #include <QTemporaryDir>
@@ -20,17 +15,14 @@ private slots:
         QCOMPARE(b.tag, QStringLiteral("\\bord4"));
         QCOMPARE(b.type, 1);
         QCOMPARE(b.name, QStringLiteral("Border"));
-        // Empty entries are kept, so an empty tag keeps its type and name.
         b = TagButtonsController::fromLegacy(QStringLiteral("{\n\t\n\t2\n\tNote\n}"), 0);
         QCOMPARE(b.tag, QString());
         QCOMPARE(b.type, 2);
         QCOMPARE(b.name, QStringLiteral("Note"));
-        // Nothing stored: "T<n>", type 0, no tag.
         b = TagButtonsController::fromLegacy(QString(), 4);
         QCOMPARE(b.name, QStringLiteral("T5"));
         QCOMPARE(b.type, 0);
         QVERIFY(b.tag.isEmpty());
-        // wxAtoi of a type that is not a number is 0.
         QCOMPARE(TagButtonsController::fromLegacy(QStringLiteral("{\n\t\\b1\n\tx\n\tB\n}"), 0).type, 0);
         const TagButtonsController::Button round{QStringLiteral("\\i1"), 2, QStringLiteral("It")};
         const auto back = TagButtonsController::fromLegacy(TagButtonsController::toLegacy(round), 0);
@@ -68,8 +60,6 @@ private slots:
         QCOMPARE(again.button(0).name, QStringLiteral("T1"));
     }
 
-    // LE5: an icon is a fourth entry, written only when there is one, so a
-    // button without one keeps legacy's text; an unknown role is no icon.
     void iconIsAFourthEntry()
     {
         const TagButtonsController::Button plain{QStringLiteral("\\b1"), 0, QStringLiteral("Bold")};
@@ -103,19 +93,17 @@ private slots:
             QCOMPARE(buttons.storedCount(), 3);
             QVERIFY(buttons.button(0).icon.isEmpty());
             QCOMPARE(buttons.buttons().at(1).toMap().value(QStringLiteral("icon")).toString(), QStringLiteral("tag-bold"));
-            // Moves stop at the ends.
             QVERIFY(!buttons.move(0, -1));
             QVERIFY(!buttons.move(2, 1));
             QVERIFY(buttons.move(2, -1));
             QCOMPARE(buttons.button(1).name, QStringLiteral("Note"));
             QCOMPARE(buttons.button(2).name, QStringLiteral("Bold"));
-            // Remove: the ones after it move up, the freed place is unset.
             buttons.remove(0);
             QCOMPARE(buttons.count(), 2);
             QCOMPARE(buttons.button(0).name, QStringLiteral("Note"));
             QCOMPARE(buttons.button(1).name, QStringLiteral("Bold"));
             QCOMPARE(buttons.button(2).name, QStringLiteral("T3"));
-            buttons.remove(5); // nothing there
+            buttons.remove(5);
             QCOMPARE(buttons.count(), 2);
         }
         {
@@ -126,7 +114,6 @@ private slots:
             QCOMPARE(again.button(1).icon, QStringLiteral("tag-bold"));
             QCOMPARE(again.button(1).type, 1);
             QCOMPARE(again.button(2).name, QStringLiteral("T3"));
-            // The Settings list's OK: the same list changes nothing.
             QSignalSpy changed(&again, &TagButtonsController::changed);
             again.replace(again.buttons());
             QCOMPARE(changed.count(), 0);
@@ -157,8 +144,6 @@ private slots:
         QCOMPARE(buttons.count(), TagButtonsController::kMaximum);
     }
 
-    // The popover's check: override tags without braces for types 0 and 1,
-    // any text but nothing for plain text.
     void tagTextIsChecked()
     {
         TagButtonsController buttons;

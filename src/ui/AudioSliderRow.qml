@@ -3,10 +3,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// AU1 (#267): a row of the audio panel's zoom and speaker popovers: a name,
-// the slider laid flat and its value. They hold the slider column that left
-// the panel (legacy AudioBox's HorizontalZoom, VerticalZoom and VolumeBar).
-// `moved` gives the slider's whole value after each move by the user.
 Item {
     id: row
     property alias text: label.text

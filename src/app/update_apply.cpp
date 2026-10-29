@@ -23,7 +23,6 @@
 namespace hikari::app::update_apply {
 
 namespace {
-    // The largest installer taken: the release's own limit for a package.
     constexpr long long kMaxInstallerBytes = 1LL << 30;
 
     struct Handle
@@ -82,7 +81,7 @@ namespace {
         return narrow;
     }
 
-    // One argument, quoted as CommandLineToArgvW reads it back.
+    // Quoted as CommandLineToArgvW reads it back.
     std::wstring Quote(const std::wstring &argument)
     {
         std::wstring quoted = L"\"";
@@ -121,10 +120,7 @@ namespace {
         return hex;
     }
 
-    // A new folder under parent that only SYSTEM, administrators and its
-    // owner (an administrator, when elevated) may open or change, and
-    // that inherits nothing. CreateDirectoryW fails on a name that exists,
-    // so the folder is always this process's own.
+    // CreateDirectoryW fails on a name that exists, so the folder is always this process's own.
     std::wstring MakePrivateFolder(const std::wstring &parent)
     {
         PSECURITY_DESCRIPTOR descriptor = nullptr;
@@ -149,7 +145,6 @@ namespace {
         return folder;
     }
 
-    // Copies source into the new file target, at most kMaxInstallerBytes.
     bool CopyInto(HANDLE source, const std::wstring &target)
     {
         Handle out(CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW,
@@ -174,7 +169,6 @@ namespace {
         return FlushFileBuffers(out.value) != 0;
     }
 
-    // The SHA-256 of what the handle reads, from its start.
     std::optional<std::string> HashOf(HANDLE file)
     {
         LARGE_INTEGER zero = {};
@@ -197,16 +191,13 @@ namespace {
         return hash.result().toHex().toStdString();
     }
 
-    // A file opened to read, that no one may write, delete or rename
-    // while the handle is open; the loader may still map it to run it.
+    // FILE_SHARE_READ alone still lets the loader map the file to run it.
     HANDLE OpenLocked(const std::wstring &path)
     {
         return CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
             FILE_ATTRIBUTE_NORMAL, nullptr);
     }
 
-// Whether a reply's final URL is https on a GitHub release host, with no
-// port or user info.
 bool isReleaseHostUrl(const std::string &url)
 {
     constexpr std::string_view scheme = "https://";
@@ -219,7 +210,7 @@ bool isReleaseHostUrl(const std::string &url)
     return application::isAllowedDownloadHost(host);
 }
 
-} // namespace
+}
 
 std::wstring commandLine(const application::ApplyRequest &request)
 {
@@ -247,8 +238,6 @@ int apply(const application::ApplyRequest &request, const Environment &environme
     if (!application::listedSha256(*sums, asset))
         return application::kApplyMismatch;
 
-    // The file to run: a private copy for all users, the download itself
-    // for the user's own install.
     std::wstring installer = file;
     std::wstring folder;
     auto discard = [&] {
@@ -292,8 +281,7 @@ int apply(const application::ApplyRequest &request, const Environment &environme
         discard();
         return application::kApplyFailed;
     }
-    // The running installer holds its file; the copy and its folder go at
-    // the next restart (only an administrator may ask for that).
+    // The running installer holds its file; MOVEFILE_DELAY_UNTIL_REBOOT needs an administrator.
     if (!folder.empty()) {
         MoveFileExW(installer.c_str(), nullptr, MOVEFILE_DELAY_UNTIL_REBOOT);
         MoveFileExW(folder.c_str(), nullptr, MOVEFILE_DELAY_UNTIL_REBOOT);
@@ -302,11 +290,7 @@ int apply(const application::ApplyRequest &request, const Environment &environme
 }
 
 namespace {
-    // Whether the server's certificate chains to a root that this
-    // computer trusts (the local machine's stores only) and names host.
-    // WinHTTP's own check also takes the current user's root store, which
-    // an unelevated process of the same user can add a root to; with a
-    // proxy of its choosing, it could then answer for GitHub here.
+    // WinHTTP's own check also trusts the current user's root store, which the user can add to.
     bool trustedByMachine(HINTERNET request, const wchar_t *host)
     {
         PCCERT_CONTEXT certificate = nullptr;
@@ -359,12 +343,11 @@ std::optional<std::string> fetchHttps(const std::string &url,
         WinHttpSetOption(session.value, WINHTTP_OPTION_SECURE_PROTOCOLS, &protocols, sizeof(protocols));
     }
 
-    // Redirects are followed here, not by WinHTTP, so that every URL on
-    // the way passes allowed and every server's certificate is checked.
+    // Redirects WinHTTP follows itself would skip `allowed` and the certificate check.
     std::string next = url;
     for (int hop = 0; hop < 6; hop++) {
         std::wstring wide = Widen(next);
-        // The parts point into wide; the path and the query are sent.
+        // WinHttpCrackUrl's parts point into wide.
         URL_COMPONENTS parts = {};
         parts.dwStructSize = sizeof(parts);
         parts.dwHostNameLength = DWORD(-1);
@@ -376,8 +359,7 @@ std::optional<std::string> fetchHttps(const std::string &url,
             return std::nullopt;
         }
         bool secure = parts.nScheme == INTERNET_SCHEME_HTTPS;
-        // Plain http only for a test build's feed on 127.0.0.1, which
-        // allowed decides.
+        // MUST KILL: plain http passes whenever `allowed` accepts it (test feeds on 127.0.0.1)
         if (!allowed(next) || (!secure && parts.nScheme != INTERNET_SCHEME_HTTP))
             return std::nullopt;
         std::wstring target = parts.lpszUrlPath && parts.dwUrlPathLength ?
@@ -422,7 +404,7 @@ std::optional<std::string> fetchHttps(const std::string &url,
                 return std::nullopt;
             }
             location.resize(wcsnlen(location.c_str(), location.size()));
-            // GitHub's are absolute; anything else is not followed.
+            // GitHub's Location is absolute; a relative one is not followed.
             next = Narrow(location);
             if (next.empty())
                 return std::nullopt;
@@ -465,8 +447,6 @@ bool launch(const std::wstring &installer, const std::wstring &arguments)
         return false;
     }
     CloseHandle(process.hThread);
-    // The app this hands off for exits next: a start of it after that must
-    // find the setup's mutex. The setup takes it first thing.
     for (int waited = 0; waited < 100 && !setupRunning(); ++waited) {
         if (WaitForSingleObject(process.hProcess, 100) != WAIT_TIMEOUT)
             break;
@@ -505,12 +485,9 @@ std::wstring systemTempFolder()
 }
 
 namespace {
-    // What lets the user change a file or a folder (FILE_WRITE_DATA and
-    // FILE_APPEND_DATA are FILE_ADD_FILE and FILE_ADD_SUBDIRECTORY).
+    // On folders FILE_WRITE_DATA and FILE_APPEND_DATA are FILE_ADD_FILE and FILE_ADD_SUBDIRECTORY.
     constexpr unsigned long kChanges = FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_DELETE_CHILD | DELETE |
         WRITE_DAC | WRITE_OWNER;
-    // What lets the user replace a folder on the way: delete or rename it,
-    // or a child of it, or give itself that right.
     constexpr unsigned long kReplaces = FILE_DELETE_CHILD | DELETE | WRITE_DAC | WRITE_OWNER;
 
     bool treeIsProtected(const std::wstring &folder, const RightsOf &rightsOf,
@@ -544,8 +521,6 @@ bool isProtected(const std::wstring &installDir, const RightsOf &rightsOf, const
     std::wstring dir = installDir;
     while (dir.size() > 3 && dir.back() == L'\\')
         dir.pop_back();
-    // A plain local path below a drive's root: no UNC, device or relative
-    // path, and no "." or ".." to walk.
     if (dir.size() < 4 || !iswalpha(dir[0]) || dir[1] != L':' || dir[2] != L'\\' ||
         dir.find(L'/') != std::wstring::npos || dir.find(L"\\\\") != std::wstring::npos)
         return false;
@@ -558,7 +533,6 @@ bool isProtected(const std::wstring &installDir, const RightsOf &rightsOf, const
             break;
         start = end + 1;
     }
-    // The folders on the way, the drive's root first.
     for (size_t at = 2; at != std::wstring::npos && at < dir.size(); at = dir.find(L'\\', at + 1)) {
         std::wstring ancestor = dir.substr(0, at + (at == 2 ? 1 : 0));
         std::optional<unsigned long> rights = rightsOf(ancestor);
@@ -660,8 +634,6 @@ int runFromCommandLine(const std::string &installedVersion, bool allUsersInstall
     environment.installDir = path.substr(0, path.find_last_of(L'\\'));
     environment.allUsers = allUsersInstall;
     if (allUsersInstall) {
-        // Program Files is only an administrator's to change, and so is the
-        // folder the installer is copied to.
         if (!isElevated())
             return application::kApplyBadArguments;
         environment.stagingParent = systemTempFolder();
@@ -685,6 +657,6 @@ int runFromCommandLine(const std::string &installedVersion, bool allUsersInstall
     return apply(*request, environment);
 }
 
-} // namespace hikari::app::update_apply
+}
 
 #endif

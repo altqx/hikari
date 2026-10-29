@@ -1,14 +1,3 @@
-// KA3 (#278): the Kanji timer window (Subtitles > Kanji timer…,
-// GLOBAL_KANJI_TIMER), Aegisub's DialogKanjiTimer over the whole song
-// (KanjiTimerController): the romaji/kanji Line pairs of two styles on the
-// left, the current pair's grouping strip on the right. The strip has the
-// keyboard: Up and Down the current group's syllables, Right and Left its
-// kanji, Enter links, Backspace unlinks, Ctrl+Enter accepts the Line, Ctrl+Z
-// and Ctrl+Y undo and redo in the window. Nothing reaches the Document until
-// Apply, one "Kanji timing" step; closing with done pairs asks first. A
-// window of its own on DG1's dialog frame (PK1), modeless and resizable.
-// KA4 (#279): Furigana draws each group's reading over its kanji (typed in
-// the text colour, suggested muted) and edits the current group's.
 pragma Translator: "HikariSub.Karaoke"
 import QtQuick
 import QtQuick.Controls
@@ -26,11 +15,8 @@ DialogWindow {
     initialFocus: strip
     readonly property var pair: timer.pair
     readonly property bool hasPair: pair.groups !== undefined
-    // KA4: the kanji cells take the reading above their kanji.
     readonly property int kanjiHeight: timer.furigana ? 58 : 44
-    // A click on the rest of the kanji or syllables shows how clicks work.
     property bool overRest: false
-    // Set while the close question is answered by Apply or Discard.
     property bool closeAnswered: false
 
     function openDialog() {
@@ -38,7 +24,6 @@ DialogWindow {
         timer.open()
         strip.forceActiveFocus()
     }
-    // false (and says so) when the Document refused the step.
     function apply() {
         if (timer.apply())
             return true
@@ -98,7 +83,6 @@ DialogWindow {
         settings: dialog.settings
     }
 
-    // The two styles, Suggest groupings and Multi-highlight (#).
     RowLayout {
         Layout.fillWidth: true
         spacing: 8
@@ -171,7 +155,6 @@ DialogWindow {
         Layout.fillHeight: true
         spacing: 16
 
-        // The pairs in Document order.
         Frame {
             Layout.preferredWidth: 300
             Layout.fillHeight: true
@@ -189,7 +172,7 @@ DialogWindow {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                     color: Theme.muted
-                    textFormat: Text.PlainText // (the Document's text: no markup, no <img> fetched)
+                    textFormat: Text.PlainText
                     text: dialog.timer.problem === "noKaraoke"
                           ? qsTr("No karaoke lines in “%1”").arg(dialog.timer.romajiStyle)
                           : dialog.timer.problem === "noStyles" ? qsTr("The subtitles have no styles")
@@ -304,7 +287,6 @@ DialogWindow {
             }
         }
 
-        // The current pair.
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -340,9 +322,6 @@ DialogWindow {
                 }
             }
 
-            // The grouping strip: linked groups solid, the current one
-            // selected, the suggestion's rest dashed, then the syllables
-            // and kanji no group has yet.
             FocusScope {
                 id: strip
                 objectName: "kanjiStrip"
@@ -359,7 +338,6 @@ DialogWindow {
                     border.color: Theme.control
                     radius: 1
                 }
-                // (DG1's focus ring, as the HikariStyle controls draw it.)
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: -2
@@ -376,7 +354,6 @@ DialogWindow {
                     contentHeight: height
                     flickableDirection: Flickable.HorizontalFlick
                     boundsBehavior: Flickable.StopAtBounds
-                    // The current group in sight.
                     function reveal() {
                         for (let i = 0; i < groupsRow.children.length; ++i) {
                             const item = groupsRow.children[i]
@@ -465,7 +442,6 @@ DialogWindow {
                                             font: dialog.fontAt(22)
                                         }
                                     }
-                                    // The dictionary reads it otherwise.
                                     Rectangle {
                                         objectName: "kanjiGroupDiffers"
                                         visible: kanjiCell.furigana !== undefined && kanjiCell.furigana.differs
@@ -488,10 +464,8 @@ DialogWindow {
                                 }
                             }
                         }
-                        // What no group has yet.
                         Column {
                             readonly property string kind: "rest"
-                            // (after the last group: not while later ones are left out)
                             visible: (dialog.pair.later || 0) === 0 && (restSyllables.count > 0 || restKanji.count > 0)
                             spacing: 4
                             HoverHandler { onHoveredChanged: dialog.overRest = hovered }
@@ -556,7 +530,6 @@ DialogWindow {
                         }
                     }
                 }
-                // Earlier groups left out, or scrolled out of sight.
                 Icon {
                     objectName: "kanjiEarlierGroups"
                     visible: flick.contentX > 0 || (dialog.pair.earlier || 0) > 0
@@ -567,7 +540,6 @@ DialogWindow {
                     size: 14
                     color: Theme.muted
                 }
-                // Later groups left out, or scrolled out of sight.
                 Icon {
                     objectName: "kanjiLaterGroups"
                     visible: (dialog.pair.later || 0) > 0 || flick.contentX + flick.width < flick.contentWidth - 1
@@ -602,7 +574,6 @@ DialogWindow {
                 }
             }
 
-            // The current group, or the reason it cannot be linked.
             RowLayout {
                 objectName: "kanjiNoKanjiLeft"
                 visible: dialog.hasPair && (dialog.pair.noKanjiLeft || "") !== ""
@@ -622,7 +593,6 @@ DialogWindow {
                 Layout.fillWidth: true
                 spacing: 8
                 readonly property var detail: dialog.pair.detail || {}
-                // KA4: the current group's reading, with Furigana on and kanji in it
                 readonly property var furigana: dialog.timer.furigana && !dialog.overRest ? detail.furigana : undefined
                 Label {
                     objectName: "kanjiDetail"
@@ -637,7 +607,6 @@ DialogWindow {
                         : detail.reading ? qsTr("%1 ← %2 (%3) · %4 cs").arg(detail.kanji).arg(detail.romaji).arg(detail.reading).arg(detail.cs)
                         : qsTr("%1 ← %2 · %3 cs").arg(detail.kanji).arg(detail.romaji).arg(detail.cs)
                 }
-                // Why the suggestion is what it is.
                 RowLayout {
                     objectName: "kanjiReadingHint"
                     readonly property string text: !parent.furigana ? ""
@@ -662,14 +631,12 @@ DialogWindow {
                     onShownChanged: if (!activeFocus) text = shown
                     placeholderText: qsTr("No furigana")
                     Accessible.name: qsTr("Reading")
+                    // MUST KILL: every command focuses the strip first so a reading being typed is set here before it runs
                     onEditingFinished: {
                         if (text !== shown)
                             dialog.timer.setReading(text)
                         text = shown
                     }
-                    // (back to the strip: leaving the field sets the reading;
-                    // every command leaves it first, so a reading being typed
-                    // goes to its own group)
                     Keys.onReturnPressed: strip.forceActiveFocus()
                     Keys.onEnterPressed: strip.forceActiveFocus()
                 }
@@ -681,7 +648,6 @@ DialogWindow {
                     flat: true
                     enabled: parent.furigana !== undefined && parent.furigana.typed
                     focusPolicy: Qt.TabFocus
-                    // (what was typed is dropped, not set as it leaves)
                     onClicked: {
                         dialog.timer.useSuggestion()
                         readingField.text = readingField.shown
@@ -690,7 +656,6 @@ DialogWindow {
                 }
             }
 
-            // The commands, as buttons.
             RowLayout {
                 visible: dialog.hasPair
                 Layout.fillWidth: true
@@ -739,7 +704,6 @@ DialogWindow {
                 }
             }
 
-            // The kanji Line it would get, its tags muted as the Line editor draws them.
             RowLayout {
                 visible: dialog.hasPair
                 Layout.fillWidth: true
@@ -762,7 +726,6 @@ DialogWindow {
                         textFormat: Text.StyledText
                         color: Theme.text
                         font.family: "monospace"
-                        // (StyledText: the parts escaped, tags in the muted colour.)
                         readonly property string plain: (dialog.pair.result || []).map(p => p.text).join("")
                         text: (dialog.pair.result || []).map(p => {
                             const escaped = p.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -777,7 +740,6 @@ DialogWindow {
                 }
             }
 
-            // The keys.
             Flow {
                 visible: dialog.hasPair
                 Layout.fillWidth: true
@@ -802,8 +764,6 @@ DialogWindow {
     }
 
     component Hint: Label { color: Theme.muted; font: dialog.fontAt(12); rightPadding: 6 }
-    // A syllable or kanji cell: solid when linked, selected when current,
-    // dashed for the suggestion; a blank group's kanji cell is hatched.
     component Cell: Item {
         property string kind: "done"
         property bool blank: false

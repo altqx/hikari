@@ -1,20 +1,5 @@
 #pragma once
 
-// O2: the shortcut editor (legacy Hotkeys, HkeysDialog and the Options
-// dialog's Hotkeys page at 20d647c4) over application::hotkeys.
-// - Bindings in memory are legacy's Hkeys map: the static actions here, the
-//   script ones (ids from 30100) in the automation hotkeys (S2), which keep
-//   their macro identity. They are stored in the settings registry when
-//   legacy saves its files (shortcuts.hotkeys: Hotkeys.txt's lines without
-//   the scripts, shortcuts.audioHotkeys: AudioHotkeys.txt's) and installed
-//   (the shortcuts in effect) when legacy calls SetAccels.
-// - The Options page edits a copy of the bindings of its own (legacy's
-//   static hotkeysCopy outlived the dialog: O2-stale-copy); OK/Apply make
-//   it the bindings, save and install them.
-// - "Set default" (ResetDefault) replaces the bindings in memory only.
-// - The Shift+click gesture on a menu item or a mapped button (OnMapHkey)
-//   changes, installs and saves the bindings at once.
-
 #include "hikari/application/hotkeys.h"
 
 #include "settings_store.h"
@@ -36,42 +21,28 @@ class AutomationHotkeysController;
 
 class HotkeysController : public QObject {
     Q_OBJECT
-    // The installed bindings that have a Qt sequence, by window and symbol:
-    // {global: {GLOBAL_SAVE_SUBS: "Ctrl+S", ...}, grid: ..., editor: ...,
-    // video: ..., audio: ...}.
+    // {global|grid|editor|video|audio: {symbol: Qt sequence}} of the installed bindings.
     Q_PROPERTY(QVariantMap keys READ keys NOTIFY installedChanged)
-    // The Global window's accelerator table (HikariSubFrame::SetAccels,
-    // HikariSubFrame.cpp:1754-1800): [{symbol, keys}] for every installed
-    // Global binding with a Qt sequence, the first in map order for keys
-    // held twice (the table's first entry wins). An action id under 5000
-    // bound for the Global window is listed too (OnUseWindowHotkey runs it
-    // in its own window); an audio _ALT id as its main id (GetHKey's id + 10),
-    // only while that main id has a Global binding (the frame binds only
-    // ids it installs). The scripts' bindings are S2's.
+    // [{symbol, keys}] per installed Global binding with a Qt sequence; first in map order wins.
+    // An audio _ALT id is listed as its main id, only while the main id has a Global binding.
     Q_PROPERTY(QVariantList globalShortcuts READ globalShortcuts NOTIFY installedChanged)
-    // Their keys (portable text), for other shortcuts to give way to them.
+    // globalShortcuts' keys, as portable text.
     Q_PROPERTY(QStringList globalSequences READ globalSequences NOTIFY installedChanged)
-    // AM1: the keys a macro's shortcut gives way to: the Global ones and the
-    // Video window's Play / Pause, which KB2's key router takes from every
-    // panel.
+    // globalSequences and the Video window's Play / Pause keys.
     Q_PROPERTY(QStringList macroTakenSequences READ macroTakenSequences NOTIFY installedChanged)
-    // The Options page: the shown rows {row, text, accel, modified}, the
-    // selected shown position and the filter mode.
+    // {row, text, context, name, accel, textModified, keyModified, block, inBlock}, and
+    // {script, macro, note} on a macro's row.
     Q_PROPERTY(QVariantList rows READ rows NOTIFY rowsChanged)
+    // A position among the shown rows, -1 when none.
     Q_PROPERTY(int selected READ selected NOTIFY rowsChanged)
     Q_PROPERTY(int filterMode READ filterMode NOTIFY rowsChanged)
-    // PU7 (#309): the page holds edits not yet kept with OK or Apply.
     Q_PROPERTY(bool optionsModified READ optionsModified NOTIFY rowsChanged)
-    // HikariListCtrl's gutter: the list is filtered (isFiltered), and the
-    // block above the first shown row (CheckIfHasHiddenBlock(-1)); each row
-    // carries its own ("block": 0, 1 "+", 2 "-"; "inBlock": shown from one).
+    // topBlock and a row's "block": 0 none, 1 hidden rows ("+"), 2 rows shown from a block ("-").
     Q_PROPERTY(bool listFiltered READ listFiltered NOTIFY rowsChanged)
     Q_PROPERTY(int topBlock READ topBlock NOTIFY rowsChanged)
-    // AM1: why the selected row cannot be given keys, "" when it can (a macro
-    // name that several loaded scripts share binds none of their macros).
+    // Why the selected row cannot be given keys, "" when it can.
     Q_PROPERTY(QString mapProblem READ mapProblem NOTIFY rowsChanged)
 public:
-    // `log`: HikariLog (the log window), for GetHKey's 'Shortcut "%s" is invalid'.
     HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
                       std::function<void(const QString &, bool warning)> log = {}, QObject *parent = nullptr);
     ~HotkeysController() override;
@@ -86,33 +57,20 @@ public:
     int selected() const;
     int filterMode() const;
 
-    // The bindings in memory, scripts included (legacy Hkeys.GetHotkeysMap()).
+    // The bindings in memory, scripts included.
     application::HotkeyMap bindings() const;
     const application::HotkeyMap &installed() const { return m_installed; }
-    // The installed binding of a symbol in `window`, as legacy text ("" when none).
+    // The installed accelerator text ("Ctrl-S") of symbol in window, "" when none.
     Q_INVOKABLE QString accelOf(const QString &symbol, int window) const;
 
-    // The action a key press runs in `window`, as legacy's accelerator
-    // tables route it ("" when none): Editor (EditBox: the Editor bindings
-    // and Video actions bound for it; not the keys the text field keeps),
-    // Subtitles (the Grid: its own and the Editor and Video actions bound for
-    // it, Video's play and seek bindings, and the Audio bindings but
-    // AUDIO_COMMIT to AUDIO_NEXT), Video (VideoBox: its own, and Editor and
-    // Grid actions bound for it), Audio (AudioBox: the Audio bindings). An
-    // _ALT audio id answers as its main id (legacy GetHKey's id + 10).
-    // `textField` false: a key in the Editor window outside its text fields
-    // (EditBox's table without DialogueTextEditor's own keys).
+    // The symbol a key press runs in window, "" when none; an _ALT audio id answers as its main id.
+    // textField false: the key was pressed in the Line editor outside its text fields.
     Q_INVOKABLE QString actionFor(int window, int key, int modifiers, bool textField = true) const;
-    // Config::CheckLastKeyEvent (config.cpp:1033-1045), shared by the frame's
-    // OnMenuSelected1, SubsGrid, AudioBox (100 ms) and VideoBox (50 ms)
-    // accelerators: true (ignore it) when the same action came less than
-    // `interval` ms after the last one that was not ignored.
+    // True (ignore it) when the same action came within interval ms of the last one not ignored.
     Q_INVOKABLE bool repeatedKey(const QString &action, int interval = 100);
-    // Tests: the millisecond clock CheckLastKeyEvent reads (timeGetTime).
+    // Tests: the millisecond clock repeatedKey reads.
     void setKeyClock(std::function<qint64()> clock) { m_keyClock = std::move(clock); }
-    // KB3: the shell's run*Hotkey functions report each command a key runs
-    // (ran; the hotkey audit records them) and return `handled`.
-    // Rehearsing (tests), a command is reported and not run.
+    // Emits ran and returns handled; while rehearsing (tests) callers report and do not run.
     Q_INVOKABLE bool report(const QString &symbol, bool handled)
     {
         emit ran(symbol, handled);
@@ -121,73 +79,49 @@ public:
     Q_INVOKABLE bool rehearsing() const { return m_rehearsing; }
     void setRehearsing(bool on) { m_rehearsing = on; }
 
-    // The Options page (legacy OptionsDialog's constructor, AddHotkeysOnList).
     Q_INVOKABLE void beginOptions();
     Q_INVOKABLE void filter(int mode);
-    // PF1 (#225): the page's search field (HotkeyList::search; a macro's
-    // row also by its script and macro names).
+    // Also matches a macro's row by its script and macro names.
     Q_INVOKABLE void search(const QString &text);
     Q_INVOKABLE void select(int position);
-    // A click on the gutter's box after a shown position (-1: above the first).
+    // The gutter box after a shown position; -1 is the one above the first.
     Q_INVOKABLE void toggleBlock(int position);
-    // The selected row's "Hotkey mapping" window: {name, windows, type}, or
-    // {} without a selection.
+    // {name, windows, type} for the selected row, {} without a selection.
     Q_INVOKABLE QVariantMap mapTarget() const;
     QString mapProblem() const;
-    // ItemHotkey::OnMapHotkey: the question first ({} when none: map with
-    // any answer), then the answer ("switch", "delete", "anyway", "cancel").
+    // {} when nothing conflicts; optionsMap's answer: "switch", "delete", "anyway" or "cancel".
     Q_INVOKABLE QVariantMap optionsConflict(const QString &accel, int type);
     Q_INVOKABLE void optionsMap(const QString &accel, int type, const QString &answer);
     Q_INVOKABLE void optionsReset();
-    // PF1-staged-reset: "Reset page" on the Hotkeys page, every row's
-    // default, kept or dropped with the dialog as the other edits.
+    // Every row back to its default, staged like the other edits.
     Q_INVOKABLE void optionsResetAll();
     Q_INVOKABLE void optionsDelete();
     Q_INVOKABLE void optionsUndo();
     Q_INVOKABLE void optionsRedo();
-    // OK/Apply (SetOptions).
     Q_INVOKABLE void commitOptions();
-    // PU7 (#309): Import legacy hotkeys on the Hotkeys page: the script
-    // hotkeys of a legacy Hotkeys.txt, added at once as AM1's import adds
-    // them (AutomationHotkeysController::importLegacy's result), and the
-    // page's list made again with them. Only while the page holds no edits
-    // (the page offers it then): OK would write the list over them.
+    // AutomationHotkeysController::importLegacy's result; {read: false} while the page holds edits.
     Q_INVOKABLE QVariantMap importLegacyScripts(const QString &path);
     bool optionsModified() const;
-    // "Set default" (ResetDefault): Hkeys.ResetDefaults() and the list again.
+    // In memory only: nothing is saved or installed.
     void resetDefaults();
 
-    // HkeysDialog::OnKeyPress for a Qt key press in `window`:
-    // {result: "ignored" | "refused" | "accepted", accel, keys (the Qt
-    // portable text), message}.
+    // {result: "ignored" | "refused" | "accepted", accel, keys (portable text), message}.
     Q_INVOKABLE QVariantMap capture(int key, int modifiers, int window) const;
 
-    // Hotkeys::OnMapHkey. The last input was a click on a button or menu
-    // item with Shift alone (`exact`: a menu's wxMOD_SHIFT) or with Shift
-    // held (a mapped button's ShiftDown()): it maps its hotkey instead of acting.
+    // The last input was a button or menu click with Shift alone (exact) or with Shift held.
     Q_INVOKABLE bool shiftClicked(bool exact = true) const;
-    // MappedButton with twoHotkeys: a click with Ctrl held maps too
-    // (MappedButton.cpp:437-445).
     Q_INVOKABLE bool ctrlClicked() const { return m_lastClickCtrlHeld; }
-    // {id, name}: the action's id and the name the mapping window shows (the
-    // names table's; for a script, its legacy name).
-    // `second`: a two-hotkey button's Ctrl+click names its second hotkey,
-    // the main id - 10 (O2-second-hotkey; legacy computed it and mapped the
-    // main one anyway).
+    // {id, name}; second names a two-hotkey button's second hotkey, the main id - 10.
     Q_INVOKABLE QVariantMap gestureTarget(const QString &symbolOrScript, bool second = false) const;
     Q_INVOKABLE QVariantMap gestureConflict(int id, const QString &accel, int type) const;
     Q_INVOKABLE void gestureMap(int id, const QString &name, const QString &accel, int type, const QString &answer);
 
-    // AM1, the Automation panel: the actions other than `id` whose binding
-    // (in any window, the scripts' included) is the legacy accelerator
-    // `accel`, as shown ("Save", "Play line (Audio)", a macro's name); and the
-    // command whose installed Global binding takes the portable `keys` from
-    // a macro ("" when none).
+    // The actions other than id bound to accel in any window, scripts included, as shown.
     Q_INVOKABLE QStringList holdersOf(const QString &accel, int id) const;
+    // The command whose installed Global binding takes keys (portable text), "" when none.
     Q_INVOKABLE QString globalHolder(const QString &keys) const;
 
-    // GRID_FILTER_IGNORE_IN_ACTIONS through a hotkey (SubsGrid::OnAccelerator):
-    // "ignore filtering" becomes the opposite of the stored option.
+    // From a hotkey, "ignore filtering" is the opposite of the stored option.
     Q_INVOKABLE bool ignoreFilteringFromOption() const;
 
 signals:
@@ -197,36 +131,31 @@ signals:
 
 private:
     void load();
-    // Legacy SaveHkeys(false) (the scripts are its lines too) and SaveHkeys(true).
     void saveMain();
     void saveAudio();
     void setAccels();
     void logInvalid() const;
     void split(const application::HotkeyMap &combined);
-    // The Options page's list: bindings() and the loaded macros without one.
     application::HotkeyMap listed() const;
-    // The page's list follows the registrations while it is open: macros
-    // registered since it was built are added, the unbound rows of macros no
-    // longer registered go unless edited.
     void relistMacros();
     bool eventFilter(QObject *watched, QEvent *event) override;
 
     AutomationHotkeysController &m_scripts;
     ui::SettingsStore &m_settings;
-    application::HotkeyMap m_live;      // the static bindings in memory
-    application::HotkeyMap m_installed; // the bindings in effect, scripts excluded
-    application::HotkeyMap m_copy;      // OptionsDialog::hotkeysCopy, one per dialog (O2-stale-copy)
+    application::HotkeyMap m_live;
+    application::HotkeyMap m_installed;
+    application::HotkeyMap m_copy;
     std::unique_ptr<application::HotkeyList> m_list;
-    int m_installedTagButtons = 0; // EDITBOX_TAG_BUTTONS when installed
-    bool m_lastClickShift = false;     // Shift alone
-    bool m_lastClickShiftHeld = false; // Shift with any other modifiers
-    bool m_lastClickCtrlHeld = false;  // Ctrl with any other modifiers
+    int m_installedTagButtons = 0;
+    bool m_lastClickShift = false;
+    bool m_lastClickShiftHeld = false;
+    bool m_lastClickCtrlHeld = false;
     std::function<void(const QString &, bool warning)> m_log;
     bool m_rehearsing = false;
-    QStringList m_retiredNotices; // V3: retired bindings dropped by load()
+    QStringList m_retiredNotices;
     std::function<qint64()> m_keyClock;
-    qint64 m_lastCheckedTime = 0; // Config::lastCheckedTime
-    QString m_lastCheckedId;      // Config::lastCheckedId
+    qint64 m_lastCheckedTime = 0;
+    QString m_lastCheckedId;
 };
 
-} // namespace hikari::app
+}

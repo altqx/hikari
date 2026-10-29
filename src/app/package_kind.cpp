@@ -32,7 +32,7 @@ std::optional<application::AurChannel> channelOf(const QByteArray &content)
     return application::parseAurChannel(std::string_view(content.constData(), std::size_t(content.size())));
 }
 
-} // namespace
+}
 
 bool onWindows()
 {
@@ -48,7 +48,6 @@ PackageInfo detectPackageKind(const QString &exeDir, const QString &appImageEnv)
     QFile marker(exeDir + QStringLiteral("/package-kind.txt"));
     if (!marker.open(QIODevice::ReadOnly))
         return {};
-    // One token and a newline; a longer file is no marker.
     const QByteArray bytes = marker.read(64);
     PackageInfo info = fromMarker(bytes, appImageEnv);
     if (info.kind == PackageKind::Arch) {
@@ -99,4 +98,4 @@ QString packageKindLabel(PackageKind kind)
     return QCoreApplication::translate("HikariSub.MainWindow", "portable");
 }
 
-} // namespace hikari::app
+}

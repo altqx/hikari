@@ -1,19 +1,3 @@
-// SH1 on Windows: MuseScore 4's main-window frame (docs/research/musescore-shell.md
-// §1, "Windows title bar: frame behaviour"; winwindowscontroller.cpp), with
-// the maximise button handed to Windows so that Windows 11 shows its snap
-// layouts over it (§7, SH1).
-//
-// Qt makes the window frameless (WS_POPUP), and the frame puts the caption
-// styles back, so Windows keeps the drop shadow, the minimise and maximise
-// animations, Aero Snap, Win+arrows and the system menu; WM_NCCALCSIZE then
-// makes the whole window client area. WM_NCHITTEST answers from the title
-// bar (MainWindowFrame::hitAt): its free parts are the caption (move,
-// double-click, snap, the system menu on a right click), the maximise
-// button is the frame's own (HTMAXBUTTON, whose hover and press come here as
-// WM_NC* messages and are handed to the QML button) and the application
-// icon is the system menu's (HTSYSMENU). A band inside the window's edges
-// resizes it while it is not maximised.
-
 #include "window_frame.h"
 #include "window_frame_native.h"
 
@@ -41,8 +25,7 @@ public:
         , m_window(window)
     {
         QCoreApplication::instance()->installNativeEventFilter(this);
-        // Qt sets the window's styles again when it makes the native window
-        // and when its flags change.
+        // Qt resets the window's styles when it makes the native window and when its flags change.
         m_window->installEventFilter(this);
     }
     ~WindowsFrame() override
@@ -134,11 +117,7 @@ public:
     }
 
 private:
-    // Qt hands the filters the posted messages (the mouse's) from its event
-    // loop with no result, and true there drops them; the sent ones come
-    // from the window procedure with one. The window procedure passes none
-    // of the input messages on (WM_SYSCOMMAND, the mouse's), so a sent
-    // WM_SYSCOMMAND never comes here.
+    // Qt passes posted messages with no result (true drops them) and sent ones with one.
     static bool answer(qintptr *result, qintptr value)
     {
         if (result)
@@ -152,12 +131,11 @@ private:
         return m_window && m_window->handle() ? reinterpret_cast<HWND>(m_window->winId()) : nullptr;
     }
 
+    // Caption styles on Qt's frameless window keep Windows' shadow, animations, Aero Snap and system menu.
     static constexpr LONG_PTR kCaptionStyles =
         WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME;
 
-    // DG1: a dialog has no minimise box, and no sizing frame or maximise
-    // box while it cannot be resized (so Aero Snap and the system menu's
-    // Size and Maximise leave it as it is).
+    // Without a sizing frame and maximise box, Aero Snap and the system menu leave a fixed-size dialog alone.
     LONG_PTR captionStyles() const
     {
         if (!m_frame->dialog())
@@ -172,10 +150,7 @@ private:
         const LONG_PTR styled = (style & ~(kCaptionStyles & ~wanted)) | wanted;
         if (styled != style)
             SetWindowLongPtrW(hwnd(), GWL_STYLE, styled);
-        // A one-pixel frame extended into the client area: DWM draws the
-        // window's shadow and its rounded corners (Windows 11). The bottom
-        // edge's alone: a frame extended at the top takes the caption
-        // buttons for DWM's, and the snap layouts never come over Maximise.
+        // DWM draws the shadow and rounded corners for a 1 px extended frame; extended at the top it takes the caption buttons and the snap layouts never show.
         const MARGINS shadow{0, 0, 0, 1};
         DwmExtendFrameIntoClientArea(hwnd(), &shadow);
         SetWindowPos(hwnd(), nullptr, 0, 0, 0, 0,
@@ -190,13 +165,11 @@ private:
                      SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
     }
 
-    // The whole window is client area. Maximised, it is the monitor's work
-    // area, less a pixel on the edge of an auto-hidden taskbar so that the
-    // taskbar can still come up.
+    // Maximised: the work area, less a pixel on an auto-hidden taskbar's edge so the taskbar can still come up.
     bool calculateSize(const MSG *msg, qintptr *result)
     {
         if (!msg->wParam)
-            return answer(result, 0); // the proposed window rectangle is the client's as it is
+            return answer(result, 0);
         auto *params = reinterpret_cast<NCCALCSIZE_PARAMS *>(msg->lParam);
         if (IsZoomed(hwnd())) {
             MONITORINFO monitor{};
@@ -204,8 +177,6 @@ private:
             if (GetMonitorInfoW(MonitorFromWindow(hwnd(), MONITOR_DEFAULTTONEAREST), &monitor)) {
                 RECT &client = params->rgrc[0];
                 client = monitor.rcWork;
-                // An auto-hidden taskbar on this monitor's edge, the primary's
-                // or a secondary one's (Shell_SecondaryTrayWnd).
                 for (const UINT edge : {ABE_LEFT, ABE_TOP, ABE_RIGHT, ABE_BOTTOM}) {
                     APPBARDATA bar{};
                     bar.cbSize = sizeof(bar);
@@ -225,9 +196,6 @@ private:
         return answer(result, 0);
     }
 
-    // The resize band: the sizing frame Windows would draw outside the
-    // window, inside its edges here (at the top, the thin sizing frame
-    // alone, so the window buttons keep most of their height).
     LRESULT hitTest(POINT screen) const
     {
         RECT window{};
@@ -259,6 +227,7 @@ private:
         case MainWindowFrame::Caption:
             return HTCAPTION;
         case MainWindowFrame::MaximizeButton:
+            // HTMAXBUTTON makes Windows 11 show its snap layouts over the button.
             return HTMAXBUTTON;
         case MainWindowFrame::WindowMenuButton:
             return HTSYSMENU;
@@ -280,8 +249,6 @@ private:
         m_frame->setMaximizeState(over, over && m_frame->maximizePressed());
     }
 
-    // The system menu, its items enabled for the window's state (MuseScore's
-    // updateContextMenuState).
     bool trackSystemMenu(POINT at)
     {
         HMENU menu = GetSystemMenu(hwnd(), FALSE);
@@ -325,11 +292,11 @@ private:
     bool m_tracking = false;
 };
 
-} // namespace
+}
 
 std::unique_ptr<NativeFrame> createNativeFrame(MainWindowFrame *frame, QQuickWindow *window)
 {
     return std::make_unique<WindowsFrame>(frame, window);
 }
 
-} // namespace hikari::ui::windowframe
+}

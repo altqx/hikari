@@ -15,7 +15,7 @@ public:
     using QSyntaxHighlighter::QSyntaxHighlighter;
     std::vector<std::pair<int, int>> ranges;
     QColor colour;
-    std::vector<std::tuple<int, int, QColor>> runs; // [start, end) in a colour
+    std::vector<std::tuple<int, int, QColor>> runs;
 
 protected:
     void highlightBlock(const QString &text) override
@@ -30,7 +30,6 @@ protected:
             format.setForeground(foreground);
             setFormat(s - from, e - s, format);
         }
-        // The spelling marks over the colours.
         for (const auto &[start, end] : ranges) {
             const int s = std::max(start, from), e = std::min(end, to);
             for (int i = s; i < e; ++i) {
@@ -104,8 +103,7 @@ void EditorHighlighter::rehighlight()
         m_highlighter->rehighlight();
 }
 
-// The colours follow a binding on the field's text: formatting the document
-// notifies the text again, so it is done once the binding has settled.
+// Formatting the document re-notifies the field's text, so wait for its binding to settle.
 void EditorHighlighter::rehighlightLater()
 {
     if (m_rehighlightPending)
@@ -132,7 +130,7 @@ void EditorHighlighter::apply()
     for (qsizetype i = 0; i + 2 < m_runs.size(); i += 3) {
         const int role = m_runs[i + 2].toInt();
         if (role <= 0 || role >= m_colours.size())
-            continue; // the field's own text colour
+            continue;
         const QColor colour = m_colours[role].value<QColor>();
         if (colour.isValid())
             m_highlighter->runs.emplace_back(m_runs[i].toInt(), m_runs[i + 1].toInt(), colour);
@@ -148,7 +146,6 @@ QVariantList EditorHighlighter::appliedRanges() const
         for (const QTextLayout::FormatRange &range : block.layout()->formats())
             if (range.format.background().style() != Qt::NoBrush && range.format.background().color() == m_colour) {
                 const int start = block.position() + range.start, end = start + range.length;
-                // The marks are set one character at a time: report each run once.
                 if (!out.isEmpty() && out.last().toInt() == start)
                     out.last() = end;
                 else
@@ -176,4 +173,4 @@ QVariantList EditorHighlighter::appliedColours() const
     return out;
 }
 
-} // namespace hikari::ui
+}

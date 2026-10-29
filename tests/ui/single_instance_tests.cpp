@@ -1,9 +1,3 @@
-// WS5: one HikariSub per user session (SingleInstance). The second start is
-// a child process of this test (HIKARI_SINGLE_INSTANCE_CHILD): it hands its
-// files to the holder, holds the instance itself and is killed (a crash), or
-// holds it without ever answering. Every test has its own socket and lock,
-// so nothing reaches a HikariSub the user runs.
-
 #include "hikari/app/single_instance.h"
 
 #include <QCoreApplication>
@@ -45,15 +39,11 @@ constexpr char kChild[] = "HIKARI_SINGLE_INSTANCE_CHILD";
 constexpr char kServer[] = "HIKARI_SINGLE_INSTANCE_SERVER";
 constexpr char kLock[] = "HIKARI_SINGLE_INSTANCE_LOCK";
 
-// The child's exit code for each role.
 int code(Role role)
 {
     return role == Role::Primary ? 10 : role == Role::Forwarded ? 11 : 12;
 }
 
-// "send": claims with its arguments as the files and exits with the role;
-// "hold": claims, prints "holding" and serves until killed; "hang": claims,
-// prints "holding" and never runs its event loop.
 int child(int argc, char **argv)
 {
     QCoreApplication core(argc, argv);
@@ -74,7 +64,7 @@ int child(int argc, char **argv)
     return core.exec();
 }
 
-} // namespace
+}
 
 class SingleInstanceTests : public QObject {
     Q_OBJECT
@@ -95,11 +85,9 @@ class SingleInstanceTests : public QObject {
         process->start(QCoreApplication::applicationFilePath(), files);
         return process;
     }
-    // The child's role once it has exited.
     int run(const QStringList &files = {}, const QString &token = {})
     {
         QProcess *process = start("send", files, token);
-        // The holder answers from this event loop while the child waits.
         QElapsedTimer waited;
         waited.start();
         while (process->state() != QProcess::NotRunning && waited.elapsed() < 15000)
@@ -108,7 +96,6 @@ class SingleInstanceTests : public QObject {
                    ? process->exitCode()
                    : -1;
     }
-    // A request as a start sends it (single_instance.cpp's protocol).
     static QByteArray request(const QStringList &files)
     {
         QByteArray payload;
@@ -120,7 +107,6 @@ class SingleInstanceTests : public QObject {
         length << quint32(payload.size());
         return frame + payload;
     }
-    // A commit as a start sends it: waiting `waitMs` for the receipt.
     static QByteArray commit(quint32 waitMs)
     {
         QByteArray bytes(1, '\2');
@@ -144,8 +130,6 @@ private slots:
 #endif
     }
 
-    // The arguments that are files: the program's switches are not, a file:
-    // URL is its path, a relative path is the start's folder's.
     void launchFilesKeepFilesOnly()
     {
         const QString cwd = dir.filePath(QStringLiteral("work"));
@@ -161,7 +145,6 @@ private slots:
         QVERIFY(app::launchFiles({QStringLiteral("--version")}, cwd).isEmpty());
     }
 
-    // A later start hands its files and its activation token over and exits.
     void aLaterStartHandsItsFilesOver()
     {
         app::SingleInstance holder(location);
@@ -176,7 +159,6 @@ private slots:
         QCOMPARE(request.activationToken, QStringLiteral("token-1"));
     }
 
-    // A start without files still hands over: the holder's window activates.
     void aStartWithoutFilesHandsOverToo()
     {
         app::SingleInstance holder(location);
@@ -187,8 +169,6 @@ private slots:
         QVERIFY(requested.at(0).at(0).value<app::SingleInstance::Request>().files.isEmpty());
     }
 
-    // A crashed holder (killed) leaves its socket file behind; the next start
-    // claims the instance all the same and serves the one after it.
     void aCrashedHolderDoesNotBlockTheNextStart()
     {
         QProcess *crashed = start("hold");
@@ -196,7 +176,7 @@ private slots:
         crashed->kill();
         QVERIFY(crashed->waitForFinished(10000));
 #ifndef _WIN32
-        QVERIFY(QFile::exists(location.server)); // the socket a crash leaves
+        QVERIFY(QFile::exists(location.server));
 #endif
         app::SingleInstance next(location);
         QCOMPARE(next.claim({}, true, 3000), Role::Primary);
@@ -206,8 +186,6 @@ private slots:
         QTRY_COMPARE(requested.size(), 1);
     }
 
-    // Anything at the socket's place that is not a holder (a file left by
-    // another program) is replaced by the start that holds the lock.
     void aStaleSocketFileIsReplaced()
     {
 #ifdef _WIN32
@@ -223,8 +201,6 @@ private slots:
 #endif
     }
 
-    // A holder that never answers does not block startup: the start runs on
-    // its own once the wait is over, without the instance.
     void aHolderThatDoesNotAnswerIsLeftAlone()
     {
         QProcess *hung = start("hang");
@@ -235,7 +211,6 @@ private slots:
         QCOMPARE(second.claim({{dir.filePath(QStringLiteral("d.ass"))}, {}}, true, 1500), Role::Alone);
         QVERIFY(took.elapsed() < 10000);
         QVERIFY(!second.listening());
-        // A start that must not hand over (an update's new version) does not wait.
         took.restart();
         QCOMPARE(second.claim({}, false), Role::Alone);
         QVERIFY(took.elapsed() < 1000);
@@ -243,16 +218,13 @@ private slots:
         hung->waitForFinished(10000);
     }
 
-    // A start that gave up waiting (the holder's event loop was busy past the
-    // wait) runs alone: once the holder answers, it does not open the files
-    // a second time.
     void aStartThatGaveUpIsNotOpenedLater()
     {
         app::SingleInstance holder(location);
         QCOMPARE(holder.claim({}), Role::Primary);
         QSignalSpy requested(&holder, &app::SingleInstance::requested);
-        // This event loop does not run while the start waits for its answer.
         QProcess *late = start("send", {dir.filePath(QStringLiteral("e.ass"))});
+        // MUST KILL: waitForFinished blocks this event loop on purpose so the holder never answers
         QVERIFY(late->waitForFinished(15000));
         QCOMPARE(late->exitCode(), code(Role::Alone));
         QTest::qWait(1000);
@@ -265,12 +237,8 @@ private slots:
         QCOMPARE(requested.size(), 1);
     }
 
-    // A holder that answers the request but closes before taking the
-    // commit (it quit or crashed) has not opened the files: the start does
-    // not leave as if it had.
     void aHolderThatClosesBeforeTheCommitIsNotTrusted()
     {
-        // The lock is held, and at the socket a holder that acks and drops.
         app::SingleInstance holder({location.server + QStringLiteral("-elsewhere"), location.lock});
         QCOMPARE(holder.claim({}), Role::Primary);
         QLocalServer dropping;
@@ -283,7 +251,7 @@ private slots:
                     QByteArray buffer = socket->property("got").toByteArray() + socket->readAll();
                     socket->setProperty("got", buffer);
                     if (socket->property("acked").toBool()) {
-                        ++dropped; // the commit: closed without the receipt
+                        ++dropped;
                         socket->abort();
                         return;
                     }
@@ -299,9 +267,6 @@ private slots:
         QVERIFY(dropped > 0);
     }
 
-    // A holder that acks and then never takes the commit holds the start
-    // no longer than its wait (claim's timeout, 3 s for the children), and
-    // the start goes on without handing over.
     void aStartWaitsNoLongerThanItsTimeout()
     {
         app::SingleInstance holder({location.server + QStringLiteral("-elsewhere"), location.lock});
@@ -313,7 +278,7 @@ private slots:
             while (QLocalSocket *socket = silent.nextPendingConnection()) {
                 connect(socket, &QLocalSocket::readyRead, socket, [socket] {
                     if (socket->property("acked").toBool())
-                        return; // the commit: never taken, never answered
+                        return;
                     QByteArray buffer = socket->property("got").toByteArray() + socket->readAll();
                     socket->setProperty("got", buffer);
                     if (buffer.size() < 19 || buffer.size() < 19 + qFromBigEndian<quint32>(buffer.constData() + 15))
@@ -330,9 +295,6 @@ private slots:
         QVERIFY2(took.elapsed() < 6000, qPrintable(QString::number(took.elapsed())));
     }
 
-    // A request the holder has answered but whose commit it has not taken
-    // when it gives the instance up (it quits) is dropped: the start sees
-    // the connection end without a receipt and goes on.
     void releaseDropsWhatItHasNotTaken()
     {
         app::SingleInstance holder(location);
@@ -352,13 +314,9 @@ private slots:
         QTRY_COMPARE(sender.state(), QLocalSocket::UnconnectedState);
         QTest::qWait(200);
         QCOMPARE(requested.size(), 0);
-        QVERIFY(sender.readAll().isEmpty()); // no receipt
+        QVERIFY(sender.readAll().isEmpty());
     }
 
-    // A request the holder has taken keeps its connection until its sender
-    // has read the receipt and closed it, past the holder's deadlines for
-    // the request and the commit (a named pipe's disconnect would drop the
-    // receipt unread).
     void aTakenRequestIsLeftForItsSenderToClose()
     {
         app::SingleInstance holder(location);
@@ -367,7 +325,8 @@ private slots:
         QLocalSocket sender;
         sender.connectToServer(location.server);
         QVERIFY(sender.waitForConnected(3000));
-        QTest::qWait(4700); // the request comes near the holder's read deadline
+        // MUST KILL: hard-coded wait just under the holder's 5 s read deadline
+        QTest::qWait(4700);
         sender.write(request({dir.filePath(QStringLiteral("t.ass"))}));
         sender.flush();
         QTRY_VERIFY(sender.bytesAvailable() > 0 || sender.waitForReadyRead(10));
@@ -376,16 +335,14 @@ private slots:
         sender.write(commit(10000));
         sender.flush();
         QTRY_COMPARE(requested.size(), 1);
-        QTest::qWait(5500); // past the read deadline and the commit window
+        // MUST KILL: hard-coded wait past the holder's 5 s read deadline and commit window
+        QTest::qWait(5500);
         QCOMPARE(sender.state(), QLocalSocket::ConnectedState);
         QTRY_VERIFY(sender.bytesAvailable() > 0 || sender.waitForReadyRead(10));
         QVERIFY(sender.getChar(&answer) && answer == '\3');
         sender.disconnectFromServer();
     }
 
-    // A holder that gives the instance up as soon as it has taken a request
-    // (the quit came then) still hands the receipt over: the start does not
-    // run alone with files the holder keeps for the next start.
     void aReleaseRightAfterTakingKeepsTheReceipt()
     {
         app::SingleInstance holder(location);
@@ -397,17 +354,12 @@ private slots:
         QVERIFY(!holder.listening());
     }
 
-    // A start at a lower integrity level (sandboxed, or the user's
-    // unelevated start beside an elevated instance) hands the holder
-    // nothing: it runs alone. Windows only (elsewhere a peer is another
-    // user or not).
     void aLowerIntegrityStartHandsNothingOver()
     {
 #ifdef _WIN32
         app::SingleInstance holder(location);
         QCOMPARE(holder.claim({}), Role::Primary);
         QSignalSpy requested(&holder, &app::SingleInstance::requested);
-        // This process's token at low integrity, for a "send" child.
         HANDLE own = nullptr, low = nullptr;
         QVERIFY(::OpenProcessToken(::GetCurrentProcess(),
                                    TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY | TOKEN_ADJUST_DEFAULT, &own));
@@ -421,8 +373,6 @@ private slots:
         label.Label.Attributes = SE_GROUP_INTEGRITY;
         label.Label.Sid = lowSid;
         QVERIFY(::SetTokenInformation(low, TokenIntegrityLevel, &label, sizeof(label) + ::GetLengthSid(lowSid)));
-        // The child reads its mode and location from the environment it
-        // inherits.
         qputenv(kChild, "send");
         qputenv(kServer, location.server.toUtf8());
         qputenv(kLock, location.lock.toUtf8());
@@ -445,7 +395,7 @@ private slots:
         QElapsedTimer waited;
         waited.start();
         while (::WaitForSingleObject(started.hProcess, 0) == WAIT_TIMEOUT && waited.elapsed() < 15000)
-            QTest::qWait(20); // the holder answers from this event loop
+            QTest::qWait(20);
         DWORD status = 0;
         QVERIFY(::GetExitCodeProcess(started.hProcess, &status));
         QCOMPARE(int(status), code(Role::Alone));
@@ -456,8 +406,6 @@ private slots:
 #endif
     }
 
-    // A commit the holder reads too long after its ack (it was held up) is
-    // not taken: the start has given up waiting for the receipt by then.
     void aLateCommitIsNotTaken()
     {
         app::SingleInstance holder(location);
@@ -473,14 +421,13 @@ private slots:
         QVERIFY(sender.getChar(&ack) && ack == '\1');
         sender.write(commit(10000));
         QVERIFY(sender.waitForBytesWritten(3000) || sender.bytesToWrite() == 0);
-        QThread::msleep(5500); // the holder's event loop is held up
+        // MUST KILL: msleep holds the holder's event loop past its 5 s commit window
+        QThread::msleep(5500);
         QTRY_COMPARE(sender.state(), QLocalSocket::UnconnectedState);
         QCOMPARE(requested.size(), 0);
         QVERIFY(sender.readAll().isEmpty());
     }
 
-    // The files a quit left are kept for the next start: added to what is
-    // kept, taken once, and dropped when that start never came.
     void handedOnFilesWaitForTheNextStart()
     {
         const QString kept = dir.filePath(QStringLiteral("handed/HandedOn.txt"));
@@ -491,7 +438,6 @@ private slots:
         QCOMPARE(app::takeHandedOn(kept), (QStringList{a, b}));
         QVERIFY(!QFile::exists(kept));
         QVERIFY(app::takeHandedOn(kept).isEmpty());
-        // Any character a path may have, a line break included.
         const QString odd = dir.filePath(QStringLiteral("two\nlines.ass"));
         QVERIFY(app::saveHandedOn(kept, {odd}));
         QCOMPARE(app::takeHandedOn(kept), QStringList{odd});
@@ -503,17 +449,12 @@ private slots:
         old.close();
         QVERIFY(app::takeHandedOn(kept).isEmpty());
         QVERIFY(!QFile::exists(kept));
-        // A place that cannot be written says so (the quit then hands the
-        // files to the next start's command line).
         QFile plain(dir.filePath(QStringLiteral("plain")));
         QVERIFY(plain.open(QIODevice::WriteOnly));
         plain.close();
         QVERIFY(!app::saveHandedOn(plain.fileName() + QStringLiteral("/HandedOn.txt"), {a}));
     }
 
-    // A start that holds the lock but cannot listen (its socket or pipe name
-    // is refused) gives the instance up and runs alone, so the next start is
-    // the instance.
     void aStartThatCannotListenGivesTheInstanceUp()
     {
 #ifdef _WIN32
@@ -529,9 +470,6 @@ private slots:
         QVERIFY(next.listening());
     }
 
-    // A start that runs alone (an update's watched start, which never hands
-    // over) becomes the instance once its holder has gone, and serves the
-    // starts after it.
     void anAloneStartTakesTheInstanceOnceFree()
     {
         QProcess *first = start("hold");
@@ -549,8 +487,6 @@ private slots:
         QTRY_COMPARE(requested.size(), 1);
     }
 
-    // The holder gives the instance up (at exit, before an update starts the
-    // new version): the next start is the instance.
     void releaseLetsTheNextStartClaim()
     {
         app::SingleInstance holder(location);
@@ -562,7 +498,6 @@ private slots:
         QCOMPARE(again.claim({}), Role::Primary);
     }
 
-    // Requests that are not the protocol's are dropped unanswered.
     void malformedRequestsAreDropped()
     {
         app::SingleInstance holder(location);
@@ -580,11 +515,9 @@ private slots:
             QVERIFY(socket.readAll().isEmpty());
         }
         QCOMPARE(requested.size(), 0);
-        QCOMPARE(run(), code(Role::Forwarded)); // still serving
+        QCOMPARE(run(), code(Role::Forwarded));
     }
 
-    // Each user session has its own instance; on Linux in a folder only the
-    // user may enter.
     void eachSessionHasItsOwn()
     {
 #ifdef _WIN32
@@ -593,8 +526,6 @@ private slots:
         DWORD session = 0;
         QVERIFY(::ProcessIdToSessionId(::GetCurrentProcessId(), &session));
         QVERIFY(here.server.endsWith(QLatin1Char('-') + QString::number(session)));
-        // An elevated process is its own instance and takes no files from
-        // the user's folders (the unelevated programs can write there).
         HANDLE token = nullptr;
         TOKEN_ELEVATION elevation{};
         DWORD size = 0;
@@ -627,8 +558,6 @@ private slots:
         const auto w1 = app::SingleInstance::forSession();
         QVERIFY(x0.server != x1.server && x0.lock != x1.lock);
         QVERIFY(w1.server != x1.server && w1.server != x0.server);
-        // One session however its display is spelled: an X server's screen
-        // or "unix:" host, a Wayland display by name or by path.
         qputenv("WAYLAND_DISPLAY", QFile::encodeName(runtimeDir.path() + QStringLiteral("/wayland-1")));
         QCOMPARE(app::SingleInstance::forSession().server, w1.server);
         qunsetenv("WAYLAND_DISPLAY");
@@ -640,7 +569,6 @@ private slots:
         QVERIFY(app::SingleInstance::forSession().server != x1.server);
         qputenv("DISPLAY", ":1");
         qputenv("WAYLAND_DISPLAY", "wayland-1");
-        // Nor one where the socket's path would be longer than a socket address holds.
         const QString deep = runtimeDir.path() + QLatin1Char('/') + QString(100, QLatin1Char('r'));
         QVERIFY(::mkdir(QFile::encodeName(deep).constData(), 0700) == 0);
         qputenv("XDG_RUNTIME_DIR", QFile::encodeName(deep));
@@ -648,7 +576,6 @@ private slots:
         QVERIFY(tooLong.server.startsWith(QDir::tempPath() + QStringLiteral("/hikarisub-")));
         QVERIFY(QFile::encodeName(tooLong.server).size() < 108);
         qputenv("XDG_RUNTIME_DIR", QFile::encodeName(runtimeDir.path()));
-        // A runtime folder others may enter is not used: a private one in the temporary folder is.
         QVERIFY(::chmod(QFile::encodeName(runtimeDir.path()).constData(), 0755) == 0);
         const auto fallback = app::SingleInstance::forSession();
         const QString own = QDir::tempPath() + QStringLiteral("/hikarisub-") + QString::number(::getuid());
@@ -656,8 +583,6 @@ private slots:
         struct stat info{};
         QVERIFY(::lstat(QFile::encodeName(own).constData(), &info) == 0);
         QCOMPARE(int(info.st_mode & 0777), 0700);
-        // Nor one the user cannot write in or search: the lock and socket
-        // could not be made there.
         for (const int mode : {0500, 0600}) {
             QVERIFY(::chmod(QFile::encodeName(runtimeDir.path()).constData(), mode_t(mode)) == 0);
             QVERIFY(app::SingleInstance::forSession().server.startsWith(own + QLatin1Char('/')));

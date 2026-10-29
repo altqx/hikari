@@ -1,14 +1,3 @@
-// W1 workflow through the real UI (Spix, Windows): with DirectShow chosen in
-// the settings (video.playbackPlayer), load the associated AVI video, Play
-// through the DirectShow adapter (its frames are shown, with the overlay),
-// Pause (the indexed frame whose interval holds the last DirectShow frame,
-// the accepted I4 handoff, read from each fixture frame's barcode), step to
-// the next frame and back, list the graph in the video's context menu
-// ("Filters", legacy VideoBox::ContextMenu) and Stop back to the first frame.
-// Then the transport's Next / Previous frame buttons step, and the Filters
-// submenu, open beside the context menu, takes the Dark and Light themes'
-// colours (saved for review when HIKARI_SCREENSHOT_DIR is set).
-
 #include "directshow/directshow_host.h"
 #include "hikari/app/application.h"
 #include "hikari/application/ycbcr_frame.h"
@@ -43,8 +32,6 @@ namespace {
 
 int barcode(const hikari::application::IndexedFrame &shown)
 {
-    // A player frame may be kept as Y'CbCr planes for the presenter's shader:
-    // read it as the CPU conversion shows it.
     hikari::application::IndexedFrame converted;
     const auto &f = shown.ycbcr && hikari::application::ycbcrToBgra(shown, converted) ? converted : shown;
     const QImage image =
@@ -60,15 +47,14 @@ int barcode(const hikari::application::IndexedFrame &shown)
     return value;
 }
 
-// What the Video panel last presented, recorded on the GUI thread.
 struct Shown {
     int frame = -1;
     int barcode = -1;
     bool accepted = false;
-    int playerFrames = 0; // DirectShow frames shown so far
+    int playerFrames = 0;
     int lastPlayerBarcode = -1;
     bool directShow = false;
-    QStringList filters; // the context menu's Filters entries
+    QStringList filters;
 };
 
 std::mutex g_mutex;
@@ -82,7 +68,6 @@ Shown shown()
     return g_shown;
 }
 
-// The context menu's Filters submenu, read on the GUI thread.
 QStringList filterEntries()
 {
     QStringList out;
@@ -124,7 +109,6 @@ std::vector<QQuickItem *> menuItems(QObject *menu)
     return out;
 }
 
-// Opens the context menu's Filters submenu as choosing its item does.
 void openFilters()
 {
     QMetaObject::invokeMethod(
@@ -153,9 +137,6 @@ void setTheme(const char *code)
         Qt::BlockingQueuedConnection);
 }
 
-// With the Filters submenu open in the theme `code`: both menus' surface
-// is the theme's (K2: Menu draws on palette.base, the field role), on the
-// theme's side.
 std::string filtersLook(const char *code, bool dark)
 {
     std::string out;
@@ -173,9 +154,7 @@ std::string filtersLook(const char *code, bool dark)
             auto *filtersBack = filters->property("background").value<QQuickItem *>();
             const QColor menuColour = menuBack ? menuBack->property("color").value<QColor>() : QColor();
             const QColor filtersColour = filtersBack ? filtersBack->property("color").value<QColor>() : QColor();
-            // Labels cut off (elided): printed only, since the offscreen
-            // platform here has no fonts of its own (the shell test
-            // videoFiltersSubmenuShowsWholeNames measures them).
+            // Printed only: the offscreen platform has no fonts of its own.
             const auto cutOff = [](QObject *m) {
                 QStringList out;
                 for (auto *item : menuItems(m)) {
@@ -246,15 +225,12 @@ protected:
     {
         if (waitForItem("mainWindow/loadAssociated", 5s)) {
             mouseClick("mainWindow/loadAssociated");
-            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0"); // 0
-            observed.push_back(shown().directShow ? "directshow" : "general player"); // 1
-            // Without the video through DirectShow no later step can pass:
-            // stop here (each would wait its 15 s, past ctest's timeout).
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0");
+            observed.push_back(shown().directShow ? "directshow" : "general player");
             if (observed[0] != "frame 0" || observed[1] != "directshow") {
                 quit();
                 return;
             }
-            // The graph is built as the video loads (legacy), so the menu lists it.
             mouseClick("mainWindow/visualOverlay", spix::MouseButtons::Right);
             QStringList entries;
             for (int i = 0; i < 50 && entries.isEmpty(); ++i) {
@@ -265,18 +241,16 @@ protected:
                 std::lock_guard lock(g_mutex);
                 g_shown.filters = entries;
             }
-            // Legacy's own filters among the system's splitter and decoder,
-            // each disabled without property pages (EnumFilters).
             observed.push_back(entries.contains(QStringLiteral("HikariSub video Renderer (disabled)")) &&
                                        entries.contains(QStringLiteral("Source Filter (disabled)")) &&
                                        entries.size() >= 4
                                    ? "filters"
-                                   : "no filters"); // 2
+                                   : "no filters");
             closeContextMenu();
             wait(200ms);
             mouseClick("mainWindow/playPause");
-            observed.push_back(waitForLabel("Pause")); // 3: Pause while playing
-            observed.push_back(waitFor([](const Shown &s) { return s.playerFrames >= 5; }) ? "playing" : "no frames"); // 4
+            observed.push_back(waitForLabel("Pause"));
+            observed.push_back(waitFor([](const Shown &s) { return s.playerFrames >= 5; }) ? "playing" : "no frames");
             mouseClick("mainWindow/playPause");
             const std::string label = waitForLabel("Play");
             const int expected = shown().lastPlayerBarcode;
@@ -284,49 +258,37 @@ protected:
                 return s.frame >= 0 && s.accepted && s.frame == expected && s.barcode == expected;
             });
             observed.push_back(identity ? "identity" : "frame " + std::to_string(shown().frame) + " expected " +
-                                                           std::to_string(expected)); // 5
-            observed.push_back(label); // 6: Play again
-            observed.push_back(expected > 0 ? "moved" : "did not move"); // 7
-            // Stepping from the paused frame: the next frame, then back.
-            // Stepping by the legacy hotkeys (GLOBAL_NEXT_FRAME Right,
-            // GLOBAL_PREVIOUS_FRAME Left): at this window size the Video
-            // panel's toolbar is wider than the panel, and its Next frame
-            // button lies under the Line editor panel, where a click lands.
+                                                           std::to_string(expected));
+            observed.push_back(label);
+            observed.push_back(expected > 0 ? "moved" : "did not move");
+            // MUST KILL: steps by hotkeys because the Next frame button lies under the Line editor panel
             enterKey("mainWindow/editingGrid", Qt::Key_Right, spix::KeyModifiers::None);
             observed.push_back(waitFor([expected](const Shown &s) {
                                    return s.frame == expected + 1 && s.barcode == expected + 1 && s.accepted;
                                }) ? "next"
                                   : "no next frame: " + std::to_string(shown().frame) + " expected " +
-                                        std::to_string(expected + 1)); // 8
+                                        std::to_string(expected + 1));
             enterKey("mainWindow/editingGrid", Qt::Key_Left, spix::KeyModifiers::None);
             observed.push_back(waitFor([expected](const Shown &s) {
                                    return s.frame == expected && s.barcode == expected && s.accepted;
                                }) ? "previous"
-                                  : "no previous frame: " + std::to_string(shown().frame)); // 9
-            // Playing again goes on from the stepped frame through DirectShow.
+                                  : "no previous frame: " + std::to_string(shown().frame));
             const int before = shown().playerFrames;
             mouseClick("mainWindow/playPause");
             observed.push_back(waitFor([before](const Shown &s) { return s.playerFrames >= before + 3; })
                                    ? "playing again"
-                                   : "no frames again"); // 10
+                                   : "no frames again");
             mouseClick("mainWindow/stopVideo");
-            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0"); // 11
-            // The transport's Next / Previous frame buttons (legacy
-            // VideoBox's frame buttons), pressed as a click does: at this
-            // window size the row is wider than the Video panel and the Next
-            // frame button lies under the Line editor panel (a layout outside
-            // this card), so its own action is invoked.
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0");
+            // MUST KILL: clicks by invokeMethod because the Next frame button lies under the Line editor panel
             invokeMethod("mainWindow/nextFrame", "click", {});
             observed.push_back(waitFor([](const Shown &s) { return s.frame == 1 && s.barcode == 1 && s.accepted; })
                                    ? "next button"
-                                   : "no next frame: " + std::to_string(shown().frame)); // 12
+                                   : "no next frame: " + std::to_string(shown().frame));
             invokeMethod("mainWindow/previousFrame", "click", {});
             observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.barcode == 0 && s.accepted; })
                                    ? "previous button"
-                                   : "no previous frame: " + std::to_string(shown().frame)); // 13
-            // The Filters submenu in the Dark and Light themes, each chosen
-            // before the menu opens (the Options dialog is modal: no menu
-            // stays open while the theme changes).
+                                   : "no previous frame: " + std::to_string(shown().frame));
             for (const auto &[code, dark] : {std::pair{"dark", true}, std::pair{"light", false}}) {
                 setTheme(code);
                 wait(300ms);
@@ -336,7 +298,7 @@ protected:
                 openFilters();
                 wait(500ms);
                 status();
-                observed.push_back(filtersLook(code, dark)); // 14, 15
+                observed.push_back(filtersLook(code, dark));
                 closeContextMenu();
                 wait(300ms);
             }
@@ -349,7 +311,6 @@ protected:
     }
 };
 
-// The exit code of a skipped run (ctest's SKIP_RETURN_CODE).
 constexpr int kSkipped = 77;
 
 constexpr char kSubtitles[] =
@@ -369,13 +330,11 @@ constexpr char kSubtitles[] =
     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
     "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,{\\an1\\pos(0,240)\\p1}m 0 0 l 320 0 320 20 0 20{\\p0}\r\n";
 
-} // namespace
+}
 
 int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
-    // A host where legacy's graph cannot be built (no audio output device,
-    // no XVID decoder) skips: ctest's SKIP_RETURN_CODE (CMakeLists.txt).
     if (const std::string missing =
             hikari::testing::directShowGraphMissing({{hikari::testing::fourcc('X', 'V', 'I', 'D'), "XVID"}});
         !missing.empty()) {
@@ -398,7 +357,7 @@ int main(int argc, char **argv)
     }
     hikari::app::Application::Options options;
     options.mediaHelper = QStringLiteral(HIKARI_MEDIA_HELPER);
-    options.playbackAudio = false; // the general player opens no device; DirectShow has its own renderer
+    options.playbackAudio = false;
     hikari::app::Application application(options);
     g_app = &application;
     application.settingsStore()->setValue(QStringLiteral("video.playbackPlayer"), 1);

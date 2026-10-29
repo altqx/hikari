@@ -2,28 +2,15 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// AS1 (#471): the macros of the Automation menu, after `after` in `menu`. A
-// "/" in a registered name opens submenus, as Aegisub's AutomationMenu
-// (src/menu.cpp, Regenerate and WorkItem): "Group/Sub/Macro" shows Macro
-// under Group ▸ Sub. Each piece but the last names a submenu and the last
-// the macro's item. agi::Split keeps empty pieces, so "A//B" has a submenu
-// with no title inside A, and "A/" an item with no text in A. Two names
-// sharing a prefix share its submenus. Unlike Aegisub, a macro and a
-// submenu of the same name both show whatever their order (Aegisub drops
-// the macros under "A" when the macro "A" comes first), and the entries
-// keep the load and registration order rather than an alphabetical one.
-// Hotkeys, the Automation panel and Settings → Hotkeys keep the full name.
 QtObject {
     id: entries
 
     required property Menu menu
     required property QtObject after
-    // The macros in load and registration order ({ path, ordinal, name }).
     property var macros: []
     property bool enabled: true
     signal triggered(var macro)
 
-    // What is in `menu` now, to take out on the next build.
     property var shown: []
 
     readonly property Component itemComponent: Component {
@@ -38,8 +25,6 @@ QtObject {
         ShellMenu {}
     }
 
-    // The macros as a tree: a submenu is { title, path, children }, a macro
-    // { label, macro }.
     function tree(list) {
         const top = []
         for (const macro of list) {

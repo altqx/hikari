@@ -1,10 +1,3 @@
-// DX1 (#367): User guide (GLOBAL_HELP, F1) through the composition and the
-// real QML: F1 on each panel opens its page of the guide, F1 in a DG1 window
-// and its title bar's "?" open the window's page, a surface without a page
-// opens the guide's home. The hand-offs are recorded (desktop_guard.h); no
-// browser opens. The guide-link table names only panels and windows that
-// exist.
-
 #include "hikari/app/application.h"
 #include "hikari/application/guide_links.h"
 #include "desktop_guard.h"
@@ -40,7 +33,6 @@ QUrl guide(GuideSurface kind, const QString &id)
     return QUrl(QString::fromStdString(application::guideUrl(kind, id.toStdString())));
 }
 
-// An item of a window's visual tree by its object name.
 QQuickItem *itemNamed(QQuickItem *item, const QString &name)
 {
     if (item->objectName() == name)
@@ -53,7 +45,7 @@ QQuickItem *itemNamed(QQuickItem *item, const QString &name)
 
 const QUrl kHome(QStringLiteral("https://hikarisub.altqx.com/en/docs"));
 
-} // namespace
+}
 
 class UserGuideTests : public QObject {
     Q_OBJECT
@@ -79,7 +71,6 @@ class UserGuideTests : public QObject {
                 return o;
         return nullptr;
     }
-    // The last URL handed to the desktop since `before` were.
     QUrl openedAfter(qsizetype before) const
     {
         const QList<QUrl> opened = recorded::opened();
@@ -95,8 +86,7 @@ private slots:
         o.playbackAudio = false;
         o.spellingBackend = {};
         application = new app::Application(o);
-        // A second between keys: F1 again within 100 ms is a repeat
-        // (CheckLastKeyEvent) and opens nothing.
+        // MUST KILL: a fake key clock that steps 1 s per read to dodge the hotkey repeat filter
         auto t = std::make_shared<qint64>(0);
         application->hotkeys().setKeyClock([t] { return *t += 1000; });
         engine = new QQmlApplicationEngine;
@@ -116,8 +106,6 @@ private slots:
         delete application;
     }
 
-    // Every panel has its page, and every page of the table names a panel
-    // the shell has or a DG1 window's guide id in the QML.
     void theTableNamesRealSurfaces()
     {
         const QStringList panels = ui::WorkspaceLayoutController::panelIds();
@@ -140,7 +128,7 @@ private slots:
             QVERIFY2(!seen.contains(key), qPrintable(surface));
             seen.insert(key);
             QVERIFY2(link.path.starts_with("/en/docs/"), qPrintable(surface));
-            if (link.kind == GuideSurface::Panel) // a panel, or a panel's mode
+            if (link.kind == GuideSurface::Panel)
                 QVERIFY2(panels.contains(surface.section(QLatin1Char('.'), 0, 0)), qPrintable(surface));
             else
                 QVERIFY2(windows.contains(surface), qPrintable(surface));
@@ -150,9 +138,6 @@ private slots:
                  QUrl(QStringLiteral("https://hikarisub.altqx.com/en/docs/basics/grid")));
     }
 
-    // Home (SH2) is no panel: F1 there opens the guide's home. Then a file in
-    // Translation mode, so every panel is there (the Original panel too) for
-    // the focus below.
     void homeOpensTheGuidesHome()
     {
         QObject *homePage = named(QStringLiteral("homePage"));
@@ -172,7 +157,6 @@ private slots:
         QVERIFY(run(QStringLiteral("editor.translationMode")).toBool());
     }
 
-    // F1 (User guide's default key) on each panel opens the panel's page.
     void f1OnEachPanelOpensItsPage()
     {
         const int count = run(QStringLiteral("panels.length")).toInt();
@@ -198,7 +182,6 @@ private slots:
         }
     }
 
-    // #409: F1 in the Spellchecker's Grammar mode opens the grammar page.
     void f1InTheGrammarModeOpensItsPage()
     {
         run(QStringLiteral("showPanel(spellDock); focusPanel(spellPanel, Qt.OtherFocusReason)"));
@@ -220,7 +203,6 @@ private slots:
         QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Panel, QStringLiteral("Spellchecker")));
     }
 
-    // Help > User guide opens the page of the panel with the focus too.
     void theMenuItemOpensTheFocusedPanelsPage()
     {
         run(QStringLiteral("showPanel(gridDock); focusPanel(gridPanel, Qt.OtherFocusReason)"));
@@ -234,8 +216,6 @@ private slots:
         QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Panel, QStringLiteral("Grid")));
     }
 
-    // In a DG1 window with a page, F1 and the title bar's "?" (Help) open it;
-    // a window without one shows no "?" and F1 opens the guide's home.
     void windowsOpenTheirPage()
     {
         run(QStringLiteral("openSettings('general')"));
@@ -243,16 +223,14 @@ private slots:
         QVERIFY(settings);
         QTRY_VERIFY(settings->isVisible());
         settings->requestActivate();
-        // (A dialog counts as active while its parent is: the focus itself.)
         QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(settings));
         auto *help = itemNamed(settings->contentItem(), QStringLiteral("dialogTitleBarHelp"));
         QVERIFY(help);
-        // Shown with the window's drawn title bar (not with the system's).
         const bool drawnBar = help->parentItem()->isVisible();
         QCOMPARE(help->isVisible(), drawnBar);
         QCOMPARE(help->property("text").toString(), QStringLiteral("Help"));
         QCOMPARE(help->property("iconRole").toString(), QStringLiteral("help"));
-        QCOMPARE(help->property("focusPolicy").toInt(), int(Qt::NoFocus)); // as every title bar button: F1 is its key
+        QCOMPARE(help->property("focusPolicy").toInt(), int(Qt::NoFocus));
         qsizetype before = recorded::opened().size();
         QTest::keyClick(settings, Qt::Key_F1);
         QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Window, QStringLiteral("settings")));

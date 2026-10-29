@@ -1,12 +1,6 @@
 import QtQuick
 import Hikari.Ui
 
-// SH1 (#220), DG1 (#222): the free parts of a drawn title bar (MainTitleBar,
-// DialogTitleBar): a drag moves the window through the window system, a
-// double-click maximises it (while it can be), a right click opens the
-// window system's window menu. On Windows the window system takes the
-// pointer here (WM_NCHITTEST says HTCAPTION, MainWindowFrame), so it never
-// reaches this area.
 MouseArea {
     id: moveArea
     required property MainWindowFrame frame
@@ -41,8 +35,7 @@ MouseArea {
         if (moving || Math.abs(at.x - pressedAt.x) + Math.abs(at.y - pressedAt.y) < Application.styleHints.startDragDistance)
             return
         moving = true
-        // Where the platform declines the move (X11 with no window
-        // manager), the window follows the pointer; never a maximised one.
+        // startSystemMove fails on X11 without a window manager; then the window follows the pointer.
         if (!Docking.startSystemMove(moveArea) && !maximized) {
             windowAt = Qt.point(window.x, window.y)
             following = true

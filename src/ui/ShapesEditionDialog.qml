@@ -5,18 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// PU5 (#307, mockup approved 2026-10-22): "Edit shapes", legacy's "Vector
-// shape editing" (ShapesEdition, VisualDrawingShapes.cpp:43-288), opened by
-// the drawing tool's Shape list "Edit shapes…". A resizable, modeless window
-// on DG1's frame: the presets on the left (each drawn small) with New shape,
-// Duplicate, Delete and ⋯ (Restore default shapes…, Undo all changes) under
-// them; the selected one's name, "Scale from the cursor" and drawing; its
-// preview around the point the tool's click puts it at. Each change is kept
-// as it is made (the tool's list and the file follow); Undo and Redo walk
-// the window's steps; Close and Esc keep them. A value the tool cannot use
-// is said under its field and the preset keeps its last good one; a name
-// another preset has asks to replace it (accepted on #55); Restore default
-// shapes asks first.
 DialogWindow {
     id: dialog
     objectName: "shapesEditionDialog"
@@ -26,14 +14,12 @@ DialogWindow {
     resizable: true
     initialFocus: shapeList
 
-    // The window's words for its steps (ShapesEdition::Step).
+    // MUST KILL: stepText's list must follow the order of ShapesEdition::Step
     function stepText(step) {
         return [qsTr("Rename shape"), qsTr("Edit drawing"), qsTr("Change scaling"), qsTr("New shape"),
                 qsTr("Duplicate shape"), qsTr("Delete shape"), qsTr("Take drawing from line"),
                 qsTr("Replace shape"), qsTr("Restore default shapes"), qsTr("Undo all changes")][step] ?? ""
     }
-    // The fields show the preset again (another one chosen, a step undone,
-    // or a refused value left).
     function showFields() {
         if (!editor)
             return
@@ -50,8 +36,6 @@ DialogWindow {
                           ? qsTr("Another shape is named “%1”. Press Enter to replace it.").arg(editor.takenName())
                         : ""
     }
-    // Enter, or leaving the name with an error: a taken name asks to replace
-    // the other preset; any other refused name goes back.
     property bool asking: false
     function nameLeft() {
         if (!editor || asking || shapeName.error.length === 0) {
@@ -59,7 +43,6 @@ DialogWindow {
                 editor.endTyping()
             return
         }
-        // Closing with a taken name keeps the last good one, unasked.
         if (!visible) {
             showFields()
             return
@@ -110,11 +93,7 @@ DialogWindow {
     function redo() { if (editor) { editor.redo(); showFields() } }
 
     onEditorChanged: showFields()
-    // Closing keeps the changes: the editor goes with the window. Not on
-    // hiding, nor when the window goes with the one it opened from
-    // (fullscreen left, a floating panel hidden): the bar showing the
-    // dialogs then makes the window again with the same editor and its
-    // history (or Edit… brings it back).
+    // MUST KILL: a close while transientParent is hidden keeps the editor, so the window can be made again
     onClosing: if (editor && !(transientParent && !transientParent.visible)) editor.close()
     Connections {
         target: dialog.editor
@@ -135,7 +114,6 @@ DialogWindow {
         Layout.preferredHeight: 420
         spacing: 0
 
-        // The presets, and the commands on them.
         Rectangle {
             Layout.preferredWidth: 220
             Layout.fillHeight: true
@@ -152,11 +130,7 @@ DialogWindow {
                     Layout.fillHeight: true
                     clip: true
                     model: dialog.editor ? dialog.editor.items : []
-                    // The editor's selection is the list's, through this
-                    // binding only: a click or a key chooses through the
-                    // editor (the view's own index moves as each change
-                    // gives it a new model, and must not choose; Codex on
-                    // #349).
+                    // Bound only: a JS-array model resets ListView's own currentIndex on each change.
                     currentIndex: dialog.editor && count > 0 ? dialog.editor.selection : -1
                     keyNavigationEnabled: false
                     activeFocusOnTab: true
@@ -255,7 +229,6 @@ DialogWindow {
             }
         }
 
-        // The selected preset.
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -271,12 +244,9 @@ DialogWindow {
                 Layout.preferredWidth: 220
                 Accessible.name: qsTr("Name")
                 Accessible.description: error
-                // shapeName->SetMaxLength(20): typing stops there; a longer
-                // name read from the file is shown whole.
+                // TextField truncates text past maximumLength, so a longer stored name raises it.
                 maximumLength: Math.max(dialog.editor ? dialog.editor.nameMaxLength : 20, text.length)
                 onTextEdited: dialog.nameTyped()
-                // Enter ends the name (asks to replace a taken one); the
-                // window stays.
                 Keys.onReturnPressed: event => { event.accepted = true; dialog.nameLeft() }
                 Keys.onEnterPressed: event => { event.accepted = true; dialog.nameLeft() }
                 onActiveFocusChanged: if (!activeFocus) dialog.nameLeft()
@@ -286,10 +256,9 @@ DialogWindow {
             Label { text: qsTr("Scale from the cursor"); font.weight: Font.DemiBold; Layout.topMargin: 6 }
             SegmentedButtons {
                 objectName: "shapeMode"
-                // (Its whole width: the window opens no narrower.)
                 Layout.fillWidth: true
                 Layout.minimumWidth: implicitWidth
-                // ShapePreset::Mode; legacy's "Scaling relative to cursor".
+                // MUST KILL: the choices' order must follow ShapePreset::Mode
                 choices: [{ text: qsTr("Width and height"), name: "shapeMode0" },
                           { text: qsTr("Keep aspect ratio"), name: "shapeMode1" },
                           { text: qsTr("Width only"), name: "shapeMode2" }]
@@ -318,8 +287,6 @@ DialogWindow {
                         border.color: shapeText.error.length > 0 ? Theme.danger
                                     : shapeText.activeFocus ? Theme.focus : Theme.line
                     }
-                    // (The text the window shows is the preset's: only a
-                    // typed one differs.)
                     onTextChanged: {
                         if (!dialog.editor || text === dialog.editor.shape)
                             return
@@ -351,8 +318,6 @@ DialogWindow {
             }
         }
 
-        // The preview: the drawing around the point a click with the tool
-        // puts it at (the cross), on a 50-unit grid.
         ColumnLayout {
             Layout.preferredWidth: 280
             Layout.fillHeight: true
@@ -367,7 +332,6 @@ DialogWindow {
                 border.color: Theme.line
                 clip: true
                 readonly property rect box: dialog.editor ? dialog.editor.box : Qt.rect(0, 0, 0, 0)
-                // The drawing and the cursor point, with room around them.
                 readonly property rect view: {
                     const span = Math.max(box.width, box.height, 1) * 1.5
                     const cx = box.x + box.width / 2, cy = box.y + box.height / 2
@@ -377,7 +341,6 @@ DialogWindow {
                     return Qt.rect(x0, y0, s, s)
                 }
                 Repeater {
-                    // The grid's lines every 50 units.
                     model: {
                         const v = previewFrame.view
                         const lines = []
@@ -408,7 +371,6 @@ DialogWindow {
                     stroke: Theme.accent
                     strokeWidth: 2
                 }
-                // The cursor point.
                 Item {
                     x: preview.mapX(0)
                     y: preview.mapY(0)
@@ -477,7 +439,6 @@ DialogWindow {
         }
     }
 
-    // The window's questions, PK1's message box over it.
     MessageHost {
         id: messages
         objectName: "shapesMessages"

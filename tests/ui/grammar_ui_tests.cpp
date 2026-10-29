@@ -1,10 +1,3 @@
-// GR1 (#364): grammar check with Harper in the main window, with the pinned
-// harper-ls (HikariHarper.cmake): off by default with no helper process, the
-// Line editor's wavy underlines and their menu (suggestions, Ignore this rule
-// with Undo, Add to dictionary), Hunspell and Harper never marking one word
-// twice, the Settings page, and the Spellchecker panel's Grammar walk in the
-// background.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 #include "line_table_model.h"
@@ -61,8 +54,7 @@ QByteArray dialogue(const QByteArray &text, int second = 1)
            + QByteArray::number(second).rightJustified(2, '0') + ".50,Default,,0,0,0,," + text + "\n";
 }
 
-// harper-ls processes this test started (Linux; elsewhere the Harper folder,
-// made with the helper, says it).
+// MUST KILL: returns -1 off Linux; callers skip or clamp the check
 int harperChildren()
 {
 #ifdef __linux__
@@ -87,7 +79,7 @@ int harperChildren()
 #endif
 }
 
-} // namespace
+}
 
 class GrammarUiTests : public QObject {
     Q_OBJECT
@@ -107,7 +99,6 @@ class GrammarUiTests : public QObject {
         o.harperLs = QStringLiteral(HIKARI_HARPER_LS);
         o.grammarDir = grammarDir();
         if (hunspell) {
-            // A tiny Hunspell dictionary (no affix rules), as shell_tests'.
             QDir().mkpath(home() + QStringLiteral("/Dictionary"));
             QFile aff(home() + QStringLiteral("/Dictionary/en_US.aff"));
             QVERIFY(aff.open(QIODevice::WriteOnly));
@@ -163,7 +154,6 @@ class GrammarUiTests : public QObject {
         const auto &t = target()->document().lines()[row]->text;
         return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
     }
-    // The field's marks as [start, end) pairs of its text.
     QList<QPair<int, int>> marks(int role = 0) const
     {
         QList<QPair<int, int>> out;
@@ -200,7 +190,6 @@ class GrammarUiTests : public QObject {
         }
         return out;
     }
-    // A toast's action button by its text.
     QQuickItem *toastButton(const QString &text) const
     {
         std::function<QQuickItem *(QQuickItem *)> find = [&](QQuickItem *from) -> QQuickItem * {
@@ -222,11 +211,9 @@ private slots:
         engine.reset();
         application.reset();
         window = nullptr;
-        QTRY_COMPARE(std::max(0, harperChildren()), 0); // the helper ends with the application
+        QTRY_COMPARE(std::max(0, harperChildren()), 0);
     }
 
-    // Off by default: no marks, no menu entries, and no helper process (nor
-    // its folder) however long the Line is edited.
     void offByDefaultStartsNoHelper()
     {
         start();
@@ -242,16 +229,12 @@ private slots:
         QVERIFY(!QFileInfo::exists(grammarDir()));
         if (harperChildren() >= 0)
             QCOMPARE(harperChildren(), 0);
-        // The panel's Grammar filter says it is off.
         const QVariantMap state = application->startGrammarWalk();
         QCOMPARE(state.value(QStringLiteral("on")).toBool(), false);
         QVERIFY(!state.value(QStringLiteral("found")).toBool());
         QVERIFY(!QFileInfo::exists(grammarDir()));
     }
 
-    // On: the field is checked after typing stops, each finding under its
-    // raw text (tags shown) or the shown text (tags hidden), drawn as a wavy
-    // underline; its menu puts a suggestion in as one step, the tags kept.
     void underlinesAndTheirMenu()
     {
         start();
@@ -266,15 +249,11 @@ private slots:
         QVERIFY(marks().contains(qMakePair(article, article + 1)));
         if (harperChildren() >= 0)
             QCOMPARE(harperChildren(), 1);
-        // The wavy underlines, one row each.
         auto *wave = item("lineTextGrammar");
         QVERIFY(wave);
         QTRY_VERIFY(wave->isVisible());
         QCOMPARE(wave->property("rows").toList().size(), marks().size());
 
-        // The finding's menu: Harper's message and group first, the
-        // suggestion, Ignore this rule naming the group; no Add to
-        // dictionary for a grammar rule.
         const QVariantMap finding = application->editorGrammarAt(0, article);
         QCOMPARE(finding.value(QStringLiteral("rule")).toString(), QStringLiteral("AnA"));
         QCOMPARE(finding.value(QStringLiteral("groupName")).toString(), QStringLiteral("Miscellaneous"));
@@ -297,15 +276,12 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         const QString fixed = QStringLiteral(R"({\i1}Their{\i0} going to the store, I has an apple.)");
         QTRY_COMPARE(lineText(), fixed);
-        // The Grid and the tab's modified mark follow.
         QVERIFY(gridText().contains(QStringLiteral("an apple")));
         QVERIFY(!tabs.isEmpty());
         QCOMPARE(target()->history().back().name, std::string("Correcting grammar errors in the text field"));
         QTRY_VERIFY_WITH_TIMEOUT(marked(fixed, QStringLiteral("Their")), kHarperWait);
         QVERIFY(!marks().contains(qMakePair(article, article + 2)));
 
-        // Tags hidden: the marks are under the shown text, and a suggestion
-        // across the hidden tags keeps them.
         application->editor().setShowTags(false);
         const QString shown = QStringLiteral("Their going to the store, I has an apple.");
         QTRY_COMPARE(field->property("text").toString(), shown);
@@ -318,8 +294,6 @@ private slots:
         application->editor().setShowTags(true);
     }
 
-    // Ignore this rule turns the rule's group off in Settings; the toast's
-    // Undo turns it on again.
     void ignoreThisRuleAndUndo()
     {
         start();
@@ -340,14 +314,10 @@ private slots:
         QTRY_VERIFY(toastButton(QStringLiteral("Undo")));
         QVERIFY(QMetaObject::invokeMethod(toastButton(QStringLiteral("Undo")), "click"));
         QTRY_COMPARE(application->settingsStore()->boolean("grammar.group.miscellaneous"), true);
-        QTRY_VERIFY(!toastButton(QStringLiteral("Undo"))); // the toast closes with it
+        QTRY_VERIFY(!toastButton(QStringLiteral("Undo")));
         QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
     }
 
-    // With Hunspell checking spelling, Harper's spelling rule is off: a
-    // misspelling has Hunspell's mark only. With it off, Harper's spelling
-    // finding offers Add to dictionary, which reaches UserDic.udic (so
-    // Hunspell accepts the word too) and Harper's own dictionary.
     void spellingIsMarkedOnceAndWordsReachBoth()
     {
         start(true);
@@ -359,7 +329,7 @@ private slots:
         QTRY_COMPARE(field->property("text").toString(), text);
         const int word = text.indexOf(QStringLiteral("tomorow"));
         QTRY_VERIFY(application->editorSpellingMarks(0).contains(word));
-        QTest::qWait(1500); // Harper's check of the same text, done
+        QTest::qWait(1500);
         QVERIFY(application->editorGrammarAt(0, word).isEmpty());
         QVERIFY(!marked(text, QStringLiteral("tomorow")));
 
@@ -385,8 +355,6 @@ private slots:
         QTRY_VERIFY(!application->editorSpellingMarks(0).contains(word));
     }
 
-    // #409: with no spell checker, a word added is harper-ls's alone; it is
-    // read back from its file, so it stays added after a restart.
     void wordsAddedWithoutASpellCheckerStay()
     {
         start();
@@ -396,7 +364,6 @@ private slots:
         QVERIFY(application->openFile(file));
         QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("tomorow")), kHarperWait);
         QVERIFY(application->addGrammarWord(QStringLiteral("tomorow")));
-        // The field is checked again (its marks gone meanwhile).
         QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("Their")) && !marked(text, QStringLiteral("tomorow")),
                                  kHarperWait);
 
@@ -408,7 +375,6 @@ private slots:
         QVERIFY(application->openFile(file));
         QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("Their")), kHarperWait);
         QVERIFY(!marked(text, QStringLiteral("tomorow")));
-        // Another word joins it in the file; neither is lost.
         QVERIFY(application->addGrammarWord(QStringLiteral("Hikarisub")));
         QFile harperWords(grammarDir() + QStringLiteral("/dictionary.txt"));
         QVERIFY(harperWords.open(QIODevice::ReadOnly));
@@ -417,7 +383,6 @@ private slots:
         QVERIFY(words.contains("Hikarisub"));
     }
 
-    // Translation mode: the Translated field is checked, not the Original.
     void translationModeChecksTheTranslation()
     {
         start();
@@ -433,8 +398,6 @@ private slots:
         QVERIFY(marks(0).isEmpty());
     }
 
-    // Tags from original: the Translated field leaves the carried leading
-    // tags out, and so do the findings' marks and the menu's hit test.
     void carriedTagsAreLeftOutOfTheMarks()
     {
         start();
@@ -458,8 +421,6 @@ private slots:
         QCOMPARE(application->editorGrammarAt(1, article).value(QStringLiteral("rule")).toString(), QStringLiteral("AnA"));
     }
 
-    // Another file in the editor while the walk waits for harper-ls: the walk
-    // stops and says so, and the editor stays where it was.
     void walkStopsWhenAnotherFileIsEdited()
     {
         start();
@@ -484,8 +445,6 @@ private slots:
         QCOMPARE(lineText(), QStringLiteral("One."));
     }
 
-    // The walk's findings follow the settings: a group turned off drops its
-    // findings in place; another English walks the file again.
     void walkFollowsTheSettings()
     {
         start();
@@ -502,7 +461,6 @@ private slots:
         const QString group = state.value(QStringLiteral("groupName")).toString();
         const int count = state.value(QStringLiteral("count")).toInt();
         QVERIFY(count >= 6);
-        // The shown finding's group off (in Settings, not through the walk).
         int index = -1;
         const QVariantList groups = application->grammarGroups();
         for (int i = 0; i < groups.size(); ++i)
@@ -513,9 +471,8 @@ private slots:
         QTRY_VERIFY(application->grammarWalkState().value(QStringLiteral("groupName")).toString() != group);
         state = application->grammarWalkState();
         QVERIFY(state.value(QStringLiteral("done")).toBool());
-        QCOMPARE(state.value(QStringLiteral("count")).toInt(), count); // dropped in place, not walked again
+        QCOMPARE(state.value(QStringLiteral("count")).toInt(), count);
         application->setGrammarGroup(index, true);
-        // Another English: all of it again.
         grammarOn(2);
         QTRY_VERIFY(!application->grammarWalkState().value(QStringLiteral("done")).toBool()
                     || application->grammarWalkState().value(QStringLiteral("count")).toInt() != count);
@@ -526,8 +483,6 @@ private slots:
         QCOMPARE(state.value(QStringLiteral("index")).toInt(), 1);
     }
 
-    // Settings > Spelling & grammar: the groups greyed out while grammar
-    // check is off; the licence line opens Help > Credits.
     void settingsPage()
     {
         start();
@@ -554,7 +509,6 @@ private slots:
         for (const QVariant &row : credits->property("components").toList())
             names << row.toList().value(0).toString();
         QVERIFY(names.contains(QStringLiteral("Harper")));
-        // The groups' names and rule counts come from Harper's grouping.
         const QVariantList groups = application->grammarGroups();
         QCOMPARE(groups.size(), 15);
         int rules = 0;
@@ -563,9 +517,6 @@ private slots:
         QCOMPARE(rules, 936);
     }
 
-    // The panel's Grammar filter walks the whole file in the background,
-    // from the active Line: the window answers while it walks, Cancel stops
-    // it, and its actions act on the finding shown.
     void panelWalksTheFileInTheBackground()
     {
         start();
@@ -578,7 +529,7 @@ private slots:
         QElapsedTimer started;
         started.start();
         QVariantMap state = application->startGrammarWalk();
-        QVERIFY(started.elapsed() < 500); // nothing waits for harper-ls
+        QVERIFY(started.elapsed() < 500);
         QVERIFY(state.value(QStringLiteral("walking")).toBool());
         QCOMPARE(state.value(QStringLiteral("total")).toInt(), 120);
         QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
@@ -590,7 +541,6 @@ private slots:
         const int count = state.value(QStringLiteral("count")).toInt();
         QVERIFY(count >= 3);
 
-        // Replace: the shown finding's Line, as one step.
         for (int i = 0; i < count && state.value(QStringLiteral("rule")).toString() != QLatin1String("AnA"); ++i)
             state = application->grammarWalkIgnore();
         QCOMPARE(state.value(QStringLiteral("rule")).toString(), QStringLiteral("AnA"));
@@ -600,7 +550,6 @@ private slots:
         QCOMPARE(target()->history().back().name, std::string("Correcting grammar errors in the text field"));
         QVERIFY(state.value(QStringLiteral("found")).toBool());
         QVERIFY(state.value(QStringLiteral("line")).toInt() > 6);
-        // Ignore this rule: the group off, its findings gone from the walk.
         const QString group = state.value(QStringLiteral("groupName")).toString();
         state = application->grammarWalkIgnoreRule();
         QVERIFY(state.value(QStringLiteral("ignoredGroup")).toInt() >= 0);
@@ -609,7 +558,6 @@ private slots:
             QVERIFY(state.value(QStringLiteral("groupName")).toString() != group);
         application->setGrammarGroup(state.value(QStringLiteral("ignoredGroup")).toInt(), true);
 
-        // Cancel while it walks; the panel shows the walk, Check again starts it over.
         auto *dock = named(QStringLiteral("spellDock"));
         QVERIFY(QMetaObject::invokeMethod(window, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
         auto *panel = named(QStringLiteral("spellCheckerPanel"));
@@ -633,8 +581,6 @@ private slots:
         QVERIFY(!application->grammarWalkState().contains(QStringLiteral("walking")));
     }
 
-    // SRT: Harper reads the text as spelling does there, with the <...> tags
-    // left out and {...} as text; a suggestion keeps the tags.
     void srtTagsAreLeftOut()
     {
         start();
@@ -647,13 +593,11 @@ private slots:
         const int braced = text.lastIndexOf(QStringLiteral("tomorow"));
         QTRY_VERIFY(marks().contains(qMakePair(braced, braced + 7)));
         for (const auto &[from, to] : marks())
-            QVERIFY(from > text.indexOf(QLatin1Char('>'))); // nothing in the tag
+            QVERIFY(from > text.indexOf(QLatin1Char('>')));
         QVERIFY(application->replaceEditorGrammar(0, article, QStringLiteral("an")));
         QCOMPARE(lineText(), QStringLiteral(R"(<font face="tomorow">I has an apple.</font> {see you tomorow})"));
     }
 
-    // The same text in a Document of another format is checked again: SRT
-    // leaves <i> out, ASS reads it as text.
     void sameTextInAnotherFormatIsCheckedAgain()
     {
         start();
@@ -671,8 +615,6 @@ private slots:
         QCOMPARE(lineText(), QStringLiteral("<i>I has an apple.</i>"));
     }
 
-    // Skipped Lines (comments here) are read a turn of the event loop at a
-    // time: the walk starts at once, and Cancel is answered while it reads.
     void walkReadsSkippedLinesInTurns()
     {
         start();
@@ -685,7 +627,7 @@ private slots:
         QTRY_VERIFY(target());
         QVariantMap state = application->startGrammarWalk();
         QCOMPARE(state.value(QStringLiteral("total")).toInt(), 3001);
-        QVERIFY(state.value(QStringLiteral("checked")).toInt() < 3000); // not every comment yet
+        QVERIFY(state.value(QStringLiteral("checked")).toInt() < 3000);
         state = application->cancelGrammarWalk();
         QVERIFY(state.value(QStringLiteral("cancelled")).toBool());
         application->startGrammarWalk();
@@ -693,8 +635,6 @@ private slots:
         QVERIFY(application->grammarWalkState().value(QStringLiteral("found")).toBool());
     }
 
-    // A Line longer than the check's cap (4096 UTF-16 units) is never
-    // checked, in the field or by the walk.
     void outsizedLinesAreNotChecked()
     {
         start();
@@ -703,7 +643,7 @@ private slots:
         QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/long.ass"),
                                                dialogue(outsized) + dialogue("I has a apple.", 2))));
         QTRY_COMPARE(item("lineText")->property("text").toString(), QString::fromUtf8(outsized.trimmed()));
-        QTest::qWait(1500); // the field's check would be back by now
+        QTest::qWait(1500);
         QVERIFY(marks().isEmpty());
         application->startGrammarWalk();
         QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
@@ -712,14 +652,11 @@ private slots:
         QCOMPARE(state.value(QStringLiteral("line")).toInt(), 2);
     }
 
-    // Lines with nothing to check (tags only here, a million units of them)
-    // keep nothing, so the walk never stops short of the Lines after them.
     void blankLinesDoNotHoldTheWalk()
     {
         start();
         grammarOn();
-        // 4096 units each, the longest checked: 256 of them reach the kept
-        // limit within one turn.
+        // MUST KILL: 1364 makes each Line exactly the 4096-unit check cap
         const QByteArray tags = "{" + QByteArray("\\b1").repeated(1364) + "\\i}";
         QByteArray events;
         for (int i = 0; i < 300; ++i)
@@ -727,14 +664,13 @@ private slots:
         events += dialogue("I has a apple.", 2);
         QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/tags.ass"), events)));
         QTRY_VERIFY(target());
-        QTest::qWait(500); // the settings in (a change would start the walk over)
+        // MUST KILL: fixed 500 ms wait so a late settings change doesn't restart the walk
+        QTest::qWait(500);
         application->startGrammarWalk();
         QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
         QCOMPARE(application->grammarWalkState().value(QStringLiteral("line")).toInt(), 301);
     }
 
-    // A finding's Line becomes the only selected one, so Enter in the editor
-    // commits there and nowhere else.
     void walkSelectsTheFindingsLine()
     {
         start();
@@ -752,17 +688,13 @@ private slots:
         const auto &selection = target()->selection();
         QCOMPARE(selection.active, std::optional(lines[4]->id));
         QCOMPARE(selection.selected, (std::set<core::LineId>{lines[4]->id}));
-        // Typed and committed in the field: only the finding's Line changes.
         application->editor().textEdited(QStringLiteral("I have an apple."), 16);
-        QVERIFY(application->editor().commit()); // Enter
+        QVERIFY(application->editor().commit());
         QTRY_COMPARE(lineText(4), QStringLiteral("I have an apple."));
         QCOMPARE(lineText(0), QStringLiteral("This line is fine."));
         QCOMPARE(lineText(1), QStringLiteral("This line is fine."));
     }
 
-    // A draft the editor cannot commit (its end before its start, under the
-    // Block policy) keeps the editor and the selection where they are when a
-    // finding comes in.
     void walkLeavesAnUncommittableDraft()
     {
         start();
@@ -785,8 +717,6 @@ private slots:
         QCOMPARE(item("lineText")->property("text").toString(), QStringLiteral("Not yet sent"));
     }
 
-    // Add to dictionary from the walk: the Lines harper-ls was reading with
-    // the old words are read again, so the word never comes back.
     void walkAddedWordNeverComesBack()
     {
         start();
@@ -796,7 +726,8 @@ private slots:
             events += dialogue("We will go there tomorow.", i % 59);
         QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/word.ass"), events)));
         QTRY_VERIFY(target());
-        QTest::qWait(500); // the settings in (a change would start the walk over)
+        // MUST KILL: fixed 500 ms wait so a late settings change doesn't restart the walk
+        QTest::qWait(500);
         application->startGrammarWalk();
         QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("found")).toBool(), kHarperWait);
         QVariantMap state = application->grammarWalkState();
@@ -809,8 +740,6 @@ private slots:
                  qPrintable(state.value(QStringLiteral("text")).toString()));
     }
 
-    // Back to text already checked while a check of other text is with
-    // harper-ls: that check is dropped and the marks stay.
     void restoredTextKeepsItsMarks()
     {
         start();
@@ -820,19 +749,18 @@ private slots:
         QTRY_COMPARE(item("lineText")->property("text").toString(), text);
         const int article = text.indexOf(QStringLiteral("a apple"));
         QTRY_VERIFY_WITH_TIMEOUT(marks().contains(qMakePair(article, article + 1)), kHarperWait);
-        // A text harper-ls takes a while over (a code action per finding).
+        // harper-ls takes a while over this text: it computes a code action per finding.
         const QString other = QStringLiteral("I has a apple. ").repeated(60).trimmed();
         application->editor().textEdited(other, int(other.size()));
-        QTest::qWait(400); // checked 300 ms after typing: with harper-ls now
+        // MUST KILL: fixed waits timed against the editor's 300 ms check delay
+        QTest::qWait(400);
         application->editor().textEdited(text, int(text.size()));
-        QTest::qWait(400); // the field's own text again: its marks kept
+        QTest::qWait(400);
         QVERIFY(marks().contains(qMakePair(article, article + 1)));
-        QTest::qWait(6000); // the other text's result would be in by now
+        QTest::qWait(6000);
         QVERIFY(marks().contains(qMakePair(article, article + 1)));
     }
 
-    // A Line deleted after its findings came in: the walk passes over them
-    // and the selection stays on a Line that is there.
     void walkSkipsDeletedLines()
     {
         start();
@@ -858,8 +786,6 @@ private slots:
         QVERIFY(std::ranges::any_of(target()->document().lines(), [&](const auto *l) { return l->id == *active; }));
     }
 
-    // Replacing the walk's last finding: the editor and the Grid show the
-    // correction though no finding is left to show.
     void replacingTheLastFindingShowsIt()
     {
         start();
@@ -872,7 +798,7 @@ private slots:
         const int count = state.value(QStringLiteral("count")).toInt();
         for (int i = 0; i < count && state.value(QStringLiteral("rule")).toString() != QLatin1String("AnA"); ++i)
             state = application->grammarWalkIgnore();
-        QCOMPARE(state.value(QStringLiteral("rule")).toString(), QStringLiteral("AnA")); // the Line's last
+        QCOMPARE(state.value(QStringLiteral("rule")).toString(), QStringLiteral("AnA"));
         state = application->grammarWalkReplace(QStringLiteral("an"));
         QVERIFY(!state.value(QStringLiteral("found")).toBool());
         QCOMPARE(lineText(), QStringLiteral("I has an apple."));
@@ -880,10 +806,6 @@ private slots:
         QVERIFY(gridText().contains(QStringLiteral("an apple")));
     }
 
-    // For review (HIKARI_SURFACE_SHOT_DIR; skipped without it), in the four
-    // themes (gr1-<part>-<theme>.png): the Line editor's underlines with a
-    // finding's menu, the toast after Ignore this rule, the Spellchecker
-    // panel's Grammar walk and Settings › Spelling & grammar.
     void screenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -923,10 +845,10 @@ private slots:
                                               "triggered"));
             QVERIFY(QMetaObject::invokeMethod(menu, "close"));
             QTRY_VERIFY(toastButton(QStringLiteral("Undo")));
-            // The other groups' marks, found again under the new rules.
             QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("Their")), kHarperWait);
             QTRY_VERIFY(!item("lineTextGrammar")->property("rows").toList().isEmpty());
-            QTest::qWait(1500); // the helper's restart slows the next frames
+            // MUST KILL: fixed 1500 ms wait for the helper's restart before the screenshot
+            QTest::qWait(1500);
             save(window, QStringLiteral("toast-") + code);
             QVERIFY(QMetaObject::invokeMethod(toastButton(QStringLiteral("Undo")), "click"));
             QTRY_COMPARE(settings.boolean("grammar.group.miscellaneous"), true);
@@ -956,9 +878,6 @@ private slots:
         settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
     }
 
-    // Switched off, the helper ends at once.
-    // Getting started's Editing page (FR1) offers grammar check: the choice
-    // is written at Finish, and then the Line editor's text is checked.
     void gettingStartedTurnsItOn()
     {
         start();
@@ -979,10 +898,10 @@ private slots:
         QCOMPARE(choice->property("currentIndex").toInt(), 0);
         choice->setProperty("currentIndex", 2);
         QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 2)));
-        QCOMPARE(application->settingsStore()->integer("grammar.language"), 0); // not written yet
+        QCOMPARE(application->settingsStore()->integer("grammar.language"), 0);
         for (int i = 0; i < 8 && !setup->property("lastPage").toBool(); ++i)
             QVERIFY(QMetaObject::invokeMethod(next, "click"));
-        QVERIFY(QMetaObject::invokeMethod(next, "click")); // Finish
+        QVERIFY(QMetaObject::invokeMethod(next, "click"));
         QTRY_VERIFY(!setup->property("visible").toBool());
         QCOMPARE(application->settingsStore()->integer("grammar.language"), 2);
         QVERIFY(application->grammarOn());

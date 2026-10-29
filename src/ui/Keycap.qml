@@ -2,9 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// KA2 (#277): a key as the text names it ("Space", "Esc", "["): its name on
-// a raised cap with a thicker bottom edge, for hints that show which key to
-// press. A shape, so it reads without its colours too.
 Rectangle {
     id: cap
     property alias text: label.text
@@ -15,7 +12,6 @@ Rectangle {
     border.color: Theme.control
     Accessible.role: Accessible.StaticText
     Accessible.name: text
-    // the cap's bottom edge
     Rectangle {
         anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
         height: 2

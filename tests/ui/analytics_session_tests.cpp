@@ -1,12 +1,3 @@
-// AN1 (#404): a scripted session through the whole window, its usage data
-// sent to a fake endpoint on the loopback: every event the session makes is
-// the table's, and none carries free text. The session's files, folder,
-// Style, font, Line text, script and saved layout carry planted names that
-// must appear nowhere in what is sent.
-//
-// HIKARI_ANALYTICS_PAYLOAD_OUT=<file>: the session's requests are written
-// there too (the card's evidence).
-
 #include "hikari/app/application.h"
 
 #include "analytics_endpoint.h"
@@ -36,7 +27,6 @@ using namespace hikari;
 
 namespace {
 
-// Planted in the session; none may be sent.
 const QStringList kPlanted{QStringLiteral("SecretUserFolder"), QStringLiteral("MyPrivateEpisode"),
                            QStringLiteral("SecretStyleName"),  QStringLiteral("SecretFontFace"),
                            QStringLiteral("Confidential"),     QStringLiteral("MySecretMacro"),
@@ -61,12 +51,12 @@ QByteArray subtitles()
            "Dialogue: 0,0:00:00.00,0:00:05.00,SecretStyleName,,0,0,0,,Confidential dialogue line\n";
 }
 
-} // namespace
+}
 
 class AnalyticsSessionTest : public QObject {
     Q_OBJECT
     QTemporaryDir root;
-    QString folder; // the session's planted folder
+    QString folder;
     std::unique_ptr<test::AnalyticsEndpoint> endpoint;
     std::unique_ptr<app::Application> application;
     std::unique_ptr<QQmlApplicationEngine> engine;
@@ -122,7 +112,6 @@ class AnalyticsSessionTest : public QObject {
         auto *item = window()->findChild<QObject *>(QLatin1String(menuItem));
         return item && QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger");
     }
-    // HIKARI_SURFACE_SHOT_DIR: `dialog` in each theme as <name>-<theme>.png.
     void shoot(QObject *dialog, const QString &name)
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -141,7 +130,6 @@ class AnalyticsSessionTest : public QObject {
                                              ui::theme::codeName(code) + QStringLiteral(".png")));
         }
     }
-    // Runs `code` in Main's own scope (its ids: root, logDock, ...).
     QVariant shell(const QString &code)
     {
         QQmlExpression expression(qmlContext(window()), window(), code);
@@ -173,7 +161,6 @@ private slots:
         start(config());
         app::Analytics &analytics = application->analytics();
         QVERIFY(analytics.active());
-        // What the composition does at the first frame.
         app::Analytics::StartFacts facts;
         facts.package = QStringLiteral("build_tree");
         facts.screens = 1;
@@ -182,13 +169,11 @@ private slots:
         facts.layout = application->workspaceLayout().preset();
         analytics.appStarted(facts);
 
-        // Getting started, skipped and finished with a changed look.
         application->skipGettingStarted();
         QVariantMap pages = application->openGettingStarted();
         pages.insert(QStringLiteral("appearance.theme"), QStringLiteral("light"));
         QVERIFY(application->finishGettingStarted(pages, false));
 
-        // A Document with planted names, its video and blank audio.
         const QString subtitlesPath = folder + QStringLiteral("/MyPrivateEpisode 03.ass");
         QVERIFY(writeFile(subtitlesPath, subtitles()));
         QVERIFY(application->openFile(subtitlesPath));
@@ -196,13 +181,11 @@ private slots:
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), video));
         application->video().openVideo(video);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 30000);
-        // An audio open closed on the way is no failed open.
         application->audio().openAudio(video);
         application->audio().closeAudio();
         application->audio().openAudio(QStringLiteral("dummy"));
         QTRY_VERIFY_WITH_TIMEOUT(application->audio().loaded(), 30000);
 
-        // Commands by key and from a menu, panels, dialogs, layouts.
         QVERIFY(shell(QStringLiteral("root.runGlobalHotkey(\"GLOBAL_OPEN_STYLE_MANAGER\")")).toBool());
         shell(QStringLiteral("root.runItem(root.globalActions().GLOBAL_ABOUT)"));
         shell(QStringLiteral("root.showPanel(logDock)"));
@@ -211,7 +194,6 @@ private slots:
         shell(QStringLiteral("root.applySavedLayout(\"MySecretLayout\")"));
         QTest::qWait(500);
 
-        // A user's script that does not load.
         const QString script = folder + QStringLiteral("/MySecretMacro.lua");
         QVERIFY(writeFile(script, "script_name = \"MySecretMacro\"\nthis is not lua\n"));
         QSignalSpy failed(&application->automation().manager(), &backends::AutomationManager::loadFailed);
@@ -240,7 +222,6 @@ private slots:
         QVERIFY(!sent.contains(QDir::homePath().toUtf8()));
         QVERIFY(!sent.contains(root.path().toUtf8()));
 
-        // What the session sent, in order, for a reader.
         auto propertiesOf = [&](const char *event) {
             for (const QJsonValue &e : events)
                 if (e.toObject().value(QStringLiteral("event")) == QJsonValue(QLatin1String(event)))
@@ -269,10 +250,6 @@ private slots:
         }
     }
 
-    // The switch shows on Getting started's Updates page and in Settings >
-    // Updates and privacy, both bound to privacy.usageData, on by default:
-    // off in Getting started stops sending; Settings then shows it off and
-    // turns it on again (a new id).
     void switchesShowAndShareTheSetting()
     {
         endpoint = std::make_unique<test::AnalyticsEndpoint>();
@@ -298,7 +275,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(setupSwitch, "toggle"));
         QVERIFY(QMetaObject::invokeMethod(setupSwitch, "toggled"));
         QCOMPARE(setup->property("values").toMap().value(QStringLiteral("privacy.usageData")).toBool(), false);
-        for (int i = 0; i < 4 && setup->property("visible").toBool(); ++i) // Next to the end, then Finish
+        for (int i = 0; i < 4 && setup->property("visible").toBool(); ++i)
             QVERIFY(QMetaObject::invokeMethod(in(setup, "gettingStartedNext"), "click"));
         QTRY_VERIFY(!setup->property("visible").toBool());
         QCOMPARE(application->settingsStore()->boolean("privacy.usageData"), false);
@@ -321,9 +298,9 @@ private slots:
         QVERIFY(settingsSwitch);
         QTRY_VERIFY(settingsSwitch->isVisible());
         QCOMPARE(settingsSwitch->property("text").toString(), QStringLiteral("Send anonymous usage data"));
-        QVERIFY(!settingsSwitch->property("checked").toBool()); // the same setting
+        QVERIFY(!settingsSwitch->property("checked").toBool());
         QVERIFY(in(settings, "settingsWhatIsSent"));
-        QVERIFY(in(settings, "setting_privacy.alwaysSendCrashReports")->isVisible()); // CR1: a build with the key
+        QVERIFY(in(settings, "setting_privacy.alwaysSendCrashReports")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(settingsSwitch, "click"));
         QTRY_VERIFY(settingsSwitch->property("checked").toBool());
         shoot(settings, QStringLiteral("an1-settings"));
@@ -335,9 +312,6 @@ private slots:
         QVERIFY(!analytics.distinctId().isEmpty());
         QVERIFY(analytics.distinctId() != firstId);
     }
-    // CR1 (#468): a build without the PostHog key sends no crash report,
-    // so Settings has no "Always send crash reports"; the usage data switch
-    // still shows.
     void alwaysSendCrashReportsNeedsTheKey()
     {
         app::Analytics::Config keyless;

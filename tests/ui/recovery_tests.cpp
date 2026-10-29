@@ -1,10 +1,3 @@
-// P3: autosave recovery through the composition (accepted
-// L58-recovery-copy and the 2026-09-29 retention choices). A child process
-// edits, autosaves and dies without closing (as a crash or kill would leave
-// it); a new session offers the work as a new unsaved copy with
-// the draft still pending and the original file unchanged. A clean close
-// and a written save remove the work; a running session's work is not offered.
-
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -68,7 +61,6 @@ void edit(app::Application &a, const char8_t *text)
     s->run(application::Command{"Set text", s->revision(), {line}, [&](core::Document &d) { return d.setLineText(line, text); }});
 }
 
-// The child: edit, type a draft, autosave, then die without closing.
 int crashChild(const QString &recovery, const QString &path)
 {
     app::Application::Options options;
@@ -84,18 +76,14 @@ int crashChild(const QString &recovery, const QString &path)
         return 3;
     if (!a.autosaveNow())
         return 4;
-    // No destructors: the session lock stays, its process gone.
 #ifdef _WIN32
-    // As a kill ends it. std::_Exit ends through ExitProcess, which stops the
-    // other threads wherever they are and then runs the DLLs' detach code
-    // (Qt's static destructors among it); there the first child hung until
-    // the test gave up on it.
+    // std::_Exit runs the DLLs' detach code (Qt's static destructors), which can hang.
     TerminateProcess(GetCurrentProcess(), 0);
 #endif
     std::_Exit(0);
 }
 
-} // namespace
+}
 
 class RecoveryTests : public QObject {
     Q_OBJECT
@@ -105,11 +93,9 @@ class RecoveryTests : public QObject {
     app::Application::Options options()
     {
         app::Application::Options o;
-        // Each test its own directory: a session that ends without quitting leaves work.
         o.recoveryDir = dir.filePath(QStringLiteral("Recovery-") + QLatin1String(QTest::currentTestFunction()));
         return o;
     }
-    // A crashed session's autosave in this test's directory.
     void crashLeavesWork(const QString &path)
     {
         QProcess child;
@@ -117,7 +103,6 @@ class RecoveryTests : public QObject {
         QVERIFY(child.waitForFinished(60'000));
         QCOMPARE(child.exitCode(), 0);
     }
-    // The main window for `a`, its own settings file.
     app::Application::Options uiOptions()
     {
         app::Application::Options o = options();
@@ -126,7 +111,6 @@ class RecoveryTests : public QObject {
         o.spellingBackend = {};
         return o;
     }
-    // An object by name: a QObject child, else an item of a view's delegate.
     static QQuickItem *itemNamed(QQuickItem *from, const QString &name)
     {
         if (from->objectName() == name)
@@ -177,14 +161,13 @@ private slots:
         auto *s = a.files().session(*a.workspace().editingTarget());
         QCOMPARE(QString::fromStdString(*a.workspace().title(*a.workspace().editingTarget())),
                  QStringLiteral("crash.ass (recovered)"));
-        QVERIFY(a.targetUntitled());     // a new copy: Save asks where
+        QVERIFY(a.targetUntitled());
         QVERIFY(s->isDirty());
         QCOMPARE(text(s, 0), std::string("committed in the crash"));
-        QCOMPARE(text(s, 1), std::string("second")); // committed content unchanged...
-        QVERIFY(s->draftLine());                     // ...the draft still pending
+        QCOMPARE(text(s, 1), std::string("second"));
+        QVERIFY(s->draftLine());
         QCOMPARE(s->draftText().value(), std::u8string(u8"typed, never committed"));
-        QCOMPARE(readAll(path), before);             // the original file untouched
-        // Dismissed, it is gone.
+        QCOMPARE(readAll(path), before);
         a.dismissBundle(bundle.value(QStringLiteral("key")).toString());
         QVERIFY(a.recoveryBundles().isEmpty());
     }
@@ -201,7 +184,7 @@ private slots:
             QVariantList choices;
             for (const QVariant &r : rows)
                 choices << QVariantMap{{QStringLiteral("id"), r.toMap().value(QStringLiteral("id"))}, {QStringLiteral("save"), false}};
-            a.resolveClose(choices); // explicit Discard
+            a.resolveClose(choices);
             QVERIFY(a.openFile(path));
             edit(a, u8"saved");
             QVERIFY(a.autosaveNow());
@@ -229,11 +212,9 @@ private slots:
         QVERIFY(running.autosaveNow());
         app::Application a(options());
         QCOMPARE(a.recoveryBundles().size(), qsizetype(2));
-        // Older than yesterday: nothing yet.
         QCOMPARE(a.removeAutosavesOlderThan(QDate::currentDate().addDays(-1)), 0);
         QCOMPARE(a.removeAutosavesOlderThan(QDate::currentDate().addDays(1)), 2);
         QVERIFY(a.recoveryBundles().isEmpty());
-        // The running session's work is still there for it.
         QVERIFY(QFile::exists(options().recoveryDir));
         QCOMPARE(running.removeAutosavesOlderThan(QDate()), 0);
     }
@@ -249,11 +230,6 @@ private slots:
         QVERIFY(other.recoveryBundles().isEmpty());
     }
 
-    // S4: legacy's autosave is SubsGrid::SaveFile, whose GetAssHeader writes
-    // the active Line's row as "Active Line" into the open Document's Script
-    // Info (SubsGridBase.cpp:1470 at 20d647c4), so macros run after an
-    // autosave see it; the autosave holds it too. No undo step, and the
-    // Document stays as modified as it was. A Save does the same.
     void anAutosaveWritesTheActiveLine()
     {
         const QString path = writeFile(dir.filePath(QStringLiteral("active.ass")), "x");
@@ -271,8 +247,7 @@ private slots:
             QVERIFY(s->document().scriptInfo(application::kActiveLineKey) == std::u8string(u8"1"));
             QCOMPARE(s->historySize(), steps);
             QVERIFY(s->isDirty());
-            QCOMPARE(readAll(path), before); // the file itself only on Save
-            // The autosave holds it.
+            QCOMPARE(readAll(path), before);
             bool held = false;
             QDirIterator files(options().recoveryDir, QDir::Files, QDirIterator::Subdirectories);
             while (!held && files.hasNext())
@@ -300,11 +275,6 @@ private slots:
         QVERIFY(!s->isDirty());
     }
 
-    // P10: legacy SubsGrid::OnBackupTimer writes "Autosave" in the status
-    // PU1-startup-cards and PU1-autosaves-window: work left by a crash is
-    // offered on the Home page, not in a window that opens by itself; its
-    // Autosaves… opens the Autosaves window, whose search and date filter
-    // narrow the list, and Open copy opens the work and ends the card.
     void aCrashIsOfferedOnHomeAndOpensFromAutosaves()
     {
         const QString path = writeFile(dir.filePath(QStringLiteral("card.ass")), "original");
@@ -319,10 +289,10 @@ private slots:
         QTRY_VERIFY(card->property("visible").toBool());
         QCOMPARE(named("homeOfferTitle")->property("text").toString(), QStringLiteral("HikariSub did not close properly"));
         QCOMPARE(named("homeOfferDetail")->property("text").toString(), QStringLiteral("Unsaved work in 1 document was autosaved."));
-        QVERIFY(!named("homeOfferRestore")->property("visible").toBool()); // no session to restore
+        QVERIFY(!named("homeOfferRestore")->property("visible").toBool());
         QVERIFY(named("homeOfferAutosaves")->property("visible").toBool());
         QVERIFY(!named("homeSession")->property("visible").toBool());
-        QVERIFY(!named("autosavesWindow")); // nothing opened by itself
+        QVERIFY(!named("autosavesWindow"));
         QVERIFY(QMetaObject::invokeMethod(named("homeOfferAutosaves"), "clicked"));
         QTRY_VERIFY(named("autosavesWindow"));
         auto *autosaves = qobject_cast<QQuickWindow *>(named("autosavesWindow"));
@@ -331,13 +301,11 @@ private slots:
         QTRY_COMPARE(list->property("count").toInt(), 1);
         QTRY_VERIFY(named("autosaveName0"));
         QCOMPARE(named("autosaveName0")->property("text").toString(), QStringLiteral("card.ass"));
-        // Every word of the search, in the name or the path.
         named("autosavesSearch")->setProperty("text", QStringLiteral("card zzz"));
         QTRY_COMPARE(list->property("count").toInt(), 0);
         QVERIFY(named("autosavesEmpty")->property("visible").toBool());
         named("autosavesSearch")->setProperty("text", QStringLiteral("CARD ass"));
         QTRY_COMPARE(list->property("count").toInt(), 1);
-        // Saved today; none before today.
         QObject *model = named("autosaves");
         model->setProperty("range", QStringLiteral("today"));
         QCOMPARE(list->property("count").toInt(), 1);
@@ -351,15 +319,10 @@ private slots:
         QTRY_VERIFY(!autosaves->isVisible());
         QCOMPARE(QString::fromStdString(*a.workspace().title(*a.workspace().editingTarget())),
                  QStringLiteral("card.ass (recovered)"));
-        // A Document opened from Home ends the offer; no startup bar either.
         QTRY_VERIFY(!card->property("visible").toBool());
         QVERIFY(!named("startupBar")->property("visible").toBool());
     }
 
-    // PU1-autosaves-window: Remove temporary files opens the window with
-    // Delete older than…; its button counts what goes and deletes at once.
-    // Started with files, the crash is the startup bar, which ends when the
-    // autosaves it offered are deleted.
     void deleteOlderThanDeletesInOneStep()
     {
         const QString path = writeFile(dir.filePath(QStringLiteral("older.ass")), "original");
@@ -385,7 +348,6 @@ private slots:
         QObject *popover = named("autosavesDeleteOlderPopover");
         QTRY_VERIFY(popover->property("visible").toBool());
         QObject *now = named("autosavesDeleteOlderNow");
-        // A month back keeps today's work; tomorrow ("Everything") takes it.
         QVERIFY(!now->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("olderDate"), "setDate",
                                           Q_ARG(QVariant, QDateTime(QDate::currentDate().addDays(1), QTime(12, 0)))));
@@ -394,12 +356,9 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(now, "clicked"));
         QTRY_VERIFY(a.recoveryBundles().isEmpty());
         QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 0);
-        // Its only reason gone (no session to restore), the offer ends.
         QTRY_VERIFY(!bar->property("visible").toBool());
     }
 
-    // bar's first field and its nullifyTimer empties the field 5 s later,
-    // whatever it shows then (SubsGridBase.cpp:1636-1651, SubsGrid.cpp:54-57).
     void anAutosaveShowsInTheStatusBarForFiveSeconds()
     {
         const QString path = writeFile(dir.filePath(QStringLiteral("status.ass")), "x");

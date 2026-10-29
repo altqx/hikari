@@ -118,16 +118,14 @@ WriteOutcome WinFilePort::writeFile(PermitId permit, const std::string &path, co
     file = INVALID_HANDLE_VALUE;
     if (!closed)
         return abandon(WriteOutcome::Failed);
-    // Keep the destination's visible attributes (not read-only: a read-only
-    // destination is not silently overwritten; the rename then fails).
+    // MoveFileExW fails onto a read-only destination, so that one is never overwritten.
     const DWORD attributes = ::GetFileAttributesW(target.c_str());
     if (attributes != INVALID_FILE_ATTRIBUTES && !(attributes & FILE_ATTRIBUTE_READONLY))
         ::SetFileAttributesW(temp.c_str(), attributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_ARCHIVE |
                                                          FILE_ATTRIBUTE_NOT_CONTENT_INDEXED));
-    // Atomic publish. Write-through returns only once the rename is on disk.
     if (!::MoveFileExW(temp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
         return abandon(WriteOutcome::Failed); // e.g. a sharing violation: the original stays
     return WriteOutcome::Written;
 }
 
-} // namespace hikari::backends
+}

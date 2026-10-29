@@ -5,28 +5,14 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// P8, ADR 0019, DG1 (#222): a newer release, on the dialog frame: its name
-// and the version this is, its notes (SH3's rendering), the requirement of a
-// package this system cannot run, the download's progress in place of the
-// button that started it. Resizable (the notes grow), modeless; closing it
-// while the download runs leaves the download running, and the ready bar
-// takes over when it is done.
-// PU7 (#309): the one update window. An AUR install's variant (the former
-// AUR notice) has "Update with your AUR helper" and the command to copy, or
-// the release page for a prerelease its package does not carry. Skip this
-// version at the leading edge; the offer (Download and install, Open the
-// download page or Open the release page) and Remind me later at the trailing
-// one, Close where there is no offer. The update options are on Settings >
-// Updates (PU7-update-settings).
 DialogWindow {
     id: available
     objectName: "updateAvailable"
-    required property var updates // UpdateChecker
-    property var app: null // copyText
-    property var whatsNew: null // SH3: WhatsNew, which renders the notes
+    required property var updates
+    property var app: null
+    property var whatsNew: null
     property var release: ({})
     readonly property bool aur: release.offer === "aur"
-    // An AUR install whose package carries the release: the command, no offer.
     readonly property bool aurCommand: aur && release.aurCarries !== false
     readonly property bool installs: release.offer === "install" && updates.autoInstall
     readonly property bool downloading: updates.installer.state === "downloading"
@@ -37,7 +23,6 @@ DialogWindow {
     title: qsTr("A new version is available")
     defaultButton: offers ? offer : closeButton
 
-    // `quiet`: the automatic check's, which takes no keyboard (openQuietly).
     function showRelease(r, quiet) {
         release = r
         copied.running = false
@@ -57,7 +42,7 @@ DialogWindow {
             Label {
                 objectName: "updateName"
                 text: available.release.name || ""
-                textFormat: Text.PlainText // GitHub's text, never markup
+                textFormat: Text.PlainText
                 font: available.fontAt(18, Font.DemiBold)
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -92,7 +77,6 @@ DialogWindow {
             }
         }
     }
-    // A package this system cannot run: the release page only.
     RowLayout {
         visible: !available.runs
         spacing: 8
@@ -107,9 +91,6 @@ DialogWindow {
                   : qsTr("This version needs glibc %1 or later.").arg(available.release.requirement || "")
         }
     }
-    // ADR 0019: an AUR install is updated by the package manager, never by
-    // the program. hikarisub-stable-bin carries stable versions only, so a
-    // prerelease it does not carry points at the AppImage instead.
     RowLayout {
         visible: available.aur && !available.aurCommand
         spacing: 8
@@ -165,7 +146,6 @@ DialogWindow {
             Timer { id: copied; interval: 2000 }
         }
     }
-    // The download in place of the button that started it.
     RowLayout {
         visible: available.downloading
         spacing: 12
