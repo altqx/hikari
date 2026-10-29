@@ -22,7 +22,6 @@ u8 fromInt(int v)
     return u8(s.begin(), s.end());
 }
 
-// SubsGrid::GetASSRes: PlayRes with its fallbacks (1280x720, or 16:9 / 9:16).
 std::pair<int, int> assRes(const core::Document &d)
 {
     int x = toInt(d.scriptInfo(u8"PlayResX")), y = toInt(d.scriptInfo(u8"PlayResY"));
@@ -35,7 +34,7 @@ std::pair<int, int> assRes(const core::Document &d)
     return {x, y};
 }
 
-} // namespace
+}
 
 const std::vector<u8> &matrixNames()
 {
@@ -74,7 +73,6 @@ std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, 
     const auto &doc = session.document();
     std::vector<std::pair<u8, u8>> writes;
     auto put = [&](const char8_t *key, u8 value) { writes.emplace_back(key, std::move(value)); };
-    // GetASSRes ran when the dialog opened: missing values are written.
     {
         const int x = toInt(doc.scriptInfo(u8"PlayResX")), y = toInt(doc.scriptInfo(u8"PlayResY"));
         const auto [fx, fy] = assRes(doc);
@@ -100,7 +98,8 @@ std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, 
         newlx = 1280;
         newly = 720;
     } else if (newlx < 1) {
-        newlx = static_cast<int>(static_cast<float>(newlx) * (16.0 / 9.0)); // legacy: from itself
+        // MUST KILL: newlx scales from itself, not from newly
+        newlx = static_cast<int>(static_cast<float>(newlx) * (16.0 / 9.0));
     } else if (newly < 1) {
         newly = static_cast<int>(static_cast<float>(newlx) * (9.0 / 16.0));
     }
@@ -140,7 +139,6 @@ std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, 
     const u8 border = edited.scaledBorderAndShadow ? u8"yes" : u8"no";
     if (doc.scriptInfo(u8"ScaledBorderAndShadow").value_or(u8()) != border)
         put(u8"ScaledBorderAndShadow", border);
-    // AddSInfo with an unchanged value records nothing.
     std::erase_if(writes, [&](const auto &w) { return doc.scriptInfo(w.first) == w.second; });
     if (writes.empty())
         return {};
@@ -155,4 +153,4 @@ std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, 
     return {};
 }
 
-} // namespace hikari::application
+}

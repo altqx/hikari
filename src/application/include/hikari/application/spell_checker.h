@@ -1,16 +1,5 @@
 #pragma once
 
-// F3: the spell checker (legacy SpellChecker, SpellCheckerDialog and the
-// TextEditor's spelling at 20d647c4: GLOBAL_OPEN_SPELLCHECKER, the editor's
-// marks, suggestions and "Add word" and the Grid's marks) over a spelling
-// backend port. Legacy loads Hunspell with the "Dictionary" folder's
-// <language>.aff/.dic pair; the composition supplies the Hunspell backend
-// (R2-hunspell, src/backends), and tests may use an in-memory fake.
-//
-// SP1 (#474): the chosen language is the primary one; every other installed
-// dictionary checks too, each word going to the dictionaries of its script
-// (core/spelling_scripts.h).
-
 #include "hikari/application/edit_session.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/spelling_scripts.h"
@@ -31,89 +20,62 @@
 
 namespace hikari::application {
 
-// One loaded dictionary (legacy Hunspell). A word the dictionary's encoding
-// cannot hold is misspelled, as legacy's failed conversion is.
+// A word the dictionary's encoding cannot hold is misspelled.
 class SpellingBackend {
 public:
     virtual ~SpellingBackend() = default;
     virtual bool spell(std::u16string_view word) = 0;
     virtual std::vector<std::u16string> suggest(std::u16string_view word) = 0;
-    virtual void add(std::u16string_view word) = 0;    // runtime only, as Hunspell::add
-    virtual bool remove(std::u16string_view word) = 0; // runtime only, as Hunspell::remove
+    virtual void add(std::u16string_view word) = 0;    // runtime only
+    virtual bool remove(std::u16string_view word) = 0; // runtime only
 };
-// Loads <folder>/<language>.aff and .dic; nullptr when it cannot.
+// nullptr when it cannot load.
 using SpellingBackendLoader =
     std::function<std::unique_ptr<SpellingBackend>(const std::filesystem::path &aff, const std::filesystem::path &dic)>;
 
-// What the UI supplies for the text walks: legacy's boost::locale word
-// segmentation and the C runtime's per-character case functions.
 struct SpellingText {
     core::legacy::WordSegmenter segment;
     core::legacy::CaseMapping cases;
 };
 
-// SpellChecker::AvailableDics: the symbols (file names without extension)
-// of the folder's .dic files, each paired with the .aff file at the same
-// position in the folder's listing (legacy pairs by position, not by name).
-// Legacy reads past a shorter .aff list (undefined); the pairing stops at
-// its end (R3-hang-crash-loss).
+// The symbols (file names without extension) of the .dic files with a same-named .aff.
 std::vector<std::u16string> availableDictionaries(const std::filesystem::path &folder);
-// Over several Dictionary folders in search order: each folder paired on its
-// own, a symbol listed once (from the first folder that has it).
+// Folders in search order, each paired on its own; a symbol is listed once.
 std::vector<std::u16string> availableDictionaries(const std::vector<std::filesystem::path> &folders);
 
 class SpellChecker {
 public:
     enum class Status {
         Ready,
-        NoDictionary, // "No dictionary files were found ... Spell checking will be disabled"
-        LoadFailed,   // "Failed to initialize spell checker."
+        NoDictionary,
+        LoadFailed,
     };
-    // `folders`: the Dictionary folders in search order. The first holds
-    // UserDic.udic (the user's settings folder); later ones hold bundled
-    // dictionaries (legacy's <executable dir>/Dictionary).
+    // `folders` in search order; the first holds UserDic.udic.
     SpellChecker(std::vector<std::filesystem::path> folders, SpellingBackendLoader loader);
     SpellChecker(std::filesystem::path folder, SpellingBackendLoader loader);
 
-    // SpellChecker::Initialize: DICTIONARY_LANGUAGE (en_US when empty), the
-    // primary language, from the first folder holding its .dic and .aff, then
-    // the user dictionary's words. The other installed dictionaries load on a
-    // worker thread, each started the first time a word of its script is
-    // checked, the user's words with them; one that fails to load is left
-    // out. `loaded` runs on that thread after each load (the application
-    // refreshes the marks).
+    // en_US when `language` is empty. Other installed dictionaries load on a worker thread the first time a
+    // word of their script is checked; the loaded handler runs on that thread after each load.
     Status initialize(std::u16string_view language);
     void setLoadedHandler(std::function<void()> loaded) { m_loaded = std::move(loaded); }
-    void clear(); // Cleaning
+    void clear();
     bool ready() const { return !m_dictionaries.empty() && m_dictionaries.front().backend; }
 
-    // CheckWord: true without a dictionary (spell checking off). SP1: true
-    // when any installed dictionary of one of the word's scripts accepts it,
-    // or when one of its scripts (or all its letters) has no dictionary.
-    // While a dictionary of its scripts is still loading, a word no loaded
-    // one accepts is true and not cached, unless `wait` waits for the load
-    // (the Spellchecker window; the Grid and the editor do not wait).
+    // True without a dictionary, when a dictionary of the word's scripts accepts it, or when one of its
+    // scripts has none. While one is loading, an unaccepted word is true and not cached, unless `wait`.
     bool checkWord(std::u16string_view word, bool wait = false);
-    // The word check the text walks use; empty without a dictionary.
+    // Empty without a dictionary.
     core::legacy::WordCheck wordCheck(bool wait = false);
-    // SP1: the primary's suggestions when it checks the word's script, then
-    // those of the script's other dictionaries, the ones accepting more of
-    // `neighbours` (the Line's other words) first; each suggestion once.
-    // Waits for the script's dictionaries to load.
+    // The primary's first, then the script's other dictionaries, those accepting more of `neighbours` first;
+    // each suggestion once. Waits for the script's dictionaries to load.
     std::vector<std::u16string> suggestions(std::u16string_view word,
                                             const std::vector<std::u16string> &neighbours = {});
-    // AddWord: refused for empty and number words or without a dictionary;
-    // appends the word to UserDic.udic.
+    // Refused for empty and number words or without a dictionary; appends to UserDic.udic.
     bool addWord(std::u16string_view word);
-    // GR1 (#364): Harper's "Add to dictionary", which also needs no Hunspell
-    // dictionary (Harper checks spelling while Hunspell is off): the word is
-    // appended to UserDic.udic, and to the dictionary when one is loaded.
-    // Refused for empty and number words.
+    // Needs no dictionary; appends to UserDic.udic and to a loaded dictionary. Refused for empty and number words.
     bool addUserWord(std::u16string_view word);
-    // RemoveWords: the lines equal to a listed word leave UserDic.udic and the
-    // dictionary; false when none matched.
+    // Removes from UserDic.udic and the dictionary; false when none matched.
     bool removeWords(const std::vector<std::u16string> &words);
-    // LoadAddedMisspels: the lines "Remove from dictionary" lists.
     std::vector<std::u16string> addedWords() const;
 
     const std::filesystem::path &folder() const { return m_folders.front(); }
@@ -127,89 +89,65 @@ private:
         std::filesystem::path dic;
         core::spelling::Scripts scripts;
         std::unique_ptr<SpellingBackend> backend;
-        bool loaded = false; // the load finished (backend is null when it failed)
+        bool loaded = false; // backend is null when the load failed
         std::future<std::unique_ptr<SpellingBackend>> pending;
         std::uint64_t generation = 0; // m_userGeneration when the load started
         std::jthread worker;
     };
     enum class Load { Ready, Loading, Missing };
     std::optional<std::pair<std::filesystem::path, std::filesystem::path>> findPair(std::u16string_view symbol) const;
-    // Starts the dictionary's load when it has not started; takes its result
-    // when it is done (or, with `wait`, once it is).
     Load poll(Dictionary &dictionary, bool wait);
     void startLoad(Dictionary &dictionary);
-    // The loaded dictionaries checking `scripts`, the primary first; `loading`
-    // tells whether one of them is still loading.
+    // The primary first; `loading` is set when one is still loading.
     std::vector<Dictionary *> dictionariesFor(core::spelling::Scripts scripts, bool wait, bool *loading = nullptr);
 
     std::vector<std::filesystem::path> m_folders;
     SpellingBackendLoader m_loader;
     std::vector<Dictionary> m_dictionaries; // the primary first
     std::function<void()> m_loaded;
-    // Counts the user dictionary's changes: a load that read it before one
-    // starts again.
+    // A load that started before the latest user dictionary change starts again.
     std::uint64_t m_userGeneration = 0;
-    // Results by word, dropped whenever the dictionary changes (legacy wordResults).
+    // Cleared whenever a dictionary changes.
     std::unordered_map<std::u16string, bool> m_results;
 };
 
-// The user dictionary file: UTF-8 with a byte-order mark (OpenWrite::FileWrite);
-// read as legacy's text-mode read does (BOM dropped, CRLF read as LF).
-// Nothing when it cannot be read or reads as empty text (OpenWrite::FileOpen
-// returns false for both, so AddWord then writes the word alone).
+// Written as UTF-8 with a BOM; reading drops the BOM (and CRLF on Windows). nullopt when unreadable or empty.
 std::optional<std::u16string> readUserDictionary(const std::filesystem::path &file);
 bool writeUserDictionary(const std::filesystem::path &file, std::u16string_view text);
 
-// SP1: the letter words of a Line's text outside override blocks and
-// drawings (the neighbours suggestions are ordered by).
+// Letter words outside override blocks and drawings.
 std::vector<std::u16string> lineWords(std::u16string_view text, core::SubtitleFormat format,
                                       const SpellingText &spelling);
 
-// The Line text the spell checker works on (legacy TextEdit): the
-// translation in translation mode, else the text.
+// True in translation mode, where the translation is spell-checked instead of the text.
 bool spellsTranslation(const core::Document &document);
 
-// The editor's marks (TextEditor::CheckText through TextData::Init2): bracket
-// errors and misspelled words of the spell-checked field; `wait` as
-// SpellChecker::checkWord's.
+// Bracket errors and misspellings of the spell-checked field; `wait` as in SpellChecker::checkWord.
 core::legacy::SpellMarks editorMarks(std::u16string_view text, core::SubtitleFormat format, SpellChecker &checker,
                                      const SpellingText &spelling, bool wait = false);
-// TextEditor::FindError: the first misspelling whose span holds `at`.
+// The first misspelling whose span holds `at`.
 std::optional<std::size_t> misspellAt(const core::legacy::SpellMarks &marks, int at);
 
-// A suggestion chosen in the editor (its menu or the double-click list):
-// the misspelling is replaced in the Line's draft (or committed text), and
-// the draft and the replacement are committed as one "Correcting spelling
-// errors in the text field" step (legacy EditBox::Send(EDITBOX_SPELL_CHECKER)).
-// Returns the caret after the replacement.
+// Replaces in the Line's draft (or committed text) and commits both as one undo step; returns the caret after it.
 std::expected<int, CommandRefusal> replaceInEditor(EditSession &session, core::LineId line, bool translation,
                                                    const core::legacy::Misspell &misspell,
                                                    std::u16string_view replacement);
 
-// GR1 (#364): a grammar finding's suggestion. `checked` is the field's text
-// the finding was found in and [start, end) its range there, in
-// core::grammar::checkedText's offsets for the Document's format: the
-// replacement goes in by core::grammar::replace, so tags inside the range
-// stay in order, and the draft and the replacement are committed as one
-// "Correcting grammar errors in the text field" step. Refused (StaleRevision)
-// when the field's text is no longer `checked`, and (Invalid) when the
-// replacement would touch a drawing or a malformed span. Returns the caret
-// after the replacement, in raw offsets.
+// [start, end) is in core::grammar::checkedText's offsets of `checked`; tags inside stay in order; one undo
+// step. StaleRevision when the field no longer holds `checked`, Invalid when the replacement would touch a
+// drawing or a malformed span. Returns the caret in raw offsets.
 std::expected<std::size_t, CommandRefusal> replaceGrammar(EditSession &session, core::LineId line, bool translation,
                                                           std::u16string_view checked, std::size_t start,
                                                           std::size_t end, std::u16string_view replacement);
 
-// The Spellchecker window (SpellCheckerDialog): walks every Line from the
-// active one for the next misspelled word that is not ignored, and corrects
-// it there or everywhere, each as one "Correcting spelling errors" step.
+// Walks every Line from the active one for the next misspelling not ignored; each correction is one undo step.
 class SpellCheckWalk {
 public:
     struct Options {
         bool ignoreComments = false;
-        bool ignoreUpperCase = false; // "Ignore words written entirely in uppercase"
+        bool ignoreUpperCase = false;
     };
-    // What Replace and Replace all did. Unchanged: refused before acting
-    // (legacy returns without touching the window); the window shows nothing new.
+    // Unchanged: refused before acting.
     enum class Result { Unchanged, Replaced, NothingReplaced };
     struct Found {
         core::LineId line;
@@ -221,41 +159,29 @@ public:
 
     SpellCheckWalk(SpellChecker &checker, SpellingText spelling);
 
-    // SetNextMisspell. The found word's Line becomes active and selected when
-    // it is not the Line of the previous word; hidden (filtered or closed
-    // group) Lines are walked too. Nothing found: "No spelling errors were
-    // found". When the session refuses to leave the active Line (an invalid
-    // draft under the Block policy), nothing is current and refused() is set.
+    // A new Line becomes active and selected; hidden Lines are walked too. When the session refuses to
+    // leave the active Line, nothing is current and refused() is set.
     bool next(EditSession &session, const Options &options);
     const std::optional<Found> &current() const { return m_current; }
     bool refused() const { return m_refused; }
 
-    // OnActive: when the window comes back and the active Line or its text
-    // changed, the walk starts again from the active Line's first word.
-    // Returns whether it did; the first activation after "No spelling errors
-    // were found" is ignored.
+    // Restarts when the active Line or its text changed; returns whether it did. The first activation after
+    // nothing was found is ignored.
     bool activated(EditSession &session, const Options &options, bool otherDocument = false);
-    // Whether OnActive would start again: the active Line or its text is not
-    // the one the current word was found in (the editor's draft committed on
-    // leave, the accepted draft policy). The window's actions check this first and
-    // start again instead of acting on a word the window no longer shows.
+    // Whether activated() would restart; actions check it before acting on a word no longer shown.
     bool stale(EditSession &session, bool otherDocument = false) const;
-    // Starts again from the active Line's first word.
     void restart(EditSession &session, const Options &options);
 
-    // Replace (button, Enter or a double-clicked suggestion). Unchanged when
-    // the replacement is empty or no word is current (legacy reads past the
-    // window's error list there, undefined: bounds-checked, R3-hang-crash-loss).
+    // Unchanged when the replacement is empty or no word is current.
     std::expected<Result, CommandRefusal> replace(EditSession &session, std::u16string_view replacement,
                                                   const Options &options);
-    // Replace all: every Line's matches of `misspell` in any case, each
-    // replaced in the case of the word it replaces (GetRightCase).
-    // Unchanged when either word is empty.
+    // Every Line's matches of `misspell` in any case, each in the case of the word it replaces; Unchanged when
+    // either word is empty.
     std::expected<Result, CommandRefusal> replaceAll(EditSession &session, std::u16string_view misspell,
                                                      std::u16string_view replacement, const Options &options);
     void ignore(EditSession &session, const Options &options);
     void ignoreAll(EditSession &session, std::u16string_view word, const Options &options);
-    // Add to dictionary, then the next word.
+    // Then moves to the next word.
     bool addWord(EditSession &session, std::u16string_view word, const Options &options);
 
 private:
@@ -275,4 +201,4 @@ private:
     std::optional<Found> m_current;
 };
 
-} // namespace hikari::application
+}

@@ -28,8 +28,6 @@ bool blank(std::u16string_view text)
     return std::ranges::all_of(text, [](char16_t c) { return c == u' ' || c == u'\t' || c == u'　'; });
 }
 
-// The syllable's text without the empty override blocks its own tag left
-// (as AudioKaraoke::join drops them); AudioKaraoke::text puts the tag back.
 std::u16string withoutEmptyBlocks(std::u16string text)
 {
     for (std::size_t at; (at = text.find(u"{}")) != std::u16string::npos;)
@@ -37,7 +35,7 @@ std::u16string withoutEmptyBlocks(std::u16string text)
     return text;
 }
 
-} // namespace
+}
 
 int tapSongMs(double positionMs, int latencyMs, double speed)
 {
@@ -85,7 +83,7 @@ LatencyCalibration calibrateLatency(std::span<const double> beatsMs, std::span<c
 std::vector<KaraokeTap::Syllable> KaraokeTap::targets(const AudioKaraoke &karaoke)
 {
     std::vector<Syllable> out;
-    std::u16string leading; // blank text before the first syllable to sing
+    std::u16string leading;
     for (int i = 0; i < karaoke.count(); i++) {
         const auto text = withoutEmptyBlocks(karaoke.syllables()[static_cast<std::size_t>(i)]);
         const auto &tag = karaoke.tags()[static_cast<std::size_t>(i)];
@@ -137,7 +135,6 @@ int KaraokeTap::lastBoundary() const
 
 void KaraokeTap::startNext(int songMs)
 {
-    // a gap shorter than kGapMergeMs joins the syllable before it
     if (!m_spans.empty() && songMs - m_spans.back().endMs < kGapMergeMs)
         m_spans.back().endMs = songMs;
     m_held = songMs;
@@ -159,9 +156,7 @@ KaraokeTap::Event KaraokeTap::press(int key, int songMs)
     songMs = std::max(songMs, lastBoundary());
     if (m_held) {
         if (m_mode == Mode::Hold && key == m_heldKey)
-            return Event::None; // still held
-        // another key rolls on (Hold), or the next press (Press): the held
-        // syllable ends here
+            return Event::None;
         finishHeld(songMs);
         if (m_done)
             return Event::LineDone;
@@ -265,4 +260,4 @@ KaraokeTap::Result KaraokeTap::result() const
     return r;
 }
 
-} // namespace hikari::application
+}

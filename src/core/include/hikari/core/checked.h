@@ -40,6 +40,6 @@ namespace detail {
 Checked<std::int64_t> mulDivPortable(std::int64_t a, std::int64_t b, std::int64_t c, std::int64_t d,
                                      Rounding rounding);
 std::strong_ordering compareProductsPortable(std::int64_t a, std::int64_t b, std::int64_t c, std::int64_t d);
-} // namespace detail
+}
 
-} // namespace hikari::core
+}

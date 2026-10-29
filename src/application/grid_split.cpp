@@ -37,7 +37,7 @@ std::vector<const core::LineRecord *> shownSelected(const EditSession &s, const 
     return out;
 }
 
-} // namespace
+}
 
 namespace legacy {
 
@@ -46,7 +46,6 @@ std::u8string floatText(float value)
     char buf[64];
     std::snprintf(buf, sizeof buf, "%5.3f", static_cast<double>(value));
     std::string s(buf);
-    // Trailing zeros, then the point (legacy getfloat).
     std::size_t remove = 0;
     for (std::size_t i = s.size() - 1; i > 0; --i) {
         if (s[i] == '0')
@@ -65,7 +64,6 @@ std::u8string floatText(float value)
 
 std::u8string moveToPos(std::u8string_view text, std::int64_t lineStartMs, std::int64_t lineEndMs, int ms)
 {
-    // The first \move( or \pos( inside an override block.
     std::size_t at = std::u8string_view::npos;
     bool isMove = false;
     bool block = false;
@@ -92,8 +90,7 @@ std::u8string moveToPos(std::u8string_view text, std::int64_t lineStartMs, std::
     if (close == std::u8string_view::npos)
         return std::u8string(text);
     if (!isMove)
-        return std::u8string(text); // a \pos stays where it is
-    // GetMultiValueFloat: up to six comma-separated values.
+        return std::u8string(text);
     double v[6] = {0, 0, 0, 0, 0, 0};
     int count = 0;
     std::string values(text.begin() + static_cast<std::ptrdiff_t>(open + 1), text.begin() + static_cast<std::ptrdiff_t>(close));
@@ -113,7 +110,6 @@ std::u8string moveToPos(std::u8string_view text, std::int64_t lineStartMs, std::
         t1 += static_cast<float>(lineStartMs);
         t2 += static_cast<float>(lineStartMs);
     }
-    // CalcMovePosition.
     float x = static_cast<float>(v[0]), y = static_cast<float>(v[1]);
     const float progress = (static_cast<float>(ms) - t1) / (t2 - t1);
     if (ms < t1) {
@@ -131,7 +127,7 @@ std::u8string moveToPos(std::u8string_view text, std::int64_t lineStartMs, std::
     return out;
 }
 
-} // namespace legacy
+}
 
 std::expected<void, CommandRefusal> splitAtVideoTime(EditSession &session, const LegacyTimebase &timebase,
                                                      std::int64_t videoMs, const LineVisible &visible)
@@ -265,8 +261,7 @@ bool isSpace16(char16_t c)
     return c == u' ' || c == u'\t' || c == u'\n' || c == u'\r' || c == u'\v' || c == u'\f' || c == 0x3000 || c == 0xA0;
 }
 
-// Dialogue::SplitWords: word segments and punctuation join a word; a space
-// outside a block ends it and is a piece of its own.
+// Punctuation joins a word; a space outside a block is a piece of its own.
 void splitWords(std::vector<u16> &out, const u16 &wordsText, std::size_t offset, u16v text, const WordSegments &words)
 {
     std::size_t curWordPos = 0, wordOffset = offset, start = 0;
@@ -305,7 +300,7 @@ void splitWords(std::vector<u16> &out, const u16 &wordsText, std::size_t offset,
         out.emplace_back(text.substr(wordOffset, curWordPos));
 }
 
-} // namespace
+}
 
 std::vector<u16> splitByWord(u16v txt, const WordSegments &words)
 {
@@ -326,7 +321,8 @@ std::vector<u16> splitByWord(u16v txt, const WordSegments &words)
                 splitWords(out, wordsText, offset, txt, words);
                 wordsText.clear();
                 out.push_back(u"\\N");
-                offset += wordsText.size(); // legacy adds the cleared length: 0
+                // MUST KILL: adds the cleared length, always 0
+                offset += wordsText.size();
                 i += 2;
                 continue;
             }
@@ -370,7 +366,7 @@ std::vector<u16> splitByWrap(u16v txt)
     return out;
 }
 
-} // namespace legacy
+}
 
 namespace {
 
@@ -378,7 +374,7 @@ using u16 = std::u16string;
 using u16v = std::u16string_view;
 using legacy::isSpace16;
 
-// The positional ASS v4+ Style fields (Name first), as the measure port takes them.
+// ASS v4+ Style field order.
 enum StyleField { Name, Fontname, Fontsize, Primary, Secondary, Outline, Back, Bold, Italic, Underline, StrikeOut,
                   ScaleX, ScaleY, Spacing, Angle, BorderStyle, OutlineWidth, Shadow, Alignment, MarginL, MarginR,
                   MarginV, Encoding, FieldCount };
@@ -433,8 +429,8 @@ struct Tag {
     std::u16string value;
 };
 
-// Dialogue::ParseTags with these tag names: the tags found in blocks, and
-// with `plain`, the text outside blocks as "plain" entries between them.
+// The `names` tags found in blocks, and with `plain`, the text outside blocks
+// as "plain" entries between them.
 std::vector<Tag> parseTags(u16v txt, const std::vector<u16v> &names, bool plain)
 {
     std::vector<Tag> out;
@@ -476,7 +472,6 @@ std::vector<Tag> parseTags(u16v txt, const std::vector<u16v> &names, bool plain)
                             const auto close = value.find(u')');
                             value = value.substr(1, close == u16::npos ? u16::npos : close - 1);
                         } else if (name != u"fn") {
-                            // ToCDouble failing: keep the leading number characters.
                             u16 number;
                             for (const char16_t c : value) {
                                 if (!((c >= u'0' && c <= u'9') || c == u'.' || c == u'-' || c == u'+'))
@@ -505,7 +500,6 @@ std::optional<u16> findTag(const std::vector<Tag> &tags, u16v name)
     return std::nullopt;
 }
 
-// Styles::SetStyleFromParseData for the measured tags.
 void applyTags(std::vector<std::string> &style, const std::vector<Tag> &tags, std::size_t from, std::size_t to)
 {
     for (std::size_t i = from; i <= to && i < tags.size(); ++i) {
@@ -528,8 +522,6 @@ void applyTags(std::vector<std::string> &style, const std::vector<Tag> &tags, st
     }
 }
 
-// Dialogue::GetTaggedTextExtents with a Style the tags keep changing (legacy
-// passes copyStyle = false here). Width sums, height is the largest.
 bool taggedExtents(TextMeasurePort &measure, std::vector<std::string> &style, u16v text, float &width, float &height)
 {
     static const std::vector<u16v> names{u"fscx", u"fscy", u"fsp", u"fs", u"fn", u"b", u"i"};
@@ -553,8 +545,6 @@ bool taggedExtents(TextMeasurePort &measure, std::vector<std::string> &style, u1
     return true;
 }
 
-// Dialogue::GetTextStripped(..., removeFirstBlock = true): from the first
-// character outside the leading blocks.
 u16 afterFirstBlock(u16v text)
 {
     bool block = false;
@@ -587,7 +577,6 @@ u16 stripped(u16v text)
     return out;
 }
 
-// Dialogue::GetFirstTagsBlock: the leading blocks.
 u16 firstTagsBlock(u16v text)
 {
     u16 out;
@@ -628,7 +617,7 @@ std::size_t count16(u16v text, char16_t c)
     return static_cast<std::size_t>(std::count(text.begin(), text.end(), c));
 }
 
-// wxString::Find(c, true) within text[0, end).
+// Within text[0, end); -1 when absent.
 long lastIndexOf(u16v text, std::size_t end, char16_t c)
 {
     for (std::size_t i = std::min(end, text.size()); i > 0; --i)
@@ -637,7 +626,6 @@ long lastIndexOf(u16v text, std::size_t end, char16_t c)
     return -1;
 }
 
-// Legacy FindBrackets (TagFindReplace.cpp) at position 0.
 std::pair<long, long> bracketsAtStart(u16v text)
 {
     const long from = 0;
@@ -672,8 +660,7 @@ std::pair<long, long> bracketsAtStart(u16v text)
     return {startPos, endPos};
 }
 
-// The tags Split looks up: "^an([0-9]*)", "^pos\((.+)\)", "^move\((.+)\)".
-// Returns the regex replacement (the capture plus the rest) when it matches.
+// For "^an([0-9]*)", "^pos\((.+)\)" or "^move\((.+)\)": the capture plus the rest.
 std::optional<u16> matchTag(u16v ftag, u16v name)
 {
     if (name == u"an") {
@@ -695,7 +682,6 @@ struct TagPlace {
     bool inBracket = false;
 };
 
-// TagFindReplace::FindTag(pattern, text, 0) without a tab (from = to = 0).
 TagPlace findTagPlace(u16v txt, u16v name)
 {
     TagPlace result;
@@ -709,7 +695,7 @@ TagPlace findTagPlace(u16v txt, u16v name)
         bracketEnd = from;
         brkt = false;
     } else {
-        result.inBracket = true; // bracketStart == bracketEnd + 1 cannot happen at 0
+        result.inBracket = true;
     }
     result.x = result.y = bracketEnd;
     bool isT = false, placedInT = false, hasR = false;
@@ -827,7 +813,6 @@ TagPlace findTagPlace(u16v txt, u16v name)
     return result;
 }
 
-// TFR.FindTag(name...) + TFR.Replace(tagText) on the tags block.
 void setTag(u16 &block, u16v name, u16v tagText)
 {
     const TagPlace place = findTagPlace(block, name);
@@ -848,7 +833,6 @@ void setTag(u16 &block, u16v name, u16v tagText)
     block.insert(static_cast<std::size_t>(place.x), tagText);
 }
 
-// Dialogue::GetTagName.
 u16 tagName(u16v tagWithValue)
 {
     if (tagWithValue.substr(0, 2) == u"fn")
@@ -864,9 +848,9 @@ u16 tagName(u16v tagWithValue)
     return name;
 }
 
-// Dialogue::MergeTagBlocks: each tag of `merged` replaces the first match of
-// its pattern in `output` when that is the same tag (else it is dropped), or
-// is added at the end when nothing matches.
+// Each tag of `merged` replaces the first match of its pattern in `output`
+// when that is the same tag (else it is dropped), or is appended when nothing
+// matches.
 void mergeTagBlocks(u16 &output, u16v merged)
 {
     if (merged.empty())
@@ -884,7 +868,6 @@ void mergeTagBlocks(u16 &output, u16v merged)
         if (token.empty())
             continue;
         const u16 tag = tagName(token);
-        // The leftmost match of "\\1?c&", "\\frz?" or "\\<tag>" (ignoring case).
         std::size_t at = u16::npos;
         for (std::size_t i = 0; i < output.size() && at == u16::npos; ++i) {
             if (output[i] != u'\\')
@@ -917,7 +900,7 @@ u16 numberText(float v)
     return core::toUtf16(t);
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText kind, TextMeasurePort &measure,
                                                 const WordSegments &words, const LineVisible &visible)
@@ -926,11 +909,11 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
     if (selected.empty())
         return std::unexpected(CommandRefusal::Invalid);
     const auto &document = session.document();
-    // SubsGrid::GetASSRes (without writing the fallbacks into Script Info).
     auto info = [&](const char8_t *key) {
         const auto v = document.scriptInfo(key).value_or(std::u8string());
         return std::atoi(u8s(v).c_str());
     };
+    // MUST KILL: duplicates legacyScriptResolution
     int resX = info(u8"PlayResX"), resY = info(u8"PlayResY");
     if (resX < 1 && resY < 1) {
         resX = 1280;
@@ -952,7 +935,6 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
         if (stripped(text).empty())
             continue;
         u16 firstBlock = firstTagsBlock(text);
-        // GetStyle(0, name): the first Style of that name, else the first Style.
         core::StyleValues style;
         bool found = false;
         for (const auto &s : styles)
@@ -975,8 +957,6 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
         bool hasMove = false;
         u16 times;
         if (const auto v = findTag(tags, u"move")) {
-            // GetMultiValueFloat(value, 4, &times): empty tokens are skipped;
-            // `times` is the rest after the fourth value.
             float values[4] = {0, 0, 0, 0};
             std::size_t p = 0;
             int count = 0;
@@ -999,7 +979,6 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
             disty = values[3] - posy;
             hasMove = true;
         } else if (const auto v = findTag(tags, u"pos")) {
-            // GetTwoValueFloat: both values must parse whole.
             auto whole = [](const u16 &t, float &out) {
                 const std::string u = toU8(t);
                 char *end = nullptr;
@@ -1013,7 +992,6 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
                 posy = y;
             }
         } else {
-            // Dialogue::GetDefaultPosition.
             const int marginL = line->marginLeft.value ? static_cast<int>(line->marginLeft.value) : std::atoi(fields[MarginL].c_str());
             const int marginR = line->marginRight.value ? static_cast<int>(line->marginRight.value) : std::atoi(fields[MarginR].c_str());
             const int marginV = line->marginVertical.value ? static_cast<int>(line->marginVertical.value) : std::atoi(fields[MarginV].c_str());
@@ -1044,8 +1022,7 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
                 while (!trimmed.empty() && isSpace16(trimmed.back()))
                     trimmed.pop_back();
                 float w = 0, h = 0;
-                // An empty text measures the whole Line (legacy falls back to it).
-                taggedExtents(measure, stylec, trimmed.empty() ? text : trimmed, w, h); // a failure is only logged
+                taggedExtents(measure, stylec, trimmed.empty() ? text : trimmed, w, h);
                 sizes.emplace_back(w, h);
                 fullHeight += h;
             }
@@ -1080,8 +1057,7 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
             }
             bool hasWrap = false;
             for (std::size_t j = 0; j < pieces.size(); ++j) {
-                // Legacy reads an empty piece's tags and size from the Line's
-                // text as last set.
+                // MUST KILL: an empty piece reads its tags and size from the Line's last-set text
                 const u16 &piece = pieces[j].empty() ? current : pieces[j];
                 u16 txt = afterFirstBlock(pieces[j]);
                 if (k > 0)
@@ -1161,4 +1137,4 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
     return {};
 }
 
-} // namespace hikari::application
+}

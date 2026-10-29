@@ -1,9 +1,7 @@
 #pragma once
 
-// Frame lookup over presentation starts B[i] (docs/time-semantics.md).
-// Constant rate: B[i] = origin + i / fps, compared exactly as rationals.
-// Indexed (VFR): authored starts in presentation order; frame identity is never
-// renumbered, and disordered starts make the timeline Estimated, not Exact.
+// Frame starts B[i]. Indexed frames are never renumbered; disordered starts
+// make the timeline Estimated.
 
 #include "hikari/core/time.h"
 
@@ -16,7 +14,7 @@ namespace hikari::core {
 
 struct TimelineDiagnostic {
     enum class Kind {
-        NotStrictlyIncreasing, // start i is not after start i-1
+        NotStrictlyIncreasing,
     };
     Kind kind;
     VideoFrameIndex frame;
@@ -63,8 +61,7 @@ private:
     std::vector<TimelineDiagnostic> m_diagnostics;
 };
 
-// T42-A: the signed frame offset between two times on one timeline, as the
-// difference of their frameAtOrAfter indices (never the frame of target-anchor).
+// The difference of the frameAtOrAfter indices (never the frame of target - anchor).
 Checked<std::int64_t> frameOffset(const FrameTimeline &timeline, DocumentTime anchor, DocumentTime target);
 
-} // namespace hikari::core
+}

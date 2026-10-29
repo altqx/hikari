@@ -23,14 +23,12 @@ std::u8string str(u8sv s)
     return std::u8string(s);
 }
 
-// wxString::Find(","): the first comma, or -1.
 long find(u8sv s, char8_t c)
 {
     const std::size_t p = s.find(c);
     return p == u8sv::npos ? -1 : static_cast<long>(p);
 }
 
-// wxString::Left(pos) and Mid(pos) with the size_t pos that -1 becomes.
 u8sv left(u8sv s, long pos)
 {
     return s.substr(0, static_cast<std::size_t>(pos));
@@ -42,8 +40,6 @@ u8sv mid(u8sv s, long pos)
     return p > s.size() ? u8sv() : s.substr(p);
 }
 
-// wxString::ToLong(&val) (base 10): strtol on the platform's long; nothing
-// parsed or out of range leaves val as it was, anything parsed is stored.
 void toLong(u8sv s, long &val)
 {
     const std::string text(reinterpret_cast<const char *>(s.data()), s.size());
@@ -55,13 +51,11 @@ void toLong(u8sv s, long &val)
     val = parsed;
 }
 
-// int arithmetic as the legacy compiler does it (wrapping).
 std::int32_t toInt(std::int64_t v)
 {
     return static_cast<std::int32_t>(static_cast<std::uint32_t>(static_cast<std::uint64_t>(v)));
 }
 
-// SubsTime::NewTime: a negative time is 0.
 std::int64_t newTime(std::int32_t ms)
 {
     return ms < 0 ? 0 : ms;
@@ -71,7 +65,6 @@ struct ScriptInfo {
     std::u8string key, value;
 };
 
-// SubsFile::AddSInfo: an existing key is replaced in place, else appended.
 void addSInfo(std::vector<ScriptInfo> &info, std::u8string key, std::u8string value)
 {
     for (auto &i : info)
@@ -82,7 +75,6 @@ void addSInfo(std::vector<ScriptInfo> &info, std::u8string key, std::u8string va
     info.push_back({std::move(key), std::move(value)});
 }
 
-// SubsFile::AddSInfo(raw): the trimmed text around the first ':'.
 void addSInfo(std::vector<ScriptInfo> &info, u8sv raw)
 {
     const std::size_t colon = raw.find(u8':');
@@ -91,7 +83,6 @@ void addSInfo(std::vector<ScriptInfo> &info, u8sv raw)
     addSInfo(info, str(trim(key)), str(trim(value)));
 }
 
-// The fields Dialogue holds, as the Grid shows them.
 bool sameLine(const LineRecord &a, const LineRecord &b)
 {
     return a.comment == b.comment && a.layer.value == b.layer.value && a.start.value == b.start.value &&
@@ -120,7 +111,7 @@ void copyFields(LineRecord &to, const LineRecord &from)
     to.translation = from.translation;
 }
 
-} // namespace
+}
 
 namespace legacy {
 
@@ -131,7 +122,7 @@ std::u8string utf8OrEmpty(std::string_view bytes)
     return std::u8string(reinterpret_cast<const char8_t *>(bytes.data()), bytes.size());
 }
 
-} // namespace legacy
+}
 
 MatroskaCodec matroskaCodec(std::u8string_view codecName)
 {
@@ -145,27 +136,25 @@ MatroskaCodec matroskaCodec(std::u8string_view codecName)
 std::u8string matroskaLine(std::int64_t start, std::int64_t duration, std::string_view line, MatroskaCodec codec)
 {
     std::u8string blockString = legacy::utf8OrEmpty(line);
-    // int startTime = Start; int endTime = startTime + Duration (Demux.cpp:269-270).
     std::int32_t startTime = toInt(start);
     std::int32_t endTime = toInt(static_cast<std::int64_t>(static_cast<std::uint64_t>(std::int64_t{startTime}) +
                                                          static_cast<std::uint64_t>(duration)));
     const bool ass = codec != MatroskaCodec::Text;
-    if (ass) { // Demux.cpp:271-276: +5 ms, then ZEROIT
+    if (ass) {
         startTime = toInt(std::int64_t{startTime} + 5);
         endTime = toInt(std::int64_t{endTime} + 5);
         startTime = startTime / 10 * 10;
         endTime = endTime / 10 * 10;
     }
     const std::int64_t subStart = newTime(startTime), subEnd = newTime(endTime);
-    if (!ass) // Demux.cpp:304-306
+    if (!ass)
         return legacy::srtTimeText(subStart) + u8" --> " + legacy::srtTimeText(subEnd) + u8"\r\n" + blockString;
-    // Demux.cpp:280-301. The ReadOrder field goes; Find returns -1 without a
-    // comma, which Left and Mid read as the whole string.
     long pos = find(blockString, u8',');
     blockString = str(mid(blockString, pos + 1));
     pos = find(blockString, u8',');
     long layer = 0;
-    if (pos) { // -1 too
+    // MUST KILL: pos -1 (no comma) passes, and left/mid read it as the whole string
+    if (pos) {
         toLong(left(blockString, pos), layer);
         blockString = str(mid(blockString, pos + 1));
     }
@@ -173,7 +162,7 @@ std::u8string matroskaLine(std::int64_t start, std::int64_t duration, std::strin
         blockString = u8"Default,,0000,0000,0000,,";
     if (!startsWith(blockString, u8","))
         blockString.insert(0, u8",");
-    const std::string number = std::to_string(layer); // "%li"
+    const std::string number = std::to_string(layer);
     return u8"Dialogue: " + std::u8string(number.begin(), number.end()) + u8"," + legacy::assTimeText(subStart) +
            u8"," + legacy::assTimeText(subEnd) + blockString;
 }
@@ -181,10 +170,9 @@ std::u8string matroskaLine(std::int64_t start, std::int64_t duration, std::strin
 Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::u8string> &lines, MatroskaCodec codec)
 {
     std::vector<ScriptInfo> info;
-    std::vector<std::u8string> styles; // Styles::GetRaw, "\r\n" included
+    std::vector<std::u8string> styles;
     std::vector<LegacyDialogue> dialogues;
     if (codec != MatroskaCodec::Text) {
-        // Demux.cpp:128-154: wxStringTokenizer(privString, "\r\n", wxTOKEN_STRTOK).
         const std::u8string priv = legacy::utf8OrEmpty(codecPrivate);
         int type = 0;
         for (std::size_t i = 0; i < priv.size();) {
@@ -196,7 +184,6 @@ Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::
             if (next.empty())
                 continue;
             if (startsWith(next, u8"Style:")) {
-                // Styles(next, 2) for SSA, 1 for ASS; the file keeps GetRaw.
                 const auto fields = legacy::styleRawFields(legacy::decodeStyle(next, codec == MatroskaCodec::Ssa));
                 std::u8string raw = u8"Style: ";
                 for (std::size_t k = 0; k < fields.size(); ++k)
@@ -212,9 +199,8 @@ Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::
             }
         }
     }
-    for (const auto &line : lines) // Demux.cpp:157-159
+    for (const auto &line : lines)
         dialogues.push_back(legacyDialogue(line));
-    // Demux.cpp:160-162: GetSInfo finds the first value of the key.
     if (codec == MatroskaCodec::Ass) {
         std::u8string matrix;
         for (const auto &i : info)
@@ -225,7 +211,6 @@ Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::
         if (matrix.empty() || matrix == u8"None")
             addSInfo(info, u8"YCbCr Matrix", u8"TV.601");
     }
-    // SubsGrid::SetSubsFormat() (SubsGridBase.cpp:1093-1105) with no extension.
     int format = 1;
     for (const auto &d : dialogues)
         if (!d.nonDialogue && d.format != 0) {
@@ -233,8 +218,6 @@ Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::
             break;
         }
     const bool srt = format == 2;
-    // The file SubsGrid::SaveFile writes (SubsGridBase.cpp:308-404): the ASS
-    // header (here in the form the other new Documents use) or numbered cues.
     std::u8string text;
     if (!srt) {
         text = u8"[Script Info]\r\n";
@@ -258,10 +241,7 @@ Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::
     std::vector<std::byte> bytes(text.size());
     std::memcpy(bytes.data(), text.data(), text.size());
     Document document = srt ? loadSrt(bytes).document : loadAss(bytes).document;
-    // The Lines are the ones legacy held, whatever reading its file back
-    // would give: a field the file does not carry back is set (the Line is
-    // then regenerated on save), and Lines the file cannot carry back one to
-    // one (an SRT line in an ASS file, say) are added in order.
+    // MUST KILL: writes a file, loads it, then patches or replaces its Lines with the parsed ones
     std::vector<LineId> loaded;
     std::vector<bool> same;
     for (const auto *l : document.lines()) {
@@ -281,4 +261,4 @@ Document matroskaDocument(std::string_view codecPrivate, const std::vector<std::
     return document;
 }
 
-} // namespace hikari::core
+}

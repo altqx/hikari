@@ -1,20 +1,5 @@
 #pragma once
 
-// GR1 (#364): grammar check with Harper. What harper-ls is given for a Line's
-// text and where its findings go back, and Harper's rules in the groups the
-// Settings page switches.
-//
-// For ASS (and plain text) the text is the hidden-tag projection's
-// (core::project, as TM1's tag transfer reads it): override blocks (karaoke
-// tags too) and brace comments are left out; \N, \n and \h are a space; a
-// drawing's commands and a malformed span are one space, never checked. Its
-// offsets are the projection's (what the field shows with tags hidden), so a
-// finding [start, end) is a projection range that mappedReplace applies a
-// suggestion over. The other formats leave out the tags spelling skips there
-// (legacy SpellChecker): SRT's <...>, with \N, \n and \h a space; TMPlayer's,
-// MicroDVD's and MPL2's {...}, with "|" a space. rawRange gives the raw text
-// a finding covers.
-
 #include "hikari/core/document.h"
 
 #include <cstddef>
@@ -34,6 +19,8 @@ struct CheckedText {
     std::vector<std::pair<std::size_t, std::size_t>> raw;
 };
 
+// ASS: the hidden-tag projection (tags and comments out; \N, \n, \h a space; a drawing or a
+// malformed span one space). SRT drops <...>; TMPlayer, MicroDVD and MPL2 drop {...}, "|" a space.
 CheckedText checkedText(std::u16string_view raw, SubtitleFormat format = SubtitleFormat::Ass);
 
 // A suggestion over checkedText(raw, format)'s units [start, end): the new raw
@@ -56,33 +43,28 @@ std::optional<std::pair<std::size_t, std::size_t>> rawRange(const CheckedText &t
 // marks, a backtick without its pair left out.
 std::u16string plainMessage(std::u16string_view markdown);
 
-// The Spellchecker panel's text before and after a finding (both modes): the
-// last (first) `most` units of it, cut back to a whole word where text is
-// left out, with an ellipsis there. A word longer than that is cut.
+// The last (first) `most` units, cut back to a whole word where text is left out, with an
+// ellipsis there. A longer word is cut.
 std::u16string contextBefore(std::u16string_view before, std::size_t most);
 std::u16string contextAfter(std::u16string_view after, std::size_t most);
 
-// Harper's rules (harper-core/default_config.json at the pinned release):
-// each in one of the curated groups, with Harper's default.
+// Harper's rules (its default_config.json at the pinned release), each in a curated group, with
+// Harper's default.
 struct Rule {
     std::string_view name;
     unsigned char group;
     bool on;
 };
 
-// The groups' ids in Harper's order ("properNouns" ... "miscellaneous"); the
-// setting grammar.group.<id> switches each.
+// In Harper's order; the setting grammar.group.<id> switches each.
 std::span<const std::string_view> groupIds();
 std::span<const Rule> rules();
 // The group a rule (a diagnostic's code) is in; nothing for one Harper
 // doesn't list.
 std::optional<std::size_t> groupOfRule(std::string_view rule);
 
-// harper-ls's `linters`: every rule on when its group is on and Harper has it
-// on, except two. SpellCheck is off while Hunspell checks spelling (a word is
-// never marked twice), and SentenceCapitalization is always off, whatever its
-// group's switch: a subtitle Line is often the middle of a sentence (owner,
-// 2026-10-27).
+// Every rule on when its group and Harper's default are on, except SpellCheck (off while
+// Hunspell checks spelling) and SentenceCapitalization (always off).
 std::vector<std::pair<std::string_view, bool>> linterSwitches(std::span<const bool> groupsOn, bool hunspellOn);
 
-} // namespace hikari::core::grammar
+}

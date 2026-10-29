@@ -1,17 +1,5 @@
 #pragma once
 
-// Autosave recovery bundles (P3; accepted L58-recovery-copy and the
-// 2026-09-29 retention choices). Each open Document with unsaved work gets a
-// bundle of generations under the recovery directory: the committed content
-// in its own format, the pending draft (kept pending on recovery, never
-// committed), and what the Document was. A generation is written and
-// verified before a manifest naming it replaces the previous one atomically;
-// the last 3 (the legacy capacity, 0 disables autosave) are kept. A clean
-// close after Save or an explicit Discard deletes the bundle; after a crash
-// the bundles stay until recovered or dismissed, and generations older than
-// 30 days are pruned. This is versioned application data, not the legacy
-// Subs/ autosave grammar.
-
 #include "hikari/application/edit_session.h"
 
 #include <chrono>
@@ -24,11 +12,11 @@
 namespace hikari::application {
 
 struct RecoveryContent {
-    std::vector<std::byte> bytes;           // the committed content, encoded in its format
-    std::string extension;                  // "ass", "srt" or "txt" (legacy save extension)
+    std::vector<std::byte> bytes;           // the committed content, in the Document's format
+    std::string extension;                  // "ass", "srt" or "txt"
     std::string title;
     std::string originalPath;               // empty for an Untitled Document
-    std::optional<std::size_t> draftRow;    // the pending draft's Line, by Document row
+    std::optional<std::size_t> draftRow;    // Document row of the pending draft
     DraftChange draft;
     std::optional<std::pair<std::int64_t, std::int64_t>> frameRate; // MicroDVD's own rate
     std::int64_t writtenMs = 0;             // milliseconds since the epoch
@@ -48,7 +36,6 @@ public:
     RecoveryStore(std::filesystem::path root, std::string session, int capacity = kDefaultCapacity);
 
     bool enabled() const { return m_capacity > 0 && !m_root.empty(); }
-    // Legacy reads AUTOSAVE_MAX_FILES at each autosave.
     void setCapacity(int capacity) { m_capacity = capacity; }
     // A new generation for `key`; false (and the previous generation kept)
     // when it could not be written and verified.
@@ -69,4 +56,4 @@ private:
     int m_capacity;
 };
 
-} // namespace hikari::application
+}

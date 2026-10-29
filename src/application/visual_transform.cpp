@@ -14,8 +14,8 @@
 #include <cstdlib>
 #include <string>
 
-// Built without floating-point contraction, as visual_view.cpp: legacy's
-// float steps must round as its build did.
+// Built without floating-point contraction so float steps round as HikariSub
+// legacy's did.
 
 namespace hikari::application::visual::transform {
 
@@ -29,7 +29,6 @@ u16 ascii(std::string_view s)
     return u16(s.begin(), s.end());
 }
 
-// wxString::Trim(true) and Trim(false): wxSafeIsspace characters.
 bool isSpace(char16_t c)
 {
     return c == u' ' || c == u'\t' || c == u'\n' || c == u'\r' || c == u'\v' || c == u'\f';
@@ -45,7 +44,6 @@ u16 trimmed(u16v s)
     return u16(s.substr(b, e - b));
 }
 
-// wxString::Mid(first, count): clamped to the text.
 u16 mid(u16v s, std::size_t first, std::size_t count = u16v::npos)
 {
     if (first >= s.size())
@@ -53,9 +51,7 @@ u16 mid(u16v s, std::size_t first, std::size_t count = u16v::npos)
     return u16(s.substr(first, count));
 }
 
-// wxString::BeforeFirst(ch, &rest) (wx 3 string.cpp): `rest` takes the text
-// after `ch` before the result is cut from the (possibly changed) string, so
-// a call whose rest is the string itself returns the tail's first characters.
+// MUST KILL: with `rest` == &self the head is cut from the tail
 u16 beforeFirst(u16 &self, char16_t ch, u16 *rest)
 {
     const auto at = self.find(ch);
@@ -74,9 +70,8 @@ std::size_t freq(u16v s, char16_t ch)
     return static_cast<std::size_t>(std::count(s.begin(), s.end(), ch));
 }
 
-// wxStringTokenizer(text, delims) in its default mode: whitespace delimiters
-// skip empty tokens (wxTOKEN_STRTOK), others return the empty ones between
-// delimiters but not a trailing one (wxTOKEN_RET_EMPTY).
+// `strtok` skips empty tokens; otherwise those between delimiters are kept
+// but not a trailing one.
 std::vector<u16> tokens(u16v text, char16_t delim, bool strtok)
 {
     std::vector<u16> out;
@@ -117,7 +112,6 @@ u16 group(const core::LegacyRegex &re, u16v text, std::size_t index)
     return u16(text.substr(m->first, m->second));
 }
 
-// Styles::Styles() (styles.cpp:249-275).
 core::StyleValues defaultStyle()
 {
     core::StyleValues s;
@@ -154,8 +148,7 @@ int alignmentOf(const core::StyleValues &style, u16v text)
     return an;
 }
 
-// GetLineTextExtents (UtilsWindows.cpp:233-...) through the text measure: an
-// empty text is 0 by 0 without measuring.
+// An empty text is 0 by 0 without measuring.
 bool lineTextExtents(const Context &context, u16v text, const core::StyleValues &style, float &width, float &height,
                      float &descent, float &extlead)
 {
@@ -179,8 +172,7 @@ bool lineTextExtents(const Context &context, u16v text, const core::StyleValues 
     return true;
 }
 
-// Dialogue::ParseTags(tags, n, plainText = true) (SubsDialogue.cpp:1086-1161),
-// as grid_split.cpp's copy, with the drawing's value trimmed in place.
+// MUST KILL: a copy of grid_split.cpp's tag parser
 struct Tag {
     u16 name, value;
 };
@@ -201,7 +193,6 @@ std::vector<Tag> parseTags(u16v txt, const std::vector<u16v> &names)
             tagsBlock = true;
             if (pos >= len - 1)
                 ++pos;
-            // SubString(plainStart, pos - 1).
             if (plainStart + 1 <= pos)
                 out.push_back({drawing ? u"pvector" : u"plain", u16(txt.substr(plainStart, pos - plainStart))});
         } else if (tagsBlock && ch == u'\\') {
@@ -224,7 +215,6 @@ std::vector<Tag> parseTags(u16v txt, const std::vector<u16v> &names)
                             value = trimmed(value);
                             drawing = value != u"0";
                         } else if (first == u'(') {
-                            // After('(').BeforeFirst(')')
                             const auto open = value.find(u'(');
                             u16 after = open == u16::npos ? u16() : value.substr(open + 1);
                             const auto close = after.find(u')');
@@ -253,8 +243,6 @@ std::vector<Tag> parseTags(u16v txt, const std::vector<u16v> &names)
     return out;
 }
 
-// TagFindReplace::TagValueToStyle (TagFindReplace.cpp:510-553) for the tags
-// GetTextSize hands it.
 bool tagValueToStyle(core::StyleValues &style, u16v tag, const u16 &value)
 {
     const std::u8string v = core::toUtf8(value);
@@ -287,7 +275,6 @@ bool tagValueToStyle(core::StyleValues &style, u16v tag, const u16 &value)
     return true;
 }
 
-// Visuals::Curve (Visuals.cpp:1245-1295) for a Bézier (bspline false).
 void curve(std::size_t pos, const std::vector<ClipPoint> &points, std::vector<PointF> &table)
 {
     float a[4], b[4];
@@ -311,8 +298,7 @@ void curve(std::size_t pos, const std::vector<ClipPoint> &points, std::vector<Po
     float h = 1.0f;
     if (maxaccel > 4.0f)
         h = std::sqrt(4.0f / maxaccel);
-    // At most 1024 points a segment: coordinates near a float's limit made
-    // the step 0 (or close to it) and this loop endless.
+    // At most 1024 points a segment, or coordinates near a float's limit loop forever.
     if (!(h >= 1.0f / 1024))
         h = 1.0f / 1024;
     float p_x, p_y;
@@ -326,7 +312,6 @@ void curve(std::size_t pos, const std::vector<ClipPoint> &points, std::vector<Po
     table.push_back({p_x, p_y});
 }
 
-// Visuals::GetRectFromSize (Visuals.cpp:217-237).
 void rectFromSize(const Context &context, PointF size, int an, const core::LineRecord &line,
                   const core::StyleValues &style, PointF &pos, PointF &pos1)
 {
@@ -344,14 +329,11 @@ void rectFromSize(const Context &context, PointF size, int an, const core::LineR
     pos1.y = result.y + size.y;
 }
 
-// Visuals::IsInRect (Visuals.cpp:239-243).
 bool isInRect(PointF pos, PointF pos1, PointF second, PointF second1)
 {
     return ((second1.x > pos.x) && (second.x < pos1.x) && (second1.y > pos.y) && (second.y < pos1.y));
 }
 
-// The clip rewrite both tools share once the points are moved
-// (VisualScale.cpp:785-825, VisualRotationZ.cpp:501-545).
 template <typename Move>
 void writeClip(TagFind &find, u16 &text, u16 newclip, int vectorScale, const std::vector<ClipPoint> &points, Move move)
 {
@@ -387,7 +369,7 @@ void writeClip(TagFind &find, u16 &text, u16 newclip, int vectorScale, const std
                     spline = true;
             }
         }
-        // fix for m one after another
+        // an m directly followed by another m gets an l
         if (pos.type == u"m" && psize > 1 &&
             ((i >= psize - 1) || (i < psize - 1 && points[i + 1].type == u"m"))) {
             newclip += u"l " + getfloat(x, format) + u" " + getfloat(y, format) + u" ";
@@ -395,15 +377,11 @@ void writeClip(TagFind &find, u16 &text, u16 newclip, int vectorScale, const std
     }
     if (spline)
         newclip += u"c ";
-    // newclip.Trim()
     while (!newclip.empty() && isSpace(newclip.back()))
         newclip.pop_back();
     find.replace(newclip, text);
 }
 
-// The rectangle clip's four values (VisualScale.cpp:750-774): the values
-// past the fourth overwrite what follows the array in legacy; they are
-// dropped here.
 bool rectanglePoints(const u16 &clip, std::vector<ClipPoint> &points, const Context *context = nullptr)
 {
     double value = 0;
@@ -431,7 +409,7 @@ bool rectanglePoints(const u16 &clip, std::vector<ClipPoint> &points, const Cont
     return true;
 }
 
-} // namespace
+}
 
 Mouse mouse(const Pointer &event)
 {
@@ -524,7 +502,7 @@ int atoi(u16v text)
 
 bool TagFind::findTag(u16v pattern, u16v text, int mode)
 {
-    // With several Lines selected FindTag searches from 0 whatever the mode.
+    // With several Lines selected the search starts at 0 whatever the mode.
     const long from = m_several ? 0 : m_selFrom;
     const long to = m_several ? 0 : m_selTo;
     core::legacy::TagEditor editor({u16(text), from, to});
@@ -539,7 +517,6 @@ bool TagFind::findTag(u16v pattern, u16v text, int mode)
 int TagFind::replaceAll(u16v pattern, u16v tag, u16 &text, const std::function<void(const FindData &, u16 &)> &func,
                         bool returnPosWhenNoTags)
 {
-    // TagFindReplace::ReplaceAll (TagFindReplace.cpp:257-304).
     int replaces = 0;
     const core::LegacyRegex regex(u"\\\\" + u16(pattern), core::LegacyRegex::Advanced);
     std::size_t textPosition = 0;
@@ -582,8 +559,7 @@ int TagFind::replaceAll(u16v pattern, u16v tag, u16 &text, const std::function<v
 
 int TagFind::replace(u16v replacement, u16 &text) const
 {
-    // TagFindReplace::Replace (TagFindReplace.cpp:423-443). A place past the
-    // text (a result from another text) goes to its end.
+    // A place past the text goes to its end.
     const long x = std::clamp<long>(m_result.x, 0, static_cast<long>(text.size()));
     const long y = m_result.y;
     if (text.empty()) {
@@ -611,7 +587,6 @@ bool TagFind::getDouble(double &out) const
 
 bool TagFind::getTwoValueDouble(double &a, double &b) const
 {
-    // The brackets are cut from a copy that is never used (TagFindReplace.cpp:587-592).
     u16 finding = m_result.finding;
     u16 sval;
     const u16 fval = beforeFirst(finding, u',', &sval);
@@ -667,8 +642,7 @@ Context context(const VisualHost &host, bool withStyles)
             c.active = *line;
     }
     if (c.active) {
-        // TextEdit's value; in TLMode it holds the translation and an empty
-        // one makes Visuals use TextEditOrig (Visuals.cpp:634-639).
+        // In translation mode an empty translation means the original's editor.
         c.editorIsTranslation = translationMode(*session) && !c.active->translation.empty();
         c.editorText = u16of(c.editorIsTranslation ? c.active->translation : c.active->text);
     }
@@ -714,7 +688,6 @@ double styleNumber(const std::u8string &value, double initial)
 
 PointF defaultPosition(const core::LineRecord &line, const core::StyleValues &style, int an, int width, int height)
 {
-    // Dialogue::GetDefaultPosition (SubsDialogue.cpp:609-634).
     const int lineL = static_cast<int>(line.marginLeft.value);
     const int lineR = static_cast<int>(line.marginRight.value);
     const int lineV = static_cast<int>(line.marginVertical.value);
@@ -752,8 +725,6 @@ int endMs(const core::LineRecord &line)
 
 PointF posnScale(const Context &context, TagFind &find, bool fromStart, PointF *scale, int *an, double *tbl)
 {
-    // Visuals::GetPosnScale (Visuals.cpp:624-722) for Scale, RotationZ and
-    // RotationXY: beforeCursor is replaceTagsInCursorPosition.
     PointF ppos{0.0f, 0.0f};
     if (!context.active)
         return ppos;
@@ -782,9 +753,6 @@ PointF posnScale(const Context &context, TagFind &find, bool fromStart, PointF *
     } else {
         if (tbl)
             tbl[6] = 0;
-        // The margins and GetDialogueAdditionalPosition's offset are
-        // replaced by the default position below for these families
-        // (Visual != VECTORCLIP), so they are not computed here.
     }
     if (tbl && tbl[6] < 4) {
         const int startTime = zeroit(startMs(line));
@@ -812,7 +780,6 @@ PointF posnScale(const Context &context, TagFind &find, bool fromStart, PointF *
 
 std::pair<int, int> moveTimes(const Context &context)
 {
-    // Visuals::GetMoveTimes (Visuals.cpp:607-622).
     if (!context.active)
         return {0, 0};
     const LegacyTimebase &timebase = context.timebase;
@@ -826,7 +793,6 @@ std::pair<int, int> moveTimes(const Context &context)
 
 PointF calcMovePos(const Context &context, double *tbl, int start, int end)
 {
-    // Visuals::CalcMovePos (Visuals.cpp:547-564).
     const int time = context.timeMs;
     if (tbl[6] < 6) {
         tbl[4] = start;
@@ -851,7 +817,6 @@ PointF calcMovePos(const Context &context, double *tbl, int start, int end)
 
 LinePosition linePosition(const Context &context, const core::LineRecord &line)
 {
-    // Visuals::GetPosition (Visuals.cpp:834-903), without the move table.
     LinePosition out;
     const core::StyleValues currentStyle = lineStyle(context, line.style);
     const u16 txt = lineText(line);
@@ -888,8 +853,7 @@ LinePosition linePosition(const Context &context, const core::LineRecord &line)
 
 PointF additionalPosition(const Context &context, const core::LineRecord &dialogue)
 {
-    // Visuals::GetDialoguesWithoutPosition (Visuals.cpp:108-140): the Lines
-    // before this one shown at the video's time without \pos or \move.
+    // The Lines before this one shown at the video's time without \pos or \move.
     std::vector<const core::LineRecord *> withoutPosition;
     const int time = context.timeMs;
     if (context.document && time >= startMs(dialogue) && time < endMs(dialogue)) {
@@ -904,7 +868,6 @@ PointF additionalPosition(const Context &context, const core::LineRecord &dialog
             }
         }
     }
-    // GetDialogueAdditionalPosition (143-215).
     PointF result{0, 0};
     if (withoutPosition.empty())
         return result;
@@ -953,8 +916,7 @@ PointF additionalPosition(const Context &context, const core::LineRecord &dialog
 TextSize textSize(const Context &context, const core::LineRecord &line, const core::StyleValues *style,
                   bool keepExtraLead)
 {
-    // Visuals::GetTextSize (Visuals.cpp:953-1133). With no text legacy left
-    // `border` as the caller had it; it is 0 here.
+    // With no text `border` is 0.
     TextSize out;
     const u16 text = lineText(line);
     if (text.empty())
@@ -1028,8 +990,7 @@ TextSize textSize(const Context &context, const core::LineRecord &line, const co
                     i = tag.value.find(u"\\N", g);
                     const u16 piece = mid(tag.value, g, i == u16::npos ? u16::npos : i - g);
                     const u16 pltext = trimmed(piece);
-                    // GetLineTextExtents(pltext, style, &width, &height, &extlead, &descent):
-                    // legacy passes the descent into extlead and the leading into descent.
+                    // MUST KILL: extlead and descent are passed swapped
                     if (lineTextExtents(context, pltext, measuringStyle, fwidth, fheight, extlead, descent)) {
                         maxwidth += fwidth;
                         if (!result.y && !keepExtraLead)
@@ -1080,9 +1041,6 @@ TextSize textSize(const Context &context, const core::LineRecord &line, const co
 
 PointF drawingSize(u16v drawing, PointF *position)
 {
-    // Visuals::GetDrawingSize (Visuals.cpp:1135-1187). A curve that starts
-    // the drawing or runs past its end read outside legacy's vector; it is
-    // measured by its points here.
     double minx = DBL_MAX;
     double miny = DBL_MAX;
     double maxx = -DBL_MAX;
@@ -1138,7 +1096,6 @@ PointF drawingSize(u16v drawing, PointF *position)
 
 std::vector<ClipPoint> vectorPoints(u16v vector)
 {
-    // Visuals::GetVectorPoints (Visuals.cpp:566-605).
     std::vector<ClipPoint> points;
     double tmpx = 0;
     bool gotx = false;
@@ -1190,12 +1147,6 @@ PointF rotateZ(PointF point, float sinOfAngle, float cosOfAngle, PointF pivot)
 void changeOrg(const Context &context, TagFind &find, u16 &text, const core::LineRecord &line, float coordx,
                float coordy)
 {
-    // Visuals::ChangeOrg (Visuals.cpp:905-934). FindTag gives the found
-    // \org's start and its last character; legacy then moved that end by the
-    // start less one as it did for an insertion, so an \org that was not the
-    // block's first tag took the characters after it with it. Only the
-    // insertion's end is set here; a found \org is replaced exactly
-    // (T3-change-org-end).
     double orgx = 0, orgy = 0;
     bool putInBrackets = false;
     long sx = 0, sy = 0;
@@ -1217,8 +1168,7 @@ void changeOrg(const Context &context, TagFind &find, u16 &text, const core::Lin
             sx += static_cast<long>(posTag.size()) + append;
             putInBrackets = false;
         }
-        // An insertion at sx (ChangeText erases nothing when its end is
-        // before its start).
+        // MUST KILL: sy = sx - 1 makes changeText insert instead of replace
         sy = sx - 1;
     }
     changeText(text,
@@ -1229,7 +1179,6 @@ void changeOrg(const Context &context, TagFind &find, u16 &text, const core::Lin
 
 void changeClipScale(TagFind &find, u16 &text, PointF pivot, float scalex, float scaley)
 {
-    // Scale::ChangeClipScale (VisualScale.cpp:741-827).
     if (!find.findTag(u"(i?clip[^)]+\\))", text, 1))
         return;
     u16 clip1, clip;
@@ -1242,11 +1191,6 @@ void changeClipScale(TagFind &find, u16 &text, PointF pivot, float scalex, float
         (void)rectanglePoints(clip, points);
     } else {
         if (clipFreq >= 1) {
-            // Legacy wrote clip.BeforeFirst(L',', &clip): the rest replaced
-            // the clip before the head was returned, so the scale read was
-            // the tail's first characters and the vector's scale was dropped
-            // (`\clip(2,m ...)` lost `2,`). The head is the scale here, as
-            // RotationZ's rewrite reads it (T3-scale-vector-clip).
             u16 rest;
             const u16 vscale = beforeFirst(clip, u',', &rest);
             const int vscaleint = atoi(vscale);
@@ -1256,8 +1200,7 @@ void changeClipScale(TagFind &find, u16 &text, PointF pivot, float scalex, float
         }
         points = vectorPoints(clip);
     }
-    // A scaled vector's points are in units of 1 / 2^(scale - 1) pixels, so
-    // the pivot is taken into them.
+    // A scaled vector's points are in units of 1 / 2^(scale - 1) pixels.
     const float units = std::ldexp(1.f, vectorScale - 1);
     const PointF p{pivot.x * units, pivot.y * units};
     writeClip(find, text, newclip, vectorScale, points, [&](const ClipPoint &pos, float &x, float &y) {
@@ -1268,7 +1211,6 @@ void changeClipScale(TagFind &find, u16 &text, PointF pivot, float scalex, float
 
 void changeClipRotationZ(TagFind &find, u16 &text, PointF pivot, float sinus, float cosinus)
 {
-    // RotationZ::ChangeClipRotationZ (VisualRotationZ.cpp:455-547).
     if (!find.findTag(u"(i?clip[^)]+\\))", text, 1))
         return;
     u16 clip1, clip;
@@ -1278,8 +1220,6 @@ void changeClipRotationZ(TagFind &find, u16 &text, PointF pivot, float sinus, fl
     const std::size_t clipFreq = freq(clip, u',');
     std::vector<ClipPoint> points;
     if (clipFreq >= 3) {
-        // Legacy added 2 to the bottom (VisualRotationZ.cpp:480), so every
-        // edit made the rectangle 2 taller; not here (T3-rotz-rect-clip).
         (void)rectanglePoints(clip, points);
     } else {
         if (clipFreq >= 1) {
@@ -1309,12 +1249,9 @@ u16 moveText(PointF pos, const double *tbl, int lineStartMs)
 
 PointF drawArrow(Overlay &out, PointF from, PointF to, int diff)
 {
-    // Visuals::DrawArrow (Visuals.cpp:305-337): the head's triangle filled
-    // 0xAA121150 with a 0xFFBB0000 border; the line ends at its base.
     const PointF pdiff{from.x - to.x, from.y - to.y};
     const float len = std::sqrt((pdiff.x * pdiff.x) + (pdiff.y * pdiff.y));
     const PointF diffUnits = (len == 0) ? PointF{0, 0} : PointF{pdiff.x / len, pdiff.y / len};
-    // SV1-hidpi-tool-sizes: the head's size and `diff` in legacy's pixels.
     const float u = out.unit;
     const float k = static_cast<float>(12 + diff) * u;
     const PointF pend{to.x + diffUnits.x * k, to.y + diffUnits.y * k};
@@ -1329,16 +1266,13 @@ PointF drawArrow(Overlay &out, PointF from, PointF to, int diff)
 
 std::optional<std::pair<PointF, PointF>> lineBox(const Context &context, const core::LineRecord &line)
 {
-    // HY1: Scale's sizing rectangle (SetSecondRectScale) for any Line: its
-    // position, its text's size with the border round it, placed by its
-    // alignment.
     const core::StyleValues style = lineStyle(context, line.style);
     const TextSize ts = textSize(context, line, &style, true);
     if (ts.size.x <= 0 || ts.size.y <= 0)
         return std::nullopt;
     PointF pos = linePosition(context, line).pos;
-    // A \move's position at the shown time, as libass moves it: over the
-    // whole Line without times (or both 0 or less), the earlier time first.
+    // As libass moves it: over the whole Line without times (or both 0 or
+    // less), the earlier time first.
     const u16 txt = lineText(line);
     if (posRegex().matches(txt) && group(posRegex(), txt, 1) == u"move") {
         std::array<double, 6> v{};
@@ -1378,8 +1312,7 @@ std::optional<std::pair<PointF, PointF>> lineBox(const Context &context, const c
 
 void drawRect(Overlay &out, PointF pos, bool selected, float size)
 {
-    // Visuals::DrawRect (Visuals.cpp:357-374).
-    size *= out.unit; // SV1-hidpi-tool-sizes
+    size *= out.unit;
     out.polygons.push_back({{{pos.x - size, pos.y - size},
                              {pos.x + size, pos.y - size},
                              {pos.x + size, pos.y + size},
@@ -1388,4 +1321,4 @@ void drawRect(Overlay &out, PointF pos, bool selected, float size)
                             kHandleBorder});
 }
 
-} // namespace hikari::application::visual::transform
+}

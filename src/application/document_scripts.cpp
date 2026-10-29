@@ -6,7 +6,6 @@ namespace hikari::application {
 
 namespace {
 
-// wxString::Trim(false): leading whitespace (wxSafeIsspace).
 std::string_view trimLeft(std::string_view s)
 {
     while (!s.empty() && (s.front() == ' ' || (s.front() >= '\t' && s.front() <= '\r')))
@@ -14,11 +13,10 @@ std::string_view trimLeft(std::string_view s)
     return s;
 }
 
-} // namespace
+}
 
 std::vector<std::string> scriptInfoScriptPaths(std::string_view value)
 {
-    // Automation.cpp:1279-1285: Trim(false), the tokenizer, each token's Trim(false).
     value = trimLeft(value);
     std::vector<std::string> tokens;
     std::size_t start = 0;
@@ -34,7 +32,6 @@ std::vector<std::string> scriptInfoScriptPaths(std::string_view value)
 
 std::string scriptInfoWithScript(std::string_view value, std::string_view path)
 {
-    // Automation.cpp:1164-1166.
     std::string out(value);
     out += '|';
     out += path;
@@ -43,7 +40,6 @@ std::string scriptInfoWithScript(std::string_view value, std::string_view path)
 
 bool DocumentScripts::add(const std::string &path)
 {
-    // Automation.cpp:1157-1158: a script already in the list is not added again.
     if (!m_listed.insert(path).second)
         return false;
     m_scripts.push_back(path);
@@ -59,20 +55,18 @@ void DocumentScripts::remove(const std::string &path)
 bool DocumentScripts::readScriptInfo(const std::string &value, const std::function<bool(const std::string &)> &isFile,
                                      std::vector<std::string> *added)
 {
-    // Automation.cpp:1277-1278.
     if (value.empty())
         return false;
     if (value == m_lastValue && !m_scripts.empty())
         return false;
     for (const std::string &path : scriptInfoScriptPaths(value)) {
-        if (!isFile(path)) // Automation.cpp:1286: a missing file is skipped silently
+        if (!isFile(path))
             continue;
         if (add(path) && added)
             added->push_back(path);
     }
-    // Automation.cpp:1305, after paths.Trim(false).
     m_lastValue = std::string(trimLeft(value));
     return true;
 }
 
-} // namespace hikari::application
+}

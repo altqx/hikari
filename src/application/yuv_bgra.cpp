@@ -67,8 +67,6 @@ __m128i pair(int a, int b)
                                            (static_cast<std::uint32_t>(a) & 0xffffu)));
 }
 
-// Eight pixels' channel values (16-bit, already saturated) from eight luma
-// and eight chroma pairs.
 struct Coefficients {
     __m128i yv, yu, yuG, v1, round, shift;
 };
@@ -78,6 +76,7 @@ __m128i channel(__m128i lo, __m128i hi, const __m128i &shift)
     return _mm_packs_epi32(_mm_sra_epi32(lo, shift), _mm_sra_epi32(hi, shift));
 }
 
+// Eight pixels' channel values, 16-bit and saturated.
 void eight(const Coefficients &k, __m128i y, __m128i u, __m128i v, __m128i &b, __m128i &g, __m128i &r)
 {
     const __m128i one = _mm_set1_epi16(1);
@@ -93,7 +92,7 @@ void eight(const Coefficients &k, __m128i y, __m128i u, __m128i v, __m128i &b, _
 }
 #endif
 
-} // namespace
+}
 
 void row(const Matrix &m, const std::uint8_t *y, const std::uint8_t *u, const std::uint8_t *v, int width,
          std::uint8_t *bgra)
@@ -137,4 +136,4 @@ void row(const Matrix &m, const std::uint8_t *y, const std::uint8_t *u, const st
         pixel(m, y[x], u[x / 2], v[x / 2], bgra + static_cast<std::ptrdiff_t>(x) * 4);
 }
 
-} // namespace hikari::application::yuv
+}

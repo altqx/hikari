@@ -1,10 +1,5 @@
 #pragma once
 
-// Style values as the legacy Styles::parseStyle reads them (C4-ssa). The
-// Document keeps each Style line's exact bytes; this is the semantic view.
-// SSA v4 lines are read with the SSA field layout and alignment numbering;
-// converting a Document to ASS is a separate, explicit operation.
-
 #include "hikari/core/document.h"
 
 #include <cstdint>
@@ -16,7 +11,7 @@
 namespace hikari::core {
 
 struct Colour {
-    std::int64_t r = 0, g = 0, b = 0, a = 0; // legacy AssColor longs
+    std::int64_t r = 0, g = 0, b = 0, a = 0;
     bool operator==(const Colour &) const = default;
 };
 
@@ -30,31 +25,28 @@ struct StyleValues {
     std::u8string outlineWidth, shadow;
     std::u8string alignment;  // ASS numpad numbering; SSA values are renumbered
     std::u8string marginLeft, marginRight, marginVertical, encoding;
-    // False when the line ran out of fields. Legacy keeps such a Style with
-    // the remaining fields unset (its booleans are then indeterminate).
+    // False when the line ran out of fields; the rest keep their defaults.
     bool complete = false;
-    // SSA fields with no ASS counterpart, as authored. Converting to ASS
-    // drops them, so a conversion must report them.
+    // SSA fields with no ASS counterpart; converting to ASS drops them.
     std::optional<std::u8string> ssaTertiaryColour, ssaAlphaLevel;
 };
 
-// Every Style line in document order. As in the legacy loader, a "[V4"
-// header that is not "[V4+" switches to the SSA layout for all later Styles.
+// Every Style line in document order; after a "[V4" header that is not "[V4+",
+// all later Styles use the SSA layout.
 std::vector<StyleValues> decodeStyles(const Document &document);
-// The Style records decodeStyles would decode, without decoding them.
 std::size_t styleCount(const Document &document);
 
 namespace legacy {
-// Styles::parseStyle on one line from "Style:" on (left-trimmed).
+// One line from "Style:" on, left-trimmed.
 StyleValues decodeStyle(std::u8string_view styleLine, bool ssa);
-// AssColor::SetAss: decimal (SSA) or &HAABBGGRR& / #RRGGBB hex.
+// Decimal (SSA) or &HAABBGGRR& / #RRGGBB hex.
 Colour colour(std::u8string_view text);
-// TagFindReplace::TagValueFromStyle: the Style's value for an override tag
-// name (fs, bord, shad, fsp, fscx, fscy, c/1c-4c as &HBBGGRR&, 1a-4a as hex,
-// fn, b, i, u, s as 0/1, fr/frz), or nullopt for any other tag.
+// The Style's value for an override tag name (fs, bord, shad, fsp, fscx, fscy,
+// c/1c-4c as &HBBGGRR&, 1a-4a as hex, fn, b, i, u, s as 0/1, fr/frz); nullopt for
+// any other tag.
 std::optional<std::u8string> styleTagValue(const StyleValues &style, std::u8string_view tag);
-// Styles::GetRaw's fields, name first (colours as &HAABBGGRR, flags -1/0).
+// The Style line's fields, name first (colours as &HAABBGGRR, flags -1/0).
 std::vector<std::u8string> styleRawFields(const StyleValues &style);
-} // namespace legacy
+}
 
-} // namespace hikari::core
+}

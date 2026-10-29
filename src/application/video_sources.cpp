@@ -23,14 +23,14 @@ std::string lower(std::string_view s)
     return out;
 }
 
-// wxString::AfterLast('.'): the whole text when there is no dot.
+// The whole text when there is no dot.
 std::string_view afterLastDot(std::string_view path)
 {
     const auto dot = path.rfind('.');
     return dot == std::string_view::npos ? path : path.substr(dot + 1);
 }
 
-// wxString::ToCDouble: the whole text is one number in the C locale.
+// The whole text must be one C-locale number.
 std::optional<double> toCDouble(std::string_view text)
 {
     if (text.empty())
@@ -43,7 +43,6 @@ std::optional<double> toCDouble(std::string_view text)
     return v;
 }
 
-// wxAtoi: atoi on the text (0 when it does not start with a number).
 int wxAtoi(std::string_view text)
 {
     return std::atoi(std::string(text).c_str());
@@ -54,7 +53,6 @@ std::uint8_t clipColour(int v)
     return static_cast<std::uint8_t>(v < 0 ? 0 : v > 255 ? 255 : v);
 }
 
-// colorspace.cpp's rgb_to_hsl (colorspace.cpp:253-290).
 void rgbToHsl(int R, int G, int B, std::uint8_t &H, std::uint8_t &S, std::uint8_t &L)
 {
     const float r = R / 255.f, g = G / 255.f, b = B / 255.f;
@@ -85,7 +83,6 @@ void rgbToHsl(int R, int G, int B, std::uint8_t &H, std::uint8_t &S, std::uint8_
     L = clipColour(int(l * 255));
 }
 
-// colorspace.cpp's hsl_to_rgb (colorspace.cpp:44-142).
 void hslToRgb(int H, int S, int L, std::uint8_t &R, std::uint8_t &G, std::uint8_t &B)
 {
     if (S == 0) {
@@ -134,13 +131,12 @@ void hslToRgb(int H, int S, int L, std::uint8_t &R, std::uint8_t &G, std::uint8_
     B = clipColour((int)(out[2] * 255));
 }
 
-// SaturateToInt (Timebase.cpp:26-29)
 int saturate(double v)
 {
     return v >= static_cast<double>(INT_MAX) ? INT_MAX : static_cast<int>(v);
 }
 
-} // namespace
+}
 
 bool isNextFileVideo(std::string_view path)
 {
@@ -155,8 +151,7 @@ std::string nextFileFolder(std::string_view path, PathFormat format)
     const bool dos = format == PathFormat::Dos;
     const auto isSeparator = [dos](char c) { return c == '/' || (dos && c == '\\'); };
     const char separator = dos ? '\\' : '/';
-    // wxFileName::SplitVolume (filename.cpp): the extended prefix up to the
-    // next backslash, a UNC "\\server", a drive letter
+    // Windows volumes: "\\?\" up to the next backslash, "\\server", a drive letter
     std::string_view volume;
     if (dos) {
         if (path.starts_with("\\\\?\\"))
@@ -171,7 +166,6 @@ std::string nextFileFolder(std::string_view path, PathFormat format)
             volume = path.substr(0, 2);
     }
     std::string_view rest = path.substr(volume.size());
-    // the folder part: everything before the last separator
     std::size_t last = std::string_view::npos;
     for (std::size_t i = 0; i < rest.size(); ++i)
         if (isSeparator(rest[i]))
@@ -181,13 +175,13 @@ std::string nextFileFolder(std::string_view path, PathFormat format)
         return out;
     const std::string_view folder = rest.substr(0, last + 1);
     if (isSeparator(folder.front()))
-        out += separator; // absolute
+        out += separator;
     bool first = true;
     for (std::size_t i = 0; i < folder.size();) {
         std::size_t end = i;
         while (end < folder.size() && !isSeparator(folder[end]))
             ++end;
-        if (end > i) { // DoSetPath drops empty names
+        if (end > i) {
             if (!first)
                 out += separator;
             out.append(folder.substr(i, end - i));
@@ -200,8 +194,7 @@ std::string nextFileFolder(std::string_view path, PathFormat format)
 
 namespace {
 
-// One code point of UTF-8 `text` at `i`, `i` moved past it. A byte that
-// does not start a well-formed sequence is taken alone, as its own value.
+// A byte that does not start a well-formed sequence is taken alone, as its own value.
 char32_t nextCodePoint(std::string_view text, std::size_t &i)
 {
     const auto byte = [&](std::size_t k) { return static_cast<unsigned char>(text[k]); };
@@ -229,7 +222,7 @@ bool isDigit(char c)
     return c >= '0' && c <= '9';
 }
 
-} // namespace
+}
 
 int naturalNameCompare(std::string_view a, std::string_view b, const NameLower &lower)
 {
@@ -241,8 +234,6 @@ int naturalNameCompare(std::string_view a, std::string_view b, const NameLower &
     std::size_t i = 0, j = 0;
     while (i < a.size() && j < b.size()) {
         if (isDigit(a[i]) && isDigit(b[j])) {
-            // one number each: leading zeros skipped, then the longer run is
-            // the larger number, and runs of one length compare digit by digit
             std::size_t endA = i, endB = j;
             while (endA < a.size() && isDigit(a[endA]))
                 ++endA;
@@ -269,7 +260,6 @@ int naturalNameCompare(std::string_view a, std::string_view b, const NameLower &
     const bool leftA = i < a.size(), leftB = j < b.size();
     if (leftA != leftB)
         return leftA ? 1 : -1;
-    // equal without case and as numbers: the plain name decides
     const int plain = a.compare(b);
     return plain < 0 ? -1 : plain > 0 ? 1 : 0;
 }
@@ -278,7 +268,6 @@ NextFileStep NextFileWalker::step(std::optional<std::vector<std::string>> listin
 {
     if (listing) {
         m_files = std::move(*listing);
-        // V3-next-file-natural-order: name order, not the file system's
         std::sort(m_files.begin(), m_files.end(),
                   [this](const std::string &x, const std::string &y) { return naturalNameCompare(x, y, m_lower) < 0; });
     }
@@ -300,8 +289,6 @@ NextFileStep NextFileWalker::step(std::optional<std::vector<std::string>> listin
     for (int k = next ? m_actualFile + 1 : m_actualFile - 1; next ? k < count : k >= 0; next ? ++k : --k) {
         const std::string &file = files[static_cast<std::size_t>(k)];
         if (isNextFileVideo(file)) {
-            // legacy moves actualFile only once the file loaded; a failed
-            // load ends the walk with FFMS2 (VideoBox.cpp:726-732)
             m_actualFile = k;
             return {NextFileStep::Kind::Open, file};
         }
@@ -339,8 +326,7 @@ std::expected<int, DummyVideoError> dummyVideoFrames(std::string_view fpsText, i
 
 std::optional<DummyVideo> parseDummyVideo(std::string_view text)
 {
-    // wxStringTokenizer(data, ":", wxTOKEN_RET_EMPTY_ALL): the first token
-    // ("?dummy") is skipped; each of the eight fields must exist.
+    // "?dummy", then eight fields, empty ones counted.
     std::vector<std::string_view> tokens;
     std::size_t from = 0;
     while (true) {
@@ -362,11 +348,8 @@ std::optional<DummyVideo> parseDummyVideo(std::string_view text)
         return std::nullopt;
     video.width = wxAtoi(tokens[3]);
     video.height = wxAtoi(tokens[4]);
-    // legacy refused 0 only (ProviderDummy.cpp:198-201) and then could not
-    // make a frame buffer for a negative size (V3-dummy-negative-size)
     if (video.width <= 0 || video.height <= 0)
         return std::nullopt;
-    // wxColour(int, int, int) keeps the low byte of each
     video.red = static_cast<std::uint8_t>(wxAtoi(tokens[5]));
     video.green = static_cast<std::uint8_t>(wxAtoi(tokens[6]));
     video.blue = static_cast<std::uint8_t>(wxAtoi(tokens[7]));
@@ -384,7 +367,7 @@ std::vector<std::byte> dummyVideoFrame(const DummyVideo &video)
     if (video.pattern) {
         std::uint8_t h = 0, s = 0, l = 0;
         std::uint8_t r1 = 0, g1 = 0, b1 = 0;
-        // legacy passes blue and green swapped both ways, as Aegisub does
+        // blue and green swapped both ways, as Aegisub does
         rgbToHsl(r, b, g, h, s, l);
         l += 24;
         if (l < 24)
@@ -419,8 +402,7 @@ std::vector<std::byte> dummyVideoFrame(const DummyVideo &video)
 
 std::vector<int> dummyVideoTimecodes(const DummyVideo &video)
 {
-    // Timebase::MsAt without timecodes: frame * (double)FrameDuration(),
-    // FrameDuration a float 1000.f / fps
+    // a float frame duration, multiplied in double
     const float duration = video.fps > 0.f ? 1000.f / video.fps : 0.f;
     std::vector<int> out;
     out.reserve(static_cast<std::size_t>(std::max(video.frames, 0)));
@@ -434,8 +416,6 @@ std::int64_t dummyVideoAudioFrames(const DummyVideo &video, int sampleRate)
     const double duration = video.fps > 0.f ? static_cast<double>(1000.f / video.fps) : 0.0;
     return std::llround(std::max(video.frames, 0) * duration * sampleRate / 1000.0);
 }
-
-// DummyVideoSource
 
 std::uint64_t DummyVideoSource::open(const std::string &path, Progress progress, Opened done)
 {
@@ -457,14 +437,12 @@ std::uint64_t DummyVideoSource::openIndexed(const std::string &path, const Index
     m_frame.clear();
     m_generation = std::max(m_generation, m_media.generation()) + 1;
     if (!m_dummy) {
-        // legacy: the provider's success false fails the open (no message)
         done(std::unexpected(SourceError::InvalidInput));
         return m_generation;
     }
     SourceTimeline t;
     t.generation = m_generation;
     t.track = 0;
-    // the float frame rate as legacy keeps it (Provider::m_FPS)
     t.fpsNumerator = static_cast<std::int64_t>(static_cast<double>(m_dummy->fps) * 1'000'000.0 + 0.5);
     t.fpsDenominator = 1'000'000;
     t.timeBaseNumerator = 1;
@@ -497,7 +475,7 @@ void DummyVideoSource::frame(int index, FrameReady done)
     IndexedFrame f;
     f.generation = m_generation;
     f.index = index;
-    // dummyVideoTimecodes' frame `index`
+    // MUST KILL: duplicates dummyVideoTimecodes' formula
     f.pts = saturate(index * static_cast<double>(m_dummy->fps > 0.f ? 1000.f / m_dummy->fps : 0.f));
     f.width = m_dummy->width;
     f.height = m_dummy->height;
@@ -621,7 +599,7 @@ std::string audioStreamLabel(const AudioTrack &track)
     std::string name = track.hasName ? track.name : std::string();
     std::string language = track.hasLanguage ? track.language : std::string();
     if (track.hasLanguage) {
-        // "Name [code]" in the language field (ProviderFFMS2.cpp:218-226)
+        // "Name [code]" in the language field
         const auto start = language.rfind('[');
         const auto end = language.rfind(']');
         if (start != std::string::npos && end != std::string::npos) {
@@ -660,7 +638,7 @@ std::vector<int> keyframesWithoutVideo(const std::vector<int> &frames)
 int keyframeSnapWithoutVideo(int keyMs)
 {
     const int frameTime = keyMs - 21;
-    return (frameTime / 10) * 10; // ZEROIT (SubsDialogue.h:20)
+    return (frameTime / 10) * 10; // truncated to 10 ms
 }
 
-} // namespace hikari::application
+}

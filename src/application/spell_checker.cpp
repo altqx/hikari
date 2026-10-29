@@ -35,17 +35,12 @@ std::u16string pathText(const fs::path &p)
     return core::toUtf16(s);
 }
 
-// wxDir::GetAllFiles(folder, ..., "*.dic", wxDIR_FILES): the folder's own
-// entries that are not folders and match the pattern, unhidden, in the order
-// each legacy platform listed them (R5-per-platform, legacy_dir.h):
-// FindFirstFileW with wx's PathMatchSpec check on Windows, readdir and
-// wxMatchWild on Linux. No sorting.
+// Unhidden files only, in the platform's directory listing order, unsorted.
 std::vector<fs::path> listFiles(const fs::path &folder, std::u16string_view pattern)
 {
     return legacy_dir::entries(folder, pattern, legacy_dir::Files).value_or(std::vector<fs::path>{});
 }
 
-// wxString::BeforeLast('.'): everything before the last dot (the full path).
 std::u16string beforeLastDot(const fs::path &p)
 {
     const std::u16string s = pathText(p);
@@ -67,9 +62,7 @@ const core::LineRecord *findLine(const core::Document &document, core::LineId id
     return nullptr;
 }
 
-// SP1: a dictionary's scripts by its symbol (core::spelling::dictionaryScripts);
-// for a language outside the table, the script of most of its .aff's TRY
-// letters when the file is UTF-8, else Latin.
+// Outside the table: the script of most of the .aff's TRY letters when it is UTF-8, else Latin.
 core::spelling::Scripts scriptsOf(std::u16string_view symbol, const fs::path &aff)
 {
     using core::spelling::Script;
@@ -96,7 +89,6 @@ core::spelling::Scripts scriptsOf(std::u16string_view symbol, const fs::path &af
     return script;
 }
 
-// A dictionary with the user dictionary's words added.
 std::unique_ptr<SpellingBackend> loadWithUserWords(const SpellingBackendLoader &loader, const fs::path &aff,
                                                    const fs::path &dic, const fs::path &userDictionary)
 {
@@ -120,7 +112,7 @@ std::ptrdiff_t activeRow(const EditSession &session)
     return 0;
 }
 
-} // namespace
+}
 
 std::vector<std::u16string> availableDictionaries(const fs::path &folder)
 {
@@ -130,10 +122,6 @@ std::vector<std::u16string> availableDictionaries(const fs::path &folder)
     for (const auto &aff : affs)
         affNames.push_back(beforeLastDot(aff));
     std::vector<std::u16string> out;
-    // SP1: each .dic pairs with the .aff of its name, in the listing's .dic
-    // order. Legacy paired the n-th .dic with the n-th .aff (and read past a
-    // shorter .aff list, R3-hang-crash-loss): one file without its partner
-    // dropped the pairs after it, and every dictionary now checks words.
     for (const auto &dic : dics)
         if (std::ranges::find(affNames, beforeLastDot(dic)) != affNames.end())
             out.push_back(pathText(dic.stem()));
@@ -157,9 +145,7 @@ std::optional<std::u16string> readUserDictionary(const fs::path &file)
         return std::nullopt;
     std::string bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 #ifdef _WIN32
-    // wxFFile "r" is the CRT's text mode on Windows (R5-per-platform): CR LF
-    // byte pairs read as LF, and Ctrl+Z ends the file, before decoding. The
-    // Linux build reads the bytes as they are ("\r" kept).
+    // Windows CRT text mode: CRLF reads as LF and Ctrl+Z ends the file.
     {
         std::string folded;
         folded.reserve(bytes.size());
@@ -175,8 +161,7 @@ std::optional<std::u16string> readUserDictionary(const fs::path &file)
 #endif
     std::u16string text;
     auto byteAt = [&](std::size_t i) { return static_cast<unsigned char>(bytes[i]); };
-    // wxConvAuto: a byte-order mark decides; else UTF-8, else its default
-    // single-byte fallback, ISO-8859-1 (convauto.cpp ms_defaultMBEncoding).
+    // A byte-order mark decides; else UTF-8, else ISO-8859-1.
     if (bytes.size() >= 2 && ((byteAt(0) == 0xFF && byteAt(1) == 0xFE) || (byteAt(0) == 0xFE && byteAt(1) == 0xFF))) {
         const bool little = byteAt(0) == 0xFF;
         for (std::size_t i = 2; i + 1 < bytes.size(); i += 2)
@@ -192,7 +177,6 @@ std::optional<std::u16string> readUserDictionary(const fs::path &file)
                 text += static_cast<char16_t>(byteAt(i));
         }
     }
-    // OpenWrite::FileOpen: empty text (an empty or BOM-only file) is a failed read.
     if (text.empty())
         return std::nullopt;
     return text;
@@ -251,7 +235,6 @@ SpellChecker::Status SpellChecker::initialize(std::u16string_view language)
     m_dictionaries.back().scripts = scriptsOf(name, aff);
     m_dictionaries.back().backend = std::move(backend);
     m_dictionaries.back().loaded = true;
-    // SP1: every other installed dictionary, loaded on first use.
     for (auto &symbol : availableDictionaries(m_folders)) {
         if (symbol == name)
             continue;
@@ -277,7 +260,7 @@ void SpellChecker::startLoad(Dictionary &dictionary)
     std::promise<std::unique_ptr<SpellingBackend>> promise;
     dictionary.pending = promise.get_future();
     dictionary.generation = m_userGeneration;
-    // Joins a finished earlier load (one restarted for the user's words).
+    // Assigning joins the earlier, finished worker.
     dictionary.worker = std::jthread([promise = std::move(promise), loader = m_loader, aff = dictionary.aff,
                                       dic = dictionary.dic, user = userDictionary(), loaded = m_loaded]() mutable {
         promise.set_value(loadWithUserWords(loader, aff, dic, user));
@@ -295,7 +278,7 @@ SpellChecker::Load SpellChecker::poll(Dictionary &dictionary, bool wait)
             return Load::Loading;
         auto backend = dictionary.pending.get();
         if (dictionary.generation != m_userGeneration)
-            continue; // the user dictionary changed while it loaded: again
+            continue;
         dictionary.backend = std::move(backend);
         dictionary.loaded = true;
     }
@@ -330,7 +313,6 @@ bool SpellChecker::checkWord(std::u16string_view word, bool wait)
     if (!word.empty()) {
         using core::spelling::Script;
         const auto scripts = core::spelling::wordScripts(word);
-        // No dictionary for a script of the word: nothing to check it with.
         correct = scripts.empty();
         for (int i = 0; !correct && i <= static_cast<int>(Script::Han); ++i) {
             const auto script = static_cast<Script>(i);
@@ -341,7 +323,6 @@ bool SpellChecker::checkWord(std::u16string_view word, bool wait)
             correct = std::ranges::any_of(dictionariesFor(scripts, wait, &loading),
                                           [&](Dictionary *dictionary) { return dictionary->backend->spell(word); });
     }
-    // A dictionary still loading may know the word: not marked, not kept.
     if (!correct && loading)
         return true;
     if (m_results.size() > 100000)
@@ -365,7 +346,6 @@ std::vector<std::u16string> SpellChecker::suggestions(std::u16string_view word,
     const auto scripts = core::spelling::wordScripts(word);
     auto dictionaries =
         scripts.empty() ? std::vector<Dictionary *>{&m_dictionaries.front()} : dictionariesFor(scripts, true);
-    // The primary stays first; the others by how many neighbours each knows.
     const bool primaryFirst = !dictionaries.empty() && dictionaries.front() == &m_dictionaries.front();
     const auto others = dictionaries.begin() + (primaryFirst ? 1 : 0);
     if (dictionaries.end() - others > 1) {
@@ -410,7 +390,6 @@ bool SpellChecker::addUserWord(std::u16string_view word)
 
 bool SpellChecker::removeWords(const std::vector<std::u16string> &words)
 {
-    // GR1: as addUserWord, with or without a dictionary loaded.
     if (words.empty() || !fileExists(userDictionary()))
         return false;
     const auto content = readUserDictionary(userDictionary());
@@ -547,9 +526,8 @@ std::u16string SpellCheckWalk::findNextMisspell(EditSession &session, const Opti
     }
     const core::Document &document = session.document();
     const auto lines = document.lines();
-    const auto check = m_checker.wordCheck(true); // the window waits for the dictionaries
+    const auto check = m_checker.wordCheck(true);
     auto ignored = [&](std::u16string_view word) {
-        // wxArrayString::Index(word, false): any case.
         return std::ranges::any_of(m_ignored, [&](const std::u16string &i) {
             return std::ranges::equal(i, word, [&](char16_t a, char16_t b) {
                 return m_spelling.cases.toLower(a) == m_spelling.cases.toLower(b);
@@ -558,7 +536,6 @@ std::u16string SpellCheckWalk::findNextMisspell(EditSession &session, const Opti
     };
     for (std::size_t i = m_lastLine; i < lines.size(); ++i) {
         m_errors.clear();
-        // A skipped comment leaves the last Line where it was.
         if (lines[i]->comment && options.ignoreComments)
             continue;
         m_errors = core::legacy::checkText(lineText(document, i), document.format(), m_spelling.segment, check);
@@ -598,9 +575,6 @@ bool SpellCheckWalk::next(EditSession &session, const Options &options)
     found.start = m_errors[m_lastMisspell].start;
     found.end = m_errors[m_lastMisspell].end;
     if (m_lastActiveLine != static_cast<std::ptrdiff_t>(m_lastLine)) {
-        // SelectRow(lastLine) and the editor's SetLine. The session keeps an
-        // invalid draft's Line under the Block policy: then nothing is shown,
-        // and the window's next activation starts again (after its message).
         if (!session.navigateTo(found.line)) {
             m_current.reset();
             m_refused = true;
@@ -644,9 +618,6 @@ bool SpellCheckWalk::activated(EditSession &session, const Options &options, boo
 std::expected<SpellCheckWalk::Result, CommandRefusal>
 SpellCheckWalk::replace(EditSession &session, std::u16string_view replacement, const Options &options)
 {
-    // R3-hang-crash-loss: legacy checks only that the list is not empty and
-    // then reads errors[lastMisspell], past the list when every word of the
-    // last Line was skipped (undefined); here that is refused like an empty one.
     if (replacement.empty() || m_errors.empty() || m_lastMisspell >= m_errors.size() || !m_current)
         return Result::Unchanged;
     const auto lines = session.document().lines();
@@ -667,10 +638,7 @@ SpellCheckWalk::replace(EditSession &session, std::u16string_view replacement, c
         return std::unexpected(ran.error());
     const int oldPos = misspell.start;
     next(session, options);
-    // The replacement is still misspelled at the same place: skip it. (Legacy
-    // compares only the offset, so the next Line's word at that offset is
-    // skipped too. With nothing found legacy reads errors[lastMisspell] past
-    // the list, undefined: bounds-checked, R3-hang-crash-loss.)
+    // MUST KILL: skips by offset only, so the next Line's word at the same offset is skipped too
     if (m_current && m_lastMisspell < m_errors.size() && m_errors[m_lastMisspell].start == oldPos) {
         ++m_lastMisspell;
         next(session, options);
@@ -713,8 +681,7 @@ SpellCheckWalk::replaceAll(EditSession &session, std::u16string_view misspell, s
         std::set<core::LineId> touches;
         for (const auto &c : changes)
             touches.insert(c.first);
-        // In translation mode the result goes to the translation, also when
-        // it was read from an untranslated Line's text (legacy CheckTlRef).
+        // MUST KILL: in translation mode an untranslated Line's corrected text goes into its translation
         const auto ran = session.run(Command{"Correcting spelling errors", session.revision(), touches,
                                              [&](core::Document &d) {
                                                  for (const auto &[id, value] : changes)
@@ -750,4 +717,4 @@ bool SpellCheckWalk::addWord(EditSession &session, std::u16string_view word, con
     return added;
 }
 
-} // namespace hikari::application
+}

@@ -1,18 +1,7 @@
 #pragma once
 
-// Y'CbCr rows to opaque BGRA for the playback paths that convert on the CPU
-// (V1's player frames, W1's DirectShow samples). One fixed-point formula,
-// with SSE2 where the target has it and the same integer arithmetic
-// elsewhere, so both give the same bytes:
-//
-//   c = cy * (Y - yOffset)
-//   B = clamp((c + bu * (U - 128) + round) >> shift)
-//   G = clamp((c + gu * (U - 128) + gv * (V - 128) + round) >> shift)
-//   R = clamp((c + rv * (V - 128) + round) >> shift)
-//
-// with round = 1 << (shift - 1). Chroma is at half the horizontal
-// resolution: pixel x takes u[x / 2] and v[x / 2] (no interpolation, as
-// legacy's DirectShow conversion and Qt's CPU conversion did).
+// The SSE2 and scalar paths give the same bytes. Pixel x takes u[x / 2] and
+// v[x / 2], no interpolation.
 
 #include <cstdint>
 
@@ -36,4 +25,4 @@ Matrix matrix(Space space, bool fullRange);
 void row(const Matrix &m, const std::uint8_t *y, const std::uint8_t *u, const std::uint8_t *v, int width,
          std::uint8_t *bgra);
 
-} // namespace hikari::application::yuv
+}

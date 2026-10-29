@@ -1,16 +1,5 @@
-// KA6: TTML lyrics. The core has no XML library, so a small reader builds
-// the element tree: elements, attributes, text, CDATA and entities, the
-// predefined, numeric and internal ones, with the attribute defaults the
-// DOCTYPE's internal subset declares; comments and processing instructions
-// are skipped. Names keep their prefixes and are matched by local name.
-//
-// Lyrics TTML (Apple Music, AMLL TTML Tool) times every <p> and <span> on
-// the media timeline, although TTML's own rule makes a child's times
-// relative to its parent's begin; the files agree with themselves only when
-// read as absolute times, so they are read that way. Lyric text collapses
-// whitespace runs unless xml:space="preserve" keeps them; head names (the
-// title, agents) are single-line fields and always collapse. A <p> without times
-// of its own takes its nearest timed ancestor's (a <div>, the <body>).
+// Lyrics TTML (Apple Music, AMLL) agrees with itself only when <p> and <span> times are read as
+// absolute, not relative to the parent as TTML says, so they are read that way.
 
 #include "hikari/core/lyrics_import.h"
 
@@ -39,28 +28,25 @@ using detail::LyricWord;
 using detail::u8sv;
 using Kind = LyricsProblem::Kind;
 
-// The namespaces the reader asks for, and "another": an element or
-// attribute keeps which one its name is in, never the URI itself, so a
-// long namespace on many attributes costs nothing per attribute.
 enum class Namespace : std::uint8_t {
-    None,         // no namespace: an unprefixed attribute, or an element with no default one
-    Xml,          // xml:
-    Xmlns,        // xmlns:
-    Ttml,         // http://www.w3.org/ns/ttml
-    TtmlMetadata, // http://www.w3.org/ns/ttml#metadata (ttm:)
-    Other,        // any other namespace, or a prefix no one declares
+    None, // unprefixed attribute, or element without a default namespace
+    Xml,
+    Xmlns,
+    Ttml,
+    TtmlMetadata, // ttm:
+    Other, // any other namespace, or an undeclared prefix
 };
 
 struct XmlNode {
     using Attribute = std::pair<std::u8string, std::u8string>;
     std::u8string name; // as written, with its prefix; empty for text
     std::vector<Attribute> attributes;
-    std::vector<std::size_t> attributeLines; // the line each attribute's value starts on
-    std::vector<Namespace> attributeNamespaces; // the namespace each attribute's prefix names
+    std::vector<std::size_t> attributeLines; // the line each value starts on
+    std::vector<Namespace> attributeNamespaces;
     std::vector<XmlNode> children;
     std::u8string text;
     std::size_t line = 0;
-    Namespace ns = Namespace::None; // the element's
+    Namespace ns = Namespace::None;
 
     bool isText() const { return name.empty(); }
 };
@@ -76,10 +62,8 @@ constexpr u8sv kXmlnsNamespace = u8"http://www.w3.org/2000/xmlns/";
 constexpr u8sv kTtmlUri = u8"http://www.w3.org/ns/ttml";
 constexpr u8sv kTtmlMetadataUri = u8"http://www.w3.org/ns/ttml#metadata";
 
-// An attribute by its namespace and local name. TTML's timing attributes
-// and AMLL's meta fields have none (unprefixed); ttm:agent and ttm:role are
-// in TTML's metadata namespace, xml:id in XML's. So "foo:begin" is not a
-// begin.
+// TTML timing and AMLL meta attributes are unprefixed; ttm:agent and ttm:role are in TTML's
+// metadata namespace, xml:id in XML's. So "foo:begin" is not a begin.
 std::optional<std::size_t> attributeAt(const XmlNode &node, u8sv local, Namespace ns)
 {
     for (std::size_t i = 0; i < node.attributes.size(); ++i)
@@ -94,7 +78,7 @@ std::optional<u8sv> attribute(const XmlNode &node, u8sv local, Namespace ns = Na
     return i ? std::optional(u8sv(node.attributes[*i].second)) : std::nullopt;
 }
 
-// The line an attribute's value starts on, or the element's when it has none.
+// The element's line when the attribute is missing.
 std::size_t attributeLine(const XmlNode &node, u8sv local, Namespace ns = Namespace::None)
 {
     const auto i = attributeAt(node, local, ns);
@@ -111,26 +95,18 @@ Namespace knownNamespace(u8sv uri)
                                       : Namespace::Other;
 }
 
-// The namespace declarations in scope while reading (Namespaces in XML):
-// each prefix ("" for the default namespace) to the URIs the open elements
-// declare for it, innermost last, so resolving a name is one lookup however
-// many declarations and attributes a file has. Each URI is kept once, by
-// number.
+// Each prefix ("" for the default) to the URIs open elements declare for it, innermost last.
 class NamespaceScope {
 public:
-    // Where a name is: its namespace and, for another one, its URI's number
-    // (kUndeclared for a prefix no one declares).
+    // kUndeclared for a prefix no one declares.
     struct Place {
         Namespace ns = Namespace::None;
         std::uint32_t uri = 0;
     };
     static constexpr std::uint32_t kUndeclared = UINT32_MAX;
 
-    // An element's xmlns and xmlns:prefix attributes come into scope, if
-    // Namespaces in XML allows them: xml only for its own namespace, never
-    // xmlns, neither namespace for another prefix or the default, and no
-    // empty namespace for a prefix (only XML 1.1 may undeclare one). False,
-    // with nothing changed, when one breaks those rules.
+    // Namespaces in XML: xml only for its own namespace, never xmlns, no empty namespace for a
+    // prefix (XML 1.1 only). False, with nothing changed, on a breach.
     bool enter(const XmlNode &node)
     {
         for (const auto &[key, value] : node.attributes)
@@ -152,7 +128,6 @@ public:
             }
         return true;
     }
-    // ...and leave it with the element.
     void leave(const XmlNode &node)
     {
         for (const auto &[key, value] : node.attributes)
@@ -160,11 +135,8 @@ public:
                 m_declared.find(*prefix)->second.pop_back();
     }
 
-    // xml and xmlns are their own; another prefix is in the namespace
-    // declared for it. An unprefixed attribute is in none; an unprefixed
-    // element in the default namespace, if one is declared. A ttm: no one
-    // declares is TTML's metadata namespace, as such files mean; another
-    // undeclared prefix is kUndeclared, which the reader refuses.
+    // Unprefixed attributes have no namespace, unprefixed elements the default one. An undeclared
+    // ttm: is TTML's metadata, as lyrics files mean it; any other undeclared prefix is kUndeclared.
     Place of(u8sv name, bool element) const
     {
         const std::size_t colon = name.find(u8':');
@@ -183,7 +155,7 @@ public:
     }
 
 private:
-    // The prefix an attribute declares, "" for the default namespace.
+    // "" for the default namespace.
     static std::optional<u8sv> declares(u8sv key)
     {
         if (key == u8"xmlns")
@@ -199,18 +171,16 @@ private:
     };
     std::unordered_map<std::u8string, std::vector<std::uint32_t>, Hash, std::equal_to<>> m_declared;
     std::unordered_map<std::u8string, std::uint32_t, Hash, std::equal_to<>> m_uris;
-    std::vector<Namespace> m_kinds; // each URI's, by number
+    std::vector<Namespace> m_kinds;
 };
 
-// Whether a node is another namespace's element, which TTML's content
-// leaves out with all it holds: its text, its times and its spans.
+// TTML's content leaves another namespace's element out with all it holds.
 bool foreign(const XmlNode &node)
 {
     return !node.isText() && node.ns != Namespace::Ttml && node.ns != Namespace::None;
 }
 
-// Whether an element is TTML's `local`: in TTML's namespace, or in none
-// (files that leave the namespace out), never in another.
+// In TTML's namespace, or in none (files that leave it out).
 bool isTtml(const XmlNode &node, u8sv local)
 {
     return !node.isText() && (node.ns == Namespace::Ttml || node.ns == Namespace::None) && localName(node.name) == local;
@@ -226,15 +196,14 @@ bool isDigit(char8_t c)
     return c >= u8'0' && c <= u8'9';
 }
 
-// XML's Char: tab, line feed, carriage return and U+0020 on, without the
-// surrogates and the noncharacters U+FFFE and U+FFFF.
+// XML's Char: tab, LF, CR and U+0020 on, without surrogates, U+FFFE and U+FFFF.
 bool xmlChar(std::uint32_t cp)
 {
     return cp == 0x9 || cp == 0xA || cp == 0xD || (cp >= 0x20 && cp <= 0xD7FF) || (cp >= 0xE000 && cp <= 0xFFFD) ||
            (cp >= 0x10000 && cp <= 0x10FFFF);
 }
 
-// The code point at `i` of valid UTF-8 and its length in bytes.
+// Valid UTF-8 only.
 std::pair<std::uint32_t, std::size_t> codePointAt(u8sv s, std::size_t i)
 {
     const auto lead = static_cast<unsigned char>(s[i]);
@@ -273,9 +242,7 @@ bool xmlName(u8sv text)
     return !text.empty();
 }
 
-// Whether a name is a QName (Namespaces in XML): a local name, or a
-// prefix, one colon and a local name, each an XML name of its own (so
-// neither empty nor starting with a digit, "-" or ".").
+// Namespaces in XML: a local name, or prefix:local, each an XML name.
 bool qualifiedName(u8sv name)
 {
     const std::size_t colon = name.find(u8':');
@@ -285,8 +252,7 @@ bool qualifiedName(u8sv name)
     return xmlName(name.substr(0, colon)) && xmlName(local) && local.find(u8':') == u8sv::npos;
 }
 
-// The character a reference's "#65" or "#x41" names, if it is one XML
-// allows.
+// If XML allows the character "#65" or "#x41" names.
 std::optional<std::uint32_t> characterReference(u8sv reference)
 {
     if (reference.size() < 2 || reference[0] != u8'#')
@@ -295,8 +261,7 @@ std::optional<std::uint32_t> characterReference(u8sv reference)
     const u8sv digits = reference.substr(hex ? 2 : 1);
     if (digits.empty())
         return std::nullopt;
-    // Any number of digits, leading zeros too ("&#00000065;"); past
-    // U+10FFFF the value stops growing, as no character is there.
+    // Leading zeros allowed; saturates past U+10FFFF.
     std::uint32_t cp = 0;
     for (char8_t c : digits) {
         const int v = c >= u8'0' && c <= u8'9'           ? c - u8'0'
@@ -310,9 +275,7 @@ std::optional<std::uint32_t> characterReference(u8sv reference)
     return xmlChar(cp) ? std::optional(cp) : std::nullopt;
 }
 
-// Whether a DTD literal's references follow XML's grammar: each "&" starts
-// "&name;" or a character reference. Which entities they name is checked
-// where they are used.
+// Each "&" starts "&name;" or a character reference; which entity is checked where it is used.
 bool referencesWritten(u8sv text)
 {
     for (std::size_t i = 0; i < text.size(); ++i) {
@@ -329,8 +292,7 @@ bool referencesWritten(u8sv text)
     return true;
 }
 
-// An attribute value of a tokenized type (any but CDATA): its spaces
-// trimmed and each run made one (XML 1.0 section 3.3.3).
+// Non-CDATA attribute types: spaces trimmed, runs made one (XML 1.0 3.3.3).
 std::u8string tokens(u8sv value)
 {
     std::u8string out;
@@ -347,7 +309,7 @@ bool pubidChar(char8_t c)
            (c >= u8'0' && c <= u8'9') || u8sv(u8"-'()+,./:=?;!*#@$_%").find(c) != u8sv::npos;
 }
 
-// "U+0001": a character XML forbids, named for the message.
+// "U+0001": a forbidden character, named for a message.
 std::u8string codePointName(std::uint32_t cp)
 {
     char buffer[16];
@@ -374,10 +336,8 @@ void appendUtf8(std::u8string &out, std::uint32_t cp)
     }
 }
 
-// An entity value's replacement text: its character references replaced,
-// its entity references kept for when it is used (XML 1.0 section 4.5).
-// A line end written in it is a line feed, as everywhere in a file (CRLF
-// or a lone CR); a "&#13;" stays a carriage return.
+// Character references replaced, entity references kept for use (XML 1.0 4.5). Line ends are LF;
+// a "&#13;" stays a CR.
 std::u8string replacementText(u8sv value)
 {
     std::u8string out;
@@ -421,8 +381,7 @@ private:
 
     void advance(std::size_t n)
     {
-        // A line ends at LF, CRLF or a lone CR, as XML ends lines. An
-        // entity's text is all on the line of its reference.
+        // LF, CRLF or a lone CR ends a line. An entity's text is all on its reference's line.
         for (std::size_t end = std::min(m_s.size(), m_pos + n); m_pos < end; ++m_pos)
             if (m_inputs.empty() &&
                 (m_s[m_pos] == u8'\n' || (m_s[m_pos] == u8'\r' && (m_pos + 1 == m_s.size() || m_s[m_pos + 1] != u8'\n'))))
@@ -435,7 +394,6 @@ private:
             advance(1);
     }
 
-    // The text here, up to the end of its line or tag, as the excerpt.
     // Where in `raw` the line holding raw[at] starts.
     static std::size_t lineStartIn(u8sv raw, std::size_t at)
     {
@@ -454,7 +412,7 @@ private:
         return LyricsProblem{Kind::NotWellFormed, m_line, std::u8string(detail::trimRight(rest.substr(0, n)))};
     }
 
-    // A comment, from its "<!--": it may not hold "--" or end with "-".
+    // It may not hold "--" or end with "-".
     bool skipComment()
     {
         const std::size_t end = m_s.find(u8"-->", m_pos + 4);
@@ -467,15 +425,14 @@ private:
         return true;
     }
 
-    // A processing instruction, from its "<?": a target name, then a space
-    // or "?>". The target "xml" (in any case) is the XML declaration's,
-    // written in lower case at the very start of the file.
+    // A target name, then a space or "?>". The target "xml" (any case) belongs to the XML
+    // declaration, lower case at the very start.
     bool skipPi()
     {
         const bool first = m_pos == m_start && m_inputs.empty();
         advance(2);
         const auto target = name();
-        if (!target || target->find(u8':') != std::u8string::npos) // Namespaces in XML: no colon in a target
+        if (!target || target->find(u8':') != std::u8string::npos) // no colon in a target (Namespaces in XML)
             return false;
         std::u8string lower = *target;
         for (char8_t &c : lower)
@@ -489,16 +446,11 @@ private:
         return skipPast(u8"?>");
     }
 
-    // The rest of an XML declaration after "<?xml": version="1.n", then
-    // optionally encoding="name" and standalone="yes" or "no", each after
-    // whitespace and in that order, then "?>". This reader is an XML 1.0
-    // processor, and XML 1.0 (section 2.8) has one read a 1.n document as
-    // 1.0: it is accepted when it uses nothing 1.0 lacks, so a reference
-    // such as "&#1;", which only XML 1.1 allows, is still broken XML here.
+    // After "<?xml": version="1.n", optional encoding and standalone in that order, then "?>".
+    // A 1.n document is read as 1.0 (XML 1.0 2.8), so 1.1-only references stay broken.
     bool xmlDeclaration()
     {
-        // A field: absent (0, nothing read), well formed (1, `value` set)
-        // or broken (-1).
+        // 0 absent, 1 well formed (`value` set), -1 broken.
         auto field = [&](u8sv key, u8sv &value) {
             const auto start = std::pair{m_pos, m_line};
             if (done() || !isSpace(m_s[m_pos]))
@@ -560,10 +512,7 @@ private:
         return true;
     }
 
-    // Whitespace, comments and processing instructions between the
-    // top-level parts of the file, and in the prolog (before the root
-    // element) one DOCTYPE: "<!DOCTYPE", a space and the root's name, then
-    // an external id and an internal subset as XML allows them.
+    // Whitespace, comments and PIs between top-level parts; in the prolog, one DOCTYPE.
     std::expected<void, LyricsProblem> skipMisc(bool prolog)
     {
         for (;;) {
@@ -585,10 +534,8 @@ private:
                         m_doctypeName = name();
                     ok = ok && m_doctypeName.has_value();
                 }
-                // Then XML's doctypedecl: an external id (SYSTEM "uri", or
-                // PUBLIC "id" "uri"), an internal subset in "[ ]", and ">".
-                // Quoted literals (entity values) and comments in the subset
-                // may hold "]" and ">".
+                // doctypedecl: an external id, an internal subset in "[ ]", then ">". Literals and comments
+                // in the subset may hold "]" and ">".
                 if (ok && space()) {
                     if (at(u8"SYSTEM") || at(u8"PUBLIC")) {
                         ok = externalId(false);
@@ -596,11 +543,8 @@ private:
                     }
                     skipSpace();
                 }
-                // The subset (XML's intSubset): markup declarations, PIs,
-                // comments, parameter-entity references and whitespace. An
-                // internal parameter entity's text is read in place of its
-                // reference, whole declarations only (XML's "PE Between
-                // Declarations").
+                // intSubset: an internal parameter entity's text is read in place of its reference, whole
+                // declarations only ("PE Between Declarations").
                 if (ok && at(u8"[")) {
                     advance(1);
                     for (skipSpace(); ok; skipSpace()) {
@@ -616,7 +560,7 @@ private:
                             ok = skipComment();
                         } else if (at(u8"<?")) {
                             ok = skipPi();
-                        } else if (at(u8"%")) { // a parameter-entity reference, "%name;"
+                        } else if (at(u8"%")) { // "%name;"
                             const std::size_t reference = m_pos;
                             advance(1);
                             const std::size_t from = m_pos;
@@ -630,9 +574,8 @@ private:
                             if (m_standalone && found == m_parameters.end()) {
                                 ok = false; // a standalone file declares each entity it names
                             } else if (!m_declarations || found == m_parameters.end() || !found->second) {
-                                // Never read, so what it declares is unknown: past it,
-                                // unless the file is standalone, declarations are only
-                                // checked (XML 1.0 section 5.1).
+                                // Never read, so its declarations are unknown: unless standalone, later ones are only checked
+                                // (XML 1.0 5.1).
                                 m_declarations = m_declarations && m_standalone;
                             } else if (std::ranges::contains(m_inputs, entity, &Input::entity)) {
                                 ok = false; // an entity naming itself
@@ -649,13 +592,11 @@ private:
                         }
                     }
                     ok = ok && !recursive(m_entities, u8'&') && !recursive(m_parameters, u8'%');
-                    // XML's "Entity Declared": where the subset is all there
-                    // is to read, or the file is standalone, each entity an
-                    // entity names is declared, whether or not it is used.
+                    // "Entity Declared": with nothing external, or standalone, each named entity must be declared.
                     if (m_complete || m_standalone)
                         ok = ok && !undeclared(m_entities, u8'&') && (!m_standalone || !undeclared(m_parameters, u8'%'));
                     if (ok)
-                        advance(1); // the "]"
+                        advance(1);
                     skipSpace();
                 }
                 ok = ok && at(u8">");
@@ -676,12 +617,7 @@ private:
         }
     }
 
-    // A name, by XML's grammar: a NameStartChar, then NameChars. What
-    // follows it is the caller's to check ("<a$>" is broken there).
-    // The internal subset's markup declarations, each read by its
-    // production in XML 1.0 (elementdecl, AttlistDecl, EntityDecl,
-    // NotationDecl), so a malformed one is not well-formed XML. Entities
-    // and attribute lists are kept (entityDeclaration, attlistDeclaration).
+    // Each by its XML 1.0 production, so a malformed one is not well-formed XML.
     bool markupDeclaration()
     {
         bool ok = false;
@@ -696,8 +632,7 @@ private:
         skipSpace();
         return ok && keyword(u8">");
     }
-    // Names in declarations by Namespaces in XML: an element's or an
-    // attribute's a QName, an entity's or a notation's no colon at all.
+    // Element and attribute names are QNames; entity and notation names have no colon.
     bool qname()
     {
         const auto n = name();
@@ -716,17 +651,14 @@ private:
         advance(word.size());
         return true;
     }
-    // Required whitespace (S), all of it.
     bool space()
     {
         const bool any = !done() && isSpace(m_s[m_pos]);
         skipSpace();
         return any;
     }
-    // A quoted literal of the DTD, held to its grammar: a SystemLiteral
-    // holds anything, a PubidLiteral only PubidChars, an AttValue no "<"
-    // and only references as "&" starts them, an EntityValue the same and
-    // no "%" (the internal subset's rule).
+    // SystemLiteral: anything; PubidLiteral: PubidChars; AttValue: no "<", "&" only in
+    // references; EntityValue: as AttValue, and no "%" (internal subset).
     enum class Literal : std::uint8_t { System, Pubid, AttValue, EntityValue };
     bool quoted(Literal literal)
     {
@@ -738,8 +670,7 @@ private:
         const u8sv text = m_s.substr(m_pos + 1, close - m_pos - 1);
         const bool written = literal == Literal::Pubid      ? std::ranges::all_of(text, pubidChar)
                              : literal == Literal::AttValue ? text.find(u8'<') == u8sv::npos && referencesWritten(text)
-                             // No "%": a parameter-entity reference may not stand
-                             // inside a declaration of the internal subset.
+                             // No "%": no parameter-entity reference inside an internal-subset declaration.
                              : literal == Literal::EntityValue ? text.find(u8'%') == u8sv::npos && referencesWritten(text)
                                                                : true;
         if (!written)
@@ -758,8 +689,7 @@ private:
         }
         return m_pos != from;
     }
-    // ExternalID: SYSTEM "uri", or PUBLIC "id" "uri"; a notation's PUBLIC
-    // "id" alone (PublicID) with `notation`.
+    // With `notation`, PUBLIC "id" alone is allowed too.
     bool externalId(bool notation)
     {
         if (keyword(u8"SYSTEM"))
@@ -772,7 +702,7 @@ private:
         std::tie(m_pos, m_line) = mark;
         return notation;
     }
-    // contentspec: EMPTY, ANY, Mixed ("(#PCDATA|a|b)*") or children.
+    // EMPTY, ANY, Mixed ("(#PCDATA|a|b)*") or children.
     bool contentSpec()
     {
         if (keyword(u8"EMPTY") || keyword(u8"ANY"))
@@ -792,9 +722,8 @@ private:
             return false;
         return keyword(u8"*") || !names;
     }
-    // A choice or seq after its "(": content particles split by "|" or by
-    // ",", not both, then ")" and an optional "?", "*" or "+". Nested no
-    // deeper than elements may be.
+    // After "(": particles split by "|" or ",", not both, then ")" and "?", "*" or "+";
+    // nested no deeper than elements may be.
     bool contentGroup(std::size_t depth)
     {
         if (depth > kMaxTtmlDepth)
@@ -828,10 +757,7 @@ private:
         if (!done() && (m_s[m_pos] == u8'?' || m_s[m_pos] == u8'*' || m_s[m_pos] == u8'+'))
             advance(1);
     }
-    // AttlistDecl after its keyword: the element's name, then each AttDef
-    // (a name, an AttType and a DefaultDecl). Each attribute is kept, the
-    // first declaration of it binding: whether its type is tokenized and
-    // its default, normalized as the element's own value would be.
+    // The first declaration of an attribute binds: whether it is tokenized and its normalized default.
     bool attlistDeclaration()
     {
         if (!space())
@@ -869,8 +795,7 @@ private:
     }
     bool attributeType()
     {
-        // The longer of two names that share a start first (IDREFS before
-        // IDREF before ID, ENTITIES before ENTITY).
+        // Longer names first where they share a start.
         for (u8sv type : {u8sv(u8"CDATA"), u8sv(u8"IDREFS"), u8sv(u8"IDREF"), u8sv(u8"ID"), u8sv(u8"ENTITIES"),
                           u8sv(u8"ENTITY"), u8sv(u8"NMTOKENS"), u8sv(u8"NMTOKEN")})
             if (keyword(type))
@@ -892,10 +817,7 @@ private:
                 return false;
         }
     }
-    // EntityDecl after its keyword: a general entity's name and value or
-    // external id (NDATA too), or "%", a parameter entity's. Each entity is
-    // kept, the first declaration of a name binding it; an external one
-    // with no text, as it is never read.
+    // General or "%" parameter entity; the first declaration binds. External ones keep no text.
     bool entityDeclaration()
     {
         if (!space())
@@ -906,8 +828,7 @@ private:
         auto entity = name();
         if (!entity || entity->find(u8':') != std::u8string::npos || !space())
             return false;
-        // The predefined five may be declared only as XML 1.0 (section 4.6)
-        // writes them, and keep their meaning.
+        // The predefined five may be declared only as XML 1.0 4.6 writes them.
         const std::optional<char32_t> predefined = parameter          ? std::nullopt
                                                    : *entity == u8"lt"   ? std::optional(U'<')
                                                    : *entity == u8"amp"  ? std::optional(U'&')
@@ -917,8 +838,7 @@ private:
                                                                          : std::nullopt;
         auto declare = [&](std::optional<std::u8string> text) {
             if (predefined) {
-                // lt and amp as a character reference to the character, the
-                // others as it or one.
+                // lt and amp as a character reference, the others as the character or one.
                 const u8sv r = text ? u8sv(*text) : u8sv();
                 const bool reference = r.starts_with(u8"&#") && r.ends_with(u8';') &&
                                        characterReference(r.substr(1, r.size() - 2)) == std::optional<std::uint32_t>(*predefined);
@@ -958,12 +878,9 @@ private:
         return std::u8string(m_s.substr(from, m_pos - from));
     }
 
-    // Text with its entities replaced, or where in it the entity that
-    // cannot be read starts. An `attribute` value's whitespace is each a
-    // space (a line end in the file one) and the entities the internal
-    // subset declares are replaced too, holding no "<" (XML 1.0 section
-    // 3.3.3); the text of an element reads those as markup (element()).
-    // A replacement past the expansion budget sets m_overBudget.
+    // Or where the unreadable entity starts. An `attribute` value's whitespace becomes spaces and
+    // internal entities are replaced too, holding no "<" (XML 1.0 3.3.3). Past the expansion
+    // budget sets m_overBudget.
     std::expected<std::u8string, std::size_t> decode(u8sv raw, bool attribute = false, std::size_t depth = 0)
     {
         std::u8string out;
@@ -1010,10 +927,7 @@ private:
 
     using Entities = std::map<std::u8string, std::optional<std::u8string>, std::less<>>;
 
-    // Whether an entity names itself, directly or through others, whether
-    // or not the file uses it (XML's "No Recursion"): a general entity by
-    // "&name;" in its text, a parameter entity by "%name;" (`sign`). Depth
-    // first without recursion, each text read once.
+    // XML's "No Recursion", used or not: `sign` is "&" or "%". Iterative, each text read once.
     static bool recursive(const Entities &entities, char8_t sign)
     {
         enum : std::uint8_t { Unseen, OnPath, Done };
@@ -1053,8 +967,7 @@ private:
         return false;
     }
 
-    // Whether an entity's text names an entity no declaration gives (but
-    // the five predefined ones, and character references).
+    // The five predefined entities and character references aside.
     static bool undeclared(const Entities &entities, char8_t sign)
     {
         for (const auto &[name, text] : entities) {
@@ -1076,7 +989,6 @@ private:
         return false;
     }
 
-    // An entity's text read: back after its reference.
     void leaveEntity()
     {
         const Input outer = m_inputs.back();
@@ -1085,7 +997,7 @@ private:
         m_pos = outer.resume;
         m_line = outer.line;
     }
-    // Back in the file, at the reference of the outermost entity being read.
+    // Back at the reference of the outermost entity being read.
     void leaveEntities()
     {
         if (m_inputs.empty())
@@ -1097,15 +1009,13 @@ private:
         m_line = outer.line;
     }
 
-    // The replacement text of a parsed entity the internal subset declares.
     const std::u8string *declared(u8sv entity) const
     {
         const auto found = m_entities.find(entity);
         return found == m_entities.end() || !found->second ? nullptr : &*found->second;
     }
 
-    // Takes an entity's text from the expansion budget (lyricsBudget), so
-    // entities naming entities cannot grow without end.
+    // The expansion budget keeps entities naming entities from growing without end.
     bool spend(std::size_t bytes)
     {
         bytes = std::max<std::size_t>(bytes, 1);
@@ -1117,9 +1027,7 @@ private:
         return true;
     }
 
-    // Where in `raw` the first reference to an entity other than the
-    // predefined ones starts, npos for none before a reference decode()
-    // cannot read.
+    // The first reference to a non-predefined entity, npos for none before one decode() cannot read.
     static std::size_t entityReference(u8sv raw)
     {
         for (std::size_t i = raw.find(u8'&'); i != u8sv::npos; i = raw.find(u8'&', i + 1)) {
@@ -1134,8 +1042,7 @@ private:
         return u8sv::npos;
     }
 
-    // The root element and everything in it, from its '<'. A problem met
-    // in an entity's text is reported at its reference in the file.
+    // A problem in an entity's text is reported at its reference in the file.
     std::expected<XmlNode, LyricsProblem> element()
     {
         auto root = elementTree();
@@ -1147,11 +1054,8 @@ private:
         return root;
     }
 
-    // Open elements are kept on a stack, so reading costs no recursion;
-    // nesting past kMaxTtmlDepth is refused, so the walks over the tree (and
-    // its destruction) stay shallow too. An entity's text is read where it
-    // is referenced, as XML includes it (section 4.4.3): it closes what it
-    // opens, and no more.
+    // Iterative; nesting past kMaxTtmlDepth is refused so tree walks and destruction stay shallow.
+    // An entity's text closes what it opens, and no more (XML 1.0 4.4.3).
     std::expected<XmlNode, LyricsProblem> elementTree()
     {
         std::vector<XmlNode> open;
@@ -1281,10 +1185,7 @@ private:
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken()); // an attribute given twice
                 }
-                // What the internal subset declares of its attributes: a
-                // tokenized value normalized, a default for one not given.
-                // Each declaration looked at is work the budget pays for, so
-                // long lists on many elements cannot run on.
+                // Declared tokenized values normalized, defaults added; the budget pays per declaration.
                 if (const auto declared = m_attributes.find(node.name); declared != m_attributes.end()) {
                     if (!spend(declared->second.size()))
                         return std::unexpected(tooLarge());
@@ -1304,16 +1205,12 @@ private:
                         node.attributeLines.push_back(line);
                     }
                 }
-                // Its declarations within Namespaces in XML's rules, and no
-                // element in the xmlns namespace.
+                // No element in the xmlns namespace.
                 if (node.name.starts_with(u8"xmlns:") || !m_scope.enter(node)) {
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
-                // Every prefix declared (ttm: aside, as such files mean TTML's
-                // metadata by it), and no attribute twice by expanded name,
-                // the namespace and the local name, as a:role and b:role with
-                // one namespace are.
+                // Every prefix declared (ttm: aside), and no attribute twice by expanded name.
                 std::vector<std::tuple<Namespace, std::uint32_t, u8sv>> expanded;
                 for (std::size_t i = 0; i < node.attributes.size(); ++i) {
                     const auto place = m_scope.of(node.attributes[i].first, false);
@@ -1353,8 +1250,7 @@ private:
                 const auto start = std::pair{m_pos, m_line};
                 const std::size_t end = std::min(m_s.find(u8'<', m_pos), m_s.size());
                 u8sv raw = m_s.substr(m_pos, end - m_pos);
-                // Text up to an entity the internal subset declares; that
-                // entity's text is read next, in its place.
+                // An internal entity's text is read next, in its place.
                 if (const std::size_t reference = entityReference(raw); reference != u8sv::npos) {
                     const std::size_t semi = raw.find(u8';', reference);
                     const u8sv entity = raw.substr(reference + 1, semi - reference - 1);
@@ -1397,7 +1293,7 @@ private:
         }
     }
 
-    // One more node in the tree, if the budget has room (kTtmlBytesPerNode).
+    // Takes kTtmlBytesPerNode from the budget; false when it is gone.
     bool takeNode()
     {
         if (m_nodesLeft == 0)
@@ -1407,16 +1303,12 @@ private:
     }
     LyricsProblem tooLarge() const { return LyricsProblem{Kind::TooLarge, m_line, {}}; }
 
-    // An entity being read, in an element's text or the internal subset:
-    // the text around its reference, where the reference starts and where
-    // reading resumes.
     struct Input {
         u8sv text;
         std::size_t reference = 0, resume = 0, line = 0;
         std::size_t depth = 0; // the elements open at the reference
         u8sv entity;
     };
-    // An attribute the internal subset declares for an element.
     struct AttributeDeclaration {
         bool tokenized = false;
         std::optional<std::u8string> value; // the default, normalized
@@ -1432,11 +1324,10 @@ private:
     bool m_standalone = false;
     bool m_declarations = true; // false past a parameter-entity reference (unless standalone)
     bool m_complete = true;     // no external subset nor parameter-entity reference: the subset declares all
-    // The general entities the internal subset declares: each one's
-    // replacement text, none for an external one.
+    // None for an external entity.
     Entities m_entities;
-    Entities m_parameters; // the parameter entities
-    // Per element, its attributes by name, the first declaration of each.
+    Entities m_parameters;
+    // First declaration of each wins.
     std::map<std::u8string, std::map<std::u8string, AttributeDeclaration, std::less<>>, std::less<>> m_attributes;
     std::vector<Input> m_inputs; // the entities being read, innermost last
     std::size_t m_start = 0; // after the byte order mark
@@ -1445,18 +1336,15 @@ private:
     NamespaceScope m_scope;
 };
 
-// A TTML time: clock time ("hh:mm:ss.fff", and the "mm:ss.fff" and
-// "ss.fff" lyrics files use) or an offset with h, m, s or ms. Frame and
-// tick times need rates lyrics files don't give, so they are not read.
+// Clock time ("hh:mm:ss.fff", or "mm:ss.fff" and "ss.fff" as lyrics files write) or an
+// offset in h, m, s or ms. Frame and tick times need rates lyrics files lack.
 std::optional<std::int64_t> ttmlTime(u8sv text)
 {
     text = detail::trim(text);
     auto decimal = [](u8sv s) -> std::optional<double> {
         if (s.empty())
             return std::nullopt;
-        // Digits, then a "." and digits if there is a fraction ("1.5", not
-        // "1." or ".5"), as many as written ("000001.500s" is 1.5 s); past
-        // 10^15 the whole part stops growing, far beyond any time read.
+        // A fraction needs digits on both sides ("1.5", not "1." or ".5"); saturates past 10^15.
         bool dot = false, wholeDigit = false, fractionDigit = false;
         double whole = 0, scale = 1, fraction = 0;
         for (char8_t c : s) {
@@ -1508,7 +1396,7 @@ std::optional<std::int64_t> ttmlTime(u8sv text)
     return ms(seconds);
 }
 
-// Whitespace runs as one space (TTML's default xml:space handling).
+// TTML's default xml:space handling.
 std::u8string collapsed(u8sv text)
 {
     std::u8string out;
@@ -1528,8 +1416,7 @@ std::u8string collapsed(u8sv text)
     return out;
 }
 
-// Whether text under `node` keeps its whitespace: its xml:space, or else
-// its parent's (`inherited`).
+// Its xml:space, else `inherited`.
 bool preserves(const XmlNode &node, bool inherited)
 {
     for (const auto &[name, value] : node.attributes)
@@ -1538,8 +1425,7 @@ bool preserves(const XmlNode &node, bool inherited)
     return inherited;
 }
 
-// A space xml:space="preserve" keeps, until its Line is put together. No
-// text of a well-formed file can hold U+0001, so it stands for one alone.
+// MUST KILL: U+0001 stands for a preserved space until the Line is assembled
 constexpr char8_t kKeptSpace = 1;
 
 bool blank(char8_t c)
@@ -1554,10 +1440,7 @@ u8sv trimBlankLeft(u8sv text)
     return text;
 }
 
-// A Line's text, or a word of it, put together. At the Line's ends
-// (`leading`, `trailing`) ordinary whitespace goes, and kept spaces become
-// hard spaces (\h): ASS trims a Line's text, so plain spaces there would be
-// lost. Inside the Line a kept space is a space.
+// At the Line's ends whitespace goes and kept spaces become \h, since ASS trims a Line's text.
 std::u8string finished(u8sv text, bool leading, bool trailing)
 {
     std::size_t from = 0, to = text.size();
@@ -1576,7 +1459,7 @@ std::u8string finished(u8sv text, bool leading, bool trailing)
     return out;
 }
 
-// The text as a message shows it: kept spaces as spaces, ends trimmed.
+// Kept spaces as spaces, ends trimmed.
 std::u8string readable(u8sv text)
 {
     std::u8string out(text);
@@ -1584,9 +1467,7 @@ std::u8string readable(u8sv text)
     return std::u8string(detail::trim(out));
 }
 
-// A text node's lyrics, literal: whitespace runs as one space (TTML's
-// default), or under xml:space="preserve" as written, a space or tab a kept
-// space and a line end a line break.
+// Collapsed (TTML's default), or under xml:space="preserve" as written, a line end a break.
 std::u8string lyricText(u8sv raw, bool preserve)
 {
     if (!preserve)
@@ -1625,7 +1506,6 @@ public:
     }
 
 private:
-    // Words as they are read, with the untimed text around them.
     struct Words {
         std::vector<LyricWord> words;
         std::vector<std::size_t> lines;           // each word's line in the file
@@ -1637,9 +1517,8 @@ private:
         std::optional<std::int64_t> timedBegin;   // the last timed span's word's begin (own text sets no order)
         std::optional<std::int64_t> lineBegin;    // the Line's begin, which a dur inside it counts from
     };
-    // A background vocal span: whether its parent keeps whitespace, and the
-    // times of the nearest timed span around it, which time it in place of
-    // its paragraph's.
+    // Its parent's xml:space, and the nearest timed span's times, which time it instead of its
+    // paragraph's.
     struct Background {
         const XmlNode *node;
         bool preserve;
@@ -1647,7 +1526,7 @@ private:
     };
     using Backgrounds = std::vector<Background>;
 
-    // The text of a head element (a title, an agent's name); a <br/> is a space.
+    // A <br/> is a space.
     std::u8string allText(const XmlNode &node)
     {
         std::u8string out;
@@ -1665,9 +1544,8 @@ private:
         return out;
     }
 
-    // Takes text about to be made from the Lines' budget, before it is
-    // made; once the budget is gone nothing more is made and the read ends
-    // as TooLarge, at the line of the text that ran past it (m_overAt).
+    // Charged before the text is made; when the budget runs out the read ends as TooLarge at
+    // m_overAt.
     bool charge(std::size_t bytes, std::size_t line)
     {
         m_sheet.spent += bytes;
@@ -1677,9 +1555,7 @@ private:
     }
     LyricsProblem overBudget() const { return LyricsProblem{Kind::TooLarge, m_overAt.value_or(0), {}}; }
 
-    // A text node's lyric text (lyricText), paid for first at its most, 4
-    // bytes for each of the node's (a "\\" gains a word joiner), and for
-    // the `copies` the caller makes of it.
+    // Charged up front at 4 bytes per byte (a "\\" gains a word joiner), times `copies`.
     std::u8string lyric(const XmlNode &text, bool preserve, std::size_t copies)
     {
         if (!charge((1 + copies) * (4 * text.text.size() + 2), text.line))
@@ -1687,9 +1563,7 @@ private:
         return lyricText(text.text, preserve);
     }
 
-    // Text appended with whitespace collapsed across the join too: TTML's
-    // default whitespace handling is over the whole paragraph, not each
-    // node. Preserved text is appended as it is.
+    // TTML collapses whitespace across the whole paragraph, not each node.
     static void append(std::u8string &to, u8sv text, bool preserve)
     {
         for (char8_t c : text)
@@ -1697,8 +1571,7 @@ private:
                 to += c;
     }
 
-    // A timed span's word: its text, literal, with a <br/> inside it a line
-    // break as under the paragraph.
+    // A <br/> inside is a line break.
     std::u8string spanText(const XmlNode &node, bool preserve)
     {
         preserve = preserves(node, preserve);
@@ -1716,9 +1589,7 @@ private:
         return out;
     }
 
-    // The title and the agents' names. Each text read for them is taken
-    // from the Lines' budget, so names nested in names (an agent's name
-    // holding agents) cannot copy a large text over and over.
+    // Charged to the budget, so names nested in names cannot copy a large text over and over.
     std::expected<void, LyricsProblem> readHead(const XmlNode &root)
     {
         std::optional<std::u8string> musicName;
@@ -1726,10 +1597,8 @@ private:
             std::u8string text = m_overAt ? std::u8string() : allText(node);
             return charge(text.size() + 64, node.line) ? text : std::u8string();
         };
-        // TTML's metadata (ttm:title, ttm:agent, ttm:name), or the same
-        // names with no namespace or TTML's, as such files write them;
-        // another namespace's are not, nor what they hold. AMLL's meta is
-        // read under whatever prefix the file gives it.
+        // ttm:title, ttm:agent and ttm:name, or the same names unprefixed or in TTML's namespace, as such
+        // files write them. AMLL's meta is read under any prefix.
         auto metadata = [](const XmlNode &node, u8sv local) {
             return (node.ns == Namespace::TtmlMetadata || node.ns == Namespace::Ttml || node.ns == Namespace::None) &&
                    localName(node.name) == local;
@@ -1769,7 +1638,6 @@ private:
         return {};
     }
 
-    // The begin, end or dur of an element, if it has one.
     static std::expected<std::optional<std::int64_t>, LyricsProblem> time(const XmlNode &node, u8sv which)
     {
         const auto value = attribute(node, which);
@@ -1782,10 +1650,8 @@ private:
         return t;
     }
 
-    // An element's own begin and end; a dur counts from its own begin, or
-    // from `inheritedBegin` (its nearest timed ancestor's) when it has none,
-    // and with an end too the earlier of the two ends it (TTML2's active
-    // duration, the lesser of dur and end - begin).
+    // A dur counts from its own begin, else `inheritedBegin`; with an end too the earlier ends it
+    // (TTML2 active duration).
     static std::expected<std::pair<std::optional<std::int64_t>, std::optional<std::int64_t>>, LyricsProblem>
     times(const XmlNode &node, std::optional<std::int64_t> inheritedBegin)
     {
@@ -1815,17 +1681,13 @@ private:
         return std::pair{*begin, *end};
     }
 
-    // The end an element ends by: its own, cut at the end it inherits
-    // (a child's interval lies within its parent's), or the inherited one.
+    // Its own end cut at the inherited one, else the inherited one.
     static std::optional<std::int64_t> endWithin(std::optional<std::int64_t> own, std::optional<std::int64_t> inherited)
     {
         return own && inherited ? std::min(*own, *inherited) : own ? own : inherited;
     }
 
-    // An element's begin and end within the ones it inherits, as a child's
-    // interval lies within its parent's: its own begin no earlier than the
-    // inherited one, its own end no later. OutsideParent, at its begin or
-    // its end, when it lies wholly outside them.
+    // Clamped into the inherited interval; OutsideParent when wholly outside it.
     static std::expected<std::pair<std::optional<std::int64_t>, std::optional<std::int64_t>>, LyricsProblem>
     within(const XmlNode &node, std::pair<std::optional<std::int64_t>, std::optional<std::int64_t>> own,
            std::optional<std::int64_t> begin, std::optional<std::int64_t> end)
@@ -1833,8 +1695,6 @@ private:
         const auto from = own.first && begin ? std::max(*own.first, *begin) : own.first ? own.first : begin;
         const auto to = endWithin(own.second, end);
         if (from && to && *to < *from) {
-            // Its own begin after the end it inherits, or its own end before
-            // the begin it inherits.
             const u8sv which = own.first && *from == *own.first ? u8"begin" : attribute(node, u8"end") ? u8"end" : u8"dur";
             return std::unexpected(LyricsProblem{Kind::OutsideParent, attributeLine(node, which),
                                                  std::u8string(attribute(node, which).value_or(u8""))});
@@ -1883,12 +1743,8 @@ private:
             append(into.words.back().text, text, preserve); // spaces after a word stay with it
     }
 
-    // The words of a <p> (or of a background span), and the background
-    // vocals inside it, each a Line of its own.
-    // `preserve`: whether the node keeps its whitespace (xml:space).
-    // `span`, `spanBegin`, `spanEnd`: the nearest timed span around the node
-    // that holds timed spans too, and its times. Its own text is a word it
-    // times, and its end ends a word inside it that has no end of its own.
+    // `preserve`: xml:space. `span`, `spanBegin`, `spanEnd`: the nearest timed span holding timed
+    // spans, whose own text is a word it times and whose end ends an endless word inside it.
     std::expected<void, LyricsProblem> collect(const XmlNode &node, Words &into, Backgrounds &backgrounds, bool preserve,
                                                const XmlNode *span, std::optional<std::int64_t> spanBegin,
                                                std::optional<std::int64_t> spanEnd)
@@ -1995,11 +1851,9 @@ private:
         return {};
     }
 
-    // Own text with no time of its own joins the word beside it as
-    // written: text that begins no earlier than the word after it
-    // ("hello<span begin=\"2\">world" from 2 s stays "helloworld"), and
-    // text after the last timed word with nothing left to time it. `end`:
-    // the Line's end. One pass, however many words join.
+    // Untimed own text joins the neighbouring word as written: text no earlier than the next word
+    // ("hello<span begin=\"2\">world" stays "helloworld"), or after the last timed word. `end`: the
+    // Line's end.
     static void joinUntimed(Words &words, std::optional<std::int64_t> end)
     {
         std::size_t n = words.words.size();
@@ -2041,12 +1895,9 @@ private:
         words.own.resize(kept);
     }
 
-    // A <p>, or an x-bg span, as Lines. `begin` and `end` are its nearest
-    // timed ancestor's: they time a plain paragraph without times of its own,
-    // and its own times and its words' lie within them. `inherited`: whether
-    // its parent keeps whitespace (xml:space). `background`: an x-bg span,
-    // whose own times stand, as AMLL writes background vocals over their
-    // main Line, starting before it or ending after it.
+    // `begin`, `end`: the nearest timed ancestor's, which bound its times. `inherited`: the
+    // parent's xml:space. `background`: an x-bg span keeps its own times, as AMLL writes them
+    // past the main Line.
     std::expected<void, LyricsProblem> line(const XmlNode &node, std::optional<std::int64_t> begin,
                                             std::optional<std::int64_t> end, const std::u8string &actor, bool inherited,
                                             bool background = false)
@@ -2172,7 +2023,7 @@ private:
     std::optional<std::size_t> m_overAt; // where the Lines' budget ran out (charge)
 };
 
-} // namespace
+}
 
 std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> bytes)
 {
@@ -2206,4 +2057,4 @@ std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> b
     return detail::lyricsDocument(std::move(*sheet));
 }
 
-} // namespace hikari::core
+}

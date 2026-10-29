@@ -16,7 +16,6 @@ namespace hikari::application {
 
 namespace {
 
-// SelectLines.h option bits.
 enum : int {
     kContains = 1,
     kNotContains = 2,
@@ -55,7 +54,7 @@ std::u8string number(std::int64_t value)
     return {s.begin(), s.end()};
 }
 
-// SubsTime::raw for the Document's format (the Grid's time column).
+// As the Grid's time column shows it.
 std::u8string rawTime(const core::TimeField &time, std::optional<std::int64_t> frame, core::SubtitleFormat format)
 {
     const std::int64_t ms = time.value.microseconds() / 1000;
@@ -63,7 +62,7 @@ std::u8string rawTime(const core::TimeField &time, std::optional<std::int64_t> f
     case core::SubtitleFormat::Srt: return core::legacy::srtTimeText(ms);
     case core::SubtitleFormat::TMPlayer: return core::legacy::tmpTimeText(ms);
     case core::SubtitleFormat::MicroDvd: {
-        // A Line without its frame takes one at 25 fps (SubsTime::raw).
+        // A Line without its frame takes one at 25 fps.
         std::int64_t f = frame.value_or(0);
         if (!f && ms)
             f = static_cast<std::int64_t>(std::ceil(static_cast<float>(ms) * (25.f / 1000.f)));
@@ -99,7 +98,7 @@ std::u16string asciiFold(std::u16string_view s)
     return out;
 }
 
-} // namespace
+}
 
 SelectLinesSettings selectLinesFromOptions(int options)
 {
@@ -158,8 +157,7 @@ int selectLinesOptions(const SelectLinesSettings &s)
 
 std::vector<std::u8string> addRecentSelection(std::vector<std::u8string> recent, const std::u8string &text)
 {
-    // Legacy removes while counting up without stepping back, so of two
-    // equal neighbours the second one stays.
+    // MUST KILL: erases without stepping back, so the second of two equal neighbours stays
     for (std::size_t i = 0; i < recent.size(); ++i)
         if (recent[i] == text)
             recent.erase(recent.begin() + static_cast<std::ptrdiff_t>(i));
@@ -194,14 +192,13 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
     const auto lines = document.lines();
 
     Selection selection = session.selection();
-    // SaveSelections(selectOptions == 0): Select starts from nothing.
+    // Select starts from nothing.
     if (settings.mode == M::Select)
         selection.selected.clear();
 
     std::u16string find = core::toUtf16(settings.find);
     if (!settings.matchCase && !settings.regex)
         find = lower(find);
-    // wxRegEx(find, wxRE_ADVANCED [| wxRE_ICASE]) (R1-pcre2).
     std::optional<core::LegacyRegex> re;
     if (settings.regex) {
         re.emplace(find, core::LegacyRegex::Advanced | (settings.matchCase ? 0 : core::LegacyRegex::IgnoreCase));
@@ -249,14 +246,14 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
     if (action == A::Copy || action == A::Cut)
         result.clipboard = core::clipboardRows(document, acted, translation, false);
 
-    // The row the active Line has now: legacy keeps currentLine as a row.
+    // The active Line is kept as a row across the change.
     std::size_t activeRow = 0;
     for (std::size_t i = 0; i < lines.size(); ++i)
         if (selection.active && lines[i]->id == *selection.active)
             activeRow = i;
 
     const bool removes = action == A::Cut || action == A::Delete || action == A::MoveToBeginning || action == A::MoveToEnd;
-    std::vector<core::LineId> doomed; // every selected Line, hidden ones too (DeleteSelectedDialogues)
+    std::vector<core::LineId> doomed; // every selected Line, hidden ones too
     if (removes)
         for (const auto *line : lines)
             if (selection.selected.contains(line->id))
@@ -265,9 +262,7 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
     const bool changes = removes ? !doomed.empty() : action == A::SetAsComment && !acted.empty();
 
     if (changes) {
-        // Approved F2-move-hidden (2026-10-04): Move takes every selected
-        // Line, hidden ones too, in Document order (legacy deleted the hidden
-        // ones and inserted copies of the walked ones only).
+        // Move takes every selected Line, hidden ones too, in Document order.
         const std::vector<core::LineId> &moved = moves ? doomed : acted;
         const std::set<core::LineId> movedSet(moved.begin(), moved.end());
         std::set<core::LineId> touches(doomed.begin(), doomed.end());
@@ -296,19 +291,15 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
                         for (const auto id : moved)
                             if (!d.moveLine(id, before))
                                 return false;
-                    // E6: the moved Lines are copies (Dial->Copy(),
-                    // SelectLines.cpp:365-367), so marked changed, even
-                    // when every Line moves and the order stays.
+                    // Marked changed even when the order stays.
                     for (const auto id : moved)
                         if (!d.markLineChanged(id))
                             return false;
                 }
                 if (d.lines().empty()) {
-                    // Legacy adds a default Dialogue (0:00:00.00-0:00:05.00, Default).
                     core::LineRecord line;
                     line.style = u8"Default";
                     line.end.value = core::DocumentTime(5000 * 1000);
-                    // E6: new Dialogue() (SelectLines.cpp:402-404), unchanged.
                     return d.appendLine(line, core::ChangeMark::Kept).has_value();
                 }
                 return true;
@@ -318,7 +309,7 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
         if (moves)
             selection.selected = movedSet;
         else if (removes)
-            selection.selected.clear(); // SaveSelections(true)
+            selection.selected.clear();
     }
 
     // The first shown selected Line becomes active; with none, the Line now
@@ -344,4 +335,4 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
     return result;
 }
 
-} // namespace hikari::application
+}

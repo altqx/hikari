@@ -19,13 +19,11 @@ namespace hikari::core {
 
 namespace {
 
-// ---- Override blocks -------------------------------------------------------
-
 struct Tag {
     std::size_t order = 0;
     std::u16string name;
     std::u16string args;
-    std::u16string text; // "\name args", as written
+    std::u16string text;
 };
 
 struct Piece {
@@ -39,7 +37,7 @@ struct Tokens {
     bool malformed = false;
 };
 
-// Longest names first, so "\bord" is not read as "\b".
+// MUST KILL: longest names first, or "\bord" reads as "\b"
 constexpr std::u16string_view kNames[] = {
     u"alpha", u"iclip", u"xbord", u"ybord", u"xshad", u"yshad", u"blur", u"bord", u"clip", u"fade", u"fscx",
     u"fscy",  u"move",  u"shad",  u"fad",   u"fax",   u"fay",   u"frx",  u"fry",  u"frz",  u"fsc",  u"fsp",  u"org",
@@ -58,10 +56,6 @@ bool isAsciiAlnum(char16_t c)
     return isAsciiLetter(c) || (c >= u'0' && c <= u'9');
 }
 
-// Part of a word for a suggestion's whole-word test: ASCII letters and
-// digits, and any other character outside the spaces and punctuation, so a
-// run never matches inside a longer word in any script (a CJK text, without
-// spaces, gets no suggestion).
 bool isWordUnit(char16_t c)
 {
     if (c < 0x80)
@@ -87,22 +81,19 @@ std::u16string tagName(std::u16string_view s)
     return std::u16string(s.substr(0, i));
 }
 
-// The name of a tag as written, past the spaces libass skips after the
-// backslash: "\ t(\fs20)" is a \t.
+// libass skips spaces after the backslash: "\ t(\fs20)" is a \t.
 std::u16string nameOf(std::u16string_view tag)
 {
     const auto at = tag.find_first_not_of(u" \t", 1);
     return at == std::u16string_view::npos ? std::u16string() : tagName(tag.substr(at));
 }
 
-// The tags of one block's content. Text outside tags is a comment.
 std::vector<Tag> parseBlock(std::u16string_view content, std::size_t &order)
 {
     std::vector<Tag> tags;
     for (auto i = content.find(u'\\'); i != std::u16string_view::npos;) {
         Tag tag;
         tag.order = order++;
-        // libass skips spaces between the backslash and the name.
         std::size_t nameStart = i + 1;
         while (nameStart < content.size() && (content[nameStart] == u' ' || content[nameStart] == u'\t'))
             ++nameStart;
@@ -130,8 +121,6 @@ std::vector<Tag> parseBlock(std::u16string_view content, std::size_t &order)
     return tags;
 }
 
-// Unclosed, nested or unmatched braces make the text malformed, as in the
-// projection.
 Tokens tokenize(std::u16string_view raw)
 {
     Tokens out;
@@ -141,8 +130,8 @@ Tokens tokenize(std::u16string_view raw)
             out.pieces.push_back({false, textStart, end, {}});
     };
     for (std::size_t i = 0; i < raw.size();) {
-        // libass shows "\{" and "\}" as braces: the text is read as having
-        // no tags rather than lose one (the projection takes them as tags).
+        // libass shows "\{" and "\}" as braces: read the text as having no tags rather than lose
+        // one.
         if (raw[i] == u'}' || (raw[i] == u'\\' && i + 1 < raw.size() && (raw[i + 1] == u'{' || raw[i + 1] == u'}'))) {
             out.malformed = true;
             return out;
@@ -199,8 +188,6 @@ bool isKaraoke(std::u16string_view name)
 {
     return name == u"k" || name == u"K" || name == u"kf" || name == u"ko" || name == u"kt";
 }
-
-// ---- Formatting state ------------------------------------------------------
 
 enum class Kind { None, Flag, Bold, Colour, Alpha, Number, Integer, Text, Transform, Reset };
 
@@ -267,16 +254,14 @@ std::u16string hex(unsigned long value, int digits)
     return ascii(buf);
 }
 
-// A tag's first argument as libass splits it (ass_parse_tags): within
-// parentheses up to the first comma, spaces skipped at both ends, else all
-// that follows the name, spaces skipped at the end only ("\r Alt" names
-// " Alt"). Empty when it has none.
+// The first argument as libass splits it: within parentheses up to the first comma, spaces
+// trimmed, else all after the name, trailing spaces trimmed ("\r Alt" names " Alt").
 std::u16string_view argumentOf(std::u16string_view args)
 {
     if (args.starts_with(u'(')) {
         args.remove_prefix(std::min(args.find_first_not_of(u" \t", 1), args.size()));
         auto end = args.find_first_of(u",\\)");
-        if (end != std::u16string_view::npos && args[end] == u'\\') // the rest, to the parenthesis
+        if (end != std::u16string_view::npos && args[end] == u'\\')
             end = args.find(u')', end);
         args = args.substr(0, end);
     }
@@ -294,8 +279,7 @@ bool isDigit(char16_t c)
     return c >= u'0' && c <= u'9';
 }
 
-// Past the spaces and the one sign strtoll and ass_strtod take: whether it
-// was a '-'.
+// Skips the spaces and the one sign strtoll and ass_strtod take; true for a '-'.
 bool skipSign(std::u16string_view text, std::size_t &i)
 {
     while (i < text.size() && isAssSpace(text[i]))
@@ -306,8 +290,7 @@ bool skipSign(std::u16string_view text, std::size_t &i)
     return negative;
 }
 
-// A whole number as libass reads one (argtoi32: strtoll's decimal prefix,
-// clamped to 32 bits). No digits is 0: "\p1e-3" is \p1.
+// As libass's argtoi32: strtoll's decimal prefix clamped to 32 bits; no digits is 0.
 std::int32_t integerOf(std::u16string_view text)
 {
     std::size_t i = 0;
@@ -318,17 +301,15 @@ std::int32_t integerOf(std::u16string_view text)
     return static_cast<std::int32_t>(std::clamp<long long>(negative ? -n : n, INT32_MIN, INT32_MAX));
 }
 
-// A number as libass reads one (argtod, ass_strtod): the longest decimal
-// prefix, digits with one point, then an exponent where digits follow its
-// 'e'. No digits is 0 ("\fspabc" is \fsp0), and neither "inf", "nan" nor
-// hexadecimal are read.
+// As libass's ass_strtod: digits with one point, then an exponent where digits follow its 'e'.
+// No digits is 0 ("\fspabc" is \fsp0); "inf", "nan" and hexadecimal are not read.
 double decimalOf(std::u16string_view text)
 {
     std::size_t i = 0;
     const bool negative = skipSign(text, i);
     std::string s;
     bool point = false;
-    long magnitude = 0; // the power of ten of the first digit other than 0, roughly
+    long magnitude = 0;
     bool significant = false;
     for (; i < text.size() && (isDigit(text[i]) || (text[i] == u'.' && !point)); ++i) {
         point = point || text[i] == u'.';
@@ -356,13 +337,12 @@ double decimalOf(std::u16string_view text)
     }
     double n = 0;
     if (std::from_chars(s.data(), s.data() + s.size(), n).ec == std::errc::result_out_of_range)
-        n = magnitude > 0 ? std::numeric_limits<double>::infinity() : 0; // past a double either way
+        n = magnitude > 0 ? std::numeric_limits<double>::infinity() : 0;
     if (n == 0)
-        return 0; // -0 is 0
+        return 0;
     return negative ? -n : n;
 }
 
-// Equal values compare equal however they are spelled.
 std::u16string normalised(Kind kind, std::u16string_view args)
 {
     const auto arg = argumentOf(args);
@@ -376,9 +356,8 @@ std::u16string normalised(Kind kind, std::u16string_view args)
     }
     case Kind::Colour:
     case Kind::Alpha: {
-        // As libass's parse_color_tag: past '&' and an uppercase 'H' only,
-        // then strtoll's signed hexadecimal clamped to 32 bits (-1 is
-        // 0xFFFFFFFF); no digits is 0 (black, opaque).
+        // As libass's parse_color_tag: past '&' and 'H' only, then strtoll's signed hexadecimal
+        // clamped to 32 bits (-1 is 0xFFFFFFFF); no digits is 0.
         std::size_t i = 0;
         while (i < arg.size() && (arg[i] == u'&' || arg[i] == u'H'))
             ++i;
@@ -412,9 +391,8 @@ std::u16string normalised(Kind kind, std::u16string_view args)
     }
 }
 
-// Whether an override's value is the active Style's: none at all, or (as
-// libass's ass_parse.c reads them) \i, \u and \s other than 0 or 1 and \b
-// other than 0, 1 or a weight of 100 and up.
+// libass takes the Style's value for none, \i, \u and \s other than 0 or 1, and \b other than 0,
+// 1 or a weight of 100 and up.
 bool isStyleValue(Kind kind, std::u16string_view args)
 {
     const auto arg = argumentOf(args);
@@ -432,9 +410,8 @@ std::u16string valueIn(const TagState &state, const std::u16string &component)
     return it == state.end() ? std::u16string() : it->second;
 }
 
-// A number as libass keeps it (ass_parse.c): no border, \shad, scale or
-// blur below 0, \blur at most 100, \be a whole number from 0 to 127 (+0.5
-// and truncated, as VSFilter rounds it). Other values are kept.
+// As libass keeps numbers: no border, \shad, scale or blur below 0, \blur at most 100, \be a
+// whole number from 0 to 127 (+0.5 and truncated, as VSFilter rounds it).
 std::u16string clamped(std::u16string_view name, std::u16string value)
 {
     const auto n = decimalOf(value);
@@ -455,9 +432,8 @@ std::u16string clamped(std::u16string_view name, std::u16string value)
     return normalised(Kind::Number, ascii(std::string(buf, r.ptr)));
 }
 
-// \fs as libass reads it (ass_parse.c TAG_FS): a signed size scales the
-// current one by (1 + n / 10), and none, or a size not above 0, is the
-// Style's. Without a current size the spelling is kept.
+// As libass reads \fs: a signed size scales the current one by (1 + n / 10); none, or a size
+// not above 0, is the Style's.
 std::optional<std::u16string> fontSizeAfter(const TagState &state, const TagState &defaults, std::u16string_view args)
 {
     const auto arg = argumentOf(args);
@@ -507,17 +483,15 @@ TagState defaultsFor(const StyleValues *style)
         for (const auto &component : field.components)
             d[component] = normalised(field.kind, toUtf16(*value));
     }
-    if (!style->encoding.empty()) // \fe's base
+    if (!style->encoding.empty())
         d[u"fe"] = normalised(Kind::Integer, toUtf16(style->encoding));
     return d;
 }
 
-// One component's value after a tag.
 struct Assignment {
     std::size_t order = 0;
     std::u16string value, tag;
 };
-// Each component's assignments in tag order.
 using History = std::map<std::u16string, std::vector<Assignment>>;
 
 std::size_t unitsOf(const TagState &state)
@@ -528,10 +502,7 @@ std::size_t unitsOf(const TagState &state)
     return units;
 }
 
-// What reading a text may copy, in UTF-16 units: the formatting state each
-// text piece keeps, the Style a reset takes (its font name has no bound) and
-// the history. A text past it is read as having no runs, however its tags
-// stay within kMaxTagTransferTags.
+// In UTF-16 units copied while reading a text; past it the text has no runs.
 constexpr std::size_t kMaxTagTransferWork = std::size_t(1) << 20;
 
 struct Budget {
@@ -545,8 +516,7 @@ struct Budget {
     }
 };
 
-// A \t with no override tag in it that changes anything (none at all, or
-// only ones libass does not know), which libass skips or that does nothing.
+// libass skips a \t with no override tag it knows.
 bool isEmptyTransform(const Tag &tag)
 {
     if (tag.name != u"t")
@@ -560,8 +530,7 @@ bool isEmptyTransform(const Tag &tag)
     return true;
 }
 
-// A \t animating only the clip: libass animates the line's clip wherever
-// it stands, a line-wide tag like \clip.
+// libass animates the line's clip wherever its \t stands, like \clip.
 bool isClipTransform(const Tag &tag)
 {
     if (tag.name != u"t")
@@ -577,9 +546,6 @@ bool isClipTransform(const Tag &tag)
     return clip;
 }
 
-// A \t animating the clip among other tags: its clip part, line-wide like
-// \clip, and the rest, which is the glyphs' ("\t(0,500,\clip(1,2,3,4)\fs20)"
-// is "\t(0,500,\clip(1,2,3,4))" and "\t(0,500,\fs20)").
 std::optional<std::pair<std::u16string, Tag>> splitClipTransform(const Tag &tag)
 {
     if (tag.name != u"t" || isEmptyTransform(tag) || isClipTransform(tag) || !tag.args.starts_with(u'('))
@@ -600,14 +566,12 @@ std::optional<std::pair<std::u16string, Tag>> splitClipTransform(const Tag &tag)
     return std::pair(u"\\t(" + times + clip + u")", std::move(glyphs));
 }
 
-// Whether applying `tag` may change the formatting state.
 bool changesState(const Tag &tag)
 {
     return effectOf(tag.name).kind != Kind::None && !isEmptyTransform(tag);
 }
 
-// Applies `tag`, appending what it set to `history` when given. Returns the
-// units it copied.
+// Returns the UTF-16 units it copied.
 std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
                   const std::map<std::u16string, TagState> &named, History *history)
 {
@@ -620,8 +584,7 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
     case Kind::Reset: {
         for (const auto &[component, value] : state)
             touched.push_back(component);
-        // A Style the Document lacks is the Line's (lookup_style_strict
-        // finds none, and the reset takes the event's).
+        // libass resets to the event's Style when the Document lacks the named one.
         const auto style = std::u16string(argumentOf(tag.args));
         const auto it = style.empty() ? named.end() : named.find(style);
         state = it != named.end() ? it->second : defaults;
@@ -635,10 +598,8 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
     case Kind::Transform: {
         if (isEmptyTransform(tag))
             return 0;
-        // The transforms so far as a count and a hash of their spellings: a
-        // fixed size however many there are (each history entry copies it).
         auto &t = state[u"t"];
-        const std::string previous(t.begin(), t.end()); // "count|hash", ASCII
+        const std::string previous(t.begin(), t.end());
         std::uint64_t count = 0, hash = 1469598103934665603ull;
         if (const auto bar = previous.find('|'); bar != std::string::npos) {
             std::from_chars(previous.data(), previous.data() + bar, count);
@@ -650,8 +611,6 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
         break;
     }
     default: {
-        // The Style a value falls back to is the one in effect, a named
-        // reset's when there was one.
         const auto reset = state.find(u"r");
         const auto active = reset != state.end() ? named.find(reset->second) : named.end();
         const TagState &base = active != named.end() ? active->second : defaults;
@@ -662,7 +621,7 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
                 state[u"fs"] = argumentOf(tag.args);
             break;
         }
-        // \fsc, and \fn0, are the Style's whatever follows (ass_parse.c).
+        // libass gives the Style's values for \fsc and \fn0, whatever follows.
         const bool styles = tag.name == u"fsc" || (tag.name == u"fn" && argumentOf(tag.args) == u"0");
         for (const auto &component : effect.components) {
             if (styles || isStyleValue(effect.kind, tag.args)) {
@@ -697,18 +656,14 @@ TagState differences(const TagState &state, const TagState &base)
     return out;
 }
 
-// A text piece and how its formatting differs from the base.
 struct Segment {
     std::size_t rawStart = 0, rawEnd = 0;
-    std::size_t order = 0; // tags before it
+    std::size_t order = 0;
     TagState differs;
     bool visible = false;
-    // The tags before it went through another state and back ("\i0\i1"):
-    // two runs alike, one after the other.
     bool afterBoundary = false;
 };
 
-// Consecutive segments that differ from the base in the same way.
 struct Group {
     std::size_t first = 0, last = 0;
 };
@@ -740,11 +695,6 @@ const TagRun *runAt(const OriginalTags &tags, int number)
     return number >= 1 && number <= static_cast<int>(tags.runs.size()) ? &tags.runs[number - 1] : nullptr;
 }
 
-// The tags that change the formatting from run `from` to run `to` (0 is the
-// base): the closing resets, the closings, the opening resets, then the
-// openings, each in the order the Original text wrote them; after a reset
-// whatever of the target it changed is set again. At the body's end only the
-// closings the Original wrote are kept: the others change no glyph.
 std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd = false)
 {
     const TagRun *f = runAt(tags, from), *t = runAt(tags, to);
@@ -760,13 +710,13 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
         return valueIn(tags.base, component);
     };
     struct Part {
-        int rank; // 0 a closing reset, 1 a closing, 2 an opening reset, 3 an opening
+        // MUST KILL: rank is a raw int: 0 closing reset, 1 closing, 2 opening reset, 3 opening
+        int rank;
         TagSetter setter;
-        TagSetter afterReset = {}; // what it is instead where the transition resets
+        TagSetter afterReset = {};
     };
     std::vector<Part> parts;
     const auto isReset = [](const TagSetter &s) { return nameOf(s.tag) == u"r"; };
-    // An opening reset goes after the closings: before them they would undo it.
     auto add = [&](const TagSetter &s, bool opening) {
         if (!s.tag.empty())
             parts.push_back({(opening ? 2 : 0) + (isReset(s) ? 0 : 1), s});
@@ -775,10 +725,7 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
         if (valueOf(f, component) == valueOf(t, component))
             continue;
         const bool opening = t && t->differs.contains(component);
-        // Transforms add up and only a reset ends them: to a run whose
-        // transforms go on from the source's, only those it adds (all of
-        // them where another value's reset ends the source's); to any other,
-        // after the source's closing reset.
+        // libass adds transforms up; only a reset ends them.
         if (component == u"t" && opening && f && f->differs.contains(component)) {
             const auto from = f->opens.find(component), to = t->opens.find(component);
             if (from != f->opens.end() && to != t->opens.end() && to->second.tag.starts_with(from->second.tag)) {
@@ -799,16 +746,12 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
         if (const auto it = setters.find(component); it != setters.end() && (it->second.written || !atEnd))
             add(it->second, opening);
     }
-    // Two runs alike, one after the other: closed and opened again, or they
-    // would read back as one.
     if (f && t && from != to && parts.empty()) {
         for (const auto &[component, close] : f->closes)
             add(close, false);
         for (const auto &[component, open] : t->opens)
             add(open, true);
     }
-    // A reset undoes every value: the target's values it undoes too are set
-    // again after it.
     const bool reset = std::ranges::any_of(parts, [](const Part &p) { return p.rank % 2 == 0; });
     if (reset)
         for (auto &part : parts)
@@ -828,9 +771,6 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
             out += part.setter.tag;
     if (!reset || (atEnd && !t))
         return out;
-    // What else the reset changed (a base value the target keeps: the bold
-    // of a carried leading \b1): the target run's own opening, or the value
-    // spelled out.
     TagState state = tags.base, target = tags.base;
     if (f)
         for (const auto &[component, value] : f->differs)
@@ -896,7 +836,6 @@ std::vector<RunPlacement> validPlacements(const OriginalTags &tags, const Transl
     return out;
 }
 
-// The last tag before the `before`th to give `component` the value.
 TagSetter lastSetter(const History &history, const std::u16string &component, std::size_t before,
                      const std::u16string &value, std::size_t &work)
 {
@@ -913,13 +852,9 @@ TagSetter lastSetter(const History &history, const std::u16string &component, st
     return {};
 }
 
-// What a run's \t opening replays at most, in UTF-16 units; a run that
-// needs more is not offered. With at most kMaxTagTransferTags runs this
-// keeps every opening within kMaxTagTransferWork.
+// In UTF-16 units; a run that needs more is not offered.
 constexpr std::size_t kMaxTransformOpening = 1024;
 
-// The \t tags from the `from`th to `last`, since the last reset: what puts
-// back the transforms running after `last`.
 TagSetter transformsTo(const History &history, const TagSetter &last, std::size_t from, std::size_t &work)
 {
     const auto it = history.find(u"t");
@@ -938,7 +873,6 @@ TagSetter transformsTo(const History &history, const TagSetter &last, std::size_
     return {last.order, std::move(tags)};
 }
 
-// The first tag from the `from`th on to give `component` the value.
 TagSetter firstSetter(const History &history, const std::u16string &component, std::size_t from,
                       const std::u16string &value, std::size_t &work)
 {
@@ -954,12 +888,8 @@ TagSetter firstSetter(const History &history, const std::u16string &component, s
     return {};
 }
 
-} // namespace
+}
 
-// `setter`, or the tag for `component` alone where `setter` sets more than
-// it (\bord, \shad, \alpha, \fsc) and would give another of them a value
-// other than `expected(other)`: "\ybord5" for "\bord5" on a run whose
-// \xbord is the base's.
 TagSetter alone(TagSetter setter, const std::u16string &component, const std::u16string &value,
                 const std::function<std::u16string(const std::u16string &)> &expected)
 {
@@ -967,11 +897,9 @@ TagSetter alone(TagSetter setter, const std::u16string &component, const std::u1
     const auto effect = effectOf(name);
     if (effect.components.size() < 2)
         return setter;
-    // \fsc gives the Style's scales, \bord and the rest one value to each.
     const bool one = name != u"fsc";
     for (const auto &other : effect.components) {
         if (other != component && (!one || expected(other) != value)) {
-            // (No value is the Style's: "\1a" alone.)
             const auto spelled = effect.kind == Kind::Alpha && !value.empty() ? u"&H" + value + u"&" : value;
             setter.tag = u"\\" + component + spelled;
             return setter;
@@ -985,8 +913,6 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
 {
     OriginalTags out;
     out.defaults = defaultsFor(style);
-    // A Style's values past the text's bound (a font name) would be copied
-    // with every state read against it.
     if (original.size() > kMaxTagTransferUnits || unitsOf(out.defaults) > kMaxTagTransferUnits) {
         out.malformed = true;
         return out;
@@ -1006,8 +932,8 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         out.malformed = true;
         return out;
     };
-    bool drawingNow = false; // \p as the renderer is at each piece
-    std::set<std::u16string> looked; // each name looked up once, found or not
+    bool drawingNow = false;
+    std::set<std::u16string> looked;
     for (const auto &piece : tokens.pieces) {
         if (!piece.block && drawingNow) {
             out.drawing = true;
@@ -1017,8 +943,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             if (effectOf(tag.name).kind == Kind::Reset) {
                 auto name = std::u16string(argumentOf(tag.args));
                 if (!name.empty() && !looked.contains(name)) {
-                    // The last Style of the name, as libass's lookup_style:
-                    // charged, the names the text gives may be many.
+                    // The last Style of the name, as libass's lookup_style takes it.
                     if (!budget.spend(styles.size() + 1))
                         return tooMuch();
                     const auto u8name = toUtf8(name);
@@ -1032,8 +957,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                     looked.insert(std::move(name));
                 }
             }
-            // libass reads \p as a whole number (argtoi32: \p1e-3 is \p1)
-            // and clamps it to 0 and up; a later \p0 is text again.
+            // libass reads \p as a whole number clamped to 0 and up; a later \p0 is text again.
             if (tag.name == u"p")
                 drawingNow = integerOf(argumentOf(tag.args)) >= 1;
             out.karaoke = out.karaoke || isKaraoke(tag.name);
@@ -1053,7 +977,6 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
     History history;
     std::map<std::u16string, TagSetter> leadingSetters;
     std::u16string leading, hoisted, trailing, trailingDone, leadingDone, leadingPending;
-    // Spaces before a leading tag stay before it (a \h at the base size).
     auto lead = [&](std::u16string_view tag) {
         if (!leadingPending.empty()) {
             leadingDone += braced(leading);
@@ -1066,7 +989,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
     };
     std::vector<Segment> segments;
     std::size_t tagsSeen = 0;
-    bool deviated = false; // since the last segment
+    bool deviated = false;
     for (std::size_t i = 0; i < tokens.pieces.size(); ++i) {
         const auto &piece = tokens.pieces[i];
         const bool isLeading = i < first, isTrailing = first < tokens.pieces.size() && i > last;
@@ -1075,8 +998,6 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             baseSet = true;
         }
         if (!piece.block) {
-            // Spaces after a trailing tag stay after it (a \h at the base
-            // size, a \N's row after a reset).
             if (isLeading)
                 leadingPending += original.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
             if (isTrailing && (!trailing.empty() || !trailingDone.empty())) {
@@ -1105,8 +1026,6 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                     hoisted += written.text;
                 continue;
             }
-            // After the leading block, a clip a \t animates goes to the front
-            // and its other tags are read where they stand.
             const auto split = isLeading ? std::nullopt : splitClipTransform(written);
             if (split)
                 hoisted += split->first;
@@ -1117,27 +1036,21 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                 for (const auto &component : effect.components)
                     leadingSetters[component] = {tag.order, tag.text};
             } else if (isTrailing) {
-                // A tag that undoes a leading one; a reset undoes them all.
                 if (std::ranges::any_of(effect.components, [&](const auto &c) { return leadingSetters.contains(c); })
                     || (effect.kind == Kind::Reset && !leadingSetters.empty()))
                     trailing += tag.text;
             }
             if (!budget.spend(apply(state, tag, out.defaults, out.named, &history)))
                 return tooMuch();
-            // (The segments hold their whole state until read.) Charged as
-            // the copy it is in cost, a long font name's too.
             if (!deviated && !segments.empty() && changesState(tag)) {
                 if (!budget.spend(unitsOf(state)))
                     return tooMuch();
                 deviated = state != segments.back().differs;
             }
-            // A leading reset sets every value of the state it gives (a
-            // named one another Style's): it is what restores them after a
-            // run, and what a trailing reset undoes.
             if (isLeading && effect.kind == Kind::Reset) {
                 if (!budget.spend(unitsOf(state)))
                     return tooMuch();
-                leadingSetters.clear(); // what it undid restores nothing (a \t)
+                leadingSetters.clear();
                 for (const auto &component : state | std::views::keys)
                     leadingSetters[component] = {tag.order, tag.text};
             }
@@ -1166,7 +1079,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             ++start;
         while (end > start && isDisplaySpace(projection.text[end - 1]))
             --end;
-        if (start == end) // only spaces, a non-breaking one among them
+        if (start == end)
             continue;
         run.displayStart = start;
         run.displayEnd = end;
@@ -1174,21 +1087,15 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         run.rawEnd = lastSegment.rawEnd;
         run.text = projection.text.substr(start, end - start);
         bool closable = true;
-        // The lookups and what the run keeps (its setters spell the
-        // Original's tags, a long one per component) charged.
         std::size_t work = unitsOf(run.differs) + run.text.size();
         for (const auto &[component, value] : run.differs) {
             auto open = lastSetter(history, component, firstSegment.order, value, work);
             if (component == u"t") {
-                // The transforms are all those still running, after any the
-                // leading block carries: the last alone is another state.
                 const auto leadingT = leadingSetters.find(component);
                 open = transformsTo(history, open, leadingT != leadingSetters.end() ? leadingT->second.order + 1 : 0,
                                     work);
                 closable = closable && open.tag.size() <= kMaxTransformOpening;
             } else if (component == u"fs" && nameOf(open.tag) == u"fs") {
-                // A relative size scales the current one: from the base it
-                // would be another.
                 std::size_t order = 0;
                 const auto parsed = parseBlock(open.tag, order);
                 const auto arg = argumentOf(parsed.front().args);
@@ -1217,8 +1124,6 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         }
         if (!budget.spend(work))
             return tooMuch();
-        // A run nothing can end (a \t the Original never resets) would go on
-        // past the text it is placed on: it is not offered.
         if (!closable)
             continue;
         run.number = static_cast<int>(out.runs.size()) + 1;
@@ -1235,12 +1140,12 @@ TranslationDraft draftOfOriginal(std::u16string_view original, const OriginalTag
         draft.body = original;
         return draft;
     }
-    std::map<std::size_t, std::size_t> starts, ends; // raw text piece bounds -> body offsets
+    std::map<std::size_t, std::size_t> starts, ends;
     std::size_t carriedLead = tags.leadingSpaces;
     for (const auto &piece : tokens.pieces) {
         if (piece.block)
             continue;
-        if (carriedLead >= piece.rawEnd - piece.rawStart) { // carried
+        if (carriedLead >= piece.rawEnd - piece.rawStart) {
             carriedLead -= piece.rawEnd - piece.rawStart;
             continue;
         }
@@ -1248,7 +1153,7 @@ TranslationDraft draftOfOriginal(std::u16string_view original, const OriginalTag
         draft.body += original.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
         ends[piece.rawEnd] = draft.body.size();
     }
-    draft.body.resize(draft.body.size() - std::min(tags.trailingSpaces, draft.body.size())); // carried
+    draft.body.resize(draft.body.size() - std::min(tags.trailingSpaces, draft.body.size()));
     for (const auto &run : tags.runs)
         if (starts.contains(run.rawStart) && ends.contains(run.rawEnd))
             draft.placements.push_back({starts[run.rawStart], ends[run.rawEnd], run.number});
@@ -1275,7 +1180,6 @@ std::u16string composeTranslation(const OriginalTags &tags, const TranslationDra
             placed->push_back({out.size(), out.size(), run});
         current = run;
     };
-    // Only the translator's own blocks from `from` to `to`: no text between.
     const auto onlyBlocks = [&](std::size_t from, std::size_t to) {
         while (from < to && draft.body[from] == u'{') {
             const auto close = draft.body.find(u'}', from);
@@ -1286,8 +1190,6 @@ std::u16string composeTranslation(const OriginalTags &tags, const TranslationDra
         return from == to;
     };
     for (const auto &p : validPlacements(tags, draft)) {
-        // Runs side by side across the translator's tags change in one
-        // block before them, as the reader reads a transition.
         if (current != 0 && currentEnd < p.start && onlyBlocks(currentEnd, p.start)) {
             moveTo(currentEnd, p.run);
             currentEnd = p.end;
@@ -1329,10 +1231,9 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     if (tokens.malformed || tagCount > kMaxTagTransferTags)
         return plain;
 
-    // The translation's own formatting, matched to the runs.
     std::vector<Segment> segments;
     TagState state = tags.base, atText = state;
-    bool deviated = false; // since the last segment, as the Original's are read
+    bool deviated = false;
     Budget budget;
     for (const auto &piece : tokens.pieces) {
         if (piece.block) {
@@ -1353,11 +1254,10 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
                 return plain;
         }
     }
-    std::vector<int> labels(segments.size(), 0); // a run, 0 for the base, -1 for the translator's own
+    // MUST KILL: labels hold a run number, 0 for the base, -1 for the translator's own
+    std::vector<int> labels(segments.size(), 0);
     std::vector<bool> used(tags.runs.size(), false);
     const auto groups = groupsOf(segments);
-    // Each group set against a run is charged: many groups against many
-    // runs alike in all but their last value.
     const auto compared = [&](const TagRun &run) { return budget.spend(unitsOf(run.differs) + 1); };
     for (const auto &group : groups) {
         int label = -1;
@@ -1374,9 +1274,6 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
         }
         std::fill(labels.begin() + group.first, labels.begin() + group.last + 1, label);
     }
-    // Then a run under the translator's own formatting (Ctrl+B over a placed
-    // italic run): its values among more, the rest staying the body's. Read
-    // without these if they don't come back as the translation.
     auto under = labels;
     for (const auto &group : groups) {
         if (under[group.first] != -1 || segments[group.first].differs.empty())
@@ -1399,17 +1296,14 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
         }
     }
 
-    // Drop each run's tags where the composer would write them, noting where.
     auto read = [&](const std::vector<int> &runOf) -> std::optional<TranslationDraft> {
         TranslationDraft draft;
-        std::vector<std::size_t> boundary; // before each segment, and at the end
+        std::vector<std::size_t> boundary;
         std::vector<const Piece *> pending;
         auto settle = [&](int before, int after, bool atEnd) {
             before = std::max(before, 0);
             after = std::max(after, 0);
             auto expected = before != after ? transition(tags, before, after, atEnd) : std::u16string();
-            // The composer ends a run at the body's end only past the body's own
-            // last tags: before one of them (\b0 after Ctrl+B) it ends as inside.
             if (atEnd && before != after) {
                 const auto inside = transition(tags, before, after, false);
                 for (std::size_t i = 0; i + 1 < pending.size(); ++i) {
@@ -1456,9 +1350,6 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
             return std::nullopt;
         return draft;
     };
-    // The runs as last placed, by position, first: each group with
-    // formatting is the next of them, exactly or under more, or the
-    // translator's own.
     if (!order.empty()) {
         std::vector<int> hinted(segments.size(), 0);
         std::vector<bool> taken(tags.runs.size(), false);
@@ -1497,8 +1388,6 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
 
 namespace {
 
-// A text piece's formatting from the base, its place counted in text
-// units (the raw text pieces one after another).
 struct Drawn {
     std::size_t rawStart = 0, textStart = 0, textEnd = 0;
     TagState state;
@@ -1528,7 +1417,7 @@ std::optional<std::vector<Drawn>> drawnText(const OriginalTags &tags, std::u16st
     return out;
 }
 
-} // namespace
+}
 
 bool keepsOwnFormatting(const OriginalTags &tags, const TranslationDraft &draft)
 {
@@ -1568,8 +1457,6 @@ bool keepsOwnFormatting(const OriginalTags &tags, const TranslationDraft &draft)
         for (const auto &d : *drawn)
             cuts.insert(d.textStart);
     cuts.insert(total);
-    // Each stretch between two cuts: drawn as the body alone draws it, a
-    // placed run's formatting on top.
     std::size_t o = 0, c = 0, r = 0, from = 0;
     for (const auto to : cuts) {
         if (to <= from)
@@ -1651,7 +1538,7 @@ bool isPlaced(std::span<const RunPlacement> placements, int run)
     return std::ranges::any_of(placements, [&](const RunPlacement &p) { return p.run == run; });
 }
 
-} // namespace
+}
 
 int nextUnplacedRun(const OriginalTags &tags, std::span<const RunPlacement> placements)
 {
@@ -1679,8 +1566,6 @@ int runWithProperty(const OriginalTags &tags, std::span<const RunPlacement> plac
 std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const TranslationDraft &draft)
 {
     std::vector<RunPlacement> out;
-    // As readTranslation: no runs past the bound, or in a text whose braces
-    // don't close (a placement there would not read back).
     if (draft.body.size() > kMaxTagTransferUnits || tokenize(draft.body).malformed)
         return out;
     const auto projection = project(draft.body);
@@ -1711,14 +1596,10 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
             continue;
         const RunPlacement p{rawOffset(projection, found, true), rawOffset(projection, found + run.text.size(), false),
                              run.number};
-        // Text across the translator's own tags is in more than one state,
-        // which no one run can be read back over.
         const bool crossesTags = p.start < p.end && draft.body.find(u'{', p.start) < p.end;
         if (p.start < p.end && !crossesTags && !overlaps(draft.placements, p))
             out.push_back(p);
     }
-    // Text two runs would both go on (the same words in two formats) says
-    // which of them it is no more than for one: neither is suggested.
     const auto candidates = out;
     std::erase_if(out, [&](const RunPlacement &p) { return overlaps(candidates, p); });
     std::ranges::sort(out, {}, &RunPlacement::start);
@@ -1729,8 +1610,6 @@ std::vector<int> matchRuns(const OriginalTags &before, const OriginalTags &now)
 {
     std::vector<int> out(before.runs.size(), 0);
     std::vector<bool> taken(now.runs.size(), false);
-    // One unchanged in its own place is that run, before another with the
-    // same text and formatting elsewhere can take it.
     for (std::size_t i = 0; i < before.runs.size() && i < now.runs.size(); ++i)
         if (now.runs[i].differs == before.runs[i].differs && now.runs[i].text == before.runs[i].text) {
             taken[i] = true;
@@ -1807,7 +1686,6 @@ void keepHeldPlacements(const OriginalTags &tags, TranslationDraft &draft)
 {
     if (placementHolds(tags, draft, runOrder(draft.placements)))
         return;
-    // In text order, each kept where it holds with those kept before it.
     auto placements = std::move(draft.placements);
     std::ranges::sort(placements, {}, &RunPlacement::start);
     draft.placements.clear();
@@ -1824,11 +1702,10 @@ void keepHeldPlacements(const OriginalTags &tags, TranslationDraft &draft)
 
 bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation)
 {
-    // One longer than the reader takes has no runs to place (as tagRuns shows).
     if (translation.empty() || tags.runs.empty() || translation.size() > kMaxTagTransferUnits)
         return false;
     const auto draft = readTranslation(tags, translation);
     return draft.carried && nextUnplacedRun(tags, draft.placements) != 0;
 }
 
-} // namespace hikari::core
+}

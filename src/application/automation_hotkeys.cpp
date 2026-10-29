@@ -28,12 +28,12 @@ std::string legacyNameOf(std::string_view fileName, int ordinal)
 
 std::string portableKeys(std::string_view accel)
 {
-    // wx joins modifiers with '-'; a trailing "-" key is written "--".
+    // Legacy accelerators join modifiers with '-'; a trailing "-" key is written "--".
     std::string out;
     std::size_t start = 0;
     while (start < accel.size()) {
         auto dash = accel.find('-', start);
-        if (dash == start) { // the '-' key itself
+        if (dash == start) {
             out += '-';
             break;
         }
@@ -76,4 +76,4 @@ std::vector<MacroBinding> parseLegacyScriptHotkeys(std::string_view text)
     return out;
 }
 
-} // namespace hikari::application
+}

@@ -1,10 +1,6 @@
 #pragma once
 
-// The application side of automation host services (L3; docs/automation.md).
-// The router answers each HostServiceRequest once through a platform port; a
-// port that is not attached answers Unavailable (the legacy nil). Ports run on
-// the GUI thread; a file picker answers later, and a run that ends first
-// withdraws it.
+// Ports run on the GUI thread; a port that is not attached answers Unavailable.
 
 #include "hikari/application/audio_display.h"
 #include "hikari/application/automation.h"
@@ -18,7 +14,6 @@
 
 namespace hikari::application {
 
-// Media and the target Document, as the legacy tab exposed them.
 class MacroMediaPort {
 public:
     virtual ~MacroMediaPort() = default;
@@ -42,10 +37,7 @@ public:
     virtual std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const = 0;
     virtual std::optional<Project> project() const = 0;
     virtual std::optional<std::string> fileName() const = 0; // nullopt: the Document has no file
-    // The audio aegisub.get_frequency_peaks reads (legacy: the video's FFMS2
-    // provider, else the audio box's): nullopt without audio (legacy "needs
-    // loaded audio by FFMS2"), a null pointer while the audio box has none
-    // yet ("cannot get audio provider").
+    // nullopt without audio; a null pointer while the audio box has none yet.
     virtual std::optional<const DisplayAudio *> peakAudio() const { return std::nullopt; }
 };
 
@@ -70,10 +62,10 @@ public:
 struct FilePickerRequest {
     enum class Mode { Open, OpenMultiple, Save };
     Mode mode = Mode::Open;
-    std::string title, dir, file, wildcard; // wildcard in the legacy wx form: "Label|*.ext|..."
+    std::string title, dir, file, wildcard; // wildcard: "Label|*.ext|..."
     bool mustExist = true;       // Open
     bool promptOverwrite = true; // Save
-    std::string script;          // the script that asked
+    std::string script;
 };
 
 class FilePickerPort {
@@ -84,7 +76,6 @@ public:
     virtual void withdraw() = 0; // the run ended while the picker was open
 };
 
-// The Line editor and the status bar.
 class EditorPort {
 public:
     virtual ~EditorPort() = default;
@@ -94,15 +85,11 @@ public:
     virtual void setStatusText(const std::string &text) = 0;
 };
 
-// Y4-playres-ask: a macro reads the script resolution (subtitles.
-// script_resolution, karaskel's collect_head) while its Document lacks
-// PlayResX or PlayResY. The port answers once with the resolution to write
-// (asking the user, or from the video when the user chose so), or nullopt to
-// write nothing (the macro gets legacy's values). A user who declines ends
-// the run through the automation manager; the answer is then never given.
+// Asked when a macro reads the script resolution while PlayResX or PlayResY is
+// missing. Answered once with the resolution to write, or nullopt to write nothing.
 struct ScriptResolutionRequest {
-    std::string script;      // the script that asked
-    Resolution written;      // PlayResX, PlayResY as staged (0: missing)
+    std::string script;
+    Resolution written; // 0: missing
 };
 
 class ScriptResolutionPort {
@@ -114,39 +101,31 @@ public:
 
 // Directories for decode_path, in native form without a trailing separator.
 struct AutomationPathContext {
-    std::string audioPath, subtitlePath, videoPath; // files of the target Document
+    std::string audioPath, subtitlePath, videoPath;
     std::string automationDir;                      // <application>/Automation
     std::string dictionaryDir;                      // <application>/Dictionary
     bool windows = false;
-    // Where scripts write (?user, ?local, ?temp): the user's Automation
-    // folder of an installed copy, whose program folder is read-only.
-    // Empty: automationDir, as a portable copy has it.
+    // Where scripts write (?user, ?local, ?temp); empty: automationDir.
     std::string userAutomationDir;
 };
 
-// Legacy decode_path: "?audio", "?data", "?dictionary", "?local", "?script",
-// "?temp", "?user" and "?video" prefixes, recognised by their 2nd and 5th
-// characters, become directories; separators are normalised for the platform.
-// "?data" is the shipped Automation folder; "?user", "?local" and "?temp"
-// the user's (the legacy installed copy's data root, installers spec 1.7).
+// decode_path's "?audio", "?data", "?dictionary", "?local", "?script", "?temp",
+// "?user" and "?video" prefixes, matched by their 2nd and 5th characters,
+// become directories; separators are normalised for the platform.
 std::string decodeAutomationPath(std::string path, const AutomationPathContext &context);
 
-// Automation's folders (legacy AutomationFolders.h), native, without a
-// trailing separator. A portable copy has the shipped Automation folder
-// only. An installed copy also has the user's, laid out as the shipped one:
-// its automation/Autoload and DependencyControl's lower-case
-// automation/autoload load after the shipped Autoload, and its
-// automation/Include and include come before the shipped Include.
+// Native, without a trailing separator. An installed copy adds the user's
+// folders: its autoload folders load after the shipped Autoload, its include
+// folders come before the shipped Include.
 struct AutomationFolders {
     std::vector<std::string> autoload; // the shipped one first
     std::vector<std::string> include;  // searched in this order after the script's own
-    std::vector<std::string> made;     // made at start: log, temp, autosave, autoload, include (UD1)
+    std::vector<std::string> made;     // made at start: log, temp, autosave, autoload, include
 };
 // user empty or the same folder as shipped: a portable copy.
 AutomationFolders automationFolders(const std::string &shipped, const std::string &user, bool windows);
-// The autoload scripts from each folder's file names, in folder order and the
-// order given: a later folder's script replaces an earlier one of the same
-// name (by case on Windows) in its place. Only .lua and .moon files.
+// A later folder's script replaces an earlier one of the same name (by case on
+// Windows) in its place. Only .lua and .moon files.
 std::vector<std::string> chooseAutoloadScripts(
     const std::vector<std::pair<std::string, std::vector<std::string>>> &folders, bool windows);
 
@@ -161,13 +140,12 @@ public:
     void setEditor(EditorPort *port) { m_editor = port; }
     void setScriptResolution(ScriptResolutionPort *port) { m_resolution = port; }
     void setPathContext(std::function<AutomationPathContext()> context) { m_paths = std::move(context); }
-    // O5: aegisub.gettext's lookup (the UTF-8 source in, its text out);
-    // without one the service is Unavailable and the script gets its source.
+    // aegisub.gettext's lookup; without one the service is Unavailable and the
+    // script gets its source.
     void setTranslation(std::function<std::string(const std::string &)> translate) { m_translate = std::move(translate); }
 
     void handle(const HostServiceRequest &request, Reply reply);
-    // The run ended: an open picker or resolution question is withdrawn and
-    // its answer dropped.
+    // Withdraws an open picker or resolution question and drops its answer.
     void withdraw();
 
 private:
@@ -183,4 +161,4 @@ private:
     bool m_resolutionOpen = false;
 };
 
-} // namespace hikari::application
+}

@@ -8,7 +8,7 @@ namespace {
 
 using enum GuideSurface;
 
-// Paths agreed with the site (altqx/hikari-site, docs/decisions.md's sidebar).
+// Paths must exist on the site; its link check reads guide-links.json.
 constexpr std::array kLinks{
     GuideLink{Panel, "Video", "/en/docs/basics/video"},
     GuideLink{Panel, "Audio", "/en/docs/basics/audio"},
@@ -23,14 +23,14 @@ constexpr std::array kLinks{
     GuideLink{Panel, "Styles", "/en/docs/basics/styles"},
     GuideLink{Panel, "FixMinorErrors", "/en/docs/checking/fix-minor-errors"},
     GuideLink{Panel, "Spellchecker", "/en/docs/checking/spelling"},
-    GuideLink{Panel, "Spellchecker.grammar", "/en/docs/checking/grammar"}, // its Grammar mode (#409)
+    GuideLink{Panel, "Spellchecker.grammar", "/en/docs/checking/grammar"},
     GuideLink{Panel, "Template", "/en/docs/karaoke/template-editor"},
     GuideLink{Window, "allTagsEdition", "/en/docs/typesetting/shapes-and-tags-editors"},
     GuideLink{Window, "automation", "/en/docs/automation/running-scripts"},
     GuideLink{Window, "dummyVideo", "/en/docs/basics/video"},
     GuideLink{Window, "fontCatalogs", "/en/docs/typesetting/fonts"},
     GuideLink{Window, "fontCollector", "/en/docs/typesetting/fonts"},
-    GuideLink{Window, "gettingStarted", "/en/docs/get-started/getting-started-window"}, // FR1
+    GuideLink{Window, "gettingStarted", "/en/docs/get-started/getting-started-window"},
     GuideLink{Window, "hotkeyCapture", "/en/docs/customize/hotkeys"},
     GuideLink{Window, "kanjiTimer", "/en/docs/karaoke/kanji-timer"},
     GuideLink{Window, "karaokeCheck", "/en/docs/karaoke/karaoke-check"},
@@ -44,7 +44,7 @@ constexpr std::array kLinks{
     GuideLink{Window, "styleManager", "/en/docs/basics/styles"},
 };
 
-} // namespace
+}
 
 std::string_view guideSurfaceName(GuideSurface kind)
 {
@@ -72,4 +72,4 @@ std::string guideUrl(GuideSurface kind, std::string_view id)
     return url;
 }
 
-} // namespace hikari::application
+}

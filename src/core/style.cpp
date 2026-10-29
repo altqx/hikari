@@ -14,8 +14,7 @@ using namespace detail;
 
 namespace {
 
-// wxStringTokenizer(text, ",") in its default mode for a non-space delimiter
-// (wxTOKEN_RET_EMPTY): empty tokens between commas, but none after a final comma.
+// Empty tokens between commas, none after a final comma.
 std::vector<u8sv> tokens(u8sv s)
 {
     std::vector<u8sv> out;
@@ -30,7 +29,6 @@ std::vector<u8sv> tokens(u8sv s)
     return out;
 }
 
-// wxString::ToLong: strtol over the whole string; on failure the target is unchanged.
 bool toLong(u8sv text, int base, std::int64_t &value)
 {
     const std::string s(text.begin(), text.end());
@@ -45,7 +43,6 @@ bool toLong(u8sv text, int base, std::int64_t &value)
     return true;
 }
 
-// wxString::IsNumber: an optional sign, then only digits.
 bool isNumber(u8sv s)
 {
     if (s.empty())
@@ -57,7 +54,7 @@ bool isNumber(u8sv s)
     return true;
 }
 
-} // namespace
+}
 
 namespace legacy {
 
@@ -238,7 +235,7 @@ std::optional<std::u8string> styleTagValue(const StyleValues &style, std::u8stri
     return std::nullopt;
 }
 
-} // namespace legacy
+}
 
 std::size_t styleCount(const Document &document)
 {
@@ -256,11 +253,10 @@ std::vector<StyleValues> decodeStyles(const Document &document)
     bool ssa = false;
     for (const auto &section : document.sections()) {
         if (section.kind == SectionKind::SsaStyles)
-            ssa = true; // never reset: "[V4+" after "[V4" keeps the SSA layout
+            ssa = true;
         for (const auto &record : section.records)
             if (const auto *style = std::get_if<StyleRecord>(&record)) {
                 if (style->inserted || style->edited) {
-                    // Added or changed in the editor: the fields as written.
                     std::u8string line = u8"Style: ";
                     for (std::size_t i = 0; i < style->fields.size(); ++i)
                         line += (i ? u8"," : u8"") + style->fields[i];
@@ -287,7 +283,7 @@ std::u8string hexColour(const Colour &c)
     return std::u8string(reinterpret_cast<const char8_t *>(buf));
 }
 
-} // namespace
+}
 
 std::vector<std::u8string> styleRawFields(const StyleValues &s)
 {
@@ -300,6 +296,6 @@ std::vector<std::u8string> styleRawFields(const StyleValues &s)
             s.marginRight,  s.marginVertical, s.encoding};
 }
 
-} // namespace legacy
+}
 
-} // namespace hikari::core
+}

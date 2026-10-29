@@ -1,6 +1,3 @@
-// E6: legacy TextEditorTagList.cpp and DialogueTextEditor.cpp's tag list at
-// 20d647c4 (see tag_list.h).
-
 #include "hikari/core/tag_list.h"
 
 #include <algorithm>
@@ -10,7 +7,6 @@ namespace hikari::core::taglist {
 
 namespace {
 
-// PopupTagList::InitList (TextEditorTagList.cpp:340-416).
 constexpr std::array<Entry, kEntryCount> kEntries{{
     {u"1a", TypeUsedInVisual, false},
     {u"2a", TypeUsedInVisual, false},
@@ -91,7 +87,7 @@ constexpr std::array<Entry, kEntryCount> kEntries{{
     {u"z", TypeVsfilterMod, false},
 }};
 
-} // namespace
+}
 
 std::span<const Entry> entries()
 {
@@ -100,14 +96,12 @@ std::span<const Entry> entries()
 
 bool shownByOptions(const Entry &entry, int options)
 {
-    // TagListItem::ShowItem(int) (TextEditorTagList.h:38-43).
     return entry.type == TypeNormal || ((options & TypeUsedInVisual) && (entry.type & TypeUsedInVisual)) ||
            ((options & TypeVsfilterMod) && (entry.type & TypeVsfilterMod));
 }
 
 std::u16string insertedTag(const Entry &entry)
 {
-    // TagListItem::GetTag (TextEditorTagList.h:53-59).
     std::u16string tag(entry.tag);
     if (entry.needBrackets)
         tag += u"()";
@@ -116,8 +110,6 @@ std::u16string insertedTag(const Entry &entry)
 
 TagList::TagList(int options) : m_options(options), m_shown(kEntryCount)
 {
-    // The constructor reads TEXT_EDITOR_TAG_LIST_OPTIONS and InitList shows
-    // each item by it (TextEditorTagList.cpp:246-252).
     for (std::size_t i = 0; i < kEntryCount; ++i)
         m_shown[i] = shownByOptions(kEntries[i], options);
 }
@@ -138,7 +130,6 @@ std::vector<std::size_t> TagList::shownEntries() const
 
 std::optional<std::size_t> TagList::entryAt(int row) const
 {
-    // FindItemById (TextEditorTagList.cpp:295-316): the row-th shown item.
     if (row < 0)
         return std::nullopt;
     int seen = 0;
@@ -153,15 +144,13 @@ std::optional<std::size_t> TagList::entryAt(int row) const
 
 void TagList::appendToKeyword(char16_t ch)
 {
-    // AppendToKeyword (TextEditorTagList.cpp:440-445).
     m_keyword += ch;
     filterByKeyword(m_keyword, false);
 }
 
 void TagList::filterByKeyword(std::u16string_view keyword, bool setKeyword)
 {
-    // FilterListViaKeyword (TextEditorTagList.cpp:269-283); ShowItem(keyword)
-    // only hides (TextEditorTagList.h:44-47), case-sensitively (StartsWith).
+    // Only hides, case-sensitively.
     if (setKeyword)
         m_keyword = keyword;
     for (std::size_t i = 0; i < kEntryCount; ++i)
@@ -175,7 +164,6 @@ void TagList::filterByKeyword(std::u16string_view keyword, bool setKeyword)
 
 void TagList::filterByOptions(int options)
 {
-    // FilterListViaOptions (TextEditorTagList.cpp:261-267).
     m_options = options;
     for (std::size_t i = 0; i < kEntryCount; ++i)
         m_shown[i] = shownByOptions(kEntries[i], options);
@@ -184,24 +172,19 @@ void TagList::filterByOptions(int options)
 
 void TagList::popup(int selected)
 {
-    // PopupTagList::Popup (TextEditorTagList.cpp:419-438): the old popup
-    // goes; a new one only when its height (a row per shown entry, ten at
-    // most, plus 2) exceeds 5, that is with an entry shown.
     ++m_popupCalls;
     m_popup = count() > 0;
     if (m_popup) {
-        // A new PopupWindow: sel 0, scrollPositionV 0, blockMouseEvent.
         m_selection = 0;
         m_scroll = 0;
         m_blockMouse = true;
-        setSelection(selected); // PopupWindow::Popup
+        setSelection(selected);
     }
     m_lastItems = count();
 }
 
 void TagList::setSelection(int row)
 {
-    // PopupWindow::SetSelection (TextEditorTagList.cpp:229-244).
     if (!m_popup)
         return;
     const int shown = static_cast<int>(count());
@@ -219,7 +202,6 @@ void TagList::setSelection(int row)
 
 void TagList::paintClamp()
 {
-    // OnPaint (TextEditorTagList.cpp:160-166), run by every Refresh.
     const int shown = static_cast<int>(count());
     if (m_scroll >= shown - kMaxVisible)
         m_scroll = shown - kMaxVisible;
@@ -229,7 +211,6 @@ void TagList::paintClamp()
 
 void TagList::scrollBy(int rows)
 {
-    // OnMouseEvent's wheel (TextEditorTagList.cpp:109-116), then OnPaint.
     if (!m_popup)
         return;
     m_scroll += rows;
@@ -255,7 +236,6 @@ bool TagList::wheel(int rows)
 
 bool TagList::pointerAt(int row)
 {
-    // OnMouseEvent (TextEditorTagList.cpp:98-129).
     if (!m_popup)
         return false;
     if (m_blockMouse) {
@@ -275,8 +255,6 @@ bool TagList::pointerAt(int row)
 
 bool Completion::typed(std::u16string_view text, std::size_t caret, char16_t key, int options)
 {
-    // TextEditor::OnCharPress (DialogueTextEditor.cpp:426-492), after the
-    // character went in and the caret moved past it.
     const auto at = [&](std::ptrdiff_t i) { return text[static_cast<std::size_t>(i)]; };
     const auto c = static_cast<std::ptrdiff_t>(std::min(caret, text.size()));
     const auto length = static_cast<std::ptrdiff_t>(text.size());
@@ -322,8 +300,6 @@ bool Completion::typed(std::u16string_view text, std::size_t caret, char16_t key
 
 bool Completion::move(int delta)
 {
-    // OnAccelerator's ID_DOWN / ID_UP (DialogueTextEditor.cpp:722-750):
-    // the key moves the selection, or does nothing without a popup.
     if (!m_list)
         return false;
     if (m_list->popupShown())
@@ -333,7 +309,6 @@ bool Completion::move(int delta)
 
 std::optional<Put> Completion::put(std::u16string_view text, std::size_t caret)
 {
-    // TextEditor::PutTag (DialogueTextEditor.cpp:2829-2852).
     if (!m_list)
         return std::nullopt;
     const auto entry = m_list->entryAt(m_list->selection());
@@ -355,4 +330,4 @@ std::optional<Put> Completion::put(std::u16string_view text, std::size_t caret)
     return std::nullopt;
 }
 
-} // namespace hikari::core::taglist
+}

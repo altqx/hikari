@@ -7,4 +7,4 @@ std::string_view moduleName() noexcept
     return "hikari_core";
 }
 
-} // namespace hikari::core
+}

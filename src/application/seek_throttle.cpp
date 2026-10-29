@@ -16,7 +16,7 @@ std::optional<int> SeekThrottle::move(int frame, Clock::time_point now)
 {
     m_last = frame;
     if (m_sent == frame) {
-        m_waiting.reset(); // back on the frame sought last: nothing to seek
+        m_waiting.reset();
         return std::nullopt;
     }
     if (!m_sentAt || now - *m_sentAt >= m_interval)
@@ -52,4 +52,4 @@ std::optional<int> SeekThrottle::release(Clock::time_point now)
     return last;
 }
 
-} // namespace hikari::application
+}

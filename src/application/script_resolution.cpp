@@ -6,7 +6,6 @@ namespace hikari::application {
 
 namespace {
 
-// wxAtoi.
 int atoiOf(const std::string &text)
 {
     return std::atoi(text.c_str());
@@ -17,7 +16,7 @@ std::u8string wide(const std::string &s)
     return std::u8string(s.begin(), s.end());
 }
 
-} // namespace
+}
 
 Resolution writtenScriptResolution(const core::Document &document)
 {
@@ -96,4 +95,4 @@ std::expected<void, CommandRefusal> setScriptResolution(EditSession &session, Re
     return {};
 }
 
-} // namespace hikari::application
+}

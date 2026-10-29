@@ -16,8 +16,6 @@ namespace {
 using u16 = std::u16string;
 using u16v = std::u16string_view;
 
-// ---- libhyphen patterns ------------------------------------------------------
-
 std::string_view trimmed(std::string_view line)
 {
     while (!line.empty() && (line.back() == '\r' || line.back() == ' ' || line.back() == '\t'))
@@ -27,14 +25,12 @@ std::string_view trimmed(std::string_view line)
     return line;
 }
 
-// ---- the text's characters ---------------------------------------------------
-
 enum class Kind { Space, Punct, Kana, Han, Hangul, Latin, Other };
 
 struct Unit {
     std::size_t at = 0, len = 0;
     char32_t cp = 0;   // the grapheme's first character
-    char32_t mark = 0; // its one mark after that (NFD), 0xFFFD for more, else 0
+    char32_t mark = 0; // its one mark (NFD), 0xFFFD for more, else 0
     Kind kind = Kind::Other;
 };
 
@@ -47,30 +43,29 @@ bool isKana(char32_t c)
 {
     return inRange(c, 0x3041, 0x3096) || inRange(c, 0x309D, 0x309F) || inRange(c, 0x30A1, 0x30FA) ||
            inRange(c, 0x30FC, 0x30FF) || inRange(c, 0x31F0, 0x31FF) || inRange(c, 0xFF66, 0xFF9F) ||
-           // Kana Extended-B, Kana Supplement (hentaigana), Kana Extended-A
-           // and Small Kana Extension (Codex)
+           // Kana Extended-B, Kana Supplement, Kana Extended-A, Small Kana Extension
            inRange(c, 0x1AFF0, 0x1AFFF) || inRange(c, 0x1B000, 0x1B16F);
 }
 
 bool isHan(char32_t c)
 {
     return c == 0x3005 || c == 0x3007 || c == 0x303B || inRange(c, 0x3400, 0x4DBF) || inRange(c, 0x4E00, 0x9FFF) ||
-           inRange(c, 0xF900, 0xFAFF) || inRange(c, 0x20000, 0x323AF); // through Extension H (Codex)
+           inRange(c, 0xF900, 0xFAFF) || inRange(c, 0x20000, 0x323AF); // through Extension H
 }
 
 bool isHangul(char32_t c)
 {
     return inRange(c, 0xAC00, 0xD7A3) || inRange(c, 0x1100, 0x11FF) || inRange(c, 0x3130, 0x318F) ||
            inRange(c, 0xA960, 0xA97C) || inRange(c, 0xD7B0, 0xD7FB) ||
-           inRange(c, 0xFFA0, 0xFFDC); // the halfwidth forms, as the compatibility jamo (Codex)
+           inRange(c, 0xFFA0, 0xFFDC); // halfwidth jamo
 }
 
 bool isLatin(char32_t c)
 {
     return inRange(c, U'a', U'z') || inRange(c, U'A', U'Z') ||
            (inRange(c, 0x00C0, 0x024F) && c != 0x00D7 && c != 0x00F7) || inRange(c, 0x1E00, 0x1EFF) ||
-           inRange(c, 0xFB00, 0xFB06) || // the ligatures (ﬁ, ﬃ), which the patterns know (Codex)
-           // IPA and Latin Extended-C to G (Codex)
+           inRange(c, 0xFB00, 0xFB06) || // ligatures (ﬁ, ﬃ)
+           // IPA and Latin Extended-C to G
            inRange(c, 0x0250, 0x02AF) || inRange(c, 0x2C60, 0x2C7F) || inRange(c, 0xA720, 0xA7FF) ||
            inRange(c, 0xAB30, 0xAB6F) || inRange(c, 0x10780, 0x107BF) || inRange(c, 0x1DF00, 0x1DFFF);
 }
@@ -91,17 +86,13 @@ char32_t codePointAt(u16v text, std::size_t at, std::size_t &len)
     return c;
 }
 
-// The visible characters of a Line in turn, as Auto split reads them:
-// override blocks (and an unclosed "{" to the end) skipped, \N \n \h one
-// space each. Each goes to `take` once the one after it is read, which
-// stops them by returning false.
+// An unclosed "{" ends the text. `take` gets each unit once the next one is
+// read; returning false stops.
 template <class Take>
 void eachUnit(u16v text, const KaraokeCharClass &classes, Take take)
 {
-    // an apostrophe between two Latin letters is part of the word (don't,
-    // n'yo), with a block beside it too (don'{\i1}t reads as don't)
     std::optional<Unit> held;
-    std::optional<Kind> before; // the kind of the one before it
+    std::optional<Kind> before;
     const auto hand = [&](const Unit &unit) {
         if (held && before == Kind::Latin && held->kind == Kind::Punct && isApostrophe(held->cp) &&
             unit.kind == Kind::Latin)
@@ -134,8 +125,6 @@ void eachUnit(u16v text, const KaraokeCharClass &classes, Take take)
             continue;
         }
         unit.cp = codePointAt(text, i, unit.len);
-        // the whole letter, a block inside it too (KA1-grapheme-letters), and
-        // what follows its first character outside blocks
         const std::size_t base = unit.len;
         unit.len = std::max(unit.len, karaokeLetterEnd(text, i) - i);
         for (std::size_t m = i + base; m < i + unit.len;) {
@@ -159,8 +148,8 @@ void eachUnit(u16v text, const KaraokeCharClass &classes, Take take)
         else if (isHangul(c))
             unit.kind = Kind::Hangul;
         else if (classes.symbol && classes.symbol(c))
-            unit.kind = Kind::Other; // legacy's punctuation, but a symbol opens what follows (Codex)
-        else if (classes.punct && classes.punct(c)) // past the BMP too (Codex)
+            unit.kind = Kind::Other;
+        else if (classes.punct && classes.punct(c))
             unit.kind = Kind::Punct;
         else if (isLatin(c))
             unit.kind = Kind::Latin;
@@ -174,8 +163,7 @@ void eachUnit(u16v text, const KaraokeCharClass &classes, Take take)
         take(*held);
 }
 
-// The first `most` + 1 of them at most (Codex security: past `most`, a
-// Line's Auto split is none).
+// At most `most` + 1 units.
 std::vector<Unit> units(u16v text, const KaraokeCharClass &classes, std::size_t most)
 {
     std::vector<Unit> out;
@@ -191,23 +179,21 @@ bool isWord(Kind kind)
     return kind != Kind::Space && kind != Kind::Punct;
 }
 
-// Punctuation that opens what follows it (a quote or bracket after a space).
+// Opening quotes and brackets.
 bool opens(char32_t c)
 {
     static constexpr std::u32string_view set = U"([{<\"'‘“«「『【〈《（［";
     return set.find(c) != std::u32string_view::npos;
 }
 
-// ---- kana --------------------------------------------------------------------
-
 bool smallKana(char32_t c)
 {
     static constexpr std::u32string_view set =
         U"ぁぃぅぇぉゃゅょゎァィゥェォャュョ"
         U"ヮｧｨｩｪｫｬｭｮﾞﾟ"
-        U"ゕゖヵヶ"; // small ka and ke (Codex); between kanji (一ヶ月) a run of their own
+        U"ゕゖヵヶ";
     return set.find(c) != std::u32string_view::npos || inRange(c, 0x31F0, 0x31FF) ||
-           // the Small Kana Extension's (small ko, wi, we, wo, n)
+           // Small Kana Extension
            c == 0x1B132 || inRange(c, 0x1B150, 0x1B152) || c == 0x1B155 || inRange(c, 0x1B164, 0x1B167);
 }
 
@@ -221,8 +207,6 @@ bool syllabicN(char32_t c)
     return c == 0x3093 || c == 0x30F3 || c == 0xFF9D;
 }
 
-// ---- romaji ------------------------------------------------------------------
-
 enum class Mora { Plain, Double, N };
 
 bool vowel(char16_t c)
@@ -230,9 +214,6 @@ bool vowel(char16_t c)
     return c == u'a' || c == u'i' || c == u'u' || c == u'e' || c == u'o';
 }
 
-// Hepburn's syllables (with the loanword ones Japanese lyrics write: fa,
-// di, she, je...) that are not a lone vowel. Not wi, we and the v ones:
-// English words (love, were) would read as romaji.
 bool romajiSyllable(u16v s)
 {
     static constexpr std::array<std::u16string_view, 104> table = {
@@ -253,8 +234,7 @@ struct MoraAt {
     Mora kind;
 };
 
-// The morae of a lower-case word read as romaji (one character a unit,
-// accents taken off), or none when it is not romaji.
+// nullopt when the lower-case word is not romaji.
 std::optional<std::vector<MoraAt>> romajiMorae(u16v s)
 {
     std::vector<MoraAt> out;
@@ -266,7 +246,6 @@ std::optional<std::vector<MoraAt>> romajiMorae(u16v s)
             out.push_back({i++, Mora::Plain});
             continue;
         }
-        // syllabic n: before a consonant (not y), an apostrophe or the end; m before b, p, m
         if (c == u'n' && (next == u'\0' || next == u'\'' || (!vowel(next) && next != u'y'))) {
             out.push_back({i, Mora::N});
             i += next == u'\'' ? 2 : 1;
@@ -276,7 +255,6 @@ std::optional<std::vector<MoraAt>> romajiMorae(u16v s)
             out.push_back({i++, Mora::N});
             continue;
         }
-        // a double consonant (kk, tt, tch, cch...)
         if ((next == c && std::u16string_view(u"kgsztdbpfjc").find(c) != std::u16string_view::npos) ||
             (c == u't' && next == u'c')) {
             out.push_back({i++, Mora::Double});
@@ -295,9 +273,6 @@ std::optional<std::vector<MoraAt>> romajiMorae(u16v s)
     return out;
 }
 
-// The letter a romaji reading takes: lower case without the marks Hepburn
-// and its variants write long vowels with (ā and â); other accents (café,
-// naïve) are no romaji.
 char16_t romajiLetter(char32_t c, const KaraokeCharClass &classes)
 {
     if (c >= 0x10000)
@@ -318,12 +293,6 @@ char16_t romajiLetter(char32_t c, const KaraokeCharClass &classes)
     return isApostrophe(c) ? u'\'' : low;
 }
 
-// ---- one word ----------------------------------------------------------------
-
-// The run [from, to) of Latin units as romaji reads it, and how many
-// letters it has. A letter written with a combining mark (NFD) reads as its
-// composed form does: a circumflex or macron on a vowel is the long vowel,
-// any other mark no romaji letter.
 std::pair<u16, int> latinLetters(const std::vector<Unit> &all, std::size_t from, std::size_t to,
                                  const KaraokeCharClass &classes)
 {
@@ -340,10 +309,6 @@ std::pair<u16, int> latinLetters(const std::vector<Unit> &all, std::size_t from,
     return {letters, count};
 }
 
-// Whether the Line's Latin words are English: its words that are no romaji
-// outweigh those that are, a word weighing its letters past the second (a
-// tie is romaji). Short words (to, no, I) read as either, and more English
-// ones than long ones (take, home) read as romaji by chance.
 bool englishLine(const std::vector<Unit> &all, const KaraokeCharClass &classes)
 {
     int romaji = 0, english = 0;
@@ -367,8 +332,6 @@ void splitWord(const std::vector<Unit> &all, std::size_t from, std::size_t to, c
                const KaraokeCharClass &classes, bool english, std::vector<std::size_t> &starts)
 {
     std::size_t runStart = from;
-    // where the next run's syllable starts: an unclassified run (digits,
-    // symbols) opens the one after it
     std::size_t opens = from;
     while (runStart < to) {
         std::size_t runEnd = runStart + 1;
@@ -379,7 +342,7 @@ void splitWord(const std::vector<Unit> &all, std::size_t from, std::size_t to, c
             continue;
         }
         if (opens != from)
-            starts.push_back(opens); // a new script, a new syllable
+            starts.push_back(opens);
         opens = runEnd;
         const bool lastRun = runEnd == to;
         switch (all[runStart].kind) {
@@ -400,8 +363,6 @@ void splitWord(const std::vector<Unit> &all, std::size_t from, std::size_t to, c
             break;
         case Kind::Latin: {
             const u16 letters = latinLetters(all, runStart, runEnd, classes).first;
-            // in an English Line every word is English; in a romaji one, a
-            // word that is no romaji
             const auto morae = english ? std::nullopt : romajiMorae(letters);
             if (morae) {
                 for (std::size_t m = 1; m < morae->size(); m++) {
@@ -425,9 +386,7 @@ void splitWord(const std::vector<Unit> &all, std::size_t from, std::size_t to, c
     }
 }
 
-} // namespace
-
-// ---- Hyphenation -------------------------------------------------------------
+}
 
 Hyphenation Hyphenation::fromPatterns(std::string_view utf8)
 {
@@ -438,13 +397,13 @@ Hyphenation Hyphenation::fromPatterns(std::string_view utf8)
         const auto line = trimmed(utf8.substr(0, eol));
         utf8.remove_prefix(eol == std::string_view::npos ? utf8.size() : eol + 1);
         if (std::exchange(first, false))
-            continue; // the charset
+            continue; // the charset line
         if (line.empty() || line.front() == '%')
             continue;
         if (line == "NEXTLEVEL")
-            break; // compound-word levels: not read
+            break; // compound-word levels
         if (line.find(' ') != std::string_view::npos)
-            continue; // LEFTHYPHENMIN and the like: print's, not a singer's
+            continue; // LEFTHYPHENMIN and the like
         if (line.find('/') != std::string_view::npos)
             continue; // libhyphen's non-standard patterns
         const u16 pattern = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(line.data()), line.size()));
@@ -468,7 +427,6 @@ Hyphenation Hyphenation::fromPatterns(std::string_view utf8)
 
 std::vector<std::size_t> Hyphenation::breaks(std::u16string_view word) const
 {
-    // two letters at least on either side (sto|ry, not s|to|ry or dream|s)
     constexpr std::size_t kLeft = 2, kRight = 2;
     std::vector<std::size_t> out;
     if (m_patterns.empty() || word.size() < kLeft + kRight)
@@ -490,8 +448,6 @@ std::vector<std::size_t> Hyphenation::breaks(std::u16string_view word) const
     return out;
 }
 
-// ---- Auto split --------------------------------------------------------------
-
 bool karaokeContinuesGrapheme(std::u16string_view text, std::size_t at)
 {
     if (at == 0 || at >= text.size())
@@ -504,7 +460,7 @@ bool karaokeContinuesGrapheme(std::u16string_view text, std::size_t at)
 
 int karaokeWeight(std::u16string_view text, const KaraokeCharClass &classes)
 {
-    int weight = 0; // (none kept: Codex security)
+    int weight = 0;
     eachUnit(text, classes, [&](const Unit &unit) {
         weight += isWord(unit.kind) ? 1 : 0;
         return true;
@@ -519,8 +475,8 @@ std::vector<std::size_t> karaokeAutoSplit(std::u16string_view text, const Karaok
     if (all.size() > kKaraokeAutoSplitMost)
         return {};
     const bool english = englishLine(all, classes);
-    std::vector<std::size_t> startUnits; // the units that open a syllable, after the first
-    std::size_t wordEnd = 0;             // past the last word
+    std::vector<std::size_t> startUnits;
+    std::size_t wordEnd = 0;
     bool firstWord = true;
     for (std::size_t k = 0; k < all.size();) {
         if (!isWord(all[k].kind)) {
@@ -531,8 +487,6 @@ std::vector<std::size_t> karaokeAutoSplit(std::u16string_view text, const Karaok
         while (end < all.size() && isWord(all[end].kind))
             ++end;
         if (!firstWord) {
-            // the separators between two words end the syllable before them,
-            // but for what opens the word after the last space
             std::size_t at = k;
             std::size_t lastSpace = all.size();
             for (std::size_t s = wordEnd; s < k; s++)
@@ -544,7 +498,7 @@ std::vector<std::size_t> karaokeAutoSplit(std::u16string_view text, const Karaok
                 while (at > wordEnd && opens(all[at - 1].cp))
                     --at;
                 if (at == wordEnd)
-                    at = k; // only opening punctuation: it ends the syllable before
+                    at = k;
             }
             startUnits.push_back(at);
         }
@@ -555,7 +509,6 @@ std::vector<std::size_t> karaokeAutoSplit(std::u16string_view text, const Karaok
     }
     std::vector<std::size_t> starts{0};
     for (const std::size_t unit : startUnits) {
-        // right after the visible character before: blocks between go with the new syllable
         const std::size_t at = unit == 0 ? 0 : all[unit - 1].at + all[unit - 1].len;
         if (at > starts.back())
             starts.push_back(at);
@@ -563,4 +516,4 @@ std::vector<std::size_t> karaokeAutoSplit(std::u16string_view text, const Karaok
     return starts;
 }
 
-} // namespace hikari::application
+}

@@ -28,11 +28,8 @@ std::int64_t centiseconds(std::int64_t ms)
     return (ms + 5) / 10;
 }
 
-// A single-line ASS field: control characters become spaces, and the Name
-// field loses its commas (they separate the fields). A Name starting with
-// "[" gets a word joiner (U+2060) first: the loader reads "[hidden]",
-// "[bookmark]" and the other markers anywhere in such a Name as Line
-// states, so an agent called "[hidden]Singer" would hide its Lines.
+// A Name loses its commas (field separators); one starting with "[" gets a
+// word joiner first, or the loader would read a marker in it as a Line state.
 std::u8string field(std::u8string_view text, bool name)
 {
     std::u8string out;
@@ -45,8 +42,6 @@ std::u8string field(std::u8string_view text, bool name)
     return out;
 }
 
-// A title as one line of words: each run of whitespace one space, as the
-// TTML reader reads its head's names, so "[ti:  My   Song ]" is "My Song".
 std::u8string titleField(std::u8string_view text)
 {
     std::u8string words;
@@ -56,7 +51,7 @@ std::u8string titleField(std::u8string_view text)
     return field(words, false);
 }
 
-} // namespace
+}
 
 std::u8string literalText(std::u8string_view text)
 {
@@ -138,11 +133,11 @@ LoadResult lyricsDocument(LyricSheet sheet)
         script += u8"Dialogue: 0," + legacy::assTimeText(line.start) + u8"," + legacy::assTimeText(line.end) +
                   u8",Default," + field(line.actor, true) + u8",0,0,0,," + text + u8"\r\n";
     }
-    sheet.lines = {}; // only the script from here, read in place
+    sheet.lines = {};
     return loadAss(std::as_bytes(std::span(script)));
 }
 
-} // namespace detail
+}
 
 namespace {
 
@@ -150,8 +145,8 @@ using detail::LyricLine;
 using detail::LyricWord;
 using detail::u8sv;
 
-// The time inside an LRC stamp: "mm:ss", "mm:ss.f" to "mm:ss.fff",
-// "h:mm:ss.ff", or the older "mm:ss:ff" (hundredths after a colon).
+// LRC stamp: "mm:ss", "mm:ss.f" to "mm:ss.fff", "h:mm:ss.ff", or "mm:ss:ff"
+// (hundredths after a colon).
 std::optional<std::int64_t> lrcTime(u8sv text)
 {
     text = detail::trim(text);
@@ -170,7 +165,7 @@ std::optional<std::int64_t> lrcTime(u8sv text)
         if (fraction.empty())
             return std::nullopt;
     } else if (parts.size() == 3) {
-        fraction = parts.back(); // mm:ss:ff
+        fraction = parts.back();
         parts.pop_back();
     }
     if (parts.size() < 2 || parts.size() > 3)
@@ -179,8 +174,7 @@ std::optional<std::int64_t> lrcTime(u8sv text)
         return !s.empty() && std::all_of(s.begin(), s.end(), [](char8_t c) { return c >= u8'0' && c <= u8'9'; });
     };
     auto value = [](u8sv s) { return detail::clampedNumber(s); };
-    // The first part may run past 59 ("[75:02.00]"); the others are a
-    // clock's minutes and seconds.
+    // The first part may run past 59 ("[75:02.00]").
     std::int64_t ms = 0;
     for (std::size_t i = 0; i < parts.size(); ++i) {
         if (!digits(parts[i]) || (i > 0 && value(parts[i]) >= 60))
@@ -189,7 +183,7 @@ std::optional<std::int64_t> lrcTime(u8sv text)
     }
     ms *= 1000;
     if (!fraction.empty()) {
-        if (!digits(fraction) || fraction.size() > 3) // tenths to milliseconds; more would be cut
+        if (!digits(fraction) || fraction.size() > 3)
             return std::nullopt;
         const u8sv first = fraction.substr(0, 3);
         std::int64_t f = value(first);
@@ -207,10 +201,8 @@ bool isDigit(char8_t c)
     return c >= u8'0' && c <= u8'9';
 }
 
-// Whether text (after a "[" or "<") has a time stamp's shape: digits, then
-// digits, colons and dots holding a colon with a digit after it ("00:12.34"),
-// as far as they go. "<3 you", "<12: tonight>" and "[1st verse]" are
-// lyrics; "<00:0x.00>" is a broken stamp.
+// "<3 you", "<12: tonight>" and "[1st verse]" are lyrics; "<00:0x.00>" is a
+// broken stamp.
 bool stampShaped(u8sv text)
 {
     text = detail::trimLeft(text);
@@ -225,20 +217,17 @@ bool stampShaped(u8sv text)
     return false;
 }
 
-// One lyrics line of the file, before the times are resolved.
 struct LrcEntry {
     std::size_t lineNumber = 0;
-    std::vector<std::int64_t> times; // line stamps: "[mm:ss.xx]"
+    std::vector<std::int64_t> times;
     std::vector<LyricWord> words;    // begin set; end set only from a later stamp
     std::vector<bool> ended;         // per word: its end came from a stamp
-    std::u8string text;              // line-only lyrics
+    std::u8string text;              // lyrics without word stamps
     std::u8string actor;
     bool timedWords = false;
 };
 
-// A voice marker before the lyrics: Walaoke's "M:", "F:" and "D:", or the
-// "v1:" agents some converters write (up to 9 digits; the marker is copied
-// into every Line after it). It stays until another one appears.
+// Walaoke's "M:", "F:" and "D:", or a converter's "v1:" agents (up to 9 digits).
 std::optional<std::u8string> voiceMarker(u8sv &rest)
 {
     std::size_t n = 0;
@@ -254,7 +243,7 @@ std::optional<std::u8string> voiceMarker(u8sv &rest)
     return voice;
 }
 
-} // namespace
+}
 
 bool isLyricsExtension(std::u8string_view extension)
 {
@@ -275,7 +264,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
     std::int64_t offset = 0;
     std::u8string voice;
     std::vector<LrcEntry> entries;
-    std::size_t stamps = 0; // line stamps so far: each a Line, or the end of one
+    std::size_t stamps = 0;
     std::size_t lineNumber = 0;
     for (std::size_t from = 0; from <= all.size();) {
         const auto [newline, next] = detail::lineAt(all, from);
@@ -290,7 +279,6 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
 
         LrcEntry entry;
         entry.lineNumber = lineNumber;
-        // The tags before the lyrics: line stamps, and "[key:value]" ID tags.
         while (!rest.empty() && rest.front() == u8'[') {
             const std::size_t close = rest.find(u8']');
             const u8sv tag = close == u8sv::npos ? rest.substr(1) : rest.substr(1, close - 1);
@@ -303,9 +291,8 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                 entry.times.push_back(*time);
             } else {
                 const std::size_t colon = tag.find(u8':');
-                // "[Chorus]" is lyrics text. After a line's time a tag's key is
-                // a lowercase word, as lyrsync's "[00:30.79][class:shhh]";
-                // another bracket there is lyrics ("[00:01.00][Verse: 1]").
+                // After a line time only a lowercase key ("[class:shhh]") makes
+                // a tag; "[Verse: 1]" there is lyrics.
                 auto tagKey = [](u8sv key) {
                     return !key.empty() && std::ranges::all_of(key, [](char8_t c) {
                         return (c >= u8'a' && c <= u8'z') || isDigit(c) || c == u8'_' || c == u8'-';
@@ -315,19 +302,15 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                     break;
                 const u8sv key = detail::trim(tag.substr(0, colon));
                 const u8sv value = detail::trim(tag.substr(colon + 1));
-                // An empty [ti:] keeps the title before it, as an empty TTML title does.
                 if (entry.times.empty() && key == u8"ti" && !detail::titleField(value).empty())
                     sheet.title = std::u8string(value);
                 if (entry.times.empty() && key == u8"offset") {
-                    // Milliseconds, signed; positive values show the lyrics
-                    // sooner. Anything else, or more than 100 hours, is not
-                    // a time (it would move every lyric).
+                    // Signed milliseconds; positive shows the lyrics sooner.
                     u8sv digits = value;
                     const bool negative = !digits.empty() && digits.front() == u8'-';
                     if (!digits.empty() && (digits.front() == u8'-' || digits.front() == u8'+'))
                         digits.remove_prefix(1);
                     std::int64_t n = 0;
-                    // "": none; a sign needs digits after it.
                     const bool number = digits.empty() ? digits.size() == value.size()
                                                        : std::ranges::all_of(digits, isDigit);
                     if (number)
@@ -345,19 +328,16 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
             return std::unexpected(LyricsProblem{Kind::TooLarge, lineNumber, {}});
         if (rest.empty()) {
             if (!entry.times.empty())
-                entries.push_back(std::move(entry)); // a time with no lyrics ends the line before
+                entries.push_back(std::move(entry)); // a bare time ends the line before
             continue;
         }
 
         if (auto marker = voiceMarker(rest))
             voice = std::move(*marker);
         entry.actor = voice;
-        // Word stamps: "<mm:ss.xx>" starts the text after it and ends the
-        // word before. Text before the first stamp starts at the line time.
+        // "<mm:ss.xx>" starts the text after it and ends the word before.
         std::u8string pending;
         std::optional<std::int64_t> pendingBegin;
-        // Spaces before a word belong to the word before it, as written
-        // (on either side of the stamp between them).
         auto closeWord = [&](std::optional<std::int64_t> end) {
             const u8sv word = detail::trimLeft(pending);
             if (!entry.words.empty() && word.size() < pending.size())
@@ -376,7 +356,6 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                 if (!time)
                     return std::unexpected(LyricsProblem{Kind::UnreadableTime, lineNumber,
                                                          std::u8string(rest.substr(i, close == u8sv::npos ? u8sv::npos : close - i + 1))});
-                // Words before the first stamp start at the line time.
                 const bool leadingWords = !lastStamp && !detail::trim(pending).empty() && !entry.times.empty();
                 if ((lastStamp && *time < *lastStamp) || (leadingWords && *time < entry.times.front()))
                     return std::unexpected(LyricsProblem{Kind::TimeGoesBack, lineNumber, std::u8string(rest.substr(i, close - i + 1))});
@@ -401,7 +380,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
             entry.text = detail::literalText(rest);
         }
         if (entry.times.empty() && entry.words.empty())
-            continue; // only stamps, no words: nothing to show
+            continue;
         if (entry.times.empty()) {
             entry.times.push_back(entry.words.front().begin);
             if (++stamps > detail::kMaxLyricsLines)
@@ -410,7 +389,6 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         entries.push_back(std::move(entry));
     }
 
-    // One Line per line stamp, in time order; the offset moves every time.
     struct Placed {
         std::int64_t start = 0;
         const LrcEntry *entry = nullptr;
@@ -424,9 +402,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
             placed.push_back({shifted(t), &entry});
     std::stable_sort(placed.begin(), placed.end(), [](const Placed &a, const Placed &b) { return a.start < b.start; });
 
-    // A line lasts until the next line's time; the last line, for the 5 s of a
-    // new Line (legacy Dialogue()). The next later time of each, in one pass
-    // from the end.
+    // MUST KILL: kLastLine copies a new Line's default duration
     constexpr std::int64_t kLastLine = 5000;
     std::vector<std::optional<std::int64_t>> nextTimes(placed.size());
     for (std::size_t i = placed.size(); i-- > 1;)
@@ -483,4 +459,4 @@ std::expected<LoadResult, LyricsProblem> importLyrics(std::span<const std::byte>
     return std::unexpected(LyricsProblem{LyricsProblem::Kind::NoLyrics, 0, {}});
 }
 
-} // namespace hikari::core
+}

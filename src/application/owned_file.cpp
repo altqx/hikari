@@ -17,7 +17,6 @@ fs::path withSuffix(const fs::path &path, std::string_view suffix)
     return out;
 }
 
-// <name>.broken, else the first free <name>.broken-N.
 fs::path brokenName(const fs::path &path)
 {
     std::error_code ec;
@@ -27,7 +26,7 @@ fs::path brokenName(const fs::path &path)
     return name;
 }
 
-} // namespace
+}
 
 std::pair<int, int> lineColumnAt(std::string_view text, std::size_t offset)
 {
@@ -39,7 +38,6 @@ std::pair<int, int> lineColumnAt(std::string_view text, std::size_t offset)
             ++line;
             start = i + 1;
         }
-    // Columns count characters: UTF-8 continuation bytes are not one.
     int column = 1;
     for (std::size_t i = start; i < offset; ++i)
         if ((static_cast<unsigned char>(text[i]) & 0xC0) != 0x80)
@@ -62,7 +60,7 @@ std::optional<ParseFailure> checkFileVersion(std::optional<std::int64_t> version
 
 std::optional<std::string> readOwnedFile(const fs::path &path)
 {
-    // A folder in the file's place opens on Linux, then throws on reading.
+    // On Linux a directory opens as an ifstream, then throws on read.
     std::error_code ec;
     if (!fs::is_regular_file(path, ec))
         return std::nullopt;
@@ -92,7 +90,6 @@ bool writeFileAtomically(const fs::path &path, std::string_view bytes, const fs:
         std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
         if (!out)
             return false;
-        // The file keeps its permissions: a private state.json stays private.
         if (fs::is_regular_file(existing))
             fs::permissions(temporary, existing.permissions(), fs::perm_options::replace, ec);
         out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
@@ -129,7 +126,6 @@ FileLoad loadOwnedFile(const fs::path &path, const std::function<std::optional<P
     }
     load.state = FileState::Broken;
     FileProblem problem{path, {}, std::move(*failure)};
-    // A file that cannot be read stays where it is (and is not written).
     if (bytes) {
         const fs::path kept = brokenName(path);
         fs::rename(path, kept, ec);
@@ -159,4 +155,4 @@ std::string displayPath(const fs::path &path)
     return {reinterpret_cast<const char *>(text.data()), text.size()};
 }
 
-} // namespace hikari::application
+}

@@ -36,7 +36,6 @@ bool isUpperChar(char16_t c, const ReplacerCase &cases)
     return c >= u'A' && c <= u'Z';
 }
 
-// wxString::Mid: a start past the end gives "", a count past the end is cut.
 std::u16string mid(u16sv s, std::size_t first, std::size_t count = std::u16string::npos)
 {
     if (first > s.size())
@@ -60,9 +59,7 @@ std::vector<std::u8string_view> split(std::u8string_view text, char8_t delimiter
     return out;
 }
 
-// Rule::Rule(const wxString &): description \f find \f replace \f options
-// (wxTOKEN_RET_EMPTY_ALL). A missing field fails; legacy then leaves the
-// options uninitialized, here 0.
+// description \f find \f replace \f options; a missing field makes the rule invalid.
 ReplacerRule parseRule(std::u8string_view line, bool &valid)
 {
     const auto fields = split(line, u8'\f', true);
@@ -82,8 +79,6 @@ ReplacerRule parseRule(std::u8string_view line, bool &valid)
     return rule;
 }
 
-// The text legacy searches: the translation when the Line has one
-// (Dialogue::Text.CheckTl(TextTl, TextTl != "")).
 std::u16string searchedText(const core::LineRecord &line)
 {
     return core::toUtf16(line.translation.empty() ? line.text : line.translation);
@@ -100,9 +95,6 @@ bool inScope(const core::LineRecord &line, const ReplacerScope &scope, const Sel
     switch (scope.lines) {
     case L::All: return true;
     case L::Styles: {
-        // FME-styles-trimmed: each name of the comma list trimmed, as
-        // Choose styles reads it (legacy matched ",Name," in the text as
-        // typed, so "A, B" never took B).
         for (std::u8string_view name : split(scope.styles, u8',', false)) {
             while (!name.empty() && (name.front() == u8' ' || name.front() == u8'\t'))
                 name.remove_prefix(1);
@@ -114,14 +106,13 @@ bool inScope(const core::LineRecord &line, const ReplacerScope &scope, const Sel
         return false;
     }
     case L::Selected: return selection.selected.contains(line.id);
-    // S57-from-selected / R3-hang-crash-loss: every Line from the first
-    // selected one on (legacy started the walk there and then took no Line).
+    // MUST KILL: FromSelection's cut lives in startRow
     case L::FromSelection: return true;
     }
     return false;
 }
 
-// FirstSelection: the first selected shown Line's row, 0 without one.
+// The first selected shown Line's row, 0 without one.
 std::size_t startRow(const std::vector<const core::LineRecord *> &lines, const ReplacerScope &scope,
                      const Selection &selection)
 {
@@ -146,8 +137,6 @@ struct CompiledRule {
     int rule = 0;
 };
 
-// wx_regexec's wxLogError after a Matches or Replace that failed with an
-// error (PCRE2's match or heap limit), which then counted as no match.
 void noteMatchError(const core::LegacyRegex &re, ReplacerMatchErrors *errors)
 {
     if (!errors)
@@ -156,7 +145,6 @@ void noteMatchError(const core::LegacyRegex &re, ReplacerMatchErrors *errors)
         errors->push_back(std::move(error));
 }
 
-// The checked rules that compile, each with its own index.
 std::vector<CompiledRule> compileChecked(const std::vector<ReplacerRule> &rules)
 {
     std::vector<CompiledRule> out;
@@ -167,7 +155,7 @@ std::vector<CompiledRule> compileChecked(const std::vector<ReplacerRule> &rules)
     return out;
 }
 
-// ReplaceOnTab's work on one Line's text; nullopt when no find was replaced.
+// nullopt when nothing was replaced.
 std::optional<std::u16string> replaceInText(const std::u16string &lineText, const std::vector<CompiledRule> &compiled,
                                             const std::vector<ReplacerRule> &rules, const ReplacerCase &cases,
                                             ReplacerMatchErrors *errors)
@@ -178,11 +166,6 @@ std::optional<std::u16string> replaceInText(const std::u16string &lineText, cons
         const ReplacerRule &rule = rules[static_cast<std::size_t>(index)];
         const std::u16string replacement = core::toUtf16(rule.replace);
         std::size_t textPos = 0;
-        // S57-rule-offsets / R3-hang-crash-loss: each rule searches the text
-        // the previous rule produced, so every position is one in the
-        // changed text. Legacy started each rule on the Line's original text
-        // and applied those positions to the changed one (wrong places, and
-        // std::out_of_range past its end).
         std::u16string text = changedText;
         for (;;) {
             const auto match = replacerSearch(re, text);
@@ -193,8 +176,6 @@ std::optional<std::u16string> replaceInText(const std::u16string &lineText, cons
             const std::size_t start = match->first;
             std::size_t length = std::max<std::size_t>(match->second, 1);
             const std::size_t at = start + textPos;
-            // FME-replace-all-in-tags: in tags or not on the whole Line, as
-            // Find decides it (legacy read only the rest after the last match).
             if (rule.options < 16 || keepFinding(changedText, at, rule.options)) {
                 const std::u16string found = mid(changedText, at, length);
                 auto result = replacerReplace(re, found, replacement).first;
@@ -204,8 +185,7 @@ std::optional<std::u16string> replaceInText(const std::u16string &lineText, cons
                 length = replaced.size();
                 changed = true;
             }
-            // R3-hang-crash-loss: a match at the end of the text is the last
-            // (legacy found the empty match there again forever).
+            // An empty match at the end would match again forever.
             if (start >= text.size())
                 break;
             textPos += start + length;
@@ -217,9 +197,7 @@ std::optional<std::u16string> replaceInText(const std::u16string &lineText, cons
     return changedText;
 }
 
-} // namespace
-
-// ---- Rules.txt
+}
 
 std::u8string defaultReplacerRules()
 {
@@ -245,15 +223,14 @@ ReplacerRules readReplacerRules(std::u8string_view fileText, RulesReadBy build)
     if (text.empty())
         text = defaultReplacerRules();
 
-    // wxTOKEN_STRTOK: empty lines are skipped. The checkbox line follows the
-    // header, or is the first line when the header is missing.
+    // Empty lines are skipped; the checkbox line follows the header, or comes first without one.
     const auto lines = split(text, u8'\n', false);
     std::size_t next = 0;
     std::u8string_view header = next < lines.size() ? lines[next++] : std::u8string_view();
     if (header.starts_with(kRulesHeader))
         header = next < lines.size() ? lines[next++] : std::u8string_view();
     if (build == RulesReadBy::Linux && header.ends_with(u8'\r'))
-        header.remove_suffix(1); // F4-rules-cr
+        header.remove_suffix(1);
     const auto onOff = split(header, u8'|', false);
 
     ReplacerRules out;
@@ -285,8 +262,6 @@ std::u8string writeReplacerRules(const std::vector<ReplacerRule> &rules)
     return text;
 }
 
-// ---- case and tags
-
 std::u16string moveCase(std::u16string_view original, std::u16string result, int options, const ReplacerCase &cases)
 {
     if (options & kReplacerUnchangedCase || original.empty() || result.empty())
@@ -301,8 +276,6 @@ std::u16string moveCase(std::u16string_view original, std::u16string result, int
             c = upperOf(c, cases);
         return result;
     }
-    // More than one capital in the find: all capitals; one (anywhere): the
-    // first character capital.
     const auto capitals = std::ranges::count_if(original, [&](char16_t c) { return isUpperChar(c, cases); });
     if (capitals > 1) {
         for (auto &c : result)
@@ -316,7 +289,6 @@ std::u16string moveCase(std::u16string_view original, std::u16string result, int
 bool keepFinding(std::u16string_view text, std::size_t position, int options)
 {
     bool inTags = false;
-    // From the find's own character back; the end of the text reads as '\0'.
     for (std::size_t i = position + 1; i-- > 0;) {
         const char16_t c = i < text.size() ? text[i] : u'\0';
         if (c == u'}')
@@ -333,8 +305,6 @@ bool keepFinding(std::u16string_view text, std::size_t position, int options)
     return false;
 }
 
-// ---- the regular expression
-
 core::LegacyRegex compileReplacerRule(const ReplacerRule &rule)
 {
     int flags = core::LegacyRegex::Advanced;
@@ -347,7 +317,7 @@ std::vector<ReplacerRegexError> replacerRegexErrors(const std::vector<ReplacerRu
 {
     std::vector<ReplacerRegexError> out;
     if (checkedOnly && std::ranges::none_of(rules, &ReplacerRule::checked))
-        return out; // SeekOnTab / ReplaceOnTab return before compiling anything
+        return out;
     for (const auto &rule : rules) {
         if (checkedOnly && !rule.checked)
             continue;
@@ -372,18 +342,15 @@ std::pair<std::u16string, int> replacerReplace(const core::LegacyRegex &re, std:
     return {std::move(out), std::max(count, 0)};
 }
 
-// ---- find and replace in a Document
-
 std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vector<ReplacerRule> &rules,
                                      const ReplacerScope &scope, ReplacerMatchErrors *matchErrors)
 {
-    // SeekOnTab numbers each find with checkedRules[k], k counting only the
-    // rules that compile: after an invalid checked rule the numbers shift.
+    // MUST KILL: finds take checked[k] by compiled index, so an invalid checked rule shifts the numbers
     std::vector<int> checked;
     for (std::size_t i = 0; i < rules.size(); ++i)
         if (rules[i].checked)
             checked.push_back(static_cast<int>(i));
-    std::vector<std::pair<core::LegacyRegex, int>> compiled; // {expression, options}
+    std::vector<std::pair<core::LegacyRegex, int>> compiled;
     for (const int i : checked) {
         const auto &rule = rules[static_cast<std::size_t>(i)];
         if (auto re = compileReplacerRule(rule); re.isValid())
@@ -396,7 +363,7 @@ std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vect
     const auto lines = session.document().lines();
     const Selection &selection = session.selection();
     const std::size_t start = startRow(lines, scope, selection);
-    int shown = 0; // positionId: shown Lines before the row
+    int shown = 0;
     for (std::size_t row = 0; row < start; ++row)
         shown += lines[row]->visibility != core::LineVisibility::Hidden;
     for (std::size_t row = start; row < lines.size(); ++row) {
@@ -417,9 +384,6 @@ std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vect
                     const std::size_t length = std::max<std::size_t>(match->second, 1);
                     if (options < 16 || keepFinding(lineText, match->first + textPos, options))
                         out.push_back({row, shown + 1, lineText, match->first + textPos, length, checked[k]});
-                    // R3-hang-crash-loss: a find at the end of the text is the
-                    // last (legacy searched "" past the end forever when an
-                    // expression matched it).
                     textPos += match->first + length;
                 }
             }
@@ -439,10 +403,7 @@ std::expected<bool, CommandRefusal> replaceErrors(EditSession &session, const st
     const auto lines = session.document().lines();
     const Selection &selection = session.selection();
     std::set<core::LineId> touches;
-    // Legacy walked each Line once and logged its match errors as it went.
-    // Each Line's errors come from the walk that decides its text: this one,
-    // or for a changed Line the command's walk below.
-    std::map<std::size_t, ReplacerMatchErrors> lineErrors; // by row
+    std::map<std::size_t, ReplacerMatchErrors> lineErrors;
     std::map<core::LineId, std::size_t> rowOf;
     for (std::size_t row = startRow(lines, scope, selection); row < lines.size(); ++row) {
         const auto &line = *lines[row];
@@ -465,8 +426,7 @@ std::expected<bool, CommandRefusal> replaceErrors(EditSession &session, const st
         report();
         return false;
     }
-    // The Lines are worked out again on the content the command sees (a
-    // pending draft on one of them is committed first).
+    // MUST KILL: replaceInText runs twice, before the command and again inside it
     const auto ran = session.run(Command{"Fixing minor errors", session.revision(), touches, [&](core::Document &d) {
                                              for (const auto id : touches) {
                                                  const auto *line = lineById(d, id);
@@ -493,14 +453,12 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
                                                           const std::vector<ReplacerFind> &finds,
                                                           const ReplacerCase &cases)
 {
-    // ReplaceChecked compiles every rule that compiles and indexes them by
-    // the find's rule number: after an invalid rule the expressions shift.
+    // MUST KILL: compiled is indexed by the find's rule number, so an invalid rule shifts the expressions
     std::vector<core::LegacyRegex> compiled;
     for (const auto &rule : rules)
         if (auto re = compileReplacerRule(rule); re.isValid())
             compiled.push_back(std::move(re));
 
-    // Consecutive finds on one row form a block; rows past the end are skipped.
     const auto lines = session.document().lines();
     std::vector<std::vector<ReplacerFind>> blocks;
     std::set<core::LineId> touches;
@@ -515,8 +473,6 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
     ReplacedFinds out;
     if (blocks.empty())
         return out;
-    // Each block from its last position back (legacy std::sort on few
-    // elements keeps equal positions in list order).
     for (auto &block : blocks)
         std::ranges::stable_sort(block, [](const auto &a, const auto &b) { return a.position > b.position; });
 
@@ -539,9 +495,6 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
                         find.rule >= 0 && static_cast<std::size_t>(find.rule) < rules.size() ? &rules[static_cast<std::size_t>(find.rule)]
                                                                                               : nullptr;
                     const std::u16string found = mid(lineText, find.position, find.length);
-                    // R3-hang-crash-loss: legacy read past its expressions (and
-                    // rules) here when the number has none; bounds-checked, such
-                    // a find is not replaced and is logged.
                     const core::LegacyRegex *re =
                         find.rule >= 0 && static_cast<std::size_t>(find.rule) < compiled.size() ? &compiled[static_cast<std::size_t>(find.rule)] : nullptr;
                     const auto replaced = re && rule ? replacerReplace(*re, found, core::toUtf16(rule->replace))
@@ -564,7 +517,6 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
                     changed = true;
                 }
             }
-            // Nothing replaced: no step (SetModified is not called).
             return changed;
         }});
     if (!ran && changed)
@@ -575,4 +527,4 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
     return out;
 }
 
-} // namespace hikari::application
+}

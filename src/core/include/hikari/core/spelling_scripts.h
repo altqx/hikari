@@ -1,10 +1,5 @@
 #pragma once
 
-// SP1 (#474): multilingual spell check routes each word to the installed
-// dictionaries of its writing script. The scripts of a word come from its
-// letters' code points; the scripts of a dictionary from its symbol's
-// language (en_US, pl, ko_KR, sr_Latn).
-
 #include <cstdint>
 #include <string_view>
 
@@ -39,7 +34,6 @@ enum class Script : std::uint8_t {
     Han,
 };
 
-// A set of scripts, one bit each.
 class Scripts {
 public:
     constexpr Scripts() = default;
@@ -70,4 +64,4 @@ bool dominantScript(std::u16string_view text, Script &out);
 // language is not in the table.
 Scripts dictionaryScripts(std::u16string_view symbol);
 
-} // namespace hikari::core::spelling
+}

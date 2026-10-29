@@ -12,12 +12,11 @@ using u16 = std::u16string;
 using u16v = std::u16string_view;
 
 struct Entry {
-    u16v kana;          // hiragana, one or two
-    std::string_view romaji; // its readings, space-separated; the first is how romajiToHiragana writes it
+    u16v kana;
+    std::string_view romaji; // space-separated; the first is canonical
 };
 
-// The order matters to romajiToHiragana: a reading goes to the first entry
-// that has it first (ji to じ, not ぢ; wa to わ, not は; di to でぃ).
+// MUST KILL: entry order decides which kana romajiToHiragana gives a reading
 constexpr std::array kTable{
     Entry{u"あ", "a"},    Entry{u"い", "i"},     Entry{u"う", "u"},       Entry{u"え", "e"},    Entry{u"お", "o"},
     Entry{u"か", "ka"},   Entry{u"き", "ki"},    Entry{u"く", "ku"},      Entry{u"け", "ke"},   Entry{u"こ", "ko"},
@@ -34,7 +33,6 @@ constexpr std::array kTable{
     Entry{u"や", "ya"},   Entry{u"ゆ", "yu"},    Entry{u"よ", "yo"},
     Entry{u"ら", "ra"},   Entry{u"り", "ri"},    Entry{u"る", "ru"},      Entry{u"れ", "re"},   Entry{u"ろ", "ro"},
     Entry{u"わ", "wa"},   Entry{u"を", "wo o"},  Entry{u"ん", "n n' m"},  Entry{u"ゔ", "vu"},
-    // two kana
     Entry{u"きゃ", "kya"}, Entry{u"きゅ", "kyu"}, Entry{u"きょ", "kyo"},
     Entry{u"ぎゃ", "gya"}, Entry{u"ぎゅ", "gyu"}, Entry{u"ぎょ", "gyo"},
     Entry{u"しゃ", "sha sya"}, Entry{u"しゅ", "shu syu"}, Entry{u"しょ", "sho syo"}, Entry{u"しぇ", "she sye"},
@@ -51,7 +49,6 @@ constexpr std::array kTable{
     Entry{u"うぃ", "wi"},  Entry{u"うぇ", "we"},  Entry{u"うぉ", "wo"},
     Entry{u"ゔぁ", "va"},  Entry{u"ゔぃ", "vi"},  Entry{u"ゔぇ", "ve"},  Entry{u"ゔぉ", "vo"},
     Entry{u"つぁ", "tsa"},
-    // after the others: their readings are the others' first
     Entry{u"ぢ", "ji di zi"}, Entry{u"づ", "zu du"}, Entry{u"ゐ", "wi i"}, Entry{u"ゑ", "we e"},
     Entry{u"ぢゃ", "ja dya"}, Entry{u"ぢゅ", "ju dyu"}, Entry{u"ぢょ", "jo dyo"},
     Entry{u"ぁ", "a"},  Entry{u"ぃ", "i"},  Entry{u"ぅ", "u"},  Entry{u"ぇ", "e"},  Entry{u"ぉ", "o"},
@@ -79,7 +76,6 @@ u16 widen(std::string_view ascii)
     return {ascii.begin(), ascii.end()};
 }
 
-// The romaji each reading writes, to the kana romajiToHiragana gives it.
 const std::map<std::string, u16v, std::less<>> &romajiKana()
 {
     static const auto map = [] {
@@ -88,7 +84,7 @@ const std::map<std::string, u16v, std::less<>> &romajiKana()
             for (const Entry &entry : kTable) {
                 const auto readings = readingsOf(entry);
                 for (std::size_t i = firstOnly ? 0 : 1; i < (firstOnly ? 1 : readings.size()); ++i)
-                    out.emplace(std::string(readings[i]), entry.kana); // the first one in keeps it
+                    out.emplace(std::string(readings[i]), entry.kana);
             }
         return out;
     }();
@@ -100,8 +96,7 @@ bool vowel(char16_t c)
     return c == u'a' || c == u'i' || c == u'u' || c == u'e' || c == u'o';
 }
 
-// Lower case, a vowel's macron, circumflex or acute taken off; 0 for a
-// character no romaji has.
+// 0 for a character no romaji has.
 char16_t romajiLetter(char16_t c)
 {
     if (c >= u'A' && c <= u'Z')
@@ -116,7 +111,7 @@ char16_t romajiLetter(char16_t c)
     return 0;
 }
 
-} // namespace
+}
 
 bool isKana(char32_t c)
 {
@@ -141,7 +136,6 @@ std::vector<KanaReading> kanaReadings(u16v text)
         return out;
     }
     if (first == kSmallTsu) {
-        // the next kana's consonant (any at the end, or before no kana)
         std::u16string consonants;
         for (const auto &next : text.size() > 1 && toHiragana(text[1]) != kSmallTsu ? kanaReadings(text.substr(1))
                                                                                      : std::vector<KanaReading>{}) {
@@ -192,14 +186,12 @@ std::optional<u16> romajiToHiragana(u16v romaji)
             ++i;
             continue;
         }
-        // a doubled consonant (kk, tt, tch)
         if (c != 'n' && !vowel(c) && ((next == c && kConsonants.find(c) != std::string_view::npos) ||
                                       (c == 't' && next == 'c'))) {
             out += kSmallTsu;
             ++i;
             continue;
         }
-        // n before a consonant, an apostrophe or the end; m before b, p, m
         if ((c == 'n' && (next == '\0' || next == '\'' || (!vowel(next) && next != 'y'))) ||
             (c == 'm' && (next == 'b' || next == 'p' || next == 'm'))) {
             out += u'ん';
@@ -223,4 +215,4 @@ std::optional<u16> romajiToHiragana(u16v romaji)
     return out;
 }
 
-} // namespace hikari::application
+}

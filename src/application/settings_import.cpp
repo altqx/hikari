@@ -14,15 +14,11 @@ namespace {
 
 constexpr std::string_view kWindowLetters = "GSEVA";
 constexpr std::string_view kCrashMarker = "___Program Crashed___";
-// The legacy program name the converters write in their header line; only
-// its presence matters (it is one more record SetRawOptions counts).
+// Only its presence matters: the converter's header line counts as a record.
 constexpr std::string_view kConverterProgname = "HikariSub";
-
-// ---- text helpers
 
 bool isSpace(char c)
 {
-    // wxString::Trim: wxSafeIsspace (" \t\n\v\f\r").
     return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
 }
 
@@ -45,7 +41,6 @@ std::string_view trim(std::string_view s)
     return trimRight(trimLeft(s));
 }
 
-// wxString::BeforeFirst / AfterFirst: the whole text / "" without `c`.
 std::string_view beforeFirst(std::string_view s, char c)
 {
     const auto at = s.find(c);
@@ -58,14 +53,12 @@ std::string_view afterFirst(std::string_view s, char c)
     return at == std::string_view::npos ? std::string_view() : s.substr(at + 1);
 }
 
-// The code points of UTF-8 text (wxString's characters on Linux; on Windows
-// they are UTF-16 units, which differ only beyond the BMP).
+// The Windows build counted UTF-16 units, which differ only beyond the BMP.
 std::size_t codePoints(std::string_view s)
 {
     return std::size_t(std::count_if(s.begin(), s.end(), [](char c) { return (static_cast<unsigned char>(c) & 0xC0) != 0x80; }));
 }
 
-// The byte offset of code point `n` (or the end).
 std::size_t offsetOf(std::string_view s, std::size_t n)
 {
     std::size_t i = 0;
@@ -75,13 +68,12 @@ std::size_t offsetOf(std::string_view s, std::size_t n)
         if (n == 0)
             return i;
     }
-    // Skip to the start of the next code point.
     while (i < s.size() && (static_cast<unsigned char>(s[i]) & 0xC0) == 0x80)
         ++i;
     return i;
 }
 
-// wxString::Mid(first, count) in code points.
+// `first` and `count` in code points.
 std::string_view mid(std::string_view s, std::size_t first, std::size_t count = std::string_view::npos)
 {
     const std::size_t begin = first == 0 ? 0 : offsetOf(s, first);
@@ -98,8 +90,6 @@ struct Token {
     std::string text;
 };
 
-// wxStringTokenizer(text, "\n") in wxTOKEN_STRTOK mode (the default for
-// whitespace delimiters): the non-empty pieces, with their line numbers.
 std::vector<Token> strtokLines(std::string_view text, int firstLine)
 {
     std::vector<Token> out;
@@ -117,8 +107,6 @@ std::vector<Token> strtokLines(std::string_view text, int firstLine)
     }
     return out;
 }
-
-// ---- encodings
 
 bool validUtf8(std::string_view s)
 {
@@ -200,8 +188,7 @@ std::optional<std::string> fromUtf16(std::string_view bytes, bool bigEndian)
     return out;
 }
 
-// Windows-1252's 0x80-0x9F (the five undefined bytes map to the C1 control
-// of the same value, as Windows' MultiByteToWideChar does).
+// Undefined bytes map to the C1 control of the same value, as MultiByteToWideChar does.
 constexpr std::array<char16_t, 32> kCp1252High = {
     0x20AC, 0x0081, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160,
     0x2039, 0x0152, 0x008D, 0x017D, 0x008F, 0x0090, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022,
@@ -221,8 +208,6 @@ std::string fromSingleByte(std::string_view bytes, Interpretation interpretation
     return out;
 }
 
-// ---- values
-
 std::string listText(const std::vector<std::string> &list)
 {
     std::string out;
@@ -241,18 +226,15 @@ SettingValue effectiveValue(const SettingDefinition &def, const Destination &des
     return def.defaultValue;
 }
 
-// GetTable's mode per option (the legacy consumer's call, cited).
 TableMode tableModeOf(std::string_view id)
 {
-    // findreplace.cpp:44-59 and SelectLines.cpp:36 read with
-    // wxTOKEN_RET_EMPTY_ALL; the others with GetTable's default (STRTOK).
+    // HikariSub legacy kept empty entries in these lists only.
     static constexpr std::string_view retEmptyAll[] = {"find.recentFinds", "find.recentReplacements",
                                                        "findInSubs.recentFilters", "findInSubs.recentPaths",
                                                        "selectLines.recentSelections"};
     return std::ranges::find(retEmptyAll, id) != std::end(retEmptyAll) ? TableMode::ReturnEmptyAll : TableMode::Strtok;
 }
 
-// wxString::IsNumber-like: optional sign, then digits only (no blanks).
 bool isPlainInteger(std::string_view s)
 {
     if (!s.empty() && (s.front() == '+' || s.front() == '-'))
@@ -262,23 +244,20 @@ bool isPlainInteger(std::string_view s)
 
 struct OptionReading {
     SettingValue value;
-    std::string problem; // malformed: legacy's reading kept in the reason
+    std::string problem; // malformed: how legacy read it
     std::string note;
 };
 
-// The option's typed value as legacy read it (config.cpp:156-198, 753-765).
 OptionReading readOption(const SettingDefinition &def, std::string_view raw, bool windows)
 {
     OptionReading r;
     switch (def.type) {
     case SettingType::Bool:
-        // GetBool: exactly "true" (config.cpp:165-168).
         r.value = raw == "true";
         if (!raw.empty() && raw != "true" && raw != "false")
             r.problem = "legacy reads \"" + std::string(raw) + "\" as false (GetBool, config.cpp:165-168)";
         break;
     case SettingType::Int:
-        // GetInt: wxAtoi (config.cpp:186-191), per build as hotkeyLabelNumber.
         r.value = std::int64_t(hotkeyLabelNumber(raw, windows));
         if (!raw.empty() && !isPlainInteger(raw))
             r.problem = "not a whole number; legacy's wxAtoi reads " + std::to_string(std::get<std::int64_t>(r.value)) +
@@ -297,7 +276,6 @@ OptionReading readOption(const SettingDefinition &def, std::string_view raw, boo
         break;
     }
     }
-    // hikarisubApp.cpp:331-336: a language of "0" or "1" is read as none.
     if (def.legacyKey == "PROGRAM_LANGUAGE" && (raw == "0" || raw == "1")) {
         r.value = std::string();
         r.note = "legacy reads the language \"" + std::string(raw) + "\" as none at startup (hikarisubApp.cpp:331-336)";
@@ -331,9 +309,7 @@ std::string windowLetter(int type)
     return type >= 0 && type < kHotkeyWindows ? std::string(1, kWindowLetters[std::size_t(type)]) : std::string("?");
 }
 
-} // namespace
-
-// ---- tables
+}
 
 std::span<const KnownSource> knownSources()
 {
@@ -355,10 +331,8 @@ bool isRetiredOption(std::string_view legacyKey)
 
 std::string_view retiredOptionReason(std::string_view legacyKey)
 {
-    // User decision 2026-10-05: no main toolbar.
     if (legacyKey == "TOOLBAR_IDS" || legacyKey == "TOOLBAR_ALIGNMENT")
-        return "retired: the rewrite has no main toolbar (user decision, 2026-10-05)";
-    // WS3 (#217, owner 2026-10-18): no editor switch.
+        return "retired: HikariSub has no main toolbar (user decision, 2026-10-05)";
     if (legacyKey == "EDITOR_ON")
         return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
     return {};
@@ -371,17 +345,13 @@ bool isRetiredAction(int id)
 
 std::string_view retiredActionReason(int id)
 {
-    // User decision 2026-10-05: GLOBAL_VIDEO_INDEXING is retired.
     if (id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING"))
-        return "retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)";
-    // AM1 (2026-10-19): GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, as the window is gone.
+        return "retired: HikariSub has no FFMS2 indexing command (user decision, 2026-10-05)";
     if (id == hotkeyIdOf("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"))
         return "retired: the shortcut mapping window is gone; each macro's shortcut is set in the "
                "Automation panel (user decision, 2026-10-19)";
-    // AV3 (owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO, as a dummy video brings its own audio.
     if (id == hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO"))
         return "retired: a dummy video brings its own silent audio (owner decision, 2026-10-18)";
-    // WS3 (#217, owner 2026-10-18): the View arrangements and the editor switch.
     for (const auto *symbol : {"GLOBAL_VIEW_ALL", "GLOBAL_VIEW_VIDEO", "GLOBAL_VIEW_AUDIO", "GLOBAL_VIEW_ONLY_VIDEO",
                                "GLOBAL_VIEW_SUBS"})
         if (id == hotkeyIdOf(symbol))
@@ -439,17 +409,12 @@ std::string_view dispositionName(Disposition d)
     return "";
 }
 
-// ---- decoding
-
 DecodedText decodeSettingsText(std::string_view bytes, ReadBy readBy, std::optional<Interpretation> interpretation)
 {
     DecodedText out;
     std::optional<std::string> text;
     auto fold = [&](std::string_view b) {
-        // The Windows build's text-mode read stopped at Ctrl+Z. CRLF reads
-        // as LF on every platform (O3-linux-crlf-blocks, approved
-        // 2026-10-05): the Windows build's text mode folded it, the Linux
-        // build kept each '\r' and lost every brace table (config.cpp:129-145).
+        // The Windows build's text mode stopped at Ctrl+Z.
         std::string s(readBy == ReadBy::Windows ? b.substr(0, b.find('\x1A')) : b);
         std::string folded;
         folded.reserve(s.size());
@@ -471,8 +436,7 @@ DecodedText decodeSettingsText(std::string_view bytes, ReadBy readBy, std::optio
             out.evidence.interpretation = "UTF-8";
         }
     } else if (bytes.starts_with("\xFF\xFE") || bytes.starts_with("\xFE\xFF")) {
-        // wxConvAuto's UTF-16 BOMs; here the line ends are folded after
-        // decoding (the byte-level fold garbles UTF-16, F1-utf16-crlf).
+        // Line ends fold after decoding: a byte-level fold garbles UTF-16.
         out.evidence.utf16Bom = true;
         const bool big = bytes.starts_with("\xFE\xFF");
         if (auto decoded = fromUtf16(bytes.substr(2), big)) {
@@ -495,15 +459,12 @@ DecodedText decodeSettingsText(std::string_view bytes, ReadBy readBy, std::optio
     return out;
 }
 
-// ---- Config.txt / AudioConfig.txt
-
 bool configNeedsConversion(std::string_view header)
 {
-    // version = fullVersion.AfterFirst('v').BeforeFirst(' ') (config.cpp:855).
     const std::string_view version = beforeFirst(afterFirst(header, 'v'), ' ');
     if (parseSemVer(version))
         return false;
-    // wxSplit(version, '.'): four parts, the last a number of at least 1142.
+    // Current: four parts, the last a number of at least 1142.
     std::vector<std::string_view> parts;
     if (!version.empty()) {
         std::size_t pos = 0;
@@ -517,7 +478,6 @@ bool configNeedsConversion(std::string_view header)
     }
     if (parts.size() != 4)
         return true;
-    // wxString::ToLong: wcstol over the whole text (leading blanks allowed).
     std::string_view last = trimLeft(parts[3]);
     long long build = 0;
     const char *begin = last.data();
@@ -531,18 +491,14 @@ bool configNeedsConversion(std::string_view header)
 
 namespace {
 
-// ConvertConfig on one line: its converted text (which may hold several
-// lines) and the old name when it renamed one.
+// The converted text (may span lines) and the old name when renamed.
 std::pair<std::string, std::string> convertConfigLine(std::string token)
 {
-    // wxRegEx("^([^=]*)") matches the text up to the first '='.
     const std::string match(beforeFirst(token, '='));
     const ConfigAlias *alias = configAliasOf(match);
     if (!alias)
         return {std::move(token), {}};
     if (token.starts_with("ToolbarIDs")) {
-        // The toolbar ids, '|'-separated, renamed through the hotkey table
-        // into a brace table (ConfigConverter.cpp:517-533).
         const std::string vals(afterFirst(token, '='));
         std::string out = std::string(alias->to) + "={\n";
         for (const auto &id : strtokLines([&] {
@@ -559,7 +515,6 @@ std::pair<std::string, std::string> convertConfigLine(std::string token)
     }
     token = std::string(alias->to) + token.substr(match.size());
     if (!alias->delimiter.empty()) {
-        // token.Replace("=", "={\n\t", false), then every delimiter "\n\t".
         if (const auto eq = token.find('='); eq != std::string::npos)
             token.replace(eq, 1, "={\n\t");
         std::string out;
@@ -576,12 +531,10 @@ std::pair<std::string, std::string> convertConfigLine(std::string token)
     return {std::move(token), match};
 }
 
-} // namespace
+}
 
 std::string convertConfigText(std::string_view text, std::string_view progname, std::map<int, std::string> *renames)
 {
-    // ConvertConfig (ConfigConverter.cpp:503-551): "[progname]\r\n", then each
-    // non-empty line, converted, followed by "\n".
     std::string result = "[" + std::string(progname) + "]\r\n";
     int outLine = 2;
     for (auto &token : strtokLines(text, 1)) {
@@ -598,17 +551,14 @@ ConfigFile readConfigFile(std::string_view text)
 {
     ConfigFile file;
     std::string txt(text);
-    // ver = txt.BeforeFirst(']').Mid(1) (config.cpp:556, 873).
     file.header = std::string(mid(beforeFirst(txt, ']'), 1));
     if (txt.ends_with(kCrashMarker)) {
         txt.resize(txt.size() - kCrashMarker.size());
         file.crashed = true;
     }
-    // txt.AfterFirst('\n'): the first line is never an option.
+    // The first line is never an option.
     txt = std::string(afterFirst(txt, '\n'));
 
-    // The tokens SetRawOptions reads, with their lines in the file and the
-    // names ConfigConverter replaced.
     struct Piece {
         int line;
         std::string text;
@@ -618,7 +568,6 @@ ConfigFile readConfigFile(std::string_view text)
     std::vector<Piece> pieces;
     if (configNeedsConversion(file.header)) {
         file.converted = true;
-        // ConvertConfig's header line is one more token SetRawOptions counts.
         pieces.push_back({1, "[" + std::string(kConverterProgname) + "]\r", {}, true});
         for (auto &token : strtokLines(txt, 2)) {
             auto [converted, from] = convertConfigLine(std::move(token.text));
@@ -630,7 +579,6 @@ ConfigFile readConfigFile(std::string_view text)
             pieces.push_back({token.line, std::move(token.text), {}});
     }
 
-    // SetRawOptions (config.cpp:120-153) and CatchValsLabs (config.cpp:259-268).
     auto catchValsLabs = [&](std::string_view line, int lineNo, const std::string &from) {
         ConfigRecord r;
         r.line = lineNo;
@@ -684,7 +632,6 @@ std::vector<std::string> legacyTable(std::string_view value, TableMode mode)
     const std::size_t length = codePoints(value);
     if (length <= 4)
         return out;
-    // strtbl.Mid(2, length - 4), split at '\n', each token's Mid(1).
     const std::string_view body = mid(value, 2, length - 4);
     std::size_t pos = 0;
     while (true) {
@@ -696,29 +643,21 @@ std::vector<std::string> legacyTable(std::string_view value, TableMode mode)
             break;
         pos = end + 1;
     }
-    // wxTOKEN_RET_EMPTY_ALL on an empty body returns nothing.
+    // An empty body has no entries even when empty ones are kept.
     if (mode == TableMode::ReturnEmptyAll && body.empty())
         out.clear();
     return out;
 }
 
-// ---- Hotkeys.txt / AudioHotkeys.txt
-
 HotkeyFile readHotkeyFile(std::string_view text, bool windows)
 {
     HotkeyFile file;
-    // wxStringTokenizer hk(acctxt, "\n", wxTOKEN_STRTOK) (Hotkeys.cpp:248).
     std::vector<Token> tokens = strtokLines(text, 1);
     std::size_t first = 0;
     if (text.starts_with('[') && !tokens.empty()) {
         const std::string &token = tokens.front().text;
         file.header = std::string(trimRight(token));
-        // int first = token.find("."); ver = token.Mid(first + 5).BeforeFirst(' ')
-        // (Hotkeys.cpp:257-261): the build number of "0.8.0.build".
-        // O3-hotkeys-semver-header (approved 2026-10-05): a semantic version
-        // ("[HikariSub v0.0.1-rc.1]", read as configNeedsConversion reads it)
-        // is current; legacy read its build number as 0 and the file as
-        // outdated. Other headers keep LoadHkeys' rule.
+        // The build number of "0.8.0.<build>"; a semantic version header is current.
         const std::string_view name = mid(beforeFirst(token, ']'), 1);
         file.semanticVersion = parseSemVer(beforeFirst(afterFirst(name, 'v'), ' ')).has_value();
         if (const auto dot = token.find('.'); dot != std::string::npos) {
@@ -737,8 +676,7 @@ HotkeyFile readHotkeyFile(std::string_view text, bool windows)
         std::string token = tokens[i].text;
         std::string renamedFrom;
         if (file.converted) {
-            // ConvertHotkeys: wxRegEx("^([^ ]*) (.)=") renamed through the
-            // table, N -> S and W -> V for the renamed ones (ConfigConverter.cpp:587-600).
+            // Renamed lines also map window N to S and W to V.
             const auto space = token.find(' ');
             if (space != std::string::npos && space + 2 < token.size() && token[space + 2] == '=') {
                 const std::string label = token.substr(0, space);
@@ -756,14 +694,11 @@ HotkeyFile readHotkeyFile(std::string_view text, bool windows)
         r.text = std::string(t);
         r.renamedFrom = renamedFrom;
         if (t.starts_with("Script")) {
-            // name = token.BeforeFirst('=', &rest) (Hotkeys.cpp:281-289).
             r.script = true;
             r.label = std::string(trim(beforeFirst(t, '=')));
             r.accel = std::string(trim(afterFirst(t, '=')));
             r.window = GlobalHotkey;
         } else {
-            // Values = AfterFirst(' ') trimmed; type = "GSEVA".find(Values[0]);
-            // Values.Remove(0, 2); Labels = BeforeFirst(' ') (Hotkeys.cpp:293-297).
             std::string_view values = trim(afterFirst(t, ' '));
             if (!values.empty()) {
                 const auto letter = kWindowLetters.find(values.front());
@@ -778,8 +713,6 @@ HotkeyFile readHotkeyFile(std::string_view text, bool windows)
     }
     return file;
 }
-
-// ---- Receipts and plans
 
 bool Receipt::sameIdentity(const Receipt &other) const
 {
@@ -810,8 +743,6 @@ std::string evidenceText(const TextEvidence &e)
     return out;
 }
 
-// O3-linux-crlf-blocks: where the importer reads a file otherwise than the
-// Linux build did.
 std::string lineEndNote(const TextEvidence &e, ReadBy readBy)
 {
     if (!e.crlf || readBy != ReadBy::Linux)
@@ -826,8 +757,6 @@ const SourceFile *findSource(const std::vector<SourceFile> &sources, SourceKind 
     return it == sources.end() ? nullptr : &*it;
 }
 
-// The proposal for a row the user may import: keep what the user set,
-// import over a default, and follow an earlier import of the same sources.
 void propose(PlanRow &row, bool currentIsUsers, const PlanOptions &options, const Receipt &identity)
 {
     row.selectable = true;
@@ -838,7 +767,6 @@ void propose(PlanRow &row, bool currentIsUsers, const PlanOptions &options, cons
     if (!previous || previous->mappingVersion != kMappingVersion)
         return;
     if (const auto it = previous->imported.find(row.id); it != previous->imported.end()) {
-        // Not edited since the last import: the new legacy value may follow.
         if (row.current && *row.current == it->second) {
             row.proposedImport = true;
         } else {
@@ -846,7 +774,7 @@ void propose(PlanRow &row, bool currentIsUsers, const PlanOptions &options, cons
             row.reason += (row.reason.empty() ? "" : "; ") + std::string("changed since the last import; kept");
         }
     } else if (previous->kept.contains(row.id) && previous->sameIdentity(identity)) {
-        row.proposedImport = false; // the same plan again: the same choice
+        row.proposedImport = false;
     }
 }
 
@@ -855,7 +783,7 @@ struct Effective {
     std::string path;
 };
 
-} // namespace
+}
 
 Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destination, const PlanOptions &options)
 {
@@ -883,9 +811,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         return add(std::move(row));
     };
 
-    // ---- Config.txt and AudioConfig.txt
-
-    // Effective records by legacy label, in the order legacy set them.
     std::map<std::string, Effective, std::less<>> effective;
     std::vector<PlanRow> supersededRows;
     std::set<std::string, std::less<>> seenLabels;
@@ -940,9 +865,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         fileRow(s, Disposition::Read, parsed->header, reason);
 
         if (audio) {
-            // LoadAudioOpts: a header other than the running build's
-            // (Config.txt's) resets the audio options to their defaults
-            // before reading (config.cpp:875).
+            // HikariSub legacy reset the audio options when the headers differ.
             if (configRead && parsed->header != configHeader)
                 for (auto it = effective.begin(); it != effective.end();) {
                     const bool reset = std::ranges::find(audioDefaultKeys(), it->first) != audioDefaultKeys().end();
@@ -983,7 +906,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
     if (audioConfig) {
         readConfigSource(*audioConfig, true);
     } else if (configRead) {
-        // LoadAudioOpts without the file: LoadDefaultAudioConfig (config.cpp:868-870).
         for (auto it = effective.begin(); it != effective.end();) {
             if (std::ranges::find(audioDefaultKeys(), it->first) != audioDefaultKeys().end()) {
                 supersede(it->second, "without AudioConfig.txt legacy loads the audio defaults (config.cpp:868-870)");
@@ -994,7 +916,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         }
     }
 
-    // One row per effective record.
     std::vector<std::pair<const ConfigRecord *, std::string>> ordered;
     for (const auto &[label, e] : effective)
         ordered.emplace_back(e.record, e.path);
@@ -1062,9 +983,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         }
         row.value = storedValue(*def, convertSetting(reading.value, def->type));
         if (def->disposition == SettingDisposition::Unresolved)
-            because("kept for review: its use in the rewrite is not settled (the migration map's preserve-unresolved)");
-        // Paths: a foreign-platform one stays unresolved; missing ones are
-        // reported and kept, never replaced.
+            because("kept for review: its use in HikariSub is not settled (the migration map's preserve-unresolved)");
         if (isPathSetting(def->id)) {
             const std::string &path = std::get<std::string>(*row.value);
             if (isForeignPath(path, destination.windowsHost)) {
@@ -1094,10 +1013,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             if (missing)
                 because(std::to_string(missing) + " missing here, kept in the list");
         }
-        // W2-missing-renderer-libass: a renderer that is not installed here
-        // (a profile's xy-VSFilter, which is no longer shipped, or a Windows
-        // profile's VSFilterMod on Linux) would draw through libass, so it is
-        // not proposed.
         if (def->id == std::string_view("video.subtitleProvider") && destination.rendererInstalled) {
             const std::string &name = std::get<std::string>(*row.value);
             if (!name.empty() && !destination.rendererInstalled(name)) {
@@ -1118,7 +1033,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
     }
     for (auto &row : supersededRows)
         add(std::move(row));
-    // Options the files leave out (the registry's legacy options).
     for (const auto &def : settingDefinitions()) {
         if (def.legacyKey.empty() || def.disposition == SettingDisposition::Excluded || isRetiredOption(def.legacyKey))
             continue;
@@ -1137,8 +1051,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         row.reason = "not in the legacy files; the current value stays";
         add(std::move(row));
     }
-
-    // ---- Hotkeys.txt and AudioHotkeys.txt
 
     HotkeyMap currentMap;
     {
@@ -1235,7 +1147,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
     if (audioHotkeys)
         readHotkeySource(*audioHotkeys, true);
 
-    // Shortcut rows, then conflicts.
     std::vector<std::size_t> shortcutRows;
     for (const auto &[record, path] : hotkeyRows) {
         PlanRow row;
@@ -1294,8 +1205,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
                 row.disposition = Disposition::Unchanged;
             } else {
                 row.disposition = Disposition::Change;
-                // Automation hotkeys' legacy import (automation_hotkeys_controller.cpp:244-252):
-                // a bound macro and keys another macro holds are kept.
                 bool taken = false;
                 for (const auto &[name, keys] : currentMacros)
                     taken = taken || (name != record->label && keys == std::get<std::string>(*row.value));
@@ -1370,8 +1279,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         shortcutRows.push_back(plan.rows.size());
         add(std::move(row));
     }
-    // Default bindings a parsed file leaves out: legacy had them unbound (a
-    // short file under C04 is read without the defaults legacy added).
+    // Defaults a parsed file leaves out were unbound in HikariSub legacy.
     std::vector<std::size_t> missingRows;
     auto missingDefaults = [&](bool audio, bool shortFile, const std::string &path) {
         HotkeyMap defaults;
@@ -1416,7 +1324,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         missingDefaults(false, mainShort, "Config/Hotkeys.txt");
     if (audioAccepted)
         missingDefaults(true, audioShort, "Config/AudioHotkeys.txt");
-    // Conflicts in a window: a legacy chord another binding holds here.
     for (const std::size_t i : shortcutRows) {
         PlanRow &row = plan.rows[i];
         if (row.disposition != Disposition::Change)
@@ -1425,7 +1332,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         for (const auto &[key, hotkey] : currentMap) {
             if (key == row.binding || key.type != row.binding.type || hotkey.accel != accel)
                 continue;
-            // Replaced by an imported legacy binding of its own: no conflict.
+            // The holder's own imported binding replaces it: no conflict.
             if (const auto legacy = legacyBindings.find(key); legacy != legacyBindings.end() &&
                                                                legacy->second.record->accel != accel)
                 continue;
@@ -1438,8 +1345,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             } else {
                 row.reason += (row.reason.empty() ? "" : "; ") + std::string("the default binding of ") + holder +
                               " has these keys";
-                // Legacy gave the chord to this action: its missing default row
-                // proposes the unbinding.
                 for (const std::size_t m : missingRows)
                     if (plan.rows[m].binding == key) {
                         plan.rows[m].proposedImport = true;
@@ -1449,9 +1354,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         }
     }
 
-    // ---- Authored collections: Rules.txt (as rules.toml), UserDic.udic, dictionaries
-
-    // `bytes`: what the import writes (the source's, unless converted).
     auto collection = [&](const SourceFile &s, const std::string &destPath, const std::string &bytes,
                           std::string reason) {
         PlanRow row;
@@ -1477,7 +1379,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
     const std::string byteForByte =
         "carried over byte for byte (R6-dictionary-location; nothing in it is rewritten or run)";
     if (const SourceFile *rules = findSource(sources, SourceKind::Rules)) {
-        // CF2 (#489): written as rules.toml, read the legacy way.
         if (destination.convertRules) {
             const std::string converted = destination.convertRules(rules->bytes);
             plan.files["rules.toml"] = converted;
@@ -1493,7 +1394,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         collection(*dic, "Dictionary/UserDic.udic", dic->bytes, byteForByte);
     }
     {
-        // Dictionary pairs: <name>.dic with <name>.aff.
         std::map<std::string, std::pair<const SourceFile *, const SourceFile *>, std::less<>> pairs;
         for (const auto &s : sources) {
             if (s.kind != SourceKind::Dictionary)
@@ -1550,7 +1450,6 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         }
     }
 
-    // ---- Themes: excluded, named.
     for (const auto &theme : options.themeFiles) {
         PlanRow row;
         row.kind = RowKind::File;
@@ -1633,8 +1532,7 @@ Profile applyPlan(const Plan &plan, const std::set<std::string, std::less<>> &ch
                         macroRows[text.substr(0, text.find('\t'))] = text;
                 macrosRead = true;
             }
-            // "legacy name\tkeys\tmacro\tsha256" with no registration recorded:
-            // it resolves through the alias alone (automation_hotkeys_controller.cpp:43-81).
+            // "legacy name\tkeys\tmacro\tsha256" without a registration resolves by alias alone.
             const std::string name = row.sourceKey;
             macroRows[name] = name + "\t" + std::get<std::string>(*row.value) + "\t\t";
             macrosTouched = true;
@@ -1679,4 +1577,4 @@ Receipt receiptOf(const Plan &plan, const std::set<std::string, std::less<>> &ch
     return r;
 }
 
-} // namespace hikari::application::settings_import
+}

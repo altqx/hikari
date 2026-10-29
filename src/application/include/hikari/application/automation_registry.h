@@ -1,13 +1,5 @@
 #pragma once
 
-// Macro identity for the automation manager (L1, S44-macro-alias;
-// docs/proposals/settings-import.md). A macro is identified by the host's
-// registration: its script's path and content hash, its registration ordinal
-// and its displayed name. The legacy `filename:ordinal` alias (what old
-// bindings stored) resolves only when it is unambiguous and the registration
-// still matches what was recorded; anything else stays visibly unresolved,
-// never bound to the nearest name.
-
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -16,10 +8,10 @@
 namespace hikari::application {
 
 struct MacroIdentity {
-    std::string scriptPath;  // as loaded
+    std::string scriptPath;
     std::string scriptSha256;
-    int ordinal = 0;         // registration order within the script, from 0
-    std::string name;        // the displayed macro name
+    int ordinal = 0; // from 0, in registration order
+    std::string name;
     std::string legacyAlias() const; // "<file name>:<ordinal>"
 };
 
@@ -28,13 +20,13 @@ enum class AliasProblem {
     MissingScript,       // no loaded script has that file name
     BasenameCollision,   // several loaded scripts share it
     OrdinalOutOfRange,
-    RegistrationChanged, // the recorded name or content differs from the current registration
+    RegistrationChanged, // the recorded name or hash differs
 };
 
 struct AliasResolution {
     std::optional<MacroIdentity> identity;
     std::optional<AliasProblem> problem;
-    std::vector<std::string> candidates; // script paths involved, for review
+    std::vector<std::string> candidates; // the script paths involved
 };
 
 class AutomationRegistry {
@@ -58,4 +50,4 @@ private:
     std::vector<Script> m_scripts;
 };
 
-} // namespace hikari::application
+}

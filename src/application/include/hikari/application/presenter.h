@@ -1,10 +1,6 @@
 #pragma once
 
-// Video presentation port (N7; docs/media.md, video pipeline). A
-// presenter takes immutable leases of a decoded frame and its subtitle
-// overlay, places them with a presentation transform, and uploads them on
-// its render thread; submitting never waits for decoding or rendering. Each
-// submission resolves once, with the stage it reached.
+// Submitting never waits for decoding or rendering; each submission resolves once.
 
 #include "hikari/application/indexed_source.h"
 #include "hikari/application/subtitle_render.h"
@@ -28,9 +24,8 @@ struct Presentation {
     std::shared_ptr<const IndexedFrame> frame;  // opaque BGRA, or Y'CbCr planes (IndexedFrame::ycbcr)
     std::shared_ptr<const OverlayFrame> overlay; // premultiplied BGRA at the frame's size; may be null
     PresentationTransform transform;
-    // Where the overlay's visible pixels are, when the submitter knows
-    // (overlayBounds); nullopt in it: none are visible. Unknown: the
-    // presenter finds them itself.
+    // With overlayBoundsKnown, where the overlay's visible pixels are (nullopt:
+    // none); otherwise the presenter finds them itself.
     bool overlayBoundsKnown = false;
     std::optional<PixelRect> overlayBounds;
 };
@@ -54,10 +49,9 @@ public:
     using Done = std::function<void(PresentResult)>;
     virtual ~PresenterPort() = default;
     virtual void present(Presentation presentation, Done done) = 0;
-    // V1: whether frames kept as Y'CbCr planes are converted on the GPU; a
-    // presenter that does not still shows them, converted on the CPU. Any
+    // Whether Y'CbCr-plane frames are converted on the GPU (else on the CPU). Any
     // thread.
     virtual bool convertsYcbcr() const { return false; }
 };
 
-} // namespace hikari::application
+}

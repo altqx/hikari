@@ -9,7 +9,7 @@ namespace {
 
 constexpr std::int64_t kMicrosPerSecond = 1'000'000;
 
-} // namespace
+}
 
 Checked<TimeDelta> TimeDelta::fromMilliseconds(std::int64_t milliseconds)
 {
@@ -69,7 +69,6 @@ Checked<Rational> Rational::make(std::int64_t numerator, std::int64_t denominato
 
 std::strong_ordering Rational::operator<=>(const Rational &other) const
 {
-    // a/b <=> c/d with b, d > 0 is exactly a*d <=> c*b.
     return compareProducts(m_num, other.m_den, other.m_num, m_den);
 }
 
@@ -85,7 +84,6 @@ Checked<FrameRate> FrameRate::make(std::int64_t numerator, std::int64_t denomina
 
 Checked<Rational> FrameRate::secondsAt(VideoFrameIndex index) const
 {
-    // index / (num/den) = index * den / num
     auto top = checkedMul(index.value(), m_fps.denominator());
     if (!top)
         return std::unexpected(top.error());
@@ -97,7 +95,6 @@ Checked<DocumentTimeConversion> toDocumentTime(const MediaTimestamp &timestamp)
     const Rational &tb = timestamp.secondsPerTick;
     if (tb.numerator() <= 0)
         return std::unexpected(ArithmeticError::InvalidRate);
-    // ticks * num * 1e6 / den, rounded to nearest with ties away from zero.
     auto scaled = checkedMul(tb.numerator(), kMicrosPerSecond);
     if (!scaled)
         return std::unexpected(scaled.error());
@@ -109,4 +106,4 @@ Checked<DocumentTimeConversion> toDocumentTime(const MediaTimestamp &timestamp)
     return DocumentTimeConversion{DocumentTime(*us), floor && ceil && *floor == *ceil};
 }
 
-} // namespace hikari::core
+}

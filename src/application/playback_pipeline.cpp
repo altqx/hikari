@@ -54,8 +54,6 @@ std::optional<PixelRect> overlayBounds(const OverlayFrame &o)
     if (o.empty || o.width <= 0 || o.height <= 0 || o.stride < o.width * 4 ||
         o.pixels.size() < static_cast<std::size_t>(o.stride) * static_cast<std::size_t>(o.height))
         return std::nullopt;
-    // The renderer's own bounds, clipped to the frame; the scan below only
-    // when it gave none (a full scan costs about 1 ms at 1080p).
     if (o.bounds) {
         const int x0 = std::max(0, o.bounds->x), y0 = std::max(0, o.bounds->y);
         const int x1 = std::min(o.width, o.bounds->x + o.bounds->width);
@@ -68,7 +66,6 @@ std::optional<PixelRect> overlayBounds(const OverlayFrame &o)
     const int pairs = o.width / 2;
     for (int y = 0; y < o.height; ++y) {
         const std::uint8_t *row = o.pixels.data() + static_cast<std::size_t>(y) * o.stride;
-        // Whole rows first, two pixels at a time.
         std::uint64_t any = 0;
         for (int i = 0; i < pairs; ++i) {
             std::uint64_t two;
@@ -108,31 +105,18 @@ std::optional<PixelRect> overlayBounds(const OverlayFrame &o)
 
 namespace {
 
-// The millisecond every renderer port draws a time at (its output depends
-// on the time only to the millisecond, subtitle_render.h).
+// Renderers draw to the millisecond.
 std::int64_t millisecond(std::int64_t us)
 {
     return us / 1000;
 }
 
-// Where the next frame starts, from the frames seen so far (the worker's),
-// as the millisecond to render ahead. Each start is taken as a measurement
-// of an exact time on a constant pace, anchor + k * interval (k: frames
-// since the anchor): in a millisecond timebase (every start a whole
-// millisecond, Matroska) one rounded half up from [start - 0.5 ms,
-// start + 0.5 ms), otherwise one within a microsecond of it (a timebase
-// converted to microseconds). The (anchor, interval) pairs every start so
-// far allows form a convex polygon, cut down by each new start; the next
-// frame's start lies in the range the polygon gives for k + 1, and the
-// millisecond covering most of that range is the guess (one render a frame;
-// nearly always right once a few frames have narrowed the pace). A start
-// the polygon cannot hold (a new rate, a seek the epoch did not show)
-// measures again from the frame before it. While half or more of the last
-// 16 guesses missed (a variable frame rate) nothing is rendered ahead.
+// Guesses the next frame's start from a constant pace fitted to the starts so
+// far. A millisecond timebase (Matroska) rounds each start half up.
 class Pace {
 public:
-    // The frame `startUs` arrived: the millisecond to render ahead for the
-    // next one (none while the guesses keep missing; `withheld` says so).
+    // The millisecond to render ahead for the next frame; nullopt with
+    // `withheld` set while the guesses keep missing.
     std::optional<std::int64_t> next(std::uint64_t epoch, std::int64_t startUs, std::optional<std::int64_t> endUs,
                                      bool &withheld)
     {
@@ -147,7 +131,7 @@ public:
             if (m_guess)
                 record(*m_guess == millisecond(startUs));
             double low = 0, high = 0;
-            span(1.0, 0.0, low, high); // the interval's range
+            span(1.0, 0.0, low, high);
             const double middle = (low + high) / 2;
             const std::int64_t k =
                 m_k + (m_k > 0 ? std::max<std::int64_t>(1, std::llround(static_cast<double>(startUs - *m_last) / middle)) : 1);
@@ -162,7 +146,6 @@ public:
         m_last = startUs;
         m_guess.reset();
         if (m_k == 0) {
-            // One frame: its end, if it has one, is the guess.
             if (endUs && *endUs > startUs)
                 m_guess = millisecond(*endUs);
             return m_guess;
@@ -187,7 +170,7 @@ public:
 
 private:
     struct Point {
-        double a, p; // the anchor's exact start (from the anchor's start, us) and the interval (us)
+        double a, p; // the anchor's exact start offset and the interval, in us
     };
     void restart(std::int64_t anchor, double half)
     {
@@ -211,7 +194,6 @@ private:
                 out.push_back({x.a + t * (y.a - x.a), x.p + t * (y.p - x.p)});
             }
         }
-        // Points a cut left on top of each other.
         std::vector<Point> kept;
         const auto same = [](const Point &x, const Point &y) {
             return std::abs(x.a - y.a) <= 1e-6 && std::abs(x.p - y.p) <= 1e-9;
@@ -223,8 +205,7 @@ private:
             kept.pop_back();
         m_polygon = std::move(kept);
     }
-    // The frame k steps from the anchor started at `startUs`: false when no
-    // pace allows it.
+    // False when no pace allows frame k to start at `startUs`.
     bool cut(std::int64_t k, std::int64_t startUs, double half)
     {
         const double x = static_cast<double>(startUs - m_anchor), kd = static_cast<double>(k);
@@ -233,7 +214,8 @@ private:
             clip(-1.0, -kd, -(x - half));
         return m_polygon.size() >= 3;
     }
-    // The range of a * ca + p * cp over the polygon (its corners).
+    // MUST KILL: span takes (cp, ca) where clip takes (ca, cp)
+    // The range of a * ca + p * cp over the polygon.
     void span(double cp, double ca, double &lo, double &hi) const
     {
         lo = std::numeric_limits<double>::infinity();
@@ -256,12 +238,12 @@ private:
     std::int64_t m_anchor = 0;
     std::int64_t m_k = 0; // frames from the anchor to the last start
     std::vector<Point> m_polygon;
-    std::optional<std::int64_t> m_guess; // the millisecond guessed for the next frame
+    std::optional<std::int64_t> m_guess;
     std::uint32_t m_misses = 0;          // the last guesses, newest in bit 0 (1: missed)
     int m_recorded = 0;
 };
 
-} // namespace
+}
 
 struct PlaybackPipeline::State {
     std::mutex mutex;
@@ -274,9 +256,8 @@ struct PlaybackPipeline::State {
     bool posted = false;          // a task to take it is on the owner's queue
     std::uint64_t serial = 0;
     bool on = false;
-    std::optional<std::pair<int, int>> screen; // SV1: the picture's size on screen (none: the video's)
+    std::optional<std::pair<int, int>> screen; // nullopt: the video's size
     Counters counters;
-    // The next frame's overlay, rendered ahead (requested, then made).
     struct AheadRequest {
         std::int64_t timeUs;
         OverlaySize size;
@@ -288,7 +269,7 @@ struct PlaybackPipeline::State {
         std::shared_ptr<const OverlayFrame> overlay;
         std::optional<PixelRect> bounds;
     };
-    // The worker's own: what it rendered ahead, and the frames' pace.
+    // Worker-only.
     std::vector<Ahead> ahead;
     Pace pace;
 };
@@ -370,7 +351,6 @@ PlaybackPipeline::Output PlaybackPipeline::process(Input input)
     out.startUs = input.startUs;
     out.frame = input.make ? input.make(*m_pool) : nullptr;
     auto ahead = std::exchange(m_state->ahead, {});
-    // What was rendered ahead and not taken by this frame was work for nothing.
     const auto unused = [this, &ahead](bool taken) {
         const std::size_t n = ahead.size() - (taken ? 1 : 0);
         if (n == 0)
@@ -499,4 +479,4 @@ void PlaybackPipeline::run()
     }
 }
 
-} // namespace hikari::application
+}

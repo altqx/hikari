@@ -7,29 +7,25 @@ namespace hikari::application {
 
 std::int64_t legacyMilliseconds(const core::TimeField &time)
 {
-    return time.value.microseconds() / 1000; // SubsTime::mstime
+    return time.value.microseconds() / 1000;
 }
 
 std::vector<Occurrence> seekOccurrences(const core::Document &reference, const core::LineRecord &editing)
 {
-    // SubsGridPreview.cpp:856-858: the editing tab's current Line's times.
     return seekOccurrences(reference, legacyMilliseconds(editing.start), legacyMilliseconds(editing.end));
 }
 
 std::vector<Occurrence> seekOccurrences(const core::Document &reference, std::int64_t startTime, std::int64_t endTime)
 {
-    // SubsGridPreview::SeekForOccurences, the loop over one tab
-    // (SubsGridPreview.cpp:868-920), transcribed with its variable names.
     const auto lines = reference.lines();
     std::vector<Occurrence> previewData;
     if (lines.empty())
-        return previewData; // the rewrite's Document never lacks Lines in practice; legacy read key 0
+        return previewData;
     std::int64_t lastLine = -2;
     std::int64_t startMin = INT_MAX, startMax = -1, endMin = INT_MAX, endMax = -1;
     std::size_t keyStartMin = 0, keyStartMax = 0, keyEndMin = 0, keyEndMax = 0;
     for (std::size_t j = 0; j < lines.size(); ++j) {
         const core::LineRecord *dial = lines[j];
-        // !dial->isVisible: NOT_VISIBLE only (an opened block is visible).
         if (dial->visibility == core::LineVisibility::Hidden)
             continue;
         const std::int64_t start = legacyMilliseconds(dial->start), end = legacyMilliseconds(dial->end);
@@ -59,8 +55,7 @@ std::vector<Occurrence> seekOccurrences(const core::Document &reference, std::in
         }
     }
     if (lastLine == -2) {
-        // SubsGridPreview.cpp:897-917: the start or end nearest to the
-        // editing Line's, preferring the start on a tie.
+        // Prefers the start on a tie.
         std::int64_t bestStart = 0, bestEnd = 0;
         std::size_t bestJ = 0, bestJE = 0;
         if (std::llabs(startTime - startMax) > std::llabs(startTime - startMin) || startMax < 0) {
@@ -129,4 +124,4 @@ bool LinkedMatch::choose(std::size_t row)
     return false;
 }
 
-} // namespace hikari::application
+}

@@ -1,8 +1,6 @@
 #pragma once
 
-// Typed time (docs/time-semantics.md): signed 64-bit microseconds for
-// Document time and deltas, distinct integral frame and sample indices, exact
-// rationals for rates and media timebases. Nothing wraps; nothing is a sentinel.
+// Signed 64-bit microseconds and exact rationals; nothing wraps, nothing is a sentinel.
 
 #include "hikari/core/checked.h"
 
@@ -19,7 +17,6 @@ public:
     static Checked<TimeDelta> fromMilliseconds(std::int64_t milliseconds);
 
     constexpr std::int64_t microseconds() const { return m_us; }
-    // Equal values compare equal under every operator (C01-equality).
     constexpr auto operator<=>(const TimeDelta &) const = default;
 
     Checked<TimeDelta> plus(TimeDelta other) const;
@@ -141,4 +138,4 @@ struct DocumentTimeConversion {
 // Nearest microsecond, ties away from zero; reports whether that lost precision.
 Checked<DocumentTimeConversion> toDocumentTime(const MediaTimestamp &timestamp);
 
-} // namespace hikari::core
+}

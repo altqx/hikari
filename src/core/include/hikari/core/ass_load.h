@@ -8,19 +8,17 @@
 
 namespace hikari::core {
 
-// Structural ASS load (C2). Keeps every byte: sections and records in authored
-// order, each linked to its source span. Field parsing reproduces the legacy
-// positional loader; anything it cannot interpret stays opaque with a
-// diagnostic. SSA, TLMode pairing and annotation markers are separate cards.
+// Keeps every byte: sections and records in authored order, each with its source span; what it cannot
+// interpret stays opaque with a diagnostic.
 LoadResult loadAss(std::span<const std::byte> bytes);
 
 namespace legacy {
-// The legacy SubsTime ASS parser: positional fields around the first ':'.
+// Positional fields around the first ':', as HikariSub legacy parses them.
 std::int64_t assTimeMilliseconds(std::u8string_view lexeme);
 // True when the lexeme is canonical "h:mm:ss.cc" (surrounding whitespace allowed).
 bool isCanonicalAssTime(std::u8string_view lexeme);
-// wxAtoi: C strtol on a 64-bit long, then truncated to int.
+// C strtol on a 64-bit long, then truncated to int.
 std::int64_t atoi(std::u8string_view text);
-} // namespace legacy
+}
 
-} // namespace hikari::core
+}

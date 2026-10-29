@@ -19,7 +19,7 @@ using u16 = std::u16string;
 using u16v = std::u16string_view;
 using u8 = std::u8string;
 
-// wxString::ToCDouble: the whole text as a C-locale number.
+// The whole text as a C-locale number.
 bool toCDouble(u16v text, double &out)
 {
     std::string ascii;
@@ -43,7 +43,6 @@ bool toCDouble(const u8 &text, double &out)
     return toCDouble(core::toUtf16(text), out);
 }
 
-// wxAtoi.
 int atoi8(const u8 &text)
 {
     return std::atoi(reinterpret_cast<const char *>(text.c_str()));
@@ -74,11 +73,10 @@ struct TagData {
     u16 name;
     u16 value;
     bool multiValue = false;
-    std::size_t start = 0; // where the value starts in the text
+    std::size_t start = 0; // value offset in the text
 };
 
-// Dialogue::ParseTags(tags, n, false): the named tags in blocks, and while a
-// \p drawing is on, the text between blocks as "pvector".
+// Named tags in override blocks; while a \p drawing is on, the text between blocks as "pvector".
 std::vector<TagData> parseTags(u16v txt, const std::vector<u16v> &names)
 {
     std::vector<TagData> out;
@@ -117,7 +115,6 @@ std::vector<TagData> parseTags(u16v txt, const std::vector<u16v> &names)
                 TagData data{u16(name), {}, false, pos + name.size()};
                 u16 value = tag.substr(name.size());
                 if (name == u"p") {
-                    // Trim() both sides, in place.
                     const auto b = value.find_first_not_of(u" \t\r\n");
                     const auto e = value.find_last_not_of(u" \t\r\n");
                     value = b == u16::npos ? u16() : value.substr(b, e - b + 1);
@@ -152,7 +149,7 @@ std::vector<TagData> parseTags(u16v txt, const std::vector<u16v> &names)
     return out;
 }
 
-// wxStringTokenizer(text, delims, wxTOKEN_STRTOK): no empty tokens.
+// Skips empty tokens.
 std::vector<u16> tokens(u16v text, char16_t delim)
 {
     std::vector<u16> out;
@@ -174,7 +171,7 @@ u16 trimmed(u16v s)
     return u16(s.substr(b, e - b + 1));
 }
 
-} // namespace
+}
 
 Resolution scriptResolution(const core::Document &document)
 {
@@ -202,7 +199,6 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
     const auto styles = core::decodeStyles(document);
     for (std::size_t i = 0; i < styles.size(); ++i) {
         core::StyleValues s = styles[i];
-        // int *= float truncates.
         int ml = atoi8(s.marginLeft);
         ml = static_cast<int>(ml * xnsize);
         s.marginLeft = number(ml);
@@ -218,7 +214,6 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
             fscx *= valFscx;
             s.scaleX = getfloat8(fscx);
         }
-        // GetFontSizeDouble: a number, else its integer part.
         double fs = 0;
         if (!toCDouble(s.fontsize, fs))
             fs = atoi8(s.fontsize);
@@ -245,7 +240,6 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
             continue;
         core::LineRecord changed = *line;
         bool marginChanged = false, textChanged = false;
-        // Dialogue margins are ints: MarginL *= xnsize truncates.
         auto scaleMargin = [&](core::IntField &field, float scale) {
             const int v = static_cast<int>(field.value);
             if (!v)
@@ -294,7 +288,6 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
                         resized += tkn + u" ";
                     }
                 }
-                // Trim(): trailing whitespace.
                 while (!resized.empty() && (resized.back() == u' ' || resized.back() == u'\t'))
                     resized.pop_back();
             } else if (tag.multiValue) {
@@ -311,7 +304,6 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
                     }
                     ++ii;
                 }
-                // BeforeLast(','): empty when there is no comma.
                 const auto comma = resized.rfind(u',');
                 resized = comma == u16::npos ? u16() : resized.substr(0, comma);
             } else if (tag.name != u"p") {
@@ -352,7 +344,6 @@ std::expected<void, CommandRefusal> changeResolution(EditSession &session, Resol
     return session.run(Command{"Changing subtitles resolution", session.revision(), touches, [&](core::Document &d) {
         d.setScriptInfo(u8"PlayResX", number(to.width));
         d.setScriptInfo(u8"PlayResY", number(to.height));
-        // Legacy tests LayoutResX twice.
         if (!d.scriptInfo(u8"LayoutResX").value_or(u8"").empty()) {
             d.setScriptInfo(u8"LayoutResX", number(to.width));
             d.setScriptInfo(u8"LayoutResY", number(to.height));
@@ -364,4 +355,4 @@ std::expected<void, CommandRefusal> changeResolution(EditSession &session, Resol
     }});
 }
 
-} // namespace hikari::application
+}

@@ -1,12 +1,6 @@
 #pragma once
 
-// The update check and its choice (docs/distribution.md, ADR 0019). It
-// reads the GitHub release list and each candidate's update manifest, or a
-// release's own asset digests when it has no manifest; keeps the releases
-// offered to this codebase; and chooses, by the install's package kind,
-// between installing the matching package, notifying only and the AUR
-// notice. Everything here is pure: the network, files and processes are the
-// app layer's (UpdateChecker, UpdateInstaller).
+// Pure: the network, files and processes are the app layer's.
 
 #include <cstdint>
 #include <functional>
@@ -33,8 +27,7 @@ bool isNewerVersion(std::string_view tag, std::string_view current);
 // GitHub's prerelease flag.
 bool isPrereleaseTag(std::string_view tag);
 
-// The codebase a release belongs to: below 0.1.0 the legacy wx app, from
-// 0.1.0 on this one.
+// Below 0.1.0 HikariSub legacy, from 0.1.0 on HikariSub.
 enum class Codebase { Legacy, Qt };
 std::optional<Codebase> codebaseOfVersion(std::string_view version);
 std::optional<Codebase> parseCodebase(std::string_view name);
@@ -71,9 +64,8 @@ bool hasStableOnlyOption(PackageKind kind, std::optional<AurChannel> channel);
 // Whether the install's AUR package carries a release: a stable one always,
 // a prerelease only hikarisub-beta-bin. The AUR notice says when it does not.
 bool aurCarries(bool prerelease, std::optional<AurChannel> channel);
-// PU7 (#309): the command the update window offers an AUR install to copy:
 // `helper` ("yay" when empty) upgrading the install's package, or the whole
-// system when the install has no channel (its package is not known).
+// system when the install has no channel.
 std::string aurUpdateCommand(std::string_view helper, std::optional<AurChannel> channel);
 
 // Every asset name, and a tag that may go into a URL.
@@ -110,12 +102,11 @@ std::optional<ReleaseEntry> findNewerRelease(const std::vector<ReleaseEntry> &re
 // A prerelease by GitHub's flag or by its tag.
 bool isPrerelease(const ReleaseEntry &release);
 
-// SH3 (#223, owner-approved 2026-10-21): What's new. The releases whose
-// notes show for `installed` after `since`, the version that ran before it:
-// no drafts, the rewrite's only (0.1.0 on), newer than `since` and up to
-// `installed`, on every channel, highest first, one per version (the first
-// listed wins). A `since` that is no version, the legacy app's or not below
-// `installed` (a first start, a downgrade) gives `installed` alone.
+// The releases whose notes show for `installed` after `since`, the version
+// that ran before it: no drafts, HikariSub's only (0.1.0 on), newer than
+// `since` and up to `installed`, on every channel, highest first, one per
+// version (the first listed wins). A `since` that is no version, HikariSub
+// legacy's or not below `installed` gives `installed` alone.
 std::vector<ReleaseEntry> whatsNewReleases(const std::vector<ReleaseEntry> &releases, std::string_view since,
                                            std::string_view installed);
 // At most this many versions show; the rest are counted.
@@ -131,7 +122,7 @@ WhatsNewShown whatsNewShown(const std::vector<ReleaseEntry> &releases, std::stri
 // The version that ran before `installed`, recorded at each start: the one
 // that ran last when it differs (an update; none on the first start ever),
 // else `storedSince`, kept until the next update. None where the installed
-// version shows alone: a downgrade, the legacy app, no version.
+// version shows alone: a downgrade, HikariSub legacy, no version.
 std::string whatsNewSince(std::string_view lastRun, std::string_view storedSince, std::string_view installed);
 
 // The update manifest, hikarisub-update.json.
@@ -216,12 +207,9 @@ bool isSha256Hex(std::string_view text);
 // unquoted as NSIS reads it. `installDir` has backslashes and no trailing one.
 std::string nsisUpdateArguments(bool machine, bool relaunch, long long waitPid, std::string_view installDir);
 
-// What installs an update decides by itself that the package is the
-// release's own file (ADR 0019): nothing the unprivileged app recorded,
-// the pending record and its SHA-256 included, is trusted there. It takes a
-// version and a file, downloads that release's SHA256SUMS from the fixed
-// GitHub URL, and compares the file with the digest listed for the release
-// file's own name. The Linux update helper does the same in shell.
+// The installing side trusts nothing the unprivileged app recorded: it
+// downloads the release's SHA256SUMS from the fixed GitHub URL and compares
+// the file with the digest listed for its name.
 inline constexpr std::string_view kSumsName = "SHA256SUMS";
 inline constexpr std::size_t kMaxSumsBytes = 64 * 1024;
 // The installing side's exit codes, the Linux helper's too.
@@ -261,11 +249,9 @@ struct ApplyRequest {
 std::optional<ApplyRequest> parseApplyArguments(const std::vector<std::string> &arguments);
 bool isPlainWindowsPath(std::string_view path);
 
-// Without pkexec: the command that installs the downloaded file, the update
-// helper through sudo. The helper checks the file against the release's
-// SHA256SUMS as root, as it does through pkexec; the package manager is
-// never given the user's own file, which another process of the user's
-// could replace after the app's check.
+// Without pkexec: the update helper through sudo, which checks the file
+// against SHA256SUMS as root; the package manager never gets the user's own
+// file, which another process could replace after the app's check.
 std::string manualInstallCommand(std::string_view helper, std::string_view file, std::string_view version);
 
 // The AppImage's download, beside the image: hidden, and named for the
@@ -289,14 +275,14 @@ struct StartupArguments {
     bool printVersion = false;
     std::string healthFile;  // --hikari-health=<path>
     std::string updatedFrom; // --hikari-updated-from=<version>
-    // DX1 (#367): --export-docs <dir> (or =<dir>); "" when the folder is missing.
+    // --export-docs <dir> (or =<dir>); "" when the folder is missing.
     std::optional<std::string> exportDocs;
     std::vector<std::string> rest;
 };
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments);
 
-// The legacy schedule: an automatic check runs only when it is on and the
-// next-check time has passed; any finished check moves that time a day on,
+// An automatic check runs only when it is on and the next-check time has
+// passed; any finished check moves that time a day on,
 // "Remind me in a week" a week.
 inline constexpr std::int64_t kUpdateDay = 24 * 60 * 60;
 inline constexpr std::int64_t kUpdateWeek = 7 * kUpdateDay;
@@ -305,4 +291,4 @@ inline bool automaticCheckDue(bool autoCheck, std::int64_t now, std::int64_t nex
     return autoCheck && now >= nextCheck;
 }
 
-} // namespace hikari::application
+}

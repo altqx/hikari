@@ -1,5 +1,4 @@
-// Generated from legacy ConfigConverter::CreateTable and config.h (COLOR) at
-// 20d647c4.
+// Generated from HikariSub legacy's config tables.
 #include "hikari/application/settings_import.h"
 
 namespace hikari::application::settings_import {
@@ -645,8 +644,7 @@ std::span<const std::string_view> themeColourKeys()
     return table;
 }
 
-// config::LoadDefaultConfig (config.cpp:346-390) and LoadDefaultAudioConfig
-// (config.cpp:806-838): the options their defaults assign.
+// The options HikariSub legacy's defaults assign.
 std::span<const std::string_view> mainDefaultKeys()
 {
     static constexpr std::string_view table[] = {
@@ -732,4 +730,4 @@ std::span<const std::string_view> audioDefaultKeys()
     return table;
 }
 
-} // namespace hikari::application::settings_import
+}

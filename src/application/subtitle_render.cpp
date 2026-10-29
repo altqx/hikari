@@ -31,7 +31,7 @@ void compositeOverlay(const OverlayFrame &overlay, std::uint8_t *bgra, int width
             std::uint32_t word;
             std::memcpy(&word, src + x, 4);
             if (!word)
-                continue; // nothing drawn here
+                continue;
             const unsigned inv = 255u - src[x + 3];
             for (int c = 0; c < 3; ++c)
                 dst[x + c] = static_cast<std::uint8_t>(std::min(255u, src[x + c] + (dst[x + c] * inv + 127u) / 255u));
@@ -44,8 +44,6 @@ OverlaySize overlaySizeFor(int videoWidth, int videoHeight, std::optional<std::p
     OverlaySize size{videoWidth, videoHeight, videoWidth, videoHeight};
     if (!screen || screen->first <= 0 || screen->second <= 0 || videoWidth <= 0 || videoHeight <= 0)
         return size;
-    // At most 8K (a zoomed picture's whole frame is larger than the screen):
-    // past it the overlay is scaled up with the picture again.
     constexpr double kMaxWidth = 7680, kMaxHeight = 4320;
     const double fit = std::min({1.0, kMaxWidth / screen->first, kMaxHeight / screen->second});
     size.width = std::max(1, static_cast<int>(screen->first * fit + 0.5));
@@ -53,4 +51,4 @@ OverlaySize overlaySizeFor(int videoWidth, int videoHeight, std::optional<std::p
     return size;
 }
 
-} // namespace hikari::application
+}

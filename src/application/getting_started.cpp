@@ -10,16 +10,16 @@ namespace hikari::application {
 namespace {
 
 constexpr std::array<std::string_view, 15> kSettings{
-    "program.language",                                             // Language
+    "program.language",
     "appearance.theme", "appearance.followSystem", "appearance.lightAccent", "appearance.darkAccent",
-    "appearance.titleBar",                                          // Look
-    "video.subtitleProvider", "audio.outputDevice",                 // Video and audio
+    "appearance.titleBar",
+    "video.subtitleProvider", "audio.outputDevice",
     "autosave.maxFiles", "editor.spellchecker", "editor.dictionaryLanguage",
-    "grammar.language",                                                 // Editing
-    "updater.checkForStable", "updater.autoCheck", "privacy.usageData", // Updates (AN1: and usage data)
+    "grammar.language",
+    "updater.checkForStable", "updater.autoCheck", "privacy.usageData",
 };
 
-} // namespace
+}
 
 std::span<const std::string_view> gettingStartedSettings()
 {
@@ -29,8 +29,6 @@ std::span<const std::string_view> gettingStartedSettings()
 OptionsState gettingStartedState(const Settings &live, const OptionsLists &lists,
                                  const std::map<std::string, SettingValue, std::less<>> &imported)
 {
-    // Opening the Settings window over a copy turns the values into its
-    // controls' state; the device's name goes with its id.
     MemorySettingsStorage storage;
     Settings copy(storage);
     copy.set("audio.outputDeviceName", live.value("audio.outputDeviceName"));
@@ -42,8 +40,7 @@ OptionsState gettingStartedState(const Settings &live, const OptionsLists &lists
     const OptionsState opened = openOptionsDialog(copy, lists).state;
     OptionsState state;
     for (const std::string_view id : kSettings) {
-        // The window leaves out what it does not offer (one renderer);
-        // the look's settings are not its controls and go as they are.
+        // MUST KILL: appearance.* settings bypass the Settings window's controls
         if (const auto it = opened.find(id); it != opened.end())
             state.emplace(id, it->second);
         else if (id.starts_with("appearance."))
@@ -81,4 +78,4 @@ std::set<std::string, std::less<>> gettingStartedPageSettings(const OptionsState
     return out;
 }
 
-} // namespace hikari::application
+}

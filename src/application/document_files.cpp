@@ -12,7 +12,6 @@ namespace hikari::application {
 
 namespace {
 
-// Lower-case extension of a path, without the dot.
 std::u8string extensionOf(const std::string &path)
 {
     const auto slash = path.find_last_of('/');
@@ -35,7 +34,7 @@ OpenError openError(ReadError e)
     return OpenError::ReadFailed;
 }
 
-} // namespace
+}
 
 DocumentFiles::DocumentFiles(FileReadPort &reader, WriteCoordinator &writes) : m_reader(reader), m_writes(writes) {}
 
@@ -93,7 +92,6 @@ std::expected<DocumentId, OpenError> DocumentFiles::activate(StagedOpen staged)
             return std::unexpected(OpenError::UnknownDocument);
         if (entry->generation != staged.expectedGeneration || entry->session->revision() != staged.expectedRevision)
             return std::unexpected(OpenError::StaleTarget);
-        // A reload starts a new lifetime generation with fresh history.
         entry->session = std::make_unique<EditSession>(std::move(staged.load.document));
         entry->session->markSaved(entry->session->contentId());
         entry->knownBytes = std::move(bytes);
@@ -116,7 +114,6 @@ std::expected<DocumentId, OpenError> DocumentFiles::activate(StagedOpen staged)
 
 DocumentId DocumentFiles::createNew()
 {
-    // Legacy LoadDefault, with the Styles() and Dialogue() defaults.
     static constexpr std::string_view kDefault =
         "[Script Info]\r\n"
         "Title: HikariSub Ass File\r\n"
@@ -145,7 +142,7 @@ DocumentId DocumentFiles::createNew()
     entry.session->markSaved(entry.session->contentId());
     if (const auto lines = entry.session->document().lines(); !lines.empty())
         entry.session->setSelection(Selection{lines.front()->id, {lines.front()->id}, lines.front()->id, {}});
-    m_documents.emplace(id, std::move(entry)); // no destination, no knownBytes: Untitled
+    m_documents.emplace(id, std::move(entry));
     return id;
 }
 
@@ -155,7 +152,7 @@ DocumentId DocumentFiles::createUnsaved(core::Document document)
     Entry entry;
     entry.session = std::make_unique<EditSession>(std::move(document));
     entry.session->markUnsaved();
-    m_documents.emplace(id, std::move(entry)); // no destination: Untitled
+    m_documents.emplace(id, std::move(entry));
     return id;
 }
 
@@ -196,10 +193,10 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
     const DestinationKey destination = saveAs ? *saveAs : entry->destination;
     if (destination.value.empty())
         return std::unexpected(SaveRefusal::NoDestination);
-    auto snapshot = entry->session->prepareSave(); // commit-then-save
+    auto snapshot = entry->session->prepareSave();
     if (!snapshot)
         return std::unexpected(SaveRefusal::InvalidDraft);
-    auto activeLine = activeLineToSave(*entry->session); // S4: as GetAssHeader
+    auto activeLine = activeLineToSave(*entry->session);
     auto layout = layoutToSave(document, snapshot->document);
     core::Document saved = withActiveLine(std::move(snapshot->document), activeLine);
     if (layout)
@@ -230,7 +227,6 @@ std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, boo
     if (entry->generation != plan.generation || entry->session->revision() != plan.revision)
         return std::unexpected(SaveRefusal::StalePlan);
     if (!plan.saveAs && !overwriteExternalChange) {
-        // Overwriting our own file: it must still hold what we last saw there.
         const auto current = m_reader.read(plan.destination);
         if (!current || *current != entry->knownBytes)
             return std::unexpected(SaveRefusal::ExternalChange);
@@ -271,8 +267,6 @@ void DocumentFiles::onWriteResult(const WriteResult &result)
     Pending pending = std::move(it->second);
     m_pending.erase(it);
     Entry *entry = find(pending.document);
-    // A result for a closed or reloaded Document is late: it can't mark the
-    // current content saved or move its association.
     if (!entry || entry->generation != pending.generation)
         return;
     if (entry->lastSave && entry->lastSave->permit == result.permit)
@@ -280,13 +274,11 @@ void DocumentFiles::onWriteResult(const WriteResult &result)
     const bool published =
         result.outcome == WriteOutcome::Written || result.outcome == WriteOutcome::DurabilityUncertain;
     if (!published)
-        return; // failed or cancelled: the work stays unsaved, nothing moves
-    // Only the written snapshot becomes saved; newer edits stay unsaved.
+        return;
     entry->session->markSaved(pending.content);
-    // S4: the file holds the active Line, and so does the open Document now.
     if (pending.activeLine)
         entry->session->amendScriptInfo(kActiveLineKey, *pending.activeLine);
-    if (pending.layout) // WS2: and the panel arrangement
+    if (pending.layout)
         entry->session->amendHikariProperty(kLayoutKey, *pending.layout);
     entry->knownBytes = std::move(pending.bytes);
     if (pending.saveAs) {
@@ -309,7 +301,7 @@ std::optional<std::u8string> activeLineToSave(const EditSession &session)
                 break;
             }
     }
-    const std::string text = std::to_string(row); // std::to_wstring(currentLine)
+    const std::string text = std::to_string(row);
     return std::u8string(text.begin(), text.end());
 }
 
@@ -326,4 +318,4 @@ std::optional<SaveStatus> DocumentFiles::lastSave(DocumentId document) const
     return it == m_documents.end() ? std::nullopt : it->second.lastSave;
 }
 
-} // namespace hikari::application
+}

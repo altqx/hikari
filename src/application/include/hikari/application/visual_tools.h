@@ -1,14 +1,7 @@
 #pragma once
 
-// T1: the visual tools' shared parts (docs/visual-tools.md): the eleven
-// families of legacy VideoToolbar's rail (and VT3's Perspective), the interface each tool implements,
-// the gesture transaction every tool's edit goes through and the batch
-// picker. A tool sees the Video panel through a VisualHost, which owns the
-// view's transform, the editing target and the one open gesture.
-//
-// Adding a tool (T2-T6) is one class implementing VisualTool and one line in
-// makeVisualTool (visual_tools.cpp); the rail, the pointer and key routing,
-// Esc, the warnings and the overlay drawing need no change.
+// A tool sees the Video panel through a VisualHost, which owns the view's
+// transform, the editing target and the one open gesture.
 
 #include "hikari/application/edit_session.h"
 #include "hikari/application/legacy_timebase.h"
@@ -26,58 +19,54 @@
 #include <vector>
 
 namespace hikari::application {
-class TextMeasurePort; // automation_services.h
+class TextMeasurePort;
 }
 
 namespace hikari::application::visual {
 
-// Legacy Visuals.h:56-68, then VT3's Perspective (no legacy family; the rail
-// shows it after RotationXY, railOrder).
+// HikariSub legacy's family numbers, then Perspective.
 enum class Family : int {
-    Crosshair = 0, // CROSS
-    Position,      // CHANGEPOS
-    Move,          // MOVE
-    Scale,         // SCALE
-    RotationZ,     // ROTATEZ
-    RotationXY,    // ROTATEXY
-    RectangleClip, // CLIPRECT
-    VectorClip,    // VECTORCLIP
-    Drawing,       // VECTORDRAW
-    PositionShifter, // MOVEALL
-    Hydra,         // ALL_TAGS
-    Perspective,   // VT3 (#273)
+    Crosshair = 0,
+    Position,
+    Move,
+    Scale,
+    RotationZ,
+    RotationXY,
+    RectangleClip,
+    VectorClip,
+    Drawing,
+    PositionShifter,
+    Hydra,
+    Perspective,
 };
-inline constexpr int kLegacyFamilyCount = 11; // VideoToolbar::toolsSize
+inline constexpr int kLegacyFamilyCount = 11;
 inline constexpr int kFamilyCount = 12;
 
 struct FamilyInfo {
     Family family;
-    std::string_view icon;    // VideoToolbar.cpp's bitmap name
-    std::string_view tooltip; // VideoToolbar.cpp:44-54
-    std::string_view history; // SubsFile.cpp:228-238: the edit's history name
-    std::string_view hotkey;  // VT2: the Video command choosing it (hotkeys.cpp)
+    std::string_view icon;
+    std::string_view tooltip;
+    std::string_view history; // the edit's history name
+    std::string_view hotkey;  // the Video command choosing it
 };
 const std::array<FamilyInfo, kFamilyCount> &families();
 const FamilyInfo &familyInfo(Family family);
-// The rail's order: legacy's, with the Perspective tool after Text X / Y
-// rotation among the transforms (owner, #273).
+// Perspective comes after RotationXY.
 const std::array<Family, kFamilyCount> &railOrder();
-// VT2: the family a VIDEO_TOOL_* command chooses, if `symbol` is one.
+// The family a VIDEO_TOOL_* command chooses.
 std::optional<Family> familyOfHotkey(std::string_view symbol);
 
-// A pointer event over the video window, in its device pixels (legacy
-// wxMouseEvent::GetX/GetY on VideoBox).
+// A pointer event over the video window, in its device pixels.
 struct Pointer {
-    // DoubleClick: the second press of a double click, after its Press
-    // (legacy wxEVT_LEFT_DCLICK; T2's Position uses it).
+    // DoubleClick: the second press of a double click, after its Press.
     enum class Kind { Enter, Leave, Move, Press, Release, Wheel, DoubleClick };
     enum class Button { None, Left, Middle, Right };
     Kind kind = Kind::Move;
     int x = 0, y = 0;
     Button button = Button::None; // the button pressed or released
     bool leftDown = false;        // held during a move
-    bool rightDown = false;       // T2: legacy RightIsDown (Move drags with either)
-    bool middleDown = false;      // T3: legacy MiddleIsDown
+    bool rightDown = false;
+    bool middleDown = false;
     bool control = false, shift = false, alt = false;
     int wheelSteps = 0;
 };
@@ -93,12 +82,10 @@ struct Key {
 // The arrow keys (Qt::Key values; the application layer does not link Qt).
 namespace keys {
 inline constexpr int Left = 0x01000012, Up = 0x01000013, Right = 0x01000014, Down = 0x01000015;
-} // namespace keys
+}
 
-// VT2-arrow-nudge: the arrows nudge, Shift a tenth (legacy's A/D/W/S). The
-// direction of `key`'s arrow, -1, 0 or 1 on each axis; none for another key,
-// with Ctrl (Ctrl+arrows stay the Global bindings') or with Alt unless `alt`
-// (Move's end point). The tool applies Shift's tenth.
+// -1, 0 or 1 on each axis for `key`'s arrow; nullopt for another key, with Ctrl,
+// or with Alt unless `alt`. The tool applies Shift's tenth.
 std::optional<PointF> nudgeDirection(const Key &key, bool alt = false);
 // Whether `key` is an arrow, whatever the modifiers (a nudge's release).
 bool isArrowKey(int key);
@@ -113,7 +100,7 @@ struct OverlayText {
     IntRect rect; // drawn from its top-left
     std::u16string text;
     std::uint32_t argb = 0xFFFFFFFF;
-    bool outline = true; // a one-pixel black outline (legacy DRAWOUTTEXT)
+    bool outline = true; // a one-pixel black outline
     int pixelSize = 0;   // 0: the label font (VisualHost::measureLabel)
 };
 struct OverlayCircle {
@@ -122,13 +109,9 @@ struct OverlayCircle {
     std::uint32_t argb = 0xFFFFFFFF;
     bool filled = false;
 };
-// A filled polygon with a one-pixel border (legacy DrawRect's and DrawArrow's
-// triangle strip and line strip, the clips' masks; T2). T3: a border of 0
-// draws the fill alone (RotationZ's ring), a fill of 0 the border alone. T4:
-// `more` holds further contours filled in the same path (non-zero: the
-// rectangle clip's two fans without a seam), and `above` draws it after the
-// lines (the vector points' handles, which legacy drew over the path)
-// instead of before them.
+// A filled polygon with a one-pixel border; a border or fill of 0 draws only the
+// other. `more`: further contours filled in the same path (non-zero). `above`:
+// drawn after the lines instead of before them.
 struct OverlayPolygon {
     std::vector<PointF> points;
     std::uint32_t fill = 0;
@@ -142,18 +125,14 @@ struct Overlay {
     std::vector<OverlayCircle> circles;
     std::vector<OverlayText> texts;
     std::vector<OverlayPolygon> polygons;
-    // SV1-hidpi-tool-sizes: device pixels per legacy pixel (unitOf): the
-    // drawing helpers' handles and arrows keep legacy's size on screen.
+    // Device pixels per HikariSub legacy pixel, so handles keep their on-screen size.
     float unit = 1;
     bool empty() const { return lines.empty() && circles.empty() && texts.empty() && polygons.empty(); }
 };
 
-// A numeric value a tool shows in the inspector bar below the canvas (VT1,
-// the handles' keyboard and numeric alternative). Editable ones are set
-// through VisualTool::setValue, typed (Enter) or scrubbed (a drag on the
-// label, `step` per pixel). Values of one group (Move's Start and End, the
-// rotations' Origin) sit together after its label; `unit` follows the
-// number in its field.
+// A numeric value in the inspector bar. Editable ones are set through
+// VisualTool::setValue, typed (Enter) or scrubbed (`step` per pixel). Values of
+// one group sit together after its label; `unit` follows the number.
 struct ToolValue {
     std::string name;
     std::u16string label;
@@ -162,8 +141,8 @@ struct ToolValue {
     std::u16string group;
     std::u16string unit;
     double step = 1;
-    // HY1: a colour's swatch beside its first channel (0xAARRGGBB; 0: none),
-    // and the value a drag over the video changes (Hydra's ◆).
+    // swatch: a colour beside its first channel (0xAARRGGBB; 0: none); marked: the
+    // value a drag over the video changes.
     std::uint32_t swatch = 0;
     bool marked = false;
 };
@@ -174,48 +153,38 @@ struct ToolValue {
 inline constexpr double kValueLimit = 1e8;
 bool parseValue(const std::u16string &text, double &out);
 
-// VT1: how VisualTool::setValue applies a value. Commit stages it and
-// commits one history step (a typed value, a scrub's release); Sample stages
-// it on the gesture a scrub's first sample opens, which the next Commit
-// commits and Esc drops (the host's cancel).
+// Commit stages the value and commits one history step; Sample stages it on the
+// gesture a scrub's first sample opens, which the next Commit commits and Esc
+// drops.
 enum class ValueEdit { Commit, Sample };
 
-// A tool's own option in the inspector bar (legacy VideoToolbar's
-// VisualItem for the family, T2-T6): a toggle with its icon role, a choice,
-// or (T4) an action button. setOption takes 0/1 for a toggle, the index for
-// a choice and 1 for an action. VT1: options of one group sit together
-// after its label (Scale's Rectangle and Tags); a choice in a group shows
-// its current entry as text. HY1: a switch is a choice shown as a row of
-// text buttons (Hydra's Set, Add, Multiply, Gradient), and a searchable
-// choice opens with a search field, each entry with its note (Hydra's tag)
-// under one of its section names.
+// setOption takes 0/1 for a toggle, the index for a choice or switch and 1 for
+// an action. A Switch is a choice shown as a row of text buttons; a searchable
+// choice opens with a search field.
 struct ToolOption {
     enum class Kind { Toggle, Choice, Action, Switch };
     std::string name;
     Kind kind = Kind::Toggle;
-    std::string iconRole;     // the K1 set's role (toggles, actions, a choice's menu button)
-    std::u16string tooltip;   // legacy's help text
+    std::string iconRole;     // the icon set's role (toggles, actions, a choice's menu button)
+    std::u16string tooltip;
     bool checked = false;     // a toggle's state
-    bool enabled = true;      // legacy's greyed icons
+    bool enabled = true;
     std::vector<std::u16string> choices;
     int index = 0;            // a choice's selection
-    // T5: legacy's shape list: the first entry is "no choice" and the last
-    // an action ("Edit"); the row's menu puts it after a separator.
+    // The first entry is "no choice" and the last an action; the menu puts it
+    // after a separator.
     bool listEnds = false;
     std::u16string group;
-    // HY1: a searchable choice (Hydra's tag list): each entry's note (its
-    // tag) beside it, under its section (an index into sectionNames).
+    // Searchable: each entry's note beside it, under its section (sectionNames index).
     bool searchable = false;
     std::vector<std::u16string> notes;
     std::vector<int> sections;
     std::vector<std::u16string> sectionNames;
-    bool afterValues = false; // HY1: shown after the tool's values
+    bool afterValues = false; // shown after the tool's values
 };
 
-// HY1: what a tool's last edit did, which it can do again with other values
-// in place of that history step (Hydra's last change card): the tag, the
-// change option (ToolOption's switch index) and the Lines it changed, and
-// its values as the strip names them.
+// A tool's last edit, which it can redo with other values in place of that
+// history step.
 struct LastChange {
     std::u16string tag;
     int change = 0;
@@ -223,13 +192,10 @@ struct LastChange {
     std::vector<ToolValue> values;
 };
 
-// One gesture's edit (docs/proposals/edit-transactions.md, accepted on
-// #55): it stages new texts for its target Lines while the pointer or key is
-// down and commits them on release as one history step named for the tool;
-// cancelling (Esc) drops them. Nothing reaches the Document, the pending
-// draft or the history until the commit, so a cancel leaves the pre-gesture
-// draft as it was. Its targets are fixed when it begins: a later change of
-// the batch picker, selection or active Line never retargets it.
+// Stages new texts for its targets while the pointer or key is down and commits
+// them as one history step; cancelling drops them. Nothing reaches the
+// Document, the draft or the history before the commit. Targets are fixed when
+// it begins.
 class Gesture {
 public:
     // Refused (and nothing begins) for a protected reference, a Document a
@@ -245,18 +211,13 @@ public:
     // Stages a target's text, or its translation (TLMode's translated role).
     void stage(core::LineId line, std::u8string text, bool translation = false);
     bool hasChanges() const { return !m_staged.empty(); }
-    // T6: a staged text that differs from the target's as the gesture began.
+    // A staged text that differs from the target's as the gesture began.
     bool changesAnyLine() const;
-    // The staged text of a target, if any.
     std::optional<std::u8string> staged(core::LineId line, bool translation = false) const;
-    // The staged texts put into a copy of the Document (the video's preview
-    // while the gesture is open, legacy's dummy rendering).
+    // The staged texts put into a copy of the Document.
     void applyTo(core::Document &document) const;
-    // What the video renders while the gesture is open (Position::
-    // ChangeMultiline / Visuals::RenderSubs on SubsGrid::GetVisible,
-    // SubsGridBase.cpp:1517-1593): only the Lines shown at the video's time
-    // (5 ms either side, or any not yet over while playing), the targets
-    // with their staged texts while they show (VisualPosition.cpp:470-481).
+    // Only the Lines shown at the video's time (5 ms either side, or any not yet
+    // over while playing), the targets with their staged texts.
     core::Document preview(const core::Document &document, std::int64_t timeMs, bool playing) const;
 
     // One history step with every staged text. A pending draft on a target
@@ -274,10 +235,8 @@ private:
     std::map<std::pair<core::LineId, bool>, std::u8string> m_staged;
 };
 
-// The batch picker (accepted on #55): the Lines a batch tool edits are
-// picked explicitly and kept by identity, independent of the active Line
-// and of later Grid selections. With nothing picked a tool edits the active
-// Line alone.
+// Lines picked explicitly and kept by identity; with nothing picked a tool
+// edits the active Line alone.
 class BatchPicker {
 public:
     void pick(std::vector<core::LineId> lines);
@@ -292,32 +251,22 @@ private:
 };
 
 class VisualTool;
-struct ShapePreset; // shape_presets.h (T5)
-struct AllTagsSetting; // all_tags.h (T6)
+struct ShapePreset;
+struct AllTagsSetting;
 
-// The Line warnings (lineWarning below).
 enum class LineWarning { None, NotVisible, Comment };
 
-// The pointer's shape over the video (legacy VideoBox::SetCursor with the
-// stock cursors the Visuals asked for): wxCURSOR_ARROW, SIZEWE, SIZENS,
-// SIZENWSE, SIZENESW and SIZING.
 enum class PointerShape { Arrow, SizeWE, SizeNS, SizeNWSE, SizeNESW, Sizing };
 
-// The shape over a rectangle's edge or corner, from a HitTest result below
-// INSIDE (LEFT 1, RIGHT 2, TOP 4, BOTTOM 8 or their sums): the expression
-// Position, Scale, ClipRect and Shapes::OnMouseEvent share
-// (VisualPosition.cpp:246-248).
+// From a HitTest result below INSIDE (LEFT 1, RIGHT 2, TOP 4, BOTTOM 8 or their
+// sums).
 PointerShape edgePointerShape(int hit);
 
-// The Video panel as a tool sees it.
 class VisualHost {
 public:
     virtual ~VisualHost() = default;
-    // The pointer's shape a tool set (VideoBox::SetCursor) and legacy
-    // VideoBox::HasArrow. It is the host's, not a tool's, as legacy kept it
-    // on the video window; the host puts the arrow back when the tool
-    // changes (VideoBox::OnChangeVisual) or its events are blocked
-    // (Visuals::Draw).
+    // The host's, not a tool's; the host puts the arrow back when the tool changes
+    // or its events are blocked.
     void setPointerShape(PointerShape shape) { m_pointerShape = shape; }
     PointerShape pointerShape() const { return m_pointerShape; }
     bool hasArrow() const { return m_pointerShape == PointerShape::Arrow; }
@@ -334,39 +283,34 @@ public:
     // Commits the open gesture (one step) and closes it.
     virtual std::expected<void, CommandRefusal> commitGesture() = 0;
     virtual void cancelGesture() = 0;
-    // HY1: undoes the last history step when the Document is still at
-    // `revision` (nothing changed it since the tool's own step) and no
+    // Undoes the last history step when the Document is still at `revision` and no
     // gesture is open; the tool then commits its step again in its place.
     virtual bool undoStep(std::uint64_t revision)
     {
         (void)revision;
         return false;
     }
-    // The crosshair label's size in device pixels (legacy GetTextExtent of
-    // the program font + 4, or the D3DX font's DT_CALCRECT).
+    // The crosshair label's size in device pixels.
     virtual std::pair<int, int> measureLabel(std::u16string_view text) const = 0;
     // The tool's drawing or values changed.
     virtual void toolChanged() = 0;
 
-    // T2: what Visuals read from the video and the Grid. The video's time
-    // (VideoBox::Tell: the shown frame's start in ms), its legacy Timebase
-    // (VideoBox::GetTimebase), the text measure GetTextSize uses
-    // (GetLineTextExtents; none: measuring fails), the Grid's "ignore
-    // filtering in some actions" (SubsGrid::ignoreFiltered) and HikariLog.
+    // The video's time (the shown frame's start, ms), its timebase, the text
+    // measure (null: measuring fails) and whether filtering is ignored in some
+    // actions.
     virtual std::int64_t videoTimeMs() const { return 0; }
     virtual LegacyTimebase timebase() const { return {}; }
     virtual TextMeasurePort *textMeasure() const { return nullptr; }
-    // VT3: whether the renderer is given a font of this name (family, full
-    // or PostScript, ignoring ASCII case, as libass matches it) from the
-    // Script's attachments or the external fonts, which the text measure
-    // does not see.
+    // Whether the renderer has a font of this name (family, full or PostScript, ASCII
+    // case ignored, as libass matches it) from the attachments or external fonts,
+    // which the text measure does not see.
     virtual bool fontLeased(const std::string &name) const
     {
         (void)name;
         return false;
     }
-    // VT3: whether fonts are leased and `font` lacks a character of `text`,
-    // which libass may then take from a leased font the measure does not see.
+    // Whether fonts are leased and `font` lacks a character of `text`, which libass
+    // may then take from a leased font the measure does not see.
     virtual bool fallsBackToLeased(const std::string &font, bool bold, bool italic, std::u16string_view text) const
     {
         (void)font;
@@ -377,72 +321,53 @@ public:
     }
     virtual bool ignoreFiltered() const { return false; }
     virtual void log(std::u16string_view text) { (void)text; }
-    // T3: the Line editor's selection in the text the tools edit (legacy
-    // TagFindReplace::FindTag's editor->GetSelection with one Line selected,
-    // TagFindReplace.cpp:40-41), in UTF-16 code units.
+    // The Line editor's selection in the text the tools edit, in UTF-16 code units.
     virtual std::pair<long, long> editorSelection() const { return {0, 0}; }
-    // Legacy put the editor's caret at the tag it changed
-    // (Visuals::SetVisual, Visuals.cpp:815); called after the commit.
+    // Places the editor's caret at the tag a tool changed; called after the commit.
     virtual void setEditorSelection(long from, long to)
     {
         (void)from;
         (void)to;
     }
-    // T4: legacy wxBell (a refused point insertion) and a notice legacy
-    // showed in a message box; shown without blocking.
+    // A refused point insertion's bell and a notice, shown without blocking.
     virtual void bell() {}
     virtual void notice(std::u16string_view text) { (void)text; }
-    // T5: the drawing's shape presets (VideoToolbar::GetShapesSettings:
-    // Config/ShapesSettings.txt, or legacy's defaults; null for none). A
-    // \move drawing's position follows videoTimeMs.
+    // The drawing's shape presets (null for none).
     virtual const std::vector<ShapePreset> *shapePresets() const { return nullptr; }
-    // T6: which Lines the Grid shows (legacy Dialogue::isVisible: not
-    // hidden by the Grid filter or a closed Line group). The Position
-    // shifter and the all-tags tool edit only the selected Lines it shows
-    // (SubsFile::GetSelections, SubsFile.cpp:503-512). A tool asks once per
-    // gesture and tests every target against the answer, so a large batch
-    // costs one pass over the Grid; an empty function means every Line.
+    // The Lines the Grid shows (not hidden by its filter or a closed group); asked
+    // once per gesture. An empty function means every Line.
     virtual std::function<bool(core::LineId)> shownLines() const { return {}; }
-    // T6: the all-tags tool's definitions (VideoToolbar::GetTagsSettings:
-    // Config/AllTagsSettings.txt, or legacy's defaults) and the toolbar's
-    // selection in their list after a change the tool made (Shift+wheel,
-    // AllTagsItem::SetItemToggled).
+    // The all-tags tool's definitions.
     virtual const std::vector<AllTagsSetting> *allTagsSettings() const { return nullptr; }
-    // T6: the accelerator text ("Ctrl-,") the Line editor's hotkey `id` has
-    // (Hotkeys::GetHKey with EDITBOX_HOTKEY); legacy's default unless the
-    // host knows the user's.
+    // The accelerator text ("Ctrl-,") of the Line editor's hotkey `id`; the default
+    // unless the host knows the user's.
     virtual std::string editorHotkey(int id) const;
 
 private:
     PointerShape m_pointerShape = PointerShape::Arrow;
 };
 
-// SV1-hidpi-tool-sizes: device pixels per legacy pixel. Legacy's handle,
-// ring and arrow sizes and its grab and snap distances are device pixels;
-// times this they keep their size on screen at any scale.
+// Device pixels per HikariSub legacy pixel: handle, ring and arrow sizes and grab
+// and snap distances times this keep their on-screen size.
 inline float unitOf(const VisualHost &host)
 {
     return static_cast<float>(host.view().devicePixelRatio());
 }
 
-// One visual family. The host gives a tool only the events legacy's
-// Visuals got: pointer events over the video with a video open, keys while
-// the video has focus, and resets when the view, script or Line changed.
+// The host gives a tool pointer events over the video with a video open, keys
+// while the video has focus, and resets when the view, script or Line changed.
 class VisualTool {
 public:
     virtual ~VisualTool() = default;
     virtual Family family() const = 0;
-    // Legacy SetCurVisual: the view, script resolution or active Line changed.
+    // The view, script resolution or active Line changed.
     virtual void reset(VisualHost &host) { (void)host; }
-    // T3: true when the tool's own commit must not reset it. The host resets
-    // a tool on every new revision; legacy's Scale and rotations sent their
-    // edit with the visual dummy flag, so no SetVisual followed it
-    // (Visuals.cpp:791-829, SubsGridBase.cpp:1125-1157) and the tool kept
-    // its state (the caret at the tag, the angles, the press point).
+    // True when the tool's own commit must not reset it (the host resets a tool on
+    // every new revision).
     virtual bool keepsStateAfterCommit() const { return false; }
     virtual void pointer(const Pointer &event, VisualHost &host) = 0;
-    // VT2: true for a key the tool takes ahead of the Video and Global
-    // bindings (its nudge's arrows), whatever its state; the host claims it.
+    // True for a key the tool takes ahead of the Video and Global bindings (its
+    // nudge's arrows), whatever its state.
     virtual bool takesKey(const Key &event) const
     {
         (void)event;
@@ -461,9 +386,8 @@ public:
         (void)host;
         return {};
     }
-    // An editable value set (VT1): true when it was staged (Sample) or
-    // committed (Commit). A gesture the tool's pointer or keys opened
-    // refuses it.
+    // True when the value was staged (Sample) or committed (Commit). A gesture the
+    // tool's pointer or keys opened refuses it.
     virtual bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
                           ValueEdit edit = ValueEdit::Commit)
     {
@@ -473,26 +397,21 @@ public:
         (void)edit;
         return false;
     }
-    // Legacy Visuals::Draw skipped these tools' warning (VisualCross overrides
-    // Draw); the others are blocked outside their Line's time or on comments.
+    // False: the tool works outside its Line's time and on comments.
     virtual bool warnsOutsideLine() const { return family() != Family::Crosshair; }
-    // A tool that overrides Visuals::Draw decides its own warning (T2's
-    // Position: none while any of its Lines is visible); nullopt: the
-    // active Line's (lineWarning).
+    // A tool's own warning; nullopt: the active Line's (lineWarning).
     virtual std::optional<LineWarning> warning(const VisualHost &host) const
     {
         (void)host;
         return std::nullopt;
     }
-    // Visuals::Draw found nothing to show and set blockevents: the host calls
-    // this when it renders, or takes a pointer event, while the tool is
-    // blocked. Position::Draw also ends a helper-cross drag there.
+    // Called while the tool is blocked (nothing to show), when the host renders or
+    // takes a pointer event.
     virtual void blocked(VisualHost &host) { (void)host; }
-    // The family became the active one: legacy Visuals::Get made a new tool
-    // (RendererVideo::SetVisual), so the tool's own state starts over; the
-    // rail's options are the toolbar's and stay.
+    // The family became active: the tool's own state starts over; the rail's
+    // options stay.
     virtual void selected(VisualHost &host) { (void)host; }
-    // The rail's second row for the family (legacy VisualItem).
+    // The rail's second row for the family.
     virtual std::vector<ToolOption> options(const VisualHost &host) const
     {
         (void)host;
@@ -505,17 +424,17 @@ public:
         (void)host;
         return false;
     }
-    // HY1: the value a drag over the video changes (a click on its field).
+    // The value a drag over the video changes (a click on its field).
     virtual bool markValue(const std::string &name, VisualHost &host)
     {
         (void)name;
         (void)host;
         return false;
     }
-    // HY1: the picked Lines changed (the batch picker).
+    // The picked Lines changed.
     virtual void targetsChanged(VisualHost &host) { (void)host; }
-    // HY1: the last change card, and a value edited on it (its step done
-    // again in place of the one it replaces), and its ✕.
+    // The last change card; editing a value redoes its step in place of the one it
+    // replaces.
     virtual std::optional<LastChange> lastChange(const VisualHost &host) const
     {
         (void)host;
@@ -529,16 +448,16 @@ public:
         return false;
     }
     virtual void dismissLastChange() {}
-    // T3: Esc with no gesture open: true when the tool dropped a pending
-    // step (RotationZ's first point of the two-point angle).
+    // Esc with no gesture open: true when the tool dropped a pending step
+    // (RotationZ's first point).
     virtual bool cancelPending(VisualHost &host)
     {
         (void)host;
         return false;
     }
     virtual bool hasPending() const { return false; }
-    // T4: Lines the video renders after the Document's while the tool is on
-    // (legacy Visuals::AppendClipMask: the vector clip's mask).
+    // Lines the video renders after the Document's while the tool is on (the vector
+    // clip's mask).
     virtual std::vector<core::LineRecord> previewLines(const VisualHost &host) const
     {
         (void)host;
@@ -547,15 +466,12 @@ public:
 
 };
 
-// The tool for a family: nullptr while its card (T2-T6) has not landed.
+// nullptr for a family without a tool.
 std::unique_ptr<VisualTool> makeVisualTool(Family family);
 
-// Legacy Visuals::Draw / DrawWarning (Visuals.cpp:503-545): a tool other
-// than the crosshair works only on a Dialogue Line visible at the video's
-// time (start <= time < end); Vector clip and Drawing work on comments too.
+// A tool other than the crosshair works only on a Dialogue Line visible at the
+// video's time (start <= time < end); Vector clip and Drawing work on comments too.
 LineWarning lineWarning(Family family, const core::LineRecord &line, std::int64_t videoMs);
-// "Line is not visible on video\nor has zero duration" /
-// "Visual editing tools\ndo not work on comments" (Visuals.cpp:534-535).
 std::u16string_view warningText(LineWarning warning);
 
-} // namespace hikari::application::visual
+}

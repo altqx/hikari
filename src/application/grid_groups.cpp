@@ -42,14 +42,12 @@ std::set<core::LineId> allIds(const EditSession &s)
     return out;
 }
 
-// Group members are closed and hidden, or open and shown.
 void setOpen(core::LineRecord &l, bool open)
 {
     l.group = open ? GroupMarker::Opened : GroupMarker::Closed;
     l.visibility = open ? LineVisibility::Visible : LineVisibility::Hidden;
 }
 
-// The active Line hidden by a group change gives way to the description.
 void keepActiveShown(EditSession &session, core::LineId description)
 {
     Selection selection = session.selection();
@@ -60,13 +58,13 @@ void keepActiveShown(EditSession &session, core::LineId description)
     }
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> makeGroups(EditSession &session, const LineVisible &shown)
 {
     const auto lines = linesOf(session);
     const auto &selected = session.selection().selected;
-    // Runs of shown selected Lines; hidden Lines are skipped, not run ends.
+    // Hidden Lines are skipped, not run ends.
     std::vector<std::vector<core::LineId>> runs;
     bool start = true;
     for (const auto *l : lines) {
@@ -90,13 +88,10 @@ std::expected<void, CommandRefusal> makeGroups(EditSession &session, const LineV
                                                  for (const auto *l : d.lines())
                                                      if (l->id == run.front())
                                                          first = l;
-                                                 // Legacy: a new Dialogue, comment, End 0, the member's Style.
                                                  core::LineRecord description;
                                                  description.comment = true;
                                                  description.style = first->style;
                                                  description.group = GroupMarker::Description;
-                                                 // E6: a new Dialogue (state 0); the members are
-                                                 // copied with keepstate (SubsGridFiltering.cpp:177-191).
                                                  const auto id = d.insertLineBefore(run.front(), description,
                                                                                     core::ChangeMark::Kept);
                                                  if (!id)
@@ -123,11 +118,9 @@ std::expected<void, CommandRefusal> toggleGroup(EditSession &session, core::Line
     const auto members = core::groupMembers(session.document(), description);
     if (members.empty())
         return std::unexpected(CommandRefusal::Invalid);
-    // OpenCloseTree: each member flips; the group opens if any member was closed.
     const auto ran = session.run(Command{"Opening or closing tree", session.revision(), {members.begin(), members.end()},
                                          [&](core::Document &d) {
                                              for (const auto id : members)
-                                                 // E6: OpenCloseTree changes the Dialogues in place.
                                                  if (!d.editLine(id, [](core::LineRecord &l) {
                                                          setOpen(l, l.group == GroupMarker::Closed);
                                                      }, core::ChangeMark::Kept))
@@ -142,7 +135,7 @@ std::expected<void, CommandRefusal> toggleGroup(EditSession &session, core::Line
 
 std::expected<void, CommandRefusal> renameGroup(EditSession &session, core::LineId description, std::u8string text)
 {
-    if (!isDescription(session, description) || text.empty()) // legacy OkClick needs a name
+    if (!isDescription(session, description) || text.empty())
         return std::unexpected(CommandRefusal::Invalid);
     const auto ran = session.run(Command{"Setting tree description", session.revision(), {description},
                                          [&](core::Document &d) { return d.setLineText(description, text); }});
@@ -194,7 +187,6 @@ std::expected<void, CommandRefusal> selectGroup(EditSession &session, core::Line
         const auto ran = session.run(Command{"Opening or closing tree", session.revision(),
                                              {members.begin(), members.end()}, [&](core::Document &d) {
                                                  for (const auto id : members)
-                                                     // E6: TreeSelect opens them in place.
                                                      if (!d.editLine(id, [](core::LineRecord &l) {
                                                              if (l.group == GroupMarker::Closed)
                                                                  setOpen(l, true);
@@ -236,8 +228,6 @@ std::expected<void, CommandRefusal> addLinesToGroup(EditSession &session, core::
     std::set<core::LineId> touched(before.begin(), before.end());
     touched.insert(after.begin(), after.end());
     touched.insert(description);
-    // Legacy TreeAddLines: Lines before the group go right after its
-    // description, Lines after it right after its last member, in order.
     std::vector<core::LineId> order;
     const std::set<core::LineId> moving(touched.begin(), touched.end());
     const auto lastOfGroup = members.empty() ? description : members.back();
@@ -257,7 +247,6 @@ std::expected<void, CommandRefusal> addLinesToGroup(EditSession &session, core::
                                              for (const auto id : after)
                                                  if (!d.editLine(id, [&](core::LineRecord &l) { setOpen(l, !closed); }))
                                                      return false;
-                                             // Row by row, the wanted Line goes before the one now there.
                                              std::vector<core::LineId> current;
                                              for (const auto *l : d.lines())
                                                  current.push_back(l->id);
@@ -288,4 +277,4 @@ std::u8string copyGroup(const EditSession &session, core::LineId description)
     return core::clipboardRows(session.document(), ids, translationMode(session));
 }
 
-} // namespace hikari::application
+}

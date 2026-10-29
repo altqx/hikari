@@ -4,7 +4,6 @@
 
 namespace hikari::application {
 
-// Legacy PlaybackVolumeFromSlider (MAX_PLAYBACK_VOLUME 1.5).
 float playbackVolumeFromSlider(int position)
 {
     if (position <= 50)
@@ -12,7 +11,6 @@ float playbackVolumeFromSlider(int position)
     return 1.0f + ((1.5f - 1.0f) * (float(position - 50) / 50.0f));
 }
 
-// Legacy ApplyVolume.
 void applyLegacyVolume(std::int16_t *samples, std::int64_t count, double volume)
 {
     if (volume == 1.0)
@@ -27,8 +25,6 @@ void applyLegacyVolume(std::int16_t *samples, std::int64_t count, double volume)
     }
 }
 
-// Legacy AudioBox::OnPlaySelection, OnPlay500Before/After/First/Last,
-// OnPlayBeforeMark/AfterMark and OnPlayToEnd.
 std::optional<PlayRequest> legacyPlayRequest(PlayMode mode, int start, int end, std::optional<int> mark, int markPlayTime)
 {
     switch (mode) {
@@ -65,8 +61,6 @@ std::optional<PlayRequest> legacyPlayRequest(PlayMode mode, int start, int end, 
     return std::nullopt;
 }
 
-// Legacy AudioDisplay::Play: start and end are ints, GetSampleAtMS works in
-// long long.
 PlayRange legacyPlayRange(int sampleRate, std::int64_t numSamples, int startMs, int endMs)
 {
     int start = static_cast<int>(static_cast<std::int64_t>(startMs) * sampleRate / 1000);
@@ -97,7 +91,6 @@ std::optional<PlayRange> AudioPlayback::stop(int sampleRate, std::int64_t sample
 {
     if (!m_player.playing())
         return play(sampleRate, sampleCount, m_lastPositionMs, m_lastEndMs);
-    // legacy GetMSAtSample
     m_lastPositionMs = sampleRate > 0 ? static_cast<int>(m_player.position() * 1000 / sampleRate) : 0;
     m_player.stop();
     m_timer = false;
@@ -105,7 +98,6 @@ std::optional<PlayRange> AudioPlayback::stop(int sampleRate, std::int64_t sample
     return std::nullopt;
 }
 
-// Legacy AudioDisplay::UpdateTimer (its centre lock is always off).
 AudioPlayback::Redraw AudioPlayback::tick(AudioView &view, int scrollbarThickness)
 {
     if (!m_timer)
@@ -122,7 +114,7 @@ AudioPlayback::Redraw AudioPlayback::tick(AudioView &view, int scrollbarThicknes
         if (posX < kEdge || posX > view.width() - kEdge) {
             const int goTo = static_cast<int>(std::max<std::int64_t>(0, position - kEdge * view.samples()));
             view.updatePosition(goTo, true, scrollbarThickness);
-            return Redraw::Image; // drawn with the cursor still at -1
+            return Redraw::Image;
         }
         m_x = view.xAtSample(position);
         if (!(m_x >= 0.f && m_x < view.width()))
@@ -155,4 +147,4 @@ FollowedCursor followCursor(AudioView &view, std::int64_t sample, int scrollbarT
     return out;
 }
 
-} // namespace hikari::application
+}

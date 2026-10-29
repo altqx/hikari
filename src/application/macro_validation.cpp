@@ -14,8 +14,6 @@ std::filesystem::path normalized(const std::string &utf8)
     fs::path p(std::u8string(utf8.begin(), utf8.end()));
     std::error_code ec;
     if (p.is_relative()) {
-        // A relative Document script resolves against the working directory
-        // (legacy wxFileExists), as the manager loaded it.
         const fs::path absolute = fs::absolute(p, ec);
         if (!ec)
             p = absolute;
@@ -24,7 +22,7 @@ std::filesystem::path normalized(const std::string &utf8)
     return ec ? p.lexically_normal() : canonical;
 }
 
-} // namespace
+}
 
 std::vector<MacroRef> dependencyValidations(const std::vector<ScriptStatus> &scripts, const std::string &path)
 {
@@ -56,4 +54,4 @@ std::vector<MacroRef> dependencyValidations(const std::vector<ScriptStatus> &scr
     return out;
 }
 
-} // namespace hikari::application
+}

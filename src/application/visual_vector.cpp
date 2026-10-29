@@ -7,8 +7,7 @@
 #include <cmath>
 #include <cstdio>
 
-// Built without floating-point contraction, as visual_view.cpp: every float
-// step below is legacy's (MSVC x64, SSE, no FMA).
+// Built without floating-point contraction so float results match MSVC x64 (SSE, no FMA).
 
 namespace hikari::application::visual {
 
@@ -16,9 +15,6 @@ namespace legacy {
 
 bool cDouble(std::u16string_view text, double &out)
 {
-    // wxString::ToCDouble (wxStrtod_l in the C locale): the whole text, as
-    // strtod reads it (leading blanks, a sign, decimal or hex, inf and nan),
-    // false on an out-of-range value (ERANGE). Locale-independent here.
     std::string s;
     for (const char16_t c : text) {
         if (c > 0x7F)
@@ -42,7 +38,7 @@ bool cDouble(std::u16string_view text, double &out)
         i += 2;
     }
     if (s[i] == '+' || s[i] == '-')
-        return false; // one sign only
+        return false;
     double value = 0;
     const char *first = s.data() + i;
     const char *last = s.data() + s.size();
@@ -106,13 +102,13 @@ int toInt(float value)
     return static_cast<int>(value);
 }
 
-} // namespace legacy
+}
 
 namespace {
 
-constexpr std::uint32_t kRed = 0xFFBB0000;         // the outlines and paths
-constexpr std::uint32_t kHandleFill = 0xAA121150;  // a point
-constexpr std::uint32_t kSelectedFill = 0xAAFCE6B1; // a selected point
+constexpr std::uint32_t kRed = 0xFFBB0000;
+constexpr std::uint32_t kHandleFill = 0xAA121150;
+constexpr std::uint32_t kSelectedFill = 0xAAFCE6B1;
 constexpr std::uint32_t kBezierArms = 0xFF0000FF;
 constexpr std::uint32_t kSplineHull = 0xFFAA33AA;
 constexpr std::uint32_t kHoverFill = 0xAACC8748;
@@ -123,7 +119,7 @@ bool isCommand(std::u16string_view token)
     return token == u"m" || token == u"l" || token == u"b" || token == u"s";
 }
 
-// D3DXVECTOR2's operators (d3dx9math.inl): division multiplies by the inverse.
+// Division multiplies by the inverse, as D3DXVECTOR2 does.
 PointF sub(PointF a, PointF b) { return {a.x - b.x, a.y - b.y}; }
 PointF mul(PointF a, float f) { return {a.x * f, a.y * f}; }
 PointF divide(PointF a, float f)
@@ -137,7 +133,7 @@ void line(Overlay &out, PointF a, PointF b, std::uint32_t argb, float width)
     out.lines.push_back({a, b, width, argb});
 }
 
-} // namespace
+}
 
 std::vector<VectorPoint> parseVectorPoints(std::u16string_view vector)
 {
@@ -149,7 +145,6 @@ std::vector<VectorPoint> parseVectorPoints(std::u16string_view vector)
     char16_t type = u'm';
     std::size_t at = 0;
     while (at < vector.size()) {
-        // wxStringTokenizer(vector, " "): blank delimiters, so no empty tokens.
         if (vector[at] == u' ') {
             ++at;
             continue;
@@ -222,13 +217,11 @@ std::u16string serializeVectorPoints(const std::vector<VectorPoint> &points, std
                     spline = true;
             }
         }
-        // "fix for m one after another" (VisualClips.cpp:352-356).
         if (pos.type == u'm' && psize > 1 && ((i >= psize - 1) || (i < psize - 1 && points[i + 1].type == u'm')))
             visual += u"l " + legacy::getfloat(x, format) + u" " + legacy::getfloat(y, format) + u" ";
     }
     if (spline)
         visual += u"c ";
-    // wxString::Trim(): trailing blanks.
     while (!visual.empty() && (visual.back() == u' ' || visual.back() == u'\t' || visual.back() == u'\r' ||
                                visual.back() == u'\n'))
         visual.pop_back();
@@ -269,8 +262,7 @@ std::vector<PointF> flattenCurve(const PointF (&control)[4], bool bspline)
     float h = 1.0f;
     if (maxaccel > 4.0f)
         h = std::sqrt(4.0f / maxaccel);
-    // At most 1024 points a segment: coordinates near a float's limit made
-    // the step 0 (or close to it) and this loop endless.
+    // At most 1024 points a segment: near a float's limit the step underflows to 0.
     if (!(h >= 1.0f / 1024))
         h = 1.0f / 1024;
     float p_x, p_y;
@@ -297,7 +289,7 @@ void dashedLines(Overlay &out, const std::vector<PointF> &vector, int dashLen, s
         if (len == 0)
             return;
         const PointF diffUnits = divide(pdiff, len);
-        const float dash = static_cast<float>(dashLen) * out.unit; // SV1-hidpi-tool-sizes
+        const float dash = static_cast<float>(dashLen) * out.unit;
         const float singleMovement = 1 / (len / (dash * 2));
         actualPoint[0] = vector[i];
         actualPoint[1] = actualPoint[0];
@@ -314,7 +306,6 @@ void dashedLines(Overlay &out, const std::vector<PointF> &vector, int dashLen, s
 
 void pointSquare(Overlay &out, PointF pos, bool sel, float rcsize)
 {
-    // A filled square and its one-pixel outline (a LINESTRIP), over the path.
     OverlayPolygon p;
     p.points = {{pos.x - rcsize, pos.y - rcsize},
                 {pos.x + rcsize, pos.y - rcsize},
@@ -328,7 +319,6 @@ void pointSquare(Overlay &out, PointF pos, bool sel, float rcsize)
 
 void pointCircle(Overlay &out, PointF pos, bool sel, float crsize)
 {
-    // An 18-sided fan from the centre and its outline (Visuals.cpp:380-401).
     const float rad = 0.01745329251994329576923690768489f;
     OverlayPolygon p;
     for (int j = 0; j < 18; j++)
@@ -353,8 +343,6 @@ void VectorEditor::normaliseFirst()
 
 void VectorEditor::wheel(int steps)
 {
-    // DrawingAndClip::OnMouseEvent (VisualClips.cpp:872-878) and
-    // VectorItem::SetItemToggled (VideoToolbar.h:117-123).
     mode -= steps;
     if (mode < 0)
         mode = modeCount - 1;
@@ -364,13 +352,10 @@ void VectorEditor::wheel(int steps)
 
 int VectorEditor::checkPos(PointF pos, const VectorFrame &frame, bool retlast) const
 {
-    // DrawingAndClip::CheckPos (VisualClips.cpp:659-673), pos in the
-    // zoomed-out view.
     pos.x = (pos.x * frame.coeffW) - frame.offsetX;
     pos.y = (pos.y * frame.coeffH) - frame.offsetY;
     const float coeffPointArea = frame.pointArea() * frame.coeffW;
     for (std::size_t i = 0; i < points.size(); i++) {
-        // ClipPoint::IsInPos.
         if (std::fabs(pos.x - points[i].x) < coeffPointArea && std::fabs(pos.y - points[i].y) < coeffPointArea)
             return static_cast<int>(i);
     }
@@ -379,7 +364,6 @@ int VectorEditor::checkPos(PointF pos, const VectorFrame &frame, bool retlast) c
 
 void VectorEditor::addCurve(PointF pos, int whereis, char16_t type, const VectorFrame &frame)
 {
-    // DrawingAndClip::AddCurve (VisualClips.cpp:682-701).
     pos.x = (pos.x * frame.coeffW) - frame.offsetX;
     pos.y = (pos.y * frame.coeffH) - frame.offsetY;
     int prevPoint = whereis - 1;
@@ -387,7 +371,7 @@ void VectorEditor::addCurve(PointF pos, int whereis, char16_t type, const Vector
         prevPoint = 0;
     if (whereis != static_cast<int>(points.size()))
         whereis++;
-    const int oldx = legacy::toInt(points[prevPoint].x); // wxPoint
+    const int oldx = legacy::toInt(points[prevPoint].x);
     const int oldy = legacy::toInt(points[prevPoint].y);
     const int diffx = legacy::toInt((pos.x - oldx) / 3.0f);
     const int diffy = legacy::toInt((pos.y - oldy) / 3.0f);
@@ -399,8 +383,7 @@ void VectorEditor::addCurve(PointF pos, int whereis, char16_t type, const Vector
 
 bool VectorEditor::addCurvePoint(PointF pos, int whereis, const VectorFrame &frame)
 {
-    // DrawingAndClip::AddCurvePoint (VisualClips.cpp:703-717): false for
-    // wxBell (not beside a B-spline).
+    // False when not beside a B-spline.
     bool isstart = false;
     const bool isInRange = static_cast<int>(points.size()) > whereis;
     if (points[(whereis == 0) ? 0 : whereis - 1].type == u's' || (isInRange && points[whereis].type == u's')) {
@@ -432,7 +415,6 @@ void VectorEditor::addMove(PointF pos, int whereis, const VectorFrame &frame)
 
 void VectorEditor::selectPoints(const VectorFrame &frame)
 {
-    // DrawingAndClip::SelectPoints (VisualClips.cpp:1086-1103), in the view.
     const int x = (m_selection.left < m_selection.right) ? m_selection.left : m_selection.right;
     const int y = (m_selection.top < m_selection.bottom) ? m_selection.top : m_selection.bottom;
     const int r = (m_selection.left > m_selection.right) ? m_selection.left : m_selection.right;
@@ -451,7 +433,6 @@ void VectorEditor::changeSelection(bool select)
 
 int VectorEditor::findPoint(int pos, char16_t type, bool nextStart, bool fromEnd) const
 {
-    // DrawingAndClip::FindPoint (VisualClips.cpp:1112-1130).
     int j = pos;
     const int size = static_cast<int>(points.size());
     while (fromEnd ? j >= 0 : j < size) {
@@ -467,8 +448,6 @@ int VectorEditor::findPoint(int pos, char16_t type, bool nextStart, bool fromEnd
 
 VectorPoint VectorEditor::findSnapPoint(const VectorPoint &pos, std::size_t pointToSkip) const
 {
-    // DrawingAndClip::FindSnapPoint (VisualClips.cpp:1132-1159): within ten
-    // units of another point's x or y, the first such point's.
     bool xfound = false, yfound = false;
     float modPosx = pos.x;
     float modPosy = pos.y;
@@ -493,8 +472,7 @@ VectorPoint VectorEditor::findSnapPoint(const VectorPoint &pos, std::size_t poin
 
 int VectorEditor::checkCurve(int pos, bool checkSpline) const
 {
-    // DrawingAndClip::CheckCurve (VisualClips.cpp:1213-1252): where a right
-    // click may insert after a point (-1: inside a Bézier or a B-spline).
+    // Where a right click may insert after a point; -1 inside a Bézier or a B-spline.
     const std::size_t pointsSize = points.size();
     if (pos < 0 || static_cast<std::size_t>(pos) > pointsSize)
         return static_cast<int>(pointsSize);
@@ -533,9 +511,7 @@ int VectorEditor::checkCurve(int pos, bool checkSpline) const
 
 void VectorEditor::removePoints(int selectedPoint, const Callbacks &cb, bool fromKeyboard)
 {
-    // DrawingAndClip::RemovePoints (VisualClips.cpp:1367-1462). Legacy read
-    // and erased past the end on some broken paths (a Bézier missing its
-    // points); those indices are skipped here (approved T4-bezier-past-end).
+    // Indices past the end (a Bézier missing its points) are skipped.
     std::vector<std::size_t> sels;
     for (std::size_t i = 0; i < points.size(); i++)
         if (points[i].selected)
@@ -614,7 +590,6 @@ void VectorEditor::removePoints(int selectedPoint, const Callbacks &cb, bool fro
 
 void VectorEditor::moveSelected(float x, float y, const Callbacks &cb)
 {
-    // DrawingAndClip::OnMoveSelected (VisualClips.cpp:1194-1211).
     bool modified = false;
     for (auto &p : points) {
         if (p.selected) {
@@ -631,7 +606,6 @@ void VectorEditor::moveSelected(float x, float y, const Callbacks &cb)
 
 bool VectorEditor::key(const Key &event, const VectorFrame &frame, const Callbacks &cb)
 {
-    // DrawingAndClip::OnKeyPress (VisualClips.cpp:1161-1192).
     (void)frame;
     if (event.release)
         return false;
@@ -644,8 +618,7 @@ bool VectorEditor::key(const Key &event, const VectorFrame &frame, const Callbac
         removePoints(-1, cb, true);
         return true;
     }
-    // VT2-arrow-nudge: the arrows for legacy's W/A/S/D. Shift is a tenth in
-    // a drawing only (VECTORDRAW): a clip is written in whole units ("6.0f").
+    // Shift nudges by a tenth in a drawing only: a clip is written in whole units.
     if (const auto direction = nudgeDirection(event)) {
         const float increase = (event.shift && drawing) ? 0.1f : 1.f;
         moveSelected(direction->x * increase, direction->y * increase, cb);
@@ -656,8 +629,6 @@ bool VectorEditor::key(const Key &event, const VectorFrame &frame, const Callbac
 
 void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const Callbacks &cb)
 {
-    // DrawingAndClip::OnMouseEvent (VisualClips.cpp:870-1083) after the
-    // wheel and blockevents (the owner and the host).
     m_x = event.x;
     m_y = event.y;
     float zx = (m_x / frame.zoomScale.x) + frame.zoomMove.x;
@@ -695,7 +666,6 @@ void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const
     }
 
     if (event.kind == Pointer::Kind::Release) {
-        // LeftUp / RightUp / MiddleUp; another button's up does nothing.
         if (event.button == Pointer::Button::None)
             return;
         if (!m_drawSelection)
@@ -704,7 +674,6 @@ void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const
             m_drawSelection = false;
         return;
     }
-    // Remove points: a middle click, or a click in the delete mode.
     if ((press && event.button == Pointer::Button::Middle) || (mode == Delete && click)) {
         m_grabbed = -1;
         const int pos = checkPos(xy, frame);
@@ -716,7 +685,7 @@ void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const
         m_grabbed = -1;
         m_axis = 0;
         for (std::size_t i = 0; i < psize; i++) {
-            const float pointx = (points[i].x + frame.offsetX) / frame.coeffW; // ClipPoint::wx
+            const float pointx = (points[i].x + frame.offsetX) / frame.coeffW;
             const float pointy = (points[i].y + frame.offsetY) / frame.coeffH;
             if (std::fabs(pointx - zx) < frame.pointArea() && std::fabs(pointy - zy) < frame.pointArea()) {
                 m_lastpoint = m_acpoint = points[i];
@@ -779,13 +748,12 @@ void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const
         if (mode == Move && m_grabbed == -1) {
             const int pos = checkPos(xy, frame, true);
             if (psize > 0 && points[(pos == static_cast<int>(psize)) ? psize - 1 : static_cast<std::size_t>(pos)].type == u'm') {
-                // Legacy's HikariMessageBox, shown without blocking.
                 cb.notice(u"Double \"m\" was blocked because of Vsfilter bug");
                 return;
             }
             addMove(xy, pos, frame);
             cb.apply(false);
-            mode = Line; // tool = 1, and the toolbar follows
+            mode = Line;
         } else if (m_grabbed == -1) {
             m_drawSelection = true;
             m_drawCross = false;
@@ -798,7 +766,7 @@ void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const
     if (leftisdown && m_grabbed != -1 && m_grabbed < static_cast<int>(psize) && event.kind == Pointer::Kind::Move) {
         const int w = frame.videoRect.right - frame.videoRect.left;
         const int h = frame.videoRect.bottom - frame.videoRect.top;
-        zx = (0 > ((zx < w) ? zx : w)) ? 0 : ((zx < w) ? zx : w); // MID(0, zx, w)
+        zx = (0 > ((zx < w) ? zx : w)) ? 0 : ((zx < w) ? zx : w);
         zy = (0 > ((zy < h) ? zy : h)) ? 0 : ((zy < h) ? zy : h);
         VectorPoint &g = points[m_grabbed];
         g.x = ((zx + m_diffX) * frame.coeffW) - frame.offsetX;
@@ -850,7 +818,6 @@ void VectorEditor::drawCircle(Overlay &out, const VectorFrame &frame, int i) con
 
 void VectorEditor::drawLine(Overlay &out, const VectorFrame &frame, int i) const
 {
-    // DrawingAndClip::DrawLine (VisualClips.cpp:731-748).
     int diff = 1;
     if (points[i - 1].type == u's') {
         int j = i - 2;
@@ -868,8 +835,6 @@ void VectorEditor::drawLine(Overlay &out, const VectorFrame &frame, int i) const
 
 int VectorEditor::drawCurve(Overlay &out, const VectorFrame &frame, int i, bool bspline) const
 {
-    // DrawingAndClip::DrawCurve (VisualClips.cpp:760-818) and its Curve on
-    // the zoomed view (ClipPoint::wx / wy with the zoom).
     std::vector<PointF> v4;
     int pts = 3;
     const int size = static_cast<int>(points.size());
@@ -910,7 +875,7 @@ int VectorEditor::drawCurve(Overlay &out, const VectorFrame &frame, int i, bool 
         }
     } else {
         if (i + 2 >= size)
-            return size - i; // a Bézier missing its points (approved T4-bezier-past-end)
+            return size - i; // a Bézier missing its points
         VectorPoint first = points[i - 1];
         if (points[i - 1].type == u's') {
             int j = i - 2;
@@ -939,9 +904,6 @@ int VectorEditor::drawCurve(Overlay &out, const VectorFrame &frame, int i, bool 
 
 void VectorEditor::draw(Overlay &out, const VectorFrame &frame) const
 {
-    // DrawingAndClip::DrawVisual (VisualClips.cpp:94-179). Legacy drew the
-    // selection rectangle with the two-pixel line Visuals::Draw sets, then
-    // everything else one pixel wide.
     if (m_drawSelection) {
         const IntRect &s = m_selection;
         const std::vector<PointF> v5 = {
@@ -954,7 +916,6 @@ void VectorEditor::draw(Overlay &out, const VectorFrame &frame) const
     }
     if (points.empty())
         return;
-    // DrawVisual's own fix: the first point is drawn as "m".
     VectorEditor copy = *this;
     copy.normaliseFirst();
     copy.drawPoints(out, frame);
@@ -1018,4 +979,4 @@ void VectorEditor::drawPoints(Overlay &out, const VectorFrame &frame) const
     }
 }
 
-} // namespace hikari::application::visual
+}

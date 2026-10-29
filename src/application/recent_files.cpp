@@ -95,14 +95,14 @@ namespace {
 
 std::string lowerExtension(std::string_view path)
 {
-    // wxString::AfterLast('.'): the whole name when there is no dot.
+    // MUST KILL: a name without a dot is its own extension
     const auto dot = path.rfind('.');
     std::string ext(dot == std::string_view::npos ? path : path.substr(dot + 1));
     std::ranges::transform(ext, ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return ext;
 }
 
-} // namespace
+}
 
 OpenKind openKindOf(std::string_view path, bool single)
 {
@@ -114,15 +114,15 @@ OpenKind openKindOf(std::string_view path, bool single)
     if (ext == "hksession" || ext == "kls")
         return single ? OpenKind::Session : OpenKind::Refused;
     if (single) {
-        // Case-sensitive in legacy (EndsWith), the extension test is not.
+        // MUST KILL: "_keyframes.txt" matches case-sensitively, the extension test does not
         if (ext == "pass" || (ext == "txt" && path.ends_with("_keyframes.txt")) || ext == "stats" || ext == "log")
             return OpenKind::Keyframes;
     }
     if (ext == "ass" || ext == "ssa" || ext == "txt" || ext == "srt" || ext == "sub")
         return OpenKind::Subtitles;
-    if (ext == "lrc" || ext == "ttml") // KA6: lyrics, imported as karaoke Lines
+    if (ext == "lrc" || ext == "ttml")
         return OpenKind::Subtitles;
     return OpenKind::Video;
 }
 
-} // namespace hikari::application
+}

@@ -1,12 +1,5 @@
 #pragma once
 
-// Y5: converting a Document to another subtitle format (legacy
-// GLOBAL_CONVERT_TO_* and SubsGrid::Convert with Dialogue::Convert at
-// 20d647c4). The result is a new Document in the target format, as legacy
-// would save it; the source is untouched (C02-loss-preview: what the
-// conversion removes or synthesizes is reported for review before it is
-// accepted).
-
 #include "hikari/core/document.h"
 #include "hikari/core/style.h"
 
@@ -17,29 +10,27 @@
 
 namespace hikari::core {
 
-// The legacy CONVERT_* options.
 struct ConversionOptions {
-    double fps = 23.976;           // CONVERT_FPS (MicroDVD frames)
-    double videoFps = 23.976;      // SubsTime::FPS: new MicroDVD end times use the video's rate
-    std::u8string prefix;          // CONVERT_ASS_TAGS_TO_INSERT_IN_LINE
-    bool newEndTimes = false;      // CONVERT_NEW_END_TIMES
-    int timePerCharacter = 110;    // CONVERT_TIME_PER_CHARACTER (ms)
+    double fps = 23.976;           // MicroDVD frames
+    double videoFps = 23.976;      // new MicroDVD end times use this rate
+    std::u8string prefix;          // tags inserted at each Line's start
+    bool newEndTimes = false;
+    int timePerCharacter = 110;    // ms
     std::u8string resolutionWidth = u8"1280", resolutionHeight = u8"720";
-    StyleValues style;             // the conversion Style; its name goes on every Line
+    StyleValues style;             // its name goes on every Line
 };
 
-// What the conversion removes, rewrites or synthesizes.
 struct ConversionReport {
-    int commentsRemoved = 0;      // comment Lines (from ASS)
-    int duplicatesRemoved = 0;    // equal start, end and text after sorting (from ASS)
-    int emptyRemoved = 0;         // Lines left without text (from ASS)
-    int drawingsCleared = 0;      // drawings have no counterpart (from ASS)
-    int textChanged = 0;          // Lines whose markup was converted or removed
-    int fieldsDropped = 0;        // layer, style, actor, margins or effect lost or replaced
-    int markersDropped = 0;       // bookmarks, hidden Lines and groups (from ASS)
-    int timesChanged = 0;         // start or end moved: rounding, frames or new end times
-    bool reordered = false;       // sorted by time (from ASS)
-    bool headerDropped = false;   // Script Info and Styles (from ASS)
+    int commentsRemoved = 0;
+    int duplicatesRemoved = 0;    // equal start, end and text after sorting
+    int emptyRemoved = 0;
+    int drawingsCleared = 0;
+    int textChanged = 0;
+    int fieldsDropped = 0;        // layer, style, actor, margins or effect
+    int markersDropped = 0;       // bookmarks, hidden Lines and groups
+    int timesChanged = 0;         // rounding, frames or new end times
+    bool reordered = false;
+    bool headerDropped = false;   // Script Info and Styles
     bool operator==(const ConversionReport &) const = default;
 };
 
@@ -52,8 +43,8 @@ struct ConversionResult {
 using ConversionCollate = std::function<int(std::u8string_view, std::u8string_view)>;
 
 // Lines that survive keep their LineIds. Nullopt for a target that is the
-// source's own format, plain text, or an fps below 1 (legacy "Invalid FPS").
+// source's own format, plain text, or an fps below 1.
 std::optional<ConversionResult> convertDocument(const Document &source, SubtitleFormat target,
                                                 const ConversionOptions &options, const ConversionCollate &collate = {});
 
-} // namespace hikari::core
+}

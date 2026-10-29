@@ -72,7 +72,7 @@ int compareIdentifiers(std::string_view a, std::string_view b)
     return result < 0 ? -1 : (result > 0 ? 1 : 0);
 }
 
-} // namespace
+}
 
 std::optional<SemVer> parseSemVer(std::string_view text)
 {
@@ -185,7 +185,6 @@ std::string_view withoutV(std::string_view tag)
     return tag;
 }
 
-// The package keys the client knows, the manifest's and 2.1's.
 constexpr std::string_view kPackageKeys[] = {"nsis", "portable-windows", "appimage", "deb", "rpm", "portable-linux"};
 
 const ReleaseAsset *assetNamed(const ReleaseEntry &release, std::string_view name)
@@ -231,12 +230,12 @@ bool shellSafe(char c)
            c == ':' || c == '@' || c == '%' || c == '=';
 }
 
-} // namespace
+}
 
 std::optional<Codebase> codebaseOfVersion(std::string_view version)
 {
-    // By the version's core alone: 0.1.0-beta.2 is the rewrite's, though
-    // SemVer sorts it below 0.1.0.
+    // By the version's core alone: 0.1.0-beta.2 is HikariSub's, though SemVer
+    // sorts it below 0.1.0.
     const auto v = parseSemVer(version);
     if (!v)
         return std::nullopt;
@@ -405,7 +404,7 @@ std::vector<ReleaseEntry> whatsNewReleases(const std::vector<ReleaseEntry> &rele
         return {};
     auto after = parseSemVer(since);
     if (after && (codebaseOfVersion(since) != Codebase::Qt || compareSemVer(*after, *top) >= 0))
-        after.reset(); // a first start, a downgrade, the legacy app: the installed version alone
+        after.reset(); // a first start, a downgrade, HikariSub legacy: the installed version alone
     std::vector<std::pair<SemVer, const ReleaseEntry *>> found;
     for (const auto &release : releases) {
         if (release.draft)
@@ -431,7 +430,6 @@ std::vector<ReleaseEntry> whatsNewReleases(const std::vector<ReleaseEntry> &rele
 
 WhatsNewShown whatsNewShown(const std::vector<ReleaseEntry> &releases, std::string_view installed, bool stableOnly)
 {
-    // As updateCandidates: "stable only" holds on a stable build.
     const bool skipPrereleases = stableOnly && !isPrereleaseTag(installed);
     WhatsNewShown shown;
     for (const auto &release : releases) {
@@ -448,7 +446,6 @@ WhatsNewShown whatsNewShown(const std::vector<ReleaseEntry> &releases, std::stri
 std::string whatsNewSince(std::string_view lastRun, std::string_view storedSince, std::string_view installed)
 {
     const std::string_view since = lastRun == installed ? storedSince : lastRun;
-    // As whatsNewReleases: a Qt version below the installed one, else none.
     const auto after = parseSemVer(since);
     const auto top = parseSemVer(installed);
     if (!after || !top || codebaseOfVersion(since) != Codebase::Qt || compareSemVer(*after, *top) >= 0)
@@ -468,9 +465,7 @@ std::vector<ReleaseEntry> updateCandidates(const std::vector<ReleaseEntry> &rele
     std::vector<std::pair<SemVer, const ReleaseEntry *>> found;
     if (!installed)
         return {};
-    // Installers spec 2.4, as legacy's SkipsPrereleases: "Stable versions
-    // only" holds on a stable build; a prerelease build always takes
-    // prereleases, so a beta is offered the next beta.
+    // A prerelease build always takes prereleases, so a beta is offered the next beta.
     const bool skipPrereleases = stableOnly && installed->prerelease.empty();
     for (const auto &release : releases) {
         if (release.draft || (skipPrereleases && isPrerelease(release)))
@@ -530,8 +525,8 @@ ManifestResult readManifest(const ManifestFields &fields, const ReleaseEntry &re
         if (entry == fields.packages.end())
             continue;
         const auto &p = entry->second;
-        // The name is the one 2.1 gives the key, so that a manifest cannot
-        // have one kind download another kind's file.
+        // assetNameFor's name only, so a manifest cannot have one kind download
+        // another kind's file.
         if (!p.name || *p.name != assetNameFor(key, version) || !p.sha256 || !isSha256Hex(*p.sha256) || !p.size ||
             *p.size <= 0)
             continue;
@@ -749,7 +744,6 @@ std::string appImageStagingPath(std::string_view appImage, std::string_view vers
 }
 
 namespace {
-// The kind, then the path's FNV-1a hash.
 std::string keyWithPath(std::string_view kindToken, std::string_view path)
 {
     std::uint64_t hash = 14695981039346656037ULL;
@@ -762,7 +756,7 @@ std::string keyWithPath(std::string_view kindToken, std::string_view path)
         key += "0123456789abcdef"[(hash >> shift) & 0xF];
     return key;
 }
-} // namespace
+}
 
 std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
 {
@@ -812,4 +806,4 @@ StartupArguments parseStartupArguments(const std::vector<std::string> &arguments
     return out;
 }
 
-} // namespace hikari::application
+}

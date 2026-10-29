@@ -1,10 +1,6 @@
 #pragma once
 
-// The open Documents and their targets (docs/ux/workspaces.md). The
-// editing target receives content-changing commands. An optional protected
-// comparison reference can be read, selected and copied, never changed.
-// Keyboard focus is a UI concern and never moves either target; only the
-// explicit operations below do.
+// Keyboard focus never moves either target; only the explicit operations below do.
 
 #include "hikari/application/write_coordinator.h"
 
@@ -25,46 +21,35 @@ class Workspace {
 public:
     // Adds a Document; the first one becomes the editing target.
     DocumentId add(std::string title);
-    // Adds a Document that already has an identity (from DocumentFiles). As
-    // the protected reference it never becomes the editing target.
+    // As the protected reference it never becomes the editing target.
     bool add(DocumentId id, std::string title, bool asReference = false);
-    // Removes a Document. Removing the editing target hands it to the tab
-    // that takes its place (legacy Notebook::DeletePage: the next tab, or the
-    // last one when it was the last), never to the reference.
+    // The editing target passes to the tab taking its place (the next tab, else the last), never
+    // to the reference.
     bool remove(DocumentId id);
-    // P6: `replacement` (already added) takes `id`'s tab position and roles,
-    // and `id` goes (legacy loads new subtitles into the same tab).
+    // `replacement` (already added) takes `id`'s tab position and roles, and `id` goes.
     bool replace(DocumentId id, DocumentId replacement);
-    // P6: the tabs, in order: every Document but the protected reference,
-    // unless the reference is a tab shown there (R2, setTabReference).
+    // Every Document but the protected reference, unless it is a tab reference.
     std::vector<DocumentId> tabs() const;
-    // P9: tabs `a` and `b` (indices into tabs()) trade places, as legacy
-    // Notebook swaps two Pages (a tab dragged over another, the tab menu's
-    // choice). The roles stay with their Documents.
+    // `a` and `b` index tabs(); the roles stay with their Documents.
     bool swapTabs(std::size_t a, std::size_t b);
 
     std::optional<DocumentId> editingTarget() const { return m_target; }
     std::optional<DocumentId> reference() const { return m_reference; }
     const std::string *title(DocumentId id) const;
-    bool setTitle(DocumentId id, std::string title); // after Save As
-    std::vector<DocumentId> documents() const;    // in the order they were added
+    bool setTitle(DocumentId id, std::string title);
+    std::vector<DocumentId> documents() const; // in the order they were added
 
-    // Explicit operations. The reference can't become the editing target this
-    // way (use promoteReference); a Document can't be both. R2: choosing the
-    // tab of a tab reference does make it the editing target, and it stops
-    // being the reference.
+    // The reference can't become the editing target this way (use promoteReference); a Document
+    // can't be both. Choosing a tab reference's tab makes it the editing target, no longer the reference.
     bool setEditingTarget(DocumentId id);
     bool setReference(std::optional<DocumentId> id);
-    // R2: another tab's Document becomes the protected reference and stays a
-    // tab (legacy's subtitles preview showed another tab's grid, which stayed
-    // in the notebook). A reference that was not a tab becomes one.
+    // Another tab's Document becomes the protected reference and stays a tab; a reference that was
+    // not a tab becomes one.
     bool setTabReference(DocumentId id);
     bool referenceIsTab() const { return m_reference && m_referenceIsTab; }
-    // Makes the reference the editing target. It stops being protected; the
-    // previous target stays open with its content and context.
+    // The reference stops being protected; the previous target stays open with its content and context.
     bool promoteReference();
 
-    // Guard for a content-changing command aimed at `target`.
     std::expected<void, TargetRefusal> checkContentCommand(DocumentId target) const;
 
 private:
@@ -77,8 +62,8 @@ private:
     std::vector<Entry> m_documents;
     std::optional<DocumentId> m_target;
     std::optional<DocumentId> m_reference;
-    bool m_referenceIsTab = false; // R2
+    bool m_referenceIsTab = false;
     std::uint64_t m_next = 1;
 };
 
-} // namespace hikari::application
+}

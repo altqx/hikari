@@ -16,7 +16,7 @@ std::optional<LoadResult> found(LoadResult result)
     return result;
 }
 
-} // namespace
+}
 
 std::optional<LoadResult> loadSubtitle(std::span<const std::byte> bytes, std::u8string_view extension)
 {
@@ -34,8 +34,7 @@ std::optional<LoadResult> loadSubtitle(std::span<const std::byte> bytes, std::u8
             return r;
         return found(loadLineFormats(bytes));
     }
-    // Any other extension: LoadTXT, then the format of the first timed Line
-    // decides, reloading ASS or SRT content with their readers.
+    // The first timed Line's format decides; ASS or SRT content is reloaded by its reader.
     return found(loadLineFormats(bytes));
 }
 
@@ -56,4 +55,4 @@ std::vector<std::byte> encodeSubtitle(const Document &document, const AssSaveOpt
     }
 }
 
-} // namespace hikari::core
+}

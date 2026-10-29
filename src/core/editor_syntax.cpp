@@ -19,7 +19,7 @@ TextState textState(bool comment, std::u16string_view effect)
 
 namespace {
 
-// IsNumberFloat (config.cpp:1075-1083): digits and dots only; true for "".
+// Digits and dots only; true for "".
 bool isNumberFloat(std::u16string_view s)
 {
     for (const char16_t c : s)
@@ -28,7 +28,6 @@ bool isNumberFloat(std::u16string_view s)
     return true;
 }
 
-// TextEditor::LuaKeywords (DialogueTextEditor.cpp:36) and CheckIfKeyword.
 bool isKeyword(std::u16string_view s)
 {
     static constexpr std::array<std::u16string_view, 13> keywords{
@@ -39,7 +38,7 @@ bool isKeyword(std::u16string_view s)
     return false;
 }
 
-// wxAtoi: leading whitespace, a sign, then digits; 0 for none.
+// Leading blanks, a sign, then digits; 0 for none.
 long atoi16(std::u16string_view s)
 {
     std::size_t i = 0;
@@ -54,8 +53,7 @@ long atoi16(std::u16string_view s)
     return negative ? -value : value;
 }
 
-// Legacy's `parttext`: the characters read since the last draw, with where
-// each came from (a tab is left out of it, as legacy leaves it out).
+// Characters read since the last draw, with their positions; tabs left out.
 struct Part {
     std::u16string text;
     std::vector<std::size_t> at;
@@ -90,8 +88,7 @@ public:
     {
         for (std::size_t i = 0; i < m_text.size(); ++i)
             step(m_text[i], i);
-        // The row's end (alltext's appended space is the last wrap): the
-        // token being read takes the colour of DrawFieldD2D:1409-1413.
+        // The row's end colours the pending token as a trailing space would.
         const char16_t ch = u' ';
         const Role role = (m_val || (m_templateLine && isNumberFloat(m_part.text) && (m_tags || m_templateCode)))
                               ? Role::Values
@@ -118,8 +115,7 @@ public:
 private:
     void draw(const Part &part, Role role)
     {
-        // DrawFieldD2D:1188: a code Line's `ctext` is EDITOR_TEMPLATE_VARIABLES,
-        // so every plain-text draw in it is a variable.
+        // A code Line's plain text is a template variable.
         if (role == Role::Text && m_state == TextState::Code)
             role = Role::TemplateVariables;
         for (const std::size_t i : part.at)
@@ -127,7 +123,6 @@ private:
     }
     void draw(char16_t, std::size_t i, Role role) { m_roles[i] = role; }
 
-    // One character of DrawFieldD2D's loop (:1481-1612).
     void step(char16_t ch, std::size_t i)
     {
         if (m_templateLine) {
@@ -186,7 +181,6 @@ private:
             if (ch == u'{' || ch == u'\\') {
                 m_tags = ch == u'{';
                 m_hasSplit = ch == u'\\';
-                // parttext.BeforeLast(ch): all but the character just read.
                 Part before = m_part;
                 before.removeLast();
                 draw(before, m_hasDrawing ? Role::SplitAndDrawings : Role::Text);
@@ -257,11 +251,11 @@ private:
     bool m_hasDrawing = false, m_hasSplit = false;
 };
 
-} // namespace
+}
 
 std::vector<Run> colourRuns(std::u16string_view text, TextState state)
 {
     return Walker(text, state).run();
 }
 
-} // namespace hikari::core::syntax
+}

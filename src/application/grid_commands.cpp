@@ -13,7 +13,7 @@ constexpr std::int64_t kUsPerMs = 1000;
 
 core::DocumentTime ms(std::int64_t value)
 {
-    return core::DocumentTime(std::max<std::int64_t>(0, value) * kUsPerMs); // SubsTime clamps at 0
+    return core::DocumentTime(std::max<std::int64_t>(0, value) * kUsPerMs);
 }
 
 std::int64_t msOf(core::DocumentTime t)
@@ -23,7 +23,7 @@ std::int64_t msOf(core::DocumentTime t)
 
 std::int64_t zeroIt(std::int64_t value)
 {
-    return value / 10 * 10; // legacy ZEROIT
+    return value / 10 * 10;
 }
 
 std::vector<const core::LineRecord *> linesOf(const EditSession &s)
@@ -40,7 +40,6 @@ int indexOf(const std::vector<const core::LineRecord *> &lines, core::LineId id)
     return -1;
 }
 
-// The next shown Line from `index` in `step` direction (legacy GetKeyFromPosition).
 const core::LineRecord *neighbour(const std::vector<const core::LineRecord *> &lines, int index, int step,
                                   const LineVisible &visible)
 {
@@ -72,7 +71,7 @@ Selection selectAll(const std::vector<core::LineId> &ids)
     return s;
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> insertLine(EditSession &session, InsertWhere where,
                                                std::optional<std::int64_t> videoMs, const LineVisible &visible)
@@ -88,8 +87,7 @@ std::expected<void, CommandRefusal> insertLine(EditSession &session, InsertWhere
         line.start.value = ms(zeroIt(*videoMs));
         line.end.value = ms(zeroIt(*videoMs + 4000));
     } else if (where == InsertWhere::Before) {
-        // Legacy compares the previous Line's End with this Line's Start and
-        // takes it even when that leaves End before Start (characterized).
+        // MUST KILL: Insert Before can leave the new Line's End before its Start
         line.end.value = current.start.value;
         const auto *previous = neighbour(lines, index, -1, visible);
         line.start.value = previous && previous->end.value > current.start.value
@@ -167,10 +165,8 @@ std::expected<void, CommandRefusal> duplicateLines(EditSession &session, const L
         }
     if (start < 0)
         return std::unexpected(CommandRefusal::Invalid);
-    // The run: selected Lines from the first one; hidden unselected Lines are
-    // stepped over, a shown unselected Line ends it.
     std::vector<const core::LineRecord *> run;
-    const core::LineRecord *lastInRun = nullptr; // the copies go after it
+    const core::LineRecord *lastInRun = nullptr;
     for (std::size_t i = static_cast<std::size_t>(start); i < lines.size(); ++i) {
         if (selected.contains(lines[i]->id)) {
             run.push_back(lines[i]);
@@ -178,7 +174,7 @@ std::expected<void, CommandRefusal> duplicateLines(EditSession &session, const L
         } else if (!visible || visible(lines[i]->id)) {
             break;
         } else {
-            lastInRun = lines[i]; // legacy rw1 also moves past hidden rows
+            lastInRun = lines[i];
         }
     }
     std::vector<core::LineRecord> copies;
@@ -235,11 +231,9 @@ std::expected<void, CommandRefusal> deleteLines(EditSession &session)
                                                  if (!d.removeLine(id))
                                                      return false;
                                              if (d.lines().empty()) {
-                                                 // Legacy adds a default Dialogue (0:00:00.00-0:00:05.00, Default).
                                                  core::LineRecord line;
                                                  line.style = u8"Default";
                                                  line.end.value = ms(5000);
-                                                 // E6: a new Dialogue, not a copy (state 0).
                                                  replacement = d.appendLine(line, core::ChangeMark::Kept);
                                                  return replacement.has_value();
                                              }
@@ -255,14 +249,12 @@ std::expected<void, CommandRefusal> deleteLines(EditSession &session)
 
 std::expected<void, CommandRefusal> deleteText(EditSession &session, const LineVisible &visible)
 {
-    // SubsGridBase.cpp:928-936: GetSelections (the shown selected Lines),
-    // CopyDialogue(i)->Text = "" for each, SetModified(GRID_DELETE_TEXT).
     std::vector<core::LineId> lines;
     for (const auto *l : linesOf(session))
         if (session.selection().selected.contains(l->id) && (!visible || visible(l->id)))
             lines.push_back(l->id);
     if (lines.empty())
-        return std::unexpected(CommandRefusal::Invalid); // SubsGrid.cpp:844: sels > 0
+        return std::unexpected(CommandRefusal::Invalid);
     const auto ran = session.run(Command{"Deleting text", session.revision(), {lines.begin(), lines.end()},
                                          [&](core::Document &d) {
                                              for (const auto id : lines)
@@ -277,7 +269,6 @@ std::expected<void, CommandRefusal> deleteText(EditSession &session, const LineV
 
 namespace {
 
-// Legacy GetSelections: the selected Lines the Grid shows, in Document order.
 std::vector<const core::LineRecord *> shownSelection(const EditSession &session, const LineVisible &visible)
 {
     std::vector<const core::LineRecord *> out;
@@ -289,8 +280,6 @@ std::vector<const core::LineRecord *> shownSelection(const EditSession &session,
 
 std::u8string joined(const std::vector<const core::LineRecord *> &parts, bool translation)
 {
-    // Legacy: while nothing is collected a contributor is taken as it is;
-    // after that each non-empty one follows a \\N.
     std::u8string out;
     for (const auto *l : parts) {
         const std::u8string &t = translation ? l->translation : l->text;
@@ -302,7 +291,7 @@ std::u8string joined(const std::vector<const core::LineRecord *> &parts, bool tr
     return out;
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> joinLines(EditSession &session, JoinKind kind, const LineVisible &visible)
 {
@@ -387,15 +376,11 @@ std::expected<void, CommandRefusal> swapLines(EditSession &session)
         static_cast<std::size_t>(rows[1]) + 1 < lines.size() ? std::optional(lines[static_cast<std::size_t>(rows[1]) + 1]->id)
                                                              : std::nullopt;
     const auto ran = session.run(Command{"Swapping lines", session.revision(), {first.id, second.id}, [&](core::Document &d) {
-                                             // Both keep their identity and source bytes; both
-                                             // are copied and marked changed (SwapRowsF,
-                                             // SubsFile.cpp:1010-1017).
                                              return d.moveLine(second.id, first.id) && d.moveLine(first.id, afterSecond) &&
                                                     d.markLineChanged(first.id) && d.markLineChanged(second.id);
                                          }});
     if (!ran)
         return std::unexpected(ran.error());
-    // Selections and the active row are positions in legacy.
     const auto now = linesOf(session);
     Selection s;
     s.selected = {now[static_cast<std::size_t>(rows[0])]->id, now[static_cast<std::size_t>(rows[1])]->id};
@@ -452,7 +437,6 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
     auto text = [&](std::u8string_view a, std::u8string_view b) {
         return compare ? compare(a, b) : a.compare(b);
     };
-    // Legacy sortstart ... sortlayer (SubsGridBase.cpp).
     auto less = [&](const core::LineRecord *i, const core::LineRecord *j) {
         const auto si = msOf(i->start.value), sj = msOf(j->start.value);
         const auto ei = msOf(i->end.value), ej = msOf(j->end.value);
@@ -466,8 +450,6 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
         case SortKey::Actor:
             return i->actor != j->actor ? text(i->actor, j->actor) < 0 : si < sj;
         case SortKey::Effect:
-            // Approved G6-sort-effect (2026-10-04): by Effect (legacy
-            // sorteffect compared the Actors when the Effects differed).
             return i->effect != j->effect ? text(i->effect, j->effect) < 0 : si < sj;
         case SortKey::Layer:
             return i->layer.value != j->layer.value ? i->layer.value < j->layer.value : si < sj;
@@ -488,7 +470,6 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
     }
     if (!changed)
         return {};
-    // Legacy keeps the selection by row number.
     std::set<std::size_t> selectedRows;
     std::optional<std::size_t> activeRow, anchorRow;
     for (std::size_t i = 0; i < lines.size(); ++i) {
@@ -505,8 +486,6 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
             moved.push_back(order[row]);
     std::set<core::LineId> touched(order.begin(), order.end());
     const auto ran = session.run(Command{"Sorting subtitles", session.revision(), touched, [&](core::Document &d) {
-                                             // Row by row, the wanted Line goes before the
-                                             // one now there; Lines already in place stay.
                                              std::vector<core::LineId> current;
                                              for (const auto *l : d.lines())
                                                  current.push_back(l->id);
@@ -519,9 +498,6 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
                                                                          current.end(), order[k]));
                                                  current.insert(current.begin() + static_cast<std::ptrdiff_t>(k), order[k]);
                                              }
-                                             // SortAll / SortSelected (SubsFile.cpp:470-501): each
-                                             // Line that lands on another row is copied, so marked
-                                             // changed; the ones left in place keep their mark.
                                              for (const auto id : moved)
                                                  if (!d.markLineChanged(id))
                                                      return false;
@@ -542,8 +518,7 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
 
 namespace {
 
-// The Document's own MicroDVD rate in frames per second; nullopt for other
-// formats, 0 when a MicroDVD Document has none yet.
+// nullopt for other formats, 0 when a MicroDVD Document has no rate yet.
 std::optional<double> microDvdFps(const core::Document &d)
 {
     if (d.format() != core::SubtitleFormat::MicroDvd)
@@ -554,7 +529,6 @@ std::optional<double> microDvdFps(const core::Document &d)
     return static_cast<double>(fps.numerator()) / static_cast<double>(fps.denominator());
 }
 
-// SubsTime::NewTime: clamped at 0; MicroDVD frames follow (ceil(ms * fps / 1000)).
 void newTime(core::TimeField &field, std::optional<std::int64_t> &frame, std::int64_t value, std::optional<double> fps)
 {
     const std::int64_t clamped = std::max<std::int64_t>(0, value);
@@ -568,7 +542,7 @@ std::expected<void, CommandRefusal> retimeAll(EditSession &session, const std::s
 {
     const auto fps = microDvdFps(session.document());
     if (fps && *fps <= 0)
-        return std::unexpected(CommandRefusal::Invalid); // C01-fps-isolation: no rate, no frames
+        return std::unexpected(CommandRefusal::Invalid);
     std::vector<std::pair<core::LineId, std::pair<std::int64_t, std::int64_t>>> times;
     for (const auto *l : linesOf(session))
         times.push_back({l->id, {retime(msOf(l->start.value)), retime(msOf(l->end.value))}});
@@ -589,7 +563,7 @@ std::expected<void, CommandRefusal> retimeAll(EditSession &session, const std::s
     return {};
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> setFpsFromVideo(EditSession &session, std::int64_t videoMs, const LineVisible &visible)
 {
@@ -605,7 +579,6 @@ std::expected<void, CommandRefusal> setFpsFromVideo(EditSession &session, std::i
     const auto diffLines = static_cast<float>(secondTime - firstTime);
     if (diffLines == 0)
         return std::unexpected(CommandRefusal::Invalid);
-    // SubsTime::Change(int): the float product truncated, added, clamped at 0.
     return retimeAll(session, "Setting FPS from video", [&](std::int64_t t) {
         return t + static_cast<int>(diffVideo * (static_cast<float>(t - firstTime) / diffLines));
     });
@@ -620,4 +593,4 @@ std::expected<void, CommandRefusal> setNewFps(EditSession &session, double oldFp
                      [&](std::int64_t t) { return static_cast<int>(static_cast<double>(t) * sub); });
 }
 
-} // namespace hikari::application
+}

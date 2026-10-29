@@ -6,8 +6,8 @@
 extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
-int luaopen_lpeg(lua_State *L);    // AutomationLPeg.c
-int luaopen_luabins(lua_State *L); // Thirdparty/luabins
+int luaopen_lpeg(lua_State *L);
+int luaopen_luabins(lua_State *L);
 }
 
 #include <chrono>
@@ -44,8 +44,7 @@ char *dup(const std::string &s)
     return out;
 }
 
-// Legacy do_register_lib_table: leaves ffi.cast on the stack after declaring
-// the opaque types.
+// Leaves ffi.cast on the stack after declaring the opaque types.
 void beginLibTable(lua_State *L, const std::vector<const char *> &types)
 {
     lua_getglobal(L, "require");
@@ -60,7 +59,6 @@ void beginLibTable(lua_State *L, const std::vector<const char *> &types)
     lua_remove(L, -2);
 }
 
-// Legacy do_register_lib_function: table[name] = ffi.cast(type, fn).
 void addFunction(lua_State *L, const char *name, const char *type, void *fn)
 {
     lua_pushvalue(L, -2);
@@ -74,8 +72,6 @@ template <typename F> void *fnptr(F *f)
 {
     return reinterpret_cast<void *>(f);
 }
-
-// ---- aegisub.__unicode_impl -------------------------------------------------
 
 char *toUpper(const char *str, char **err)
 {
@@ -118,12 +114,8 @@ int openUnicode(lua_State *L)
     return 1;
 }
 
-// ---- aegisub.__re_impl (legacy, unchanged semantics) -------------------------
-
 using boost::u32regex;
 
-// A cmatch with its range attached, so a pointer to an int pair can be
-// returned without a heap allocation per call.
 struct agi_re_match {
     boost::cmatch m;
     int range[2];
@@ -170,7 +162,7 @@ int *regexSearch(u32regex &re, const char *str, size_t len, size_t start)
 
 char *regexReplace(u32regex &re, const char *replacement, const char *str, size_t len, int maxCount)
 {
-    // regex_replace does one or every replacement; this does up to maxCount.
+    // Boost's regex_replace does one or every replacement; this does up to maxCount.
     auto match = boost::u32regex_iterator<const char *>(str, str + len, re);
     auto endIt = boost::u32regex_iterator<const char *>();
     auto suffix = str;
@@ -240,12 +232,9 @@ int openRe(lua_State *L)
     return 1;
 }
 
-// ---- aegisub.__lfs_impl ------------------------------------------------------
-// Legacy used boost::filesystem, whose char paths are in the ANSI code page
-// on Windows; std::filesystem's char paths behave the same way there, and
-// are UTF-8 elsewhere.
+// std::filesystem char paths are in the ANSI code page on Windows, UTF-8 elsewhere.
 
-// Legacy wrap(): a std::exception's text, anything else "Unknown error".
+// Error text: a std::exception's what(), anything else "Unknown error".
 template <typename Func> auto wrap(char **err, Func f) -> decltype(f())
 {
     try {
@@ -311,7 +300,7 @@ DirectoryIterator *dirNew(const char *path, char **err)
         auto *d = new DirectoryIterator;
         std::error_code ec;
         d->it = fs::directory_iterator(path, ec);
-        d->open = !ec; // legacy: an unreadable directory is simply empty
+        d->open = !ec; // an unreadable directory is empty
         return d;
     });
 }
@@ -367,7 +356,7 @@ unsigned long long getSize(const char *path, char **err)
 {
     return wrap(err, [=] {
         if (fs::is_directory(path))
-            throw "Not a file"; // legacy: not a std::exception, so "Unknown error"
+            throw "Not a file"; // not a std::exception, so scripts see "Unknown error"
         return static_cast<unsigned long long>(fs::file_size(path));
     });
 }
@@ -398,14 +387,12 @@ void setPreload(lua_State *L, const char *name, lua_CFunction open)
     lua_setfield(L, -2, name);
 }
 
-} // namespace
+}
 
 void installGlobalLocale()
 {
-    // Legacy HikariSubFrame: the system default locale. Script strings are
-    // UTF-8, and Boost.Locale's generator uses UTF-8 on Windows by default; a
-    // POSIX system locale without UTF-8 (a bare C locale in a container)
-    // keeps its language with UTF-8 instead, so case mapping never drops text.
+    // Script strings are UTF-8: a POSIX locale without UTF-8 keeps its language
+    // with UTF-8 so case mapping never drops text.
     boost::locale::generator gen;
     try {
         std::locale loc = gen("");
@@ -439,4 +426,4 @@ void preload(lua_State *L)
     lua_pop(L, 2);
 }
 
-} // namespace hikari::lua_native
+}

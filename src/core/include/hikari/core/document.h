@@ -1,8 +1,6 @@
 #pragma once
 
-// Source-preserving subtitle document (docs/document-model.md). Sections and
-// records keep authored order; every record links to its exact source bytes.
-// Records are semantic views over that source, never a competing copy of it.
+// Records keep authored order and link to their exact source bytes.
 
 #include "hikari/core/time.h"
 
@@ -32,7 +30,7 @@ enum class TextEncoding {
 };
 
 struct SourceText {
-    std::vector<std::byte> bytes; // immutable original input, byte for byte
+    std::vector<std::byte> bytes; // immutable original input
     TextEncoding encoding = TextEncoding::Utf8;
 };
 
@@ -42,33 +40,26 @@ struct LineId {
     auto operator<=>(const LineId &) const = default;
 };
 
-// An authored time field: the original lexeme, and the value the legacy
-// positional parser gives it.
+// The value is read positionally; the lexeme is kept.
 struct TimeField {
     std::u8string lexeme;
     DocumentTime value;
 };
 
-// An integer field read like the legacy loader (C atoi): lexeme kept.
+// The value is read like C atoi.
 struct IntField {
     std::u8string lexeme;
     std::int64_t value = 0;
 };
 
-// Actor-field markers as the legacy Dialogue::SetRaw reads them. Only a field
-// starting with '[' is examined, and only the first matching kind in the
-// order bookmark, hidden, visible, tree_closed, tree_opened,
-// tree_description is removed (every occurrence of it). Kinds never combine
-// on load; on save the group or visibility marker precedes [bookmark].
+// Actor-field markers: on load only the first marker kind found is removed.
 enum class LineVisibility { Visible, Hidden, VisibleBlock };
 enum class GroupMarker { None, Description, Opened, Closed };
 
 struct LineRecord {
     LineId id;
     bool comment = false;   // ASS Comment: rather than Dialogue:
-    // An event line the legacy parser could not read as ASS ("Dial"/"Comm"
-    // prefix without "Dialogue"/"Comment", or fewer than 9 fields): the whole
-    // line is the text, with zero times and the Default style.
+    // Not readable as an ASS event: the whole line is the text, zero times, Default style.
     bool unparsed = false;
     IntField layer;
     TimeField start;
@@ -82,42 +73,27 @@ struct LineRecord {
     IntField marginRight;
     IntField marginVertical;
     std::u8string effect;
-    std::u8string text;     // legacy trims surrounding whitespace; raw bytes stay in the span
+    std::u8string text;     // trimmed; raw bytes stay in the span
     SourceSpan span;        // where the record came from; its terminator is reused on save
     bool edited = false;    // the span no longer describes the record; regenerate on save
-    // Added in the editor: no source bytes (an empty span at its position).
-    // Saved in the legacy form with the newline style of the record before it.
+    // No source bytes (an empty span at its position); saved with the previous record's newline.
     bool inserted = false;
     std::optional<std::u8string> cueNumber; // SRT: the authored cue number line, if any
-    // MicroDVD: authored frame numbers. start/end times stay unresolved (zero)
-    // until the Document's own frame rate is set (C01-fps-isolation).
+    // MicroDVD: start/end stay zero until the Document's frame rate is set.
     std::optional<std::int64_t> startFrame;
     std::optional<std::int64_t> endFrame;
-    // TLMode pair (Script Info "TLMode: Yes"): an original line in the
-    // "TLMode Style" followed by its translation line, read as one Line. The
-    // other fields come from the translation line; text is the original's.
-    // span covers both lines and anything between them; originalSpan is the
-    // original line alone.
+    // TLMode pair: the original line ("TLMode Style") and its translation read as one Line; text is
+    // the original's, other fields the translation line's. span covers both, originalSpan the original.
     std::optional<SourceSpan> originalSpan;
-    std::u8string translation; // legacy TextTl; empty means untranslated
-    bool unconfirmed = false;  // legacy State 4, written as the effect "\fD"
-    // E6: legacy State 1 and 2, the Grid's changed-Line mark. Each legacy
-    // Dialogue::Copy() without keepstate made a changed object
-    // (ChangeDialogueState(1), SubsDialogue.cpp:1071-1072), shared by the
-    // history steps after it until copied again; a save turned changed
-    // objects into saved ones (SubsGridBase.cpp:391). A changed Line carries
-    // a version unique to that copy (0: never changed since loading), so the
-    // session can mark exactly the saved copies, wherever history keeps them.
+    std::u8string translation; // empty: untranslated
+    bool unconfirmed = false;  // written as the effect "\fD"
+    // Unique per changed copy (0: unchanged since loading), so a save marks exactly the saved copies.
     std::uint64_t changeVersion = 0;
-    // KE1: the karaoke Line a templater run generated this Line from (part
-    // of that Line's generated output); none when 0. In memory only: never
-    // saved, so a Document opened from a file starts without it.
+    // The karaoke Line a templater run generated this one from; 0: none. Never saved.
     LineId generatedFrom;
 };
 
-// E6: how a Document mutation treats a Line's changed-Line mark: Changed
-// gives it a new version (legacy Copy()), Kept leaves it as it is (legacy
-// Copy(keepstate) or an in-place change, such as filtering's).
+// Changed gives the Line a new changeVersion; Kept leaves it.
 enum class ChangeMark { Changed, Kept };
 // A version no other changed Line has (process-wide).
 std::uint64_t newChangeVersion();
@@ -134,7 +110,7 @@ struct PropertyRecord {
     std::u8string key;   // trimmed text before the first ':' (in [Hikari], the first '=')
     std::u8string value; // trimmed text after it
     SourceSpan span;
-    bool edited = false;   // written as "key: value" (legacy GetSInfos)
+    bool edited = false;   // written as "key: value"
     bool inserted = false; // added in the editor
 };
 
@@ -159,8 +135,8 @@ enum class SectionKind {
     Events,
     Fonts,
     Graphics,
-    Unknown,    // retained untouched (C03-preservation)
-    Hikari,     // [Hikari]: HikariSub's own "key=value" lines (WS2, setHikariProperty)
+    Unknown,    // retained untouched
+    Hikari,     // [Hikari]: HikariSub's own "key=value" lines
     Cues,       // the single body of a sectionless format (SRT)
 };
 
@@ -176,7 +152,7 @@ struct Diagnostic {
     enum class Kind {
         InvalidUtf8,         // line kept as opaque bytes
         UnsupportedEncoding, // e.g. a UTF-16 byte-order mark; content kept as bytes
-        MalformedTime,       // non-canonical time lexeme; legacy value used
+        MalformedTime,       // non-canonical time lexeme; positional value used
         MalformedEvent,      // not readable as an ASS event; kept as a plain-text Line
         MalformedPair,       // TLMode original without a readable translation line
         RepeatedSection,     // a section kind seen again; both kept in order
@@ -189,7 +165,7 @@ struct Diagnostic {
     std::u8string excerpt;
 };
 
-// The legacy format codes (styles.h): which serialization a Document uses.
+// Values match HikariSub legacy's format codes.
 enum class SubtitleFormat { Ass = 1, Srt, TMPlayer, MicroDvd, Mpl2, PlainText = 0 };
 
 class Document {
@@ -206,16 +182,13 @@ public:
     bool setLineText(LineId id, std::u8string text);
     // Sets a Line's Unconfirmed state; like setLineText, the Line is regenerated.
     bool setLineUnconfirmed(LineId id, bool unconfirmed);
-    // E6: marks a Line changed without touching its fields or source bytes,
-    // as legacy's plain copy of a Dialogue that only moves (SwapRowsF, the
-    // sorts). False when no Line has this id.
+    // Without touching its fields or source bytes. False when no Line has this id.
     bool markLineChanged(LineId id);
     // Changes any fields of one Line; the Line is then regenerated on save.
-    // Every mutation marks the Line changed unless `mark` is Kept (E6).
+    // Every mutation marks the Line changed unless `mark` is Kept.
     bool editLine(LineId id, const std::function<void(LineRecord &)> &change, ChangeMark mark = ChangeMark::Changed);
     // Inserts a new Line right after `after`, in the same section. Returns its
-    // id, or nullopt when `after` is unknown. Kept: the record's own
-    // changeVersion stays (0 for a new legacy Dialogue).
+    // id, or nullopt when `after` is unknown. Kept: the record's own changeVersion stays.
     std::optional<LineId> insertLineAfter(LineId after, LineRecord line, ChangeMark mark = ChangeMark::Changed);
     // Inserts a new Line right before `before`, in the same section.
     std::optional<LineId> insertLineBefore(LineId before, LineRecord line, ChangeMark mark = ChangeMark::Changed);
@@ -232,61 +205,44 @@ public:
     // either Line is unknown or they are the same Line.
     bool moveLine(LineId id, std::optional<LineId> before);
 
-    // The last Script Info value for key, as the legacy SubsFile::GetSInfo sees it.
+    // The last value for key.
     std::optional<std::u8string> scriptInfo(std::u8string_view key) const;
-    // Legacy AddSInfo: the key's (last) value is replaced, or the key is added
-    // after the last Script Info property. An ASS Document without a Script
-    // Info section gets one at the top (E5-tlmode-needs-script-info); false
-    // for the other formats, which have none.
+    // Replaces the key's (last) value, or adds it after the last property. An ASS Document without
+    // Script Info gets one at the top; false for other formats.
     bool setScriptInfo(std::u8string_view key, std::u8string value);
-    // Legacy DeleteSInfo: the key is no longer written. False when absent.
+    // False when absent.
     bool removeScriptInfo(std::u8string_view key);
-    // Legacy AddStyle: a Style line after the last Style; `fields` are its
-    // positional fields, name first. False without a Styles section.
+    // After the last Style; `fields` positional, name first. False without a Styles section.
     bool appendStyle(std::vector<std::u8string> fields);
-    // Legacy DeleteStyle(FindStyle(name)): the first Style of that name.
+    // The first Style of that name.
     bool removeStyle(std::u8string_view name);
-    // Legacy ChangeStyle: the index-th Style (document order, as decodeStyles
-    // lists them) gets these positional fields, name first, and is written
-    // as "Style: " + fields in its place. False when there is no such Style.
+    // `index` in document order (as decodeStyles lists them); `fields` positional, name first.
+    // False when there is no such Style.
     bool editStyle(std::size_t index, std::vector<std::u8string> fields);
-    // The Style manager's lists (Y1): the Styles become `slots` in this order.
-    // A slot naming an existing Style (`from`, document order) moves it with
-    // its bytes unless `fields` are given; a slot without `from` is a new
-    // Style. Slots fill the existing Style positions in order, extra ones go
-    // after the last Style, and Styles beyond the slots are removed. False
-    // without a Styles section or for an unknown `from`.
+    // The Styles become `slots` in order. A slot with `from` (document order) keeps that Style's bytes
+    // unless `fields` are given; without `from` it is new. Slots fill existing positions, extras go
+    // after the last Style, Styles beyond the slots are removed. False without a Styles section or
+    // for an unknown `from`.
     struct StyleSlot {
         std::optional<std::size_t> from;
         std::optional<std::vector<std::u8string>> fields;
     };
     bool rearrangeStyles(const std::vector<StyleSlot> &slots);
-    // A macro's Script Info list (S4; the legacy SInfo vector a macro edits
-    // through its subtitles object): the properties become `slots` in this
-    // order, as rearrangeStyles does for Styles. A slot naming an existing
-    // property (`from`, document order across Script Info sections) keeps its
-    // bytes unless `property` gives a new key and value; extra slots go after
-    // the last property of the last Script Info section; properties beyond
-    // the slots are removed. Comments and blank lines stay where they are.
-    // False without a Script Info section or for an unknown `from`.
+    // As rearrangeStyles, for Script Info properties (`from` counts across sections; extras go after
+    // the last section's last property). Comments and blank lines stay. False without a Script Info
+    // section or for an unknown `from`.
     struct PropertySlot {
         std::optional<std::size_t> from;
         std::optional<std::pair<std::u8string, std::u8string>> property;
     };
     bool rearrangeScriptInfo(const std::vector<PropertySlot> &slots);
 
-    // WS2: the [Hikari] section, HikariSub's own data in an ASS file (the
-    // Document tab's panel arrangement). Its lines are "key=value": no ':',
-    // so legacy LoadASS, which takes any line with one into Script Info,
-    // passes over them. The last value for key in any [Hikari] section, as
-    // the Document holds it (no copy: a file's value can be any length),
-    // valid until the Document changes.
+    // [Hikari] lines are "key=value": without ':', loaders that read any line with one as Script
+    // Info pass over them. The last value for key, valid until the Document changes.
     std::optional<std::u8string_view> hikariProperty(std::u8string_view key) const;
-    // The key's (last) value is replaced in place, or the key is added after
-    // the last property of the last [Hikari] section. A Document without one
-    // gets the section at its end, before the embedded [Fonts]/[Graphics]
-    // data that may end it (libass reads any line after [Fonts] as font
-    // data). False for the formats other than ASS.
+    // Replaces the key's (last) value or adds it to the last [Hikari] section. A new section goes
+    // before trailing [Fonts]/[Graphics] (libass reads any line after [Fonts] as font data). False
+    // for formats other than ASS.
     bool setHikariProperty(std::u8string_view key, std::u8string value);
 
     SubtitleFormat format() const { return m_format; }
@@ -310,4 +266,4 @@ struct LoadResult {
     std::vector<Diagnostic> diagnostics;
 };
 
-} // namespace hikari::core
+}

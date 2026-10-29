@@ -1,24 +1,5 @@
 #pragma once
 
-// T3: the rotation families (legacy RotationZ and RotationXY,
-// VisualRotationZ.cpp and VisualRotationXY.cpp at 20d647c4, and their
-// toolbar items RotationZItem and RotationXYItem, VideoToolbar.cpp:827-897,
-// 1197-1262).
-//
-// Z rotation: dragging around the \org circle writes \frz; dragging the
-// \org cross moves it (\org written, with a \pos put in first on a Line
-// without one); "Set angle from 2 points" takes the angle of two clicked
-// points (the first click only places a point, Esc drops it); "Changing all
-// Z-rotation tags" turns every \frz by the same amount and "Preserve
-// proportions" also turns the several targets' positions and clips about
-// \org.
-//
-// X/Y rotation: left drag writes \fry (the horizontal distance in degrees),
-// right drag \frx (the vertical one), middle drag both; the \org cross moves
-// as for Z; "Changing all X/Y-rotation tags" adds to every tag. The overlay is
-// legacy's Direct3D grid, turned and projected as RotationXY::DrawVisual set
-// up its matrices.
-
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_transform.h"
 
@@ -43,8 +24,7 @@ public:
     bool cancelPending(VisualHost &host) override;
     bool hasPending() const override;
 
-    // RotationZItem::GetItemToggled: bit 1 two points, 2 change all tags,
-    // 4 preserve proportions.
+    // Bits: 1 two points, 2 change all tags, 4 preserve proportions.
     int toggled() const;
     void setToggled(int bits, VisualHost *host = nullptr);
 
@@ -56,7 +36,7 @@ public:
     PointF lastmove() const { return m_lastmove; }
     const std::array<PointF, 2> &twoPoints() const { return m_twoPoints; }
     const std::array<bool, 2> &visibility() const { return m_visibility; }
-    std::pair<long, long> editorCaret() const { return m_find.selection(); } // as ScaleTool's
+    std::pair<long, long> editorCaret() const { return m_find.selection(); }
 
 private:
     void changeTool(int tool, bool blockSetCurVisual, VisualHost &host);
@@ -85,7 +65,6 @@ private:
     bool m_editorIsTranslation = false;
     std::optional<core::LineId> m_editing;
 
-    // RotationZ members (Visuals.h:406-433).
     bool m_isOrg = false;
     mutable PointF m_org{0.f, 0.f};
     PointF m_lastOrg{0.f, 0.f};
@@ -99,7 +78,7 @@ private:
     bool m_changeAllTags = false;
     bool m_isfirst = true;
     int m_grabbed = -1;
-    bool m_valueEdit = false;              // the open gesture is a scrubbed value's (VT1)
+    bool m_valueEdit = false;              // the open gesture is a scrubbed value's
     std::optional<float> m_typedAngle;     // the angle a typed or scrubbed value sets
 };
 
@@ -117,8 +96,7 @@ public:
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
 
-    // RotationXYItem::GetItemToggled: 0 with "Changing all X/Y-rotation
-    // tags", else -1.
+    // 0 with "Changing all X/Y-rotation tags", else -1.
     int toggled() const { return m_toggled; }
     void setToggled(int toggled, VisualHost *host = nullptr);
 
@@ -130,7 +108,7 @@ public:
     PointF org() const { return m_org; }
     PointF angle() const { return m_angle; }
     PointF oldAngle() const { return m_oldAngle; }
-    std::pair<long, long> editorCaret() const { return m_find.selection(); } // as ScaleTool's
+    std::pair<long, long> editorCaret() const { return m_find.selection(); }
 
 private:
     void changeTool(int tool, bool blockSetCurVisual, VisualHost &host);
@@ -159,31 +137,27 @@ private:
     bool m_editorIsTranslation = false;
     std::optional<core::LineId> m_editing;
 
-    // RotationXY members (Visuals.h:435-456).
     bool m_isOrg = false;
     PointF m_angle{0.f, 0.f};
     PointF m_oldAngle{0.f, 0.f};
     mutable PointF m_org{0.f, 0.f};
     PointF m_lastOrg{0.f, 0.f};
+    // MUST KILL: m_type magic ints: 0 \fry, 1 \frx, 2 both
     int m_type = 0;
     int m_an = 2;
-    int m_diffsX = 0, m_diffsY = 0; // wxPoint
+    int m_diffsX = 0, m_diffsY = 0;
     bool m_changeAllTags = false;
-    bool m_valueEdit = false; // the open gesture is a scrubbed value's (VT1)
+    bool m_valueEdit = false; // the open gesture is a scrubbed value's
 };
 
-// RotationXY::DrawVisual's projection (VisualRotationXY.cpp:37-181): a
-// point of the tool's 3D model in the video window's device pixels, for the
-// window `width` x `height` (GetWindowSize without the panel), the \org at
-// `org`, the Line's position at `from` and the angles (`angle`.x the Y
-// rotation, .y the X rotation); nullopt behind the near plane.
+// A model point in the video window's device pixels; `angle`.x is the Y
+// rotation, .y the X rotation. nullopt behind the near plane.
 struct XYProjection {
     float width = 0, height = 0;
     PointF org, from, angle;
 };
 std::optional<PointF> projectXY(const XYProjection &p, float x, float y, float z);
-// The grid, axes and arrows as legacy drew them (44 grid lines, the axis
-// lines and the three arrow cones), clipped at the near plane.
+// Grid, axes and arrow cones, clipped at the near plane.
 void drawXYGrid(Overlay &out, const XYProjection &p, int an);
 
-} // namespace hikari::application::visual
+}

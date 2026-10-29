@@ -50,4 +50,4 @@ std::vector<OutputDeviceChoice> outputDeviceChoices(const std::vector<SystemOutp
     return out;
 }
 
-} // namespace hikari::application
+}

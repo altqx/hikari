@@ -16,8 +16,7 @@ bool isLowSurrogate(char16_t c)
     return c >= 0xDC00 && c <= 0xDFFF;
 }
 
-// The drawing state after an override block: only a top-level literal \pN
-// counts (one inside \t(...) is not interpreted).
+// Only a top-level \pN counts; one inside \t(...) is not interpreted.
 bool drawingAfter(std::u16string_view tag, bool drawing)
 {
     int depth = 0;
@@ -42,7 +41,7 @@ bool drawingAfter(std::u16string_view tag, bool drawing)
     return drawing;
 }
 
-} // namespace
+}
 
 Projection project(std::u16string_view raw)
 {
@@ -99,7 +98,6 @@ Projection project(std::u16string_view raw)
 
 namespace {
 
-// Source of every hidden or protected span, in order: what an edit must keep.
 std::vector<std::u16string> keptTokens(std::u16string_view raw, const Projection &p)
 {
     std::vector<std::u16string> out;
@@ -109,7 +107,7 @@ std::vector<std::u16string> keptTokens(std::u16string_view raw, const Projection
     return out;
 }
 
-} // namespace
+}
 
 std::expected<std::u16string, MapRefusal> mappedReplace(std::u16string_view raw, std::size_t start,
                                                         std::size_t end, std::u16string_view insertedText,
@@ -156,7 +154,6 @@ std::expected<std::u16string, MapRefusal> mappedReplace(std::u16string_view raw,
             return std::unexpected(MapRefusal::SplitsToken);
     }
 
-    // Insertion point: after every hidden span that touches the boundary.
     std::size_t where = 0;
     bool found = p.spans.empty() && start == 0;
     for (const auto &s : p.spans) {
@@ -182,7 +179,6 @@ std::expected<std::u16string, MapRefusal> mappedReplace(std::u16string_view raw,
             encoded += c;
     }
 
-    // Remove only the selected visible source spans, then insert.
     std::u16string result(raw);
     std::size_t removedBefore = 0;
     for (auto it = selected.rbegin(); it != selected.rend(); ++it) {
@@ -209,7 +205,7 @@ std::size_t rawOffset(const Projection &p, std::size_t display, bool afterTags)
         if (s.displayEnd == display)
             best = best ? (afterTags ? std::max(*best, s.rawEnd) : std::min(*best, s.rawEnd)) : s.rawEnd;
         if (s.displayStart < display && display < s.displayEnd)
-            return s.rawStart + (display - s.displayStart); // inside a text run
+            return s.rawStart + (display - s.displayStart);
     }
     return best.value_or(0);
 }
@@ -220,7 +216,7 @@ std::size_t displayOffset(const Projection &p, std::size_t raw)
         if (raw < s.rawEnd || (raw == s.rawEnd && s.rawEnd == s.rawStart)) {
             if (s.kind == SpanKind::Text && raw >= s.rawStart)
                 return s.displayStart + (raw - s.rawStart);
-            return s.displayStart; // inside a hidden or protected span
+            return s.displayStart;
         }
     }
     return p.text.size();
@@ -279,4 +275,4 @@ std::u8string toUtf8(std::u16string_view s)
     return out;
 }
 
-} // namespace hikari::core
+}

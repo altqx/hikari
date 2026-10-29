@@ -20,7 +20,7 @@ using namespace detail;
 
 namespace {
 
-// Legacy Dialogue::Format / SubsTime::form values (styles.h).
+// The codes LegacyDialogue::format uses.
 enum Format : int { Plain = 0, Ass = 1, Srt = 2, Tmp = 3, Mdvd = 4, Mpl2 = 5, Frame = 10 };
 
 std::u8string str(u8sv s)
@@ -34,7 +34,6 @@ std::u8string number(std::int64_t v)
     return std::u8string(s.begin(), s.end());
 }
 
-// wxString::Replace(from, to): every occurrence.
 void replaceAll(std::u8string &text, u8sv from, u8sv to)
 {
     for (std::size_t p = 0; (p = text.find(from, p)) != std::u8string::npos; p += to.size())
@@ -61,8 +60,7 @@ bool equalsIgnoreCase(u8sv a, u8sv b)
     return true;
 }
 
-// wxRegEx ReplaceAll of `open lead ([^close]*) close`: `make` builds the
-// replacement from the captured part (`lead` matched case-insensitively when asked).
+// Replaces each `open lead ([^close]*) close`; `make` builds the replacement from the capture.
 template <typename Make>
 void replaceDelimited(std::u8string &text, char8_t open, u8sv lead, char8_t close, char8_t exclude, bool icase,
                       Make make)
@@ -87,13 +85,11 @@ void replaceDelimited(std::u8string &text, char8_t open, u8sv lead, char8_t clos
     text = std::move(out);
 }
 
-// \{[^}]*\} (or <[^>]*>) removed.
 void removeBlocks(std::u8string &text, char8_t open, char8_t close)
 {
     replaceDelimited(text, open, u8"", close, close, false, [](u8sv) { return std::u8string(); });
 }
 
-// SubsTime: integer milliseconds, the original frame and the format it was read in.
 struct LegacyTime {
     std::int64_t ms = 0;
     std::int64_t frame = 0;
@@ -103,7 +99,7 @@ struct LegacyTime {
 void setRawTime(LegacyTime &t, u8sv rawText, int form)
 {
     t.form = form;
-    const u8sv raw = trimRight(rawText); // raw.Trim() before everything else
+    const u8sv raw = trimRight(rawText);
     if (raw.empty()) {
         t.ms = 0;
         t.frame = 0;
@@ -156,20 +152,19 @@ void changeFormat(LegacyTime &t, int format, float fps)
     if (format == t.form)
         return;
     if (format == Ass)
-        t.ms = t.ms / 10 * 10; // ZEROIT
+        t.ms = t.ms / 10 * 10; // centiseconds
     if (format == Mdvd && t.form != Frame)
         t.frame = static_cast<std::int64_t>(std::ceil(static_cast<float>(t.ms) * (fps / 1000)));
     t.form = format;
 }
 
-// The legacy Dialogue fields the clipboard reads and writes.
 struct Dialogue {
     int format = Ass;
     bool comment = false;
     bool nonDialogue = false;
     std::int64_t layer = 0;
     LegacyTime start;
-    LegacyTime end{5000, 0, Ass}; // Dialogue(): End.mstime = 5000
+    LegacyTime end{5000, 0, Ass};
     std::u8string style = u8"Default";
     std::u8string actor;
     bool bookmark = false;
@@ -181,7 +176,6 @@ struct Dialogue {
     std::u8string translation;
 };
 
-// wxStringTokenizer(ldial, ",", wxTOKEN_RET_EMPTY_ALL).
 std::vector<u8sv> splitCommas(u8sv s)
 {
     std::vector<u8sv> out;
@@ -202,7 +196,7 @@ bool replaceMarker(std::u8string &actor, u8sv marker)
     return found;
 }
 
-// [digits-]+ / [digits-]* (MicroDVD and MPL2 time fields).
+// MicroDVD and MPL2 time fields: [0-9-]+ / [0-9-]*.
 std::size_t timeDigits(u8sv s, std::size_t pos)
 {
     std::size_t end = pos;
@@ -260,7 +254,6 @@ bool matchTmp(u8sv s, std::u8string &time, u8sv &rest)
     return true;
 }
 
-// Dialogue::SetRaw.
 Dialogue setRaw(u8sv ldial)
 {
     Dialogue d;
@@ -362,7 +355,7 @@ Dialogue setRaw(u8sv ldial)
     return d;
 }
 
-// Dialogue::StartsWith / StartsWithNoBlock / EndsWith (tag blocks and spaces skipped).
+// Tag blocks and spaces skipped.
 bool startsWithChar(u8sv text, char8_t ch, std::size_t &pos, bool skipBlocks)
 {
     bool block = false;
@@ -467,9 +460,8 @@ bool hasDrawing(u8sv text)
     return false;
 }
 
-// wxRegEx ReplaceAll of a fixed sequence of one-character classes, e.g.
-// \{y[:+]([ib])\} as {"{", "y", ":+", "ib", "}"}; `make` gets the character
-// matched by the class at `capture`.
+// A fixed sequence of one-character classes, e.g. \{y[:+]([ib])\} as
+// {"{", "y", ":+", "ib", "}"}; `make` gets the character the class at `capture` matched.
 template <typename Make>
 void replaceSequence(std::u8string &text, const std::vector<u8sv> &classes, std::size_t capture, bool icase, Make make)
 {
@@ -495,7 +487,6 @@ void replaceSequence(std::u8string &text, const std::vector<u8sv> &classes, std:
     text = std::move(out);
 }
 
-// Dialogue::Convert.
 void convert(Dialogue &d, int type, const PasteConversion &conversion)
 {
     if (d.format == Plain && type == Ass)
@@ -566,7 +557,6 @@ void convert(Dialogue &d, int type, const PasteConversion &conversion)
         removeBlocks(tmp, u8'<', u8'>');
         d.text = tmp;
     } else if (type == Srt) {
-        // Legacy also checks for MicroDVD and MPL2 targets here, which never applies.
         replaceAll(d.text, u8"|", u8"\\N");
     } else if (d.format == Mdvd && type == Mpl2) {
         replaceAll(d.text, u8"{y:i}", u8"/");
@@ -628,7 +618,7 @@ LineRecord toLine(const Dialogue &d, SubtitleFormat format)
     return line;
 }
 
-// Dialogue::GetRaw, line terminator included.
+// Line terminator included.
 std::u8string getRaw(Dialogue d, const LineRecord &line, bool translation)
 {
     std::u8string out;
@@ -651,7 +641,6 @@ std::u8string getRaw(Dialogue d, const LineRecord &line, bool translation)
     return out + u8"\r\n";
 }
 
-// Dialogue::GetCols.
 std::u8string getCols(Dialogue d, int cols, bool translation)
 {
     std::u8string text = translation ? d.translation : d.text;
@@ -737,7 +726,7 @@ const LineRecord *find(const Document &document, LineId id)
     return nullptr;
 }
 
-} // namespace
+}
 
 std::u8string clipboardRows(const Document &document, const std::vector<LineId> &lines, bool translationMode,
                             bool numberSrtCues)
@@ -748,7 +737,6 @@ std::u8string clipboardRows(const Document &document, const std::vector<LineId> 
         const LineRecord *line = find(document, id);
         if (!line)
             continue;
-        // Legacy numbers SRT cues by Document row.
         if (numberSrtCues && document.format() == SubtitleFormat::Srt)
             out += number(static_cast<std::int64_t>(rows.at(id.value)) + 1) + u8"\r\n";
         const bool translation = translationMode && !line->translation.empty();
@@ -770,7 +758,6 @@ std::u8string clipboardColumns(const Document &document, const std::vector<LineI
 std::vector<LineRecord> parseClipboardRows(std::u8string_view text, SubtitleFormat format,
                                            const PasteConversion &conversion, bool intoTranslation)
 {
-    // wxStringTokenizer(text, "\n\r", wxTOKEN_STRTOK): no empty tokens.
     std::vector<u8sv> tokens;
     for (std::size_t i = 0; i < text.size();) {
         std::size_t j = i;
@@ -825,7 +812,7 @@ std::u8string rawDialogueWithField(std::u8string_view raw, int column, std::u8st
     case column::Effect: d.effect = value; break;
     default: d.text = value; break;
     }
-    // GetRaw: a non-dialogue line is its text alone.
+    // A non-dialogue line is its text alone.
     if (d.nonDialogue)
         return d.text + u8"\r\n";
     return getRaw(d, toLine(d, static_cast<SubtitleFormat>(d.format)), false);
@@ -834,8 +821,7 @@ std::u8string rawDialogueWithField(std::u8string_view raw, int column, std::u8st
 LegacyDialogue legacyDialogue(std::u8string_view raw)
 {
     const Dialogue d = setRaw(raw);
-    // The Document's view of a Line keeps no format of its own: SRT, ASS and
-    // plain text lines differ only in what GetRaw writes for them.
+    // A Line keeps no format; SRT, ASS and plain text differ only when written.
     const auto format = d.format == Mdvd ? SubtitleFormat::MicroDvd : SubtitleFormat::Ass;
     LineRecord line = toLine(d, format);
     std::u8string text = d.nonDialogue ? d.text + u8"\r\n" : getRaw(d, line, false);
@@ -873,7 +859,6 @@ std::optional<ConversionResult> convertDocument(const Document &source, Subtitle
     for (const auto *line : source.lines())
         items.push_back({line->id, fromLine(*line, source.format())});
 
-    // SubsGrid::Convert's loop.
     std::vector<Item> out;
     std::size_t lastIndex = static_cast<std::size_t>(-1);
     for (std::size_t i = 0; i < items.size(); ++i) {
@@ -908,7 +893,6 @@ std::optional<ConversionResult> convertDocument(const Document &source, Subtitle
             if (newEnd < 1000)
                 newEnd = 1000;
             newEnd += item.d.start.ms;
-            // SubsTime::NewTime: MicroDVD frames at the video's rate.
             item.d.end.ms = newEnd < 0 ? 0 : newEnd;
             if (item.d.end.form == Mdvd)
                 item.d.end.frame = static_cast<std::int64_t>(
@@ -957,11 +941,8 @@ std::optional<ConversionResult> convertDocument(const Document &source, Subtitle
         }
     }
 
-    // The file legacy SaveFile writes for the converted Lines.
     std::u8string text;
     if (type == Ass) {
-        // LoadDefault, then CONVERT_RESOLUTION_* (legacy sets the width when
-        // the height is empty) and the conversion Style.
         std::u8string resx = options.resolutionWidth, resy = options.resolutionHeight;
         if (resx.empty())
             resx = u8"1280";
@@ -1011,4 +992,4 @@ std::optional<ConversionResult> convertDocument(const Document &source, Subtitle
     return ConversionResult{std::move(document), report};
 }
 
-} // namespace hikari::core
+}

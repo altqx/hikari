@@ -27,7 +27,7 @@ bool cancelAnswer(const DialogRequest &request, int pressed)
     if (pressed < 0)
         return true;
     if (request.buttons.empty())
-        return pressed == 1; // the default pair: OK, Cancel
+        return pressed == 1; // default buttons: OK, Cancel
     const auto at = static_cast<std::size_t>(pressed);
     return at < request.buttonIds.size() && request.buttonIds[at] == "cancel";
 }
@@ -129,7 +129,6 @@ DialogResult safePrefill(const DialogRequest &request, const LastDialogAnswer &l
         const auto answered = last.answered.find(c.name);
         if (c.name.empty() || sent == last.sent.end() || answered == last.answered.end())
             continue;
-        // The comparison is on the value as the script sent it.
         if (dialogValueOf(c, sent->second) != std::optional<DialogValue>(result.values[i]))
             continue;
         if (const auto v = acceptedDialogValue(c, answered->second))
@@ -138,4 +137,4 @@ DialogResult safePrefill(const DialogRequest &request, const LastDialogAnswer &l
     return result;
 }
 
-} // namespace hikari::application
+}

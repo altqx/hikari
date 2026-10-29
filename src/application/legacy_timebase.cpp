@@ -19,7 +19,7 @@ int saturate(double v)
     return static_cast<int>(v);
 }
 
-} // namespace
+}
 
 int LegacyTimebase::msAt(int frame) const
 {
@@ -87,4 +87,4 @@ int LegacyTimebase::endTimeFor(int frame) const
     return std::min(frameTime + (nextTime - frameTime) / 2 + kCentisecondMargin, nextTime);
 }
 
-} // namespace hikari::application
+}

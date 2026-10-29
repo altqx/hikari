@@ -46,10 +46,10 @@ bool writeFile(const fs::path &path, std::string_view data)
             return false;
     }
     std::string back;
-    return readFile(path, back) && back == data; // verified
+    return readFile(path, back) && back == data;
 }
 
-// Fields as "name length\n<bytes>\n", so any text (titles, drafts) survives.
+// "name length\n<bytes>\n", so any text survives.
 void field(std::string &out, std::string_view name, std::string_view value)
 {
     out += name;
@@ -120,7 +120,6 @@ std::string metaOf(const RecoveryContent &c)
             field(meta, "draft.marginRight", std::to_string(*c.draft.marginRight));
         if (c.draft.marginVertical)
             field(meta, "draft.marginVertical", std::to_string(*c.draft.marginVertical));
-        // E4: the editor's other fields; a cleared MicroDVD frame is "none".
         if (c.draft.comment)
             field(meta, "draft.comment", *c.draft.comment ? "1" : "0");
         if (c.draft.layer)
@@ -156,7 +155,6 @@ std::optional<RecoveryContent> contentOf(const fs::path &generation)
     c.bytes.resize(content.size());
     std::transform(content.begin(), content.end(), c.bytes.begin(), [](char ch) { return static_cast<std::byte>(ch); });
     try {
-        // An incomplete or corrupt generation is rejected.
         if (std::stoull(f["size"]) != c.bytes.size() || std::stoull(f["hash"]) != fnv1a(c.bytes))
             return std::nullopt;
         c.extension = f["extension"];
@@ -205,7 +203,7 @@ std::optional<RecoveryContent> contentOf(const fs::path &generation)
     return c;
 }
 
-} // namespace
+}
 
 RecoveryStore::RecoveryStore(fs::path root, std::string session, int capacity)
     : m_root(std::move(root)), m_session(std::move(session)), m_capacity(capacity)
@@ -242,7 +240,7 @@ bool RecoveryStore::writeManifest(const fs::path &bundle, const std::vector<std:
     if (!writeFile(temporary, data))
         return false;
     std::error_code ec;
-    fs::rename(temporary, bundle / "manifest", ec); // replaces the previous manifest atomically
+    fs::rename(temporary, bundle / "manifest", ec); // atomic replace
     return !ec;
 }
 
@@ -265,7 +263,7 @@ bool RecoveryStore::write(const std::string &key, const RecoveryContent &content
     if (!writeFile(generation / "content", bytes) || !writeFile(generation / "meta", metaOf(content)) ||
         !contentOf(generation)) {
         fs::remove_all(generation, ec);
-        return false; // the previous generation stays active
+        return false;
     }
     generations.push_back(next);
     std::vector<std::uint64_t> dropped;
@@ -277,7 +275,6 @@ bool RecoveryStore::write(const std::string &key, const RecoveryContent &content
         fs::remove_all(generation, ec);
         return false;
     }
-    // Retention runs after activation; never the generation just activated.
     for (const auto g : dropped)
         fs::remove_all(bundle / std::to_string(g), ec);
     return true;
@@ -304,7 +301,6 @@ std::vector<RecoveryBundle> RecoveryStore::leftovers(const std::function<bool(co
         const auto generations = manifest(entry.path(), &session);
         if (!generations || generations->empty() || session == m_session || !sessionEnded(session))
             continue;
-        // The newest generation that reads back complete.
         for (auto it = generations->rbegin(); it != generations->rend(); ++it)
             if (auto content = contentOf(entry.path() / std::to_string(*it))) {
                 out.push_back(RecoveryBundle{entry.path().filename().string(), session, *generations, std::move(*content)});
@@ -345,7 +341,7 @@ void RecoveryStore::prune(std::chrono::system_clock::time_point now, std::chrono
             continue;
         }
         if (kept.size() != generations->size()) {
-            // Keep the bundle's own session in its manifest.
+            // MUST KILL: a throwaway RecoveryStore just to write another session's manifest
             RecoveryStore owner(m_root, session, m_capacity);
             if (owner.writeManifest(entry.path(), kept))
                 for (const auto g : *generations)
@@ -355,4 +351,4 @@ void RecoveryStore::prune(std::chrono::system_clock::time_point now, std::chrono
     }
 }
 
-} // namespace hikari::application
+}

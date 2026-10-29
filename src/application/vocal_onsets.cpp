@@ -13,19 +13,18 @@ namespace hikari::application {
 namespace {
 
 constexpr double kBandLowHz = 150, kBandHighHz = 4000;
-constexpr int kWindowMs = 40;          // the transform's window (zero-padded to legacy's 2048 points)
-constexpr int kLag = 2;                // frames back the flux compares with
-constexpr double kLogGamma = 100;      // log(1 + kLogGamma * magnitude)
-constexpr int kPeakSpan = 3;           // a peak is the largest within this many frames each side
-constexpr int kMeanSpan = 10;          // the threshold's local mean, frames each side
-constexpr int kMedianSpan = 25;        // the threshold's local median, frames each side
-constexpr double kDelta = 0.12;        // over the local mean or median, of the flux's scale
-constexpr double kMinDelta = 0.08;     // and at least this (log magnitude per band): vibrato stays under it
-constexpr double kQuietRms = 0.004;    // a voice under this (of full scale, about -48 dBFS) starts nothing
-constexpr int kBlockFrames = 200;      // frames read and transformed at a time (2 s)
+constexpr int kWindowMs = 40;
+constexpr int kLag = 2;                // frames
+constexpr double kLogGamma = 100;
+constexpr int kPeakSpan = 3;           // frames each side
+constexpr int kMeanSpan = 10;          // frames each side
+constexpr int kMedianSpan = 25;        // frames each side
+constexpr double kDelta = 0.12;        // of the flux's scale
+constexpr double kMinDelta = 0.08;     // log magnitude per band
+constexpr double kQuietRms = 0.004;    // of full scale, about -48 dBFS
+constexpr int kBlockFrames = 200;      // 2 s
 
-// The flux of every 10 ms frame, and the energy (mean square, full scale 1)
-// of each 10 ms block from the frame's time.
+// Per 10 ms frame: the flux, and the energy as mean square (full scale 1).
 struct Envelope {
     std::vector<double> flux;
     std::vector<double> energy;
@@ -43,15 +42,15 @@ std::optional<Envelope> envelope(const DisplayAudio &audio, const std::atomic<bo
     std::vector<float> hann(static_cast<std::size_t>(window));
     for (int i = 0; i < window; ++i)
         hann[std::size_t(i)] = float(0.5 - 0.5 * std::cos(2 * std::numbers::pi * (i + 0.5) / window));
-    // a full-scale sine's peak bin is 1 (32768 x the window's sum / 2)
+    // a full-scale sine's peak bin is 1
     const double scale = 1.0 / (32768.0 * window / 4);
     auto centre = [&](std::int64_t frame) { return frame * kOnsetHopMs * rate / 1000; };
 
     Envelope out;
     out.flux.assign(std::size_t(frames), 0);
     out.energy.assign(std::size_t(frames), 0);
-    // the bands: 1/12 octave (a semitone) each from kBandLowHz, at least one bin wide
-    std::vector<int> bandEnd; // each band's bins run to (not including) its end
+    // semitone bands, at least one bin wide
+    std::vector<int> bandEnd; // exclusive
     for (int k = lowBin; k <= highBin;) {
         const double hz = double(k) * rate / kSpectrumDoubleLength;
         const int end = std::max(k + 1, int(std::ceil(hz * std::pow(2.0, 1.0 / 12) * kSpectrumDoubleLength / rate)));
@@ -59,7 +58,7 @@ std::optional<Envelope> envelope(const DisplayAudio &audio, const std::atomic<bo
         k = bandEnd.back();
     }
     const std::size_t bands = bandEnd.size();
-    // the log magnitudes of the last kLag frames, a ring, with a band each side
+    // a ring of the last kLag frames' log magnitudes, padded with a band each side
     std::vector<std::vector<float>> history(kLag + 1, std::vector<float>(bands + 2, 0.f));
     std::vector<std::int16_t> pcm;
     std::array<float, kSpectrumDoubleLength * 2> data{};
@@ -75,7 +74,6 @@ std::optional<Envelope> envelope(const DisplayAudio &audio, const std::atomic<bo
             const std::int64_t c = centre(f);
             const std::int16_t *at = pcm.data() + (c - window / 2 - first);
             data.fill(0.f);
-            // digital silence (a dummy audio's, the gaps of a song) needs no transform
             const bool silent = std::all_of(at, at + window, [](std::int16_t v) { return v == 0; });
             if (!silent) {
                 for (int i = 0; i < window; ++i)
@@ -93,14 +91,12 @@ std::optional<Envelope> envelope(const DisplayAudio &audio, const std::atomic<bo
             }
             now[0] = now[1];
             now[bands + 1] = now[bands];
-            // each band against the loudest of it and its neighbours kLag
-            // frames before (SuperFlux): vibrato within a semitone adds little
+            // SuperFlux: vibrato within a semitone adds little
             if (f >= kLag) {
                 for (std::size_t b = 1; b <= bands; ++b)
                     flux += std::max(0.f, now[b] - std::max({before[b - 1], before[b], before[b + 1]}));
             }
             out.flux[std::size_t(f)] = flux / double(bands);
-            // the 10 ms block from the frame's time
             const std::int16_t *from = pcm.data() + (c - first);
             const std::int64_t length = std::max<std::int64_t>(1, centre(f + 1) - c);
             double energy = 0;
@@ -132,7 +128,7 @@ double localMedian(const std::vector<double> &v, std::int64_t at, int span, std:
     return *middle;
 }
 
-} // namespace
+}
 
 std::optional<std::vector<int>> detectVocalOnsets(const DisplayAudio &audio, const std::atomic<bool> *cancel)
 {
@@ -148,7 +144,6 @@ std::optional<std::vector<int>> detectVocalOnsets(const DisplayAudio &audio, con
     const auto &energy = env->energy;
     const auto frames = std::int64_t(flux.size());
 
-    // The flux's scale: its 99th percentile, so one loud hit does not hide the rest.
     std::vector<double> sorted(flux);
     const auto rank = sorted.begin() + std::ptrdiff_t((sorted.size() - 1) * 99 / 100);
     std::nth_element(sorted.begin(), rank, sorted.end());
@@ -162,7 +157,6 @@ std::optional<std::vector<int>> detectVocalOnsets(const DisplayAudio &audio, con
         const double value = flux[std::size_t(f)];
         if (value <= 0)
             continue;
-        // the largest within kPeakSpan (the first of equal ones)
         bool peak = true;
         const std::int64_t last = std::min(frames - 1, f + kPeakSpan);
         for (std::int64_t g = std::max<std::int64_t>(0, f - kPeakSpan); peak && g <= last; ++g)
@@ -173,8 +167,7 @@ std::optional<std::vector<int>> detectVocalOnsets(const DisplayAudio &audio, con
         const double threshold = local + std::max(kMinDelta, kDelta * fluxScale);
         if (value < threshold)
             continue;
-        // Back to the sharpest rise of the energy from 50 ms before the peak
-        // to 30 ms after it; without a rise (a glide) the peak itself.
+        // Back to the sharpest energy rise from 50 ms before to 30 ms after the peak.
         std::int64_t at = f;
         double sharpest = 2; // a rise needs to double the energy
         const double floor = quiet / 16;
@@ -185,7 +178,6 @@ std::optional<std::vector<int>> detectVocalOnsets(const DisplayAudio &audio, con
                 at = g;
             }
         }
-        // a voice too quiet to time by starts nothing
         double loudest = 0;
         for (std::int64_t g = at; g < std::min(frames, at + 5); ++g)
             loudest = std::max(loudest, energy[std::size_t(g)]);
@@ -215,4 +207,4 @@ int snapToOnset(std::span<const int> onsetsMs, int ms, int windowMs, int lowMs, 
     return best;
 }
 
-} // namespace hikari::application
+}

@@ -17,7 +17,6 @@ bool space(char8_t c)
     return c == u8' ' || c == u8'\t' || c == u8'\n' || c == u8'\v' || c == u8'\f' || c == u8'\r';
 }
 
-// string.headtail(effect):lower(): the Effect's first word.
 std::u8string firstWord(const std::u8string &effect)
 {
     std::u8string word(effect.begin(), std::ranges::find_if(effect, space));
@@ -27,8 +26,8 @@ std::u8string firstWord(const std::u8string &effect)
     return word;
 }
 
-// kara-templater.lua's line_key: a dialogue line as it reads back once
-// saved, spaces trimmed around the actor, effect and texts.
+// kara-templater.lua's line_key: a line as it reads back once saved, spaces
+// trimmed around the actor, effect and texts.
 std::string lineKey(const MacroDialogueLine &l)
 {
     const auto trim = [](const std::string &s) {
@@ -56,7 +55,7 @@ bool over(const core::LineRecord &l, TemplatePreviewWindow window)
     return msOf(l.start) <= window.toMs && msOf(l.end) > window.fromMs;
 }
 
-} // namespace
+}
 
 std::optional<TemplateKind> templateKindOf(const core::LineRecord &line)
 {
@@ -109,7 +108,7 @@ std::optional<MacroSnapshot> templateOwnersSnapshot(const core::Document &doc)
     plain.removeLinesIf([](const core::LineRecord &l) { return isGeneratedLine(l); });
     Selection all;
     for (const auto *l : plain.lines())
-        if (isKaraokeLine(*l)) { // a `template line karaoke` too
+        if (isKaraokeLine(*l)) {
             all.selected.insert(l->id);
             if (!all.active)
                 all.active = l->id;
@@ -129,14 +128,10 @@ std::map<core::LineId, core::LineId> templateOwners(const core::Document &doc, c
     for (const auto &d : result.dialogues)
         if (d.id == 0 && d.generatedFrom != 0)
             made[d.generatedFrom].push_back(&d);
-    // A karaoke Line whose Lines are marked (selected Lines applied since)
-    // takes none of the unmarked ones, as KE1's run finds them.
     std::set<core::LineId> marked;
     for (const auto *l : doc.lines())
         if (isGeneratedLine(*l) && l->generatedFrom.value != 0)
             marked.insert(l->generatedFrom);
-    // One the file holds none of the Lines of made none when it was written
-    // (a template since gives it Lines): it takes none either.
     std::set<std::string> held;
     for (const auto &[key, list] : free)
         held.insert(key);
@@ -149,7 +144,7 @@ std::map<core::LineId, core::LineId> templateOwners(const core::Document &doc, c
         for (const auto *d : lines->second) {
             auto &list = free[lineKey(*d)];
             if (list.empty())
-                return {}; // the templates give what the file does not hold
+                return {};
             owners[list.front()] = l->id;
             list.pop_front();
         }
@@ -170,14 +165,12 @@ std::optional<MacroSnapshot> templatePreviewSnapshot(const core::Document &doc, 
     MacroSnapshot s = macroSnapshotOf(doc, Selection{});
     s.dialogues.clear();
     const int offset = static_cast<int>(s.info.size() + s.styles.size()) + 1;
-    // A template with its text not yet in the Document (a `template line
-    // karaoke` source too).
     const auto withText = [&](const core::LineRecord &l) {
         const auto text = texts.find(l.id);
         if (text == texts.end())
             return macroLineOf(l);
         core::LineRecord edited = l;
-        // In TLMode the script reads the translation (macroLineOf).
+        // MUST KILL: duplicates macroLineOf's TLMode text-or-translation choice
         (edited.translation.empty() ? edited.text : edited.translation) = text->second;
         return macroLineOf(edited);
     };
@@ -191,7 +184,7 @@ std::optional<MacroSnapshot> templatePreviewSnapshot(const core::Document &doc, 
         } else if (templateKindOf(*l)) {
             s.dialogues.push_back(withText(*l));
         } else if (!found && !isGeneratedLine(*l)) {
-            s.dialogues.push_back(templatePlaceholder()); // $li as a whole run gives it
+            s.dialogues.push_back(templatePlaceholder());
         }
     }
     if (!found)
@@ -223,7 +216,6 @@ TemplatePreviewWindow templatePreviewWindow(std::int64_t timeMs, bool playing, s
         return {timeMs, timeMs};
     if (timeMs >= spanStart && timeMs < spanEnd)
         return {spanStart, spanEnd};
-    // The Lines over after timeMs are those over after the last end passed.
     const auto passed = std::ranges::upper_bound(ends, timeMs);
     return {passed == ends.begin() ? std::numeric_limits<std::int64_t>::min() : *std::prev(passed),
             std::numeric_limits<std::int64_t>::max()};
@@ -265,23 +257,15 @@ core::Document templatePreviewDocument(const core::Document &doc, core::LineId s
         else
             out.appendStyle(std::move(fields));
     }
-    // The source too when its templates make Lines: Apply turns it into a
-    // Comment then.
     const bool sourceGoes = !preview.empty();
-    // A marked Line edited out of `fx` stays: Apply replaces only generated
-    // ones.
     const auto replacedHere = [&](const core::LineRecord &l) {
         return (l.generatedFrom == source && isGeneratedLine(l)) || replaced.contains(l.id);
     };
     const auto goes = [&](const core::LineRecord &l) {
         return l.comment || replacedHere(l) || !over(l, window) || (sourceGoes && l.id == source);
     };
-    // The preview stands where the Lines it replaces stood, as Apply writes
-    // it (read order decides collisions and stacking): before the first Line
-    // after them that stays. With none, before the first Line of a karaoke
-    // Line after the source (Apply writes the Lines in karaoke Line order;
-    // an unmarked Line's karaoke Line from `owners`); at the end when there
-    // is none either.
+    // The preview stands where Apply writes it: read order decides collisions and
+    // stacking.
     std::map<core::LineId, std::size_t> place;
     for (const auto *l : doc.lines())
         place.emplace(l->id, place.size());
@@ -333,4 +317,4 @@ bool isPreviewService(HostService service)
     }
 }
 
-} // namespace hikari::application
+}

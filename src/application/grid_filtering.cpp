@@ -18,16 +18,11 @@ std::vector<const core::LineRecord *> linesOf(const EditSession &s)
     return {lines.begin(), lines.end()};
 }
 
-// legacy isVisible is truthy for VISIBLE and VISIBLE_BLOCK.
 bool shownFlag(LineVisibility v)
 {
     return v != LineVisibility::Hidden;
 }
 
-// Applies the visibilities that changed as one step; nothing changed, no step.
-// E6: legacy Filter, FilterPartial and TurnOffFiltering copy with keepstate
-// (SubsGridFiltering.cpp:78-95, 119, 212): the changed-Line mark stays;
-// HideSelections copies without it (146-156) and marks the Lines changed.
 std::expected<void, CommandRefusal> applyVisibility(EditSession &session, const std::string &name,
                                                     const std::map<std::uint64_t, LineVisibility> &target,
                                                     core::ChangeMark mark = core::ChangeMark::Kept)
@@ -49,8 +44,6 @@ std::expected<void, CommandRefusal> applyVisibility(EditSession &session, const 
                                          }});
     if (!ran)
         return std::unexpected(ran.error());
-    // A hidden active Line gives way to the nearest shown Line (ties: the
-    // following one); the selection itself is kept.
     Selection selection = session.selection();
     const auto lines = linesOf(session);
     if (selection.active) {
@@ -77,11 +70,7 @@ std::expected<void, CommandRefusal> applyVisibility(EditSession &session, const 
     return {};
 }
 
-// The "keep earlier filtering" pass (legacy addToFilter and HideSelections):
-// a Line bordering a revealed block joins it. Legacy compares the visibility
-// the Lines had before this filter (it keeps pointers to the originals).
-// HideSelections also counts the Lines it hides as the previous Line;
-// Filter does not.
+// MUST KILL: hiddenAreLast: whether newly hidden Lines count as the previous Line
 void keepBlocks(const std::vector<const core::LineRecord *> &lines, std::map<std::uint64_t, LineVisibility> &target,
                 const std::vector<bool> &hideNow, bool hiddenAreLast)
 {
@@ -101,7 +90,7 @@ void keepBlocks(const std::vector<const core::LineRecord *> &lines, std::map<std
     }
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> filterLines(EditSession &session, const FilterSettings &settings,
                                                 const LineVisible &shown, bool afterLoad)
@@ -109,7 +98,6 @@ std::expected<void, CommandRefusal> filterLines(EditSession &session, const Filt
     int filterBy = settings.filterBy;
     std::vector<std::u8string> styles;
     if (filterBy & filter_by::Styles) {
-        // Only Styles the Document has count.
         const auto documentStyles = core::decodeStyles(session.document());
         for (const auto &name : settings.styles)
             if (std::any_of(documentStyles.begin(), documentStyles.end(), [&](const auto &s) { return s.name == name; }))
@@ -130,8 +118,6 @@ std::expected<void, CommandRefusal> filterLines(EditSession &session, const Filt
                 if (session.selection().selected.contains(l->id) && shownFlag(l->visibility) && (!shown || shown(l->id)))
                     selected.insert(l->id);
     }
-    // SubsGridFiltering::CheckHiding: every criterion that does not hide the
-    // Line clears its bit; a bit left over hides it.
     auto hides = [&](const core::LineRecord &l) {
         int result = filterBy;
         if (filterBy & filter_by::Selections) {
@@ -182,7 +168,6 @@ std::expected<void, CommandRefusal> hideSelectedLines(EditSession &session, cons
     bool any = false;
     for (std::size_t i = 0; i < lines.size(); ++i) {
         const auto *l = lines[i];
-        // Legacy GetSelections: the selected Lines that are shown.
         if (session.selection().selected.contains(l->id) && shownFlag(l->visibility) && (!shown || shown(l->id))) {
             target[l->id.value] = LineVisibility::Hidden;
             hideNow[i] = true;
@@ -207,8 +192,6 @@ std::expected<void, CommandRefusal> turnOffFiltering(EditSession &session)
 std::expected<void, CommandRefusal> toggleHiddenBlock(EditSession &session, int row)
 {
     const auto lines = linesOf(session);
-    // FilterPartial: from the Line after `row` up to the next shown Line.
-    // (Legacy's own first-row case only works around its scroll position.)
     const std::size_t from = static_cast<std::size_t>(std::max(row + 1, 0));
     std::map<std::uint64_t, LineVisibility> target;
     bool hide = true;
@@ -256,4 +239,4 @@ int hiddenBlockAfter(const core::Document &document, int row)
     return hidden ? 1 : 0;
 }
 
-} // namespace hikari::application
+}

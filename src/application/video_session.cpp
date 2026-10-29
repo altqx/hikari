@@ -15,7 +15,8 @@ VideoSession::VideoSession(IndexedSourcePort &source, SubtitleRendererPort &rend
 
 void VideoSession::setFrameWorker(PlaybackPipeline::Post post)
 {
-    m_pipeline.reset(); // its worker stops first
+    // MUST KILL: the old pipeline is reset first so its worker stops before the new one starts
+    m_pipeline.reset();
     m_pipeline = std::make_unique<PlaybackPipeline>(m_renderer, std::move(post),
                                                     [this](PlaybackPipeline::Output out) { showGeneral(std::move(out)); });
     m_pipeline->setSubtitles(m_subtitleSerial, m_hasSubtitles);
@@ -29,7 +30,6 @@ void VideoSession::setScreenSize(std::optional<std::pair<int, int>> size)
     m_screen = size;
     if (m_pipeline)
         m_pipeline->setScreenSize(size);
-    // Playing, the next frame is drawn at the new size.
     if (!m_playing) {
         render();
         present();
@@ -71,7 +71,7 @@ void VideoSession::setPresenter(PresenterPort *presenter)
 
 void VideoSession::open(const std::string &path, IndexRequest index)
 {
-    // A Line seek made before the video opened still applies to it.
+    // MUST KILL: close() clears m_pendingSeek, so open saves and restores it
     const auto pendingSeek = m_pendingSeek;
     close();
     m_pendingSeek = pendingSeek;
@@ -80,12 +80,9 @@ void VideoSession::open(const std::string &path, IndexRequest index)
     m_state = State::Opening;
     const std::weak_ptr<bool> alive = m_alive;
     const int chosen = index.audioTrack;
-    // V3: legacy's "Indexing video" progress (ProviderFFMS2::UpdateProgress)
     auto progress = [this, alive](std::int64_t done, std::int64_t total) {
         if (alive.expired() || m_state != State::Opening)
             return;
-        // AV4: one report per packet came to a notify each, and the UI
-        // thread spent the indexing redrawing
         if (m_progress && progressPermille(m_progress->first, m_progress->second) == progressPermille(done, total))
             return;
         m_progress = std::pair(done, total);
@@ -98,8 +95,6 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         if (!opened) {
             m_openFailure = m_source.openFailure();
             if (opened.error() == SourceError::Cancelled) {
-                // V3: cancelled indexing leaves no video (legacy's failed
-                // provider deleted the renderer)
                 close();
                 return;
             }
@@ -108,7 +103,7 @@ void VideoSession::open(const std::string &path, IndexRequest index)
             return notify();
         }
         if (opened->generation != m_source.generation())
-            return; // a later open replaced it
+            return;
         m_starts.clear();
         bool exact = opened->timeBaseDenominator > 0;
         for (const std::int64_t pts : opened->pts) {
@@ -117,7 +112,6 @@ void VideoSession::open(const std::string &path, IndexRequest index)
             exact = exact && us.has_value();
             m_starts.emplace_back(us.value_or(0));
         }
-        // P10: legacy's float m_FPS (ProviderFFMS2.cpp:361), for the status bar.
         m_legacyFps = opened->fpsDenominator != 0 ? static_cast<float>(opened->fpsNumerator) /
                                                         static_cast<float>(opened->fpsDenominator)
                                                   : 0.f;
@@ -140,7 +134,6 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
         m_geometry = {opened->width, opened->height, opened->sarNum, opened->sarDen};
         m_state = State::Ready;
-        // V4: legacy ProviderFFMS2::Init's matrix, before the first frame.
         m_inputMatrix.reset();
         if (const auto input = m_colour.open(opened->colorSpace, opened->colorRange, opened->width, opened->height,
                                              m_docMatrix))
@@ -169,7 +162,6 @@ void VideoSession::close()
     if (m_state == State::Opening)
         m_source.cancelOpen();
     m_source.cancelReads();
-    // V3: the source lets go of the file (legacy deleted its provider)
     if (m_state != State::Closed)
         m_source.close();
     m_state = State::Closed;
@@ -201,7 +193,8 @@ void VideoSession::setSubtitles(std::vector<std::byte> script)
     snapshot.fonts = m_fonts;
     ++m_subtitleUpdates;
     m_hasSubtitles = m_renderer.prepare(std::move(snapshot)).has_value();
-    subtitlesChanged(); // after the prepare: the worker's renders from now on use it
+    // MUST KILL: subtitlesChanged must follow prepare so worker renders use the new script
+    subtitlesChanged();
     if (m_shown) {
         render();
         present();
@@ -215,8 +208,6 @@ void VideoSession::setMatrix(std::string matrix)
     m_docMatrix = std::move(matrix);
     if (m_state != State::Ready)
         return; // the open takes it
-    // RendererFFMS2::SetColorSpace: the provider's SetColorSpace, then
-    // Render() while paused (RendererFFMS2.h:66-72).
     if (auto change = m_colour.set(m_docMatrix)) {
         applyInputMatrix(change->input, change);
         if (!m_playing && m_requested)
@@ -233,11 +224,11 @@ void VideoSession::applyInputMatrix(LegacyColourMatrix::Input input, std::option
                             [this, alive, generation, change, previous](std::expected<void, SourceError> done) {
                                 if (alive.expired() || done || generation != m_source.generation())
                                     return;
-                                m_inputMatrix = previous; // the converter keeps the one before
+                                m_inputMatrix = previous;
                                 if (change)
                                     m_colour.revert(*change);
                                 if (m_log)
-                                    m_log("Cannot change YCbCr matrix"); // ProviderFFMS2.cpp:402, 408, 979
+                                    m_log("Cannot change YCbCr matrix");
                                 notify();
                             });
 }
@@ -274,13 +265,11 @@ void VideoSession::seekTo(core::DocumentTime start)
         return;
     }
     const auto frame = m_timeline->frameAtOrAfter(start);
-    // Past the last frame start: the last frame.
     showFrame(frame ? static_cast<int>(frame->value()) : frameCount() - 1);
 }
 
 bool VideoSession::step(int frames)
 {
-    // Legacy ChangePositionByFrame does nothing while playing.
     if (m_state != State::Ready || !m_requested || m_playing)
         return false;
     const int target = *m_requested + frames;
@@ -299,7 +288,7 @@ void VideoSession::showFrame(int index)
     const std::weak_ptr<bool> alive = m_alive;
     m_source.frame(index, [this, alive, request](std::expected<IndexedFrame, SourceError> frame) {
         if (alive.expired() || request != m_request)
-            return; // superseded or closed
+            return;
         if (!frame) {
             if (frame.error() != SourceError::Stale && frame.error() != SourceError::Cancelled) {
                 m_error = frame.error();
@@ -308,7 +297,7 @@ void VideoSession::showFrame(int index)
             return;
         }
         if (m_playing)
-            return; // playback shows the player's frames
+            return;
         m_shown = std::make_shared<const IndexedFrame>(std::move(*frame));
         m_overlayTime.reset();
         m_lastPresent.reset();
@@ -331,7 +320,6 @@ void VideoSession::requestFrame(int index, bool withSubtitles,
         if (withSubtitles && m_hasSubtitles)
             if (const auto start = frameStart(index))
                 if (auto overlay = m_renderer.render(*start, frame->width, frame->height))
-                    // Premultiplied overlay over the opaque frame, as a saved snapshot lays it.
                     compositeOverlay(*overlay, reinterpret_cast<std::uint8_t *>(frame->bgra.data()), frame->width,
                                      frame->height, frame->stride);
         done(std::make_shared<const IndexedFrame>(std::move(*frame)));
@@ -373,8 +361,6 @@ void VideoSession::present(std::optional<std::optional<PixelRect>> overlayBounds
         p.overlayBoundsKnown = true;
         p.overlayBounds = *overlayBounds;
     }
-    // T1: the source's SAR widens the frame as legacy's aspect did
-    // (ProviderFFMS2.cpp:366; no SAR is square).
     const auto geometry = sourceGeometry();
     if (geometry.sarNum > 0 && geometry.sarDen > 0)
         p.transform.pixelAspect = static_cast<double>(geometry.sarNum) / static_cast<double>(geometry.sarDen);
@@ -384,8 +370,6 @@ void VideoSession::present(std::optional<std::optional<PixelRect>> overlayBounds
         if (alive.expired() || shown != m_shown)
             return;
         m_lastPresent = result;
-        // V1: while playing, the next player frame's notification carries it
-        // (one notification per frame).
         if (m_playing && shown->index < 0)
             return;
         notify();
@@ -396,7 +380,7 @@ void VideoSession::cancelOpen()
 {
     if (m_state != State::Opening)
         return;
-    close(); // cancels the source's open (FFMS_CancelIndexing in the helper)
+    close(); // also cancels the source's open
 }
 
 bool VideoSession::dummy() const
@@ -406,13 +390,11 @@ bool VideoSession::dummy() const
 
 bool VideoSession::play()
 {
-    // V3: a dummy video has no file for the general player (legacy played it
-    // on the Windows provider thread only, ProviderDummy.cpp:229-235)
+    // A dummy video has no file for the general player.
     if (!m_player || m_state != State::Ready || m_playing || dummy())
         return false;
     m_playEndMs = 0;
-    // From the reported frame: a pause's indexed frame may still be on its
-    // way, with the last player frame (index -1) shown until it arrives.
+    // A pause's indexed frame may still be on its way.
     const auto from = reportedFrame();
     const std::int64_t fromUs = from ? frameStart(*from).value_or(core::DocumentTime(0)).microseconds() : 0;
     return startPlayback(fromUs);
@@ -423,7 +405,7 @@ bool VideoSession::playLine(int startMs, int endMs, bool loop)
     if (!m_player || m_state != State::Ready || m_starts.empty())
         return false;
     const LegacyTimebase timebase = legacyTimebase();
-    int end = timebase.msAt(timebase.frameAt(endMs) - 1); // PlayEndBefore
+    int end = timebase.msAt(timebase.frameAt(endMs) - 1);
     const int duration = static_cast<int>(m_starts.back().microseconds() / 1000);
     if (startMs >= end || startMs >= duration)
         return false;
@@ -431,7 +413,7 @@ bool VideoSession::playLine(int startMs, int endMs, bool loop)
         end = duration;
     if (m_playing)
         pause();
-    const int frame = timebase.clampFrame(timebase.frameAt(startMs)); // SeekFrame
+    const int frame = timebase.clampFrame(timebase.frameAt(startMs));
     showFrame(frame);
     m_playEndMs = end;
     m_loop = loop;
@@ -445,12 +427,12 @@ void VideoSession::setGeneralPlayer(GeneralPlayerPort *player)
     if (player == m_player)
         return;
     if (m_playing)
-        pause(); // the indexed frame of the last delivered time, as a pause shows
+        pause();
     m_player = player;
     m_playerPath.clear();
     m_preparing = false;
     m_failedPath.clear();
-    ++m_playEpoch; // the previous player's pending answers are dropped
+    ++m_playEpoch; // drops the previous player's pending answers
 }
 
 void VideoSession::preparePlayer()
@@ -469,9 +451,6 @@ void VideoSession::preparePlayer()
         if (path != m_path)
             return;
         if (!opened) {
-            // Legacy opened the DirectShow graph once per load and warned
-            // once (VideoBox::LoadVideo, VideoBox.cpp:328-331); the player
-            // is not asked again until the video loads again.
             m_failedPath = path;
             return notify();
         }
@@ -485,7 +464,7 @@ void VideoSession::preparePlayer()
 bool VideoSession::startPlayback(std::int64_t fromUs)
 {
     if (playerFailed())
-        return false; // legacy had no video after the failed open
+        return false;
     m_preparing = false;
     m_playing = true;
     m_stopped = false;
@@ -515,7 +494,6 @@ bool VideoSession::startPlayback(std::int64_t fromUs)
                 return notify();
             }
             m_playerPath = m_path;
-            // A1: the video's chosen audio track (legacy played the box's)
             if (m_audioOrdinal >= 0 && m_audioOrdinal < static_cast<int>(opened->audioTracks.size()))
                 m_player->selectAudioTrack(m_audioOrdinal);
             start();
@@ -528,20 +506,20 @@ bool VideoSession::startPlayback(std::int64_t fromUs)
 void VideoSession::generalFrame(IndexedFrame frame, std::int64_t startUs)
 {
     if (!m_playing)
-        return; // a late frame after a pause or stop
+        return;
     frame.generation = m_source.generation();
     PlaybackPipeline::Output out;
     out.epoch = m_playEpoch;
     out.startUs = startUs;
     out.frame = std::make_shared<const IndexedFrame>(std::move(frame));
-    showGeneral(std::move(out)); // no overlay yet: rendered here
+    showGeneral(std::move(out));
 }
 
 void VideoSession::submitGeneralFrame(std::int64_t startUs, std::optional<std::int64_t> endUs,
                                       PlaybackPipeline::Make make)
 {
     if (!m_playing || !make)
-        return; // a late frame after a pause or stop
+        return;
     const std::uint64_t generation = m_source.generation();
     PlaybackPipeline::Input input;
     input.epoch = m_playEpoch;
@@ -551,7 +529,8 @@ void VideoSession::submitGeneralFrame(std::int64_t startUs, std::optional<std::i
         auto frame = make(pool);
         if (frame) {
             frame->generation = generation;
-            frame->index = -1; // a player frame, not an indexed one
+            // MUST KILL: index -1 marks a player frame
+            frame->index = -1;
         }
         return frame;
     };
@@ -560,8 +539,6 @@ void VideoSession::submitGeneralFrame(std::int64_t startUs, std::optional<std::i
 
 void VideoSession::showGeneral(PlaybackPipeline::Output out)
 {
-    // Late: after a pause or stop, from before a seek, or older than the
-    // frame already shown.
     if (!m_playing || out.epoch != m_playEpoch || !out.frame)
         return;
     if (m_lastGeneralUs && m_lastGeneralEpoch == out.epoch && out.startUs < *m_lastGeneralUs)
@@ -573,7 +550,6 @@ void VideoSession::showGeneral(PlaybackPipeline::Output out)
     m_overlayTime = core::DocumentTime(startUs);
     m_lastPresent.reset();
     if (out.subtitles != 0 && out.subtitles == m_subtitleSerial) {
-        // Rendered on the worker for the subtitles shown now.
         m_overlay = m_hasSubtitles ? std::move(out.overlay) : nullptr;
         if (m_overlay)
             present(std::optional(out.overlayBounds));
@@ -584,7 +560,6 @@ void VideoSession::showGeneral(PlaybackPipeline::Output out)
         present();
     }
     notify();
-    // A4: a Line's playback pauses once its end frame is shown
     if (m_playEndMs > 0)
         if (const auto at = frameHolding(startUs))
             if (m_starts[static_cast<std::size_t>(*at)].microseconds() / 1000 >= m_playEndMs) {
@@ -603,7 +578,6 @@ bool VideoSession::pause()
     m_player->pause();
     m_playing = false;
     ++m_playEpoch;
-    // The indexed frame whose interval holds the last delivered frame's start.
     int index = m_requested.value_or(0);
     if (m_lastGeneralUs)
         if (const auto frame = frameHolding(*m_lastGeneralUs))
@@ -620,7 +594,7 @@ bool VideoSession::stop()
         m_player->pause();
         m_playing = false;
         m_playEndMs = 0;
-        m_stopped = true; // legacy Stop acts only while Playing
+        m_stopped = true;
         ++m_playEpoch;
     }
     showFrame(0);
@@ -634,13 +608,12 @@ std::int64_t msOf(core::DocumentTime t)
     return t.microseconds() / 1000;
 }
 
-} // namespace
+}
 
 void VideoSession::seekToEnd(core::DocumentTime end)
 {
     if (!m_timeline)
         return;
-    // FrameShownAt(end - 1 ms), clamped.
     const core::DocumentTime before(std::max<std::int64_t>(0, end.microseconds() - 1000));
     const auto frame = m_timeline->frameContaining(before);
     showFrame(frame ? static_cast<int>(frame->value()) : (before.microseconds() <= 0 ? 0 : frameCount() - 1));
@@ -648,7 +621,6 @@ void VideoSession::seekToEnd(core::DocumentTime end)
 
 std::optional<int> VideoSession::jumpOrigin() const
 {
-    // Legacy Tell(): while playing the player's frame, else the requested one.
     const auto from = m_playing ? currentFrame() : m_requested;
     if (!from || *from < 0 || *from >= frameCount())
         return std::nullopt;
@@ -657,8 +629,6 @@ std::optional<int> VideoSession::jumpOrigin() const
 
 void VideoSession::jumpTo(int frame)
 {
-    // RendererFFMS2::SetPosition: while playing, playback goes on from the
-    // frame (the play end reset); paused, the frame is shown.
     if (m_playing)
         seekFrame(frame);
     else
@@ -670,8 +640,6 @@ bool VideoSession::seekBy(std::int64_t ms)
     const auto from = m_state == State::Ready ? jumpOrigin() : std::nullopt;
     if (!from || !m_timeline)
         return false;
-    // Seek(Tell() + ms): Tell() is the frame's start in whole milliseconds;
-    // SeekFrame's FrameAt, 0 at or before 0, the last past the last start.
     const std::int64_t target = msOf(m_starts[static_cast<std::size_t>(*from)]) + ms;
     if (target <= 0) {
         jumpTo(0);
@@ -727,7 +695,7 @@ void VideoSession::seekKeepPlaying(core::DocumentTime time, bool startTime)
         frame = at ? static_cast<int>(at->value()) : (before.microseconds() <= 0 ? 0 : frameCount() - 1);
     }
     m_requested = frame;
-    m_playEndMs = 0; // legacy SetPosition resets the play end
+    m_playEndMs = 0;
     startPlayback(m_starts[static_cast<std::size_t>(frame)].microseconds());
 }
 
@@ -738,19 +706,16 @@ std::optional<int> VideoSession::frameHolding(std::int64_t us) const
     const core::DocumentTime time(us);
     if (const auto at = m_timeline->frameContaining(time))
         return static_cast<int>(at->value());
-    // The last frame's interval has no known end: a time past its start is
-    // the last frame (legacy FrameShownAt went on counting frames past the
-    // end; the rewrite clamps, as Timebase::ClampFrame did for seeks).
+    // The last frame's interval has no known end.
     if (time >= m_starts.back())
         return frameCount() - 1;
     if (time < m_starts.front())
-        return 0; // FrameShownAt: 0 before the first frame
+        return 0;
     return std::nullopt;
 }
 
 std::optional<int> VideoSession::currentFrame() const
 {
-    // A frame from before the latest play or seek no longer counts.
     if (m_playing && m_lastGeneralUs && m_lastGeneralEpoch == m_playEpoch)
         if (const auto at = frameHolding(*m_lastGeneralUs))
             return at;
@@ -774,7 +739,7 @@ bool VideoSession::seekFrame(int index)
     }
     m_requested = index;
     m_lastGeneralUs.reset();
-    m_playEndMs = 0; // SetFFMS2Position resets the play end
+    m_playEndMs = 0;
     return startPlayback(m_starts[static_cast<std::size_t>(index)].microseconds());
 }
 
@@ -788,8 +753,6 @@ bool VideoSession::nextKeyframe()
     const auto from = m_state == State::Ready ? jumpOrigin() : std::nullopt;
     if (!from || m_keyframes.empty())
         return false;
-    // Timebase::NextKeyframe(Tell()) on keyframe times in ms: the first after
-    // now, else the first; SetPosition goes there (playing on while playing).
     const std::int64_t now = msOf(m_starts[static_cast<std::size_t>(*from)]);
     int target = m_keyframes.front();
     for (const int k : m_keyframes)
@@ -806,7 +769,6 @@ bool VideoSession::previousKeyframe()
     const auto from = m_state == State::Ready ? jumpOrigin() : std::nullopt;
     if (!from || m_keyframes.empty())
         return false;
-    // Timebase::PrevKeyframe(Tell()): the last before now, else the last.
     const std::int64_t now = msOf(m_starts[static_cast<std::size_t>(*from)]);
     int target = m_keyframes.back();
     for (auto it = m_keyframes.rbegin(); it != m_keyframes.rend(); ++it)
@@ -834,7 +796,6 @@ bool VideoSession::seekToMs(int ms)
 {
     if (m_state != State::Ready || !m_timeline)
         return false;
-    // SeekFrame(timebase, ms, true): Timebase::FrameAt, clamped
     int frame = 0;
     if (ms > 0) {
         const auto at = m_timeline->frameAtOrAfter(core::DocumentTime(std::int64_t{ms} * 1000));
@@ -842,7 +803,7 @@ bool VideoSession::seekToMs(int ms)
     }
     if (m_playing) {
         if (looping())
-            m_playEndMs = 0; // KE2: a seek ends Loop the Line; playing goes on
+            m_playEndMs = 0; // a seek ends the loop; playing goes on
         m_requested = frame;
         m_lastGeneralUs.reset();
         return startPlayback(frameStart(frame).value_or(core::DocumentTime(0)).microseconds());
@@ -884,4 +845,4 @@ void VideoSession::setKeyframes(std::vector<int> frames)
     m_keyframes = std::move(frames);
 }
 
-} // namespace hikari::application
+}

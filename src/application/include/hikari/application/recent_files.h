@@ -1,16 +1,5 @@
 #pragma once
 
-// P2: the recent subtitles list and how opened files are dispatched.
-//
-// RecentFiles follows legacy HikariSubFrame::SetRecent/AppendRecent: most
-// recent first, no duplicates, at most 20. Missing local files are pruned
-// when the list is shown; network paths are not checked, so a missing share
-// never stalls the menu.
-//
-// SH2: an entry can also carry when it was last opened, for the Home page.
-// Legacy kept paths only, so the times are stored beside the list
-// (openedRecords) and an entry carried over from legacy has none.
-
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -25,21 +14,18 @@ class RecentFiles {
 public:
     static constexpr std::size_t kCapacity = 20;
 
-    // `path` first; `openedMs` (milliseconds since the epoch) is when it was
-    // opened, none forgets any earlier time.
+    // `openedMs`: milliseconds since the epoch; none forgets any earlier time.
     void add(const std::string &path, std::optional<std::int64_t> openedMs = std::nullopt);
-    // Replaces the list (from storage), keeping its order and the rules. The
-    // times are forgotten; setOpenedRecords gives them back.
+    // Forgets the times; setOpenedRecords gives them back.
     void set(std::vector<std::string> paths);
     const std::vector<std::string> &entries() const { return m_paths; }
-    // Drops entries `missing` reports; true when anything was dropped.
+    // True when anything was dropped.
     bool prune(const std::function<bool(const std::string &)> &missing);
-    // Drops `path`; true when it was listed.
+    // True when `path` was listed.
     bool remove(const std::string &path);
     std::optional<std::int64_t> opened(const std::string &path) const;
-    // The times as stored: "<ms> <path>" for each entry that has one, in the
-    // list's order. Reading takes the records of listed paths and skips the
-    // rest.
+    // "<ms> <path>" per entry with a time, in list order; setOpenedRecords
+    // skips unlisted paths.
     std::vector<std::string> openedRecords() const;
     void setOpenedRecords(const std::vector<std::string> &records);
 
@@ -50,18 +36,13 @@ private:
     std::map<std::string, std::int64_t> m_opened;
 };
 
-// Legacy IsMissingLocalFile: UNC paths and mapped network drives (as
-// `isRemoteDrive` reports them) count as present without a check.
+// UNC paths and `isRemoteDrive` drives count as present without a check.
 bool isMissingLocalFile(const std::string &path, const std::function<bool(const std::string &)> &exists,
                         const std::function<bool(char drive)> &isRemoteDrive);
 
-// What opening a file does, by its extension (legacy OpenFile for one file,
-// OpenFiles for several): subtitles replace the editing target's content,
-// scripts load into Automation, keyframes go to the video, archives and
-// programs are refused, anything else opens as video. CF3: one session file
-// (.hksession, legacy .kls) loads as Load session does; among several it is
-// refused.
+// By extension: unknown ones open as video, archives and programs are
+// refused, a session file (.hksession, .kls) only opens alone.
 enum class OpenKind { Subtitles, Script, Keyframes, Video, Session, Refused };
 OpenKind openKindOf(std::string_view path, bool single);
 
-} // namespace hikari::application
+}

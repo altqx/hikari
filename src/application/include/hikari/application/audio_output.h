@@ -1,11 +1,7 @@
 #pragma once
 
-// Editor audio output port (N6; docs/media.md, ADR 0010). The control
-// side opens a device and writes ready interleaved float samples; a real-time
-// callback consumes them and fills silence when nothing is ready. Status and
-// clock estimates are published without locks. Device identity is scoped to
-// its host API, not its display name. All methods belong to one owner thread;
-// only the callback runs elsewhere.
+// All methods belong to one owner thread; only the real-time callback runs
+// elsewhere, filling silence when nothing is queued.
 
 #include <cstddef>
 #include <cstdint>
@@ -74,9 +70,8 @@ struct ClockEstimate {
     double monotonicSeconds = 0;      // steady_clock at that callback, to map domains
     double uncertaintySeconds = 0;    // callback granularity, plus latency when derived
     // The latest callback that took queued audio, kept after the queue runs
-    // dry: where that audio ends (DAC time, stream domain), that callback's
-    // stream and monotonic times, and the queued frames taken up to its end.
-    // A player maps these to when its last frame should finish sounding.
+    // dry: where that audio ends (DAC time), its stream and monotonic times,
+    // and the queued frames taken up to its end.
     double lastReadyEndDacSeconds = 0;
     double lastReadyStreamSeconds = 0;
     double lastReadyMonotonicSeconds = 0;
@@ -104,4 +99,4 @@ public:
     virtual ClockEstimate clock() const = 0;
 };
 
-} // namespace hikari::application
+}

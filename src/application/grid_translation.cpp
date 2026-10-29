@@ -13,7 +13,6 @@ namespace {
 using u8 = std::u8string;
 using u8v = std::u8string_view;
 
-// wxString::Trim(): trailing whitespace.
 u8 trimRight(u8v s)
 {
     while (!s.empty() && (s.back() == u8' ' || s.back() == u8'\t' || s.back() == u8'\r' || s.back() == u8'\n'))
@@ -21,7 +20,7 @@ u8 trimRight(u8v s)
     return u8(s);
 }
 
-// Legacy IsNumber: digits only (an empty text counts).
+// MUST KILL: isNumber("") is true
 bool isNumber(u8v s)
 {
     for (const char8_t c : s)
@@ -30,7 +29,6 @@ bool isNumber(u8v s)
     return true;
 }
 
-// wxStringTokenizer(text, "\n", wxTOKEN_STRTOK).
 std::vector<u8v> tokens(u8v text)
 {
     std::vector<u8v> out;
@@ -43,15 +41,14 @@ std::vector<u8v> tokens(u8v text)
     return out;
 }
 
-// The entries OnPasteTextTl reads, as Dialogue raw text.
+// As Dialogue raw text.
 std::vector<u8> pastedEntries(u8v text, u8v extension)
 {
     std::vector<u8> out;
     const auto all = tokens(text);
     if (extension == u8"srt") {
         u8 block;
-        // The first token (the first cue number) is skipped; a block is
-        // pasted when the next number (or an empty line) is reached.
+        // The first cue number is skipped; a block ends at the next number or an empty line.
         for (std::size_t i = 1; i < all.size(); ++i) {
             const u8 line = trimRight(all[i]);
             if (isNumber(line)) {
@@ -71,14 +68,13 @@ std::vector<u8> pastedEntries(u8v text, u8v extension)
     return out;
 }
 
-} // namespace
+}
 
 bool turnOnTranslationMode(core::Document &document)
 {
     if (!document.scriptInfo(u8"TLMode")) {
         const auto styles = core::decodeStyles(document);
         if (!styles.empty()) {
-            // GetStyle(0, "Default"): that Style, else the first.
             core::StyleValues tl = styles.front();
             for (const auto &s : styles)
                 if (s.name == u8"Default") {
@@ -112,10 +108,8 @@ std::expected<void, CommandRefusal> turnOffTranslationMode(EditSession &session)
 {
     if (session.document().scriptInfo(u8"TLMode") != std::optional<u8>(u8"Yes"))
         return std::unexpected(CommandRefusal::Invalid);
-    // E5: a loaded pair without a translation is touched too, so that it is
-    // written again as the one line legacy's Dialogue is (SaveFile writes
-    // every line; byte-for-byte it would stay an original line in a Style
-    // that is gone plus an empty translation line).
+    // Loaded pairs without a translation are touched too, so they are written
+    // back as one line.
     std::set<core::LineId> touches;
     for (const auto *line : session.document().lines())
         if (!line->translation.empty() || line->unconfirmed || line->originalSpan)
@@ -144,16 +138,12 @@ std::expected<void, CommandRefusal> pasteTranslation(EditSession &session, std::
                                                      const core::PasteConversion &conversion)
 {
     const auto format = session.document().format();
-    if (format != core::SubtitleFormat::Ass) // E5-tlmode-needs-script-info: PlainText has no Script Info
+    if (format != core::SubtitleFormat::Ass)
         return std::unexpected(CommandRefusal::Invalid);
-    // The text is as OpenWrite::FileOpen read it (backends::readLegacyTextFile,
-    // R5-per-platform): on Windows CRLF is already LF; on Linux each line
-    // keeps its "\r", so a blank CRLF line is a "\r" entry (a pasted empty
-    // translation; in an SRT file it ends the block before it).
     std::vector<u8> texts;
     for (const auto &entry : pastedEntries(fileText, extension))
         texts.push_back(core::dialogueFromRaw(entry, format, conversion).text);
-    // Appended entries keep the other fields legacy's Dialogue(raw) read.
+    // Appended entries keep the other fields their raw text gives.
     std::vector<core::LineRecord> appended;
     std::vector<std::pair<core::LineId, u8>> translations;
     std::set<core::LineId> touched;
@@ -162,7 +152,6 @@ std::expected<void, CommandRefusal> pasteTranslation(EditSession &session, std::
         for (const auto *l : session.document().lines())
             if (!visible || visible(l->id))
                 shown.push_back(l->id);
-        // GetStyle(0, "Default")->Name.
         u8 styleName = u8"Default";
         const auto styles = core::decodeStyles(session.document());
         bool hasDefault = false;
@@ -209,7 +198,7 @@ struct Row {
     bool changed = false;
 };
 
-// GetKeyFromPosition(i, delta, false) for delta >= 0: the delta-th shown row after i.
+// For delta >= 0: the delta-th shown row after i.
 std::optional<std::size_t> rowWithOffset(const std::vector<Row> &rows, std::size_t i, int delta)
 {
     if (i > rows.size())
@@ -226,7 +215,7 @@ std::optional<std::size_t> rowWithOffset(const std::vector<Row> &rows, std::size
     return std::nullopt;
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> moveTranslation(EditSession &session, TranslationMove move, const LineVisible &visible)
 {
@@ -314,8 +303,6 @@ std::expected<void, CommandRefusal> moveTranslation(EditSession &session, Transl
             }
         }
     }
-    // Apply: Lines that are gone are removed, changed ones edited, new ones
-    // inserted before the next kept Line (or appended).
     std::set<core::LineId> kept, touched;
     for (const auto &r : rows)
         if (r.id)
@@ -360,10 +347,10 @@ std::expected<void, CommandRefusal> moveTranslation(EditSession &session, Transl
     }});
     if (!ran)
         return std::unexpected(ran.error());
-    // Legacy keeps the first selected row selected and edited.
+    // The first selected row stays selected and active.
     if (active)
         session.setSelection(Selection{active, {*active}, active, {}});
     return {};
 }
 
-} // namespace hikari::application
+}

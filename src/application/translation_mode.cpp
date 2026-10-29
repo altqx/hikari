@@ -12,7 +12,6 @@ using u8 = std::u8string;
 using u8v = std::u8string_view;
 constexpr auto npos = u8v::npos;
 
-// wxString::Mid(first, count): empty past the end, clamped to the rest.
 u8 mid(u8v s, std::size_t first, std::size_t count = npos)
 {
     if (first > s.size())
@@ -20,16 +19,13 @@ u8 mid(u8v s, std::size_t first, std::size_t count = npos)
     return u8(s.substr(first, count));
 }
 
-// wxString::SubString(from, to) is Mid(from, to - from + 1) in size_t: with
-// `to` before `from` - 1 the count wraps and the rest of the string is taken.
+// `to` before `from` - 1 takes the rest of the string.
 u8 subString(u8v s, std::size_t from, std::size_t to)
 {
     const std::size_t count = to + 1 >= from ? to + 1 - from : npos;
     return mid(s, from, count);
 }
 
-// wxString::Replace("}{", "") with replaceAll: the occurrences found left to
-// right in the original string are removed.
 u8 removeJoinedBlocks(u8v s)
 {
     u8 out;
@@ -57,7 +53,7 @@ bool translationModeOn(const core::Document &document)
     return document.scriptInfo(u8"TLMode") == std::optional<u8>(u8"Yes");
 }
 
-} // namespace
+}
 
 std::expected<void, CommandRefusal> turnOnTranslationModeStep(EditSession &session)
 {
@@ -73,16 +69,12 @@ std::expected<void, CommandRefusal> toggleUnconfirmed(EditSession &session)
 {
     if (!translationModeOn(session.document()))
         return std::unexpected(CommandRefusal::Invalid);
-    // `line->ChangeState(4)` on the editor's Line, then on each selected one.
     std::set<core::LineId> lines = session.selection().selected;
     if (const auto active = session.selection().active)
         lines.insert(*active);
     if (lines.empty())
         return std::unexpected(CommandRefusal::Invalid);
-    // E5-unconfirmed-own-step: typed text on one of these Lines is its own
-    // step first, then the flip is "Mark unconfirmed" on top of it (legacy's
-    // flip joined that text's step). Committed here, before the revision is
-    // taken, so the flip is not refused as stale.
+    // MUST KILL: the draft must commit before session.revision() is read, or the flip is stale
     if (const auto draft = session.draftLine(); draft && lines.contains(*draft)) {
         if (session.draftProblem() && session.invalidCommitPolicy() == InvalidCommitPolicy::Block)
             return std::unexpected(CommandRefusal::InvalidDraft);
@@ -146,9 +138,9 @@ bool OriginalColumns::observe(const core::Document &document, bool showOriginalS
     const bool showtl = document.scriptInfo(u8"TLMode Showtl") == std::optional<u8>(u8"Yes");
     const bool on = tlMode == std::optional<u8>(u8"Yes");
     if (!m_seen)
-        m_shown = on && (showtl || showOriginalSetting); // Clearing, then LoadSubtitles
+        m_shown = on && (showtl || showOriginalSetting);
     else if (tlMode != m_tlMode)
-        m_shown = showtl || (on && showOriginalSetting); // DoUndo
+        m_shown = showtl || (on && showOriginalSetting);
     see(document);
     return m_shown;
 }
@@ -172,4 +164,4 @@ void OriginalColumns::pasted(const core::Document &after)
     see(after);
 }
 
-} // namespace hikari::application
+}

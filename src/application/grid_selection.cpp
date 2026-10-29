@@ -97,7 +97,7 @@ Selection GridSelection::ctrlClick(const Selection &current, core::LineId line) 
 {
     Selection s = current;
     s.anchor = line;
-    // Legacy: Ctrl+click on the active Line when it alone is selected does nothing.
+    // Ctrl+click on the active Line when it alone is selected does nothing.
     if (!(current.active == line && current.selected.size() == 1 && current.selected.contains(line))) {
         if (s.selected.contains(line))
             s.selected.erase(line);
@@ -133,4 +133,4 @@ Selection GridSelection::selectAll(const Selection &current) const
     return s;
 }
 
-} // namespace hikari::application
+}

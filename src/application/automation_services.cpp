@@ -46,7 +46,7 @@ HostServiceReply strings(std::vector<std::string> values)
     return reply;
 }
 
-} // namespace
+}
 
 namespace {
 
@@ -75,7 +75,7 @@ void addUnique(std::vector<std::string> &folders, const std::string &folder, boo
     folders.push_back(folder);
 }
 
-} // namespace
+}
 
 AutomationFolders automationFolders(const std::string &shipped, const std::string &user, bool windows)
 {
@@ -99,7 +99,7 @@ AutomationFolders automationFolders(const std::string &shipped, const std::strin
 std::vector<std::string> chooseAutoloadScripts(
     const std::vector<std::pair<std::string, std::vector<std::string>>> &folders, bool windows)
 {
-    std::vector<std::pair<std::string, std::string>> chosen; // folded name, path
+    std::vector<std::pair<std::string, std::string>> chosen;
     for (const auto &[folder, names] : folders) {
         for (const auto &name : names) {
             const auto dot = name.find_last_of('.');
@@ -123,10 +123,9 @@ std::vector<std::string> chooseAutoloadScripts(
 
 std::string decodeAutomationPath(std::string path, const AutomationPathContext &c)
 {
-    // Legacy normalises '\\' to '/' off Windows, then '/' to '\\' on Windows.
     std::replace(path.begin(), path.end(), c.windows ? '/' : '\\', c.windows ? '\\' : '/');
     if (path.size() < 5 || path[0] != '?')
-        return path; // legacy indexes [1] and [4] unchecked; short paths stay as given
+        return path;
     const char a = path[1], b = path[4];
     const auto replace = [&](std::size_t count, const std::string &with) { path.replace(0, count, with); };
     const std::string &user = c.userAutomationDir.empty() ? c.automationDir : c.userAutomationDir;
@@ -227,7 +226,7 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
         m_pickerOpen = true;
         return m_picker->pick(p, [this, reply](std::optional<std::vector<std::string>> paths) {
             if (!m_pickerOpen)
-                return; // withdrawn: the run already ended
+                return;
             m_pickerOpen = false;
             if (!paths || paths->empty())
                 return reply(HostServiceReply::unavailable());
@@ -262,8 +261,6 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
             return unavailable();
         if (!*audio)
             return reply(integers({1}));
-        // Legacy reads the spectrum only for times it accepts (the helper
-        // raises or answers {} for the others).
         HostServiceReply out = integers({0});
         const std::int64_t start = integer(r, 0), end = integer(r, 1);
         if (start >= 0 && end >= 0 && start < end) {
@@ -285,7 +282,7 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
         m_resolutionOpen = true;
         return m_resolution->resolve(q, [this, reply](std::optional<Resolution> chosen) {
             if (!m_resolutionOpen)
-                return; // withdrawn: the run already ended
+                return;
             m_resolutionOpen = false;
             if (!chosen || chosen->width < 1 || chosen->height < 1)
                 return reply(HostServiceReply::unavailable());
@@ -310,4 +307,4 @@ void AutomationServiceRouter::withdraw()
         m_picker->withdraw();
 }
 
-} // namespace hikari::application
+}
