@@ -601,6 +601,10 @@ class ShellTest : public QObject {
         return nullptr;
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
+    // VB1: a window wide enough for every tool's inspector bar on one line
+    // (nothing under More options), for the tests that reach a tool's
+    // options and values by name.
+    void widenForTheInspectorBar() { window->resize(2400, std::max(window->height(), 900)); }
     // D3: the header row (DockTabBar.qml) of the group whose current panel
     // is `panel` (a dock's uniqueName), in any window.
     QQuickItem *dockHeader(const QString &panel) const
@@ -24980,6 +24984,21 @@ private:
         f.write(extra);
         return path;
     }
+    // VB1: the inspector bar laid out for the tool (shown or gone), so the
+    // video is at its size before a test points at it. Offscreen a frame (a
+    // polish) comes only when asked for.
+    void settleVisualBar() const
+    {
+        QQuickItem *bar = visualItem("visualToolBar");
+        const auto settled = [&] {
+            window->update();
+            const bool shown = bar->property("shown").toBool();
+            return shown ? bar->isVisible() && bar->height() == bar->property("lineHeight").toReal() : !bar->isVisible();
+        };
+        QTRY_VERIFY2(settled(), qPrintable(QStringLiteral("shown %1 visible %2 height %3")
+                                               .arg(bar->property("shown").toBool()).arg(bar->isVisible()).arg(bar->height())));
+        QTest::qWait(20);
+    }
     QPoint videoPoint(QPointF local) const
     {
         return item("visualOverlay")->mapToScene(local).toPoint();
@@ -25043,7 +25062,9 @@ private slots:
         QVERIFY(application->openFile(visualDocument("visual.ass")));
         auto &tools = application->visualTools();
         // The rail: legacy VideoToolbar's eleven families and VT3's
-        // Perspective, the crosshair on.
+        // Perspective, the crosshair on (tall enough for all of them).
+        window->resize(1600, 1400);
+        QTRY_VERIFY(!visualItem("visualToolRail")->property("overflows").toBool());
         for (int i = 0; i < application::visual::kFamilyCount; ++i) {
             auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(i)));
             QVERIFY(button);
@@ -25090,34 +25111,21 @@ private slots:
                     QVERIFY2(!names.contains(it->property("text").toString()), qPrintable(it->property("text").toString()));
             }
         }
-        // A Video panel too short for the twelve families: the rail shows a
-        // scroll bar beside them (the families below are reached by the
-        // mouse and the bar says there are more), still a narrow strip; tall
-        // enough, no bar.
-        {
-            QQuickItem *rail = visualItem("visualToolRail");
-            auto *bar = visualItem("visualToolRailScrollBar");
-            QVERIFY(bar);
-            const QSize was = window->size();
-            window->resize(1100, 520);
-            QTRY_VERIFY(rail->property("overflows").toBool());
-            QTRY_VERIFY(bar->isVisible());
-            QVERIFY2(rail->width() <= 40, qPrintable(QString::number(rail->width())));
-            auto *last = visualItem("visualTool10");
-            QVERIFY(last->mapToItem(rail, QPointF(0, 0)).x() + last->width() <= bar->mapToItem(rail, QPointF(0, 0)).x());
-            window->resize(1600, 1400);
-            QTRY_VERIFY(!rail->property("overflows").toBool());
-            QTRY_VERIFY(!bar->isVisible());
-            window->resize(was);
-        }
-        // VT1: the inspector bar is there for the crosshair too (the video
-        // does not resize with the tool): its name, Copy video position
-        // (greyed with no position yet), no batch picker, no "Targets"
-        // readout anywhere.
-        QVERIFY(visualItem("visualToolBar")->isVisible());
-        QVERIFY(visualItem("visualToolName")->isVisible());
-        QVERIFY(!visualItem("visualPickBatch")->isVisible());
+        // VB1: the crosshair has no inspector bar line; its Copy video
+        // position (greyed with no position yet) is on the video times line,
+        // with no batch picker and no "Targets" readout anywhere.
+        // (VB1-pointer-readout; the rail's More tools:
+        // visualToolRailFoldsUnderMoreTools.)
+        QTRY_VERIFY(!visualItem("visualToolBar")->isVisible());
+        QVERIFY(visualItem("visualPointerReadout")->isVisible());
+        QVERIFY(visualItem("visualOption_copyPosition")->isVisible());
         QVERIFY(!visualItem("visualOption_copyPosition")->isEnabled());
+        {
+            const auto middle = [](QQuickItem *i) { return i->mapToScene(QPointF(0, i->height() / 2)).y(); };
+            QTRY_VERIFY2(std::abs(middle(visualItem("visualPointerReadout")) - middle(item("videoTimes"))) < 4,
+                         qPrintable(QStringLiteral("%1 %2").arg(middle(visualItem("visualPointerReadout")))
+                                        .arg(middle(item("videoTimes")))));
+        }
         QVERIFY(!visualItem("visualBatch"));
         QVERIFY(tools.overlay().isEmpty()); // no video: no tools (VideoBox state None)
         application->video().openVideo(nativeFixture("cfr.mkv"));
@@ -26064,6 +26072,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool2"), "click"));
         QCOMPARE(tools.activeFamily(), 2);
+        settleVisualBar();
         QQuickItem *two = visualItem("visualOption_twoPoints");
         QVERIFY(two);
         if (!two->property("checked").toBool())
@@ -26122,6 +26131,7 @@ private slots:
         QCOMPARE(tools.activeFamily(), 3);
         QTRY_VERIFY(visualItem("visualOption_rectangle") && visualItem("visualOption_rectangle")->isVisible());
         QTRY_VERIFY(!visualItem("visualOption_copyPosition"));
+        settleVisualBar(); // the video stays put for the drags below
         // ScaleItem (VideoToolbar.cpp:83-89, 900-958): width and the aspect
         // ratio on; the rectangle's four options greyed without it.
         const char *names[] = {"rectangle", "scaleX", "aspectRatio", "scaleY", "originalRectangle", "changeAll",
@@ -26412,6 +26422,7 @@ private slots:
     // more lines, the picker keeping its slot.
     void visualInspectorBarValues()
     {
+        widenForTheInspectorBar();
         QVERIFY(application->openFile(visualDocument(
             "inspector.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}third\n")));
         auto &tools = application->visualTools();
@@ -26456,12 +26467,13 @@ private slots:
             return QString();
         };
 
-        // Scale: the tool's name leads; its options in Rectangle and Tags,
-        // its two values after them.
+        // Scale: its options in Rectangle and Tags, its two values after
+        // them (VB1: the rail names the tool, the bar does not).
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
         QCOMPARE(tools.activeFamily(), 3);
         QTRY_VERIFY(field("fscx"));
-        QVERIFY(visualItem("visualToolName")->isVisible());
+        settleVisualBar(); // shown, after the crosshair's none
+        QVERIFY(!visualItem("visualToolName"));
         QCOMPARE(groupLabel(visualItem("visualOption_rectangle")), QStringLiteral("Rectangle"));
         QCOMPARE(groupLabel(visualItem("visualOption_originalRectangle")), QStringLiteral("Rectangle"));
         QCOMPARE(groupLabel(visualItem("visualOption_changeAll")), QStringLiteral("Tags"));
@@ -26593,57 +26605,6 @@ private slots:
             application->selectLine(third.value);
             QTRY_VERIFY(session->selection().active == third);
             QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("130"));
-        }
-
-        // A narrow panel wraps the groups onto more lines; the picker stays.
-        // (The window is at least 800 wide, the Video panel all of it here:
-        // the bar is held to a panel's narrower width.)
-        {
-            QQuickItem *groups = visualItem("visualToolGroups");
-            QQuickItem *bar = visualItem("visualToolBar");
-            QQmlProperty maximum(bar, QStringLiteral("Layout.maximumWidth"), qmlContext(bar));
-            const QSize was = window->size();
-            // (implicitHeight is the tool's own lines; the bar keeps the
-            // tallest family's, which may be more.)
-            window->resize(1600, 1400); // wide: Scale on one line
-            QTRY_VERIFY(groups->implicitHeight() < 40);
-            QVERIFY(maximum.write(420));
-            QTRY_COMPARE(bar->width(), qreal(420));
-            QTRY_VERIFY2(groups->implicitHeight() > 40, qPrintable(QString::number(groups->implicitHeight())));
-            QQuickItem *pick = visualItem("visualPickBatch");
-            QVERIFY(pick->isVisible());
-            QVERIFY(pick->mapToItem(bar, QPointF(pick->width(), 0)).x() <= bar->width());
-            // Every group whole, inside the bar.
-            for (QQuickItem *group : groups->childItems())
-                if (group->isVisible())
-                    QVERIFY2(group->x() + group->width() <= groups->width() + 0.5, qPrintable(group->objectName()));
-            // A tool switch keeps the bar's height (the approved design;
-            // Codex on #293): the crosshair, on fewer lines here, keeps the
-            // lines the tallest family needs.
-            // The Video panel's minimum follows the tool's own lines, not
-            // the height the bar holds (Codex on #293: the column is as tall
-            // after the switch, holding more, and the minimum must still
-            // change with the lines).
-            QQuickItem *videoPanel = item("videoPanel");
-            const auto minimumHeight = [&] { return videoPanel->property("minimumSize").toSizeF().height(); };
-            const qreal wrapped = bar->height();
-            const qreal scaleLines = groups->implicitHeight(), scaleMinimum = minimumHeight();
-            QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
-            QTRY_COMPARE(tools.activeFamily(), 0);
-            QTRY_VERIFY2(groups->implicitHeight() < groups->height() - 10,
-                         qPrintable(QStringLiteral("%1 %2").arg(groups->implicitHeight()).arg(groups->height())));
-            QCOMPARE(bar->height(), wrapped);
-            QTRY_VERIFY2(std::abs((scaleMinimum - minimumHeight()) - (scaleLines - groups->implicitHeight())) <= 1,
-                         qPrintable(QStringLiteral("minimum %1 -> %2, lines %3 -> %4").arg(scaleMinimum).arg(minimumHeight())
-                                        .arg(scaleLines).arg(groups->implicitHeight())));
-            QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
-            QTRY_COMPARE(tools.activeFamily(), 3);
-            QCOMPARE(bar->height(), wrapped);
-            QTRY_COMPARE(minimumHeight(), scaleMinimum);
-            QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()) /* the Layout default */);
-            QTRY_VERIFY(groups->implicitHeight() < 40);
-            window->resize(was);
-            QTRY_VERIFY(!tools.videoRect().isEmpty());
         }
 
         // Z rotation: its angle, and Origin in its group.
@@ -27743,6 +27704,7 @@ private slots:
     // nudge that corner, its own step; Esc during a drag drops it.
     void visualPerspectiveThroughThePanel()
     {
+        widenForTheInspectorBar();
         using namespace application::visual;
         QVERIFY(application->openFile(visualDocument(
             "perspective.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(100,80)\\p1}m 0 0 l 120 0 120 60 0 60\n")));
@@ -27759,6 +27721,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool11"), "click"));
         QCOMPARE(tools.activeFamily(), 11);
         QTRY_VERIFY(visualItem("visualOption_plane"));
+        settleVisualBar(); // shown, after the crosshair's none
         const auto option = [&](const char *name) {
             return visualItem(qPrintable(QStringLiteral("visualOption_") + QLatin1String(name)));
         };
@@ -27940,6 +27903,7 @@ private slots:
     // the file at once.
     void visualAllTagsThroughThePanel()
     {
+        widenForTheInspectorBar();
         using namespace application::visual;
         QTemporaryDir config;
         QVERIFY(config.isValid());
@@ -28527,41 +28491,256 @@ private slots:
         QTRY_COMPARE(tools.activeFamily(), 0);
     }
 
-    void visualToolRailKeepsTheActiveFamilyInView()
+    // VB1 (#481, VB1-rail-more-tools): a rail too short for the twelve
+    // families shows the ones that fit, none cut off, and ends in More
+    // tools, a menu of the others; the on family takes the last slot.
+    void visualToolRailFoldsUnderMoreTools()
     {
         auto &tools = application->visualTools();
         QVERIFY(application->openFile(
             visualDocument("rail.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}Rail\n")));
-        window->resize(1280, 860);
-        QTRY_VERIFY(visualItem("visualToolRailScroll"));
-        QQuickItem *scroll = visualItem("visualToolRailScroll");
-        auto *view = scroll->property("contentItem").value<QQuickItem *>();
-        QVERIFY(view);
+        QQuickItem *rail = visualItem("visualToolRail");
+        QQuickItem *more = visualItem("visualToolsMore");
+        QVERIFY(rail && more);
         tools.selectFamily(0);
-        const auto inView = [&](int family) {
-            QQuickItem *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family)));
-            if (!button || !button->isVisible())
-                return false;
-            const QRectF r = button->mapRectToItem(scroll, QRectF(0, 0, button->width(), button->height()));
-            return r.top() >= -0.5 && r.bottom() <= scroll->height() + 0.5;
+        const QList<int> order = [&] {
+            QList<int> out;
+            for (const QVariant &f : tools.railOrder())
+                out << f.toInt();
+            return out;
+        }();
+        const auto button = [&](int family) { return visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family))); };
+        const auto shown = [&] {
+            QList<int> out;
+            for (int f : order)
+                if (button(f)->isVisible())
+                    out << f;
+            return out;
         };
-        const auto overflows = [&] { return view->property("contentHeight").toReal() > view->height() + 0.5; };
-        // Shrink the window until the rail overflows.
-        for (int h = 760; h >= 400 && !overflows(); h -= 40) {
+        // Every button shown is whole inside the rail.
+        const auto whole = [&] {
+            QList<QQuickItem *> items;
+            for (int f : order)
+                if (button(f)->isVisible())
+                    items << button(f);
+            if (more->isVisible())
+                items << more;
+            for (QQuickItem *b : items) {
+                const QRectF r = b->mapRectToItem(rail, QRectF(0, 0, b->width(), b->height()));
+                if (r.top() < -0.5 || r.bottom() > rail->height() + 0.5)
+                    return false;
+            }
+            return true;
+        };
+        // Shrink the window until the rail folds.
+        window->resize(1280, 860);
+        for (int h = 760; h >= 400 && !rail->property("overflows").toBool(); h -= 40) {
             window->resize(1280, h);
             QTest::qWait(50);
         }
-        QVERIFY2(overflows(), "the rail does not overflow");
-        QTRY_VERIFY(inView(0));
-        QVERIFY(!inView(10));
-        for (int family : {10, 9, 0, 10}) {
-            tools.selectFamily(family);
-            QCOMPARE(tools.activeFamily(), family);
-            QTRY_VERIFY2(inView(family), qPrintable(QString::number(family)));
-            QVERIFY(visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family)))->property("checked").toBool());
-        }
+        QVERIFY2(rail->property("overflows").toBool(), "the rail does not fold");
+        QTRY_VERIFY(more->isVisible());
+        QTRY_VERIFY(whole());
+        const QList<int> first = shown();
+        QVERIFY(first.size() < order.size());
+        QCOMPARE(first, order.mid(0, first.size()));
+        QVERIFY(first.contains(0));
+        QVERIFY(rail->width() <= 34);
+        // The on family keeps the last slot: as many buttons, all whole.
+        const int last = order.last();
+        QVERIFY(!first.contains(last));
+        tools.selectFamily(last);
+        QTRY_VERIFY(button(last)->isVisible());
+        QVERIFY(button(last)->property("checked").toBool());
+        QCOMPARE(shown().size(), first.size());
+        QCOMPARE(shown().last(), last);
+        QTRY_VERIFY(whole());
+        // More tools lists the others, in the rail's order, and chooses one.
+        QVERIFY(QMetaObject::invokeMethod(more, "click"));
+        // (The rail's own: fullscreen has a rail of its own.)
+        auto *menu = rail->findChild<QObject *>(QStringLiteral("visualToolsMoreMenu"));
+        QVERIFY(menu);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QList<int> listed;
+        for (int f : order)
+            if (auto *entry = menu->findChild<QObject *>(QStringLiteral("visualToolsMore%1").arg(f))) {
+                QVERIFY(!entry->property("text").toString().isEmpty());
+                listed << f;
+            }
+        QCOMPARE(listed.size() + shown().size(), order.size());
+        for (int f : listed)
+            QVERIFY(!shown().contains(f));
+        const int chosen = listed.first();
+        QVERIFY(QMetaObject::invokeMethod(menu->findChild<QObject *>(QStringLiteral("visualToolsMore%1").arg(chosen)),
+                                          "triggered"));
+        QTRY_COMPARE(tools.activeFamily(), chosen);
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QTRY_VERIFY(button(chosen)->isVisible());
+        QTRY_VERIFY(whole());
+        // Tall enough: every family, no More tools.
+        window->resize(1600, 1400);
+        QTRY_VERIFY(!rail->property("overflows").toBool());
+        QTRY_VERIFY(!more->isVisible());
+        QTRY_COMPARE(shown(), order);
+        QTRY_VERIFY(whole());
         tools.selectFamily(0);
         window->resize(1280, 860);
+    }
+
+    // VB1 (#481, VB1-one-line-bar): every tool's inspector bar is one line
+    // (none for the crosshair), so the video keeps its size across the
+    // tools; the groups that do not fit fold under More options, whose
+    // popover holds them live.
+    void visualInspectorBarFitsOneLine()
+    {
+        auto &tools = application->visualTools();
+        QVERIFY(application->openFile(visualDocument(
+            "one-line.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}One line\n")));
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->selectLine(session->document().lines()[2]->id.value);
+        QQuickItem *bar = visualItem("visualToolBar");
+        QQuickItem *groups = visualItem("visualToolGroups");
+        QQuickItem *more = visualItem("visualToolMore");
+        QQuickItem *stage = visualItem("videoStage");
+        QVERIFY(bar && groups && more && stage);
+        const qreal line = bar->property("lineHeight").toReal();
+        const auto lengthOf = [&](const char *name) {
+            return bar->property(name).value<QJSValue>().property(QStringLiteral("length")).toInt();
+        };
+        QVERIFY(line > 20 && line < 40);
+        // Offscreen, a frame (a polish) comes only when asked for.
+        const auto drawn = [&] {
+            window->update();
+            return true;
+        };
+        // The groups on the line are whole inside it.
+        const auto onTheLine = [&] {
+            for (QQuickItem *g : groups->childItems())
+                if (g->isVisible() && g->x() + g->width() > groups->width() + 0.5)
+                    return false;
+            return true;
+        };
+        const auto widthsOf = [&] {
+            QStringList out;
+            for (QQuickItem *g : groups->childItems())
+                if (g->isVisible())
+                    out << QStringLiteral("%1+%2").arg(g->x()).arg(g->width());
+            out << QStringLiteral("| measured");
+            auto *measure = bar->findChild<QQuickItem *>(QStringLiteral("visualToolMeasure"));
+            for (QQuickItem *row : measure->childItems())
+                for (QQuickItem *g : row->childItems())
+                    out << QStringLiteral("%1/%2").arg(g->width()).arg(g->implicitWidth());
+            out << QStringLiteral("room %1 more %2").arg(bar->property("groupsRoom").toReal()).arg(more->implicitWidth());
+            return out.join(u' ');
+        };
+        const auto check = [&](const QString &where) {
+            QList<qreal> stageHeights;
+            qreal pointerStage = 0;
+            for (const QVariant &v : tools.railOrder()) {
+                const int family = v.toInt();
+                tools.selectFamily(family);
+                QTRY_COMPARE(tools.activeFamily(), family);
+                const QString what = where + QStringLiteral(" family %1").arg(family);
+                if (family == 0) {
+                    QTRY_VERIFY2(drawn() && !bar->isVisible(), qPrintable(what));
+                    QTRY_VERIFY(visualItem("visualPointerReadout")->isVisible());
+                    continue;
+                }
+                QTRY_VERIFY2(drawn() && bar->height() == line, qPrintable(what));
+                QTRY_VERIFY2(drawn() && onTheLine(), qPrintable(what + QStringLiteral(" fit %1 of %2 in %3: %4")
+                                                                      .arg(bar->property("fitCount").toInt())
+                                                                      .arg(lengthOf("segments"))
+                                                                      .arg(groups->width())
+                                                                      .arg(widthsOf())));
+                QVERIFY(!visualItem("visualPointerReadout")->isVisible());
+                // More options only with groups folded under it.
+                const int folded = lengthOf("foldedSegments");
+                QCOMPARE(more->isVisible(), folded > 0);
+                QCOMPARE(bar->property("fitCount").toInt() + folded, lengthOf("segments"));
+                settleVisualBar();
+                stageHeights << stage->height();
+            }
+            // The video keeps its size across the tools with options, and
+            // gets the line back for the crosshair.
+            for (qreal h : stageHeights)
+                QCOMPARE(h, stageHeights.first());
+            tools.selectFamily(0);
+            settleVisualBar();
+            QTRY_VERIFY2(drawn() && stage->height() >= stageHeights.first() + line - 1,
+                         qPrintable(QStringLiteral("%1 %2").arg(stage->height()).arg(stageHeights.first())));
+            pointerStage = stage->height();
+            QVERIFY2(pointerStage >= stageHeights.first() + line - 1,
+                     qPrintable(where + QStringLiteral(": %1 vs %2").arg(pointerStage).arg(stageHeights.first())));
+        };
+        const QSize was = window->size();
+        window->resize(1600, 1000);
+        check(QStringLiteral("wide"));
+        // A narrow bar folds Perspective's last groups under More options.
+        QQmlProperty maximum(bar, QStringLiteral("Layout.maximumWidth"), qmlContext(bar));
+        tools.selectFamily(3); // shown, so laid out at its new width
+        settleVisualBar();
+        QVERIFY(maximum.write(360));
+        QTRY_VERIFY2(drawn() && bar->width() == 360, qPrintable(QString::number(bar->width())));
+        check(QStringLiteral("narrow"));
+        tools.selectFamily(11); // Family::Perspective
+        settleVisualBar();
+        QTRY_VERIFY(more->isVisible());
+        QTRY_VERIFY(!visualItem("visualValue_frx")); // folded, not on the line
+        QVERIFY(QMetaObject::invokeMethod(more, "click"));
+        auto *popover = bar->findChild<QObject *>(QStringLiteral("visualToolMorePopover")); // not fullscreen's
+        QVERIFY(popover);
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QVERIFY(more->property("checked").toBool());
+        QTRY_VERIFY(visualItem("visualValue_frx") && visualItem("visualValue_frx")->isVisible());
+        // Its fields are the tool's: a folded field typed in, the Line
+        // takes the value (Perspective's angles are read-only: X/Y rotation's).
+        const auto editableIn = [&](QObject *in) -> QQuickItem * {
+            auto *content = in->property("contentItem").value<QQuickItem *>();
+            QList<QQuickItem *> pending{content ? content->parentItem() : nullptr};
+            while (!pending.isEmpty())
+                if (QQuickItem *f = pending.takeLast()) {
+                    if (f->objectName().startsWith(QStringLiteral("visualValue_")) && f->inherits("QQuickTextField")
+                        && f->isVisible())
+                        return f;
+                    pending << f->childItems();
+                }
+            return nullptr;
+        };
+        QVERIFY(!editableIn(popover));
+        tools.selectFamily(5); // Family::RotationXY
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        settleVisualBar();
+        QTRY_VERIFY(more->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(more, "click"));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QTRY_VERIFY(editableIn(popover));
+        QQuickItem *field = editableIn(popover);
+        const QString name = field->objectName().mid(int(qstrlen("visualValue_")));
+        const auto steps = session->historySize();
+        field->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(field, "selectAll"));
+        for (const QChar c : QStringLiteral("12"))
+            QTest::keyClick(field->window(), c.toLatin1());
+        QTest::keyClick(field->window(), Qt::Key_Return);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        bool took = false;
+        for (const QVariant &v : tools.property("values").toList())
+            took |= v.toMap().value(QStringLiteral("name")).toString() == name
+                    && v.toMap().value(QStringLiteral("text")).toString() == QLatin1String("12");
+        QVERIFY2(took, qPrintable(name));
+        // Another tool closes it; wide enough again, nothing is folded.
+        tools.selectFamily(3);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()) /* the Layout default */);
+        window->resize(2400, 1000); // Perspective's four groups need ~770 px
+        tools.selectFamily(11);
+        QTRY_VERIFY2(drawn() && !more->isVisible(), qPrintable(QStringLiteral("width %1: %2").arg(bar->width()).arg(widthsOf())));
+        QTRY_VERIFY(drawn() && visualItem("visualValue_frx") && visualItem("visualValue_frx")->isVisible());
+        tools.selectFamily(0);
+        window->resize(was);
     }
 
     // T6: the Position shifter's and the all-tags tool's surfaces in the
@@ -28646,6 +28825,94 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(named("tagsClose"), "clicked"));
             QTRY_VERIFY(!dialog->isVisible());
         }
+    }
+
+    // VB1 (#481): every tool's bar and the rail in a tall and a short Video
+    // panel, the four themes (with HIKARI_SURFACE_SHOT_DIR), on the dummy
+    // video; then More options open on Perspective and More tools on the
+    // short panel.
+    void visualToolbarAdaptiveScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto &tools = application->visualTools();
+        tools.setAllTagsFile({});
+        QVERIFY(application->openFile(visualDocument(
+            "vb1-shots.ass",
+            // A drawing, so Perspective has its quad and its angles.
+            "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\an7\\pos(100,80)\\frx12\\fry-8\\p1}m 0 0 l 120 0 120 60 0 60\n")));
+        application->video().openVideo(QStringLiteral("?dummy:23.976:4000:1920:1080:47:163:161:c"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        closeMismatchQuestion(); // modal: the video takes no hover under it
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->selectLine(session->document().lines()[2]->id.value);
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        const auto shoot = [&](const QString &name, bool whole = false) {
+            QTest::qWait(300);
+            const QImage shot = window->grabWindow();
+            QVERIFY(whole ? shot.save(out + QLatin1Char('/') + name)
+                          : shot.copy(crop(visualItem("videoPanel"))).save(out + QLatin1Char('/') + name));
+        };
+        auto *root = engine->rootObjects().first();
+        const QSize was = window->size();
+        for (const char *code : {"light", "dark", "highContrastBlack", "highContrastWhite"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QString::fromLatin1(code) + QStringLiteral(".png");
+            for (const auto &[size, height] : {std::pair{"tall", 1300}, std::pair{"short", 760}}) {
+                window->resize(1280, height);
+                QTest::qWait(200);
+                for (const QVariant &v : tools.railOrder()) {
+                    tools.selectFamily(v.toInt());
+                    QTRY_COMPARE(tools.activeFamily(), v.toInt());
+                    if (v.toInt() == 0) { // the cross and its position on the times line
+                        settleVisualBar();
+                        // Moved again each try: the video's place settles
+                        // after the resize and the theme change.
+                        int nudge = 0;
+                        const auto hovered = [&] {
+                            const QPointF at = tools.videoRect().center() + QPointF(20 + (++nudge % 2), -10);
+                            QTest::mouseMove(window, videoPoint(at));
+                            return !tools.overlay().isEmpty();
+                        };
+                        QTRY_VERIFY2(hovered(), qPrintable(QDebug::toString(tools.videoRect())));
+                    }
+                    shoot(QStringLiteral("vb1-%1-%2%3").arg(QLatin1String(size)).arg(v.toInt(), 2, 10, QLatin1Char('0'))
+                              .arg(suffix));
+                    QTest::mouseMove(window, QPoint(1, 1));
+                }
+            }
+            // Short: More options on Perspective, then More tools.
+            tools.selectFamily(11);
+            if (QQuickItem *more = visualItem("visualToolMore"); more && more->isVisible()) {
+                QVERIFY(QMetaObject::invokeMethod(more, "click"));
+                auto *popover = visualItem("visualToolBar")->findChild<QObject *>(QStringLiteral("visualToolMorePopover"));
+                QTRY_VERIFY(popover->property("opened").toBool());
+                shoot(QStringLiteral("vb1-short-more-options") + suffix, true);
+                QVERIFY(QMetaObject::invokeMethod(popover, "revert")); // Esc's, the window unfocused offscreen
+                QTRY_VERIFY(!popover->property("visible").toBool());
+            }
+            tools.selectFamily(0);
+            if (QQuickItem *more = visualItem("visualToolsMore"); more && more->isVisible()) {
+                QVERIFY(QMetaObject::invokeMethod(more, "click"));
+                auto *menu = visualItem("visualToolRail")->findChild<QObject *>(QStringLiteral("visualToolsMoreMenu"));
+                QTRY_VERIFY(menu->property("opened").toBool());
+                shoot(QStringLiteral("vb1-short-more-tools") + suffix, true);
+                QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+                QTRY_VERIFY(!menu->property("visible").toBool());
+            }
+        }
+        window->resize(was);
     }
 
     // VT1: the inspector bar in the four themes (with
@@ -28769,14 +29036,14 @@ private slots:
             QVERIFY(application->editor().undo());
             QVERIFY(tools.setOption(QStringLiteral("change"), 0)); // the next theme's shots as the first's
             application->selectLine(lines[2]->id.value);
-            // Scale on a narrow window: the groups wrap.
+            // Scale on a narrow window: the last groups fold (VB1).
             tools.selectFamily(3);
             QTRY_VERIFY(visualItem("visualValue_fscx"));
             {
                 QQuickItem *bar = visualItem("visualToolBar");
                 QQmlProperty maximum(bar, QStringLiteral("Layout.maximumWidth"), qmlContext(bar));
                 QVERIFY(maximum.write(420));
-                QTRY_VERIFY(visualItem("visualToolGroups")->height() > 40);
+                QTRY_VERIFY(visualItem("visualToolMore")->isVisible());
                 QTest::qWait(300);
                 const QImage shot = window->grabWindow();
                 QVERIFY(shot.copy(crop(bar)).save(out + QStringLiteral("/vt1-scale-narrow") + suffix));
@@ -35636,7 +35903,7 @@ private slots:
         auto *fsBar = fullscreenItem("fullscreenToolBar");
         QVERIFY(fsBar && fsBar->isVisible());
         QCOMPARE(fsBar->parentItem(), slot);
-        QVERIFY(fullscreenItem("visualToolName")->isVisible());
+        QVERIFY(!fullscreenItem("visualToolName")); // VB1: the tools button names it
         QTRY_VERIFY(fullscreenItem("visualOption_rectangle"));
         QTRY_VERIFY(fullscreenItem("visualValue_fscx") && fullscreenItem("visualValue_fscx")->isVisible());
         QCOMPARE(fullscreenItem("fullscreenToolsButton")->property("iconRole").toString(), QStringLiteral("tool-scale"));
@@ -35645,6 +35912,10 @@ private slots:
         QVERIFY(rail->mapToScene(QPointF(0, rail->height())).y() <= bar->mapToScene(QPointF(0, 0)).y());
         auto *crosshair = findItem(rail, QStringLiteral("visualTool0"));
         QVERIFY(crosshair && crosshair->isVisible());
+        // VB1: a short rail gave the on tool its last slot; offscreen its
+        // column is laid out again only at a frame, so lay it out now.
+        for (QQuickItem *item : rail->findChildren<QQuickItem *>())
+            item->ensurePolished();
         clickWith(crosshair, Qt::NoModifier);
         QTRY_COMPARE(tools.activeFamily(), 0);
         QTRY_VERIFY(!rail->isVisible());
