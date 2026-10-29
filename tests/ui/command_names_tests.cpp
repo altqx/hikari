@@ -62,10 +62,15 @@ private:
     std::unique_ptr<hikari::application::EditSession> m_session;
 };
 
+bool spellsAWord(std::u16string_view text)
+{
+    return std::ranges::count_if(text, [](char16_t c) { return QChar(c).isLetter(); }) >= 2;
+}
+
 void collect(const visual::VisualTool &tool, const visual::VisualHost &host, std::set<std::u16string> &out)
 {
     const auto add = [&](const std::u16string &text) {
-        if (std::ranges::count_if(text, [](char16_t c) { return QChar(c).isLetter(); }) >= 2)
+        if (spellsAWord(text))
             out.insert(text);
     };
     for (const auto &o : tool.options(host)) {
@@ -86,9 +91,7 @@ void collect(const visual::VisualTool &tool, const visual::VisualHost &host, std
     }
 }
 
-// Every option, value and choice text each tool shows, through each of its choices; units and axis letters
-// such as "%" and "X" are left out.
-std::set<std::u16string> shownToolTexts()
+std::set<std::u16string> toolTextsThroughEveryChoice()
 {
     std::set<std::u16string> out;
     Host host;
@@ -168,7 +171,7 @@ private slots:
     void everyVisualToolTextIsExtracted()
     {
         QStringList missing;
-        for (const std::u16string &text : shownToolTexts()) {
+        for (const std::u16string &text : toolTextsThroughEveryChoice()) {
             const QByteArray utf8 = QString::fromStdU16String(text).toUtf8();
             if (!extracted(hikari::ui::visualToolTextSources(), utf8.toStdString()))
                 missing << QString::fromStdU16String(text);
