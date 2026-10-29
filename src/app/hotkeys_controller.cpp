@@ -61,11 +61,27 @@ QVariantMap conflictMap(const std::optional<application::HotkeyConflict> &c)
 {
     if (!c)
         return {};
+    QStringList commands;
+    QStringList holders;
+    for (std::size_t i = 0; i < c->commands.size(); ++i) {
+        const application::HotkeyId key = c->holders[i];
+        const QString shown = key.id < application::kFirstScriptHotkey ? ui::hotkeyCommandName(c->commands[i])
+                                                                        : qs(c->commands[i]);
+        commands << shown;
+        holders << (c->doubled ? shown : ui::hotkeyWindowName(key.type) + QLatin1Char(' ') + shown);
+    }
+    const QString names = holders.join(QStringLiteral(", "));
+    const QString message =
+        c->doubled    ? QCoreApplication::translate("HikariSub.Hotkeys", "This hotkey already exists for \"%1\".\nWhat to do?")
+        : c->count > 1 ? QCoreApplication::translate("HikariSub.Hotkeys",
+                                                     "This shortcut already exists in other windows as a shortcut for \"%1\".\nWhat would you like to do?")
+                       : QCoreApplication::translate("HikariSub.Hotkeys",
+                                                     "This shortcut already exists in another window as a shortcut for \"%1\".\nWhat would you like to do?");
     return {{QStringLiteral("doubled"), c->doubled},
-            {QStringLiteral("message"), qs(c->message)},
+            {QStringLiteral("message"), message.arg(names)},
             {QStringLiteral("canSwitch"), c->canSwitch},
             {QStringLiteral("canSetAnyway"), c->canSetAnyway},
-            {QStringLiteral("commands"), qLines(c->commands)}};
+            {QStringLiteral("commands"), commands}};
 }
 
 // Stored accelerators name the unshifted US key with Shift ("Shift-;"); Qt gives the shifted one.
@@ -783,7 +799,7 @@ QVariantMap HotkeysController::capture(int key, int modifiers, int window) const
     return {{QStringLiteral("result"), QLatin1String(result)},
             {QStringLiteral("accel"), qs(c.accel)},
             {QStringLiteral("keys"), qs(application::qtKeysOfAccel(c.accel))},
-            {QStringLiteral("message"), qs(c.message)}};
+            {QStringLiteral("message"), c.message.empty() ? QString() : ui::hotkeyRefusal(c.message)}};
 }
 
 bool HotkeysController::eventFilter(QObject *watched, QEvent *event)

@@ -561,7 +561,7 @@ void VisualToolsController::bell()
 void VisualToolsController::notice(std::u16string_view text)
 {
     if (m_log)
-        m_log(qs(text));
+        m_log(visualToolText(text));
 }
 
 QString VisualToolsController::toolName() const
@@ -570,6 +570,14 @@ QString VisualToolsController::toolName() const
         if (f.family == m_family)
             return visualToolName(f.tooltip);
     return {};
+}
+
+void VisualToolsController::retranslate()
+{
+    emit familiesChanged();
+    m_options.clear();
+    refreshOptions();
+    emit changed();
 }
 
 void VisualToolsController::refreshOptions()
@@ -588,14 +596,16 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
     QVariantList out;
     for (const ToolOption &o : t.options(*this)) {
         QStringList choices;
-        for (const auto &c : o.choices)
-            choices.append(qs(c));
+        for (std::size_t i = 0; i < o.choices.size(); ++i) {
+            const bool named = o.searchable || (o.listEnds && i > 0 && i + 1 < o.choices.size());
+            choices.append(named ? qs(o.choices[i]) : visualToolText(o.choices[i]));
+        }
         QStringList notes;
         for (const auto &n : o.notes)
             notes.append(qs(n));
         QStringList sectionNames;
         for (const auto &n : o.sectionNames)
-            sectionNames.append(qs(n));
+            sectionNames.append(visualToolText(n));
         QVariantList sections;
         for (const int section : o.sections)
             sections.append(section);
@@ -606,7 +616,7 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
         out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(o.name)},
                                {QStringLiteral("kind"), kind},
                                {QStringLiteral("iconRole"), QString::fromStdString(o.iconRole)},
-                               {QStringLiteral("tooltip"), qs(o.tooltip)},
+                               {QStringLiteral("tooltip"), visualToolText(o.tooltip)},
                                {QStringLiteral("checked"), o.checked},
                                {QStringLiteral("enabled"), o.enabled && m_railEnabled},
                                {QStringLiteral("choices"), choices},
@@ -725,7 +735,7 @@ application::LegacyTimebase VisualToolsController::timebase() const
 void VisualToolsController::log(std::u16string_view text)
 {
     if (m_log)
-        m_log(qs(text));
+        m_log(visualToolText(text));
 }
 
 std::pair<long, long> VisualToolsController::editorSelection() const
@@ -943,10 +953,10 @@ QVariantMap VisualToolsController::lastChange() const
     QVariantList values;
     for (const ToolValue &v : last->values)
         values.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(v.name)},
-                                  {QStringLiteral("label"), qs(v.label)},
+                                  {QStringLiteral("label"), visualToolText(v.label)},
                                   {QStringLiteral("text"), qs(v.text)},
                                   {QStringLiteral("group"), qs(v.group)},
-                                  {QStringLiteral("unit"), qs(v.unit)},
+                                  {QStringLiteral("unit"), visualToolText(v.unit)},
                                   {QStringLiteral("step"), v.step},
                                   {QStringLiteral("swatch"), v.swatch ? QColor::fromRgba(v.swatch).name() : QString()}});
     return QVariantMap{{QStringLiteral("tag"), qs(last->tag)},
@@ -1005,7 +1015,7 @@ QString VisualToolsController::warning() const
     const auto *t = tool();
     if (!t || !t->warnsOutsideLine() || !m_view.hasVideo() || m_settings.boolean("video.visualWarningsOff"))
         return {};
-    return qs(warningText(currentWarning()));
+    return visualToolText(warningText(currentWarning()));
 }
 
 int VisualToolsController::pointerShapeCursor() const
@@ -1114,11 +1124,11 @@ QVariantList VisualToolsController::valueMaps(const VisualTool &t) const
     const bool marks = std::ranges::any_of(values, [](const ToolValue &v) { return v.marked; });
     for (const ToolValue &v : values)
         out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(v.name)},
-                               {QStringLiteral("label"), qs(v.label)},
+                               {QStringLiteral("label"), visualToolText(v.label)},
                                {QStringLiteral("text"), qs(v.text)},
                                {QStringLiteral("editable"), v.editable},
                                {QStringLiteral("group"), qs(v.group)},
-                               {QStringLiteral("unit"), qs(v.unit)},
+                               {QStringLiteral("unit"), visualToolText(v.unit)},
                                {QStringLiteral("step"), v.step},
                                {QStringLiteral("swatch"), v.swatch ? QColor::fromRgba(v.swatch).name() : QString()},
                                {QStringLiteral("marked"), marks ? QVariant(v.marked) : QVariant()}});

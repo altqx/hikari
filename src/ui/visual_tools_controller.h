@@ -85,7 +85,7 @@ public:
     application::visual::BatchPicker &batchPicker() { return m_picker; }
 
     QVariantList families() const;
-    void retranslate() { emit familiesChanged(); }
+    void retranslate();
     QVariantList railOrder() const;
     int activeFamily() const { return static_cast<int>(m_family); }
     bool railEnabled() const { return m_railEnabled; }

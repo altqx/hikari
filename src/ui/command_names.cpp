@@ -273,6 +273,12 @@ constexpr const char *kHotkeyWindows[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Audio"),
 };
 
+constexpr const char *kHotkeyRefusals[] = {
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt)."),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "You cannot use shortcuts for copying, cutting, and pasting."),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "You cannot use the program exit shortcut."),
+};
+
 constexpr const char *kVisualTools[] = {
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Position pointer"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Text positioning"),
@@ -288,12 +294,119 @@ constexpr const char *kVisualTools[] = {
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Perspective"),
 };
 
+constexpr const char *kVisualToolTexts[] = {
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "\\org mode"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Across characters, decreasing"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Across characters, increasing"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Across lines, decreasing"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Across lines, increasing"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Add"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Add B-spline"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Add by line number"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Add Bézier curve"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Add line"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Add separate point"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "After-bottom"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "After-center"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "After-top"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "At the cursor"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "At the start of the text"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Bad range"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Before-bottom"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Before-center"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Before-top"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Bottom-center"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Bottom-left"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Bottom-right"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "By"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Cannot read clip rectangle values."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Center"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Center-above"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Center-below"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Change \\move ending points"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Change \\move starting points"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Change all scale tags"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Changing all X/Y-rotation tags"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Changing all Z-rotation tags"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Choose"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Clip rectangle with \\t animation"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Common"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Copy video position"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Delete point"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Double \"m\" was blocked because of Vsfilter bug"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Edit"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "End"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "From"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Gradient"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "How each line's number changes the value"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "In"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Invert clip"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Keep"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Left-above"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Left-below"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Line is not visible on video\nor has zero duration"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "List of ASS drawings with edit option.\nAfter choose drawing from list just set cursor i n place\nof start of drawing and click left mouse button and drag."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "List of tags that can edit visual tool"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Lock outer quad\nOff: the inner quad is resized within the plane. On: the outer quad is, and the inner one sets the perspective"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Middle-left"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Middle-right"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "More"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Move \\org points"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Move clips"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Move drawings;\nuse only when you want\nto move drawing points.\nDo not combine with the first three options"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Move points"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Move position points"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "ms"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Multiply"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "No \\fax"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Out"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Per line"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Positioning in X axis"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Positioning in Y axis"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Preserve aspect ratio"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Preserve proportions so that vector drawings and text\nkeep their original positions after rotation."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Preserve proportions so that vector drawings and text\nkeep their original positions after scaling."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Right-above"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Right-below"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Scale height"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Scale width"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Set"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Set a custom rectangle for the current scale.\nIf automatic size calculation does not work correctly,\nyou can set a rectangle for the original scale."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Set angle from 2 points.\nAfter setting 2 points below text on video\nit calculates angle from it."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Set by line number"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Set movement using 2 points and the video position.\nAfter placing the first point before the moving text,\nadvance the video by enough frames\nso that the same video element\nfor which the start point was set remains visible.\nMovement is generated by placing the second point."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Set position by rectangle.\nAfter drawing a rectangle, the line will be\npositioned on one or both axes\nfor the selected alignment."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Set scale by rectangle.\nAfter drawing rectangle text is scaled\nin two or one axis."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Shear"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Show grid"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Show surrounding plane\nA rectangle of the text's plane: match it to one in the shot, then place the text inside it"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Start"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Tag change options:\nAdd - changes all tags by adding the slider value.\nInsert - inserts the tag at the cursor position for one line,\nor at the start for multiple lines.\nMultiply - multiplies the slider value by the selected line number;\nthe first line is not changed.\nGradient text increasing - inserts a tag at each character, increasing the value.\nGradient text decreasing - inserts a tag at each character, decreasing the value.\nGradient line increasing - inserts a tag in selected lines, increasing the value.\nGradient line decreasing - inserts a tag in selected lines, decreasing the value."),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Text placing works similar like in styles"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "To"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Top-center"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Top-left"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Top-right"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Value"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Video must be set at least one frame after the line's start time"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Visual editing tools\ndo not work on comments"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "What the gradient runs across"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Where the tag goes in the text"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Your tags"),
+};
+
 QString translated(const char *context, std::string_view english)
 {
     const std::string source(english);
     return QCoreApplication::translate(context, source.c_str());
 }
 
+}
+
+QString visualToolText(std::u16string_view english)
+{
+    return QCoreApplication::translate(kVisualToolsContext,
+                                       QString::fromUtf16(english.data(), qsizetype(english.size())).toUtf8().constData());
 }
 
 QString hotkeyCommandName(std::string_view english)
@@ -304,6 +417,11 @@ QString hotkeyCommandName(std::string_view english)
 QString hotkeyWindowName(int type)
 {
     return translated(kHotkeyContext, application::hotkeyWindowName(type));
+}
+
+QString hotkeyRefusal(std::string_view english)
+{
+    return translated(kHotkeyContext, english);
 }
 
 QString visualToolName(std::string_view english)
@@ -321,9 +439,19 @@ std::span<const char *const> hotkeyWindowSources()
     return kHotkeyWindows;
 }
 
+std::span<const char *const> hotkeyRefusalSources()
+{
+    return kHotkeyRefusals;
+}
+
 std::span<const char *const> visualToolSources()
 {
     return kVisualTools;
+}
+
+std::span<const char *const> visualToolTextSources()
+{
+    return kVisualToolTexts;
 }
 
 }
