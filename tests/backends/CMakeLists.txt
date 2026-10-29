@@ -16,18 +16,11 @@ hikari_add_gtest(hikari_backends_open_save_tests SOURCES open_save_reopen_tests.
 target_compile_definitions(hikari_backends_open_save_tests PRIVATE
     HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
 
-# The subtitle adapters' blend against legacy BlendAssBitmap itself
-# (HikariSub/AssBlend.cpp), copied unchanged into the build so that its
-# directory's other headers stay out.
-set(_legacy_assblend "${CMAKE_CURRENT_BINARY_DIR}/legacy-assblend")
-configure_file("${PROJECT_SOURCE_DIR}/HikariSub/AssBlend.cpp" "${_legacy_assblend}/AssBlend.cpp" COPYONLY)
-configure_file("${PROJECT_SOURCE_DIR}/HikariSub/AssBlend.h" "${_legacy_assblend}/AssBlend.h" COPYONLY)
-hikari_add_gtest(hikari_backends_overlay_blend_tests SOURCES overlay_blend_tests.cpp "${_legacy_assblend}/AssBlend.cpp"
+# The subtitle adapters' blend paths.
+hikari_add_gtest(hikari_backends_overlay_blend_tests SOURCES overlay_blend_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
-target_include_directories(hikari_backends_overlay_blend_tests PRIVATE "${_legacy_assblend}")
-hikari_add_gtest(hikari_backends_libass_tests SOURCES libass_renderer_tests.cpp "${_legacy_assblend}/AssBlend.cpp"
+hikari_add_gtest(hikari_backends_libass_tests SOURCES libass_renderer_tests.cpp
     LIBRARIES hikari_backends hikari_image_testing Hikari::libass Qt6::Gui LABELS backends)
-target_include_directories(hikari_backends_libass_tests PRIVATE "${_legacy_assblend}")
 target_compile_definitions(hikari_backends_libass_tests PRIVATE
     HIKARI_REFERENCE_DIR="${PROJECT_SOURCE_DIR}/tests/references"
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
@@ -143,7 +136,7 @@ target_compile_definitions(hikari_backends_lua_helper_tests PRIVATE
     HIKARI_EDGEBLUR_SCRIPT="${PROJECT_SOURCE_DIR}/Automation/automation/Autoload/macro-1-edgeblur.lua"
     HIKARI_AUTOLOAD_DIR="${HIKARI_AUTOMATION_STAGE}/Autoload"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
-    HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/capture-probe.lua")
+    HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/automation/capture-probe.lua")
 add_dependencies(hikari_backends_lua_helper_tests hikari_lua_helper hikari_automation_stage)
 
 # KE1: the bundled karaoke templater against the template corpus, byte for
@@ -204,7 +197,7 @@ target_compile_definitions(hikari_backends_automation_thirdparty_tests PRIVATE
     HIKARI_THIRDPARTY_FETCH="${CMAKE_CURRENT_BINARY_DIR}/automation-thirdparty/fetched"
     HIKARI_AUTOMATION_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
-    HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/capture-probe.lua")
+    HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/automation/capture-probe.lua")
 add_dependencies(hikari_backends_automation_thirdparty_tests hikari_lua_helper hikari_automation_stage)
 
 # N5: general playback through Qt Multimedia, identified by delivered frames,
@@ -336,7 +329,14 @@ hikari_add_gtest(hikari_backends_legacy_spelling_tests SOURCES legacy_spelling_t
     LIBRARIES hikari_backends LABELS backends)
 target_compile_definitions(hikari_backends_legacy_spelling_tests PRIVATE
     HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling"
-    HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs")
+    HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs")
+
+# DK1 (#473): the bundled dictionaries, as the build fetched them, through Hunspell.
+hikari_add_gtest(hikari_backends_bundled_dictionaries_tests SOURCES bundled_dictionaries_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+target_compile_definitions(hikari_backends_bundled_dictionaries_tests PRIVATE
+    HIKARI_BUNDLED_DICTIONARIES="${HIKARI_BUNDLED_DICTIONARIES}"
+    HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling")
 
 # GR1 (#364): the pinned harper-ls over LSP: diagnostics, replacements, settings.
 hikari_add_gtest(hikari_backends_harper_client_tests SOURCES harper_client_tests.cpp
@@ -429,7 +429,7 @@ if(WIN32)
         HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfiltermod"
         HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
         HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
-        HIKARI_W2_LEGACY_CAPTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-w2-vsfiltermod-20261015")
+        HIKARI_W2_LEGACY_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-w2-vsfiltermod-20261015")
     if(HIKARI_TEST_VSFILTERMOD_DLL)
         set(_w2_csri "${CMAKE_CURRENT_BINARY_DIR}/vsfiltermod-csri")
         add_custom_command(TARGET hikari_backends_vsfiltermod_tests POST_BUILD

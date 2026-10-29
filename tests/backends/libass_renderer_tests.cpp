@@ -1,18 +1,18 @@
 // N3: the libass SubtitleRenderer adapter. Fonts come from the locked Qt
 // install (OFL Titillium Web), added in memory with no system provider, so
 // the results are deterministic. Its frames are checked byte for byte
-// against legacy's composite: libass's images blended by legacy
-// BlendAssBitmap (HikariSub/AssBlend.cpp, copied unchanged into the build)
-// onto a cleared frame, as SubtitlesLibass::DrawOverlay does.
+// against legacy's composite: libass's images blended by the plain
+// blendAssBitmap path onto a cleared frame, as SubtitlesLibass::DrawOverlay
+// does.
 
 #include "hikari/application/playback_pipeline.h"
 #include "hikari/backends/libass_renderer.h"
+#include "hikari/backends/overlay_blend.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
 
-#include "AssBlend.h" // legacy
 #include "image_compare.h"
 
 extern "C" {
@@ -253,7 +253,7 @@ std::string heavyScript(int playResX = 640, int playResY = 360, std::string_view
 }
 
 // Legacy SubtitlesLibass::DrawOverlay's composite of the same script: every
-// image blended by legacy BlendAssBitmap onto a cleared frame.
+// image blended by the plain blendAssBitmap path onto a cleared frame.
 class LegacyComposite {
 public:
     LegacyComposite(const std::string &script, const std::shared_ptr<const std::vector<std::byte>> &font)
@@ -281,8 +281,8 @@ public:
         for (ASS_Image *img = ass_render_frame(m_renderer, m_track, ms, &change); img; img = img->next) {
             if (img->h == 0 || img->w == 0)
                 continue;
-            BlendAssBitmap(out.data() + img->dst_y * pitch + img->dst_x * 4, pitch, img->bitmap, img->stride, img->w,
-                           img->h, img->color);
+            backends::blendAssBitmap(backends::BlendPath::Plain, out.data() + img->dst_y * pitch + img->dst_x * 4,
+                                     pitch, img->bitmap, img->stride, img->w, img->h, img->color);
         }
         return out;
     }

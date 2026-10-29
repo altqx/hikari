@@ -845,7 +845,7 @@ TEST(VsfilterMod, MatchesTheLegacyAppsCaptures)
     const auto renderers = vsfilterModRenderers();
     if (!renderers)
         GTEST_SKIP() << "no VSFilterMod: HIKARI_VSFILTERMOD_CSRI is not set and the build did not fetch it";
-    const QString dir = QStringLiteral(HIKARI_W2_LEGACY_CAPTURES);
+    const QString dir = QStringLiteral(HIKARI_W2_LEGACY_OBSERVATIONS);
     const auto captures = legacyCaptures(dir);
     ASSERT_FALSE(captures.empty()) << qPrintable(dir);
     auto out = drawn::report("vsfiltermod-legacy.txt");

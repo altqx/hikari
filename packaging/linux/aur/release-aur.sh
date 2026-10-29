@@ -8,8 +8,12 @@
 # <tar.gz> is the release's hikarisub-<version>-linux-x86_64.tar.gz, already
 # checked against the release's SHA256SUMS. For each package:
 #
-# 1. With --releases, a package is skipped when the release list has a newer
-#    release of the same codebase (0.0.x legacy, 0.1.0 and up Qt) for its
+# 1. Each package follows one codebase (0.0.x legacy, 0.1.0 and up the app;
+#    ADR-0021), read from the release list and <version>: hikarisub-beta-bin
+#    the app once 0.1.0-beta.1 or higher is out, hikarisub-stable-bin once a
+#    stable 0.1.0 or higher is out, legacy until then. A release of the other
+#    codebase is skipped for it. With --releases, a package is also skipped
+#    when the release list has a newer release of its codebase for its
 #    channel: any release for hikarisub-beta-bin, a stable one for
 #    hikarisub-stable-bin. So an older tag never replaces a newer one, even
 #    on a package the AUR does not have yet.
@@ -37,7 +41,7 @@
 # With --strict, a missing key or a refused push is an error too, and so is a
 # run that refused every package.
 #
-# This file has the same bytes on the legacy (main) and Qt (qt) branches.
+# This file has the same bytes on the main and legacy branches.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -65,6 +69,7 @@ version=$1 tarball=$(cd "$(dirname "$2")" && pwd)/$(basename "$2") out=$3
 [ -f "$tarball" ] || { echo "error: no such file: $tarball" >&2; exit 2; }
 [ -z "$releases" ] || [ -f "$releases" ] || { echo "error: no such file: $releases" >&2; exit 2; }
 packages=$("$here/render-pkgbuild.sh" --packages "$version")
+case $version in 0.0.*) codebase=legacy ;; *) codebase=qt ;; esac
 mkdir -p "$out"
 out=$(cd "$out" && pwd)
 
@@ -72,8 +77,10 @@ skip() { # <message>
     echo "::warning::$1"
 }
 
-# The newest release of <version>'s codebase for a channel, or nothing.
-newest() { # <stable|beta>
+# For a channel: the codebase its package follows, the release it has
+# followed it since (or will from), and the newest release of that codebase
+# newer than <version>, or "-".
+plan() { # <stable|beta>
     python3 - "$releases" "$version" "$1" <<'EOF'
 import json, re, sys
 path, version, channel = sys.argv[1:]
@@ -86,21 +93,23 @@ def key(v):
     return (int(m.group(1)), int(m.group(2)), int(m.group(3)), stage, int(m.group(5) or 0))
 def legacy(k):
     return k[:2] == (0, 0)
+def stable(k):
+    return k[3] == 3
+first = {"beta": ((0, 1, 0, 1, 1), "0.1.0-beta.1"), "stable": ((0, 1, 0, 3, 0), "0.1.0")}[channel]
 mine = key(version)
-best = None
-for release in json.load(open(path)):
+published = [(mine, version)]
+for release in json.load(open(path)) if path else []:
     tag = release.get("tag_name", "")
     if release.get("draft") or not tag.startswith("v"):
         continue
     k = key(tag[1:])
-    if k is None or legacy(k) != legacy(mine):
+    if k is None or (channel == "stable" and (release.get("prerelease") or not stable(k))):
         continue
-    if channel == "stable" and (release.get("prerelease") or k[3] != 3):
-        continue
-    if best is None or k > best[0]:
-        best = (k, tag[1:])
-if best and best[0] > mine:
-    print(best[1])
+    published.append((k, tag[1:]))
+moved = sorted(p for p in published if p[0] >= first[0] and (channel == "beta" or stable(p[0])))
+follows, since = ("qt", moved[0][1]) if moved else ("legacy", first[1])
+newer = [p for p in published if legacy(p[0]) == (follows == "legacy") and p[0] > mine]
+print(follows, since, max(newer)[1] if newer else "-")
 EOF
 }
 
@@ -108,12 +117,20 @@ published=0
 for package in $packages; do
     channel=${package#hikarisub-} channel=${channel%-bin}
     echo "== $package ($channel) $version"
-    if [ -n "$releases" ]; then
-        newer=$(newest "$channel")
-        if [ -n "$newer" ]; then
-            skip "$package: v$newer is newer than v$version, so v$version is not published to it."
-            continue
+    # shellcheck disable=SC2046
+    set -- $(plan "$channel")
+    follows=$1 since=$2 newer=$3
+    if [ "$follows" != "$codebase" ]; then
+        if [ "$follows" = qt ]; then
+            skip "$package follows 0.1.0 and up since v$since, so legacy v$version is not published to it."
+        else
+            skip "$package follows legacy until v$since, so v$version is not published to it."
         fi
+        continue
+    fi
+    if [ "$newer" != - ]; then
+        skip "$package: v$newer is newer than v$version, so v$version is not published to it."
+        continue
     fi
 
     rc=0

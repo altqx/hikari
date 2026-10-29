@@ -88,13 +88,13 @@ hikari_add_gtest(hikari_application_getting_started_tests SOURCES getting_starte
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_find_replace_tests SOURCES find_replace_tests.cpp
     LIBRARIES hikari_application LABELS application)
-# F1: the legacy Find and replace captures (tools/legacy-capture ui cases)
+# F1: the legacy Find and replace captures (the legacy plan's ui cases)
 # replayed through FindReplace. Qt Core only reads the JSON.
 hikari_add_gtest(hikari_application_find_replace_capture_tests SOURCES find_replace_capture_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_find_replace_capture_tests PRIVATE
-    HIKARI_LEGACY_CAPTURE_PLAN="${PROJECT_SOURCE_DIR}/tools/legacy-capture/plan.json"
-    HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs"
+    HIKARI_LEGACY_PLAN="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/plan.json"
+    HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs"
     HIKARI_F1F3_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/run-37216509697/observations.json"
     HIKARI_CAPTURE_ARTIFACTS="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
 hikari_add_gtest(hikari_application_audio_display_tests SOURCES audio_display_tests.cpp
@@ -109,11 +109,10 @@ hikari_add_gtest(hikari_application_audio_playback_tests SOURCES audio_playback_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp
     LIBRARIES hikari_application LABELS application)
-# O2: hotkeys and the shortcut editor, against the legacy sources.
+# O2: hotkeys and the shortcut editor.
 hikari_add_gtest(hikari_application_hotkeys_tests SOURCES hotkeys_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
-    HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map/actions.csv")
 # A3: the audio box's timing.
 hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp
@@ -131,7 +130,7 @@ hikari_add_gtest(hikari_application_furigana_tests SOURCES furigana_tests.cpp
 hikari_add_gtest(hikari_application_audio_karaoke_tests SOURCES audio_karaoke_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_audio_karaoke_tests PRIVATE
-    HIKARI_KARAOKE_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/karaoke-cases.txt"
+    HIKARI_KARAOKE_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/karaoke-cases.txt"
     HIKARI_KARAOKE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-a5-karaoke-20261005/observations.jsonl")
 # KA1: Karaoke's language-aware Auto split, with the UI's hyphenation patterns.
 hikari_add_gtest(hikari_application_karaoke_split_tests SOURCES karaoke_split_tests.cpp
@@ -151,7 +150,7 @@ target_compile_definitions(hikari_application_session_file_tests PRIVATE
 hikari_add_gtest(hikari_application_subtitle_comparison_tests SOURCES subtitle_comparison_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_subtitle_comparison_tests PRIVATE
-    HIKARI_COMPARISON_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/comparison-cases.txt"
+    HIKARI_COMPARISON_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/comparison-cases.txt"
     HIKARI_COMPARISON_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-r1-comparison-20261005/observations.jsonl")
 # R2: the reference tray's linked matching (legacy SeekForOccurences).
 hikari_add_gtest(hikari_application_reference_navigation_tests SOURCES reference_navigation_tests.cpp
@@ -168,15 +167,13 @@ hikari_add_gtest(hikari_application_matroska_tests SOURCES matroska_tests.cpp
 hikari_add_gtest(hikari_application_visual_tools_tests SOURCES visual_tools_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
-    HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
-    HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-cases.txt"
+    HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")
-# O3: the one-shot settings importer's readers and plan, against the legacy
-# loaders and the migration worksheet.
+# O3: the one-shot settings importer's readers and plan, against the
+# migration worksheet.
 hikari_add_gtest(hikari_application_settings_import_tests SOURCES settings_import_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_settings_import_tests PRIVATE
-    HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map")
 # Y6: Font catalogs (FontCatalogs.txt grammar, operations), the picker's
 # family lists and filter, and the external fonts folder.
@@ -189,15 +186,15 @@ target_compile_definitions(hikari_application_font_catalogs_tests PRIVATE
 hikari_add_gtest(hikari_application_visual_position_tests SOURCES visual_position_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_position_tests PRIVATE
-    HIKARI_POSITION_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/position-cases.txt"
+    HIKARI_POSITION_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/position-cases.txt"
     HIKARI_POSITION_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t2-position-20261005/observations.jsonl")
 # T3: Scale and the Z and X/Y rotations, with the legacy probe's observations.
 hikari_add_gtest(hikari_application_visual_transform_tests SOURCES visual_transform_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_transform_tests PRIVATE
-    HIKARI_VISUAL_T3_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-t3-cases.txt"
+    HIKARI_VISUAL_T3_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/visual-t3-cases.txt"
     HIKARI_VISUAL_T3_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-visual-20261005/observations.jsonl"
-    HIKARI_VISUAL_T3_MEASURE_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-t3-measure-cases.txt"
+    HIKARI_VISUAL_T3_MEASURE_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/visual-t3-measure-cases.txt"
     HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-measure-20261012/observations.jsonl")
 # VT3: the Perspective tool's quad-to-tags maths, tags and gestures.
 hikari_add_gtest(hikari_application_visual_perspective_tests SOURCES visual_perspective_tests.cpp
@@ -207,21 +204,21 @@ hikari_add_gtest(hikari_application_visual_perspective_tests SOURCES visual_pers
 hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
-    HIKARI_CLIP_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/clip-cases.txt"
+    HIKARI_CLIP_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/clip-cases.txt"
     HIKARI_CLIP_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t4-clip-20261005/observations.jsonl")
 # T5: the drawing tool and its shape presets, with the legacy probe's
 # observations.
 hikari_add_gtest(hikari_application_visual_drawing_tests SOURCES visual_drawing_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_drawing_tests PRIVATE
-    HIKARI_DRAWING_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/drawing-cases.txt"
+    HIKARI_DRAWING_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/drawing-cases.txt"
     HIKARI_DRAWING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t5-drawing-20261005/observations.jsonl")
 # T6: the Position shifter and the all-tags tool with their definitions and
 # the "Tag editing" dialog's model, with the legacy probe's observations.
 hikari_add_gtest(hikari_application_visual_shift_tests SOURCES visual_shift_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_shift_tests PRIVATE
-    HIKARI_VISUAL_T6_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-t6-cases.txt"
+    HIKARI_VISUAL_T6_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/visual-t6-cases.txt"
     HIKARI_VISUAL_T6_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t6-visual-20261006/observations.jsonl")
 # V4: the video view's zoom, aspect, volume, snapshot and matrix arithmetic.
 hikari_add_gtest(hikari_application_video_view_tests SOURCES video_view_tests.cpp
@@ -234,7 +231,7 @@ hikari_add_gtest(hikari_application_video_fullscreen_tests SOURCES video_fullscr
 hikari_add_gtest(hikari_application_video_timing_tests SOURCES video_timing_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_video_timing_tests PRIVATE
-    HIKARI_VIDEO_TIMING_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/video-timing-cases.txt"
+    HIKARI_VIDEO_TIMING_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/video-timing-cases.txt"
     HIKARI_VIDEO_TIMING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v6-video-timing-20261005/observations.jsonl")
 # E5: translation mode controls (Translator mode, Not confirmed, Moving tags,
 # the Grid's Original text / Translation columns), with the legacy probe's
@@ -242,7 +239,7 @@ target_compile_definitions(hikari_application_video_timing_tests PRIVATE
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_translation_mode_tests PRIVATE
-    HIKARI_TAG_MOVE_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/tag-move-cases.txt"
+    HIKARI_TAG_MOVE_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/tag-move-cases.txt"
     HIKARI_TAG_MOVE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-e5-tag-move-20261012/observations.jsonl")
 # P9: associated-file discovery and the legacy Subs/ autosaves.
 hikari_add_gtest(hikari_application_associated_files_tests SOURCES associated_files_tests.cpp legacy_autosaves_tests.cpp

@@ -2138,7 +2138,7 @@ private slots:
         QTRY_COMPARE(editor.text(), QStringLiteral("first"));
     }
 
-    // E6: GLOBAL_HIDE_TAGS, Subtitles > Hide tags (legacy SubsGrid::
+    // E6: GLOBAL_HIDE_TAGS, View > Hide tags (legacy SubsGrid::
     // HideOverrideTags): the Grid's text with each block swapped for
     // GRID_TAGS_SWAP_CHARACTER, kept in GRID_HIDE_TAGS.
     void hideTagsSwitchesTheGridsTags()
@@ -2832,7 +2832,7 @@ private slots:
     }
     // NT1 (#302): a failed open is an error toast titled with the command;
     // the Log is a panel that never opens by itself, opened by a toast's
-    // Details at its entry (marked) and by File > Log.
+    // Details at its entry (marked) and by View > Log.
     void aFailedOpenIsAToastAndTheLogAPanel()
     {
         auto *root = engine->rootObjects().first();
@@ -2882,7 +2882,7 @@ private slots:
                                           Q_ARG(int, quotedText->property("length").toInt())));
         QCOMPARE(shown, QStringLiteral("Open subtitles <img src=\"x\"> & <b>"));
         QVERIFY(log.history().contains(QStringLiteral("Save: nt1 could not be saved.\n    disk full\n")));
-        // File > Log toggles the panel.
+        // View > Log toggles the panel.
         auto *menuItem = root->findChild<QObject *>(QStringLiteral("logMenuItem"));
         QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Log"));
         QVERIFY(QMetaObject::invokeMethod(menuItem, "click"));
@@ -6261,6 +6261,69 @@ private slots:
         history->close();
     }
 
+    // MN1 (#472): the menu bar is tests/ui/menu_bar.txt, line for line: each
+    // menu, its items and separators ("-") in order with their commands, and
+    // a submenu's items one level down (a deeper submenu by its title). An
+    // item moved or lost shows in the file's diff. Entries named by their
+    // data (macros, recent files, saved layouts) are left out.
+    void menuBarIsTheListedOne()
+    {
+        static const QRegularExpression byData(QStringLiteral(R"(^(macro_|recent\w*\d+$|viewLayoutSaved\d+$))"));
+        const auto plain = [](QString text) {
+            text = text.section(QLatin1Char('\t'), 0, 0);
+            text.replace(QStringLiteral("&&"), QStringLiteral("\x01"));
+            text.remove(QLatin1Char('&'));
+            return text.replace(QLatin1Char('\x01'), QLatin1Char('&'));
+        };
+        QStringList shown;
+        std::function<void(QObject *, const QString &, int)> walk = [&](QObject *menu, const QString &path, int depth) {
+            for (QQuickItem *entry : menuItems(menu)) {
+                if (!entry)
+                    continue;
+                if (entry->inherits("QQuickMenuSeparator"))
+                    shown << path + QStringLiteral(" > -");
+                if (!entry->inherits("QQuickMenuItem"))
+                    continue;
+                if (byData.match(entry->objectName()).hasMatch())
+                    continue;
+                if (auto *sub = entry->property("subMenu").value<QObject *>()) {
+                    const QString place = path + QStringLiteral(" > ") + plain(sub->property("title").toString());
+                    shown << place + QStringLiteral(" >");
+                    if (depth < 1)
+                        walk(sub, place, depth + 1);
+                    continue;
+                }
+                const QString command = entry->property("command").toString();
+                shown << path + QStringLiteral(" > ") + plain(entry->property("text").toString())
+                             + (command.isEmpty() ? QString() : QStringLiteral(" [%1]").arg(command));
+            }
+        };
+        QObject *bar = named("appMenus");
+        QVERIFY(bar);
+        for (int i = 0; i < bar->property("count").toInt(); ++i) {
+            QQuickItem *title = nullptr;
+            QVERIFY(QMetaObject::invokeMethod(bar, "itemAt", Q_RETURN_ARG(QQuickItem *, title), Q_ARG(int, i)));
+            auto *menu = title->property("menu").value<QObject *>();
+            QVERIFY(menu);
+            const QString name = plain(menu->property("title").toString());
+            shown << name;
+            walk(menu, name, 0);
+        }
+        QFile file(QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tests/ui/menu_bar.txt"));
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QStringList listed = QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+        if (shown != listed) {
+            QFile actual(QDir::current().filePath(QStringLiteral("menu_bar.actual.txt")));
+            QVERIFY(actual.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            actual.write(shown.join(QLatin1Char('\n')).toUtf8() + '\n');
+            qsizetype at = 0;
+            while (at < shown.size() && at < listed.size() && shown[at] == listed[at])
+                ++at;
+            QFAIL(qPrintable(QStringLiteral("line %1: the menus have \"%2\", menu_bar.txt \"%3\" (the menus are in %4)")
+                                 .arg(at + 1).arg(shown.value(at), listed.value(at), actual.fileName())));
+        }
+    }
+
     // D1 Windows gate: Right on View > Panels did not open it. Menus open as
     // items of the main window (Popup.Item), so it stays the focus window and
     // the shell's Right and Left (Next and Previous frame) took the keys on
@@ -6458,7 +6521,8 @@ private slots:
             {main, QStringLiteral(R"("sortAll_" + modelData.key)"), QStringLiteral("a sort key, under Sort all lines")},
             {main, QStringLiteral(R"("sortSelected_" + modelData.key)"),
              QStringLiteral("a sort key, under Sort selected lines")},
-            {main, QStringLiteral(R"("macro_" + modelData.name)"), QStringLiteral("a macro of the loaded scripts")},
+            {QStringLiteral("MacroMenuEntries.qml"), QStringLiteral(R"("macro_" + macro.name)"),
+             QStringLiteral("a macro of the loaded scripts")},
             {main, QStringLiteral(R"("panelMenu" + modelData.uniqueName)"), QStringLiteral("a panel, under Panels")},
             {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
             {QStringLiteral("AutomationDialog.qml"), QStringLiteral(R"("dialogPreset_" + modelData)"),
@@ -8879,6 +8943,9 @@ private slots:
         QVERIFY(!names.contains(QStringLiteral("Aegisub")));
         QVERIFY(names.contains(QStringLiteral("SoundTouch"))); // KA2-slowed-playback
         QVERIFY(names.contains(QStringLiteral("Harper")));     // GR1: harper-ls
+        // DK1: the bundled Korean and Tamil dictionaries.
+        QVERIFY(names.contains(QStringLiteral("hunspell-dict-ko")));
+        QVERIFY(names.contains(QStringLiteral("ThamiZha! Solthiruthi")));
         // W2: CSRI where the CSRI adapter is built (Windows); VSFilter only
         // where VSFilterMod, a VSFilter derivative, is in the Csri folder (the
         // package; xy-VSFilter is not shipped).
@@ -25114,8 +25181,7 @@ private slots:
         // VB1: the crosshair has no inspector bar line; its Copy video
         // position (greyed with no position yet) is on the video times line,
         // with no batch picker and no "Targets" readout anywhere.
-        // (VB1-pointer-readout; the rail's More tools:
-        // visualToolRailFoldsUnderMoreTools.)
+        // (VB1; the rail's More tools: visualToolRailFoldsUnderMoreTools.)
         QTRY_VERIFY(!visualItem("visualToolBar")->isVisible());
         QVERIFY(visualItem("visualPointerReadout")->isVisible());
         QVERIFY(visualItem("visualOption_copyPosition")->isVisible());
@@ -28491,7 +28557,7 @@ private slots:
         QTRY_COMPARE(tools.activeFamily(), 0);
     }
 
-    // VB1 (#481, VB1-rail-more-tools): a rail too short for the twelve
+    // VB1 (#481): a rail too short for the twelve
     // families shows the ones that fit, none cut off, and ends in More
     // tools, a menu of the others; the on family takes the last slot.
     void visualToolRailFoldsUnderMoreTools()
@@ -28587,7 +28653,7 @@ private slots:
         window->resize(1280, 860);
     }
 
-    // VB1 (#481, VB1-one-line-bar): every tool's inspector bar is one line
+    // VB1 (#481): every tool's inspector bar is one line
     // (none for the crosshair), so the video keeps its size across the
     // tools; the groups that do not fit fold under More options, whose
     // popover holds them live.
@@ -33442,7 +33508,7 @@ private slots:
     }
 
     // V3: the previous/next file over legacy's own NextFile capture folder
-    // (tools/legacy-capture/next_file, the observation for this platform in
+    // (the observation for this platform in
     // tests/fixtures/legacy-observations/local-v3-next-file-20261013). Legacy
     // (at the baseline) walked wxDir::GetAllFiles(..., wxDIR_FILES) as the
     // system enumerates the folder, unsorted (readdir on Linux, FindFirstFileW
@@ -33461,8 +33527,7 @@ private slots:
 #endif
         const QString observationFile = QStringLiteral(HIKARI_NEXT_FILE_OBSERVATIONS "/") + platform + QStringLiteral(".json");
         if (!QFileInfo::exists(observationFile))
-            QSKIP(qPrintable(QStringLiteral("no legacy NextFile observation for %1 (%2); the winix task "
-                                            "legacy-win-next-file records the Windows one")
+            QSKIP(qPrintable(QStringLiteral("no legacy NextFile observation for %1 (%2)")
                                  .arg(platform, observationFile)));
         QFile in(observationFile);
         QVERIFY(in.open(QIODevice::ReadOnly));

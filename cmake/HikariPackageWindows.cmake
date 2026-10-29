@@ -6,7 +6,8 @@
 #   the Qt runtime, plugins and QML imports, from windeployqt
 #   the app-local MSVC runtime, from the Visual Studio redistributable folder
 #   Automation/automation (the staged tree with DependencyControl's modules)
-#   Dictionary/ (legacy's dictionaries, pinned by commit and SHA-256)
+#   Dictionary/ and licenses/dictionaries/ (the dictionaries
+#     HikariDictionaries.cmake pins by commit and SHA-256, and their notices)
 #   Dictionary/unidic-lite/ (KA4: the furigana suggestions' UniDic 2.1.2)
 #   licenses/mecab/LICENSE, licenses/unidic/LICENSE (their BSD notices)
 #   Csri/VSFiltermod.dll, the prebuilt VSFilterMod release that
@@ -63,6 +64,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DMECAB_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyright"
             "-DUNIDIC_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/hikari-unidic-lite/copyright"
             "-DDOWNLOADS=${CMAKE_BINARY_DIR}/payload-downloads"
+            "-DDICTIONARIES=${HIKARI_BUNDLED_DICTIONARIES}"
             "-DHARPER=${HIKARI_HARPER_LS}"
             "-DHARPER_LICENSE=${HIKARI_HARPER_LS_LICENSE}"
             "-DHARPER_NOTICES=${PROJECT_SOURCE_DIR}/packaging/licenses/harper/THIRD-PARTY.txt"
@@ -75,26 +77,14 @@ endif()
 
 # --- script mode -------------------------------------------------------------
 cmake_minimum_required(VERSION 3.28)
-foreach(var STAGE APP HELPERS AUTOMATION CRT WINDEPLOYQT QMLDIR LICENSE DOWNLOADS UNIDIC MECAB_LICENSE
-        UNIDIC_LICENSE)
+foreach(var STAGE APP HELPERS AUTOMATION CRT WINDEPLOYQT QMLDIR LICENSE DOWNLOADS DICTIONARIES UNIDIC
+        MECAB_LICENSE UNIDIC_LICENSE)
     if(NOT DEFINED ${var} OR "${${var}}" STREQUAL "")
         message(FATAL_ERROR "HikariPackageWindows: ${var} is required")
     endif()
 endforeach()
 string(REPLACE "|" ";" HELPERS "${HELPERS}")
 string(REPLACE "|" ";" CRT "${CRT}")
-
-# Legacy's dictionaries (.github/scripts/runtime-assets.json, the same commits),
-# with their hashes: the name in Dictionary/, the URL, the SHA-256.
-set(_aegisub "https://raw.githubusercontent.com/TypesettingTools/Aegisub-dictionaries/6d792f04521b3ac8823c8e8972fcfd757342da4d/dicts")
-set(_libreoffice "https://raw.githubusercontent.com/LibreOffice/dictionaries/32b006a2c22a4ac7e8ed3f03346f7b3d85a970a4")
-set(dictionaries
-    "en_US.aff|${_aegisub}/en_US.aff|1d1a827ce91d9eb061d5954ba325f8a538b386bd70704af431fbaac1c8e9623a"
-    "en_US.dic|${_aegisub}/en_US.dic|b88263b1637b124d516dd3518a83a19e91dc73db6bf30d05e3aceb30e6ff4604"
-    "pl.aff|${_libreoffice}/pl_PL/pl_PL.aff|82973651651aa930335c865b339b98db376ca3dbf3a661b70b9eeb71fdf41dca"
-    "pl.dic|${_libreoffice}/pl_PL/pl_PL.dic|c0848440599eb88e5aca500418d5f389e562ec2c157b63dbe39d354658ffba49"
-    "th_TH.aff|${_libreoffice}/th_TH/th_TH.aff|a99ba46a0899a9155cd0d4f7f823ef9f5686281220ae2eb355c8b576d166e243"
-    "th_TH.dic|${_libreoffice}/th_TH/th_TH.dic|42e9f145eb6744a3a24c498e143229a7ce7fb2cb67c8e8e94b42fde808dbf28f")
 
 file(REMOVE_RECURSE "${STAGE}")
 file(MAKE_DIRECTORY "${STAGE}")
@@ -122,29 +112,8 @@ hikari_fetch_vsfiltermod("${DOWNLOADS}" vsfiltermod_dll)
 file(MAKE_DIRECTORY "${STAGE}/Csri")
 file(COPY_FILE "${vsfiltermod_dll}" "${STAGE}/Csri/VSFiltermod.dll")
 
-file(MAKE_DIRECTORY "${STAGE}/Dictionary")
-foreach(entry IN LISTS dictionaries)
-    string(REPLACE "|" ";" entry "${entry}")
-    list(GET entry 0 name)
-    list(GET entry 1 url)
-    list(GET entry 2 sha)
-    set(cached "${DOWNLOADS}/${name}")
-    if(EXISTS "${cached}")
-        file(SHA256 "${cached}" have)
-        if(NOT have STREQUAL sha)
-            file(REMOVE "${cached}")
-        endif()
-    endif()
-    if(NOT EXISTS "${cached}")
-        file(DOWNLOAD "${url}" "${cached}" EXPECTED_HASH SHA256=${sha} TLS_VERIFY ON STATUS status)
-        list(GET status 0 code)
-        if(NOT code EQUAL 0)
-            file(REMOVE "${cached}")
-            message(FATAL_ERROR "HikariPackageWindows: downloading ${url} failed: ${status}")
-        endif()
-    endif()
-    file(COPY_FILE "${cached}" "${STAGE}/Dictionary/${name}")
-endforeach()
+# DK1 (#473): the pinned dictionaries, as the build fetched them.
+file(COPY "${DICTIONARIES}/Dictionary" "${DICTIONARIES}/licenses" DESTINATION "${STAGE}")
 
 file(COPY ${CRT} DESTINATION "${STAGE}")
 file(COPY_FILE "${LICENSE}" "${STAGE}/LICENSE")
@@ -213,8 +182,16 @@ if(problems)
 endif()
 
 # The payload's fixed members (installers SPEC 6.5; W2: the CSRI renderer;
-# KA4: the furigana dictionary and the notices; GR1: harper-ls and its notices).
-foreach(required HikariSub.exe hikari-media-helper.exe hikari-lua-helper.exe LICENSE bundled-files.txt Dictionary/en_US.dic
+# KA4: the furigana dictionary and the notices; GR1: harper-ls and its notices;
+# DK1: every pinned dictionary and its notices).
+include("${CMAKE_CURRENT_LIST_DIR}/HikariDictionaries.cmake")
+set(pinned "")
+foreach(entry IN LISTS HIKARI_DICTIONARY_FILES)
+    string(REPLACE "|" ";" entry "${entry}")
+    list(GET entry 0 path)
+    list(APPEND pinned "${path}")
+endforeach()
+foreach(required HikariSub.exe hikari-media-helper.exe hikari-lua-helper.exe LICENSE bundled-files.txt ${pinned}
         Csri/VSFiltermod.dll Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin
         Dictionary/unidic-lite/char.bin Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc
         Dictionary/unidic-lite/mecabrc Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE

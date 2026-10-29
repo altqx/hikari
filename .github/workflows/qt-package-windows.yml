@@ -256,7 +256,7 @@ jobs:
           set -euo pipefail
           packaging/windows/build-installer.sh \
             --payload payload/HikariSub --version "$VERSION" --codebase qt \
-            --icon HikariSub/Bitmaps/HikariLargeIcon.ico --icon-header HikariSub/FileTypeIcons.h \
+            --icon src/app/windows/HikariLargeIcon.ico --icon-header src/app/windows/FileTypeIcons.h \
             --out "dist/HikariSub-$VERSION-windows-x64-setup.exe" --work nsis-work
 
       # The uninstaller's elevation rule, built alone for the Windows test

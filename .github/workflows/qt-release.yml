@@ -1,23 +1,47 @@
 name: Qt rewrite — Release
 
-# Installers spec 7: a v* tag of the Qt branch (0.1.0 or higher) builds the
-# packages with qt-package-linux.yml and qt-package-windows.yml, publishes
-# the release, then its update manifest, then, once the rewrite replaces
-# legacy, the AUR packages.
+# Installers spec 7: a v* tag of main (0.1.0 or higher) builds the packages
+# with qt-package-linux.yml and qt-package-windows.yml, publishes the
+# release, then its update manifest, then the AUR packages that follow 0.1.0
+# and up (release-aur.sh).
 #
-# offer_to: a Qt release is offered to Qt clients only, until the owner sets
-# the repository variable HIKARISUB_OFFER_QT_TO_LEGACY to true; a manual run
-# of the tag can name it instead. Only the called workflows' provisioning
-# steps receive the Qt installer secret.
+# The manifest's offer_to is always ["qt"]: legacy 0.0.2-rc.1 and later
+# install a release that names legacy without asking. Legacy users get the
+# release as an opt-in offer, the manifest's `offer` (ADR-0021), whose pitch
+# the owner approves: packaging/offer/<version>.json unless a manual run
+# names another. A tag push offers a prerelease on the prerelease channel and
+# a stable release on the stable one. A missing or broken pitch fails the run
+# before anything is built; a manual run with offer_channel none publishes
+# without an offer. A dry run builds and publishes nothing (see dry-run).
+# Only the called workflows' provisioning steps receive the Qt installer
+# secret.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
-      offer_to:
-        description: 'A manual run of a tag: the release manifest offer_to (comma list of qt and legacy); empty follows HIKARISUB_OFFER_QT_TO_LEGACY'
+      offer_channel:
+        description: 'The offer to legacy users: auto (a prerelease on prerelease, a stable release on stable), prerelease, stable, or none'
+        type: choice
+        options: [auto, prerelease, stable, none]
+        default: auto
+      offer_legacy_support:
+        description: 'The offer says legacy support continues, or has ended'
+        type: choice
+        options: [continues, ended]
+        default: continues
+      offer_pitch:
+        description: 'The pitch, a JSON file in the tree; empty is packaging/offer/<version>.json'
         type: string
         default: ''
+      dry_run:
+        description: 'Build and publish nothing: check the version and the offer and write the manifest from stand-in packages (any ref)'
+        type: boolean
+        default: false
+      dry_run_version:
+        description: 'A dry run: the version whose manifest is written'
+        type: string
+        default: '0.1.0-beta.1'
 
 permissions:
   contents: read
@@ -30,14 +54,20 @@ jobs:
   # Fails straight away when the tag does not match the source: SemVer, no
   # build metadata, 0.1.0 or higher, and the part before the prerelease is
   # the CMake project version (the prerelease is HIKARI_VERSION_SUFFIX).
+  # Then when the offer's pitch is missing or breaks the rules legacy reads
+  # it by (make-update-manifest.py --check-offer).
   release-version:
     name: Release version
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.dry_run
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.version.outputs.version }}
       suffix: ${{ steps.version.outputs.suffix }}
       prerelease: ${{ steps.version.outputs.prerelease }}
+      offer_channel: ${{ steps.offer.outputs.channel }}
+      offer_legacy_support: ${{ steps.offer.outputs.legacy_support }}
+      offer_pitch: ${{ steps.offer.outputs.pitch }}
+      notes: ${{ steps.notes.outputs.notes }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -46,9 +76,16 @@ jobs:
 
       - name: Match the tag against the project version
         id: version
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          DRY_RUN_VERSION: ${{ inputs.dry_run_version }}
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
+          if [[ "$DRY_RUN" == true ]]; then
+            version="$DRY_RUN_VERSION"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
           if [[ "$version" == *+* ]]; then
             echo "::error::$version has build metadata, which a release version does not."
             exit 1
@@ -66,7 +103,7 @@ jobs:
           suffix="${BASH_REMATCH[5]}"
           project=$(sed -n 's/^project(HikariSub VERSION \([0-9.]*\) .*/\1/p' CMakeLists.txt)
           if [[ "$core" != "$project" ]]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match the project version $project."
+            echo "::error::Tag v$version does not match the project version $project."
             exit 1
           fi
           {
@@ -75,9 +112,73 @@ jobs:
             echo "prerelease=$([[ -n "$suffix" ]] && echo true || echo false)"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Check the offer
+        id: offer
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+          CHANNEL_INPUT: ${{ inputs.offer_channel }}
+          SUPPORT_INPUT: ${{ inputs.offer_legacy_support }}
+          PITCH_INPUT: ${{ inputs.offer_pitch }}
+        run: |
+          set -euo pipefail
+          channel=${CHANNEL_INPUT:-auto}
+          if [[ "$channel" == auto ]]; then
+            channel=$([[ "$PRERELEASE" == true ]] && echo prerelease || echo stable)
+          fi
+          support=${SUPPORT_INPUT:-continues}
+          pitch=${PITCH_INPUT:-packaging/offer/$VERSION.json}
+          if [[ "$channel" == none ]]; then
+            echo "::warning::v$VERSION is published without an offer to legacy users."
+          else
+            if [[ "$pitch" == /* || "$pitch" == *..* || ! "$pitch" =~ ^[A-Za-z0-9._/-]+\.json$ ]]; then
+              echo "::error::The pitch $pitch is not a JSON file in the tree."
+              exit 1
+            fi
+            if [[ ! -f "$pitch" ]]; then
+              echo "::error::There is no pitch at $pitch. Add the owner-approved pitch there, or run the tag with offer_channel none to publish without an offer."
+              exit 1
+            fi
+            python3 tools/release/make-update-manifest.py --tag "v$VERSION" --check-offer \
+              --offer-channel "$channel" --offer-legacy-support "$support" --offer-pitch "$pitch"
+          fi
+          {
+            echo "channel=$channel"
+            echo "legacy_support=$support"
+            echo "pitch=$pitch"
+          } >> "$GITHUB_OUTPUT"
+
+      # ADR-0021: legacy 0.0.1 reads no manifest and shows the release notes,
+      # so they open by saying moving is optional, with the newest legacy
+      # release.
+      - name: Write the notes' first line
+        id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SUPPORT: ${{ steps.offer.outputs.legacy_support }}
+        run: |
+          set -euo pipefail
+          legacy=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' |
+            grep -E '^v0\.0\.[0-9]+$' | sort -V | tail -n 1 || true)
+          if [[ -z "$legacy" ]]; then
+            echo "::error::No stable legacy release was found for the notes."
+            exit 1
+          fi
+          link="[$legacy](https://github.com/$GH_REPO/releases/tag/$legacy)"
+          if [[ "$SUPPORT" == ended ]]; then
+            notes="Coming from 0.0.x? Moving is optional; legacy keeps working but gets no further updates. The last legacy release is $link."
+          else
+            notes="Coming from 0.0.x? Moving is optional; legacy keeps getting updates. The latest legacy release is $link."
+          fi
+          echo "$notes"
+          echo "notes=$notes" >> "$GITHUB_OUTPUT"
+
   linux:
     name: Linux packages
     needs: release-version
+    if: ${{ !inputs.dry_run }}
     uses: ./.github/workflows/qt-package-linux.yml
     with:
       version_suffix: ${{ needs.release-version.outputs.suffix }}
@@ -89,6 +190,7 @@ jobs:
   windows:
     name: Windows packages
     needs: release-version
+    if: ${{ !inputs.dry_run }}
     uses: ./.github/workflows/qt-package-windows.yml
     with:
       version: ${{ needs.release-version.outputs.version }}
@@ -220,11 +322,14 @@ jobs:
       # is there (published below). Without one they would fall back to the
       # assets' digests, without the manifest's offer_to and requirements.
       - name: Create the release as a draft
+        env:
+          NOTES: ${{ needs.release-version.outputs.notes }}
         run: |
           set -euo pipefail
           flag=()
           [[ "$PRERELEASE" == true ]] && flag=(--prerelease)
-          gh release create "$GITHUB_REF_NAME" release/* --verify-tag --draft --title "v$VERSION" --generate-notes "${flag[@]}"
+          gh release create "$GITHUB_REF_NAME" release/* --verify-tag --draft --title "v$VERSION" \
+            --notes "$NOTES" --generate-notes "${flag[@]}"
 
       - name: Read the asset names back
         run: |
@@ -237,19 +342,22 @@ jobs:
 
       - name: Publish the update manifest
         env:
-          OFFER_TO_INPUT: ${{ github.event.inputs.offer_to }}
-          OFFER_QT_TO_LEGACY: ${{ vars.HIKARISUB_OFFER_QT_TO_LEGACY }}
+          OFFER_CHANNEL: ${{ needs.release-version.outputs.offer_channel }}
+          OFFER_LEGACY_SUPPORT: ${{ needs.release-version.outputs.offer_legacy_support }}
+          OFFER_PITCH: ${{ needs.release-version.outputs.offer_pitch }}
         run: |
           set -euo pipefail
-          offer_to="$OFFER_TO_INPUT"
-          if [[ -z "$offer_to" ]]; then
-            offer_to=qt
-            [[ "$OFFER_QT_TO_LEGACY" == true ]] && offer_to=qt,legacy
+          offer=()
+          if [[ "$OFFER_CHANNEL" != none ]]; then
+            offer=(--offer-channel "$OFFER_CHANNEL" --offer-legacy-support "$OFFER_LEGACY_SUPPORT" --offer-pitch "$OFFER_PITCH")
           fi
-          echo "offer_to: $offer_to"
           mkdir manifest
           python3 tools/release/make-update-manifest.py --tag "$GITHUB_REF_NAME" --dir release \
-            --offer-to "$offer_to" --output manifest/hikarisub-update.json --upload
+            "${offer[@]}" --output manifest/hikarisub-update.json --upload
+
+      # The release stays a draft unless the manifest names exactly ["qt"].
+      - name: Refuse a manifest not offered to qt only
+        run: python3 tools/release/make-update-manifest.py --tag "$GITHUB_REF_NAME" --verify manifest/hikarisub-update.json
 
       # --latest only for the highest stable version published, so a later
       # legacy release does not become Latest over a Qt one, nor the reverse.
@@ -271,16 +379,16 @@ jobs:
           echo "Publishing with $flag"
           gh release edit "$GITHUB_REF_NAME" --draft=false "$flag"
 
-      # The AUR packages (spec 5.5) follow the rewrite once it replaces legacy
-      # for users (HIKARISUB_OFFER_QT_TO_LEGACY): hikarisub-beta-bin for every
-      # release, hikarisub-stable-bin too for a stable one. Each is rendered
-      # from the published tar.gz, built and started in the pinned archlinux
-      # container from the published URL, then pushed to the AUR. A missing
-      # or refused key, a newer version on the AUR or a newer release of the
-      # channel is a warning: the release is out already, and the owner can
-      # publish it later with the AUR publish workflow (aur-publish.yml).
+      # The AUR packages (spec 5.5) that follow 0.1.0 and up (release-aur.sh,
+      # ADR-0021): hikarisub-beta-bin from 0.1.0-beta.1, hikarisub-stable-bin
+      # from the first stable release. Each is rendered from the published
+      # tar.gz, built and started in the pinned archlinux container from the
+      # published URL, then pushed to the AUR. A package that still follows
+      # legacy, a missing or refused key, a newer version on the AUR or a
+      # newer release of the channel is a warning: the release is out
+      # already, and the owner can publish it later with the AUR publish
+      # workflow (aur-publish.yml).
       - name: Publish to the AUR
-        if: vars.HIKARISUB_OFFER_QT_TO_LEGACY == 'true'
         env:
           AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
         run: |
@@ -291,13 +399,92 @@ jobs:
             "$VERSION" "release/hikarisub-$VERSION-linux-x86_64.tar.gz" aur-artifact
 
       - name: Upload the AUR files
-        if: always() && vars.HIKARISUB_OFFER_QT_TO_LEGACY == 'true'
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: hikarisub-aur
           path: aur-artifact/
           include-hidden-files: true
           if-no-files-found: warn
+
+  # A dry run (dry_run, any ref): the release job's manifest steps on
+  # stand-in packages, GitHub's asset list given as a file, then the same
+  # manifest with a bad offer_to, which must be refused. Nothing is built,
+  # created or published; the manifest is the run's artifact.
+  dry-run:
+    name: Dry run
+    needs: release-version
+    if: inputs.dry_run
+    runs-on: ubuntu-24.04
+    env:
+      VERSION: ${{ needs.release-version.outputs.version }}
+      OFFER_CHANNEL: ${{ needs.release-version.outputs.offer_channel }}
+      OFFER_LEGACY_SUPPORT: ${{ needs.release-version.outputs.offer_legacy_support }}
+      OFFER_PITCH: ${{ needs.release-version.outputs.offer_pitch }}
+      NOTES: ${{ needs.release-version.outputs.notes }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Write the update manifest from stand-in packages
+        run: |
+          set -euo pipefail
+          mkdir release manifest
+          for name in "HikariSub-$VERSION-windows-x64-setup.exe" "HikariSub-$VERSION-windows-x64.zip" \
+              "HikariSub-$VERSION-linux-x86_64.AppImage" "hikarisub-$VERSION-linux-amd64.deb" \
+              "hikarisub-$VERSION-linux-x86_64.rpm" "hikarisub-$VERSION-linux-x86_64.tar.gz"; do
+            echo "stand-in for $name" > "release/$name"
+          done
+          python3 - release > assets.json <<'PY'
+          import hashlib, json, os, sys
+          assets = []
+          for name in sorted(os.listdir(sys.argv[1])):
+              with open(os.path.join(sys.argv[1], name), "rb") as file:
+                  data = file.read()
+              assets.append({"name": name, "size": len(data), "digest": "sha256:" + hashlib.sha256(data).hexdigest()})
+          print(json.dumps({"assets": assets}))
+          PY
+          offer=()
+          if [[ "$OFFER_CHANNEL" != none ]]; then
+            offer=(--offer-channel "$OFFER_CHANNEL" --offer-legacy-support "$OFFER_LEGACY_SUPPORT" --offer-pitch "$OFFER_PITCH")
+          fi
+          python3 tools/release/make-update-manifest.py --tag "v$VERSION" --dir release --assets-json assets.json \
+            "${offer[@]}" --output manifest/hikarisub-update.json
+          {
+            echo "The notes open with: $NOTES"
+            echo
+            echo '```json'
+            cat manifest/hikarisub-update.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Refuse a manifest not offered to qt only
+        run: python3 tools/release/make-update-manifest.py --tag "v$VERSION" --verify manifest/hikarisub-update.json
+
+      - name: Check a bad offer_to is refused
+        run: |
+          set -euo pipefail
+          for offer_to in qt,legacy legacy; do
+            if python3 tools/release/make-update-manifest.py --tag "v$VERSION" --dir release --assets-json assets.json \
+                --offer-to "$offer_to" --output bad.json; then
+              echo "::error::A manifest with offer_to $offer_to was written."
+              exit 1
+            fi
+            jq --arg to "$offer_to" '.offer_to = ($to | split(","))' manifest/hikarisub-update.json > bad.json
+            if python3 tools/release/make-update-manifest.py --tag "v$VERSION" --verify bad.json; then
+              echo "::error::A manifest with offer_to $offer_to passed the check."
+              exit 1
+            fi
+            echo "offer_to $offer_to: refused"
+          done
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hikarisub-update-manifest-dry-run
+          path: manifest/hikarisub-update.json
+          if-no-files-found: error
 
   # DX1 (#367): the site (altqx/hikari-site) rebuilds on a published release:
   # its downloads from the update manifest, its hotkeys and settings pages

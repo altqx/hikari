@@ -1,6 +1,5 @@
 // T2: the Position and Move families. The replay runs the legacy probe's
-// cases (tools/legacy-capture/position_capture.cpp over
-// inputs/position-cases.txt; tests/fixtures/legacy-observations/
+// cases (tests/fixtures/legacy-cases/inputs/position-cases.txt; tests/fixtures/legacy-observations/
 // local-t2-position-20261005) through visual::PositionTool and
 // visual::MoveTool and must give legacy's texts, history, log, positions and
 // handles exactly. A key in a case is a press and its release here: legacy

@@ -25,7 +25,7 @@
     </message>
     <message>
         <source>Audio display</source>
-        <translation type="unfinished"></translation>
+        <translation>Widok audio</translation>
     </message>
     <message>
         <source>Search bar</source>
@@ -45,15 +45,15 @@
     </message>
     <message>
         <source>Linked to vertical stretch</source>
-        <translation type="unfinished"></translation>
+        <translation>Powiązane z rozciąganiem w pionie</translation>
     </message>
     <message>
         <source>Output device</source>
-        <translation type="unfinished"></translation>
+        <translation>Urządzenie wyjściowe</translation>
     </message>
     <message>
         <source>Audio settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia audio…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -125,7 +125,7 @@
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished"></translation>
+        <translation>Wejście</translation>
     </message>
     <message>
         <source>Add lead-in to the active line</source>
@@ -133,7 +133,7 @@
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyjście</translation>
     </message>
     <message>
         <source>Add lead-out to the active line</source>
@@ -153,7 +153,7 @@
     </message>
     <message>
         <source>Karaoke</source>
-        <translation type="unfinished"></translation>
+        <translation>Karaoke</translation>
     </message>
     <message>
         <source>Enable / disable karaoke creation</source>
@@ -161,7 +161,7 @@
     </message>
     <message>
         <source>Auto split</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczny podział</translation>
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
@@ -177,7 +177,7 @@
     </message>
     <message>
         <source>Auto-scroll</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne przewijanie</translation>
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
@@ -185,84 +185,84 @@
     </message>
     <message>
         <source>Spectrum</source>
-        <translation type="unfinished"></translation>
+        <translation>Spektrum</translation>
     </message>
     <message>
         <source>%1×</source>
         <extracomment>The audio panel&apos;s zoom readout; %1 is the magnification</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1×</translation>
     </message>
     <message>
         <source>Back to line</source>
-        <translation type="unfinished"></translation>
+        <translation>Wróć do linijki</translation>
     </message>
     <message>
         <source>Play around</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz okolice</translation>
     </message>
     <message>
         <source>Play 500 ms before the start</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz 500 ms przed początkiem</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz pierwsze 500 ms</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz ostatnie 500 ms</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz 500 ms po końcu</translation>
     </message>
     <message>
         <source>Play before the mark</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz przed znacznikiem</translation>
     </message>
     <message>
         <source>Play after the mark</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz po znaczniku</translation>
     </message>
     <message>
         <source>Commit options</source>
-        <translation type="unfinished"></translation>
+        <translation>Opcje zatwierdzania</translation>
     </message>
     <message>
         <source>Auto-commit</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne zatwierdzanie</translation>
     </message>
     <message>
         <source>Next after commit</source>
-        <translation type="unfinished"></translation>
+        <translation>Dalej po zatwierdzeniu</translation>
     </message>
     <message>
         <source>Line</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijka</translation>
     </message>
     <message>
         <source>Line timing</source>
-        <translation type="unfinished"></translation>
+        <translation>Timing linijki</translation>
     </message>
     <message>
         <source>Syllable commands</source>
-        <translation type="unfinished"></translation>
+        <translation>Polecenia sylab</translation>
     </message>
     <message>
         <source>Split syllable at the cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>Podziel sylabę w miejscu kursora</translation>
     </message>
     <message>
         <source>Switch long syllables between %1 and %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Przełącz długie sylaby między %1 a %2</translation>
     </message>
     <message>
         <source>Waveform</source>
-        <translation type="unfinished"></translation>
+        <translation>Przebieg fali</translation>
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation type="unfinished"></translation>
+        <translation>Tryb przebiegu fali</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
@@ -270,15 +270,15 @@
     </message>
     <message>
         <source>Sync with video</source>
-        <translation type="unfinished"></translation>
+        <translation>Synchronizuj z wideo</translation>
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation type="unfinished"></translation>
+        <translation>Synchronizuj kursory wideo i audio</translation>
     </message>
     <message>
         <source>Speech</source>
-        <translation type="unfinished"></translation>
+        <translation>Mowa</translation>
     </message>
     <message>
         <source>Enhance speech frequencies in the spectrum</source>
@@ -286,77 +286,78 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation type="unfinished"></translation>
+        <translation>Więcej opcji audio</translation>
     </message>
     <message>
         <source>Speech (non-linear spectrum)</source>
-        <translation type="unfinished"></translation>
+        <translation>Mowa (spektrum nieliniowe)</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>Powiększenie</translation>
     </message>
     <message>
         <source>Zoom: horizontal and vertical stretching</source>
-        <translation type="unfinished"></translation>
+        <translation>Powiększenie: rozciąganie w poziomie i w pionie</translation>
     </message>
     <message>
         <source>Horizontal</source>
-        <translation type="unfinished"></translation>
+        <translation>W poziomie</translation>
     </message>
     <message>
         <source>Vertical</source>
-        <translation type="unfinished"></translation>
+        <translation>W pionie</translation>
     </message>
     <message>
         <source>Reset zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>Resetuj powiększenie</translation>
     </message>
     <message>
         <source>Shift+wheel and Ctrl+wheel on the waveform zoom too</source>
-        <translation type="unfinished"></translation>
+        <translation>Shift+kółko i Ctrl+kółko na przebiegu fali również zmieniają powiększenie</translation>
     </message>
     <message>
         <source>Volume and output device</source>
-        <translation type="unfinished"></translation>
+        <translation>Głośność i urządzenie wyjściowe</translation>
     </message>
     <message>
         <source>Volume: %1
 Output device: %2</source>
         <extracomment>The audio panel&apos;s speaker button; %1 is the volume (1 to 100), %2 the device audio plays through now</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Głośność: %1
+Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Volume: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Głośność: %1</translation>
     </message>
     <message>
         <source>Customise the audio panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Dostosuj panel audio</translation>
     </message>
     <message>
         <source>Show on the panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj na panelu</translation>
     </message>
     <message>
         <source>Play around button</source>
-        <translation type="unfinished"></translation>
+        <translation>Przycisk odtwarzania okolic</translation>
     </message>
     <message>
         <source>Go to the next line after commit</source>
-        <translation type="unfinished"></translation>
+        <translation>Przechodź do następnej linijki po zatwierdzeniu</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
-        <translation type="unfinished"></translation>
+        <translation>Suwaki powiększenia i głośności</translation>
     </message>
     <message>
         <source>Classic arrangement</source>
-        <translation type="unfinished"></translation>
+        <translation>Układ klasyczny</translation>
     </message>
     <message>
         <source>Default arrangement</source>
-        <translation type="unfinished"></translation>
+        <translation>Układ domyślny</translation>
     </message>
     <message>
         <source>Choose audio file</source>
@@ -372,11 +373,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>Choose the audio track</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz ścieżkę audio</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">Otwórz</translation>
+        <translation>Otwórz</translation>
     </message>
     <message>
         <source>Choose the track</source>
@@ -384,31 +385,31 @@ Output device: %2</source>
     </message>
     <message>
         <source>No audio open</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie otwarto audio</translation>
     </message>
     <message>
         <source>Indexing video %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>Indeksowanie wideo %1%</translation>
     </message>
     <message>
         <source>%1 is not connected. No output device is available.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Urządzenie %1 nie jest podłączone. Brak dostępnego urządzenia wyjściowego.</translation>
     </message>
     <message>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Urządzenie %1 nie jest podłączone. Audio jest odtwarzane przez %2.</translation>
     </message>
     <message>
         <source>Finding vocal onsets…</source>
         <extracomment>Status bar while Snap to vocal onsets (the audio panel&apos;s Tap menu, Karaoke mode) reads the audio</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Wyszukiwanie początków wokalu…</translation>
     </message>
     <message>
         <source>Vocal onsets found</source>
         <extracomment>Status bar once Snap to vocal onsets has read the audio and boundaries snap</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Znaleziono początki wokalu</translation>
     </message>
 </context>
 <context>
@@ -427,407 +428,407 @@ Output device: %2</source>
     </message>
     <message>
         <source>No scripts loaded</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie wczytano żadnych skryptów</translation>
     </message>
     <message>
         <source>Load script…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj skrypt…</translation>
     </message>
     <message>
         <source>Load an Automation script</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytuje skrypt automatyzacji</translation>
     </message>
     <message>
         <source>Loading</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytywanie</translation>
     </message>
     <message>
         <source>Running</source>
-        <translation type="unfinished"></translation>
+        <translation>Działa</translation>
     </message>
     <message>
         <source>Failed to load</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się wczytać</translation>
     </message>
     <message>
         <source>Reload</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj ponownie</translation>
     </message>
     <message>
         <source>Force stop</source>
-        <translation type="unfinished"></translation>
+        <translation>Wymuś zatrzymanie</translation>
     </message>
     <message numerus="yes">
         <source>This file names scripts: %1 and %n more</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Ten plik wymienia skrypty: %1 i %n inny</numerusform>
+            <numerusform>Ten plik wymienia skrypty: %1 i %n inne</numerusform>
+            <numerusform>Ten plik wymienia skrypty: %1 i %n innych</numerusform>
         </translation>
     </message>
     <message>
         <source>This file names scripts: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten plik wymienia skrypty: %1</translation>
     </message>
     <message numerus="yes">
         <source>and %n more</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>i %n inny</numerusform>
+            <numerusform>i %n inne</numerusform>
+            <numerusform>i %n innych</numerusform>
         </translation>
     </message>
     <message>
         <source>Subtitle scripts</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrypty napisów</translation>
     </message>
     <message>
         <source>Autoload</source>
-        <translation type="unfinished"></translation>
+        <translation>Autoload</translation>
     </message>
     <message>
         <source>Shortcuts for missing macros</source>
-        <translation type="unfinished"></translation>
+        <translation>Skróty brakujących makr</translation>
     </message>
     <message>
         <source>Filter macros</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtruj makra</translation>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation type="unfinished"></translation>
+        <translation>Uruchom ponownie ostatnie makro</translation>
     </message>
     <message>
         <source>%1 cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: anulowano</translation>
     </message>
     <message>
         <source>%1 named problems</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: zgłoszono problemy</translation>
     </message>
     <message>
         <source>%1 failed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: niepowodzenie</translation>
     </message>
     <message>
         <source>Applied. The script wrote 1 line to its log.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosowano. Skrypt zapisał 1 wiersz w dzienniku.</translation>
     </message>
     <message numerus="yes">
         <source>Applied. The script wrote %n lines to its log.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zastosowano. Skrypt zapisał %n wiersz w dzienniku.</numerusform>
+            <numerusform>Zastosowano. Skrypt zapisał %n wiersze w dzienniku.</numerusform>
+            <numerusform>Zastosowano. Skrypt zapisał %n wierszy w dzienniku.</numerusform>
         </translation>
     </message>
     <message>
         <source>Applied. The templates have 1 problem.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosowano. Szablony mają 1 problem.</translation>
     </message>
     <message numerus="yes">
         <source>Applied. The templates have %n problems.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zastosowano. Szablony mają %n problem.</numerusform>
+            <numerusform>Zastosowano. Szablony mają %n problemy.</numerusform>
+            <numerusform>Zastosowano. Szablony mają %n problemów.</numerusform>
         </translation>
     </message>
     <message>
         <source>Cancelling…</source>
-        <translation type="unfinished"></translation>
+        <translation>Anulowanie…</translation>
     </message>
     <message>
         <source>The script has not stopped yet. Force stop ends its helper; nothing is changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrypt jeszcze się nie zatrzymał. Wymuszenie zatrzymania kończy jego proces pomocniczy; nic nie zostaje zmienione.</translation>
     </message>
     <message>
         <source>Log · 1 line</source>
-        <translation type="unfinished"></translation>
+        <translation>Dziennik · 1 wiersz</translation>
     </message>
     <message numerus="yes">
         <source>Log · %n lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Dziennik · %n wiersz</numerusform>
+            <numerusform>Dziennik · %n wiersze</numerusform>
+            <numerusform>Dziennik · %n wierszy</numerusform>
         </translation>
     </message>
     <message>
         <source>Fold the log</source>
-        <translation type="unfinished"></translation>
+        <translation>Zwiń dziennik</translation>
     </message>
     <message>
         <source>Show the log</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż dziennik</translation>
     </message>
     <message>
         <source>Open in panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz w panelu</translation>
     </message>
     <message>
         <source>Its validation did not let it run; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Walidacja nie pozwoliła go uruchomić; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>Progress</source>
-        <translation type="unfinished"></translation>
+        <translation>Postęp</translation>
     </message>
     <message>
         <source>%1 is read-only until the macro ends</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: tylko do odczytu do zakończenia makra</translation>
     </message>
     <message>
         <source>Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Dziennik</translation>
     </message>
     <message>
         <source>Loading a script runs its code.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytanie skryptu uruchamia jego kod.</translation>
     </message>
     <message>
         <source>Scripts</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrypty</translation>
     </message>
     <message>
         <source>Runs %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Uruchomienia %1</translation>
     </message>
     <message>
         <source>Runs</source>
-        <translation type="unfinished"></translation>
+        <translation>Uruchomienia</translation>
     </message>
     <message>
         <source>Load</source>
-        <translation type="unfinished">Wczytaj</translation>
+        <translation>Wczytaj</translation>
     </message>
     <message>
         <source>Load the scripts this file names</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj skrypty wymienione w tym pliku</translation>
     </message>
     <message>
         <source>No macros match</source>
-        <translation type="unfinished"></translation>
+        <translation>Żadne makro nie pasuje</translation>
     </message>
     <message>
         <source>Macros</source>
-        <translation type="unfinished"></translation>
+        <translation>Makra</translation>
     </message>
     <message>
         <source>No macro has run yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Żadne makro nie zostało jeszcze uruchomione</translation>
     </message>
     <message>
         <source>Applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosowano</translation>
     </message>
     <message>
         <source>Applied, problems named</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosowano, zgłoszono problemy</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Anulowano</translation>
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Niepowodzenie</translation>
     </message>
     <message>
         <source>1 line</source>
-        <translation type="unfinished"></translation>
+        <translation>1 wiersz</translation>
     </message>
     <message numerus="yes">
         <source>%n lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n wiersz</numerusform>
+            <numerusform>%n wiersze</numerusform>
+            <numerusform>%n wierszy</numerusform>
         </translation>
     </message>
     <message>
         <source>nothing logged</source>
-        <translation type="unfinished"></translation>
+        <translation>brak wpisów w dzienniku</translation>
     </message>
     <message>
         <source>Up to fatal</source>
-        <translation type="unfinished"></translation>
+        <translation>Do poziomu krytycznego</translation>
     </message>
     <message>
         <source>Up to error</source>
-        <translation type="unfinished"></translation>
+        <translation>Do poziomu błędu</translation>
     </message>
     <message>
         <source>Up to warning</source>
-        <translation type="unfinished"></translation>
+        <translation>Do poziomu ostrzeżenia</translation>
     </message>
     <message>
         <source>Up to hint</source>
-        <translation type="unfinished"></translation>
+        <translation>Do poziomu wskazówki</translation>
     </message>
     <message>
         <source>Up to debug</source>
-        <translation type="unfinished"></translation>
+        <translation>Do poziomu debugowania</translation>
     </message>
     <message>
         <source>All levels</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie poziomy</translation>
     </message>
     <message>
         <source>Levels shown</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazywane poziomy</translation>
     </message>
     <message>
         <source>Lines without a level always show</source>
-        <translation type="unfinished"></translation>
+        <translation>Wiersze bez poziomu są zawsze pokazywane</translation>
     </message>
     <message>
         <source>Filter</source>
-        <translation type="unfinished">Filtruj</translation>
+        <translation>Filtruj</translation>
     </message>
     <message>
         <source>Filter the run&apos;s log</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtruj dziennik uruchomienia</translation>
     </message>
     <message>
         <source>%1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 z %2</translation>
     </message>
     <message>
         <source>Show times</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż czasy</translation>
     </message>
     <message>
         <source>Copy</source>
-        <translation type="unfinished">Kopiuj</translation>
+        <translation>Kopiuj</translation>
     </message>
     <message>
         <source>Copy the lines shown</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj pokazane wiersze</translation>
     </message>
     <message>
         <source>Save…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz…</translation>
     </message>
     <message>
         <source>Save the lines shown…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz pokazane wiersze…</translation>
     </message>
     <message>
         <source>No lines match</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pasujących wierszy</translation>
     </message>
     <message>
         <source>Nothing logged</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak wpisów w dzienniku</translation>
     </message>
     <message>
         <source>%1 min %2 s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 min %2 s</translation>
     </message>
     <message>
         <source>Save the run&apos;s log</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz dziennik uruchomienia</translation>
     </message>
     <message>
         <source>Log files (*.log *.txt)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki dziennika (*.log *.txt)</translation>
     </message>
     <message>
         <source>Folded</source>
-        <translation type="unfinished"></translation>
+        <translation>Zwinięte</translation>
     </message>
     <message>
         <source>Unfolded</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozwinięte</translation>
     </message>
     <message>
         <source>Stopped</source>
-        <translation type="unfinished"></translation>
+        <translation>Zatrzymano</translation>
     </message>
     <message>
         <source>%1 options</source>
-        <translation type="unfinished"></translation>
+        <translation>Opcje: %1</translation>
     </message>
     <message>
         <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
-        <translation type="unfinished"></translation>
+        <translation>Proces skryptu zakończył się. Wczytaj go ponownie, aby go uruchomić; jego makro nie zostanie uruchomione ponownie.</translation>
     </message>
     <message>
         <source>Show less</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż mniej</translation>
     </message>
     <message>
         <source>Show full error</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż cały błąd</translation>
     </message>
     <message>
         <source>Run</source>
-        <translation type="unfinished"></translation>
+        <translation>Uruchom</translation>
     </message>
     <message>
         <source>Run (Enter)</source>
-        <translation type="unfinished"></translation>
+        <translation>Uruchom (Enter)</translation>
     </message>
     <message>
         <source>Add shortcut</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj skrót</translation>
     </message>
     <message>
         <source>Shortcut %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrót %1</translation>
     </message>
     <message>
         <source>Press a shortcut</source>
-        <translation type="unfinished"></translation>
+        <translation>Naciśnij skrót</translation>
     </message>
     <message>
         <source>Clear shortcut</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyczyść skrót</translation>
     </message>
     <message>
         <source>Already assigned to: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Już przypisany do: %1</translation>
     </message>
     <message>
         <source>%1 also uses %2 and takes it.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 również używa skrótu %2 i ma pierwszeństwo.</translation>
     </message>
     <message>
         <source>Remove shortcut</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń skrót</translation>
     </message>
     <message>
         <source>Shortcut</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrót</translation>
     </message>
     <message>
         <source>Edit script</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj skrypt</translation>
     </message>
     <message>
         <source>Unload</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyładuj</translation>
     </message>
     <message>
         <source>Set shortcut…</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustaw skrót…</translation>
     </message>
     <message>
         <source>Reassign shortcut</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień przypisanie skrótu</translation>
     </message>
     <message>
         <source>%1 is assigned to %2. Assign it to %3 instead?</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrót %1 jest przypisany do: %2. Przypisać go zamiast tego do: %3?</translation>
     </message>
     <message>
         <source>Reassign</source>
-        <translation type="unfinished"></translation>
+        <translation>Przypisz ponownie</translation>
     </message>
     <message>
         <source>Keep both</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowaj oba</translation>
     </message>
     <message>
         <source>Select a script editor</source>
@@ -835,19 +836,19 @@ Output device: %2</source>
     </message>
     <message>
         <source>Programs (*.exe)</source>
-        <translation type="unfinished"></translation>
+        <translation>Programy (*.exe)</translation>
     </message>
     <message>
         <source>All files (*.*)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie pliki (*.*)</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie pliki (*)</translation>
     </message>
     <message>
         <source>Close</source>
@@ -855,7 +856,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Automation scripts (*.lua *.moon)</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrypty automatyzacji (*.lua *.moon)</translation>
     </message>
     <message>
         <source>List of automation shortcuts</source>
@@ -883,27 +884,27 @@ Output device: %2</source>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
-        <translation type="unfinished">Odśwież skrypty autoload</translation>
+        <translation>Odśwież skrypty autoload</translation>
     </message>
     <message>
         <source>Shortcuts in Settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Skróty w Ustawieniach…</translation>
     </message>
     <message>
         <source>Clear runs</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyczyść uruchomienia</translation>
     </message>
     <message>
         <source>Automation</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyzacja</translation>
     </message>
     <message>
         <source>The protected reference can&apos;t be changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Chronionego dokumentu referencyjnego nie można zmienić.</translation>
     </message>
     <message>
         <source>The macro&apos;s changes could not be applied; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się zastosować zmian makra; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>Info</source>
@@ -924,7 +925,7 @@ Output device: %2</source>
     <message>
         <source>Error loading Lua script: %1
 %2</source>
-        <translation type="unfinished">Błąd wczytywania skryptu Lua: %1
+        <translation>Błąd wczytywania skryptu Lua: %1
 %2</translation>
     </message>
     <message>
@@ -937,174 +938,174 @@ Output device: %2</source>
     </message>
     <message>
         <source>The macro was cancelled; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Makro zostało anulowane; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
-        <translation type="unfinished"></translation>
+        <translation>Makro zostało anulowane; ustawiono tylko rozdzielczość skryptu.</translation>
     </message>
     <message>
         <source>Validation Lua script &apos;%1&apos; failed</source>
-        <translation type="unfinished">Warunki skryptu Lua &apos;%1&apos; nie zostały spełnione</translation>
+        <translation>Warunki skryptu Lua &apos;%1&apos; nie zostały spełnione</translation>
     </message>
     <message>
         <source>The script&apos;s helper ended; reload the script to use it again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Proces pomocniczy skryptu zakończył się; wczytaj skrypt ponownie, aby znów go używać.</translation>
     </message>
     <message>
         <source>The document changed while the macro ran; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dokument zmienił się podczas działania makra; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>Open a document to run a macro on.</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz dokument, na którym ma zostać uruchomione makro.</translation>
     </message>
     <message>
         <source>The line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zatwierdzić edytowanej linijki, więc makro nie może się uruchomić.</translation>
     </message>
     <message>
         <source>Its document was closed while the macro ran; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dokument makra został zamknięty podczas jego działania; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>The macro was force stopped; reload the script to use it again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wymuszono zatrzymanie makra; wczytaj skrypt ponownie, aby znów go używać.</translation>
     </message>
     <message>
         <source>Script resolution</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozdzielczość skryptu</translation>
     </message>
     <message>
         <source>This file has no script resolution, and “%1” needs one.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten plik nie ma rozdzielczości skryptu, a “%1” jej wymaga.</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerokość</translation>
     </message>
     <message>
         <source>Height</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysokość</translation>
     </message>
     <message>
         <source>Use video resolution</source>
-        <translation type="unfinished"></translation>
+        <translation>Użyj rozdzielczości wideo</translation>
     </message>
     <message>
         <source>Always set it from the video without asking</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawsze ustawiaj ją na podstawie wideo bez pytania</translation>
     </message>
     <message>
         <source>Set</source>
-        <translation type="unfinished">Ustaw</translation>
+        <translation>Ustaw</translation>
     </message>
     <message>
         <source>No loaded script has this macro</source>
-        <translation type="unfinished"></translation>
+        <translation>Żaden wczytany skrypt nie ma tego makra</translation>
     </message>
     <message>
         <source>Several loaded scripts have this file name</source>
-        <translation type="unfinished"></translation>
+        <translation>Kilka wczytanych skryptów ma tę nazwę pliku</translation>
     </message>
     <message>
         <source>The script has no such macro</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrypt nie ma takiego makra</translation>
     </message>
     <message>
         <source>The script or its macro changed</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrypt lub jego makro zmieniły się</translation>
     </message>
     <message>
         <source>Not a macro shortcut</source>
-        <translation type="unfinished"></translation>
+        <translation>To nie jest skrót makra</translation>
     </message>
     <message>
         <source>Several loaded scripts have this file name, so a shortcut cannot tell their macros apart.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kilka wczytanych skryptów ma tę nazwę pliku, więc skrót nie może rozróżnić ich makr.</translation>
     </message>
     <message>
         <source>%1 ms</source>
         <extracomment>A short duration in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 ms</translation>
     </message>
     <message>
         <source>%1 s</source>
         <extracomment>A duration in seconds</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 s</translation>
     </message>
     <message numerus="yes">
         <source>Karaoke template: %n line(s) generated from %1 karaoke line(s) in %2.</source>
         <extracomment>Status bar after applying karaoke templates; %n is the number of Lines generated, %1 the number of karaoke Lines templated, %2 the time the run took</extracomment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Szablon karaoke: wygenerowano %n linijkę (linijki karaoke: %1, czas: %2).</numerusform>
+            <numerusform>Szablon karaoke: wygenerowano %n linijki (linijki karaoke: %1, czas: %2).</numerusform>
+            <numerusform>Szablon karaoke: wygenerowano %n linijek (linijki karaoke: %1, czas: %2).</numerusform>
         </translation>
     </message>
     <message>
         <source>Measuring the karaoke lines: %1</source>
         <extracomment>In the karaoke template report; %1 is the time karaskel took to measure the karaoke lines</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Pomiar linijek karaoke: %1</translation>
     </message>
     <message>
         <source>Code line %1 (%2, %3): %4</source>
         <extracomment>In the karaoke template report: a code Line&apos;s number, its effect and style, and the time it took</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Linijka kodu %1 (%2, %3): %4</translation>
     </message>
     <message numerus="yes">
         <source>Template line %1 (%2, %3): %4, %n line(s) generated</source>
         <extracomment>In the karaoke template report: a template Line&apos;s number, its effect and style, the time it took and %n the number of Lines it generated</extracomment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Linijka szablonu %1 (%2, %3): %4, wygenerowano %n linijkę</numerusform>
+            <numerusform>Linijka szablonu %1 (%2, %3): %4, wygenerowano %n linijki</numerusform>
+            <numerusform>Linijka szablonu %1 (%2, %3): %4, wygenerowano %n linijek</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n template problem(s): see the log.</source>
         <extracomment>After the karaoke template status; %n is the number of template problems the log lists</extracomment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n problem z szablonami: zobacz dziennik.</numerusform>
+            <numerusform>%n problemy z szablonami: zobacz dziennik.</numerusform>
+            <numerusform>%n problemów z szablonami: zobacz dziennik.</numerusform>
         </translation>
     </message>
     <message>
         <source>The script wrote more than this log keeps; the rest is not kept.</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrypt zapisał więcej, niż mieści ten dziennik; reszta nie została zachowana.</translation>
     </message>
     <message>
         <source>The rest of this message is not kept.</source>
-        <translation type="unfinished"></translation>
+        <translation>Reszta tej wiadomości nie została zachowana.</translation>
     </message>
     <message>
         <source>fatal</source>
-        <translation type="unfinished"></translation>
+        <translation>krytyczny</translation>
     </message>
     <message>
         <source>error</source>
-        <translation type="unfinished"></translation>
+        <translation>błąd</translation>
     </message>
     <message>
         <source>warning</source>
-        <translation type="unfinished"></translation>
+        <translation>ostrzeżenie</translation>
     </message>
     <message>
         <source>hint</source>
-        <translation type="unfinished"></translation>
+        <translation>wskazówka</translation>
     </message>
     <message>
         <source>debug</source>
-        <translation type="unfinished"></translation>
+        <translation>debugowanie</translation>
     </message>
     <message>
         <source>trace</source>
-        <translation type="unfinished"></translation>
+        <translation>śledzenie</translation>
     </message>
     <message>
         <source>The run is no longer kept.</source>
-        <translation type="unfinished"></translation>
+        <translation>To uruchomienie nie jest już przechowywane.</translation>
     </message>
 </context>
 <context>
@@ -1135,131 +1136,131 @@ Output device: %2</source>
     </message>
     <message>
         <source>Previous colour %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzedni kolor %1</translation>
     </message>
     <message>
         <source>New colour %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowy kolor %1</translation>
     </message>
     <message>
         <source>Palette</source>
-        <translation type="unfinished"></translation>
+        <translation>Paleta</translation>
     </message>
     <message>
         <source>White</source>
-        <translation type="unfinished"></translation>
+        <translation>Biały</translation>
     </message>
     <message>
         <source>Light grey</source>
-        <translation type="unfinished"></translation>
+        <translation>Jasnoszary</translation>
     </message>
     <message>
         <source>Grey</source>
-        <translation type="unfinished"></translation>
+        <translation>Szary</translation>
     </message>
     <message>
         <source>Dark grey</source>
-        <translation type="unfinished"></translation>
+        <translation>Ciemnoszary</translation>
     </message>
     <message>
         <source>Black</source>
-        <translation type="unfinished"></translation>
+        <translation>Czarny</translation>
     </message>
     <message>
         <source>Yellow</source>
-        <translation type="unfinished"></translation>
+        <translation>Żółty</translation>
     </message>
     <message>
         <source>Cyan</source>
-        <translation type="unfinished"></translation>
+        <translation>Cyjan</translation>
     </message>
     <message>
         <source>Magenta</source>
-        <translation type="unfinished"></translation>
+        <translation>Magenta</translation>
     </message>
     <message>
         <source>Orange</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomarańczowy</translation>
     </message>
     <message>
         <source>Lime</source>
-        <translation type="unfinished"></translation>
+        <translation>Limonkowy</translation>
     </message>
     <message>
         <source>Spring green</source>
-        <translation type="unfinished"></translation>
+        <translation>Wiosenna zieleń</translation>
     </message>
     <message>
         <source>Azure</source>
-        <translation type="unfinished"></translation>
+        <translation>Lazurowy</translation>
     </message>
     <message>
         <source>Violet</source>
-        <translation type="unfinished"></translation>
+        <translation>Fioletowy</translation>
     </message>
     <message>
         <source>Recent colours</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnie kolory</translation>
     </message>
     <message>
         <source>Hex</source>
-        <translation type="unfinished"></translation>
+        <translation>Hex</translation>
     </message>
     <message>
         <source>0 is opaque, 255 fully transparent</source>
-        <translation type="unfinished"></translation>
+        <translation>0 to pełne krycie, 255 to pełna przezroczystość</translation>
     </message>
     <message>
         <source>Less</source>
-        <translation type="unfinished"></translation>
+        <translation>Mniej</translation>
     </message>
     <message>
         <source>More…</source>
-        <translation type="unfinished"></translation>
+        <translation>Więcej…</translation>
     </message>
     <message>
         <source>Fewer colour options</source>
-        <translation type="unfinished"></translation>
+        <translation>Mniej opcji koloru</translation>
     </message>
     <message>
         <source>More colour options</source>
-        <translation type="unfinished"></translation>
+        <translation>Więcej opcji koloru</translation>
     </message>
     <message>
         <source>Saturation and value</source>
-        <translation type="unfinished"></translation>
+        <translation>Nasycenie i wartość</translation>
     </message>
     <message>
         <source>Hue</source>
-        <translation type="unfinished"></translation>
+        <translation>Odcień</translation>
     </message>
     <message>
         <source>Colour values</source>
-        <translation type="unfinished"></translation>
+        <translation>Wartości koloru</translation>
     </message>
     <message>
         <source>RGB</source>
-        <translation type="unfinished"></translation>
+        <translation>RGB</translation>
     </message>
     <message>
         <source>HSL</source>
-        <translation type="unfinished"></translation>
+        <translation>HSL</translation>
     </message>
     <message>
         <source>HSV</source>
-        <translation type="unfinished"></translation>
+        <translation>HSV</translation>
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished"></translation>
+        <translation>Nasycenie</translation>
     </message>
     <message>
         <source>ASS</source>
-        <translation type="unfinished"></translation>
+        <translation>ASS</translation>
     </message>
     <message>
         <source>HTML</source>
-        <translation type="unfinished"></translation>
+        <translation>HTML</translation>
     </message>
     <message>
         <source>Swap shortcuts between the color picker
@@ -1287,7 +1288,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Red</source>
-        <translation type="unfinished"></translation>
+        <translation>Czerwony</translation>
     </message>
     <message>
         <source>Green:</source>
@@ -1295,7 +1296,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Green</source>
-        <translation type="unfinished"></translation>
+        <translation>Zielony</translation>
     </message>
     <message>
         <source>Blue:</source>
@@ -1303,19 +1304,19 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
+        <translation>Niebieski</translation>
     </message>
     <message>
         <source>Alpha</source>
-        <translation type="unfinished"></translation>
+        <translation>Alfa</translation>
     </message>
     <message>
         <source>ASS colour</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolor ASS</translation>
     </message>
     <message>
         <source>HTML colour</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolor HTML</translation>
     </message>
     <message>
         <source>HSL color</source>
@@ -1327,7 +1328,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>HSL hue</source>
-        <translation type="unfinished"></translation>
+        <translation>Odcień HSL</translation>
     </message>
     <message>
         <source>Saturation:</source>
@@ -1335,7 +1336,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>HSL saturation</source>
-        <translation type="unfinished"></translation>
+        <translation>Nasycenie HSL</translation>
     </message>
     <message>
         <source>Lightness:</source>
@@ -1343,7 +1344,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Lightness</source>
-        <translation type="unfinished"></translation>
+        <translation>Jaskrawość</translation>
     </message>
     <message>
         <source>HSV color</source>
@@ -1351,11 +1352,11 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>HSV hue</source>
-        <translation type="unfinished"></translation>
+        <translation>Odcień HSV</translation>
     </message>
     <message>
         <source>HSV saturation</source>
-        <translation type="unfinished"></translation>
+        <translation>Nasycenie HSV</translation>
     </message>
     <message>
         <source>Value:</source>
@@ -1363,15 +1364,15 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Value</source>
-        <translation type="unfinished"></translation>
+        <translation>Wartość</translation>
     </message>
     <message>
         <source>Pick a colour from the screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobierz kolor z ekranu</translation>
     </message>
     <message>
         <source>Screen pixels around the pointer</source>
-        <translation type="unfinished"></translation>
+        <translation>Piksele ekranu wokół wskaźnika</translation>
     </message>
     <message>
         <source>Color picker</source>
@@ -1389,15 +1390,15 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobieranie koloru z ekranu jest niedostępne: ta sesja Wayland nie udostępnia portalu zrzutów ekranu (xdg-desktop-portal z PickColor).</translation>
     </message>
     <message>
         <source>The desktop&apos;s screenshot portal is not in use here.</source>
-        <translation type="unfinished"></translation>
+        <translation>Portal zrzutów ekranu pulpitu nie jest tu używany.</translation>
     </message>
     <message>
         <source>The desktop could not pick a colour from the screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pulpit nie mógł pobrać koloru z ekranu.</translation>
     </message>
 </context>
 <context>
@@ -1412,7 +1413,7 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -1424,7 +1425,7 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Set new FPS</source>
-        <translation type="unfinished">Ustaw nowy FPS</translation>
+        <translation>Ustaw nowy FPS</translation>
     </message>
     <message>
         <source>Subtitles FPS</source>
@@ -1432,7 +1433,7 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Type a frame rate, such as 25.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz liczbę klatek na sekundę, np. 25.</translation>
     </message>
     <message>
         <source>New FPS</source>
@@ -1440,115 +1441,115 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Every start and end time × %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Każdy czas początkowy i końcowy × %1</translation>
     </message>
     <message>
         <source>Change FPS</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień FPS</translation>
     </message>
     <message>
         <source>Keep as is</source>
-        <translation type="unfinished"></translation>
+        <translation>Pozostaw bez zmian</translation>
     </message>
     <message>
         <source>Change resolution only</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień tylko rozdzielczość</translation>
     </message>
     <message>
         <source>Resample and stretch</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeskaluj i rozciągnij</translation>
     </message>
     <message>
         <source>Resample</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeskaluj</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation type="unfinished">Otwórz wideo</translation>
+        <translation>Otwórz wideo</translation>
     </message>
     <message>
         <source>The video is %1 × %2 and the subtitles are %3 × %4.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo ma rozdzielczość %1 × %2, a napisy %3 × %4.</translation>
     </message>
     <message>
         <source>Resample the subtitles to the video? Subtitles › Resample subtitles does it later too.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeskalować napisy do wideo? Można to zrobić także później: Napisy › Przeskaluj napisy.</translation>
     </message>
     <message>
         <source>Catalog</source>
-        <translation type="unfinished">Katalog</translation>
+        <translation>Katalog</translation>
     </message>
     <message>
         <source>Every line gets this style.</source>
-        <translation type="unfinished"></translation>
+        <translation>Każda linijka otrzyma ten styl.</translation>
     </message>
     <message>
         <source>Tags at start</source>
-        <translation type="unfinished"></translation>
+        <translation>Tagi na początku</translation>
     </message>
     <message>
         <source>Written at the start of every line.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstawiane na początku każdej linijki.</translation>
     </message>
     <message>
         <source>Resolution</source>
-        <translation type="unfinished">Rozdzielczość</translation>
+        <translation>Rozdzielczość</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerokość</translation>
     </message>
     <message>
         <source>Height</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysokość</translation>
     </message>
     <message>
         <source>The new file’s script resolution.</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozdzielczość skryptu nowego pliku.</translation>
     </message>
     <message>
         <source>Frame rate</source>
-        <translation type="unfinished"></translation>
+        <translation>Liczba klatek na sekundę</translation>
     </message>
     <message>
         <source>Frames</source>
-        <translation type="unfinished">Klatki</translation>
+        <translation>Klatki</translation>
     </message>
     <message>
         <source>fps</source>
-        <translation type="unfinished"></translation>
+        <translation>fps</translation>
     </message>
     <message>
         <source>Enter a frame rate from 1 to 1000.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
     </message>
     <message>
         <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation type="unfinished"></translation>
+        <translation>MicroDVD liczy klatki: czasy są zamieniane na klatki według tej liczby klatek na sekundę.</translation>
     </message>
     <message>
         <source>End times</source>
-        <translation type="unfinished"></translation>
+        <translation>Czasy końcowe</translation>
     </message>
     <message>
         <source>Per character</source>
-        <translation type="unfinished"></translation>
+        <translation>Na znak</translation>
     </message>
     <message>
         <source>ms</source>
-        <translation type="unfinished"></translation>
+        <translation>ms</translation>
     </message>
     <message>
         <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijka trwa tyle, ile jej długość × ta wartość, co najmniej 1 s, i kończy się tam, gdzie zaczyna się następna.</translation>
     </message>
     <message>
         <source>What changes</source>
-        <translation type="unfinished"></translation>
+        <translation>Co się zmieni</translation>
     </message>
     <message>
         <source>Nothing to show until the frame rate is valid.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nic do pokazania, dopóki liczba klatek na sekundę nie będzie poprawna.</translation>
     </message>
     <message>
         <source>FPS from video</source>
@@ -1556,7 +1557,7 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Time for one letter in milliseconds</source>
@@ -1576,7 +1577,7 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Convert</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwertuj</translation>
     </message>
     <message>
         <source>Subtitles resolution</source>
@@ -1584,15 +1585,15 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished">Napisy</translation>
+        <translation>Napisy</translation>
     </message>
     <message>
         <source>Subtitles width</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerokość napisów</translation>
     </message>
     <message>
         <source>Subtitles height</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysokość napisów</translation>
     </message>
     <message>
         <source>From subtitles</source>
@@ -1600,47 +1601,47 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>No video is open</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie otwarto wideo</translation>
     </message>
     <message>
         <source>The resolution the lines are written for now.</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozdzielczość, dla której linijki są obecnie napisane.</translation>
     </message>
     <message>
         <source>Target</source>
-        <translation type="unfinished"></translation>
+        <translation>Cel</translation>
     </message>
     <message>
         <source>Target width</source>
-        <translation type="unfinished"></translation>
+        <translation>Docelowa szerokość</translation>
     </message>
     <message>
         <source>Target height</source>
-        <translation type="unfinished"></translation>
+        <translation>Docelowa wysokość</translation>
     </message>
     <message>
         <source>The same as the subtitles: nothing to resample.</source>
-        <translation type="unfinished"></translation>
+        <translation>Taka sama jak napisów: nie ma czego przeskalowywać.</translation>
     </message>
     <message>
         <source>Positions, sizes and margins are scaled by %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pozycje, rozmiary i marginesy są skalowane ze współczynnikiem %1.</translation>
     </message>
     <message>
         <source>Scaled by %1 across and %2 down.</source>
-        <translation type="unfinished"></translation>
+        <translation>Skalowanie: %1 w poziomie i %2 w pionie.</translation>
     </message>
     <message>
         <source>Aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Proporcje obrazu</translation>
     </message>
     <message>
         <source>Keep it</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowaj</translation>
     </message>
     <message>
         <source>The aspect ratio changes from %1 to %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>Proporcje obrazu zmieniają się z %1 na %2.</translation>
     </message>
     <message>
         <source>Target resolution</source>
@@ -1707,20 +1708,20 @@ Dopasować rozdzielczość do wideo?
     <message>
         <source>In line %1, value &apos;%2&apos; cannot be scaled
 in tag &apos;%3&apos;</source>
-        <translation type="unfinished">W linii %1 nie można przeskalować wartości &apos;%2&apos;
+        <translation>W linijce %1 nie można przeskalować wartości &apos;%2&apos;
 w tagu &apos;%3&apos;</translation>
     </message>
     <message numerus="yes">
         <source>%n value(s) could not be scaled.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
+            <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
+            <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
         </translation>
     </message>
     <message>
         <source>This document can&apos;t be converted to that format.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tego dokumentu nie można przekonwertować do tego formatu.</translation>
     </message>
     <message>
         <source>Invalid FPS. Correct it in options and try again.</source>
@@ -1728,82 +1729,82 @@ w tagu &apos;%3&apos;</translation>
     </message>
     <message>
         <source>The script properties and styles are removed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Właściwości skryptu i style zostaną usunięte.</translation>
     </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zostanie usunięta %n skomentowana linijka.</numerusform>
+            <numerusform>Zostaną usunięte %n skomentowane linijki.</numerusform>
+            <numerusform>Zostanie usuniętych %n skomentowanych linijek.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n drawing(s) removed.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zostanie usunięty %n rysunek.</numerusform>
+            <numerusform>Zostaną usunięte %n rysunki.</numerusform>
+            <numerusform>Zostanie usuniętych %n rysunków.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n line(s) left without text removed.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zostanie usunięta %n linijka bez tekstu.</numerusform>
+            <numerusform>Zostaną usunięte %n linijki bez tekstu.</numerusform>
+            <numerusform>Zostanie usuniętych %n linijek bez tekstu.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n duplicate line(s) removed.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zostanie usunięta %n zduplikowana linijka.</numerusform>
+            <numerusform>Zostaną usunięte %n zduplikowane linijki.</numerusform>
+            <numerusform>Zostanie usuniętych %n zduplikowanych linijek.</numerusform>
         </translation>
     </message>
     <message>
         <source>Lines are sorted by time.</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijki zostaną posortowane według czasu.</translation>
     </message>
     <message numerus="yes">
         <source>Formatting tags converted or removed in %n line(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Tagi formatowania zostaną przekonwertowane lub usunięte w %n linijce.</numerusform>
+            <numerusform>Tagi formatowania zostaną przekonwertowane lub usunięte w %n linijkach.</numerusform>
+            <numerusform>Tagi formatowania zostaną przekonwertowane lub usunięte w %n linijkach.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n line(s) get the conversion style &quot;%1&quot;.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n linijka otrzyma styl konwersji &quot;%1&quot;.</numerusform>
+            <numerusform>%n linijki otrzymają styl konwersji &quot;%1&quot;.</numerusform>
+            <numerusform>%n linijek otrzyma styl konwersji &quot;%1&quot;.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijki.</numerusform>
+            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijek.</numerusform>
+            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijek.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zakładki, ukrycie i grupy zostaną usunięte z %n linijki.</numerusform>
+            <numerusform>Zakładki, ukrycie i grupy zostaną usunięte z %n linijek.</numerusform>
+            <numerusform>Zakładki, ukrycie i grupy zostaną usunięte z %n linijek.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Times changed (rounding, frames or new end times) in %n line(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Czasy zostaną zmienione (zaokrąglenie, klatki lub nowe czasy końcowe) w %n linijce.</numerusform>
+            <numerusform>Czasy zostaną zmienione (zaokrąglenie, klatki lub nowe czasy końcowe) w %n linijkach.</numerusform>
+            <numerusform>Czasy zostaną zmienione (zaokrąglenie, klatki lub nowe czasy końcowe) w %n linijkach.</numerusform>
         </translation>
     </message>
 </context>
@@ -1845,7 +1846,7 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Save as…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz jako…</translation>
     </message>
     <message>
         <source>Save all</source>
@@ -1853,67 +1854,67 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>%1 was changed by another program. Reloading drops the changes you made here.</source>
-        <translation type="unfinished"></translation>
+        <translation>Inny program zmienił %1. Ponowne wczytanie odrzuci zmiany wprowadzone tutaj.</translation>
     </message>
     <message>
         <source>%1 was changed by another program.</source>
-        <translation type="unfinished"></translation>
+        <translation>Inny program zmienił %1.</translation>
     </message>
     <message>
         <source>Reload</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj ponownie</translation>
     </message>
     <message>
         <source>Compare</source>
-        <translation type="unfinished">Porównaj</translation>
+        <translation>Porównaj</translation>
     </message>
     <message>
         <source>Keep mine</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowaj moje</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz “%1” jako</translation>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie pliki (*)</translation>
     </message>
     <message>
         <source>“%1” is read-only.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” jest tylko do odczytu.</translation>
     </message>
     <message>
         <source>Save it under another name, or make the file writable and save again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz go pod inną nazwą albo zezwól na zapis do pliku i zapisz ponownie.</translation>
     </message>
     <message>
         <source>%1 were changed by another program.</source>
-        <translation type="unfinished"></translation>
+        <translation>Inny program zmienił: %1.</translation>
     </message>
     <message>
         <source>Saving writes over those changes.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisanie nadpisze te zmiany.</translation>
     </message>
     <message>
         <source>Save over it</source>
-        <translation type="unfinished"></translation>
+        <translation>Nadpisz</translation>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation type="unfinished">Otwórz napisy</translation>
+        <translation>Otwórz napisy</translation>
     </message>
     <message>
         <source>Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)</source>
-        <translation type="unfinished"></translation>
+        <translation>Napisy (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation type="unfinished"></translation>
+        <translation>Teksty piosenek z czasami słów (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo z osadzonymi napisami (*.mkv *.ogm)</translation>
     </message>
     <message>
         <source>Reloading</source>
@@ -1929,19 +1930,19 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>The reference is protected (read-only).</source>
-        <translation type="unfinished"></translation>
+        <translation>Dokument referencyjny jest chroniony (tylko do odczytu).</translation>
     </message>
     <message>
         <source>A macro is running on this document.</source>
-        <translation type="unfinished"></translation>
+        <translation>W tym dokumencie działa makro.</translation>
     </message>
     <message>
         <source>The edited line cannot be committed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zatwierdzić edytowanej linijki.</translation>
     </message>
     <message>
         <source>The change was refused.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmiana została odrzucona.</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -1949,91 +1950,91 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
-        <translation type="unfinished"></translation>
+        <translation>tekst nie jest w kodowaniu UTF-8</translation>
     </message>
     <message>
         <source>&quot;%1&quot; is not a time</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; nie jest czasem</translation>
     </message>
     <message>
         <source>the word at %1 starts before the word before it</source>
-        <translation type="unfinished"></translation>
+        <translation>słowo przy %1 zaczyna się przed poprzednim słowem</translation>
     </message>
     <message>
         <source>the end %1 is earlier than the begin</source>
-        <translation type="unfinished"></translation>
+        <translation>koniec %1 jest wcześniejszy niż początek</translation>
     </message>
     <message>
         <source>the time %1 is outside the times of the element around it</source>
-        <translation type="unfinished"></translation>
+        <translation>czas %1 wykracza poza czasy otaczającego go elementu</translation>
     </message>
     <message>
         <source>&quot;%1&quot; has no time</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; nie ma czasu</translation>
     </message>
     <message>
         <source>a line with word times can have only one line time</source>
-        <translation type="unfinished"></translation>
+        <translation>linijka z czasami słów może mieć tylko jeden czas linijki</translation>
     </message>
     <message>
         <source>the XML is broken at &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>XML jest uszkodzony przy &quot;%1&quot;</translation>
     </message>
     <message>
         <source>%1 is not a TTML document</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 nie jest dokumentem TTML</translation>
     </message>
     <message>
         <source>the elements are nested more than %1 deep at &quot;%2&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>zagnieżdżenie elementów przekracza głębokość %1 przy &quot;%2&quot;</translation>
     </message>
     <message>
         <source>it is too large for a lyrics file</source>
-        <translation type="unfinished"></translation>
+        <translation>plik jest za duży jak na tekst piosenki</translation>
     </message>
     <message>
         <source>it has no timed lyrics</source>
-        <translation type="unfinished"></translation>
+        <translation>nie zawiera tekstu piosenki z czasami</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zaimportować %1: wiersz %2: %3. Nic nie zaimportowano.</translation>
     </message>
     <message>
         <source>Could not import %1: %2. Nothing was imported.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zaimportować %1: %2. Nic nie zaimportowano.</translation>
     </message>
     <message>
         <source>Choose where to save the untitled document.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz, gdzie zapisać dokument bez nazwy.</translation>
     </message>
     <message>
         <source>A document could not be saved; nothing was closed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zapisać dokumentu; nic nie zostało zamknięte.</translation>
     </message>
     <message>
         <source>Not closed, because saving failed or there is newer work: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zamknięto, ponieważ zapis się nie powiódł lub istnieją nowsze zmiany: %1</translation>
     </message>
     <message>
         <source>%1 could not be saved.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zapisać %1.</translation>
     </message>
     <message>
         <source>Could not open %1; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj ponownie napisy</translation>
     </message>
     <message>
         <source>Could not reload the subtitles; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można ponownie wczytać napisów; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>The subtitles changed while reloading; nothing was replaced.</source>
-        <translation type="unfinished"></translation>
+        <translation>Napisy zmieniły się podczas ponownego wczytywania; nic nie zostało zastąpione.</translation>
     </message>
     <message>
         <source>Video: </source>
@@ -2069,135 +2070,135 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Quit</source>
-        <translation type="unfinished"></translation>
+        <translation>Zakończ</translation>
     </message>
     <message numerus="yes">
         <source>Save the changes to %n documents before quitting?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zapisać zmiany w %n dokumencie przed zakończeniem?</numerusform>
+            <numerusform>Zapisać zmiany w %n dokumentach przed zakończeniem?</numerusform>
+            <numerusform>Zapisać zmiany w %n dokumentach przed zakończeniem?</numerusform>
         </translation>
     </message>
     <message>
         <source>Save the changes to “%1” before quitting?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisać zmiany w “%1” przed zakończeniem?</translation>
     </message>
     <message>
         <source>Save and quit</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz i zakończ</translation>
     </message>
     <message>
         <source>Quit without saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Zakończ bez zapisywania</translation>
     </message>
     <message>
         <source>Close all tabs</source>
-        <translation type="unfinished">Zamknij wszystkie zakładki</translation>
+        <translation>Zamknij wszystkie zakładki</translation>
     </message>
     <message numerus="yes">
         <source>Save the changes to %n documents before closing them?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zapisać zmiany w %n dokumencie przed jego zamknięciem?</numerusform>
+            <numerusform>Zapisać zmiany w %n dokumentach przed ich zamknięciem?</numerusform>
+            <numerusform>Zapisać zmiany w %n dokumentach przed ich zamknięciem?</numerusform>
         </translation>
     </message>
     <message>
         <source>Save the changes to “%1” before closing?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisać zmiany w “%1” przed zamknięciem?</translation>
     </message>
     <message>
         <source>Save and close</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz i zamknij</translation>
     </message>
     <message>
         <source>Close without saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknij bez zapisywania</translation>
     </message>
     <message>
         <source>Load session</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj sesję</translation>
     </message>
     <message numerus="yes">
         <source>Save the changes to %n documents before loading the session?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zapisać zmiany w %n dokumencie przed wczytaniem sesji?</numerusform>
+            <numerusform>Zapisać zmiany w %n dokumentach przed wczytaniem sesji?</numerusform>
+            <numerusform>Zapisać zmiany w %n dokumentach przed wczytaniem sesji?</numerusform>
         </translation>
     </message>
     <message>
         <source>Save the changes to “%1” before loading the session?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisać zmiany w “%1” przed wczytaniem sesji?</translation>
     </message>
     <message>
         <source>Save and load</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz i wczytaj</translation>
     </message>
     <message>
         <source>Load without saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj bez zapisywania</translation>
     </message>
     <message>
         <source>Close tab</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknij zakładkę</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
-        <translation type="unfinished">Usuń napisy z edytora</translation>
+        <translation>Usuń napisy z edytora</translation>
     </message>
     <message>
         <source>Save the changes to “%1” before removing them?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisać zmiany w “%1” przed usunięciem napisów?</translation>
     </message>
     <message>
         <source>Save and remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz i usuń</translation>
     </message>
     <message>
         <source>Remove without saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń bez zapisywania</translation>
     </message>
     <message>
         <source>Open files</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz pliki</translation>
     </message>
     <message>
         <source>Save the changes to “%1” before replacing them?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisać zmiany w “%1” przed zastąpieniem napisów?</translation>
     </message>
     <message>
         <source>Save and open</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz i otwórz</translation>
     </message>
     <message>
         <source>Open without saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz bez zapisywania</translation>
     </message>
     <message>
         <source>Changes you don’t save are lost.</source>
-        <translation type="unfinished"></translation>
+        <translation>Niezapisane zmiany zostaną utracone.</translation>
     </message>
     <message>
         <source>Don’t save</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zapisuj</translation>
     </message>
     <message>
         <source>Not saved yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Jeszcze nie zapisano</translation>
     </message>
     <message>
         <source>Choose file…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz plik…</translation>
     </message>
     <message>
         <source>Save %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz %1</translation>
     </message>
     <message>
         <source>Saves %1 · Discards %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisywane: %1 · Odrzucane: %2</translation>
     </message>
 </context>
 <context>
@@ -2244,7 +2245,7 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>mixed</source>
-        <translation type="unfinished"></translation>
+        <translation>różne</translation>
     </message>
     <message>
         <source>Number of characters in each line.
@@ -2264,7 +2265,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Show times</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż czasy</translation>
     </message>
     <message>
         <source>Frames</source>
@@ -2272,7 +2273,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Show frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż klatki</translation>
     </message>
     <message>
         <source>Comment</source>
@@ -2308,7 +2309,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Duration</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas trwania</translation>
     </message>
     <message>
         <source>Line duration</source>
@@ -2316,7 +2317,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Line style</source>
@@ -2328,15 +2329,15 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Changed, not applied to the line yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmieniono, jeszcze nie zastosowano do linijki</translation>
     </message>
     <message>
         <source>Edit style</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj styl</translation>
     </message>
     <message>
         <source>Edit style: allows quick editing of the current line&apos;s style</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj styl: umożliwia szybką edycję stylu bieżącej linijki</translation>
     </message>
     <message>
         <source>Allows quick editing of the current line&apos;s style</source>
@@ -2408,15 +2409,15 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>&amp;Add word &quot;%1&quot; to dictionary</source>
-        <translation type="unfinished">&amp;Dodaj słowo &quot;%1&quot; do słownika</translation>
+        <translation>&amp;Dodaj słowo &quot;%1&quot; do słownika</translation>
     </message>
     <message>
         <source>Add word to dictionary</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj słowo do słownika</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
-        <translation type="unfinished">Błąd, słowo &quot;%1&quot; nie zostało dodane.</translation>
+        <translation>Błąd. Słowo &quot;%1&quot; nie zostało dodane.</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
@@ -2424,11 +2425,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Line editor</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytor linijki</translation>
     </message>
     <message>
         <source>Line editor: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytor linijki: %1</translation>
     </message>
     <message>
         <source>Bold</source>
@@ -2444,7 +2445,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Strikeout</source>
-        <translation type="unfinished"></translation>
+        <translation>Przekreślenie</translation>
     </message>
     <message>
         <source>Font selection</source>
@@ -2468,23 +2469,23 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Add a tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj przycisk tagu</translation>
     </message>
     <message>
         <source>Edit...</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj...</translation>
     </message>
     <message>
         <source>Move left</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń w lewo</translation>
     </message>
     <message>
         <source>Move right</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń w prawo</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>Manage tag buttons</source>
@@ -2500,11 +2501,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Line text</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekst linijki</translation>
     </message>
     <message>
         <source>Translated text</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekst tłumaczenia</translation>
     </message>
     <message>
         <source>Paste all</source>
@@ -2516,11 +2517,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Comment out original</source>
-        <translation type="unfinished"></translation>
+        <translation>Zakomentuj tekst oryginalny</translation>
     </message>
     <message>
         <source>Not applied: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zastosowano: %1</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -2544,7 +2545,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Insertion</source>
-        <translation type="unfinished"></translation>
+        <translation>Sposób wstawiania</translation>
     </message>
     <message>
         <source>Button name</source>
@@ -2552,15 +2553,15 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Enter a name or choose an icon</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz nazwę lub wybierz ikonę</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished">Nazwa</translation>
+        <translation>Nazwa</translation>
     </message>
     <message>
         <source>Tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Tag</translation>
     </message>
     <message>
         <source>Button tag</source>
@@ -2568,23 +2569,23 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Insert</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstaw</translation>
     </message>
     <message>
         <source>Icon</source>
-        <translation type="unfinished"></translation>
+        <translation>Ikona</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished">Brak</translation>
+        <translation>Brak</translation>
     </message>
     <message>
         <source>Preview</source>
-        <translation type="unfinished">Podgląd</translation>
+        <translation>Podgląd</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished">Zapisz</translation>
+        <translation>Zapisz</translation>
     </message>
     <message>
         <source>Save tag</source>
@@ -2592,83 +2593,83 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Select whole characters.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacz całe znaki.</translation>
     </message>
     <message>
         <source>Braces and backslashes are ASS syntax: edit them with tags shown.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nawiasy klamrowe i ukośniki odwrotne to składnia ASS: edytuj je przy widocznych tagach.</translation>
     </message>
     <message>
         <source>This touches a drawing or malformed tag: edit it with tags shown.</source>
-        <translation type="unfinished"></translation>
+        <translation>To dotyczy rysunku lub uszkodzonego tagu: edytuj go przy widocznych tagach.</translation>
     </message>
     <message>
         <source>Select the whole line break or hard space.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacz całe łamanie wiersza lub twardą spację.</translation>
     </message>
     <message>
         <source>Here the text would become drawing or tag content: edit it with tags shown.</source>
-        <translation type="unfinished"></translation>
+        <translation>W tym miejscu tekst stałby się częścią rysunku lub tagu: edytuj go przy widocznych tagach.</translation>
     </message>
     <message>
         <source>Saving…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisywanie…</translation>
     </message>
     <message>
         <source>Saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisano</translation>
     </message>
     <message>
         <source>Saved; the disk could not confirm it is stored</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisano; dysk nie potwierdził, że dane zostały utrwalone</translation>
     </message>
     <message>
         <source>Save cancelled; nothing was written</source>
-        <translation type="unfinished"></translation>
+        <translation>Anulowano zapis; nic nie zostało zapisane</translation>
     </message>
     <message>
         <source>Save failed; the file on disk is unchanged</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapis nie powiódł się; plik na dysku pozostał bez zmian</translation>
     </message>
     <message>
         <source>End is before Start.</source>
-        <translation type="unfinished"></translation>
+        <translation>Koniec jest wcześniej niż Początek.</translation>
     </message>
     <message>
         <source>Margins must be between 0 and 9999.</source>
-        <translation type="unfinished"></translation>
+        <translation>Marginesy muszą mieścić się w zakresie od 0 do 9999.</translation>
     </message>
     <message>
         <source>Start is not a frame number.</source>
-        <translation type="unfinished"></translation>
+        <translation>Początek nie jest numerem klatki.</translation>
     </message>
     <message>
         <source>End is not a frame number.</source>
-        <translation type="unfinished"></translation>
+        <translation>Koniec nie jest numerem klatki.</translation>
     </message>
     <message>
         <source>Start is not a time such as 0:00:01.00.</source>
-        <translation type="unfinished"></translation>
+        <translation>Początek nie jest czasem w formacie 0:00:01.00.</translation>
     </message>
     <message>
         <source>End is not a time such as 0:00:01.00.</source>
-        <translation type="unfinished"></translation>
+        <translation>Koniec nie jest czasem w formacie 0:00:01.00.</translation>
     </message>
     <message>
         <source>Start is not a time such as %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Początek nie jest czasem w formacie %1.</translation>
     </message>
     <message>
         <source>End is not a time such as %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Koniec nie jest czasem w formacie %1.</translation>
     </message>
     <message>
         <source>Margins must be whole numbers.</source>
-        <translation type="unfinished"></translation>
+        <translation>Marginesy muszą być liczbami całkowitymi.</translation>
     </message>
     <message>
         <source>The file changed on disk since it was opened. Reload it, or save elsewhere.</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik na dysku zmienił się od czasu otwarcia. Wczytaj go ponownie lub zapisz w innym miejscu.</translation>
     </message>
     <message>
         <source>Wraps: 0/86</source>
@@ -2680,35 +2681,35 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Characters per second: %1&lt;=15</source>
-        <translation type="unfinished">Znaki na sekundę: %1&lt;=15</translation>
+        <translation>Znaki na sekundę: %1&lt;=15</translation>
     </message>
     <message>
         <source>Duration is not a frame number.</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas trwania nie jest numerem klatki.</translation>
     </message>
     <message>
         <source>Duration is not a time.</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas trwania nie jest poprawnym czasem.</translation>
     </message>
     <message>
         <source>Unconfirmed applies in translation mode only.</source>
-        <translation type="unfinished"></translation>
+        <translation>Oznaczanie linijek jako niepewne działa tylko w trybie tłumaczenia.</translation>
     </message>
     <message>
         <source>This document can&apos;t be saved here.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tego dokumentu nie można tu zapisać.</translation>
     </message>
     <message>
         <source>Another open document uses that file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten plik jest używany przez inny otwarty dokument.</translation>
     </message>
     <message>
         <source>The document can&apos;t be saved right now.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można teraz zapisać dokumentu.</translation>
     </message>
     <message>
         <source>This search applies in translation mode only.</source>
-        <translation type="unfinished"></translation>
+        <translation>To wyszukiwanie działa tylko w trybie tłumaczenia.</translation>
     </message>
     <message>
         <source>No unconfirmed lines found</source>
@@ -2720,30 +2721,30 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>%1, active line %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, aktywna linijka %2</translation>
     </message>
     <message>
         <source>Enter the text the button puts in</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz tekst wstawiany przez przycisk</translation>
     </message>
     <message>
         <source>Enter the tag, for example \blur2</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz tag, na przykład \blur2</translation>
     </message>
     <message>
         <source>Leave out the braces: the button puts the tag in an override block</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomiń nawiasy klamrowe: przycisk umieszcza tag w bloku tagów</translation>
     </message>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
-        <translation type="unfinished"></translation>
+        <translation>Tag zaczyna się od ukośnika odwrotnego, na przykład \blur2</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Fonts</name>
     <message>
         <source>Font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalogi czcionek</translation>
     </message>
     <message>
         <source>Add</source>
@@ -2799,11 +2800,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Refresh fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Odśwież czcionki</translation>
     </message>
     <message>
         <source>Refresh fonts: reads the installed and external fonts again</source>
-        <translation type="unfinished"></translation>
+        <translation>Odśwież czcionki: ponownie wczytuje zainstalowane i zewnętrzne czcionki</translation>
     </message>
     <message>
         <source>Find:</source>
@@ -2819,67 +2820,67 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Enter a name for the catalog.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz nazwę katalogu.</translation>
     </message>
     <message>
         <source>“%1” already exists.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” już istnieje.</translation>
     </message>
     <message>
         <source>Rename font catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień nazwę katalogu czcionek</translation>
     </message>
     <message>
         <source>A catalog named “%1” already exists.</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalog o nazwie “%1” już istnieje.</translation>
     </message>
     <message>
         <source>Merge adds the fonts of “%1” to it. Replace deletes the old “%2” first.</source>
-        <translation type="unfinished"></translation>
+        <translation>Scalenie dodaje do niego czcionki z “%1”. Zamiana najpierw usuwa stary katalog “%2”.</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished">Zamień</translation>
+        <translation>Zamień</translation>
     </message>
     <message>
         <source>Delete font catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń katalog czcionek</translation>
     </message>
     <message>
         <source>Delete the catalog “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunąć katalog “%1”?</translation>
     </message>
     <message>
         <source>It holds no fonts.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zawiera żadnych czcionek.</translation>
     </message>
     <message>
         <source>Its fonts stay installed and in their other catalogs.</source>
-        <translation type="unfinished"></translation>
+        <translation>Jego czcionki pozostaną zainstalowane i w innych katalogach.</translation>
     </message>
     <message>
         <source>The file holds no font catalog.</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik nie zawiera katalogu czcionek.</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Load font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj katalogi czcionek</translation>
     </message>
     <message>
         <source>%1 of %2 catalogs in “%3” already exist.</source>
-        <translation type="unfinished"></translation>
+        <translation>Już istniejące katalogi z “%3”: %1 z %2.</translation>
     </message>
     <message>
         <source>The file’s new catalogs are added.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowe katalogi z pliku zostaną dodane.</translation>
     </message>
     <message>
         <source>Those with the same fonts as yours are left as they are.</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalogi z takimi samymi czcionkami jak Twoje pozostaną bez zmian.</translation>
     </message>
     <message>
         <source>Catalog</source>
@@ -2887,103 +2888,103 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>%1 here, +%2 new</source>
-        <translation type="unfinished"></translation>
+        <translation>tutaj: %1, nowe: +%2</translation>
     </message>
     <message>
         <source>%1 here, %2 in the file</source>
-        <translation type="unfinished"></translation>
+        <translation>tutaj: %1, w pliku: %2</translation>
     </message>
     <message>
         <source>Load 1 catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj 1 katalog</translation>
     </message>
     <message numerus="yes">
         <source>Load %n catalogs</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Wczytaj %n katalog</numerusform>
+            <numerusform>Wczytaj %n katalogi</numerusform>
+            <numerusform>Wczytaj %n katalogów</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n new</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n nowy</numerusform>
+            <numerusform>%n nowe</numerusform>
+            <numerusform>%n nowych</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n merged</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n scalony</numerusform>
+            <numerusform>%n scalone</numerusform>
+            <numerusform>%n scalonych</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n replaced</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n zastąpiony</numerusform>
+            <numerusform>%n zastąpione</numerusform>
+            <numerusform>%n zastąpionych</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n renamed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n przemianowany</numerusform>
+            <numerusform>%n przemianowane</numerusform>
+            <numerusform>%n przemianowanych</numerusform>
         </translation>
     </message>
     <message>
         <source>Loaded 1 font catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytano 1 katalog czcionek</translation>
     </message>
     <message numerus="yes">
         <source>Loaded %n font catalogs</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Wczytano %n katalog czcionek</numerusform>
+            <numerusform>Wczytano %n katalogi czcionek</numerusform>
+            <numerusform>Wczytano %n katalogów czcionek</numerusform>
         </translation>
     </message>
     <message>
         <source>From %1: %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>Z %1: %2.</translation>
     </message>
     <message>
         <source>Catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalogi</translation>
     </message>
     <message>
         <source>New catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowy katalog</translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień nazwę</translation>
     </message>
     <message>
         <source>Load from a file</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj z pliku</translation>
     </message>
     <message>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż</translation>
     </message>
     <message>
         <source>In “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>W “%1”</translation>
     </message>
     <message>
         <source>In the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>W katalogu</translation>
     </message>
     <message>
         <source>Not in a catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Poza katalogiem</translation>
     </message>
     <message>
         <source>Sample</source>
@@ -2991,39 +2992,39 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Drawn by Qt, not by the subtitle renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>Rysowane przez Qt, a nie przez renderer napisów</translation>
     </message>
     <message>
         <source>“%1” in “%2”</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” w “%2”</translation>
     </message>
     <message>
         <source>Saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisano</translation>
     </message>
     <message>
         <source>Not saved: the safety copy could not be written</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zapisano: nie można zapisać kopii zapasowej</translation>
     </message>
     <message>
         <source>The catalogs are saved automatically to FontCatalogs.txt in the &quot;Config&quot; folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalogi są zapisywane automatycznie w pliku FontCatalogs.txt w folderze &quot;Config&quot;.</translation>
     </message>
     <message>
         <source>Catalog name</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwa katalogu</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished"></translation>
+        <translation>Utwórz</translation>
     </message>
     <message>
         <source>Rename “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień nazwę “%1”</translation>
     </message>
     <message>
         <source>Fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Czcionki</translation>
     </message>
     <message>
         <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
@@ -3047,7 +3048,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -3079,11 +3080,11 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Choose font catalog file</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz plik katalogu czcionek</translation>
     </message>
     <message>
         <source>Text files (*.txt)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki tekstowe (*.txt)</translation>
     </message>
     <message>
         <source>Font collector</source>
@@ -3137,111 +3138,111 @@ przy wyciąganiu czcionek z pliku MKV.</translation>
     </message>
     <message>
         <source>Font collector log</source>
-        <translation type="unfinished"></translation>
+        <translation>Dziennik kolekcjonera czcionek</translation>
     </message>
     <message>
         <source>Lists the fonts the subtitles use and whether this computer has each one.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyświetla listę czcionek używanych w napisach i informuje, czy każda z nich jest dostępna na tym komputerze.</translation>
     </message>
     <message>
         <source>Copies each font file the subtitles use into the folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuje do folderu każdy plik czcionki używanej w napisach.</translation>
     </message>
     <message>
         <source>Puts each font file the subtitles use into a zip archive.</source>
-        <translation type="unfinished"></translation>
+        <translation>Umieszcza w archiwum zip każdy plik czcionki używanej w napisach.</translation>
     </message>
     <message>
         <source>“%1” already exists.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” już istnieje.</translation>
     </message>
     <message>
         <source>Writing the new archive replaces it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisanie nowego archiwum zastąpi ten plik.</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished">Zamień</translation>
+        <translation>Zamień</translation>
     </message>
     <message>
         <source>Action</source>
-        <translation type="unfinished">Akcja</translation>
+        <translation>Akcja</translation>
     </message>
     <message>
         <source>Check fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź czcionki</translation>
     </message>
     <message>
         <source>Copy to a folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj do folderu</translation>
     </message>
     <message>
         <source>Zip archive</source>
-        <translation type="unfinished"></translation>
+        <translation>Archiwum zip</translation>
     </message>
     <message>
         <source>Save to</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz w</translation>
     </message>
     <message>
         <source>Choose an archive</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz archiwum</translation>
     </message>
     <message>
         <source>Choose a folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz folder</translation>
     </message>
     <message>
         <source>Write beside the subtitles, in a “Fonts” folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz obok napisów, w folderze “Fonts”</translation>
     </message>
     <message>
         <source>Beside the video when the fonts come from the MKV file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Obok wideo, gdy czcionki pochodzą z pliku MKV.</translation>
     </message>
     <message>
         <source>Take the fonts from the loaded MKV file</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobierz czcionki z wczytanego pliku MKV</translation>
     </message>
     <message>
         <source>Start lists the fonts the subtitles use.</source>
-        <translation type="unfinished"></translation>
+        <translation>Po rozpoczęciu zostanie wyświetlona lista czcionek używanych w napisach.</translation>
     </message>
     <message>
         <source>Some fonts were not found, so the collection is incomplete.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono niektórych czcionek, więc kolekcja jest niekompletna.</translation>
     </message>
     <message>
         <source>Ready to write %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Gotowe do zapisu: %1</translation>
     </message>
     <message>
         <source>Ready to copy to %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Gotowe do skopiowania do: %1</translation>
     </message>
     <message>
         <source>Write it, labelled incomplete</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz, oznaczając jako niekompletne</translation>
     </message>
     <message>
         <source>Copy it, labelled incomplete</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiuj, oznaczając jako niekompletne</translation>
     </message>
     <message>
         <source>Write archive</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz archiwum</translation>
     </message>
     <message>
         <source>Copy fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj czcionki</translation>
     </message>
     <message>
         <source>Show folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż folder</translation>
     </message>
     <message>
         <source>Start on all tabs</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozpocznij na wszystkich zakładkach</translation>
     </message>
     <message>
         <source>Start</source>
@@ -3249,7 +3250,7 @@ przy wyciąganiu czcionek z pliku MKV.</translation>
     </message>
     <message>
         <source>Stop</source>
-        <translation type="unfinished">Zatrzymaj</translation>
+        <translation>Zatrzymaj</translation>
     </message>
     <message>
         <source>Start on tabs</source>
@@ -3265,7 +3266,7 @@ przy wyciąganiu czcionek z pliku MKV.</translation>
     </message>
     <message>
         <source>Archive files (*.zip)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki archiwum (*.zip)</translation>
     </message>
     <message>
         <source>Select a font</source>
@@ -3277,63 +3278,63 @@ przy wyciąganiu czcionek z pliku MKV.</translation>
     </message>
     <message>
         <source>Font selection</source>
-        <translation type="unfinished">Wybór czcionki</translation>
+        <translation>Wybór czcionki</translation>
     </message>
     <message>
         <source>Search fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukaj czcionek</translation>
     </message>
     <message>
         <source>Font catalog: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalog czcionek: %1</translation>
     </message>
     <message>
         <source>Has “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawiera “%1”</translation>
     </message>
     <message>
         <source>Characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Znaki</translation>
     </message>
     <message>
         <source>Only fonts that have “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Tylko czcionki zawierające “%1”</translation>
     </message>
     <message>
         <source>Characters filter</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtr znaków</translation>
     </message>
     <message>
         <source>Add to a catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj do katalogu</translation>
     </message>
     <message>
         <source>Add “%1” to a catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj “%1” do katalogu</translation>
     </message>
     <message>
         <source>No installed font is called “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Żadna zainstalowana czcionka nie nazywa się “%1”.</translation>
     </message>
     <message>
         <source>“%1” is installed but not in this list.</source>
-        <translation type="unfinished"></translation>
+        <translation>Czcionka “%1” jest zainstalowana, ale nie ma jej na tej liście.</translation>
     </message>
     <message>
         <source>No installed font is in “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>W “%1” nie ma żadnej zainstalowanej czcionki.</translation>
     </message>
     <message>
         <source>No fonts match</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pasujących czcionek</translation>
     </message>
     <message>
         <source>Use “%1” anyway</source>
-        <translation type="unfinished"></translation>
+        <translation>Mimo to użyj “%1”</translation>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozmiar</translation>
     </message>
     <message>
         <source>Font size</source>
@@ -3341,7 +3342,7 @@ przy wyciąganiu czcionek z pliku MKV.</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Bold</source>
@@ -3361,67 +3362,67 @@ przy wyciąganiu czcionek z pliku MKV.</translation>
     </message>
     <message numerus="yes">
         <source>%1 of %n fonts</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%1 z %n czcionki</numerusform>
+            <numerusform>%1 z %n czcionek</numerusform>
+            <numerusform>%1 z %n czcionek</numerusform>
         </translation>
     </message>
     <message>
         <source>1 font</source>
-        <translation type="unfinished"></translation>
+        <translation>1 czcionka</translation>
     </message>
     <message numerus="yes">
         <source>%n fonts</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n czcionka</numerusform>
+            <numerusform>%n czcionki</numerusform>
+            <numerusform>%n czcionek</numerusform>
         </translation>
     </message>
     <message>
         <source>Sample text</source>
-        <translation type="unfinished"></translation>
+        <translation>Przykładowy tekst</translation>
     </message>
     <message>
         <source>The line’s selected text</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznaczony tekst linijki</translation>
     </message>
     <message>
         <source>The line’s text</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekst linijki</translation>
     </message>
     <message>
         <source>The Style editor’s sample text</source>
-        <translation type="unfinished"></translation>
+        <translation>Przykładowy tekst z edytora stylu</translation>
     </message>
     <message>
         <source>Manage catalogs…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zarządzaj katalogami…</translation>
     </message>
     <message>
         <source>No catalogs yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak katalogów</translation>
     </message>
     <message>
         <source>New catalog…</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowy katalog…</translation>
     </message>
     <message>
         <source>Add fonts from subtitles…</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj czcionki z napisów…</translation>
     </message>
     <message>
         <source>Only fonts that have these characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Tylko czcionki zawierające te znaki</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished">Oczyść</translation>
+        <translation>Oczyść</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">Zastosuj</translation>
+        <translation>Zastosuj</translation>
     </message>
     <message>
         <source>Filtering and font catalogs</source>
@@ -3433,19 +3434,19 @@ przy wyciąganiu czcionek z pliku MKV.</translation>
     </message>
     <message>
         <source>Drawn by the subtitle renderer with %1 (%2).</source>
-        <translation type="unfinished"></translation>
+        <translation>Renderer napisów rysuje ją czcionką %1 (%2).</translation>
     </message>
     <message>
         <source>Not installed under this name: the subtitle renderer substitutes %1 (%2).</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zainstalowano pod tą nazwą: renderer napisów zastępuje ją czcionką %1 (%2).</translation>
     </message>
     <message>
         <source>Not installed: the subtitle renderer falls back to %1 (%2).</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zainstalowano: renderer napisów używa zamiast niej czcionki %1 (%2).</translation>
     </message>
     <message>
         <source>No font answers this name.</source>
-        <translation type="unfinished"></translation>
+        <translation>Żadna czcionka nie odpowiada tej nazwie.</translation>
     </message>
     <message>
         <source>Remove all contents of catalog</source>
@@ -3481,36 +3482,36 @@ by utworzyć nowy katalog.</translation>
     </message>
     <message>
         <source>Cannot add external font file %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można dodać zewnętrznego pliku czcionki %1.</translation>
     </message>
     <message>
         <source>%1 font</source>
-        <translation type="unfinished"></translation>
+        <translation>czcionki: %1</translation>
     </message>
     <message>
         <source>%1 fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>czcionki: %1</translation>
     </message>
     <message>
         <source>Found &quot;%1&quot; font file.</source>
-        <translation type="unfinished">Znaleziono plik czcionki &quot;%1&quot;.</translation>
+        <translation>Znaleziono plik czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Renderer użył też czcionki &quot;%1&quot; (%2); nie została ona zebrana.</translation>
     </message>
     <message>
         <source>Copied font &quot;%1&quot;.</source>
-        <translation type="unfinished">Skopiowano czcionkę &quot;%1&quot;.</translation>
+        <translation>Skopiowano czcionkę &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Added font &quot;%1&quot; to the archive.</source>
-        <translation type="unfinished">Dodano do archiwum czcionkę &quot;%1&quot;.</translation>
+        <translation>Dodano do archiwum czcionkę &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; belongs to a style
 that is not used.</source>
-        <translation type="unfinished">Czcionka &quot;%1&quot; należy do stylu,
+        <translation>Czcionka &quot;%1&quot; należy do stylu,
 który nie jest wykorzystywany.</translation>
     </message>
     <message>
@@ -3521,51 +3522,51 @@ Nie zostanie skopiowana.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing normal style.</source>
-        <translation type="unfinished">Czcionka &quot;%1&quot; nie ma stylu normalnego.</translation>
+        <translation>Czcionka &quot;%1&quot; nie ma stylu normalnego.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing bold italics.</source>
-        <translation type="unfinished">Czcionka &quot;%1&quot; nie ma pogrubienia z kursywą.</translation>
+        <translation>Czcionka &quot;%1&quot; nie ma pogrubienia z kursywą.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing bold.</source>
-        <translation type="unfinished">Czcionka &quot;%1&quot; nie ma pogrubienia.</translation>
+        <translation>Czcionka &quot;%1&quot; nie ma pogrubienia.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing italics.</source>
-        <translation type="unfinished">Czcionka &quot;%1&quot; nie ma kursywy.</translation>
+        <translation>Czcionka &quot;%1&quot; nie ma kursywy.</translation>
     </message>
     <message>
         <source>Cannot check the characters in font &quot;%1&quot;.</source>
-        <translation type="unfinished">Nie można sprawdzić znaków czcionki &quot;%1&quot;.</translation>
+        <translation>Nie można sprawdzić znaków czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; does not contain characters: &quot;%2&quot;.</source>
-        <translation type="unfinished">Czcionka &quot;%1&quot; nie zawiera znaków: &quot;%2&quot;.</translation>
+        <translation>Czcionka &quot;%1&quot; nie zawiera znaków: &quot;%2&quot;.</translation>
     </message>
     <message>
         <source>Characters &quot;%1&quot; were drawn by the fallback font &quot;%2&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Znaki &quot;%1&quot; zostały narysowane czcionką zastępczą &quot;%2&quot;.</translation>
     </message>
     <message>
         <source>Cannot get the contents of font &quot;%1&quot;.</source>
-        <translation type="unfinished">Nie można pobrać zawartości czcionki &quot;%1&quot;.</translation>
+        <translation>Nie można pobrać zawartości czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Cannot open file &quot;%1&quot;.</source>
-        <translation type="unfinished">Nie można otworzyć pliku &quot;%1&quot;.</translation>
+        <translation>Nie można otworzyć pliku &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
-        <translation type="unfinished">Nie można znaleźć czcionki &quot;%1&quot; w folderze Fonts.</translation>
+        <translation>Nie można znaleźć czcionki &quot;%1&quot; w folderze Fonts.</translation>
     </message>
     <message>
         <source>Cannot copy font &quot;%1&quot;.</source>
-        <translation type="unfinished">Nie można skopiować czcionki &quot;%1&quot;.</translation>
+        <translation>Nie można skopiować czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Cannot zip font &quot;%1&quot;.</source>
-        <translation type="unfinished">Nie można spakować czcionki &quot;%1&quot;.</translation>
+        <translation>Nie można spakować czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
@@ -3574,7 +3575,7 @@ Nie zostanie skopiowana.</translation>
     <message>
         <source>Fonts</source>
         <comment>the folder the font collector writes beside the subtitles</comment>
-        <translation type="unfinished"></translation>
+        <translation>Fonts</translation>
     </message>
     <message>
         <source>The save path is not valid.</source>
@@ -3591,12 +3592,12 @@ Nie zostanie skopiowana.</translation>
     <message>
         <source>Found font &quot;%1&quot;
 </source>
-        <translation type="unfinished">Znaleziono czcionkę &quot;%1&quot;
+        <translation>Znaleziono czcionkę &quot;%1&quot;
 </translation>
     </message>
     <message>
         <source>Found font &quot;%1&quot;.</source>
-        <translation type="unfinished">Znaleziono czcionkę &quot;%1&quot;.</translation>
+        <translation>Znaleziono czcionkę &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Font not found &quot;</source>
@@ -3619,52 +3620,62 @@ Nie zostanie skopiowana.</translation>
     <message>
         <source>Checked by the subtitle renderer (%1).
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzone przez renderer napisów (%1).
+</translation>
     </message>
     <message>
         <source>Tab %1: the renderer could not read this document; it was not checked.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Zakładka %1: renderer nie mógł odczytać tego dokumentu; nie został on sprawdzony.
+</translation>
     </message>
     <message>
         <source>Families the renderer did not find: %1.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Rodziny czcionek, których renderer nie znalazł: %1.
+</translation>
     </message>
     <message>
         <source>Families answered by a font of another name: %1.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Rodziny zastąpione czcionką o innej nazwie: %1.
+</translation>
     </message>
     <message>
         <source>Characters no font has: %1.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Znaki, których nie ma żadna czcionka: %1.
+</translation>
     </message>
     <message>
         <source>Characters drawn by a fallback font of this computer: %1.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Znaki narysowane czcionką zastępczą z tego komputera: %1.
+</translation>
     </message>
     <message>
         <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Zakładka %1: przy użyciu samych zebranych czcionek różnią się klatki: %2 z %3.
+</translation>
     </message>
     <message>
         <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Różne czcionki o tej samej nazwie pliku: %1. W folderze zostaje zachowana tylko jedna z nich.
+</translation>
     </message>
     <message>
         <source>The video shows the subtitles through %1, whose output this check does not verify.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo wyświetla napisy za pomocą %1; to sprawdzenie nie weryfikuje jego wyniku.
+</translation>
     </message>
     <message>
         <source>The collected fonts alone reproduce every frame.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Same zebrane czcionki odtwarzają każdą klatkę.
+</translation>
     </message>
     <message>
         <source>found</source>
@@ -3677,19 +3688,19 @@ Nie zostanie skopiowana.</translation>
     <message>
         <source>Finished, %1 %2.
 </source>
-        <translation type="unfinished">Zakończono, %1 %2.
+        <translation>Zakończono, %1 %2.
 </translation>
     </message>
     <message>
         <source>Not found %1.
 </source>
-        <translation type="unfinished">Nie znaleziono %1.
+        <translation>Nieznalezione %1.
 </translation>
     </message>
     <message>
         <source>Cannot copy %1.
 </source>
-        <translation type="unfinished">Nie udało się skopiować %1.
+        <translation>Nieskopiowane %1.
 </translation>
     </message>
     <message>
@@ -3701,42 +3712,48 @@ Nie zostanie skopiowana.</translation>
     <message>
         <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Renderer nie może odtworzyć napisów wyłącznie z tych czcionek: kolekcja jest niekompletna.
+</translation>
     </message>
     <message>
         <source>The output does not hold every collected font under its own name: the collection is incomplete.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Wynik nie zawiera każdej zebranej czcionki pod jej własną nazwą: kolekcja jest niekompletna.
+</translation>
     </message>
     <message>
         <source>Writing was cancelled.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Zapis został anulowany.
+</translation>
     </message>
     <message>
         <source>The output is labelled incomplete (&quot;%1&quot;).
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Wynik oznaczono jako niekompletny (&quot;%1&quot;).
+</translation>
     </message>
     <message>
         <source>Completed Successfully, %1 %2.
 </source>
-        <translation type="unfinished">Zakończono powodzeniem, %1 %2.
+        <translation>Zakończono pomyślnie, %1 %2.
 </translation>
     </message>
     <message>
         <source>Finished in %1ms</source>
-        <translation type="unfinished"></translation>
+        <translation>Zakończono w %1ms</translation>
     </message>
     <message>
         <source>Cancelled; nothing was written.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Anulowano; nic nie zostało zapisane.
+</translation>
     </message>
     <message>
         <source>The subtitle renderer is not available; the fonts cannot be checked.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Renderer napisów jest niedostępny; nie można sprawdzić czcionek.
+</translation>
     </message>
     <message>
         <source>Cannot retrieve the font file sizes and names;
@@ -3750,24 +3767,27 @@ kopiowanie zostaje przerwane.
         <source>Retrieved sizes and names of %1 fonts, elapsed time %2ms.
 
 </source>
-        <translation type="unfinished">Pobrano rozmiary i nazwy %1 czcionek, upłynęło %2ms.
+        <translation>Pobrano rozmiary i nazwy czcionek (%1), upłynęło %2ms.
 
 </translation>
     </message>
     <message>
         <source>Ready to add %1 to the archive &quot;%2&quot;.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Do archiwum &quot;%2&quot; zostaną dodane %1.
+</translation>
     </message>
     <message>
         <source>Ready to copy %1 to &quot;%2&quot;.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Do &quot;%2&quot; zostaną skopiowane %1.
+</translation>
     </message>
     <message>
         <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Ta kolekcja jest niekompletna. Zostanie zapisana dopiero po potwierdzeniu tego faktu, a wynik zostanie oznaczony jako niekompletny.
+</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -3781,7 +3801,7 @@ kopiowanie zostaje przerwane.
         <source>Video: %1
 
 </source>
-        <translation type="unfinished">Wideo: %1
+        <translation>Wideo: %1
 
 </translation>
     </message>
@@ -3800,11 +3820,12 @@ kopiowanie zostaje przerwane.
     <message>
         <source>Font named &quot;%1&quot;.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Czcionka o nazwie &quot;%1&quot;.
+</translation>
     </message>
     <message>
         <source>(no folder)</source>
-        <translation type="unfinished"></translation>
+        <translation>(brak folderu)</translation>
     </message>
     <message>
         <source>Saved a font named &quot;</source>
@@ -3817,80 +3838,80 @@ kopiowanie zostaje przerwane.
     <message>
         <source>Completed, copied %1 fonts.
 Failed to copy %2 fonts.</source>
-        <translation type="unfinished">Zakończono, skopiowano %1 czcionek.
-Nie udało się skopiować %2 czcionek.</translation>
+        <translation>Zakończono, skopiowano czcionki: %1.
+Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Completed successfully and copied %1 fonts.</source>
-        <translation type="unfinished">Zakończono powodzeniem, skopiowano %1 czcionek.</translation>
+        <translation>Zakończono pomyślnie, skopiowano czcionki: %1.</translation>
     </message>
     <message>
         <source>Added 1 font to “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodano 1 czcionkę do “%1”</translation>
     </message>
     <message numerus="yes">
         <source>Added %n fonts to “%1”</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Dodano %n czcionkę do “%1”</numerusform>
+            <numerusform>Dodano %n czcionki do “%1”</numerusform>
+            <numerusform>Dodano %n czcionek do “%1”</numerusform>
         </translation>
     </message>
     <message>
         <source>The fonts were added to “%1” but could not be saved.</source>
-        <translation type="unfinished"></translation>
+        <translation>Czcionki zostały dodane do “%1”, ale nie można było ich zapisać.</translation>
     </message>
     <message>
         <source>FontCatalogs.txt in the &quot;Config&quot; folder could not be written. Saving is tried again on exit.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zapisać pliku FontCatalogs.txt w folderze &quot;Config&quot;. Zapis zostanie ponowiony przy zamykaniu programu.</translation>
     </message>
     <message>
         <source>From the styles and %1 tags of the open files.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ze stylów i tagów %1 otwartych plików.</translation>
     </message>
     <message>
         <source>From the styles and %1 tags of %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ze stylów i tagów %1 w %2.</translation>
     </message>
     <message>
         <source>Choose a catalog or type a new name.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz katalog lub wpisz nową nazwę.</translation>
     </message>
     <message>
         <source>From</source>
-        <translation type="unfinished"></translation>
+        <translation>Źródło</translation>
     </message>
     <message>
         <source>This file</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten plik</translation>
     </message>
     <message>
         <source>All open files</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie otwarte pliki</translation>
     </message>
     <message>
         <source>Replace the catalog’s fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastąp czcionki katalogu</translation>
     </message>
     <message numerus="yes">
         <source>The fonts of every style and every %1 tag in all %n open files.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Czcionki każdego stylu i każdego tagu %1 w %n otwartym pliku.</numerusform>
+            <numerusform>Czcionki każdego stylu i każdego tagu %1 we wszystkich %n otwartych plikach.</numerusform>
+            <numerusform>Czcionki każdego stylu i każdego tagu %1 we wszystkich %n otwartych plikach.</numerusform>
         </translation>
     </message>
     <message>
         <source>The fonts of every style and every %1 tag in %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>Czcionki każdego stylu i każdego tagu %1 w %2.</translation>
     </message>
     <message>
         <source>The fonts “%1” holds now are removed first.</source>
-        <translation type="unfinished"></translation>
+        <translation>Obecne czcionki katalogu “%1” zostaną najpierw usunięte.</translation>
     </message>
     <message>
         <source>Add fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj czcionki</translation>
     </message>
 </context>
 <context>
@@ -3901,15 +3922,15 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Grid</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista napisów</translation>
     </message>
     <message>
         <source>Editing: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Edycja: %1</translation>
     </message>
     <message>
         <source>No document open</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak otwartego dokumentu</translation>
     </message>
     <message>
         <source>Add lines</source>
@@ -3933,7 +3954,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>&amp;Insert</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Wstaw</translation>
     </message>
     <message>
         <source>Insert &amp;before</source>
@@ -4085,7 +4106,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Hide empty columns</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukryj puste kolumny</translation>
     </message>
     <message>
         <source>Hide layer</source>
@@ -4141,15 +4162,15 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Copy	Ctrl+C</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj	Ctrl+C</translation>
     </message>
     <message>
         <source>Cut	Ctrl+X</source>
-        <translation type="unfinished"></translation>
+        <translation>Wytnij	Ctrl+X</translation>
     </message>
     <message>
         <source>Paste	Ctrl+V</source>
-        <translation type="unfinished"></translation>
+        <translation>Wklej	Ctrl+V</translation>
     </message>
     <message>
         <source>Copy columns</source>
@@ -4165,7 +4186,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Delete lines	Shift+Del</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń linijki	Shift+Del</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
@@ -4173,7 +4194,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -4193,27 +4214,27 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Line group</source>
-        <translation type="unfinished"></translation>
+        <translation>Grupa linijek</translation>
     </message>
     <message>
         <source>This would break the line group “%1”. Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
-        <translation type="unfinished"></translation>
+        <translation>To rozbiłoby grupę linijek “%1”. Nic nie zostało zmienione. Usuń grupę (jej linijka opisu zostanie usunięta) i spróbuj ponownie lub anuluj.</translation>
     </message>
     <message>
         <source>This would leave group members outside a line group. Nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Niektóre linijki grupy znalazłyby się poza grupą linijek. Nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>Remove group</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń grupę</translation>
     </message>
     <message>
         <source>Subtitle lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijki napisów</translation>
     </message>
     <message>
         <source>Line %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijka %1</translation>
     </message>
     <message>
         <source>Layer</source>
@@ -4269,38 +4290,38 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>changed</source>
-        <translation type="unfinished"></translation>
+        <translation>zmieniona</translation>
     </message>
     <message>
         <source>changed, saved</source>
-        <translation type="unfinished"></translation>
+        <translation>zmieniona, zapisana</translation>
     </message>
     <message>
         <source>unconfirmed</source>
-        <translation type="unfinished"></translation>
+        <translation>niepewna</translation>
     </message>
     <message>
         <source>bookmarked</source>
-        <translation type="unfinished"></translation>
+        <translation>z zakładką</translation>
     </message>
     <message>
         <source>uncommitted</source>
-        <translation type="unfinished"></translation>
+        <translation>niezatwierdzona</translation>
     </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n zaznaczona, ukryte: %1</numerusform>
+            <numerusform>%n zaznaczone, ukryte: %1</numerusform>
+            <numerusform>%n zaznaczonych, ukryte: %1</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n selected</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n zaznaczona</numerusform>
+            <numerusform>%n zaznaczone</numerusform>
+            <numerusform>%n zaznaczonych</numerusform>
         </translation>
     </message>
     <message>
@@ -4345,166 +4366,166 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Characters per second</source>
-        <translation type="unfinished"></translation>
+        <translation>Znaki na sekundę</translation>
     </message>
     <message>
         <source>Line wraps</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawinięcia wierszy</translation>
     </message>
     <message>
         <source>Fold generated lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Zwijaj wygenerowane linijki</translation>
     </message>
     <message numerus="yes">
         <source>%n generated lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n wygenerowana linijka</numerusform>
+            <numerusform>%n wygenerowane linijki</numerusform>
+            <numerusform>%n wygenerowanych linijek</numerusform>
         </translation>
     </message>
     <message>
         <source>folded</source>
-        <translation type="unfinished"></translation>
+        <translation>zwinięte</translation>
     </message>
     <message>
         <source>unfolded</source>
-        <translation type="unfinished"></translation>
+        <translation>rozwinięte</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
     <message>
         <source>Today %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Dzisiaj %1</translation>
     </message>
     <message>
         <source>Yesterday %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczoraj %1</translation>
     </message>
     <message>
         <source>Home</source>
-        <translation type="unfinished"></translation>
+        <translation>Strona główna</translation>
     </message>
     <message>
         <source>New</source>
-        <translation type="unfinished">Nowy</translation>
+        <translation>Nowy</translation>
     </message>
     <message>
         <source>New subtitles in a new tab</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowe napisy w nowej zakładce</translation>
     </message>
     <message>
         <source>Open…</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz…</translation>
     </message>
     <message>
         <source>Open video…</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz wideo…</translation>
     </message>
     <message>
         <source>Last session</source>
-        <translation type="unfinished">Ostatnia sesja</translation>
+        <translation>Ostatnia sesja</translation>
     </message>
     <message>
         <source>1 document</source>
-        <translation type="unfinished"></translation>
+        <translation>1 dokument</translation>
     </message>
     <message numerus="yes">
         <source>%n documents</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n dokument</numerusform>
+            <numerusform>%n dokumenty</numerusform>
+            <numerusform>%n dokumentów</numerusform>
         </translation>
     </message>
     <message>
         <source>Restore</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć</translation>
     </message>
     <message>
         <source>Restore session</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć sesję</translation>
     </message>
     <message>
         <source>Autosaves…</source>
-        <translation type="unfinished"></translation>
+        <translation>Autozapisy…</translation>
     </message>
     <message>
         <source>Restore it at every start</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywracaj ją przy każdym uruchomieniu</translation>
     </message>
     <message>
         <source>Dismiss</source>
-        <translation type="unfinished"></translation>
+        <translation>Odrzuć</translation>
     </message>
     <message>
         <source>Recent files</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnie pliki</translation>
     </message>
     <message>
         <source>Filter</source>
-        <translation type="unfinished">Filtruj</translation>
+        <translation>Filtruj</translation>
     </message>
     <message>
         <source>Filter recent files</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtruj ostatnie pliki</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished">Nazwa</translation>
+        <translation>Nazwa</translation>
     </message>
     <message>
         <source>Last opened</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnio otwarty</translation>
     </message>
     <message>
         <source>No recent files</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak ostatnich plików</translation>
     </message>
     <message>
         <source>No matching files</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pasujących plików</translation>
     </message>
     <message>
         <source>last opened %1</source>
-        <translation type="unfinished"></translation>
+        <translation>ostatnio otwarty %1</translation>
     </message>
     <message>
         <source>missing</source>
-        <translation type="unfinished"></translation>
+        <translation>brak pliku</translation>
     </message>
     <message>
         <source>Missing</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pliku</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>Show in folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż w folderze</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">Otwórz</translation>
+        <translation>Otwórz</translation>
     </message>
     <message>
         <source>Copy path</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj ścieżkę</translation>
     </message>
     <message>
         <source>Remove from list</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń z listy</translation>
     </message>
     <message>
         <source>Remove missing files</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń brakujące pliki</translation>
     </message>
     <message>
         <source>Since %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Od %1</translation>
     </message>
 </context>
 <context>
@@ -4515,7 +4536,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Keys for &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Klawisze dla &quot;%1&quot;</translation>
     </message>
     <message>
         <source>Global hotkey</source>
@@ -4539,47 +4560,47 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Press the keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Naciśnij klawisze</translation>
     </message>
     <message>
         <source>Press the keys…</source>
-        <translation type="unfinished"></translation>
+        <translation>Naciśnij klawisze…</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished"></translation>
+        <translation>Działa w</translation>
     </message>
     <message>
         <source>Window</source>
-        <translation type="unfinished"></translation>
+        <translation>Okno</translation>
     </message>
     <message>
         <source>%1 is already used by %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrót %1 jest już używany przez: %2.</translation>
     </message>
     <message>
         <source>Swap with %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamień z: %1</translation>
     </message>
     <message>
         <source>Swap</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamień</translation>
     </message>
     <message>
         <source>Take it from %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejmij od: %1</translation>
     </message>
     <message>
         <source>Take it</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejmij</translation>
     </message>
     <message>
         <source>Keep both</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowaj oba</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished">Oczyść</translation>
+        <translation>Oczyść</translation>
     </message>
     <message>
         <source>Please enter a hotkey for &quot;%1&quot;.</source>
@@ -4611,430 +4632,430 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Exit</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyjście</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto skrót %1 polecenia &quot;Widok wszystko&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;View audio and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto skrót %1 polecenia &quot;Widok audio i napisy&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;View video and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto skrót %1 polecenia &quot;Widok wideo i napisy&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;View only video&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto skrót %1 polecenia &quot;Widok tylko wideo&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;View only subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto skrót %1 polecenia &quot;Widok tylko napisy&quot;: układy menu Widok zostały wycofane; zamiast tego wybierz układ w przełączniku układów.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Enable / Disable editor&quot; was removed: the editor is always shown; hide panels or choose a layout instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto skrót %1 polecenia &quot;Włącz / Wyłącz edytor&quot;: edytor jest zawsze widoczny; zamiast tego ukryj panele lub wybierz układ.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto skrót %1 polecenia &quot;Otwórz okno mapowania skrótów&quot;: tego okna już nie ma, a skrót każdego makra ustawia się w panelu Automatyzacja.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto skrót %1 polecenia &quot;Otwórz puste audio na 2:30 godziny&quot;: polecenie zostało wycofane, a puste wideo ma własne ciche audio.</translation>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto skrót %1 polecenia &quot;Otwórz wideo przez FFMS2&quot;: polecenie zostało wycofane, a wideo jest zawsze indeksowane.</translation>
     </message>
     <message>
         <source>Shortcut &quot;%1&quot; is invalid</source>
-        <translation type="unfinished">Skrót &quot;%1&quot; nie jest prawidłowy</translation>
+        <translation>Skrót &quot;%1&quot; nie jest prawidłowy</translation>
     </message>
     <message>
         <source>%1 takes it</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejmuje go: %1</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Karaoke</name>
     <message>
         <source>Syllable %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Sylaba %1</translation>
     </message>
     <message>
         <source>Syllables %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Sylaby %1</translation>
     </message>
     <message>
         <source>Unclosed syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>Niezamknięta sylaba</translation>
     </message>
     <message>
         <source>A karaoke tag has no duration, or its override block is never closed</source>
-        <translation type="unfinished"></translation>
+        <translation>Tag karaoke nie ma czasu trwania albo jego blok tagów nigdy się nie zamyka</translation>
     </message>
     <message>
         <source>Not read by the audio editor</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieodczytywane przez edytor audio</translation>
     </message>
     <message>
         <source>No karaoke tag&apos;s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas żadnego tagu karaoke nie zaczyna się od cyfry, jak w \k50, więc edytor audio dzieli linijkę od nowa</translation>
     </message>
     <message>
         <source>Other syllables in the audio editor</source>
-        <translation type="unfinished"></translation>
+        <translation>Inne sylaby w edytorze audio</translation>
     </message>
     <message>
         <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback&apos;s</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytor audio dzieli tekst przy każdym tagu \k i odczytuje jego liczbę po swojemu, więc tag taki jak \keep, \kfo50 czy \k(50) daje w nim inne sylaby niż przy odtwarzaniu</translation>
     </message>
     <message>
         <source>Syllables don&apos;t match the line</source>
-        <translation type="unfinished"></translation>
+        <translation>Sylaby nie pasują do linijki</translation>
     </message>
     <message>
         <source>The syllables last %1 s; the line lasts %2 s</source>
-        <translation type="unfinished"></translation>
+        <translation>Sylaby trwają %1 s; linijka trwa %2 s</translation>
     </message>
     <message>
         <source>Zero-length syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>Sylaba o zerowej długości</translation>
     </message>
     <message>
         <source>Syllable outside the line</source>
-        <translation type="unfinished"></translation>
+        <translation>Sylaba poza linijką</translation>
     </message>
     <message>
         <source>Karaoke check</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzanie karaoke</translation>
     </message>
     <message>
         <source>No karaoke problems found</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono problemów z karaoke</translation>
     </message>
     <message>
         <source>Karaoke problems</source>
-        <translation type="unfinished"></translation>
+        <translation>Problemy z karaoke</translation>
     </message>
     <message>
         <source>Line</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijka</translation>
     </message>
     <message>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzenie</translation>
     </message>
     <message>
         <source>Detail</source>
-        <translation type="unfinished"></translation>
+        <translation>Szczegóły</translation>
     </message>
     <message>
         <source>Line %1: %2. %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijka %1: %2. %3</translation>
     </message>
     <message>
         <source>1 more problem not listed; fix these and check again</source>
-        <translation type="unfinished"></translation>
+        <translation>Jeszcze 1 problem poza listą; popraw te i sprawdź ponownie</translation>
     </message>
     <message numerus="yes">
         <source>%n more problems not listed; fix these and check again</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Jeszcze %n problem poza listą; popraw te i sprawdź ponownie</numerusform>
+            <numerusform>Jeszcze %n problemy poza listą; popraw te i sprawdź ponownie</numerusform>
+            <numerusform>Jeszcze %n problemów poza listą; popraw te i sprawdź ponownie</numerusform>
         </translation>
     </message>
     <message>
         <source>Re-check</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź ponownie</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">Zamknij</translation>
+        <translation>Zamknij</translation>
     </message>
     <message>
         <source>Kanji timer</source>
-        <translation type="unfinished"></translation>
+        <translation>Timer kanji</translation>
     </message>
     <message>
         <source>The kanji timing could not be applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zastosować timingu kanji</translation>
     </message>
     <message>
         <source>The subtitles are read-only.</source>
-        <translation type="unfinished"></translation>
+        <translation>Napisy są tylko do odczytu.</translation>
     </message>
     <message numerus="yes">
         <source>Apply the kanji timing of %n lines?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zastosować timing kanji %n linijki?</numerusform>
+            <numerusform>Zastosować timing kanji %n linijek?</numerusform>
+            <numerusform>Zastosować timing kanji %n linijek?</numerusform>
         </translation>
     </message>
     <message>
         <source>They are done but not in the subtitles yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>Są gotowe, ale jeszcze nie trafiły do napisów.</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">Zastosuj</translation>
+        <translation>Zastosuj</translation>
     </message>
     <message>
         <source>Discard</source>
-        <translation type="unfinished"></translation>
+        <translation>Odrzuć</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Suggested</source>
-        <translation type="unfinished"></translation>
+        <translation>Sugestia</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <translation>Gotowe</translation>
     </message>
     <message>
         <source>Applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosowano</translation>
     </message>
     <message>
         <source>Changed</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmieniono</translation>
     </message>
     <message>
         <source>No kanji line</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak linijki kanji</translation>
     </message>
     <message>
         <source>No romaji line</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak linijki romaji</translation>
     </message>
     <message>
         <source>To do</source>
-        <translation type="unfinished"></translation>
+        <translation>Do zrobienia</translation>
     </message>
     <message>
         <source>Romaji</source>
-        <translation type="unfinished"></translation>
+        <translation>Romaji</translation>
     </message>
     <message>
         <source>Romaji style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl romaji</translation>
     </message>
     <message>
         <source>Kanji</source>
-        <translation type="unfinished"></translation>
+        <translation>Kanji</translation>
     </message>
     <message>
         <source>Kanji style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl kanji</translation>
     </message>
     <message>
         <source>Suggest groupings</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaproponuj grupy</translation>
     </message>
     <message>
         <source>Multi-highlight (#)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wielokrotne podświetlenie (#)</translation>
     </message>
     <message>
         <source>Write each further syllable of a group as a # syllable, for the templater&apos;s multi effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisuje każdą kolejną sylabę grupy jako sylabę #, na potrzeby efektów multi w templaterze</translation>
     </message>
     <message>
         <source>Furigana</source>
-        <translation type="unfinished"></translation>
+        <translation>Furigana</translation>
     </message>
     <message>
         <source>Write each kanji&apos;s reading after it (漢|かん), as the romaji sings it</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisuje czytanie każdego kanji po nim (漢|かん), tak jak śpiewa je romaji</translation>
     </message>
     <message>
         <source>No reading dictionary: readings come from the romaji only.</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak słownika czytań: czytania pochodzą tylko z romaji.</translation>
     </message>
     <message>
         <source>Dictionary: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Słownik: %1</translation>
     </message>
     <message>
         <source>Not sung in kana</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieśpiewane w kanie</translation>
     </message>
     <message>
         <source>Reading</source>
-        <translation type="unfinished"></translation>
+        <translation>Czytanie</translation>
     </message>
     <message>
         <source>No furigana</source>
-        <translation type="unfinished"></translation>
+        <translation>Bez furigany</translation>
     </message>
     <message>
         <source>Use the suggestion</source>
-        <translation type="unfinished"></translation>
+        <translation>Użyj sugestii</translation>
     </message>
     <message>
         <source>Choose two different styles.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz dwa różne style.</translation>
     </message>
     <message>
         <source>No karaoke lines in “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak linijek karaoke w “%1”</translation>
     </message>
     <message>
         <source>The subtitles have no styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Napisy nie mają stylów</translation>
     </message>
     <message>
         <source>No lines to pair</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak linijek do sparowania</translation>
     </message>
     <message>
         <source>Line pairs</source>
-        <translation type="unfinished"></translation>
+        <translation>Pary linijek</translation>
     </message>
     <message>
         <source>Line pair %1: %2, %3. %4</source>
-        <translation type="unfinished"></translation>
+        <translation>Para linijek %1: %2, %3. %4</translation>
     </message>
     <message>
         <source>no kanji line</source>
-        <translation type="unfinished"></translation>
+        <translation>brak linijki kanji</translation>
     </message>
     <message>
         <source>no romaji line</source>
-        <translation type="unfinished"></translation>
+        <translation>brak linijki romaji</translation>
     </message>
     <message>
         <source>%1 of %2 groups</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 z %2 grup</translation>
     </message>
     <message>
         <source>Choose the romaji and kanji styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz style romaji i kanji</translation>
     </message>
     <message>
         <source>No pair with both lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pary z obiema linijkami</translation>
     </message>
     <message>
         <source>%1 s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 s</translation>
     </message>
     <message>
         <source>Groups</source>
-        <translation type="unfinished"></translation>
+        <translation>Grupy</translation>
     </message>
     <message>
         <source>Up and Down: syllables. Right and Left: kanji. Enter links, Backspace unlinks.</source>
-        <translation type="unfinished"></translation>
+        <translation>W górę i w dół: sylaby. W prawo i w lewo: kanji. Enter łączy, Backspace rozłącza.</translation>
     </message>
     <message>
         <source>“%1” has no kanji left. Enter links it on its own (a blank group); Backspace reopens the group before, where ↑ takes it in.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sylabie “%1” nie zostały już żadne kanji. Enter łączy ją samodzielnie (pusta grupa); Backspace ponownie otwiera poprzednią grupę, do której ↑ ją dołącza.</translation>
     </message>
     <message>
         <source>Click a kanji: the current group ends there. Click a syllable: its romaji does.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kliknij kanji: bieżąca grupa kończy się na nim. Kliknij sylabę: grupa kończy się na jej romaji.</translation>
     </message>
     <message>
         <source>blank ← %1 · %2 cs</source>
-        <translation type="unfinished"></translation>
+        <translation>pusta ← %1 · %2 cs</translation>
     </message>
     <message>
         <source>%1 ← %2 (%3) · %4 cs</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 ← %2 (%3) · %4 cs</translation>
     </message>
     <message>
         <source>%1 ← %2 · %3 cs</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 ← %2 · %3 cs</translation>
     </message>
     <message>
         <source>Link</source>
-        <translation type="unfinished"></translation>
+        <translation>Połącz</translation>
     </message>
     <message>
         <source>Unlink</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozłącz</translation>
     </message>
     <message>
         <source>Skip romaji line</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomiń linijkę romaji</translation>
     </message>
     <message>
         <source>Skip kanji line</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomiń linijkę kanji</translation>
     </message>
     <message>
         <source>Previous</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzednia</translation>
     </message>
     <message>
         <source>Accept line</source>
-        <translation type="unfinished"></translation>
+        <translation>Akceptuj linijkę</translation>
     </message>
     <message>
         <source>Result</source>
-        <translation type="unfinished"></translation>
+        <translation>Wynik</translation>
     </message>
     <message>
         <source>Result: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wynik: %1</translation>
     </message>
     <message>
         <source>%1 cs</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 cs</translation>
     </message>
     <message>
         <source>romaji</source>
-        <translation type="unfinished"></translation>
+        <translation>romaji</translation>
     </message>
     <message>
         <source>kanji</source>
-        <translation type="unfinished"></translation>
+        <translation>kanji</translation>
     </message>
     <message>
         <source>Enter</source>
-        <translation type="unfinished"></translation>
+        <translation>Enter</translation>
     </message>
     <message>
         <source>link</source>
-        <translation type="unfinished"></translation>
+        <translation>połącz</translation>
     </message>
     <message>
         <source>Backspace</source>
-        <translation type="unfinished"></translation>
+        <translation>Backspace</translation>
     </message>
     <message>
         <source>unlink</source>
-        <translation type="unfinished"></translation>
+        <translation>rozłącz</translation>
     </message>
     <message>
         <source>Ctrl+Enter</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+Enter</translation>
     </message>
     <message>
         <source>accept line</source>
-        <translation type="unfinished"></translation>
+        <translation>akceptuj linijkę</translation>
     </message>
     <message>
         <source>Ctrl+Z</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+Z</translation>
     </message>
     <message>
         <source>undo</source>
-        <translation type="unfinished"></translation>
+        <translation>cofnij</translation>
     </message>
     <message>
         <source>Accept all suggestions</source>
-        <translation type="unfinished"></translation>
+        <translation>Akceptuj wszystkie sugestie</translation>
     </message>
 </context>
 <context>
@@ -5045,7 +5066,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>%1 - HikariSub</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 - HikariSub</translation>
     </message>
     <message>
         <source>Convert to ASS</source>
@@ -5097,7 +5118,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>&amp;Open…</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Otwórz…</translation>
     </message>
     <message>
         <source>Recently opened &amp;subtitles</source>
@@ -5113,7 +5134,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>&amp;Close</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Zamknij</translation>
     </message>
     <message>
         <source>&amp;Save</source>
@@ -5125,7 +5146,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Save &amp;as…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz &amp;jako…</translation>
     </message>
     <message>
         <source>Save &amp;translation</source>
@@ -5177,7 +5198,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Wyjście</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
@@ -5229,7 +5250,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>&amp;Automation</source>
-        <translation type="unfinished"></translation>
+        <translation>Au&amp;tomatyzacja</translation>
     </message>
     <message>
         <source>Open shortcut mapping window</source>
@@ -5237,7 +5258,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>&amp;Load script…</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Wczytaj skrypt…</translation>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
@@ -5245,7 +5266,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation type="unfinished"></translation>
+        <translation>Uruchom ponownie ostatnie makro</translation>
     </message>
     <message>
         <source>&amp;Video</source>
@@ -5253,7 +5274,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Open &amp;video…</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz &amp;wideo…</translation>
     </message>
     <message>
         <source>Previous frame</source>
@@ -5289,7 +5310,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Import legacy settings...</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj ustawienia starej wersji...</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -5325,7 +5346,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Unload video</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknij wideo</translation>
     </message>
     <message>
         <source>Zoom video</source>
@@ -5361,35 +5382,35 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Vie&amp;w</source>
-        <translation type="unfinished"></translation>
+        <translation>Wido&amp;k</translation>
     </message>
     <message>
         <source>&amp;Layout</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Układ</translation>
     </message>
     <message>
         <source>&amp;Panels</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Panele</translation>
     </message>
     <message>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż</translation>
     </message>
     <message>
         <source>Hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukryj</translation>
     </message>
     <message>
         <source>Float</source>
-        <translation type="unfinished"></translation>
+        <translation>Odepnij</translation>
     </message>
     <message>
         <source>Dock</source>
-        <translation type="unfinished"></translation>
+        <translation>Zadokuj</translation>
     </message>
     <message>
         <source>&amp;Move panel…</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Przenieś panel…</translation>
     </message>
     <message>
         <source>Editing</source>
@@ -5397,11 +5418,11 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Development</source>
-        <translation type="unfinished"></translation>
+        <translation>Programowanie</translation>
     </message>
     <message>
         <source>Design and development</source>
-        <translation type="unfinished"></translation>
+        <translation>Projekt i programowanie</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -5409,23 +5430,23 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Korean, Polish, Tamil and Thai</source>
-        <translation type="unfinished"></translation>
+        <translation>Koreański, polski, tamilski i tajski</translation>
     </message>
     <message>
         <source>Built with</source>
-        <translation type="unfinished"></translation>
+        <translation>Zbudowano przy użyciu</translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć poprzedni układ</translation>
     </message>
     <message>
         <source>&amp;Subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Napisy</translation>
     </message>
     <message>
         <source>Shift &amp;times...</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń &amp;czasy...</translation>
     </message>
     <message>
         <source>Shift times / run time post processor</source>
@@ -5477,11 +5498,11 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Shows the release notes of the versions since the one you used before</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuje informacje o wydaniach od wersji używanej poprzednio</translation>
     </message>
     <message>
         <source>What&apos;s &amp;new</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Co nowego</translation>
     </message>
     <message>
         <source>&amp;About</source>
@@ -5517,11 +5538,11 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>History (1 element)</source>
-        <translation type="unfinished"></translation>
+        <translation>Historia (1 element)</translation>
     </message>
     <message>
         <source>History (%1 elements)</source>
-        <translation type="unfinished"></translation>
+        <translation>Historia (elementy: %1)</translation>
     </message>
     <message>
         <source>Set</source>
@@ -5529,7 +5550,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -5725,11 +5746,11 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Cancel macro</source>
-        <translation type="unfinished"></translation>
+        <translation>Anuluj makro</translation>
     </message>
     <message>
         <source>Show &amp;panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż &amp;panel</translation>
     </message>
     <message>
         <source>Go to previous frame</source>
@@ -5753,7 +5774,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Show / hide render cost</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż / ukryj koszt renderowania</translation>
     </message>
     <message>
         <source>Opens audio file</source>
@@ -5765,11 +5786,11 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Copies the karaoke timing of romaji lines to their kanji lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuje timing karaoke linijek romaji do odpowiadających im linijek kanji</translation>
     </message>
     <message>
         <source>Kanji timer…</source>
-        <translation type="unfinished"></translation>
+        <translation>Timer kanji…</translation>
     </message>
     <message>
         <source>Opens the user guide in the default browser</source>
@@ -5781,7 +5802,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Install update</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj aktualizację</translation>
     </message>
     <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
@@ -5813,15 +5834,15 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdza sylaby karaoke w każdej linijce</translation>
     </message>
     <message>
         <source>Check karaoke</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź karaoke</translation>
     </message>
     <message>
         <source>Hide tags in the line editor</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukryj tagi w edytorze linijki</translation>
     </message>
     <message>
         <source>Opens the HikariSub website in the default browser</source>
@@ -5853,11 +5874,11 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Dziennik</translation>
     </message>
     <message>
         <source>Check for updates</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź aktualizacje</translation>
     </message>
     <message>
         <source>You already have the latest version</source>
@@ -5881,51 +5902,51 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>This version needs Windows %1 or later.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ta wersja wymaga systemu Windows %1 lub nowszego.</translation>
     </message>
     <message>
         <source>This version needs glibc %1 or later.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ta wersja wymaga glibc w wersji %1 lub nowszej.</translation>
     </message>
     <message>
         <source>You have version %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Masz wersję %1.</translation>
     </message>
     <message>
         <source>The AUR package carries stable versions only. To try %1, use the AppImage from the release page.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pakiet AUR zawiera tylko wersje stabilne. Aby wypróbować %1, użyj AppImage ze strony wydania.</translation>
     </message>
     <message>
         <source>Update with your AUR helper</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaktualizuj za pomocą pomocnika AUR</translation>
     </message>
     <message>
         <source>You installed HikariSub from the AUR, so your package manager updates it.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub zainstalowano z AUR, więc aktualizuje go menedżer pakietów.</translation>
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation>Polecenie</translation>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiowano</translation>
     </message>
     <message>
         <source>Downloading… %1 %</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobieranie… %1 %</translation>
     </message>
     <message>
         <source>Skip this version</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomiń tę wersję</translation>
     </message>
     <message>
         <source>Open the release page</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz stronę wydania</translation>
     </message>
     <message>
         <source>Remind me later</source>
-        <translation type="unfinished"></translation>
+        <translation>Przypomnij później</translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
@@ -5941,7 +5962,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Download and install</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobierz i zainstaluj</translation>
     </message>
     <message>
         <source>Remind me in a week</source>
@@ -5953,27 +5974,27 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wersja %1</translation>
     </message>
     <message>
         <source>Copy version</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj wersję</translation>
     </message>
     <message>
         <source>Subtitle editor by altqx.</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytor napisów autorstwa altqx.</translation>
     </message>
     <message>
         <source>HikariSub is free software under the GNU General Public License, version 3. It comes with no warranty.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub to wolne oprogramowanie na licencji GNU General Public License w wersji 3. Jest dostarczany bez żadnej gwarancji.</translation>
     </message>
     <message>
         <source>HikariSub website</source>
-        <translation type="unfinished"></translation>
+        <translation>Strona HikariSub</translation>
     </message>
     <message>
         <source>Report an issue</source>
-        <translation type="unfinished"></translation>
+        <translation>Zgłoś problem</translation>
     </message>
     <message>
         <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
@@ -6105,371 +6126,371 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>The update to HikariSub %1 could not be installed (error %2).</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zainstalować aktualizacji do HikariSub %1 (błąd %2).</translation>
     </message>
     <message>
         <source>HikariSub %1 was not installed: its installer did not finish. If another administrator account approved it, that account was told why.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub %1 nie został zainstalowany: jego instalator nie zakończył pracy. Jeśli instalację zatwierdziło inne konto administratora, to konto otrzymało informację o przyczynie.</translation>
     </message>
     <message>
         <source>Cannot write the update to %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zapisać aktualizacji w %1</translation>
     </message>
     <message>
         <source>Cannot download the update: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można pobrać aktualizacji: %1</translation>
     </message>
     <message>
         <source>The downloaded update does not match its checksum, so it was deleted.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobrana aktualizacja nie zgadza się z sumą kontrolną, więc została usunięta.</translation>
     </message>
     <message>
         <source>The download of HikariSub %1 changed or went missing, so it was not installed. It is downloaded again at the next check.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobrany plik HikariSub %1 zmienił się lub zniknął, więc nie został zainstalowany. Zostanie pobrany ponownie przy następnym sprawdzeniu.</translation>
     </message>
     <message>
         <source>HikariSub is installed for all users in a folder that can be changed without administrator rights, so HikariSub %1 was not installed automatically. Run %2 to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub jest zainstalowany dla wszystkich użytkowników w folderze, który można zmienić bez uprawnień administratora, więc HikariSub %1 nie został zainstalowany automatycznie. Aby go zainstalować, uruchom %2.</translation>
     </message>
     <message>
         <source>The installer of HikariSub %1 could not be started. Run %2 to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można uruchomić instalatora HikariSub %1. Aby zainstalować tę wersję, uruchom %2.</translation>
     </message>
     <message>
         <source>HikariSub %1 could not be checked against its release on GitHub, so it was not installed. It will be tried again when you next quit.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zweryfikować HikariSub %1 względem jego wydania w serwisie GitHub, więc nie został zainstalowany. Kolejna próba nastąpi przy następnym zamknięciu programu.</translation>
     </message>
     <message>
         <source>Cannot keep a copy of %1, so the update was not installed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zachować kopii %1, więc aktualizacja nie została zainstalowana.</translation>
     </message>
     <message>
         <source>Cannot replace %1, so the update was not installed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zastąpić %1, więc aktualizacja nie została zainstalowana.</translation>
     </message>
     <message>
         <source>HikariSub %1 did not start, so the version you had was put back.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub %1 się nie uruchomił, więc przywrócono poprzednią wersję.</translation>
     </message>
     <message>
         <source>The downloaded HikariSub %1 package did not pass its checks, so it was not installed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobrany pakiet HikariSub %1 nie przeszedł weryfikacji, więc nie został zainstalowany.</translation>
     </message>
     <message>
         <source>HikariSub %1 was not installed because the package manager is busy. It will be installed when you next quit.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub %1 nie został zainstalowany, ponieważ menedżer pakietów jest zajęty. Zostanie zainstalowany przy następnym zamknięciu programu.</translation>
     </message>
     <message>
         <source>The package manager could not install HikariSub %1 (error %2). The file is %3.</source>
-        <translation type="unfinished"></translation>
+        <translation>Menedżer pakietów nie mógł zainstalować HikariSub %1 (błąd %2). Plik: %3.</translation>
     </message>
     <message>
         <source>installer</source>
-        <translation type="unfinished"></translation>
+        <translation>instalator</translation>
     </message>
     <message>
         <source>portable</source>
-        <translation type="unfinished"></translation>
+        <translation>wersja przenośna</translation>
     </message>
     <message>
         <source>Update downloaded: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobrano aktualizację: %1</translation>
     </message>
     <message>
         <source>HikariSub %1 is ready to install</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub %1 jest gotowy do instalacji</translation>
     </message>
     <message>
         <source>What&apos;s new</source>
-        <translation type="unfinished"></translation>
+        <translation>Co nowego</translation>
     </message>
     <message>
         <source>Restart now</source>
-        <translation type="unfinished"></translation>
+        <translation>Uruchom ponownie teraz</translation>
     </message>
     <message>
         <source>Later</source>
-        <translation type="unfinished"></translation>
+        <translation>Później</translation>
     </message>
     <message>
         <source>Show in folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż w folderze</translation>
     </message>
     <message>
         <source>Copy install command</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj polecenie instalacji</translation>
     </message>
     <message>
         <source>Menus</source>
-        <translation type="unfinished"></translation>
+        <translation>Menu</translation>
     </message>
     <message>
         <source>Window menu</source>
-        <translation type="unfinished"></translation>
+        <translation>Menu okna</translation>
     </message>
     <message>
         <source>More menus</source>
-        <translation type="unfinished"></translation>
+        <translation>Więcej menu</translation>
     </message>
     <message>
         <source>Minimise</source>
-        <translation type="unfinished"></translation>
+        <translation>Minimalizuj</translation>
     </message>
     <message>
         <source>Restore</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć</translation>
     </message>
     <message>
         <source>Maximise</source>
-        <translation type="unfinished"></translation>
+        <translation>Maksymalizuj</translation>
     </message>
     <message>
         <source>Application menu</source>
-        <translation type="unfinished"></translation>
+        <translation>Menu aplikacji</translation>
     </message>
     <message>
         <source>Pre-release</source>
-        <translation type="unfinished"></translation>
+        <translation>Wersja wstępna</translation>
     </message>
     <message>
         <source>And 1 earlier version: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>I 1 wcześniejsza wersja: %1</translation>
     </message>
     <message numerus="yes">
         <source>And %n earlier versions: %1</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>I %n wcześniejsza wersja: %1</numerusform>
+            <numerusform>I %n wcześniejsze wersje: %1</numerusform>
+            <numerusform>I %n wcześniejszych wersji: %1</numerusform>
         </translation>
     </message>
     <message>
         <source>Don&apos;t ask again</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie pytaj ponownie</translation>
     </message>
     <message>
         <source>Details</source>
-        <translation type="unfinished"></translation>
+        <translation>Szczegóły</translation>
     </message>
     <message>
         <source>Expanded</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozwinięte</translation>
     </message>
     <message>
         <source>Collapsed</source>
-        <translation type="unfinished"></translation>
+        <translation>Zwinięte</translation>
     </message>
     <message>
         <source>Copy details</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj szczegóły</translation>
     </message>
     <message>
         <source>Notices</source>
-        <translation type="unfinished"></translation>
+        <translation>Powiadomienia</translation>
     </message>
     <message>
         <source>Dismiss</source>
-        <translation type="unfinished"></translation>
+        <translation>Odrzuć</translation>
     </message>
     <message numerus="yes">
         <source>%n more notice(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Jeszcze %n powiadomienie</numerusform>
+            <numerusform>Jeszcze %n powiadomienia</numerusform>
+            <numerusform>Jeszcze %n powiadomień</numerusform>
         </translation>
     </message>
     <message>
         <source>all release notes</source>
-        <translation type="unfinished"></translation>
+        <translation>wszystkie informacje o wydaniach</translation>
     </message>
     <message>
         <source>All release notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie informacje o wydaniach</translation>
     </message>
     <message>
         <source>Changes since version %1, the one you used before.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmiany od wersji %1, używanej poprzednio.</translation>
     </message>
     <message>
         <source>Fetching the release notes…</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobieranie informacji o wydaniach…</translation>
     </message>
     <message>
         <source>Cannot fetch the release notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można pobrać informacji o wydaniach</translation>
     </message>
     <message>
         <source>No release notes for this version</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak informacji o wydaniu tej wersji</translation>
     </message>
     <message>
         <source>No release notes yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak jeszcze informacji o wydaniach</translation>
     </message>
     <message>
         <source>HikariSub tries again at the next start.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub spróbuje ponownie przy następnym uruchomieniu.</translation>
     </message>
     <message>
         <source>HikariSub fetches the release notes only while “Check for updates automatically” is on.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub pobiera informacje o wydaniach tylko wtedy, gdy opcja “Automatycznie sprawdzaj aktualizacje” jest włączona.</translation>
     </message>
     <message>
         <source>Open the Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz dziennik</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished">Zamień</translation>
+        <translation>Zamień</translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień nazwę</translation>
     </message>
     <message>
         <source>Skip</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomiń</translation>
     </message>
     <message>
         <source>All:</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie:</translation>
     </message>
     <message>
         <source>Action for every row</source>
-        <translation type="unfinished"></translation>
+        <translation>Akcja dla każdego wiersza</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished">Nazwa</translation>
+        <translation>Nazwa</translation>
     </message>
     <message>
         <source>Difference</source>
-        <translation type="unfinished"></translation>
+        <translation>Różnica</translation>
     </message>
     <message>
         <source>Merge</source>
-        <translation type="unfinished">Scal</translation>
+        <translation>Scal</translation>
     </message>
     <message>
         <source>Action</source>
-        <translation type="unfinished">Akcja</translation>
+        <translation>Akcja</translation>
     </message>
     <message>
         <source>Action for %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Akcja dla: %1</translation>
     </message>
     <message>
         <source>New name for %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowa nazwa dla: %1</translation>
     </message>
     <message>
         <source>Already exists</source>
-        <translation type="unfinished"></translation>
+        <translation>Już istnieje</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">Zastosuj</translation>
+        <translation>Zastosuj</translation>
     </message>
     <message>
         <source>Choose styles</source>
-        <translation type="unfinished">Wybierz style</translation>
+        <translation>Wybierz style</translation>
     </message>
     <message>
         <source>Search styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukaj stylów</translation>
     </message>
     <message>
         <source>No styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak stylów</translation>
     </message>
     <message>
         <source>No style matches</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pasujących stylów</translation>
     </message>
     <message>
         <source>Select all</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacz wszystko</translation>
     </message>
     <message>
         <source>%1 of %2 selected</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznaczono %1 z %2</translation>
     </message>
     <message>
         <source>A week ago</source>
-        <translation type="unfinished"></translation>
+        <translation>Tydzień temu</translation>
     </message>
     <message>
         <source>A month ago</source>
-        <translation type="unfinished"></translation>
+        <translation>Miesiąc temu</translation>
     </message>
     <message>
         <source>Date, as %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Data w formacie %1</translation>
     </message>
     <message>
         <source>Choose a date</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz datę</translation>
     </message>
     <message>
         <source>Previous month</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzedni miesiąc</translation>
     </message>
     <message>
         <source>Next month</source>
-        <translation type="unfinished"></translation>
+        <translation>Następny miesiąc</translation>
     </message>
     <message>
         <source>Today</source>
-        <translation type="unfinished"></translation>
+        <translation>Dzisiaj</translation>
     </message>
     <message>
         <source>Information</source>
-        <translation type="unfinished"></translation>
+        <translation>Informacje</translation>
     </message>
     <message>
         <source>Warnings</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostrzeżenia</translation>
     </message>
     <message>
         <source>Errors</source>
-        <translation type="unfinished"></translation>
+        <translation>Błędy</translation>
     </message>
     <message>
         <source>Filter</source>
-        <translation type="unfinished">Filtruj</translation>
+        <translation>Filtruj</translation>
     </message>
     <message>
         <source>Filter the Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtruj dziennik</translation>
     </message>
     <message>
         <source>Copy</source>
-        <translation type="unfinished">Kopiuj</translation>
+        <translation>Kopiuj</translation>
     </message>
     <message>
         <source>Copy the entries shown</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj widoczne wpisy</translation>
     </message>
     <message>
         <source>No entries match</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pasujących wpisów</translation>
     </message>
     <message>
         <source>Nothing logged yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Dziennik jest jeszcze pusty</translation>
     </message>
     <message>
         <source>Installing HikariSub %1…</source>
-        <translation type="unfinished"></translation>
+        <translation>Instalowanie HikariSub %1…</translation>
     </message>
     <message>
         <source>Installing update…</source>
-        <translation type="unfinished"></translation>
+        <translation>Instalowanie aktualizacji…</translation>
     </message>
     <message>
         <source>Enter your password when the system asks for it. HikariSub starts again when the install is done.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz hasło, gdy system o nie poprosi. HikariSub uruchomi się ponownie po zakończeniu instalacji.</translation>
     </message>
     <message>
         <source>Help</source>
@@ -6496,7 +6517,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Loading subtitles from %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytywanie napisów z %1</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -6504,7 +6525,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
-        <translation type="unfinished">Wczytaj napisy z pliku MKV / OGM</translation>
+        <translation>Wczytaj napisy z pliku MKV / OGM</translation>
     </message>
     <message>
         <source>The file does not contain any subtitle tracks.</source>
@@ -6512,31 +6533,31 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Choose the subtitle track</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz ścieżkę napisów</translation>
     </message>
     <message>
         <source>Load subtitles from MKV</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj napisy z MKV</translation>
     </message>
     <message>
         <source>Save the changes to “%1” first?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisać najpierw zmiany w “%1”?</translation>
     </message>
     <message>
         <source>The subtitles from %1 replace this tab’s.</source>
-        <translation type="unfinished"></translation>
+        <translation>Napisy z %1 zastąpią napisy tej zakładki.</translation>
     </message>
     <message>
         <source>Save and load</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz i wczytaj</translation>
     </message>
     <message>
         <source>Load without saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj bez zapisywania</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">Otwórz</translation>
+        <translation>Otwórz</translation>
     </message>
     <message>
         <source>Choose subtitle track</source>
@@ -6548,11 +6569,11 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Time elapsed: %1</source>
-        <translation type="unfinished">Upłynęło %1 sekund</translation>
+        <translation>Upłynęło: %1</translation>
     </message>
     <message>
         <source>Indexing error occurred: %1</source>
-        <translation type="unfinished">Wystąpił błąd indeksowania: %1</translation>
+        <translation>Wystąpił błąd indeksowania: %1</translation>
     </message>
 </context>
 <context>
@@ -6563,7 +6584,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Fix minor errors</source>
-        <translation type="unfinished"></translation>
+        <translation>Popraw drobne błędy</translation>
     </message>
     <message>
         <source>Rule editing</source>
@@ -6607,7 +6628,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Rules</source>
-        <translation type="unfinished"></translation>
+        <translation>Reguły</translation>
     </message>
     <message>
         <source>Description</source>
@@ -6699,7 +6720,7 @@ we wszystkich zakładkach</translation>
     </message>
     <message>
         <source>Line %1: </source>
-        <translation type="unfinished">Linia %1: </translation>
+        <translation>Linijka %1: </translation>
     </message>
     <message>
         <source>Check all</source>
@@ -6716,12 +6737,12 @@ we wszystkich zakładkach</translation>
     <message>
         <source>Line %1 cannot be replaced,
 cause it was edited.</source>
-        <translation type="unfinished">Linia %1 nie może być zamieniona,
-bo została zedytowana.</translation>
+        <translation>Nie można zamienić linijki %1,
+ponieważ została zedytowana.</translation>
     </message>
     <message>
         <source>Rule &quot;%1&quot; is invalid.</source>
-        <translation type="unfinished">Reguła &quot;%1&quot; jest nieprawidłowa.</translation>
+        <translation>Reguła &quot;%1&quot; jest nieprawidłowa.</translation>
     </message>
     <message>
         <source>Cannot change rules
@@ -6731,7 +6752,7 @@ gdy okno wyników szukania jest otwarte</translation>
     </message>
     <message>
         <source>Cannot replace &quot;%1&quot; to &quot;%2&quot;, with rule &quot;%3&quot; in line %4.</source>
-        <translation type="unfinished">Nie można zamienić &quot;%1&quot; na &quot;%2&quot;, wykorzystując regułę &quot;%3&quot; w linii %4.</translation>
+        <translation>Nie można zamienić &quot;%1&quot; na &quot;%2&quot; przy użyciu reguły &quot;%3&quot; w linijce %4.</translation>
     </message>
 </context>
 <context>
@@ -6765,39 +6786,39 @@ gdy okno wyników szukania jest otwarte</translation>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
-        <translation type="unfinished"></translation>
+        <translation>Motyw</translation>
     </message>
     <message>
         <source>Interface theme</source>
-        <translation type="unfinished"></translation>
+        <translation>Motyw interfejsu</translation>
     </message>
     <message>
         <source>Follow system theme</source>
-        <translation type="unfinished"></translation>
+        <translation>Używaj motywu systemowego</translation>
     </message>
     <message>
         <source>Light or Dark as the system&apos;s colour scheme sets it; high contrast stays as chosen</source>
-        <translation type="unfinished"></translation>
+        <translation>Jasny lub ciemny, zgodnie ze schematem kolorów systemu; wysoki kontrast pozostaje taki, jak wybrano</translation>
     </message>
     <message>
         <source>Choose…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz…</translation>
     </message>
     <message>
         <source>Accent color</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolor akcentu</translation>
     </message>
     <message>
         <source>Accent</source>
-        <translation type="unfinished"></translation>
+        <translation>Akcent</translation>
     </message>
     <message>
         <source>%1 (contrast %2:1)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (kontrast %2:1)</translation>
     </message>
     <message>
         <source>Program font</source>
-        <translation type="unfinished"></translation>
+        <translation>Czcionka programu</translation>
     </message>
     <message>
         <source>Preview text</source>
@@ -6809,27 +6830,27 @@ gdy okno wyników szukania jest otwarte</translation>
     </message>
     <message>
         <source>Window</source>
-        <translation type="unfinished"></translation>
+        <translation>Okno</translation>
     </message>
     <message>
         <source>Use system title bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Używaj systemowego paska tytułu</translation>
     </message>
     <message>
         <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
-        <translation type="unfinished"></translation>
+        <translation>Domyślnie wyłączone w systemie Windows, KDE Plasma i GNOME; domyślnie włączone w kafelkowych menedżerach okien.</translation>
     </message>
     <message>
         <source>UI colors</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolory interfejsu</translation>
     </message>
     <message>
         <source>Choose %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz: %1</translation>
     </message>
     <message>
         <source>Reset to default</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć domyślne</translation>
     </message>
     <message>
         <source>Options</source>
@@ -6849,11 +6870,11 @@ gdy okno wyników szukania jest otwarte</translation>
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Font size</source>
@@ -6897,11 +6918,11 @@ gdy okno wyników szukania jest otwarte</translation>
     </message>
     <message>
         <source>Appearance</source>
-        <translation type="unfinished"></translation>
+        <translation>Wygląd</translation>
     </message>
     <message>
         <source>Language</source>
-        <translation type="unfinished"></translation>
+        <translation>Język</translation>
     </message>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
@@ -6909,19 +6930,19 @@ gdy okno wyników szukania jest otwarte</translation>
     </message>
     <message>
         <source>None chosen</source>
-        <translation type="unfinished"></translation>
+        <translation>Nic nie wybrano</translation>
     </message>
     <message>
         <source>No dictionaries found</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono słowników</translation>
     </message>
     <message>
         <source>Notices</source>
-        <translation type="unfinished"></translation>
+        <translation>Powiadomienia</translation>
     </message>
     <message>
         <source>Ask again</source>
-        <translation type="unfinished"></translation>
+        <translation>Pytaj ponownie</translation>
     </message>
     <message>
         <source>Open sorted subtitles</source>
@@ -7003,35 +7024,35 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawiaj brakującą rozdzielczość skryptu na podstawie wideo bez pytania</translation>
     </message>
     <message>
         <source>Tag buttons</source>
-        <translation type="unfinished"></translation>
+        <translation>Przyciski tagów</translation>
     </message>
     <message>
         <source>No tag buttons</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak przycisków tagów</translation>
     </message>
     <message>
         <source>Add a tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj przycisk tagu</translation>
     </message>
     <message>
         <source>Edit the tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj przycisk tagu</translation>
     </message>
     <message>
         <source>Move up</source>
-        <translation type="unfinished"></translation>
+        <translation>Przenieś w górę</translation>
     </message>
     <message>
         <source>Move down</source>
-        <translation type="unfinished"></translation>
+        <translation>Przenieś w dół</translation>
     </message>
     <message>
         <source>Remove the tag button</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń przycisk tagu</translation>
     </message>
     <message>
         <source>Choose catalog</source>
@@ -7199,11 +7220,11 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Playback</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwarzanie</translation>
     </message>
     <message>
         <source>Built-in</source>
-        <translation type="unfinished"></translation>
+        <translation>Wbudowany</translation>
     </message>
     <message>
         <source>Start video zoom in percent.</source>
@@ -7235,11 +7256,11 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Hotkeys follow the panel under the pointer</source>
-        <translation type="unfinished"></translation>
+        <translation>Skróty klawiszowe działają w panelu pod wskaźnikiem</translation>
     </message>
     <message>
         <source>Choose external font folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz zewnętrzny folder czcionek</translation>
     </message>
     <message>
         <source>Activate the audio when hover</source>
@@ -7267,19 +7288,19 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Give a double consonant its own syllable (so|ma|t|ta)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wydzielaj podwojoną spółgłoskę w osobną sylabę (so|ma|t|ta)</translation>
     </message>
     <message>
         <source>Long syllables for %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Długie sylaby dla %1</translation>
     </message>
     <message>
         <source>cs</source>
-        <translation type="unfinished"></translation>
+        <translation>cs</translation>
     </message>
     <message>
         <source>Switch long syllables between %1 and %2 changes the syllables at least this long.</source>
-        <translation type="unfinished"></translation>
+        <translation>Polecenie Przełącz długie sylaby między %1 a %2 zmienia sylaby co najmniej tej długości.</translation>
     </message>
     <message>
         <source>Load audio into RAM</source>
@@ -7287,11 +7308,11 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Device</source>
-        <translation type="unfinished"></translation>
+        <translation>Urządzenie</translation>
     </message>
     <message>
         <source>API</source>
-        <translation type="unfinished"></translation>
+        <translation>API</translation>
     </message>
     <message>
         <source>Audio delay in milliseconds</source>
@@ -7369,23 +7390,23 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>General</source>
-        <translation type="unfinished"></translation>
+        <translation>Ogólne</translation>
     </message>
     <message>
         <source>Line editor</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytor linijki</translation>
     </message>
     <message>
         <source>Subtitle grid</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista napisów</translation>
     </message>
     <message>
         <source>Automation</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyzacja</translation>
     </message>
     <message>
         <source>Updates</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktualizacje</translation>
     </message>
     <message>
         <source>Updates and privacy</source>
@@ -7409,459 +7430,459 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Reset all settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć wszystkie ustawienia</translation>
     </message>
     <message>
         <source>Reset all settings to their defaults?</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywrócić domyślne wartości wszystkich ustawień?</translation>
     </message>
     <message>
         <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.</source>
-        <translation type="unfinished"></translation>
+        <translation>Każda strona wróci do wartości domyślnych po naciśnięciu OK lub Zastosuj; Anuluj zachowuje ustawienia. Skróty klawiszowe i wygląd pozostają bez zmian: przywróć je na ich własnych stronach.</translation>
     </message>
     <message>
         <source>Reset all</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć wszystko</translation>
     </message>
     <message>
         <source>Reset page</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć stronę</translation>
     </message>
     <message>
         <source>The settings of the page shown back to their defaults</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywraca domyślne wartości ustawień wyświetlanej strony</translation>
     </message>
     <message>
         <source>More resets</source>
-        <translation type="unfinished"></translation>
+        <translation>Więcej opcji przywracania</translation>
     </message>
     <message>
         <source>Reset this page</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć tę stronę</translation>
     </message>
     <message>
         <source>Reset all settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć wszystkie ustawienia…</translation>
     </message>
     <message>
         <source>Interface language</source>
-        <translation type="unfinished"></translation>
+        <translation>Język interfejsu</translation>
     </message>
     <message>
         <source>Tabs</source>
-        <translation type="unfinished"></translation>
+        <translation>Zakładki</translation>
     </message>
     <message>
         <source>Tab name length</source>
-        <translation type="unfinished"></translation>
+        <translation>Długość nazwy zakładki</translation>
     </message>
     <message>
         <source>characters</source>
-        <translation type="unfinished"></translation>
+        <translation>znaków</translation>
     </message>
     <message>
         <source>Saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisywanie</translation>
     </message>
     <message>
         <source>Autosave files kept</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowywane pliki autozapisu</translation>
     </message>
     <message>
         <source>Show notices as toasts</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj powiadomienia jako dymki</translation>
     </message>
     <message>
         <source>Off: notices go to the Log only.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłączone: powiadomienia trafiają tylko do dziennika.</translation>
     </message>
     <message>
         <source>Questions hidden with “Don’t ask again”</source>
-        <translation type="unfinished"></translation>
+        <translation>Pytania ukryte opcją “Nie pytaj ponownie”</translation>
     </message>
     <message>
         <source>Folders</source>
-        <translation type="unfinished"></translation>
+        <translation>Foldery</translation>
     </message>
     <message>
         <source>Fonts folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Folder czcionek</translation>
     </message>
     <message>
         <source>Spelling</source>
-        <translation type="unfinished"></translation>
+        <translation>Pisownia</translation>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation type="unfinished">Sprawdź poprawność pisowni</translation>
+        <translation>Sprawdzaj pisownię</translation>
     </message>
     <message>
         <source>Dictionary</source>
-        <translation type="unfinished"></translation>
+        <translation>Słownik</translation>
     </message>
     <message>
         <source>Show suggestions on double-click</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj podpowiedzi po dwukrotnym kliknięciu</translation>
     </message>
     <message>
         <source>Display</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyświetlanie</translation>
     </message>
     <message>
         <source>Spelling &amp; grammar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pisownia i gramatyka</translation>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="unfinished">Ukryj tagi w nawiasach</translation>
+        <translation>Ukrywaj tagi</translation>
     </message>
     <message>
         <source>Show video frames instead of times</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj klatki wideo zamiast czasów</translation>
     </message>
     <message>
         <source>In the line editor and the subtitle grid.</source>
-        <translation type="unfinished"></translation>
+        <translation>W edytorze linijki i na liście napisów.</translation>
     </message>
     <message>
         <source>Stay on the line when editing times</source>
-        <translation type="unfinished"></translation>
+        <translation>Pozostawaj na linijce podczas edycji czasów</translation>
     </message>
     <message>
         <source>Translation mode</source>
-        <translation type="unfinished"></translation>
+        <translation>Tryb tłumaczenia</translation>
     </message>
     <message>
         <source>Show the original</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj tekst oryginalny</translation>
     </message>
     <message>
         <source>Hide the original on the video</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukrywaj tekst oryginalny na wideo</translation>
     </message>
     <message>
         <source>Grammar</source>
-        <translation type="unfinished"></translation>
+        <translation>Gramatyka</translation>
     </message>
     <message>
         <source>Grammar check</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzanie gramatyki</translation>
     </message>
     <message>
         <source>Harper checks the Text field (the Translated field in translation mode) after you stop typing. It runs as a separate program only while grammar check is on.</source>
-        <translation type="unfinished"></translation>
+        <translation>Harper sprawdza pole tekstu (w trybie tłumaczenia pole tekstu tłumaczenia), gdy przestaniesz pisać. Działa jako osobny program tylko wtedy, gdy sprawdzanie gramatyki jest włączone.</translation>
     </message>
     <message>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłączone</translation>
     </message>
     <message>
         <source>English (US)</source>
-        <translation type="unfinished"></translation>
+        <translation>Angielski (USA)</translation>
     </message>
     <message>
         <source>English (UK)</source>
-        <translation type="unfinished"></translation>
+        <translation>Angielski (Wielka Brytania)</translation>
     </message>
     <message>
         <source>English (Canada)</source>
-        <translation type="unfinished"></translation>
+        <translation>Angielski (Kanada)</translation>
     </message>
     <message>
         <source>English (Australia)</source>
-        <translation type="unfinished"></translation>
+        <translation>Angielski (Australia)</translation>
     </message>
     <message>
         <source>While spelling is checked, Harper leaves spelling to the dictionary above, so a word is never marked twice.</source>
-        <translation type="unfinished"></translation>
+        <translation>Gdy pisownia jest sprawdzana, Harper zostawia ją słownikowi powyżej, więc żadne słowo nie jest oznaczane dwa razy.</translation>
     </message>
     <message>
         <source>Rule groups</source>
-        <translation type="unfinished"></translation>
+        <translation>Grupy reguł</translation>
     </message>
     <message>
         <source>Choose an English above to switch them.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz powyżej odmianę angielskiego, aby je przełączać.</translation>
     </message>
     <message numerus="yes">
         <source>%n rules</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n reguła</numerusform>
+            <numerusform>%n reguły</numerusform>
+            <numerusform>%n reguł</numerusform>
         </translation>
     </message>
     <message>
         <source>Harper %1 by Automattic, Apache License 2.0. %2 in Help › Credits.</source>
-        <translation type="unfinished"></translation>
+        <translation>Harper %1 autorstwa Automattic, licencja Apache License 2.0. %2 w menu Pomoc › Lista osób pomocnych przy tworzeniu programu.</translation>
     </message>
     <message>
         <source>Licence notice</source>
-        <translation type="unfinished"></translation>
+        <translation>Informacja o licencji</translation>
     </message>
     <message>
         <source>Font</source>
-        <translation type="unfinished">Czcionka</translation>
+        <translation>Czcionka</translation>
     </message>
     <message>
         <source>Active line</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktywna linijka</translation>
     </message>
     <message>
         <source>Change the active line when adding to the selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmieniaj aktywną linijkę przy dodawaniu do zaznaczenia</translation>
     </message>
     <message>
         <source>Keep the selection when duplicating lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowuj zaznaczenie przy duplikowaniu linijek</translation>
     </message>
     <message>
         <source>Find the visible line after leaving full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Odszukuj widoczną linijkę po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Columns</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolumny</translation>
     </message>
     <message>
         <source>Hide empty columns</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukrywaj puste kolumny</translation>
     </message>
     <message>
         <source>Counting</source>
-        <translation type="unfinished"></translation>
+        <translation>Liczenie</translation>
     </message>
     <message>
         <source>Count spaces and punctuation for wraps</source>
-        <translation type="unfinished"></translation>
+        <translation>Licz spacje i interpunkcję przy zawijaniu</translation>
     </message>
     <message>
         <source>Count spaces and punctuation for CPS</source>
-        <translation type="unfinished"></translation>
+        <translation>Licz spacje i interpunkcję w CPS</translation>
     </message>
     <message>
         <source>New lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowe linijki</translation>
     </message>
     <message>
         <source>Start frame offset</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesunięcie klatki początkowej</translation>
     </message>
     <message>
         <source>ms</source>
-        <translation type="unfinished"></translation>
+        <translation>ms</translation>
     </message>
     <message>
         <source>End frame offset</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesunięcie klatki końcowej</translation>
     </message>
     <message>
         <source>ASS tag replacement</source>
-        <translation type="unfinished"></translation>
+        <translation>Znak podmiany tagów ASS</translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwieraj wideo z menu kontekstowego na pełnym ekranie</translation>
     </message>
     <message>
         <source>Open video at the active line&apos;s time</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwieraj wideo w czasie aktywnej linijki</translation>
     </message>
     <message>
         <source>Player</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwarzacz</translation>
     </message>
     <message>
         <source>Subtitles on video</source>
-        <translation type="unfinished"></translation>
+        <translation>Napisy na wideo</translation>
     </message>
     <message>
         <source>Turn off the edits preview</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłącz podgląd zmian</translation>
     </message>
     <message>
         <source>Applies when the tab opens again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Działa po ponownym otwarciu zakładki.</translation>
     </message>
     <message>
         <source>Decoding</source>
-        <translation type="unfinished"></translation>
+        <translation>Dekodowanie</translation>
     </message>
     <message>
         <source>Seeking method</source>
-        <translation type="unfinished"></translation>
+        <translation>Metoda przewijania</translation>
     </message>
     <message>
         <source>Applies when the video opens again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Działa po ponownym otwarciu wideo.</translation>
     </message>
     <message>
         <source>Convert video colours on the GPU</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwertuj kolory wideo na GPU</translation>
     </message>
     <message>
         <source>Preferred audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Preferowane audio</translation>
     </message>
     <message>
         <source>Separated by semicolons.</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozdzielone średnikami.</translation>
     </message>
     <message>
         <source>View</source>
-        <translation type="unfinished"></translation>
+        <translation>Widok</translation>
     </message>
     <message>
         <source>Start zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>Początkowe powiększenie</translation>
     </message>
     <message>
         <source>Script resolution</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozdzielczość skryptu</translation>
     </message>
     <message>
         <source>Turn off the visual tools warning</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłącz ostrzeżenie narzędzi wizualnych</translation>
     </message>
     <message>
         <source>Don&apos;t warn about a resolution mismatch</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie ostrzegaj o niezgodności rozdzielczości</translation>
     </message>
     <message>
         <source>Output</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyjście</translation>
     </message>
     <message>
         <source>Applies when the output opens again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Działa po ponownym otwarciu wyjścia.</translation>
     </message>
     <message>
         <source>Audio delay</source>
-        <translation type="unfinished"></translation>
+        <translation>Opóźnienie audio</translation>
     </message>
     <message>
         <source>Play around the marker</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwarzaj wokół znacznika</translation>
     </message>
     <message>
         <source>Lead-in and lead-out</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstęp i zakończenie</translation>
     </message>
     <message>
         <source>Don&apos;t play after changing the line</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie odtwarzaj po zmianie linijki</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj czas obok kursora</translation>
     </message>
     <message>
         <source>Show the selection background</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj tło zaznaczenia</translation>
     </message>
     <message>
         <source>Show the video position</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj pozycję wideo</translation>
     </message>
     <message>
         <source>Inactive lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieaktywne linijki</translation>
     </message>
     <message>
         <source>Snapping</source>
-        <translation type="unfinished"></translation>
+        <translation>Przyklejanie</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
-        <translation type="unfinished">Wyrównaj do klatek kluczowych</translation>
+        <translation>Przyklejaj do klatek kluczowych</translation>
     </message>
     <message>
         <source>Karaoke</source>
-        <translation type="unfinished"></translation>
+        <translation>Karaoke</translation>
     </message>
     <message>
         <source>Merge every &quot;n&quot; with the previous syllable</source>
-        <translation type="unfinished"></translation>
+        <translation>Scalaj każde &quot;n&quot; z poprzednią sylabą</translation>
     </message>
     <message>
         <source>Move the syllable line after a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuwaj linię sylaby po kliknięciu</translation>
     </message>
     <message>
         <source>Cache</source>
-        <translation type="unfinished"></translation>
+        <translation>Pamięć podręczna</translation>
     </message>
     <message>
         <source>Cache files kept</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowywane pliki pamięci podręcznej</translation>
     </message>
     <message>
         <source>0 keeps them all.</source>
-        <translation type="unfinished"></translation>
+        <translation>0 zachowuje wszystkie.</translation>
     </message>
     <message>
         <source>files</source>
-        <translation type="unfinished"></translation>
+        <translation>plików</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Catalog</source>
-        <translation type="unfinished">Katalog</translation>
+        <translation>Katalog</translation>
     </message>
     <message>
         <source>Timing</source>
-        <translation type="unfinished"></translation>
+        <translation>Timing</translation>
     </message>
     <message>
         <source>Frame rate</source>
-        <translation type="unfinished"></translation>
+        <translation>Liczba klatek na sekundę</translation>
     </message>
     <message>
         <source>Frame rate from the video</source>
-        <translation type="unfinished"></translation>
+        <translation>Liczba klatek na sekundę z wideo</translation>
     </message>
     <message>
         <source>Time per letter</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas na literę</translation>
     </message>
     <message>
         <source>ASS</source>
-        <translation type="unfinished"></translation>
+        <translation>ASS</translation>
     </message>
     <message>
         <source>Resolution</source>
-        <translation type="unfinished">Rozdzielczość</translation>
+        <translation>Rozdzielczość</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerokość</translation>
     </message>
     <message>
         <source>Height</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysokość</translation>
     </message>
     <message>
         <source>Tags at the start of each line</source>
-        <translation type="unfinished"></translation>
+        <translation>Tagi na początku każdej linijki</translation>
     </message>
     <message>
         <source>Files</source>
-        <translation type="unfinished">Pliki</translation>
+        <translation>Pliki</translation>
     </message>
     <message>
         <source>Save the panel layout in subtitle files</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisuj układ paneli w plikach napisów</translation>
     </message>
     <message>
         <source>Debugging</source>
-        <translation type="unfinished"></translation>
+        <translation>Debugowanie</translation>
     </message>
     <message>
         <source>Lua trace level</source>
-        <translation type="unfinished"></translation>
+        <translation>Poziom śledzenia Lua</translation>
     </message>
     <message>
         <source>Set shortcuts</source>
@@ -7889,7 +7910,7 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Automation shortcuts</source>
-        <translation type="unfinished"></translation>
+        <translation>Skróty automatyzacji</translation>
     </message>
     <message>
         <source>Filtering mode:</source>
@@ -7897,31 +7918,31 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Search hotkeys</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukaj skrótów</translation>
     </message>
     <message>
         <source>Import legacy hotkeys…</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj skróty ze starej wersji…</translation>
     </message>
     <message>
         <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
-        <translation type="unfinished"></translation>
+        <translation>Od razu dodaje skróty skryptów z pliku Hotkeys.txt starej wersji</translation>
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation type="unfinished"></translation>
+        <translation>Najpierw naciśnij Zastosuj lub Anuluj: import jest dodawany od razu</translation>
     </message>
     <message>
         <source>Global</source>
-        <translation type="unfinished"></translation>
+        <translation>Globalne</translation>
     </message>
     <message>
         <source>Show hidden rows</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż ukryte wiersze</translation>
     </message>
     <message>
         <source>Hide the rows shown</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukryj pokazane wiersze</translation>
     </message>
     <message>
         <source>Function</source>
@@ -7933,23 +7954,23 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Missing macro</source>
-        <translation type="unfinished"></translation>
+        <translation>Brakujące makro</translation>
     </message>
     <message>
         <source>Map hotkey…</source>
-        <translation type="unfinished"></translation>
+        <translation>Mapuj skrót…</translation>
     </message>
     <message>
         <source>Restore default</source>
-        <translation type="unfinished">Przywróć domyślne</translation>
+        <translation>Przywróć domyślne</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">Usuń</translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>Checking</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzanie</translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
@@ -7957,7 +7978,7 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>At most once a day, when HikariSub starts.</source>
-        <translation type="unfinished"></translation>
+        <translation>Najwyżej raz dziennie, przy uruchomieniu HikariSub.</translation>
     </message>
     <message>
         <source>Stable versions only</source>
@@ -7965,86 +7986,86 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Off: prereleases (beta versions) are offered too.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłączone: proponowane są też wersje przedpremierowe (beta).</translation>
     </message>
     <message>
         <source>Skipped version</source>
-        <translation type="unfinished"></translation>
+        <translation>Pominięta wersja</translation>
     </message>
     <message>
         <source>Offer it again</source>
-        <translation type="unfinished"></translation>
+        <translation>Proponuj ją ponownie</translation>
     </message>
     <message>
         <source>Skip this version hides one version; a newer one is offered again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomiń tę wersję ukrywa jedną wersję; nowsza zostanie zaproponowana ponownie.</translation>
     </message>
     <message>
         <source>Installing</source>
-        <translation type="unfinished"></translation>
+        <translation>Instalowanie</translation>
     </message>
     <message>
         <source>Install updates automatically</source>
-        <translation type="unfinished"></translation>
+        <translation>Instaluj aktualizacje automatycznie</translation>
     </message>
     <message>
         <source>Downloads the update in the background and installs it when you quit HikariSub.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobiera aktualizację w tle i instaluje ją po zamknięciu HikariSub.</translation>
     </message>
     <message>
         <source>You installed HikariSub from the AUR, so your package manager installs updates.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub zainstalowano z AUR, więc aktualizacje instaluje menedżer pakietów.</translation>
     </message>
     <message>
         <source>This copy does not install updates itself: the update window opens the download page.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ta kopia nie instaluje aktualizacji sama: okno aktualizacji otwiera stronę pobierania.</translation>
     </message>
     <message>
         <source>Choose a legacy Hotkeys.txt</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz plik Hotkeys.txt starej wersji</translation>
     </message>
     <message>
         <source>Hotkeys (Hotkeys.txt)</source>
-        <translation type="unfinished"></translation>
+        <translation>Skróty klawiszowe (Hotkeys.txt)</translation>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie pliki (*)</translation>
     </message>
     <message>
         <source>Import legacy hotkeys</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj skróty ze starej wersji</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można odczytać pliku.</translation>
     </message>
     <message numerus="yes">
         <source>Added %n script hotkey(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Dodano %n skrót skryptu.</numerusform>
+            <numerusform>Dodano %n skróty skryptów.</numerusform>
+            <numerusform>Dodano %n skrótów skryptów.</numerusform>
         </translation>
     </message>
     <message>
         <source>No script hotkeys were added.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie dodano żadnych skrótów skryptów.</translation>
     </message>
     <message numerus="yes">
         <source>%n kept the keys you gave them.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n zachował klawisze nadane przez ciebie.</numerusform>
+            <numerusform>%n zachowały klawisze nadane przez ciebie.</numerusform>
+            <numerusform>%n zachowało klawisze nadane przez ciebie.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n skipped: their keys are taken.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Pominięto %n: jego klawisze są zajęte.</numerusform>
+            <numerusform>Pominięto %n: ich klawisze są zajęte.</numerusform>
+            <numerusform>Pominięto %n: ich klawisze są zajęte.</numerusform>
         </translation>
     </message>
     <message>
@@ -8101,31 +8122,31 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Red</source>
-        <translation type="unfinished"></translation>
+        <translation>Czerwony</translation>
     </message>
     <message>
         <source>Orange</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomarańczowy</translation>
     </message>
     <message>
         <source>Gold</source>
-        <translation type="unfinished"></translation>
+        <translation>Złoty</translation>
     </message>
     <message>
         <source>Green</source>
-        <translation type="unfinished"></translation>
+        <translation>Zielony</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
+        <translation>Niebieski</translation>
     </message>
     <message>
         <source>Purple</source>
-        <translation type="unfinished"></translation>
+        <translation>Fioletowy</translation>
     </message>
     <message>
         <source>Pink</source>
-        <translation type="unfinished"></translation>
+        <translation>Różowy</translation>
     </message>
     <message>
         <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
@@ -8134,7 +8155,7 @@ całkowicie usuwanie plików audio cache.</translation>
     <message>
         <source>The selected %1 for conversion does not exist
 and will be changed to the default</source>
-        <translation type="unfinished">Wybrany %1 konwersji nie istnieje,
+        <translation>Wybrany %1 konwersji nie istnieje,
 zostanie zmieniony na domyślny</translation>
     </message>
     <message>
@@ -8147,16 +8168,16 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>System default</source>
-        <translation type="unfinished"></translation>
+        <translation>Domyślne systemowe</translation>
     </message>
     <message>
         <source>%1 (not connected)</source>
         <extracomment>An output device chosen in Settings &gt; Audio that is not plugged in; %1 is its name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 (niepodłączone)</translation>
     </message>
     <message>
         <source>%1 (slow; only for VSFilterMod tags)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (działa wolno; tylko dla tagów VSFilterMod)</translation>
     </message>
     <message>
         <source>Cannot find translation, language change failed</source>
@@ -8164,23 +8185,23 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Light</source>
-        <translation type="unfinished"></translation>
+        <translation>Jasny</translation>
     </message>
     <message>
         <source>Dark</source>
-        <translation type="unfinished"></translation>
+        <translation>Ciemny</translation>
     </message>
     <message>
         <source>High contrast white</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysoki kontrast, biały</translation>
     </message>
     <message>
         <source>High contrast black</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysoki kontrast, czarny</translation>
     </message>
     <message>
         <source>Text and icons</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekst i ikony</translation>
     </message>
     <message>
         <source>Border color</source>
@@ -8199,55 +8220,55 @@ zostanie zmieniony na domyślny</translation>
     <name>HikariSub.Reference</name>
     <message>
         <source>Compare with reference</source>
-        <translation type="unfinished"></translation>
+        <translation>Porównaj z dokumentem referencyjnym</translation>
     </message>
     <message>
         <source>Reference</source>
-        <translation type="unfinished"></translation>
+        <translation>Dokument referencyjny</translation>
     </message>
     <message>
         <source>Reference: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Dokument referencyjny: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Dokument referencyjny (chroniony, tylko do odczytu): %1</translation>
     </message>
     <message>
         <source>Independent navigation</source>
-        <translation type="unfinished"></translation>
+        <translation>Niezależna nawigacja</translation>
     </message>
     <message>
         <source>Match %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Dopasowanie %1 z %2</translation>
     </message>
     <message>
         <source>Follow the editing line</source>
-        <translation type="unfinished"></translation>
+        <translation>Podążaj za edytowaną linijką</translation>
     </message>
     <message>
         <source>No matching line</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pasującej linijki</translation>
     </message>
     <message>
         <source>Show nearest line</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż najbliższą linijkę</translation>
     </message>
     <message>
         <source>Previous match</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzednie dopasowanie</translation>
     </message>
     <message>
         <source>Next match</source>
-        <translation type="unfinished"></translation>
+        <translation>Następne dopasowanie</translation>
     </message>
     <message>
         <source>Reference lines (protected, read-only)</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijki dokumentu referencyjnego (chronione, tylko do odczytu)</translation>
     </message>
     <message>
         <source>The reference is protected (read-only).</source>
-        <translation type="unfinished"></translation>
+        <translation>Dokument referencyjny jest chroniony (tylko do odczytu).</translation>
     </message>
 </context>
 <context>
@@ -8625,15 +8646,15 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Credits</source>
-        <translation type="unfinished">Lista osób pomocnych przy tworzeniu programu</translation>
+        <translation>Autorzy</translation>
     </message>
     <message>
         <source>Same as the subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Taka sama jak napisów</translation>
     </message>
     <message>
         <source>Rendering</source>
-        <translation type="unfinished"></translation>
+        <translation>Renderowanie</translation>
     </message>
     <message>
         <source>Save</source>
@@ -8697,11 +8718,11 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Layout width</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerokość układu</translation>
     </message>
     <message>
         <source>Layout height</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysokość układu</translation>
     </message>
     <message>
         <source>YCbCr matrix</source>
@@ -8721,12 +8742,13 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>1: End-of-line wrapping, only N breaks</source>
-        <translation type="unfinished"></translation>
+        <translation>1: Zawijanie na końcu linijki, łamie tylko N</translation>
     </message>
     <message>
         <source>2: No wrapping, both 
  and N break</source>
-        <translation type="unfinished"></translation>
+        <translation>2: Bez zawijania, łamią 
+ i N</translation>
     </message>
     <message>
         <source>3: Auto, bottom line wider</source>
@@ -8753,7 +8775,7 @@ zostanie zmieniony na domyślny</translation>
     <name>HikariSub.Search</name>
     <message>
         <source>Search</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukaj</translation>
     </message>
     <message>
         <source>Find and replace</source>
@@ -8765,7 +8787,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>In files</source>
-        <translation type="unfinished"></translation>
+        <translation>W plikach</translation>
     </message>
     <message>
         <source>Find in subtitles</source>
@@ -8785,7 +8807,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Windows search filters separated by semicolons, e.g. &quot;*.ass; *.srt&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtry wyszukiwania systemu Windows rozdzielone średnikami, np. &quot;*.ass; *.srt&quot;.</translation>
     </message>
     <message>
         <source>Catalog:</source>
@@ -8873,15 +8895,15 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Search in hidden folders</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukaj w ukrytych folderach</translation>
     </message>
     <message>
         <source>Find in all open subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Znajdź we wszystkich otwartych napisach</translation>
     </message>
     <message>
         <source>Find all in current subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Znajdź wszystko w bieżących napisach</translation>
     </message>
     <message>
         <source>Replace next</source>
@@ -8893,7 +8915,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Replace in all open subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamień we wszystkich otwartych napisach</translation>
     </message>
     <message>
         <source>Replace in subtitles</source>
@@ -8905,11 +8927,11 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>No results yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Na razie brak wyników</translation>
     </message>
     <message>
         <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
-        <translation type="unfinished"></translation>
+        <translation>Znajdź wszystko, Znajdź we wszystkich otwartych napisach i Znajdź w napisach wyświetlają tu dopasowania; zaznacz te do zmiany i zamień je.</translation>
     </message>
     <message>
         <source>Check all</source>
@@ -8925,7 +8947,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Choose subtitle search folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz folder do przeszukania napisów</translation>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
@@ -8933,7 +8955,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Remove styles</source>
@@ -8963,8 +8985,8 @@ zostanie zmieniony na domyślny</translation>
         <source>Styles named &quot;%1&quot; do not exist in the subtitles being searched,
 which may significantly reduce the number of search results.
 What would you like to do?</source>
-        <translation type="unfinished">Stylów o nazwach &quot;%1&quot; nie ma w przeszukiwanych napisach,
-co może znacząco zmniejszyć ilość wyników szukania.
+        <translation>Stylów o nazwach &quot;%1&quot; nie ma w przeszukiwanych napisach,
+co może znacząco zmniejszyć liczbę wyników wyszukiwania.
 Co zrobić?</translation>
     </message>
     <message>
@@ -8983,11 +9005,11 @@ W razie pomyłki kopie zapasowe są w folderze &apos;ReplaceBackup&apos;</transl
     </message>
     <message>
         <source>Could not find the specified phrase &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono podanej frazy &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Replaced %1 times.</source>
-        <translation type="unfinished">Zmieniono %1 razy.</translation>
+        <translation>Liczba zamian: %1.</translation>
     </message>
     <message>
         <source>Search path is invalid</source>
@@ -8995,7 +9017,7 @@ W razie pomyłki kopie zapasowe są w folderze &apos;ReplaceBackup&apos;</transl
     </message>
     <message>
         <source>Find in files</source>
-        <translation type="unfinished"></translation>
+        <translation>Znajdź w plikach</translation>
     </message>
     <message>
         <source>Confirmation</source>
@@ -9011,37 +9033,37 @@ W razie pomyłki kopie zapasowe są w folderze &apos;ReplaceBackup&apos;</transl
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieprawidłowe wyrażenie regularne &apos;%1&apos;: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono dopasowania do wyrażenia regularnego: %1</translation>
     </message>
     <message>
         <source>Line %1 cannot be replaced,
 cause it was edited.</source>
-        <translation type="unfinished">Linia %1 nie może być zamieniona,
-bo została zedytowana.</translation>
+        <translation>Nie można zamienić linijki %1,
+ponieważ została zedytowana.</translation>
     </message>
     <message>
         <source>Cannot back up %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można utworzyć kopii zapasowej %1.</translation>
     </message>
     <message>
         <source>Cannot open file %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można otworzyć pliku %1.</translation>
     </message>
     <message>
         <source>Cannot write file %1; it was left as it was.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zapisać pliku %1; pozostał bez zmian.</translation>
     </message>
     <message>
         <source>%1 could not be restored; its backup is in %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można przywrócić %1; kopia zapasowa jest w %2.</translation>
     </message>
     <message>
         <source>Line %1: </source>
-        <translation type="unfinished">Linia %1: </translation>
+        <translation>Linijka %1: </translation>
     </message>
 </context>
 <context>
@@ -9176,23 +9198,23 @@ bo została zedytowana.</translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieprawidłowe wyrażenie regularne &apos;%1&apos;: %2</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono dopasowania do wyrażenia regularnego: %1</translation>
     </message>
     <message>
         <source>%1 lines selected.</source>
-        <translation type="unfinished">Zaznaczono %1 linijek.</translation>
+        <translation>Zaznaczono linijek: %1.</translation>
     </message>
     <message>
         <source>%1 lines added to selection.</source>
-        <translation type="unfinished">Dodano do zaznaczenia %1 linijek.</translation>
+        <translation>Dodano do zaznaczenia linijek: %1.</translation>
     </message>
     <message>
         <source>%1 lines deselected.</source>
-        <translation type="unfinished">Odznaczono %1 linijek.</translation>
+        <translation>Odznaczono linijek: %1.</translation>
     </message>
 </context>
 <context>
@@ -9231,99 +9253,99 @@ bo została zedytowana.</translation>
     </message>
     <message>
         <source>Today %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Dzisiaj %1</translation>
     </message>
     <message>
         <source>Yesterday %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczoraj %1</translation>
     </message>
     <message>
         <source>Autosaves</source>
-        <translation type="unfinished"></translation>
+        <translation>Autozapisy</translation>
     </message>
     <message>
         <source>Search autosaves</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukaj autozapisów</translation>
     </message>
     <message>
         <source>Saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisano</translation>
     </message>
     <message>
         <source>Any time</source>
-        <translation type="unfinished"></translation>
+        <translation>Dowolny czas</translation>
     </message>
     <message>
         <source>Today</source>
-        <translation type="unfinished"></translation>
+        <translation>Dzisiaj</translation>
     </message>
     <message>
         <source>Last 7 days</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnie 7 dni</translation>
     </message>
     <message>
         <source>Last 30 days</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnie 30 dni</translation>
     </message>
     <message>
         <source>Before a date</source>
-        <translation type="unfinished"></translation>
+        <translation>Przed datą</translation>
     </message>
     <message>
         <source>Saved before</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisane przed</translation>
     </message>
     <message>
         <source>Document</source>
-        <translation type="unfinished"></translation>
+        <translation>Dokument</translation>
     </message>
     <message>
         <source>Version</source>
-        <translation type="unfinished"></translation>
+        <translation>Wersja</translation>
     </message>
     <message>
         <source>There are no autosaves.</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak autozapisów.</translation>
     </message>
     <message>
         <source>No matching autosaves</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pasujących autozapisów</translation>
     </message>
     <message>
         <source>Previous version</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzednia wersja</translation>
     </message>
     <message>
         <source>Autosave of the previous version</source>
-        <translation type="unfinished"></translation>
+        <translation>Autozapis poprzedniej wersji</translation>
     </message>
     <message>
         <source>Never saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Nigdy nie zapisano</translation>
     </message>
     <message>
         <source>Version of %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wersja: %1</translation>
     </message>
     <message>
         <source>Opens it as a new unsaved copy</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera go jako nową, niezapisaną kopię</translation>
     </message>
     <message>
         <source>Read only</source>
-        <translation type="unfinished"></translation>
+        <translation>Tylko do odczytu</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">Usuń</translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation type="unfinished"></translation>
+        <translation>Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
     </message>
     <message>
         <source>Delete older than…</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń starsze niż…</translation>
     </message>
     <message>
         <source>Close</source>
@@ -9331,30 +9353,30 @@ bo została zedytowana.</translation>
     </message>
     <message>
         <source>Delete autosaves saved before</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń autozapisy zapisane przed</translation>
     </message>
     <message>
         <source>A week ago</source>
-        <translation type="unfinished"></translation>
+        <translation>Tydzień temu</translation>
     </message>
     <message>
         <source>A month ago</source>
-        <translation type="unfinished"></translation>
+        <translation>Miesiąc temu</translation>
     </message>
     <message>
         <source>Everything</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystko</translation>
     </message>
     <message>
         <source>Delete 1 autosave</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń 1 autozapis</translation>
     </message>
     <message numerus="yes">
         <source>Delete %n autosaves</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Usuń %n autozapis</numerusform>
+            <numerusform>Usuń %n autozapisy</numerusform>
+            <numerusform>Usuń %n autozapisów</numerusform>
         </translation>
     </message>
     <message>
@@ -9363,7 +9385,7 @@ bo została zedytowana.</translation>
     </message>
     <message>
         <source>Open copy</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz kopię</translation>
     </message>
     <message>
         <source>Auto save</source>
@@ -9461,7 +9483,7 @@ wczytać poprzednią sesję wraz z najnowszymi napisami z autozapisu?</translati
     </message>
     <message>
         <source>Save session</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz sesję</translation>
     </message>
     <message>
         <source>Chosen file is read only,
@@ -9471,87 +9493,87 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Load session</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj sesję</translation>
     </message>
     <message>
         <source>Sessions (*.kls)</source>
-        <translation type="unfinished"></translation>
+        <translation>Sesje (*.kls)</translation>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie pliki (*)</translation>
     </message>
     <message>
         <source>“%1” is read-only.</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik “%1” jest tylko do odczytu.</translation>
     </message>
     <message>
         <source>Save the session under another name, or make the file writable and save again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz sesję pod inną nazwą albo zezwól na zapis pliku i zapisz ponownie.</translation>
     </message>
     <message>
         <source>Save as…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz jako…</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>napisy</translation>
     </message>
     <message>
         <source>video</source>
-        <translation type="unfinished"></translation>
+        <translation>wideo</translation>
     </message>
     <message>
         <source>audio</source>
-        <translation type="unfinished"></translation>
+        <translation>audio</translation>
     </message>
     <message>
         <source>keyframes</source>
-        <translation type="unfinished"></translation>
+        <translation>klatki kluczowe</translation>
     </message>
     <message>
         <source>%1, this tab’s subtitles, was not found.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono pliku napisów tej zakładki: %1.</translation>
     </message>
     <message>
         <source>%1, this tab’s video, was not found.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono pliku wideo tej zakładki: %1.</translation>
     </message>
     <message>
         <source>%1, this tab’s audio, was not found.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono pliku audio tej zakładki: %1.</translation>
     </message>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono pliku klatek kluczowych tej zakładki: %1.</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono: %1.</translation>
     </message>
     <message>
         <source>Find “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Znajdź “%1”</translation>
     </message>
     <message>
         <source>Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)</source>
-        <translation type="unfinished"></translation>
+        <translation>Napisy (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
         <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki audio i wideo (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik klatek kluczowych (*.txt *.pass *.stats *.log)</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -9567,31 +9589,31 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Restore</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć</translation>
     </message>
     <message>
         <source>Autosaves…</source>
-        <translation type="unfinished"></translation>
+        <translation>Autozapisy…</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation>Ponów próbę</translation>
     </message>
     <message>
         <source>Relink…</source>
-        <translation type="unfinished"></translation>
+        <translation>Połącz ponownie…</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>Could not open %1; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (odzyskany)</translation>
     </message>
     <message>
         <source>Auto save folder is empty</source>
@@ -9611,74 +9633,74 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Restore session</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć sesję</translation>
     </message>
     <message>
         <source>Could not find %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono %1</translation>
     </message>
     <message>
         <source>The tab of %1 has other work now; open the file in a new tab.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zakładka pliku %1 zawiera teraz coś innego; otwórz plik w nowej zakładce.</translation>
     </message>
     <message>
         <source>The last session had 1 document: %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnia sesja zawierała 1 dokument: %1.</translation>
     </message>
     <message numerus="yes">
         <source>The last session had %n documents: %1.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Ostatnia sesja zawierała %n dokument: %1.</numerusform>
+            <numerusform>Ostatnia sesja zawierała %n dokumenty: %1.</numerusform>
+            <numerusform>Ostatnia sesja zawierała %n dokumentów: %1.</numerusform>
         </translation>
     </message>
     <message>
         <source>Unsaved work in 1 document was autosaved.</source>
-        <translation type="unfinished"></translation>
+        <translation>Niezapisane zmiany w 1 dokumencie zostały zapisane automatycznie.</translation>
     </message>
     <message numerus="yes">
         <source>Unsaved work in %n documents was autosaved.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Niezapisane zmiany w %n dokumencie zostały zapisane automatycznie.</numerusform>
+            <numerusform>Niezapisane zmiany w %n dokumentach zostały zapisane automatycznie.</numerusform>
+            <numerusform>Niezapisane zmiany w %n dokumentach zostały zapisane automatycznie.</numerusform>
         </translation>
     </message>
     <message>
         <source>HikariSub did not close properly</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub nie został poprawnie zamknięty</translation>
     </message>
     <message>
         <source>Restore the last session?</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywrócić ostatnią sesję?</translation>
     </message>
     <message>
         <source>1 document</source>
-        <translation type="unfinished"></translation>
+        <translation>1 dokument</translation>
     </message>
     <message numerus="yes">
         <source>%n documents</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n dokument</numerusform>
+            <numerusform>%n dokumenty</numerusform>
+            <numerusform>%n dokumentów</numerusform>
         </translation>
     </message>
     <message>
         <source>HikariSub did not close properly.</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub nie został poprawnie zamknięty.</translation>
     </message>
     <message>
         <source>Restore the last session (1 document)?</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywrócić ostatnią sesję (1 dokument)?</translation>
     </message>
     <message numerus="yes">
         <source>Restore the last session (%n documents)?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Przywrócić ostatnią sesję (%n dokument)?</numerusform>
+            <numerusform>Przywrócić ostatnią sesję (%n dokumenty)?</numerusform>
+            <numerusform>Przywrócić ostatnią sesję (%n dokumentów)?</numerusform>
         </translation>
     </message>
 </context>
@@ -9686,75 +9708,75 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     <name>HikariSub.SettingsImport</name>
     <message>
         <source>Cannot read %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można odczytać %1</translation>
     </message>
     <message>
         <source>Cannot write the snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zapisać migawki</translation>
     </message>
     <message>
         <source>Import legacy settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj ustawienia starszej wersji</translation>
     </message>
     <message>
         <source>Conflict</source>
-        <translation type="unfinished"></translation>
+        <translation>Konflikt</translation>
     </message>
     <message>
         <source>Same</source>
-        <translation type="unfinished"></translation>
+        <translation>Identyczne</translation>
     </message>
     <message>
         <source>File read</source>
-        <translation type="unfinished"></translation>
+        <translation>Odczytany plik</translation>
     </message>
     <message>
         <source>Not here</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieobecne</translation>
     </message>
     <message>
         <source>Roll back import</source>
-        <translation type="unfinished"></translation>
+        <translation>Wycofaj import</translation>
     </message>
     <message>
         <source>Go back to the settings you had before the last import?</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywrócić ustawienia sprzed ostatniego importu?</translation>
     </message>
     <message>
         <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaczną obowiązywać przy następnym uruchomieniu HikariSub. Instalacja starszej wersji nie zostanie zmieniona.</translation>
     </message>
     <message>
         <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia zmienione przez ciebie od tamtej pory również wrócą do poprzednich wartości: %1. Instalacja starszej wersji nie zostanie zmieniona.</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Choose the folder of a legacy installation</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz folder instalacji starszej wersji</translation>
     </message>
     <message>
         <source>Roll back</source>
-        <translation type="unfinished"></translation>
+        <translation>Wycofaj</translation>
     </message>
     <message>
         <source>Choose folder…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz folder…</translation>
     </message>
     <message>
         <source>Choose...</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz...</translation>
     </message>
     <message>
         <source>Latin-1 (ISO 8859-1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Latin-1 (ISO 8859-1)</translation>
     </message>
     <message>
         <source>Windows-1252</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows-1252</translation>
     </message>
     <message>
         <source>All</source>
@@ -9762,162 +9784,162 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Unresolved</source>
-        <translation type="unfinished"></translation>
+        <translation>Nierozstrzygnięte</translation>
     </message>
     <message>
         <source>Proposed choice</source>
-        <translation type="unfinished"></translation>
+        <translation>Proponowany wybór</translation>
     </message>
     <message>
         <source>An import waits for the next start.</source>
-        <translation type="unfinished"></translation>
+        <translation>Import czeka na następne uruchomienie.</translation>
     </message>
     <message>
         <source>Import</source>
-        <translation type="unfinished"></translation>
+        <translation>Import</translation>
     </message>
     <message>
         <source>Installation</source>
-        <translation type="unfinished"></translation>
+        <translation>Instalacja</translation>
     </message>
     <message>
         <source>Review</source>
-        <translation type="unfinished"></translation>
+        <translation>Przegląd</translation>
     </message>
     <message>
         <source>Step %1 of 3: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Krok %1 z 3: %2</translation>
     </message>
     <message>
         <source>Choose the legacy installation to import from</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz instalację starszej wersji, z której chcesz zaimportować ustawienia</translation>
     </message>
     <message>
         <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Instalacje HikariSub 0.0.x znalezione na tym komputerze. Nic w nich nie zostanie zmienione.</translation>
     </message>
     <message>
         <source>Legacy installations</source>
-        <translation type="unfinished"></translation>
+        <translation>Instalacje starszej wersji</translation>
     </message>
     <message>
         <source>No legacy installation was found. Choose its folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono instalacji starszej wersji. Wybierz jej folder.</translation>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki w kodowaniu innym niż UTF-8 są odczytywane jako</translation>
     </message>
     <message>
         <source>An import waits for the next start. These settings changed since it was made keep your change: %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Import czeka na następne uruchomienie. Ustawienia zmienione od czasu jego przygotowania zachowają twoją zmianę: %1.</translation>
     </message>
     <message>
         <source>The last import is in effect.</source>
-        <translation type="unfinished"></translation>
+        <translation>Obowiązują ustawienia z ostatniego importu.</translation>
     </message>
     <message>
         <source>Roll back…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wycofaj…</translation>
     </message>
     <message>
         <source>Review what to import</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejrzyj, co zaimportować</translation>
     </message>
     <message>
         <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
-        <translation type="unfinished"></translation>
+        <translation>Konflikt to ustawienie, które instalacja starszej wersji ma ustawione inaczej niż ty. Proponowany wybór jest zaznaczony; odznacz to, co chcesz zachować.</translation>
     </message>
     <message>
         <source>Every record read, with its status. Only conflicts can be imported.</source>
-        <translation type="unfinished"></translation>
+        <translation>Każdy odczytany rekord wraz ze stanem. Importować można tylko konflikty.</translation>
     </message>
     <message>
         <source>Conflicts %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Konflikty %1</translation>
     </message>
     <message>
         <source>All %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie %1</translation>
     </message>
     <message>
         <source>Search settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukaj ustawień</translation>
     </message>
     <message>
         <source>%1 of %2 chosen</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybrano %1 z %2</translation>
     </message>
     <message>
         <source>Setting</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienie</translation>
     </message>
     <message>
         <source>Legacy</source>
-        <translation type="unfinished"></translation>
+        <translation>Starsza wersja</translation>
     </message>
     <message>
         <source>Now</source>
-        <translation type="unfinished"></translation>
+        <translation>Obecnie</translation>
     </message>
     <message>
         <source>Status</source>
-        <translation type="unfinished"></translation>
+        <translation>Stan</translation>
     </message>
     <message>
         <source>Settings to review</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia do przejrzenia</translation>
     </message>
     <message>
         <source>No conflicts: the legacy settings are the same as yours or need no choice.</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak konfliktów: ustawienia starszej wersji są takie same jak twoje albo nie wymagają wyboru.</translation>
     </message>
     <message>
         <source>Nothing matches.</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak wyników.</translation>
     </message>
     <message>
         <source>Choose a row to see where it comes from.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz wiersz, aby zobaczyć jego pochodzenie.</translation>
     </message>
     <message>
         <source>Paths not found, kept as they are: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono ścieżek, pozostawiono je bez zmian: %1</translation>
     </message>
     <message>
         <source>All conflicts</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie konflikty</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished">Brak</translation>
+        <translation>Brak</translation>
     </message>
     <message numerus="yes">
         <source>%n setting(s) imported.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zaimportowano %n ustawienie.</numerusform>
+            <numerusform>Zaimportowano %n ustawienia.</numerusform>
+            <numerusform>Zaimportowano %n ustawień.</numerusform>
         </translation>
     </message>
     <message>
         <source>Nothing was imported.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nic nie zostało zaimportowane.</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstecz</translation>
     </message>
     <message>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>Dalej</translation>
     </message>
     <message numerus="yes">
         <source>Import %n setting(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Importuj %n ustawienie</numerusform>
+            <numerusform>Importuj %n ustawienia</numerusform>
+            <numerusform>Importuj %n ustawień</numerusform>
         </translation>
     </message>
     <message>
@@ -9926,90 +9948,90 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>%1 to import of %2 changes, %3 unchanged, %4 unresolved, %5 excluded, %6 retired</source>
-        <translation type="unfinished"></translation>
+        <translation>Do zaimportowania: %1 z %2 zmian, bez zmian: %3, nierozstrzygnięte: %4, wykluczone: %5, przestarzałe: %6</translation>
     </message>
     <message>
         <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
-        <translation type="unfinished"></translation>
+        <translation>Obok programu nie znaleziono ustawień starszej wersji. Wybierz folder instalacji starszej wersji.</translation>
     </message>
     <message>
         <source>%1 holds no legacy settings (Config, Dictionary).</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 nie zawiera ustawień starszej wersji (Config, Dictionary).</translation>
     </message>
     <message>
         <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaimportowano. Ustawienia zaczną obowiązywać po ponownym uruchomieniu HikariSub; ustawienie zmienione przed tym czasem zachowa twoją zmianę. Pliki starszej wersji nie zostały zmienione.</translation>
     </message>
     <message>
         <source>Nothing to import: the chosen settings are already in effect.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie ma nic do zaimportowania: wybrane ustawienia już obowiązują.</translation>
     </message>
     <message>
         <source>The legacy files changed since they were read. Read them again to review the changes.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki starszej wersji zmieniły się od czasu ich odczytania. Odczytaj je ponownie, aby przejrzeć zmiany.</translation>
     </message>
     <message>
         <source>The current settings changed since this review. Review the import again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bieżące ustawienia zmieniły się od czasu tego przeglądu. Przejrzyj import ponownie.</translation>
     </message>
     <message>
         <source>The import could not be prepared; the current settings stay in effect.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się przygotować importu; bieżące ustawienia pozostają w mocy.</translation>
     </message>
     <message>
         <source>There is no earlier generation of the settings to go back to.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie ma wcześniejszego stanu ustawień, do którego można wrócić.</translation>
     </message>
     <message>
         <source>The settings before the import take effect when HikariSub starts again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia sprzed importu zaczną obowiązywać po ponownym uruchomieniu HikariSub.</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Spelling</name>
     <message>
         <source>Ignore words in capitals</source>
-        <translation type="unfinished"></translation>
+        <translation>Ignoruj słowa pisane wielkimi literami</translation>
     </message>
     <message>
         <source>Words added to dictionary…</source>
-        <translation type="unfinished"></translation>
+        <translation>Słowa dodane do słownika…</translation>
     </message>
     <message>
         <source>%1 turned off</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłączono: %1</translation>
     </message>
     <message numerus="yes">
         <source>Grammar check no longer uses its %n rules. Turn it back on in Settings › Spelling &amp; grammar.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Sprawdzanie gramatyki nie używa już %n reguły z tej grupy. Możesz ją ponownie włączyć w Ustawienia › Pisownia i gramatyka.</numerusform>
+            <numerusform>Sprawdzanie gramatyki nie używa już %n reguł z tej grupy. Możesz ją ponownie włączyć w Ustawienia › Pisownia i gramatyka.</numerusform>
+            <numerusform>Sprawdzanie gramatyki nie używa już %n reguł z tej grupy. Możesz ją ponownie włączyć w Ustawienia › Pisownia i gramatyka.</numerusform>
         </translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished">Cofnij</translation>
+        <translation>Cofnij</translation>
     </message>
     <message>
         <source>Grammar settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia gramatyki…</translation>
     </message>
     <message>
         <source>Grammar · %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Gramatyka · %1</translation>
     </message>
     <message>
         <source>Ignore this rule</source>
-        <translation type="unfinished"></translation>
+        <translation>Ignoruj tę regułę</translation>
     </message>
     <message>
         <source>Turns off %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłącza %1</translation>
     </message>
     <message>
         <source>Add “%1” to dictionary</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj “%1” do słownika</translation>
     </message>
     <message>
         <source>Fix suggestions</source>
@@ -10033,11 +10055,11 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>No suggestions</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak sugestii</translation>
     </message>
     <message>
         <source>Suggestions</source>
-        <translation type="unfinished"></translation>
+        <translation>Sugestie</translation>
     </message>
     <message>
         <source>Ignore comments</source>
@@ -10059,119 +10081,119 @@ wielką literą</translation>
     </message>
     <message>
         <source>Checks the spelling from the active line</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdza pisownię od aktywnej linijki</translation>
     </message>
     <message>
         <source>No dictionaries found</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono słowników</translation>
     </message>
     <message>
         <source>No spelling errors in %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak błędów pisowni w %1</translation>
     </message>
     <message>
         <source>Spelling settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia pisowni…</translation>
     </message>
     <message>
         <source>Check again</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź ponownie</translation>
     </message>
     <message>
         <source>Spelling</source>
-        <translation type="unfinished"></translation>
+        <translation>Pisownia</translation>
     </message>
     <message>
         <source>Grammar</source>
-        <translation type="unfinished"></translation>
+        <translation>Gramatyka</translation>
     </message>
     <message>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź</translation>
     </message>
     <message>
         <source>Checking line %1 of %2…</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzanie linijki %1 z %2…</translation>
     </message>
     <message>
         <source>Finding %1 of %2 · %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Uwaga %1 z %2 · %3</translation>
     </message>
     <message numerus="yes">
         <source>%n lines checked</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Sprawdzono %n linijkę</numerusform>
+            <numerusform>Sprawdzono %n linijki</numerusform>
+            <numerusform>Sprawdzono %n linijek</numerusform>
         </translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Grammar check is off</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzanie gramatyki jest wyłączone</translation>
     </message>
     <message>
         <source>Checks the grammar of the whole file from the active line</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdza gramatykę całego pliku od aktywnej linijki</translation>
     </message>
     <message>
         <source>Grammar check cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Anulowano sprawdzanie gramatyki</translation>
     </message>
     <message>
         <source>No more grammar findings in %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak dalszych uwag gramatycznych w %1</translation>
     </message>
     <message>
         <source>No more grammar findings</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak dalszych uwag gramatycznych</translation>
     </message>
     <message>
         <source>No grammar findings in %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak uwag gramatycznych w %1</translation>
     </message>
     <message>
         <source>No grammar findings</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak uwag gramatycznych</translation>
     </message>
     <message>
         <source>Choose an English in Settings to check grammar with Harper.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz wariant języka angielskiego w Ustawieniach, aby sprawdzać gramatykę narzędziem Harper.</translation>
     </message>
     <message numerus="yes">
         <source>%n lines checked.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Sprawdzono %n linijkę.</numerusform>
+            <numerusform>Sprawdzono %n linijki.</numerusform>
+            <numerusform>Sprawdzono %n linijek.</numerusform>
         </translation>
     </message>
     <message>
         <source>Check grammar</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź gramatykę</translation>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation type="unfinished">Sprawdź poprawność pisowni</translation>
+        <translation>Sprawdź pisownię</translation>
     </message>
     <message>
         <source>Line %1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijka %1 · %2</translation>
     </message>
     <message>
         <source>Misspelled word: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Błędne słowo: %1</translation>
     </message>
     <message>
         <source>Line %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijka %1</translation>
     </message>
     <message>
         <source>Replace with</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamień na</translation>
     </message>
     <message>
         <source>Ignore</source>
@@ -10195,27 +10217,27 @@ wielką literą</translation>
     </message>
     <message>
         <source>Filter</source>
-        <translation type="unfinished">Filtruj</translation>
+        <translation>Filtruj</translation>
     </message>
     <message>
         <source>No words added</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie dodano słów</translation>
     </message>
     <message>
         <source>No matching words</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pasujących słów</translation>
     </message>
     <message numerus="yes">
         <source>Remove %n word(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Usuń %n słowo</numerusform>
+            <numerusform>Usuń %n słowa</numerusform>
+            <numerusform>Usuń %n słów</numerusform>
         </translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>Close</source>
@@ -10232,7 +10254,8 @@ wielką literą</translation>
     <message>
         <source>No dictionary files were found in the &quot;%1&quot; folder.
 Spell checking will be disabled</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak plików słownika w folderze &quot;%1&quot;.
+Sprawdzanie pisowni zostanie wyłączone</translation>
     </message>
     <message>
         <source>Failed to initialize spell checker.</source>
@@ -10240,178 +10263,178 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>The edited line cannot be committed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zatwierdzić edytowanej linijki.</translation>
     </message>
     <message>
         <source>Proper nouns</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwy własne</translation>
     </message>
     <message>
         <source>Names of places, organizations and products keep their standard capitalization.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwy miejsc, organizacji i produktów zachowują standardową wielkość liter.</translation>
     </message>
     <message>
         <source>Initialisms</source>
-        <translation type="unfinished"></translation>
+        <translation>Skrótowce</translation>
     </message>
     <message>
         <source>Abbreviations and initialisms use the expected letter case and punctuation.</source>
-        <translation type="unfinished"></translation>
+        <translation>Skróty i skrótowce mają oczekiwaną wielkość liter i interpunkcję.</translation>
     </message>
     <message>
         <source>Closed compounds</source>
-        <translation type="unfinished"></translation>
+        <translation>Złożenia pisane łącznie</translation>
     </message>
     <message>
         <source>Compound words written as one word instead of split apart.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyrazy złożone pisane razem zamiast osobno.</translation>
     </message>
     <message>
         <source>Phrase corrections</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprawki wyrażeń</translation>
     </message>
     <message>
         <source>Common phrase-level mistakes where a standard expression is preferred.</source>
-        <translation type="unfinished"></translation>
+        <translation>Częste błędy w wyrażeniach, w których preferowany jest standardowy zwrot.</translation>
     </message>
     <message>
         <source>Capitalization and case</source>
-        <translation type="unfinished"></translation>
+        <translation>Wielkie litery i wielkość liter</translation>
     </message>
     <message>
         <source>Personal pronouns, titles, brands and other case-sensitive text.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaimki osobowe, tytuły, marki i inny tekst, w którym liczy się wielkość liter.</translation>
     </message>
     <message>
         <source>Punctuation and spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Interpunkcja i odstępy</translation>
     </message>
     <message>
         <source>Punctuation marks, apostrophes, quotation marks, commas and spacing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Znaki interpunkcyjne, apostrofy, cudzysłowy, przecinki i odstępy.</translation>
     </message>
     <message>
         <source>Numbers and units</source>
-        <translation type="unfinished"></translation>
+        <translation>Liczby i jednostki</translation>
     </message>
     <message>
         <source>Numbers, dates, times, decades and units of measurement.</source>
-        <translation type="unfinished"></translation>
+        <translation>Liczby, daty, godziny, dekady i jednostki miary.</translation>
     </message>
     <message>
         <source>Pronouns and possession</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaimki i dzierżawczość</translation>
     </message>
     <message>
         <source>Pronouns, contractions, possessives and their agreement.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaimki, formy ściągnięte, formy dzierżawcze i ich uzgodnienie.</translation>
     </message>
     <message>
         <source>Compounds and hyphenation</source>
-        <translation type="unfinished"></translation>
+        <translation>Złożenia i łączniki</translation>
     </message>
     <message>
         <source>Multi-word compounds that should be open, closed or hyphenated.</source>
-        <translation type="unfinished"></translation>
+        <translation>Złożenia wielowyrazowe, które powinny być pisane osobno, łącznie lub z łącznikiem.</translation>
     </message>
     <message>
         <source>Spelling and orthography</source>
-        <translation type="unfinished"></translation>
+        <translation>Pisownia i ortografia</translation>
     </message>
     <message>
         <source>Misspellings and word forms spelled the wrong way.</source>
-        <translation type="unfinished"></translation>
+        <translation>Literówki i formy wyrazów zapisane niepoprawnie.</translation>
     </message>
     <message>
         <source>Style and redundancy</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl i redundancja</translation>
     </message>
     <message>
         <source>Wordy, repeated or weak phrasing that can be tightened.</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozwlekłe, powtórzone lub słabe sformułowania, które można ująć zwięźlej.</translation>
     </message>
     <message>
         <source>Grammar and agreement</source>
-        <translation type="unfinished"></translation>
+        <translation>Gramatyka i uzgodnienie</translation>
     </message>
     <message>
         <source>Agreement, articles, prepositions, verb forms and sentence structure.</source>
-        <translation type="unfinished"></translation>
+        <translation>Uzgodnienie, przedimki, przyimki, formy czasowników i budowa zdań.</translation>
     </message>
     <message>
         <source>Word choice and usage</source>
-        <translation type="unfinished"></translation>
+        <translation>Dobór i użycie słów</translation>
     </message>
     <message>
         <source>More standard or idiomatic wording for understandable phrases.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bardziej standardowe lub idiomatyczne sformułowania zrozumiałych wyrażeń.</translation>
     </message>
     <message>
         <source>Regionalisms and dialect</source>
-        <translation type="unfinished"></translation>
+        <translation>Regionalizmy i dialekty</translation>
     </message>
     <message>
         <source>Wording that may not fit the chosen English.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sformułowania, które mogą nie pasować do wybranego wariantu angielskiego.</translation>
     </message>
     <message>
         <source>Miscellaneous</source>
-        <translation type="unfinished"></translation>
+        <translation>Różne</translation>
     </message>
     <message>
         <source>Rules that fit none of the groups above.</source>
-        <translation type="unfinished"></translation>
+        <translation>Reguły, które nie pasują do żadnej z powyższych grup.</translation>
     </message>
     <message>
         <source>The grammar checker stopped.</source>
-        <translation type="unfinished"></translation>
+        <translation>Moduł sprawdzania gramatyki przestał działać.</translation>
     </message>
     <message>
         <source>Grammar check</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzanie gramatyki</translation>
     </message>
     <message>
         <source>The grammar checker (harper-ls) stopped: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Moduł sprawdzania gramatyki (harper-ls) przestał działać: %1</translation>
     </message>
     <message>
         <source>Another file is open in the editor.</source>
-        <translation type="unfinished"></translation>
+        <translation>W edytorze jest otwarty inny plik.</translation>
     </message>
     <message>
         <source>The line changed since it was checked.</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijka zmieniła się od czasu sprawdzenia.</translation>
     </message>
     <message>
         <source>The text there cannot be replaced.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zastąpić tekstu w tym miejscu.</translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
-        <translation type="unfinished">Błąd, słowo &quot;%1&quot; nie zostało dodane.</translation>
+        <translation>Błąd. Słowo &quot;%1&quot; nie zostało dodane.</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.StatusBar</name>
     <message>
         <source>Status bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pasek stanu</translation>
     </message>
     <message>
         <source>1 line selected</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznaczono 1 linijkę</translation>
     </message>
     <message>
         <source>%1 lines selected</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznaczone linijki: %1</translation>
     </message>
     <message>
         <source> (%1 hidden)</source>
-        <translation type="unfinished"></translation>
+        <translation> (ukryte: %1)</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
-        <translation type="unfinished">Upłynęło %1 sekund</translation>
+        <translation>Upłynęło: %1</translation>
     </message>
     <message>
         <source>Video scale</source>
@@ -10482,83 +10505,83 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>New style</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowy styl</translation>
     </message>
     <message>
         <source>Create</source>
-        <translation type="unfinished"></translation>
+        <translation>Utwórz</translation>
     </message>
     <message>
         <source>font</source>
-        <translation type="unfinished"></translation>
+        <translation>czcionka</translation>
     </message>
     <message>
         <source>size</source>
-        <translation type="unfinished"></translation>
+        <translation>rozmiar</translation>
     </message>
     <message>
         <source>bold, italic, underline or strikeout</source>
-        <translation type="unfinished"></translation>
+        <translation>pogrubienie, kursywa, podkreślenie lub przekreślenie</translation>
     </message>
     <message>
         <source>colours</source>
-        <translation type="unfinished"></translation>
+        <translation>kolory</translation>
     </message>
     <message>
         <source>shadow</source>
-        <translation type="unfinished"></translation>
+        <translation>cień</translation>
     </message>
     <message>
         <source>scale</source>
-        <translation type="unfinished"></translation>
+        <translation>skala</translation>
     </message>
     <message>
         <source>angle</source>
-        <translation type="unfinished"></translation>
+        <translation>kąt</translation>
     </message>
     <message>
         <source>spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>odstępy</translation>
     </message>
     <message>
         <source>alignment</source>
-        <translation type="unfinished"></translation>
+        <translation>położenie tekstu</translation>
     </message>
     <message>
         <source>margins</source>
-        <translation type="unfinished"></translation>
+        <translation>marginesy</translation>
     </message>
     <message>
         <source>encoding</source>
-        <translation type="unfinished"></translation>
+        <translation>kodowanie</translation>
     </message>
     <message>
         <source>Copy styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj style</translation>
     </message>
     <message>
         <source>%1 of %2 styles already exist in %3.</source>
-        <translation type="unfinished"></translation>
+        <translation>Miejsce docelowe (%3) ma już %1 z %2 stylów.</translation>
     </message>
     <message numerus="yes">
         <source>%n more are the same as the ones there and are left as they are.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Jeszcze %n styl jest identyczny z tamtym i pozostaje bez zmian.</numerusform>
+            <numerusform>Jeszcze %n style są identyczne z tamtymi i pozostają bez zmian.</numerusform>
+            <numerusform>Jeszcze %n stylów jest identycznych z tamtymi i pozostaje bez zmian.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Copy %n style(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Kopiuj %n styl</numerusform>
+            <numerusform>Kopiuj %n style</numerusform>
+            <numerusform>Kopiuj %n stylów</numerusform>
         </translation>
     </message>
     <message>
         <source>Save style</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz styl</translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -10682,7 +10705,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Close</source>
@@ -10702,7 +10725,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Size</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozmiar</translation>
     </message>
     <message>
         <source>Bold</source>
@@ -10794,303 +10817,303 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Edit style</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj styl</translation>
     </message>
     <message>
         <source>This file has no style named “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten plik nie ma stylu o nazwie “%1”.</translation>
     </message>
     <message>
         <source>Create it from Default and edit it?</source>
-        <translation type="unfinished"></translation>
+        <translation>Utworzyć go na podstawie stylu Default i edytować?</translation>
     </message>
     <message>
         <source>The style is gone.</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl już nie istnieje.</translation>
     </message>
     <message>
         <source>Apply the changes to “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosować zmiany w stylu “%1”?</translation>
     </message>
     <message>
         <source>The catalog “%1” is shown now; the changes go to “%2”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyświetlany jest teraz katalog “%1”; zmiany trafią do “%2”.</translation>
     </message>
     <message>
         <source>Discard</source>
-        <translation type="unfinished"></translation>
+        <translation>Odrzuć</translation>
     </message>
     <message numerus="yes">
         <source>Apply the changes to the %n selected styles?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zastosować zmiany w %n zaznaczonym stylu?</numerusform>
+            <numerusform>Zastosować zmiany w %n zaznaczonych stylach?</numerusform>
+            <numerusform>Zastosować zmiany w %n zaznaczonych stylach?</numerusform>
         </translation>
     </message>
     <message>
         <source>No unused styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak nieużywanych stylów</translation>
     </message>
     <message>
         <source>Deleted 1 unused style</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto 1 nieużywany styl</translation>
     </message>
     <message numerus="yes">
         <source>Deleted %n unused styles</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Usunięto %n nieużywany styl</numerusform>
+            <numerusform>Usunięto %n nieużywane style</numerusform>
+            <numerusform>Usunięto %n nieużywanych stylów</numerusform>
         </translation>
     </message>
     <message>
         <source>Every style is used by a line.</source>
-        <translation type="unfinished"></translation>
+        <translation>Każdy styl jest używany przez jakąś linijkę.</translation>
     </message>
     <message>
         <source>Ctrl+Z puts them back.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+Z je przywróci.</translation>
     </message>
     <message>
         <source>border</source>
-        <translation type="unfinished"></translation>
+        <translation>obwódka</translation>
     </message>
     <message>
         <source>The styles changed while this was open. Nothing was copied.</source>
-        <translation type="unfinished"></translation>
+        <translation>Style zmieniły się, gdy to okno było otwarte. Niczego nie skopiowano.</translation>
     </message>
     <message>
         <source>this file</source>
-        <translation type="unfinished"></translation>
+        <translation>ten plik</translation>
     </message>
     <message>
         <source>the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>katalog</translation>
     </message>
     <message>
         <source>Delete catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń katalog</translation>
     </message>
     <message>
         <source>Delete the catalog “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunąć katalog “%1”?</translation>
     </message>
     <message>
         <source>It has no styles.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zawiera stylów.</translation>
     </message>
     <message>
         <source>Its one style goes with it. This can’t be undone.</source>
-        <translation type="unfinished"></translation>
+        <translation>Jego jedyny styl zostanie usunięty razem z nim. Tej operacji nie można cofnąć.</translation>
     </message>
     <message numerus="yes">
         <source>Its %n styles go with it. This can’t be undone.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Jego %n styl zostanie usunięty razem z nim. Tej operacji nie można cofnąć.</numerusform>
+            <numerusform>Jego %n style zostaną usunięte razem z nim. Tej operacji nie można cofnąć.</numerusform>
+            <numerusform>Jego %n stylów zostanie usuniętych razem z nim. Tej operacji nie można cofnąć.</numerusform>
         </translation>
     </message>
     <message>
         <source>A style needs a name.</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl musi mieć nazwę.</translation>
     </message>
     <message>
         <source>The catalog already has a style named “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalog ma już styl o nazwie “%1”.</translation>
     </message>
     <message>
         <source>This file already has a style named “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten plik ma już styl o nazwie “%1”.</translation>
     </message>
     <message>
         <source>Its file was closed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Jego plik został zamknięty.</translation>
     </message>
     <message>
         <source>Style not renamed</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zmieniono nazwy stylu</translation>
     </message>
     <message>
         <source>“%1” keeps its name; the other changes were applied. %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl “%1” zachowuje swoją nazwę; pozostałe zmiany zostały zastosowane. %2</translation>
     </message>
     <message>
         <source>Changes to “%1” not applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zastosowano zmian w stylu “%1”</translation>
     </message>
     <message>
         <source>The file shown now uses the catalog “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyświetlany teraz plik używa katalogu “%1”.</translation>
     </message>
     <message>
         <source>You edited it in the file shown before.</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytowano go w poprzednio wyświetlanym pliku.</translation>
     </message>
     <message>
         <source>Reset %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć: %1</translation>
     </message>
     <message>
         <source>Put back the value it had</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć poprzednią wartość</translation>
     </message>
     <message>
         <source>Multiple values</source>
-        <translation type="unfinished"></translation>
+        <translation>Wiele wartości</translation>
     </message>
     <message>
         <source>%1: multiple values</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: wiele wartości</translation>
     </message>
     <message>
         <source>%1 transparency</source>
-        <translation type="unfinished"></translation>
+        <translation>Przezroczystość: %1</translation>
     </message>
     <message>
         <source>Transparency, 0 (opaque) to 255</source>
-        <translation type="unfinished"></translation>
+        <translation>Przezroczystość, od 0 (nieprzezroczysty) do 255</translation>
     </message>
     <message>
         <source>Catalog styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Style katalogu</translation>
     </message>
     <message>
         <source>Styles in this file</source>
-        <translation type="unfinished"></translation>
+        <translation>Style w tym pliku</translation>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%1, %n linijka</numerusform>
+            <numerusform>%1, %n linijki</numerusform>
+            <numerusform>%1, %n linijek</numerusform>
         </translation>
     </message>
     <message>
         <source>Changes not applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie zastosowano zmian</translation>
     </message>
     <message>
         <source>Duplicate</source>
-        <translation type="unfinished"></translation>
+        <translation>Duplikuj</translation>
     </message>
     <message>
         <source>Move up</source>
-        <translation type="unfinished"></translation>
+        <translation>Przenieś w górę</translation>
     </message>
     <message>
         <source>Move up (Alt+Up)</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń w górę (Alt+Up)</translation>
     </message>
     <message>
         <source>Move down</source>
-        <translation type="unfinished"></translation>
+        <translation>Przenieś w dół</translation>
     </message>
     <message>
         <source>Move down (Alt+Down)</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń w dół (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj z pliku…</translation>
     </message>
     <message>
         <source>More</source>
-        <translation type="unfinished"></translation>
+        <translation>Więcej</translation>
     </message>
     <message>
         <source>Move to top</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń na początek</translation>
     </message>
     <message>
         <source>Move to bottom</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń na koniec</translation>
     </message>
     <message>
         <source>Sort by name</source>
-        <translation type="unfinished"></translation>
+        <translation>Sortuj według nazwy</translation>
     </message>
     <message>
         <source>Filter styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtruj style</translation>
     </message>
     <message>
         <source>Catalog</source>
-        <translation type="unfinished">Katalog</translation>
+        <translation>Katalog</translation>
     </message>
     <message>
         <source>Add to file</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj do pliku</translation>
     </message>
     <message>
         <source>Copy the selected catalog styles into this file</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuje zaznaczone style katalogu do tego pliku</translation>
     </message>
     <message>
         <source>Add to catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj do katalogu</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuje zaznaczone style pliku do katalogu</translation>
     </message>
     <message>
         <source>Add to all open files</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj do wszystkich otwartych plików</translation>
     </message>
     <message>
         <source>Copy the selected catalog styles into every open file</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuje zaznaczone style katalogu do każdego otwartego pliku</translation>
     </message>
     <message>
         <source>This file</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten plik</translation>
     </message>
     <message>
         <source>This tab has no ASS styles.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ta zakładka nie ma stylów ASS.</translation>
     </message>
     <message numerus="yes">
         <source>%n styles: the preview shows %1</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n styl: podgląd pokazuje %1</numerusform>
+            <numerusform>%n style: podgląd pokazuje %1</numerusform>
+            <numerusform>%n stylów: podgląd pokazuje %1</numerusform>
         </translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished">Nazwa</translation>
+        <translation>Nazwa</translation>
     </message>
     <message>
         <source>Rename it in the line that uses it</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień nazwę w linijce, która go używa</translation>
     </message>
     <message numerus="yes">
         <source>Rename it in the %n lines that use it</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zmień nazwę w %n linijce, która go używa</numerusform>
+            <numerusform>Zmień nazwę w %n linijkach, które go używają</numerusform>
+            <numerusform>Zmień nazwę w %n linijkach, które go używają</numerusform>
         </translation>
     </message>
     <message>
         <source>Family</source>
-        <translation type="unfinished"></translation>
+        <translation>Rodzina</translation>
     </message>
     <message>
         <source>Font catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalog czcionek</translation>
     </message>
     <message>
         <source>Emphasis</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyróżnienie</translation>
     </message>
     <message>
         <source>Text encoding</source>
-        <translation type="unfinished">Kodowanie tekstu</translation>
+        <translation>Kodowanie tekstu</translation>
     </message>
     <message>
         <source>0 - ANSI</source>
@@ -11174,7 +11197,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekst podglądu</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -11186,119 +11209,119 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>New catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowy katalog</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolory i przezroczystość</translation>
     </message>
     <message>
         <source>Primary</source>
-        <translation type="unfinished"></translation>
+        <translation>Podstawowy</translation>
     </message>
     <message>
         <source>Secondary</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodatkowy</translation>
     </message>
     <message>
         <source>Shape and position</source>
-        <translation type="unfinished"></translation>
+        <translation>Kształt i położenie</translation>
     </message>
     <message>
         <source>Scale X</source>
-        <translation type="unfinished"></translation>
+        <translation>Skala X</translation>
     </message>
     <message>
         <source>Scale Y</source>
-        <translation type="unfinished"></translation>
+        <translation>Skala Y</translation>
     </message>
     <message>
         <source>Border width</source>
-        <translation type="unfinished"></translation>
+        <translation>Grubość obwódki</translation>
     </message>
     <message>
         <source>Shadow distance</source>
-        <translation type="unfinished"></translation>
+        <translation>Odległość cienia</translation>
     </message>
     <message>
         <source>Angle</source>
-        <translation type="unfinished"></translation>
+        <translation>Kąt</translation>
     </message>
     <message>
         <source>Spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Odstępy</translation>
     </message>
     <message>
         <source>Border type</source>
-        <translation type="unfinished"></translation>
+        <translation>Typ obwódki</translation>
     </message>
     <message>
         <source>Alignment</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie tekstu</translation>
     </message>
     <message>
         <source>Alignment %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie tekstu %1</translation>
     </message>
     <message>
         <source>Top left</source>
-        <translation type="unfinished"></translation>
+        <translation>Lewy górny róg</translation>
     </message>
     <message>
         <source>Top</source>
-        <translation type="unfinished"></translation>
+        <translation>Góra</translation>
     </message>
     <message>
         <source>Top right</source>
-        <translation type="unfinished"></translation>
+        <translation>Prawy górny róg</translation>
     </message>
     <message>
         <source>Left</source>
-        <translation type="unfinished">M.L.</translation>
+        <translation>Lewa strona</translation>
     </message>
     <message>
         <source>Middle</source>
-        <translation type="unfinished"></translation>
+        <translation>Środek</translation>
     </message>
     <message>
         <source>Right</source>
-        <translation type="unfinished">M.P.</translation>
+        <translation>Prawa strona</translation>
     </message>
     <message>
         <source>Bottom left</source>
-        <translation type="unfinished"></translation>
+        <translation>Lewy dolny róg</translation>
     </message>
     <message>
         <source>Bottom</source>
-        <translation type="unfinished"></translation>
+        <translation>Dół</translation>
     </message>
     <message>
         <source>Bottom right</source>
-        <translation type="unfinished"></translation>
+        <translation>Prawy dolny róg</translation>
     </message>
     <message>
         <source>Left margin</source>
-        <translation type="unfinished">Margines lewy</translation>
+        <translation>Margines lewy</translation>
     </message>
     <message>
         <source>Right margin</source>
-        <translation type="unfinished">Margines prawy</translation>
+        <translation>Margines prawy</translation>
     </message>
     <message>
         <source>Vertical margin</source>
-        <translation type="unfinished">Margines pionowy</translation>
+        <translation>Margines pionowy</translation>
     </message>
     <message>
         <source>Revert</source>
-        <translation type="unfinished"></translation>
+        <translation>Cofnij zmiany</translation>
     </message>
     <message>
         <source>A catalog named “%1” already exists.</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalog o nazwie “%1” już istnieje.</translation>
     </message>
     <message>
         <source>Catalog name</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwa katalogu</translation>
     </message>
     <message>
         <source>Choose ASS file</source>
@@ -11306,7 +11329,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>ASS subtitle files(*.ass)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki napisów ASS(*.ass)</translation>
     </message>
     <message>
         <source>Choose styles</source>
@@ -11318,15 +11341,15 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>The document has no styles to edit.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dokument nie ma stylów do edycji.</translation>
     </message>
     <message>
         <source>The catalog “%1” no longer exists.</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalog “%1” już nie istnieje.</translation>
     </message>
     <message>
         <source>Style named &quot;%1&quot; already exists.</source>
-        <translation type="unfinished">Styl o nazwie &quot;%1&quot; jest już na liście.</translation>
+        <translation>Styl o nazwie &quot;%1&quot; jest już na liście.</translation>
     </message>
     <message>
         <source>None</source>
@@ -11337,89 +11360,89 @@ Spell checking will be disabled</source>
 %1
 Styles deleted:
 %2</source>
-        <translation type="unfinished">Używane style:
+        <translation>Używane style:
 %1
 Usunięte style:
 %2</translation>
     </message>
     <message>
         <source>Styles</source>
-        <translation type="unfinished">Style</translation>
+        <translation>Style</translation>
     </message>
     <message>
         <source>Styles: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Style: %1</translation>
     </message>
     <message>
         <source>Delete unused styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń nieużywane style</translation>
     </message>
     <message>
         <source>Filter</source>
-        <translation type="unfinished">Filtruj</translation>
+        <translation>Filtruj</translation>
     </message>
     <message>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation type="unfinished">Linijki</translation>
+        <translation>Linijki</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak stylów: plik nie ma stylów ASS</translation>
     </message>
     <message>
         <source>No styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak stylów</translation>
     </message>
     <message>
         <source>No matching styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak pasujących stylów</translation>
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijki: %1</translation>
     </message>
     <message>
         <source>the current line&apos;s style</source>
-        <translation type="unfinished"></translation>
+        <translation>styl bieżącej linijki</translation>
     </message>
     <message>
         <source>The current line&apos;s style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl bieżącej linijki</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosuj do zaznaczonych linijek</translation>
     </message>
     <message>
         <source>Apply to the selected lines: sets their style (Enter, or double-click a style)</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosuj do zaznaczonych linijek: ustawia ich styl (Enter lub dwukrotne kliknięcie stylu)</translation>
     </message>
     <message>
         <source>Edit…</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacz linijki z tym stylem</translation>
     </message>
     <message>
         <source>Copy to the catalog…</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj do katalogu…</translation>
     </message>
     <message>
         <source>Open in Style manager</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz w menedżerze stylów</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Tabs</name>
     <message>
         <source>Open documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwarte dokumenty</translation>
     </message>
     <message>
         <source>Modified</source>
@@ -11427,15 +11450,15 @@ Usunięte style:
     </message>
     <message>
         <source>Protected reference</source>
-        <translation type="unfinished"></translation>
+        <translation>Chroniony dokument referencyjny</translation>
     </message>
     <message>
         <source>Modified (history step %1)</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmodyfikowano (krok historii %1)</translation>
     </message>
     <message>
         <source>Close %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknij %1</translation>
     </message>
     <message>
         <source>Open new tab</source>
@@ -11519,43 +11542,43 @@ Usunięte style:
     </message>
     <message>
         <source>Close the tab?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknąć zakładkę?</translation>
     </message>
     <message numerus="yes">
         <source>Close all %n tabs?</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zamknąć %n zakładkę?</numerusform>
+            <numerusform>Zamknąć wszystkie %n zakładki?</numerusform>
+            <numerusform>Zamknąć wszystkie %n zakładek?</numerusform>
         </translation>
     </message>
     <message>
         <source>You are asked about unsaved changes next.</source>
-        <translation type="unfinished"></translation>
+        <translation>Następnie pojawi się pytanie o niezapisane zmiany.</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation type="unfinished">Otwórz wideo</translation>
+        <translation>Otwórz wideo</translation>
     </message>
     <message>
         <source>Open “%1” with the video?</source>
-        <translation type="unfinished"></translation>
+        <translation>Otworzyć “%1” razem z wideo?</translation>
     </message>
     <message>
         <source>It is next to %1 and has the same name.</source>
-        <translation type="unfinished"></translation>
+        <translation>Leży obok pliku %1 i ma taką samą nazwę.</translation>
     </message>
     <message>
         <source>Open both</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz oba</translation>
     </message>
     <message>
         <source>Video only</source>
-        <translation type="unfinished"></translation>
+        <translation>Tylko wideo</translation>
     </message>
 </context>
 <context>
@@ -11866,7 +11889,7 @@ Usunięte style:
     </message>
     <message>
         <source>Tag list</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista tagów</translation>
     </message>
     <message>
         <source>Show description</source>
@@ -11882,7 +11905,7 @@ Usunięte style:
     </message>
     <message>
         <source>%1, %2, %3 of %4</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, %2, %3 z %4</translation>
     </message>
 </context>
 <context>
@@ -11945,11 +11968,11 @@ Usunięte style:
     </message>
     <message>
         <source>Move the marker to video time</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń znacznik do czasu wideo</translation>
     </message>
     <message>
         <source>Move the marker to audio time</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń znacznik do czasu audio</translation>
     </message>
     <message>
         <source>Which lines</source>
@@ -11957,37 +11980,39 @@ Usunięte style:
     </message>
     <message>
         <source>Amount</source>
-        <translation type="unfinished"></translation>
+        <translation>Wartość</translation>
     </message>
     <message>
         <source>Time shifts</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas przesunięcia</translation>
     </message>
     <message>
         <source>Shift times by time / frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuwa napisy o ustawiony czas / klatki</translation>
     </message>
     <message>
         <source>Delays subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Opóźnia napisy</translation>
     </message>
     <message>
         <source>Speeds up subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Przyspiesza napisy</translation>
     </message>
     <message>
         <source>Shifts %1, %2, and %3 tag times
 so their positions on video do not change
 (slows down time shifting)</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuwa czasy tagów %1, %2 i %3 tak,
+by ich pozycja na wideo się nie zmieniła
+(spowalnia przesuwanie czasów)</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation type="unfinished">Linijki</translation>
+        <translation>Linijki</translation>
     </message>
     <message>
         <source>The choice of lines to move</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybór linijek do przesunięcia</translation>
     </message>
     <message>
         <source>All lines</source>
@@ -12015,15 +12040,15 @@ so their positions on video do not change
     </message>
     <message>
         <source>Select a style from the list</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz styl z listy</translation>
     </message>
     <message>
         <source>Styles, separated by commas</source>
-        <translation type="unfinished"></translation>
+        <translation>Style oddzielone przecinkami</translation>
     </message>
     <message>
         <source>Move according to the following styles (separated by a coma)</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń według następujących stylów (oddzielone przecinkiem)</translation>
     </message>
     <message>
         <source>A method of time shift</source>
@@ -12031,7 +12056,7 @@ so their positions on video do not change
     </message>
     <message>
         <source>The choice of times to move</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybór czasów do przesunięcia</translation>
     </message>
     <message>
         <source>Both times</source>
@@ -12043,7 +12068,7 @@ so their positions on video do not change
     </message>
     <message>
         <source>Correction end times, when they are improper or overlap each other</source>
-        <translation type="unfinished"></translation>
+        <translation>Korekcja czasów końcowych, gdy są niewłaściwe albo nachodzą na siebie</translation>
     </message>
     <message>
         <source>Leave unchanged</source>
@@ -12059,63 +12084,67 @@ so their positions on video do not change
     </message>
     <message>
         <source>Move the start time to the time video / audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuwa czas początkowy do czasu wideo / audio</translation>
     </message>
     <message>
         <source>Moves the end time to the video/audio time</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuwa czas końcowy do czasu wideo / audio</translation>
     </message>
     <message>
         <source>Lead-in/lead-out</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstęp i zakończenie</translation>
     </message>
     <message>
         <source>Inserts introduction to the start time (good when using fad)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstawia wstęp do czasu początkowego (dobre przy stosowaniu fad)</translation>
     </message>
     <message>
         <source>Introduction time in milliseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas wstępu w milisekundach</translation>
     </message>
     <message>
         <source>Inserts introduction to the end time (good when using fad)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstawia zakończenie do czasu końcowego (dobre przy stosowaniu fad)</translation>
     </message>
     <message>
         <source>End time in milliseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas zakończenia w milisekundach</translation>
     </message>
     <message>
         <source>Enable</source>
-        <translation type="unfinished"></translation>
+        <translation>Włącz</translation>
     </message>
     <message>
         <source>Start time extension threshold</source>
-        <translation type="unfinished"></translation>
+        <translation>Próg wydłużania czasu początkowego</translation>
     </message>
     <message>
         <source>End time extension threshold</source>
-        <translation type="unfinished"></translation>
+        <translation>Próg wydłużania czasu końcowego</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
 before the start time in milliseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>Maksymalne przesunięcie do klatki kluczowej 
+przed czasem początkowym w milisekundach</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
 after the start time in milliseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>Maksymalne przesunięcie do klatki kluczowej 
+po czasie początkowym w milisekundach</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
 before the end time in milliseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>Maksymalne przesunięcie do klatki kluczowej 
+przed czasem końcowym w milisekundach</translation>
     </message>
     <message>
         <source>The maximum shift to a keyframe 
 after the end time in milliseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>Maksymalne przesunięcie do klatki kluczowej 
+po czasie końcowym w milisekundach</translation>
     </message>
     <message>
         <source>Run post processor</source>
@@ -12167,7 +12196,7 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Profile</translation>
     </message>
     <message>
         <source>Adding and editing profiles</source>
@@ -12195,7 +12224,7 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>No document open</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak otwartego dokumentu</translation>
     </message>
     <message>
         <source>No styles selected for time shifting</source>
@@ -12211,35 +12240,35 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>The times could not be shifted.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się przesunąć czasów.</translation>
     </message>
     <message>
         <source>Shift only the start times?</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesunąć tylko czasy początkowe?</translation>
     </message>
     <message>
         <source>Shift only the end times?</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesunąć tylko czasy końcowe?</translation>
     </message>
     <message>
         <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
-        <translation type="unfinished"></translation>
+        <translation>Czasy końcowe pozostają bez zmian, więc linijka, której początek przesunięto za koniec, kończy się, zanim się zacznie.</translation>
     </message>
     <message>
         <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
-        <translation type="unfinished"></translation>
+        <translation>Czasy początkowe pozostają bez zmian, więc linijka, której koniec przesunięto przed początek, kończy się, zanim się zacznie.</translation>
     </message>
     <message>
         <source>Shift start times</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń czasy początkowe</translation>
     </message>
     <message>
         <source>Shift end times</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń czasy końcowe</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
 </context>
 <context>
@@ -12254,7 +12283,7 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki napisów (*.ass *.srt *.sub *.txt)</translation>
     </message>
     <message>
         <source>Translation matching options</source>
@@ -12322,7 +12351,9 @@ Tłumaczenie idzie do góry.</translation>
         <source>Description:
 Original - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.
 Translation - text pasted into subtitles with correct timing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Objaśnienie:
+Oryginał - tekst napisów z właściwym timingiem, służy do porównania wklejanych dialogów; później zostaje usunięty.
+Tłumaczenie - tekst wklejony do napisów z właściwym timingiem.</translation>
     </message>
     <message>
         <source>Not confirmed</source>
@@ -12352,42 +12383,42 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Paste translation</source>
-        <translation type="unfinished"></translation>
+        <translation>Wklej tłumaczenie</translation>
     </message>
     <message>
         <source>Could not open %1; nothing was changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>Translation needs an ASS file: plain text cannot store it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tłumaczenie wymaga pliku ASS: zwykły tekst nie może go przechowywać.</translation>
     </message>
     <message>
         <source>More</source>
-        <translation type="unfinished"></translation>
+        <translation>Więcej</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Video</name>
     <message>
         <source>Reset</source>
-        <translation type="unfinished"></translation>
+        <translation>Resetuj</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Proporcje obrazu</translation>
     </message>
     <message>
         <source>Taller</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyższy</translation>
     </message>
     <message>
         <source>Wider</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerszy</translation>
     </message>
     <message>
         <source>Failed to initialize DirectShow</source>
@@ -12487,7 +12518,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>This gives %1 frames</source>
-        <translation type="unfinished">Co daje %1 klatek</translation>
+        <translation>Liczba klatek: %1</translation>
     </message>
     <message>
         <source>Video resolution:</source>
@@ -12495,43 +12526,43 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Open dummy video</source>
-        <translation type="unfinished">Otwórz dummy wideo</translation>
+        <translation>Otwórz dummy wideo</translation>
     </message>
     <message>
         <source>Video resolution</source>
-        <translation type="unfinished">Rozdzielczość wideo</translation>
+        <translation>Rozdzielczość wideo</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <translation>Własna</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerokość</translation>
     </message>
     <message>
         <source>Height</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysokość</translation>
     </message>
     <message>
         <source>Colour</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolor</translation>
     </message>
     <message>
         <source>Frames per second</source>
-        <translation type="unfinished">Klatki na Sekundę</translation>
+        <translation>Klatki na sekundę</translation>
     </message>
     <message>
         <source>Must be from 15 to 120.</source>
-        <translation type="unfinished"></translation>
+        <translation>Musi wynosić od 15 do 120.</translation>
     </message>
     <message>
         <source>Duration</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas trwania</translation>
     </message>
     <message>
         <source>Type a time such as 0:25:00.00.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz czas, np. 0:25:00.00.</translation>
     </message>
     <message>
         <source>Color:</source>
@@ -12539,7 +12570,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Choose the colour</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz kolor</translation>
     </message>
     <message>
         <source>Checkerboard pattern</source>
@@ -12571,15 +12602,15 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Video position</source>
-        <translation type="unfinished"></translation>
+        <translation>Pozycja wideo</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation type="unfinished"></translation>
+        <translation>Czasy wideo</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas klatki; numer klatki; klatki od klatki początkowej linijki; milisekundy od początku i końca linijki</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -12611,7 +12642,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz plik klatek kluczowych</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -12619,11 +12650,11 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie pliki (*)</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
         <source>Choose video file</source>
@@ -12631,31 +12662,31 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik klatek kluczowych (*.txt *.pass *.stats *.log)</translation>
     </message>
     <message>
         <source>the file could not be read</source>
-        <translation type="unfinished"></translation>
+        <translation>nie udało się odczytać pliku</translation>
     </message>
     <message>
         <source>the file has no usable video track</source>
-        <translation type="unfinished"></translation>
+        <translation>plik nie zawiera użytecznej ścieżki wideo</translation>
     </message>
     <message>
         <source>the media helper ended</source>
-        <translation type="unfinished"></translation>
+        <translation>proces pomocniczy multimediów zakończył działanie</translation>
     </message>
     <message>
         <source>a media component is missing</source>
-        <translation type="unfinished"></translation>
+        <translation>brakuje komponentu multimediów</translation>
     </message>
     <message>
         <source>the video could not be opened</source>
-        <translation type="unfinished"></translation>
+        <translation>nie udało się otworzyć wideo</translation>
     </message>
     <message>
         <source>Chapters</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozdziały</translation>
     </message>
     <message>
         <source>Copy video position</source>
@@ -12663,11 +12694,11 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Exit full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłącz pełny ekran</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation type="unfinished"></translation>
+        <translation>Escape</translation>
     </message>
     <message>
         <source>Full screen</source>
@@ -12675,11 +12706,11 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Switch full screen to monitor %1</source>
-        <translation type="unfinished">Przełącz pełny ekran na %1 monitor</translation>
+        <translation>Przełącz pełny ekran na monitor %1</translation>
     </message>
     <message>
         <source>Open in full screen on monitor %1</source>
-        <translation type="unfinished">Włącz pełny ekran na %1 monitorze</translation>
+        <translation>Włącz pełny ekran na monitorze %1</translation>
     </message>
     <message>
         <source>Open editor</source>
@@ -12707,7 +12738,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Show / hide render cost</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż / ukryj koszt renderowania</translation>
     </message>
     <message>
         <source>Change aspect ratio</source>
@@ -12731,7 +12762,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Unload video</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknij wideo</translation>
     </message>
     <message>
         <source>Filters</source>
@@ -12751,7 +12782,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Seek on</source>
-        <translation type="unfinished"></translation>
+        <translation>Przewijaj przy</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -12783,7 +12814,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Then play</source>
-        <translation type="unfinished"></translation>
+        <translation>Potem odtwórz</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -12807,12 +12838,12 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Full screen video</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo na pełnym ekranie</translation>
     </message>
     <message>
         <source>Press Esc to exit full screen</source>
         <extracomment>Shown for two seconds on entering full screen video</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Naciśnij Esc, aby wyjść z pełnego ekranu</translation>
     </message>
     <message>
         <source>Previous video file</source>
@@ -12821,56 +12852,56 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     <message>
         <source>Line %1, %2: %3</source>
         <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Linijka %1, %2: %3</translation>
     </message>
     <message>
         <source>Visual tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Narzędzia wizualne</translation>
     </message>
     <message>
         <source>Unmute</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłącz wyciszenie</translation>
     </message>
     <message>
         <source>Mute</source>
-        <translation type="unfinished"></translation>
+        <translation>Wycisz</translation>
     </message>
     <message>
         <source>%1 · Wheel: volume · Right-click: output device</source>
         <extracomment>The full screen speaker&apos;s tooltip: %1 is Mute or Unmute</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 · Kółko: głośność · Prawy przycisk: urządzenie wyjściowe</translation>
     </message>
     <message>
         <source>Full screen bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pasek pełnego ekranu</translation>
     </message>
     <message>
         <source>Full screen bar: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Pasek pełnego ekranu: %1</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatycznie</translation>
     </message>
     <message>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawsze</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation type="unfinished"></translation>
+        <translation>Nigdy</translation>
     </message>
     <message>
         <source>Show on pointer movement, hide when idle</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj przy ruchu wskaźnika, ukrywaj przy bezczynności</translation>
     </message>
     <message>
         <source>Keep the bar; the picture ends above it</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowaj pasek; obraz kończy się nad nim</translation>
     </message>
     <message>
         <source>Picture only</source>
-        <translation type="unfinished"></translation>
+        <translation>Tylko obraz</translation>
     </message>
     <message>
         <source>Show toolbar</source>
@@ -12886,7 +12917,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Streams</source>
-        <translation type="unfinished"></translation>
+        <translation>Strumienie</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -12902,7 +12933,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Indexing error occurred: %1</source>
-        <translation type="unfinished">Wystąpił błąd indeksowania: %1</translation>
+        <translation>Wystąpił błąd indeksowania: %1</translation>
     </message>
     <message>
         <source>Cannot create VideoSource.</source>
@@ -12924,58 +12955,58 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>No video open</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak otwartego wideo</translation>
     </message>
     <message>
         <source>Opening dummy video…</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwieranie dummy wideo…</translation>
     </message>
     <message>
         <source>Indexing %1…</source>
-        <translation type="unfinished"></translation>
+        <translation>Indeksowanie %1…</translation>
     </message>
     <message>
         <source>Video unavailable: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo niedostępne: %1</translation>
     </message>
     <message>
         <source>Frame %1 of %2  %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Klatka %1 z %2  %3</translation>
     </message>
     <message>
         <source>Aspect ratio: %1</source>
-        <translation type="unfinished">Proporcje ekranu: %1</translation>
+        <translation>Proporcje ekranu: %1</translation>
     </message>
     <message>
         <source>No subtitles on this frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak napisów w tej klatce</translation>
     </message>
     <message>
         <source>Subtitles drawn in %1 ms</source>
         <extracomment>Over the video: how long drawing the frame&apos;s subtitles took</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Napisy narysowane w %1 ms</translation>
     </message>
     <message>
         <source>%1 event(s), %2 bitmap(s), %3 Mpx</source>
         <extracomment>Over the video: %1 events shown, %2 bitmaps libass drew, %3 their area in megapixels</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Zdarzenia: %1, bitmapy: %2, %3 Mpx</translation>
     </message>
     <message>
         <source>%1 with blur, %2 with a vector clip</source>
         <extracomment>Over the video: of the shown events, %1 use <byte value="x8"/>lur or <byte value="x8"/>e and %2 a drawing clip or iclip</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 z rozmyciem, %2 z wycinkiem wektorowym</translation>
     </message>
     <message>
         <source>Open the next video in this folder?</source>
-        <translation type="unfinished"></translation>
+        <translation>Otworzyć następne wideo z tego folderu?</translation>
     </message>
     <message>
         <source>Open the previous video in this folder?</source>
-        <translation type="unfinished"></translation>
+        <translation>Otworzyć poprzednie wideo z tego folderu?</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">Otwórz</translation>
+        <translation>Otwórz</translation>
     </message>
 </context>
 <context>
@@ -12990,83 +13021,83 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Rectangle</source>
-        <translation type="unfinished"></translation>
+        <translation>Prostokąt</translation>
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Tagi</translation>
     </message>
     <message>
         <source>Points</source>
-        <translation type="unfinished"></translation>
+        <translation>Punkty</translation>
     </message>
     <message>
         <source>Move</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruch</translation>
     </message>
     <message>
         <source>Change</source>
-        <translation type="unfinished">Zmień</translation>
+        <translation>Zmiana</translation>
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished">Start</translation>
+        <translation>Start</translation>
     </message>
     <message>
         <source>End</source>
-        <translation type="unfinished">Koniec</translation>
+        <translation>Koniec</translation>
     </message>
     <message>
         <source>Origin</source>
-        <translation type="unfinished"></translation>
+        <translation>Środek obrotu</translation>
     </message>
     <message>
         <source>Plane</source>
-        <translation type="unfinished"></translation>
+        <translation>Płaszczyzna</translation>
     </message>
     <message>
         <source>Rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>Obrót</translation>
     </message>
     <message>
         <source>By</source>
-        <translation type="unfinished"></translation>
+        <translation>O ile</translation>
     </message>
     <message>
         <source>Per line</source>
-        <translation type="unfinished"></translation>
+        <translation>Na linijkę</translation>
     </message>
     <message>
         <source>From</source>
-        <translation type="unfinished"></translation>
+        <translation>Od</translation>
     </message>
     <message>
         <source>To</source>
-        <translation type="unfinished"></translation>
+        <translation>Do</translation>
     </message>
     <message>
         <source>In</source>
-        <translation type="unfinished"></translation>
+        <translation>Wejście</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyjście</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Zmienia %n linijkę</numerusform>
+            <numerusform>Zmienia %n linijki</numerusform>
+            <numerusform>Zmienia %n linijek</numerusform>
         </translation>
     </message>
     <message>
         <source>Changes 1 line</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmienia 1 linijkę</translation>
     </message>
     <message>
         <source>Changes the active line</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmienia aktywną linijkę</translation>
     </message>
     <message>
         <source>More options</source>
@@ -13074,38 +13105,38 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
-        <translation type="unfinished"></translation>
+        <translation>Użyj zaznaczonych linijek (wybrano 1 linijkę: narzędzia edytują ją, a nie aktywną linijkę)</translation>
     </message>
     <message numerus="yes">
         <source>Pick selected lines (%n lines picked: the tools edit them, not the active line)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Użyj zaznaczonych linijek (wybrano %n linijkę: narzędzia edytują ją, a nie aktywną linijkę)</numerusform>
+            <numerusform>Użyj zaznaczonych linijek (wybrano %n linijki: narzędzia edytują je, a nie aktywną linijkę)</numerusform>
+            <numerusform>Użyj zaznaczonych linijek (wybrano %n linijek: narzędzia edytują je, a nie aktywną linijkę)</numerusform>
         </translation>
     </message>
     <message>
         <source>1 line picked</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybrano 1 linijkę</translation>
     </message>
     <message numerus="yes">
         <source>%n lines picked</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Wybrano %n linijkę</numerusform>
+            <numerusform>Wybrano %n linijki</numerusform>
+            <numerusform>Wybrano %n linijek</numerusform>
         </translation>
     </message>
     <message>
         <source>1 line</source>
-        <translation type="unfinished"></translation>
+        <translation>1 linijka</translation>
     </message>
     <message numerus="yes">
         <source>%n lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n linijka</numerusform>
+            <numerusform>%n linijki</numerusform>
+            <numerusform>%n linijek</numerusform>
         </translation>
     </message>
     <message>
@@ -13114,51 +13145,51 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Edit tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj tagi</translation>
     </message>
     <message>
         <source>Rename tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień nazwę tagu</translation>
     </message>
     <message>
         <source>Edit tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj tag</translation>
     </message>
     <message>
         <source>Edit range</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj zakres</translation>
     </message>
     <message>
         <source>Edit step</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj przeskok</translation>
     </message>
     <message>
         <source>Edit decimal places</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj miejsca po przecinku</translation>
     </message>
     <message>
         <source>Change count</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień liczbę wartości</translation>
     </message>
     <message>
         <source>Edit starting value</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj wartość początkową</translation>
     </message>
     <message>
         <source>Change change option</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień opcję zmiany</translation>
     </message>
     <message>
         <source>Change placing</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień umiejscowienie</translation>
     </message>
     <message>
         <source>New tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowy tag</translation>
     </message>
     <message>
         <source>Duplicate tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Duplikuj tag</translation>
     </message>
     <message>
         <source>Delete tag</source>
@@ -13166,143 +13197,143 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Replace tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastąp tag</translation>
     </message>
     <message>
         <source>Restore default tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć domyślne tagi</translation>
     </message>
     <message>
         <source>Type the tag, without the backslash.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz tag bez ukośnika wstecznego.</translation>
     </message>
     <message>
         <source>Another tag is named “%1”. Press Enter to replace it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Inny tag nosi nazwę “%1”. Naciśnij Enter, aby go zastąpić.</translation>
     </message>
     <message>
         <source>A tag can&apos;t contain “,”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tag nie może zawierać “,”.</translation>
     </message>
     <message>
         <source>A name can&apos;t contain “,”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwa nie może zawierać “,”.</translation>
     </message>
     <message>
         <source>Type a number.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz liczbę.</translation>
     </message>
     <message>
         <source>Type a whole number from 0 to 6.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz liczbę całkowitą od 0 do 6.</translation>
     </message>
     <message>
         <source>Type a number from -10000 to 10000.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz liczbę od -10000 do 10000.</translation>
     </message>
     <message>
         <source>The maximum must be greater than the minimum (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>Maksimum musi być większe od minimum (%1).</translation>
     </message>
     <message>
         <source>The minimum must be less than the maximum (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>Minimum musi być mniejsze od maksimum (%1).</translation>
     </message>
     <message>
         <source>The step must be greater than zero.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeskok musi być większy od zera.</translation>
     </message>
     <message>
         <source>The step must be at most half the range (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeskok może wynosić najwyżej połowę zakresu (%1).</translation>
     </message>
     <message>
         <source>Replace the tag “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastąpić tag “%1”?</translation>
     </message>
     <message>
         <source>Restore the default tags?</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywrócić domyślne tagi?</translation>
     </message>
     <message numerus="yes">
         <source>Your %n tag(s) are removed and the 22 default tags come back, with their ranges and steps.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Twój %n tag zostanie usunięty, a 22 domyślne tagi wrócą wraz z zakresami i przeskokami.</numerusform>
+            <numerusform>Twoje %n tagi zostaną usunięte, a 22 domyślne tagi wrócą wraz z zakresami i przeskokami.</numerusform>
+            <numerusform>Twoich %n tagów zostanie usuniętych, a 22 domyślne tagi wrócą wraz z zakresami i przeskokami.</numerusform>
         </translation>
     </message>
     <message>
         <source>The 22 default tags come back with their ranges and steps.</source>
-        <translation type="unfinished"></translation>
+        <translation>22 domyślne tagi wrócą wraz z zakresami i przeskokami.</translation>
     </message>
     <message>
         <source>The list keeps at least one tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista musi zawierać co najmniej jeden tag</translation>
     </message>
     <message>
         <source>Default</source>
-        <translation type="unfinished"></translation>
+        <translation>Domyślne</translation>
     </message>
     <message>
         <source>Advanced</source>
-        <translation type="unfinished">Zaawansowane</translation>
+        <translation>Zaawansowane</translation>
     </message>
     <message>
         <source>Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Zakres</translation>
     </message>
     <message>
         <source>Minimum</source>
-        <translation type="unfinished"></translation>
+        <translation>Minimum</translation>
     </message>
     <message>
         <source>to</source>
-        <translation type="unfinished"></translation>
+        <translation>do</translation>
     </message>
     <message>
         <source>Maximum</source>
-        <translation type="unfinished"></translation>
+        <translation>Maksimum</translation>
     </message>
     <message>
         <source>Count</source>
-        <translation type="unfinished"></translation>
+        <translation>Liczba</translation>
     </message>
     <message numerus="yes">
         <source>The tag takes %n value(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Tag przyjmuje %n wartość</numerusform>
+            <numerusform>Tag przyjmuje %n wartości</numerusform>
+            <numerusform>Tag przyjmuje %n wartości</numerusform>
         </translation>
     </message>
     <message>
         <source>Starts on</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaczyna od</translation>
     </message>
     <message>
         <source>Where the tag goes in the text</source>
-        <translation type="unfinished"></translation>
+        <translation>Miejsce tagu w tekście</translation>
     </message>
     <message>
         <source>How each line&apos;s number changes the value</source>
-        <translation type="unfinished"></translation>
+        <translation>Jak numer linijki zmienia wartość</translation>
     </message>
     <message>
         <source>What the gradient runs across</source>
-        <translation type="unfinished"></translation>
+        <translation>Po czym rozkłada się gradient</translation>
     </message>
     <message>
         <source>In the inspector bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Na pasku inspektora</translation>
     </message>
     <message>
         <source>Set writes, on the active line</source>
-        <translation type="unfinished"></translation>
+        <translation>Co zapisze Ustaw w aktywnej linijce</translation>
     </message>
     <message>
         <source>Restore default tags…</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć domyślne tagi…</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -13310,107 +13341,107 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Edit shapes</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj kształty</translation>
     </message>
     <message>
         <source>Rename shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień nazwę kształtu</translation>
     </message>
     <message>
         <source>Edit drawing</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj rysunek</translation>
     </message>
     <message>
         <source>Change scaling</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień skalowanie</translation>
     </message>
     <message>
         <source>New shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Nowy kształt</translation>
     </message>
     <message>
         <source>Duplicate shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Duplikuj kształt</translation>
     </message>
     <message>
         <source>Take drawing from line</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobierz rysunek z linijki</translation>
     </message>
     <message>
         <source>Replace shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastąp kształt</translation>
     </message>
     <message>
         <source>Restore default shapes</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć domyślne kształty</translation>
     </message>
     <message>
         <source>Undo all changes</source>
-        <translation type="unfinished"></translation>
+        <translation>Cofnij wszystkie zmiany</translation>
     </message>
     <message>
         <source>Type a name.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz nazwę.</translation>
     </message>
     <message>
         <source>A name can&apos;t contain “;”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwa nie może zawierać “;”.</translation>
     </message>
     <message>
         <source>Another shape is named “%1”. Press Enter to replace it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Inny kształt nosi nazwę “%1”. Naciśnij Enter, aby go zastąpić.</translation>
     </message>
     <message>
         <source>Replace the shape “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastąpić kształt “%1”?</translation>
     </message>
     <message>
         <source>“%1” takes its name and its place in the list; the other is removed. Undo brings it back while this window is open.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” przejmuje jego nazwę i miejsce na liście; drugi zostaje usunięty. Cofnij przywróci go, dopóki to okno jest otwarte.</translation>
     </message>
     <message>
         <source>Keep editing</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj dalej</translation>
     </message>
     <message>
         <source>Restore the default shapes?</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywrócić domyślne kształty?</translation>
     </message>
     <message numerus="yes">
         <source>Your %n shape(s) are removed and the five default shapes come back.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Twój %n kształt zostanie usunięty i wróci pięć domyślnych kształtów.</numerusform>
+            <numerusform>Twoje %n kształty zostaną usunięte i wróci pięć domyślnych kształtów.</numerusform>
+            <numerusform>Twoich %n kształtów zostanie usuniętych i wróci pięć domyślnych kształtów.</numerusform>
         </translation>
     </message>
     <message>
         <source>The five default shapes come back as they were.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pięć domyślnych kształtów wróci w pierwotnej postaci.</translation>
     </message>
     <message>
         <source>Undo brings yours back while this window is open.</source>
-        <translation type="unfinished"></translation>
+        <translation>Cofnij przywróci Twoje elementy, dopóki to okno jest otwarte.</translation>
     </message>
     <message>
         <source>Restore defaults</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć domyślne</translation>
     </message>
     <message>
         <source>yours</source>
-        <translation type="unfinished"></translation>
+        <translation>własny</translation>
     </message>
     <message>
         <source>Duplicate</source>
-        <translation type="unfinished"></translation>
+        <translation>Duplikuj</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">Usuń</translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>The list keeps at least one shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista musi zawierać co najmniej jeden kształt</translation>
     </message>
     <message>
         <source>Name</source>
@@ -13418,75 +13449,75 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Scale from the cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>Skaluj od kursora</translation>
     </message>
     <message>
         <source>Width and height</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerokość i wysokość</translation>
     </message>
     <message>
         <source>Keep aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowaj proporcje</translation>
     </message>
     <message>
         <source>Width only</source>
-        <translation type="unfinished"></translation>
+        <translation>Tylko szerokość</translation>
     </message>
     <message>
         <source>Drawing</source>
-        <translation type="unfinished"></translation>
+        <translation>Rysunek</translation>
     </message>
     <message>
         <source>A drawing can&apos;t contain “;”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Rysunek nie może zawierać “;”.</translation>
     </message>
     <message>
         <source>A shape needs a drawing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kształt wymaga rysunku.</translation>
     </message>
     <message>
         <source>Take from the active line</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobierz z aktywnej linijki</translation>
     </message>
     <message>
         <source>Put the active line&apos;s drawing in this shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Umieść rysunek z aktywnej linijki w tym kształcie</translation>
     </message>
     <message>
         <source>The active line has no drawing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktywna linijka nie zawiera rysunku.</translation>
     </message>
     <message>
         <source>Preview</source>
-        <translation type="unfinished">Podgląd</translation>
+        <translation>Podgląd</translation>
     </message>
     <message>
         <source>The shape keeps its last drawing until this one can be used</source>
-        <translation type="unfinished"></translation>
+        <translation>Kształt zachowuje poprzedni rysunek, dopóki tego nie można użyć</translation>
     </message>
     <message>
         <source>%1 × %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 × %2</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished">Cofnij</translation>
+        <translation>Cofnij</translation>
     </message>
     <message>
         <source>Undo “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Cofnij “%1”</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation type="unfinished">Ponów</translation>
+        <translation>Ponów</translation>
     </message>
     <message>
         <source>Redo “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Ponów “%1”</translation>
     </message>
     <message>
         <source>Restore default shapes…</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć domyślne kształty…</translation>
     </message>
     <message>
         <source>Tag:</source>
@@ -13494,7 +13525,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Tag</translation>
     </message>
     <message>
         <source>Minimal value:</source>
@@ -13510,7 +13541,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Value</source>
-        <translation type="unfinished"></translation>
+        <translation>Wartość</translation>
     </message>
     <message>
         <source>Step:</source>
@@ -13518,7 +13549,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Step</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeskok</translation>
     </message>
     <message>
         <source>Decimal places:</source>
@@ -13526,7 +13557,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Decimal places</source>
-        <translation type="unfinished"></translation>
+        <translation>Miejsca po przecinku</translation>
     </message>
     <message>
         <source>Used only when tag have 2 values or more</source>
@@ -13566,7 +13597,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Shapes</source>
-        <translation type="unfinished"></translation>
+        <translation>Kształty</translation>
     </message>
     <message>
         <source>Add shape</source>
@@ -13618,7 +13649,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Kształt</translation>
     </message>
     <message>
         <source>Confirmation</source>
@@ -13630,55 +13661,55 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Copy video position</source>
-        <translation type="unfinished">Kopiuj pozycję na wideo</translation>
+        <translation>Kopiuj pozycję na wideo</translation>
     </message>
     <message>
         <source>At the cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>W miejscu kursora</translation>
     </message>
     <message>
         <source>At the start of the text</source>
-        <translation type="unfinished"></translation>
+        <translation>Na początku tekstu</translation>
     </message>
     <message>
         <source>Clip rectangle with %1 animation</source>
-        <translation type="unfinished"></translation>
+        <translation>Wycinek prostokątny z animacją %1</translation>
     </message>
     <message>
         <source>Set by line number</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustaw według numeru linijki</translation>
     </message>
     <message>
         <source>Add by line number</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj według numeru linijki</translation>
     </message>
     <message>
         <source>Across characters, increasing</source>
-        <translation type="unfinished"></translation>
+        <translation>Po znakach, rosnąco</translation>
     </message>
     <message>
         <source>Across characters, decreasing</source>
-        <translation type="unfinished"></translation>
+        <translation>Po znakach, malejąco</translation>
     </message>
     <message>
         <source>Across lines, increasing</source>
-        <translation type="unfinished"></translation>
+        <translation>Po linijkach, rosnąco</translation>
     </message>
     <message>
         <source>Across lines, decreasing</source>
-        <translation type="unfinished"></translation>
+        <translation>Po linijkach, malejąco</translation>
     </message>
     <message>
         <source>Free drawing</source>
-        <translation type="unfinished"></translation>
+        <translation>Rysunek odręczny</translation>
     </message>
     <message>
         <source>Edit shapes…</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj kształty…</translation>
     </message>
     <message>
         <source>Shape: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Kształt: %1</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -13690,19 +13721,19 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (jeszcze niedostępne)</translation>
     </message>
     <message>
         <source>Pick selected lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Użyj zaznaczonych linijek</translation>
     </message>
     <message>
         <source>Pick selected lines (the tools edit them, not the active line)</source>
-        <translation type="unfinished"></translation>
+        <translation>Użyj zaznaczonych linijek (narzędzia edytują je, a nie aktywną linijkę)</translation>
     </message>
     <message>
         <source>Clear picked lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyczyść wybrane linijki</translation>
     </message>
     <message>
         <source>Clear</source>
@@ -13710,66 +13741,66 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Common</source>
-        <translation type="unfinished"></translation>
+        <translation>Popularne</translation>
     </message>
     <message>
         <source>More</source>
-        <translation type="unfinished"></translation>
+        <translation>Więcej</translation>
     </message>
     <message>
         <source>Your tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Twoje tagi</translation>
     </message>
     <message>
         <source>Search tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukaj tagów</translation>
     </message>
     <message>
         <source>Edit tags…</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytuj tagi…</translation>
     </message>
     <message>
         <source>Set</source>
-        <translation type="unfinished">Ustaw</translation>
+        <translation>Ustaw</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished">Dodaj</translation>
+        <translation>Dodaj</translation>
     </message>
     <message>
         <source>Multiply</source>
-        <translation type="unfinished"></translation>
+        <translation>Pomnóż</translation>
     </message>
     <message>
         <source>Gradient</source>
-        <translation type="unfinished"></translation>
+        <translation>Gradient</translation>
     </message>
     <message>
         <source>Last change</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnia zmiana</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">Zamknij</translation>
+        <translation>Zamknij</translation>
     </message>
     <message>
         <source>Change a value to redo it in place of that step</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień wartość, aby wykonać zmianę ponownie w miejsce tego kroku</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
         <source>%1 options</source>
-        <translation type="unfinished"></translation>
+        <translation>Opcje: %1</translation>
     </message>
     <message>
         <source>Panels</source>
-        <translation type="unfinished"></translation>
+        <translation>Panele</translation>
     </message>
     <message>
         <source>Dock</source>
-        <translation type="unfinished"></translation>
+        <translation>Zadokuj</translation>
     </message>
     <message>
         <source>Close</source>
@@ -13777,99 +13808,99 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Place</source>
-        <translation type="unfinished"></translation>
+        <translation>Umieść</translation>
     </message>
     <message>
         <source>Float</source>
-        <translation type="unfinished"></translation>
+        <translation>Odepnij</translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć poprzedni układ</translation>
     </message>
     <message>
         <source>Dismiss</source>
-        <translation type="unfinished"></translation>
+        <translation>Odrzuć</translation>
     </message>
     <message>
         <source>Move panel…</source>
-        <translation type="unfinished"></translation>
+        <translation>Przenieś panel…</translation>
     </message>
     <message>
         <source>Move tab left</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń zakładkę w lewo</translation>
     </message>
     <message>
         <source>Move tab right</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuń zakładkę w prawo</translation>
     </message>
     <message>
         <source>Undock</source>
-        <translation type="unfinished"></translation>
+        <translation>Odłącz</translation>
     </message>
     <message>
         <source>Close reference</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknij dokument referencyjny</translation>
     </message>
     <message>
         <source>Move panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Przenieś panel</translation>
     </message>
     <message>
         <source>next to</source>
-        <translation type="unfinished"></translation>
+        <translation>obok</translation>
     </message>
     <message>
         <source>px</source>
-        <translation type="unfinished"></translation>
+        <translation>px</translation>
     </message>
     <message>
         <source>Panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Panel</translation>
     </message>
     <message>
         <source>Tab with</source>
-        <translation type="unfinished"></translation>
+        <translation>W zakładce z</translation>
     </message>
     <message>
         <source>Left of</source>
-        <translation type="unfinished"></translation>
+        <translation>Na lewo od</translation>
     </message>
     <message>
         <source>Above</source>
-        <translation type="unfinished"></translation>
+        <translation>Nad</translation>
     </message>
     <message>
         <source>Right of</source>
-        <translation type="unfinished"></translation>
+        <translation>Na prawo od</translation>
     </message>
     <message>
         <source>Below</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod</translation>
     </message>
     <message>
         <source>Placement</source>
-        <translation type="unfinished"></translation>
+        <translation>Umiejscowienie</translation>
     </message>
     <message>
         <source>Next to panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Obok panelu</translation>
     </message>
     <message>
         <source>Move</source>
-        <translation type="unfinished"></translation>
+        <translation>Przenieś</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerokość</translation>
     </message>
     <message>
         <source>Height</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysokość</translation>
     </message>
     <message>
         <source>Resize</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień rozmiar</translation>
     </message>
     <message>
         <source>Editing</source>
@@ -13877,7 +13908,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Timing</source>
-        <translation type="unfinished"></translation>
+        <translation>Timing</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -13885,151 +13916,151 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting</translation>
     </message>
     <message>
         <source>the file is larger than %1 bytes</source>
-        <translation type="unfinished"></translation>
+        <translation>plik jest większy niż %1 B</translation>
     </message>
     <message>
         <source>it is not a layout file</source>
-        <translation type="unfinished"></translation>
+        <translation>nie jest to plik układu</translation>
     </message>
     <message>
         <source>it was written by a newer version</source>
-        <translation type="unfinished"></translation>
+        <translation>został zapisany przez nowszą wersję</translation>
     </message>
     <message>
         <source>its format is not known</source>
-        <translation type="unfinished"></translation>
+        <translation>jego format jest nieznany</translation>
     </message>
     <message>
         <source>it names panels from a newer version</source>
-        <translation type="unfinished"></translation>
+        <translation>zawiera panele z nowszej wersji</translation>
     </message>
     <message>
         <source>it was made with %1</source>
-        <translation type="unfinished"></translation>
+        <translation>został utworzony w %1</translation>
     </message>
     <message>
         <source>it names an unknown panel (%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>zawiera nieznany panel (%1)</translation>
     </message>
     <message>
         <source>it holds no layout</source>
-        <translation type="unfinished"></translation>
+        <translation>nie zawiera układu</translation>
     </message>
     <message>
         <source>it holds no Classic arrangement</source>
-        <translation type="unfinished"></translation>
+        <translation>nie zawiera układu Classic</translation>
     </message>
     <message>
         <source>it holds more windows or panels than HikariSub has</source>
-        <translation type="unfinished"></translation>
+        <translation>zawiera więcej okien lub paneli, niż ma HikariSub</translation>
     </message>
     <message>
         <source>it puts a floating panel in a window that does not exist</source>
-        <translation type="unfinished"></translation>
+        <translation>umieszcza pływający panel w nieistniejącym oknie</translation>
     </message>
     <message>
         <source>it puts a panel in a window that does not exist</source>
-        <translation type="unfinished"></translation>
+        <translation>umieszcza panel w nieistniejącym oknie</translation>
     </message>
     <message>
         <source>the docking engine could not restore it</source>
-        <translation type="unfinished"></translation>
+        <translation>mechanizm dokowania nie mógł go przywrócić</translation>
     </message>
     <message>
         <source>The saved panel layout at %1 could not be read or copied: it is not restored and not changed. The Editing layout is shown.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisanego układu paneli w %1 nie udało się odczytać ani skopiować: nie został przywrócony ani zmieniony. Wyświetlany jest układ Edycja.</translation>
     </message>
     <message>
         <source>The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisany układ paneli nie został przywrócony, ponieważ %1. Wyświetlany jest układ Edycja; zapisany plik zachowano w %2.</translation>
     </message>
     <message>
         <source>The panel layout could not be written to %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się zapisać układu paneli w %1.</translation>
     </message>
     <message>
         <source>The panel layout of this tab was not restored because %1. The tab shows the Editing layout.</source>
-        <translation type="unfinished"></translation>
+        <translation>Układ paneli tej zakładki nie został przywrócony, ponieważ %1. Zakładka wyświetla układ Edycja.</translation>
     </message>
     <message>
         <source>The panel layout of %1 was not restored because %2. The tab shows the Editing layout.</source>
-        <translation type="unfinished"></translation>
+        <translation>Układ paneli zakładki %1 nie został przywrócony, ponieważ %2. Zakładka wyświetla układ Edycja.</translation>
     </message>
     <message>
         <source>The layout is kept at %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Układ zachowano w %1.</translation>
     </message>
     <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>Układ paneli zapisany w %1 nie został użyty, ponieważ %2.</translation>
     </message>
     <message>
         <source>it is not a layouts file</source>
-        <translation type="unfinished"></translation>
+        <translation>nie jest to plik układów</translation>
     </message>
     <message>
         <source>The saved layouts were not read because %1. The file is kept at %2.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisane układy nie zostały odczytane, ponieważ %1. Plik zachowano w %2.</translation>
     </message>
     <message>
         <source>Some saved layouts were not read: their names cannot name a layout, or were listed before. The file as it was is kept at %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Niektórych zapisanych układów nie odczytano: ich nazwy nie mogą być nazwą układu lub wystąpiły już wcześniej. Plik w pierwotnej postaci zachowano w %1.</translation>
     </message>
     <message>
         <source>The saved layouts at %1 could not be read or copied: they are not used and not changed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisanych układów w %1 nie udało się odczytać ani skopiować: nie są używane ani zmieniane.</translation>
     </message>
     <message>
         <source>The saved layouts were not changed: together they would be larger than %1 bytes. Delete layouts you no longer use first.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisane układy nie zostały zmienione: łącznie przekroczyłyby %1 B. Najpierw usuń nieużywane układy.</translation>
     </message>
     <message>
         <source>The saved layouts could not be written to %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się zapisać układów w %1.</translation>
     </message>
     <message>
         <source>Enter a name for the layout.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wpisz nazwę układu.</translation>
     </message>
     <message>
         <source>The name is longer than %1 characters.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwa przekracza limit znaków (%1).</translation>
     </message>
     <message>
         <source>The name cannot hold line breaks or tabs.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwa nie może zawierać podziałów wiersza ani tabulatorów.</translation>
     </message>
     <message>
         <source>%1 is a built-in layout.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 to wbudowany układ.</translation>
     </message>
     <message>
         <source>A layout named %1 already exists.</source>
-        <translation type="unfinished"></translation>
+        <translation>Układ o nazwie %1 już istnieje.</translation>
     </message>
     <message>
         <source>Layout: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Układ: %1</translation>
     </message>
     <message>
         <source>Layout of this tab</source>
-        <translation type="unfinished"></translation>
+        <translation>Układ tej zakładki</translation>
     </message>
     <message>
         <source>Save layout as…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz układ jako…</translation>
     </message>
     <message>
         <source>Reset this layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Resetuj ten układ</translation>
     </message>
     <message>
         <source>Manage layouts…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zarządzaj układami…</translation>
     </message>
     <message>
         <source>Name:</source>
@@ -14037,74 +14068,74 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Save layout as</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz układ jako</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished">Nazwa</translation>
+        <translation>Nazwa</translation>
     </message>
     <message>
         <source>Saving replaces the layout %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisanie zastąpi układ %1.</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished">Zamień</translation>
+        <translation>Zamień</translation>
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished">Zapisz</translation>
+        <translation>Zapisz</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Manage layouts</source>
-        <translation type="unfinished"></translation>
+        <translation>Zarządzaj układami</translation>
     </message>
     <message>
         <source>Delete layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń układ</translation>
     </message>
     <message>
         <source>Delete the layout “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunąć układ “%1”?</translation>
     </message>
     <message>
         <source>Tabs that use it keep their arrangement, under the preset it started from.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zakładki, które go używają, zachowają swoje rozmieszczenie pod nazwą presetu, z którego powstał.</translation>
     </message>
     <message>
         <source>Saved layouts</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisane układy</translation>
     </message>
     <message>
         <source>%1, cannot be used</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, nie można użyć</translation>
     </message>
     <message>
         <source>Cannot be used: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można użyć: %1</translation>
     </message>
     <message>
         <source>Rename (F2)</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień nazwę (F2)</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">Usuń</translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>Karaoke</source>
-        <translation type="unfinished"></translation>
+        <translation>Karaoke</translation>
     </message>
 </context>
 <context>
     <name>QGuiApplication</name>
     <message>
         <source>QT_LAYOUT_DIRECTION</source>
-        <translation type="unfinished"></translation>
+        <translation>LTR</translation>
     </message>
 </context>
 </TS>

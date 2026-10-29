@@ -787,8 +787,7 @@ private slots:
     }
 };
 
-// The Linux capture (document_scripts_capture.py) and the Windows one
-// (drive_windows.py --document-scripts on the Winix VM), the same plan.
+// The Linux capture and the Windows one (on the Winix VM), the same plan.
 void AutomationDocumentScriptsTests::replaysTheLegacyCapture_data()
 {
     QTest::addColumn<QString>("capture");
@@ -936,7 +935,7 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
             // which writes "Active Line" into the open Document's Script Info
             // (GetAssHeader, SubsGridBase.cpp:1470 at 20d647c4). On Windows the
             // driver's steps are slow (the 8 s wait after each hotkey and the
-            // winix tasks in between, drive_windows.py), so in runs-last the
+            // winix tasks in between), so in runs-last the
             // timer that step 0's run started fired before step 3, and the
             // scripts see the key from there on; the Linux capture's steps all
             // came within the 20 s. The replay autosaves where legacy's first

@@ -20,8 +20,8 @@
 // Legacy works in the video window's device pixels. The view's inputs and
 // outputs are device pixels too; toDevice/toLogical convert Qt's logical
 // item coordinates at the window's device pixel ratio. The checked fixtures
-// are the legacy probe's captures (tools/legacy-capture/visual_capture.cpp,
-// tests/fixtures/legacy-observations/local-t1-visual-20261005).
+// are the legacy probe's captures
+// (tests/fixtures/legacy-observations/local-t1-visual-20261005).
 
 #include <optional>
 
