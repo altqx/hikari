@@ -669,6 +669,49 @@ private slots:
         }
     }
 
+    // A folder in a file's place makes its write fail.
+    void aConversionThatCannotBeWrittenIsTriedAgainWhole()
+    {
+        QTemporaryDir dir;
+        const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        {
+            QSettings s(ini, QSettings::IniFormat);
+            s.setValue(QStringLiteral("profile/audio.volume"), 70);
+            s.setValue(QStringLiteral("profile/recent.video"), QStringList{QStringLiteral("/v.mkv")});
+        }
+        const QString blocked = dir.filePath(QStringLiteral("state.json"));
+        QVERIFY(QDir().mkpath(blocked + QStringLiteral("/x")));
+        SettingsStore store(file);
+        QVERIFY(!store.converted());
+        QCOMPARE(store.integer("audio.volume"), 70);
+        QVERIFY(!QFileInfo::exists(file)); // not done: the next start converts again
+        QVERIFY(QFileInfo::exists(ini));
+        store.set("audio.delay", 5);
+        store.sync();
+        QVERIFY(!QFileInfo::exists(file));
+        QVERIFY(QDir(blocked).removeRecursively());
+        store.sync();
+        QVERIFY(QFileInfo::exists(ini + QStringLiteral(".old")));
+        QVERIFY(!QFileInfo::exists(ini));
+        QVERIFY2(readAll(blocked).contains("/v.mkv"), readAll(blocked).constData());
+        QCOMPARE(readAll(file), QByteArray("version = 1\n\n[audio]\ndelay = 5\nvolume = 70\n"));
+    }
+
+    void aFileThatCannotBeWrittenIsWrittenLater()
+    {
+        QTemporaryDir dir;
+        const QString state = dir.filePath(QStringLiteral("state.json"));
+        SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
+        QVERIFY(QDir().mkpath(state + QStringLiteral("/x")));
+        store.set("recent.video", QStringList{QStringLiteral("/v.mkv")});
+        store.sync();
+        QVERIFY(QFileInfo(state).isDir());
+        QVERIFY(QDir(state).removeRecursively());
+        store.sync();
+        QVERIFY(readAll(state).contains("/v.mkv"));
+    }
+
     // The panel reads the legacy options (SHIFT_TIMES_TIME 2000, backward
     // when SHIFT_TIMES_OPTIONS is unset) and stores nothing until it changes.
     void shiftTimesPanelStartsFromTheLegacyOptions()

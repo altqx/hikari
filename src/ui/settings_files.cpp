@@ -799,10 +799,10 @@ SettingsFiles::~SettingsFiles()
 
 void SettingsFiles::load()
 {
-    const auto conversion = application::convertOnce(pathOf(path(Settings)),
-                                                     pathOf(m_folder + QStringLiteral("/hikari.ini")),
+    const auto conversion = application::convertOnce(pathOf(path(Settings)), pathOf(legacyIni()),
                                                      [this] { return convertIni(); });
     m_converted = conversion == application::Conversion::Converted;
+    m_conversionPending = conversion == application::Conversion::Failed;
     if (conversion != application::Conversion::NotNeeded)
         return; // the documents are the converted ones (also when a write failed)
     const auto parseToml = [](toml::table &into) {
@@ -863,7 +863,7 @@ bool SettingsFiles::convertIni()
 {
     QVariantMap ini;
     {
-        const QSettings file(m_folder + QStringLiteral("/hikari.ini"), QSettings::IniFormat);
+        const QSettings file(legacyIni(), QSettings::IniFormat);
         for (const QString &key : file.allKeys())
             ini.insert(key, file.value(key));
     }
@@ -875,11 +875,19 @@ bool SettingsFiles::convertIni()
         if (const auto it = ini.constFind(key); it != ini.cend())
             write(setting, application::storedValue(setting, iniValue(*it, setting.type)));
     }
-    // settings.toml last: it says the conversion is done.
-    bool ok = true;
-    for (const File file : {Hotkeys, State, Settings})
-        ok = writeFile(file) && ok;
-    return ok;
+    return writeConversion();
+}
+
+// settings.toml last, and only after the other two: it says the conversion
+// is done.
+bool SettingsFiles::writeConversion()
+{
+    for (const File file : {Hotkeys, State, Settings}) {
+        m_dirty[file] = true;
+        if (!writeFile(file))
+            return false;
+    }
+    return true;
 }
 
 std::optional<SettingValue> SettingsFiles::read(const SettingDefinition &setting) const
@@ -1097,6 +1105,14 @@ void SettingsFiles::changed(File file)
 void SettingsFiles::flush()
 {
     m_flushQueued = false;
+    // A conversion that could not be written is tried again as a whole.
+    if (m_conversionPending) {
+        m_conversionPending = application::convertOnce(pathOf(path(Settings)), pathOf(legacyIni()), [this] {
+                                  return writeConversion();
+                              }) == application::Conversion::Failed;
+        if (m_conversionPending)
+            return;
+    }
     for (const File file : {Hotkeys, State, Settings})
         if (m_dirty[file])
             writeFile(file);
@@ -1104,7 +1120,6 @@ void SettingsFiles::flush()
 
 bool SettingsFiles::writeFile(File file)
 {
-    m_dirty[file] = false;
     if (!m_writable[file])
         return false;
     std::string text;
@@ -1119,7 +1134,11 @@ bool SettingsFiles::writeFile(File file)
         text = jsonDocumentText(m_state);
         break;
     }
-    return application::writeFileAtomically(pathOf(path(file)), text);
+    // Kept dirty when the write fails, so a later flush tries again.
+    if (!application::writeFileAtomically(pathOf(path(file)), text))
+        return false;
+    m_dirty[file] = false;
+    return true;
 }
 
 } // namespace hikari::ui

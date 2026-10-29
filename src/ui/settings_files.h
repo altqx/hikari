@@ -69,6 +69,8 @@ public:
 private:
     void load();
     bool convertIni();
+    bool writeConversion();
+    QString legacyIni() const { return m_folder + QStringLiteral("/hikari.ini"); }
     void changed(File file);
     bool writeFile(File file);
 
@@ -80,6 +82,8 @@ private:
     // A broken file that could not be moved aside is never written.
     bool m_writable[kFiles] = {true, true, true};
     bool m_flushQueued = false;
+    // hikari.ini was converted but the files could not all be written.
+    bool m_conversionPending = false;
     std::vector<application::FileProblem> m_problems;
     std::vector<std::string> m_ignored;
     bool m_converted = false;
