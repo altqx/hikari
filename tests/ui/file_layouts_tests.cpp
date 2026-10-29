@@ -31,6 +31,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QRegularExpression>
+#include <QSet>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -128,6 +129,8 @@ class FileLayoutsTest : public QObject {
     QTemporaryDir dir;
     std::unique_ptr<app::Application> application;
     std::unique_ptr<QQmlApplicationEngine> engine;
+    QByteArray madeLayout;
+    QSet<QByteArray> opened;
 
     QString path(const char *name) const { return dir.filePath(QLatin1String(name)); }
     void start(const QString &recovery = {})
@@ -212,6 +215,32 @@ class FileLayoutsTest : public QObject {
         const QByteArray layout = application->workspaceLayout().fileArrangement(target->value);
         stop();
         return layout;
+    }
+    // fileLayout(), made once for the refusal tests, which each change a copy.
+    QByteArray refusalBase()
+    {
+        if (madeLayout.isEmpty())
+            madeLayout = fileLayout();
+        return madeLayout;
+    }
+    // A refused file opens as a copy of the tab as it was, and the log names
+    // it. Every row of a refusal test checks the parse; the app opens the file
+    // for the function's first row only, as every refusal takes this one
+    // fallback (TP1 #462; anUnusableFileArrangementFollowsTheNewTabRule
+    // covers it in full).
+    void opensAsACopyOfTheTab(const char *name, const QByteArray &layout)
+    {
+        if (opened.contains(QTest::currentTestFunction()))
+            return;
+        opened.insert(QTest::currentTestFunction());
+        const QString file = write(path(name), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
+        start();
+        application->addPage();
+        QVERIFY(application->openFile(file));
+        QTRY_VERIFY(isOpen("videoDock"));
+        QVERIFY(!isFloating("audioDock"));
+        QVERIFY(application->log().history().contains(QLatin1String(name)));
+        stop();
     }
 
 private slots:
@@ -600,7 +629,7 @@ private slots:
     void aFloatingPanelInAMissingWindowIsRefused()
     {
         QFETCH(QJsonValue, parent);
-        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(refusalBase())).object();
         QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
         QJsonArray floating = payload.value(QStringLiteral("floatingWindows")).toArray();
         QJsonObject window = floating.first().toObject();
@@ -614,14 +643,7 @@ private slots:
         QVERIFY(!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem));
         QVERIFY2(problem.contains(QStringLiteral("window that does not exist")), qPrintable(problem));
 
-        const QString file = write(path("parent.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
-        start();
-        application->addPage();
-        QVERIFY(application->openFile(file));
-        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
-        QVERIFY(!isFloating("audioDock"));
-        QVERIFY(application->log().history().contains(QStringLiteral("parent.ass")));
-        stop();
+        opensAsACopyOfTheTab("parent.ass", layout);
     }
 
     // The engine takes a docked panel's place in a main window by name and
@@ -640,7 +662,7 @@ private slots:
     void aPanelPlacedInAMissingMainWindowIsRefused()
     {
         QFETCH(QJsonValue, placeholder);
-        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(refusalBase())).object();
         QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
         QJsonArray docks = payload.value(QStringLiteral("allDockWidgets")).toArray();
         bool replaced = false;
@@ -668,14 +690,7 @@ private slots:
         QVERIFY(!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem));
         QVERIFY2(problem.contains(QStringLiteral("window that does not exist")), qPrintable(problem));
 
-        const QString file = write(path("place.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
-        start();
-        application->addPage();
-        QVERIFY(application->openFile(file));
-        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
-        QVERIFY(!isFloating("audioDock"));
-        QVERIFY(application->log().history().contains(QStringLiteral("place.ass")));
-        stop();
+        opensAsACopyOfTheTab("place.ass", layout);
     }
 
     // The engine makes a window, a group or a layout item for every entry a
@@ -695,7 +710,7 @@ private slots:
     void aLayoutLargerThanThePanelsIsRefused()
     {
         QFETCH(QString, change);
-        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(refusalBase())).object();
         QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
         const auto many = [](const QJsonValue &value, int count) {
             QJsonArray array;
@@ -757,14 +772,7 @@ private slots:
         QVERIFY(!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem));
         QVERIFY2(problem.contains(QStringLiteral("more windows or panels")), qPrintable(problem));
 
-        const QString file = write(path("large.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
-        start();
-        application->addPage();
-        QVERIFY(application->openFile(file));
-        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
-        QVERIFY(!isFloating("audioDock"));
-        QVERIFY(application->log().history().contains(QStringLiteral("large.ass")));
-        stop();
+        opensAsACopyOfTheTab("large.ass", layout);
     }
 
     // The engine reads a window's layout tree outside its own catch: a value
@@ -786,7 +794,7 @@ private slots:
     void aLayoutTheEngineCannotReadIsRefused()
     {
         QFETCH(QString, change);
-        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(refusalBase())).object();
         QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
         QJsonObject main = payload.value(QStringLiteral("mainWindows")).toArray().first().toObject();
         QJsonObject splitter = main.value(QStringLiteral("multiSplitterLayout")).toObject();
@@ -831,14 +839,7 @@ private slots:
         QVERIFY(!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem));
         QVERIFY2(problem.contains(QStringLiteral("not a layout file")), qPrintable(problem));
 
-        const QString file = write(path("tree.ass"), kAss + "\n[Hikari]\nLayout=" + text + "\n");
-        start();
-        application->addPage();
-        QVERIFY(application->openFile(file));
-        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
-        QVERIFY(!isFloating("audioDock"));
-        QVERIFY(application->log().history().contains(QStringLiteral("tree.ass")));
-        stop();
+        opensAsACopyOfTheTab("tree.ass", text);
     }
 
     // A panel's place by index: the engine takes a floating place's window
@@ -869,7 +870,7 @@ private slots:
         QFETCH(QString, key);
         QFETCH(QJsonValue, value);
         QFETCH(QString, reason);
-        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(refusalBase())).object();
         QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
         QCOMPARE(payload.value(QStringLiteral("floatingWindows")).toArray().size(), 1); // Audio's
         QJsonArray docks = payload.value(QStringLiteral("allDockWidgets")).toArray();
@@ -906,14 +907,7 @@ private slots:
         QVERIFY(!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem));
         QVERIFY2(problem.contains(reason), qPrintable(problem));
 
-        const QString file = write(path("position.ass"), kAss + "\n[Hikari]\nLayout=" + text + "\n");
-        start();
-        application->addPage();
-        QVERIFY(application->openFile(file));
-        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
-        QVERIFY(!isFloating("audioDock"));
-        QVERIFY(application->log().history().contains(QStringLiteral("position.ass")));
-        stop();
+        opensAsACopyOfTheTab("position.ass", text);
     }
 
     // A window's place: a file's is moved by the main window's place when
@@ -945,7 +939,7 @@ private slots:
         QFETCH(QString, rect);
         QFETCH(QString, field);
         QFETCH(QJsonValue, value);
-        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(refusalBase())).object();
         QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
         QJsonArray list = payload.value(windows).toArray();
         QVERIFY(!list.isEmpty());
@@ -973,14 +967,7 @@ private slots:
         QVERIFY(!ui::WorkspaceArrangement::parseFromFile(text, QPoint(1000, 1000), &problem));
         QVERIFY2(problem.contains(QStringLiteral("not a layout file")), qPrintable(problem));
 
-        const QString file = write(path("place.ass"), kAss + "\n[Hikari]\nLayout=" + text + "\n");
-        start();
-        application->addPage();
-        QVERIFY(application->openFile(file));
-        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
-        QVERIFY(!isFloating("audioDock"));
-        QVERIFY(application->log().history().contains(QStringLiteral("place.ass")));
-        stop();
+        opensAsACopyOfTheTab("place.ass", text);
     }
 
     // An autosave writes the tab's arrangement as a save does, and the open
