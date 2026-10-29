@@ -933,8 +933,7 @@ jobs:
           fi
 
       # A legacy release is offered to legacy clients only, unless a manual
-      # run of the tag says otherwise. HIKARISUB_OFFER_QT_TO_LEGACY is for
-      # Qt releases.
+      # run of the tag says otherwise.
       - name: Publish the update manifest
         env:
           OFFER_TO: ${{ github.event.inputs.offer_to || 'legacy' }}
@@ -962,16 +961,16 @@ jobs:
           echo "Publishing with $flag"
           gh release edit "$GITHUB_REF_NAME" --draft=false "$flag"
 
-      # The AUR packages (installers spec, 5.5), while they follow legacy
-      # (until HIKARISUB_OFFER_QT_TO_LEGACY): hikarisub-beta-bin for every
-      # release, hikarisub-stable-bin too for a stable one. Each is rendered
-      # from the published tar.gz, built and started in the pinned archlinux
-      # container from the published URL, then pushed to the AUR. A missing
-      # or refused key, a newer version on the AUR or a newer release of the
-      # channel is a warning: the release is out already, and the owner can
-      # publish it later with the AUR publish workflow (aur-publish.yml).
+      # The AUR packages (installers spec, 5.5) that still follow legacy
+      # (release-aur.sh, ADR-0021): hikarisub-beta-bin until 0.1.0-beta.1,
+      # hikarisub-stable-bin until the first stable 0.1.0 or higher. Each is
+      # rendered from the published tar.gz, built and started in the pinned
+      # archlinux container from the published URL, then pushed to the AUR. A
+      # package that follows 0.1.0 and up, a missing or refused key, a newer
+      # version on the AUR or a newer release of the channel is a warning:
+      # the release is out already, and the owner can publish it later with
+      # the AUR publish workflow (aur-publish.yml).
       - name: Publish to the AUR
-        if: vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
         env:
           AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
         run: |
@@ -981,7 +980,7 @@ jobs:
             "$VERSION" "release/hikarisub-$VERSION-linux-x86_64.tar.gz" aur-artifact
 
       - name: Upload the AUR files
-        if: always() && vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hikarisub-aur
